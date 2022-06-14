@@ -27,11 +27,11 @@
 namespace mindspore {
 namespace device {
 namespace gpu {
-class GPUDeviceContext : public DeviceContext {
+class GPUKernelExecutor;
+class GPUDeviceResManager : public DeviceResManager {
  public:
-  explicit GPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceContext(device_context_key), mem_manager_(nullptr), initialized_(false) {}
-  ~GPUDeviceContext() override = default;
+  GPUDeviceResManager() : mem_manager_(nullptr) {}
+  ~GPUDeviceResManager() override = default;
 
   // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
   void Initialize() override;
@@ -41,23 +41,49 @@ class GPUDeviceContext : public DeviceContext {
 
   bool BindDeviceToCurrentThread() const override;
 
-  // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
-  void FreeMemory(void *ptr) const override;
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
+
+  bool SyncStream(size_t stream_id = 0) const override;
+
+  bool LoadCollectiveCommLib() override;
+
+ protected:
+  // Relevant function to allocate and free device memory of raw ptr.
+  void *AllocateMemory(size_t size) const override;
+  void FreeMemory(void *ptr) const override;
+
+  // Really create a cuda stream.
+  bool CreateStream(void **stream) const override;
+  // Really destroy a cuda stream.
+  bool DestroyStream(void *stream) const override;
+
+ private:
+  friend class GPUKernelExecutor;
+  bool InitDevice();
+  std::shared_ptr<MemoryManager> mem_manager_;
+  std::vector<void *> streams_;
+};
+
+class GPUKernelExecutor : public DeprecatedKernelExecutor {
+ public:
+  GPUKernelExecutor() = default;
+  ~GPUKernelExecutor() override = default;
+
+  void Initialize();
+  void Destroy();
 
   // Optimize the kernel graph for graph mode.
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
   void CreateKernel(const std::vector<CNodePtr> &nodes) const override;
 
+  void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
+
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
-
-  bool SyncStream(size_t stream_id = 0) const override;
 
   uint32_t GetRankID() const override;
 
@@ -65,14 +91,7 @@ class GPUDeviceContext : public DeviceContext {
   // handles all resource to launch and sync allreduce operator.
   std::shared_ptr<Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const override;
 
-  bool LoadCollectiveCommLib() override;
-
-  void PreprocessBeforeRun(const FuncGraphPtr &graph) const override;
-
  private:
-  DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
-  bool InitDevice();
-
   // Select the matching backend kernels according to the data type and format of input and output for all
   // execution operators, and set final device data type and format information for backend kernels, device
   // data type and format which replace original data type and format will use for executing kernels.
@@ -104,14 +123,28 @@ class GPUDeviceContext : public DeviceContext {
   // default stream.
   void *GetLaunchKernelStream(const CNodePtr &kernel) const;
 
-  // Really create a cuda stream.
-  bool CreateStream(void **stream) const override;
+  // The cublas handle is not thread safety specifically, it is not recommended that multiple threads access the same
+  // cublas handle at the same time, so need the launch mutex when multiple threads launch the cublas kernels.
+  mutable std::mutex launch_mutex_;
+  GPUDeviceResManager *res_manager_{nullptr};
+};
 
-  // Really destroy a cuda stream.
-  bool DestroyStream(void *stream) const override;
+class GPUDeviceContext : public DeviceInterface<GPUKernelExecutor, GPUDeviceResManager> {
+ public:
+  explicit GPUDeviceContext(const DeviceContextKey &device_context_key)
+      : DeviceInterface(device_context_key), initialized_(false) {}
+  ~GPUDeviceContext() override = default;
 
-  std::shared_ptr<MemoryManager> mem_manager_;
-  std::vector<void *> streams_;
+  // Set device id and initialize device resource, such as stream, cudnn and cublas handle.
+  void Initialize() override;
+
+  // Release device memory, stream, cudnn and cublas handle, etc.
+  void Destroy() override;
+
+  RunMode GetRunMode(const FuncGraphPtr &func_graph) const override { return RunMode::kKernelMode; }
+
+ private:
+  DISABLE_COPY_AND_ASSIGN(GPUDeviceContext);
   bool initialized_;
 };
 }  // namespace gpu

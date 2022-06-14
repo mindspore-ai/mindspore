@@ -33,7 +33,7 @@ void DeviceContextManager::ClearDeviceContexts() {
   for (auto &iter : device_contexts_) {
     MS_LOG(INFO) << "Release device " << iter.first;
     MS_EXCEPTION_IF_NULL(iter.second);
-    (void)iter.second->DestroyAllStreams();
+    (void)iter.second->device_res_manager_->DestroyAllStreams();
     iter.second->Destroy();
   }
   device_contexts_.clear();
@@ -77,7 +77,7 @@ void DeviceContextManager::WaitTaskFinishOnDevice() const {
   for (const auto &item : device_contexts_) {
     auto device_context = item.second;
     try {
-      if (device_context != nullptr && !device_context->SyncStream()) {
+      if (device_context != nullptr && !device_context->device_res_manager_->SyncStream()) {
         MS_LOG(ERROR) << "SyncStream failed";
         return;
       }

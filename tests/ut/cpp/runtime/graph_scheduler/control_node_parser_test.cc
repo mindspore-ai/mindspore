@@ -60,11 +60,11 @@ class TestDeviceAddress : public DeviceAddress {
   virtual void ClearDeviceMemory() {}
 };
 
-class TestDeviceContext : public DeviceContext {
+class TestDeviceResManager : public device::DeviceResManager {
  public:
-  explicit TestDeviceContext(const DeviceContextKey &device_context_key) : DeviceContext(device_context_key) {}
-  ~TestDeviceContext() override = default;
-  virtual void Initialize() {}
+  TestDeviceResManager() = default;
+  ~TestDeviceResManager() override = default;
+
   virtual bool AllocateMemory(DeviceAddress *const &address, size_t size) const { return true; }
   virtual void FreeMemory(DeviceAddress *const &address) const {}
   virtual void *AllocateMemory(size_t size) const { return nullptr; }
@@ -73,9 +73,23 @@ class TestDeviceContext : public DeviceContext {
                                                TypeId type_id, const ShapeVector &shape) const {
     return std::make_shared<TestDeviceAddress>(nullptr, 0);
   }
+};
+
+class TestKernelExecutor : public device::KernelExecutor {
+ public:
+  TestKernelExecutor() = default;
+  ~TestKernelExecutor() override = default;
+};
+
+class TestDeviceContext : public device::DeviceInterface<TestKernelExecutor, TestDeviceResManager> {
+ public:
+  explicit TestDeviceContext(const DeviceContextKey &device_context_key)
+      : DeviceInterface(device_context_key) {}
+  ~TestDeviceContext() override = default;
+
+  virtual void Initialize() {}
   virtual DeviceType GetDeviceType() const { return DeviceType::kCPU; }
-  virtual void SetOperatorInfo(const KernelGraphPtr &graph) const {}
-  virtual void CreateKernel(const std::vector<CNodePtr> &nodes) const {}
+  device::RunMode GetRunMode(const FuncGraphPtr &func_graph) const override { return device::RunMode::kKernelMode; }
 };
 
 KernelGraphPtr BuildKernelGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &front_node,

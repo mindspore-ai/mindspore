@@ -45,7 +45,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
     try {
       // Allocate memory through the device context.
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-      if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+      if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
       }
@@ -83,7 +83,7 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
     MS_EXCEPTION_IF_NULL(device_context);
     // Allocate memory through the device context.
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-    auto dev_ptr_list = device_context->AllocateContinuousMemory(size_list);
+    auto dev_ptr_list = device_context->device_res_manager_->AllocateContinuousMemory(size_list);
     if (dev_ptr_list.empty() || dev_ptr_list.size() != alloc_list.size()) {
       MS_LOG(ERROR) << "Allocate continuous memory failed, device ptr list size: " << dev_ptr_list.size()
                     << ", address list size:" << alloc_list.size();
@@ -100,10 +100,10 @@ void MemoryManagerActor::AllocateContinuousMemory(const std::vector<std::vector<
           MS_LOG(EXCEPTION) << "Device size of old device address is larger than new device address, " << old_size
                             << " vs " << size_list[index];
         }
-        auto new_dev_addr = device_context->CreateDeviceAddress(dev_ptr_list[index], old_size, old_dev_addr->format(),
-                                                                old_dev_addr->type_id(), old_dev_addr->host_shape());
+        auto new_dev_addr = device_context->device_res_manager_->CreateDeviceAddress(
+          dev_ptr_list[index], old_size, old_dev_addr->format(), old_dev_addr->type_id(), old_dev_addr->host_shape());
         new_dev_addr->SyncDeviceToDevice(old_dev_addr.get());
-        device_context->FreeMemory(old_dev_addr.get());
+        device_context->device_res_manager_->FreeMemory(old_dev_addr.get());
       }
       alloc_list[index]->set_ptr(dev_ptr_list[index]);
       alloc_list[index]->SetSize(size_list[index]);
@@ -138,7 +138,7 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
     try {
       // Allocate memory through the device context.
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-      if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+      if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
       }

@@ -146,8 +146,8 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
 
   // Copy data from device queue by data kernel launching.
   try {
-    auto ret = device_contexts_[0]->LaunchKernel(data_kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                 launch_info_.outputs_);
+    auto ret = device_contexts_[0]->kernel_executor_->LaunchKernel(data_kernel_, launch_info_.inputs_,
+                                                                   launch_info_.workspaces_, launch_info_.outputs_);
     if (!ret) {
       std::string error_info = "Launch kernel failed: " + data_kernel_->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
@@ -328,8 +328,8 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {old_address->device_name(), old_address->device_id()});
       MS_EXCEPTION_IF_NULL(device_context);
-      auto new_address = device_context->CreateDeviceAddress(nullptr, old_address->GetSize(), old_address->format(),
-                                                             old_address->type_id(), old_address->host_shape());
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, old_address->GetSize(), old_address->format(), old_address->type_id(), old_address->host_shape());
       MS_EXCEPTION_IF_NULL(new_address);
       new_address->set_original_ref_count(old_address->original_ref_count());
       new_address->ResetRefCount();

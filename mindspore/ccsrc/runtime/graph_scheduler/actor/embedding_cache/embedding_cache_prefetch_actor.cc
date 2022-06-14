@@ -139,12 +139,12 @@ bool MemcpyHostToDeviceAsync(void *dst, const void *src, size_t size, const Devi
   void *device_ptr = dst;
   const void *host_ptr = src;
 
-  auto device_address =
-    device_context->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector());
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
+                                                                                 kTypeUnknown, ShapeVector());
   MS_ERROR_IF_NULL(device_address);
-  RETURN_IF_FALSE_WITH_LOG(
-    device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr, device_context->GetStream(stream_id)),
-    "Async memcpy host to device failed.");
+  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncHostToDevice({}, size, kTypeUnknown, host_ptr,
+                                                             device_context->device_res_manager_->GetStream(stream_id)),
+                           "Async memcpy host to device failed.");
 
   return true;
 }
@@ -159,12 +159,12 @@ bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const Devi
   void *device_ptr = const_cast<void *>(src);
   void *host_ptr = dst;
 
-  auto device_address =
-    device_context->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT, kTypeUnknown, ShapeVector());
+  auto device_address = device_context->device_res_manager_->CreateDeviceAddress(device_ptr, size, kOpFormat_DEFAULT,
+                                                                                 kTypeUnknown, ShapeVector());
   MS_ERROR_IF_NULL(device_address);
-  RETURN_IF_FALSE_WITH_LOG(
-    device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr, device_context->GetStream(stream_id)),
-    "Async memcpy device to host failed.");
+  RETURN_IF_FALSE_WITH_LOG(device_address->AsyncDeviceToHost({}, size, kTypeUnknown, host_ptr,
+                                                             device_context->device_res_manager_->GetStream(stream_id)),
+                           "Async memcpy device to host failed.");
 
   return true;
 }
@@ -172,7 +172,7 @@ bool MemcpyDeviceToHostAsync(void *dst, const void *src, size_t size, const Devi
 
 void EmbeddingCachePrefetchActor::Initialize() {
   MS_EXCEPTION_IF_NULL(device_context_);
-  if (!device_context_->CreateStream(&stream_id_)) {
+  if (!device_context_->device_res_manager_->CreateStream(&stream_id_)) {
     MS_LOG(EXCEPTION) << "Create stream failed.";
   }
 
@@ -227,7 +227,7 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
-  device_context_->CreateKernel({embedding_cache_lookup_node_});
+  device_context_->kernel_executor_->CreateKernel({embedding_cache_lookup_node_});
 }
 
 void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
@@ -252,7 +252,7 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheUpdateKernel() {
 
   // 3. Kernel build process.
   MS_EXCEPTION_IF_NULL(device_context_);
-  device_context_->CreateKernel({embedding_cache_update_node_});
+  device_context_->kernel_executor_->CreateKernel({embedding_cache_update_node_});
 }
 
 bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embedding_cache, size_t indices_num,
@@ -288,7 +288,8 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
   AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
 
   MS_ERROR_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
+  auto ret =
+    device_context_->kernel_executor_->LaunchKernel(embedding_cache_lookup_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_lookup_node_->fullname_with_scope() << " failed.";
     return false;
@@ -337,7 +338,8 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
     std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float))};
 
   MS_ERROR_IF_NULL(device_context_);
-  auto ret = device_context_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
+  auto ret =
+    device_context_->kernel_executor_->LaunchKernel(embedding_cache_update_node_, kernel_inputs, {}, kernel_outputs);
   if (!ret) {
     MS_LOG(ERROR) << "Launch kernel: " << embedding_cache_update_node_->fullname_with_scope() << " failed.";
     return false;
@@ -807,7 +809,7 @@ bool EmbeddingCachePrefetchActor::PushCacheFromDeviceToLocalHost(const HashTable
     "Memcpy device to host asynchronously failed.");
 
   MS_ERROR_IF_NULL(device_context_);
-  RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
+  RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
   RETURN_IF_FALSE_WITH_LOG(
     InsertLocalHostCache(embedding_size, IntToSize(swap_indices_size), host_cache_device_to_host_index,
                          swap_out_data.get(), host_hash_table_addr),
@@ -880,7 +882,7 @@ bool EmbeddingCachePrefetchActor::PullCacheFromLocalHostToDevice(const HashTable
                       swap_indices_size, cache_vocab_size, embedding_size, hash_table_addr),
     "Update device embedding cache failed.");
   MS_ERROR_IF_NULL(device_context_);
-  RETURN_IF_FALSE_WITH_LOG(device_context_->SyncStream(stream_id_), "Synchronize stream failed.");
+  RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_), "Synchronize stream failed.");
   return true;
 }
 

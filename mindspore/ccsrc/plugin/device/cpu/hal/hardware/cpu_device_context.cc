@@ -58,13 +58,11 @@ void CPUDeviceContext::Initialize() {
   if (initialized_) {
     return;
   }
-
-  mem_manager_ = std::make_shared<CPUMemoryManager>();
-  MS_EXCEPTION_IF_NULL(mem_manager_);
+  device_res_manager_->Initialize();
 
 #ifndef ENABLE_SECURITY
   // Dump json config file if dump is enabled.
-  auto rank_id = GetRankID();
+  auto rank_id = 0;
   auto &json_parser = DumpJsonParser::GetInstance();
   json_parser.Parse();
   json_parser.CopyDumpJsonToDir(rank_id);
@@ -74,7 +72,14 @@ void CPUDeviceContext::Initialize() {
   initialized_ = true;
 }
 
-void CPUDeviceContext::Destroy() {
+void CPUDeviceContext::Destroy() { device_res_manager_->Destroy(); }
+
+void CPUDeviceResManager::Initialize() {
+  mem_manager_ = std::make_shared<CPUMemoryManager>();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+}
+
+void CPUDeviceResManager::Destroy() {
   // Release memory.
   if (mem_manager_ != nullptr) {
     mem_manager_->Finalize();
@@ -82,30 +87,32 @@ void CPUDeviceContext::Destroy() {
   }
 }
 
-void *CPUDeviceContext::AllocateMemory(size_t size) const {
+void *CPUDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
-void CPUDeviceContext::FreeMemory(void *ptr) const {
+void CPUDeviceResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
   MS_EXCEPTION_IF_NULL(mem_manager_);
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
-std::vector<void *> CPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> CPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
-DeviceAddressPtr CPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                                       TypeId type_id, const ShapeVector &shape) const {
-  auto device_address = std::make_shared<CPUDeviceAddress>(
-    device_ptr, device_size, format, type_id, device_context_key_.device_name_, device_context_key_.device_id_);
+DeviceAddressPtr CPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
+                                                          const string &format, TypeId type_id,
+                                                          const ShapeVector &shape) const {
+  auto device_address = std::make_shared<CPUDeviceAddress>(device_ptr, device_size, format, type_id,
+                                                           device_context_->device_context_key().device_name_,
+                                                           device_context_->device_context_key().device_id_);
   device_address->set_host_shape(shape);
   return device_address;
 }
 
-void CPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
+void CPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -133,7 +140,7 @@ void CPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
 }
 
-void CPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
+void CPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -152,7 +159,7 @@ void CPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   }
 }
 
-void CPUDeviceContext::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
+void CPUKernelExecutor::OptimizeGraphImpl(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -215,7 +222,7 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 }
 }  // namespace
 
-void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
+void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
 #ifdef ENABLE_AKG
   bool do_expand = false;
 #endif
@@ -252,7 +259,7 @@ void CPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
 #endif
 }
-void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+void CPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
 
   kernel::KernelMeta *bin_map = kernel::KernelMeta::GetInstance();
@@ -308,7 +315,7 @@ void CPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
 #endif
 }
 
-void CPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
+void CPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -332,9 +339,9 @@ void CPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   }
 }
 
-bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                     const std::vector<AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -358,7 +365,7 @@ bool CPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   return DoLaunchKernel(kernel_mod, inputs, workspace, outputs);
 }
 
-bool CPUDeviceContext::LoadCollectiveCommLib() {
+bool CPUDeviceResManager::LoadCollectiveCommLib() {
   bool using_mpi = common::UseMPI();
   if (using_mpi) {
     std::string mpi_comm_lib_name = "libmpi_collective.so";
@@ -384,9 +391,9 @@ bool CPUDeviceContext::LoadCollectiveCommLib() {
   return true;
 }
 
-bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &workspace,
+                                                  const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
 
   auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
@@ -404,9 +411,9 @@ bool CPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
   return ret;
 }
 
-bool CPUDeviceContext::DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
-                                      const std::vector<AddressPtr> &workspace,
-                                      const std::vector<AddressPtr> &outputs) const {
+bool CPUKernelExecutor::DoLaunchKernel(KernelMod *const kernel_mod, const std::vector<AddressPtr> &inputs,
+                                       const std::vector<AddressPtr> &workspace,
+                                       const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel_mod);
   return kernel_mod->Launch(inputs, workspace, outputs, nullptr);
 }

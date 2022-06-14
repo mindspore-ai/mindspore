@@ -43,7 +43,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), allocator_type, 0);
   if ((device_tensor->GetPtr() == nullptr) &&
-      (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
+      (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
@@ -145,7 +145,7 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
                                                      0);
-  if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                 node->fullname_with_scope(), device_tensor->GetSize());
   }
@@ -556,9 +556,9 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
           output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
         }
         size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(input_node, 0);
-        auto device_address =
-          device_context->CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, 0),
-                                              output_type_id, trans::GetRuntimePaddingShape(input_node, 0));
+        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+          nullptr, tensor_size, AnfAlgo::GetOutputFormat(input_node, 0), output_type_id,
+          trans::GetRuntimePaddingShape(input_node, 0));
         MS_EXCEPTION_IF_NULL(device_address);
         AnfAlgo::SetOutputAddr(device_address, 0, input_node.get());
         device_address->SetNodeIndex(input_node, 0);
@@ -652,7 +652,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
     UpdateRefCount(device_tensor.get(), true);
 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->DebugString(), device::AllocatorType::kConstantValue, 0);
-    if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                   node->fullname_with_scope(), device_tensor->GetSize());
     }
@@ -695,7 +695,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(),
                                                        device::AllocatorType::kConstantValue, 0);
-    if (!device_context->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                   node->fullname_with_scope(), device_tensor->GetSize());
     }
@@ -732,7 +732,8 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
     auto type = backend_node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(backend_node->fullname_with_scope(), type, 0);
     if ((another_device_tensor->GetPtr() == nullptr) &&
-        (!another_device_context->AllocateMemory(another_device_tensor.get(), another_device_tensor->GetSize()))) {
+        (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get(),
+                                                                      another_device_tensor->GetSize()))) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *another_device_context,
                                                   backend_node->fullname_with_scope(),
                                                   another_device_tensor->GetSize());
@@ -769,9 +770,9 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       // The step mode can't reuse the device tensor, because other actors may use the device tensor in step mode.
       if ((strategy_ == GraphExecutionStrategy::kStep) ||
           (device_tensor->GetDeviceType() != device_context->GetDeviceType())) {
-        host_tensor_address =
-          device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
-                                              device_tensor->type_id(), device_tensor->host_shape());
+        host_tensor_address = device_context->device_res_manager_->CreateDeviceAddress(
+          nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+          device_tensor->host_shape());
         host_tensor_address->set_from_persistent_mem(tensor->is_parameter());
       } else {
         host_tensor_address = device_tensor;

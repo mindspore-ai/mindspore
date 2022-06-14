@@ -17,6 +17,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/gpu/hal/device/gpu_kernel_runtime.cc"                     "build/include_what_you_use"
 "mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
+"mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

@@ -27,24 +27,35 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
-class CPUDeviceContext : public DeviceContext {
+class CPUDeviceResManager : public DeviceResManager {
  public:
-  explicit CPUDeviceContext(const DeviceContextKey &device_context_key)
-      : DeviceContext(device_context_key), mem_manager_(nullptr), initialized_(false) {}
-  ~CPUDeviceContext() override = default;
+  CPUDeviceResManager() : mem_manager_(nullptr) {}
+  ~CPUDeviceResManager() override = default;
 
   void Initialize() override;
 
   void Destroy() override;
 
-  // Relevant function to allocate and free device memory of raw ptr.
-  void *AllocateMemory(size_t size) const override;
-  void FreeMemory(void *ptr) const override;
-
   std::vector<void *> AllocateContinuousMemory(const std::vector<size_t> &size_list) const override;
 
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
+
+  bool LoadCollectiveCommLib() override;
+
+ protected:
+  // Relevant function to allocate and free device memory of raw ptr.
+  void *AllocateMemory(size_t size) const override;
+  void FreeMemory(void *ptr) const override;
+
+ private:
+  std::shared_ptr<MemoryManager> mem_manager_;
+};
+
+class CPUKernelExecutor : public KernelExecutor {
+ public:
+  CPUKernelExecutor() = default;
+  ~CPUKernelExecutor() override = default;
 
   void OptimizeGraph(const FuncGraphPtr &graph) const override;
 
@@ -55,11 +66,7 @@ class CPUDeviceContext : public DeviceContext {
   bool LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
                     const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) const override;
 
-  bool LoadCollectiveCommLib() override;
-
  private:
-  DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
-
   // Select the matching backend kernels according to the data type and format of input and output for all
   // execution operators, and set final device data type and format information for backend kernels, device
   // data type and format which replace original data type and format will use for executing kernels.
@@ -79,7 +86,22 @@ class CPUDeviceContext : public DeviceContext {
   void UpdateKernelRefInfo(const KernelGraphPtr &graph) const;
 
   mutable std::mutex launch_mutex_;
-  std::shared_ptr<MemoryManager> mem_manager_;
+};
+
+class CPUDeviceContext : public DeviceInterface<CPUKernelExecutor, CPUDeviceResManager> {
+ public:
+  explicit CPUDeviceContext(const DeviceContextKey &device_context_key)
+      : DeviceInterface(device_context_key), initialized_(false) {}
+  ~CPUDeviceContext() override = default;
+
+  void Initialize() override;
+
+  void Destroy() override;
+
+  RunMode GetRunMode(const FuncGraphPtr &func_graph) const override { return RunMode::kKernelMode; }
+
+ private:
+  DISABLE_COPY_AND_ASSIGN(CPUDeviceContext);
   bool initialized_;
 };
 }  // namespace cpu

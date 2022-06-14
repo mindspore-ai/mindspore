@@ -475,7 +475,12 @@ uint32_t Debugger::GetRankID() {
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-  uint32_t rank_id = device_context->GetRankID();
+  uint32_t rank_id = 0;
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    rank_id = deprecated_kernel_executor->GetRankID();
+  }
   return rank_id;
 }
 

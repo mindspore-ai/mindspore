@@ -102,9 +102,9 @@ void CreateParameterDeviceAddress(const DeviceContext *device_context, const Ker
       }
 
       size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(item, index);
-      auto device_address =
-        device_context->CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
-                                            trans::GetRuntimePaddingShape(item, index));
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id,
+        trans::GetRuntimePaddingShape(item, index));
       device_address->set_from_persistent_mem(item->isa<Parameter>());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(item)
                     << " addr:" << device_address;
@@ -144,7 +144,7 @@ void CreateDeviceAddressForTensorValue(const DeviceContext *device_context, cons
     }
     std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
 
-    device::DeviceAddressPtr address = device_context->CreateDeviceAddress(
+    device::DeviceAddressPtr address = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
     MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node) << " addr:" << address;
     MS_EXCEPTION_IF_NULL(address);
@@ -169,8 +169,8 @@ void CreateValueNodeDeviceAddress(const DeviceContext *device_context, const Ker
     } else if (node_value->isa<StringImm>()) {
       auto value = GetValue<std::string>(node_value);
       size_t tensor_size = value.size();
-      auto address =
-        device_context->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT, kNumberTypeUInt8, ShapeVector());
+      auto address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, kOpFormat_DEFAULT,
+                                                                              kNumberTypeUInt8, ShapeVector());
       MS_EXCEPTION_IF_NULL(address);
       address->set_from_persistent_mem(true);
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(value_node)
@@ -200,8 +200,8 @@ void CreateKernelOutputDeviceAddress(const DeviceContext *device_context, const 
       auto output_format = AnfAlgo::GetOutputFormat(kernel, i);
       auto output_type = AnfAlgo::GetOutputDeviceDataType(kernel, i);
       auto address_size = AnfAlgo::GetOutputTensorMemSize(kernel, i);
-      auto device_address = device_context->CreateDeviceAddress(nullptr, address_size, output_format, output_type,
-                                                                trans::GetRuntimePaddingShape(kernel, i));
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, address_size, output_format, output_type, trans::GetRuntimePaddingShape(kernel, i));
       if (is_gradient_out) {
         device_address->set_from_persistent_mem(true);
       }
@@ -228,8 +228,8 @@ void CreateKernelWorkspaceDeviceAddress(const DeviceContext *device_context, con
       if (AnfAlgo::WorkspaceAddrExist(kernel, i)) {
         break;
       }
-      auto device_address =
-        device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
+      auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_sizes[i], "",
+                                                                                     kTypeUnknown, ShapeVector());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());
@@ -528,7 +528,13 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
   SetGraphDependency(graph, segment);
 
   // Unify the MindIR, must be before of the graph optimization.
-  device_context->UnifyMindIR(graph);
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    deprecated_kernel_executor->UnifyMindIR(graph);
+  } else {
+    opt::CommonUnifyMindIR(graph);
+  }
 
   // The graph common optimization.
   graph->UpdateGraphAquireGilAttr();
@@ -612,7 +618,11 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   root_graph->set_is_loop_count_sink(true);
 
   // Unify the MindIR, must be before of the graph optimization.
-  device_context->UnifyMindIR(root_graph);
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    deprecated_kernel_executor->UnifyMindIR(root_graph);
+  }
 
   // The graph common optimization.
   opt::BackendCommonOptimization(root_graph);
@@ -654,11 +664,11 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
 
   // Execute optimization pass.
-  device_context->OptimizeGraph(graph);
+  device_context->kernel_executor_->OptimizeGraph(graph);
 
   // Generate 'KernelMod' for all kernels and set 'KernelMod' into kernel,
   // 'KernelMod' is real executive object of kernel.
-  device_context->CreateKernel(graph->execution_order());
+  device_context->kernel_executor_->CreateKernel(graph->execution_order());
 
   // Read the output and input ref map and set to the kernel graph.
   AddOutInRefToGraph(graph);
@@ -670,7 +680,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 #endif
 
   // Adjust kernel graph before run graph.
-  device_context->PreprocessBeforeRun(graph);
+  device_context->kernel_executor_->PreprocessBeforeRun(graph);
 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context, false);
@@ -724,10 +734,16 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   graph->set_run_mode(device::RunMode::kKernelMode);
   graph->set_is_from_single_op(true);
   // session_ is SessionBasic, AscendUnifyMindIR has not been executed.
-  device_context->UnifyMindIR(graph);
+  auto deprecated_kernel_executor =
+    dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+  if (deprecated_kernel_executor != nullptr) {
+    deprecated_kernel_executor->UnifyMindIR(graph);
+  } else {
+    opt::CommonUnifyMindIR(graph);
+  }
 
   // Select kernel and optimize
-  device_context->OptimizeGraph(graph);
+  device_context->kernel_executor_->OptimizeGraph(graph);
 
   UpdateRefInfoBeforeCreateKernel(op_run_info, graph);
 
@@ -772,10 +788,10 @@ void GraphCompiler::BuildSingleOpGraphs(const std::vector<KernelGraphPtr> &graph
     std::copy(nodes.begin(), nodes.end(), std::back_inserter(node_to_build));
   }
   // Kernel build
-  device_context->CreateKernel(node_to_build);
+  device_context->kernel_executor_->CreateKernel(node_to_build);
 
   for (const auto &graph : graphs) {
-    device_context->PreprocessBeforeRun(graph);
+    device_context->kernel_executor_->PreprocessBeforeRun(graph);
     CreateKernelWorkspaceDeviceAddress(device_context, graph);
     // Need to execute after PreprocessBeforeRunSingleOpGraph
     runtime::OpRuntimeInfo::CacheGraphOpRuntimeInfo(graph);

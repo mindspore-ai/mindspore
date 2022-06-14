@@ -37,7 +37,7 @@ BlockQueueStatus_T GpuDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
       MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_;
       return ERROR_INPUT;
     }
-    void *addr = device_context_->AllocateMemory(item.data_len_);
+    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len_);
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr_, item.data_len_, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
     item.device_addr_ = addr;

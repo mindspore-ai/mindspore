@@ -48,6 +48,9 @@
 #ifdef ENABLE_DEBUGGER
 #include "debug/debugger/debugger.h"
 #endif
+#ifndef ENABLE_SECURITY
+#include "debug/data_dump/dump_json_parser.h"
+#endif
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "common/graph_kernel/adapter/expander.h"
@@ -62,26 +65,43 @@ static thread_local bool cur_thread_device_inited{false};
 
 void GPUDeviceContext::Initialize() {
   if (initialized_ == true) {
-    if (!BindDeviceToCurrentThread()) {
+    if (!device_res_manager_->BindDeviceToCurrentThread()) {
       MS_LOG(EXCEPTION) << "BindDeviceToCurrentThread failed.";
     }
     GPUMemoryAllocator::GetInstance().CheckMaxDeviceMemory();
     return;
   }
 
+  device_res_manager_->Initialize();
+  auto gpu_kernel_executor = dynamic_cast<GPUKernelExecutor *>(kernel_executor_.get());
+  MS_EXCEPTION_IF_NULL(gpu_kernel_executor);
+  gpu_kernel_executor->Initialize();
+
+#ifndef ENABLE_SECURITY
+  // Dump json config file if dump is enabled.
+  auto rank_id = gpu_kernel_executor->GetRankID();
+  auto &json_parser = DumpJsonParser::GetInstance();
+  json_parser.Parse();
+  json_parser.CopyDumpJsonToDir(rank_id);
+  json_parser.CopyMSCfgJsonToDir(rank_id);
+#endif
+  initialized_ = true;
+}
+
+void GPUDeviceResManager::Initialize() {
   // Set device id
   if (CollectiveInitializer::instance().collective_inited()) {
-    DeviceContextKey old_key = device_context_key_;
-    device_context_key_.device_id_ = CollectiveInitializer::instance().local_rank_id();
+    DeviceContextKey old_key = device_context_->device_context_key();
+    device_context_->device_context_key_.device_id_ = CollectiveInitializer::instance().local_rank_id();
 
-    DeviceContextManager::GetInstance().UpdateDeviceContextKey(old_key, device_context_key_);
+    DeviceContextManager::GetInstance().UpdateDeviceContextKey(old_key, device_context_->device_context_key());
 
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
-    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_context_key_.device_id_);
+    ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_context_->device_context_key().device_id_);
   }
 
-  MS_LOG(INFO) << "Set GPU device id index " << device_context_key_.device_id_;
+  MS_LOG(INFO) << "Set GPU device id index " << device_context_->device_context_key().device_id_;
   // Set device id and initialize device resource.
   if (!InitDevice()) {
     MS_LOG(EXCEPTION) << "GPU InitDevice failed.";
@@ -96,7 +116,8 @@ void GPUDeviceContext::Initialize() {
   if (CollectiveInitializer::instance().collective_inited()) {
     auto collective_handle = CollectiveInitializer::instance().collective_handle();
     if (collective_handle != nullptr) {
-      MS_LOG(INFO) << "Start initializing NCCL communicator for device " << device_context_key_.device_id_;
+      MS_LOG(INFO) << "Start initializing NCCL communicator for device "
+                   << device_context_->device_context_key().device_id_;
       auto init_nccl_comm_funcptr =
         reinterpret_cast<InitNCCLComm>(dlsym(const_cast<void *>(collective_handle), "InitNCCLComm"));
       MS_EXCEPTION_IF_NULL(init_nccl_comm_funcptr);
@@ -104,27 +125,18 @@ void GPUDeviceContext::Initialize() {
       MS_LOG(INFO) << "End initializing NCCL communicator.";
     }
   }
-
-#ifndef ENABLE_SECURITY
-  // Dump json config file if dump is enabled.
-  auto rank_id = GetRankID();
-  auto &json_parser = DumpJsonParser::GetInstance();
-  json_parser.Parse();
-  json_parser.CopyDumpJsonToDir(rank_id);
-  json_parser.CopyMSCfgJsonToDir(rank_id);
-#endif
-  initialized_ = true;
 }
 
-bool GPUDeviceContext::InitDevice() {
+bool GPUDeviceResManager::InitDevice() {
   if (GPUDeviceManager::GetInstance().device_count() <= 0) {
     MS_LOG(ERROR) << "No GPU device found.";
     return false;
   }
 
   if (!GPUDeviceManager::GetInstance().is_device_id_init()) {
-    if (!GPUDeviceManager::GetInstance().set_cur_device_id(device_context_key_.device_id_)) {
-      MS_LOG(ERROR) << "Failed to set current device id: " << SizeToInt(device_context_key_.device_id_);
+    if (!GPUDeviceManager::GetInstance().set_cur_device_id(device_context_->device_context_key().device_id_)) {
+      MS_LOG(ERROR) << "Failed to set current device id: "
+                    << SizeToInt(device_context_->device_context_key().device_id_);
       return false;
     }
   }
@@ -154,19 +166,7 @@ bool GPUDeviceContext::InitDevice() {
   return true;
 }
 
-void GPUDeviceContext::Destroy() {
-  // Release GPU buffer manager resource
-#ifdef ENABLE_DEBUGGER
-  auto debugger = Debugger::GetInstance();
-  if (debugger && debugger->debugger_enabled()) {
-    debugger->SetTrainingDone(true);
-    bool ret = debugger->SendMetadata(false);
-    if (!ret) {
-      MS_LOG(ERROR) << "Failed to SendMetadata when finalize";
-    }
-  }
-#endif
-
+void GPUDeviceResManager::Destroy() {
   if (DataQueueMgr::GetInstance().IsInit()) {
     if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
@@ -184,7 +184,23 @@ void GPUDeviceContext::Destroy() {
   }
 }
 
-void *GPUDeviceContext::AllocateMemory(size_t size) const {
+void GPUDeviceContext::Destroy() {
+#ifdef ENABLE_DEBUGGER
+  auto debugger = Debugger::GetInstance();
+  if (debugger && debugger->debugger_enabled()) {
+    debugger->SetTrainingDone(true);
+    bool ret = debugger->SendMetadata(false);
+    if (!ret) {
+      MS_LOG(ERROR) << "Failed to SendMetadata when finalize";
+    }
+  }
+#endif
+  auto gpu_kernel_executor = dynamic_cast<GPUKernelExecutor *>(kernel_executor_.get());
+  gpu_kernel_executor->Destroy();
+  device_res_manager_->Destroy();
+}
+
+void *GPUDeviceResManager::AllocateMemory(size_t size) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!BindDeviceToCurrentThread()) {
     return nullptr;
@@ -192,13 +208,13 @@ void *GPUDeviceContext::AllocateMemory(size_t size) const {
   return mem_manager_->MallocMemFromMemPool(size, false);
 }
 
-void GPUDeviceContext::FreeMemory(void *ptr) const {
+void GPUDeviceResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   MS_EXCEPTION_IF_NULL(ptr);
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
-std::vector<void *> GPUDeviceContext::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
+std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   if (!BindDeviceToCurrentThread()) {
     std::vector<void *> ptr_list;
     return ptr_list;
@@ -206,15 +222,17 @@ std::vector<void *> GPUDeviceContext::AllocateContinuousMemory(const std::vector
   return mem_manager_->MallocContinuousMemFromMemPool(size_list);
 }
 
-DeviceAddressPtr GPUDeviceContext::CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format,
-                                                       TypeId type_id, const ShapeVector &shape) const {
-  auto device_address = std::make_shared<GPUDeviceAddress>(
-    device_ptr, device_size, format, type_id, device_context_key_.device_name_, device_context_key_.device_id_);
+DeviceAddressPtr GPUDeviceResManager::CreateDeviceAddress(void *const device_ptr, size_t device_size,
+                                                          const string &format, TypeId type_id,
+                                                          const ShapeVector &shape) const {
+  auto device_address = std::make_shared<GPUDeviceAddress>(device_ptr, device_size, format, type_id,
+                                                           device_context_->device_context_key().device_name_,
+                                                           device_context_->device_context_key().device_id_);
   device_address->set_host_shape(shape);
   return device_address;
 }
 
-void GPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
+void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
@@ -232,13 +250,13 @@ void GPUDeviceContext::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   }
 }
 
-void GPUDeviceContext::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
+void GPUKernelExecutor::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   // Operator fusion optimization.
   FuseOperators(graph);
 }
 
-void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
+void GPUKernelExecutor::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -272,7 +290,7 @@ void GPUDeviceContext::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph) 
   graph->SetExecOrderByDefault();
 }
 
-void GPUDeviceContext::FuseOperators(const KernelGraphPtr &graph) const {
+void GPUKernelExecutor::FuseOperators(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>();
@@ -419,7 +437,14 @@ std::lock_guard<std::mutex> LockLaunchKernel(const void *stream) {
 }
 }  // namespace
 
-void GPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
+void GPUKernelExecutor::Initialize() {
+  res_manager_ = dynamic_cast<GPUDeviceResManager *>(device_context_->device_res_manager_.get());
+  MS_EXCEPTION_IF_NULL(res_manager_);
+}
+
+void GPUKernelExecutor::Destroy() { res_manager_ = nullptr; }
+
+void GPUKernelExecutor::OptimizeGraph(const FuncGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -458,7 +483,7 @@ void GPUDeviceContext::OptimizeGraph(const FuncGraphPtr &graph) const {
   }
 }
 
-void GPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
+void GPUKernelExecutor::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   MS_EXCEPTION_IF_NULL(graph);
   const std::vector<CNodePtr> &kernels = graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -478,7 +503,7 @@ void GPUDeviceContext::UpdateKernelRefInfo(const KernelGraphPtr &graph) const {
   }
 }
 
-void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
+void GPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
   bool do_expand = false;
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
@@ -504,16 +529,16 @@ void GPUDeviceContext::SetOperatorInfo(const KernelGraphPtr &graph) const {
   }
 }
 
-void GPUDeviceContext::CreateKernel(const std::vector<CNodePtr> &nodes) const {
+void GPUKernelExecutor::CreateKernel(const std::vector<CNodePtr> &nodes) const {
   SetKernelInfoBeforeCreateKernel(nodes);
   CreateGPUKernel(nodes);
 }
 
-bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                    const std::vector<AddressPtr> &workspace,
-                                    const std::vector<AddressPtr> &outputs) const {
+bool GPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                     const std::vector<AddressPtr> &workspace,
+                                     const std::vector<AddressPtr> &outputs) const {
   MS_EXCEPTION_IF_NULL(kernel);
-  if (!BindDeviceToCurrentThread()) {
+  if (!res_manager_->BindDeviceToCurrentThread()) {
     return false;
   }
   bool ret = true;
@@ -546,16 +571,16 @@ bool GPUDeviceContext::LaunchKernel(const CNodePtr &kernel, const std::vector<Ad
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if ((ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) &&
-      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !SyncStream()) {
+      ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE) && !res_manager_->SyncStream()) {
     return false;
   }
 
   return ret;
 }
 #ifndef ENABLE_SECURITY
-bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                                 const std::vector<AddressPtr> &workspace,
-                                                 const std::vector<AddressPtr> &outputs, void *stream) const {
+bool GPUKernelExecutor::LaunchKernelWithProfiling(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &workspace,
+                                                  const std::vector<AddressPtr> &outputs, void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
 
@@ -571,7 +596,7 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
     profiler_inst->SetStepTraceOpName(profiling_trace);
   }
 
-  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), streams_.front());
+  profiler_inst->OpDataProducerBegin(kernel->fullname_with_scope(), res_manager_->streams_.front());
   bool ret = DoLaunchKernel(kernel, inputs, workspace, outputs, stream);
   profiler_inst->OpDataProducerEnd();
   profiler_inst->RecordFrameWorkInfo(kernel);
@@ -581,14 +606,14 @@ bool GPUDeviceContext::LaunchKernelWithProfiling(const CNodePtr &kernel, const s
                 << (op_launch_start_end_time.second - op_launch_start_end_time.first) / kBasicTimeTransferUnit;
 
   if (profiler_inst->GetSyncEnableFlag()) {
-    CHECK_RET_WITH_RETURN_ERROR(SyncStream(), "Profiler SyncStream failed.");
+    CHECK_RET_WITH_RETURN_ERROR(res_manager_->SyncStream(), "Profiler SyncStream failed.");
   }
   return ret;
 }
 #endif
-bool GPUDeviceContext::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
-                                      const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
-                                      void *stream) const {
+bool GPUKernelExecutor::DoLaunchKernel(const CNodePtr &kernel, const std::vector<AddressPtr> &inputs,
+                                       const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs,
+                                       void *stream) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(stream);
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
@@ -596,24 +621,24 @@ bool GPUDeviceContext::DoLaunchKernel(const CNodePtr &kernel, const std::vector<
   return kernel_mod->Launch(inputs, workspace, outputs, stream);
 }
 
-void *GPUDeviceContext::GetLaunchKernelStream(const CNodePtr &kernel) const {
+void *GPUKernelExecutor::GetLaunchKernelStream(const CNodePtr &kernel) const {
   void *stream = nullptr;
   if (common::AnfAlgo::HasNodeAttr(kAttrStream, kernel)) {
     auto stream_id = common::AnfAlgo::GetNodeAttr<size_t>(kernel, kAttrStream);
-    auto iter = stream_ids_.find(stream_id);
-    if (iter == stream_ids_.end()) {
+    auto iter = res_manager_->stream_ids_.find(stream_id);
+    if (iter == res_manager_->stream_ids_.end()) {
       MS_LOG(EXCEPTION) << "Can not find stream for stream id: " << stream_id;
     }
     stream = iter->second;
   } else {
-    stream = streams_.front();
+    stream = res_manager_->streams_.front();
   }
 
   MS_EXCEPTION_IF_NULL(stream);
   return stream;
 }
 
-bool GPUDeviceContext::SyncStream(size_t stream_id) const {
+bool GPUDeviceResManager::SyncStream(size_t stream_id) const {
   void *stream = nullptr;
   auto iter = stream_ids_.find(stream_id);
   if (iter != stream_ids_.end()) {
@@ -637,7 +662,7 @@ bool GPUDeviceContext::SyncStream(size_t stream_id) const {
   return result;
 }
 
-bool GPUDeviceContext::CreateStream(void **stream) const {
+bool GPUDeviceResManager::CreateStream(void **stream) const {
   MS_EXCEPTION_IF_NULL(stream);
   if (!CudaDriver::CreateStream(stream)) {
     MS_LOG(ERROR) << "Failed to create CUDA stream.";
@@ -646,7 +671,7 @@ bool GPUDeviceContext::CreateStream(void **stream) const {
   return true;
 }
 
-bool GPUDeviceContext::DestroyStream(void *stream) const {
+bool GPUDeviceResManager::DestroyStream(void *stream) const {
   MS_EXCEPTION_IF_NULL(stream);
   if (!CudaDriver::DestroyStream(stream)) {
     MS_LOG(ERROR) << "Failed to destroy CUDA stream.";
@@ -655,7 +680,7 @@ bool GPUDeviceContext::DestroyStream(void *stream) const {
   return true;
 }
 
-uint32_t GPUDeviceContext::GetRankID() const {
+uint32_t GPUKernelExecutor::GetRankID() const {
   bool collective_inited = CollectiveInitializer::instance().collective_inited();
   uint32_t rank_id = 0;
   if (collective_inited) {
@@ -666,20 +691,21 @@ uint32_t GPUDeviceContext::GetRankID() const {
   return rank_id;
 }
 
-std::shared_ptr<Bucket> GPUDeviceContext::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
+std::shared_ptr<Bucket> GPUKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
   auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size);
   MS_EXCEPTION_IF_NULL(bucket);
   // One computation stream, one communication stream.
   const size_t min_num_of_stream = 2;
-  if (min_num_of_stream > streams_.size()) {
-    MS_LOG(EXCEPTION) << "The total stream num: " << streams_.size() << " is less than: " << min_num_of_stream;
+  if (min_num_of_stream > res_manager_->streams_.size()) {
+    MS_LOG(EXCEPTION) << "The total stream num: " << res_manager_->streams_.size()
+                      << " is less than: " << min_num_of_stream;
   }
 
-  bucket->Init({streams_[0]}, {streams_[1]});
+  bucket->Init({res_manager_->streams_[0]}, {res_manager_->streams_[1]});
   return bucket;
 }
 
-bool GPUDeviceContext::LoadCollectiveCommLib() {
+bool GPUDeviceResManager::LoadCollectiveCommLib() {
 #ifdef ENABLE_MPI
   std::string nvidia_comm_lib_name = "libnvidia_collective.so";
   auto loader = std::make_shared<CollectiveCommLibLoader>(nvidia_comm_lib_name);
@@ -700,13 +726,13 @@ bool GPUDeviceContext::LoadCollectiveCommLib() {
 #endif
 }
 
-bool GPUDeviceContext::BindDeviceToCurrentThread() const {
+bool GPUDeviceResManager::BindDeviceToCurrentThread() const {
   if (cur_thread_device_inited) {
     return true;
   }
 
-  if (!CudaDriver::SetDevice(UintToInt(device_context_key_.device_id_))) {
-    MS_LOG(ERROR) << "Failed to set device id: " << device_context_key_.device_id_;
+  if (!CudaDriver::SetDevice(UintToInt(device_context_->device_context_key().device_id_))) {
+    MS_LOG(ERROR) << "Failed to set device id: " << device_context_->device_context_key().device_id_;
     return false;
   }
 
