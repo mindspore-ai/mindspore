@@ -31,15 +31,6 @@ class FuncNet(nn.Cell):
         return ops.pad(x, self.paddings)
 
 
-class TensorNet(nn.Cell):
-    def __init__(self, paddings):
-        super(TensorNet, self).__init__()
-        self.paddings = paddings
-
-    def construct(self, x):
-        return x.pad(self.paddings)
-
-
 class GradNet(nn.Cell):
     def __init__(self, network):
         super(GradNet, self).__init__()
@@ -50,11 +41,8 @@ class GradNet(nn.Cell):
         return self.grad(self.network)(x)
 
 
-def run_case(x, paddings, expect, mode="functional"):
-    if mode == "functional":
-        net = FuncNet(paddings)
-    else:
-        net = TensorNet(paddings)
+def run_case(x, paddings, expect):
+    net = FuncNet(paddings)
     out_ms = net(Tensor(x))
     assert np.allclose(expect, out_ms.asnumpy())
 
@@ -112,37 +100,6 @@ def test_pad_function_grad_cpu():
     net = GradNet(FuncNet(paddings))
     out_ms = net(Tensor(x))
     assert np.allclose(expect, out_ms.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_pad_tensor_cpu():
-    """
-    Feature: test ops.Pad tensor interface.
-    Description: paddings with different values.
-    Expectation: the result match with numpy result.
-    """
-    x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
-    # case1: padding value are non negative
-    paddings1 = ((1, 1), (1, 1))
-    expect1 = np.pad(x, paddings1, "constant", constant_values=0).astype(x.dtype)
-    # case2: padding value are non positive
-    paddings2 = ((-1, -1), (0, -1))
-    expect2 = np.array([[4, 5]], dtype=np.float32)
-    # case3: padding with positive and negative value
-    paddings3 = ((1, -1), (-1, 1))
-    expect3 = np.array([[0, 0, 0], [2, 3, 0], [5, 6, 0]], dtype=np.float32)
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    run_case(x, paddings1, expect1, "tensor")
-    run_case(x, paddings2, expect2, "tensor")
-    run_case(x, paddings3, expect3, "tensor")
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    run_case(x, paddings1, expect1, "tensor")
-    run_case(x, paddings2, expect2, "tensor")
-    run_case(x, paddings3, expect3, "tensor")
 
 
 def vmap_case():
