@@ -30,6 +30,7 @@ namespace ops {
 namespace {
 abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   constexpr int64_t size_num = 2;
+  constexpr int64_t indexid2 = 2;
   constexpr int64_t indexid3 = 3;
   constexpr int64_t image_shape_size = 4;
   constexpr int64_t size_shape_size = 1;
@@ -73,6 +74,18 @@ abstract::ShapePtr ResizeAreaInferShape(const PrimitivePtr &primitive, const std
     }
     return std::make_shared<abstract::Shape>(output_shape);
   } else {
+    auto prim_name = primitive->name();
+    auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+    auto x_shape = x_shape_ptr->shape();
+    if (x_shape_ptr->IsDynamic()) {
+      auto x_min_shape = x_shape_ptr->min_shape();
+      auto x_max_shape = x_shape_ptr->max_shape();
+      x_min_shape[1] = 0;
+      x_min_shape[indexid2] = 0;
+      x_max_shape[1] = 1;
+      x_max_shape[indexid2] = 1;
+      return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+    }
     ShapeVector out_shape = {images_shape[0], abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY,
                              images_shape[indexid3]};
     ShapeVector shape_min = {images_shape[0], 0, 0, images_shape[indexid3]};
@@ -84,7 +97,12 @@ TypePtr ResizeAreaInferType(const PrimitivePtr &primitive, const std::vector<Abs
   return kFloat32;
 }
 }  // namespace
-MIND_API_BASE_IMPL(ResizeArea, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ResizeArea, BaseOperator);
+void ResizeArea::Init(const bool align_corners) { this->set_align_corners(align_corners); }
+void ResizeArea::set_align_corners(const bool align_corners) {
+  (void)this->AddAttr(kAlignCorners, api::MakeValue(align_corners));
+}
+bool ResizeArea::get_align_corners() const { return GetValue<bool>(GetAttr(kAlignCorners)); }
 AbstractBasePtr ResizeAreaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
