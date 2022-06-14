@@ -1491,6 +1491,7 @@ class Resample(AudioTensorOperation):
 
     Examples:
         >>> import numpy as np
+        >>> from mindspore.dataset.audio import ResampleMethod
         >>>
         >>> waveform = np.random.random([1, 30])
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data=waveform, column_names=["audio"])

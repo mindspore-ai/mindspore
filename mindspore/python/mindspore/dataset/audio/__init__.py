@@ -41,8 +41,8 @@ from .transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, Bandpas
     Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, DCShift, DeemphBiquad, DetectPitchFrequency, Dither, \
     EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, GriffinLim, HighpassBiquad, InverseMelScale, LFilter, \
     LowpassBiquad, Magphase, MaskAlongAxis, MaskAlongAxisIID, MelScale, MuLawDecoding, MuLawEncoding, Overdrive, \
-    Phaser, PhaseVocoder, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, TimeStretch, \
-    TrebleBiquad, Vol
+    Phaser, PhaseVocoder, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, \
+    TimeStretch, TrebleBiquad, Vol
 from . import transforms
 from .utils import create_dct, melscale_fbanks, BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
-    MelType, Modulation, NormMode, NormType, ScaleType, WindowType
+    MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType
