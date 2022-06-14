@@ -41,44 +41,50 @@ static std::unordered_map<int, mindspore::TypeId> kOnnxTypeTransferMap = {
 }  // namespace
 
 int64_t OnnxNodeParser::opset_version_ = 0;
-void *OnnxNodeParser::buffer_ = nullptr;
 
-STATUS ExternalDataInfo::Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &externalData,
-                                ExternalDataInfo *externalDataInfo) {
-  const int data_size = externalData.size();
+STATUS ExternalDataInfo::Create(const google::protobuf::RepeatedPtrField<onnx::StringStringEntryProto> &external_data,
+                                ExternalDataInfo *external_data_info) {
+  const int data_size = external_data.size();
   for (int i = 0; i != data_size; ++i) {
-    onnx::StringStringEntryProto stringMap = externalData[i];
-    if (!stringMap.has_key()) {
+    onnx::StringStringEntryProto string_map = external_data[i];
+    if (!string_map.has_key()) {
       MS_LOG(ERROR) << "No key is in external data.";
       return RET_ERROR;
     }
-    if (!stringMap.has_value()) {
+    if (!string_map.has_value()) {
       MS_LOG(ERROR) << "No value is in external data.";
       return RET_ERROR;
     }
 
-    if (stringMap.key() == "location" && !stringMap.value().empty()) {
-      externalDataInfo->rel_path_ = stringMap.value();
-    } else if (stringMap.key() == "offset" && !stringMap.value().empty()) {
-      externalDataInfo->offset_ = strtol(stringMap.value().c_str(), nullptr, kMaxValidCharacters);
-      if (std::to_string(externalDataInfo->offset_).length() != stringMap.value().length()) {
-        MS_LOG(ERROR) << "Failed to parse offset.";
+    if (StringMapKeyIs("location", string_map)) {
+      external_data_info->relative_path_ = string_map.value();
+    } else if (StringMapKeyIs("offset", string_map)) {
+      external_data_info->offset_ = strtol(string_map.value().c_str(), nullptr, kMaxValidCharacters);
+      if (std::to_string(external_data_info->offset_).length() != string_map.value().length()) {
+        MS_LOG(ERROR) << "Failed to parse offset with size " << std::to_string(external_data_info->offset_).length()
+                      << ", expected size is " << string_map.value().length();
         return RET_ERROR;
       }
-    } else if (stringMap.key() == "length" && !stringMap.value().empty()) {
-      externalDataInfo->length_ = static_cast<size_t>(strtol(stringMap.value().c_str(), nullptr, kMaxValidCharacters));
-      if (std::to_string(externalDataInfo->length_).length() != stringMap.value().length()) {
-        MS_LOG(ERROR) << "Failed to parse length.";
+    } else if (StringMapKeyIs("length", string_map)) {
+      external_data_info->length_ =
+        static_cast<size_t>(strtol(string_map.value().c_str(), nullptr, kMaxValidCharacters));
+      if (std::to_string(external_data_info->length_).length() != string_map.value().length()) {
+        MS_LOG(ERROR) << "Failed to parse length with size " << std::to_string(external_data_info->offset_).length()
+                      << ", expected size is " << string_map.value().length();
         return RET_ERROR;
       }
-    } else if (stringMap.key() == "checksum" && !stringMap.value().empty()) {
-      externalDataInfo->checksum_ = stringMap.value();
+    } else if (StringMapKeyIs("checksum", string_map)) {
+      external_data_info->checksum_ = string_map.value();
     } else {
       MS_LOG(ERROR) << "Invalid model format";
       return RET_ERROR;
     }
   }
   return RET_OK;
+}
+
+bool ExternalDataInfo::StringMapKeyIs(const std::string &key, const onnx::StringStringEntryProto &string_map) {
+  return string_map.key() == key && !string_map.value().empty();
 }
 
 mindspore::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr) {
@@ -222,30 +228,27 @@ STATUS OnnxNodeParser::LoadOnnxExternalTensorData(const onnx::TensorProto &onnx_
   }
   size_t data_size = 0;
   const void *onnx_data = LoadOnnxRawData(onnx_const_tensor, &data_size, model_file);
-  if (data_size == 0) {
-    return RET_OK;
-  }
   if (onnx_data == nullptr) {
     MS_LOG(ERROR) << "origin data from external data is nullptr.";
     return RET_MEMORY_FAILED;
   }
   auto tensor_data = reinterpret_cast<uint8_t *>(tensor_info->data_c());
   if (memcpy_s(tensor_data, tensor_info->data().nbytes(), onnx_data, data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed.";
+    MS_LOG(ERROR) << "memcpy_s from onnx tensor data to mindspore tensor data failed.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 STATUS OnnxNodeParser::SetExternalTensorFile(const std::string &model_file, std::string *external_tensor_dir) {
-  auto iEndIndex = model_file.find_last_of('/');
-  if (iEndIndex == std::string::npos) {
-    iEndIndex = model_file.find_last_of('\\');
+  auto i_end_index = model_file.find_last_of('/');
+  if (i_end_index == std::string::npos) {
+    i_end_index = model_file.find_last_of('\\');
   }
-  if (iEndIndex == std::string::npos) {
+  if (i_end_index == std::string::npos) {
     *external_tensor_dir = ".";
   } else {
-    *external_tensor_dir = model_file.substr(0, iEndIndex);
+    *external_tensor_dir = model_file.substr(0, i_end_index);
   }
   return RET_OK;
 }
@@ -323,25 +326,22 @@ const void *OnnxNodeParser::GetOnnxRawData(const onnx::TensorProto &onnx_const_t
 const void *OnnxNodeParser::LoadOnnxRawData(const onnx::TensorProto &onnx_const_tensor, size_t *data_size,
                                             const std::string &model_file) {
   MS_ASSERT(data_size != nullptr);
-  const void *onnx_data = nullptr;
-  ExternalDataInfo externalDataInfo;
-  if (ExternalDataInfo::Create(onnx_const_tensor.external_data(), &externalDataInfo) != RET_OK) {
+  ExternalDataInfo external_data_info;
+  if (ExternalDataInfo::Create(onnx_const_tensor.external_data(), &external_data_info) != RET_OK) {
     MS_LOG(ERROR) << "Create ExternalDataInfo failed.";
     return nullptr;
   }
-  std::string externalTensorDir;
-  if (SetExternalTensorFile(model_file, &externalTensorDir) != RET_OK) {
+  std::string external_tensor_dir;
+  if (SetExternalTensorFile(model_file, &external_tensor_dir) != RET_OK) {
     MS_LOG(ERROR) << "Failed to set external tensor file.";
     return nullptr;
   }
 #ifdef _WIN32
-  std::string externalDataFile = externalTensorDir + "\\" + externalDataInfo.GetRelPath();
+  std::string external_data_file = external_tensor_dir + "\\" + external_data_info.GetRelativePath();
 #else
-  std::string externalDataFile = externalTensorDir + "/" + externalDataInfo.GetRelPath();
+  std::string external_data_file = external_tensor_dir + "/" + external_data_info.GetRelativePath();
 #endif
-  buffer_ = ReadFile(externalDataFile.c_str(), data_size);
-  onnx_data = std::move(buffer_);
-  return onnx_data;
+  return ReadFile(external_data_file.c_str(), data_size);
 }
 }  // namespace lite
 }  // namespace mindspore
