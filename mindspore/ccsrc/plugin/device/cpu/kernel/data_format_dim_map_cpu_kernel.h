@@ -60,9 +60,8 @@ class DataFormatDimMapCpuKernelMod : public NativeCpuKernelMod, public MatchKern
   std::string kernel_type_{kUnknown};
   std::string src_format_{kUnknown};
   std::string dst_format_{kUnknown};
-  std::unordered_map<int32_t, int32_t> dim_map_;
-  bool value_valid_ = true;
-  int32_t invalid_value_ = 0;
+  std::vector<int32_t> dim_map_;
+  size_t max_dims_ = 7;
 };
 }  // namespace mindspore::kernel
 

@@ -74,6 +74,7 @@ class DataFormatDimMapGpuKernelMod : public NativeGpuKernelMod, public MatchKern
   size_t unit_size_{1};
   bool is_null_input_{false};
   size_t input_elements_{};
+  size_t max_dims_ = 7;
 };
 }  // namespace mindspore::kernel
 
