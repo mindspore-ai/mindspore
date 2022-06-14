@@ -1797,7 +1797,7 @@ class GatherDGrad(PrimitiveWithInfer):
         return grad_dtype
 
 
-class ResizeBilinearGrad(PrimitiveWithInfer):
+class ResizeBilinearGrad(Primitive):
     """Performs grad of ResizeBilinear operation."""
 
     @prim_attr_register
@@ -1808,18 +1808,12 @@ class ResizeBilinearGrad(PrimitiveWithInfer):
         self.align_corners = validator.check_value_type("align_corners", align_corners, [bool], self.name)
         self.half_pixel_centers = validator.check_value_type("half_pixel_centers",
                                                              half_pixel_centers, [bool], self.name)
+        self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
         if half_pixel_centers and align_corners:
             raise ValueError(f"If half_pixel_centers is True, align_corners must be False, but got {align_corners}")
         target = context.get_context("device_target")
-        if half_pixel_centers and target.lower() != "ascend":
-            raise ValueError(f"Currently `half_pixel_centers`=True only support in Ascend device_target, "
-                             f"but got {target}")
-
-    def infer_shape(self, dout_shape, orig_shape):
-        return orig_shape
-
-    def infer_dtype(self, dout_dtype, orig_type):
-        return orig_type
+        if half_pixel_centers and target.lower() == "cpu":
+            raise ValueError(f"Currently `half_pixel_centers`=True not support in cpu device_target")
 
 
 class ResizeNearestNeighborGrad(Primitive):

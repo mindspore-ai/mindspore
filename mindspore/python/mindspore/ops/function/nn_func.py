@@ -868,6 +868,48 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
     return NN.GridSampler3D(interpolation_mode, padding_mode, align_corners)(input_x, grid)
 
 
+def resize_bilinear(x, size, align_corners=False, half_pixel_centers=False):
+    r"""
+    Resizes an image to a certain size using the bilinear interpolation.
+
+    The resizing only affects the lower two dimensions which represent the height and width.
+
+    Args:
+        x (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
+            :math:`(batch, channels, height, width)`, with data type of float32 or float16.
+        size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements :math:`(new\_height, new\_width)`,
+            the new size of the images.
+        align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
+                       which exactly aligns the 4 corners of images and resized images. If false,
+                       rescale by :math:`new\_height / height`. Default: False.
+        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+                           Default: False.
+
+    Returns:
+        Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
+        with the same data type as input `x`.
+
+    Raises:
+        TypeError: If `align_corners` is not a bool.
+        TypeError: If `half_pixel_centers` is not a bool.
+        TypeError: If `align_corners` and `half_pixel_centers` are all True.
+        ValueError: If `half_pixel_centers` is True and device_target is CPU.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> x = Tensor([[[[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]]], mindspore.float32)
+        >>> output = resize_bilinear(x, (5, 5))
+        >>> print(output)
+        [[[[1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+           [1. 2. 3. 4. 5.]
+    """
+    return NN.ResizeBilinearV2(align_corners, half_pixel_centers)(x, size)
+
+
 __all__ = [
     'adaptive_avgpool2d',
     'celu',
@@ -882,6 +924,7 @@ __all__ = [
     'pad',
     'cross_entropy',
     'grid_sample',
+    'resize_bilinear',
     'nll_loss'
 ]
 __all__.sort()

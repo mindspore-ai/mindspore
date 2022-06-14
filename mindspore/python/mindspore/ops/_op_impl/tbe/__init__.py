@@ -375,6 +375,7 @@ from .ceil import _ceil_tbe
 from .ceil_ds import _ceil_ds_tbe
 from .log1p import _log1p_tbe
 from .resize_bilinear import _resize_bilinear_tbe
+from .resize_bilinear_v2 import _resize_bilinear_v2_tbe
 from .resize_bilinear_grad import _resize_bilinear_grad_tbe
 from .flatten import _flatten_tbe
 from .roi_align import _roi_align_tbe

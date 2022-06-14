@@ -57,7 +57,7 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
                                cudaMemsetAsync(interim, 0, workspace_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemsetAsync dx_interim failed");
-    CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, dx, interim,
+    CalResizeBilinearGrad(dy, n_, c_, dy_h_, dy_w_, dx_h_, dx_w_, h_scale, w_scale, half_pixel_centers_, dx, interim,
                           reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -73,9 +73,9 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    std::vector<size_t> dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    std::vector<size_t> dx_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    std::vector<size_t> dy_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    std::vector<size_t> x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    std::vector<size_t> dx_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name, "dy") || CHECK_SHAPE_NULL(x_shape, kernel_name, "x") ||
                      CHECK_SHAPE_NULL(dx_shape, kernel_name, "dx");
     if (is_null_input_) {
@@ -110,12 +110,14 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     workspace_size_ = (dx_size_ / sizeof(T)) * sizeof(float);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
+    half_pixel_centers_ = GetAttr<bool>(kernel_node, "half_pixel_centers");
     InitSizeLists();
     return true;
   }
 
   void ResetResource() noexcept override {
     align_corners_ = false;
+    half_pixel_centers_ = false;
     is_null_input_ = false;
     n_ = 0;
     c_ = 0;
@@ -145,6 +147,7 @@ class ResizeBilinearGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   bool align_corners_;
+  bool half_pixel_centers_;
   bool is_null_input_;
   int n_;
   int c_;

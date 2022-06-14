@@ -21,13 +21,14 @@
 template <typename T>
 CUDA_LIB_EXPORT void CalResizeBilinear(const T *input, const int n_, const int c_, const int input_h_,
                                        const int input_w_, const int output_h_, const int output_w_,
-                                       const float h_scale, const float w_scale, T *output, cudaStream_t cuda_stream);
+                                       const float h_scale, const float w_scale, const bool half_pixel_centers,
+                                       T *output, cudaStream_t cuda_stream);
 CUDA_LIB_EXPORT void CalResizeBilinearGrad(const half *input, const int n_, const int c_, const int input_h_,
                                            const int input_w_, const int output_h_, const int output_w_,
-                                           const float h_scale, const float w_scale, half *output, float *interim,
-                                           cudaStream_t cuda_stream);
+                                           const float h_scale, const float w_scale, const bool half_pixel_centers,
+                                           half *output, float *interim, cudaStream_t cuda_stream);
 CUDA_LIB_EXPORT void CalResizeBilinearGrad(const float *input, const int n_, const int c_, const int input_h_,
                                            const int input_w_, const int output_h_, const int output_w_,
-                                           const float h_scale, const float w_scale, float *output, float *interim,
-                                           cudaStream_t cuda_stream);
+                                           const float h_scale, const float w_scale, const bool half_pixel_centers,
+                                           float *output, float *interim, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_RESIZE_BILINEAR_IMPL_CUH_

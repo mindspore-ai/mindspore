@@ -89,8 +89,9 @@ class RegisterHostDependsHelper {
   ~RegisterHostDependsHelper() = default;
 };
 
-#define REGISTER_HOST_DEPENDS(name, depends) \
-  static auto helper_host_depends_##name = abstract::RegisterHostDependsHelper(name, depends);
+// Processes such as InferShape need to obtain some inputs value on the host
+#define REGISTER_HOST_DEPENDS(name, depends...) \
+  static auto helper_host_depends_##name = abstract::RegisterHostDependsHelper(name, ##depends);
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_PRIMITIVE_INFER_MAP_H_

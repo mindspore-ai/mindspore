@@ -223,6 +223,7 @@ from .nn_func import (
     nll_loss,
     cross_entropy,
     grid_sample,
+    resize_bilinear,
 )
 from .linalg_func import (
     svd,

@@ -43,6 +43,8 @@ constexpr auto kCdist = "Cdist";
 constexpr auto kCdistGrad = "CdistGrad";
 // image
 constexpr auto kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
+constexpr auto kResizeBilinearV2 = "ResizeBilinearV2";
+constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
 
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
@@ -475,6 +477,8 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum)
 
 // image
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
+GVAR_DEF(PrimitivePtr, kPrimResizeBilinearV2, std::make_shared<Primitive>(kResizeBilinearV2));
+GVAR_DEF(PrimitivePtr, kPrimResizeBilinearGrad, std::make_shared<Primitive>(kResizeBilinearGrad));
 
 // NN
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
