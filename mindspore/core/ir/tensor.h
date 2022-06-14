@@ -90,6 +90,11 @@ class MS_CORE_API TensorData {
   /// \return Whether this tensor data is sub data.
   virtual bool is_sub_data() const = 0;
 
+  /// \brief Check whether this tensor data has sub data.
+  ///
+  /// \return True if this tensor data has sub data, otherwise false.
+  virtual bool has_sub_data() const = 0;
+
   /// \brief Whether the data are equal.
   ///
   /// \param[in] other Another TensorData.
@@ -237,6 +242,12 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \param[in] input [bool] the data for tensor.
   /// \param[in] data_type [TypeId] data type.
   explicit Tensor(bool input, const TypePtr &data_type = nullptr);
+
+  /// \brief Create a chunk tensor with the given data size.
+  ///
+  /// \param[in] data_type [TypeId] Data type of the tensor.
+  /// \param[in] data_size The tensor chunk data size in number of elements.
+  Tensor(TypeId data_type, size_t data_size);
 
   /// Destructor of Tensor.
   ~Tensor() override = default;
