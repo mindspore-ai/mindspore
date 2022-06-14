@@ -2300,6 +2300,57 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_min')()(self, indices, updates)
 
+    def scatter_max(self, indices, updates):
+        """
+        By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
+        the value at the index will eventually be equal to the largest one to create a new tensor.
+
+        The last axis of the index is the depth of each index vector. For each index vector,
+        there must be a corresponding value in `updates`. The shape of `updates` should be
+        equal to the shape of `input_x[indices]`. For more details, see case below.
+
+        Note:
+            If some values of the `indices` are out of bound, instead of raising an index error,
+            the corresponding `updates` will not be updated to `input_x`.
+
+        Args:
+            indices (Tensor): The index of input tensor whose data type is int32 or int64.
+                The rank must be at least 2.
+            updates (Tensor): The tensor to update the input tensor, has the same type as input,
+                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+
+        Returns:
+            Tensor, has the same shape and type as `input_x`.
+
+        Raises:
+            TypeError: If dtype of `indices` is neither int32 nor int64.
+            ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
+
+        Supported Platforms:
+            ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+            >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+            >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+            >>> # Next, demonstrate the approximate operation process of this operator:
+            >>> # 1, indices[0] = [0, 0], indices[1] = [0, 0]
+            >>> # 2, And input_x[0, 0] = -0.1
+            >>> # 3, So input_x[indices] = [-0.1, -0.1]
+            >>> # 4, Satisfy the above formula: input_x[indices].shape=(2) == updates.shape=(2)
+            >>> op = ops.TensorScatterMax()
+            >>> # 5, Perform the max operation for the first time:
+            >>> #      first_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> # 6, Perform the max operation for the second time:
+            >>> #      second_input_x = Max(input_x[0][0], updates[0]) = [[2.2, 0.3, 3.6], [0.4, 0.5, -3.2]]
+            >>> output = op(input_x, indices, updates)
+            >>> print(output)
+            [[ 2.2  0.3  3.6]
+            [ 0.4  0.5 -3.2]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('tensor_scatter_max')()(self, indices, updates)
+
     def fill(self, value):
         """
         Fill the tensor with a scalar value.
