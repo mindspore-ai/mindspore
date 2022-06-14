@@ -89,6 +89,7 @@ from .array_func import (
     broadcast_to,
     adaptive_max_pool2d,
     col2im,
+    split
 )
 from .parameter_func import (
     assign,

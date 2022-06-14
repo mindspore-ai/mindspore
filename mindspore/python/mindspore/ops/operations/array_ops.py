@@ -1261,24 +1261,7 @@ class Split(PrimitiveWithCheck):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
-    The `input_x` tensor will be split into equally sized sub-tensors.
-    This requires that `input_x.shape(axis)` is divisible by `output_num`.
-
-    Args:
-        axis (int): Index of the split position. Default: 0.
-        output_num (int): The number of output tensors. Must be positive int. Default: 1.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        tuple[Tensor], the shape of each output tensor is the same, which is
-        :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with `input_x`.
-
-    Raises:
-        TypeError: If `axis` or `output_num` is not an int.
-        ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
-            or if the `output_num` is less than or equal to 0.
+    Refer to :func:`mindspore.ops.split` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
