@@ -22,9 +22,9 @@ from mindspore import Tensor
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
 
 
-def generate_data(shape, datatype="float32", indicetype="int32", density=0.2):
+def generate_data(shape, datatype="float32", indicetype="int32", density=0.5):
     mask = np.random.random(shape)
-    mask[mask > 0.2] = 0
+    mask[mask > density] = 0
     dense_tensor = (np.random.random(shape) * 10).astype(datatype)
     dense_tensor[mask == 0] = 0
     indices = np.array(dense_tensor.nonzero()).T.astype(indicetype)
@@ -43,7 +43,7 @@ def generate_expected_res(dense_data, indices):
     nnz_per_batch = np.bincount(indices[:, 0])
     shape = dense_data.shape
     batch_ptr = np.zeros(batch_size + 1).astype("int32")
-    batch_ptr[1:] = nnz_per_batch
+    batch_ptr[1:nnz_per_batch.shape[0] + 1] = nnz_per_batch
     batch_ptr = np.cumsum(batch_ptr)
     indptr = np.zeros(batch_size * (row_length + 1)).astype("int32")
     col_indices = np.zeros(indices.shape[0]).astype("int32")
@@ -91,7 +91,7 @@ def test_2d_dense_to_csr(indicetype, datatype):
     compare_res(out, expected)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
                                                   ("int32", "float64"),
                                                   ("int32", "complex64"),
