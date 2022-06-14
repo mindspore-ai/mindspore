@@ -330,6 +330,20 @@ def get_bprop_max_pool3d_grad_grad_grad(self):
     return bprop
 
 
+@bprop_getters.register(nps.AdaptiveMaxPool2D)
+def get_bprop_adaptive_max_pool2d_grad(self):
+    """Grad definition for `AdaptiveMaxPool2D` operation."""
+    adaptive_maxpool2d_grad = G.AdaptiveMaxPool2DGrad()
+
+    def bprop(x, out, dout):
+        dy = dout[0]
+        index = out[1]
+        dx = adaptive_maxpool2d_grad(dy, x, index)
+        return (dx,)
+
+    return bprop
+
+
 @bprop_getters.register(P.AvgPool)
 def get_bprop_avg_pool_grad(self):
     """Grad definition for `AvgPool` operation."""

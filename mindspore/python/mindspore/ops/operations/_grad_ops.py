@@ -908,6 +908,14 @@ class AvgPool3DGrad(Primitive):
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
 
 
+class AdaptiveMaxPool2DGrad(Primitive):
+    """Gradients of the adaptive max pool 2D operation."""
+    @prim_attr_register
+    def __init__(self):
+        """Initialize AdaptiveMaxPool2DGrad"""
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'argmax'], outputs=['x_grad'])
+
+
 class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 
