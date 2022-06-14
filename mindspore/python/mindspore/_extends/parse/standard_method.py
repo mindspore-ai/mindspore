@@ -1239,13 +1239,13 @@ def clip(x, xmin, xmax, dtype=None):
         const_utils.raise_value_error("One of max or min must be given.")
     is_scalar = False
     if xmin is not None:
-        xmin = const_utils.make_tensor(xmin).astype(x.dtype)
+        xmin = const_utils.make_tensor(xmin, dtype=x.dtype)
         if x.ndim == 0 and xmin.ndim == 0:
             x = F.maximum(x.reshape((1,)), xmin).squeeze()
         else:
             x = F.maximum(x, xmin)
     if xmax is not None:
-        xmax = const_utils.make_tensor(xmax).astype(x.dtype)
+        xmax = const_utils.make_tensor(xmax, dtype=x.dtype)
         if x.ndim == 0 and xmax.ndim == 0:
             x = F.minimum(x.reshape((1,)), xmax).squeeze()
         else:
