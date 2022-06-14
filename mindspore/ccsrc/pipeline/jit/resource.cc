@@ -225,7 +225,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"batch_to_space_nd", std::string("batch_to_space_nd")},            // P.BatchToSpaceND
        {"choose", std::string("choose")},                                  // P.Select()
        {"diagonal", std::string("diagonal")},                              // P.Eye()
-       {"matrix_diag", std::string("matrix_diag")},                        // matrix_diag()
        {"isclose", std::string("isclose")},                                // P.IsClose()
        {"inv", std::string("inv")},                                        // inv()
        {"invert", std::string("invert")},                                  // invert()
