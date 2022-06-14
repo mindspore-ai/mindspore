@@ -938,51 +938,6 @@ mindspore.Tensor
 
         - **TypeError** - 当前Tensor的数据类型不为int16或uint16。
 
-    .. py:method:: matrix_band_part(lower, upper)
-
-        将当前Tensor的每个中心带外的所有位置设置为0。
-
-        当前Tensor、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
-
-
-        **参数：**
-
-        - **lower** (Union[int, Tensor]) - 要保留的子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个下三角形。
-        - **upper** (Union[int, Tensor]) - 要保留的子对角线数。其数据类型必须是int32或int64。如果为负数，则保留整个上三角形。
-
-        **返回：**
-
-        Tensor，shape和类型与当前Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - 当前Tensor的数据类型不是float16、float32、float64、int32或int64。
-        - **TypeError** - `lower` 不是一个数值或者Tensor。
-        - **TypeError** - `upper` 不是一个数值或者Tensor。
-        - **TypeError** - `lower` 的数据类型不是int32或int64。
-        - **TypeError** - `upper` 的数据类型不是int32或int64。
-        - **ValueError** - 当前Tensor的shape不是大于或等于2维。
-        - **ValueError** - 当前Tensor、 `lower` 和 `upper` 三者的shapes不能广播。
-
-    .. py:method:: padding(pad_dim_size=8)
-
-        通过填充0，将当前Tensor的最后一个维度从1扩展到pad_dim_size。
-
-
-        **参数：**
-
-        - **pad_dim_size** (int) - 要扩展的当前Tensor的最后一个维度的值，该值必须为正数。默认值：8。
-
-        **返回：**
-
-        Tensor，其数据类型和维度必须和输入中的当前Tensor保持一致。
-
-        **异常：**
-
-        - **TypeError** - `pad_dim_size` 的数据类型不是int。
-        - **ValueError** - `pad_dim_size` 的值小于1。
-        - **ValueError** - 当前Tensor的最后一个维度不等于1。
-
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)
 
         返回Tensor的最大值或轴方向上的最大值。

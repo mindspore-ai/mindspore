@@ -856,20 +856,6 @@ def invert(x):
     return F.invert(x)
 
 
-def matrix_band_part(x, lower, upper):
-    """
-    Copy a tensor setting everything outside a central band in each innermost matrix to zero.
-    """
-    return F.matrix_band_part(x, lower, upper)
-
-
-def padding(x, pad_dim_size=8):
-    """
-    Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
-    """
-    return F.padding(x, pad_dim_size)
-
-
 def trace(x, offset=0, axis1=0, axis2=1, dtype=None):
     """
     Returns the sum along diagonals of the array.
