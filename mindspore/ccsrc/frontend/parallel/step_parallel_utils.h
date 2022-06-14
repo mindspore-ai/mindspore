@@ -21,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <set>
+#include <map>
 #include <memory>
 #include "base/base.h"
 #include "frontend/parallel/device_manager.h"
@@ -28,13 +29,22 @@
 
 namespace mindspore {
 namespace parallel {
+using OperatorInfoPtr = std::shared_ptr<OperatorInfo>;
 const int64_t TWO_INPUT_SIZE = 2;
-
+extern size_t TOTAL_OPS;
+extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 // common method
 bool IsSomePrimitive(const CNodePtr &cnode, const std::string &name);
 bool IsSomePrimitiveList(const CNodePtr &cnode, const std::set<string> &check_list);
 bool IsParallelCareNode(const CNodePtr &cnode);
+bool IsAutoParallelCareNode(const CNodePtr &cnode);
 Shapes GetNodeShape(const AnfNodePtr &node);
+// Extract shape from anfnode
+std::vector<Shapes> ExtractShape(const CNodePtr &node);
+// Generate and init parallel operator
+OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
+                                 const std::vector<Shapes> &shape_list);
+OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode);
 std::string GetPrimName(const CNodePtr &node);
 std::shared_ptr<Value> GetAttrsFromAnfNode(const std::shared_ptr<AnfNode> &node, const string &key);
 std::vector<AnfNodePtr> ReplaceOpInput(const Operator &replace_op, const std::string &instance_name,

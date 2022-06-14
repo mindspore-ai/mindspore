@@ -86,19 +86,12 @@ void InsertVirtualDivOp(const VirtualDivOp &virtual_div_op, const CNodePtr &node
 std::pair<bool, CNodePtr> FindCNode(const AnfNodePtr &anode, const std::string &name, const FuncGraphPtr &func_graph,
                                     size_t max_depth);
 
-// Generate and init parallel operator
-OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
-                                 const std::vector<Shapes> &shape_list);
-
 // Generate without initing parallel operator
 OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                     std::vector<Shapes> shape_list);
 
 // Extract strategy from attr
 StrategyPtr ExtractStrategy(const ValuePtr &strategy);
-
-// Extract shape from anfnode
-std::vector<Shapes> ExtractShape(const CNodePtr &node);
 
 // Find finally sub graph
 std::pair<AnfNodePtr, int64_t> FindSubGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &parameter);

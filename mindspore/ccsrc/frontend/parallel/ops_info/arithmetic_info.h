@@ -38,6 +38,7 @@ class ArithmeticBase : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   void ReComputeBatchSplitFlagList() override;
+  Shapes InferParamStrategy(const Shapes &default_strategy) override;
 
  protected:
   Status GetAttrs() override { return SUCCESS; }

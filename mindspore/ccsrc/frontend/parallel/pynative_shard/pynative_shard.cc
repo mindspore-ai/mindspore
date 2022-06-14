@@ -23,15 +23,13 @@
 #include <memory>
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/comm_manager.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 
 namespace mindspore {
 namespace parallel {
-static const std::set<std::string> ELEMENT_WISE_NODE_ = {"Add",       "BiasAdd",  "ScalarAdd",     "Sub",
-                                                         "ScalarSub", "Mul",      "ScalarMul",     "RealDiv",
-                                                         "ScalarDiv", "FloorDiv", "ScalarFloorDiv"};
-
 static void GenerateDefaultStrategy(const ValueNodePtr &axes, const std::vector<AnfNodePtr> &nodes,
                                     const int64_t device_num, std::vector<std::vector<int64_t>> *default_strategy) {
   auto strategies = axes->value()->cast<ValueTuplePtr>()->value();
@@ -75,84 +73,10 @@ static bool CheckLayout(const ValueNodePtr &axes, bool *need_default_strategy, s
   return true;
 }
 
-static bool IsElementWiseNode(const CNodePtr &cnode) {
-  auto prim = GetCNodePrimitive(cnode);
-  MS_EXCEPTION_IF_NULL(prim);
-  return ELEMENT_WISE_NODE_.find(prim->name()) != ELEMENT_WISE_NODE_.end();
-}
-
-static void HandleStrategyForOneHot(std::vector<ValuePtr> *strategy) {
-  // onehot needs to set layout for output, modify the strategy with an additional dimension
-  auto input_strategy = GetValue<std::vector<int64_t>>(strategy->at(0));
-  input_strategy.push_back(1);
-  strategy->at(0) = MakeValue(input_strategy);
-}
-
-static void HandleStrategyForMatMul(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
-  // handle strategy for matmul to deal with corresponding dimension
-  auto left_matrix_strategy = GetValue<std::vector<int64_t>>(strategy->at(0));
-  auto right_matrix_strategy = GetValue<std::vector<int64_t>>(strategy->at(1));
-  auto index_a = left_matrix_strategy.size() - 1;
-  auto index_b = index_a - 1;
-  auto attrs = GetCNodePrimitive(cnode)->attrs();
-  bool transpose_a = attrs[parallel::TRANSPOSE_A]->cast<BoolImmPtr>()->value();
-  bool transpose_b = attrs[parallel::TRANSPOSE_B]->cast<BoolImmPtr>()->value();
-  if (transpose_a) {
-    index_a -= 1;
-  }
-  if (transpose_b) {
-    index_b += 1;
-  }
-  if (left_matrix_strategy[index_a] != right_matrix_strategy[index_b]) {
-    if (left_matrix_strategy[index_a] == 1) {
-      left_matrix_strategy[index_a] = right_matrix_strategy[index_b];
-    } else {
-      right_matrix_strategy[index_b] = left_matrix_strategy[index_a];
-    }
-    strategy->at(0) = MakeValue(left_matrix_strategy);
-    strategy->at(1) = MakeValue(right_matrix_strategy);
-  }
-}
-
-static void HandleStrategyForElementWiseNode(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
-  auto left_strategy = GetValue<std::vector<int64_t>>(strategy->at(kIndexZero));
-  auto right_strategy = GetValue<std::vector<int64_t>>(strategy->at(kIndexOne));
-  if (left_strategy.size() != right_strategy.size()) {
-    return;
-  }
-  int64_t strategy_mul = 1;
-  std::for_each(left_strategy.begin(), left_strategy.end(), [&](int64_t const &data) { strategy_mul *= data; });
-  auto left_shape = cnode->input(kIndexOne)->Shape()->cast<abstract::ShapePtr>();
-  auto left_batch = left_shape->shape()[kIndexZero];
-  auto right_shape = cnode->input(kIndexTwo)->Shape()->cast<abstract::ShapePtr>();
-  auto right_batch = right_shape->shape()[kIndexZero];
-
-  if (strategy_mul == 1) {
-    left_strategy = right_strategy;
-  } else {
-    right_strategy = left_strategy;
-  }
-
-  if (left_batch == 1) {
-    left_strategy[kIndexZero] = 1;
-  }
-  if (right_batch == 1) {
-    right_strategy[kIndexZero] = 1;
-  }
-  strategy->at(kIndexZero) = MakeValue(left_strategy);
-  strategy->at(kIndexOne) = MakeValue(right_strategy);
-}
-
-static void HandleSpecialStrategy(std::vector<ValuePtr> *strategy, const CNodePtr &cnode) {
-  if (IsPrimitiveCNode(cnode, prim::kPrimMatMul) || IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul)) {
-    HandleStrategyForMatMul(strategy, cnode);
-  }
-  if (IsPrimitiveCNode(cnode, prim::kPrimOneHot)) {
-    HandleStrategyForOneHot(strategy);
-  }
-  if (IsElementWiseNode(cnode)) {
-    HandleStrategyForElementWiseNode(strategy, cnode);
-  }
+static Shapes GenerateParamStrategy(const Shapes &default_strategy, const CNodePtr &cnode) {
+  OperatorInfoPtr op_info = CreateOperatorInfo(cnode);
+  MS_EXCEPTION_IF_NULL(op_info);
+  return op_info->GenerateParamStrategy(default_strategy);
 }
 
 static void GetInputNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr> *input_nodes) {
@@ -240,10 +164,10 @@ static void SetOutputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &ou
   }
 }
 
-static std::vector<ValuePtr> GetStrategyElements(const CNodePtr &cnode, const std::vector<AnfNodePtr> &parameters,
-                                                 const std::vector<std::vector<int64_t>> &input_strategy) {
+static Shapes GenerateDefaultStrategyForParam(const CNodePtr &cnode, const std::vector<AnfNodePtr> &parameters,
+                                              const Shapes &input_strategy) {
   auto current_inputs = cnode->inputs();
-  std::vector<ValuePtr> elements;
+  Shapes elements;
   for (size_t i = 1; i < current_inputs.size(); ++i) {
     auto current_input = current_inputs[i];
     if (current_input->isa<ValueNode>()) {
@@ -254,15 +178,22 @@ static std::vector<ValuePtr> GetStrategyElements(const CNodePtr &cnode, const st
     }
     auto iter = std::find(parameters.begin(), parameters.end(), current_input);
     if (iter != parameters.end()) {
-      elements.push_back(MakeValue(input_strategy[iter - parameters.begin()]));
+      elements.push_back(input_strategy[iter - parameters.begin()]);
     } else {
       auto shape = current_input->Shape()->cast<abstract::ShapePtr>();
       auto dimension = shape->shape().size();
       std::vector<int64_t> default_strategy(dimension, 1);
-      elements.push_back(MakeValue(default_strategy));
+      elements.push_back(default_strategy);
     }
   }
   return elements;
+}
+
+static ValueTuplePtr ShapesToValueTuplePtr(const Shapes &shapes) {
+  std::vector<ValuePtr> value_list;
+  (void)std::transform(shapes.begin(), shapes.end(), std::back_inserter(value_list),
+                       [](const Shape &shape) { return MakeValue(shape); });
+  return std::make_shared<ValueTuple>(value_list);
 }
 
 static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_strategy, const int64_t &device_num) {
@@ -308,12 +239,13 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
     }
   }
   for (auto &cnode : concerned_nodes) {
-    auto elements = GetStrategyElements(cnode, parameters, input_strategy);
+    Shapes default_strategy = GenerateDefaultStrategyForParam(cnode, parameters, input_strategy);
     // Some operators has a special requirements for parallel strategy
-    HandleSpecialStrategy(&elements, cnode);
+    Shapes ret_strategy = GenerateParamStrategy(default_strategy, cnode);
     // Set in_strategy
-    ValueTuplePtr strategy = std::make_shared<ValueTuple>(elements);
+    auto strategy = ShapesToValueTuplePtr(ret_strategy);
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    MS_EXCEPTION_IF_NULL(prim);
     auto attrs_temp = prim->attrs();
     attrs_temp[parallel::IN_STRATEGY] = strategy;
     (void)prim->SetAttrs(attrs_temp);
@@ -340,6 +272,7 @@ static void SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
 }
 
 bool PynativeShard(const pipeline::ResourcePtr &res) {
+  MS_LOG(INFO) << "Entering pynative shard";
   MS_EXCEPTION_IF_NULL(res);
   auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode != kSemiAutoParallel && parallel_mode != kAutoParallel) {
@@ -356,12 +289,17 @@ bool PynativeShard(const pipeline::ResourcePtr &res) {
     MS_LOG(EXCEPTION) << "device_num must be set when use shard function";
   }
 
+  if (ParallelInit() != SUCCESS) {
+    MS_LOG(EXCEPTION) << "parallel init failed.";
+  }
+
   auto root = res->func_graph();
   AnfNodePtr ret = root->get_return();
   MS_EXCEPTION_IF_NULL(ret);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   auto device_num_shard = parallel::ParallelContext::GetInstance()->device_num();
   SetStrategyForShard(root, all_nodes, device_num_shard);
+  MS_LOG(INFO) << "Leaving pynative shard";
   return true;
 }
 }  // namespace parallel

@@ -28,7 +28,6 @@
 namespace mindspore {
 namespace parallel {
 CostGraphPtr entire_costgraph = nullptr;
-size_t TOTAL_OPS = 0;
 
 void CostGraph::Init() {
   inputs_tensor_name_list_.clear();

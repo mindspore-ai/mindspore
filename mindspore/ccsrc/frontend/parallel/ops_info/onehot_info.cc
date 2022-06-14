@@ -234,5 +234,17 @@ std::shared_ptr<Strategys> OneHotInfo::GenerateBatchStrategies() {
   Strategys strategy_v = {strategy, empty_strategy, empty_strategy};
   return std::make_shared<Strategys>(strategy_v);
 }
+
+Shapes OneHotInfo::InferParamStrategy(const Shapes &default_strategy) {
+  // onehot needs to set layout for output, modify the strategy with an additional dimension
+  auto input_strategy = default_strategy[0];
+  input_strategy.push_back(1);
+  Shapes ret;
+  Shape tmp;
+  ret.push_back(input_strategy);
+  ret.push_back(tmp);
+  ret.push_back(tmp);
+  return ret;
+}
 }  // namespace parallel
 }  // namespace mindspore
