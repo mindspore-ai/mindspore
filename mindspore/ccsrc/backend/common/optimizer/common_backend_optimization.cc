@@ -34,6 +34,7 @@
 #include "backend/common/pass/add_akg_kernel_attrs.h"
 #include "backend/common/pass/inplace_assign_for_custom_op.h"
 #include "backend/common/pass/flatten_concat_fission.h"
+#include "backend/common/pass/clip_by_norm_fission.h"
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
@@ -69,6 +70,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   common_pm->AddPass(std::make_shared<ConvertTupleInputToDynamicInput>());
   common_pm->AddPass(std::make_shared<AddTrainingAttr>());
   common_pm->AddPass(std::make_shared<FlattenConcatFission>());
+  common_pm->AddPass(std::make_shared<ClipByNormFission>());
   optimizer->AddPassManager(common_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
