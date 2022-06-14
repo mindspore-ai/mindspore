@@ -21,7 +21,7 @@ from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
@@ -44,3 +44,20 @@ def test_parser_operator_floor_div():
     out_me = net(input_me_x)
 
     assert np.allclose(out_me.asnumpy(), 3 // input_np_x, 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor_pow():
+    """
+    Feature: tensor pow
+    Description: Test tensor pow in pynative
+    Expectation: No exception.
+    """
+    x = (2, 2)
+    y_np = np.array([8.0, 8.0]).astype(np.float32)
+    y = Tensor(y_np)
+    out_me = x ** y
+    out_np = np.array(x) ** y_np
+    assert np.allclose(out_me.asnumpy(), out_np, rtol=0.01, atol=0.01)

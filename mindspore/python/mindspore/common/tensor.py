@@ -310,6 +310,9 @@ class Tensor(Tensor_):
     def __pow__(self, other):
         return tensor_operator_registry.get('__pow__')(self, other)
 
+    def __rpow__(self, other):
+        return tensor_operator_registry.get('__rpow__')(self, other)
+
     def __floordiv__(self, other):
         return tensor_operator_registry.get('__floordiv__')(self, other)
 
