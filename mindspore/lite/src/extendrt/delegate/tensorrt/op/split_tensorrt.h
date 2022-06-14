@@ -26,28 +26,7 @@ class SplitTensorRT : public TensorRTOp {
   SplitTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
                 const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {
-    type_ = primitive->value_type();
-    if (type_ == schema::PrimitiveType_Split) {
-      auto split_op = primitive->value_as_Split();
-      axis_ = split_op->axis();
-
-      output_num_ = split_op->output_num();
-
-      auto size_splits_ptr = split_op->size_splits();
-      if (size_splits_ptr != nullptr) {
-        size_splits_.resize(size_splits_ptr->size());
-        std::copy(size_splits_ptr->begin(), size_splits_ptr->end(), size_splits_.begin());
-      }
-    }
-    if (type_ == schema::PrimitiveType_Unstack) {
-      auto unstack_op = primitive->value_as_Unstack();
-      axis_ = unstack_op->axis();
-
-      output_num_ = out_tensors.size();
-    }
-    axis_ = axis_ < 0 ? axis_ + in_tensors_[0].Shape().size() : axis_;
-  }
+      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
 
   ~SplitTensorRT() override = default;
 
@@ -57,9 +36,9 @@ class SplitTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
+  int ParseParams();
   int64_t axis_;
   int64_t output_num_;
-  schema::PrimitiveType type_;
   std::vector<int64_t> size_splits_;
 };
 }  // namespace mindspore::lite

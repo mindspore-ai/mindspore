@@ -24,8 +24,8 @@ namespace mindspore::lite {
 constexpr char *NORMALIZE_OPT_PLUGIN_NAME{"NormalizeOptPlugin"};
 class NormalizeOptPlugin : public TensorRTPlugin {
  public:
-  NormalizeOptPlugin(const std::string name, size_t axis, float epsilion)
-      : TensorRTPlugin(name, std::string(NORMALIZE_OPT_PLUGIN_NAME)), axis_(axis), epsilion_(epsilion) {}
+  NormalizeOptPlugin(const std::string name, size_t axis, float epsilion, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(NORMALIZE_OPT_PLUGIN_NAME), device_id), axis_(axis), epsilion_(epsilion) {}
 
   NormalizeOptPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(NORMALIZE_OPT_PLUGIN_NAME)) {

@@ -27,10 +27,17 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
   }
-  if (in_tensors.size() != 1) {
+  if (in_tensors.size() != 1 && in_tensors.size() != INPUT_SIZE2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
   }
+  int ret = ParseParams();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << op_name_ << " parse params failed.";
+    return ret;
+  }
+
+  axis_ = axis_ < 0 ? axis_ + in_tensors_[0].Shape().size() : axis_;
 
   if (out_tensors.size() < 1 || out_tensors.size() != output_num_) {
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
@@ -39,16 +46,6 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   if (axis_ < 0 || axis_ >= in_tensors_[0].Shape().size()) {
     MS_LOG(ERROR) << "invalid axis : " << axis_;
     return RET_ERROR;
-  }
-
-  if (size_splits_.empty()) {
-    if (in_tensors_[0].Shape().at(axis_) % output_num_ != 0) {
-      MS_LOG(ERROR) << "axis dim can not be split into same subdim";
-      return RET_ERROR;
-    }
-    int split_width = in_tensors_[0].Shape().at(axis_) / output_num_;
-    size_splits_.resize(output_num_);
-    std::fill(size_splits_.begin(), size_splits_.end(), split_width);
   }
   int split_sum = std::accumulate(size_splits_.begin(), size_splits_.end(), 0);
   int split_sum_expect = in_tensors_[0].Shape()[axis_];
@@ -109,6 +106,53 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     this->AddInnerOutTensors(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_});
   }
   this->layer_ = slice_layer;
+  return RET_OK;
+}
+int SplitTensorRT::ParseParams() {
+  switch (type_) {
+    case schema::PrimitiveType_Split: {
+      auto split_op = op_primitive_->value_as_Split();
+      CHECK_NULL_RETURN(split_op);
+      axis_ = split_op->axis();
+      output_num_ = split_op->output_num();
+      auto size_splits_ptr = split_op->size_splits();
+      if (size_splits_ptr != nullptr) {
+        size_splits_.resize(size_splits_ptr->size());
+        std::copy(size_splits_ptr->begin(), size_splits_ptr->end(), size_splits_.begin());
+      } else if (in_tensors_.size() == INPUT_SIZE2 && in_tensors_[1].Data() != nullptr &&
+                 in_tensors_[1].DataType() == DataType::kNumberTypeInt32) {
+        size_splits_.resize(in_tensors_[1].ElementNum());
+        auto split_out_ptr = static_cast<const int *>(in_tensors_[1].Data().get());
+        for (int i = 0; i < in_tensors_[1].ElementNum(); i++) {
+          size_splits_[i] = split_out_ptr[i];
+        }
+      } else {
+        MS_LOG(ERROR) << op_name_ << " has invalid input size and size_splits: " << in_tensors_.size();
+        return RET_ERROR;
+      }
+      break;
+    }
+    case schema::PrimitiveType_Unstack: {
+      auto unstack_op = op_primitive_->value_as_Unstack();
+      CHECK_NULL_RETURN(unstack_op);
+      axis_ = unstack_op->axis();
+      output_num_ = out_tensors_.size();
+      break;
+    }
+    default: {
+      MS_LOG(ERROR) << op_name_ << " has invalid type for split";
+      return RET_ERROR;
+    }
+  }
+  if (size_splits_.empty()) {
+    if (output_num_ == 0 || in_tensors_[0].Shape().at(axis_) % output_num_ != 0) {
+      MS_LOG(ERROR) << "axis dim can not be split into same subdim";
+      return RET_ERROR;
+    }
+    int split_width = in_tensors_[0].Shape().at(axis_) / output_num_;
+    size_splits_.resize(output_num_);
+    std::fill(size_splits_.begin(), size_splits_.end(), split_width);
+  }
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Split, SplitTensorRT)

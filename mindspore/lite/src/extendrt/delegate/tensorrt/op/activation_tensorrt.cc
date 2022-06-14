@@ -25,7 +25,8 @@ namespace mindspore::lite {
 namespace {
 bool HasCustomActivationPlugin(schema::ActivationType type) {
   std::unordered_set<schema::ActivationType> plugin_activation = {schema::ActivationType::ActivationType_SIGMOID,
-                                                                  schema::ActivationType::ActivationType_GELU};
+                                                                  schema::ActivationType::ActivationType_GELU,
+                                                                  schema::ActivationType::ActivationType_SWISH};
   return plugin_activation.find(type) != plugin_activation.end();
 }
 }  // namespace
@@ -71,8 +72,8 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   float alpha = activation_op->alpha();
   nvinfer1::ITensor *activation_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
-    auto plugin =
-      std::make_shared<CastPlugin>(op_name_ + "_cast_in", nvinfer1::DataType::kINT32, nvinfer1::DataType::kFLOAT);
+    auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_in", nvinfer1::DataType::kINT32,
+                                               nvinfer1::DataType::kFLOAT, device_id_);
     nvinfer1::ITensor *inputTensors[] = {activation_input};
     nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
     if (cast_layer == nullptr) {
@@ -83,10 +84,11 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_input = cast_layer->getOutput(0);
   }
 
-  auto activation_layer = ActivationTensorRT::AddActivation(
-    network, activation_op->activation_type(), alpha,
-    std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
-    std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX, activation_input, quant_type_);
+  auto activation_layer =
+    ActivationTensorRT::AddActivation(network, activation_op->activation_type(), alpha,
+                                      std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
+                                      std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX,
+                                      activation_input, device_id_, quant_type_);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -97,7 +99,7 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *out_tensor = activation_layer->getOutput(0);
   if (out_tensor->getType() != ConvertDataType(out_tensors_[0].DataType())) {
     auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_out", out_tensor->getType(),
-                                               ConvertDataType(out_tensors_[0].DataType()));
+                                               ConvertDataType(out_tensors_[0].DataType()), device_id_);
     nvinfer1::ITensor *inputTensors[] = {activation_layer->getOutput(0)};
     nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
     if (cast_layer == nullptr) {
@@ -116,18 +118,20 @@ int ActivationTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 nvinfer1::ILayer *ActivationTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
                                                     schema::ActivationType activation_type, float alpha,
                                                     float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
-                                                    schema::QuantType quant_type) {
+                                                    uint32_t device_id, schema::QuantType quant_type) {
   bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
   // sigmoid precision is wrong for trt
   if (quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
-    auto plugin = std::make_shared<ActivationOptPlugin>(trt_in_tensor->getName(), activation_type);
-    MS_LOG(INFO) << "using opt plugin for " << trt_in_tensor->getName();
+    std::string layer_name = std::string(trt_in_tensor->getName()) + "_activation";
+    auto plugin = std::make_shared<ActivationOptPlugin>(layer_name.c_str(), activation_type, device_id);
+    MS_LOG(INFO) << "using opt plugin for " << layer_name;
     if (plugin == nullptr) {
-      MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << trt_in_tensor->getName();
+      MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << layer_name;
       return nullptr;
     }
     nvinfer1::ITensor *inputTensors[] = {trt_in_tensor};
     nvinfer1::IPluginV2Layer *activation_opt_layer = network->addPluginV2(inputTensors, 1, *plugin);
+    activation_opt_layer->setName(layer_name.c_str());
     return activation_opt_layer;
   }
 

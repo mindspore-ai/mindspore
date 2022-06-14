@@ -282,6 +282,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
         cur_op->AddInnerInTensors(trt_tensor);
       }
     }
+    MS_LOG(DEBUG) << "Parsing TensorRT op for " << cur_op->GetOpName();
 
     ret = cur_op->AddInnerOp(this->network_);
     if (ret != RET_OK) {

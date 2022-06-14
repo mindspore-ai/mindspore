@@ -252,7 +252,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(network, activation, 0, 0, 0, in_tensor);
+    auto activation_layer = ActivationTensorRT::AddActivation(network, activation, 0, 0, 0, in_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for element wise failed";
       return nullptr;
@@ -263,37 +263,11 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   return activation_out_tensor;
 }
 int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
-  nvinfer1::ITensor *constant_input = nullptr;
   int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
-  if (this->in_tensors_[const_tensor_index].Shape().size() == 0 ||
-      this->in_tensors_[const_tensor_index].ElementNum() == 1) {
-    constant_input = lite::ConvertScalarToITensor(network, this->in_tensors_[1 - const_tensor_index].Shape().size(),
-                                                  in_tensors_[const_tensor_index].Data().get(),
-                                                  in_tensors_[const_tensor_index].DataType(), op_name_);
-    if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << op_name_;
-      return RET_ERROR;
-    }
-    this->AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_, true});
-  } else if (this->in_tensors_[const_tensor_index].Shape().size() ==
-             this->in_tensors_[1 - const_tensor_index].Shape().size()) {
-    constant_input = lite::ConvertConstantTensor(network, in_tensors_[const_tensor_index], op_name_);
-    if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from constant tensor failed: " << op_name_;
-      return RET_ERROR;
-    }
-    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
-  } else if (this->in_tensors_[const_tensor_index].ElementNum() >= 1) {
-    constant_input = ConvertTensorWithExpandDims(network, in_tensors_[const_tensor_index],
-                                                 in_tensors_[1 - const_tensor_index].Shape().size(), op_name_);
-    if (constant_input == nullptr) {
-      MS_LOG(ERROR) << "create Itensor from ConvertTensorWithExpandDims failed: " << op_name_;
-      return RET_ERROR;
-    }
-    this->AddInnerInTensors(ITensorHelper{constant_input, Format::NHWC, true});
-  } else {
-    MS_LOG(ERROR) << "const tensor value needs check: " << op_name_;
-  }
+  nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(
+    network, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
+  CHECK_NULL_RETURN(constant_input);
+  AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_, true});
   return RET_OK;
 }
 bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor) {

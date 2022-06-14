@@ -42,8 +42,8 @@ class AllGatherTensorRT : public TensorRTOp {
 
 class AllGatherPlugin : public TensorRTPlugin {
  public:
-  AllGatherPlugin(const std::string name, int rank)
-      : TensorRTPlugin(name, std::string(ALLGATHER_PLUGIN_NAME)), rank_(rank) {}
+  AllGatherPlugin(const std::string name, int rank, uint32_t device_id)
+      : TensorRTPlugin(name, std::string(ALLGATHER_PLUGIN_NAME), device_id), rank_(rank) {}
 
   AllGatherPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
       : TensorRTPlugin(std::string(name), std::string(ALLGATHER_PLUGIN_NAME)) {

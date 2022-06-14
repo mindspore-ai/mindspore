@@ -76,6 +76,15 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     }
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
+  if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
+    // x^2
+    auto *pow2_layer = network->addElementWise(*reduce_input, *reduce_input, nvinfer1::ElementWiseOperation::kPROD);
+    CHECK_NULL_RETURN(pow2_layer);
+    pow2_layer->setName((op_name_ + "_pow2").c_str());
+
+    reduce_input = pow2_layer->getOutput(0);
+    CHECK_NULL_RETURN(reduce_input);
+  }
 
   uint32_t reduceAxis = GetAxis();
   auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->mode());
@@ -85,17 +94,19 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
   nvinfer1::IReduceLayer *layer =
     network->addReduce(*reduce_input, reduce_operation_opt.value(), reduceAxis, keep_dims);
-  if (layer == nullptr) {
-    MS_LOG(ERROR) << "addReduce failed for TensorRT.";
-    return RET_ERROR;
-  }
+  CHECK_NULL_RETURN(layer);
+
   layer->setName(op_name_.c_str());
   this->layer_ = layer;
 
   nvinfer1::ITensor *out_tensor = layer->getOutput(0);
-  if (out_tensor == nullptr) {
-    MS_LOG(ERROR) << "addReduce output tensor create failed for TensorRT.";
-    return RET_ERROR;
+  CHECK_NULL_RETURN(out_tensor);
+
+  if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
+    auto sqrt_layer = network->addUnary(*out_tensor, nvinfer1::UnaryOperation::kSQRT);
+    CHECK_NULL_RETURN(sqrt_layer);
+    sqrt_layer->setName((op_name_ + "_sqrt").c_str());
+    out_tensor = sqrt_layer->getOutput(0);
   }
   out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_, true});

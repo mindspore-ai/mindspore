@@ -88,7 +88,7 @@ int PoolTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     activation_layer = pooling_layer;
   } else {
     activation_layer =
-      ActivationTensorRT::AddActivation(network, activation_type_, 0, 0, 0, pooling_layer->getOutput(0));
+      ActivationTensorRT::AddActivation(network, activation_type_, 0, 0, 0, pooling_layer->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for pool failed";
       return RET_ERROR;

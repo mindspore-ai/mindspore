@@ -25,6 +25,7 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_opt_plugin.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/activation.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cuh"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(ActivationOptPluginCreater);
@@ -86,6 +87,11 @@ int ActivationOptPlugin::RunCudaActivation(const nvinfer1::PluginTensorDesc *inp
     case (schema::ActivationType::ActivationType_GELU): {
       Gelu(static_cast<const float *>(inputs[0]), static_cast<float *>(outputs[0]), GetDimsVolume(inputDesc[0].dims),
            stream);
+      break;
+    }
+    case (schema::ActivationType::ActivationType_SWISH): {
+      CalSwish(GetDimsVolume(inputDesc[0].dims), static_cast<const float *>(inputs[0]),
+               static_cast<float *>(outputs[0]), stream, device_id_);
       break;
     }
     default: {

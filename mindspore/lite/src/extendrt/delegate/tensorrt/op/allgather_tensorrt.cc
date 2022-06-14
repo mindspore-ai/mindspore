@@ -58,7 +58,7 @@ int AllGatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   int rank = GetGPUGroupSize();
-  auto plugin = std::make_shared<AllGatherPlugin>(op_name_, rank);
+  auto plugin = std::make_shared<AllGatherPlugin>(op_name_, rank, device_id_);
   MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
   nvinfer1::IPluginV2Layer *allgather_layer = network->addPluginV2(inputTensors, 1, *plugin);
   if (allgather_layer == nullptr) {

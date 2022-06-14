@@ -56,7 +56,7 @@ class TensorRTSubGraph : public kernel::Kernel {
       schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims,      schema::PrimitiveType_Resize,
       schema::PrimitiveType_Maximum,      schema::PrimitiveType_BiasAdd,         schema::PrimitiveType_LSTM,
       schema::PrimitiveType_RealDiv,      schema::PrimitiveType_LayerNormFusion, schema::PrimitiveType_Greater,
-      schema::PrimitiveType_Less};
+      schema::PrimitiveType_Less,         schema::PrimitiveType_TopKFusion,      schema::PrimitiveType_TileFusion};
     if (!support_resize) {
       input_batchsize_index_ = -1;
       input_hw_index_ = -1;
