@@ -17,6 +17,21 @@
 #include "nnacl/fp32/cumsum_fp32.h"
 #include "nnacl/op_base.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/cumsum_fp32_avx512.h"
+#endif
+
+#ifdef ENABLE_AVX
+#include "nnacl/avx/cumsum_fp32_avx.h"
+#endif
+
+#ifdef ENABLE_SSE
+#include "nnacl/sse/cumsum_fp32_sse.h"
+#endif
+
+#ifdef ENABLE_ARM
+#include "nnacl/neon/cumsum_fp32_neon.h"
+#endif
 
 // (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
 // (a, b, c) -> (0, a,   a+b)    exclusive == true
@@ -27,13 +42,9 @@ void Cumsum(const float *input, float *output, int out_dim, int axis_dim, int in
     for (int i = 0; i < out_dim; ++i) {
       const float *layer_input = input + i * axis_dim * inner_dim;
       float *layer_output = output + i * axis_dim * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_FLOAT32X4 val = MS_LDQ_F32(layer_input + j);
-        MS_STQ_F32(layer_output + j, val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumOutputInitWithInput, j, layer_input, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output + j) = *(layer_input + j);
       }
@@ -41,13 +52,9 @@ void Cumsum(const float *input, float *output, int out_dim, int axis_dim, int in
   } else {
     for (int i = 0; i < out_dim; ++i) {
       float *layer_output = output + i * axis_dim * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_FLOAT32X4 zero_val = MS_MOVQ_F32(0.0f);
-        MS_STQ_F32(layer_output + j, zero_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumOutputInitWithZero, j, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output + j) = 0.0f;
       }
@@ -61,14 +68,7 @@ void Cumsum(const float *input, float *output, int out_dim, int axis_dim, int in
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; k <= inner_dim - C4NUM; k += C4NUM) {
-        MS_FLOAT32X4 input_val = MS_LDQ_F32(layer_input + k);
-        MS_FLOAT32X4 last_output_val = MS_LDQ_F32(layer_last_output + k);
-        MS_FLOAT32X4 out_val = MS_ADDQ_F32(input_val, last_output_val);
-        MS_STQ_F32(layer_output + k, out_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(Cumsum, k, layer_input, layer_output, layer_last_output, inner_dim);
       for (; k < inner_dim; ++k) {
         // layer_output (i, j, k) = layer_input (i, j, k) + layer_last_output (i,j-1, k)
         *(layer_output + k) = *(layer_input + k) + *(layer_last_output + k);
@@ -87,13 +87,9 @@ void CumsumReverse(const float *input, float *output, int out_dim, int axis_dim,
     for (int i = 0; i < out_dim; ++i) {
       const float *layer_input = input + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
       float *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_FLOAT32X4 val = MS_LDQ_F32(layer_input + j);
-        MS_STQ_F32(layer_output + j, val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumOutputInitWithInput, j, layer_input, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output + j) = *(layer_input + j);
       }
@@ -101,13 +97,9 @@ void CumsumReverse(const float *input, float *output, int out_dim, int axis_dim,
   } else {
     for (int i = 0; i < out_dim; ++i) {
       float *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_FLOAT32X4 zero_val = MS_MOVQ_F32(0.0f);
-        MS_STQ_F32(layer_output + j, zero_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumOutputInitWithZero, j, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output + j) = 0.0f;
       }
@@ -121,14 +113,7 @@ void CumsumReverse(const float *input, float *output, int out_dim, int axis_dim,
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; k <= inner_dim - C4NUM; k += C4NUM) {
-        MS_FLOAT32X4 input_val = MS_LDQ_F32(layer_input - k - 3);
-        MS_FLOAT32X4 last_output_val = MS_LDQ_F32(layer_last_output - k - 3);
-        MS_FLOAT32X4 out_val = MS_ADDQ_F32(input_val, last_output_val);
-        MS_STQ_F32(layer_output - k - 3, out_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumReverse, k, layer_input, layer_output, layer_last_output, inner_dim);
       for (; k < inner_dim; ++k) {
         *(layer_output - k) = *(layer_input - k) + *(layer_last_output - k);
       }
@@ -148,13 +133,9 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
     for (int i = 0; i < out_dim; ++i) {
       const int *layer_input = input + i * axis_dim * inner_dim;
       int *layer_output = output + i * axis_dim * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_INT32X4 val = MS_LDQ_EPI32(layer_input + j);
-        MS_STQ_EPI32(layer_output + j, val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithInput, j, layer_input, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output + j) = *(layer_input + j);
       }
@@ -162,13 +143,9 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
   } else {
     for (int i = 0; i < out_dim; ++i) {
       int *layer_output = output + i * axis_dim * inner_dim;
+
       int j = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; j <= inner_dim - C4NUM; j += C4NUM) {
-        MS_INT32X4 zero_val = MS_MOVQ_EPI32(0);
-        MS_STQ_EPI32(layer_output + j, zero_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithZero, j, layer_output, inner_dim);
       for (; j < inner_dim; ++j) {
         *(layer_output++) = 0;
       }
@@ -182,14 +159,7 @@ void CumsumInt(const int *input, int *output, int out_dim, int axis_dim, int inn
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; k <= inner_dim - C4NUM; k += C4NUM) {
-        MS_INT32X4 input_val = MS_LDQ_EPI32(layer_input + k);
-        MS_INT32X4 last_output_val = MS_LDQ_EPI32(layer_last_output + k);
-        MS_INT32X4 out_val = MS_ADDQ_EPI32(input_val, last_output_val);
-        MS_STQ_EPI32(layer_output + k, out_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumInt, k, layer_input, layer_output, layer_last_output, inner_dim);
       for (; k < inner_dim; ++k) {
         *(layer_output + k) = *(layer_input + k) + *(layer_last_output + k);
       }
@@ -207,14 +177,20 @@ void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, 
     for (int i = 0; i < out_dim; ++i) {
       const int *layer_input = input + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
       int *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
-      for (int j = 0; j < inner_dim; ++j) {
+
+      int j = 0;
+      SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithInput, j, layer_input, layer_output, inner_dim);
+      for (; j < inner_dim; ++j) {
         *(layer_output++) = *(layer_input++);
       }
     }
   } else {
     for (int i = 0; i < out_dim; ++i) {
       int *layer_output = output + i * axis_dim * inner_dim + (axis_dim - 1) * inner_dim;
-      for (int j = 0; j < inner_dim; ++j) {
+
+      int j = 0;
+      SIMD_RUN_NO_SCALAR(CumsumIntOutputInitWithZero, j, layer_output, inner_dim);
+      for (; j < inner_dim; ++j) {
         *(layer_output++) = 0.0f;
       }
     }
@@ -227,14 +203,7 @@ void CumsumReverseInt(const int *input, int *output, int out_dim, int axis_dim, 
 
     for (int j = 1; j < axis_dim; ++j) {
       int k = 0;
-#if defined(ENABLE_NEON) || defined(ENABLE_SSE)
-      for (; k <= inner_dim - C4NUM; k += C4NUM) {
-        MS_INT32X4 input_val = MS_LDQ_EPI32(layer_input - k - 3);
-        MS_INT32X4 last_output_val = MS_LDQ_EPI32(layer_last_output - k - 3);
-        MS_INT32X4 out_val = MS_ADDQ_EPI32(input_val, last_output_val);
-        MS_STQ_EPI32(layer_output - k - 3, out_val);
-      }
-#endif
+      SIMD_RUN_NO_SCALAR(CumsumReverseInt, k, layer_input, layer_output, layer_last_output, inner_dim);
       for (; k < inner_dim; ++k) {
         *(layer_output - k) = *(layer_input - k) + *(layer_last_output - k);
       }

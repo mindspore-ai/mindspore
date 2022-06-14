@@ -1,0 +1,114 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_NNACL_FP32_CUMSUM_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_CUMSUM_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+// (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
+// (a, b, c) -> (0, a,   a+b)    exclusive == true
+static inline int64_t CumsumOutputInitWithInput@SIMD_INSTRUCTION@(int64_t index, const float *layer_input,
+  float *layer_output, int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_F32(layer_output + index, SIMD_LD_F32(layer_input + index));
+  }
+  return index;
+}
+
+static inline int64_t CumsumOutputInitWithZero@SIMD_INSTRUCTION@(int64_t index, float *layer_output, int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_F32(layer_output + index, SIMD_MOV_F32(0.0f));
+  }
+  return index;
+}
+
+static inline int64_t Cumsum@SIMD_INSTRUCTION@(int64_t index, const float *layer_input, float *layer_output, float *layer_last_output,
+  int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 input_val = SIMD_LD_F32(layer_input + index);
+    SIMD_F32 last_output_val = SIMD_LD_F32(layer_last_output + index);
+    SIMD_F32 out_val = SIMD_ADD_F32(input_val, last_output_val);
+    SIMD_ST_F32(layer_output + index, out_val);
+  }
+  return index;
+}
+
+// (a, b, c) -> (c+b+a, c+b, c) exclusive==false
+// (a, b, c) -> (c+b, c, 0) exclusive==true
+static inline int64_t CumsumReverse@SIMD_INSTRUCTION@(int64_t index, const float *layer_input, float *layer_output,
+  float *layer_last_output, int inner_dim) {
+
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 input_val = SIMD_LD_F32(layer_input - index - BLOCK_NUM + 1);
+    SIMD_F32 last_output_val = SIMD_LD_F32(layer_last_output - index - BLOCK_NUM + 1);
+    SIMD_F32 out_val = SIMD_ADD_F32(input_val, last_output_val);
+    SIMD_ST_F32(layer_output - index - BLOCK_NUM + 1, out_val);
+  }
+  return index;
+}
+
+// (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
+// (a, b, c) -> (0, a,   a+b)    exclusive == true
+static inline int64_t CumsumIntOutputInitWithInput@SIMD_INSTRUCTION@(int64_t index, const int *layer_input,
+  int *layer_output, int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_EPI32(layer_output + index, SIMD_LD_EPI32(layer_input + index));
+  }
+  return index;
+}
+
+static inline int64_t CumsumIntOutputInitWithZero@SIMD_INSTRUCTION@(int64_t index, int *layer_output, int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_EPI32(layer_output + index, SIMD_MOV_EPI32(0.0f));
+  }
+  return index;
+}
+
+static inline int64_t CumsumInt@SIMD_INSTRUCTION@(int64_t index, const int *layer_input, int *layer_output, int *layer_last_output,
+  int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_EPI32 input_val = SIMD_LD_EPI32(layer_input + index);
+    SIMD_EPI32 last_output_val = SIMD_LD_EPI32(layer_last_output + index);
+    SIMD_EPI32 out_val = SIMD_ADD_EPI32(input_val, last_output_val);
+    SIMD_ST_EPI32(layer_output + index, out_val);
+  }
+  return index;
+}
+
+// (a, b, c) -> (c+b+a, c+b, c) exclusive==false
+// (a, b, c) -> (c+b, c, 0) exclusive==true
+static inline int64_t CumsumReverseInt@SIMD_INSTRUCTION@(int64_t index, const int *layer_input, int *layer_output, int *layer_last_output,
+  int inner_dim) {
+  for (int block_max_size = inner_dim - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_EPI32 input_val = SIMD_LD_EPI32(layer_input - index - BLOCK_NUM + 1);
+    SIMD_EPI32 last_output_val = SIMD_LD_EPI32(layer_last_output - index - BLOCK_NUM + 1);
+    SIMD_EPI32 out_val = SIMD_ADD_EPI32(input_val, last_output_val);
+    SIMD_ST_EPI32(layer_output - index - BLOCK_NUM + 1, out_val);
+  }
+  return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif
