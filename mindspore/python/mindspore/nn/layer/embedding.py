@@ -18,7 +18,7 @@ from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.parameter import Parameter
 from mindspore.common.parameter import _get_unique_parameter_key
 from mindspore.common.initializer import initializer
 from mindspore.communication.management import get_group_size, get_rank
@@ -401,7 +401,6 @@ class EmbeddingLookup(Cell):
             embedding_lookup.add_prim_attr('ms_role', 'MS_PSERVER')
             self.embedding_lookup_list.append(embedding_lookup)
 
-        self.embedding_table_param_tuple = ParameterTuple(self.embedding_table_list)
         # For now unique operation is not applied,
         # so we need to reduce the lookup results from different servers with AddN.
         self.reduce_lookup_result = P.AddN()
@@ -412,7 +411,7 @@ class EmbeddingLookup(Cell):
         '''
         result_from_servers = []
         for i in range(_get_ps_context("server_num")):
-            result = self.embedding_lookup_list[i](self.embedding_table_param_tuple[i],
+            result = self.embedding_lookup_list[i](self.embedding_table_list[i],
                                                    indices, self.embedding_offset[i])
             result_from_servers.append(result)
         final_result = self.reduce_lookup_result(result_from_servers)
