@@ -828,13 +828,6 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
     return res.astype(dtype)
 
 
-def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_LEFT"):
-    """
-    Returns a batched diagonal tensor with given batched diagonal values.
-    """
-    return F.matrix_diag(x, k, num_rows, num_cols, padding_value, align)
-
-
 def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
     """
     Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
