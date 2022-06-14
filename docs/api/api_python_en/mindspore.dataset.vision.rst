@@ -77,8 +77,8 @@ Transforms
     mindspore.dataset.vision.UniformAugment
     mindspore.dataset.vision.VerticalFlip
 
-Others
-------
+Utilities
+---------
 
 .. autosummary::
     :toctree: dataset_vision
@@ -91,3 +91,5 @@ Others
     mindspore.dataset.vision.ImageBatchFormat
     mindspore.dataset.vision.Inter
     mindspore.dataset.vision.SliceMode
+    mindspore.dataset.vision.get_image_num_channels
+    mindspore.dataset.vision.get_image_size

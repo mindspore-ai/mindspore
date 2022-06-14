@@ -362,6 +362,43 @@ class Ngram(TextTensorOperation):
         return cde.NgramOperation(self.ngrams, self.left_pad, self.right_pad, self.separator)
 
 
+class PythonTokenizer:
+    """
+    Class that applies user-defined string tokenizer into input string.
+
+    Args:
+        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
+
+    Raises:
+        TypeError: If `tokenizer` is not a callable Python function.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> def my_tokenizer(line):
+        ...     return line.split()
+        >>> text_file_dataset = text_file_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
+    """
+
+    @check_python_tokenizer
+    def __init__(self, tokenizer):
+        self.pyfunc = tokenizer
+        self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
+        self.random = False
+
+    def __call__(self, in_array):
+        if not isinstance(in_array, np.ndarray):
+            raise TypeError("input should be a NumPy array. Got {}.".format(type(in_array)))
+        if in_array.dtype.type is np.bytes_:
+            in_array = to_str(in_array)
+        try:
+            tokens = self.tokenizer(in_array)
+        except Exception as e:
+            raise RuntimeError("Error occurred in Pyfunc [" + str(self.pyfunc.__name__) + "], error message: " + str(e))
+        return tokens
+
+
 class SentencePieceTokenizer(TextTensorOperation):
     """
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
@@ -651,43 +688,6 @@ class WordpieceTokenizer(TextTensorOperation):
     def parse(self):
         return cde.WordpieceTokenizerOperation(self.vocab.c_vocab, self.suffix_indicator, self.max_bytes_per_token,
                                                self.unknown_token, self.with_offsets)
-
-
-class PythonTokenizer:
-    """
-    Class that applies user-defined string tokenizer into input string.
-
-    Args:
-        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
-
-    Raises:
-        TypeError: If `tokenizer` is not a callable Python function.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
-        >>> def my_tokenizer(line):
-        ...     return line.split()
-        >>> text_file_dataset = text_file_dataset.map(operations=text.PythonTokenizer(my_tokenizer))
-    """
-
-    @check_python_tokenizer
-    def __init__(self, tokenizer):
-        self.pyfunc = tokenizer
-        self.tokenizer = np.vectorize(lambda x: np.array(tokenizer(x), dtype='U'), signature='()->(n)')
-        self.random = False
-
-    def __call__(self, in_array):
-        if not isinstance(in_array, np.ndarray):
-            raise TypeError("input should be a NumPy array. Got {}.".format(type(in_array)))
-        if in_array.dtype.type is np.bytes_:
-            in_array = to_str(in_array)
-        try:
-            tokens = self.tokenizer(in_array)
-        except Exception as e:
-            raise RuntimeError("Error occurred in Pyfunc [" + str(self.pyfunc.__name__) + "], error message: " + str(e))
-        return tokens
 
 
 if platform.system().lower() != 'windows':

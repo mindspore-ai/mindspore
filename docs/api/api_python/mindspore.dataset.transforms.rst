@@ -44,8 +44,8 @@ Transforms
     mindspore.dataset.transforms.TypeCast
     mindspore.dataset.transforms.Unique
 
-Others
-------
+Utilities
+---------
 
 .. mscnautosummary::
     :toctree: dataset_transforms

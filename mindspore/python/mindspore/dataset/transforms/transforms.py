@@ -464,36 +464,6 @@ class Fill(TensorOperation):
         return cde.FillOperation(self.fill_value)
 
 
-class Relational(IntEnum):
-    """
-    Relationship operator.
-
-    Possible enumeration values are: Relational.EQ, Relational.NE, Relational.GT, Relational.GE, Relational.LT,
-    Relational.LE.
-
-    - Relational.EQ: refers to Equality.
-    - Relational.NE: refers not equal, or Inequality.
-    - Relational.GT: refers to Greater than.
-    - Relational.GE: refers to Greater than or equal to.
-    - Relational.LT: refers to Less than.
-    - Relational.LE: refers to Less than or equal to.
-    """
-    EQ = 0
-    NE = 1
-    GT = 2
-    GE = 3
-    LT = 4
-    LE = 5
-
-
-DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
-                   Relational.NE: cde.RelationalOp.NE,
-                   Relational.GT: cde.RelationalOp.GT,
-                   Relational.GE: cde.RelationalOp.GE,
-                   Relational.LT: cde.RelationalOp.LT,
-                   Relational.LE: cde.RelationalOp.LE}
-
-
 class Mask(TensorOperation):
     r"""
     Mask content of the input tensor with the given predicate.
@@ -811,6 +781,36 @@ class RandomOrder(PyTensorOperation):
             img (PIL image), Transformed image.
         """
         return util.random_order(img, self.transforms)
+
+
+class Relational(IntEnum):
+    """
+    Relationship operator.
+
+    Possible enumeration values are: Relational.EQ, Relational.NE, Relational.GT, Relational.GE, Relational.LT,
+    Relational.LE.
+
+    - Relational.EQ: refers to Equality.
+    - Relational.NE: refers not equal, or Inequality.
+    - Relational.GT: refers to Greater than.
+    - Relational.GE: refers to Greater than or equal to.
+    - Relational.LT: refers to Less than.
+    - Relational.LE: refers to Less than or equal to.
+    """
+    EQ = 0
+    NE = 1
+    GT = 2
+    GE = 3
+    LT = 4
+    LE = 5
+
+
+DE_C_RELATIONAL = {Relational.EQ: cde.RelationalOp.EQ,
+                   Relational.NE: cde.RelationalOp.NE,
+                   Relational.GT: cde.RelationalOp.GT,
+                   Relational.GE: cde.RelationalOp.GE,
+                   Relational.LT: cde.RelationalOp.LT,
+                   Relational.LE: cde.RelationalOp.LE}
 
 
 class _SliceOption(cde.SliceOption):
