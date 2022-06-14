@@ -25,9 +25,6 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   }
 
   const TensorC *input = inputs[0];
-  if (input->shape_size_ == 4 && input->format_ != Format_NHWC) {
-    return NNACL_ERR;
-  }
   TensorC *output0 = outputs[0];
   TensorC *output1 = outputs[1];
   SetDataTypeFormat(output0, input);
@@ -53,7 +50,13 @@ int TopKInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   if (out_shape_size < 1) {
     return NNACL_ERR;
   }
-  out_shape[out_shape_size - 1] = param->k_;
+  if (param->axis_ < 0) {
+    param->axis_ += out_shape_size;
+  }
+  if (param->axis_ < 0 || param->axis_ >= out_shape_size) {
+    return NNACL_ERR;
+  }
+  out_shape[param->axis_] = param->k_;
 
   SetShapeArray(output0, out_shape, out_shape_size);
   SetShapeArray(output1, out_shape, out_shape_size);

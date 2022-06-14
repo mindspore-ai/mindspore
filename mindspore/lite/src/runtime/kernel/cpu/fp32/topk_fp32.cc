@@ -36,10 +36,14 @@ int TopKCPUKernel::Prepare() {
 
 int TopKCPUKernel::ReSize() {
   lite::Tensor *input = in_tensors_.at(0);
-  topk_param_->last_dim_size_ = input->shape().at(input->shape().size() - 1);
-  topk_param_->loop_num_ = 1;
-  for (size_t i = 0; i < input->shape().size() - 1; ++i) {
-    topk_param_->loop_num_ *= input->shape().at(i);
+  topk_param_->dim_size_ = input->shape().at(topk_param_->axis_);
+  topk_param_->outer_loop_num_ = 1;
+  for (size_t i = 0; i < static_cast<size_t>(topk_param_->axis_); ++i) {
+    topk_param_->outer_loop_num_ *= input->shape().at(i);
+  }
+  topk_param_->inner_loop_num_ = 1;
+  for (size_t i = static_cast<size_t>(topk_param_->axis_ + 1); i < input->shape().size(); ++i) {
+    topk_param_->inner_loop_num_ *= input->shape().at(i);
   }
   return RET_OK;
 }
@@ -63,7 +67,7 @@ int TopKCPUKernel::Run() {
   }
   MS_ASSERT(ms_context_->allocator != nullptr);
   topk_param_->topk_node_list_ =
-    ms_context_->allocator->Malloc(static_cast<int>(sizeof(TopkNode)) * topk_param_->last_dim_size_);
+    ms_context_->allocator->Malloc(static_cast<int>(sizeof(TopkNode)) * topk_param_->dim_size_);
   if (topk_param_->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;

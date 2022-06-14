@@ -28,11 +28,13 @@ typedef struct TopkParameter {
   // primitive parameter
   OpParameter op_parameter_;
   int k_;
+  int axis_;
   bool sorted_;
 
   // other parameter
-  int last_dim_size_;
-  int loop_num_;
+  int dim_size_;
+  int outer_loop_num_;
+  int inner_loop_num_;
   void *topk_node_list_;
 } TopkParameter;
 

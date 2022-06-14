@@ -37,10 +37,14 @@ int TopKInt8CPUKernel::ReSize() {
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
   CHECK_NULL_RETURN(parameter);
   lite::Tensor *input = in_tensors_.at(0);
-  parameter->last_dim_size_ = input->shape().at(input->shape().size() - 1);
-  parameter->loop_num_ = 1;
-  for (size_t i = 0; i < input->shape().size() - 1; ++i) {
-    parameter->loop_num_ *= input->shape().at(i);
+  parameter->dim_size_ = input->shape().at(parameter->axis_);
+  parameter->outer_loop_num_ = 1;
+  for (size_t i = 0; i < static_cast<size_t>(parameter->axis_); ++i) {
+    parameter->outer_loop_num_ *= input->shape().at(i);
+  }
+  parameter->inner_loop_num_ = 1;
+  for (size_t i = static_cast<size_t>(parameter->axis_ + 1); i < input->shape().size(); ++i) {
+    parameter->inner_loop_num_ *= input->shape().at(i);
   }
   return RET_OK;
 }
@@ -55,7 +59,7 @@ int TopKInt8CPUKernel::Run() {
 
   MS_ASSERT(ms_context_->allocator != nullptr);
   TopkParameter *parameter = reinterpret_cast<TopkParameter *>(op_parameter_);
-  parameter->topk_node_list_ = ms_context_->allocator->Malloc(sizeof(TopkNodeInt8) * parameter->last_dim_size_);
+  parameter->topk_node_list_ = ms_context_->allocator->Malloc(sizeof(TopkNodeInt8) * parameter->dim_size_);
   if (parameter->topk_node_list_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
     return RET_ERROR;

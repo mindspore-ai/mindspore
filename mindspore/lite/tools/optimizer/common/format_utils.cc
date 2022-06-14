@@ -97,8 +97,7 @@ static const std::unordered_map<std::string, std::vector<size_t>> NHWCOpMap = {
   {ops::kNameSGD, {2}},
   {ops::kNameSpaceToBatch, {1}},
   {ops::kNameSpaceToBatchND, {1}},
-  {ops::kNameSpaceToDepth, {1}},
-  {ops::kNameTopKFusion, {1}}};
+  {ops::kNameSpaceToDepth, {1}}};
 
 static const std::unordered_map<std::string, std::vector<size_t>> NCHWOpMap = {};
 
