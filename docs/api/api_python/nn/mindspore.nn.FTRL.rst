@@ -59,8 +59,7 @@ mindspore.nn.FTRL
 
     **输入：**
 
-    **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
-
+    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
 
     **输出：**
 

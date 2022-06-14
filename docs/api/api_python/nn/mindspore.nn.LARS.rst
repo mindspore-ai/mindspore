@@ -34,7 +34,6 @@ mindspore.nn.LARS
 
     :math:`w` 表示 `params`，:math:`g` 表示 `gradients` ，:math:`t` 表示当前step，:math:`\lambda` 表示 `optimizer` 配置的 `weight_decay` ，:math:`\gamma` 表示 `optimizer` 配置的 `learning_rate` ，:math:`\eta` 表示 `coefficient` 。
 
-
     **参数：**
 
     - **optimizer** (Optimizer) - 待封装和修改梯度的MindSpore优化器。
@@ -47,7 +46,6 @@ mindspore.nn.LARS
 
     - **gradients** (tuple[Tensor]) - 优化器中 `params` 的梯度，shape与优化器中的 `params` 相同。
 
-
     **输出：**
 
-    Union[Tensor[bool], tuple[Parameter]]，取决于 `optimizer` 的输出。
+    Union[Tensor[bool]，tuple[Parameter]]，取决于 `optimizer` 的输出。

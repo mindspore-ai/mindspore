@@ -9,7 +9,6 @@ mindspore.nn.Lamb
 
     LAMB优化器旨在不降低精度的情况下增加训练batch size，支持自适应逐元素更新和精确的分层校正。
 
-
     参数更新如下：
 
     ..  math::

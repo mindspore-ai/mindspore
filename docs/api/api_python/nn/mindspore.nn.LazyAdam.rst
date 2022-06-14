@@ -37,12 +37,12 @@ mindspore.nn.LazyAdam
       .. include:: mindspore.nn.optim_group_gc.rst
       .. include:: mindspore.nn.optim_group_order.rst
 
-    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]): 默认值：1e-3。
+    - **learning_rate** (Union[float, Tensor, Iterable, LearningRateSchedule]) - 默认值：1e-3。
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
-    - **beta1** (float)：`moment1` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.9。
-    - **beta2** (float)：`moment2` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.999。
+    - **beta1** (float) - `moment1` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.9。
+    - **beta2** (float) - `moment2` 的指数衰减率。参数范围（0.0,1.0）。默认值：0.999。
     - **eps** (float) - 将添加到分母中，以提高数值稳定性。必须大于0。默认值：1e-8。
     - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的Tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
