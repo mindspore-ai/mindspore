@@ -68,12 +68,10 @@ OUTPUT_MAP(SpaceToBatchD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(SpaceToBatchD, kNameSpaceToBatch, ADPT_DESC(SpaceToBatchD))
 
 // SpaceToBatchNDD
-INPUT_MAP(SpaceToBatchNDD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(SpaceToBatchNDD) = {
-  {"block_shape", ATTR_DESC(block_shape, AnyTraits<std::vector<int64_t>>())},
-  {"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(SpaceToBatchNDD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SpaceToBatchNDD, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchNDD))
+INPUT_MAP(SpaceToBatchND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(paddings)}};
+ATTR_MAP(SpaceToBatchND) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(SpaceToBatchND) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(SpaceToBatchND, kNameSpaceToBatchNDD, ADPT_DESC(SpaceToBatchND))
 
 // BatchToSpaceD
 INPUT_MAP(BatchToSpaceD) = {{1, INPUT_DESC(x)}};
@@ -83,11 +81,9 @@ ATTR_MAP(BatchToSpaceD) = {
 OUTPUT_MAP(BatchToSpaceD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BatchToSpaceD, kNameBatchToSpace, ADPT_DESC(BatchToSpaceD))
 
-// BatchToSpaceNDD
-INPUT_MAP(BatchToSpaceNDD) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(BatchToSpaceNDD) = {
-  {"block_shape", ATTR_DESC(block_shape, AnyTraits<std::vector<int64_t>>())},
-  {"crops", ATTR_DESC(crops, AnyTraits<std::vector<std::vector<int64_t>>>(), AnyTraits<std::vector<int64_t>>())}};
-OUTPUT_MAP(BatchToSpaceNDD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(BatchToSpaceNDD, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceNDD))
+// BatchToSpaceND
+INPUT_MAP(BatchToSpaceND) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(block_shape)}, {3, INPUT_DESC(crops)}};
+ATTR_MAP(BatchToSpaceND) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BatchToSpaceND) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BatchToSpaceND, kNameBatchToSpaceNd, ADPT_DESC(BatchToSpaceND))
 }  // namespace mindspore::transform

@@ -97,11 +97,11 @@ ATTR_MAP(MatMulV2) = {{"transpose_a", ATTR_DESC(transpose_x1, AnyTraits<bool>())
 OUTPUT_MAP(MatMulV2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MatMulV2, prim::kPrimMatMul->name(), ADPT_DESC(MatMulV2))
 
-// MatrixDiagD
-INPUT_MAP(MatrixDiagD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
-ATTR_MAP(MatrixDiagD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(MatrixDiagD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(MatrixDiagD, kNameMatrixDiagD, ADPT_DESC(MatrixDiagD))
+// MatrixDiag
+INPUT_MAP(MatrixDiag) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(MatrixDiag) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(MatrixDiag) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(MatrixDiag, kNameMatrixDiagD, ADPT_DESC(MatrixDiag))
 
 // MatrixDiagPartD
 INPUT_MAP(MatrixDiagPartD) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(assist)}};
