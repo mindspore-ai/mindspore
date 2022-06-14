@@ -60,6 +60,7 @@ using CuptiGetTimestampFunc = CUptiResult (*)(uint64_t *timestamp);
 using CuptiGetResultStringFunc = CUptiResult (*)(CUptiResult result, const char **str);
 using CuptiGetStreamIdFunc = CUptiResult (*)(CUcontext context, CUstream stream, uint32_t *streamId);
 using CuptiGetDeviceIdFunc = CUptiResult (*)(CUcontext context, uint32_t *deviceId);
+using CuptiFinalizeFunc = CUptiResult (*)();
 
 CUptiResult CuptiSubscribe(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback, void *userdata) {
   static auto func_ptr = reinterpret_cast<CuptiSubscribeFunc>(GetCUPTIFunc("cuptiSubscribe"));
@@ -127,6 +128,11 @@ CUptiResult CuptiGetStreamId(CUcontext context, CUstream stream, uint32_t *strea
 CUptiResult CuptiGetDeviceId(CUcontext context, uint32_t *deviceId) {
   static auto func_ptr = reinterpret_cast<CuptiGetDeviceIdFunc>(GetCUPTIFunc("cuptiGetDeviceId"));
   return func_ptr(context, deviceId);
+}
+
+CUptiResult CuptiFinalize() {
+  static auto func_ptr = reinterpret_cast<CuptiFinalizeFunc>(GetCUPTIFunc("cuptiFinalize"));
+  return func_ptr();
 }
 }  // namespace gpu
 }  // namespace profiler
