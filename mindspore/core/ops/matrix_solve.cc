@@ -41,7 +41,7 @@ abstract::ShapePtr MatrixSolveInferShape(const PrimitivePtr &primitive,
   const int64_t rhs_dim = SizeToLong(rhs_shape.size());
 
   constexpr int64_t min_dims = 2;
-  (void)CheckAndConvertUtils::CheckValue("dimension of 'matrix'", matrix_dim, kEqual, min_dims, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("dimension of 'matrix'", matrix_dim, kGreaterEqual, min_dims, prim_name);
   (void)CheckAndConvertUtils::CheckValue("dimension of 'matrix'", matrix_dim, kEqual, "the dimension of 'rhs'", rhs_dim,
                                          prim_name);
 

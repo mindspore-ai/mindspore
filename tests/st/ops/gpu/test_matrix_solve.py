@@ -22,7 +22,7 @@ import pytest
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('rhs_shape', [[10, 5], [3, 2, 5, 4], [1, 3, 4]])
@@ -38,7 +38,7 @@ def test_matrix_solve(adjoint, rhs_shape, dtype, error):
     matrix_shape[-1] = m
 
     np.random.seed(0)
-    context.set_context(device_target="CPU")
+    context.set_context(device_target="GPU")
 
     matrix = np.random.normal(-10, 10, np.prod(matrix_shape)).reshape(matrix_shape).astype(dtype)
     rhs = np.random.normal(-10, 10, np.prod(rhs_shape)).reshape(rhs_shape).astype(dtype)
@@ -54,7 +54,7 @@ def test_matrix_solve(adjoint, rhs_shape, dtype, error):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('adjoint', [True, False])
 @pytest.mark.parametrize('m', [10])
@@ -67,7 +67,7 @@ def test_matrix_solve_complex(adjoint, m, k, dtype, error):
     Expectation: the result match to scipy
     """
     np.random.seed(0)
-    context.set_context(device_target="CPU")
+    context.set_context(device_target="GPU")
 
     matrix = np.random.normal(-10, 10, m * m).reshape((m, m)).astype(dtype)
     matrix.imag = np.random.normal(-10, 10, m * m).reshape((m, m)).astype(dtype)
