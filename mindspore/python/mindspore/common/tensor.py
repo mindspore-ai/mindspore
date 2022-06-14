@@ -2088,6 +2088,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor, with updated values.
 
+        Raises:
+            TypeError: if indices is not int or tuple.
+            TypeError: if indices is tuple but any of its element is not int.
+            ValueError: the Tensor shape is different from that of v.
+
         Supported Platforms:
             ``Ascend`` ``CPU``
 
@@ -2119,6 +2124,11 @@ class Tensor(Tensor_):
         Returns:
             Tensor, with values after adding.
 
+        Raises:
+            TypeError: if indices is not int or tuple.
+            TypeError: if indices is tuple but any of its element is not int.
+            ValueError: the Tensor shape is different from that of v.
+
         Supported Platforms:
             ``Ascend`` ``CPU``
 
@@ -2149,6 +2159,11 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, with values after subtracting.
+
+        Raises:
+            TypeError: if indices is not int or tuple.
+            TypeError: if indices is tuple but any of its element is not int.
+            ValueError: the Tensor shape is different from that of v.
 
         Supported Platforms:
             ``Ascend`` ``CPU``

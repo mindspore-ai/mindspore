@@ -639,6 +639,7 @@ mindspore.Tensor
 
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
+        - **ValueError** - Tensor的shape与 `v` 的shape不同。
 
     .. py:method:: inplace_sub(v, indices)
 
@@ -660,6 +661,7 @@ mindspore.Tensor
 
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
+        - **ValueError** - Tensor的shape与 `v` 的shape不同。
 
     .. py:method:: inplace_update(v, indices)
 
@@ -681,6 +683,7 @@ mindspore.Tensor
 
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
+        - **ValueError** - Tensor的shape与 `v` 的shape不同。
 
     .. py:method:: intopk(x, k)
 
