@@ -86,7 +86,7 @@ def test_ge_resnet50_cifar10_ascend():
     loss_list = utils.get_loss_data_list(log_file)
     assert loss_list[-1] < 1.7
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_resnet50_cifar10_gpu_accuracy():
