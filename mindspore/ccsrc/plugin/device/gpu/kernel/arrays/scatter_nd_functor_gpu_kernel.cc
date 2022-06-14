@@ -62,12 +62,13 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
       "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   }
 
+  CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices, updates,
+                      input, device_id_, cuda_stream);
+
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-    cudaMemcpyAsync(&output[0], &input[0], input_size_ * sizeof(T), cudaMemcpyDeviceToDevice, cuda_stream),
+    cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice, cuda_stream),
     "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync output failed")
 
-  CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices, updates,
-                      output, device_id_, cuda_stream);
   return true;
 }
 
@@ -83,6 +84,11 @@ bool ScatterNdFunctorGPUKernelMod::Init(const BaseOperatorPtr &base_operator,
   scatter_nd_functor_type_ = iter->second;
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  if (scatter_nd_functor_type_ != SCATTER_ND_FUNC_UPDATE && (inputs[kIndex0]->GetDtype() == kNumberTypeBool)) {
+    const auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it does not support this kernel type: " << kernel_attr;
     return false;
   }
 
@@ -118,8 +124,6 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the dimension of 'indices' must be at least 2, but got "
                              << indices_shape.size();
   }
-
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies{});
 
   unit_size_ = 1;
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
@@ -168,20 +172,26 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &ScatterNdFunctorGPUKern
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int64_t, int),
     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t),
     // Data type: uint64
-    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int),
-    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, uint64_t, int64_t),
-    // Data type: int
-    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int, int),
-    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int, int64_t),
+    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeInt32, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t, int64_t),
+    // Data type: int32_t
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int32_t, int64_t),
+    // Data type: uint32_t
+    DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeInt64, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t, int64_t),
     // Data type: int16_t
     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int16_t, int),
     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int16_t, int64_t),
-    // Data type: uint8_t
-    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int),
-    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int64_t),
+    // Data type: uint16_t
+    DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeInt32, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeInt64, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t, int64_t),
     // Data type: int8_t
     DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int8_t, int),
     DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int8_t, int64_t),
+    // Data type: uint8_t
+    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int),
+    DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t, int64_t),
     // Data type: bool, only for scatter_nd_update
     DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt32, kNumberTypeBool, kNumberTypeBool, bool, int),
     DTYPE_REGISTER(kNumberTypeBool, kNumberTypeInt64, kNumberTypeBool, kNumberTypeBool, bool, int64_t),

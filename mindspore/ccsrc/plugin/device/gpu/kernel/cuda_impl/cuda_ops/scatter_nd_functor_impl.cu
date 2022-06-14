@@ -174,6 +174,18 @@ template CUDA_LIB_EXPORT void CalScatterNdFunctor<int32_t, int32_t>(enum Scatter
                                                                     const int32_t *out_strides, const int32_t *indices,
                                                                     const int32_t *updates, int32_t *input,
                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint32_t, int64_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int64_t *out_strides, const int64_t *indices,
+                                                                     const uint32_t *updates, uint32_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint32_t, int32_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int32_t *out_strides, const int32_t *indices,
+                                                                     const uint32_t *updates, uint32_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
@@ -186,6 +198,18 @@ template CUDA_LIB_EXPORT void CalScatterNdFunctor<int16_t, int32_t>(enum Scatter
                                                                     const int32_t *out_strides, const int32_t *indices,
                                                                     const int16_t *updates, int16_t *input,
                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint16_t, int64_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int64_t *out_strides, const int64_t *indices,
+                                                                     const uint16_t *updates, uint16_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint16_t, int32_t>(enum ScatterNdFunctorType func_type,
+                                                                     const size_t &unit_size, const size_t &num_units,
+                                                                     const size_t &index_depth,
+                                                                     const int32_t *out_strides, const int32_t *indices,
+                                                                     const uint16_t *updates, uint16_t *input,
+                                                                     uint32_t device_id, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CalScatterNdFunctor<uint8_t, int64_t>(enum ScatterNdFunctorType func_type,
                                                                     const size_t &unit_size, const size_t &num_units,
                                                                     const size_t &index_depth,
