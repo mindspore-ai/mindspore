@@ -197,9 +197,66 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
   }
 }
 
+// Move these function to anonymous namespace
+void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value) {
+  MS_EXCEPTION_IF_NULL(flatted_value);
+  for (auto value_element : value) {
+    MS_EXCEPTION_IF_NULL(value_element);
+    if (utils::isa<tensor::TensorPtr>(value_element)) {
+      (void)flatted_value->emplace_back(value_element);
+    } else if (utils::isa<ValueTuplePtr>(value_element)) {
+      auto value_tuple_element = value_element->cast<ValueTuplePtr>();
+      MS_EXCEPTION_IF_NULL(value_tuple_element);
+      FlatValueTupleValue(value_tuple_element->value(), flatted_value);
+    } else {
+      MS_LOG(EXCEPTION) << "The value input to FlatValueTupleValue should only contains Tensor and ValueTuple.";
+    }
+  }
+}
+
+void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
+  MS_EXCEPTION_IF_NULL(flatted_value);
+  if (utils::isa<ValueSequencePtr>(arg)) {
+    auto value_sequence = utils::cast<ValueSequencePtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_sequence);
+    auto sequence_value = value_sequence->value();
+    for (auto &value : sequence_value) {
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        (void)flatted_value->emplace_back(value);
+      } else {
+        FlattenValue(value, flatted_value);
+      }
+    }
+  } else if (utils::isa<ValueDictionaryPtr>(arg)) {
+    auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
+    MS_EXCEPTION_IF_NULL(value_dict);
+    auto dict_value = value_dict->value();
+    for (auto &iter : dict_value) {
+      auto value = iter.second;
+      MS_EXCEPTION_IF_NULL(value);
+      if (value->isa<tensor::Tensor>()) {
+        (void)flatted_value->emplace_back(value);
+      } else {
+        FlattenValue(value, flatted_value);
+      }
+    }
+  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
+    auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(csr_tensor);
+    for (size_t i = 0; i < csr_tensor->GetTensorLength(); ++i) {
+      (void)flatted_value->emplace_back(csr_tensor->GetTensorAt(i));
+    }
+  } else {
+    MS_LOG(EXCEPTION) << "The value input to flatten should only contains be sequence or dictionary, but it is "
+                      << arg.ToString();
+  }
+}
+
 // Insert the front_node related tensor in the input_tensor.
 void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const KernelWithIndex &front_node,
                 std::vector<tensor::TensorPtr> *input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node.first);
   if (iter == parameters.end()) {
     (void)((*input_tensor).emplace_back(nullptr));
@@ -207,6 +264,31 @@ void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters
   }
   auto position = iter - parameters.begin();
   PushInputTensor(args[position], input_tensor, front_node.second);
+}
+
+void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
+                     size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
+  const size_t position = iter - parameters.begin();
+  // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
+  // and there is no need to input a tensor.
+  if (position >= args.size()) {
+    MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
+                 << ".";
+    (void)input_tensor->emplace_back(nullptr);
+    return;
+  }
+  ValuePtrList flatted_value_tuple_value;
+  FlattenValue(args[position], &flatted_value_tuple_value);
+  if (index >= flatted_value_tuple_value.size()) {
+    MS_LOG(EXCEPTION) << "Index out of flatted_value_tuple_value range, index value is " << index
+                      << " and flatted_value_tuple_value size is " << flatted_value_tuple_value.size() << ".";
+  }
+  auto input = flatted_value_tuple_value[index];
+  MS_EXCEPTION_IF_NULL(input);
+  auto tensor_input = input->cast<tensor::TensorPtr>();
+  input_tensor->push_back(tensor_input);
 }
 
 void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_info) {
@@ -333,6 +415,38 @@ bool EnablePyNativeSyncRunning() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   return ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+}
+
+std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
+                                                              const VectorRef &args) {
+  const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
+  std::vector<std::vector<tensor::TensorPtr>> input_tensors;
+  for (const auto &kernel_graph : graph_compiler_info.graphs_) {
+    std::vector<tensor::TensorPtr> input_tensor;
+    MS_EXCEPTION_IF_NULL(kernel_graph);
+    for (const auto &input_node : kernel_graph->input_nodes()) {
+      auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
+      if (element_pair.first) {
+        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensor);
+      } else {
+        const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
+        PushTensor(args, origin_parameters, {front_node, 0}, &input_tensor);
+      }
+    }
+    (void)input_tensors.emplace_back(input_tensor);
+  }
+
+  // Input tensors of the control node.
+  std::vector<tensor::TensorPtr> input_tensor;
+  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
+  // Get inputs of control node which come from the host actor.
+  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
+  for (const auto &parameter : control_node_parameters) {
+    PushTensor(args, origin_parameters, parameter, &input_tensor);
+  }
+  (void)input_tensors.emplace_back(input_tensor);
+
+  return input_tensors;
 }
 }  // namespace
 
@@ -470,7 +584,7 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   PROF_START(compile_func_graph);
   auto root_graph = WrapPrimitives(func_graph);
   MS_EXCEPTION_IF_NULL(root_graph);
-  root_graph_ = root_graph.get();
+  root_graph_ = root_graph;
   // Register a summary callback function, which is called in the final stages of summary.
   graph_compiler_->RegisterSummaryCallBackFunc(callbacks::SummarySaveCallback);
 
@@ -504,8 +618,9 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  if (real_execution_mode_ == kGraphMode && graph_compiler_info->graphs_.size() != 0) {
+  if (real_execution_mode_ == kGraphMode && !graph_compiler_info->graphs_.empty()) {
     // Transform graph to actor DAG, and schedule the actor DAG.
+    ParseControlNodes(*graph_compiler_info);
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
   }
@@ -815,84 +930,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 }
 }  // namespace
 
-void FlatValueTupleValue(const ValuePtrList &value, ValuePtrList *flatted_value) {
-  for (size_t i = 0; i < value.size(); ++i) {
-    auto value_element = value[i];
-    MS_EXCEPTION_IF_NULL(value_element);
-    if (utils::isa<tensor::TensorPtr>(value_element)) {
-      (void)flatted_value->emplace_back(value_element);
-    } else if (utils::isa<ValueTuplePtr>(value_element)) {
-      auto value_tuple_element = value_element->cast<ValueTuplePtr>();
-      MS_EXCEPTION_IF_NULL(value_tuple_element);
-      FlatValueTupleValue(value_tuple_element->value(), flatted_value);
-    } else {
-      MS_LOG(EXCEPTION) << "The value input to FlatValueTupleValue should only contains Tensor and ValueTuple.";
-    }
-  }
-}
-
-void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
-  if (utils::isa<ValueSequencePtr>(arg)) {
-    auto value_sequence = utils::cast<ValueSequencePtr>(arg);
-    MS_EXCEPTION_IF_NULL(value_sequence);
-    auto sequence_value = value_sequence->value();
-    for (auto &value : sequence_value) {
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        (void)flatted_value->emplace_back(value);
-      } else {
-        FlattenValue(value, flatted_value);
-      }
-    }
-  } else if (utils::isa<ValueDictionaryPtr>(arg)) {
-    auto value_dict = utils::cast<ValueDictionaryPtr>(arg);
-    MS_EXCEPTION_IF_NULL(value_dict);
-    auto dict_value = value_dict->value();
-    for (auto &iter : dict_value) {
-      auto value = iter.second;
-      MS_EXCEPTION_IF_NULL(value);
-      if (value->isa<tensor::Tensor>()) {
-        (void)flatted_value->emplace_back(value);
-      } else {
-        FlattenValue(value, flatted_value);
-      }
-    }
-  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
-    auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
-    for (size_t i = 0; i < csr_tensor->GetTensorLength(); ++i) {
-      (void)flatted_value->emplace_back(csr_tensor->GetTensorAt(i));
-    }
-  } else {
-    MS_LOG(EXCEPTION) << "The value input to flatten should only contains be sequence or dictionary, but it is "
-                      << arg.ToString();
-  }
-}
-
-void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
-                     size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
-  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
-  const size_t position = iter - parameters.begin();
-  // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
-  // and there is no need to input a tensor.
-  if (position >= args.size()) {
-    MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
-                 << ".";
-    (void)input_tensor->emplace_back(nullptr);
-    return;
-  }
-  ValuePtrList flatted_value_tuple_value;
-  FlattenValue(args[position], &flatted_value_tuple_value);
-  if (index >= flatted_value_tuple_value.size()) {
-    MS_LOG(EXCEPTION) << "Index out of flatted_value_tuple_value range, index value is " << index
-                      << " and flatted_value_tuple_value size is " << flatted_value_tuple_value.size() << ".";
-  }
-  auto input = flatted_value_tuple_value[index];
-  MS_EXCEPTION_IF_NULL(input);
-  auto tensor_input = input->cast<tensor::TensorPtr>();
-  input_tensor->push_back(tensor_input);
-}
-
-void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, FuncGraph *root_graph) {
+void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph) {
   bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
                                 distributed::recovery::RecoveryContext::GetInstance()->need_reset());
   if (need_contruct_output) {
@@ -911,8 +949,9 @@ void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *ou
 }
 
 void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                                     const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
+                                     const VectorRef &args, VectorRef *outputs) {
   WaitTaskFinish();
+  auto inputs = GetRunGraphInputs(graph_compiler_info, args);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto graphs = graph_compiler_info.graphs_;
   if (graphs.size() > inputs.size()) {
@@ -927,15 +966,22 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       const auto &graph = graphs[i];
       MS_EXCEPTION_IF_NULL(graph);
       graph->set_flag(kFlagPyNativeRunInGraph, true);
-      // Get real format from input tensor before compile graph
-      pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs[i]);
-      graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.front());
+
+      // The size of control_nodes is at least 1 since there is return node in the graph.
+      if (control_nodes_.size() == 1) {
+        MS_LOG(INFO) << "Replace parameter format";
+        // Input tensor is null if there is control-flow in graph.
+        // Need to get tensor after ParseControlNodes.
+        pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs.at(i));
+      }
+      graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.at(i));
       pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
       graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
       // Clear front outputs after the outputs is cached.
       graph->set_front_outputs({});
     }
 
+    ParseControlNodes(graph_compiler_info);
     actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
     MS_EXCEPTION_IF_NULL(actor_set);
     // Multithreading can cause spikes in memory usage and performance fluctuations
@@ -952,9 +998,11 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graph);
   }
 
+  std::vector<std::vector<tensor::TensorPtr>> input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+
   // Release GIL and run actor DAG.
   mindspore::ScopedLongRunning long_running;
-  runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, inputs);
+  runtime::GraphScheduler::GetInstance().Run(actor_set, graph_compiler_info.device_contexts_, input_tensors);
 
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->Summary(graph_compiler_info.graphs_);
@@ -977,12 +1025,15 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
 }
 
-void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
-                                       const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs) {
+void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args,
+                                       VectorRef *outputs) {
   WaitTaskFinish();
-  MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto &op_executor = runtime::OpExecutor::GetInstance();
   op_executor.Register([this]() { BatchBuildCallback(); });
+
+  MS_EXCEPTION_IF_NULL(graph_compiler_);
+  const auto &graphs = graph_compiler_info.graphs_;
+  auto inputs = GetRunGraphInputs(graph_compiler_info, args);
   for (size_t graph_index = 0; graph_index < graphs.size(); ++graph_index) {
     const auto &graph = graphs[graph_index];
     MS_EXCEPTION_IF_NULL(graph);
@@ -1043,13 +1094,12 @@ void MindRTBackend::RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs
 }
 
 void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                                        const std::vector<std::vector<tensor::TensorPtr>> &input_tensors,
-                                        VectorRef *outputs) {
+                                        const VectorRef &args, VectorRef *outputs) {
   bool contain_cut_graph = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                                        [](const KernelGraphPtr &graph) { return graph->has_flag(kFlagsIsCutGraph); });
   if (contain_cut_graph) {
     // Python API will be called in cut_graph, so we cannot release gil here.
-    RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    RunGraphBySingleOp(graph_compiler_info, args, outputs);
   } else {
     bool is_dynamic_shape = std::any_of(graph_compiler_info.graphs_.begin(), graph_compiler_info.graphs_.end(),
                                         [](const KernelGraphPtr &graph) { return graph->is_dynamic_shape(); });
@@ -1061,10 +1111,12 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
 
     // TODO(caifubi): Need to support condition: 1. Dynamic shape. 2. AutoParallel.
     MS_EXCEPTION_IF_NULL(root_graph_);
-    if (root_graph_->has_flag(kFlagIsDynamicStructure) || is_dynamic_shape || is_parallel) {
-      RunGraphBySingleOp(graph_compiler_info.graphs_, input_tensors, outputs);
+    if (root_graph_->has_flag(kFlagIsDynamicStructure) ||
+        // `ms_function + dynamic_shape` is already supported, so there is no need to execute RunGraphBySingleOp.
+        (is_dynamic_shape && root_graph_->has_flag(kFlagIsPynativeBpropGraph)) || is_parallel) {
+      RunGraphBySingleOp(graph_compiler_info, args, outputs);
     } else {
-      RunGraphByActors(actor_info, graph_compiler_info, input_tensors, outputs);
+      RunGraphByActors(actor_info, graph_compiler_info, args, outputs);
     }
   }
   MS_LOG(INFO) << "Status record: end run actor: " << actor_info;
@@ -1094,46 +1146,18 @@ void MindRTBackend::RunGraph(const ActorInfo &actor_info, const VectorRef &args,
   }
   MS_EXCEPTION_IF_NULL(graph_iter->second);
   const auto &graph_compiler_info = *(graph_iter->second);
-  const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
-
   // For pynative and graph mix execution.
   WaitTaskFinish();
 
-  // Transform args to input tensors.
-  // Input tensors of the graph.
-  std::vector<std::vector<tensor::TensorPtr>> input_tensors;
-  for (const auto &kernel_graph : graph_compiler_info.graphs_) {
-    std::vector<tensor::TensorPtr> input_tensor;
-    MS_EXCEPTION_IF_NULL(kernel_graph);
-    for (const auto &input_node : kernel_graph->input_nodes()) {
-      auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
-      if (element_pair.first) {
-        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensor);
-      } else {
-        const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-        PushTensor(args, origin_parameters, {front_node, 0}, &input_tensor);
-      }
-    }
-    (void)input_tensors.emplace_back(input_tensor);
-  }
-
-  // Input tensors of the control node.
-  std::vector<tensor::TensorPtr> input_tensor;
-  MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
-  // Get inputs of control node which come from the host actor.
-  const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
-  for (const auto &parameter : control_node_parameters) {
-    PushTensor(args, origin_parameters, parameter, &input_tensor);
-  }
-  (void)input_tensors.emplace_back(input_tensor);
   // Run in the pynative mode.
   MS_EXCEPTION_IF_NULL(outputs);
   // There will be more than one kernel graph in heterogeneous scenario in a ms function of PyNative Mode.
   if (real_execution_mode_ == kPynativeMode) {
-    RunGraphByCondition(actor_info, graph_compiler_info, input_tensors, outputs);
+    RunGraphByCondition(actor_info, graph_compiler_info, args, outputs);
     return;
   }
 
+  auto input_tensors = GetRunGraphInputs(graph_compiler_info, args);
   // Release python gil.
   mindspore::ScopedLongRunning long_running;
   // Run actor DAG.
@@ -1298,22 +1322,7 @@ std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(con
     ++graph_index;
   }
 
-  FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;
-  for (const auto &func_graph_to_kernel_graph_ids : func_graph_to_kernel_graph_ids_) {
-    const auto &func_graph = func_graph_to_kernel_graph_ids.first;
-    for (const auto &sub_kernel_graphs_ids : func_graph_to_kernel_graph_ids.second) {
-      std::vector<KernelGraphPtr> kernel_graphs;
-      for (const auto &graph_id : sub_kernel_graphs_ids) {
-        const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
-        MS_EXCEPTION_IF_NULL(kernel_graph);
-        (void)kernel_graphs.emplace_back(kernel_graph);
-      }
-      (void)func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graphs);
-    }
-  }
-
   auto parser = std::make_shared<ControlNodeParser>();
-  parser->Parse(control_nodes_, graphs, device_contexts, root_graph, func_graph_to_kernel_graphs);
 
   runtime::KernelMapPosition outputs_order;
   const auto &root_output =
@@ -1634,6 +1643,26 @@ void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &ou
     output_tensor->set_lazy_callback([]() { runtime::OpExecutor::GetInstance().Wait(); });
     outputs->emplace_back(output_tensor);
   }
+}
+
+void MindRTBackend::ParseControlNodes(const GraphCompilerInfo &graph_compile_info) {
+  FuncGraphToKernelGraphGroup func_graph_to_kernel_graphs;
+  for (const auto &func_graph_to_kernel_graph_ids : func_graph_to_kernel_graph_ids_) {
+    const auto &func_graph = func_graph_to_kernel_graph_ids.first;
+    for (const auto &sub_kernel_graphs_ids : func_graph_to_kernel_graph_ids.second) {
+      std::vector<KernelGraphPtr> kernel_graphs;
+      for (const auto &graph_id : sub_kernel_graphs_ids) {
+        const auto &kernel_graph = graph_compiler_->Fetch(graph_id);
+        MS_EXCEPTION_IF_NULL(kernel_graph);
+        (void)kernel_graphs.emplace_back(kernel_graph);
+      }
+      (void)func_graph_to_kernel_graphs[func_graph].emplace_back(kernel_graphs);
+    }
+  }
+
+  graph_compile_info.control_node_parser_->Parse(control_nodes_, graph_compile_info.graphs_,
+                                                 graph_compile_info.device_contexts_, root_graph_,
+                                                 func_graph_to_kernel_graphs);
 }
 }  // namespace compile
 }  // namespace mindspore

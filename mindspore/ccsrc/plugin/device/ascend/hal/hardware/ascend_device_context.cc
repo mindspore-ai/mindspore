@@ -455,7 +455,7 @@ void AscendDeviceContext::PreprocessBeforeRunGraph(const KernelGraphPtr &graph) 
       AllocateGraphMemory(NOT_NULL(graph));
       LoadModel(NOT_NULL(graph));
       AssignOutputNopNodeDeviceAddress(graph);
-    } else if (graph->is_dynamic_shape() && IsGraphMode()) {
+    } else if (graph->is_dynamic_shape() && (IsGraphMode() || graph->has_flag(kFlagPyNativeRunInGraph))) {
       device::ascend::InsertAtomicCleanOps(graph->execution_order(), &node_atomics_);
       SetAtomicCleanToNodes(graph, node_atomics_);  // graph mode may can do it too, instead of update execorder
       opt::DynamicShapeConvertPass(graph);

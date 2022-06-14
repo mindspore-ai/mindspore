@@ -143,7 +143,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // Get saved OpBuildTask in OpExecutor and build all the kernels together in PyNative mode.
   void CompileSingleOpGraphs(const std::vector<std::shared_ptr<runtime::OpBuildTask>> &build_tasks);
 
-  void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, FuncGraph *root_graph);
+  void ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph);
 
   // Restore the outputs tuple by the origin funcGraph output node and output tensors.
   void ConstructOutputs(const AnfNodePtr &output_node, const std::vector<tensor::TensorPtr> &output_tensors,
@@ -159,6 +159,8 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
                                                                 const std::vector<int64_t> *tensors_mask,
                                                                 const std::vector<tensor::TensorPtr> *input_tensors,
                                                                 bool need_erase);
+
+  void ParseControlNodes(const GraphCompilerInfo &graph_compile_info);
 
   // In PyNative mode, the size of single op cache list will be increasing, which lead to memory cost increasing,
   // so the latest single op cache should be erased when cache list size exceeds threshold value.
@@ -176,14 +178,13 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
                       OpRunInfo *op_run_info);
 
   void RunGraphByCondition(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                           const std::vector<std::vector<tensor::TensorPtr>> &input_tensors, VectorRef *outputs);
+                           const VectorRef &args, VectorRef *outputs);
   // Split complete kernel graph to single op graph in PyNative back
   // propagation, then compile and run single op graph.
-  void RunGraphBySingleOp(const std::vector<KernelGraphPtr> &graphs,
-                          const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
+  void RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_info, const VectorRef &args, VectorRef *outputs);
 
   void RunGraphByActors(const ActorInfo &actor_info, const GraphCompilerInfo &graph_compiler_info,
-                        const std::vector<std::vector<tensor::TensorPtr>> &inputs, VectorRef *outputs);
+                        const VectorRef &args, VectorRef *outputs);
 
   void UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs);
 
@@ -209,7 +210,7 @@ class BACKEND_EXPORT MindRTBackend : public Backend {
   // Cache forward op output value node tensor ref count of kernels for back propagation graph in PyNative mode.
   std::map<std::string, size_t> forward_op_output_tensor_id_;
 
-  FuncGraph *root_graph_;
+  FuncGraphPtr root_graph_;
   GraphPartitionPtr graph_partition_;
   std::shared_ptr<GraphCompiler> graph_compiler_;
   std::string device_name_;
