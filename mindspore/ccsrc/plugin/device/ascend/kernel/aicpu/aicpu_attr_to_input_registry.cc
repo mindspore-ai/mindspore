@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimConcat->name(), {{"axis", 0}}},
   {prim::kPrimTranspose->name(), {{"perm", 1}}},
   {prim::kPrimGather->name(), {{"axis", 2}}},
-  {prim::kPrimSlice->name(), {{"begin", 1}, {"size", 2}}}};
+  {prim::kPrimSlice->name(), {{"begin", 1}, {"size", 2}}},
+  {prim::kPrimReduceProd->name(), {{"axis", 1}}}};
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);

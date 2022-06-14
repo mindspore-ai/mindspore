@@ -140,6 +140,7 @@ from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
 from .ragged_range import _raggedrange_aicpu
 from .tan import _tan_aicpu
 from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
+from .reduce_prod import _reduce_prod_aicpu
 from .resize_bilinear import _resize_bilinear_aicpu
 from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
