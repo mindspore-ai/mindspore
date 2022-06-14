@@ -71,7 +71,7 @@ class RuntimeCache {
   std::map<size_t, std::pair<AnfNodePtr, size_t>> prev_node_output_map_;
   std::string device_target_;
   ssize_t output_tensor_num_ = -1;
-  CacheBool is_real_kernel_ = CacheBool::UNCACHED;
+  CacheBool is_real_kernel_ = Uncached;
 };
 // Interface for device kernel program information.
 class KernelInfoDevice {

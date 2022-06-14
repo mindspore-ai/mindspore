@@ -35,7 +35,7 @@ namespace kernel {
 class RtKerDesc {
  public:
   virtual ~RtKerDesc() {}
-  virtual std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo() {
+  virtual std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo(const CNodePtr &kernel_node = nullptr) {
     return std::vector<std::shared_ptr<kernel::KernelBuildInfo>>{};
   }
 };

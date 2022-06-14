@@ -38,6 +38,7 @@
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "common/util/error_manager/error_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
+#include "runtime/data_queue/data_queue_mgr.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -314,6 +315,10 @@ void AscendDeviceContext::Destroy() {
     return;
   }
   MS_LOG(INFO) << "Status record: Destroy start...";
+  if (DataQueueMgr::GetInstance().IsInit()) {
+    MS_EXCEPTION_IF_CHECK_FAIL(DataQueueMgr::GetInstance().Destroy(), "Could not destroy ascend data queue.");
+  }
+
   graph_event_.clear();
   rank_id_ = 0;
   if (runtime_instance_) {

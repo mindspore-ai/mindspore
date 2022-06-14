@@ -275,6 +275,14 @@ class ConfigManager {
   // @param interval - multiprocessing timeout interval in seconds
   void set_multiprocessing_timeout_interval(uint32_t interval) { multiprocessing_timeout_interval_ = interval; }
 
+  // setter function
+  // @param is_dynamic - Indicate whether the dataset is dynamic-shape
+  void set_dynamic_shape(bool is_dynamic) { dynamic_shape_ = is_dynamic; }
+
+  // getter function
+  // @return - Flag to indicate whether the dataset is dynamic-shape
+  bool dynamic_shape() const { return dynamic_shape_; }
+
  private:
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
@@ -308,6 +316,7 @@ class ConfigManager {
   bool enable_watchdog_;                       // Watchdog python thread enabled flag
   uint32_t multiprocessing_timeout_interval_;  // Multiprocessing timeout interval in seconds
   std::string autotune_json_filepath_;         // Filepath name of the final AutoTune Configuration JSON file
+  bool dynamic_shape_{false};
 };
 }  // namespace dataset
 }  // namespace mindspore

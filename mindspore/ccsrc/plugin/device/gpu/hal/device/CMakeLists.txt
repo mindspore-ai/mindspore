@@ -20,16 +20,10 @@ if(ENABLE_GPU)
 
     file(GLOB_RECURSE CUDA_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc" "*.cu")
 
-    set(GPU_QUEUE_SRCS "blocking_queue.cc" "gpu_buffer_mgr.cc")
+    #set(GPU_QUEUE_SRCS "blocking_queue.cc" "gpu_buffer_mgr.cc" "data_queue.cc")
     set(GPU_COLLECTIVE_SRCS "distribution/collective_wrapper.cc"
                             "distribution/mpi_wrapper.cc"
                             "distribution/nccl_wrapper.cc")
-
-    # gpu_queue
-    list(REMOVE_ITEM CUDA_SRC_LIST ${GPU_QUEUE_SRCS})
-    set_property(SOURCE ${GPU_QUEUE_SRCS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-    add_library(gpu_queue SHARED ${GPU_QUEUE_SRCS})
-    target_link_libraries(gpu_queue ${CMAKE_THREAD_LIBS_INIT} ${CUDA_PATH}/lib64/libcudart.so)
 
     list(REMOVE_ITEM CUDA_SRC_LIST "mpi/mpi_initializer.cc" ${GPU_COLLECTIVE_SRCS})
 

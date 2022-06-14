@@ -19,6 +19,7 @@ from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
 from mindspore.dataset.engine import offload
+import mindspore.dataset as ds
 from .. import context, nn
 from ._utils import _exec_datagraph, _get_types_and_shapes, _construct_tensor_list
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _to_full_shapes, _get_pipeline_stages
@@ -43,12 +44,14 @@ def _send_data_no_flag(dataset, epoch_num):
 
 def _dynamic_sink_data(dataset, dataset_iter):
     """Special scenario for dataset with sink_size=1."""
+    _, dataset_shapes = dataset_iter.types_shapes()
     if hasattr(dataset_iter, "sink_size") and \
        dataset_iter.sink_size == 1 and \
        dataset.get_dataset_size() != 1 and \
        hasattr(dataset_iter, "sink_count") and \
        dataset_iter.sink_count == 1 and \
-       context.get_context("device_target") == "Ascend":
+       context.get_context("device_target") == "Ascend" and \
+       not _has_dynamic_shape(dataset_shapes):
         return True
     return False
 
@@ -79,12 +82,14 @@ class _DataWrapper(nn.Cell):
     """
 
     def __init__(self, network, dataset_types, dataset_shapes, queue_name, min_shapes=None, max_shapes=None):
-        super(_DataWrapper, self).__init__(auto_prefix=False, flags=network.get_flags())
+        super(_DataWrapper, self).__init__(
+            auto_prefix=False, flags=network.get_flags())
         # Also copy the flag in `network` construct
         flags = getattr(network.__class__.construct, "_mindspore_flags", {})
         self.info = (dataset_types, dataset_shapes)
         self.add_flags(**flags)
-        self.get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
+        self.get_next = P.GetNext(
+            dataset_types, dataset_shapes, len(dataset_types), queue_name)
         if min_shapes is not None and max_shapes is not None:
             Validator.check_value_type("min_shapes", min_shapes, [list, tuple])
             Validator.check_value_type("max_shapes", max_shapes, [list, tuple])
@@ -100,7 +105,8 @@ class _DataWrapper(nn.Cell):
 def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name,
                                     min_shapes=None, max_shapes=None):
     if not isinstance(network, _DataWrapper):
-        network = _DataWrapper(network, dataset_types, dataset_shapes, queue_name, min_shapes, max_shapes)
+        network = _DataWrapper(
+            network, dataset_types, dataset_shapes, queue_name, min_shapes, max_shapes)
     return network
 
 
@@ -175,7 +181,8 @@ def connect_network_with_dataset(network, dataset_helper):
     aux = _get_dataset_aux(dataset)
 
     if isinstance(dataset_iter, _DatasetIterNormal):
-        raise RuntimeError("The API 'connect_network_with_dataset' should be called in dataset sink mode.")
+        raise RuntimeError(
+            "The API 'connect_network_with_dataset' should be called in dataset sink mode.")
 
     if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
         return network
@@ -184,7 +191,8 @@ def connect_network_with_dataset(network, dataset_helper):
         aux.__network__ = network
 
     if aux.__network__ is not network:
-        raise ValueError("The dataset has been connected to other network, please check the code.")
+        raise ValueError(
+            "The dataset has been connected to other network, please check the code.")
 
     queue_name = dataset.__transfer_dataset__.queue_name
     if _dynamic_sink_scenario(dataset, dataset_iter) and not context.get_context("enable_ge"):
@@ -199,8 +207,10 @@ def connect_network_with_dataset(network, dataset_helper):
                 device_num = _get_device_num() // _get_pipeline_stages()
                 dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
-            network = _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queue_name)
-            aux.__network_manage__ = aux.__network_manage__ if hasattr(aux, '__network_manage__') else dict()
+            network = _generate_dataset_sink_mode_net(
+                network, dataset_shapes, dataset_types, queue_name)
+            aux.__network_manage__ = aux.__network_manage__ if hasattr(
+                aux, '__network_manage__') else dict()
             aux.__network_manage__[key] = network
         return network
 
@@ -208,8 +218,10 @@ def connect_network_with_dataset(network, dataset_helper):
         network = aux.__sink_network__
     else:
         if not context.get_context("enable_ge") and context.get_context("device_target") in ("Ascend", "GPU"):
-            network = offload.check_add_offload_sink_mode(dataset, dataset_helper, network)
-            network = _generate_network_with_dataset(network, dataset_helper, queue_name)
+            network = offload.check_add_offload_sink_mode(
+                dataset, dataset_helper, network)
+            network = _generate_network_with_dataset(
+                network, dataset_helper, queue_name)
             aux.__sink_network__ = network
 
     if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter):
@@ -262,7 +274,8 @@ class DatasetHelper:
         dataset_sink_mode = Validator.check_bool(dataset_sink_mode)
         Validator.check_is_int(sink_size)
         if sink_size < -1 or sink_size == 0:
-            raise ValueError("The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
+            raise ValueError(
+                "The 'sink_size' must be -1 or positive, but got sink_size {}.".format(sink_size))
         if sink_size == -1:
             sink_size = dataset.get_dataset_size()
 
@@ -337,7 +350,7 @@ class DatasetHelper:
 
     def _reset(self, step):
         """Reset the dataset to the provided step."""
-        self.iter._reset(step) # pylint: disable=W0212
+        self.iter._reset(step)  # pylint: disable=W0212
 
     def get_data_info(self):
         """
@@ -370,23 +383,29 @@ class _DatasetIter:
         self.dataset = dataset
         self.sink_size = sink_size
         self.sink_count = self.get_sink_count(dataset)
-
+        self.dataset_types, self.dataset_shapes = _get_types_and_shapes(
+            dataset)
+        self.dynamic_shape = _has_dynamic_shape(self.dataset_shapes) or ds.config.get_dynamic_shape()
+        if self.dynamic_shape:
+            ds.config.set_dynamic_shape(True)
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 # PS mode does not support loop sink and need get the real sink size.
                 if not (_is_role_worker() and _is_ps_mode()):
                     self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
-                                      and context.get_context("device_target") == "Ascend")
+                                      and context.get_context("device_target") == "Ascend" and not self.dynamic_shape)
             dataset.__transfer_dataset__ = _exec_datagraph(dataset, self.sink_size,
-                                                           create_data_info_queue=create_data_info_queue)
+                                                           create_data_info_queue=create_data_info_queue,
+                                                           is_dynamic_shape=self.dynamic_shape)
 
             if not hasattr(dataset, '__no_send__'):
                 _send_data(dataset, epoch_num)
         else:
             # if using an existed __transfer_dataset__, set the queue_name directly
             if not dataset.__transfer_dataset__.queue_name:
-                _cell_graph_executor.set_queue_name(dataset.__transfer_dataset__.queue_name)
+                _cell_graph_executor.set_queue_name(
+                    dataset.__transfer_dataset__.queue_name)
             _send_data_no_flag(dataset, epoch_num)
 
         self.stop_send = dataset.__transfer_dataset__.stop_send
@@ -394,7 +413,6 @@ class _DatasetIter:
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
         self.dynamic_min_max_shapes = dataset.dynamic_min_max_shapes
-        self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
         if hasattr(dataset.__transfer_dataset__, "_reset"):
             self._reset = dataset.__transfer_dataset__._reset  # pylint: disable=W0212
 
@@ -452,7 +470,8 @@ class _DatasetIterGE(_DatasetIter):
         batch_expand_num = 1
         if _need_to_full():
             batch_expand_num = _get_device_num() // _get_pipeline_stages()
-        tensor_list_run = _construct_tensor_list(self.dataset_types, self.dataset_shapes, batch_expand_num)
+        tensor_list_run = _construct_tensor_list(
+            self.dataset_types, self.dataset_shapes, batch_expand_num)
 
         def op():
             return tensor_list_run
@@ -487,7 +506,8 @@ class _DatasetIterMSLoopSink(_DatasetIter):
         # compile is device_number times the batch dimension of tensors for run. Now only support LoopSink.
         if _need_to_full():
             device_num = _get_device_num() // _get_pipeline_stages()
-            self.dataset_shapes = _to_full_shapes(self.dataset_shapes, device_num)
+            self.dataset_shapes = _to_full_shapes(
+                self.dataset_shapes, device_num)
 
         def op():
             return tuple()
@@ -533,7 +553,8 @@ class _DatasetIterNormal:
         self.dataset = dataset
         self.device_num = _get_device_num()
         self.global_rank = _get_global_rank()
-        self.iter = self.dataset.create_tuple_iterator(num_epochs=epoch_num, do_copy=True)
+        self.iter = self.dataset.create_tuple_iterator(
+            num_epochs=epoch_num, do_copy=True)
 
     def __iter__(self):
         return self

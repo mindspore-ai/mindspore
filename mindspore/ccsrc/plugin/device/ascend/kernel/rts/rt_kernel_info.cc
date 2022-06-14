@@ -59,8 +59,8 @@ void GetRtKelInfo(const CNodePtr &kernel_node,
   (void)std::transform(opNameLower.begin(), opNameLower.end(), opNameLower.begin(), ::tolower);
 
   auto ker_desc_ptr = RtKerDescFactory::Create(opNameLower);
-  if (ker_desc_ptr != nullptr && !ker_desc_ptr->GetKernelInfo().empty()) {
-    *kernel_info_list = ker_desc_ptr->GetKernelInfo();
+  if (ker_desc_ptr != nullptr && !ker_desc_ptr->GetKernelInfo(kernel_node).empty()) {
+    *kernel_info_list = ker_desc_ptr->GetKernelInfo(kernel_node);
     return;
   }
   // if can't find kernel info in kernel info database, use the default kernel info

@@ -133,9 +133,6 @@ if(ENABLE_GPU)
         list(APPEND CUDA_NVCC_FLAGS -G)
         message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})
     endif()
-
-    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/blocking_queue.cc"
-            "plugin/device/gpu/hal/device/gpu_buffer_mgr.cc")
     list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/mpi/mpi_initializer.cc"
                                   "plugin/device/gpu/hal/device/distribution/collective_wrapper.cc"
                                   "plugin/device/gpu/hal/device/distribution/mpi_wrapper.cc"
@@ -167,7 +164,6 @@ if(ENABLE_GPU)
     add_dependencies(gpu_cuda_lib proto_input)
     add_subdirectory(plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 endif()
-
 
 ## make protobuf files
 file(GLOB ONNX_PROTO "" ${CMAKE_SOURCE_DIR}/third_party/proto/onnx/onnx.proto)
@@ -334,6 +330,7 @@ set(BACKEND_SUB_COMP
         runtime/graph_scheduler
         runtime/hardware
         runtime/pynative
+        runtime/data_queue
         plugin/device/ascend/hal/device
         plugin/device/ascend/hal/hardware
         plugin/device/ascend/hal/hccl_adapter
@@ -392,7 +389,7 @@ if(ENABLE_CPU)
 endif()
 if(ENABLE_GPU)
     message("add gpu lib to mindspore_backend")
-    target_link_libraries(mindspore_backend PRIVATE gpu_cuda_lib gpu_queue cublas cuda_ops
+    target_link_libraries(mindspore_backend PRIVATE gpu_cuda_lib cublas cuda_ops
             ${CUDA_PATH}/lib64/libcurand.so
             ${CUDNN_LIBRARY_PATH}
             ${CUDA_PATH}/lib64/libcudart.so

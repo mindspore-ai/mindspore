@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUFFER_MGR_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GPU_GPU_BUFFER_MGR_H_
+#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_DATA_QUEUE_MGR_H_
+#define MINDSPORE_CCSRC_RUNTIME_DEVICE_DATA_QUEUE_MGR_H_
 
 #include <unistd.h>
 #include <cstring>
@@ -25,7 +25,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "plugin/device/gpu/hal/device/blocking_queue.h"
+#include "runtime/data_queue/blocking_queue.h"
 
 #define EXPORT __attribute__((visibility("default")))
 
@@ -60,31 +60,32 @@ class Semaphore {
   int count_;
 };
 
-class GpuBufferMgr {
+class DataQueueMgr {
  public:
-  EXPORT GpuBufferMgr() : cur_dev_id_(0), init_(false), closed_(false), open_by_dataset_(0) {}
+  EXPORT DataQueueMgr() : cur_dev_id_(0), init_(false), closed_(false), open_by_dataset_(0) {}
 
-  EXPORT virtual ~GpuBufferMgr() = default;
+  EXPORT virtual ~DataQueueMgr() = default;
 
-  EXPORT static GpuBufferMgr &GetInstance() noexcept;
+  EXPORT static DataQueueMgr &GetInstance() noexcept;
 
   EXPORT BlockQueueStatus_T Create(const std::string &channel_name, void *addr, const std::vector<size_t> &shape,
                                    const size_t &capacity);
 
   // call for Push thread
-  EXPORT BlockQueueStatus_T Open(const std::string &channel_name, const std::vector<size_t> &shape,
-                                 std::function<void(void *, int32_t)> func);
+  EXPORT BlockQueueStatus_T Open(const std::string &channel_name, std::function<void(void *, int32_t)> func);
 
   // call for Front/Pop thread
-  EXPORT BlockQueueStatus_T Open(const std::string &channel_name, const std::vector<size_t> &shape);
-
-  EXPORT BlockQueueStatus_T Push(const std::string &channel_name, const std::vector<DataItemGpu> &data,
+  EXPORT BlockQueueStatus_T Open(const std::string &channel_name);
+  EXPORT BlockQueueStatus_T Push(const std::string &channel_name, const std::vector<DataQueueItem> &data,
                                  unsigned int timeout_in_sec);
-  EXPORT BlockQueueStatus_T Front(const std::string &channel_name, std::vector<DataItemGpu> *data);
+  EXPORT BlockQueueStatus_T Front(const std::string &channel_name, std::vector<DataQueueItem> *data);
   EXPORT BlockQueueStatus_T Pop(const std::string &channel_name);
   EXPORT BlockQueueStatus_T Clear(const std::string &channel_name);
 
-  EXPORT void set_device_id(int device_id);
+  EXPORT BlockQueueStatus_T OpenDynamicBufQueue(const std::string &channel_name,
+                                                const std::function<void(void *, int32_t)> func);
+  EXPORT BlockQueueStatus_T CreateDynamicBufQueue(const std::string &channel_name, const size_t &capacity);
+  EXPORT BlockQueueStatus_T OpenDynamicBufQueue(const std::string &channel_name);
 
   EXPORT void Close(const std::string &channel_name) noexcept;
 
@@ -105,24 +106,26 @@ class GpuBufferMgr {
   EXPORT size_t Capacity(const std::string &channel_name);
 
  private:
-  void set_device() const;
-
   int cur_dev_id_;
   bool init_;
   bool closed_;
   std::mutex mutex_;
   std::mutex close_mutex_;
+  std::condition_variable cv_;
   // how many queues opened by dataset
   int open_by_dataset_;
   Semaphore sema;
+  bool dynamic_shape_{false};
+  size_t default_capacity_{2};
 
   std::map<std::string, std::shared_ptr<BlockingQueue>> name_queue_map_;
 
   inline bool isCreated(const std::string &channel_name);
 
-  GpuBufferMgr(const GpuBufferMgr &) = delete;
-  GpuBufferMgr &operator=(const GpuBufferMgr &) = delete;
+  DataQueueMgr(const DataQueueMgr &) = delete;
+  DataQueueMgr &operator=(const DataQueueMgr &) = delete;
 };
+bool PopDataFromDataQueue(const AnfNodePtr &data_kernel);
 }  // namespace device
 }  // namespace mindspore
 

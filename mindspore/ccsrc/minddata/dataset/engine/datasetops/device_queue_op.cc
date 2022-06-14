@@ -41,11 +41,13 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
       data_info_queue_ptr_(nullptr),
       first_fetch_flag_(false),
       first_push_flag_(false) {
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  dynamic_shape_ = cfg->dynamic_shape();
+
 #ifdef ENABLE_GPUQUE
   // Get the total device num of current machine
   int32_t device_count = 0;
   cudaGetDeviceCount(&device_count);
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();  // Get the current rank_id
   if (device_count > 0) {
     rank_id_ = rank_id_ % device_count;
@@ -154,7 +156,12 @@ Status DeviceQueueOp::operator()() {
       RETURN_STATUS_UNEXPECTED(
         "[Internal ERROR] Create channel for sending data failed, please check DEVICE ID setting.");
     }
-    RETURN_IF_NOT_OK(SendDataToAscend());
+
+    if (dynamic_shape_) {
+      RETURN_IF_NOT_OK(SendDataToAscendDynamic());
+    } else {
+      RETURN_IF_NOT_OK(SendDataToAscend());
+    }
 #endif
   } else if (device_type_ == DeviceType::GPU) {
 #ifdef ENABLE_GPUQUE
@@ -414,6 +421,10 @@ Status DeviceQueueOp::LaunchParallelCopyThread() {
   return Status::OK();
 }
 
+bool DeviceQueueOp::NoExceptionRaised() {
+  return !TaskManager::FindMe()->Interrupted() && !mindspore::DataQueueHandler::IsClosed();
+}
+
 Status DeviceQueueOp::PushDataToGPU() {
   RETURN_UNEXPECTED_IF_NULL(tree_);
   // Every thread use cuda api should SetThreadDevice
@@ -442,12 +453,17 @@ Status DeviceQueueOp::PushDataToGPU() {
   bool eoe_flag = item.eoe_flag;
   int64_t send_batch = 0;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
+  BlockQueueStatus_T ret;
+  if (dynamic_shape_) {
+    ret = mindspore::DataQueueHandler::OpenDynamicBufQueue(channel_name_, release_function);
+  } else {
+    ret = mindspore::DataQueueHandler::Open(channel_name_, release_function);
+  }
   if (ret != BlockQueueStatus_T::SUCCESS) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for sending data.");
   }
 
-  while (!(items.empty() && !eoe_flag) && !GpuBufferMgr::GetInstance().IsClosed()) {
+  while (!(items.empty() && !eoe_flag) && !mindspore::DataQueueHandler::IsClosed()) {
     if (!eoe_flag) {
 #ifdef ENABLE_DUMP_IR
       md_channel_info_->RecordBatchQueue(gpu_connector_->size());
@@ -482,14 +498,14 @@ Status DeviceQueueOp::PushDataToGPU() {
       }
 #endif
     }
-    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+    if (NoExceptionRaised()) {
       auto rc = gpu_connector_->Pop(0, &item);
       items = std::move(item.data_item);
       eoe_flag = item.eoe_flag;
       // If the batches send by dataset are more than gpu calculate, gpu will core for no signal notify.
       if (rc.IsError()) {
-        GpuBufferMgr::GetInstance().Close(channel_name_);
-        GpuBufferMgr::GetInstance().CloseConfirm();
+        mindspore::DataQueueHandler::Close(channel_name_);
+        mindspore::DataQueueHandler::CloseConfirm();
         return rc;
       }
     } else {
@@ -498,51 +514,14 @@ Status DeviceQueueOp::PushDataToGPU() {
   }
 
   // now we use this flag to judge whether exception raised.
-  if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+  if (NoExceptionRaised()) {
     send_finished_ = true;
   }
   tree_->SetFinished();
   MS_LOG(INFO) << "ExecutionTree finished.  Device queue pushed number of batches: " << send_batch;
 
-  GpuBufferMgr::GetInstance().Close(channel_name_);
-  GpuBufferMgr::GetInstance().CloseConfirm();
-  return Status::OK();
-}
-
-Status DeviceQueueOp::RetryPushData(const std::vector<DataItemGpu> &items, const bool profiling, uint64_t *push_time) {
-  bool flag_log = false;
-#ifndef ENABLE_SECURITY
-  uint64_t start_time = 0;
-  if (profiling) {
-    start_time = ProfilingTime::GetCurMilliSecond();
-  }
-#endif
-  while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
-    BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(channel_name_, items, WAIT_TIME);
-    if (ret) {
-      if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-        RETURN_STATUS_UNEXPECTED(
-          "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
-          "drop_reminder is False, or without resize image into the same size, these will cause shapes differs).");
-      } else {
-        if (!stop_send_) {
-          if (!flag_log) {
-            MS_LOG(DEBUG) << "Retry pushing data...";
-            flag_log = true;
-          }
-          continue;
-        }
-        break;
-      }
-    } else {
-      break;
-    }
-  }
-#ifndef ENABLE_SECURITY
-  if (profiling) {
-    *push_time = ProfilingTime::GetCurMilliSecond() - start_time;
-  }
-#endif
+  mindspore::DataQueueHandler::Close(channel_name_);
+  mindspore::DataQueueHandler::CloseConfirm();
   return Status::OK();
 }
 
@@ -554,12 +533,12 @@ Status DeviceQueueOp::WorkerEntry(int32_t worker_id) {
   TensorRow current_row;
   uint32_t batch_num = 0;
   RETURN_IF_NOT_OK(receive_queues_[worker_id]->PopFront(&current_row));
-  while (!current_row.quit() && !GpuBufferMgr::GetInstance().IsClosed()) {
+  while (!current_row.quit() && !mindspore::DataQueueHandler::IsClosed()) {
     GpuConnectorItem connector_item = {{}, current_row.eoe()};
     if (!connector_item.eoe_flag) {
-      std::vector<device::DataItemGpu> items;
+      std::vector<device::DataQueueItem> items;
       for (auto &i : current_row) {
-        device::DataItemGpu data_item;
+        device::DataQueueItem data_item;
         data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
         data_item.shapes_ = i->shape().AsVector();
         data_item.data_ptr_ = nullptr;
@@ -596,8 +575,8 @@ Status DeviceQueueOp::SendDataToGPU() {
   int64_t num_buf = 0;
   bool is_break_loop = false;
   uint32_t batch_num = 0;
-  while (!current_row.eof() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
-    while (!current_row.eoe() && !is_break_loop && !GpuBufferMgr::GetInstance().IsClosed()) {
+  while (!current_row.eof() && !is_break_loop && !mindspore::DataQueueHandler::IsClosed()) {
+    while (!current_row.eoe() && !is_break_loop && !mindspore::DataQueueHandler::IsClosed()) {
       batch_num++;
       RETURN_IF_NOT_OK(FilterMetadata(&current_row));
       RETURN_IF_NOT_OK(CheckExceptions(current_row));
@@ -610,7 +589,7 @@ Status DeviceQueueOp::SendDataToGPU() {
 #ifndef ENABLE_SECURITY
       batch_record_start = ProfilingTime::GetCurMilliSecond();
 #endif
-      if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+      if (NoExceptionRaised()) {
         RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
       } else {
         is_break_loop = true;
@@ -623,7 +602,7 @@ Status DeviceQueueOp::SendDataToGPU() {
       RETURN_IF_NOT_OK(receive_queues_[num_buf++ % num_workers_]->Add(std::move(eoe_flag)));
     }
 
-    if (!TaskManager::FindMe()->Interrupted() && !GpuBufferMgr::GetInstance().IsClosed()) {
+    if (NoExceptionRaised()) {
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&current_row));
     } else {
       is_break_loop = true;
@@ -640,7 +619,7 @@ Status DeviceQueueOp::SendDataToGPU() {
   return Status::OK();
 }
 
-Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row,
+Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataQueueItem> *items, const TensorRow &curr_row,
                                        const int32_t &worker_id) {
   int i = 0;
   for (auto &sub_item : *items) {
@@ -667,16 +646,16 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
 Status DeviceQueueOp::ClearDevice() {
   MS_LOG(INFO) << "Clearing the data in GPU device: " << device_id_ << " channel: " << channel_name_;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
-  auto ret = GpuBufferMgr::GetInstance().Open(channel_name_, {}, release_function);
+  auto ret = mindspore::DataQueueHandler::Open(channel_name_, release_function);
   if (ret != BlockQueueStatus_T::SUCCESS) {
     RETURN_STATUS_UNEXPECTED("[Internal ERROR] Failed to open channel for clearing the device.");
   }
 
-  ret = GpuBufferMgr::GetInstance().Clear(channel_name_);
+  ret = mindspore::DataQueueHandler::Clear(channel_name_);
   CHECK_FAIL_RETURN_UNEXPECTED(!ret, "Failed to clear the device.");
 
-  GpuBufferMgr::GetInstance().Close(channel_name_);
-  GpuBufferMgr::GetInstance().CloseConfirm();
+  mindspore::DataQueueHandler::Close(channel_name_);
+  mindspore::DataQueueHandler::CloseConfirm();
   return Status::OK();
 }
 
@@ -790,6 +769,115 @@ void DeviceQueueOp::PrintEndInfoWhenFirstBatch(bool *first_push_flag) {
     MS_LOG(INFO) << "Loading dataset and push first batch into device successful.";
     *first_push_flag = true;
   }
+}
+Status DeviceQueueOp::RetryPushData(const std::vector<DataQueueItem> &items, const bool profiling,
+                                    uint64_t *push_time) {
+  bool flag_log = false;
+#ifndef ENABLE_SECURITY
+  uint64_t start_time = 0;
+  if (profiling) {
+    start_time = ProfilingTime::GetCurMilliSecond();
+  }
+#endif
+  while (!mindspore::DataQueueHandler::IsClosed() && !TaskManager::FindMe()->Interrupted()) {
+    BlockQueueStatus_T ret = mindspore::DataQueueHandler::Push(channel_name_, items, WAIT_TIME);
+    if (ret != BlockQueueStatus_T::SUCCESS) {
+      if (ret == BlockQueueStatus_T::ERROR_INPUT) {
+        return Status(
+          StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+          "Invalid data, the types or shapes of current row is different with previous row(i.e. do batch operation but "
+          "drop_reminder is False, or without resize image into the same size, these will cause shapes differs).");
+      } else {
+        if (!stop_send_) {
+          if (!flag_log) {
+            MS_LOG(DEBUG) << "Retry pushing data...";
+            flag_log = true;
+          }
+          continue;
+        }
+        break;
+      }
+    } else {
+      break;
+    }
+  }
+#ifndef ENABLE_SECURITY
+  if (profiling) {
+    *push_time = ProfilingTime::GetCurMilliSecond() - start_time;
+  }
+#endif
+  return Status::OK();
+}
+
+Status DeviceQueueOp::SendDataToAscendDynamic() {
+  MS_LOG(DEBUG) << "Dynamic Device queue, sending data to Ascend.";
+
+  int64_t send_batch = 0;
+  uint64_t data_queue_cost = 0;
+
+  bool is_break_loop = false;
+
+  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
+  std::function<void(void *, int32_t)> release_function([](void *, int32_t) { return; });
+  auto ret = mindspore::DataQueueHandler::OpenDynamicBufQueue(channel_name_, release_function);
+  if (ret != BlockQueueStatus_T::SUCCESS) {
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                  "[Internal ERROR] Failed to open channel for sending data.");
+  }
+
+  TensorRow curr_row;
+  RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
+  first_fetch_flag_ = true;
+
+  while (!curr_row.eof() && !is_break_loop) {
+    while (!curr_row.eoe() && !is_break_loop) {
+      RETURN_IF_NOT_OK(FilterMetadata(&curr_row));
+      RETURN_IF_NOT_OK(CheckExceptions(curr_row));
+      std::vector<device::DataQueueItem> items;
+      for (auto &i : curr_row) {
+        device::DataQueueItem data_item;
+        data_item.data_len_ = static_cast<size_t>(i->SizeInBytes());
+        data_item.shapes_ = i->shape().AsVector();
+        data_item.data_ptr_ = const_cast<void *>((const void *)(i->GetBuffer()));
+        data_item.data_type_ = i->type().ToString();
+        items.push_back(data_item);
+      }
+
+      RETURN_IF_NOT_OK(RetryPushData(items, false, &data_queue_cost));
+      if (create_data_info_queue_) {
+        DATA_INFO data_info;
+        (void)std::transform(curr_row.begin(), curr_row.end(), std::back_inserter(data_info),
+                             [](const std::shared_ptr<Tensor> &ts) { return std::make_pair(ts->type(), ts->shape()); });
+        RETURN_IF_NOT_OK(data_info_queue_ptr_->Add(data_info));
+      }
+      send_batch++;
+      if (total_batch_ > 0 && send_batch >= total_batch_) {
+        is_break_loop = true;
+        break;
+      }
+
+      RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
+    }
+
+    if (curr_row.eoe() && send_epoch_end_) {
+      MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
+      stop_send_ = true;
+    }
+
+    RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&curr_row));
+  }
+
+  // now we use this flag to judge whether exception raised.
+  if (stop_send_ || !TaskManager::FindMe()->Interrupted()) {
+    send_finished_ = true;
+  }
+  tree_->SetFinished();
+  MS_LOG(INFO) << "ExecutionTree finished. Device queue sent number of batches: " << send_batch;
+
+  mindspore::DataQueueHandler::Close(channel_name_);
+  mindspore::DataQueueHandler::CloseConfirm();
+
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

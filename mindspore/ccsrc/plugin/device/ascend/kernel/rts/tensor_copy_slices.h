@@ -55,7 +55,7 @@ class TensorCopySlicesDesc : public RtKerDesc {
  public:
   TensorCopySlicesDesc();
   ~TensorCopySlicesDesc() override;
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo() override;
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo(const CNodePtr &kernel_node = nullptr) override;
 };
 
 MS_REG_RTKERNEL_DESC(tensorcopyslices, TensorCopySlicesDesc);

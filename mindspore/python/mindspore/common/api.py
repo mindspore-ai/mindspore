@@ -979,7 +979,7 @@ class _CellGraphExecutor:
         self._graph_executor.set_kernel_build_server_dir(os.path.split(kernel_build_server.__file__)[0] + os.sep)
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
-                     input_indexs, phase='dataset'):
+                     input_indexs, phase='dataset', need_run=True):
         """
         Initialization interface for calling data subgraph.
 
@@ -1001,7 +1001,8 @@ class _CellGraphExecutor:
                                  types=dataset_types,
                                  shapes=dataset_shapes,
                                  input_indexs=input_indexs,
-                                 phase=phase):
+                                 phase=phase,
+                                 need_run=need_run):
             raise RuntimeError("Failure to init and dataset subgraph!")
         self._graph_executor.set_queue_name(queue_name)
         return True

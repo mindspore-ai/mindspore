@@ -144,7 +144,7 @@ MemCpyAsyncDesc::MemCpyAsyncDesc() {}
 
 MemCpyAsyncDesc::~MemCpyAsyncDesc() {}
 
-std::vector<std::shared_ptr<kernel::KernelBuildInfo>> MemCpyAsyncDesc::GetKernelInfo() {
+std::vector<std::shared_ptr<kernel::KernelBuildInfo>> MemCpyAsyncDesc::GetKernelInfo(const CNodePtr &) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> memcpy_build_info{};
   for (const auto &format : format_list) {
     for (const auto &type : data_type_list) {

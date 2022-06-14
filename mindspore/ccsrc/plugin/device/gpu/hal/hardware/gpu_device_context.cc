@@ -25,7 +25,7 @@
 #include "plugin/device/gpu/hal/device/gpu_stream_assign.h"
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
-#include "plugin/device/gpu/hal/device/gpu_buffer_mgr.h"
+#include "runtime/data_queue/data_queue_mgr.h"
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
@@ -167,11 +167,11 @@ void GPUDeviceContext::Destroy() {
   }
 #endif
 
-  if (GpuBufferMgr::GetInstance().IsInit()) {
-    if (!GpuBufferMgr::GetInstance().IsClosed() && !GpuBufferMgr::GetInstance().CloseNotify()) {
+  if (DataQueueMgr::GetInstance().IsInit()) {
+    if (!DataQueueMgr::GetInstance().IsClosed() && !DataQueueMgr::GetInstance().CloseNotify()) {
       MS_LOG(ERROR) << "Could not close gpu data queue.";
     }
-    CHECK_OP_RET_WITH_ERROR(GpuBufferMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
+    CHECK_OP_RET_WITH_ERROR(DataQueueMgr::GetInstance().Destroy(), "Could not destroy gpu data queue.");
   }
 
   // Release stream, cudnn and cublas handle, etc.
