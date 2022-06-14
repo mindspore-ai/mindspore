@@ -78,3 +78,4 @@ from .buffer_sample import _buffer_sample_cpu
 from .priority_replay_buffer import _prb_push_op_cpu
 from .priority_replay_buffer import _prb_sample_op_cpu
 from .space_to_batch_nd import _space_to_batch_nd_cpu
+from .sspaddmm import _sspaddmm_cpu

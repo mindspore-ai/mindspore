@@ -73,7 +73,7 @@ from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
-from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix
+from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
@@ -1604,6 +1604,18 @@ test_case_math_ops = [
         'block': DenseToCSRSparseMatrix(),
         'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
                         Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))],
+        'skip': ['backward']}),
+    ('Sspaddmm', {
+        'block': Sspaddmm(),
+        'desc_inputs': [Tensor(np.array([[0, 1], [0, 1]]).astype(np.int64)),
+                        Tensor(np.array([1, 2]).astype(np.int32)),
+                        Tensor(np.array([3, 3]).astype(np.int64)),
+                        Tensor(np.array([[0, 1], [2, 2]]).astype(np.int64)),
+                        Tensor(np.array([3, 4]).astype(np.int32)),
+                        Tensor(np.array([3, 3]).astype(np.int64)),
+                        Tensor(np.array([[1, 2, 3], [1, 3, 2], [3, 2, 1]]).astype(np.int32)),
+                        Tensor(np.array(1).astype(np.int32)),
+                        Tensor(np.array(1).astype(np.int32))],
         'skip': ['backward']}),
     ('Embedding_1', {
         'block': Embedding(vocab_size=10, embedding_size=3),

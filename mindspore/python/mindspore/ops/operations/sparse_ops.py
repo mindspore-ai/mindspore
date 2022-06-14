@@ -379,3 +379,103 @@ class DenseToDenseSetOperation(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y_indices', 'y_values', 'y_shape'])
         validator.check_value_type("set_operation", set_operation, [str], self.name)
         validator.check_value_type("validate_indices", validate_indices, [bool], self.name)
+
+
+class Sspaddmm(Primitive):
+    r"""
+    Matrix multiplies a sparse tensor `x2` with a dense tensor `x3`, then adds the sparse tensor `x1`.
+    If `x1_shape` is :math:`(s0, s1)`, `x2_shpae` should be :math:`(s0, s2)`, the `x3_shape` should be :math:`(s2, s1)`.
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    .. math::
+        out =\beta * x1  + \alpha * (x2 @ x3),
+
+    Inputs:
+        - **x1_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int32, int64. The shape is :math:`(2, n)`.  If `x1_shape` is :math:`(s0, s1)`, the row index
+          value of `x1_indices` should be a non-negative and less than `s0` int number, the col index value of
+          `x1_indices` should be a non-negative and less than `s1` int number.
+        - **x1_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in
+          the `x1_indices`. Support float32, float64, int8, int16, int32, int64, uint8. The dtype should be the same as
+          `x2_values` and `x3_dense`. The shape should be :math:`(n,)`.
+        - **x1_shape** (Tensor) - A 1-D Tensor, specifies the shape of sparse tensor. Support int32, int64,
+          have 2 positive int elements, shape is :math:`(2,)`. The dtype should be the same as `x1_indices`.
+        - **x2_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          Support int32, int64. The shape is :math:`(2, n)`. If `x2_shape` is :math:`(s0, s2)`, the row index
+          value of `x2_indices` should be a non-negative and less than `s0` int number, the col index value of
+          `x2_indices` should be a non-negative and less than `s2` int number.
+        - **x2_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `x2_indices`.
+          Support float32, float64, int8, int16, int32, int64, uint8. The dtype should be the same as `x1_values`
+          and `x3_dense`. The shape should be :math:`(n,)`.
+        - **x2_shape** (Tensor) - A 1-D Tensor, specifies the shape of sparse tensor. Support int32,int64,
+          have 2 positive int elements, shape is :math:`(2,)`. The dtype is same as `x2_indices`.
+        - **x3_dense** (Tensor) - A 2-D Tensor, the dtype should be the same as `x2_values` and `x3_dense`.
+        - **alpha** (Tensor) - A 0-D or 1-D Tensor, the weight of x1. If alpha is 1-D tensor,
+          the shape should be :math:`()` otherwise the shape is :math:`(1,)`. Support uint8, uint16, uint32, uint64,
+          int8, int16, int32, int64, float16, float32, float64. If the dtype of alpha is not the same with expected
+          output dtype, alpha value should be convert without overflow.
+        - **beta** (Tensor) - A 0-D or 1-D, the weight of x2@x3. If alpha is 1-D tensor,
+          the shape should be :math:`()` otherwise the shape is :math:`(1,)`. Support uint8, uint16, uint32, uint64,
+          int8, int16, int32, int64, float16, float32, float64. If the `x1_values` dtype is byte, char, short, int,
+          long, the dtype of beta doesn't support float16, float32, float64.
+
+    Outputs:
+        - **y_indices** (Tensor) - A 2-D Tensor, represents the position of the element in the sparse tensor.
+          The dtype is int64, each element value should be a non-negative int number. The shape is :math:`(2, n)`.
+        - **y_values** (Tensor) - A 1-D Tensor, represents the value corresponding to the position in the `y_indices`.
+          The dtype is the same as `x1_values` . The shape should be :math:`(n,)`.
+        - **y_shape** (Tensor) - A 1-D Tensor, A positive int tuple which specifies the shape of sparse tensor.
+          The dtype is int64, the values is the same as `x1_shape`.
+
+    Raises:
+        TypeError: If dtype of `x1_indices`, `x1_shape` is not the same and neither int32 nor int64.
+        TypeError: If dtype of `x2_indices`, `x2_shape` is not the same and not int32 or int64.
+        TypeError: If type of `x1_values`, `x2_values`, `x3_dense` is not the same.
+        TypeError: If dtype of `x1_values`, `x2_values`, `x3_dense` is not uint8, int8, int16, int32, int64, float32,
+                   float64.
+        ValueError: If shape of `x1_indices`, `x2_indices` is not (2, n).
+        ValueError: If shape of `x1_values`, `x2_values` is not (n,).
+        ValueError: If dim0 size of `x1_values` is not the same with dim1 size of `x1_indices`.
+        ValueError: If dim0 size of `x2_values` is not the same with dim1 size of `x2_indices`.
+        ValueError: If shape of `x1_shape` or shape of `x2_shape` is not (2,).
+        ValueError: If dim of `x3_dense` is not 2D.
+        ValueError: If dtype of `alpha` is not the same with `x2_values` dtype, and alpha value convert to the
+                    `x2_values` dtype overflow.
+        TypeError: If dtype of `alpha`, `beta` is not uint8, uint16, uint32, uint64, int8, int16, int32, int64,
+                   float16, float32, float64.
+        TypeError: If the `x1_values` dtype is byte, char, short, int, long, while the dtype of beta is float16,
+                   float32 or float64.
+        ValueError: If the shape of `alpha`, `beta` is not () or (1,).
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1_indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int64)
+        >>> x1_values = Tensor(np.array([1, 2]), mstype.int32)
+        >>> x1_shape = Tensor(np.array([3, 3]), mstype.int64)
+        >>> x2_indices = Tensor(np.array([[0, 1], [2, 2]]), mstype.int64)
+        >>> x2_values = Tensor(np.array([3, 4]), mstype.int32)
+        >>> x2_shape = Tensor(np.array([3, 3]), mstype.int64)
+        >>> x3_dense = Tensor(np.array([[1, 2, 3], [1, 3, 2], [3, 2, 1]]), mstype.int32)
+        >>> alpha = Tensor(np.array(1), mstype.int32)
+        >>> beta = Tensor(np.array(1), mstype.int32)
+        >>> sspaddmm = ops.Sspaddmm()
+        >>> out_indices, out_values, out_shapes = sspaddmm(x1_indices, x1_values, x1_shape,
+        ... x2_indices, x2_values, x2_shape, x3_dense, alpha, beta)
+        >>> print(out_indices)
+        [[0 1 0 0 0 1 1 1]
+         [0 1 0 1 2 0 1 2]]
+        >>> print(out_values)
+        [ 1  2  9  6  3 12  8  4]
+        >>> print(out_shapes)
+        [3 3]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Sspaddmm."""
+        self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2_indices', 'x2_values', 'x2_shape',
+                                        'x3_dense', 'alpha', 'beta'], outputs=['y_indices', 'y_values', 'y_shape'])
