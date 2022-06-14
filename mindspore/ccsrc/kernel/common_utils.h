@@ -362,6 +362,12 @@ class MatchKernelHelper {
   KernelRunFunc kernel_func_;
 };
 
+namespace broadcast_utils {
+bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs);
+bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
+                           std::vector<size_t> *rhs);
+}  // namespace broadcast_utils
+
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \
     if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \

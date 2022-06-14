@@ -1344,5 +1344,49 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
   }
   to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }
+
+namespace broadcast_utils {
+bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
+  if (lhs.size() != rhs.size()) {
+    return true;
+  }
+  for (size_t i = 0; i < lhs.size(); i++) {
+    if (lhs[i] != rhs[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
+                           std::vector<size_t> *rhs) {
+  size_t broadcast_rank = broadcast->size();
+  size_t l_rank = lhs->size();
+  size_t r_rank = rhs->size();
+  if (broadcast_rank > align_rank || l_rank > align_rank || r_rank > align_rank) {
+    return false;
+  }
+  std::vector<size_t> aligned_broadcast(align_rank, 1);
+  std::vector<size_t> aligned_lhs(align_rank, 1);
+  std::vector<size_t> aligned_rhs(align_rank, 1);
+  size_t broadcast_offset = align_rank - broadcast_rank;
+  for (size_t i = 0; i < broadcast_rank; i++) {
+    aligned_broadcast[i + broadcast_offset] = (*broadcast)[i];
+  }
+
+  size_t l_offset = align_rank - l_rank;
+  for (size_t i = 0; i < l_rank; i++) {
+    aligned_lhs[i + l_offset] = (*lhs)[i];
+  }
+  size_t r_offset = align_rank - r_rank;
+  for (size_t i = 0; i < r_rank; i++) {
+    aligned_rhs[i + r_offset] = (*rhs)[i];
+  }
+  *broadcast = aligned_broadcast;
+  *lhs = aligned_lhs;
+  *rhs = aligned_rhs;
+  return true;
+}
+}  // namespace broadcast_utils
 }  // namespace kernel
 }  // namespace mindspore
