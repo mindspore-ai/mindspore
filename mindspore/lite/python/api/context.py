@@ -30,7 +30,7 @@ class Context:
     Args:
         thread_num (int, optional): Set the number of threads at runtime.
         thread_affinity_mode (int, optional): Set the thread affinity to CPU cores.
-                                              0: no affinities, 1: big cores first, 2: little cores first
+            0: no affinities, 1: big cores first, 2: little cores first
         thread_affinity_core_list (list[int], optional): Set the thread lists to CPU cores.
         enable_parallel (bool, optional): Set the status whether to perform model inference or training in parallel.
 
@@ -235,7 +235,6 @@ class AscendDeviceInfo(DeviceInfo):
         TypeError: type of input parameters are invalid.
         ValueError: value of input parameters are invalid.
         RuntimeError: file path does not exist
-
 
     Examples:
         >>> import mindspore_lite as mslite

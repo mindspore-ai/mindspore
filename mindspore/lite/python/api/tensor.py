@@ -70,6 +70,87 @@ class Format(Enum):
     NC8HW8 = 19
 
 
+data_type_py_cxx_map = {
+    DataType.UNKNOWN: _c_lite_wrapper.DataType.kTypeUnknown,
+    DataType.BOOL: _c_lite_wrapper.DataType.kNumberTypeBool,
+    DataType.INT8: _c_lite_wrapper.DataType.kNumberTypeInt8,
+    DataType.INT16: _c_lite_wrapper.DataType.kNumberTypeInt16,
+    DataType.INT32: _c_lite_wrapper.DataType.kNumberTypeInt32,
+    DataType.INT64: _c_lite_wrapper.DataType.kNumberTypeInt64,
+    DataType.UINT8: _c_lite_wrapper.DataType.kNumberTypeUInt8,
+    DataType.UINT16: _c_lite_wrapper.DataType.kNumberTypeUInt16,
+    DataType.UINT32: _c_lite_wrapper.DataType.kNumberTypeUInt32,
+    DataType.UINT64: _c_lite_wrapper.DataType.kNumberTypeUInt64,
+    DataType.FLOAT16: _c_lite_wrapper.DataType.kNumberTypeFloat16,
+    DataType.FLOAT32: _c_lite_wrapper.DataType.kNumberTypeFloat32,
+    DataType.FLOAT64: _c_lite_wrapper.DataType.kNumberTypeFloat64,
+    DataType.INVALID: _c_lite_wrapper.DataType.kInvalidType,
+}
+
+data_type_cxx_py_map = {
+    _c_lite_wrapper.DataType.kTypeUnknown: DataType.UNKNOWN,
+    _c_lite_wrapper.DataType.kNumberTypeBool: DataType.BOOL,
+    _c_lite_wrapper.DataType.kNumberTypeInt8: DataType.INT8,
+    _c_lite_wrapper.DataType.kNumberTypeInt16: DataType.INT16,
+    _c_lite_wrapper.DataType.kNumberTypeInt32: DataType.INT32,
+    _c_lite_wrapper.DataType.kNumberTypeInt64: DataType.INT64,
+    _c_lite_wrapper.DataType.kNumberTypeUInt8: DataType.UINT8,
+    _c_lite_wrapper.DataType.kNumberTypeUInt16: DataType.UINT16,
+    _c_lite_wrapper.DataType.kNumberTypeUInt32: DataType.UINT32,
+    _c_lite_wrapper.DataType.kNumberTypeUInt64: DataType.UINT64,
+    _c_lite_wrapper.DataType.kNumberTypeFloat16: DataType.FLOAT16,
+    _c_lite_wrapper.DataType.kNumberTypeFloat32: DataType.FLOAT32,
+    _c_lite_wrapper.DataType.kNumberTypeFloat64: DataType.FLOAT64,
+    _c_lite_wrapper.DataType.kInvalidType: DataType.INVALID,
+}
+
+format_py_cxx_map = {
+    Format.DEFAULT: _c_lite_wrapper.Format.DEFAULT_FORMAT,
+    Format.NCHW: _c_lite_wrapper.Format.NCHW,
+    Format.NHWC: _c_lite_wrapper.Format.NHWC,
+    Format.NHWC4: _c_lite_wrapper.Format.NHWC4,
+    Format.HWKC: _c_lite_wrapper.Format.HWKC,
+    Format.HWCK: _c_lite_wrapper.Format.HWCK,
+    Format.KCHW: _c_lite_wrapper.Format.KCHW,
+    Format.CKHW: _c_lite_wrapper.Format.CKHW,
+    Format.KHWC: _c_lite_wrapper.Format.KHWC,
+    Format.CHWK: _c_lite_wrapper.Format.CHWK,
+    Format.HW: _c_lite_wrapper.Format.HW,
+    Format.HW4: _c_lite_wrapper.Format.HW4,
+    Format.NC: _c_lite_wrapper.Format.NC,
+    Format.NC4: _c_lite_wrapper.Format.NC4,
+    Format.NC4HW4: _c_lite_wrapper.Format.NC4HW4,
+    Format.NCDHW: _c_lite_wrapper.Format.NCDHW,
+    Format.NWC: _c_lite_wrapper.Format.NWC,
+    Format.NCW: _c_lite_wrapper.Format.NCW,
+    Format.NDHWC: _c_lite_wrapper.Format.NDHWC,
+    Format.NC8HW8: _c_lite_wrapper.Format.NC8HW8,
+}
+
+format_cxx_py_map = {
+    _c_lite_wrapper.Format.DEFAULT_FORMAT: Format.DEFAULT,
+    _c_lite_wrapper.Format.NCHW: Format.NCHW,
+    _c_lite_wrapper.Format.NHWC: Format.NHWC,
+    _c_lite_wrapper.Format.NHWC4: Format.NHWC4,
+    _c_lite_wrapper.Format.HWKC: Format.HWKC,
+    _c_lite_wrapper.Format.HWCK: Format.HWCK,
+    _c_lite_wrapper.Format.KCHW: Format.KCHW,
+    _c_lite_wrapper.Format.CKHW: Format.CKHW,
+    _c_lite_wrapper.Format.KHWC: Format.KHWC,
+    _c_lite_wrapper.Format.CHWK: Format.CHWK,
+    _c_lite_wrapper.Format.HW: Format.HW,
+    _c_lite_wrapper.Format.HW4: Format.HW4,
+    _c_lite_wrapper.Format.NC: Format.NC,
+    _c_lite_wrapper.Format.NC4: Format.NC4,
+    _c_lite_wrapper.Format.NC4HW4: Format.NC4HW4,
+    _c_lite_wrapper.Format.NCDHW: Format.NCDHW,
+    _c_lite_wrapper.Format.NWC: Format.NWC,
+    _c_lite_wrapper.Format.NCW: Format.NCW,
+    _c_lite_wrapper.Format.NDHWC: Format.NDHWC,
+    _c_lite_wrapper.Format.NC8HW8: Format.NC8HW8,
+}
+
+
 class Tensor:
     """
     The MSTensor class defines a tensor in MindSpore.
@@ -151,23 +232,7 @@ class Tensor:
         """
         if not isinstance(data_type, DataType):
             raise TypeError(f"data_type must be DataType, but got {type(data_type)}.")
-        data_type_map = {
-            DataType.UNKNOWN: _c_lite_wrapper.DataType.kTypeUnknown,
-            DataType.BOOL: _c_lite_wrapper.DataType.kNumberTypeBool,
-            DataType.INT8: _c_lite_wrapper.DataType.kNumberTypeInt8,
-            DataType.INT16: _c_lite_wrapper.DataType.kNumberTypeInt16,
-            DataType.INT32: _c_lite_wrapper.DataType.kNumberTypeInt32,
-            DataType.INT64: _c_lite_wrapper.DataType.kNumberTypeInt64,
-            DataType.UINT8: _c_lite_wrapper.DataType.kNumberTypeUInt8,
-            DataType.UINT16: _c_lite_wrapper.DataType.kNumberTypeUInt16,
-            DataType.UINT32: _c_lite_wrapper.DataType.kNumberTypeUInt32,
-            DataType.UINT64: _c_lite_wrapper.DataType.kNumberTypeUInt64,
-            DataType.FLOAT16: _c_lite_wrapper.DataType.kNumberTypeFloat16,
-            DataType.FLOAT32: _c_lite_wrapper.DataType.kNumberTypeFloat32,
-            DataType.FLOAT64: _c_lite_wrapper.DataType.kNumberTypeFloat64,
-            DataType.INVALID: _c_lite_wrapper.DataType.kInvalidType,
-        }
-        self._tensor.set_data_type(data_type_map.get(data_type))
+        self._tensor.set_data_type(data_type_py_cxx_map.get(data_type))
 
     def get_data_type(self):
         """
@@ -184,23 +249,7 @@ class Tensor:
             >>> print(data_type)
             DataType.FLOAT32
         """
-        data_type_map = {
-            _c_lite_wrapper.DataType.kTypeUnknown: DataType.UNKNOWN,
-            _c_lite_wrapper.DataType.kNumberTypeBool: DataType.BOOL,
-            _c_lite_wrapper.DataType.kNumberTypeInt8: DataType.INT8,
-            _c_lite_wrapper.DataType.kNumberTypeInt16: DataType.INT16,
-            _c_lite_wrapper.DataType.kNumberTypeInt32: DataType.INT32,
-            _c_lite_wrapper.DataType.kNumberTypeInt64: DataType.INT64,
-            _c_lite_wrapper.DataType.kNumberTypeUInt8: DataType.UINT8,
-            _c_lite_wrapper.DataType.kNumberTypeUInt16: DataType.UINT16,
-            _c_lite_wrapper.DataType.kNumberTypeUInt32: DataType.UINT32,
-            _c_lite_wrapper.DataType.kNumberTypeUInt64: DataType.UINT64,
-            _c_lite_wrapper.DataType.kNumberTypeFloat16: DataType.FLOAT16,
-            _c_lite_wrapper.DataType.kNumberTypeFloat32: DataType.FLOAT32,
-            _c_lite_wrapper.DataType.kNumberTypeFloat64: DataType.FLOAT64,
-            _c_lite_wrapper.DataType.kInvalidType: DataType.INVALID,
-        }
-        return data_type_map.get(self._tensor.get_data_type())
+        return data_type_cxx_py_map.get(self._tensor.get_data_type())
 
     def set_shape(self, shape):
         """
@@ -258,29 +307,7 @@ class Tensor:
         """
         if not isinstance(tensor_format, Format):
             raise TypeError(f"tensor_format must be Format, but got {type(tensor_format)}.")
-        format_map = {
-            Format.DEFAULT: _c_lite_wrapper.Format.DEFAULT_FORMAT,
-            Format.NCHW: _c_lite_wrapper.Format.NCHW,
-            Format.NHWC: _c_lite_wrapper.Format.NHWC,
-            Format.NHWC4: _c_lite_wrapper.Format.NHWC4,
-            Format.HWKC: _c_lite_wrapper.Format.HWKC,
-            Format.HWCK: _c_lite_wrapper.Format.HWCK,
-            Format.KCHW: _c_lite_wrapper.Format.KCHW,
-            Format.CKHW: _c_lite_wrapper.Format.CKHW,
-            Format.KHWC: _c_lite_wrapper.Format.KHWC,
-            Format.CHWK: _c_lite_wrapper.Format.CHWK,
-            Format.HW: _c_lite_wrapper.Format.HW,
-            Format.HW4: _c_lite_wrapper.Format.HW4,
-            Format.NC: _c_lite_wrapper.Format.NC,
-            Format.NC4: _c_lite_wrapper.Format.NC4,
-            Format.NC4HW4: _c_lite_wrapper.Format.NC4HW4,
-            Format.NCDHW: _c_lite_wrapper.Format.NCDHW,
-            Format.NWC: _c_lite_wrapper.Format.NWC,
-            Format.NCW: _c_lite_wrapper.Format.NCW,
-            Format.NDHWC: _c_lite_wrapper.Format.NDHWC,
-            Format.NC8HW8: _c_lite_wrapper.Format.NC8HW8,
-        }
-        self._tensor.set_format(format_map.get(tensor_format))
+        self._tensor.set_format(format_py_cxx_map.get(tensor_format))
 
     def get_format(self):
         """
@@ -297,29 +324,7 @@ class Tensor:
             >>> print(tensor_format)
             Format,NHWC
         """
-        format_map = {
-            _c_lite_wrapper.Format.DEFAULT_FORMAT: Format.DEFAULT,
-            _c_lite_wrapper.Format.NCHW: Format.NCHW,
-            _c_lite_wrapper.Format.NHWC: Format.NHWC,
-            _c_lite_wrapper.Format.NHWC4: Format.NHWC4,
-            _c_lite_wrapper.Format.HWKC: Format.HWKC,
-            _c_lite_wrapper.Format.HWCK: Format.HWCK,
-            _c_lite_wrapper.Format.KCHW: Format.KCHW,
-            _c_lite_wrapper.Format.CKHW: Format.CKHW,
-            _c_lite_wrapper.Format.KHWC: Format.KHWC,
-            _c_lite_wrapper.Format.CHWK: Format.CHWK,
-            _c_lite_wrapper.Format.HW: Format.HW,
-            _c_lite_wrapper.Format.HW4: Format.HW4,
-            _c_lite_wrapper.Format.NC: Format.NC,
-            _c_lite_wrapper.Format.NC4: Format.NC4,
-            _c_lite_wrapper.Format.NC4HW4: Format.NC4HW4,
-            _c_lite_wrapper.Format.NCDHW: Format.NCDHW,
-            _c_lite_wrapper.Format.NWC: Format.NWC,
-            _c_lite_wrapper.Format.NCW: Format.NCW,
-            _c_lite_wrapper.Format.NDHWC: Format.NDHWC,
-            _c_lite_wrapper.Format.NC8HW8: Format.NC8HW8,
-        }
-        return format_map.get(self._tensor.get_format())
+        return format_cxx_py_map.get(self._tensor.get_format())
 
     def get_element_num(self):
         """

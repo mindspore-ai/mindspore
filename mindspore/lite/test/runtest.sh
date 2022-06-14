@@ -129,6 +129,8 @@ if [[ -f "${mindspore_lite_whl}" || "$MSLITE_ENABLE_SERVER_INFERENCE" = on ]]; t
     BIN_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/micro/mobilenetv2.tar.gz"
     wget -c --no-check-certificate ${BIN_DOWNLOAD_URL}
     tar -zxf mobilenetv2.tar.gz
+    cp mobilenetv2/*.tflite ./mobilenetv2.tflite
+    cp mobilenetv2/*.ms.out ./mobilenetv2.ms.out
     cp mobilenetv2/*.ms.bin ./mobilenetv2.ms.bin
     rm -rf mobilenetv2.tar.gz mobilenetv2/
   fi
@@ -140,15 +142,26 @@ if [ ! -f "${mindspore_lite_whl}" ]; then
 else
   export PYTHONPATH=${CUR_DIR}/../build/package/:${PYTHONPATH}
 
-  # run Python-API ut test
+  # run converter Python-API ut test
+  if [[ ! "${MSLITE_ENABLE_CONVERTER}" || "${MSLITE_ENABLE_CONVERTER}" == "ON" || "${MSLITE_ENABLE_CONVERTER}" == "on" ]]; then
+    echo "run converter Python API ut test"
+    pytest ${CUR_DIR}/ut/python/test_converter_api.py -s
+    RET=$?
+    if [ ${RET} -ne 0 ]; then
+        exit ${RET}
+    fi
+  fi
+
+  # run inference Python-API ut test
+  echo "run inference Python API ut test"
   pytest ${CUR_DIR}/ut/python/test_inference_api.py -s
   RET=$?
   if [ ${RET} -ne 0 ]; then
       exit ${RET}
   fi
 
-  # run CPU Python-API st test
-  echo "run CPU Python API st test"
+  # run inference CPU Python-API st test
+  echo "run inference CPU Python API st test"
   pytest ${CUR_DIR}/st/python/test_inference.py::test_cpu_inference_01 -s
   RET=$?
   if [ ${RET} -ne 0 ]; then

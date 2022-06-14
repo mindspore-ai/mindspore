@@ -62,7 +62,7 @@ class Model:
         Args:
             model_path (str): Define the model path.
             model_type (ModelType): Define The type of model file.
-                                              Options: ModelType::MINDIR, ModelType::MINDIR_LITE.
+                Options: ModelType::MINDIR, ModelType::MINDIR_LITE.
             context (Context): Define the context used to store options during execution.
 
         Raises:
@@ -350,6 +350,7 @@ class RunnerConfig:
     RunnerConfig Class defines runner config of one or more servables.
     The class can be used to make model parallel runner which corresponds to the service provided by a model.
     The client sends inference tasks and receives inference results through server.
+
     Args:
         context (Context): Define the context used to store options during execution.
         workers_num (int): the num of workers.

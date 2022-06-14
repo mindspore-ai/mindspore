@@ -28,7 +28,7 @@ namespace mindspore {
 struct ConverterPara;
 class MS_API Converter {
  public:
-  Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file,
+  Converter(converter::FmkType fmk_type, const std::string &model_file, const std::string &output_file = "",
             const std::string &weight_file = "");
   ~Converter() = default;
 
