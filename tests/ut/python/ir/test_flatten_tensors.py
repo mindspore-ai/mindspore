@@ -16,8 +16,10 @@
 import numpy as np
 import mindspore as ms
 import mindspore.common.initializer as init
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore.common import Tensor, Parameter
 from mindspore.nn import Cell
+from mindspore import context
 
 
 def test_flatten_tensors_basic():
@@ -274,3 +276,31 @@ def test_cell_flatten_weights_with_fusion_size():
     assert np.allclose(chunks[2].asnumpy(), np.array([6, 7, 8]))
     fusion_size = Parameter._get_fusion_size(chunks)  # pylint: disable=W0212
     assert fusion_size == 12
+
+
+def test_init_data_after_flatten_weights():
+    """
+    Feature: Flatten tensors.
+    Description: Init tensor data after flatten weights.
+    Expectation: Tensor data initialized as expected.
+    """
+    class MyCell(Cell):
+        def __init__(self):
+            super(MyCell, self).__init__()
+            self.para1 = Parameter(Tensor([1, 2], ms.float32))
+            self.para2 = Parameter(init.initializer('ones', [3], ms.float32))
+            self.para3 = Parameter(Tensor([6], ms.float32))
+
+        def construct(self, x):
+            return x
+
+    # Set 'auto_parallel' to enable tensor data lazy initialization.
+    context.set_auto_parallel_context(parallel_mode="auto_parallel")
+    net = MyCell()
+    net.flatten_weights()
+    assert net.para2.init is not None
+    data = Tensor_.asnumpy(net.para2)
+    data.fill(2)
+    assert np.allclose(data, 2)
+    net.para2.init_data()
+    assert np.allclose(data, 1)
