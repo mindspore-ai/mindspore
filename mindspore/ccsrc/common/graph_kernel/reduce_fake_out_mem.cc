@@ -41,6 +41,9 @@ void ReduceFakeOutMem::ModifyAbstract(const AnfNodePtr &composite_node, const st
       std::vector<int64_t> shape_vec_shape = {1};
       AbstractBasePtr abstract = std::make_shared<abstract::AbstractTensor>(kInt64, shape_vec_shape);
       out_specs.push_back(abstract);
+      if (output_list.size() > 1) {
+        output_list[i]->set_abstract(abstract);
+      }
     } else {
       out_specs.push_back(output_list[i]->abstract());
     }
@@ -52,6 +55,11 @@ void ReduceFakeOutMem::ModifyAbstract(const AnfNodePtr &composite_node, const st
     out_spec = output_list[0]->abstract();
   }
   composite_node->set_abstract(out_spec);
+  auto gk_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
+  auto tuple_output = gk_graph->output()->cast<CNodePtr>();
+  if (IsPrimitiveCNode(tuple_output, prim::kPrimMakeTuple)) {
+    tuple_output->set_abstract(out_spec);
+  }
 }
 
 bool ReduceFakeOutMem::Run(const FuncGraphPtr &func_graph) {

@@ -26,6 +26,22 @@
 
 namespace mindspore::graphkernel {
 namespace {
+mindspore::HashSet<AnfNodePtr> GetPredecessors(const AnfNodePtr &cur_node) {
+  mindspore::HashSet<AnfNodePtr> predecessors;
+  std::function<void(AnfNodePtr)> dfs;
+  dfs = [&predecessors, &dfs](const AnfNodePtr &node) {
+    if (!node->isa<CNode>() || predecessors.count(node) > 0) return;
+    (void)predecessors.insert(node);
+    auto cnode = node->cast<CNodePtr>();
+    auto inputs = cnode->inputs();
+    for (size_t i = 1; i < inputs.size(); i++) {
+      dfs(inputs[i]);
+    }
+  };
+  dfs(cur_node);
+  return predecessors;
+}
+
 // when A and B's relation is case1 or case2, return true; else return false
 // case 1: B is A's only user
 // ********
@@ -47,58 +63,83 @@ namespace {
 // *************
 bool NoUsersAfterCurNode(const AnfNodePtr &input, const AnfNodePtr &cur_node, const FuncGraphManagerPtr &mng) {
   if (!input->isa<CNode>()) return false;
-  mindspore::HashSet<AnfNodePtr> predecessors;
-  std::function<void(AnfNodePtr)> dfs;
-  dfs = [&predecessors, &dfs](const AnfNodePtr &node) {
-    if (!node->isa<CNode>() || predecessors.count(node) > 0) return;
-    (void)predecessors.insert(node);
-    auto cnode = node->cast<CNodePtr>();
-    auto inputs = cnode->inputs();
-    for (size_t i = 1; i < inputs.size(); i++) {
-      dfs(inputs[i]);
-    }
-  };
-  dfs(cur_node);
+  mindspore::HashSet<AnfNodePtr> predecessors = GetPredecessors(cur_node);
   auto users = mng->node_users()[input];
   return std::all_of(users.begin(), users.end(),
                      [&predecessors](const std::pair<AnfNodePtr, int> &p) { return predecessors.count(p.first) > 0; });
 }
 
-// check node types of a graph kernel
-bool CheckComputeType(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph->get_return());
-  auto all_nodes = TopoSort(func_graph->get_return());
-  for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim::kPrimReturn)) continue;
+// input-output pair suitable for inplace assign should satisfy:
+// 1. output is an elemwise op
+// 2. in graph kernel, input and all input's users depend on output
+mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInputOutputPairs(
+  const FuncGraphPtr &sub_graph) {
+  auto isElemwise = [](const AnfNodePtr &node) {
     if (auto cnode = node->cast<CNodePtr>()) {
       auto node_prim = inner::OpRegistry::Instance().NewOp(GetValueNode<PrimitivePtr>(cnode->input(0))->name());
-      if (node_prim == nullptr || node_prim->compute_type() != inner::PrimOp::ComputeType::ELEMWISE) {
-        return false;
+      if (node_prim != nullptr && node_prim->compute_type() == inner::PrimOp::ComputeType::ELEMWISE) {
+        return true;
       }
     }
-  }
-  return true;
-}
+    return false;
+  };
 
-// collect output nodes of a subgraph
-std::vector<AnfNodePtr> SubGraphOutputs(const FuncGraphPtr &sub_graph) {
-  std::vector<AnfNodePtr> outs;
+  std::vector<std::pair<AnfNodePtr, size_t>> outs;
   auto output = sub_graph->output();
   if (IsPrimitiveCNode(output, prim::kPrimMakeTuple)) {
     auto output_cnode = output->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(output_cnode);
-    (void)outs.insert(outs.end(), output_cnode->inputs().begin() + 1, output_cnode->inputs().end());
+    for (size_t i = 1; i < output_cnode->inputs().size(); i++) {
+      if (isElemwise(output_cnode->input(i))) {
+        (void)outs.emplace_back(std::make_pair(output_cnode->input(i), i - 1));
+      }
+    }
   } else {
-    (void)outs.emplace_back(output);
+    if (isElemwise(output)) {
+      (void)outs.emplace_back(std::make_pair(output, 0));
+    }
   }
-  return outs;
+
+  std::vector<mindspore::HashSet<AnfNodePtr>> predecessors;
+  (void)std::transform(outs.cbegin(), outs.cend(), std::back_inserter(predecessors),
+                       [](const std::pair<AnfNodePtr, size_t> &out) { return GetPredecessors(out.first); });
+
+  auto params = sub_graph->parameters();
+  auto mng_sub = sub_graph->manager();
+  if (mng_sub == nullptr) {
+    mng_sub = Manage(sub_graph, false);
+    sub_graph->set_manager(mng_sub);
+  }
+  mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> in_out_pairs;
+  for (size_t index = 0; index < params.size(); index++) {
+    if (!params[index]->isa<Parameter>()) {
+      continue;
+    }
+    auto users = mng_sub->node_users()[params[index]];
+    for (size_t j = 0; j < predecessors.size(); j++) {
+      auto reliable = std::all_of(users.begin(), users.end(), [&predecessors, &j](const std::pair<AnfNodePtr, int> &p) {
+        return predecessors[j].count(p.first) > 0;
+      });
+      if (!reliable) {
+        continue;
+      }
+      if (in_out_pairs.count(index) > 0) {
+        in_out_pairs[index].push_back(outs[j]);
+      } else {
+        in_out_pairs[index] = {outs[j]};
+      }
+    }
+  }
+  return in_out_pairs;
 }
 
 // whether two nodes have same shape and type
-bool IsSameShapeTypeFormat(const AnfNodePtr &x, const AnfNodePtr &y) {
+// currently we only support inplace for tensor of type float32 to avoid precision problem
+bool CheckShapeType(const AnfNodePtr &x, const AnfNodePtr &y) {
   if (!x->isa<CNode>() || !y->isa<CNode>()) return false;
   if (common::AnfAlgo::GetOutputInferShape(x, 0) != common::AnfAlgo::GetOutputInferShape(y, 0)) return false;
-  return common::AnfAlgo::GetOutputInferDataType(x, 0) == common::AnfAlgo::GetOutputInferDataType(y, 0);
+  return common::AnfAlgo::GetOutputInferDataType(x, 0) == TypeId::kNumberTypeFloat32 &&
+         common::AnfAlgo::GetOutputInferDataType(y, 0) == TypeId::kNumberTypeFloat32;
 }
 }  // namespace
 
@@ -113,23 +154,30 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
     if (common::AnfAlgo::IsGraphKernel(node)) {
       auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       MS_EXCEPTION_IF_NULL(sub_func_graph);
-      if (!CheckComputeType(sub_func_graph)) continue;
-      auto outs = SubGraphOutputs(sub_func_graph);
-      if (outs.size() > 1) continue;
+      auto in_out_pairs = FindInputOutputPairs(sub_func_graph);
       auto cnode = node->cast<CNodePtr>();
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
-        if (NoUsersAfterCurNode(cnode->input(i), node, mng) && IsSameShapeTypeFormat(cnode->input(i), node)) {
-          // input - output pair suitable for inplace assign is found
-          changed = true;
-          InplaceAssignerInfo new_op_info;  // output info
-          new_op_info.op_node = outs[0]->cast<CNodePtr>();
-          new_op_info.real_output_num = 1;
-          new_op_info.inplace_to_origin_input = i - 1;
-          // modify graph kernel's abstract, kernelBuildInfo and insert assign
-          ProcessOriginCNode(cnode, {{new_op_info, cnode->input(i)}});
-          // reconnet output's user to input
-          ProcessOriginCNodeUser(func_graph, cnode, {{new_op_info, cnode->input(i)}}, mng);
-          break;
+        if (in_out_pairs.count(i - 1) == 0) continue;
+        if (NoUsersAfterCurNode(cnode->input(i), node, mng)) {
+          // input - output pair suitable for inplace assign
+          auto outs = in_out_pairs[i - 1];
+          auto candidate =
+            std::find_if(outs.begin(), outs.end(), [&cnode, &i](const std::pair<AnfNodePtr, size_t> &node) {
+              return CheckShapeType(cnode->input(i), node.first);
+            });
+          if (candidate != outs.end()) {
+            changed = true;
+            InplaceAssignerInfo new_op_info;  // output info
+            new_op_info.op_node = candidate->first->cast<CNodePtr>();
+            new_op_info.real_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
+            new_op_info.real_output_index = candidate->second;
+            new_op_info.inplace_to_origin_input = i - 1;
+            // modify graph kernel's abstract, kernelBuildInfo and insert assign
+            ProcessOriginCNode(cnode, {{new_op_info, cnode->input(i)}});
+            // reconnect output's user to input
+            ProcessOriginCNodeUser(func_graph, cnode, {{new_op_info, cnode->input(i)}}, mng);
+            break;
+          }
         }
       }
     }
