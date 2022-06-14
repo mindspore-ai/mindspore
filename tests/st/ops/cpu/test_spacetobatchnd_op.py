@@ -117,43 +117,6 @@ def test_space_to_batch_nd_function():
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-class SpaceToBatchNDTensorNet(nn.Cell):
-    def __init__(self, block_size=2):
-        super(SpaceToBatchNDTensorNet, self).__init__()
-        self.block_size = block_size
-
-    def construct(self, x):
-        return x.space_to_batch_nd(self.block_size, [[0, 0], [0, 0]])
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_space_to_batch_nd_tensor():
-    """
-    Feature: test SpaceToBatchND tensor interface.
-    Description: test tensor interface.
-    Expectation: the result match with numpy result
-    """
-    net = SpaceToBatchNDTensorNet(2)
-    input_x = Tensor(np.arange(16).reshape((1, 1, 4, 4)).astype(np.float32), mindspore.float32)
-    expect = np.array([[[[0, 2],
-                         [8, 10]]],
-                       [[[1, 3],
-                         [9, 11]]],
-                       [[[4, 6],
-                         [12, 14]]],
-                       [[[5, 7],
-                         [13, 15]]]]).astype(np.float32)
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    output = net(input_x)
-    assert (output.asnumpy() == expect).all()
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    output = net(input_x)
-    assert (output.asnumpy() == expect).all()
-
-
 class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
     def __init__(self, block_size, paddings, axis=0):
         super().__init__()
