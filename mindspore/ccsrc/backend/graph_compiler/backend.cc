@@ -338,9 +338,9 @@ device::DeviceAddressPtr CloneEmptyDeviceAddress(const device::DeviceAddressPtr 
                                                  const DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(old_device_address);
   MS_EXCEPTION_IF_NULL(device_context);
-  auto new_device_address =
-    device_context->CreateDeviceAddress(nullptr, old_device_address->GetSize(), old_device_address->format(),
-                                        old_device_address->type_id(), old_device_address->host_shape());
+  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+    nullptr, old_device_address->GetSize(), old_device_address->format(), old_device_address->type_id(),
+    old_device_address->host_shape());
   MS_EXCEPTION_IF_NULL(new_device_address);
   new_device_address->set_original_ref_count(old_device_address->original_ref_count());
   new_device_address->ResetRefCount();
@@ -1300,7 +1300,7 @@ void MindRTBackend::SyncStream() {
   const auto &device_context =
     device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
   MS_EXCEPTION_IF_NULL(device_context);
-  (void)device_context->SyncStream();
+  (void)device_context->device_res_manager_->SyncStream();
 }
 
 std::unique_ptr<GraphCompilerInfo> MindRTBackend::ConstructGraphCompilerInfo(const FuncGraphPtr &root_graph) {

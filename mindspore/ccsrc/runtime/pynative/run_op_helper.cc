@@ -141,7 +141,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   if ((device_address->GetPtr() == nullptr) &&
-      (!device_context->AllocateMemory(device_address.get(), device_address->GetSize()))) {
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   // Copy data from host tensor to device.
@@ -186,7 +186,7 @@ void CopyValueNodeStringToDevice(const ValueNodePtr &node, const device::DeviceC
     return;
   }
 
-  if (!device_context->AllocateMemory(node_address.get(), node_address->GetSize())) {
+  if (!device_context->device_res_manager_->AllocateMemory(node_address.get(), node_address->GetSize())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
 
@@ -266,7 +266,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(input_address);
     if (input_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(input_address.get(), input_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(input_address.get(), input_address->GetSize())) {
       return false;
     }
   }
@@ -306,7 +306,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
       }
     }
     if (device_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
       MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
       return false;
     }
@@ -341,8 +341,8 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     // Resize of workspaces, because of the dynamic size of workspace.
     if (workspace_size < workspace_sizes.size()) {
       for (size_t i = workspace_size; i < workspace_sizes.size(); ++i) {
-        auto device_address =
-          device_context->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
+        auto device_address = device_context->device_res_manager_->CreateDeviceAddress(nullptr, workspace_sizes[i], "",
+                                                                                       kTypeUnknown, ShapeVector());
         MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel)
                       << " addr:" << device_address;
         AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());  // set to kernel_info
@@ -364,7 +364,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
     workspaces.emplace_back(
@@ -376,7 +376,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     auto device_address = add_workspaces[i];
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&
-        !device_context->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
     workspaces.emplace_back(
@@ -474,7 +474,7 @@ void LaunchKernels(const KernelGraphPtr &graph, const device::DeviceContext *dev
       MS_LOG(EXCEPTION) << "Malloc for kernel output failed, Memory isn't enough, node:" << node->fullname_with_scope();
     }
     auto outputs = CreateKernelOutputAddress(runtime_info);
-    if (!device_context->LaunchKernel(node, inputs, workspaces, outputs)) {
+    if (!device_context->kernel_executor_->LaunchKernel(node, inputs, workspaces, outputs)) {
       MS_LOG(EXCEPTION) << "Launch kernel failed, name:" << node->fullname_with_scope();
     }
 

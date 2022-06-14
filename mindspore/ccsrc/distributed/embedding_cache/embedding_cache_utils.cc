@@ -122,7 +122,7 @@ void EmbeddingCacheTableManager::AllocMemForEmbeddingCacheTable(const device::De
     size_t embedding_size = item.second.embedding_size;
     auto &device_address = item.second.device_address;
     device_address.size = device_cache_size_ * embedding_size * sizeof(float);
-    auto addr = device_context->AllocateMemory(device_address.size);
+    auto addr = device_context->device_res_manager_->AllocateMemory(device_address.size);
     MS_EXCEPTION_IF_NULL(addr);
     device_address.addr = addr;
 
@@ -141,10 +141,10 @@ void EmbeddingCacheTableManager::AllocMemForEmbeddingCacheTable(const device::De
   MS_EXCEPTION_IF_NULL(embedding_host_cache_);
 
   embedding_device_cache_->hash_swap_index_addr_ =
-    reinterpret_cast<int *>(device_context->AllocateMemory(batch_ids_num_ * sizeof(int)));
+    reinterpret_cast<int *>(device_context->device_res_manager_->AllocateMemory(batch_ids_num_ * sizeof(int)));
   MS_EXCEPTION_IF_NULL(embedding_device_cache_->hash_swap_index_addr_);
-  embedding_device_cache_->hash_swap_value_addr_ =
-    reinterpret_cast<float *>(device_context->AllocateMemory(max_embedding_size * batch_ids_num_ * sizeof(float)));
+  embedding_device_cache_->hash_swap_value_addr_ = reinterpret_cast<float *>(
+    device_context->device_res_manager_->AllocateMemory(max_embedding_size * batch_ids_num_ * sizeof(float)));
   MS_EXCEPTION_IF_NULL(embedding_device_cache_->hash_swap_value_addr_);
 }
 

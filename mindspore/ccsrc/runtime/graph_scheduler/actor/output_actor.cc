@@ -223,9 +223,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
   } else {
-    auto tensor_device_address =
-      device_context->CreateDeviceAddress(nullptr, device_tensor->GetSize(), device_tensor->format(),
-                                          device_tensor->type_id(), device_tensor->host_shape());
+    auto tensor_device_address = device_context->device_res_manager_->CreateDeviceAddress(
+      nullptr, device_tensor->GetSize(), device_tensor->format(), device_tensor->type_id(),
+      device_tensor->host_shape());
     MS_EXCEPTION_IF_NULL(tensor_device_address);
     tensor->set_device_address(tensor_device_address);
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
@@ -271,7 +271,8 @@ void OutputActor::UpdateOutputDeviceAddress() {
       auto device_context = device_contexts_[i];
       MS_EXCEPTION_IF_NULL(device_context);
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
-      if (!device_context->AllocateMemory(tensor_device_address.get(), tensor_device_address->GetSize())) {
+      if (!device_context->device_res_manager_->AllocateMemory(tensor_device_address.get(),
+                                                               tensor_device_address->GetSize())) {
         MS_LOG(EXCEPTION) << "Device(id:" << device_context->device_context_key().device_id_
                           << ") memory isn't enough and alloc failed, kernel name: "
                           << output_node->fullname_with_scope() << ", alloc size: " << tensor_device_address->GetSize()

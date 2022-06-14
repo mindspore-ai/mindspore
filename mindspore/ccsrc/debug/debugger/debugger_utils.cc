@@ -90,8 +90,8 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto host_format = kOpFormat_DEFAULT;
     auto device_format =
       E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(input_kernel, PARAMETER_OUTPUT_INDEX);
-    auto device_addr =
-      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
+    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(addr->addr, addr->size, device_format,
+                                                                                device_type, ShapeVector());
     string input_tensor_name = input_kernel_name + ':' + "0";
     ShapeVector int_shapes;
     GetDumpIntShape(input_kernel, PARAMETER_OUTPUT_INDEX, NOT_NULL(&int_shapes), trans_flag);
@@ -132,8 +132,8 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
 
     auto host_format = kOpFormat_DEFAULT;
     auto device_format = E2eDump::IsDeviceTargetGPU() ? kOpFormat_DEFAULT : AnfAlgo::GetOutputFormat(cnode, j);
-    auto device_addr =
-      device_context->CreateDeviceAddress(addr->addr, addr->size, device_format, device_type, ShapeVector());
+    auto device_addr = device_context->device_res_manager_->CreateDeviceAddress(addr->addr, addr->size, device_format,
+                                                                                device_type, ShapeVector());
     string tensor_name = kernel_name + ':' + std::to_string(j);
     ShapeVector int_shapes;
     GetDumpIntShape(cnode, j, NOT_NULL(&int_shapes), trans_flag);

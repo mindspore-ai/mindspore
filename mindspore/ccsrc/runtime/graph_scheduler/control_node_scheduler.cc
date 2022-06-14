@@ -312,9 +312,9 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompile
       // Create device tensor.
       const auto &device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
       MS_EXCEPTION_IF_NULL(device_address);
-      auto new_address =
-        device_context->CreateDeviceAddress(nullptr, device_address->GetSize(), device_address->format(),
-                                            device_address->type_id(), device_address->host_shape());
+      auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
+        nullptr, device_address->GetSize(), device_address->format(), device_address->type_id(),
+        device_address->host_shape());
       MS_EXCEPTION_IF_NULL(new_address);
       MS_LOG(INFO) << "Create new address for node that has no corresponding backend node:"
                    << common::AnfAlgo::GetNodeDebugString(parameter.first) << " addr:" << new_address

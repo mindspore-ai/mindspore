@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace device {
-bool DeviceContext::CreateStream(size_t *stream_id) {
+bool DeviceResManager::CreateStream(size_t *stream_id) {
   MS_EXCEPTION_IF_NULL(stream_id);
   std::lock_guard<std::mutex> locker(stream_mutex_);
   void *stream = nullptr;
@@ -38,7 +38,7 @@ bool DeviceContext::CreateStream(size_t *stream_id) {
   return true;
 }
 
-bool DeviceContext::DestroyAllStreams() {
+bool DeviceResManager::DestroyAllStreams() {
   for (auto &item : stream_ids_) {
     if (item.second != nullptr) {
       if (!DestroyStream(item.second)) {
@@ -53,7 +53,7 @@ bool DeviceContext::DestroyAllStreams() {
   return true;
 }
 
-void *DeviceContext::GetStream(size_t stream_id) const {
+void *DeviceResManager::GetStream(size_t stream_id) const {
   auto iter = stream_ids_.find(stream_id);
   if (iter == stream_ids_.end()) {
     MS_LOG(ERROR) << "Can not find stream for stream id[" << stream_id << "]";
@@ -63,12 +63,12 @@ void *DeviceContext::GetStream(size_t stream_id) const {
   return iter->second;
 }
 
-bool DeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) const {
+bool DeviceResManager::AllocateMemory(DeviceAddress *const &address, size_t size) const {
   MS_EXCEPTION_IF_NULL(address);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_key_.device_name_) {
+  if (device_name_in_address != device_context_->device_context_key().device_name_) {
     MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
-                      << ", type name in context:" << device_context_key_.device_name_;
+                      << ", type name in context:" << device_context_->device_context_key().device_name_;
   }
 
   if (address->GetPtr() != nullptr) {
@@ -85,16 +85,16 @@ bool DeviceContext::AllocateMemory(DeviceAddress *const &address, size_t size) c
   return true;
 }
 
-void DeviceContext::FreeMemory(DeviceAddress *const &address) const {
+void DeviceResManager::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   if (address->GetPtr() == nullptr) {
     MS_LOG(EXCEPTION) << "Device ptr is null in device address to release!";
   }
 
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
-  if (device_name_in_address != device_context_key_.device_name_) {
+  if (device_name_in_address != device_context_->device_context_key().device_name_) {
     MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
-                      << ", type name in context:" << device_context_key_.device_name_;
+                      << ", type name in context:" << device_context_->device_context_key().device_name_;
   }
 
   if (!address->from_mem_pool()) {

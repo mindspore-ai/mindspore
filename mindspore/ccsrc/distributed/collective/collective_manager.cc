@@ -310,11 +310,11 @@ bool CollectiveManager::InitHostCommlib() {
   device::DeviceContextKey host_key = {"CPU", 0};
   host_ctx_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(host_ctx_);
-  if (!host_ctx_->LoadCollectiveCommLib()) {
+  if (!host_ctx_->device_res_manager_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the host side.";
     return false;
   }
-  host_comm_lib_instance_ = host_ctx_->collective_comm_lib();
+  host_comm_lib_instance_ = host_ctx_->device_res_manager_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
 
   // For some communication libraries, global_rank_id_', 'global_rank_size_' should be set by caller, e.g., when using
@@ -360,11 +360,11 @@ bool CollectiveManager::InitDeviceCommLib() {
   // We can initialize device context now because device id(local_rank_id_) is already assigned.
   device_ctx_->Initialize();
 
-  if (!device_ctx_->LoadCollectiveCommLib()) {
+  if (!device_ctx_->device_res_manager_->LoadCollectiveCommLib()) {
     MS_LOG(ERROR) << "Failed to load communication library on the device side.";
     return false;
   }
-  device_comm_lib_instance_ = device_ctx_->collective_comm_lib();
+  device_comm_lib_instance_ = device_ctx_->device_res_manager_->collective_comm_lib();
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
 
   MS_LOG(INFO) << "Start initializing communication library on device side...";

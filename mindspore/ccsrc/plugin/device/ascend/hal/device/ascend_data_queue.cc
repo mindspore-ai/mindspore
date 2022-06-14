@@ -42,7 +42,7 @@ BlockQueueStatus_T AscendDataQueueDynamic::Push(std::vector<DataQueueItem> data)
       MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_;
       return ERROR_INPUT;
     }
-    void *addr = device_context_->AllocateMemory(item.data_len_);
+    void *addr = device_context_->device_res_manager_->AllocateMemory(item.data_len_);
     if (addr == nullptr) {
       MS_LOG(ERROR) << "Allocate device memory of data queue failed";
     }

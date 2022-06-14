@@ -184,7 +184,7 @@ void AscendDeviceAddress::BindDevice() const {
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
     auto ascend_device_context = dynamic_cast<AscendDeviceContext *>(device_context);
     MS_EXCEPTION_IF_NULL(ascend_device_context);
-    ascend_device_context->BindDeviceToCurrentThread();
+    ascend_device_context->device_res_manager_->BindDeviceToCurrentThread();
   } else {
     MS_LOG(WARNING) << "device name is null.";
   }

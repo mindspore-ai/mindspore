@@ -77,7 +77,11 @@ void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   }
 
   try {
-    auto ret = device_contexts_[0]->LaunchGraph(graph_);
+    // @TODO: @TBD: run graph with inputs and outputs
+    const std::vector<tensor::Tensor> inputs;
+    std::vector<tensor::Tensor> outputs;
+    const std::map<string, string> compile_options;
+    auto ret = device_contexts_[0]->graph_executor_->RunGraph(graph_, inputs, &outputs, compile_options);
     if (!ret) {
       std::string error_info = "Launch graph failed, graph id: " + std::to_string(graph_->graph_id());
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);

@@ -2837,7 +2837,13 @@ void SessionBasic::InitAllBucket(const KernelGraphPtr &graph, const device::Devi
     MS_LOG(INFO) << "Create new bucket:" << bucket_id << " size:" << bucket_size;
     std::shared_ptr<device::Bucket> bucket = nullptr;
     if (device_context != nullptr) {
-      bucket = device_context->CreateBucket(bucket_id++, bucket_size);
+      auto deprecated_kernel_executor =
+        dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+      if (deprecated_kernel_executor != nullptr) {
+        bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, bucket_size);
+      } else {
+        MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
+      }
     } else {
       bucket = CreateBucket(bucket_id++, bucket_size);
     }
@@ -2871,8 +2877,14 @@ void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::
   std::shared_ptr<device::Bucket> bucket;
   auto iter = actor_set_to_bucket_.find(actor_info);
   if (iter == actor_set_to_bucket_.end()) {
-    static size_t bucket_id = 0;
-    bucket = device_context->CreateBucket(bucket_id++, outputs.size());
+    auto deprecated_kernel_executor =
+      dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+    if (deprecated_kernel_executor != nullptr) {
+      static size_t bucket_id = 0;
+      bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, outputs.size());
+    } else {
+      MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
+    }
     actor_set_to_bucket_[actor_info] = bucket;
   } else {
     bucket = iter->second;
@@ -2987,7 +2999,11 @@ void SessionBasic::DumpGraphs(const std::vector<KernelGraphPtr> &graphs) {
       uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
       const auto &device_context =
         device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
-      rank_id = device_context->GetRankID();
+      auto deprecated_kernel_executor =
+        dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
+      if (deprecated_kernel_executor != nullptr) {
+        rank_id = deprecated_kernel_executor->GetRankID();
+      }
     }
     std::string final_graph = "trace_code_graph_" + std::to_string(graph->graph_id());
     if (json_parser.e2e_dump_enabled() || json_parser.async_dump_enabled()) {

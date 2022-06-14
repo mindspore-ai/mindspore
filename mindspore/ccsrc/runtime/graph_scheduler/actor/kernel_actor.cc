@@ -134,8 +134,8 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
     (void)launch_info_.workspaces_.erase(launch_info_.workspaces_.end() - size, launch_info_.workspaces_.end());
   } else if (launch_info_.workspaces_.size() < workspace_sizes.size()) {
     for (size_t i = launch_info_.workspaces_.size(); i < workspace_sizes.size(); ++i) {
-      auto device_address =
-        device_contexts_[0]->CreateDeviceAddress(nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
+      auto device_address = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
+        nullptr, workspace_sizes[i], "", kTypeUnknown, ShapeVector());
       MS_LOG(DEBUG) << "Create addr for node:" << common::AnfAlgo::GetNodeDebugString(kernel_)
                     << " addr:" << device_address;
       AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_.get());  // set to kernel_info
@@ -164,7 +164,7 @@ void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceC
       continue;
     }
     // Allocate memory through the device context.
-    if (!device_context->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kStep, *context, *device_context, actor_name,
                                                   device_tensor->GetSize());
     }
@@ -183,7 +183,7 @@ void FreeMemory(const std::vector<DeviceTensor *> &free_list, const DeviceContex
     if (device_tensor->ref_count() == 0) {
       // Free memory through the device context.
       if (device_tensor->GetPtr() != nullptr) {
-        device_context->FreeMemory(device_tensor);
+        device_context->device_res_manager_->FreeMemory(device_tensor);
       }
       device_tensor->ResetRefCount();
     }
@@ -219,7 +219,7 @@ void KernelActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const context) {
   // Free the address that is the temp store for kernel input copy.
   for (auto &copy_input_device_tensor : copy_input_device_tensors_) {
     if ((copy_input_device_tensor != nullptr) && (copy_input_device_tensor->GetPtr() != nullptr)) {
-      device_contexts_[0]->FreeMemory(copy_input_device_tensor.get());
+      device_contexts_[0]->device_res_manager_->FreeMemory(copy_input_device_tensor.get());
     }
   }
 }
@@ -311,7 +311,7 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, "The input index is of range.");
   }
   if (copy_input_device_tensors_[input_data->index_] == nullptr) {
-    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->CreateDeviceAddress(
+    copy_input_device_tensors_[input_data->index_] = device_contexts_[0]->device_res_manager_->CreateDeviceAddress(
       nullptr, real_input_info->size_, real_input_info->format_, real_input_info->type_id_, real_input_info->shape_);
   }
   auto &new_device_tensor = copy_input_device_tensors_[input_data->index_];
@@ -325,8 +325,8 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kKernelOutput,
                                                      input_data->index_);
-  if ((new_device_tensor->GetPtr() == nullptr) &&
-      (!device_contexts_[0]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize()))) {
+  if ((new_device_tensor->GetPtr() == nullptr) && (!device_contexts_[0]->device_res_manager_->AllocateMemory(
+                                                    new_device_tensor.get(), new_device_tensor->GetSize()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
                                                 new_device_tensor->GetSize());
   }
@@ -451,8 +451,8 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 
 bool KernelActor::LaunchKernel() {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
-  return device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                           launch_info_.outputs_);
+  return device_contexts_[0]->kernel_executor_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                                             launch_info_.outputs_);
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {

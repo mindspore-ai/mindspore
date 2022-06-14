@@ -234,9 +234,9 @@ void FreeMemory(DeviceTensor *const device_tensor, const DeviceContext *device_c
     const auto &new_device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
       {device_tensor->device_name(), device_tensor->device_id()});
     MS_EXCEPTION_IF_NULL(new_device_context);
-    new_device_context->FreeMemory(device_tensor);
+    new_device_context->device_res_manager_->FreeMemory(device_tensor);
   } else {
-    device_context->FreeMemory(device_tensor);
+    device_context->device_res_manager_->FreeMemory(device_tensor);
   }
 }
 

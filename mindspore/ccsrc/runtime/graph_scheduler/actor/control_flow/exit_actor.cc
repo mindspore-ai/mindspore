@@ -138,7 +138,7 @@ void ExitActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const context)
   for (size_t i = 0; i < input_device_tensors_.size(); ++i) {
     if ((input_device_tensors_[i] != nullptr) && (input_device_tensors_[i]->dynamic_ref_count() == 0)) {
       MS_LOG(WARNING) << GetAID().Name() << " input index:" << i << " has no user and free the memory.";
-      device_contexts_[i]->FreeMemory(input_device_tensors_[i]);
+      device_contexts_[i]->device_res_manager_->FreeMemory(input_device_tensors_[i]);
     }
   }
 }
@@ -182,9 +182,9 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
       (void)std::transform(shape_tmp.begin(), shape_tmp.end(), std::back_inserter(host_shape), IntToSize);
     }
     // Create the new device tensor to take over the input_device_tensors which are the outputs of kernel graphs.
-    auto new_device_tensor =
-      device_contexts_[i]->CreateDeviceAddress(nullptr, input_device_tensor->GetSize(), input_device_tensor->format(),
-                                               input_device_tensor->type_id(), host_shape);
+    auto new_device_tensor = device_contexts_[i]->device_res_manager_->CreateDeviceAddress(
+      nullptr, input_device_tensor->GetSize(), input_device_tensor->format(), input_device_tensor->type_id(),
+      host_shape);
     MS_EXCEPTION_IF_NULL(new_device_tensor);
     (void)created_device_tensors_.emplace_back(new_device_tensor);
     (void)new_device_tensors.emplace_back(new_device_tensor.get());
@@ -198,7 +198,8 @@ void ExitActor::CopyDeviceAddress(OpContext<DeviceTensor> *const context) {
     // If the address ptr can't be changed, then alloc the new device memory and copy the data.
     if (input_device_tensor->is_ptr_persisted()) {
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kOther);
-      if (!device_contexts_[i]->AllocateMemory(new_device_tensor.get(), new_device_tensor->GetSize())) {
+      if (!device_contexts_[i]->device_res_manager_->AllocateMemory(new_device_tensor.get(),
+                                                                    new_device_tensor->GetSize())) {
         SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_contexts_[i],
                                                     GetAID().Name(), new_device_tensor->GetSize());
       }
