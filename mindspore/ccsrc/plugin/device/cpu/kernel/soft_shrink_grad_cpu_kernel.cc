@@ -20,28 +20,24 @@
 namespace mindspore {
 namespace kernel {
 #define SOFT_SHRINK_GRAD_CPU_REGISTER(DT, T) \
-  KernelAttr().AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradCpuKernelMod::LaunchKernel<T>
+  KernelAttr().AddInputAttr(DT).AddInputAttr(DT).AddOutputAttr(DT), &SoftShrinkGradCpuKernelMod::LaunchKernel<T>
 
 template <typename T>
 bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  T *input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
-  T *output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
+  T *dy_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
+  T *x_addr = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
+  T *dx_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
 
   float lambd_value = lambd_;
-  auto task = [input_addr, output_addr, lambd_value](size_t start, size_t end) {
+  auto task = [dy_addr, x_addr, dx_addr, lambd_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      if (input_addr[i] > 0) {
-        output_addr[i] = input_addr[i] + lambd_value;
-      } else if (input_addr[i] < 0) {
-        output_addr[i] = input_addr[i] - lambd_value;
-      } else {
-        output_addr[i] = 0;
-      }
+      dx_addr[i] = (x_addr[i] >= -lambd_value && x_addr[i] <= lambd_value) ? 0 : dy_addr[i];
     }
   };
   ParallelLaunchAutoSearch(task, size_, this, &parallel_search_info_);
+
   return true;
 }
 

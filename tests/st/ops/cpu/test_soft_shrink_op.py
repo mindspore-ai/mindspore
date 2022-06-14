@@ -53,7 +53,7 @@ class SoftShrinkNet(nn.Cell):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('dtype', [np.float32])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
-@pytest.mark.parametrize("lambd", [0.5])
+@pytest.mark.parametrize("lambd", [0.5, 0.75])
 def test_soft_shrink(dtype, data_shape, lambd):
     """
     Feature: SoftShrink cpu kernel
