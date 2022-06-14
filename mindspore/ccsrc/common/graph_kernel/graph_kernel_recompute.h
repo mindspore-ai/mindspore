@@ -67,7 +67,7 @@ struct Candidate {
 class AutoRecompute {
  public:
   AutoRecompute() = default;
-  ~AutoRecompute() = default;
+  virtual ~AutoRecompute() = default;
 
   virtual std::vector<Candidate> Run(const FuncGraphPtr &func_graph);
 
@@ -84,7 +84,7 @@ class AutoRecompute {
   OutPosLinkList JudegeTargetAndCaptureSource(const AnfNodePtr &node, const FuncGraphManagerPtr &mng);
   AnfNodePtrList Filter(const AnfNodePtr &source_node, const AnfNodePtr &end_node, int edge_pos,
                         const FuncGraphManagerPtr &mng);
-  int GetSourceLinkOutPos(const AnfNodePtr &target, int pos);
+  int GetSourceLinkOutPos(const AnfNodePtr &target, int pos) const;
   std::tuple<OrderedSet<AnfNodePtr>, OutPosLinkMap, MemorySize> GetValidUsers(const AnfNodePtr &node,
                                                                               const FuncGraphManagerPtr &mng);
   MemorySize SelectThreshold(EdgeLifeTimeType type) const;
@@ -108,7 +108,7 @@ class CSRRecompute : public AutoRecompute {
                                                       const FuncGraphManagerPtr &mng) override;
 
  private:
-  bool CheckPrimitiveInput(AnfNodePtr base, PrimitivePtr prim_type);
+  bool CheckPrimitiveInput(AnfNodePtr base, const PrimitivePtr &prim_type) const;
 };
 
 class GraphKernelRecompute : public opt::Pass {
@@ -121,10 +121,10 @@ class GraphKernelRecompute : public opt::Pass {
   bool DoRun(const FuncGraphPtr &func_graph, bool use_csr = false);
   void Process(const Candidate &candidate);
   std::pair<FuncGraphPtr, AnfNodePtrList> CloneGraph(const CNodePtr &source_graph,
-                                                     const AnfNodePtrList &recompute_edges);
+                                                     const AnfNodePtrList &recompute_edges) const;
   void LinkIntoTargetFuncGraph(
     const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
-    const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func);
+    const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func) const;
 
   std::vector<Candidate> candidates_;
 };

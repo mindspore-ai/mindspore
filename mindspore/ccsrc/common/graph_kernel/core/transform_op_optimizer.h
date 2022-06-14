@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_TRANSFORM_OP_OPTIMIZER_H_
 
 #include <string>
-#include <vector>
 #include "backend/common/optimizer/pass.h"
 #include "ir/func_graph.h"
 #include "common/graph_kernel/model/lite_graph.h"
@@ -52,7 +51,7 @@ class TransformOpOptimizer : public opt::Pass {
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  bool Process(const inner::LiteGraphPtr &litegraph, const std::string &trans_op_name = "Transpose");
+  bool Process(const inner::LiteGraphPtr &litegraph, const std::string &trans_op_name = "Transpose") const;
   bool IsFlexibleOp(const inner::NodePtr &node);
 };
 }  // namespace mindspore::graphkernel

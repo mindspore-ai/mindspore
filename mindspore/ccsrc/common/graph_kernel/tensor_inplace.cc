@@ -30,7 +30,9 @@ mindspore::HashSet<AnfNodePtr> GetPredecessors(const AnfNodePtr &cur_node) {
   mindspore::HashSet<AnfNodePtr> predecessors;
   std::function<void(AnfNodePtr)> dfs;
   dfs = [&predecessors, &dfs](const AnfNodePtr &node) {
-    if (!node->isa<CNode>() || predecessors.count(node) > 0) return;
+    if (!node->isa<CNode>() || predecessors.count(node) > 0) {
+      return;
+    }
     (void)predecessors.insert(node);
     auto cnode = node->cast<CNodePtr>();
     auto inputs = cnode->inputs();
@@ -62,7 +64,9 @@ mindspore::HashSet<AnfNodePtr> GetPredecessors(const AnfNodePtr &cur_node) {
 // * B         *
 // *************
 bool NoUsersAfterCurNode(const AnfNodePtr &input, const AnfNodePtr &cur_node, const FuncGraphManagerPtr &mng) {
-  if (!input->isa<CNode>()) return false;
+  if (!input->isa<CNode>()) {
+    return false;
+  }
   mindspore::HashSet<AnfNodePtr> predecessors = GetPredecessors(cur_node);
   auto users = mng->node_users()[input];
   return std::all_of(users.begin(), users.end(),
@@ -136,8 +140,12 @@ mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInput
 // whether two nodes have same shape and type
 // currently we only support inplace for tensor of type float32 to avoid precision problem
 bool CheckShapeType(const AnfNodePtr &x, const AnfNodePtr &y) {
-  if (!x->isa<CNode>() || !y->isa<CNode>()) return false;
-  if (common::AnfAlgo::GetOutputInferShape(x, 0) != common::AnfAlgo::GetOutputInferShape(y, 0)) return false;
+  if (!x->isa<CNode>() || !y->isa<CNode>()) {
+    return false;
+  }
+  if (common::AnfAlgo::GetOutputInferShape(x, 0) != common::AnfAlgo::GetOutputInferShape(y, 0)) {
+    return false;
+  }
   return common::AnfAlgo::GetOutputInferDataType(x, 0) == TypeId::kNumberTypeFloat32 &&
          common::AnfAlgo::GetOutputInferDataType(y, 0) == TypeId::kNumberTypeFloat32;
 }
@@ -157,7 +165,9 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
       auto in_out_pairs = FindInputOutputPairs(sub_func_graph);
       auto cnode = node->cast<CNodePtr>();
       for (size_t i = 1; i < cnode->inputs().size(); i++) {
-        if (in_out_pairs.count(i - 1) == 0) continue;
+        if (in_out_pairs.count(i - 1) == 0) {
+          continue;
+        }
         if (NoUsersAfterCurNode(cnode->input(i), node, mng)) {
           // input - output pair suitable for inplace assign
           auto outs = in_out_pairs[i - 1];
@@ -171,7 +181,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
             new_op_info.op_node = candidate->first->cast<CNodePtr>();
             new_op_info.real_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
             new_op_info.real_output_index = candidate->second;
-            new_op_info.inplace_to_origin_input = i - 1;
+            new_op_info.inplace_to_origin_input = SizeToInt(i) - 1;
             // modify graph kernel's abstract, kernelBuildInfo and insert assign
             ProcessOriginCNode(cnode, {{new_op_info, cnode->input(i)}});
             // reconnect output's user to input

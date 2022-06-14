@@ -213,7 +213,8 @@ void InplaceAssignBuilder::ProcessOriginCNode(
       (void)additonal_inputs.emplace_back(input);
     } else {
       auto params = sub_graph->parameters();
-      (void)parameters_infos.emplace_back(target_node_info, params[target_node_info.inplace_to_origin_input]);
+      (void)parameters_infos.emplace_back(target_node_info,
+                                          params[IntToSize(target_node_info.inplace_to_origin_input)]);
     }
   }
 

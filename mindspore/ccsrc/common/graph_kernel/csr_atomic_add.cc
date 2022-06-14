@@ -16,6 +16,7 @@
 
 #include "common/graph_kernel/csr_atomic_add.h"
 #include <memory>
+#include <vector>
 #include "mindspore/core/ops/core_ops.h"
 #include "ir/tensor.h"
 #include "include/common/utils/utils.h"
@@ -56,35 +57,35 @@ class ReduceSumCsrChecker : public AtomicAddChecker {
     auto node = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(node);
     auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
-    auto mng_sub = sub_graph->manager();
-    if (mng_sub == nullptr) {
-      mng_sub = Manage(sub_graph, false);
-      sub_graph->set_manager(mng_sub);
+    auto sub_mng = sub_graph->manager();
+    if (sub_mng == nullptr) {
+      sub_mng = Manage(sub_graph, false);
+      sub_graph->set_manager(sub_mng);
     }
 
-    auto CheckSuitableTarget = [&mng_sub](const InplaceAssignerInfo &atomic_add_info) {
+    auto CheckSuitableTarget = [&sub_mng](const InplaceAssignerInfo &atomic_add_infos) {
       // Target type should not fuse any other ops in out direction, which means it should be in output list.
-      return mng_sub->node_users()[atomic_add_info.op_node].size() <= 1;
+      return sub_mng->node_users()[atomic_add_infos.op_node].size() <= 1;
     };
 
     auto real_return_node = sub_graph->get_return()->input(kFirstDataInputIndex);
-    InplaceAssignerInfo atomic_add_info;
+    InplaceAssignerInfo atomic_add_infos;
     if (IsPrimitiveCNode(real_return_node, prim::kPrimMakeTuple)) {
       const auto &inputs = real_return_node->cast<CNodePtr>()->inputs();
       for (size_t i = 1; i < inputs.size(); ++i) {
-        atomic_add_info.op_node = inputs[i]->cast<CNodePtr>();
-        atomic_add_info.real_output_index = i - 1;
-        atomic_add_info.real_output_num = inputs.size() - 1;
+        atomic_add_infos.op_node = inputs[i]->cast<CNodePtr>();
+        atomic_add_infos.real_output_index = i - 1;
+        atomic_add_infos.real_output_num = inputs.size() - 1;
         // Target type should not fuse any other ops in out direction, which means it should be in output list.
-        if (CheckSuitableTarget(atomic_add_info)) {
-          atomic_add_infos_.push_back(atomic_add_info);
+        if (CheckSuitableTarget(atomic_add_infos)) {
+          atomic_add_infos_.push_back(atomic_add_infos);
         }
       }
     } else if (real_return_node->isa<CNode>()) {
-      atomic_add_info.op_node = real_return_node->cast<CNodePtr>();
-      atomic_add_info.real_output_num = 1;
-      if (CheckSuitableTarget(atomic_add_info)) {
-        atomic_add_infos_.push_back(atomic_add_info);
+      atomic_add_infos.op_node = real_return_node->cast<CNodePtr>();
+      atomic_add_infos.real_output_num = 1;
+      if (CheckSuitableTarget(atomic_add_infos)) {
+        atomic_add_infos_.push_back(atomic_add_infos);
       }
     } else {
       return false;
