@@ -66,6 +66,9 @@ class LossMonitor(Callback):
                     please refer to :class:`mindspore.RunContext`.
         """
         cb_params = run_context.original_args()
+
+
+        cur_epoch_num = cb_params.get("cur_epoch_num", 1)
         loss = cb_params.net_outputs
 
         if isinstance(loss, (tuple, list)):
@@ -79,7 +82,7 @@ class LossMonitor(Callback):
 
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("In epoch: {} step: {}, loss is NAN or INF, training process cannot continue, "
-                             "terminating training.".format(cb_params.cur_epoch_num, cur_step_in_epoch))
+                             "terminating training.".format(cur_epoch_num, cur_step_in_epoch))
 
         # In disaster recovery scenario, the cb_params.cur_step_num may be rollback to previous step
         # and be less than self._last_print_time, so self._last_print_time need to be updated.
@@ -90,7 +93,7 @@ class LossMonitor(Callback):
 
         if self._per_print_times != 0 and (cb_params.cur_step_num - self._last_print_time) >= self._per_print_times:
             self._last_print_time = cb_params.cur_step_num
-            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss), flush=True)
+            print("epoch: %s step: %s, loss is %s" % (cur_epoch_num, cur_step_in_epoch, loss), flush=True)
 
     def on_train_epoch_end(self, run_context):
         """

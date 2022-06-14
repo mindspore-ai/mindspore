@@ -1081,7 +1081,7 @@ class Model:
             >>> net = Net()
             >>> loss = nn.SoftmaxCrossEntropyWithLogits()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
-            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics="accuracy")
+            >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics={"accuracy"})
             >>> model.fit(2, train_dataset, valid_dataset)
         """
 
