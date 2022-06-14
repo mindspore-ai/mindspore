@@ -28,10 +28,6 @@
 #include "minddata/mindrecord/include/shard_sample.h"
 #include "ut_common.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 class TestShardReader : public UT::Common {

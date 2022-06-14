@@ -21,11 +21,6 @@
 #include "minddata/mindrecord/include/common/shard_utils.h"
 #include "pybind11/pybind11.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 ShardSegment::ShardSegment() { SetAllInIndex(false); }

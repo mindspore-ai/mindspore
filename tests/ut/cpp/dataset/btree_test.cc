@@ -24,9 +24,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 // For testing purposes, we will make the branching factor very low.
 struct mytraits {

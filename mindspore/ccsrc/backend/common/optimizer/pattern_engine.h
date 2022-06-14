@@ -185,9 +185,6 @@ class PatternEngine {
 };
 }  // namespace mindspore
 namespace std {
-using mindspore::ERROR;
-using mindspore::LogStream;
-using mindspore::NoExceptionType;
 template <>
 struct hash<mindspore::VarPtr> {
   std::size_t operator()(const mindspore::VarPtr var) const {

@@ -38,9 +38,6 @@ namespace common = mindspore::common;
 namespace de = mindspore::dataset;
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
 
 class MindDataTestBatchOp : public UT::DatasetOpTesting {
  protected:

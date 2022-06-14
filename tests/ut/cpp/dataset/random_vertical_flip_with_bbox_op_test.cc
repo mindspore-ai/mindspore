@@ -19,9 +19,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 const bool kSaveExpected = false;
 const char kOpName[] = "random_vertical_flip_with_bbox_c";

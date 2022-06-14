@@ -38,9 +38,6 @@
 #include "securec.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestDataHelper : public UT::DatasetOpTesting  {
  protected: 

@@ -26,9 +26,6 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestCircularPool : public UT::Common {
  public:

@@ -20,9 +20,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestEqualizeOp : public UT::CVOP::CVOpCommon {
  public:

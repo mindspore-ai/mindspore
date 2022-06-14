@@ -22,9 +22,6 @@
 #include "minddata/dataset/core/global_context.h"
 
 using namespace mindspore::dataset;
-using mindspore::MsLogLevel::INFO;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::LogStream;
 
 class MindDataTestRandomSharpness : public UT::CVOP::CVOpCommon {
  public:

@@ -22,9 +22,6 @@
 #include "minddata/dataset/include/dataset/transforms.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 using namespace std;
 
 class MindDataTestPipeline : public UT::DatasetOpTesting {

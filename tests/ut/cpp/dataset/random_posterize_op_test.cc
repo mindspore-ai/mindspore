@@ -22,9 +22,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestRandomPosterizeOp : public UT::CVOP::CVOpCommon {
 };

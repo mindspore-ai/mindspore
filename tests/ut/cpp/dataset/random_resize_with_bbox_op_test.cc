@@ -22,9 +22,6 @@
 #include "minddata/dataset/core/global_context.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 const bool kSaveExpected = false;
 const char kOpName[] = "random_resize_with_bbox_c";

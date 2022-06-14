@@ -16,10 +16,6 @@
 
 #include "minddata/mindrecord/include/shard_sequential_sample.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-
 namespace mindspore {
 namespace mindrecord {
 ShardSequentialSample::ShardSequentialSample(int64_t n, int64_t offset)

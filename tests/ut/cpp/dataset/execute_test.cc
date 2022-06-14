@@ -28,13 +28,10 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
 using mindspore::dataset::CharNGram;
 using mindspore::dataset::FastText;
 using mindspore::dataset::GloVe;
 using mindspore::dataset::Vectors;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestExecute : public UT::DatasetOpTesting {
  protected:

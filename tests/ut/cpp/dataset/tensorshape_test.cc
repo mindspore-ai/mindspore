@@ -26,9 +26,6 @@
 namespace common = mindspore::common;
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestTensorShape : public UT::Common {
  public:

@@ -30,11 +30,6 @@
 #include "securec.h"
 #include "ut_common.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::ERROR;
-using mindspore::MsLogLevel::INFO;
-
 namespace mindspore {
 namespace mindrecord {
 class TestShardWriter : public UT::Common {

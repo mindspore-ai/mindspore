@@ -18,10 +18,6 @@
 #include "utils/ms_utils.h"
 #include "minddata/mindrecord/include/common/shard_utils.h"
 
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::DEBUG;
-
 namespace mindspore {
 namespace mindrecord {
 ShardTaskList::ShardTaskList() : categories(1) {}

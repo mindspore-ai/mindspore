@@ -22,9 +22,6 @@
 #include "gtest/gtest.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 
 class MindDataTestSolarizeOp : public UT::CVOP::CVOpCommon {
  protected:

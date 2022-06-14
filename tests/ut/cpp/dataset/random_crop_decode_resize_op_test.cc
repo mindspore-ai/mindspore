@@ -23,9 +23,6 @@
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
-using mindspore::LogStream;
-using mindspore::ExceptionType::NoExceptionType;
-using mindspore::MsLogLevel::INFO;
 constexpr double kMseThreshold = 2.5;
 
 class MindDataTestRandomCropDecodeResizeOp : public UT::CVOP::CVOpCommon {
