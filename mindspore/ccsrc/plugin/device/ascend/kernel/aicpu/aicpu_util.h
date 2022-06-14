@@ -60,6 +60,7 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kGather = "Gather";
 constexpr auto kIdentity = "Identity";
+constexpr auto kIdentityN = "IdentityN";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kUpdateCache = "UpdateCache";
 constexpr auto kCacheSwapTable = "CacheSwapTable";
@@ -108,7 +109,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kPriorityReplayBufferDestroy};
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
-  kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample};
+  kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
+  kIdentityN};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kMaxPoolV1, "MaxPool"},
   {kMaxPoolGradV1, "MaxPoolGrad"},

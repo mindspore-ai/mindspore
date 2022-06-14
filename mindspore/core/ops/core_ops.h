@@ -357,6 +357,7 @@ GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentSum, std::make_shared<Primitive>("Uns
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentMin, std::make_shared<Primitive>("UnsortedSegmentMin"));
 GVAR_DEF(PrimitivePtr, kPrimUnsortedSegmentProd, std::make_shared<Primitive>("UnsortedSegmentProd"));
 GVAR_DEF(PrimitivePtr, kPrimConcatOffset, std::make_shared<Primitive>("ConcatOffset"));
+GVAR_DEF(PrimitivePtr, kPrimIdentityN, std::make_shared<Primitive>("IdentityN"));
 GVAR_DEF(PrimitivePtr, kPrimReshape, std::make_shared<Primitive>("Reshape"));
 GVAR_DEF(PrimitivePtr, kPrimListDiff, std::make_shared<Primitive>(kListDiff));
 GVAR_DEF(PrimitivePtr, kPrimSubAndFilter, std::make_shared<Primitive>("SubAndFilter"));

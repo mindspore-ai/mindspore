@@ -6316,6 +6316,43 @@ class Identity(Primitive):
         pass
 
 
+class IdentityN(Primitive):
+    """
+    Return a tuple of tensors with the same shapes and contents as the input.
+
+    This op can be used to override the gradient for complicated functions. For
+    example, suppose y = f(x) and we wish to apply a custom function g for backprop
+    such that dx = g(dy).
+
+    Inputs:
+        - **x** (Tensors) - tuple(Tensor) or List(Tensor). The data type is RealNumber.
+
+    Outputs:
+        Tensors - tuple(Tensor), the shape of tensor and the data type are the same as input `x`.
+
+    Raises:
+        TypeError: If `x` is not tuple(Tensor) or List(Tensor).
+        TypeError: If input `x` type is not RealNumber.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = [Tensor(np.array([1, 2, 3, 4]), mstype.int64), Tensor(np.array([4, 3, 1, 1]), mstype.int64)]
+        >>> output = ops.IdentityN()(x)
+        >>> print(np.allclose(output[0].asnumpy(), x[0].asnumpy()))
+        True
+        >>> print(np.allclose(output[1].asnumpy(), x[1].asnumpy()))
+        True
+        >>> print(output)
+        (Tensor(shape=[4], dtype=Int64, value= [1, 2, 3, 4]), Tensor(shape=[4], dtype=Int64, value= [4, 3, 1, 1]))
+    """
+    @prim_attr_register
+    def __init__(self):
+        """Initialize IdentityN"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+
+
 class Range(PrimitiveWithCheck):
     r"""
     Creates a sequence of numbers that begins at `start` and extends by increments of
