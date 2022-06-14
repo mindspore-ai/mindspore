@@ -1831,6 +1831,14 @@ def tensor_sactter_div(input_x, indices, updates):
     return F.tensor_scatter_div(input_x, indices, updates)
 
 
+def tensor_scatter_max(x, indices, updates):
+    """
+    By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
+    the value at the index will eventually be equal to the largest one to create a new tensor.
+    """
+    return F.tensor_scatter_max(x, indices, updates)
+
+
 def tensor_scatter_min(x, indices, updates):
     """
     By comparing the value at the position indicated by `indices` in `x` with the value in the `updates`,
