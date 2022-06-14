@@ -600,8 +600,7 @@ uint32_t PSContext::continuous_failure_times() { return continuous_failure_times
 
 bool PSContext::enable_distributed_mindrt() const {
   bool ms_cluster_enabled = distributed::cluster::ClusterContext::instance()->initialized();
-  bool cache_enabled = cache_enable();
-  return ms_cluster_enabled && !cache_enabled;
+  return ms_cluster_enabled;
 }
 }  // namespace ps
 }  // namespace mindspore

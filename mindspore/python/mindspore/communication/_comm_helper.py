@@ -161,14 +161,21 @@ def _check_mpi_envs():
     return False
 
 
+def _use_old_ps():
+    """
+    Whether use old framework to launch Parameter Server training.
+    """
+    return os.getenv("USE_OLD_PS") == "True"
+
+
 def _not_require_collective_comm_lib():
     '''
     Whether collective communication library is required in this training mode.
     For example, scheduler and server do not require actual collective communication in parameter server mode.
     '''
-    # Environment variable PARALLEL_EXCUTE is set by test case and
-    # will be removed after Parameter Server training switches to MindRT.
-    if os.getenv("PARALLEL_EXCUTE") != "ms_ps" and (_is_role_sched() or _is_role_pserver()):
+    # Environment variable USE_OLD_PS is set by user and used to run
+    # parameter server training with old framework.
+    if _use_old_ps() and (_is_role_sched() or _is_role_pserver()):
         return True
     return False
 
@@ -180,7 +187,7 @@ def _check_bypass_rank_id_and_size():
     '''
     if _is_role_sched():
         return True
-    if os.getenv("PARALLEL_EXCUTE") != "ms_ps" and _is_role_pserver():
+    if _use_old_ps() and _is_role_pserver():
         return True
     return False
 
