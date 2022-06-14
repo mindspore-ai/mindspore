@@ -5529,39 +5529,9 @@ class Igammac(Primitive):
 
 class IsClose(Primitive):
     r"""
-    Returns a boolean tensor where two tensors are element-wise equal within a tolerance.
+    Returns a boolean Tensor where two tensors are element-wise equal within a tolerance.
 
-    Note:
-        Returns a new tensor with boolean elements representing if each element of input
-        is “close” to the corresponding element of other. Closeness is defined as:
-            ∣input−other∣  ≤  atol + rtol × ∣other∣
-
-    .. warning::
-        When the input is nan or inf, the result is uncertain.
-
-    Args:
-        rtol(float): Relative tolerance. Default: 1e-05.
-        atol(float): Absolute tolerance. Default: 1e-08.
-        equal_nan(bool): If True, then two NaNs will be considered equal. At present, `equal_nan` must be True in Ascend
-            platform currently, we will support False in future version. Default: True.
-
-    Inputs:
-        -**input**(Tensor) – First tensor to compare, with data type belongs to float32, float16, int32.
-        -**other**(Tensor) – Second tensor to compare, with data type belongs to float32, float16, int32.
-
-    Outputs:
-        Tensor, with same shape as input and other. When the input is close to the other, it is true,
-        otherwise it is false.
-
-    Raises:
-        TypeError: If either of `input` and `other` is not tensor.
-        TypeError: If either of `input` and `other` is not float16, float32 or int32.
-        TypeError: If either of `atol` and `rtol` is not float.
-        TypeError: If `equal_nan` is not bool.
-        TypeError: If the dtype of `input` is not same as the `other`.
-        ValueError: If shape of `input` is not same as the `other`.
-        ValueError: If either of `atol` and `rtol` is less than zero.
-        ValueError: If `equal_nan` is False.
+    Refer to :func:`mindspore.ops.isclose` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -5581,7 +5551,7 @@ class IsClose(Primitive):
         validator.check_value_type('atol', atol, [float], self.name)
         validator.check_value_type('equal_nan', equal_nan, [bool], self.name)
         if context.get_context("device_target") == "Ascend" and not equal_nan:
-            raise ValueError("For IsClose, the `equal_nan` must be True, but got False.")
+            raise ValueError("For IsClose, the `equal_nan` must be True on Ascend, but got False.")
         validator.check_non_negative_float(rtol, 'rtol', self.name)
         validator.check_non_negative_float(atol, 'atol', self.name)
 
