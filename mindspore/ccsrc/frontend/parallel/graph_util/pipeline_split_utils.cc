@@ -454,12 +454,6 @@ void ReorderForParams(const std::vector<AnfNodePtr> &backward_params, const std:
     InsertDepend(prior_node, post_node, manager, root);
   }
   if (!backward_params.empty()) {
-    if (!allreduce_params.empty()) {
-      for (auto &node : allreduce_params) {
-        auto post_node1 = backward_params_pair.first[0];
-        InsertDepend(node, post_node1, manager, root);
-      }
-    }
     auto prior_node2 = backward_end.back();
     auto post_node2 = backward_params[0];
     InsertDepend(prior_node2, post_node2, manager, root);
