@@ -54,23 +54,26 @@ bool SendActor::ConnectServer() {
   return true;
 }
 
-void SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
-  MS_EXCEPTION_IF_NULL(context);
-  KernelActor::LaunchKernel(context);
+bool SendActor::LaunchKernel() {
+  if (!KernelActor::LaunchKernel()) {
+    MS_LOG(ERROR) << "Launching kernel for send actor failed.";
+    return false;
+  }
 
   // Send input data(inter-process data is the input of the Send kernel) to peers.
   if (launch_info_.inputs_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
-    return;
+    return false;
   }
   auto send_output = launch_info_.inputs_;
   for (const auto &peer : peer_actor_urls_) {
     std::string peer_server_url = peer.second;
     auto message = BuildRpcMessage(send_output, peer_server_url);
-    MS_ERROR_IF_NULL_WO_RET_VAL(message);
+    MS_ERROR_IF_NULL_W_RET_VAL(message, false);
     MS_LOG(INFO) << "Rpc actor send message for inter-process edge: " << peer.first;
     client_->SendAsync(std::move(message));
   }
+  return true;
 }
 
 void SendActor::EraseInput(const OpContext<DeviceTensor> *context) {

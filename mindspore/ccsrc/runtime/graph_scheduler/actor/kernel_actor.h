@@ -92,7 +92,7 @@ class KernelActor : public DebugAwareActor {
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
-  virtual void LaunchKernel(OpContext<DeviceTensor> *const context);
+  virtual bool LaunchKernel();
 
   // The info of kernel.
   CNodePtr kernel_;

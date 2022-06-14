@@ -230,7 +230,26 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   PreLaunchKernel(context);
 
-  LaunchKernel(context);
+  try {
+    if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
+      // In disaster recovery scenarios, run dag in this step failed, the rest operators of graph do not need launch,
+      // especially the collective communication operators.
+      MS_LOG(WARNING) << "Collective communication need reinitialize, skip launch kernel: "
+                      << kernel_->fullname_with_scope();
+    } else {
+      auto ret = LaunchKernel();
+      if (!ret) {
+        std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
+        SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+      }
+    }
+  } catch (const std::exception &e) {
+    if (strategy_ == GraphExecutionStrategy::kPipeline) {
+      MsException::Instance().SetException();
+    }
+    std::string error_info = "Launch kernel exception: " + kernel_->fullname_with_scope();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+  }
 
   // Debug actor is blocked, must wait debug actor callback message to process continue.
   if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
@@ -430,28 +449,10 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
   }
 }
 
-void KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
-  try {
-    if (RecoveryContext::GetInstance()->enable_recovery() && CollectiveManager::instance()->need_reinit()) {
-      // In disaster recovery scenarios, run dag in this step failed, the rest operators of graph do not need launch,
-      // especially the collective communication operators.
-      MS_LOG(WARNING) << "Collective communication need reinitialize, skip launch kernel: "
-                      << kernel_->fullname_with_scope();
-    } else {
-      auto ret = device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
-                                                   launch_info_.outputs_);
-      if (!ret) {
-        std::string error_info = "Launch kernel failed: " + kernel_->fullname_with_scope();
-        SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-      }
-    }
-  } catch (const std::exception &e) {
-    if (strategy_ == GraphExecutionStrategy::kPipeline) {
-      MsException::Instance().SetException();
-    }
-    std::string error_info = "Launch kernel exception: " + kernel_->fullname_with_scope();
-    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
-  }
+bool KernelActor::LaunchKernel() {
+  MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  return device_contexts_[0]->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
+                                           launch_info_.outputs_);
 }
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
