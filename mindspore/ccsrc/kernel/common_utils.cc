@@ -1056,6 +1056,20 @@ KernelAttr &KernelAttr::AddAllOutInRef(const bool &all_out_in_ref) {
   return *this;
 }
 
+void KernelAttr::SetInputAttr(const size_t index, const TypeId &ms_type, const std::string &format) {
+  if (index >= input_type_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid index for input: " << index << ", out of range.";
+  }
+  input_type_[index] = std::make_pair(ms_type, format);
+}
+
+void KernelAttr::SetOutputAttr(const size_t index, const TypeId &ms_type, const std::string &format) {
+  if (index >= output_type_.size()) {
+    MS_LOG(EXCEPTION) << "Invalid index for output: " << index << ", out of range.";
+  }
+  output_type_[index] = std::make_pair(ms_type, format);
+}
+
 void KernelAttr::SetInputAttrList(const std::vector<DataType> &addr_list) {
   input_type_.assign(addr_list.begin(), addr_list.end());
 }
