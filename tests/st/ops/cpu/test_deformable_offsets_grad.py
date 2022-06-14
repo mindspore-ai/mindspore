@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import pytest
 import numpy as np
 
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import composite as C
 from mindspore import nn
-from mindspore import context
 from mindspore import Tensor
 from mindspore import dtype
 from mindspore.ops.operations import nn_ops
@@ -44,14 +44,10 @@ def test_grad_infer():
     Description: Test of CPU operation: DeformableOffsetsGrad
     Expectation: No exception raised.
     """
-    context.set_context(save_graphs=True, save_graphs_path="./graph_ir")
     dout = Tensor(np.ones([1, 1, 2, 2]), dtype.float32)
     x = Tensor(np.ones([1, 1, 2, 2]), dtype.float32)
-    offsets = Tensor(np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]).astype(np.float32)
-                     .reshape([1, 12, 2, 2]))
+    offsets = Tensor(np.array([0.1] * 12).astype(np.float32).reshape([1, 12, 1, 1]))
+
     net = TestNetwork()
     grad = net(dout, x, offsets)
     print("grad_x:", grad[0])
@@ -88,16 +84,97 @@ def test_auto_diff():
     Description: Test of CPU operation: DeformableOffsetsGrad by auto diff.
     Expectation: No exception raised.
     """
-    context.set_context(save_graphs=True, save_graphs_path="./graph_ir")
     x = Tensor(np.ones([1, 1, 2, 2]), dtype.float32)
-    offsets = Tensor(np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
-                               0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]).astype(np.float32)
-                     .reshape([1, 12, 2, 2]))
+    offsets = Tensor(np.array([0.1] * 12).astype(np.float32).reshape([1, 12, 1, 1]))
     forward_net = ForwardNet()
     net = BackwardNet(forward_net)
     grad = net(x, offsets)
     print("grad_x:", grad[0])
     print("grad_offset:", grad[1])
     return grad
+
+
+class NetDeformableOffsetsGrad(nn.Cell):
+    def __init__(self, data_format):
+        super(NetDeformableOffsetsGrad, self).__init__()
+        strides = (1, 1, 1, 1)
+        pads = (0, 0, 0, 0)
+        ksize = (3, 3)
+        self.grad_op = G.DeformableOffsetsGrad(strides, pads, ksize, data_format=data_format)
+
+    def construct(self, grad, input_x, offsets):
+        return self.grad_op(grad, input_x, offsets)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('data_type', [np.float16, np.float32])
+def test_deformable_offsets_grad_nchw(data_type):
+    """
+    Feature: DeformableOffsetsGrad gpu kernel
+    Description: test the rightness of DeformableOffsetsGrad gpu kernel
+    Expectation: the output is same as expected result
+    """
+    net = NetDeformableOffsetsGrad(data_format="NCHW")
+    dout = Tensor(np.ones([1, 2, 3, 3]).astype(data_type))
+    x = Tensor(np.ones([1, 2, 4, 4]).astype(data_type))
+    offsets = Tensor(np.ones([1, 27, 1, 1]).astype(data_type) * 0.1)
+    output = net(dout, x, offsets)
+
+    expect_grad_x = np.array([[[0.081, 0.09, 0.09, 0.009],
+                               [0.09, 0.1, 0.1, 0.01],
+                               [0.09, 0.1, 0.1, 0.01],
+                               [0.009, 0.01, 0.01, 0.001]],
+                              [[0.081, 0.09, 0.09, 0.009],
+                               [0.09, 0.1, 0.1, 0.01],
+                               [0.09, 0.1, 0.1, 0.01],
+                               [0.009, 0.01, 0.01, 0.001]]]
+                             ).astype(data_type)
+    expect_grad_offset = np.array([-0.32] * 18 + [2.0] * 9).astype(data_type).reshape([1, 27, 1, 1])
+    rtol = 1e-5
+    if data_type == np.float16:
+        rtol = 1e-3
+    assert np.allclose(output[0].asnumpy(), expect_grad_x, rtol)
+    assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('data_type', [np.float16, np.float32])
+def test_deformable_offsets_grad_nhwc(data_type):
+    """
+    Feature: DeformableOffsetsGrad gpu kernel
+    Description: test the rightness of DeformableOffsetsGrad gpu kernel
+    Expectation: the output is same as expected result
+    """
+    net = NetDeformableOffsetsGrad(data_format="NHWC")
+    dout = Tensor(np.ones([1, 3, 3, 2]).astype(data_type))
+    x = Tensor(np.ones([1, 4, 4, 2]).astype(data_type))
+    offsets = Tensor(np.ones([1, 1, 1, 27]).astype(data_type) * 0.1)
+    output = net(dout, x, offsets)
+    expect_grad_x = np.array([[[0.081, 0.081],
+                               [0.09, 0.09],
+                               [0.09, 0.09],
+                               [0.009, 0.009]],
+                              [[0.09, 0.09],
+                               [0.1, 0.1],
+                               [0.1, 0.1],
+                               [0.01, 0.01]],
+                              [[0.09, 0.09],
+                               [0.1, 0.1],
+                               [0.1, 0.1],
+                               [0.01, 0.01]],
+                              [[0.009, 0.009],
+                               [0.01, 0.01],
+                               [0.01, 0.01],
+                               [0.001, 0.001]]
+                              ]
+                             ).astype(data_type)
+    expect_grad_offset = np.array([-0.32] * 18 + [2.0] * 9).astype(data_type).reshape([1, 1, 1, 27])
+    rtol = 1e-5
+    if data_type == np.float16:
+        rtol = 1e-3
+    assert np.allclose(output[0].asnumpy(), expect_grad_x, rtol)
+    assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
