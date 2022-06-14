@@ -55,6 +55,16 @@ TypePtr BernoulliInferType(const PrimitivePtr &primitive, const std::vector<Abst
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(Bernoulli, BaseOperator);
+
+void Bernoulli::Init(const int64_t seed) { this->set_seed(seed); }
+
+void Bernoulli::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+int64_t Bernoulli::get_seed() const {
+  auto value_ptr = this->GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+
 AbstractBasePtr BernoulliInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
