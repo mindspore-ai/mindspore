@@ -15,8 +15,10 @@
  */
 
 #include <float.h>
+#include <math.h>
 #include "nnacl/fp16/reduce_fp16.h"
 #include "nnacl/errorcode.h"
+#include "nnacl/intrinsics/ms_simd_instructions_fp16.h"
 
 int ReduceMeanFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
                    int tid, int thread_num) {
@@ -150,6 +152,46 @@ int ReduceSumFp16(int outer_size, int inner_size, int axis_size, const float16_t
         tmp += inner_src[k * inner_size];
       }
       *inner_dst = tmp;
+    }
+  }
+  return NNACL_OK;
+}
+
+int ReduceL2NormFp16(int outer_size, int inner_size, int axis_size, const float16_t *src_data, float16_t *dst_data,
+                     int tid, int thread_num) {
+  int stride = UP_DIV(outer_size, thread_num);
+  int start = stride * tid;
+  int end = MSMIN(outer_size, start + stride);
+  int num = end - start;
+#ifdef ENABLE_NEON
+  int block_c8 = inner_size - inner_size % C8NUM;
+#endif
+
+  int src_stride = axis_size * inner_size;
+  src_data += start * src_stride;
+  dst_data += start * inner_size;
+
+  for (int i = 0; i < num; i++, src_data += src_stride, dst_data += inner_size) {
+    int j = 0;
+#ifdef ENABLE_NEON
+    for (; j < block_c8; j += C8NUM) {
+      const float16_t *inner_src = src_data + j;
+      float16_t *inner_dst = dst_data + j;
+      float16x8_t tmp = {0, 0, 0, 0, 0, 0, 0, 0};
+      for (int k = 0; k < axis_size; k++) {
+        float16x8_t src = vld1q_f16(inner_src + k * inner_size);
+        tmp = MS_FMAQ_F16(tmp, src, src);
+      }
+      vst1q_f16(inner_dst, MS_SQRTFX8_F16(tmp));
+    }
+#endif
+    for (; j < inner_size; j++) {
+      const float16_t *inner_src = src_data + j;
+      float tmp = 0.0f;
+      for (int k = 0; k < axis_size; k++) {
+        tmp += inner_src[k * inner_size] * inner_src[k * inner_size];
+      }
+      dst_data[j] = sqrtf(tmp);
     }
   }
   return NNACL_OK;
