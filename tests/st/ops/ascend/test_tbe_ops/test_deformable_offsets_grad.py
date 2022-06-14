@@ -59,7 +59,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x, w, offset, output_grad)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -74,10 +74,10 @@ def test_deformable_conv2d_grad():
     stride = 1
     pad = 0
     dilation = 1
-    # x shape [1, 8, 2, 2]
-    x = Tensor(np.ones([1, 8, 2, 2]).astype(np.float32) * 0.1)
-    # weight shape [1, 8, 2, 2]
-    weight = Tensor(np.ones([1, 8, 2, 2]).astype(np.float32) * 0.1)
+    # x shape [1, 64, 2, 2]
+    x = Tensor(np.ones([1, 64, 2, 2]).astype(np.float32) * 0.1)
+    # weight shape [1, 64, 2, 2]
+    weight = Tensor(np.ones([1, 64, 2, 2]).astype(np.float32) * 0.1)
     # offsets shape [1, 12, 1, 1]
     offsets = Tensor(np.ones([1, 12, 1, 1]).astype(np.float32) * 0.1)
     # out_channel, kernel_size, pad, stride, dilation
@@ -85,39 +85,13 @@ def test_deformable_conv2d_grad():
     out = dfm_conv2d_net(x, weight, offsets)
     grad_net = Grad(dfm_conv2d_net)
     grad_output = grad_net(x, weight, offsets, out)
-    expected_out = np.array([[[[0.02888089]]]]).astype(np.float32)
-    expect_grad_x = np.array([[[[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]],
-                               [[0.00023391, 0.0002599],
-                                [0.0002599, 0.00028877]]]]).astype(np.float32)
-    expect_grad_offset = np.array([[[[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]],
-                                    [[0.00028891, 0.00026004],
-                                     [0.00026004, 0.00023404]]]]).astype(np.float32)
-    assert np.allclose(out.asnumpy(), expected_out, 0.0001, 0.0001)
+    expect_out = np.array([[[[0.2310471]]]]).astype(np.float32)
+    expect_grad_x = np.array([[[[0.00187125, 0.00207916], [0.00207916, 0.00231018]]] * 64]).astype(np.float32)
+    expect_grad_weight = np.array([[[[0.00231128, 0.00208033], [0.00208033, 0.0018723]]] * 64]).astype((np.float32))
+    expect_grad_offset = np.array([[[0]], [[-0.01478]], [[0]], [[-0.01331]],
+                                   [[0]], [[0]], [[-0.01478]], [[-0.01331]],
+                                   [[0.14785]], [[0.13307]], [[0.13307]], [[0.11976]]]).astype((np.float32))
+    assert np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
     assert np.allclose(grad_output[0].asnumpy(), expect_grad_x, 0.0001, 0.0001)
-    assert np.allclose(grad_output[1].asnumpy(), expect_grad_offset, 0.0001, 0.0001)
+    assert np.allclose(grad_output[1].asnumpy(), expect_grad_weight, 0.0001, 0.0001)
+    assert np.allclose(grad_output[2].asnumpy(), expect_grad_offset, 0.0001, 0.0001)
