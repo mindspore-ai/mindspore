@@ -72,7 +72,7 @@ def run_train():
     if device_num > 1:
         ms.communication.init()
         ms.context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL,
-                                             gradients_mean=True, all_reduce_fusion_config=[85, 160])
+                                             gradients_mean=True, all_reduce_fusion_config=[80, 160])
     net = resnet50(thor_config.class_num)
 
     if not thor_config.label_smooth:
