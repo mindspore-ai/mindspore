@@ -893,15 +893,15 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         kwargs['dataset'] = inputs[0]
         only_support_col = "image"
 
-        inputs = list()
+        inputs_col = list()
         for c, s, t in zip(columns, shapes, types):
             if only_support_col != c:
                 continue
-            inputs.append(Tensor(np.random.uniform(-1.0, 1.0, size=s).astype(t)))
-        if not inputs:
+            inputs_col.append(Tensor(np.random.uniform(-1.0, 1.0, size=s).astype(t)))
+        if not inputs_col:
             raise RuntimeError(f"Only supports parse \"image\" column from dataset now, given dataset has columns: "
                                + str(columns))
-        inputs = tuple(inputs)
+        inputs = tuple(inputs_col)
 
     Validator.check_file_name_by_regular(file_name)
     file_name = os.path.realpath(file_name)
