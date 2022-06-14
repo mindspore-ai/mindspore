@@ -45,6 +45,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "runtime/device/context_extends.h"
+#include "utils/ms_context.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
 #include "utils/crypto.h"
@@ -770,7 +771,7 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
       return ServerPipeline(resource);
     }
     if (ps::PSContext::instance()->is_server()) {
-      resource->SetResult(kBackend, compile::CreateBackend());
+      resource->SetBackendAsync([]() { return compile::CreateBackend(); });
       return PServerPipeline(resource);
     }
     if (ps::PSContext::instance()->is_scheduler()) {
@@ -836,13 +837,15 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   std::shared_ptr<Pipeline> pip = std::make_shared<Pipeline>(resource, FilterActions(actions, phase));
 
   if (pip->NeedCreateBackend()) {
-    // Create backend.
-    auto backend_ptr = compile::CreateBackend();
+    // Create backend asynchronously.
+    resource->SetBackendAsync([]() {
+      auto backend = compile::CreateBackend();
 #ifdef ENABLE_DEBUGGER
-    // Connect session to debugger
-    backend_ptr->SetDebugger();
+      // Connect session to debugger.
+      backend->SetDebugger();
 #endif
-    resource->SetResult(kBackend, backend_ptr);
+      return backend;
+    });
   }
 
   // Get the parameters items and add the value to args_abs.

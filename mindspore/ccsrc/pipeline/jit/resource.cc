@@ -24,11 +24,10 @@
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "include/common/utils/parallel_context.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
-// namespace to support opmap definition
 namespace pipeline {
-
 BuiltInTypeMap &GetMethodMap() {
   static BuiltInTypeMap method_map = {
     {kObjectTypeString,
@@ -339,6 +338,8 @@ BuiltInTypeMap &GetAttrMap() {
   return attr_map;
 }
 
+std::mutex Resource::backend_init_mutex_;
+
 Resource::Resource(const py::object &obj)
     : engine_(std::make_shared<abstract::AnalysisEngine>(abstract::GetPrimEvaluatorConstructors(), manager_)),
       source_input_(obj),
@@ -441,6 +442,10 @@ void Resource::CacheFuncGraph() const {
 }
 
 void Resource::Clean() {
+  // Ensure that async backend creating task is finished before clean resource.
+  if (backend_ == nullptr && backend_future_.valid()) {
+    backend_ = backend_future_.get();
+  }
   // AbstractTensor->elements() will be saved in AbstractBasePtrList
   args_abs_.clear();
   source_input_ = py::none();
@@ -457,5 +462,29 @@ void Resource::Clean() {
   is_cleaned_ = true;
 }
 
+compile::BackendPtr Resource::GetBackend() const {
+  if (backend_ == nullptr && backend_future_.valid()) {
+    backend_ = backend_future_.get();
+  }
+  return backend_;
+}
+
+void Resource::SetBackendAsync(std::function<compile::BackendPtr()> func) {
+  static bool is_enable_ge = (common::GetEnv("MS_ENABLE_GE") == "1");
+  if (is_enable_ge) {
+    // Disable async backend creating for GE pipeline.
+    std::lock_guard<std::mutex> guard(GetBackendInitMutex());
+    backend_ = func();
+    return;
+  }
+  if (backend_ == nullptr && backend_future_.valid()) {
+    (void)backend_future_.get();
+  }
+  backend_ = nullptr;
+  backend_future_ = std::async(std::launch::async, [func]() {
+    std::lock_guard<std::mutex> guard(Resource::GetBackendInitMutex());
+    return func();
+  });
+}
 }  // namespace pipeline
 }  // namespace mindspore

@@ -21,6 +21,10 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <future>
+#include <mutex>
+#include <utility>
+#include <functional>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
@@ -38,11 +42,13 @@
 #include "pipeline/jit/compile_cache_manager.h"
 
 namespace mindspore {
+namespace compile {
+class Backend;
+using BackendPtr = std::shared_ptr<Backend>;
+}  // namespace compile
 namespace pipeline {
-
 namespace py = pybind11;
 
-const char kBackend[] = "backend";
 const char kStepParallelGraph[] = "step_parallel";
 const char kOutput[] = "output";
 const char kPynativeGraphId[] = "graph_id";
@@ -102,6 +108,16 @@ class Resource : public ResourceBase {
   // should be cleared.
   void Clean();
 
+  // Get the backend object. if the backend is being initialized, wait until it completes.
+  compile::BackendPtr GetBackend() const;
+
+  // Set backend asynchronously, the input function should return a Backend pointer,
+  // and it will be called in a background thread.
+  void SetBackendAsync(std::function<compile::BackendPtr()> func);
+
+  // Get the mutex for backend initializing.
+  static std::mutex &GetBackendInitMutex() { return backend_init_mutex_; }
+
  private:
   abstract::AnalysisEnginePtr engine_;
   FuncGraphPtr func_graph_;
@@ -116,6 +132,11 @@ class Resource : public ResourceBase {
   int64_t loop_size_{1};
   LayoutMap layout_map_{};
   CompileCacheManagerPtr compile_cache_manager_{nullptr};
+  // The backend related fields for async initializing.
+  mutable compile::BackendPtr backend_;
+  mutable std::future<compile::BackendPtr> backend_future_;
+  // Mutex to ensure backend creating task is running exclusively.
+  static std::mutex backend_init_mutex_;
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;
