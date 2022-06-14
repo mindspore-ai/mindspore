@@ -29,7 +29,6 @@
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite {
-#ifndef ENABLE_CLOUD_AND_LITE
 class MindIRSerializer {
  public:
   MindIRSerializer() = default;
@@ -72,7 +71,6 @@ class MindIRSerializer {
   std::fstream *data_fs_ = nullptr;
   std::shared_ptr<system::FileSystem> fs_{};
 };
-#endif
 // export func_graph
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph);
 }  // namespace mindspore::lite

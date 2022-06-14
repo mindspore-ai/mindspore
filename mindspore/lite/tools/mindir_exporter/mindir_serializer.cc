@@ -31,7 +31,6 @@ namespace mindspore::lite {
 constexpr const size_t TOTAL_SAVE = 1024 * 1024 * 1024;
 constexpr const int64_t OFFSET = 64;
 
-#ifndef ENABLE_CLOUD_AND_LITE
 namespace {
 bool DeleteDirRecursively(const std::string &dir_name) {
   DIR *dir = opendir(dir_name.c_str());
@@ -402,18 +401,12 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
   ChangeFileMode(realpath.value(), S_IRUSR);
   return RET_OK;
 }
-#endif
 
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
-#ifndef ENABLE_CLOUD_AND_LITE
   if (!param->export_mindir) {
     return RET_OK;
   }
   mindspore::lite::MindIRSerializer serializer;
   return serializer.Save(param, func_graph);
-#else
-  MS_LOG(INFO) << "No need to serialize mindir when load model online.";
-  return RET_OK;
-#endif
 }
 }  // namespace mindspore::lite

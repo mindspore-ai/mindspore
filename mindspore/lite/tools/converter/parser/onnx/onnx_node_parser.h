@@ -21,11 +21,7 @@
 #include <utility>
 #include <vector>
 #include "google/protobuf/message.h"
-#ifdef ENABLE_CLOUD_AND_LITE
-#include "proto/lite/onnx.pb.h"
-#else
 #include "proto/onnx.pb.h"
-#endif
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"

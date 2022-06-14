@@ -388,9 +388,7 @@ set(TRAIN_SRC
         )
 
 if(MSLITE_ENABLE_MINDRT)
-    if(NOT ENABLE_CLOUD_AND_LITE)
-        add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
-    endif()
+    add_subdirectory(${CORE_DIR}/mindrt mindspore_mindrt)
     set(LITE_SRC ${LITE_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/lite_mindrt.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/mindrt_executor.cc
@@ -581,12 +579,10 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
             cpu_kernel_mid ccsrc_src_mid converter_src_mid lite_exporter_mid
             config_parser_mid mslite_converter_plugin mindspore_core coder_mid
             mindir_serializer_mid mindspore::protobuf ${SECUREC_LIBRARY})
-    if(NOT ENABLE_CLOUD_AND_LITE)
-        target_link_libraries(mindspore-lite
-                ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-        target_link_libraries(mindspore-lite_static
-                ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
-    endif()
+    target_link_libraries(mindspore-lite
+            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
+    target_link_libraries(mindspore-lite_static
+            ccsrc_debug_common_mid_ mindir_proto_mid _mindspore_transform_express_ir_obj)
     if(MSLITE_ENABLE_ACL)
         target_link_libraries(mindspore-lite lite_acl_mid
                 mindspore_shared_lib)
@@ -647,8 +643,4 @@ endif()
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(mindspore-lite ascend_kernel_mid)
     target_link_libraries(mindspore-lite_static ascend_kernel_mid)
-endif()
-
-if(ENABLE_CLOUD_AND_LITE)
-    set_target_properties(mindspore-lite PROPERTIES INSTALL_RPATH $ORIGIN)
 endif()
