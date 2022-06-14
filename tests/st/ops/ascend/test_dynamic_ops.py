@@ -173,6 +173,15 @@ class SquareSumAllNet(nn.Cell):
         return self.square_sum_all(x, y)
 
 
+class HSwishNet(nn.Cell):
+    def __init__(self):
+        super(HSwishNet, self).__init__()
+        self.hswish = ops.HSwish()
+
+    def construct(self, x):
+        return self.hswish(x)
+
+
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -396,3 +405,21 @@ def test_dynamic_square_sum_all():
     out = dynamic_shape_sink_process(net, dataset)
     out_expect = fixed_shape_process(net, dataset)
     assert compare(out, out_expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.parametrize('dtype', [np.float32])
+@pytest.mark.env_onecard
+def test_dynamic_hswish(dtype):
+    """
+    Feature: Test HSwish and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    batch_size = 16
+    dynamic_range = range(48, 50)
+    input_shape = [(batch_size, 2, None), (batch_size, 2, None)]
+    net = HSwishNet()
+    common_func(dynamic_range, input_shape, dtype, net)
