@@ -233,6 +233,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"padding", std::string("padding")},                                // padding()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
+       {"gather", std::string("gather")},                                  // P.Gather()
        {"scatter_add", std::string("tensor_scatter_add")},                 // P.TensorScatterAdd()
        {"scatter_mul", std::string("tensor_scatter_mul")},                 // tensor_scatter_mul()
        {"scatter_sub", std::string("tensor_scatter_sub")},                 // P.TensorScatterSub()
