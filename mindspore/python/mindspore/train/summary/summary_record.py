@@ -211,8 +211,8 @@ class SummaryRecord:
         Examples:
             >>> import mindspore as ms
             >>> if __name__ == '__main__':
-            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy")
-                                          as summary_record:
+            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
+            ...             as summary_record:
             ...         summary_record.set_mode('eval')
         """
         mode_spec = 'train', 'eval'
@@ -273,8 +273,8 @@ class SummaryRecord:
             >>> import mindspore as ms
             >>> from mindspore import Tensor
             >>> if __name__ == '__main__':
-            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy")
-                                          as summary_record:
+            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
+            ...             as summary_record:
             ...         summary_record.add_value('scalar', 'loss', Tensor(0.1))
         """
         if plugin in ('tensor', 'scalar', 'image', 'histogram'):
@@ -329,8 +329,8 @@ class SummaryRecord:
         Examples:
             >>> import mindspore as ms
             >>> if __name__ == '__main__':
-            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy")
-                                          as summary_record:
+            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
+            ...             as summary_record:
             ...         result = summary_record.record(step=2)
             ...         print(result)
             ...
@@ -443,8 +443,8 @@ class SummaryRecord:
         Examples:
             >>> import mindspore as ms
             >>> if __name__ == '__main__':
-            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy")
-                                          as summary_record:
+            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
+            ...             as summary_record:
             ...         log_dir = summary_record.log_dir
         """
         return self.file_info['file_path']
@@ -458,8 +458,8 @@ class SummaryRecord:
         Examples:
             >>> import mindspore as ms
             >>> if __name__ == '__main__':
-            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy")
-                                          as summary_record:
+            ...     with ms.SummaryRecord(log_dir="./summary_dir", file_prefix="xx_", file_suffix="_yy") \
+            ...             as summary_record:
             ...         summary_record.flush()
         """
         if self._status.get('closed'):
