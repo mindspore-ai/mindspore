@@ -83,15 +83,15 @@ class _ReflectionPadNd(Cell):
 
 class ReflectionPad1d(_ReflectionPadNd):
     r"""
-    Using a given padding to do reflection pad on the last dimension of the given tensor.
+    Using a given padding to do reflection pad on the given tensor.
 
     Args:
         padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
             If padding is an integer: all directions will be padded with the same size.
-            If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
+            If padding is a tuple: uses (pad_left, pad_right) to pad.
 
     Inputs:
-        x (Tensor): 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
+        - **x** (Tensor) - 2D or 3D, shape: :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, W_{out})` or :math:`(N, C, W_{out})`,
@@ -129,15 +129,15 @@ class ReflectionPad1d(_ReflectionPadNd):
 
 class ReflectionPad2d(_ReflectionPadNd):
     r"""
-    Using a given padding to do reflection pad on the last dimension of the given tensor.
+    Using a given padding to do reflection pad the given tensor.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last dimension of input tensor.
+        padding (union[int, tuple]): The padding size to pad the input tensor.
             If padding is an integer: all directions will be padded with the same size.
             If padding is a tuple: uses (pad_left, pad_right, pad_up, pad_down) to pad.
 
     Inputs:
-        x (Tensor): 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
+        - **x** (Tensor) - 3D or 4D, shape: :math:`(C, H_{in}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`.
 
     Outputs:
         Tensor, after padding. Shape: :math:`(C, H_{out}, W_{out})` or :math:`(N, C, H_{out}, W_{out})`,

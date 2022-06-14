@@ -7,19 +7,7 @@ mindspore.nn.ReflectionPad2d
 
     **参数：**
 
-    - **padding** (tuple/int) - 填充大小， 如果输入为int， 则对所有边界进行相同大小的填充； 如果是tuple，则顺序为(pad_left, pad_right, pad_up, pad_down)。
-
-      .. code-block::
-
-          # 假设参数和输入如下：
-          paddings = (1, 1, 2, 0).
-          x = [[[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]].
-          # `x` 的第一个维度为1， 第二个维度为1， 第三个维度为3，第四个维度为3。
-          # 输出的第一个维度不变。
-          # 输出的第二个维度不变。
-          # 输出的第三个维度为H_out = H_in + pad_up + pad_down = 3 + 1 + 1 = 5。
-          # 输出的第四个维度为W_out = W_in + pad_left + pad_right = 3 + 2 + 0 = 5。
-          # 所以最终的输出shape为(1, 1, 5, 5)
+    - **padding** (union[int, tuple]) - 填充大小， 如果输入为int， 则对所有边界进行相同大小的填充； 如果是tuple，则顺序为(pad_left, pad_right, pad_up, pad_down)。
 
     **输入：**
 
