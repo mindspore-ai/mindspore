@@ -155,7 +155,7 @@ def test_Ascend_e2e_multi_root_graph_dump():
     run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
