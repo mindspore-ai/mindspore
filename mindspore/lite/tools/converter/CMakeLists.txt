@@ -91,16 +91,13 @@ add_subdirectory(registry)
 add_subdirectory(preprocess)
 add_subdirectory(config_parser)
 add_subdirectory(micro/coder)
-if(NOT ENABLE_CLOUD_AND_LITE)
-    add_subdirectory(${CORE_DIR} mindspore_core)
-endif()
+add_subdirectory(${CORE_DIR} mindspore_core)
+
 
 if(MSLITE_ENABLE_ACL)
     set(MODE_ASCEND_ACL ON)
     include_directories(${TOP_DIR}/graphengine/inc/external)
-    if(NOT ENABLE_CLOUD_AND_LITE)
-        include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
-    endif()
+    include(${TOP_DIR}/cmake/dependency_graphengine.cmake)
     add_subdirectory(adapter/acl)
     link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
@@ -303,9 +300,8 @@ add_dependencies(ccsrc_src_mid fbs_src fbs_inner_src)
 target_compile_definitions(ccsrc_src_mid PRIVATE BACKEND_DLL)
 target_compile_definitions(converter_src_mid PRIVATE BACKEND_DLL)
 
-if(NOT ENABLE_CLOUD_AND_LITE)
-    add_dependencies(mindspore_converter nnacl_mid)
-endif()
+add_dependencies(mindspore_converter nnacl_mid)
+
 if((NOT WIN32) AND MSLITE_ENABLE_DPICO_ATC_ADAPTER)
     add_dependencies(mindspore_converter dpico_atc_adapter)
 endif()
@@ -357,12 +353,11 @@ if(ENABLE_CONVERT_PYTORCH_MODEL)
     target_link_libraries(mindspore_converter pytorch_parser_mid)
 endif()
 
-if(NOT ENABLE_CLOUD_AND_LITE)
-    target_link_libraries(mindspore_converter
-            ccsrc_debug_common_mid_
-            mindir_proto_mid
-            _mindspore_transform_express_ir_obj)
-endif()
+target_link_libraries(mindspore_converter
+        ccsrc_debug_common_mid_
+        mindir_proto_mid
+        _mindspore_transform_express_ir_obj)
+
 if(MSLITE_ENABLE_ACL)
     target_link_libraries(mindspore_converter
             lite_acl_mid

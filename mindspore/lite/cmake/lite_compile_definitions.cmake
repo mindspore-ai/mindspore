@@ -1,10 +1,5 @@
 add_compile_definitions(BUILD_LITE)
 
-if(ENABLE_CLOUD_AND_LITE)
-    remove_definitions(-DUSE_GLOG)
-    add_compile_definitions(ENABLE_CLOUD_AND_LITE)
-endif()
-
 add_definitions(-DVERSION_STR=\"${VERSION_STR}\")
 
 if(MACHINE_LINUX_ARM64)

@@ -10,14 +10,8 @@ set(MSLITE_REGISTRY_DEVICE "off" CACHE STRING "Compile Mindspore Lite that suppo
     currently supported devices: Hi3516D/Hi3519A/Hi3559A/SD3403")
 set(MSLITE_MICRO_PLATFORM "auto" CACHE STRING "Platform of micro static library micro static, \
     currently supported : cortex-m7/auto")
-if(NOT ENABLE_CLOUD_AND_LITE)
-    set(MSLITE_MINDDATA_IMPLEMENT "lite_cv" CACHE STRING "off, lite_cv, cloud, or full")
-else()
-    if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "aarch64")
-        set(PLATFORM_ARM64 "on")
-        set(MACHINE_LINUX_ARM64 "on")
-    endif()
-endif()
+set(MSLITE_MINDDATA_IMPLEMENT "lite_cv" CACHE STRING "off, lite_cv, cloud, or full")
+
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
