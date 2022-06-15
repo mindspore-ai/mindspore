@@ -175,4 +175,5 @@ if __name__ == "__main__":
 
         import time
         time.sleep(0.3)
+        print(cmd_server)
         subprocess.call(['bash', '-c', cmd_server])
