@@ -139,7 +139,7 @@ TEST_F(TestMemScheduler, test_mem_scheduler_manager) {
 /// Feature: MemScheduler
 /// Description: Test MemScheduler interface
 /// Expectation: MemScheduler GetOrMalloc return valid ptr for continuous mem
-TEST_F(TestMemScheduler, test_mem_scheduler_with_continuous_mem) {
+TEST_F(TestMemScheduler, test_mem_scheduler) {
   MemSchedulerManager mem_scheduler_manager;
   auto scheduler = mem_scheduler_manager.GetOrCreateMemScheduler(0);
   ASSERT_NE(scheduler, nullptr);
@@ -238,7 +238,7 @@ TEST_F(TestMemScheduler, test_manual_mem_scheduler) {
 /// Feature: MemScheduler
 /// Description: Test MemScheduler interface
 /// Expectation: MemScheduler GetOrMalloc return valid ptr
-TEST_F(TestMemScheduler, test_mem_scheduler) {
+TEST_F(TestMemScheduler, test_mem_scheduler_with_continuous_mem) {
 MemSchedulerManager mem_scheduler_manager;
 auto scheduler = mem_scheduler_manager.GetOrCreateMemScheduler(0);
 ASSERT_NE(scheduler, nullptr);
@@ -253,7 +253,7 @@ used_tensor_num_ = 8;
 total_step_ = 8;
 std::vector<uint8_t> tensor_keys(used_tensor_num_, 0);
 std::vector<uint8_t> tensor_datas(used_tensor_num_, 0);
-std::vector<size_t> init_tensors = {0, 2, 4};
+std::vector<size_t> init_tensors = {0, 2, 6, 7};
 // 8 step tensor usage
 //
 // 0-----0-----0

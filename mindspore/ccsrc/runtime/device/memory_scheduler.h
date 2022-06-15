@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,35 +23,10 @@
 #include <queue>
 #include <utility>
 #include "runtime/device/memory_offload_strategy.h"
-#include "runtime/device/memory_manager.h"
+#include "runtime/device/auto_mem_offload.h"
 
 namespace mindspore {
 namespace device {
-class MemHandler {
- public:
-  explicit MemHandler(std::shared_ptr<MemoryManager> memory_manager) : memory_manager_(memory_manager) {}
-  ~MemHandler() = default;
-  size_t GetAvailableMemSize() { return memory_manager_->GetAvailableMemSize(); }
-  void *MallocDevice(size_t mem_size) { return memory_manager_->MallocMemFromMemPool(mem_size, false); }
-  void FreeDevice(void *ptr) { memory_manager_->FreeMemFromMemPool(ptr); }
-  void *MallocHost(size_t mem_size);
-  void FreeHost(void *ptr);
-  void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
-    memory_manager_->SwapIn(host_ptr, device_ptr, mem_size, stream);
-  }
-  void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
-    memory_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
-  }
-  std::vector<void *> MallocContinuousMemFromMemPool(const std::vector<size_t> &size_list) {
-    return memory_manager_->MallocContinuousMemFromMemPool(size_list);
-  }
-
- private:
-  std::shared_ptr<MemoryManager> memory_manager_;
-  std::map<size_t, std::queue<void *>> cached_host_mem_;
-  std::map<void *, std::shared_ptr<std::vector<uint8_t>>> host_mem_block_map_;
-};
-
 class MemScheduler {
  public:
   MemScheduler() = default;
@@ -65,15 +40,18 @@ class MemScheduler {
 
   void Update();
 
-  void SetMemHandler(const std::shared_ptr<MemHandler> &handler) { mem_handler_ = handler; }
+  void SetMemHandler(const std::shared_ptr<MemHandler> &handler) {
+    mem_handler_ = handler;
+    auto_mem_offload_ = std::make_shared<AutoMemoryOffload>(handler);
+  }
 
   void Init(const void *key, void *host_ptr, size_t mem_size, MemPriority priority = kMemPriorityLow);
 
   void *GetOrMalloc(const void *key, size_t mem_size, MemPriority priority = kMemPriorityLow);
 
-  bool HasDeviceMem(const void *key) const { return mem_result_.find(key) != mem_result_.end(); }
+  bool HasDeviceMem(const void *key) const { return auto_mem_offload_->Get(key) != nullptr; }
 
-  void UpdateHighPriorityMem(const void *key) { (void)updated_high_priority_mem_.insert(key); }
+  void UpdateHighPriorityMem(const void *key) { auto_mem_offload_->UpdateHighPriorityMem(key); }
 
   void SetTotalStep(size_t step) {
     total_step_ = step;
@@ -88,9 +66,7 @@ class MemScheduler {
 
   bool Optimize();
 
-  void Clear();
-
-  void ClearAllocatedMem();
+  void Clear() { auto_mem_offload_->Clear(); }
 
   void SetOffload(const void *key) { (void)manual_offload_keys_.insert(key); }
 
@@ -111,18 +87,6 @@ class MemScheduler {
 
   void AdjustFirstEventIndex();
 
-  void *MallocDevice(size_t mem_size, void *stream);
-
-  std::vector<void *> MallocContinuousMem(size_t total_size, const std::vector<size_t> &size_list, void *stream);
-
-  void SwapOutAndFreeDevice(const void *key, void *device_ptr, size_t mem_size, void *stream);
-
-  size_t GetMemSize(const void *key);
-
-  void GetOrMallocHostPtr(const void *key, size_t mem_size, void **host_ptr, bool *from_init);
-
-  void GetHostPtr(const void *key, void **host_ptr, bool *from_init);
-
   bool PreComputeMock(const MemEventPtr &event);
 
   bool PreComputeInit(const MemEventPtr &event, void *stream);
@@ -133,32 +97,30 @@ class MemScheduler {
 
   bool PreComputeGet(const MemEventPtr &event, void *stream);
 
-  void *MallocContinuousMem(const MemEventPtr &event, void *stream);
+  const HashSet<const void *> &GetNoReuseKeys() const { return step_keys_[current_step_]; }
+
+  void *Malloc(const MemEventPtr &event, void *stream);
 
   // Scheduler status
   bool need_record_event_{true};
   bool optimized_{false};
   bool updated_{false};
   bool record_compute_time_{false};
-  // Memory status
-  std::map<const void *, void *> mem_result_;
-  std::map<const void *, MemPriority> mem_priority_;
-  std::map<const void *, MemEventPtrList> mem_events_;
-  std::vector<std::set<const void *>> step_keys_;
-  std::set<const void *> high_priority_mem_need_init_;
-  std::set<const void *> updated_high_priority_mem_;
-  std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_helper_{std::make_shared<ContinuousMemInfoHelper>()};
-  std::set<std::shared_ptr<ContinuousMemInfo>> cur_step_allocated_continuous_mem_;
-  std::set<const void *> continuous_mem_key_;
   size_t total_step_{0};
   size_t current_step_{0};
+  // Memory status
+  std::map<const void *, MemEventPtrList> mem_events_;
+  std::map<const void *, MemPriority> mem_priority_;
+  std::vector<HashSet<const void *>> step_keys_;
+  std::set<const void *> high_priority_mem_need_init_;
+  std::shared_ptr<ContinuousMemInfoHelper> continuous_mem_info_helper_{std::make_shared<ContinuousMemInfoHelper>()};
+  std::set<std::shared_ptr<ContinuousMemInfo>> cur_step_allocated_continuous_mem_;
   std::set<const void *> manual_offload_keys_;
-  std::map<const void *, void *> init_host_ptr_;
-  std::map<const void *, void *> swap_host_ptr_;
   // Compute time
   std::vector<double> compute_time_;
   double compute_start_time_{0};
 
+  std::shared_ptr<AutoMemoryOffload> auto_mem_offload_;
   std::shared_ptr<MemHandler> mem_handler_{nullptr};
   std::shared_ptr<MemOffloadStrategy> strategy_{nullptr};
 };

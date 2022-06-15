@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -273,7 +273,7 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
 }
 
 size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
-                                                      const std::vector<size_t> &mem_used) {
+                                                      const std::vector<size_t> &mem_used) const {
   const size_t continuous_mem_used_index = continuous_mem_info->compute_index_;
   size_t earliest_malloc_index = GetFirstMallocIndex(continuous_mem_info);
   size_t max_span_mem_in_device = GetSpanBetweenMemEvents(earliest_malloc_index, continuous_mem_used_index);
@@ -288,7 +288,7 @@ size_t MemOffloadStrategy::GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr
   return max_span_mem_in_device;
 }
 
-size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) {
+size_t MemOffloadStrategy::GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const {
   size_t earliest_malloc_index = continuous_mem_info->compute_index_;
   for (const auto &key_index : continuous_mem_info->key_index_map_) {
     const auto &events_iter = mem_events_.find(key_index.first);
@@ -382,15 +382,12 @@ void MemOffloadStrategy::GenFreeEvent(const std::shared_ptr<MemEvent> &last_even
   }
 }
 
-std::shared_ptr<ContinuousMemInfo> ContinuousMemInfoHelper::GetContinuousMemInfo(const void *address_key) {
-  const auto &key_compute_index_iter = key_continuous_info_map_.find(address_key);
-  if (key_compute_index_iter == key_continuous_info_map_.end()) {
-    return nullptr;
-  }
-  return key_compute_index_iter->second;
+std::shared_ptr<ContinuousMemInfo> ContinuousMemInfoHelper::GetContinuousMemInfo(const void *address_key) const {
+  const auto &continuous_info_iter = key_continuous_info_map_.find(address_key);
+  return continuous_info_iter == key_continuous_info_map_.end() ? nullptr : continuous_info_iter->second;
 }
 
-std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemInfo() {
+std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemInfo() const {
   std::vector<ContinuousMemInfoPtr> all_continuous_mem_info(input_continuous_mem_info_.size() +
                                                             output_continuous_mem_info_.size());
   std::copy(input_continuous_mem_info_.begin(), input_continuous_mem_info_.end(), all_continuous_mem_info.begin());
@@ -399,12 +396,12 @@ std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemIn
   return all_continuous_mem_info;
 }
 
-bool ContinuousMemInfoHelper::IsContinuousMem(const void *address_key) {
+bool ContinuousMemInfoHelper::IsContinuousMem(const void *address_key) const {
   const auto continuous_mem_info = GetContinuousMemInfo(address_key);
   return (continuous_mem_info != nullptr);
 }
 
-bool ContinuousMemInfoHelper::IsContinuousInputMem(const void *address_key) {
+bool ContinuousMemInfoHelper::IsContinuousInputMem(const void *address_key) const {
   const auto continuous_mem_info = GetContinuousMemInfo(address_key);
   return (continuous_mem_info != nullptr && continuous_mem_info->is_input_);
 }
@@ -432,7 +429,7 @@ void ContinuousMemInfoHelper::AddContinuousMemInfo(bool is_input, size_t compute
   index_continuous_info_map_[compute_index].emplace_back(continuous_mem_info);
 }
 
-void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) {
+void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) const {
   const auto &input_continuous_mem_info_ = continuous_mem_info_helper_->GetAllContinuousMemInfo();
   for (const auto &continuous_mem_info : input_continuous_mem_info_) {
     if (!continuous_mem_info->is_input_ || continuous_mem_info->key_index_map_.empty()) {
