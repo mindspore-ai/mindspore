@@ -561,20 +561,18 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeValid(const std::string &type_name,
 TypePtr CheckAndConvertUtils::CheckSparseTensorTypeValid(const std::string &type_name, const TypePtr &type,
                                                          const std::set<TypePtr> &, const std::string &prim_name) {
   MS_EXCEPTION_IF_NULL(type);
-  if (!type->isa<CSRTensorType>() && !type->isa<COOTensorType>()) {
+  if (!type->isa<SparseTensorType>()) {
     MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
                             << "] must be a CSRTensor or COOTensor, but got " << type->ToString() << ".";
+  } else {
+    auto sparse_type = type->cast<SparseTensorTypePtr>();
+    if (sparse_type != nullptr) {
+      return sparse_type->element_type();
+    }
+    MS_EXCEPTION(TypeError) << "For Primitive[" << prim_name << "], the input argument[" << type_name
+                            << "] cast to SparseTensorTypePtr failed! Get type : " << type->ToString() << ".";
   }
-  TypePtr element = nullptr;
-  if (type->isa<CSRTensorType>()) {
-    auto csr_tensor_type = type->cast<CSRTensorTypePtr>();
-    element = csr_tensor_type->element();
-  } else if (type->isa<COOTensorType>()) {
-    auto coo_tensor_type = type->cast<COOTensorTypePtr>();
-    element = coo_tensor_type->element();
-  }
-  MS_EXCEPTION_IF_NULL(element);
-  return element;
+  return nullptr;
 }
 
 ShapeVector CheckAndConvertUtils::CheckTensorIntValue(const std::string &type_name, const ValuePtr &value,

@@ -658,6 +658,13 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     MS_EXCEPTION_IF_NULL(type_ptr);
   }
 
+  if (type_ptr->isa<SparseTensorType>()) {
+    auto tensor_ptr = type_ptr->cast<SparseTensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    type_ptr = (*tensor_ptr)[output_idx];
+    MS_EXCEPTION_IF_NULL(type_ptr);
+  }
+
   if (type_ptr->isa<TensorType>()) {
     auto tensor_ptr = type_ptr->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_ptr);
@@ -665,15 +672,6 @@ TypeId AnfAlgo::GetOutputInferDataType(const TypePtr &type, size_t output_idx) {
     MS_EXCEPTION_IF_NULL(elem);
     return elem->type_id();
   }
-
-  if (type_ptr->isa<CSRTensorType>()) {
-    auto tensor_ptr = type_ptr->cast<CSRTensorTypePtr>();
-    MS_EXCEPTION_IF_NULL(tensor_ptr);
-    TypePtr elem = tensor_ptr->element();
-    MS_EXCEPTION_IF_NULL(elem);
-    return elem->type_id();
-  }
-
   return type_ptr->type_id();
 }
 
