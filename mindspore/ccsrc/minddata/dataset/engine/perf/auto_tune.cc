@@ -45,7 +45,8 @@ AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
       AT_phase_(AutoTunePhase::kAutoTunePhaseTime),
       phase_1_best_time_(-1),
       phase_1_no_improve_count_(0),
-      AT_change_(false) {
+      AT_change_(false),
+      phase_3_state_(AutoTuneMemPhase::kAutoTuneMemInit) {
   tree_modifier_ = std::make_unique<TreeModifier>(tree_adapter_);
   max_workers_ = GlobalContext::config_manager()->num_cpu_threads();
   step_gap_ = GlobalContext::config_manager()->autotune_interval();
@@ -99,7 +100,9 @@ Status AutoTune::ATMainLoop(bool output_intermediate_config) {
         rc = RunIterationStep();
       }
       if (rc.IsError()) {
-        MS_LOG(ERROR) << "Dataset AutoTune failed and will exit with the following error: " << rc;
+        if (rc.StatusCode() != StatusCode::kMDInterrupted) {
+          MS_LOG(ERROR) << "Dataset AutoTune failed and will exit with the following error: " << rc;
+        }
         RETURN_IF_NOT_OK(profiling_manager_->Stop());
         break;
       }
@@ -119,7 +122,7 @@ Status AutoTune::ATMainLoop(bool output_intermediate_config) {
       }
     }
     rc = cv_.WaitFor(&_lock, GlobalContext::config_manager()->monitor_sampling_interval());
-    // the thread may be interrupted for tree termination when waiting (we should not report error in this case)
+    // The thread may be interrupted for tree termination when waiting (we should not report error in this case)
     if (rc.IsError() && rc != StatusCode::kMDInterrupted) {
       return rc;
     }
@@ -207,7 +210,9 @@ Status AutoTune::LaunchThread() {
   MS_LOG(INFO) << "Launching Dataset AutoTune thread";
   Status rc = CollectOpsInfo();
   if (rc.IsError()) {
-    MS_LOG(ERROR) << "Dataset AutoTune failed and will exit with the following error: " << rc;
+    if (rc.StatusCode() != StatusCode::kMDInterrupted) {
+      MS_LOG(ERROR) << "Dataset AutoTune failed and will exit with the following error: " << rc;
+    }
     RETURN_IF_NOT_OK(profiling_manager_->Stop());
     return Status::OK();
   }
@@ -221,12 +226,12 @@ Status AutoTune::CollectOpsInfo() {
   RETURN_UNEXPECTED_IF_NULL(tree);
   for (auto itr = tree->begin(); itr != tree->end(); ++itr) {
     ops_[itr->id()] = itr.get();
-    // get all parallel ops (num_workers>0) except leaf nodes (no children)
+    // Get all parallel ops (num_workers>0) except leaf nodes (no children)
     if (itr->NumWorkers() > 0) {
       parallel_ops_ids_.push_back(itr->id());
     }
   }
-  // sort parallel ops in reverse order of IDs (i.e., bottommost op is first)
+  // Sort parallel ops in reverse order of IDs (i.e., bottommost op is first)
   std::sort(parallel_ops_ids_.begin(), parallel_ops_ids_.end(), std::greater<>());
   leaf_op_id_ = ops_.size() - 1;
   return Status::OK();
@@ -240,7 +245,7 @@ Status AutoTune::GetOpConnectorCapacity(int32_t op_id, int64_t *capacity) {
 }
 
 Status AutoTune::GetOpsCpuUtil(std::map<int32_t, double> *ops_cpu_util) {
-  // loop over all itr keys and get avg cpu usage
+  // Loop over all itr keys and get avg cpu usage
   for (auto itr = ops_.begin(); itr != ops_.end(); ++itr) {
     std::vector<uint16_t> sys_util;
     std::vector<uint16_t> user_util;
@@ -264,7 +269,7 @@ Status AutoTune::GetOpsCpuUtil(std::map<int32_t, double> *ops_cpu_util) {
 
 Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util,
                                  std::map<int32_t, double> *in_ops_queue_util) {
-  // loop over all itr keys in the ops_ and get output_queue usage
+  // Loop over all itr keys in the ops_ and get output_queue usage
   for (auto itr = ops_.begin(); itr != ops_.end(); ++itr) {
     if (itr->second->inlined()) {
       (*out_ops_queue_util)[itr->first] = -1;
@@ -283,14 +288,14 @@ Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util,
     (*out_ops_queue_util)[itr->first] = avg_size / capacity;
   }
   for (auto itr = ops_.rbegin(); itr != ops_.rend(); ++itr) {
-    // assume that leaf op has 100% input queue util
+    // Assume that leaf op has 100% input queue util
     if (itr->first + 1 == ops_.size()) {
       (*in_ops_queue_util)[itr->first] = 1;
       continue;
     }
-    // input queue is the output queue of the child
+    // Input queue is the output queue of the child
     (*in_ops_queue_util)[itr->first] = (*out_ops_queue_util)[itr->first + 1];
-    // if the child is an inlined op, use the prev known utilization
+    // If the child is an inlined op, use the prev known utilization
     if ((*in_ops_queue_util)[itr->first] == -1) {
       (*in_ops_queue_util)[itr->first] = (*in_ops_queue_util)[itr->first + 1];
     }
@@ -324,9 +329,9 @@ double AutoTune::Mean(const std::vector<T> &items) {
 }
 
 Status AutoTune::UpdateCurrentRunInfo() {
-  // get current running epoch
+  // Get current running epoch
   cur_epoch_running_ = profiling_manager_->GetNumOfProfiledEpochs();
-  // get current running step
+  // Get current running step
   int32_t step_temp = 0;
   RETURN_IF_NOT_OK(profiling_manager_->GetNumberOfProfiledSteps(&step_temp));
   cur_step_running_ = step_temp;
@@ -405,13 +410,17 @@ Status AutoTune::ResetWorkersQueue() {
 Status AutoTune::TrackPipelineTime() {
   std::vector<int32_t> pipeline_times;
   std::vector<int32_t> batch_times;
+  // Select early stop threshold based on running mode
+  int early_stop_threshold_mode;
   if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
     RETURN_IF_NOT_OK(profiling_manager_->GetPipelineTimeByEpoch(cur_epoch_running_, &pipeline_times));
     RETURN_IF_NOT_OK(profiling_manager_->GetBatchTimeByEpoch(cur_epoch_running_ - 1, &batch_times));
+    early_stop_threshold_mode = EARLY_STOP_TRIAL_THRESHOLD_EPOCH;
   } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
     RETURN_IF_NOT_OK(
       profiling_manager_->GetPipelineTimeByStep(last_step_autotuned_, cur_step_running_ - 1, &pipeline_times));
     RETURN_IF_NOT_OK(profiling_manager_->GetBatchTimeByStep(last_step_autotuned_, cur_step_running_ - 1, &batch_times));
+    early_stop_threshold_mode = EARLY_STOP_TRIAL_THRESHOLD_STEP;
   }
   double avg_time_pipeline = Mean(pipeline_times);
   double avg_time_batch = Mean(batch_times);
@@ -425,17 +434,17 @@ Status AutoTune::TrackPipelineTime() {
     } else if (avg_time_batch < phase_1_best_time_) {
       phase_1_no_improve_count_ = 0;
       phase_1_best_time_ = avg_time_batch;
-      // trigger save process
+      // Trigger save process
       if (AT_change_) {
-        AT_change_ = false;  // reset for next analysis run
+        AT_change_ = false;  // Reset for next analysis run
         RETURN_IF_NOT_OK(RegisterWorkersQueue());
       }
     } else {
       phase_1_no_improve_count_++;
     }
-    if (phase_1_no_improve_count_ > EARLY_STOP_TRIAL_THRESHOLD) {
-      // reset best config and exit
-      AT_phase_ = AutoTunePhase::kAutoTuneEnd;
+    if (phase_1_no_improve_count_ > early_stop_threshold_mode) {
+      // Reset best config and exit
+      AT_phase_ = AutoTunePhase::kAutoTunePhaseMemory;
       RETURN_IF_NOT_OK(ResetWorkersQueue());
     }
   }
@@ -444,7 +453,11 @@ Status AutoTune::TrackPipelineTime() {
 
 Status AutoTune::RunIteration() {
   RETURN_IF_NOT_OK(TrackPipelineTime());
-  RETURN_IF_NOT_OK(AnalyseTime());
+  if (AT_phase_ == AutoTunePhase::kAutoTunePhaseTime) {
+    RETURN_IF_NOT_OK(AnalyseTime());
+  } else if (AT_phase_ == AutoTunePhase::kAutoTunePhaseMemory) {
+    RETURN_IF_NOT_OK(AnalyseMemory());
+  }
   return Status::OK();
 }
 
@@ -467,6 +480,19 @@ Status AutoTune::GetConnectorCapacity(std::vector<int32_t> *capacities) {
   return Status::OK();
 }
 
+Status AutoTune::GetConnectorUtil(double *usage_avg_last, double *avg_size, double *avg_capacity) {
+  std::vector<int32_t> sizes;
+  RETURN_IF_NOT_OK(GetConnectorSize(&sizes));
+  *avg_size = Mean(sizes);
+  std::vector<int32_t> capacities;
+  RETURN_IF_NOT_OK(GetConnectorCapacity(&capacities));
+  *avg_capacity = Mean(capacities);
+  CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != 0, "Capacities of connectors should not be 0");
+  // size here means size of queue utilized
+  *usage_avg_last = (*avg_size / *avg_capacity);
+  return Status::OK();
+}
+
 Status AutoTune::GetEmptyQueueFrequency(float *empty_freq) {
   if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
     RETURN_IF_NOT_OK(profiling_manager_->GetEmptyQueueFrequencyByEpoch(cur_epoch_running_, empty_freq));
@@ -478,14 +504,8 @@ Status AutoTune::GetEmptyQueueFrequency(float *empty_freq) {
 }
 
 Status AutoTune::IsDSaBottleneck(bool *isBottleneck) {
-  std::vector<int32_t> sizes;
-  RETURN_IF_NOT_OK(GetConnectorSize(&sizes));
-  double avg_size = Mean(sizes);
-  std::vector<int32_t> capacities;
-  RETURN_IF_NOT_OK(GetConnectorCapacity(&capacities));
-  double avg_capacity = Mean(capacities);
-  CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != 0, "Capacities of connectors should not be 0");
-  double usage_avg_last = (avg_size / avg_capacity);
+  double usage_avg_last, avg_size, avg_capacity;
+  RETURN_IF_NOT_OK(GetConnectorUtil(&usage_avg_last, &avg_size, &avg_capacity));
   float empty_freq = 0;
   RETURN_IF_NOT_OK(GetEmptyQueueFrequency(&empty_freq));
   if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
@@ -543,6 +563,20 @@ Status AutoTune::RequestConnectorCapacityChange(int32_t op_id, int32_t old_size,
   return Status::OK();
 }
 
+bool AutoTune::SkipOpsCheck(int op_id) {
+  // Skip Generator op
+  if (ops_[op_id]->Name() == "GeneratorOp") {
+    return true;
+  }
+  //  NonMappableDataset is not supported in AutoTune
+#ifndef ENABLE_ANDROID
+  if (std::dynamic_pointer_cast<NonMappableLeafOp>(ops_[op_id]) != nullptr) {
+    return true;
+  }
+#endif
+  return false;
+}
+
 Status AutoTune::AnalyseTime() {
   // check for connector queue bottleneck
   bool isBottleneck = false;
@@ -560,17 +594,9 @@ Status AutoTune::AnalyseTime() {
   RETURN_IF_NOT_OK(GetOpsCpuUtil(&ops_cpu_util));
   // check parallel ops in loop
   for (const auto &op_id : parallel_ops_ids_) {
-    // Skip Generator op
-    if (ops_[op_id]->Name() == "GeneratorOp") {
+    if (SkipOpsCheck(op_id)) {
       continue;
     }
-    //  NonMappableDataset is not supported in AutoTune
-#ifndef ENABLE_ANDROID
-    if (std::dynamic_pointer_cast<NonMappableLeafOp>(ops_[op_id]) != nullptr) {
-      continue;
-    }
-#endif
-
     // op specifics
     double output_queue_util = out_ops_queue_util[op_id];
     double input_queue_util = in_ops_queue_util[op_id];
@@ -610,6 +636,100 @@ Status AutoTune::AnalyseTime() {
       new_queue_capacity = std::max(new_queue_capacity, static_cast<int64_t>(requested_workers));
       RETURN_IF_NOT_OK(RequestConnectorCapacityChange(op_id, queue_capacity, new_queue_capacity));
     }
+  }
+  return Status::OK();
+}
+
+bool AutoTune::MemoryPhaseCompareMetric(double prev_avg, double cur_avg) {
+  double lower_bound = prev_avg - (prev_avg * MEMORY_COMPARISON_LOWER_BOUND_PERCENT);
+  // If cur_avg worse than lower bound - negative impact on performance
+  // lower bound set to account for expected fluctuations in util numbers
+  if (cur_avg < lower_bound) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+Status AutoTune::AnalyseMemory() {
+  double prev_avg = 0;
+  double cur_avg = 0;
+  bool comp_flag = true;
+  double connector_avg_size;
+  double connector_avg_capacity;
+  int total = parallel_ops_ids_.size();
+  if (total == 0) {
+    AT_phase_ = AutoTunePhase::kAutoTuneEnd;
+    return Status::OK();
+  }
+  std::map<int32_t, int32_t> ops_num_workers;
+  RETURN_IF_NOT_OK(GetOpsNumWorker(&ops_num_workers));
+  double reduce_percent_mode;
+  // Decrease queue sizes faster in epoch mode
+  if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
+    reduce_percent_mode = QUEUE_REDUCTION_PERCENTAGE_EPOCH;
+  } else if (AutoTuneMode::kAutoTuneModeStep) {
+    reduce_percent_mode = QUEUE_REDUCTION_PERCENTAGE_STEP;
+  }
+  // Init state on first call
+  if (phase_3_state_ == AutoTuneMemPhase::kAutoTuneMemInit) {
+    count_down_ = 0;
+    for (auto op_id : parallel_ops_ids_) {
+      if ((SkipOpsCheck(op_id)) || (ops_[op_id]->Name() == "DeviceQueueOp")) {
+        // Op not supported - ignore throughout AT
+        OP_values.push_back(-1);
+        continue;
+      }
+      // Op supported - attempt memory reduction on this
+      OP_values.push_back(0);
+      count_down_++;
+    }
+    phase_3_state_ = AutoTuneMemPhase::kAutoTuneMemSet;
+    phase_3_ID_ = 0;
+  }
+
+  // Exit when all viable ops have been tested
+  // Or if none found
+  if (count_down_ == 0) {
+    AT_phase_ = AutoTunePhase::kAutoTuneEnd;
+    return Status::OK();
+  }
+
+  if (phase_3_state_ == AutoTuneMemPhase::kAutoTuneMemSet) {
+    RETURN_IF_NOT_OK(GetConnectorUtil(&phase_3_prev_avg_, &connector_avg_size, &connector_avg_capacity));
+    // Search for next viable op that can be tested
+    while (OP_values[phase_3_ID_] == -1) {
+      phase_3_ID_ = ((phase_3_ID_ + 1) % total);
+    }
+    int64_t current_queue_size;
+    RETURN_IF_NOT_OK(GetOpConnectorCapacity(parallel_ops_ids_[phase_3_ID_], &current_queue_size));
+    int op_workers = ops_num_workers[parallel_ops_ids_[phase_3_ID_]];
+    int target_mem = current_queue_size * reduce_percent_mode;
+    if (std::max(target_mem, op_workers) == op_workers) {
+      // Lower bound on range of queue size testing
+      OP_values[phase_3_ID_] = -1;
+      count_down_--;
+      target_mem = op_workers;
+    } else {
+      // Save current queue size for possible recovery and switch to compare mode
+      OP_values[phase_3_ID_] = current_queue_size;
+      phase_3_state_ = AutoTuneMemPhase::kAutotTuneMemCompare;
+    }
+    RequestConnectorCapacityChange(parallel_ops_ids_[phase_3_ID_], -1, target_mem);
+  } else if (phase_3_state_ == AutoTuneMemPhase::kAutotTuneMemCompare) {
+    // Analyse impact on model from previous change made
+    RETURN_IF_NOT_OK(GetConnectorUtil(&cur_avg, &connector_avg_size, &connector_avg_capacity));
+    prev_avg = phase_3_prev_avg_;
+    comp_flag = MemoryPhaseCompareMetric(prev_avg, cur_avg);
+    // Compare current avg against pre-change avg
+    if (comp_flag == false) {
+      int reset_val = OP_values[phase_3_ID_];
+      RequestConnectorCapacityChange(parallel_ops_ids_[phase_3_ID_], -1, reset_val);
+      // Op queue size reduction caused performance decrease - ignore onwards
+      OP_values[phase_3_ID_] = -1;
+      count_down_--;
+    }
+    phase_3_state_ = AutoTuneMemPhase::kAutoTuneMemSet;
   }
   return Status::OK();
 }
