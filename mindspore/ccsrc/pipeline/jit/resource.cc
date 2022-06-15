@@ -227,8 +227,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"isclose", std::string("isclose")},                                // P.IsClose()
        {"inv", std::string("inv")},                                        // inv()
        {"invert", std::string("invert")},                                  // invert()
-       {"matrix_band_part", std::string("matrix_band_part")},              // matrix_band_part()
-       {"padding", std::string("padding")},                                // padding()
        {"searchsorted", std::string("searchsorted")},                      // P.Select()
        {"take", std::string("take")},                                      // P.GatherNd()
        {"scatter_add", std::string("tensor_scatter_add")},                 // P.TensorScatterAdd()
