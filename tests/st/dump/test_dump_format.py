@@ -144,7 +144,7 @@ def test_ascend_kernel_by_kernel_trans_false():
     del os.environ['GRAPH_OP_RUN']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

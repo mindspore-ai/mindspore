@@ -75,7 +75,7 @@ def run_multi_layer_train(is_set_dump):
     train_network(inputs, label)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -118,7 +118,7 @@ def test_ascend_cell_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -150,7 +150,7 @@ def test_ascend_not_cell_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -179,7 +179,7 @@ def test_ascend_cell_empty_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -222,7 +222,7 @@ class OperateSymbolNet(Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
