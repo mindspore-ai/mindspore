@@ -105,6 +105,7 @@
 #include "backend/common/pass/common_subexpression_elimination.h"
 #include "plugin/device/ascend/optimizer/format_type/merge_cast_to_op.h"
 #include "plugin/device/ascend/optimizer/format_type/check_consistency.h"
+#include "plugin/device/ascend/optimizer/format_type/eliminate_graph_output_transdata.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/eltwise_fusion_pass.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/multi_output_fusion_pass.h"
@@ -290,6 +291,9 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
+  if (kernel_graph->has_flag(kFlagPyNativeRunInGraph)) {
+    data_layout_pm->AddPass(std::make_shared<EliminateGraphOutputTransdata>());
+  }
   data_layout_pm->AddPass(std::make_shared<InsertTransposeForDynamicGRUV2>());
   data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
   data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
