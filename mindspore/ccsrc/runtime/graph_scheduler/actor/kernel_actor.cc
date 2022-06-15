@@ -164,7 +164,7 @@ void AllocateMemory(const std::vector<DeviceTensor *> &alloc_list, const DeviceC
       continue;
     }
     // Allocate memory through the device context.
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor)) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kStep, *context, *device_context, actor_name,
                                                   device_tensor->GetSize());
     }
@@ -330,8 +330,8 @@ void KernelActor::CopyInputDeviceTensor(const OpData<DeviceTensor> *input_data,
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(GetAID().Name(), device::AllocatorType::kKernelOutput,
                                                      input_data->index_);
-  if ((new_device_tensor->GetPtr() == nullptr) && (!device_contexts_[0]->device_res_manager_->AllocateMemory(
-                                                    new_device_tensor.get(), new_device_tensor->GetSize()))) {
+  if ((new_device_tensor->GetPtr() == nullptr) &&
+      (!device_contexts_[0]->device_res_manager_->AllocateMemory(new_device_tensor.get()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy_, *context, *(device_contexts_[0]), GetAID().Name(),
                                                 new_device_tensor->GetSize());
   }

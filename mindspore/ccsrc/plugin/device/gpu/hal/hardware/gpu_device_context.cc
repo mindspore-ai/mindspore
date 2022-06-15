@@ -214,6 +214,32 @@ void GPUDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+bool GPUDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
+  if (device_name_in_address != device_context_->device_context_key().device_name_) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
+                      << ", type name in context:" << device_context_->device_context_key().device_name_;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
+  }
+
+  if (!BindDeviceToCurrentThread()) {
+    return false;
+  }
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
+  if (!device_ptr) {
+    return false;
+  }
+
+  address->set_ptr(device_ptr);
+  address->set_from_mem_pool(true);
+  return true;
+}
+
 std::vector<void *> GPUDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   if (!BindDeviceToCurrentThread()) {
     std::vector<void *> ptr_list;

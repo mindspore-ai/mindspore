@@ -55,6 +55,8 @@ class GPUDeviceResManager : public DeviceResManager {
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
 
+  bool AllocateMemory(DeviceAddress *const &address) const override;
+
   // Really create a cuda stream.
   bool CreateStream(void **stream) const override;
   // Really destroy a cuda stream.
