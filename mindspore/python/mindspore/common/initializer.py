@@ -747,9 +747,10 @@ def initializer(init, shape=None, dtype=mstype.float32):
                              f"but got {shape}")
 
     if isinstance(init, str):
-        init = _INITIALIZER_ALIAS[init.lower()]()
-        if init is None:
-            raise ValueError("The class corresponding to '{}' was not found.".format(init))
+        class_name = _INITIALIZER_ALIAS.get(init.lower())
+        if class_name is None:
+            raise ValueError(f"For 'initializer', the class corresponding to '{init}' was not found.")
+        init = class_name()
     elif isinstance(init, numbers.Number):
         init = Constant(init)
     shape = shape if shape is not None else init.shape
