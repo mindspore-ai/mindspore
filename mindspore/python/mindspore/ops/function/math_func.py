@@ -824,17 +824,19 @@ def inplace_add(x, v, indices):
     Raises:
         TypeError: If `indices` is neither int nor tuple.
         TypeError: If `indices` is a tuple whose elements are not all int.
-        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
+        ValueError: If the rank of `x` is not equal to the rank of `v`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplaceAdd = ops.InplaceAdd(indices)
-        >>> output = inplaceAdd(x, input_v)
+        >>> output = ops.inplace_add(x, input_v, indices)
         >>> print(output)
         [[1.5 3. ]
          [4.  5.5]
@@ -862,17 +864,19 @@ def inplace_sub(x, v, indices):
     Raises:
         TypeError: If `indices` is neither int nor tuple.
         TypeError: If `indices` is a tuple whose elements are not all int.
-        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
+        ValueError: If the rank of `x` is not equal to the rank of `v`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplaceSub = ops.InplaceSub(indices)
-        >>> output = inplaceSub(x, input_v)
+        >>> output = ops.inplace_sub(x, input_v, indices)
         >>> print(output)
         [[0.5 1. ]
          [2.  2.5]
@@ -3250,6 +3254,7 @@ def rad2deg(x):
     else:
         out = x * 180.0 / math.pi
     return out
+
 
 #####################################
 # Reduction Operation Functions.
