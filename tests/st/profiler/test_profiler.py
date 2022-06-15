@@ -173,14 +173,14 @@ class TestProfiler:
 
     def _train_with_profiler(self, device_target, profile_memory):
         context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
-        profiler = Profiler(profile_memory=profile_memory, output_path='data')
-        profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
-        self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
             raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
 
         lenet = LeNet5()
+        profiler = Profiler(profile_memory=profile_memory, output_path='data')
+        profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
+        self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
         model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'acc': Accuracy()})
