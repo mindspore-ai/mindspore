@@ -3175,6 +3175,81 @@ class Tensor(Tensor_):
         validator.check_value_type('indices', indices, (Tensor_,), 'Tensor.gather_nd')
         return tensor_operator_registry.get('gather_nd')(self, indices)
 
+    def gather(self, input_indices, axis):
+        r"""
+        Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
+        The shape of input tensor is :math:`(x_1, x_2, ..., x_R)`. For convenience, define it as `input_params`
+
+        The following figure shows the calculation process of Gather commonly:
+
+        .. image:: Gather.png
+
+        where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
+
+        .. note::
+             1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result
+                is undefined out of range.
+
+             2. The data type of input_params cannot be
+                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+                platform currently.
+
+        Args:
+            input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
+                Specifies the indices of elements of the original Tensor. The data type can be int32 or int64.
+            axis (int): Specifies the dimension index to gather indices.
+
+        Returns:
+            Tensor, the shape of tensor is
+            :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`.
+
+        Raises:
+            TypeError: If `axis` is not an int.
+            TypeError: If `input_indices` is not a tensor of type int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> # case1: input_indices is a Tensor with shape (5, ).
+            >>> input_params = Tensor(np.array([1, 2, 3, 4, 5, 6, 7]), mindspore.float32)
+            >>> input_indices = Tensor(np.array([0, 2, 4, 2, 6]), mindspore.int32)
+            >>> axis = 0
+            >>> output = input_params.gather(input_indices, axis)
+            >>> print(output)
+            [1. 3. 5. 3. 7.]
+            >>> # case2: input_indices is a Tensor with shape (2, 2). When the input_params has one dimension,
+            >>> # the output shape is equal to the input_indices shape.
+            >>> input_indices = Tensor(np.array([[0, 2], [2, 6]]), mindspore.int32)
+            >>> axis = 0
+            >>> output = input_params.gather(input_indices, axis)
+            >>> print(output)
+            [[ 1. 3.]
+             [ 3. 7.]]
+            >>> # case3: input_indices is a Tensor with shape (2, ) and
+            >>> # input_params is a Tensor with shape (3, 4) and axis is 0.
+            >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
+            >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+            >>> axis = 0
+            >>> output = input_params.gather(input_indices, axis)
+            >>> print(output)
+            [[1.  2.  3.  4.]
+             [9. 10. 11. 12.]]
+            >>> # case4: input_indices is a Tensor with shape (2, ) and
+            >>> # input_params is a Tensor with shape (3, 4) and axis is 1.
+            >>> input_params = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]), mindspore.float32)
+            >>> input_indices = Tensor(np.array([0, 2]), mindspore.int32)
+            >>> axis = 1
+            >>> output = input_params.gather(input_indices, axis)
+            >>> print(output)
+            [[1.  3.]
+             [5.  7.]
+             [9. 11.]]
+        """
+        self._init_check()
+        validator.check_is_int(axis, 'axis')
+        return tensor_operator_registry.get('gather')(self, input_indices, axis)
+
     def var(self, axis=None, ddof=0, keepdims=False):
         """
         Compute the variance along the specified axis.

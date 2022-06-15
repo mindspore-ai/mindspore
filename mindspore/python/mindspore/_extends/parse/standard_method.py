@@ -2276,6 +2276,14 @@ def gather_nd(input_x, indices):
     return F.gather_nd(input_x, indices)
 
 
+def gather(input_x, input_indices, axis):
+    r"""
+    Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
+    Refer to :func:`mindspore.ops.gather` for more detail.
+    """
+    return F.gather(input_x, input_indices, axis)
+
+
 def pdist(x, p=2.0):
     r"""
     Computes the p-norm distance between each pair of row vectors in the input.
