@@ -7111,34 +7111,10 @@ class Dropout(PrimitiveWithCheck):
     During training, randomly zeroes some of the elements of the input tensor
     with probability 1-`keep_prob` from a Bernoulli distribution.
 
-    Args:
-        keep_prob (float): The keep rate, between 0 and 1, e.g. keep_prob = 0.9,
-            means dropping out 10% of input units. Default: 0.5.
-        Seed0 (int): Seed0 value for random generating. Default: 0.
-        Seed1 (int): Seed1 value for random generating. Default: 0.
-
-    Inputs:
-        - **x** (Tensor) - The input of Dropout, a Tensor of any shape with data type of float16 or float32.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x`.
-
-    Raises:
-        TypeError: If `keep_prob` is not a float.
-        TypeError: If `Seed0` or `Seed1` is not an int.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If `x` is not a Tensor.
+    Refer to :func:`mindspore.ops.dropout` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> dropout = ops.Dropout(keep_prob=0.5)
-        >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output, mask = dropout(x)
-        >>> print(output.shape)
-        (2, 2)
     """
 
     @prim_attr_register

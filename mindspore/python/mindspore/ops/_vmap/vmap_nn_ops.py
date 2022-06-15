@@ -420,6 +420,7 @@ def get_bias_add_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Dropout)
 @vmap_rules_getters.register(P.Dropout2D)
 @vmap_rules_getters.register(P.Dropout3D)
 def get_dropout_nd_vmap_rule(prim, axis_size):

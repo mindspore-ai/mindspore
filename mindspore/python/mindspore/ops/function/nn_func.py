@@ -326,6 +326,38 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
     return bce_with_logits_loss_op(logits, label, weight, pos_weight)
 
 
+def dropout(x, p=0.5, seed0=0, seed1=0):
+    """
+    During training, randomly zeroes some of the elements of the input tensor
+    with probability 1-`keep_prob` from a Bernoulli distribution.
+    Args:
+        x (Tensor): The input of Dropout, a Tensor of any shape with data type of float16 or float32.
+        p (float): The keep rate, between 0 and 1, e.g. p = 0.1,
+            means dropping out 10% of input units. Default: 0.5.
+        seed0 (int): Seed0 value for random generating. Default: 0.
+        seed1 (int): Seed1 value for random generating. Default: 0.
+    Returns:
+        - **output** (Tensor) - With the same shape and data type as `x`.
+        - **mask** (Tensor) - With the same shape as `x`.
+    Raises:
+        TypeError: If `keep_prob` is not a float.
+        TypeError: If `Seed0` or `Seed1` is not an int.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `x` is not a Tensor.
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    Examples:
+        >>> from mindspore.ops import dropout
+        >>> x = Tensor(((20, 16), (50, 50)), mindspore.float32)
+        >>> output, mask = dropout(x, keep_prob=0.5)
+        >>> print(output.shape)
+        (2, 2)
+    """
+    keep_prob = 1 - p
+    dropout_ = P.Dropout(keep_prob=keep_prob, Seed0=seed0, Seed1=seed1)
+    return dropout_(x)
+
+
 def celu(x, alpha=1.0):
     r"""
     Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
@@ -1889,6 +1921,7 @@ __all__ = [
     'smooth_l1_loss',
     'nll_loss',
     'ctc_loss',
-    'ctc_greedy_decoder'
+    'ctc_greedy_decoder',
+    'dropout'
 ]
 __all__.sort()
