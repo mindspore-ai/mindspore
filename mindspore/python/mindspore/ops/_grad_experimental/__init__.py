@@ -22,5 +22,6 @@ from . import grad_math_ops
 from . import grad_linalg_ops
 from . import grad_image_ops
 from . import grad_sparse
+from . import grad_sparse_ops
 
 __all__ = ['get_bprop_fn']

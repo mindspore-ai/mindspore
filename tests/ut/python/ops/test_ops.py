@@ -109,6 +109,8 @@ from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
+from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
+from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
@@ -1710,6 +1712,17 @@ test_case_math_ops = [
                         Tensor(np.array([0, 1, 0, 1]).astype(np.int64)),
                         Tensor(np.array([5, 2, 3, 5]).astype(np.float64))],
         'skip': ['backward']}),
+    ('CSRSparseMatrixToSparseTensor', {
+        'block': CSRSparseMatrixToSparseTensor(),
+        'desc_inputs': [Tensor(np.array([2, 2, 4]).astype(np.int64)),
+                        Tensor(np.array([0, 3, 6]).astype(np.int64)),
+                        Tensor(np.array([0, 1, 3, 0, 1, 3]).astype(np.int64)),
+                        Tensor(np.array([1, 2, 3, 1, 2, 3]).astype(np.int64)),
+                        Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[0, 0, 1], [0, 1, 2], [0, 1, 3], [1, 0, 1], [1, 1, 2],
+                                        [1, 1, 3]]).astype(np.int64)),
+                       Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32)),
+                       Tensor(np.array([2, 2, 4]).astype(np.int64))]}),
     ('DenseToCSRSparseMatrix', {
         'block': DenseToCSRSparseMatrix(),
         'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
@@ -2624,6 +2637,17 @@ test_case_nn_ops = [
         'block': P.BinaryCrossEntropy(),
         'desc_inputs': [[1, 2, 3], [1, 2, 3], [1, 2, 3]],
         'desc_bprop': []}),
+    ('SparseTensorToCSRSparseMatrix', {
+        'block': SparseTensorToCSRSparseMatrix(),
+        'desc_inputs': [Tensor(np.array([[0, 0, 1], [0, 1, 2], [0, 1, 3], [1, 0, 1], [1, 1, 2],
+                                         [1, 1, 3]]).astype(np.int64)),
+                        Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32)),
+                        Tensor(np.array([2, 2, 4]).astype(np.int64))],
+        'desc_bprop': [Tensor(np.array([2, 2, 4]).astype(np.int64)),
+                       Tensor(np.array([0, 3, 6]).astype(np.int64)),
+                       Tensor(np.array([0, 1, 3, 0, 1, 3]).astype(np.int64)),
+                       Tensor(np.array([1, 2, 3, 1, 2, 3]).astype(np.int64)),
+                       Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))]}),
     ('SparseApplyAdagrad', {
         'block': SparseApplyAdagradNet(),
         'desc_inputs': [[3, 3], Tensor(np.ones((3,), np.int32))],

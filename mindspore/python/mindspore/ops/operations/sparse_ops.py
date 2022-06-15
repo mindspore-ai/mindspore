@@ -273,16 +273,17 @@ class CSRSparseMatrixToSparseTensor(Primitive):
         ValueError: If shape of `x_col_indices` is not corresponding to shape of `x_values`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
         >>> x_dense_shape = Tensor(np.array([2, 2, 4]).astype(np.int64))
         >>> x_batch_pointers = Tensor(np.array([0, 3, 6]).astype(np.int64))
         >>> x_row_pointers = Tensor(np.array([0, 1, 3, 0, 1, 3]).astype(np.int64))
         >>> x_col_indices = Tensor(np.array([1, 2, 3, 1, 2, 3]).astype(np.int64))
         >>> x_values = Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))
-        >>> csr_sparse_matrix_to_sparse_tensor = ops.CSRSparseMatrixToSparseTensor()
-        >>> out = csr_sparse_matrix_to_sparse_tensor(x_dense_shape, x_batch_pointers, x_row_pointers,
+        >>> csr_sparse_matrix_to_sparse_tensor = CSRSparseMatrixToSparseTensor()
+        >>> out = csr_sparse_matrix_to_sparse_tensor(x_dense_shape, x_batch_pointers, x_row_pointers,\
                                                      x_col_indices, x_values)
         >>> print(out[0])
         [[0 0 1]
@@ -300,7 +301,6 @@ class CSRSparseMatrixToSparseTensor(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize CSRSparseMatrixToSparseTensor."""
-        self.add_prim_attr("cust_aicpu", self.name)
         self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
                                         'x_col_indices', 'x_values'],
                                 outputs=['indices', 'values', 'dense_shape'])
@@ -837,3 +837,69 @@ class SparseMatrixTranspose(Primitive):
                                         'x_col_indices', 'x_values'],
                                 outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers',
                                          'y_col_indices', 'y_values'])
+
+
+class SparseTensorToCSRSparseMatrix(Primitive):
+    """
+    Converts a sparse tensor to its CSR sparse matrix(maybe batched) form.
+
+    Inputs:
+        - **x_indices** (Tensor) - A 2-D Tensor. It represents the position of the non-zero element
+          in the sparse tensor. Support int32, int64.
+        - **x_values** (Tensor) - A 1-D Tensor. It represents the value corresponding to the position
+          in the `x_indices`, the shape of which should be :math:`(N,)`.
+        - **x_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the input sparse tensor. Its shape should be :math:`(2,)` or :math:`(3,)`. Support int32, int64.
+    Outputs:
+        - **y_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the output CSR sparse matrix, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **y_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the output CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of non-zero values of the first `i - 1` batches.
+        - **y_row_pointers** (Tensor) - A 1-D Tensor. Supposing the output CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          non-zero values of the first `i - 1` rows in the corresponding batch.
+        - **y_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the non-zero values
+          in the output CSR sparse matrix.
+        - **y_values** (Tensor) - A 1-D Tensor. It represents all the non-zero values in the
+          output CSR sparse matrix.
+
+    Raises:
+        TypeError: If the dtype of `x_indices` or `x_dense_shape` is not int32 or int64.
+        TypeError: If the dtype of `x_values` is not one of: float32, float64, complex64 or complex128.
+        ValueError: If `x_indices` or `x_values` or `x_dense_shape` is not a tensor.
+        ValueError: If any of `x_values` and `x_dense_shape` is not a 1-D tensor.
+        ValueError: If `x_indices` is not a 2-D tensor.
+        ValueError: If shape[0] of `x_indices` is not corresponding to shape[0] of `x_values`.
+        ValueError: If shape[1] of `x_indices` is not corresponding to shape[1] of `x_dense_shape`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
+        >>> x_indices = Tensor(np.array([[0, 0, 1], [0, 1, 2], [0, 1, 3], [1, 0, 1], [1, 1, 2],\
+                                         [1, 1, 3]]).astype(np.int64))
+        >>> x_values = Tensor(np.array([1, 4, 3, 1, 4, 3]).astype(np.float32))
+        >>> x_dense_shape = Tensor(np.array([2, 2, 4]).astype(np.int64))
+        >>> sparse_tensor_to_csr_sparse_matrix = SparseTensorToCSRSparseMatrix()
+        >>> out = sparse_tensor_to_csr_sparse_matrix(x_indices, x_values, x_dense_shape)
+        >>> print(out[0])
+        [2 2 4]
+        >>> print(out[1])
+        [0 3 6]
+        >>> print(out[2])
+        [0 1 3 0 1 3]
+        >>> print(out[3])
+        [1 2 3 1 2 3]
+        >>> print(out[4])
+        [1. 4. 3. 1. 4. 3.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseTensorToCSRSparseMatrix."""
+        self.init_prim_io_names(
+            inputs=['x_indices', 'x_values', 'x_dense_shape'],
+            outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices', 'y_values'])

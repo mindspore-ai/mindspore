@@ -273,3 +273,5 @@ from .depth_to_space import _depth_to_space_aicpu
 from .space_to_depth import _space_to_depth_aicpu
 from .csr_sparse_matrix_to_dense import _csr_sparse_matrix_to_dense_aicpu
 from .sparse_matrix_transpose import _sparse_matrix_transpose_aicpu
+from .sparse_tensor_to_csr_sparse_matrix import _sparse_tensor_to_csr_sparse_matrix_aicpu
+from .csr_sparse_matrix_to_sparse_tensor import _csr_sparse_matrix_to_sparse_tensor_aicpu
