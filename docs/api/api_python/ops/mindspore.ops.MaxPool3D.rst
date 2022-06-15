@@ -27,7 +27,7 @@ mindspore.ops.MaxPool3D
     - **data_format** (str) - 输入和输出的数据格式。目前仅支持'NCDHW'。默认值：'NCDHW'。
 
     **输入：**
-    
+
     - **x** (Tensor) - shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor。数据类型为float16或float32。
 
     **输出：**

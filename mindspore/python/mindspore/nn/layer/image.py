@@ -517,7 +517,7 @@ class CentralCrop(Cell):
 
     Raises:
         TypeError: If `central_fraction` is not a float.
-        ValueError: If `central_fraction` is not in range (0, 1.0].
+        ValueError: If `central_fraction` is not in range (0.0, 1.0].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

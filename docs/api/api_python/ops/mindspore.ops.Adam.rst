@@ -28,7 +28,7 @@ mindspore.ops.Adam
 
     **输入：**
 
-    - **var** (Tensor) - 需更新的权重。任意维度的Tensor，其数据类型可以是float16或float32。
+    - **var** (Tensor) - 需更新的权重。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，其数据类型可以是float16或float32。
     - **m** (Tensor) - 更新公式中的第一个动量矩阵，shape和数据类型应与 `var` 相同。
     - **v** (Tensor) - 更新公式中的第二个动量矩阵，shape和数据类型应与 `var` 相同。均方梯度的数据类型也应与 `var` 相同。
     - **beta1_power** (float) - 在更新公式中的 :math:`beta_1^t(\beta_1^{t})` ，数据类型值应与 `var` 相同。

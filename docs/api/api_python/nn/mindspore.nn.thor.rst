@@ -55,11 +55,11 @@ mindspore.nn.thor
     - **gradients** （tuple[Tensor]） - 训练参数的梯度，矩阵维度与训练参数相同。
 
     **输出：**
-    
+
     tuple[bool]，所有元素都为True。
 
     **异常：**
-    
+
     - **TypeError** - `learning_rate` 不是张量。
     - **TypeError** - `loss_scale` 、 `momentum` 或 `frequency` 不是浮点数。
     - **TypeError** - `weight_decay` 既不是浮点数也不是整数。

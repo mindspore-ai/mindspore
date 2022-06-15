@@ -48,9 +48,9 @@ mindspore.ops.DynamicGRUV2
       数据类型支持float16和float32。
 
     **输出：**
-    
+
     - **y** (Tensor) - Tensor，shape：
-    
+
       - :math:`(num\_step, batch\_size, min(hidden\_size, num\_proj))` ，如果 `num_proj` 大于0,
       - :math:`(num\_step, batch\_size, hidden\_size)` ，如果 `num_proj` 等于0。
           
@@ -68,7 +68,7 @@ mindspore.ops.DynamicGRUV2
       - 如果 `bias_input` 为 `None` 而 `bias_hidden` 不为 `None` ，则 `bias_type` 为 `bias_hidden` 的数据类型。
 
     **异常：**
-    
+
     - **TypeError** - `direction` 、 `activation` 或 `gate_order` 不是str。
     - **TypeError** - `cell_depth` 或 `num_proj` 不是int类型。
     - **TypeError** - `keep_prob` 或 `cell_clip` float类型。

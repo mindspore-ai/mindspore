@@ -4,7 +4,7 @@ mindspore.ops.Conv2D
 .. py:class:: mindspore.ops.Conv2D(out_channel, kernel_size, mode=1, pad_mode="valid", pad=0, stride=1, dilation=1, group=1, data_format="NCHW")
 
     二维卷积层。
-    
+
     对输入Tensor计算二维卷积，该Tensor的常见shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 为batch size，:math:`C_{in}` 为通道数， :math:`H_{in}, W_{in}` 分别为特征层的高度和宽度。 :math:`X_i` 为 :math:`i^{th}` 输入值， :math:`b_i` 为 :math:`i^{th}` 输入值的偏置项。对于每个batch中的Tensor，其shape为 :math:`(C_{in}, H_{in}, W_{in})` ，公式定义如下：
 
     .. math::
@@ -23,7 +23,7 @@ mindspore.ops.Conv2D
     - **kernel_size** (Union[int, tuple[int]]) - 数据类型为int或一个包含2个int组成的元组。指定二维卷积核的高度和宽度。单个整数表示该值同时适用于内核的高度和宽度。包含2个整数的元组表示第一个值用于高度，另一个值用于内核的宽度。
     - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值：1。
     - **pad_mode** (str) - 指定填充模式。取值为"same"，"valid"，或"pad"。默认值："valid"。
-    
+
       - **same**: 输出的高度和宽度分别与输入整除 `stride` 后的值相同。若设置该模式，`pad` 的值必须为0。
       - **valid**: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。
       - **pad**: 对输入 `x` 进行填充。在输入的高度和宽度方向上填充 `pad` 大小的0。如果设置此模式， `pad` 必须大于或等于0。

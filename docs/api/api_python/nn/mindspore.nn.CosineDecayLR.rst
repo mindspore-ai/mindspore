@@ -11,12 +11,11 @@ mindspore.nn.CosineDecayLR
         decayed\_learning\_rate = &min\_lr + 0.5 * (max\_lr - min\_lr) *\\
         &(1 + cos(\frac{current\_step}{decay\_steps}\pi))
 
-
     **参数：**
 
-    - **min_lr** (float): 学习率的最小值。
-    - **max_lr** (float): 学习率的最大值。
-    - **decay_steps** (int): 进行衰减的step数。
+    - **min_lr** (float) - 学习率的最小值。
+    - **max_lr** (float) - 学习率的最大值。
+    - **decay_steps** (int) - 进行衰减的step数。
 
     **输入：**
 

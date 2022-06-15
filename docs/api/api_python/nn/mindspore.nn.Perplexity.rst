@@ -30,7 +30,6 @@ mindspore.nn.Perplexity
 
         - **RuntimeError** - 样本量为0。
 
-
     .. py:method:: update(*inputs)
 
         使用 `preds` 和 `labels` 更新内部评估结果。

@@ -19,7 +19,7 @@ mindspore.ops.Elu
 
     **参数：**
 
-    **alpha** (float)：Elu的alpha值，数据类型为浮点数。目前只支持alpha等于1.0，默认值：1.0。
+    - **alpha** (float) - Elu的alpha值，数据类型为浮点数。目前只支持alpha等于1.0，默认值：1.0。
 
     **输入：**
 

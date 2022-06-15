@@ -23,20 +23,20 @@
         如果需要，请调用其他reduce运算符对损失执行"reduce"操作。
 
     **参数：**
-    
+
     - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值。默认值：1.0。
-        
+
     **输入：**
-    
+
     - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型支持float16或float32。
     - **labels** (Tensor) - shape： :math:`(N, *)` ，与 `logits` 的shape和数据类型相同。
 
     **输出：**
-    
+
     Tensor，损失值，与 `logits` 的shape和数据类型相同。
 
     **异常：**
-    
+
     - **TypeError** - `beta` 不是float类型。
     - **TypeError** - `logits` 或 `labels` 的数据类型非float16或float32。
     - **ValueError** - `beta` 小于或等于0。

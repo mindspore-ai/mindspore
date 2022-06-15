@@ -18,7 +18,7 @@
 
     **输入：**
 
-    - **logits** (Tensor) - Softmax的输入，任意维度的Tensor。其数据类型为float16或float32。
+    - **logits** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。其数据类型为float16或float32。
 
     **输出：**
 

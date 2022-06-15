@@ -30,8 +30,6 @@ mindspore.nn.OcclusionSensitivity
 
          - **RuntimeError** - 如果没有先调用update方法，则会报错。
 
-
-
     .. py:method:: update(*inputs)
 
         更新inputs，包括 `model` 、 `y_pred` 和 `label` 。
@@ -39,7 +37,6 @@ mindspore.nn.OcclusionSensitivity
         **参数：**
 
         - **inputs** - `y_pred` 和 `label` 为Tensor，list或numpy.ndarray，`y_pred` 是要测试的图像，一般为2D或3D，`label` 是用于检测神经网络预测值变化的类别标签，通常情况下为真实标签。`model` 为神经网络模型。
-
 
         **异常：**
 

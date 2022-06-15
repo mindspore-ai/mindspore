@@ -7,8 +7,8 @@ mindspore.nn.SparseTensorDenseMatmul
 
     **参数：**
 
-    - **adjoint_st** (bool)：如果为True，则在乘法之前转置稀疏Tensor。默认值：False。
-    - **adjoint_dt** (bool)：如果为True，则在乘法之前转置密集Tensor。默认值：False。
+    - **adjoint_st** (bool) - 如果为True，则在乘法之前转置稀疏Tensor。默认值：False。
+    - **adjoint_dt** (bool) - 如果为True，则在乘法之前转置密集Tensor。默认值：False。
 
     **输入：**
 

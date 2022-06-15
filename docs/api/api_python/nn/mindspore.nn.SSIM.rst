@@ -5,7 +5,7 @@ mindspore.nn.SSIM
 
     计算两个图像之间的结构相似性（SSIM）。
 
-    SSIM是用来衡量两张图片相似性的指标。与PSNR一样，SSIM经常被用于图像质量的评估。SSIM是一个介于0和1之间的值，值越大，输出图像和未失真图像之间的差距越小，即图像质量越好。当两个图像完全相同时，SSIM=1。SSIM的实现请参考：Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004) `Image quality assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_ 
+    SSIM的实现请参考：Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004) `Image quality assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_ 。SSIM是用来衡量两张图片相似性的指标。与PSNR一样，SSIM经常被用于图像质量的评估。SSIM是一个介于0和1之间的值，值越大，输出图像和未失真图像之间的差距越小，即图像质量越好。当两个图像完全相同时，SSIM=1。
 
     .. math::
         l(x,y)&=\frac{2\mu_x\mu_y+C_1}{\mu_x^2+\mu_y^2+C_1}, C_1=(K_1L)^2.\\
