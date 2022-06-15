@@ -53,7 +53,7 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto trt_tensor = tensorrt_in_tensors_[0].trt_tensor_;
 
 #if TRT_VERSION_GE(7, 2)
-  dest_datatype == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : dest_datatype;
+  dest_datatype = (dest_datatype == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : dest_datatype);
   auto cast_layer = ctx->network()->addIdentity(*trt_tensor);
 #else
   auto plugin = std::make_shared<CastPlugin>(op_name_, trt_tensor->getType(), dest_datatype);

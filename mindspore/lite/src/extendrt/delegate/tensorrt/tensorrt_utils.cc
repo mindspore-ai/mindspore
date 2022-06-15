@@ -218,6 +218,22 @@ std::experimental::optional<ActivationParams> TryConvertActivationType(schema::A
            : std::experimental::nullopt;
 }
 
+void AlignShapeRank(std::vector<int64_t> *in_shape_ptr, const std::vector<int64_t> &out_shape) {
+  const size_t last_dim = in_shape_ptr->size() - 1;
+  const int in_rank = in_shape_ptr->size();
+  int index = out_shape.size() - 1;
+  for (; index >= 0; index--) {
+    if (out_shape[index] == in_shape_ptr->at(last_dim)) {
+      break;
+    }
+  }
+  const int align_rank = index + 1;
+  if (index <= 0 || align_rank == in_rank) return;
+  for (int i = 0; i < index + 1 - in_rank; i++) {
+    in_shape_ptr->insert(in_shape_ptr->begin(), 1);
+  }
+}
+
 nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                const std::vector<int64_t> &expect_shape, const std::string &op_name) {
   if (ctx == nullptr || ctx->network() == nullptr) {
@@ -226,15 +242,22 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
   }
   auto origin_shape = ms_tensor.Shape();
   std::vector<int64_t> convert_shape(expect_shape);
+  AlignShapeRank(&origin_shape, convert_shape);
   size_t origin_index = 0;
   for (size_t i = 0; i < convert_shape.size(); ++i) {
     if (origin_index >= origin_shape.size()) {
       convert_shape[i] = 1;
-    } else if (origin_shape[origin_index] == convert_shape[i]) {
-      origin_index++;
-    } else {
-      convert_shape[i] = 1;
+      continue;
     }
+    if (origin_shape[origin_index] != convert_shape[i]) {
+      convert_shape[i] = origin_shape[origin_index];
+    }
+    origin_index++;
+  }
+  if (ms_tensor.ElementNum() !=
+      std::accumulate(convert_shape.begin(), convert_shape.end(), 1, std::multiplies<int64_t>())) {
+    MS_LOG(ERROR) << "ExpandDims failed for " << op_name;
+    return nullptr;
   }
   nvinfer1::Dims dims = ConvertCudaDims(convert_shape);
   if (dims.nbDims == -1) {
@@ -611,7 +634,7 @@ int PreprocessInputs2SameDim(TensorRTContext *ctx, const ITensorHelper &input_te
 }
 
 int GetDimsVolume(const nvinfer1::Dims &dims) {
-  if (dims.nbDims == 0) {
+  if (dims.nbDims <= 0) {
     return 0;
   }
   return std::accumulate(dims.d, dims.d + dims.nbDims, 1, std::multiplies<int64_t>());
