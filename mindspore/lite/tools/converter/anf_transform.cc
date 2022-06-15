@@ -93,6 +93,7 @@
 #include "src/common/log_util.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
+#include "tools/converter/import/cast_op_adjust.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -333,6 +334,7 @@ int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::share
   CHECK_NULL_RETURN(convert_pm);
   convert_pm->AddPass(std::make_shared<opt::RemoveRedundantOpPass>(param->train_model));
   convert_pm->AddPass(std::make_shared<opt::InferShapePass>(param->fmk_type, param->train_model));
+  convert_pm->AddPass(std::make_shared<opt::CastOpAdjust>());
   convert_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
   optimizer->AddPassManager(convert_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
