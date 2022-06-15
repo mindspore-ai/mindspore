@@ -248,6 +248,12 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
         FlattenValue(value, flatted_value);
       }
     }
+  } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
+    auto coo_tensor = utils::cast<tensor::COOTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(coo_tensor);
+    for (size_t i = 0; i < coo_tensor->GetTensorLength(); ++i) {
+      (void)flatted_value->emplace_back(coo_tensor->GetTensorAt(i));
+    }
   } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
     auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(arg);
     MS_EXCEPTION_IF_NULL(csr_tensor);

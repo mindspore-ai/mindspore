@@ -1668,9 +1668,15 @@ bool AnfAlgo::CheckAbsSparseTensor(const abstract::AbstractBasePtr &abs) {
 
 TypeId AnfAlgo::GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx) {
   if (CheckAbsType<abstract::AbstractSparseTensorPtr>(node)) {
-    return node->abstract()->cast<abstract::AbstractSparseTensorPtr>()->GetTypeIdAt(idx);
+    auto abs_sparse = node->abstract()->cast<abstract::AbstractSparseTensorPtr>();
+    auto shape_idx = abs_sparse->size() - 1;
+    // idx points to a tensor element
+    if (idx < shape_idx) {
+      return abs_sparse->GetTensorTypeIdAt(idx);
+    }
+    return abs_sparse->GetShapeTypeIdAt(idx - shape_idx);
   }
-  MS_LOG_WARNING << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
+  MS_LOG(EXCEPTION) << "Expect AbstractCSRTensor or AbstractCOOTensor, but got " << node->abstract()->ToString();
   return kTypeUnknown;
 }
 }  // namespace common

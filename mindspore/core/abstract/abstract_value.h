@@ -1337,7 +1337,19 @@ class MS_CORE_API AbstractSparseTensor : public AbstractTuple {
   BaseShapePtrList ElementsShapeTupleRecursive() const;
   TypePtr BuildType() const override;
   BaseShapePtr BuildShape() const override { return std::make_shared<TupleShape>(ElementsShapeTupleRecursive()); }
-  const TypeId GetTypeIdAt(size_t index) const;
+
+  /// \brief Return the TypeId of a Tensor element in SparseTensor.
+  ///
+  /// \param[in] index The index of element to choose.
+  /// \return A TypeId.
+  const TypeId GetTensorTypeIdAt(size_t index) const;
+
+  /// \brief Return the TypeId of a shape element in SparseTensor. Note that each element in shape will be transformed
+  /// to Tensor(scalar) in the backend.
+  /// \param[in] index The index of element to choose.
+  /// \return A TypeId.
+  const TypeId GetShapeTypeIdAt(size_t index) const;
+
   const AbstractTuplePtr shape() const;
 };
 using AbstractSparseTensorPtr = std::shared_ptr<AbstractSparseTensor>;
