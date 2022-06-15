@@ -135,9 +135,54 @@ def test_random_adjust_sharpness_invalid_degree():
         assert "interval" in str(e)
 
 
+def test_random_adjust_sharpness_four_dim():
+    """
+    Feature: RandomAdjustSharpness
+    Description: test with four dimension images
+    Expectation: raise errors as expected
+    """
+    logger.info("test_random_adjust_sharpness_four_dim")
+
+    c_op = vision.RandomAdjustSharpness(2.0, 0.5)
+
+    try:
+        data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
+                                            lambda img: np.array(img[2, 200, 10, 32])], input_columns=["image"])
+
+        data_set = data_set.map(operations=c_op, input_columns="image")
+
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "image shape is not <H,W,C>" in str(e)
+
+
+def test_random_adjust_sharpness_invalid_input():
+    """
+    Feature: RandomAdjustSharpness
+    Description: test with images in uint32 type
+    Expectation: raise errors as expected
+    """
+    logger.info("test_random_adjust_sharpness_invalid_input")
+
+    c_op = vision.RandomAdjustSharpness(2.0, 0.5)
+
+    try:
+        data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        data_set = data_set.map(operations=[vision.Decode(), vision.Resize((224, 224)),
+                                            lambda img: np.array(img[2, 32, 3], dtype=uint32)], input_columns=["image"])
+        data_set = data_set.map(operations=c_op, input_columns="image")
+
+    except TypeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Cannot convert from OpenCV type, unknown CV type" in str(e)
+
+
 if __name__ == "__main__":
     test_random_adjust_sharpness_pipeline(plot=True)
     test_random_adjust_sharpness_eager()
     test_random_adjust_sharpness_comp(plot=True)
     test_random_adjust_sharpness_invalid_prob()
     test_random_adjust_sharpness_invalid_degree()
+    test_random_adjust_sharpness_four_dim()
+    test_random_adjust_sharpness_invalid_input()
