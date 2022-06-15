@@ -5,7 +5,7 @@ mindspore.ops.matrix_band_part
 
     将矩阵的每个中心带外的所有位置设置为0。
 
-	`x` 、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
+    `x` 、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
 
     **参数：**
 
