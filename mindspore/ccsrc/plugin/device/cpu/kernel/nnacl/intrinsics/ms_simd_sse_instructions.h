@@ -21,9 +21,11 @@
 #ifdef _MSC_VER
 #include <immintrin.h>
 #define MS_F32X4_GETI(src, i) src.m128_f32[i]
+#define MS128_F32_GETI(src, i) src.m128_f32[i]
 #else
 #include <x86intrin.h>
 #define MS_F32X4_GETI(src, i) src[i]
+#define MS128_F32_GETI(src, i) src[i]
 #endif
 
 #define MS_FLOAT32X4 __m128

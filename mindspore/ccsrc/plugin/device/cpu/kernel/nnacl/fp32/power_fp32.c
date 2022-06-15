@@ -16,36 +16,7 @@
 
 #include "nnacl/fp32/power_fp32.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-typedef MS_FLOAT32X4 (*PowerSimdFun)(MS_FLOAT32X4 x, const float *exponent);
-
-MS_FLOAT32X4 OptimizedPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
-  int exp = abs((int)(*exponent));
-  MS_FLOAT32X4 result = MS_MOVQ_F32(1.0f);
-  while (exp) {
-    if (exp % 2) {
-      result = MS_MULQ_F32(result, x);
-    }
-    x = MS_MULQ_F32(x, x);
-    exp = exp / 2;
-  }
-  if (*exponent >= 0) {
-    return result;
-  }
-  return MS_DIVQ_F32(MS_MOVQ_F32(1), result);
-}
-
-MS_FLOAT32X4 StdPowerSimd(MS_FLOAT32X4 x, const float *exponent) {
-  MS_FLOAT32X4 result;
-  for (int i = 0; i < 4; ++i) {
-    MS_F32X4_GETI(result, i) = powf(MS_F32X4_GETI(x, i), *exponent);
-  }
-  return result;
-}
-
-#endif
+#include "nnacl/power_fp32_simd.h"
 
 float OptimizedPowerScalar(float x, const float *exponent) {
   int exp = abs((int)(*exponent));
@@ -62,31 +33,16 @@ float OptimizedPowerScalar(float x, const float *exponent) {
 
 void PowerBroadCast(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  PowerSimdFun PowerSimdFun_ = NULL;
-#endif
 
-  if (CheckInteger(*exponent)) {
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-    PowerSimdFun_ = OptimizedPowerSimd;
-#endif
-    PowerScalarFun_ = OptimizedPowerScalar;
-  } else {
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-    PowerSimdFun_ = StdPowerSimd;
-#endif
-    PowerScalarFun_ = StdPowerScalar;
-  }
   int i = 0;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  int len_c4 = DOWN_ROUND(len, C4NUM);
-  MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
-  MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
-  for (; i < len_c4; i += C4NUM) {
-    MS_FLOAT32X4 result = PowerSimdFun_(MS_ADDQ_F32(MS_MULQ_F32(scale_4, MS_LDQ_F32(input + i)), shift_4), exponent);
-    MS_STQ_F32(output + i, result);
+  if (CheckInteger(*exponent)) {
+    PowerScalarFun_ = OptimizedPowerScalar;
+    SIMD_RUN_NO_SCALAR(PowerBroadCastIntExponent, i, input, (int)(*exponent), output, len, scale, shift);
+  } else {
+    PowerScalarFun_ = StdPowerScalar;
+    SIMD_RUN_NO_SCALAR(PowerBroadCastFloatExponent, i, input, *exponent, output, len, scale, shift);
   }
-#endif
+
   for (; i < len; ++i) {
     output[i] = PowerScalarFun_(scale * input[i] + shift, exponent);
   }
@@ -94,19 +50,9 @@ void PowerBroadCast(const float *input, const float *exponent, float *output, in
 
 void PowerSingle(const float *input, const float *exponent, float *output, int len, float scale, float shift) {
   int i = 0;
+
+  SIMD_RUN_NO_SCALAR(PowerSingleExponent, i, input, exponent, output, len, scale, shift);
   PowerScalarFun PowerScalarFun_ = NULL;
-#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
-  int len_c4 = DOWN_ROUND(len, C4NUM);
-  MS_FLOAT32X4 scale_4 = MS_MOVQ_F32(scale);
-  MS_FLOAT32X4 shift_4 = MS_MOVQ_F32(shift);
-  for (; i < len_c4; i += C4NUM) {
-    MS_FLOAT32X4 tmp_4 = MS_ADDQ_F32(MS_MULQ_F32(scale_4, MS_LDQ_F32(input + i)), shift_4);
-    for (int j = 0; j < 4; ++j) {
-      PowerScalarFun_ = CheckInteger(exponent[i + j]) ? OptimizedPowerScalar : StdPowerScalar;
-      output[i + j] = PowerScalarFun_(MS_F32X4_GETI(tmp_4, j), exponent + i + j);
-    }
-  }
-#endif
   for (; i < len; ++i) {
     PowerScalarFun_ = CheckInteger(exponent[i]) ? OptimizedPowerScalar : StdPowerScalar;
     output[i] = PowerScalarFun_(scale * input[i] + shift, exponent + i);
