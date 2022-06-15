@@ -4138,6 +4138,81 @@ class Pad(PrimitiveWithInfer):
         return x_dtype
 
 
+class PadV3(Primitive):
+    """
+    Pads the input tensor according to the paddings, mode and paddings_contiguous.
+
+    Args:
+        mode (str): An optional string, Defaults to "constant", indicates padding mode,
+            support "constant", "reflect", "edge", Defaults to "constant".
+        paddings_contiguous (bool): An optional bool value, Defaults to True.
+            If true, paddings is arranged as [begin0, end0, begin1, end1, ...]
+            If false, paddings is arranged as [begin0, begin1, ..., end1, end2, ...]
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+          additional dimensions.
+        - **paddings** (Tensor) - The paddings tensor of type int32 or int64. The value of `paddings` is a tuple.
+        - **constant_value** (Union[Number, Tensor], optional) - Padding value in 'constant' mode.
+
+    Outputs:
+        Tensor, the tensor after padding.
+
+    Raises:
+        TypeError: If `x` or `paddings` is not a Tensor.
+        TypeError: If `padding_contiguous` is not a bool.
+        ValueError: If `mode` is not a str or not in support modes.
+        ValueError: If the element's number of paddings not be even.
+        ValueError: If the element's number of paddings is more than 6.
+        ValueError: If `mode` is constant or edge, input dims bigger than 5.
+        ValueError: If `mode` is reflect, input dims bigger than 4.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> # case1: mode="reflect", paddings_contiguous=True
+        >>> class Net(nn.Cell):
+        ...    def __init__(self, mode, paddings_contiguous):
+        ...        super(Net, self).__init__()
+        ...        self.pad = ops.PadV3(mode=mode, paddings_contiguous=paddings_contiguous)
+        ...        self.paddings = Tensor([1, 1])
+        ...    def construct(self, x):
+        ...        return self.pad(x, self.paddings)
+        ...
+        >>> x = Tensor([[[0., 1.]]])
+        >>> pad = Net(mode="reflect", paddings_contiguous=True)
+        >>> output = pad(x)
+        >>> print(output)
+        [[[1., 0., 1., 0.]]]
+        >>> # case2: mode="constant", padding_contigous=False
+        >>> class Net(nn.Cell):
+        ...    def __init__(self, mode, paddings_contiguous):
+        ...        super(Net, self).__init__()
+        ...        self.pad = ops.PadV3(mode=mode, paddings_contiguous=paddings_contiguous)
+        ...        self.paddings = Tensor([1, 0, 1, 0])
+        ...        self.value = 1.5
+        ...    def construct(self, x):
+        ...        return self.pad(x, self.paddings, self.value)
+        ...
+        >>> x = Tensor([[0., 1., 2.]])
+        >>> pad = Net(mode="constant", paddings_contiguous=False)
+        >>> output = pad(x)
+        >>> print(output)
+        [[[1.5, 0., 1., 2., 1.5]]])
+    """
+
+    @prim_attr_register
+    def __init__(self, mode='constant', paddings_contiguous=True):
+        """Initialize PadV3"""
+        self.init_prim_io_names(inputs=['x', 'paddings', 'constant_value'], outputs=['y'])
+        validator.check_string(mode, ['constant', 'reflect', 'edge'], 'mode', self.name)
+        validator.check_bool(paddings_contiguous, "paddings_contiguous", self.name)
+        self.mode = mode
+        self.set_const_input_indexes([1])
+        self.paddings_contiguous = paddings_contiguous
+
+
 class MirrorPad(PrimitiveWithInfer):
     """
     Pads the input tensor according to the paddings and mode.

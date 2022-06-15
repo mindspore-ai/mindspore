@@ -288,6 +288,9 @@ constexpr auto kModulated = "modulated";
 constexpr auto kAdjoint = "adjoint";
 constexpr auto kInplaceAlgo = "inplace_algo";
 constexpr auto kHalfPixelCenters = "half_pixel_centers";
+constexpr auto kConstant = "constant";
+constexpr auto kReflect = "reflect";
+constexpr auto kEdge = "edge";
 
 enum Index : size_t {
   kInputIndex0 = 0,
