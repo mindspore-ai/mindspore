@@ -336,13 +336,16 @@ void ParallelLaunch(const CTask &task, size_t count, float block_size, Content c
 }
 
 void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, ThreadPool *pool) {
+  size_t count = tasks.size();
+  if (count == 0) {
+    return;
+  }
   auto thread_pool = pool == nullptr ? GetActorMgrInnerThreadPool() : pool;
   size_t kernel_thread_num = thread_pool->GetKernelThreadNum();
   if (kernel_thread_num == 0) {
     MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
   }
 
-  size_t count = tasks.size();
   size_t thread_num = count < kernel_thread_num ? count : kernel_thread_num;
   size_t once_compute_size = (count + thread_num - 1) / thread_num;
   size_t task_num = count / once_compute_size;
