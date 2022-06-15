@@ -1566,8 +1566,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('col2im')(self, output_size, kernel_size, dilation, padding_value, stride)
 
-
-
     def reshape(self, *shape):
         """
         Give a new shape to a tensor without changing its data.
@@ -3140,48 +3138,6 @@ class Tensor(Tensor_):
             i = tensor_operator_registry.get('select')(mask, i, mid)
             j = tensor_operator_registry.get('select')(mask, mid, j)
         return j
-
-    def space_to_batch_nd(self, block_shape, paddings):
-        r"""
-        Divides spatial dimensions into blocks and combines the block size with the original batch.
-
-        Refer to :func:`mindspore.ops.space_to_batch_nd` for more detail.
-
-        Args:
-            block_shape (Union[list(int), tuple(int), int]): The block size of dividing block with all value greater
-                than 1.
-            paddings (Union[tuple, list]): The padding values for spatial dimensions, containing M subtraction list.
-                Each contains 2 integer values.
-
-        Returns:
-            Tensor, the output tensor with the same data type as the input tensor.
-
-        Raises:
-            ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
-            ValueError: If the length of `block_shape` is not 2 on Ascend.
-            ValueError: If the element of `block_shape` is not an integer larger than 1.
-            ValueError: If shape of `paddings` is not (2, M), where M is the length of `block_shape`.
-            ValueError: If the element of `paddings` is not an integer larger than 0.
-            TypeError: If `block_shape` is not one of list, tuple, int.
-            TypeError: If `paddings` is neither list nor tuple.
-
-        Supported Platforms:
-            ``Ascend`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> block_shape = [2, 2]
-            >>> paddings = [[0, 0], [0, 0]]
-            >>> input_x = Tensor(np.array([[[[1, 2], [3, 4]]]]), mindspore.float32)
-            >>> output = input_x.space_to_batch_nd(block_shape, paddings)
-            >>> print(output)
-            [[[[1.]]]
-             [[[2.]]]
-             [[[3.]]]
-             [[[4.]]]]
-        """
-        return tensor_operator_registry.get('space_to_batch_nd')(block_shape, paddings)(self)
 
     def batch_to_space_nd(self, block_shape, crops):
         """

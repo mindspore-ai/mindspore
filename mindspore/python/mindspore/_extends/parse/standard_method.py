@@ -2191,15 +2191,6 @@ def filter_(fun, iter_):
     return result
 
 
-def space_to_batch_nd(x, block_shape, paddings):
-    """
-    Divides spatial dimensions into blocks and combines the block size with the original batch.
-
-    Refer to :func:`mindspore.ops.space_to_batch_nd` for more detail.
-    """
-    return P.SpaceToBatchND(block_shape, paddings)(x)
-
-
 def batch_to_space_nd(x, block_shape, crops):
     r"""
     Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
