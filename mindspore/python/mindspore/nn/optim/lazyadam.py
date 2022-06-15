@@ -421,6 +421,9 @@ class LazyAdam(Optimizer):
 
 
 def create_distributed_adam(*args, **kwargs):
+    """
+    Create the distributed Adam op.
+    """
     adam = P.Adam(*args, **kwargs)
     adam.add_prim_attr("gradient_type", "dense_gradient")
     adam.add_prim_attr("parameter_input_index", 0)
@@ -429,6 +432,9 @@ def create_distributed_adam(*args, **kwargs):
 
 
 def create_distributed_fused_sparse_lazy_adam(*args, **kwargs):
+    """
+    Create the distributed FusedSparseLazyAdam op.
+    """
     sparse_lazy_adam = P.FusedSparseLazyAdam(*args, **kwargs)
     sparse_lazy_adam.add_prim_attr("gradient_type", "sparse_gradient")
     sparse_lazy_adam.add_prim_attr("parameter_input_index", 0)
