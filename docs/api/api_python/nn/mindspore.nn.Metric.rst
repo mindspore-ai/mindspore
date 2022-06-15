@@ -45,7 +45,7 @@ mindspore.nn.Metric
 
         **输出：**
 
-        :class:`Metric` ，类实例本身。
+        :class:`.Metric` ，类实例本身。
 
         **异常：**
 
