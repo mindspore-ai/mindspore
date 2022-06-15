@@ -3,7 +3,7 @@ mindspore.ops.dense_to_sparse_csr
 
 .. py:function:: mindspore.ops.dense_to_sparse_csr(tensor)
 
-    将一个Tensor稀疏化成一个CSRTensor
+    将常规Tensor转为稀疏化的CSRTensor。
 
     .. note::
         现在只支持2维Tensor。
@@ -15,6 +15,7 @@ mindspore.ops.dense_to_sparse_csr
     **返回：**
 
     返回一个2维的CSRTensor，是原稠密Tensor的稀疏化表示。其中数据分别为：
+
     - **indptr** (Tensor) - 一维整数张量，其中M等于 `shape[0] + 1` , 表示每行非零元素的在 `values` 中存储的起止位置。
     - **indices** (Tensor) - 一维整数张量，其中N等于非零元素数量，表示每个元素的列索引值。
     - **values** (Tensor) - 一维张量，用来表示索引对应的数值。

@@ -4487,6 +4487,9 @@ class CSRTensor(CSRTensor_):
         """
         Converts CSRTensor to COOTensor.
 
+        Note:
+            Currently only supports CPU backend with LLVM 12.0.1 installed.
+
         Returns:
             COOTensor.
 
@@ -4541,6 +4544,9 @@ class CSRTensor(CSRTensor_):
         """
         Sparse matrix-vector multiplication.
 
+        Note:
+            Currently only supports CPU backend with LLVM 12.0.1 installed.
+
         Args:
             dense_vector (Tensor): A dense Tensor, its shape must be (csr_tensor.shape[1], 1)
 
@@ -4570,6 +4576,9 @@ class CSRTensor(CSRTensor_):
         """
         Sparse matrix-matrix multiplication.
 
+        Note:
+            Currently only supports CPU backend with LLVM 12.0.1 installed.
+
         Args:
             dense_vector (Tensor): A dense Tensor, its shape[0] should be equal to csr_tensor.shape[1]
 
@@ -4598,6 +4607,9 @@ class CSRTensor(CSRTensor_):
     def sum(self, axis):
         """
         Reduces a dimension of a CSRTensor by summing all elements in the dimension.
+
+        Note:
+            Currently only supports CPU backend with LLVM 12.0.1 installed.
 
         Args:
             axis (int): The dimensions to reduce.
