@@ -19,11 +19,12 @@
 #include <memory>
 
 #include "backend/common/optimizer/pass.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace opt {
 // @brief ANF Node level optimization base pass
-class NodePass : public Pass {
+class BACKEND_EXPORT NodePass : public Pass {
  public:
   explicit NodePass(const std::string &name) : Pass(name) {}
   ~NodePass() override = default;
