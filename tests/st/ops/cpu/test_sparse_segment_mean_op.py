@@ -18,14 +18,14 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import SparseSegmentMean
 
 
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.op = SparseSegmentMean()
+        self.op = ops.sparse_segment_mean
 
     def construct(self, x, indices, segment_ids):
         return self.op(x, indices, segment_ids)

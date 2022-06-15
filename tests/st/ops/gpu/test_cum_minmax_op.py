@@ -19,21 +19,21 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.ops.operations import _inner_ops as inner
 
 
 class Net(nn.Cell):
     def __init__(self, op, axis):
         super(Net, self).__init__()
+        self.axis = axis
         if op == "Cummin":
-            self.op = inner.Cummin(axis)
+            self.op = ops.cummin
         elif op == "Cummax":
-            self.op = ops.Cummax(axis)
+            self.op = ops.cummax
         else:
             raise ValueError("op value error.")
 
     def construct(self, x):
-        return self.op(x)
+        return self.op(x, self.axis)
 
 
 def cum_minmax_compare(op, x, expected, axis, data_type):

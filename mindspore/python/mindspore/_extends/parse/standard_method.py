@@ -554,6 +554,33 @@ def cumsum(x, axis=None, dtype=None):
     return cumsum_(x, axis)
 
 
+def cummin(x, axis):
+    """
+    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
+    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
+    each maximum value.
+    """
+    return F.cummin(x, axis)
+
+
+def cummax(x, axis):
+    """
+    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
+    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
+    each maximum value.
+    """
+    return F.cummax(x, axis)
+
+
+def index_fill(x, dim, index, value):
+    """
+    Fills the elements under the dim dimension of the self tensor with the input value
+    by selecting the indices in the order given in index.
+    """
+    return F.index_fill(x, dim, index, value)
+
+
+
 def copy(x):
     """
     Returns a copy of the tensor.
