@@ -162,56 +162,6 @@ bool IsControlArrowExistForCallNode(const AnfNodePtr &node, const AbstractActor 
   const auto &arrows = arrow_iter->second;
   return std::find(arrows.begin(), arrows.end(), to_actor->GetAID()) != arrows.end();
 }
-
-// Check whether the switch node abstract is functional.
-bool IsPartialInput(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &abstract = node->abstract();
-  if (abstract != nullptr) {
-    if (abstract->isa<abstract::AbstractFunction>()) {
-      return true;
-    }
-    return false;
-  }
-
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-
-  // If the abstract is empty and the node is a cnode, check its true branch.
-  const auto &cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-
-  const auto &inputs = cnode->inputs();
-  if (inputs.size() < kSwitchTrueBranchIndex + 1) {
-    MS_LOG(EXCEPTION) << "Invalid switch node:" << node->DebugString();
-  }
-  const auto &branch_node = inputs[kSwitchTrueBranchIndex];
-  MS_EXCEPTION_IF_NULL(branch_node);
-  const auto &branch_abstract = branch_node->abstract();
-  // If abstract is empty, the default is true.
-  if (branch_abstract == nullptr) {
-    MS_LOG(WARNING) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
-    return true;
-  }
-
-  if (branch_abstract->isa<abstract::AbstractFunction>()) {
-    return true;
-  } else if (branch_abstract->isa<abstract::AbstractTuple>()) {
-    // In switch layer, the true branch input is a make tuple.
-    auto tuple_abstract = branch_abstract->cast<abstract::AbstractTuplePtr>();
-    MS_EXCEPTION_IF_NULL(tuple_abstract);
-    const auto &sub_abstracts = tuple_abstract->elements();
-    if (sub_abstracts.empty() || sub_abstracts[0] == nullptr) {
-      MS_LOG(WARNING) << "Failed to get abstract by true branch input of switch node:" << node->DebugString();
-      return true;
-    }
-    if (sub_abstracts[0]->isa<abstract::AbstractFunction>()) {
-      return true;
-    }
-  }
-  return false;
-}
 }  // namespace
 
 ControlActorSetPtr ControlNodeScheduler::Build(const GraphCompilerInfo &graph_compiler_info,
@@ -1550,8 +1500,11 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
       auto to_actor = FetchActor(type, "", kernel, graph);
       MS_EXCEPTION_IF_NULL(to_actor);
       size_t from_index = 0;
-      if (common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
-          common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) {
+      // If the input is a switch node and the graph does not need a stack, then the data arrow needs to be connected
+      // from the switch actor.
+      if ((common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitch) ||
+           common::AnfAlgo::CheckPrimitiveType(from_node, prim::kPrimSwitchLayer)) &&
+          (from_actor->type() != KernelTransformType::kStackActor)) {
         const auto &actor_name = GetActorName(from_node);
         auto actor = FetchActor(actor_name);
         MS_EXCEPTION_IF_NULL(actor);
