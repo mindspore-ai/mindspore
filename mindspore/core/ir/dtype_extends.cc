@@ -233,37 +233,53 @@ TypePtr RowTensorStrToType(const std::string &type_name) {
 }
 
 TypePtr COOTensorStrToType(const std::string &type_name) {
+  TypePtr type = nullptr;
   if (type_name == "COOTensor") {
-    return std::make_shared<COOTensorType>();
+    type = std::make_shared<COOTensorType>();
+  } else {
+    size_t start = type_name.find_first_of('[');
+    size_t end = type_name.find_last_of(']');
+    // It's better to using regular expression, now just do simple check.
+    if (start == std::string::npos || end == std::string::npos || end < start) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'COOTensor[type1, type2, ...]', but got '" << type_name
+                                    << "' that not provide pair of ('[', ']').";
+    }
+    start = start + 1;
+    std::string element_strs = type_name.substr(start, end - start);
+    std::vector<TypePtr> element_types;
+    auto ret = StringToVectorOfType(element_strs, &element_types);
+    if (!ret) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'COOTensor[type1, type2, ...]', but got '" << type_name
+                                    << "' that miss typename after ','.";
+    }
+    type = std::make_shared<COOTensorType>(element_types);
   }
-  auto start = type_name.find_first_of('[') + 1;
-  auto end = type_name.find_last_of(']');
-  if (start >= type_name.size()) {
-    return nullptr;
-  }
-  auto element_str = type_name.substr(start, end - start);
-  auto element_type = StringToType(element_str);
-  if (element_type == nullptr) {
-    return nullptr;
-  }
-  return std::make_shared<COOTensorType>(element_type);
+  return type;
 }
 
 TypePtr CSRTensorStrToType(const std::string &type_name) {
+  TypePtr type = nullptr;
   if (type_name == "CSRTensor") {
-    return std::make_shared<CSRTensorType>();
+    type = std::make_shared<CSRTensorType>();
+  } else {
+    size_t start = type_name.find_first_of('[');
+    size_t end = type_name.find_last_of(']');
+    // It's better to using regular expression, now just do simple check.
+    if (start == std::string::npos || end == std::string::npos || end < start) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'CSRTensor[type1, type2, ...]', but got '" << type_name
+                                    << "' that not provide pair of ('[', ']').";
+    }
+    start = start + 1;
+    std::string element_strs = type_name.substr(start, end - start);
+    std::vector<TypePtr> element_types;
+    auto ret = StringToVectorOfType(element_strs, &element_types);
+    if (!ret) {
+      MS_EXCEPTION(NotSupportError) << "Expect format like 'CSRTensor[type1, type2, ...]', but got '" << type_name
+                                    << "' that miss typename after ','.";
+    }
+    type = std::make_shared<CSRTensorType>(element_types);
   }
-  auto start = type_name.find_first_of('[') + 1;
-  auto end = type_name.find_last_of(']');
-  if (start >= type_name.size()) {
-    return nullptr;
-  }
-  auto element_str = type_name.substr(start, end - start);
-  auto element_type = StringToType(element_str);
-  if (element_type == nullptr) {
-    return nullptr;
-  }
-  return std::make_shared<CSRTensorType>(element_type);
+  return type;
 }
 
 TypePtr UndeterminedStrToType(const std::string &type_name) {
