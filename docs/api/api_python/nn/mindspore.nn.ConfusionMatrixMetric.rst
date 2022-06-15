@@ -47,10 +47,6 @@ mindspore.nn.ConfusionMatrixMetric
             至于分类任务， `y_pred` 的shape应为[BN]，其中N大于1。对于分割任务，shape应为[BNHW]或[BNHWD]。
           - **y** (ndarray)：计算度量值的真实值。格式必须为one-hot，且第一个维度是batch。`y` 的shape是 :math:`(N, C, ...)` 。
 
-        **返回：**
-
-        numpy，numpy类型评估结果。
-
         **异常：**
 
         - **ValueError** - 输入参数的数量不等于2。
