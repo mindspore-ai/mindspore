@@ -858,8 +858,6 @@ const std::set<std::string> DynamicShapeConstInputToAttr = {kCastOpName,      kE
                                                             kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
                                                             kReduceAllOpName, kReduceAnyOpName,  kConcatOpName};
 
-const std::set<std::string> NeedConvertToValueNodeSet = {kStridedSliceGradOpName};
-
 const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
   kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
   kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kReduceSumOpName};

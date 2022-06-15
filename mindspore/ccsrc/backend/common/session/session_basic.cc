@@ -1677,6 +1677,24 @@ TensorPtr SessionBasic::GetCNodeOutputTensor(const KernelWithIndex &kernel_with_
   return iter->second;
 }
 
+void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  MS_EXCEPTION_IF_NULL(const_input_attr_index);
+  auto op_name = common::AnfAlgo::GetCNodeName(cnode);
+  auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
+  auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kTBE, is_dynamic_shape);
+  if (op_info_ptr == nullptr) {
+    return;
+  }
+  auto inputs_ptr = op_info_ptr->inputs_ptr();
+  for (size_t i = 0; i < inputs_ptr.size(); i++) {
+    MS_EXCEPTION_IF_NULL(inputs_ptr[i]);
+    if (!inputs_ptr[i]->value_depend().empty() && inputs_ptr[i]->value_depend() != "ignored") {
+      const_input_attr_index->push_back(i + 1);
+    }
+  }
+}
+
 void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      const std::map<KernelWithIndex, tensor::TensorPtr> &op_output,
                                      const std::map<AnfNodePtr, size_t> &parameter_index,
@@ -1684,11 +1702,8 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
                                      InputTensorInfo *input_tensor_info) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(input_tensor_info);
-  auto has_const_input_to_attr = common::AnfAlgo::HasNodeAttr(kAttrNeedConvertToValueNode, cnode);
   std::vector<size_t> const_input_attr_index = {};
-  if (has_const_input_to_attr) {
-    const_input_attr_index = common::AnfAlgo::GetNodeAttr<std::vector<size_t>>(cnode, kAttrNeedConvertToValueNode);
-  }
+  GetConstValueDepend(cnode, &const_input_attr_index);
   const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t i = 1; i <= input_tensor_num; i += 1) {
     const auto &input = cnode->input(i);
@@ -1701,7 +1716,7 @@ void SessionBasic::GetOpInputTensors(const CNodePtr &cnode,
       const auto &value_ptr = GetValueNode(real_input);
       MS_EXCEPTION_IF_NULL(value_ptr);
       auto is_value_node = value_ptr->isa<StringImm>();
-      if (has_const_input_to_attr) {
+      if (!const_input_attr_index.empty()) {
         is_value_node =
           std::find(const_input_attr_index.begin(), const_input_attr_index.end(), i) != const_input_attr_index.end();
       }
