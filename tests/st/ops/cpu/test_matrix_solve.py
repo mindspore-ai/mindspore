@@ -15,8 +15,7 @@
 
 
 import mindspore.context as context
-from mindspore import Tensor
-from mindspore.ops.operations.math_ops import MatrixSolve
+from mindspore import Tensor, ops
 import numpy as np
 import pytest
 
@@ -44,7 +43,7 @@ def test_matrix_solve(adjoint, rhs_shape, dtype, error):
     rhs = np.random.normal(-10, 10, np.prod(rhs_shape)).reshape(rhs_shape).astype(dtype)
     matrix_np = np.swapaxes(matrix, -1, -2) if adjoint else matrix
 
-    result = MatrixSolve(adjoint)(Tensor(matrix), Tensor(rhs)).asnumpy()
+    result = ops.matrix_solve(Tensor(matrix), Tensor(rhs), adjoint).asnumpy()
     if dtype == np.float16:
         expected = np.linalg.solve(matrix_np.astype(np.float32), rhs.astype(np.float32))
     else:
@@ -77,7 +76,7 @@ def test_matrix_solve_complex(adjoint, m, k, dtype, error):
 
     matrix_np = np.conj(np.transpose(matrix)) if adjoint else matrix
 
-    result = MatrixSolve(adjoint)(Tensor(matrix), Tensor(rhs)).asnumpy()
+    result = ops.matrix_solve(Tensor(matrix), Tensor(rhs), adjoint).asnumpy()
     expected = np.linalg.solve(matrix_np, rhs)
 
     assert np.allclose(result, expected, atol=error, rtol=error)

@@ -859,6 +859,13 @@ def intopk(x1, x2, k):
     return P.InTopK(k)(x1, x2)
 
 
+def log_softmax(logits, axis=-1):
+    r"""
+    Log Softmax activation function.
+    """
+    return P.LogSoftmax(axis)(logits)
+
+
 def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
     """
     Given an `input_x` and a flow-field `grid`, computes the `output` using `input_x` values and pixel locations from
@@ -987,6 +994,7 @@ __all__ = [
     'hardshrink',
     'soft_shrink',
     'intopk',
+    'log_softmax',
     'hardswish',
     'softsign',
     'pdist',

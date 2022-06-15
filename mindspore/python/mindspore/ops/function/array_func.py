@@ -19,12 +19,17 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 
-from ..operations.array_ops import UniqueConsecutive
-from ..operations.array_ops import NonZero, MatrixDiagV3
-from ..operations.array_ops import Fills
-from ..operations.array_ops import Col2Im
-from ..operations.array_ops import ScatterNdMax
-from ..operations.array_ops import ScatterNdMul
+from ..operations.array_ops import (
+    UniqueConsecutive,
+    NonZero,
+    MatrixDiagV3,
+    MatrixDiagPartV3,
+    Fills,
+    Col2Im,
+    ScatterNdMax,
+    ScatterNdMul,
+)
+
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ...common import Tensor
 
@@ -2404,6 +2409,66 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
     return matrix_diag_v3(x, k, num_rows, num_cols, padding_value)
 
 
+def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
+    r"""
+    Returns the batched diagonal part of a batched tensor.
+    Returns a tensor with the k[0]-th to k[1]-th diagonals of the batched x. Some diagonals are shorter than
+    max_diag_len and need to be padded. Input k and padding_value must be const Tensor when taking Graph mode.
+
+    Args:
+        x (Tensor): The batched Tensor with rank r, where r >= 2.
+        k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offset(s). Positive value means
+          superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a single integer
+          (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band. k[0] must not
+          be larger than k[1]. The value of k has restructions, meaning value of k must be in
+          (-x.shape[-2], x.shape[-1]).
+        padding_value (Union[int, float, Tensor], optional): A Tensor with only one value. Have the same dtype as x.
+          The number to fill the area outside the specified diagonal band. Default: 0.
+        align (str): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
+          is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
+          aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
+
+    Returns:
+        A Tensor. Has the same type as x.
+        Assume `x` has r dimensions `[I, J, ..., L, M, N]`. Let max_diag_len be the maximum length among all
+        diagonals to be extracted, `max_diag_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        Let num_diags be the number of diagonals to extract, `num_diags = k[1] - k[0] + 1`.
+        If num_diags == 1, the output tensor is of rank r - 1 with shape `[I, J, ..., L, max_diag_len]`
+        Otherwise, the output tensor has rank r with dimensions `[I, J, ..., L, num_diags, max_diag_len]`
+
+    Raises:
+        TypeError: If any input is not Tensor.
+        TypeError: If input `x` and `padding_value` are not the same dtype.
+        TypeError: If `k` is not int32 dtype.
+        ValueError: If `align` is not a string or not in the valid range.
+        ValueError: If rank of `k` is not equal to 0 or 1.
+        ValueError: If rank of `padding_value` is not equal to 0.
+        ValueError: If rank of `x` is not greater equal to 2.
+        ValueError: If size of `k` is not equal to 1 or 2.
+        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
+        ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3, 4],
+        ...                      [5, 6, 7, 8],
+        ...                      [9, 8, 7, 6]]), mindspore.float32)
+        >>> k =Tensor(np.array([1, 3]), mindspore.int32)
+        >>> padding_value = Tensor(np.array(9), mindspore.float32)
+        >>> output = ops.matrix_diag_part(x, k, padding_value, align='RIGHT_LEFT')
+        >>> print(output)
+        [[9. 9. 4.]
+         [9. 3. 8.]
+         [2. 7. 6.]]
+        >>> print(output.shape)
+        (3, 3)
+    """
+    matrix_diag_part_v3 = MatrixDiagPartV3(align)
+    return matrix_diag_part_v3(x, k, padding_value)
+
+
 def meshgrid(inputs, indexing='xy'):
     """
     Generates coordinate matrices from given coordinate tensors.
@@ -3101,6 +3166,7 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
+    'matrix_diag_part',
     'diag',
     'meshgrid',
     'adaptive_max_pool2d',

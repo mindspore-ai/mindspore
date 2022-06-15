@@ -15,26 +15,9 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, nn, context, Parameter, ms_function
+from mindspore import Tensor, nn, context, ms_function
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
-from mindspore.ops.operations.nn_ops import InstanceNorm
-from mindspore.common.initializer import initializer
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
-
-class InstanceNormNd(nn.Cell):
-    def __init__(self, num_features, eps=1e-5, momentum=0.1, affine=True, gamma_init='ones', beta_init='zeros'):
-        super(InstanceNormNd, self).__init__()
-        self.moving_mean = Parameter(initializer('zeros', num_features), name="mean", requires_grad=False)
-        self.moving_variance = Parameter(initializer('ones', num_features), name="variance", requires_grad=False)
-        self.gamma = Parameter(initializer(gamma_init, num_features), name="gamma", requires_grad=affine)
-        self.beta = Parameter(initializer(beta_init, num_features), name="beta", requires_grad=affine)
-        self.instance_bn = InstanceNorm(epsilon=eps, momentum=momentum)
-
-    def construct(self, x):
-        return self.instance_bn(x, self.gamma, self.beta, self.moving_mean, self.moving_variance)[0]
 
 
 class Grad(nn.Cell):
@@ -90,11 +73,12 @@ def test_instancenorm_1d(shape, data_type):
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x_np = Tensor(np.random.randn(*shape).astype(data_type))
     grad = Tensor(np.random.randn(*shape).astype(data_type))
 
-    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    instance_op = nn.InstanceNorm1d(shape[1], gamma_init=0.5, beta_init=0.5)
     expected_net = Expected1d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
 
     result = instance_op(Tensor(x_np))
@@ -121,11 +105,12 @@ def test_instancenorm_2d(shape, data_type):
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     x_np = Tensor(np.random.randn(*shape).astype(data_type))
     grad = Tensor(np.random.randn(*shape).astype(data_type))
 
-    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    instance_op = nn.InstanceNorm2d(shape[1], gamma_init=0.5, beta_init=0.5)
     expected_net = Expected2d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
 
     result = instance_op(Tensor(x_np))
@@ -152,11 +137,12 @@ def test_instancenorm_3d(shape, data_type):
     Expectation: The result matches numpy implementation.
     """
     np.random.seed(0)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     x_np = Tensor(np.random.randn(*shape).astype(data_type))
     grad = Tensor(np.random.randn(*shape).astype(data_type))
 
-    instance_op = InstanceNormNd(shape[1], gamma_init=0.5, beta_init=0.5)
+    instance_op = nn.InstanceNorm3d(shape[1], gamma_init=0.5, beta_init=0.5)
     expected_net = Expected3d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
 
     result = instance_op(Tensor(x_np))

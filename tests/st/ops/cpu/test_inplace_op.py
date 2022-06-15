@@ -15,15 +15,15 @@
 import numpy as np
 import pytest
 
-from mindspore import context, Tensor
+from mindspore import context, Tensor, ops
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 import mindspore.nn as nn
 
 
-class InplaceOps(nn.Cell):
+class InplaceUpdate(nn.Cell):
     def __init__(self, indices):
-        super(InplaceOps, self).__init__()
+        super(InplaceUpdate, self).__init__()
         self.indices = indices
 
     def construct(self, x, v):
@@ -60,7 +60,7 @@ def test_inplace_add(shape, indice_len, dtype):
     indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
     indices = tuple((int(i) for i in indices))
 
-    result = P.InplaceAdd(indices)(Tensor(x), Tensor(v))
+    result = ops.inplace_add(Tensor(x), Tensor(v), indices)
     expected = inplace_op_np('add', x, v, indices)
     np.allclose(result.asnumpy(), expected)
 
@@ -80,7 +80,7 @@ def test_inplace_add_1d(shape, indice, dtype):
     x = np.random.random(shape).astype(dtype)
     v = np.random.random((1,) + shape[1:]).astype(dtype)
 
-    result = P.InplaceAdd(indice)(Tensor(x), Tensor(v))
+    result = ops.inplace_add(Tensor(x), Tensor(v), indice)
     expected = inplace_op_np('add', x, v, indice)
     np.allclose(result.asnumpy(), expected)
 
@@ -102,7 +102,7 @@ def test_inplace_sub(shape, indice_len, dtype):
     indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
     indices = tuple((int(i) for i in indices))
 
-    result = P.InplaceSub(indices)(Tensor(x), Tensor(v))
+    result = ops.inplace_sub(Tensor(x), Tensor(v), indices)
     expected = inplace_op_np('sub', x, v, indices)
     np.allclose(result.asnumpy(), expected)
 
@@ -122,7 +122,7 @@ def test_inplace_sub_1d(shape, indice, dtype):
     x = np.random.random(shape).astype(dtype)
     v = np.random.random((1,) + shape[1:]).astype(dtype)
 
-    result = P.InplaceSub(indice)(Tensor(x), Tensor(v))
+    result = ops.inplace_sub(Tensor(x), Tensor(v), indice)
     expected = inplace_op_np('sub', x, v, indice)
     np.allclose(result.asnumpy(), expected)
 
@@ -166,7 +166,7 @@ def test_vmap_inplace_ops(shape, indice_len, dtype):
     indices = np.random.choice(list(range(shape[1])), indice_len, replace=False)
     indices = tuple((int(i) for i in indices))
 
-    inplace_op = InplaceOps(indices)
+    inplace_op = InplaceUpdate(indices)
     result = vmap(inplace_op, in_axes=(0, None), out_axes=0)(Tensor(x), Tensor(v))
     expected = np.zeros(shape=shape)
     for i in range(shape[0]):

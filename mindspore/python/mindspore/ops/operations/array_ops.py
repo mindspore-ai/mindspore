@@ -621,6 +621,7 @@ class Col2Im(Primitive):
         >>> print(y.shape)
         (16, 16, 8, 8)
     """
+
     @prim_attr_register
     def __init__(self, kernel_size, dilation=1, padding=0, stride=1):
         """Initialize Col2Im."""
@@ -1424,45 +1425,11 @@ class MatrixDiagV3(Primitive):
 class MatrixDiagPartV3(Primitive):
     r"""
     Returns the batched diagonal part of a batched tensor.
-    Returns a tensor with the k[0]-th to k[1]-th diagonals of the batched x. Some diagonals are shorter than
-    max_diag_len and need to be padded. Input k and padding_value must be const Tensor when taking Graph mode.
 
-    Args:
-        align (string): An optional string from: "RIGHT_LEFT"(default), "LEFT_RIGHT", "LEFT_LEFT", "RIGHT_RIGHT". Align
-            is a string specifying how superdiagonals and subdiagonals should be aligned, respectively. "RIGHT_LEFT"
-            aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
-
-    Inputs:
-        - **x** (Tensor) - Rank r, where r >= 2.
-        - **k** (Tensor) - A Tensor of type int32. Diagonal offset(s). Positive value means superdiagonal, 0 refers to
-          the main diagonal, and negative value means subdiagonals. k can be a single integer (for a single diagonal) or
-          a pair of integers specifying the low and high ends of a matrix band. k[0] must not be larger than k[1]. The
-          value of k has restructions, meaning value of k must be in (-x.shape[-2], x.shape[-1]).
-        - **padding_value** (Tensor) - A Tensor. Have the same dtype as x. The number to fill the area outside the
-          specified diagonal band with. There must be only one value.
-
-    Outputs:
-        A Tensor. Has the same type as x.
-        Assume x has r dimensions [I, J, ..., L, M, N]. Let max_diag_len be the maximum length among all
-        diagonals to be extracted, max_diag_len = min(M + min(k[1], 0), N + min(-k[0], 0))
-        Let num_diags be the number of diagonals to extract, num_diags = k[1] - k[0] + 1.
-        If num_diags == 1, the output tensor is of rank r - 1 with shape [I, J, ..., L, max_diag_len]
-        Otherwise, the output tensor has rank r with dimensions [I, J, ..., L, num_diags, max_diag_len]
-
-    Raises:
-        TypeError: If any input is not Tensor.
-        TypeError: If input `x` and `padding_value` are not the same dtype.
-        TypeError: If `k` is not int32 dtype.
-        ValueError: If `align` is not a string or not in the valid range.
-        ValueError: If rank of `k` is not equal to 0 or 1.
-        ValueError: If rank of `padding_value` is not equal to 0.
-        ValueError: If rank of `x` is not greater equal to 2.
-        ValueError: If size of `k` is not equal to 1 or 2.
-        ValueError: If k[1] is not greater equal to k[0] in case the size of `k` is 2.
-        ValueError: If the value of `k` is not in (-x.shape[-2], x.shape[-1]).
+    Refer to :func:`mindspore.ops.matrix_diag_part` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2, 3, 4],
@@ -3942,7 +3909,7 @@ class StridedSlice(PrimitiveWithInfer):
         if has_ellipsis:
             # When there is ellipsis, handle the second half of the ellipsis split.
             ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
             ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
             j += 1
             i += ellipsis_occupied_dims
@@ -5814,7 +5781,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
                              f"while the shape of blocks is {self.block_shape}.")
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
-                self.paddings[i][1]
+                     self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f"For '{self.name}', the padded must be divisible by 'block_shape', "
                                  f"where padded = input_x_shape[i + 2] + paddings[i][0] + paddings[i][1], "
