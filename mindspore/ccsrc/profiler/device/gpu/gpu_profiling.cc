@@ -548,8 +548,16 @@ void GPUProfiler::ClearInst() {
   op_name_map_.clear();
   events_.clear();
   activities_enable_.clear();
+  all_step_start_end_info_.clear();
+  step_start_end_info_vector_.clear();
+  all_kernel_info_.clear();
+  is_init_ = false;
+  is_dynamic_shape_net_ = false;
   enable_flag_ = false;
   sync_enable_flag_ = true;
+  init_flag_ = false;
+  enable_flag_ = false;
+  has_find = false;
   cupti_callback_events_count_ = 0l;
   cupti_callback_events_drop_count_ = 0l;
   cupti_activity_events_count_ = 0l;

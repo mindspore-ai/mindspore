@@ -21,7 +21,9 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+import mindspore.dataset as ds
 from mindspore import Profiler
+from mindspore import Model
 from tests.security_utils import security_off_wrap
 
 
@@ -36,6 +38,26 @@ class Net(nn.Cell):
 
 x = np.random.randn(1, 3, 3, 4).astype(np.float32)
 y = np.random.randn(1, 3, 3, 4).astype(np.float32)
+
+
+class NetWork(nn.Cell):
+    def __init__(self):
+        super(NetWork, self).__init__()
+        self.unique = P.Unique()
+        self.shape = P.TensorShape()
+        self.reshape = P.Reshape()
+        self.add = P.Add()
+
+    def construct(self, a, b):
+        val = self.add(a, b)
+        size = self.shape(val)
+        res = self.reshape(val, size)
+        return res
+
+
+def dataset_generator():
+    for i in range(1, 10):
+        yield (np.ones((32, 2 * i), dtype=np.float32), np.ones((32, 2 * i), dtype=np.float32))
 
 
 @pytest.mark.level0
@@ -72,3 +94,26 @@ def test_ascend_pynative_profiling():
         add(Tensor(x), Tensor(y))
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/output_timeline_data_*.txt")) == 1
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_shape():
+    """
+    Feature: Test the ascend dynamic shape model profiling
+    Description: Generate the Net dynamic shape data.
+    Expectation: Dynamic shape data generated successfully
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    with tempfile.TemporaryDirectory() as tmpdir:
+        network = NetWork()
+        profiler = Profiler(output_path=tmpdir)
+        dataset = ds.GeneratorDataset(dataset_generator, ["data1", "data2"])
+        dataset.set_dynamic_columns(columns={"data1": [32, None], "data2": [32, None]})
+        model = Model(network)
+        model.train(1, dataset, dataset_sink_mode=True)
+        profiler.analyse()
+        assert len(glob.glob(f"{tmpdir}/profiler*/dynamic_shape_*.json")) == 1

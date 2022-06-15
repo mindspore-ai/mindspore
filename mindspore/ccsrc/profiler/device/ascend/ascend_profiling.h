@@ -46,7 +46,7 @@ class AscendProfiler : public Profiler {
   void Finalize() const;
   bool IsInitialized() const { return init_flag_; }
   void ReportErrorMessage() const;
-  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, KernelType kernel_type);
+  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type);
   bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
   void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
   std::map<std::thread::id, uint32_t> last_tid;

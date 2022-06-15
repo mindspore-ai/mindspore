@@ -120,11 +120,11 @@ class DataSaver {
 
   float GetTotalOpTime(const OpInfoMap &op_info_maps) const;
 
-  void WriteOpType(const std::string &saver_base_dir) const;
+  void WriteOpType(const std::string &saver_base_dir);
 
-  void WriteOpDetail(const std::string &saver_base_dir) const;
+  void WriteOpDetail(const std::string &saver_base_dir);
 
-  void WriteOpTimestamp(const std::string &saver_base_dir) const;
+  void WriteOpTimestamp(const std::string &saver_base_dir);
 
   void ChangeFileMode(const std::string &file_path) const;
 
