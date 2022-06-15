@@ -4328,7 +4328,7 @@ class ScatterUpdate(Primitive):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index of input tensor. With int32 or int64 data type.
+        - **indices** (Tensor) - The index of input tensor. With int32 data type.
           If there are duplicates in indices, the order for updating is undefined.
         - **updates** (Tensor) - The tensor to update the input tensor, has the same type as input,
           and updates.shape = indices.shape + input_x.shape[1:].
@@ -4338,7 +4338,7 @@ class ScatterUpdate(Primitive):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32 or an int64.
+        TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -4688,8 +4688,7 @@ class ScatterSub(Primitive):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
-          mindspore.int64.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
@@ -4698,7 +4697,7 @@ class ScatterSub(Primitive):
 
     Raises:
         TypeError: If `use_locking` is not a bool.
-        TypeError: If `indices` is not an int32 or an int64.
+        TypeError: If `indices` is not an int32.
         ValueError: If the shape of `updates` is not equal to `indices_shape + x_shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
