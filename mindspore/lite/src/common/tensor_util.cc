@@ -134,8 +134,8 @@ int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lit
   }
 }
 
-int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<TensorC *> *in_tensor_c, std::shared_ptr<Allocator> allocator) {
+int GenerateInTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<TensorC *> *in_tensor_c,
+                      std::shared_ptr<Allocator> allocator) {
   MS_CHECK_TRUE_RET(in_tensor_c != nullptr, RET_ERROR);
   int ret = RET_OK;
   for (auto input : inputs) {

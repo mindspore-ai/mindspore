@@ -65,7 +65,7 @@ std::vector<size_t> GetGraphOutputNodes(const lite::Model *model) {
   return ret;
 }
 
-std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, const size_t tensor_idx) {
+std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, size_t tensor_idx) {
   MS_ASSERT(model != nullptr);
   std::vector<size_t> post_node_idxes;
   auto nodes_size = model->graph_.all_nodes_.size();

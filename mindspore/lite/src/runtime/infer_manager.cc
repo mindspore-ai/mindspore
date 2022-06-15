@@ -144,7 +144,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, const std::vecto
     return RET_OK;
   }
 
-  int ret = GenerateInTensorC(parameter, inputs, &in_tensors, allocator);
+  int ret = GenerateInTensorC(inputs, &in_tensors, allocator);
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors, allocator);
     return RET_ERROR;

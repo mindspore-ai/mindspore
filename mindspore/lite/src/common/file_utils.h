@@ -47,7 +47,7 @@ char *ReadFile(const char *file, size_t *size);
 
 std::string RealPath(const char *path);
 
-int CreateOutputDir(std::string *dir);
+int CreateOutputDir(std::string *file_path);
 
 template <typename T>
 void WriteToTxt(const std::string &file_path, void *data, size_t element_size) {

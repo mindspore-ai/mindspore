@@ -169,7 +169,7 @@ bool ConvertStrToInt(const std::string &str, int *value);
 
 // tokenize string
 std::vector<std::string> Tokenize(const std::string &src, const std::string &delimiters,
-                                  const Option<size_t> &maxTokenNum = Option<size_t>(None()));
+                                  const Option<size_t> &max_token_num = Option<size_t>(None()));
 
 enum RemoveSubStrMode { PREFIX, SUFFIX, ANY };
 
