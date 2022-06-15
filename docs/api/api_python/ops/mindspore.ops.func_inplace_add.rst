@@ -22,3 +22,4 @@ mindspore.ops.inplace_add
 
     - **TypeError** - `indices` 不是int或tuple。
     - **TypeError** - `indices` 是元组，但是其中的元素不是int。
+    - **ValueError** - `x` 的维度与 `v` 的维度不相等。

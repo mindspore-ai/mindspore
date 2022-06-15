@@ -1721,28 +1721,12 @@ class InplaceAdd(PrimitiveWithInfer):
     """
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
-    Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
-
-    Inputs:
-        - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **input_v** (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
-          the first dimension, which must be the same as indices' size. It has the same data type with `x`.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Raises:
-        TypeError: If `indices` is neither int nor tuple.
-        TypeError: If `indices` is a tuple whose elements are not all int.
-        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
+    Refer to :func:`mindspore.ops.inplace_add` for more detail.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
@@ -1790,28 +1774,12 @@ class InplaceSub(PrimitiveWithInfer):
     """
     Subtracts `v` into specified rows of `x`. Computes `y` = `x`; y[i,] -= `v`.
 
-    Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to subtract with `v`. It is an int or tuple, whose value is in [0, the first dimension size of `x`).
-
-    Inputs:
-        - **x** (Tensor) - The first input is a tensor whose data type is float16, float32 or int32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-        - **input_v** (Tensor) - The second input is a tensor who has the same dimension sizes as `x` except
-          the first dimension, which must be the same as indices' size. It has the same data type with `x`.
-
-    Outputs:
-        Tensor, has the same shape and dtype as `x`.
-
-    Raises:
-        TypeError: If `indices` is neither int nor tuple.
-        TypeError: If `indices` is a tuple whose elements are not all int.
-        ValueError: If length of shape of `x` is not equal to length of shape of `input_v`.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
+    Refer to :func:`mindspore.ops.inplace_sub` for more detail.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, ops
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> input_v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
