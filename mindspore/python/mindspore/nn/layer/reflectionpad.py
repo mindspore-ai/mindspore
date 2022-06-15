@@ -112,10 +112,13 @@ class ReflectionPad1d(_ReflectionPadNd):
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReflectionPad1d
         >>> x = Tensor(np.array([[[0, 1, 2, 3], [4, 5, 6, 7]]]).astype(np.float32))
-        >>> # padding is tuple
+        >>> # x has shape (1, 2, 4)
         >>> padding = (3, 1)
+        >>> # The first and the second dimension of x remain the same.
+        >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 4 + 3 + 1 = 8
         >>> pad1d = ReflectionPad1d(padding)
         >>> out = pad1d(x)
+        >>> # The shape of out is (1, 2, 8)
         >>> print(out)
         [[[3. 2. 1. 0. 1. 2. 3. 2.]
           [7. 6. 5. 4. 5. 6. 7. 6.]]]
@@ -158,10 +161,14 @@ class ReflectionPad2d(_ReflectionPadNd):
         >>> from mindspore import Tensor
         >>> from mindspore.nn import ReflectionPad2d
         >>> x = Tensor(np.array([[[0, 1, 2], [3, 4, 5], [6, 7, 8]]]).astype(np.float32))
-        >>> # padding is tuple
+        >>> # x has shape (1, 3, 3)
         >>> padding = (1, 1, 2, 0)
         >>> pad2d = ReflectionPad2d(padding)
+        >>> # The first dimension of x remains the same.
+        >>> # The second dimension of x: H_out = H_in + pad_up + pad_down = 3 + 1 + 1 = 5
+        >>> # The third dimension of x: W_out = W_in + pad_left + pad_right = 3 + 2 + 0 = 5
         >>> out = pad2d(x)
+        >>> # The shape of out is (1, 5, 5)
         >>> print(out)
         [[[7. 6. 7. 8. 7.]
           [4. 3. 4. 5. 4.]
