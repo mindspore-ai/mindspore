@@ -1501,7 +1501,10 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     cv::Mat input_img = input_cv->mat();
 
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] RandomLighting: load image failed.");
+      RETURN_STATUS_UNEXPECTED(
+        "RandomLighting: Cannot convert from OpenCV type, unknown "
+        "CV type. Currently supported data type: [int8, uint8, int16, uint16, "
+        "int32, float16, float32, float64].");
     }
 
     if (input_cv->Rank() != kDefaultImageRank || input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
