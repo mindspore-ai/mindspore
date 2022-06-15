@@ -19,14 +19,14 @@
 
 namespace mindspore {
 namespace lite {
-int GetPrimitiveType(const void *prim, int schema_version);
+int GetPrimitiveType(const void *primitive, int schema_version);
 const char *GetPrimitiveTypeName(const void *primitive, int schema_version);
 const char *PrimitiveCurVersionTypeName(int type);
 int GenPrimVersionKey(int primitive_type, int schema_version);
 bool IsPartialNode(const void *primitive, int schema_version);
-bool IsCallNode(const void *node, int schema_version);
-bool IsSwitchNode(const void *node, int schema_version);
-bool IsSwitchLayerNode(const void *node, int schema_version);
+bool IsCallNode(const void *primitive, int schema_version);
+bool IsSwitchNode(const void *primitive, int schema_version);
+bool IsSwitchLayerNode(const void *primitive, int schema_version);
 bool IsCustomNode(const void *primitive, int schema_version);
 bool IsTensorListNode(const void *primitive, int schema_version);
 int GetPartialGraphIndex(const void *primitive, int schema_version);

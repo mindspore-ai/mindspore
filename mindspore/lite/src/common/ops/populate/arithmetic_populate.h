@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-ArithmeticParameter *PopulateArithmeticCommonPara(const void *primitive);
+ArithmeticParameter *PopulateArithmeticCommonPara(const void *prim);
 OpParameter *PopulateArithmetic(const void *primitive);
 }  // namespace lite
 }  // namespace mindspore

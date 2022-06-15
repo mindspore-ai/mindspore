@@ -29,16 +29,16 @@
 
 namespace mindspore {
 namespace lite {
-int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors_in, std::vector<TensorC *> *tensors_out,
+int OutputTensor2TensorC(const std::vector<lite::Tensor *> &tensors, std::vector<TensorC *> *tensors_c,
                          std::shared_ptr<Allocator> allocator = nullptr);
 void FreeAllTensorC(std::vector<TensorC *> *tensors_in, std::shared_ptr<Allocator> allocator = nullptr);
 int Tensor2TensorC(const Tensor *src, TensorC *dst);
 int TensorC2Tensor(const TensorC *src, Tensor *dst, std::shared_ptr<Allocator> allocator = nullptr);
-void FreeTensorListC(TensorListC *tensorListC, std::shared_ptr<Allocator> allocator = nullptr);
+void FreeTensorListC(TensorListC *tensorlist_c, std::shared_ptr<Allocator> allocator = nullptr);
 int TensorList2TensorListC(TensorList *src, TensorListC *dst, std::shared_ptr<Allocator> allocator = nullptr);
 int TensorListC2TensorList(const TensorListC *src, TensorList *dst);
-int GenerateInTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
-                      std::vector<TensorC *> *in_tensor_c, std::shared_ptr<Allocator> allocator = nullptr);
+int GenerateInTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<TensorC *> *in_tensor_c,
+                      std::shared_ptr<Allocator> allocator = nullptr);
 int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &outputs,
                        std::vector<TensorC *> *out_tensor_c, std::shared_ptr<Allocator> allocator = nullptr);
 int CheckTensorsInvalid(const std::vector<Tensor *> &tensors);
@@ -49,20 +49,20 @@ void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void MoveTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void SetTensorData(Tensor *dst_tensor, Tensor *src_tensor);
 void SetCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor);
-void MoveTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
-void SetTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor);
+void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist);
+void SetTensorListTensorData(TensorList *dst_tensor_list, TensorList *src_tensor_list);
 void SetTensorShape(Tensor *dst, Tensor *src);
 void SetTensorListShape(Tensor *dst, Tensor *src);
 bool NeedCastTensorListData(Tensor *dst_tensor, Tensor *src_tensor);
 bool NeedCastData(Tensor *dst_tensor, Tensor *src_tensor);
-int CastTensorData(Tensor *dst_tensor, Tensor *src_tensor, bool support_fp16);
-int CastCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor, bool support_fp16);
-int CastTensorListTensorData(TensorList *dst_tensor, TensorList *src_tensor, bool support_fp16);
+int CastTensorData(Tensor *dst, Tensor *src, bool support_fp16);
+int CastCommonTensorData(Tensor *dst, Tensor *src, bool support_fp16);
+int CastTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensorlist, bool support_fp16);
 TypeId TensorListDataType(Tensor *tensor);
 TensorList *MallocTensorListDataAccordingToTensorListC(Tensor *tensor, TensorListC *tensor_list_c);
 int DecodeTensorLsit(Tensor *tensor, const int *src_data);
-Tensor *CreateTensorList(const std::vector<int> &shape, const Category &category, const void *src_data);
-int CopyTensorListTensorDataType(TensorList *dst_tensor, TensorList *src_tensor);
+Tensor *CreateTensorList(const std::vector<int> &shape, const Category &src_category, const void *src_data);
+int CopyTensorListTensorDataType(TensorList *dst_tensorlist, TensorList *src_tensorlist);
 void SetTensorListTensorDataType(const TypeId &data_type, Tensor *tensor);
 }  // namespace lite
 }  // namespace mindspore

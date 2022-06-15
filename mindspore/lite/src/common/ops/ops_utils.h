@@ -58,7 +58,7 @@ class MSOpsRegistry {
 
 class RegistryMSOps {
  public:
-  RegistryMSOps(const std::string &name, PrimitiveTCreator creator) {
+  RegistryMSOps(const std::string &name, PrimitiveTCreator creator) noexcept {
     MSOpsRegistry::GetInstance()->InsertPrimitiveTMap(name, creator);
   }
   ~RegistryMSOps() = default;

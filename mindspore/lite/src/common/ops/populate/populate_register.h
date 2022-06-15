@@ -74,7 +74,7 @@ class PopulateRegistry {
 
 class Registry {
  public:
-  Registry(int primitive_type, ParameterGen creator, int version) {
+  Registry(int primitive_type, ParameterGen creator, int version) noexcept {
     PopulateRegistry::GetInstance()->InsertParameterMap(primitive_type, creator, version);
   }
   ~Registry() = default;

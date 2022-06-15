@@ -292,8 +292,8 @@ set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindsp
 
 add_library(converter_runtime_mid OBJECT ${LITE_SRC})
 add_dependencies(converter_runtime_mid fbs_src fbs_inner_src)
+target_compile_options(converter_runtime_mid PRIVATE "-Wno-stringop-overflow")
 add_library(mindspore_converter SHARED $<TARGET_OBJECTS:converter_runtime_mid>)
-target_compile_options(mindspore_converter PRIVATE "-Wno-stringop-overflow")
 
 add_library(converter_src_mid OBJECT ${CONVERTER_SRC})
 add_dependencies(converter_src_mid fbs_src fbs_inner_src)
