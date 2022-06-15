@@ -102,9 +102,9 @@ class ShapeFusionPass {
       return;
     }
     if (ConvertToShapeFusion(node) != RET_OK) {
-      MS_LOG(WARNING) << "Convert to built-in shape failed: " << node->name_;
+      MS_LOG(INFO) << "Convert to built-in shape failed: " << node->name_;
     } else if (FusePostNodes(node, subgraph_index) != RET_OK) {
-      MS_LOG(WARNING) << "Fused to built-in shape failed: " << node->name_;
+      MS_LOG(INFO) << "Fused to built-in shape failed: " << node->name_;
     }
     std::transform(node->output_indices_.begin(), node->output_indices_.end(),
                    std::back_inserter(shape_fusion_outputs_),

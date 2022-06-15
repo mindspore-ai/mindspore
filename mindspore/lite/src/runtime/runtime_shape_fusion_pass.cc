@@ -33,7 +33,7 @@ int ShapeFusionPass::ConvertToShapeFusion(LiteGraph::Node *node) {
   MS_CHECK_TRUE_RET(input_tensor != nullptr, RET_ERROR);
   auto shape = input_tensor->shape();
   if (shape.empty() || std::find(shape.begin(), shape.end(), -1) != shape.end()) {
-    MS_LOG(WARNING) << "The input shape is invalid.";
+    MS_LOG(INFO) << "The input shape is invalid.";
     return RET_ERROR;
   }
 

@@ -32,7 +32,8 @@ class PredictTaskQueue;
 struct WorkerConfig {
   std::map<std::string, std::map<std::string, std::string>> config_info;
   std::shared_ptr<Context> context = nullptr;
-  int numa_id = 0;
+  int numa_id = -1;
+  int worker_id = -1;
 };
 
 class ModelWorker {
@@ -41,7 +42,7 @@ class ModelWorker {
 
   ~ModelWorker() = default;
 
-  Status Init(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config);
+  Status Init(const char *model_buf, size_t size);
 
   Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
 
@@ -60,7 +61,7 @@ class ModelWorker {
                           const std::shared_ptr<PredictTaskQueue> &predict_task_queue, bool *create_success);
 
  private:
-  void Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue);
+  void Run();
 
   std::pair<std::vector<std::vector<int64_t>>, bool> GetModelResize(const std::vector<MSTensor> &model_inputs,
                                                                     const std::vector<MSTensor> &inputs);
@@ -69,14 +70,17 @@ class ModelWorker {
 
  private:
   std::shared_ptr<mindspore::Model> model_ = nullptr;
-  std::mutex mtx_worker_;
-  std::atomic_bool available_ = true;
+  std::shared_ptr<WorkerConfig> worker_config_ = nullptr;
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
   std::vector<MSTensor> origin_worker_inputs_;
   std::vector<MSTensor> origin_worker_outputs_;
+  // Init worker
   bool create_work_done_ = false;
-  std::condition_variable create_work_done_condition_;
   std::mutex create_work_done_mutex_;
+  std::condition_variable create_work_done_condition_;
+  // run
+  std::mutex mtx_worker_;
+  std::atomic_bool available_ = true;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_WORKER_H_
