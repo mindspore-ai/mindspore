@@ -44,10 +44,10 @@ from . import c_transforms
 from . import py_transforms
 from . import transforms
 from . import utils
-from .transforms import AdjustGamma, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, ConvertColor, Crop, \
-    CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, HorizontalFlip, HsvToRgb, \
-    HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, PadToSize, \
-    RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, RandomColorAdjust, RandomCrop, \
+from .transforms import AdjustBrightness, AdjustGamma, AutoAugment, AutoContrast, BoundingBoxAugment, CenterCrop, \
+    ConvertColor, Crop, CutMixBatch, CutOut, Decode, Equalize, Erase, FiveCrop, GaussianBlur, Grayscale, \
+    HorizontalFlip, HsvToRgb, HWC2CHW, Invert, LinearTransformation, MixUp, MixUpBatch, Normalize, NormalizePad, Pad, \
+    PadToSize, RandomAdjustSharpness, RandomAffine, RandomAutoContrast, RandomColor, RandomColorAdjust, RandomCrop, \
     RandomCropDecodeResize, RandomCropWithBBox, RandomEqualize, RandomErasing, RandomGrayscale, RandomHorizontalFlip, \
     RandomHorizontalFlipWithBBox, RandomInvert, RandomLighting, RandomPerspective, RandomPosterize, RandomResizedCrop, \
     RandomResizedCropWithBBox, RandomResize, RandomResizeWithBBox, RandomRotation, RandomSelectSubpolicy, \

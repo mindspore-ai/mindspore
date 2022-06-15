@@ -1114,9 +1114,8 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustBrightness: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
-        ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
+      "AdjustBrightness: image rank should be 3, but got:" + std::to_string(input_cv->shape().Size()));
+    int num_channels = input_cv->shape()[kChannelIndexHWC];
     // Rank of the image represents how many dimensions, image is expected to be HWC
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3, got image rank: " +
