@@ -2609,7 +2609,7 @@ class Tensor(Tensor_):
             shape = self.shape
 
         try:
-            arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
+            data = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
         except ValueError:
             msg = "Error shape={}".format(shape)
             logger.critical(msg)
@@ -2646,14 +2646,13 @@ class Tensor(Tensor_):
                     self.init.seed, _ = self.seed
 
         with seed_context(self.init):
-            self.init(arr)
-        data = np.array(arr)
+            self.init(data)
         if opt_shard_group:
             rank = get_rank(opt_shard_group)
             size = get_group_size(opt_shard_group)
             data = np.split(data, size)[rank]
         self.init = None
-        self.assign_value(Tensor(data, dtype=self.dtype))
+        self.assign_value(Tensor_.from_numpy(data))
         return self
 
     def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
