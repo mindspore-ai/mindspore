@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
+import mindspore as ms
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore.common.initializer import One
@@ -421,3 +422,49 @@ def test_fallback_tensor_slice():
         out = Tensor(array)[1:5]
         return out
     print(foo())
+
+
+def test_fallback_ms_tensor():
+    """
+    Feature: JIT Fallback
+    Description: Test ms.Tensor() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        me_x = ms.Tensor([1])
+        return me_x
+    res = foo()
+    assert (res.asnumpy() == [1]).all()
+
+
+def test_fallback_ms_tensor_numpy():
+    """
+    Feature: JIT Fallback
+    Description: Test ms.Tensor() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        me_x = ms.Tensor(np.array([1, 2], dtype=np.float32))
+        return me_x
+    res = foo()
+    assert (res.asnumpy() == [1, 2]).all()
+
+
+def test_fallback_ms_tensor_class():
+    """
+    Feature: Fallback feature
+    Description: Test ms.Tensor() in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self):
+            np_array = np.array(9)
+            x = ms.Tensor(np_array)
+            res = x + ms.Tensor(np_array)
+            return res
+
+    net = Net()
+    res = net()
+    assert res == 18

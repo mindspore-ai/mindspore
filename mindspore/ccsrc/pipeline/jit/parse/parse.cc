@@ -1329,6 +1329,16 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   // Process the node attr
   auto attr_str = python_adapter::GetPyObjAttr(node, "attr").cast<std::string>();
   MS_LOG(DEBUG) << "Attr = " << attr_str;
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  // Process xxx.Tensor(), eg: ms.Tensor()
+  if (use_fallback && attr_str == "Tensor") {
+    std::string script_text = py::cast<std::string>(ast()->GetAstNodeText(node));
+    AnfNodePtr interpret_node = MakeInterpretNode(block, value_node, script_text);
+    interpret_node->set_interpret(true);
+    interpret_node->set_interpret_internal_type(true);
+    return interpret_node;
+  }
   AnfNodePtr attr_node = nullptr;
   {
     TraceGuard guard(GetLocation(python_adapter::GetPyObjAttr(node, "attr")));
@@ -1337,8 +1347,6 @@ AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::objec
   MS_EXCEPTION_IF_NULL(block->func_graph());
   // Create the apply node
   auto attr_cnode = block->func_graph()->NewCNodeInOrder({op_node, value_node, attr_node});
-  // The fallback feature is enabled in default.
-  static const auto use_fallback = (support_fallback() != "0");
   if (use_fallback) {
     // Check whether it is constant, constant does not need interpret.
     auto value_str = py::cast<std::string>(ast()->GetAstNodeText(value_body));
