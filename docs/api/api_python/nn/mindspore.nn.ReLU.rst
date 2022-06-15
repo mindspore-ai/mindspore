@@ -5,11 +5,11 @@ mindspore.nn.ReLU
 
     修正线性单元激活函数（Rectified Linear Unit activation function）。
 
-    逐元素求 :math:`\max(x,\  0)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
-
     .. math::
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
+
+    逐元素求 :math:`\max(x,\  0)` 。特别说明，负数输出值会被修改为0，正数输出不受影响。
 
     ReLU相关图参见 `ReLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_rectified_linear.svg>`_ 。
 

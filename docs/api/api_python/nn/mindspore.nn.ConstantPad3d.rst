@@ -18,5 +18,5 @@ mindspore.nn.ConstantPad3d
 
     - **TypeError** - `padding` 既不是tuple或者int。
     - **TypeError** - `value` 既不是int，也不是float。
-    - **ValueError** - tuple类型的padding长度大于6或者长度不是2的倍数。
+    - **ValueError** - tuple类型的 `padding` 长度大于6或者长度不是2的倍数。
     - **ValueError** - 填充后输出的维度不是正数。

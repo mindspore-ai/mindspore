@@ -20,7 +20,7 @@ mindspore.nn.Softmax
 
     **输入：**
 
-    **x** (Tensor) - 用于计算Softmax函数的Tensor，数据类型为float16或float32。
+    - **x** (Tensor) - 用于计算Softmax函数的Tensor，数据类型为float16或float32。
 
     **输出：**
 

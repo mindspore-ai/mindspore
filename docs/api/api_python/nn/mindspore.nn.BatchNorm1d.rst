@@ -29,7 +29,7 @@ mindspore.nn.BatchNorm1d
 
     **输入：**
 
-    - **x** (Tensor)：输入shape为 :math:`(N, C_{in})` 的Tensor。
+    - **x** (Tensor) - 输入shape为 :math:`(N, C_{in})` 的Tensor。
 
     **输出：**
 

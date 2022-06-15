@@ -407,7 +407,7 @@ class BatchNorm2d(_BatchNorm):
 
     Args:
         num_features (int): The number of channels of the input tensor. Expected input size is (N, C, H, W),
-            `C` represents the number of channels
+            `C` represents the number of channels.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.

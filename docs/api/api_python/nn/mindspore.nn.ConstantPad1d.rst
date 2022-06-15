@@ -18,5 +18,5 @@ mindspore.nn.ConstantPad1d
 
     - **TypeError** - `padding` 既不是tuple或者int。
     - **TypeError** - `value` 既不是int，也不是float。
-    - **ValueError** - tuple类型的padding长度不等于2。
+    - **ValueError** - tuple类型的 `padding` 长度不等于2。
     - **ValueError** - 填充后输出的维度不是正数。
