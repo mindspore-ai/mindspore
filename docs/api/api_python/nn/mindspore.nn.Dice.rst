@@ -36,7 +36,7 @@ mindspore.nn.Dice
 
         **参数：**
 
-        - **inputs** (tuple) -输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。
+        - **inputs** (tuple) -输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。 `y_pred` 和 `y` 的shape都是 `(N, ...)`。
 
         **异常：**
 
