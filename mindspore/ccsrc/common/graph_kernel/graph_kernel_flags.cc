@@ -193,14 +193,9 @@ std::pair<std::string, bool> GraphKernelFlags::GetGraphKernelContext() {
 void GraphKernelFlags::CheckSupport() const {
 #ifndef MSLITE_ENABLE_GRAPH_KERNEL
   if (IsEnableGraphKernel()) {
+#ifndef USE_LLVM
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (context->get_param<int>(MS_CTX_EXECUTION_MODE) != kGraphMode) {
-      MS_LOG(WARNING) << "Graph Kernel Fusion only supports GRAPH_MODE, and it will be turned off now.";
-      const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
-      return;
-    }
-#ifndef USE_LLVM
     auto is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
     if (is_cpu) {
       MS_LOG(WARNING)
