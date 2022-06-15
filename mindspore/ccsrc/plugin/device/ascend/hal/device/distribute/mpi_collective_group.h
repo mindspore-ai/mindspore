@@ -20,6 +20,7 @@
 #include <mpi.h>
 #include <unistd.h>
 #include <map>
+#include <tuple>
 #include <string>
 #include <vector>
 #include <utility>
@@ -30,17 +31,23 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace collective {
-constexpr int MAX_HOSTNAME_LEN = 1024;
+constexpr int max_hostname_len = 1024;
+constexpr int local_rank_size_index = 2;
 class MPICollective {
  public:
   MPICollective(MPICollective const &) = delete;
   MPICollective &operator=(const MPICollective &) = delete;
   static MPICollective &instance();
   void AssignLocalRankID();
+  void AssignLocalRankSize();
   bool Init();
   void FinalizeMPI();
   int GetRankIdByGroup(const std::string &name);
   int GetGroupSize(const std::string &name);
+  int GetGroupLocalRankSize(const std::string &name);
+  int GetWorldRankIdFromGroup(const std::string &name, const int rank_id);
+  int GetGroupRankIdFromWorld(const std::string &name, const int rank_id);
+  void AssignLocalRankSize(const std::string &name, const std::vector<int> &group_ranks, MPI_Comm mpi_group_comm);
   HcclComm GetGroupComm(const std::string &name);
   int GetDeviceId() const;
   bool CreateCommGroup(const std::string &name, const std::vector<unsigned int> &ranks);
@@ -55,7 +62,8 @@ class MPICollective {
   int local_rank_id_;
   int rank_size_;
   MPI_Group comm_group_world_;
-  std::map<std::string, std::pair<int, int>> group_info_;
+  std::map<std::string, std::tuple<int, int, int>> group_info_;
+  std::map<std::string, std::vector<int>> world_map_;
 };
 #define CHECK_RET(expression, result, message)                                         \
   {                                                                                    \

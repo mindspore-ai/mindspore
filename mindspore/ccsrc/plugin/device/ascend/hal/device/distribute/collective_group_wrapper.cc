@@ -21,6 +21,13 @@ void InitMPI() { (void)MPICollective::instance().Init(); }
 void FinalizeMPI() { MPICollective::instance().FinalizeMPI(); }
 int GetRankIdByGroup(const std::string &name) { return MPICollective::instance().GetRankIdByGroup(name); }
 int GetGroupSize(const std::string &name) { return MPICollective::instance().GetGroupSize(name); }
+int GetGroupLocalRankSize(const std::string &name) { return MPICollective::instance().GetGroupLocalRankSize(name); }
+int GetWorldRankIdFromGroup(const std::string &name, const int rank_id) {
+  return MPICollective::instance().GetWorldRankIdFromGroup(name, rank_id);
+}
+int GetGroupRankIdFromWorld(const std::string &name, const int rank_id) {
+  return MPICollective::instance().GetGroupRankIdFromWorld(name, rank_id);
+}
 int GetDeviceId() { return MPICollective::instance().GetDeviceId(); }
 HcclComm GetGroupComm(const std::string &name) { return MPICollective::instance().GetGroupComm(name); }
 bool CreateCommForGroup(const std::string &name, const std::vector<unsigned int> &ranks) {
