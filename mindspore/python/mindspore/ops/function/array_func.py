@@ -31,6 +31,7 @@ from ..operations.array_ops import (
     IndexFill,
 )
 from ..operations.nn_ops import AdaptiveMaxPool2D
+from ..operations.array_ops import TensorScatterElements
 from ...common import Tensor
 
 eye_ = P.Eye()
@@ -2276,6 +2277,77 @@ def tensor_scatter_min(input_x, indices, updates):
     return tensor_scatter_min_(input_x, indices, updates)
 
 
+def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none"):
+    """
+    Updates the value of the input tensor through the reduction operation.
+
+    tensor_scatter_elements takes three inputs data, updates, and indices of the same rank r >= 1,
+    an optional attribute axis that identifies an axis of data (default is 0),  and another optional attribute reduction
+    that identifies reduction operation. When reduction is set to "none", the update value will be assigned to the
+    output value according to the indices. When reduction is set to "add", the update value will be added to the output
+    value according to the indices.
+
+    For a 3-D tensor, the output is:
+    .. code-block::
+
+    output[indices[i][j][k]][j][k] = updates[i][j][k]  # if axis == 0, reduction == "none"
+
+    output[i][indices[i][j][k]][k] += updates[i][j][k]  # if axis == 1, reduction == "add"
+
+    output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+          The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index to do add operation whose data type must be mindspore.int32 or
+          mindspore.int64. Same rank as input_x. And accepted range is [-s, s) where s is the size along axis.
+        updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
+          and update.shape should be equal to indices.shape.
+        axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(data).
+        reduction (string): Which reduction operation to scatter, default is "none". Other option: "add".
+
+    Outputs:
+        Tensor, has the same shape and type as `input_x`.
+
+    Warning:
+        When the indices is not unique, this behavior is not defined one of the value will be picked from the updates.
+        The result is arbitrary.
+
+    Raises:
+        TypeError: If `indices` is neither int32 nor int64.
+        ValueError: If anyone of the rank among `input_x`, `indices` and `updates` less than 1.
+        ValueError: If the shape of `updates` is not equal to the shape of `indices`.
+        ValueError: If the rank of `updates` is not equal to the rank of `input_x`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                        is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="input_x")
+        >>> indices = Tensor(np.array([[1, 0, 2], [0, 2, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[1, 1, 1], [1, 1, 1]]), mindspore.float32)
+        >>> axis = 0
+        >>> reduction = "add"
+        >>> output = tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> print(output)
+        [[ 2.0  3.0  3.0]
+         [ 5.0  5.0  7.0]
+         [ 7.0  9.0  10.0]]
+        >>> input_x = Parameter(Tensor(np.array([[1, 2, 3, 4, 5]]), mindspore.int32), name="x")
+        >>> indices = Tensor(np.array([[2, 4]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[8, 8]]), mindspore.int32)
+        >>> axis = 1
+        >>> reduction = "none"
+        >>> output = tensor_scatter_elements(input_x, indices, updates, axis, reduction)
+        >>> print(output)
+        [[ 1  2  8  4  8]]
+    """
+    tensor_scatter_elements_ = TensorScatterElements(axis, reduction)
+    return tensor_scatter_elements_(input_x, indices, updates)
+
+
 def space_to_batch_nd(input_x, block_size, paddings):
     r"""
     Divides a tensor's spatial dimensions into blocks and combines the block sizes with the original batch.
@@ -3322,6 +3394,7 @@ __all__ = [
     'tensor_scatter_mul',
     'tensor_scatter_div',
     'tensor_scatter_min',
+    'tensor_scatter_elements',
     'unsorted_segment_min',
     'unsorted_segment_max',
     'unsorted_segment_prod',

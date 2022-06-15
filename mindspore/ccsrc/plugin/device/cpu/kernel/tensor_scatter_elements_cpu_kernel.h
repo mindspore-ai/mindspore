@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ELEMENTS_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ELEMENTS_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SCATTER_ELEMENTS_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SCATTER_ELEMENTS_CPU_KERNEL_H_
 
 #include <vector>
 #include <string>
@@ -27,15 +27,15 @@
 
 namespace mindspore::kernel {
 constexpr auto kUnKnown = "UnKnown";
-constexpr auto kScatterElements = "ScatterElements";
-constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
+constexpr auto kTensorScatterElements = "TensorScatterElements";
 
-class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
+class TensorScatterElementsCpuKernelMod : public NativeCpuKernelMod,
+                                          public MatchKernelHelper<TensorScatterElementsCpuKernelMod> {
  public:
-  ScatterElementsCpuKernelMod() = default;
+  TensorScatterElementsCpuKernelMod() = default;
 
-  explicit ScatterElementsCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
-  ~ScatterElementsCpuKernelMod() override = default;
+  explicit TensorScatterElementsCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
+  ~TensorScatterElementsCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -47,26 +47,23 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs, update_input_);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
- protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
-  template <typename T, typename S, typename ReductionT>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                    const bool &update_input);
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
   template <typename T, typename S, typename ReductionT>
   bool Scatter(const ReductionT &reduction_func, T *output, const S *indices, const T *updates);
 
  private:
-  using ScatterElementsLaunchFunc =
-    std::function<bool(ScatterElementsCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const bool &update_input)>;
-
-  static std::map<std::string, std::vector<std::pair<KernelAttr, ScatterElementsLaunchFunc>>> func_map_;
-  ScatterElementsLaunchFunc kernel_func_;
+  enum ReductionType { REDUCTION_ASSIGNMENT = 0, REDUCTION_ADD = 1, REDCUTION_INVALID_TYPE = 255 };
   std::string kernel_type_{kUnKnown};
   int input_axis_size_{0};
   size_t input_size_{1};
@@ -77,8 +74,8 @@ class ScatterElementsCpuKernelMod : public NativeCpuKernelMod {
   std::vector<size_t> output_stride_{};
   std::vector<size_t> indices_stride_{};
   std::string kernel_name_;
-  bool update_input_ = true;
+  ReductionType reduction_type_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_SCATTER_ELEMENTS_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_TENSOR_SCATTER_ELEMENTS_CPU_KERNEL_H_

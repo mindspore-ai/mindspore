@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ELEMENTS_GPU_KERNEL_H
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_SCATTER_ELEMENTS_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SCATTER_ELEMENTS_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SCATTER_ELEMENTS_GPU_KERNEL_H
 
 #include <vector>
 #include <algorithm>
@@ -23,22 +23,20 @@
 #include <map>
 #include <utility>
 #include <memory>
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/scatter_elements.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/tensor_scatter_elements.cuh"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
-#include "mindspore/core/ops/scatter_elements.h"
-#include "mindspore/core/ops/scatter_add_with_axis.h"
+#include "mindspore/core/ops/tensor_scatter_elements.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr auto kUnKnown = "UnKnown";
-constexpr auto kScatterElements = "ScatterElements";
-constexpr auto kScatterAddWithAxis = "ScatterAddWithAxis";
-class ScatterElementsGpuKernelMod : public NativeGpuKernelMod {
+constexpr auto kTensorScatterElements = "TensorScatterElements";
+class TensorScatterElementsGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ScatterElementsGpuKernelMod() {}
-  ~ScatterElementsGpuKernelMod() { FreeResource(); }
+  TensorScatterElementsGpuKernelMod() {}
+  ~TensorScatterElementsGpuKernelMod() { FreeResource(); }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -53,12 +51,9 @@ class ScatterElementsGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void ResetResource();
   void MallocResource();
   void FreeResource();
-  void InitSizeLists();
   std::vector<KernelAttr> GetOpSupport() override;
-  void GetOpTypeAndFuncType(const BaseOperatorPtr &base_operator);
   void GetSize();
   int ShapeCheck();
   int AxisCheck();
@@ -66,19 +61,18 @@ class ScatterElementsGpuKernelMod : public NativeGpuKernelMod {
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
-  using ScatterElementsFunc =
-    std::function<bool(ScatterElementsGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+  using TensorScatterElementsFunc =
+    std::function<bool(TensorScatterElementsGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
   std::string kernel_name_{};
   BaseOperatorPtr kernel_ptr_{nullptr};
-  ScatterElementsFunc kernel_func_;
-  ScatterElementsReductionType reduction_type_{REDCUTION_INVALID_TYPE};
-  static std::vector<std::pair<KernelAttr, ScatterElementsFunc>> func_list_;
+  TensorScatterElementsFunc kernel_func_;
+  TensorScatterElementsReductionType type_{REDCUTION_INVALID_TYPE};
+  static std::vector<std::pair<KernelAttr, TensorScatterElementsFunc>> func_list_;
 
   bool sync_resource_ = false;
-  bool update_input_ = false;
 
   std::vector<size_t> updates_shape_;
   std::vector<size_t> indices_shape_;
@@ -92,7 +86,6 @@ class ScatterElementsGpuKernelMod : public NativeGpuKernelMod {
   size_t input_dims_{0};
 
   size_t input_byte_size_{1};
-  size_t updates_byte_size_{1};
   size_t indices_byte_size_{1};
 
   size_t data_unit_size_{0};    /* sizeof(T) */
@@ -104,4 +97,4 @@ class ScatterElementsGpuKernelMod : public NativeGpuKernelMod {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_TENSOR_TENSOR_SCATTER_ARITHMETIC_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_ARRAYS_TENSOR_SCATTER_ELEMENTS_GPU_KERNEL_H
