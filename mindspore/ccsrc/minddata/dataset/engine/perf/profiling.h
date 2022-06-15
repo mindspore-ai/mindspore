@@ -519,6 +519,10 @@ class ProfilingManager {
   /// \return Status object with the error code
   Status Save(const std::string &profile_data_path);
 
+  /// \brief Helper to get the rank id. Currently being used for appending rank id to files
+  /// \return String The rank id
+  std::string GetRankID();
+
   /// Get number of epochs that have been already profiled
   /// \return number of epochs
   int32_t GetNumOfProfiledEpochs() { return static_cast<int32_t>(epoch_end_step_.size()) - 1; }
