@@ -29,26 +29,6 @@ mindspore.Tensor
         **返回：**
 
         Tensor。
-    
-    .. py:method:: adaptive_avgpool2d(output_size)
-
-        2维自适应平均池化。
-
-        更多参考详见 :func:`mindspore.ops.adaptive_avgpool2d`。
-
-        **参数：**
-
-        **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，则意味着输出大小与该Tensor相同。
-
-        **返回：**
-
-        Tensor，数据类型与该Tensor相同。
-
-        **异常：**
-
-        - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
-        - **ValueError** - Tensor的维度小于或等于 `output_size` 的维度。
-        - **TypeError** - Tensor的数据类型不是float16、float32或者float64。
 
     .. py:method:: all(axis=(), keep_dims=False)
 
@@ -681,56 +661,6 @@ mindspore.Tensor
 
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
-
-    .. py:method:: intopk(x, k)
-
-        判断目标标签是否在前 `k` 个预测中。
-
-        更多细节参考 :func:`mindspore.ops.intopk`。
-
-        **参数：**
-
-        **x** (Tensor) - 1维Tensor，样本的标签。数据类型为int32。 `x` 的大小必须与该Tensor第一维度的大小相同。 `x` 取值不可为负且必须小于或等于该Tensor第二维度的大小。
-        **k** (int32) - 指定在最后一维上参与比较的top元素的数量。
-
-        **返回：**
-
-        1维的bool类型Tensor，与 `x` shape相同。对于 `x` 中的样本标签 `i`，如果它在该Tensor的前 `k` 个预测值中，则输出值为True，否则为False。
-
-        **异常：**
-
-        - **TypeError** - `k` 不是int类型。
-        - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - 该Tensor的数据类型非float16或float32。
-
-    .. py:method:: isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False)
-
-        返回一个布尔型Tensor，表示当前Tensor与 `x2` 的对应元素是否在给定容忍度内相等。
-
-        .. note::
-            目前，Ascend后端不支持包含 inf 或 NaN 的输入数组。因此，当输入包含NaN或inf时，结果是不确定的。在Ascend后端上， `equal_nan` 必须为真。
-
-        **参数：**
-
-        - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
-        - **rtol** (Tensor) - 相对容忍度。默认值：1e-05。
-        - **atol** (Tensor) - 绝对容忍度。默认值：1e-08。
-        - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。
-
-        **返回：**
-
-        Tensor，shape与广播后的shape相同，数据类型是布尔型。
-
-        **异常：**
-
-        - **TypeError** - 如果当前Tensor和 `x2` 中的任何一个不是Tensor。
-        - **TypeError** - 如果当前Tensor和 `x2` 的数据类型不是float16、float32或int32之一。
-        - **TypeError** - 如果 `atol` 和 `rtol` 中的任何一个不是float。
-        - **TypeError** - 如果  `equal_nan`  不是bool。
-        - **TypeError** - 如果当前Tensor和 `x2` 的数据类型不同。
-        - **ValueError** - 如果当前Tensor和 `x2` 无法广播。
-        - **ValueError** - 如果 `atol` 和 `rtol` 中的任何一个小于零。
-        - **ValueError** - 如果Ascend平台上的  `equal_nan`  为False。
 
     .. py:method:: item(index=None)
 

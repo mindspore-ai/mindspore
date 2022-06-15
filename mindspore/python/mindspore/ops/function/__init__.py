@@ -210,7 +210,8 @@ from .math_func import (
     baddbmm,
 )
 from .nn_func import (
-    adaptive_avgpool2d,
+    adaptive_avg_pool2d,
+    avg_pool2d,
     celu,
     deformable_conv2d,
     fast_gelu,

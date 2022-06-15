@@ -1,7 +1,7 @@
-mindspore.ops.adaptive_avgpool2d
-================================
+mindspore.ops.adaptive_avg_pool2d
+=================================
 
-.. py:function:: mindspore.ops.adaptive_avgpool2d(input_x, output_size)
+.. py:function:: mindspore.ops.adaptive_avg_pool2d(input_x, output_size)
 
     2维自适应平均池化。
 
@@ -23,7 +23,7 @@ mindspore.ops.adaptive_avgpool2d
 
     **输入：**
 
-    - **input_x** (Tensor) - adaptive_avgpool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+    - **input_x** (Tensor) - adaptive_avg_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
     - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以是H * H的单个H，或None，如果是None，则意味着输出大小与输入相同。
 
     **输出：**
@@ -47,4 +47,3 @@ mindspore.ops.adaptive_avgpool2d
     - **ValueError** - 如果 `input_x` 的维度小于或等于 `output_size` 的维度。
     - **TypeError** - 如果 `input_x` 不是Tensor。
     - **TypeError** - 如果 `input_x` 的数据类型不是float16、float32或者float64。
-

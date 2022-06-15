@@ -1546,16 +1546,6 @@ def soft_shrink(x, lambd=0.5):
     return F.SoftShrink(lambd)(x)
 
 
-def adaptive_avgpool2d(x, output_size):
-    """
-    2D adaptive average pooling for temporal data.
-    """
-    check_value_type("output_size", output_size, [int, tuple], "Tensor")
-    if isinstance(output_size, tuple):
-        check_int(len(output_size), 2, validator.Rel.EQ, "length of output_size", "Tensor")
-    return F.adaptive_avgpool2d(x, output_size)
-
-
 def getitem(data, index):
     """Implementation of `getitem`."""
     return data.__getitem__(index)
@@ -1671,14 +1661,6 @@ def masked_fill(x, mask, value):
     check_is_tensor(mask)
     check_type_name('mask', mask.dtype, [mstype.bool_], "Tensor")
     return F.masked_fill(x, mask, value)
-
-
-def intopk(x1, x2, k):
-    """
-    Determines whether the targets are in the top `k` predictions.
-    """
-    check_is_int(k, 'k')
-    return F.intopk(x1, x2, k)
 
 
 def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
