@@ -39,7 +39,7 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
   (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_shape.size(), kLessEqual, kNonZeroInputMaxDim,
                                            prim_name);
 
-  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
+  auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
 
   int64_t x_rank = SizeToLong(x_shape.size());
   ShapeVector output_shape = {abstract::Shape::SHP_ANY, x_rank};
