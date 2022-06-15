@@ -57,7 +57,6 @@ class CdistGradCpuKernelMod : public NativeCpuKernelMod {
   int64_t l2_size;
 
   float p_ = 2;
-  size_t thread_num_;
 };
 }  // namespace kernel
 }  // namespace mindspore

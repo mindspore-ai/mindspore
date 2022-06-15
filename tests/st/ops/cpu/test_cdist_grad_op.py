@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -52,3 +53,62 @@ def test_CdistGradP0_float32():
         [[[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]]]).astype(np.float32)
     print(output)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap():
+    """
+    Feature: cdist vmap.
+    Description: test the rightness of cdist vmap feature.
+    Expectation: Success.
+    """
+
+    def cal_cdist_grad(grad, x1, x2, dist):
+        return G.CdistGrad(3.0)(grad, x1, x2, dist)
+
+    grad = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
+    x1 = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
+    x2 = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
+    dist = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
+    expect = np.array(
+        [[[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]],
+         [[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]]]).astype(np.float32)
+
+    vmap_ceil = vmap(cal_cdist_grad, in_axes=(0), out_axes=0)
+    output = vmap_ceil(grad, x1, x2, dist)
+    assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap2():
+    """
+    Feature: cdist vmap.
+    Description: test the rightness of cdist vmap feature.
+    Expectation: Success.
+    """
+
+    def cal_cdist_grad(grad, x1, x2, dist):
+        return G.CdistGrad(3.0)(grad, x1, x2, dist)
+
+    grad = Tensor(np.array([[[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]],
+                            [[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]]]).astype(np.float32))
+    x1 = Tensor(np.array([[[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]],
+                          [[[1.0, 1.0], [2.0, 2.0]], [[1.0, 1.0], [2.0, 2.0]]]]).astype(np.float32))
+    x2 = Tensor(np.array([[[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]],
+                          [[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]]]).astype(np.float32))
+    dist = Tensor(np.array([[[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]],
+                            [[[3.0, 3.0], [3.0, 3.0]], [[3.0, 3.0], [3.0, 3.0]]]]).astype(np.float32))
+    expect = np.array(
+        [[[[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]],
+          [[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]]],
+         [[[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]],
+          [[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]]]]).astype(np.float32)
+
+    vmap_ceil = vmap(vmap(cal_cdist_grad, in_axes=(
+        0), out_axes=0), in_axes=(0), out_axes=0)
+    output = vmap_ceil(grad, x1, x2, dist)
+    assert np.allclose(output.asnumpy(), expect)

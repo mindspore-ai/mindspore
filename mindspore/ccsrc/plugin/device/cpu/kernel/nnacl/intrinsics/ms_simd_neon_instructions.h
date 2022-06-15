@@ -130,6 +130,24 @@ static inline int32x4_t MS_DIV128_EPI32(int32x4_t src1, int32x4_t src2) {
 #define MS128_INT32_TO_FLOAT32(src) vcvtq_f32_s32(src)
 #define MS128_FLOAT32_TO_INT32(src) vcvtq_s32_f32(src)
 
+static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = powf(MS_F32X4_GETI(src1, 0), MS_F32X4_GETI(src2, 0));
+  MS_F32X4_GETI(dst, 1) = powf(MS_F32X4_GETI(src1, 1), MS_F32X4_GETI(src2, 1));
+  MS_F32X4_GETI(dst, 2) = powf(MS_F32X4_GETI(src1, 2), MS_F32X4_GETI(src2, 2));
+  MS_F32X4_GETI(dst, 3) = powf(MS_F32X4_GETI(src1, 3), MS_F32X4_GETI(src2, 3));
+  return dst;
+}
+
+static inline MS_FLOAT32X4 MS_ABS128_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = fabsf(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = fabsf(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = fabsf(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = fabsf(MS_F32X4_GETI(src, 3));
+  return dst;
+}
+
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = sqrtf(MS_F32X4_GETI(src, 0));

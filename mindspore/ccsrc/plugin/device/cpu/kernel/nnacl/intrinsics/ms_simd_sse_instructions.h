@@ -66,7 +66,6 @@
 #define MS_COS128_F32 _mm_cos_ps
 #define MS_SIN128_F32 _mm_sin_ps
 #define MS_ERF128_F32 _mm_erf_ps
-#define MS_ABS128_F32 _mm_abs_ps
 #define MS_ROUND128_F32(src) _mm_round_ps(src, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
 #define MS_FLOOR128_F32 _mm_floor_ps
 #define MS_CEIL128_F32 _mm_ceil_ps
@@ -97,6 +96,15 @@
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 #define MS_AND128_MASK(src1, src2) _mm_and_ps(src1, src2)
+
+static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = powf(MS_F32X4_GETI(src1, 0), MS_F32X4_GETI(src2, 0));
+  MS_F32X4_GETI(dst, 1) = powf(MS_F32X4_GETI(src1, 1), MS_F32X4_GETI(src2, 1));
+  MS_F32X4_GETI(dst, 2) = powf(MS_F32X4_GETI(src1, 2), MS_F32X4_GETI(src2, 2));
+  MS_F32X4_GETI(dst, 3) = powf(MS_F32X4_GETI(src1, 3), MS_F32X4_GETI(src2, 3));
+  return dst;
+}
 
 #ifdef ENABLE_AVX  // only enable sse, dont support fma instruction.
 #define MS_FMADD128_F32(src1, src2, src3) _mm_fmadd_ps(src1, src2, src3)
@@ -133,6 +141,15 @@
 #define MS128_INT32_TO_INT64(src) _mm128_cvtepi32_epi64(src)
 #define MS128_INT64_TO_INT16(src) _mm128_cvtepi64_epi16(src)
 #define MS128_INT64_TO_INT32(src) _mm128_cvtepi64_epi32(src)
+
+static inline MS_FLOAT32X4 MS_ABS128_F32(MS_FLOAT32X4 src) {
+  MS_FLOAT32X4 dst;
+  MS_F32X4_GETI(dst, 0) = fabsf(MS_F32X4_GETI(src, 0));
+  MS_F32X4_GETI(dst, 1) = fabsf(MS_F32X4_GETI(src, 1));
+  MS_F32X4_GETI(dst, 2) = fabsf(MS_F32X4_GETI(src, 2));
+  MS_F32X4_GETI(dst, 3) = fabsf(MS_F32X4_GETI(src, 3));
+  return dst;
+}
 
 static inline MS_FLOAT32X4 MS_SQRTFX4_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;

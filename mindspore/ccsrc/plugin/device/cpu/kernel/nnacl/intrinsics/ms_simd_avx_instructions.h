@@ -78,6 +78,32 @@
 #define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
 #define MS_AND256_MASK(src1, src2) _mm256_and_ps(src1, src2)
 
+static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = powf(MS_F32X8_GETI(src1, 0), MS_F32X8_GETI(src2, 0));
+  MS_F32X8_GETI(dst, 1) = powf(MS_F32X8_GETI(src1, 1), MS_F32X8_GETI(src2, 1));
+  MS_F32X8_GETI(dst, 2) = powf(MS_F32X8_GETI(src1, 2), MS_F32X8_GETI(src2, 2));
+  MS_F32X8_GETI(dst, 3) = powf(MS_F32X8_GETI(src1, 3), MS_F32X8_GETI(src2, 3));
+  MS_F32X8_GETI(dst, 4) = powf(MS_F32X8_GETI(src1, 4), MS_F32X8_GETI(src2, 4));
+  MS_F32X8_GETI(dst, 5) = powf(MS_F32X8_GETI(src1, 5), MS_F32X8_GETI(src2, 5));
+  MS_F32X8_GETI(dst, 6) = powf(MS_F32X8_GETI(src1, 6), MS_F32X8_GETI(src2, 6));
+  MS_F32X8_GETI(dst, 7) = powf(MS_F32X8_GETI(src1, 7), MS_F32X8_GETI(src2, 7));
+  return dst;
+}
+
+static inline MS_FLOAT32X8 MS_ABS256_F32(MS_FLOAT32X8 src) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = fabsf(MS_F32X8_GETI(src, 0));
+  MS_F32X8_GETI(dst, 1) = fabsf(MS_F32X8_GETI(src, 1));
+  MS_F32X8_GETI(dst, 2) = fabsf(MS_F32X8_GETI(src, 2));
+  MS_F32X8_GETI(dst, 3) = fabsf(MS_F32X8_GETI(src, 3));
+  MS_F32X8_GETI(dst, 4) = fabsf(MS_F32X8_GETI(src, 4));
+  MS_F32X8_GETI(dst, 5) = fabsf(MS_F32X8_GETI(src, 5));
+  MS_F32X8_GETI(dst, 6) = fabsf(MS_F32X8_GETI(src, 6));
+  MS_F32X8_GETI(dst, 7) = fabsf(MS_F32X8_GETI(src, 7));
+  return dst;
+}
+
 static inline float MS_GET_MAX256_F32(__m256 src) {
   float result = MS_F32X8_GETI(src, 0);
   for (int i = 1; i < 8; i++) {  // avx block num : 8

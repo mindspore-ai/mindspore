@@ -24,6 +24,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kCdistGradInputDimsMin = 2;
+
 abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
@@ -41,7 +43,22 @@ abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION(ValueError) << "For 'CdistGrad', rank of input_x and input_y must be equal, but got input_x size: "
                              << x_size << ", input_y size: " << y_size << ".";
   }
-  CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "CdistGrad");
+  if (x_size < kCdistGradInputDimsMin) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                             << kCdistGradInputDimsMin << ", but got rank of input: " << x_size << ".";
+  }
+
+  if (x_size > kCdistGradInputDimsMin) {
+    for (size_t i = 0; i < x_size - kCdistGradInputDimsMin; i++) {
+      if (x_shape[i] != y_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', the batch shape of 'x' must be the same as the shape of 'y', "
+                                    "but got 'x_shape["
+                                 << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+      }
+    }
+  }
+
   auto out_shape = x_shape;
   return std::make_shared<abstract::Shape>(out_shape);
 }

@@ -126,7 +126,6 @@ int CdistGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   l1_size = r0_ * m_;
   l2_size = r1_ * m_;
 
-  thread_num_ = std::min(static_cast<size_t>(batch_), pool_->GetKernelThreadNum());
   return 0;
 }
 
@@ -144,12 +143,11 @@ bool CdistGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     return true;
   }
 
-  {
+  auto task = [this, grad_start, dist_start, t1_start, t2_start, res_start](size_t b_start, size_t b_end) {
     const float *i = t1_start;
     const float *j = t2_start;
-    float *res_l = res_start;
-
-    for (float *res_end = res_start + m_; res_l != res_end; i += 1, j += 1, res_l += 1) {
+    float *res_end = res_start + b_end;
+    for (float *res_l = res_start + b_start; res_l != res_end; i += 1, j += 1, res_l += 1) {
       const float *t1 = i;
       const float *t2 = j;
       float *res = res_l;
@@ -176,7 +174,9 @@ bool CdistGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
         t2 += l2_size;
       }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, m_, this, &parallel_search_info_, pool_);
+
   return true;
 }
 
