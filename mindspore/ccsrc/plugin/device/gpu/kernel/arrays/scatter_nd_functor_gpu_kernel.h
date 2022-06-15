@@ -58,7 +58,6 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
                     const std::vector<AddressPtr> &outputs);
 
   ScatterNdFunctorType scatter_nd_functor_type_;
-  size_t input_size_{0};
 
   size_t unit_size_{0};
   size_t num_units_{0};
