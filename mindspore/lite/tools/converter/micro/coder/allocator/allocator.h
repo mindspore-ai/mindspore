@@ -83,7 +83,7 @@ class MemoryAllocator {
   }
 
   Tensor *MallocTensor(TypeId data_type, const std::vector<int> &shape);
-
+  void FreeTensor(Tensor *t);
   /*
    * get the actual runtime address with it's type,
    * including tensor, workspace

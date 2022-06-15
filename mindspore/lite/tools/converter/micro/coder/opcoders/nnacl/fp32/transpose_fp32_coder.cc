@@ -91,11 +91,13 @@ void TransposeFp32Coder::GetNHNCTransposeFunc() {
 int TransposeFp32Coder::DoCode(CoderContext *const context) {
   Collect(context,
           {
+            "wrapper/fp32/transpose_fp32_wrapper.h",
             "nnacl/transpose.h",
             "nnacl/errorcode.h",
             "nnacl/fp32/transpose_fp32.h",
           },
           {
+            "transpose_fp32_wrapper.c",
             "transpose_fp32.c",
           });
 
@@ -119,8 +121,21 @@ int TransposeFp32Coder::DoCode(CoderContext *const context) {
   }
   GetNHNCTransposeFunc();
   if (!NHNCTransposeFunc_.empty()) {
-    code.CodeFunction(NHNCTransposeFunc_, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1],
-                      nhnc_param_[kTwo], kDefaultTaskId, 1);
+    if (!support_parallel_) {
+      code.CodeFunction(NHNCTransposeFunc_, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1],
+                        nhnc_param_[kTwo], kDefaultTaskId, 1);
+    } else {
+      code.CodeStruct("transpose_param", *param_);
+      code.CodeBaseStruct("TransposeFp32Args", kRunArgs, input_tensor_, output_tensor_, nhnc_param_[0], nhnc_param_[1],
+                          nhnc_param_[kTwo], "&transpose_param");
+      if (NHNCTransposeFunc_ == "PackNCHWToNHWCFp32") {
+        code.CodeFunction(kParallelLaunch, "DoTransposeNCHWToNHWC", kRunArgsAddr,
+                          "transpose_param.op_parameter_.thread_num_");
+      } else if (NHNCTransposeFunc_ == "PackNHWCToNCHWFp32") {
+        code.CodeFunction(kParallelLaunch, "DoTransposeNHWCToNCHW", kRunArgsAddr,
+                          "transpose_param.op_parameter_.thread_num_");
+      }
+    }
     context->AppendCode(code.str());
     return RET_OK;
   }

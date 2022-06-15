@@ -134,6 +134,9 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
               "dequant_int8_to_fp32_wrapper.c",
             });
   }
+  if (support_parallel_) {
+    Collect(context, {"wrapper/fp32/conv_fp32_wrapper.h"}, {"conv_fp32_wrapper.c"});
+  }
   if (target_ == kARM32) {
     Collect(context, {}, {},
             {
@@ -168,9 +171,14 @@ int ConvolutionFP32Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", packed_input_, "0", packed_input_size_);
   code.CodeFunction("memset", col_major_input_, "0", col_major_input_size_);
   code.CodeStruct("conv_parameter", *conv_param_);
-  code.CodeFunction("ConvFp32", input_tensor_, packed_input_, packed_weight_, bias_data_, col_major_input_,
-                    output_tensor_, kDefaultTaskId, "&conv_parameter");
-
+  if (support_parallel_) {
+    code.CodeBaseStruct("ConvFp32Args", kRunArgs, input_tensor_, packed_input_, packed_weight_, bias_data_,
+                        col_major_input_, output_tensor_, "&conv_parameter");
+    code.CodeFunction(kParallelLaunch, "ConvFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
+  } else {
+    code.CodeFunction("ConvFp32", input_tensor_, packed_input_, packed_weight_, bias_data_, col_major_input_,
+                      output_tensor_, kDefaultTaskId, "&conv_parameter");
+  }
   context->AppendCode(code.str());
   return RET_OK;
 }

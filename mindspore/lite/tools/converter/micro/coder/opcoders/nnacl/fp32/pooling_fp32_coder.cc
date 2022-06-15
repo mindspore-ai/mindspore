@@ -47,9 +47,11 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
   float maxf = FLT_MAX;
   Collect(context,
           {
+            "wrapper/fp32/pooling_fp32_wrapper.h",
             "nnacl/fp32/pooling_fp32.h",
           },
           {
+            "pooling_fp32_wrapper.c",
             "pooling_fp32.c",
           });
   switch (pooling_parameter->act_type_) {
@@ -68,7 +70,12 @@ int PoolingFP32Coder::DoCode(CoderContext *const context) {
     }
   }
   if (pooling_parameter->pool_mode_ == PoolMode_MaxPool) {
-    code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
+    if (!support_parallel_) {
+      code.CodeFunction("MaxPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
+    } else {
+      code.CodeBaseStruct("PoolingFp32Args", kRunArgs, input_tensor_, output_tensor_, minf, maxf, "&pooling_parameter");
+      code.CodeFunction(kParallelLaunch, "DoMaxPooling", kRunArgsAddr, "pooling_parameter.op_parameter_.thread_num_");
+    }
   } else {
     code.CodeFunction("AvgPooling", input_tensor_, output_tensor_, "&pooling_parameter", kDefaultTaskId, minf, maxf);
   }

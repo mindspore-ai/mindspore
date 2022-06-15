@@ -17,6 +17,13 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_CORE_AFFINITY_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_CORE_AFFINITY_H_
 
+#ifdef __ANDROID__
+#define BIND_CORE
+#include <sched.h>
+#include <pthread.h>
+#endif
+#include "wrapper/thread/micro_thread_pool.h"
+
 #define MAX_PATH_SIZE (256)
 #define MAX_CPU_ID (9)
 
@@ -40,6 +47,7 @@ typedef struct {
   int max_freq;
 } CpuInfo;
 
-int BindThreads(enum BindMode bind_mode);
+int BindThreads(enum BindMode bind_mode, ThreadPool *g_pool);
+int BindThreadToCore(int task_id, ThreadPool *g_pool);
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_THREAD_MICRO_CORE_AFFINITY_H_

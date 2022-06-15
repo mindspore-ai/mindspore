@@ -81,3 +81,21 @@ void BroadcastRun(const void *input0, const void *input1, void *output, int dim,
                  data_type_len, arithmetic_func_type, arithmetic_func, param);
   }
 }
+
+int ArithmeticFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale) {
+  ArithmeticFp32Args *args = (ArithmeticFp32Args *)cdata;
+  int thread_num = args->thread_num_;
+  if (thread_num < 1) {
+    return NNACL_ERR;
+  }
+  int size = UP_DIV(args->size_, args->thread_num_);
+  int completed_size = task_id * size;
+  int cur_size = MSMIN(size, args->size_ - completed_size);
+  if (cur_size <= 0) return NNACL_OK;
+  void *input0 = (void *)((float *)args->input0_ + completed_size);
+  void *input1 = (void *)((float *)args->input1_ + completed_size);
+  void *output = (void *)((float *)args->output_ + completed_size);
+  ArithmeticExecute(input0, input1, output, cur_size, args->is_opt_, args->func_type_, args->arithmetic_func_,
+                    args->param);
+  return NNACL_OK;
+}

@@ -345,8 +345,14 @@ int ArithmeticFP32Coder::ExecuteCode(const std::string &input0, const std::strin
     return RET_ERROR;
   }
   code->CodeStruct("arithmetic_parameter", *arithmetic_parameter_);
-  code->CodeFunction("ArithmeticExecute", input0, input1, output, size, is_opt, arithmetic_func_type_,
-                     arithmetic_func_str_, "&arithmetic_parameter");
+  if (support_parallel_) {
+    code->CodeBaseStruct("ArithmeticFp32Args", kRunArgs, input0, input1, output, size, is_opt, arithmetic_func_type_,
+                         arithmetic_func_str_, "&arithmetic_parameter", gThreadNum);
+    code->CodeFunction(kParallelLaunch, "ArithmeticFp32Run", kRunArgsAddr, gThreadNum);
+  } else {
+    code->CodeFunction("ArithmeticExecute", input0, input1, output, size, is_opt, arithmetic_func_type_,
+                       arithmetic_func_str_, "&arithmetic_parameter");
+  }
   context->AppendCode(code->str());
   return RET_OK;
 }

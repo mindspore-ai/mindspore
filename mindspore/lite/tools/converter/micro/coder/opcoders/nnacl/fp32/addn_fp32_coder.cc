@@ -31,7 +31,7 @@ int AddNFP32Coder::DoCode(CoderContext *const context) {
   // Get Tensor Pointer
   Collect(context,
           {
-            "nnacl/kernel/fp32/add_fp32.h",
+            "nnacl/fp32/add_fp32.h",
           },
           {
             "add_fp32.c",
