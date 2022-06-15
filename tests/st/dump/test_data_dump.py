@@ -205,7 +205,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -376,7 +376,7 @@ def run_not_overflow_dump():
         assert not os.path.exists(exe_graph_path)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -548,7 +548,7 @@ def test_stat_dump_nulls():
             assert output['Avg Value'] == 'null'
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -581,7 +581,7 @@ def test_ascend_statistic_dump_kernel_by_kernel():
     del os.environ['GRAPH_OP_RUN']
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -596,7 +596,7 @@ def test_ascend_tensor_dump():
     run_saved_data_dump_test('test_async_dump', 'tensor')
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -642,7 +642,7 @@ class ConstantNet(nn.Cell):
         return self.relu(construct_tensor(ops.shape(x_)))
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
