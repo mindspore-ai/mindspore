@@ -1424,7 +1424,7 @@ class MatrixDiagV3(Primitive):
 
 class MatrixDiagPartV3(Primitive):
     r"""
-    Returns the batched diagonal part of a batched tensor.
+    Returns the diagonal part of a tensor.
 
     Refer to :func:`mindspore.ops.matrix_diag_part` for more detail.
 
@@ -1437,7 +1437,7 @@ class MatrixDiagPartV3(Primitive):
         ...                      [9, 8, 7, 6]]), mindspore.float32)
         >>> k =Tensor(np.array([1, 3]), mindspore.int32)
         >>> padding_value = Tensor(np.array(9), mindspore.float32)
-        >>> matrix_diag_part_v3 = ops.MatrixDiagPartV3(align='RIGHT_LEFT')
+        >>> matrix_diag_part_v3 = ops.operations.array_ops.MatrixDiagPartV3(align='RIGHT_LEFT')
         >>> output = matrix_diag_part_v3(x, k, padding_value)
         >>> print(output)
         [[9. 9. 4.]

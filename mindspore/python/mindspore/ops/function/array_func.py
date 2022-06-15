@@ -2469,12 +2469,12 @@ def matrix_diag(x, k=0, num_rows=-1, num_cols=-1, padding_value=0, align="RIGHT_
 
 def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
     r"""
-    Returns the batched diagonal part of a batched tensor.
-    Returns a tensor with the k[0]-th to k[1]-th diagonals of the batched x. Some diagonals are shorter than
+    Returns the diagonal part of input tensor.
+    Returns a tensor with the k[0]-th to k[1]-th diagonals of `x`. Some diagonals are shorter than
     max_diag_len and need to be padded. Input k and padding_value must be const Tensor when taking Graph mode.
 
     Args:
-        x (Tensor): The batched Tensor with rank r, where r >= 2.
+        x (Tensor): The input Tensor with rank r, where r >= 2.
         k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offset(s). Positive value means
           superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a single integer
           (for a single diagonal) or a pair of integers specifying the low and high ends of a matrix band. k[0] must not
@@ -2487,15 +2487,15 @@ def matrix_diag_part(x, k=0, padding_value=0, align="RIGHT_LEFT"):
           aligns superdiagonals to the right (left-pads the row) and subdiagonals to the left (right-pads the row).
 
     Returns:
-        A Tensor. Has the same type as x.
-        Assume `x` has r dimensions `[I, J, ..., L, M, N]`. Let max_diag_len be the maximum length among all
-        diagonals to be extracted, `max_diag_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
-        Let num_diags be the number of diagonals to extract, `num_diags = k[1] - k[0] + 1`.
-        If num_diags == 1, the output tensor is of rank r - 1 with shape `[I, J, ..., L, max_diag_len]`
-        Otherwise, the output tensor has rank r with dimensions `[I, J, ..., L, num_diags, max_diag_len]`
+        A Tensor. Has the same type as `x`.
+        Assume `x` has r dimensions :math:`[I, J, ..., L, M, N]`. Let `max_diag_len` be the maximum length among all
+        diagonals to be extracted, :math:`max_diag_len = min(M + min(k[1], 0), N + min(-k[0], 0))`
+        Let `num_diags` be the number of diagonals to extract, :math:`num_diags = k[1] - k[0] + 1`.
+        If :math:`num_diags == 1`, the output tensor is of rank r - 1 with shape :math:`[I, J, ..., L, max_diag_len]`
+        Otherwise, the output tensor has rank r with dimensions :math:`[I, J, ..., L, num_diags, max_diag_len]`
 
     Raises:
-        TypeError: If any input is not Tensor.
+        TypeError: If `x` is not Tensor.
         TypeError: If input `x` and `padding_value` are not the same dtype.
         TypeError: If `k` is not int32 dtype.
         ValueError: If `align` is not a string or not in the valid range.
