@@ -45,11 +45,15 @@ def test_basic():
     assert n.type() == cde.DataType("int64")
 
     arr2 = n.as_array()
+    # decoding only impacts string arrays
+    arr3 = n.as_decoded_array()
     arr[0] = 2
     x = np.array([2, 2, 3, 4, 5])
     np.testing.assert_array_equal(x, arr2)
+    np.testing.assert_array_equal(x, arr3)
     assert n.type() == cde.DataType("int64")
     assert arr.__array_interface__['data'] == arr2.__array_interface__['data']
+    assert arr.__array_interface__['data'] == arr3.__array_interface__['data']
 
 
 def test_strides():
