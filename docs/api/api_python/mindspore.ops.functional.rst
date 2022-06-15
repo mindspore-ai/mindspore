@@ -383,6 +383,17 @@ Array操作
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
+稀疏算子
+^^^^^^^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.dense_to_sparse_coo
+    mindspore.ops.dense_to_sparse_csr
+
 Parameter操作算子
 --------------------
 

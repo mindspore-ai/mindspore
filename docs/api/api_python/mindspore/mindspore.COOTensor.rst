@@ -83,6 +83,9 @@ mindspore.COOTensor
 
         将COOTensor转换为CSRTensor。
 
+        .. note::
+            如果运行后端是CPU，那么仅支持在安装了LLVM12.0.1的机器运行。
+
         **返回：**
 
         CSRTensor。
