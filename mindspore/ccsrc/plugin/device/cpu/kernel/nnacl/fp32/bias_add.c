@@ -16,22 +16,7 @@
 
 #include "nnacl/fp32/bias_add.h"
 #include "nnacl/op_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/bias_add_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/bias_add_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/bias_add_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/bias_add_neon.h"
-#endif
+#include "nnacl/bias_add_simd.h"
 
 void BiasAddByInnerCore(const float *input, const float *bias, float *output, int64_t num) {
   int64_t index = 0;

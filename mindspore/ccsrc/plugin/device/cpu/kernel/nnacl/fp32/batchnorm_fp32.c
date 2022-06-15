@@ -18,22 +18,7 @@
 #include <math.h>
 #include "nnacl/batchnorm_parameter.h"
 #include "nnacl/op_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/batchnorm_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/batchnorm_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/batchnorm_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/batchnorm_fp32_neon.h"
-#endif
+#include "nnacl/batchnorm_fp32_simd.h"
 
 void BatchNormFp32(const float *input, const float *mean, const float *variance, const BatchNormParameter *param,
                    int task_id, float *output) {

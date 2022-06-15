@@ -15,22 +15,7 @@
  */
 #include "nnacl/fp32/mul_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/mul_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/mul_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/mul_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/mul_fp32_neon.h"
-#endif
+#include "nnacl/mul_fp32_simd.h"
 
 int BroadcastMul(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param) {

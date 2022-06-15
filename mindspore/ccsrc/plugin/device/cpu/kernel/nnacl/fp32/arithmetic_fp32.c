@@ -16,22 +16,7 @@
 
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include <math.h>
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/arithmetic_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/arithmetic_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/arithmetic_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/arithmetic_fp32_neon.h"
-#endif
+#include "nnacl/arithmetic_fp32_simd.h"
 
 #define ACCURACY_DATA 0.00000001
 

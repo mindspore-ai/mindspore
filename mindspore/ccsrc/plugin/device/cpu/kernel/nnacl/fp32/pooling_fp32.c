@@ -18,22 +18,7 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/pooling_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/pooling_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/pooling_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/pooling_fp32_neon.h"
-#endif
+#include "nnacl/pooling_fp32_simd.h"
 
 int AvgPoolingBatch(const float *src_b_ptr, float *dst_b_ptr, const PoolingParameter *pooling_param, int task_id,
                     float minf, float maxf) {

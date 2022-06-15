@@ -15,22 +15,7 @@
  */
 
 #include "nnacl/base/fill_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/fill_base_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/fill_base_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/fill_base_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/fill_base_neon.h"
-#endif
+#include "nnacl/fill_base_simd.h"
 
 int FillFp32(float *output, int size, float data) {
   if (output == NULL) {

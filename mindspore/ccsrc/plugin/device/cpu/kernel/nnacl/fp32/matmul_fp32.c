@@ -17,23 +17,7 @@
 #include "nnacl/fp32/matmul_fp32.h"
 #include "nnacl/fp32/pack_fp32.h"
 #include "nnacl/fp32/matmul_avx512_fp32.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/matmul_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/matmul_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/matmul_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/matmul_fp32_neon.h"
-#endif
+#include "nnacl/matmul_fp32_simd.h"
 
 #ifndef ENABLE_ARM
 void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col) {

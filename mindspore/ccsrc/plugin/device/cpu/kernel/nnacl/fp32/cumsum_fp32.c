@@ -16,22 +16,7 @@
 
 #include "nnacl/fp32/cumsum_fp32.h"
 #include "nnacl/op_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/cumsum_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/cumsum_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/cumsum_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/cumsum_fp32_neon.h"
-#endif
+#include "nnacl/cumsum_fp32_simd.h"
 
 // (a, b, c) -> (a, a+b, a+b+c)  exclusive == false
 // (a, b, c) -> (0, a,   a+b)    exclusive == true
