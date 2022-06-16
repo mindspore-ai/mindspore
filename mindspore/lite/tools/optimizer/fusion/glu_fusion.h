@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_GLU_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_GLU_FUSION_H_
 
-#include <vector>
 #include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"

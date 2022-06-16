@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MULTI_HEAD_ATTENTION_FUSION_H_
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_MULTI_HEAD_ATTENTION_FUSION_H_
 
-#include <vector>
 #include <memory>
 #include <string>
 #include <unordered_map>

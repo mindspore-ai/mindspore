@@ -27,7 +27,6 @@
 #include "src/common/utils.h"
 #include "tools/common/tensor_util.h"
 #include "include/common/utils/utils.h"
-#include "securec/include/securec.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 
