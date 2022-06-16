@@ -1921,35 +1921,9 @@ def gather(input_params, input_indices, axis):
 
 def gather_d(x, dim, index):
     """
-    Gathers values along an axis specified by dim.
+    Gathers elements along an axis specified by dim.
 
-    For a 3-D tensor, the output is:
-
-    .. code-block::
-
-        output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
-
-        output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
-
-        output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
-
-    If `x` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` and `dim` = i,
-    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
-    where `y`>=1 and the output will have the same shape as `index`.
-
-    Args:
-        x (Tensor): The source tensor.
-            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        dim (int): The axis along which to index. It must be int32 or int64. Only constant value is allowed.
-        index (Tensor): The indices of elements to gather. It can be one of the following data types:
-            int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
-
-    Returns:
-        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`, has the same data type with `x`.
-
-    Raises:
-        TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
-        ValueError: If length of shape of `x` is not equal to length of shape of `index`.
+    Refer to :func:`mindspore.ops.gather_elements` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1968,9 +1942,37 @@ def gather_d(x, dim, index):
 
 def gather_elements(x, dim, index):
     """
-    Gathers values along an axis specified by dim.
+    Gathers elements along an axis specified by dim.
 
-    Refer to :func:`mindspore.ops.gather_d` for more detail.
+    For a 3-D tensor, the output is:
+
+    .. code-block::
+
+        output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
+
+        output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
+
+        output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
+
+    `x` and `index` have the same length of dimensions, and all dimensions except `dim` have the same size.
+    If `dim` = i, `x` is an n-D tensor with shape :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})`,
+    the `index` must be an n-D tensor with shape :math:`(z_0, z_1, ..., y, ..., z_{n-1})`
+    where `y`>=1 and the output will have the same shape with `index`.
+
+    Args:
+        x (Tensor): The input tensor.
+        dim (int): The axis along which to index. It must be int32 or int64. The value range is [-x_rank, x_rank).
+        index (Tensor): The indices of elements to gather. It can be one of the following data types:
+            int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
+
+    Returns:
+        Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_{n-1})`, has the same data type with `x`.
+
+    Raises:
+        TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
+        ValueError: If length of shape of `x` is not equal to length of shape of `index`.
+        ValueError: If the size of the dimension except `dim` is not equal between `x` and `index`.
+        ValueError: If the value of `dim` is not in the expected range.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -6248,9 +6248,9 @@ class EmbeddingLookup(PrimitiveWithCheck):
 
 class GatherD(Primitive):
     """
-    Gathers values along an axis specified by dim.
+    Gathers elements along an axis specified by dim.
 
-    Refer to :func:`mindspore.ops.gather_d` for more detail.
+    Refer to :func:`mindspore.ops.gather_elements` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

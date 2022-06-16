@@ -1336,9 +1336,9 @@ def one_hot(self, depth, on_value, off_value, axis=-1):
 
 def gather_elements(x, dim, index):
     r"""
-    Gathers values along an axis specified by dim.
+    Gathers elements along an axis specified by dim.
 
-    Refer to :func:`mindspore.ops.gather_d` for more detail.
+    Refer to :func:`mindspore.ops.gather_elements` for more detail.
     """
     check_value_type('x', x, (Tensor,), 'Tensor.gather_elements')
     check_value_type('dim', dim, (int,), 'Tensor.gather_elements')
