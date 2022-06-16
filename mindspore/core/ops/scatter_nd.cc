@@ -71,7 +71,15 @@ abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::
     MS_EXCEPTION_IF_NULL(shape_attr);
     shape = GetValue<ShapeVector>(shape_attr);
   }
-  CheckAndConvertUtils::CheckPositiveVector("shape", shape, prim->name());
+  if (std::any_of(shape.begin(), shape.end(), [](int64_t item) { return item < 1; })) {
+    std::ostringstream buffer;
+    buffer << "For primitive[ScatterNd], the attribute[shape] should be a tuple with all positive item. but got (";
+    for (auto item : shape) {
+      buffer << item << ", ";
+    }
+    buffer << ").";
+    MS_EXCEPTION(ValueError) << buffer.str();
+  }
   return std::make_shared<abstract::Shape>(shape);
 }
 
@@ -82,6 +90,12 @@ AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const Primit
   const std::set<TypePtr> valid_indices_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kScatterNdInputNum, name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[0]->BuildType(), valid_indices_types, name);
+  if (input_args.size() > static_cast<size_t>(kScatterNdInputNum)) {
+    auto shape_type = input_args[kInputIndex2]->BuildType();
+    if (!shape_type->isa<TensorType>()) {
+      (void)CheckAndConvertUtils::CheckTypeValid("shape", shape_type, {kTuple}, name);
+    }
+  }
 
   auto infer_type = ScatterNdInferType(primitive, input_args);
   auto infer_shape = ScatterNdInferShape(primitive, input_args);

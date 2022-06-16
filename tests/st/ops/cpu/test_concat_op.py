@@ -549,3 +549,56 @@ def test_concat_vmap():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     vmap_basic()
+
+
+class ConcatFunctional(nn.Cell):
+    def __init__(self):
+        super(ConcatFunctional, self).__init__()
+        self.axis = 2
+        self.x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(np.float32))
+        self.x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(np.float32))
+
+    def construct(self):
+        return ops.concat((self.x1, self.x2), self.axis)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_functional():
+    """
+    Feature: Op Concat
+    Description: Concat function interface on graph mode
+    Expectation: success
+    """
+    cat = ConcatFunctional()
+    output = cat()
+    expect = np.array([[[0., 0., 1.],
+                        [1., 2., 3.]],
+                       [[2., 4., 5.],
+                        [3., 6., 7.]]]).astype(np.float32)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_functional_pynative():
+    """
+    Feature: Op Concat
+    Description: Concat function interface on pynative mode
+    Expectation: success
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    x2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+    output0 = ops.concat((x1, x2))
+    expect0 = np.array([[0, 1],
+                        [2, 1],
+                        [0, 1],
+                        [2, 1]]).astype(np.float32)
+    assert (output0.asnumpy() == expect0).all()
+    output1 = ops.concat((x1, x2), 1)
+    expect1 = np.array([[0, 1, 0, 1],
+                        [2, 1, 2, 1]]).astype(np.float32)
+    assert (output1.asnumpy() == expect1).all()

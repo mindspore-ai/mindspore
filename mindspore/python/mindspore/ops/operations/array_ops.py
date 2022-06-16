@@ -2793,40 +2793,7 @@ class Concat(PrimitiveWithInfer):
     r"""
     Connect tensor in the specified axis.
 
-    Connect input tensors along with the given axis.
-
-    The input data is a tuple of tensors. These tensors have the same rank `R`. Set the given axis as `m`, and
-    :math:`0 \le m < R`. Set the number of input tensors as `N`. For the :math:`i`-th tensor :math:`t_i`, it has
-    the shape of :math:`(x_1, x_2, ..., x_{mi}, ..., x_R)`. :math:`x_{mi}` is the :math:`m`-th dimension of the
-    :math:`i`-th tensor. Then, the shape of the output tensor is
-
-    .. math::
-
-        (x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)
-
-    .. warning::
-        The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
-
-    Args:
-        axis (int): The specified axis. Default: 0.
-
-    Inputs:
-        - **input_x** (tuple, list) - A tuple or a list of input tensors.
-          Suppose there are two tensors in this tuple or list, namely x1 and x2.
-          To perform `Concat` in the axis 0 direction, except for the 0th axis, all other axes should be equal,
-          that is, :math:`x1.shape[1] == x2.shape[1], x1.shape[2] == x2.shape[2], ..., x1.shape[R] == x2.shape[R]`,
-          where the :math:`R` indicates the last axis.
-
-    Outputs:
-        - Tensor, the shape is :math:`(x_1, x_2, ..., \sum_{i=1}^Nx_{mi}, ..., x_R)`.
-          The data type is the same with `input_x`.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        ValueError: If `input_x` have different dimension of tensor.
-        ValueError: If `axis` not in [-dims, dims - 1].
-        RuntimeError: If tensor's shape in `input_x` except for `axis` are different.
-
+    Refer to :func:`mindspore.ops.concat` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
