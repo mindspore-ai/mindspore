@@ -20,8 +20,8 @@ mindspore.nn.CosineEmbeddingLoss
 
     **输入：**
 
-    - **logits_x1** (Tensor)- CosineEmbeddingLoss的输入，任意维度的Tensor。
-    - **logits_x2** (Tensor) - shape和数据类型与 `logits_x1` 相同。
+    - **logits_x1** (Tensor) - 输入Tensor，shape :math:`(N,*)` ，其中 `*` 代表任意数量的附加维度。
+    - **logits_x2** (Tensor) - 输入Tensor，shape :math:`(N,*)` 。shape和数据类型与 `logits_x1` 相同。
     - **labels** (Tensor) - 输入值为1或-1。假设 `logits_x1` 的shape是 :math:`(x_1, x_2, x_3, ..., x_R)` ，那么 `labels` 的shape必须是 :math:`(x_1, x_3, x_4, ..., x_R)` 。
 
     **输出：**

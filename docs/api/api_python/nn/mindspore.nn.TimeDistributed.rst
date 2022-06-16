@@ -9,7 +9,7 @@ mindspore.nn.TimeDistributed
 
     **参数：**
 
-    - **layer** (Union[Cell, Primitive]) - 指定将被包裹的 :class:`mindspore.nn.Cell` 或 :class:`mindspore.ops.Primitive` 。
+    - **layer** (Union[Cell, Primitive]) - 被封装的Cell或Primitive。
     - **time_axis** (int) - 指定各个时间切片上的轴。
     - **reshape_with_axis** (int) - 将使用 `time_axis` 调整该轴。默认值：None。
 
@@ -23,4 +23,4 @@ mindspore.nn.TimeDistributed
 
     **异常：**
 
-    - **TypeError** - layer既不是 :class:`mindspore.nn.Cell` 也不是 :class:`mindspore.ops.Primitive` 。
+    - **TypeError** - layer不是Cell或Primitive类型。

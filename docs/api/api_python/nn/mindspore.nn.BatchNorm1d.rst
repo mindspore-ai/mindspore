@@ -17,7 +17,7 @@ mindspore.nn.BatchNorm1d
 
     **参数：**
 
-    - **num_features** (int) - 指定输入Tensor的通道数量，输入Tensor的size为 :math:`(N, C)` 。
+    - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N, C)` 中的 `C` 。
     - **eps** (float) - :math:`\epsilon` 加在分母上的值，以确保数值稳定。默认值：1e-5。
     - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.9。
     - **affine** (bool) - bool类型。设置为True时，可学习到 :math:`\gamma` 和 :math:`\beta` 值。默认值：True。

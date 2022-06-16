@@ -23,7 +23,7 @@ mindspore.nn.InstanceNorm2d
 
     **参数：**
 
-    - **num_features** (int) - 输入Tensor的通道数量。
+    - **num_features** (int) - 通道数量，输入Tensor shape :math:`(N,C,H,W)` 中的 `C` 。
     - **eps** (float) - 添加到分母中的值，以确保数值稳定。默认值：1e-5。
     - **momentum** (float) - 动态均值和动态方差所使用的动量。默认值：0.1。
     - **affine** (bool) - bool类型。设置为True时，可以学习gamma和beta参数。默认值：True。

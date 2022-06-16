@@ -33,7 +33,7 @@ mindspore.nn.LSTM
     - **num_layers** (int) - 网络层数。默认值：1。
     - **has_bias** (bool) - Cell是否有偏置项 `b_{ih}` 和 `b_{fh}`。默认值：True。
     - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值：False。
-    - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值0。dropout的范围为[0.0, 1.0]。
+    - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值0。dropout的范围为[0.0, 1.0)。
     - **bidirectional** (bool) - 是否为双向LSTM。默认值：False。
 
     **输入：**
@@ -54,4 +54,4 @@ mindspore.nn.LSTM
     - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是int。
     - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
     - **TypeError** - `dropout` 既不是float也不是int。
-    - **ValueError** - `dropout` 不在[0.0, 1.0]范围内。
+    - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
