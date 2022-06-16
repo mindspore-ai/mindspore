@@ -20,13 +20,13 @@
 #include <vector>
 #include <set>
 #include <queue>
+#include <algorithm>
 #include "src/runtime/delegate/delegate_utils.h"
 
 namespace mindspore::lite {
 TensorRTSubGraph::~TensorRTSubGraph() {
-  if (network_ != nullptr) {
-    network_->destroy();
-    network_ = nullptr;
+  if (ctx_ != nullptr) {
+    delete ctx_;
   }
   if (config_ != nullptr) {
     config_->destroy();
@@ -60,6 +60,16 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "createOptimizationProfile failed.";
     return RET_ERROR;
   }
+  ctx_ = new TensorRTContext();
+  if (ctx_ == nullptr) {
+    MS_LOG(ERROR) << "New TensorRTContext failed.";
+    return RET_OK;
+  }
+  ctx_->SetRuntime(runtime_);
+  if (!ctx_->Init()) {
+    MS_LOG(ERROR) << "New TensorRTContext failed.";
+    return RET_OK;
+  }
   if (SetDeviceConfig(stream) != RET_OK) {
     MS_LOG(WARNING) << "set tensorrt config failed.";
   }
@@ -72,12 +82,6 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
   if (engine_ != nullptr) {
     MS_LOG(INFO) << "using serialized engine " << serialize_file_path_;
     return RET_OK;
-  }
-  network_ = runtime_->GetBuilder()->createNetworkV2(
-    1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH));
-  if (network_ == nullptr) {
-    MS_LOG(ERROR) << "New network failed.";
-    return RET_ERROR;
   }
   for (size_t i = 0; i < inputs_.size(); i++) {
     if (inputs_[i].Shape().size() != DIMENSION_4D) {
@@ -93,13 +97,13 @@ int TensorRTSubGraph::BuildEngine() {
     MS_LOG(ERROR) << "addOptimizationProfile failed.";
     return RET_ERROR;
   }
-  MS_LOG(INFO) << "build engine for tensorrt network: " << this->network_->getName();
-  for (int i = 0; i < this->network_->getNbLayers(); i++) {
-    MS_LOG(DEBUG) << "tensorrt op: " << this->network_->getLayer(i)->getName();
+  MS_LOG(INFO) << "build engine for tensorrt network: " << ctx_->network()->getName();
+  for (int i = 0; i < ctx_->network()->getNbLayers(); i++) {
+    MS_LOG(DEBUG) << "tensorrt op: " << ctx_->network()->getLayer(i)->getName();
   }
-  MS_LOG(DEBUG) << "end of tensorrt network: " << this->network_->getName();
+  MS_LOG(DEBUG) << "end of tensorrt network: " << ctx_->network()->getName();
 
-  this->engine_ = runtime_->GetBuilder()->buildEngineWithConfig(*this->network_, *this->config_);
+  this->engine_ = runtime_->GetBuilder()->buildEngineWithConfig(*ctx_->network(), *this->config_);
   if (this->engine_ == nullptr) {
     MS_LOG(ERROR) << "Create engine failed in TensorRT network";
     return RET_ERROR;
@@ -154,10 +158,10 @@ bool TensorRTSubGraph::IsInt8Mode() {
 }
 
 nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MSTensor &in_tensor) {
-  for (int i = 0; i < this->network_->getNbInputs(); i++) {
-    if (in_tensor.Name().compare(this->network_->getInput(i)->getName()) == 0) {
+  for (int i = 0; i < ctx_->network()->getNbInputs(); i++) {
+    if (in_tensor.Name().compare(ctx_->network()->getInput(i)->getName()) == 0) {
       MS_LOG(INFO) << "input tensor is already added in network: " << in_tensor.Name();
-      return this->network_->getInput(i);
+      return ctx_->network()->getInput(i);
     }
   }
 
@@ -168,7 +172,7 @@ nvinfer1::ITensor *TensorRTSubGraph::SetTensorRTNetworkInput(const mindspore::MS
   }
   nvinfer1::Dims input_dims = ParseInputDimsProfile(in_tensor);
   MS_LOG(INFO) << "add network input: " << in_tensor.Name();
-  return this->network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+  return ctx_->network()->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
 }
 
 nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor &in_tensor) {
@@ -188,6 +192,7 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
     if (input_batchsize_index_ != -1) {
       for (int n = 0; n < input_dims.nbDims; n++) {
         if (input_dims.d[n] == runtime_->GetBatchSize()) {
+          runtime_->SetBatchSize(std::max(input_dims.d[0], runtime_->GetBatchSize()));
           // first dims equals to batchsize
           input_dims.d[n] = -1;
           input_batchsize_index_ = n;
@@ -273,7 +278,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
             MS_LOG(ERROR) << "Weight Tensor data is nullptr.";
             return RET_ERROR;
           }
-          trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(this->network_, in_tensor, cur_op->GetOpName());
+          trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx_, in_tensor, cur_op->GetOpName());
           trt_tensor.format_ = Format::NHWC;
           MS_LOG(INFO) << "auto convert constant tensor for: " << in_tensor.Name();
           cur_op->AddInnerInTensors(trt_tensor);
@@ -284,7 +289,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     }
     MS_LOG(DEBUG) << "Parsing TensorRT op for " << cur_op->GetOpName();
 
-    ret = cur_op->AddInnerOp(this->network_);
+    ret = cur_op->AddInnerOp(ctx_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Add op failed in TensorRT network: " << cur_op->GetOpName();
       return RET_ERROR;
@@ -301,9 +306,9 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
     return ret;
   }
 
-  std::string network_name =
-    "network_" + std::string(network_->getInput(0)->getName()) + "_" + std::string(network_->getOutput(0)->getName());
-  network_->setName(network_name.c_str());
+  std::string network_name = "network_" + std::string(ctx_->network()->getInput(0)->getName()) + "_" +
+                             std::string(ctx_->network()->getOutput(0)->getName());
+  ctx_->network()->setName(network_name.c_str());
   this->name_ = network_name;
   ret = BuildEngine();
   if (ret != RET_OK) {
@@ -327,7 +332,7 @@ int TensorRTSubGraph::MarkOutputs() {
               !SameDims(out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions(), out_tensor.Shape())) {
             // transpose subgraph output from nchw to nhwc
             nvinfer1::IShuffleLayer *transpose_layer_out =
-              NCHW2NHWC(network_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
+              NCHW2NHWC(ctx_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
             if (transpose_layer_out == nullptr) {
               MS_LOG(ERROR) << "op action convert failed";
               return RET_ERROR;
@@ -337,7 +342,7 @@ int TensorRTSubGraph::MarkOutputs() {
           }
 
           out_trt_tensor->setName(out_tensor.Name().c_str());
-          this->network_->markOutput(*out_trt_tensor);
+          ctx_->network()->markOutput(*out_trt_tensor);
           for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
             if (out_trt_tensor->getDimensions().d[n] == -1) {
               output_batchsize_index_ = n;
@@ -437,12 +442,12 @@ int TensorRTSubGraph::ReSize() {
     return RET_ERROR;
   }
   for (size_t i = 0; i < trt_in_tensor_name_.size(); i++) {
-    if (network_ != nullptr) {
-      for (int j = 0; j < this->network_->getNbInputs(); j++) {
-        if (trt_in_tensor_name_[i].compare(network_->getInput(j)->getName()) != 0) {
+    if (ctx_->network() != nullptr) {
+      for (int j = 0; j < ctx_->network()->getNbInputs(); j++) {
+        if (trt_in_tensor_name_[i].compare(ctx_->network()->getInput(j)->getName()) != 0) {
           continue;
         }
-        nvinfer1::Dims construct_dims = this->network_->getInput(j)->getDimensions();
+        nvinfer1::Dims construct_dims = ctx_->network()->getInput(j)->getDimensions();
         bool ret = ValidInputResizeDims(construct_dims, inputs_[i].Shape());
         if (!ret) {
           MS_LOG(ERROR) << "input resize shape is invalid.";
@@ -642,7 +647,7 @@ int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MST
   MS_LOG(INFO) << "auto add cache constant tensor for: " << in_tensor.Name();
   auto cuda_dtype = ConvertDataType(in_tensor.DataType());
   nvinfer1::Dims input_dims = ConvertCudaDims(shape);
-  nvinfer1::ITensor *cache_input = network_->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
+  nvinfer1::ITensor *cache_input = ctx_->network()->addInput(in_tensor.Name().c_str(), cuda_dtype, input_dims);
   if (cache_input == nullptr) {
     MS_LOG(ERROR) << "add cache Weight Tensor data is nullptr.";
     return RET_ERROR;

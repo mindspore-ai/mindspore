@@ -30,7 +30,7 @@ class ShuffleTensorRT : public TensorRTOp {
 
   ~ShuffleTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -51,7 +51,7 @@ class ShuffleTensorRT : public TensorRTOp {
   Format out_format_ = Format::NHWC;
   nvinfer1::ITensor *shuffler_input_{nullptr};
   nvinfer1::ITensor *shuffler_output_{nullptr};
-  nvinfer1::INetworkDefinition *network_{nullptr};
+  TensorRTContext *ctx_{nullptr};
   const flatbuffers::Vector<int64_t> *param_axis_{nullptr};
 };
 }  // namespace mindspore::lite

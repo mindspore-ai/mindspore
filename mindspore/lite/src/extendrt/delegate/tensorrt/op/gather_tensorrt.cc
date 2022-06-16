@@ -48,14 +48,14 @@ int GatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   return RET_OK;
 }
 
-int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   if (tensorrt_in_tensors_.size() < INPUT_SIZE2 && in_tensors_.size() >= INPUT_SIZE2) {
     int const_ms_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
-    auto const_input = ConvertConstantTensor(network, in_tensors_[const_ms_tensor_index], op_name_);
+    auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_ms_tensor_index], op_name_);
     if (const_input == nullptr) {
       MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
       return RET_ERROR;
@@ -65,20 +65,20 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   int indices_tensor_index = tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32 ? 0 : 1;
   ITensorHelper gather_input;
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[1 - indices_tensor_index], &gather_input);
+  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[1 - indices_tensor_index], &gather_input);
   if (ret != RET_OK || gather_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim gather failed for " << op_name_;
     return RET_ERROR;
   }
   ITensorHelper indices_tensor;
-  ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[indices_tensor_index], &indices_tensor);
+  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[indices_tensor_index], &indices_tensor);
   if (ret != RET_OK || indices_tensor.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim indices failed for " << op_name_;
     return RET_ERROR;
   }
 
   nvinfer1::IGatherLayer *gather_layer =
-    network->addGather(*gather_input.trt_tensor_, *indices_tensor.trt_tensor_, axis_);
+    ctx->network()->addGather(*gather_input.trt_tensor_, *indices_tensor.trt_tensor_, axis_);
   if (gather_layer == nullptr) {
     MS_LOG(ERROR) << "addGather failed for TensorRT.";
     return RET_ERROR;
@@ -89,7 +89,7 @@ int GatherTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::ITensor *op_output = gather_layer->getOutput(0);
   // keep shape
   if (in_tensors_[1].Shape().empty()) {
-    auto squeeze = network->addShuffle(*op_output);
+    auto squeeze = ctx->network()->addShuffle(*op_output);
     if (squeeze == nullptr) {
       MS_LOG(ERROR) << "add output squeeze failed for " << op_name_;
       return RET_ERROR;

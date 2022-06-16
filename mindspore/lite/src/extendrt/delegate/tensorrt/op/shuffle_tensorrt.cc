@@ -91,12 +91,12 @@ int ShuffleTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   return RET_OK;
 }
 
-int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  network_ = network;
+  ctx_ = ctx;
 
   int ret = InputTensorPreprocess();
   if (ret != RET_OK || shuffler_input_ == nullptr) {
@@ -104,7 +104,7 @@ int ShuffleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
 
-  nvinfer1::IShuffleLayer *shuffle_layer = network->addShuffle(*shuffler_input_);
+  nvinfer1::IShuffleLayer *shuffle_layer = ctx->network()->addShuffle(*shuffler_input_);
   if (shuffle_layer == nullptr) {
     MS_LOG(ERROR) << "add Shuffle op failed for TensorRT.";
     return RET_ERROR;
@@ -169,7 +169,7 @@ int ShuffleTensorRT::InputTensorPreprocess() {
     // input tensor support NCHW format input
     if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
       // for transpose op, if tensor has same dim with ms tensor, keep origin dims
-      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network_, *shuffler_input_);
+      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx_, *shuffler_input_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -179,7 +179,7 @@ int ShuffleTensorRT::InputTensorPreprocess() {
       out_format_ = Format::NHWC;
     } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
       // infer format may error, correct here
-      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network_, *shuffler_input_);
+      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx_, *shuffler_input_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -378,7 +378,7 @@ nvinfer1::ITensor *ShuffleTensorRT::ExpandDim(nvinfer1::IShuffleLayer *shuffle_l
         perm.order[i] = i - 1;
       }
     }
-    nvinfer1::IShuffleLayer *trans_layer = network_->addShuffle(*shuffle_layer->getOutput(0));
+    nvinfer1::IShuffleLayer *trans_layer = ctx_->network()->addShuffle(*shuffle_layer->getOutput(0));
     if (trans_layer == nullptr) {
       MS_LOG(ERROR) << "add transpose layer failed for special expand dims op " << op_name_;
       return nullptr;

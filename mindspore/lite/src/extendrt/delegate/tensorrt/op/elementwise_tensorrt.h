@@ -30,19 +30,19 @@ class ElementWiseTensorRT : public TensorRTOp {
 
   ~ElementWiseTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  nvinfer1::ITensor *AddActivation(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *in_tensor);
+  nvinfer1::ITensor *AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor);
 
-  int AddConstTensor(nvinfer1::INetworkDefinition *network);
+  int AddConstTensor(TensorRTContext *ctx);
 
   bool SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor);
 
-  int PreprocessInputTensors(nvinfer1::INetworkDefinition *network, ITensorHelper *x_input, ITensorHelper *y_input);
+  int PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input);
 
   nvinfer1::ElementWiseOperation element_wise_op_;
 };

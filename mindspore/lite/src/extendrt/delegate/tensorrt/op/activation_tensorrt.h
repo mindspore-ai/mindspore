@@ -29,14 +29,14 @@ class ActivationTensorRT : public TensorRTOp {
 
   ~ActivationTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  static nvinfer1::ILayer *AddActivation(nvinfer1::INetworkDefinition *network, schema::ActivationType activation_type,
-                                         float alpha, float min_value, float max_value,
-                                         nvinfer1::ITensor *trt_in_tensor, uint32_t device_id = 0,
+  static nvinfer1::ILayer *AddActivation(TensorRTContext *ctx, schema::ActivationType activation_type, float alpha,
+                                         float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
+                                         uint32_t device_id = 0,
                                          schema::QuantType quant_type = schema::QuantType_QUANT_NONE);
 };
 }  // namespace mindspore::lite

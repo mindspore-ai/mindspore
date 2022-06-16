@@ -47,9 +47,9 @@ int LSTMTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
 #endif
 }
 
-int LSTMTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int LSTMTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   int input_data_dims_cnt = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
@@ -57,7 +57,7 @@ int LSTMTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     MS_LOG(ERROR) << "invalid input data shape dims for " << op_name_;
     return RET_ERROR;
   }
-  network_ = network;
+  network_ = ctx->network();
   int ret = PreProcess();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreProcess for " << op_name_;

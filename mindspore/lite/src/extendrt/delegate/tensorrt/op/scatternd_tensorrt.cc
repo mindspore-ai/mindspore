@@ -43,22 +43,22 @@ int ScatterNdTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 #endif
 }
 
-int ScatterNdTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
 #if TRT_VERSION_GE(8, 2)
   ITensorHelper scatter_input;
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &scatter_input);
+  int ret = PreprocessInputs2SameDim(ctx->network(), tensorrt_in_tensors_[0], &scatter_input);
   if (ret != RET_OK || scatter_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
   if (tensorrt_in_tensors_.size() < INPUT_SIZE3) {
-    auto indices = ConvertConstantTensor(network, in_tensors_[1], op_name_ + "_indice");
+    auto indices = ConvertConstantTensor(ctx->network(), in_tensors_[1], op_name_ + "_indice");
     if (indices == nullptr) {
       MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
       return RET_ERROR;
     }
     tensorrt_in_tensors_.push_back(ITensorHelper{indices});
-    auto updates = ConvertConstantTensor(network, in_tensors_[INPUT_SIZE2], op_name_ + "_update");
+    auto updates = ConvertConstantTensor(ctx->network(), in_tensors_[INPUT_SIZE2], op_name_ + "_update");
     if (updates == nullptr) {
       MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
       return RET_ERROR;
@@ -66,20 +66,20 @@ int ScatterNdTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     tensorrt_in_tensors_.push_back(ITensorHelper{updates});
   }
   ITensorHelper indices_helper;
-  ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[1], &indices_helper);
+  ret = PreprocessInputs2SameDim(ctx->network(), tensorrt_in_tensors_[1], &indices_helper);
   if (ret != RET_OK || indices_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim indices tensor failed for " << op_name_;
     return ret;
   }
   ITensorHelper updates_helper;
-  ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[INPUT_SIZE2], &updates_helper);
+  ret = PreprocessInputs2SameDim(ctx->network(), tensorrt_in_tensors_[INPUT_SIZE2], &updates_helper);
   if (ret != RET_OK || updates_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim update tensor failed for " << op_name_;
     return ret;
   }
 
-  nvinfer1::IScatterLayer *scatter_layer = network->addScatter(*scatter_input.trt_tensor_, *indices_helper.trt_tensor_,
-                                                               *updates_helper.trt_tensor_, nvinfer1::ScatterMode::kND);
+  nvinfer1::IScatterLayer *scatter_layer = ctx->network()->addScatter(
+    *scatter_input.trt_tensor_, *indices_helper.trt_tensor_, *updates_helper.trt_tensor_, nvinfer1::ScatterMode::kND);
   if (scatter_layer == nullptr) {
     MS_LOG(ERROR) << "addScatter failed for TensorRT.";
     return RET_ERROR;

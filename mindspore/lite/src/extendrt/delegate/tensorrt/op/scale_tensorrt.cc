@@ -42,8 +42,8 @@ int ScaleTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
   return RET_OK;
 }
 
-int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  CHECK_NULL_RETURN(network);
+int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  CHECK_NULL_RETURN(ctx);
   auto scale_op = op_primitive_->value_as_ScaleFusion();
   CHECK_NULL_RETURN(scale_op);
 
@@ -56,7 +56,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   mode_ = GetScaleMode(axis_);
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
 
-  nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(network);
+  nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(ctx);
   if (scale_in_tensor == nullptr) {
     MS_LOG(ERROR) << "PreProcessInputTensor failed: " << op_name_;
     return RET_ERROR;
@@ -66,16 +66,15 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
   nvinfer1::ITensor *op_out_tensor{nullptr};
   if (scale_in_tensor->getDimensions().nbDims == DIMENSION_4D) {
-    op_out_tensor = RunAs4DimsScale(network, scale_in_tensor);
+    op_out_tensor = RunAs4DimsScale(ctx, scale_in_tensor);
   } else {
-    op_out_tensor = RunAsMutiDimsScale(network, scale_in_tensor);
+    op_out_tensor = RunAsMutiDimsScale(ctx, scale_in_tensor);
   }
   CHECK_NULL_RETURN(op_out_tensor);
 
   // add activation
   if (activation_type != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    auto activation_layer =
-      ActivationTensorRT::AddActivation(network, activation_type, 0, 0, 0, op_out_tensor, device_id_);
+    auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation_type, 0, 0, 0, op_out_tensor, device_id_);
     CHECK_NULL_RETURN(activation_layer);
     activation_layer->setName((op_name_ + "_activation").c_str());
     op_out_tensor = activation_layer->getOutput(0);
@@ -87,7 +86,7 @@ int ScaleTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefinition *network) {
+nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(TensorRTContext *ctx) {
   nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       mode_ == nvinfer1::ScaleMode::kCHANNEL) {
@@ -95,7 +94,7 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefini
     // transpose: NHWC->NCHW
     if ((tensorrt_in_tensors_[0].format_ == Format::NHWC && axis_ == kNHWC_C) ||
         (tensorrt_in_tensors_[0].same_format_ == true && axis_ == kNHWC_C)) {
-      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
         return nullptr;
@@ -111,7 +110,7 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(nvinfer1::INetworkDefini
   } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
              tensorrt_in_tensors_[0].format_ == Format::NCHW && mode_ == nvinfer1::ScaleMode::kELEMENTWISE) {
     // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "op action convert failed";
       return nullptr;
@@ -145,8 +144,7 @@ nvinfer1::ScaleMode ScaleTensorRT::GetScaleMode(int64_t axis) {
   return mode;
 }
 
-nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(nvinfer1::INetworkDefinition *network,
-                                                  nvinfer1::ITensor *scale_in_tensor) {
+nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(TensorRTContext *ctx, nvinfer1::ITensor *scale_in_tensor) {
   bool nd = false;
   // (input * scale + shift) ^ power
   nvinfer1::Weights power{nvinfer1::DataType::kFLOAT, nullptr, 0};
@@ -175,9 +173,9 @@ nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(nvinfer1::INetworkDefinition *
 
   if (nd) {
     MS_LOG(WARNING) << "multi dims ScaleMode enter";
-    cal_layer = network->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis_);
+    cal_layer = ctx->network()->addScaleNd(*scale_in_tensor, mode_, shift, scale, power, axis_);
   } else {
-    cal_layer = network->addScale(*scale_in_tensor, mode_, shift, scale, power);
+    cal_layer = ctx->network()->addScale(*scale_in_tensor, mode_, shift, scale, power);
   }
 
   if (cal_layer == nullptr) {
@@ -189,14 +187,14 @@ nvinfer1::ITensor *ScaleTensorRT::RunAs4DimsScale(nvinfer1::INetworkDefinition *
   return cal_layer->getOutput(0);
 }
 
-nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(nvinfer1::INetworkDefinition *network,
-                                                     nvinfer1::ITensor *scale_in_tensor) {
-  auto scale_tensor = ConvertConstantTensorWithDims(network, in_tensors_[1], in_tensors_[0].Shape(), op_name_);
+nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(TensorRTContext *ctx, nvinfer1::ITensor *scale_in_tensor) {
+  auto scale_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_);
   if (scale_tensor == nullptr) {
     MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
     return nullptr;
   }
-  auto mul_layer = network->addElementWise(*scale_in_tensor, *scale_tensor, nvinfer1::ElementWiseOperation::kPROD);
+  auto mul_layer =
+    ctx->network()->addElementWise(*scale_in_tensor, *scale_tensor, nvinfer1::ElementWiseOperation::kPROD);
   if (mul_layer == nullptr) {
     MS_LOG(ERROR) << "add mul failed for " << op_name_;
     return nullptr;
@@ -206,13 +204,12 @@ nvinfer1::ITensor *ScaleTensorRT::RunAsMutiDimsScale(nvinfer1::INetworkDefinitio
   nvinfer1::ITensor *out_tensor = mul_layer->getOutput(0);
   // add shift
   if (in_tensors_.size() >= INPUT_SIZE3) {
-    auto shift_tensor =
-      ConvertConstantTensorWithDims(network, in_tensors_[SHIFT_INDEX], in_tensors_[0].Shape(), op_name_);
+    auto shift_tensor = ConvertConstantTensorWithDims(ctx, in_tensors_[SHIFT_INDEX], in_tensors_[0].Shape(), op_name_);
     if (shift_tensor == nullptr) {
       MS_LOG(ERROR) << "ConvertConstantTensorWithDims failed for " << op_name_;
       return nullptr;
     }
-    auto shift_layer = network->addElementWise(*out_tensor, *shift_tensor, nvinfer1::ElementWiseOperation::kSUM);
+    auto shift_layer = ctx->network()->addElementWise(*out_tensor, *shift_tensor, nvinfer1::ElementWiseOperation::kSUM);
     if (shift_layer == nullptr) {
       MS_LOG(ERROR) << "add bias failed for " << op_name_;
       return nullptr;

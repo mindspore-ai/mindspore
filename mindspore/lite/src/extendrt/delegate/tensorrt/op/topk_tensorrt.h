@@ -30,15 +30,15 @@ class TopKTensorRT : public TensorRTOp {
 
   ~TopKTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int ParseParams(nvinfer1::INetworkDefinition *network);
+  int ParseParams(TensorRTContext *ctx);
 
-  int PreprocessInputs(nvinfer1::INetworkDefinition *network, ITensorHelper *topk_input);
+  int PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_input);
 
   nvinfer1::TopKOperation topk_op_{nvinfer1::TopKOperation::kMAX};
   uint32_t axis_{0};

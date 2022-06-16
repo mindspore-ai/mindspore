@@ -111,20 +111,20 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
   return RET_OK;
 }
 
-int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
+int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network or input tensor size is invalid";
     return RET_ERROR;
   }
   ITensorHelper x_input;
   ITensorHelper y_input;
-  int ret = PreprocessInputTensors(network, &x_input, &y_input);
+  int ret = PreprocessInputTensors(ctx, &x_input, &y_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputTensors failed.";
     return RET_ERROR;
   }
   nvinfer1::IElementWiseLayer *cal_layer =
-    network->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
+    ctx->network()->addElementWise(*x_input.trt_tensor_, *y_input.trt_tensor_, element_wise_op_);
 
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addElementWise failed for TensorRT.";
@@ -139,7 +139,7 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   // add activation
-  nvinfer1::ITensor *activation_out_tensor = AddActivation(network, op_out_tensor);
+  nvinfer1::ITensor *activation_out_tensor = AddActivation(ctx, op_out_tensor);
   op_out_tensor = (activation_out_tensor == nullptr) ? op_out_tensor : activation_out_tensor;
 
   // scale and shift
@@ -161,12 +161,11 @@ int ElementWiseTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-int ElementWiseTensorRT::PreprocessInputTensors(nvinfer1::INetworkDefinition *network, ITensorHelper *x_input,
-                                                ITensorHelper *y_input) {
+int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input) {
   int input_x_index = SameTensor(tensorrt_in_tensors_[0].trt_tensor_, &in_tensors_[0]) ? 0 : 1;
 
   if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
-    int ret = AddConstTensor(network);
+    int ret = AddConstTensor(ctx);
     if (ret != RET_OK) {
       return ret;
     }
@@ -179,7 +178,7 @@ int ElementWiseTensorRT::PreprocessInputTensors(nvinfer1::INetworkDefinition *ne
   if (x_input->trt_tensor_->getDimensions().nbDims == DIMENSION_4D && x_input->format_ != y_input->format_) {
     // when inputs format are different, change to NHWC
     auto need_trans = x_input->format_ == Format::NCHW ? x_input : y_input;
-    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *need_trans->trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *need_trans->trt_tensor_);
     if (transpose_layer == nullptr) {
       MS_LOG(ERROR) << "op action convert failed";
       return RET_ERROR;
@@ -196,7 +195,7 @@ int ElementWiseTensorRT::PreprocessInputTensors(nvinfer1::INetworkDefinition *ne
     bool x_large = x_input->trt_tensor_->getDimensions().nbDims > y_input->trt_tensor_->getDimensions().nbDims;
     auto input_tensor = x_large ? y_input : x_input;
     auto output_dim = x_large ? x_input->trt_tensor_->getDimensions() : y_input->trt_tensor_->getDimensions();
-    auto reshape_layer = network->addShuffle(*input_tensor->trt_tensor_);
+    auto reshape_layer = ctx->network()->addShuffle(*input_tensor->trt_tensor_);
     if (reshape_layer == nullptr) {
       MS_LOG(ERROR) << "add reshape failed for " << op_name_;
       return RET_ERROR;
@@ -207,8 +206,7 @@ int ElementWiseTensorRT::PreprocessInputTensors(nvinfer1::INetworkDefinition *ne
   return RET_OK;
 }
 
-nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefinition *network,
-                                                      nvinfer1::ITensor *in_tensor) {
+nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvinfer1::ITensor *in_tensor) {
   schema::ActivationType activation = schema::ActivationType::ActivationType_NO_ACTIVATION;
   switch (type_) {
     case schema::PrimitiveType_AddFusion: {
@@ -252,7 +250,7 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   nvinfer1::ITensor *activation_out_tensor = nullptr;
   if (activation != schema::ActivationType::ActivationType_NO_ACTIVATION) {
-    auto activation_layer = ActivationTensorRT::AddActivation(network, activation, 0, 0, 0, in_tensor, device_id_);
+    auto activation_layer = ActivationTensorRT::AddActivation(ctx, activation, 0, 0, 0, in_tensor, device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for element wise failed";
       return nullptr;
@@ -262,10 +260,10 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(nvinfer1::INetworkDefiniti
   }
   return activation_out_tensor;
 }
-int ElementWiseTensorRT::AddConstTensor(nvinfer1::INetworkDefinition *network) {
+int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
   nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(
-    network, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
+    ctx, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
   CHECK_NULL_RETURN(constant_input);
   AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_, true});
   return RET_OK;

@@ -31,7 +31,7 @@ class SliceTensorRTUtil {
   virtual std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
     const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
     const std::vector<mindspore::MSTensor> &out_tensors) = 0;
-  virtual nvinfer1::ITensor *PostProcess(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
+  virtual nvinfer1::ITensor *PostProcess(TensorRTContext *ctx, nvinfer1::ITensor *input,
                                          const std::vector<mindspore::MSTensor> &in_tensors,
                                          const std::vector<mindspore::MSTensor> &out_tensors) {
     return input;
@@ -54,7 +54,7 @@ class SliceTensorRT : public TensorRTOp {
 
   ~SliceTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;

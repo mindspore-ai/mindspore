@@ -35,16 +35,16 @@ int ShapeTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
   dynamic_shape_params_.support_hw_dynamic_ = false;
   return RET_OK;
 }
-int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ShapeTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   nvinfer1::ITensor *shape_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NCHW) {
     // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NCHW->NHWC failed for " << op_name_;
       return RET_ERROR;
@@ -53,7 +53,7 @@ int ShapeTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     shape_input = transpose_layer_in->getOutput(0);
     this->transpose_layer_ = transpose_layer_in;
   }
-  nvinfer1::IShapeLayer *shape_layer = network->addShape(*shape_input);
+  nvinfer1::IShapeLayer *shape_layer = ctx->network()->addShape(*shape_input);
 
   if (shape_layer == nullptr) {
     MS_LOG(ERROR) << "add shape op failed for TensorRT.";

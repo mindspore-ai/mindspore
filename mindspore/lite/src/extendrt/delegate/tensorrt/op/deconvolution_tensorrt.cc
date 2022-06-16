@@ -40,9 +40,9 @@ int DeconvolutionTensorRT::IsSupport(const schema::Primitive *primitive,
   }
   return RET_OK;
 }
-int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int DeconvolutionTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   const schema::Conv2dTransposeFusion *deconv_op = this->op_primitive_->value_as_Conv2dTransposeFusion();
@@ -54,7 +54,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       tensorrt_in_tensors_[0].format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -96,7 +96,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   }
 
   nvinfer1::IDeconvolutionLayer *deconv_layer =
-    network->addDeconvolutionNd(*deconv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
+    ctx->network()->addDeconvolutionNd(*deconv_input, nbOutputMaps, kernelSize, kernelWeights, biasWeights);
 
   if (deconv_layer == nullptr) {
     MS_LOG(ERROR) << "DeconvolutionLayer failed";
@@ -112,7 +112,7 @@ int DeconvolutionTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   if (deconv_op->activation_type() == schema::ActivationType::ActivationType_NO_ACTIVATION) {
     activation_layer = deconv_layer;
   } else {
-    activation_layer = ActivationTensorRT::AddActivation(network, deconv_op->activation_type(), 0, 0, 0,
+    activation_layer = ActivationTensorRT::AddActivation(ctx, deconv_op->activation_type(), 0, 0, 0,
                                                          deconv_layer->getOutput(0), device_id_);
     if (activation_layer == nullptr) {
       MS_LOG(ERROR) << "addActivation for conv failed";

@@ -32,14 +32,14 @@ class TileTensorRT : public TensorRTOp {
 
   ~TileTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int RunAsConcat(nvinfer1::INetworkDefinition *network, const ITensorHelper &tile_input);
-  int RunAsPlugin(nvinfer1::INetworkDefinition *network, const ITensorHelper &tile_input);
+  int RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_input);
+  int RunAsPlugin(TensorRTContext *ctx, const ITensorHelper &tile_input);
   std::vector<float> repeats_;
 };
 

@@ -31,7 +31,7 @@ class ScaleTensorRT : public TensorRTOp {
 
   ~ScaleTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -39,11 +39,11 @@ class ScaleTensorRT : public TensorRTOp {
  private:
   nvinfer1::ScaleMode GetScaleMode(int64_t axis);
 
-  nvinfer1::ITensor *PreProcessInputTensor(nvinfer1::INetworkDefinition *network);
+  nvinfer1::ITensor *PreProcessInputTensor(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *RunAs4DimsScale(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *scale_in_tensor);
+  nvinfer1::ITensor *RunAs4DimsScale(TensorRTContext *ctx, nvinfer1::ITensor *scale_in_tensor);
 
-  nvinfer1::ITensor *RunAsMutiDimsScale(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *scale_in_tensor);
+  nvinfer1::ITensor *RunAsMutiDimsScale(TensorRTContext *ctx, nvinfer1::ITensor *scale_in_tensor);
 
   Format out_format_;
 

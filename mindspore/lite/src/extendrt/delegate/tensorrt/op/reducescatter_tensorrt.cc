@@ -52,7 +52,7 @@ int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
 #endif
 }
 
-int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int ReduceScatterTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
   auto reduce_op = op_primitive_->value_as_ReduceScatter();
   if (reduce_op == nullptr) {
@@ -63,7 +63,7 @@ int ReduceScatterTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   auto rank = GetGPUGroupSize();
   auto plugin = std::make_shared<ReduceScatterPlugin>(op_name_, reduce_mode, rank, device_id_);
   MS_LOG(INFO) << op_name_ << " group size: " << rank << ", rank id: " << GetRankID();
-  nvinfer1::IPluginV2Layer *reduce_scatter_layer = network->addPluginV2(inputTensors, 1, *plugin);
+  nvinfer1::IPluginV2Layer *reduce_scatter_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (reduce_scatter_layer == nullptr) {
     MS_LOG(ERROR) << "create ReduceScatter layer failed for: " << op_name_;
     return RET_ERROR;

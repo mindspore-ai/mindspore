@@ -39,12 +39,12 @@ int SoftMaxTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   }
   return RET_OK;
 }
-int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
+int SoftMaxTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network is invalid";
     return RET_ERROR;
   }
-  nvinfer1::ISoftMaxLayer *softmax_layer_ = AddSoftMaxOp(network);
+  nvinfer1::ISoftMaxLayer *softmax_layer_ = AddSoftMaxOp(ctx);
   if (softmax_layer_ == nullptr) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return RET_ERROR;
@@ -63,8 +63,8 @@ int SoftMaxTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   return RET_OK;
 }
 
-nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(nvinfer1::INetworkDefinition *network) {
-  nvinfer1::ISoftMaxLayer *current_layer_ = network->addSoftMax(*tensorrt_in_tensors_[0].trt_tensor_);
+nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
+  nvinfer1::ISoftMaxLayer *current_layer_ = ctx->network()->addSoftMax(*tensorrt_in_tensors_[0].trt_tensor_);
   if (current_layer_ == nullptr) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;

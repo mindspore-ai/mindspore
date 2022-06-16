@@ -31,17 +31,17 @@ class NormalizeTensorRT : public TensorRTOp {
 
   ~NormalizeTensorRT() override = default;
 
-  int AddInnerOp(nvinfer1::INetworkDefinition *network) override;
+  int AddInnerOp(TensorRTContext *ctx) override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int PreprocessInputs(nvinfer1::INetworkDefinition *network);
+  int PreprocessInputs(TensorRTContext *ctx);
 
-  int RunAsOptPlugin(nvinfer1::INetworkDefinition *network);
+  int RunAsOptPlugin(TensorRTContext *ctx);
 
-  int RunAsTrtOps(nvinfer1::INetworkDefinition *network);
+  int RunAsTrtOps(TensorRTContext *ctx);
 
   bool RunOptPlugin();
 

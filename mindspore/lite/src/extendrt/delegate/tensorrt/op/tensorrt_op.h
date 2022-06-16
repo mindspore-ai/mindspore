@@ -23,6 +23,7 @@
 #include "include/api/kernel.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
+#include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/runtime/delegate/auto_registration_factory.h"
 #include "src/common/log_util.h"
@@ -31,12 +32,6 @@ namespace mindspore::lite {
 constexpr int INPUT_SIZE2 = 2;
 constexpr int INPUT_SIZE3 = 3;
 constexpr int INPUT_SIZE4 = 4;
-
-struct ITensorHelper {
-  nvinfer1::ITensor *trt_tensor_{nullptr};
-  mindspore::Format format_{Format::NHWC};
-  bool same_format_{true};
-};
 
 struct BindingHelper {
   std::string name_;
@@ -72,7 +67,7 @@ class TensorRTOp {
   virtual int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                         const std::vector<mindspore::MSTensor> &out_tensors) = 0;
 
-  virtual int AddInnerOp(nvinfer1::INetworkDefinition *network) = 0;
+  virtual int AddInnerOp(TensorRTContext *ctx) = 0;
 
   virtual int SetInt8DynamicRange();
 

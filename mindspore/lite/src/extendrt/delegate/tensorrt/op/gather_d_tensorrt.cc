@@ -46,7 +46,7 @@ int GatherDTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
   return RET_OK;
 }
 
-int GatherDTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int GatherDTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[2].trt_tensor_};
   auto dim_tensor = static_cast<const int *>(in_tensors_[1].Data().get());
   if (dim_tensor == nullptr) {
@@ -56,7 +56,7 @@ int GatherDTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   size_t dim = static_cast<size_t>(dim_tensor[0]);
 
   auto plugin = std::make_shared<GatherDPlugin>(op_name_, dim, device_id_);
-  nvinfer1::IPluginV2Layer *gatherd_layer = network->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);
+  nvinfer1::IPluginV2Layer *gatherd_layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);
   if (gatherd_layer == nullptr) {
     MS_LOG(ERROR) << "create gatherd failed for: " << op_name_;
     return RET_ERROR;

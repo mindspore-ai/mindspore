@@ -21,11 +21,12 @@
 #include <NvInferVersion.h>
 #include <memory>
 #include <string>
-#include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
+#include "src/extendrt/delegate/tensorrt/tensorrt_context.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cublas_utils.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "schema/ops_generated.h"
 #include "nnacl/pack.h"
+#include "include/api/context.h"
 
 #define kNCHW_N 0
 #define kNCHW_C 1
@@ -39,7 +40,11 @@
 namespace mindspore::lite {
 #define TRT_VERSION_GE(major, minor) \
   (NV_TENSORRT_MAJOR > major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR >= minor))
-struct ITensorHelper;
+struct ITensorHelper {
+  nvinfer1::ITensor *trt_tensor_{nullptr};
+  mindspore::Format format_{Format::NHWC};
+  bool same_format_{true};
+};
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
   bool has_alpha;
@@ -68,24 +73,22 @@ nvinfer1::DataType ConvertDataType(DataType type_id);
 
 cudaDataType ConvertDataType(nvinfer1::DataType type_id);
 
-nvinfer1::IShuffleLayer *NHWC2NCHW(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
+nvinfer1::IShuffleLayer *NHWC2NCHW(TensorRTContext *ctx, const nvinfer1::ITensor &input);
 
-nvinfer1::IShuffleLayer *NCHW2NHWC(nvinfer1::INetworkDefinition *network, const nvinfer1::ITensor &input);
+nvinfer1::IShuffleLayer *NCHW2NHWC(TensorRTContext *ctx, const nvinfer1::ITensor &input);
 
 std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type);
 
-nvinfer1::ITensor *ConvertConstantTensor(nvinfer1::INetworkDefinition *network, const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                          const std::string &op_name);
 
-nvinfer1::ITensor *ConvertTensorWithExpandDims(nvinfer1::INetworkDefinition *network,
-                                               const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
-nvinfer1::ITensor *ConvertScalarToITensor(nvinfer1::INetworkDefinition *network, size_t shape_size, const void *value,
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name);
 
-nvinfer1::ITensor *ConvertConstantTensorWithDims(nvinfer1::INetworkDefinition *network,
-                                                 const mindspore::MSTensor &ms_tensor,
+nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                  const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
 nvinfer1::Weights TransposeWeight4D(const mindspore::MSTensor &ms_tensor, void **pack_weight);
@@ -113,7 +116,7 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
 std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode);
 
-int PreprocessInputs2SameDim(nvinfer1::INetworkDefinition *network, const ITensorHelper &input_tensor_helper,
+int PreprocessInputs2SameDim(TensorRTContext *ctx, const ITensorHelper &input_tensor_helper,
                              ITensorHelper *out_tensor_helper);
 
 int GetDimsVolume(const nvinfer1::Dims &dims);
@@ -128,11 +131,9 @@ void SerializeValue(void **buffer, const void *value, size_t cpy_size);
 
 void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size);
 
-nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
-                           const std::vector<int64_t> &shape);
+nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape);
 
-nvinfer1::ITensor *Reshape(nvinfer1::INetworkDefinition *network, nvinfer1::ITensor *input,
-                           const nvinfer1::Dims &shape);
+nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const nvinfer1::Dims &shape);
 
 int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
 

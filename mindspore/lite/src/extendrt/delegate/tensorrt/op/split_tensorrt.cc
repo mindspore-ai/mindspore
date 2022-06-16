@@ -65,9 +65,9 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
   return RET_OK;
 }
 
-int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper split_input;
-  int ret = PreprocessInputs2SameDim(network, tensorrt_in_tensors_[0], &split_input);
+  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &split_input);
   if (ret != RET_OK || split_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
@@ -85,7 +85,7 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     nvinfer1::Dims size_dims = lite::ConvertCudaDims(in_tensors_[0].Shape());
     size_dims.d[axis_] = size_splits_[i];
 
-    slice_layer = network->addSlice(*split_input.trt_tensor_, start_dims, size_dims, one_dims);
+    slice_layer = ctx->network()->addSlice(*split_input.trt_tensor_, start_dims, size_dims, one_dims);
     if (slice_layer == nullptr) {
       MS_LOG(ERROR) << "add Slice op failed for TensorRT: " << op_name_;
       return RET_ERROR;
@@ -93,7 +93,7 @@ int SplitTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
 
     nvinfer1::ITensor *out_tensor = slice_layer->getOutput(0);
     if (type_ == schema::PrimitiveType_Unstack) {
-      auto shuffer_layer = network->addShuffle(*out_tensor);
+      auto shuffer_layer = ctx->network()->addShuffle(*out_tensor);
       auto shuffer_dims_opt = SqueezeDims(out_tensor->getDimensions(), axis_);
       if (!shuffer_dims_opt) {
         MS_LOG(ERROR) << "SqueezeDims failed.";

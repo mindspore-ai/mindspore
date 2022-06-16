@@ -33,9 +33,9 @@ int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
   return RET_OK;
 }
 
-int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
-  if (network == nullptr) {
-    MS_LOG(ERROR) << "network is invalid";
+int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
+    MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
   auto reduce_op = op_primitive_->value_as_ReduceFusion();
@@ -51,7 +51,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
     if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
       // NCHW->NHWC
-      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -62,7 +62,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
       this->transpose_layer_ = transpose_layer;
     } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
       // NHWC->NCHW
-      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(network, *tensorrt_in_tensors_[0].trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -78,7 +78,8 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
   if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
     // x^2
-    auto *pow2_layer = network->addElementWise(*reduce_input, *reduce_input, nvinfer1::ElementWiseOperation::kPROD);
+    auto *pow2_layer =
+      ctx->network()->addElementWise(*reduce_input, *reduce_input, nvinfer1::ElementWiseOperation::kPROD);
     CHECK_NULL_RETURN(pow2_layer);
     pow2_layer->setName((op_name_ + "_pow2").c_str());
 
@@ -93,9 +94,8 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
     return RET_ERROR;
   }
   nvinfer1::IReduceLayer *layer =
-    network->addReduce(*reduce_input, reduce_operation_opt.value(), reduceAxis, keep_dims);
+    ctx->network()->addReduce(*reduce_input, reduce_operation_opt.value(), reduceAxis, keep_dims);
   CHECK_NULL_RETURN(layer);
-
   layer->setName(op_name_.c_str());
   this->layer_ = layer;
 
@@ -103,7 +103,7 @@ int ReduceTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   CHECK_NULL_RETURN(out_tensor);
 
   if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
-    auto sqrt_layer = network->addUnary(*out_tensor, nvinfer1::UnaryOperation::kSQRT);
+    auto sqrt_layer = ctx->network()->addUnary(*out_tensor, nvinfer1::UnaryOperation::kSQRT);
     CHECK_NULL_RETURN(sqrt_layer);
     sqrt_layer->setName((op_name_ + "_sqrt").c_str());
     out_tensor = sqrt_layer->getOutput(0);

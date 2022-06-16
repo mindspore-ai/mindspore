@@ -46,7 +46,7 @@ int CastTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
   return RET_OK;
 }
 
-int CastTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
+int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
   // cast to type tensor
   auto type_tensor = in_tensors_[1];
@@ -63,7 +63,7 @@ int CastTensorRT::AddInnerOp(nvinfer1::INetworkDefinition *network) {
   nvinfer1::DataType dest_datatype = ConvertDataType(data_type);
   auto plugin =
     std::make_shared<CastPlugin>(op_name_, tensorrt_in_tensors_[0].trt_tensor_->getType(), dest_datatype, device_id_);
-  nvinfer1::IPluginV2Layer *cast_layer = network->addPluginV2(inputTensors, 1, *plugin);
+  nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (cast_layer == nullptr) {
     MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
     return RET_ERROR;
