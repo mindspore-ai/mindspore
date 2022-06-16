@@ -1257,7 +1257,7 @@ def sinh(x):
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)

@@ -242,6 +242,27 @@ __global__ void SinKernel(const half *input, half *output, const size_t count) {
   return;
 }
 template <typename T>
+__global__ void SinhKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    output[i] = sinhf(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void SinhKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    output[i] = sinh(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void SinhKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < count; i += blockDim.x * gridDim.x) {
+    output[i] = half(0.5) * (hexp(input[i]) - hexp(-input[i]));
+  }
+  return;
+}
+template <typename T>
 __global__ void TanKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = tanf(input[i]);
@@ -718,6 +739,11 @@ void Sin(const T *input, T *output, const size_t count, cudaStream_t cuda_stream
   return;
 }
 template <typename T>
+void Sinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  SinhKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Tan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   TanKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -860,6 +886,8 @@ template CUDA_LIB_EXPORT void Sqrt<double>(const double *input, double *output, 
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sin<double>(const double *input, double *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<double>(const double *input, double *output, const size_t count,
+                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<double>(const double *input, double *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<double>(const double *input, double *output, const size_t count,
@@ -926,6 +954,8 @@ template CUDA_LIB_EXPORT void Sqrt<float>(const float *input, float *output, con
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sin<float>(const float *input, float *output, const size_t count,
                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<float>(const float *input, float *output, const size_t count,
+                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<float>(const float *input, float *output, const size_t count,
                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<float>(const float *input, float *output, const size_t count,
@@ -987,6 +1017,7 @@ template CUDA_LIB_EXPORT void Square<half>(const half *input, half *output, cons
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Sin<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
@@ -1037,6 +1068,7 @@ template CUDA_LIB_EXPORT void Sqrt<char>(const char *input, char *output, const 
 template CUDA_LIB_EXPORT void Sin<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ACos<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -1092,6 +1124,8 @@ template CUDA_LIB_EXPORT void Cos<unsigned char>(const unsigned char *input, uns
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
+                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -1147,6 +1181,7 @@ template CUDA_LIB_EXPORT void Sqrt<int>(const int *input, int *output, const siz
 template CUDA_LIB_EXPORT void Sin<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cos<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void ACos<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -1196,6 +1231,8 @@ template CUDA_LIB_EXPORT void Cos<uint32_t>(const uint32_t *input, uint32_t *out
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
@@ -1256,6 +1293,8 @@ template CUDA_LIB_EXPORT void Cos<int16_t>(const int16_t *input, int16_t *output
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<int16_t>(const int16_t *input, int16_t *output, const size_t count,
@@ -1315,6 +1354,8 @@ template CUDA_LIB_EXPORT void Sin<uint16_t>(const uint16_t *input, uint16_t *out
 template CUDA_LIB_EXPORT void Cos<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
@@ -1376,6 +1417,8 @@ template CUDA_LIB_EXPORT void Cos<int64_t>(const int64_t *input, int64_t *output
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<int64_t>(const int64_t *input, int64_t *output, const size_t count,
@@ -1436,6 +1479,8 @@ template CUDA_LIB_EXPORT void Cos<uint64_t>(const uint64_t *input, uint64_t *out
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Tan<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Sinh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Cosh<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Asin<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,

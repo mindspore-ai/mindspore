@@ -47,6 +47,7 @@ constexpr auto kRsqrt = "Rsqrt";
 constexpr auto kSign = "Sign";
 constexpr auto kSin = "Sin";
 constexpr auto kTan = "Tan";
+constexpr auto kSinh = "Sinh";
 constexpr auto kSqrt = "Sqrt";
 constexpr auto kSquare = "Square";
 }  // namespace
@@ -163,6 +164,13 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
     {kSin,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kSinh,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
        &UnaryOpGpuKernelMod::LaunchKernel<double>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
@@ -346,8 +354,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
       {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
       {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
       {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
-      {kTan, Tan<T>},
-    };
+      {kTan, Tan<T>},         {kSinh, Sinh<T>}};
     copy(func_map_normal.begin(), func_map_normal.end(), inserter(func_map, func_map.begin()));
   }
 
@@ -407,6 +414,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Rsqrt,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Sign,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kSign); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Sin, []() { return std::make_shared<UnaryOpGpuKernelMod>(kSin); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Sinh,
+                                 []() { return std::make_shared<UnaryOpGpuKernelMod>(kSinh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Tan, []() { return std::make_shared<UnaryOpGpuKernelMod>(kTan); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Sqrt,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kSqrt); });

@@ -39,6 +39,7 @@ enum UnaryOptype {
   UNARY_OP_SQRT,
   UNARY_OP_RSQRT,
   UNARY_OP_SIN,
+  UNARY_OP_SINH,
   UNARY_OP_COS,
   UNARY_OP_TAN,
   UNARY_OP_COSH,
@@ -77,7 +78,7 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {
   {"Real", UNARY_OP_REAL},     {"Imag", UNARY_OP_IMAG},
   {"Sign", UNARY_OP_SIGN},     {"Conj", UNARY_OP_CONJ},
   {"Atanh", UNARY_OP_ATANH},   {"Tan", UNARY_OP_TAN},
-};
+  {"Sinh", UNARY_OP_SINH}};
 
 template <typename T>
 class UnaryHelperGpuKernel : public GpuKernelHelperBase {
@@ -126,8 +127,7 @@ class UnaryHelperGpuKernel : public GpuKernelHelperBase {
       {UNARY_OP_FLOOR, Floor<T>},     {UNARY_OP_CEIL, Ceil<T>},
       {UNARY_OP_RINT, Rint<T>},       {UNARY_OP_ROUND, Round<T>},
       {UNARY_OP_SIGN, Sign<T>},       {UNARY_OP_ATANH, Atanh<T>},
-      {UNARY_OP_TAN, Tan<T>},
-    };
+      {UNARY_OP_TAN, Tan<T>},         {UNARY_OP_SINH, Sinh<T>}};
 
     auto iter = func_map.find(unary_op_type_);
     if (iter != func_map.end()) {
