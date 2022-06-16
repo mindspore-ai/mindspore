@@ -34,6 +34,7 @@ from ..operations.array_ops import Col2Im
 from ..operations.array_ops import NonZero
 from ..operations.array_ops import IndexFill
 from ..operations.array_ops import TensorScatterElements
+from ..composite import _VmapGeneralRule
 
 
 @vmap_rules_getters.register("Cast")
@@ -853,6 +854,20 @@ def get_range_vmap_rule(prim, axis_size):
             _raise_value_error("For operator Range, all axis for inputs should be None, but got start_dim: {},"
                                " limit_dim: {} and delta_dim: {}.".format(start_dim, limit_dim, delta_dim))
         return result
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.UniqueWithPad)
+def get_unique_with_pad_vmap_rule(prim, axis_size):
+    """VmapRule for `UniqueWithPad` operations."""
+    if isinstance(prim, str):
+        prim = P.UniqueWithPad()
+
+    prim_vmap = _VmapGeneralRule(prim, axis_size)
+
+    def vmap_rule(x_bdim, pad_num_bdim):
+        return prim_vmap(x_bdim, pad_num_bdim)
 
     return vmap_rule
 

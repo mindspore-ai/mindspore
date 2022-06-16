@@ -450,6 +450,7 @@ constexpr char DEPTHWISE_CONV2D[] = "DepthwiseConv2D";
 constexpr char DROPOUT[] = "Dropout";
 constexpr char KStridedSlice[] = "StridedSlice";
 constexpr char UNIQUE[] = "Unique";
+constexpr char UNIQUE_WITH_PAD[] = "UniqueWithPad";
 constexpr char UNIQUE_CONSECUTIVE[] = "UniqueConsecutive";
 constexpr char GATHERND[] = "GatherNd";
 constexpr char SCATTER_UPDATE[] = "ScatterUpdate";

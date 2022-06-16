@@ -27,6 +27,7 @@ from . import (
 )
 from .array_func import (
     unique,
+    unique_with_pad,
     eye,
     matrix_band_part,
     padding,

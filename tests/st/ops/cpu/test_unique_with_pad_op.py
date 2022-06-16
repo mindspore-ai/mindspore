@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,46 +12,73 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
 import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.common.dtype as mstype
 from mindspore import Tensor
+from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 
-context.set_context(mode=context.GRAPH_MODE,
-                    device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
 class Net(nn.Cell):
     def __init__(self, pad_num):
         super(Net, self).__init__()
-        self.unique_with_pad = P.UniqueWithPad()
+        self.uniq = P.UniqueWithPad()
         self.pad_num = pad_num
 
     def construct(self, x):
-        return self.unique_with_pad(x, self.pad_num)
+        return self.uniq(x, self.pad_num)
 
 
-def test_unique_with_pad():
-    x = Tensor(np.array([1, 1, 5, 5, 4, 4, 3, 3, 2, 2]), mstype.int32)
-    pad_num = 8
-    unique_with_pad = Net(pad_num)
-    out = unique_with_pad(x)
-    expect_val = ([1, 5, 4, 3, 2, 8, 8, 8, 8, 8], [0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-    assert(out[0].asnumpy() == expect_val[0]).all()
-    assert(out[1].asnumpy() == expect_val[1]).all()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_int32():
+    """
+    Feature: test uniquewithpad in cpu.
+    Description: test uniquewithpad forward with int32 dtype.
+    Expectation: expect correct forward result.
+    """
+    x = Tensor(np.array([1, 2, 5, 2]), mstype.int32)
+    uniq = Net(0)
+    output = uniq(x)
+    expect_y_result = [1, 2, 5, 0]
+    expect_idx_result = [0, 1, 2, 1]
+
+    assert (output[0].asnumpy() == expect_y_result).all()
+    assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_float32():
+    """
+    Feature: test uniquewithpad in cpu.
+    Description: test uniquewithpad forward with float32 dtype.
+    Expectation: expect correct forward result.
+    """
+    x = Tensor(np.array([1, 2, 5, 2]), mstype.float32)
+    uniq = Net(0.0)
+    output = uniq(x)
+    expect_y_result = np.array([1, 2, 5, 0]).astype(np.float32)
+    expect_idx_result = np.array([0, 1, 2, 1]).astype(np.int32)
+
+    assert (output[0].asnumpy() == expect_y_result).all()
+    assert (output[1].asnumpy() == expect_idx_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_with_pad_dynamic_shape():
     """
-    Feature: uniquewithpad dynamic shape test in ascend.
+    Feature: uniquewithpad dynamic shape test in cpu.
     Description: test the rightness of uniquewithpad dynamic shape feature.
     Expectation: expect correct forward result.
     """
@@ -68,12 +95,11 @@ def test_unique_with_pad_dynamic_shape():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_unique_with_pad_vmap():
     """
-    Feature: uniquewithpad vmap test in ascend.
+    Feature: uniquewithpad vmap test in cpu.
     Description: test the rightness of uniquewithpad vmap feature.
     Expectation: use vmap rule's result equal to manually batched.
     """
@@ -89,3 +115,22 @@ def test_unique_with_pad_vmap():
     expect1 = np.array([[[0, 1, 2, 1], [0, 1, 2, 1]], [[0, 1, 2, 1], [0, 1, 2, 1]]]).astype(np.int32)
     assert np.allclose(outputs[0].asnumpy(), expect0)
     assert np.allclose(outputs[1].asnumpy(), expect1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_int64():
+    """
+    Feature: test uniquewithpad in cpu.
+    Description: test uniquewithpad forward with int64 dtype.
+    Expectation: expect correct forward result.
+    """
+    x = Tensor(np.array([1, 2, 5, 2]), mstype.int64)
+    uniq = Net(0)
+    output = uniq(x)
+    expect_y_result = [1, 2, 5, 0]
+    expect_idx_result = [0, 1, 2, 1]
+
+    assert (output[0].asnumpy() == expect_y_result).all()
+    assert (output[1].asnumpy() == expect_idx_result).all()
