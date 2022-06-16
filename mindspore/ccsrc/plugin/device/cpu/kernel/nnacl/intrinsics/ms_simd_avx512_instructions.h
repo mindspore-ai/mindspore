@@ -22,9 +22,10 @@
 #ifdef _MSC_VER
 #include <immintrin.h>
 #define MS_F32X16_GETI(src, i) src.m512_f32[i]
+#define MS512_F32_GETI(src, i) src.m512_f32[i]
 #else
 #include <x86intrin.h>
-#define MS_F32X16_GETI(src, i) src[i]
+#define MS512_F32_GETI(src, i) src[i]
 #endif
 
 #pragma GCC push_options

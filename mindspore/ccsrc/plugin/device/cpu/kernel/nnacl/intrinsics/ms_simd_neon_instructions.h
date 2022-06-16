@@ -22,6 +22,7 @@
 #include <arm_neon.h>
 
 #define MS_F32X4_GETI(src, i) src[i]
+#define MS128_F32_GETI(src, i) src[i]
 #define MS_FLOAT32X4 float32x4_t
 #define MS_FLOAT128_F32 float32x4_t
 #define MS_INT32X4 int32x4_t

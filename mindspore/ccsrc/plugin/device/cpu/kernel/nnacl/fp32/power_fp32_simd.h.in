@@ -1,0 +1,94 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_NNACL_FP32_POWER_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_POWER_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int PowerBroadCastIntExponent@SIMD_INSTRUCTION@(int index, const float *input, int exponent, float *output, int len,
+  float scale, float shift) {
+  SIMD_F32 scale_vec = SIMD_MOV_F32(scale);
+  SIMD_F32 shift_vec = SIMD_MOV_F32(shift);
+  for (int block_max_size = len - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 tmp = SIMD_FMADD_F32(scale_vec, SIMD_LD_F32(input + index), shift_vec);
+    SIMD_F32 result = SIMD_MOV_F32(1.0f);
+    int exp = abs(exponent);
+    while (exp) {
+      if (exp % 2) {
+        result = SIMD_MUL_F32(result, tmp);
+      }
+      tmp = SIMD_MUL_SQUARE_F32(tmp);
+      exp = exp / 2;
+    }
+    SIMD_ST_F32(output + index, exponent >= 0 ? result : SIMD_DIV_F32(SIMD_MOV_F32(1), result));
+  }
+  return index;
+}
+
+static inline int PowerBroadCastFloatExponent@SIMD_INSTRUCTION@(int index, const float *input, float exponent, float *output, int len,
+  float scale, float shift) {
+  SIMD_F32 scale_vec = SIMD_MOV_F32(scale);
+  SIMD_F32 shift_vec = SIMD_MOV_F32(shift);
+  for (int block_max_size = len - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 tmp = SIMD_FMADD_F32(scale_vec, SIMD_LD_F32(input + index), shift_vec);
+    SIMD_F32 result;
+    for (int i = 0; i < BLOCK_NUM; ++i) {
+      SIMD_F32_GETI(result, i) = powf(SIMD_F32_GETI(tmp, i), exponent);
+    }
+    SIMD_ST_F32(output + index, result);
+  }
+  return index;
+}
+
+static inline int PowerSingleExponent@SIMD_INSTRUCTION@(int index, const float *input, const float *exponent, float *output, int len,
+  float scale, float shift) {
+  SIMD_F32 scale_vec = SIMD_MOV_F32(scale);
+  SIMD_F32 shift_vec = SIMD_MOV_F32(shift);
+  for (int block_max_size = len - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 tmp_vec = SIMD_FMADD_F32(scale_vec, SIMD_LD_F32(input + index), shift_vec);
+    for (int j = 0; j < BLOCK_NUM; ++j) {
+      float cur_exponent = exponent[index + j];
+      float cur_val = SIMD_F32_GETI(tmp_vec, j);
+      if (fabsf(cur_exponent - (int)(cur_exponent)) < 0.000001) {
+        int exp = abs((int)(cur_exponent));
+        float result = 1;
+        while (exp) {
+          if (exp % 2) {
+            result *= cur_val;
+          }
+          cur_val *= cur_val;
+          exp = exp / 2;
+        }
+        output[index + j] = *exponent >= 0 ? result : 1 / result;
+      } else {
+        output[index + j] = powf(cur_val, cur_exponent);
+      }
+    }
+  }
+  return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif
