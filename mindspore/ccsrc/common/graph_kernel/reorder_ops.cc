@@ -201,7 +201,7 @@ void ReorderOps::SetTypeInsensitiveNodeInputsInfo(const CNodePtr &node, const st
 }
 
 bool ReorderOps::ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
-                                                const CNodePtr &node) {
+                                                const CNodePtr &node) const {
   // Limitation:
   //   Current cast node is CAST_DOWN.
   //   Cast node will not change the input format.
@@ -257,7 +257,7 @@ bool ReorderOps::ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, 
 }
 
 bool ReorderOps::ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
-                                              const CNodePtr &node) {
+                                              const CNodePtr &node) const {
   if (!IsTypeInsensitive(node)) {
     return false;
   }

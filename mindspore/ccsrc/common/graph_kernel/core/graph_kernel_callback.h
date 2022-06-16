@@ -173,6 +173,7 @@ class CallbackImplRegister {
 };
 
 #define GRAPH_KERNEL_CALLBACK_REGISTER(cls) \
-  const CallbackImplRegister callback([]() { return std::static_pointer_cast<Callback>(std::make_shared<cls>()); })
+  const CallbackImplRegister callback(      \
+    []() noexcept { return std::static_pointer_cast<Callback>(std::make_shared<cls>()); })
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_CALLBACK_H_

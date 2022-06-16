@@ -61,7 +61,6 @@ AbstractBasePtr InferWithAbstract(const PrimitivePtr &prim, const AbstractBasePt
   } else {
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
-  return nullptr;
 }
 
 NodeBase ExtractAbstract(const AbstractBasePtr &abs) {

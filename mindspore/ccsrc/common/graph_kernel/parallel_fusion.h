@@ -45,6 +45,7 @@ class ParallelInfo {
     fusion_info_ = obj.fusion_info_;
   }
   ParallelInfo &operator=(const ParallelInfo &) = default;
+  ParallelInfo &operator=(ParallelInfo &&) = default;
   ~ParallelInfo() = default;
 
   size_t GetSize() const {
@@ -70,6 +71,7 @@ class ParallelConfig {
   explicit ParallelConfig(size_t max_n) : max_num_for_fuse_(max_n) {}
   explicit ParallelConfig(const ParallelConfig &obj) { max_num_for_fuse_ = obj.max_num_for_fuse_; }
   ParallelConfig &operator=(const ParallelConfig &) = default;
+  ParallelConfig &operator=(ParallelConfig &&) = default;
   ~ParallelConfig() = default;
   size_t max_num_for_fuse() const { return max_num_for_fuse_; }
 

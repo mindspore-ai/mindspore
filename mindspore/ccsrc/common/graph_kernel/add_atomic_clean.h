@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <tuple>
-#include <utility>
 #include <vector>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"

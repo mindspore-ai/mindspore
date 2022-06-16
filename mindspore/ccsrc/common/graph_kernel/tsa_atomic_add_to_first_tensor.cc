@@ -86,7 +86,7 @@ std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::FindTsaFirstRealInputIn
 }
 
 std::pair<AnfNodePtr, size_t> TsaAtomicAddToFirstTensor::GetOrCreateNewTsaFirstNode(
-  const KernelGraphPtr &main_graph, const InplaceAssignerInfo &atomic_add_info, const AnfNodePtr &node) {
+  const KernelGraphPtr &main_graph, const InplaceAssignerInfo &atomic_add_info, const AnfNodePtr &node) const {
   auto mng = main_graph->manager();
   if (mng == nullptr) {
     mng = Manage(main_graph, true);
@@ -178,7 +178,7 @@ void TsaAtomicAddToFirstTensor::ChangeKernelBuildInfo(
 
 void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
   const AnfNodePtr &composite_node,
-  const std::vector<std::tuple<InplaceAssignerInfo, AnfNodePtr, size_t>> &outer_nodes) {
+  const std::vector<std::tuple<InplaceAssignerInfo, AnfNodePtr, size_t>> &outer_nodes) const {
   auto sub_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(composite_node);
   auto mng_sub = sub_graph->manager();
   if (mng_sub == nullptr) {

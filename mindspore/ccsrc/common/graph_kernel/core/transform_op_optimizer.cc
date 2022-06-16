@@ -268,8 +268,7 @@ bool IsFlexibleOp(const NodePtr &node) {
 constexpr int kOutputIndex = -1;
 class Mutator {
  public:
-  explicit Mutator(const NodePtr &node, const NodePtrList &ops)
-      : op_checker_(node), basenode_(node), ordered_nodes_(ops), ori_node_(1) {}
+  explicit Mutator(const NodePtr &node) : op_checker_(node), basenode_(node), ori_node_(1) {}
   ~Mutator() = default;
 
   bool Run(std::set<NodePtr> *changed_nodes) {
@@ -281,7 +280,7 @@ class Mutator {
     RemoveTransOp();
     GenFormatGraph();
     RebuildLiteGraph(changed_nodes);
-    (void)changed_nodes->insert(flexible_ops_.begin(), flexible_ops_.end());
+    changed_nodes->insert(flexible_ops_.begin(), flexible_ops_.end());
     return true;
   }
 
@@ -411,7 +410,6 @@ class Mutator {
 
   TransformOp op_checker_;
   NodePtr basenode_;
-  const NodePtrList &ordered_nodes_;
   std::set<NodePtr> flexible_ops_;
   std::set<NodePtr> trans_ops_;
   std::set<NodePtr> visited_;
@@ -423,7 +421,7 @@ class Mutator {
   std::vector<std::pair<size_t, size_t>> graph_edges_;
 };
 
-bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::string &trans_op_name) {
+bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::string &trans_op_name) const {
   auto &ops = litegraph->ops();
   bool changed = true;
   auto check_is_trans_op = [&trans_op_name](const NodePtr &node) { return node->As<PrimOp>()->op() == trans_op_name; };
@@ -431,7 +429,7 @@ bool TransformOpOptimizer::Process(const LiteGraphPtr &litegraph, const std::str
   std::set<NodePtr> nodes_may_change;
   for (auto &op : ops) {
     if (check_is_trans_op(op) && !op->inputs().empty() && op->input(0)->format != op->format) {
-      auto mutator = Mutator(op, ops);
+      auto mutator = Mutator(op);
       changed = mutator.Run(&nodes_may_change) || changed;
     }
   }

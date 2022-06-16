@@ -372,7 +372,7 @@ OutPosLinkList AutoRecompute::JudegeTargetAndCaptureSource(const AnfNodePtr &nod
  * @param pos The input position of target node for edge.
  * @return int The output position of source node for edge.
  */
-int AutoRecompute::GetSourceLinkOutPos(const AnfNodePtr &target, int pos) {
+int AutoRecompute::GetSourceLinkOutPos(const AnfNodePtr &target, int pos) const {
   // If the input is get-item, than use get-item's index, otherwise zero.
   auto cnode = target->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -545,21 +545,25 @@ std::vector<Candidate> CSRRecompute::Run(const FuncGraphPtr &func_graph) {
   return candidates_;
 }
 
-bool CSRRecompute::CheckPrimitiveInput(AnfNodePtr base, PrimitivePtr prim_type) {
+bool CSRRecompute::CheckPrimitiveInput(AnfNodePtr base, const PrimitivePtr &prim_type) const {
   std::deque<AnfNodePtr> q{base};
   std::set<AnfNodePtr> visited;
   while (!q.empty()) {
     auto node = q.front();
     q.pop_front();
-    if (visited.count(node) > 0) continue;
-    visited.insert(node);
+    if (visited.count(node) > 0) {
+      continue;
+    }
+    (void)visited.insert(node);
     if (IsPrimitiveCNode(node, prim_type)) {
       return true;
     }
     auto cnode = node->cast<CNodePtr>();
-    if (cnode == nullptr) continue;
+    if (cnode == nullptr) {
+      continue;
+    }
     auto inputs = cnode->inputs();
-    q.insert(q.begin(), inputs.begin(), inputs.end());
+    (void)q.insert(q.begin(), inputs.begin(), inputs.end());
   }
   return false;
 }
@@ -572,7 +576,6 @@ AutoRecompute::NodeRecomputeCandidates CSRRecompute::FindNodeRecomputeCandidates
   NodeRecomputeCandidates node_candidates;
   auto graph_node = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
   MS_EXCEPTION_IF_NULL(graph_node);
-  auto nodes = graph_node->nodes();
   // subgraphs outputting UnsortedSegmentSum or CSRReduceSum along with other ops
   // (likely the result of Gather), or containing CSRDiv without outputting
   // UnsortedSegmentSum or CSRReduceSum, are selected as candidates for recompute.
@@ -592,17 +595,19 @@ AutoRecompute::NodeRecomputeCandidates CSRRecompute::FindNodeRecomputeCandidates
   if (std::any_of(tuple_inputs.cbegin(), tuple_inputs.cend(), TargetTail)) {
     for (size_t i = 1; i < tuple_inputs.size(); ++i) {
       if (!TargetTail(tuple_inputs[i])) {
-        candidate_idx.insert(i - 1);
+        (void)candidate_idx.insert(i - 1);
       }
     }
   } else if (std::any_of(tuple_inputs.cbegin(), tuple_inputs.cend(), TargetHead)) {
     for (size_t i = 1; i < tuple_inputs.size(); ++i) {
       if (CheckPrimitiveInput(tuple_inputs[i], prim::kPrimCSRDiv)) {
-        candidate_idx.insert(i - 1);
+        (void)candidate_idx.insert(i - 1);
       }
     }
   }
-  if (candidate_idx.empty()) return node_candidates;
+  if (candidate_idx.empty()) {
+    return node_candidates;
+  }
   for (size_t i = 0; i < target_graphs.size(); ++i) {
     AnfNodePtr gt;
     std::vector<int> gt_in_pos_vec;
@@ -611,7 +616,9 @@ AutoRecompute::NodeRecomputeCandidates CSRRecompute::FindNodeRecomputeCandidates
       auto gt_cnode = gt->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(gt_cnode);
       auto edge = gt_cnode->input(IntToSize(gt_in_pos));
-      if (!IsPrimitiveCNode(edge, prim::kPrimTupleGetItem)) continue;
+      if (!IsPrimitiveCNode(edge, prim::kPrimTupleGetItem)) {
+        continue;
+      }
       auto edge_cnode = edge->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(edge_cnode);
       auto tuple_idx = common::AnfAlgo::GetTupleGetItemOutIndex(edge_cnode);
@@ -624,7 +631,7 @@ AutoRecompute::NodeRecomputeCandidates CSRRecompute::FindNodeRecomputeCandidates
 }
 
 std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const CNodePtr &source_graph,
-                                                                         const AnfNodePtrList &recompute_edges) {
+                                                                         const AnfNodePtrList &recompute_edges) const {
   MS_EXCEPTION_IF_NULL(source_graph);
   auto gs = common::AnfAlgo::GetCNodeFuncGraphPtr(source_graph);
   MS_EXCEPTION_IF_NULL(gs);
@@ -656,7 +663,7 @@ std::pair<FuncGraphPtr, AnfNodePtrList> GraphKernelRecompute::CloneGraph(const C
 
 void GraphKernelRecompute::LinkIntoTargetFuncGraph(
   const Candidate &candidate, const FuncGraphPtr &cloned_func, const AnfNodePtrList &cloned_inputs,
-  const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func) {
+  const std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> &edge_match_func) const {
   auto cloned_nodes = TopoSort(cloned_func->get_return());
   auto gt = common::AnfAlgo::GetCNodeFuncGraphPtr(candidate.target_graph);
   MS_EXCEPTION_IF_NULL(gt);
@@ -766,9 +773,11 @@ bool GraphKernelRecompute::DoRun(const FuncGraphPtr &func_graph, bool use_csr) {
   int repeat_times = 2;
   while ((repeat_times--) != 0) {
     if (use_csr) {
-      candidates_ = CSRRecompute().Run(func_graph);
+      CSRRecompute csr_recompute;
+      candidates_ = csr_recompute.Run(func_graph);
     } else {
-      candidates_ = AutoRecompute().Run(func_graph);
+      AutoRecompute auto_recompute;
+      candidates_ = auto_recompute.Run(func_graph);
     }
     if (candidates_.empty()) {
       return false;
@@ -799,7 +808,7 @@ bool GraphKernelRecompute::DoRun(const FuncGraphPtr &func_graph, bool use_csr) {
 bool GraphKernelRecompute::Run(const FuncGraphPtr &func_graph) {
   bool status = DoRun(func_graph);
   if (GraphKernelFlags::GetInstance().enable_csr_fusion) {
-    status |= DoRun(func_graph, true);
+    status = DoRun(func_graph, true) || status;
   }
   return status;
 }

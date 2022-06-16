@@ -23,8 +23,8 @@
 
 namespace mindspore {
 namespace prim {
-inline const PrimitivePtr kPrimUnPadAkg = std::make_shared<Primitive>("UnPadAkg");
-inline const PrimitivePtr kPrimPadAkg = std::make_shared<Primitive>("PadAkg");
+GVAR_DEF(PrimitivePtr, kPrimUnPadAkg, std::make_shared<Primitive>("UnPadAkg"));
+GVAR_DEF(PrimitivePtr, kPrimPadAkg, std::make_shared<Primitive>("PadAkg"));
 }  // namespace prim
 namespace graphkernel {
 namespace {

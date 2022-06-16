@@ -44,9 +44,9 @@ class ReorderOps : public opt::Pass {
                                         const std::vector<AnfNodePtr> &input_at_indexes, NodeIOInfo *new_inputs_info,
                                         bool from_input) const;
   bool ReorderTypeInsensitiveCastDown(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
-                                      const CNodePtr &node);
+                                      const CNodePtr &node) const;
   bool ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
-                                    const CNodePtr &node);
+                                    const CNodePtr &node) const;
   bool ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph);
 };
 using ReorderOpsPtr = std::shared_ptr<ReorderOps>;
