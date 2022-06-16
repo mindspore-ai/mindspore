@@ -1870,9 +1870,13 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
     after_block->UpdateGlobalPyParam(block->global_py_params());
   }
   AnfNodePtr condition_node = ParseExprNode(header_block, test_node);
-  condition_node = header_block->ForceToWhileCond(condition_node);
+  condition_node = HandleInterpret(header_block, condition_node, test_node);
+  AnfNodePtr while_condition_node = header_block->ForceToWhileCond(condition_node);
+  UpdateInterpretForUserNode(while_condition_node, condition_node);
+  while_condition_node = HandleInterpret(header_block, while_condition_node, test_node);
+  header_block->ConditionalJump(while_condition_node, body_block, after_block);
+
   body_block->Mature();
-  header_block->ConditionalJump(condition_node, body_block, after_block);
   // Parse loop body statements with loop context.
   LoopContext loop_context{&loops_, header_block, nullptr};
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
