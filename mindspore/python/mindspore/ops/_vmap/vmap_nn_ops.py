@@ -285,6 +285,43 @@ def get_pdist_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.DeformableOffsets)
+def get_matmul_vmap_rule(prim, axis_size):
+    """VmapRule for `DeformableOffsets` operation."""
+    nchw_size = 4
+    chw_size = 3
+    chw_reverse_index = -chw_size
+
+    def vmap_rule(x_bdim, offsets_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, offsets_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        offsets, offsets_dim = offsets_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_ndim = F.rank(x)
+        x_origin_shape = F.shape(x)
+
+        offsets = _bdim_at_front(offsets, offsets_dim, axis_size)
+        offsets_ndim = F.rank(offsets)
+        offsets_origin_shape = F.shape(offsets)
+
+        batch_origin_shape = x_origin_shape
+        if x_ndim > nchw_size:
+            x = F.reshape(x, (-1,) + x_origin_shape[chw_reverse_index:])
+        if offsets_ndim > nchw_size:
+            offsets = F.reshape(offsets, (-1,) + offsets_origin_shape[chw_reverse_index:])
+            batch_origin_shape = offsets_origin_shape
+
+        out = prim(x, offsets)
+        out_shape = F.shape(out)
+        out = F.reshape(out, batch_origin_shape[:(nchw_size + 1 - chw_size)] + out_shape[chw_reverse_index:])
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.AdaptiveAvgPool2D)
 def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
     """VmapRule for `AdaptiveAvgPool2D` operation."""
