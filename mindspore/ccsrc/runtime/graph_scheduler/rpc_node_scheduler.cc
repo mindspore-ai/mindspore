@@ -17,9 +17,53 @@
 #include "runtime/graph_scheduler/rpc_node_scheduler.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 #include "include/common/utils/anfalgo.h"
+#include "runtime/graph_scheduler/actor/rpc/mux_send_actor.h"
+#include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"
 
 namespace mindspore {
 namespace runtime {
+namespace {
+// MuxSendActor and MuxRecvActor of the server are used in pairs, and the MuxSendActor
+// needs to obtain the information(ip and port) of peer that initiates this service from the corresponding
+// MuxRecvActor to response request, so need to set the paired MuxRecvActor for MuxSendActor.
+void SetMuxRecvActorForMuxSendActor(const RpcActorSetPtr &rpc_actor_set) {
+  MS_EXCEPTION_IF_NULL(rpc_actor_set);
+
+  // 1. Check whether exist mux recv actor.
+  bool exist_mux_recv_actor = false;
+  std::vector<RecvActorPtr> recv_actors;
+  for (const auto &recv_actor : rpc_actor_set->recv_actors_) {
+    MS_EXCEPTION_IF_NULL(recv_actor);
+    CNodePtr rpc_recv_kernel = recv_actor->kernel();
+    MS_EXCEPTION_IF_NULL(rpc_recv_kernel);
+    if (common::AnfAlgo::HasNodeAttr(kAttrIsMuxRpcKernel, rpc_recv_kernel) &&
+        (common::AnfAlgo::GetNodeAttr<bool>(rpc_recv_kernel, kAttrIsMuxRpcKernel) == true)) {
+      exist_mux_recv_actor = true;
+      recv_actors.emplace_back(recv_actor);
+    }
+  }
+
+  if (!exist_mux_recv_actor) {
+    return;
+  }
+  if (recv_actors.size() != 1) {
+    MS_LOG(EXCEPTION) << "Currently the actor set is only allowed to contain one MuxRecvActor, but got: "
+                      << recv_actors.size();
+  }
+
+  // 2. Set mux recv actor for mux send actor.
+  MuxRecvActorPtr mux_recv_actor = std::dynamic_pointer_cast<MuxRecvActor>(recv_actors.front());
+  MS_EXCEPTION_IF_NULL(mux_recv_actor);
+
+  for (const auto &send_actor : rpc_actor_set->send_actors_) {
+    MS_EXCEPTION_IF_NULL(send_actor);
+    MuxSendActorPtr mux_send_actor = std::dynamic_pointer_cast<MuxSendActor>(send_actor);
+    MS_EXCEPTION_IF_NULL(mux_send_actor);
+    mux_send_actor->set_mux_recv_actor(mux_recv_actor);
+  }
+}
+}  // namespace
+
 RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
 
@@ -44,6 +88,9 @@ RpcActorSetPtr RpcNodeScheduler::Build(const ActorSet *actor_set) {
       }
     }
   }
+
+  // Set the paired MuxRecvActor for MuxSendActor, used in embedding cache case.
+  SetMuxRecvActorForMuxSendActor(rpc_actor_set);
 
   // Create route table proxy for each rpc actor and set.
   for (auto &rpc_actor : rpc_actors) {
@@ -164,6 +211,28 @@ ActorRouteTableProxyPtr RpcNodeScheduler::CreateRouteTableProxy() {
     MS_EXCEPTION_IF_NULL(actor_route_table_proxy);
   }
   return actor_route_table_proxy;
+}
+
+RpcActorStatusUpdater &RpcActorStatusUpdater::GetInstance() {
+  static RpcActorStatusUpdater instance;
+  return instance;
+}
+
+void RpcActorStatusUpdater::set_rpc_actors(const RpcActorSetPtr &rpc_actors) {
+  if (rpc_actors != nullptr) {
+    rpc_actors_ = rpc_actors;
+  }
+}
+
+void RpcActorStatusUpdater::UpdateRpcActorStatus() const {
+  // To ensure performance, only mux recv actor need to update ready status for embedding cache mode currently.
+  if (is_embedding_cache_server()) {
+    MS_EXCEPTION_IF_NULL(rpc_actors_);
+    for (auto &recv_actor : rpc_actors_->recv_actors_) {
+      MS_EXCEPTION_IF_NULL(recv_actor);
+      recv_actor->UpdateStatus();
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

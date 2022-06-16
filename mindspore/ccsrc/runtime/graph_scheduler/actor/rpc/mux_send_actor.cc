@@ -19,30 +19,27 @@
 
 namespace mindspore {
 namespace runtime {
-void MuxSendActor::SendOutput(OpContext<DeviceTensor> *const context) {
-  MS_ERROR_IF_NULL_WO_RET_VAL(context);
-  MS_ERROR_IF_NULL_WO_RET_VAL(client_);
-  // Step 1: Send data and control outputs.
-  AbstractActor::SendOutput(context);
-
-  // Step 2: Erase inter-process inputs for this sequential number.
-  if (input_op_inter_process_.count(context->sequential_num_) != 0) {
-    input_op_inter_process_.erase(context->sequential_num_);
+bool MuxSendActor::LaunchKernel() {
+  MS_ERROR_IF_NULL(client_);
+  if (!KernelActor::LaunchKernel()) {
+    MS_LOG(ERROR) << "Launching kernel for send actor failed.";
+    return false;
   }
 
-  // Step 3: Send input data(inter-process data is the input of the Send kernel) to peers.
+  // Send input data(inter-process data is the input of the Send kernel) to peers.
   if (launch_info_.inputs_.empty()) {
     MS_LOG(ERROR) << "Send kernel has no output tensor.";
-    return;
+    return false;
   }
-  auto send_output = launch_info_.inputs_;
 
+  auto send_output = launch_info_.inputs_;
   MS_EXCEPTION_IF_NULL(mux_recv_actor_);
   std::string peer_server_url = mux_recv_actor_->from_actor_aid().Url();
   auto message = BuildRpcMessage(send_output, peer_server_url);
-  MS_ERROR_IF_NULL_WO_RET_VAL(message);
-  MS_LOG(INFO) << "Rpc actor send message to actor: " << mux_recv_actor_->from_actor_aid();
+  MS_EXCEPTION_IF_NULL(message);
+  MS_LOG(INFO) << "Rpc actor send message to: " << peer_server_url;
   client_->SendAsync(std::move(message));
+  return true;
 }
 }  // namespace runtime
 }  // namespace mindspore

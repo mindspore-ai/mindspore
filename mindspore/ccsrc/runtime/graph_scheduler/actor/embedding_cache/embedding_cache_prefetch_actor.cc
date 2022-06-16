@@ -1288,6 +1288,112 @@ bool EmbeddingCachePrefetchActor::RetrieveEmbeddings(
   return true;
 }
 
+void EmbeddingCachePrefetchActor::SyncEmbeddingTable() {
+  std::lock_guard<std::mutex> locker(sync_embedding_table_mutex_);
+  // Do not synchronize in case of abnormally finalizing.
+  if (!running_) {
+    return;
+  }
+
+  if (finish_sync_embedding_table_) {
+    return;
+  }
+  if (!initialized_) {
+    return;
+  }
+  if (!SyncHostEmbeddingTable()) {
+    MS_LOG(ERROR) << "SyncHostEmbeddingTable failed.";
+  }
+  if (!SyncDeviceEmbeddingTable()) {
+    MS_LOG(ERROR) << "SyncDeviceEmbeddingTable failed.";
+  }
+  finish_sync_embedding_table_ = true;
+}
+
+bool EmbeddingCachePrefetchActor::SyncHostEmbeddingTable() {
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  MS_ERROR_IF_NULL(embedding_host_cache_->host_hash_map_);
+  const auto &hash_id_to_index = embedding_host_cache_->host_hash_map_->hash_id_to_index();
+  size_t swap_indices_lens = hash_id_to_index.size();
+  if (swap_indices_lens == 0) {
+    return true;
+  }
+
+  std::unique_ptr<int[]> host_to_server_ids_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(host_to_server_ids_ptr);
+  std::unique_ptr<int[]> host_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(host_to_server_indices_ptr);
+  size_t idx = 0;
+  for (const auto &item : hash_id_to_index) {
+    host_to_server_ids_ptr[idx] = item.first;
+    host_to_server_indices_ptr[idx++] = item.second;
+  }
+  for (const auto &item : hash_tables_) {
+    const auto &hash_info = item.second;
+    std::vector<float> swap_out_data;
+    auto embedding_size = hash_info.embedding_size;
+    swap_out_data.resize(swap_indices_lens * embedding_size);
+    auto host_hash_table_addr = hash_info.host_address.get();
+    MS_ERROR_IF_NULL(host_hash_table_addr);
+    RETURN_IF_FALSE(LookupLocalHostCache(embedding_size, swap_indices_lens, host_hash_table_addr,
+                                         host_to_server_indices_ptr.get(), swap_out_data.data()));
+
+    RETURN_IF_FALSE_WITH_LOG(
+      PushEmbeddingsToRemote(hash_info.param_key_, host_to_server_ids_ptr.get(), swap_indices_lens,
+                             swap_out_data.data(), swap_out_data.size() * sizeof(float)),
+      "Push embeddings to remote failed.");
+  }
+  return true;
+}
+
+bool EmbeddingCachePrefetchActor::SyncDeviceEmbeddingTable() {
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(device_hash_map);
+  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
+  size_t swap_indices_lens = hash_id_to_index.size();
+  if (swap_indices_lens == 0) {
+    return true;
+  }
+  MS_ERROR_IF_NULL(device_context_);
+  MS_ERROR_IF_NULL(device_context_->device_res_manager_);
+  std::unique_ptr<int[]> device_to_server_ids_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(device_to_server_ids_ptr);
+  std::unique_ptr<int[]> device_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(device_to_server_indices_ptr);
+  size_t idx = 0;
+  for (const auto &item : hash_id_to_index) {
+    device_to_server_ids_ptr[idx] = item.first;
+    device_to_server_indices_ptr[idx++] = item.second;
+  }
+  for (const auto &item : hash_tables_) {
+    const auto &hash_info = item.second;
+    std::vector<float> swap_out_data;
+    auto embedding_size = hash_info.embedding_size;
+    swap_out_data.resize(swap_indices_lens * embedding_size);
+    std::unique_ptr<float[]> device_hash_table_addr_tmp =
+      std::make_unique<float[]>(device_hash_map->hash_capacity() * embedding_size);
+    MS_ERROR_IF_NULL(device_hash_table_addr_tmp);
+
+    auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+    MS_ERROR_IF_NULL(hash_table_addr);
+    auto hash_table_size = hash_info.device_address.size;
+    RETURN_IF_FALSE_WITH_LOG(MemcpyDeviceToHostAsync(device_hash_table_addr_tmp.get(), hash_table_addr, hash_table_size,
+                                                     device_context_, stream_id_),
+                             "Memcpy device to host asynchronously failed.");
+    RETURN_IF_FALSE_WITH_LOG(device_context_->device_res_manager_->SyncStream(stream_id_),
+                             "Synchronize stream failed.");
+    RETURN_IF_FALSE(LookupLocalHostCache(embedding_size, swap_indices_lens, device_hash_table_addr_tmp.get(),
+                                         device_to_server_indices_ptr.get(), swap_out_data.data()));
+
+    RETURN_IF_FALSE_WITH_LOG(
+      PushEmbeddingsToRemote(hash_info.param_key_, device_to_server_ids_ptr.get(), swap_indices_lens,
+                             swap_out_data.data(), swap_out_data.size() * sizeof(float)),
+      "Push embeddings to remote failed.");
+  }
+  return true;
+}
+
 std::string EmbeddingCachePrefetchActor::channel_name() {
   std::lock_guard<std::mutex> locker(channel_mutex_);
   return channel_name_;

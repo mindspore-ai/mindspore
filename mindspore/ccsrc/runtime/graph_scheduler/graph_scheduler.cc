@@ -64,6 +64,12 @@
 #include "utils/numa_interface.h"
 #endif
 
+#ifdef ENABLE_RPC_ACTOR
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
+#include "runtime/graph_scheduler/actor/rpc/mux_send_actor.h"
+#include "runtime/graph_scheduler/actor/rpc/mux_recv_actor.h"
+#endif
+
 namespace mindspore {
 namespace runtime {
 using distributed::cluster::ClusterContext;
@@ -84,6 +90,12 @@ int64_t GetLoopCount(const GraphCompilerInfo &graph_compiler_info) {
       (graphs.size() == 1 && graphs[0]->is_loop_count_sink()) || graphs[0]->has_flag(kFlagPyNativeRunInGraph)) {
     loop_count = 1;
   }
+
+  // For embedding cache mode, server is long running service.
+  if (is_embedding_cache_server()) {
+    loop_count = LONG_MAX;
+  }
+
   return loop_count;
 }
 
@@ -415,6 +427,9 @@ void GraphScheduler::Initialize() {
   // Create and initialize RpcNodeScheduler.
   rpc_node_scheduler_ = std::make_unique<RpcNodeScheduler>();
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
+
+  // Initialize EmbeddingCacheScheduler.
+  EmbeddingCacheScheduler::GetInstance().Initialize();
 #endif
 
   BuildAndScheduleGlobalActor();
@@ -528,6 +543,15 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   }
 #endif
 
+#ifdef WITH_BACKEND
+  // Save data channel for this actor set.
+  MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
+  EmbeddingCacheScheduler::GetInstance().SetDataSetChannel(actor_set->data_prepare_actor_->GetAID(),
+                                                           graph_compiler_info.graphs_);
+  // Set rpc actors in order to update rpc actors status.
+  RpcActorStatusUpdater::GetInstance().set_rpc_actors(actor_set->rpc_actors_);
+#endif
+
   return actor_set.get();
 }
 
@@ -551,6 +575,10 @@ void GraphScheduler::Schedule(const ActorSet *actor_set) {
   // Build physical connections in 'RpcNodeScheduler::Schedule()' method. This costs some time.
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   rpc_node_scheduler_->Schedule(actor_set);
+
+  // Build network connection between local and remote cache for embedding cache prefetch actor.
+  // Schedule and Run embedding cache prefetch actor.
+  EmbeddingCacheScheduler::GetInstance().Schedule();
 #endif
 }
 
@@ -1107,17 +1135,26 @@ KernelActorPtr GraphScheduler::GenerateRpcActor(const CNodePtr &kernel, const De
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(device_context);
 #ifdef ENABLE_RPC_ACTOR
+  bool generate_mux_rpc_actor = common::AnfAlgo::HasNodeAttr(kAttrIsMuxRpcKernel, kernel) &&
+                                (common::AnfAlgo::GetNodeAttr<bool>(kernel, kAttrIsMuxRpcKernel) == true);
+
   MS_EXCEPTION_IF_NULL(rpc_node_scheduler_);
   if (common::AnfAlgo::GetCNodeName(kernel) == kRpcSendOpName) {
-    auto send_actor =
-      std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                  debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+    SendActorPtr send_actor =
+      generate_mux_rpc_actor
+        ? std::make_shared<MuxSendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                         debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes)
+        : std::make_shared<SendActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                      debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(send_actor);
     return send_actor;
   } else if (common::AnfAlgo::GetCNodeName(kernel) == kRpcRecvOpName) {
-    auto recv_actor =
-      std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
-                                  debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
+    RecvActorPtr recv_actor =
+      generate_mux_rpc_actor
+        ? std::make_shared<MuxRecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                         debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes)
+        : std::make_shared<RecvActor>(kernel->fullname_with_scope(), kernel, device_context, memory_manager_aid_,
+                                      debug_aid_, recorder_aid_, strategy, ref_input_indexes, ref_output_indexes);
     MS_EXCEPTION_IF_NULL(recv_actor);
     return recv_actor;
   } else {

@@ -45,6 +45,8 @@ constexpr char kLookupEmbeddingCache[] = "LookupEmbeddingCache";
 // Embedding cache update operation.
 constexpr char kUpdateEmbeddingCache[] = "UpdateEmbeddingCache";
 const std::vector<std::string> kEmbeddingCacheOps = {kLookupEmbeddingCache, kUpdateEmbeddingCache};
+// Message header of finalize mux recv actor.
+constexpr char kFinalizeMuxRecvActor[] = "FINALIZE_MUX_RECV_ACTOR";
 
 // The distributed execution mode enum.
 enum class DistExecutionMode { kPSMode = 0, kInvalidMode };

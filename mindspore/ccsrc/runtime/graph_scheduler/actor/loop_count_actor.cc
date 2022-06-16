@@ -27,6 +27,9 @@
 #include "runtime/device/stream_synchronizer.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/collective/collective_manager.h"
+#ifdef WITH_BACKEND
+#include "runtime/graph_scheduler/rpc_node_scheduler.h"
+#endif
 
 namespace mindspore {
 namespace runtime {
@@ -103,6 +106,11 @@ void LoopCountActor::SendOutput(OpContext<DeviceTensor> *const context) {
   for (auto &entrance_aid : entrance_aids_) {
     ActorDispatcher::Send(entrance_aid, &EntranceActor::ClearDataOnStepEnd, from_aid, context);
   }
+
+#ifdef WITH_BACKEND
+  // Update rpc actors' status.
+  RpcActorStatusUpdater::GetInstance().UpdateRpcActorStatus();
+#endif
 
   // The LoopCountActor exits.
   if (current_count_ == loop_count_) {

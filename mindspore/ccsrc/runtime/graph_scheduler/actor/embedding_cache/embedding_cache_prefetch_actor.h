@@ -87,6 +87,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Increase the global step of compute graph.
   void IncreaseGraphStep(const std::string &channel_name);
 
+  // Sync latest embedding table to remote.
+  void SyncEmbeddingTable();
+
   // Finalize embedding cache prefetch actor and push latest embedding from local cache to remote cache.
   void Finalize();
 
@@ -183,6 +186,14 @@ class EmbeddingCachePrefetchActor : public ActorBase {
                           const std::vector<std::unique_ptr<std::vector<char>>> &slice_embeddings_list,
                           std::vector<float> *outputs);
 
+  // Send finalize request to remote and finalize it.
+  bool FinalizeRemote();
+
+  // Sync latest local host embedding cache to remote.
+  bool SyncHostEmbeddingTable();
+  // Sync latest device embedding cache to remote.
+  bool SyncDeviceEmbeddingTable();
+
   // The cache prefetch phase may involve RPC communication with the server, implemented through Sender and
   // Receiver.
   // Build rpc operators.
@@ -277,6 +288,13 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 
   // The flag which indicates whether this actor is running to prefetch cache.
   std::atomic_bool running_{false};
+
+  // The flag which indicates whether this actor is initialized.
+  bool initialized_{false};
+
+  // The flag which indicates whether finish sync embedding table.
+  bool finish_sync_embedding_table_{false};
+  std::mutex sync_embedding_table_mutex_;
 
   // The current global step of the computed graph.
   std::atomic_ulong graph_step_{0};

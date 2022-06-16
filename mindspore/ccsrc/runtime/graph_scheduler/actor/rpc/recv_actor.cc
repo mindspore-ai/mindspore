@@ -149,8 +149,12 @@ void RecvActor::Run(OpContext<DeviceTensor> *const context) {
   auto recv_kernel_mod = dynamic_cast<kernel::RpcKernelMod *>(kernel_info_->MutableKernelMod());
   MS_EXCEPTION_IF_NULL(recv_kernel_mod);
   auto remote_input = recv_kernel_mod->GetRemoteInput();
+  bool need_finalize = false;
   // Preprocess the remote input in case data is dynamic shape.
-  PreprocessRemoteInput(remote_input);
+  PreprocessRemoteInput(remote_input, &need_finalize);
+  if (need_finalize) {
+    return;
+  }
   KernelActor::Run(context);
 }
 
@@ -163,6 +167,10 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
   size_t real_input_index = input_node_with_index.second;
   MS_EXCEPTION_IF_NULL(real_input);
   auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, false);
+  MS_EXCEPTION_IF_NULL(output_addr);
+  if (output_addr->GetNodeIndex().first == nullptr) {
+    output_addr->SetNodeIndex(kernel_, input_index);
+  }
   auto out_tensor = std::make_shared<tensor::Tensor>(data_type, shapes);
   MS_EXCEPTION_IF_NULL(out_tensor);
   out_tensor->set_device_address(output_addr, false);
@@ -182,10 +190,22 @@ void RecvActor::AddArgSpecForInput(AbstractBasePtrList *args_spec_list, const Sh
     tuple_elements->set_shape(updated_shape);
   }
   common::AnfAlgo::AddArgList(args_spec_list, real_input, real_input_index);
+
+  // The inputs of RpcRecv node are all in device tensor store(weight or value node), framework does not free these
+  // device tensors. If these device tensors are not released, they will persist in the same memory size. In dynamic
+  // shape scenarios, there will be out of memory bounds problems.
+  MS_EXCEPTION_IF_NULL(output_addr);
+  auto output_addr_size = AnfAlgo::GetOutputTensorMemSize(real_input, real_input_index);
+  if (output_addr_size != output_addr->GetSize()) {
+    output_addr->SetSize(output_addr_size);
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+    MS_EXCEPTION_IF_NULL(device_contexts_[0]->device_res_manager_);
+    device_contexts_[0]->device_res_manager_->FreeMemory(output_addr.get());
+  }
 }
 
-void RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
-                                      size_t count) {
+size_t RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, AbstractBasePtrList *args_spec_list,
+                                        size_t count) {
   // The data which could be parsed by offset in dynamic shape scenario.
   auto data_to_be_parsed = dynamic_shape_data.c_str();
   // The real data offsets which will be used by RpcRecvKernel.
@@ -193,7 +213,7 @@ void RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, Abs
 
   // Once the magic header is dynamic shape, each input of the Recv is dynamic shape.
   // So traverse each input and parse the dynamic shape data.
-  size_t last_data_size = 0;
+  size_t offset = 0;
   for (size_t i = 0; i < count; i++) {
     if (data_to_be_parsed >= dynamic_shape_data.c_str() + dynamic_shape_data.size()) {
       MS_LOG(EXCEPTION) << "The dynamic shape data size is invalid.";
@@ -231,17 +251,21 @@ void RecvActor::ParseDynamicShapeData(const std::string &dynamic_shape_data, Abs
     // Step 6: update the abstract.
     AddArgSpecForInput(args_spec_list, shapes, data_type, i);
 
-    real_data_offsets.push_back(strlen(kRpcDynamicShapeData) + sizeof(pb_msg_size) + pb_msg_size + last_data_size);
-    last_data_size = LongToSize(real_data_size);
+    offset += strlen(kRpcDynamicShapeData) + sizeof(pb_msg_size) + pb_msg_size;
+    real_data_offsets.push_back(offset);
+    offset += LongToSize(real_data_size);
   }
 
   auto recv_kernel_mod = dynamic_cast<kernel::RpcRecvKernelMod *>(kernel_info_->MutableKernelMod());
   MS_EXCEPTION_IF_NULL(recv_kernel_mod);
   recv_kernel_mod->set_real_data_offset(real_data_offsets);
+
+  return offset;
 }
 
-void RecvActor::PreprocessRemoteInput(MessageBase *const msg) {
+void RecvActor::PreprocessRemoteInput(MessageBase *const msg, bool *need_finalize) {
   MS_EXCEPTION_IF_NULL(msg);
+  MS_EXCEPTION_IF_NULL(need_finalize);
   if (msg->body.size() <= strlen(kRpcDynamicShapeData)) {
     MS_LOG(DEBUG) << "This is not a dynamic shape data. No need to preprocess.";
     return;
@@ -255,7 +279,8 @@ void RecvActor::PreprocessRemoteInput(MessageBase *const msg) {
   MS_LOG(INFO) << "Preprocess for dynamic shape data.";
   AbstractBasePtrList args_spec_list;
   size_t input_size = common::AnfAlgo::GetInputTensorNum(kernel_);
-  ParseDynamicShapeData(msg->body, &args_spec_list, input_size);
+  size_t dynamic_shape_data_msg_len = ParseDynamicShapeData(msg->body, &args_spec_list, input_size);
+  ParseFinalizeReqData(dynamic_shape_data_msg_len, msg, need_finalize);
 
   // The args_spec_list is updated in ParseDynamicShapeData method. So do the Infer and Resize operation.
   auto eval_result = opt::CppInferShape(common::AnfAlgo::GetCNodePrimitive(kernel_), args_spec_list);
