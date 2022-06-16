@@ -35,6 +35,9 @@ class MS_API KernelExecutor {
   /// \brief Build a single operator so that it can run on a device.
   ///
   /// \param[in] op Define an operator pointer.
+  ///               Notices:The `Init` function of BaseOperator may throw a `std::runtime_error` when the parameters
+  ///                       passed into `Init` function is wrong. If don't want to break down the main process, please
+  ///                       catch `std::runtime_error` to ensure execute without crash.
   /// \param[in] ms_context Define the context used to store options during execution.
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
   /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
@@ -43,7 +46,8 @@ class MS_API KernelExecutor {
   Status Build(const std::shared_ptr<ops::BaseOperator> &op, const std::vector<MSTensor> &inputs,
                const std::vector<MSTensor> &outputs, const std::shared_ptr<Context> &ms_context);
 
-  /// \brief ReSize KernelExecutor.
+  /// \brief ReSize KernelExecutor. Change the shape and data type of inputs.
+  ///        Notice: Conv2DFusion can't update weight and bias by this method.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
   /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
@@ -51,14 +55,14 @@ class MS_API KernelExecutor {
   /// \return Status.
   Status ReSize(const std::vector<MSTensor> &inputs, const std::vector<MSTensor> &outputs);
 
-  /// \brief set outputs infer shape info.
+  /// \brief Set outputs infer shape info.
   ///
   /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
   ///
   /// \return Status.
   Status Infer(std::vector<MSTensor> *outputs);
 
-  /// \brief ReSize KernelExecutor.
+  /// \brief Execute KernelExecutor.
   ///
   /// \param[in] inputs A vector where single operator inputs are arranged in sequence.
   /// \param[in] outputs A vector where single operator outputs are arranged in sequence.
