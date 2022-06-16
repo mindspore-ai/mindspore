@@ -287,6 +287,18 @@ def get_bprop_lp_norm(self):
     return bprop
 
 
+@bprop_getters.register(G.MaximumGrad)
+def get_bprop_maximum_grad(self):
+    """Grad definition for `MaximumGrad` operation."""
+    input_grad = G.MaximumGradGrad()
+
+    def bprop(x1, x2, out, dout):
+        sopd_x1, sopd_x2, sopd_grad = input_grad(x1, x2, dout[0], dout[1])
+        return sopd_x1, sopd_x2, sopd_grad
+
+    return bprop
+
+
 @bprop_getters.register(P.MatrixInverse)
 def get_bprop_matrix_inverse(self):
     """Generate bprop for MatrixInverse"""
