@@ -1318,6 +1318,17 @@ mindspore.Tensor
 
         Tensor。
 
+    .. py:method:: cosh()
+
+        逐元素计算双曲余弦值。
+
+        .. math::
+            out_i = cosh(x_i)
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: scatter_add(indices, updates)
 
         根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
