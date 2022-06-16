@@ -39,6 +39,7 @@ fills_ = Fills()
 ones_ = P.Ones()
 ones_like_ = P.OnesLike()
 tile_ = P.Tile()
+unique_with_pad_ = P.UniqueWithPad()
 size_ = P.Size()
 shape_ = P.Shape()
 rank_ = P.Rank()
@@ -559,6 +560,52 @@ def unique(x):
     y, idx = unique_op(x)
     idx = reshape_op(idx, shape_x)
     return y, idx
+
+
+def unique_with_pad(x, pad_num):
+    """
+    Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
+
+    The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
+    The returned tuple(`y`, `idx`) after the input Tensor `x` is processed by the unique operator,
+    in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
+    the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
+    to make it have the same shape as the Tensor `idx`.
+
+    Args:
+        x (Tensor): The tensor need to be unique. Must be 1-D vector with types: int32, int64.
+        pad_num (int): Pad num. The data type is an int.
+
+    Returns:
+        tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
+        - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as `x`.
+        - idx (Tensor) - The index of each value of `x` in the unique output `y`, the shape and data type same as `x`.
+
+    Raises:x
+        TypeError: If dtype of `x` is neither int32 nor int64.
+        ValueError: If length of shape of `x` is not equal to 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import ops
+        >>> x = Tensor(np.array([1, 2, 5, 2, 3, 5]), mindspore.int32)
+        >>> output = ops.unique_with_pad(x, 0)
+        >>> print(output)
+        (Tensor(shape=[6], dtype=Int32, value= [1, 2, 5, 3, 0, 0]),
+         Tensor(shape=[6], dtype=Int32, value= [0, 1, 2, 1, 3, 2]))
+        >>> y = output[0]
+        >>> print(y)
+        [1 2 5 3 0 0]
+        >>> idx = output[1]
+        >>> print(idx)
+        [0 1 2 1 3 2]
+    """
+    return unique_with_pad_(x, pad_num)
 
 
 def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):

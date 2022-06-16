@@ -172,7 +172,7 @@ char *ReadFile(const char *file, size_t *size) {
 
   ifs->seekg(0, std::ios::end);
   *size = ifs->tellg();
-  auto buf = std::make_unique<char[]>(*size);
+  auto buf = new (std::nothrow) char[*size];
   if (buf == nullptr) {
     MS_LOG(ERROR) << "malloc buf failed, file: " << file;
     ifs->close();
@@ -181,10 +181,10 @@ char *ReadFile(const char *file, size_t *size) {
   }
 
   ifs->seekg(0, std::ios::beg);
-  ifs->read(buf.get(), *size);
+  ifs->read(buf, *size);
   ifs->close();
   delete ifs;
-  return buf.release();
+  return buf;
 }
 
 std::string RealPath(const char *path) {

@@ -252,6 +252,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"one_hot", std::string("one_hot")},                                // P.OneHot
        {"gather_nd", std::string("gather_nd")},                            // P.GatherNd()
        {"unique_consecutive", std::string("unique_consecutive")},          // UniqueConsecutive()
+       {"unique_with_pad", std::string("unique_with_pad")},                // P.UniqueWithPad()
        {"diag", std::string("diag")},                                      // P.Diag()
        {"adaptive_max_pool2d", std::string("adaptive_max_pool2d")},        // P.AdaptiveMaxPool2D
        {"to_coo", std::string("to_coo")},                                  // dense_to_sparse_coo()
