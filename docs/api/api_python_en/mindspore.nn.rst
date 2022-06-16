@@ -84,7 +84,7 @@ Recurrent Neural Network Layer
     mindspore.nn.GRUCell
     mindspore.nn.LSTM
     mindspore.nn.LSTMCell
-    
+
 Embedding Layer
 ---------------
 
@@ -233,6 +233,7 @@ Optimizer
 
     mindspore.nn.Adagrad
     mindspore.nn.Adam
+    mindspore.nn.AdaMax
     mindspore.nn.AdamOffload
     mindspore.nn.AdamWeightDecay
     mindspore.nn.AdaSumByDeltaWeightWrapCell
@@ -298,12 +299,12 @@ as input to get the current learning rate.
 .. code-block::
 
     import mindspore.nn as nn
-    
+
     min_lr = 0.01
     max_lr = 0.1
     decay_steps = 4
     cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
-    
+
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=cosine_decay_lr, momentum=0.9)
 
@@ -328,18 +329,18 @@ During the training process, the optimizer takes result[current step] as current
 .. code-block::
 
     import mindspore.nn as nn
-    
+
     min_lr = 0.01
     max_lr = 0.1
     total_step = 6
     step_per_epoch = 1
     decay_epoch = 4
-    
+
     lr= nn.cosine_decay_lr(min_lr, max_lr, total_step, step_per_epoch, decay_epoch)
-    
+
     net = Net()
     optim = nn.Momentum(net.trainable_params(), learning_rate=lr, momentum=0.9)
-    
+
 .. msplatformautosummary::
     :toctree: nn
     :nosignatures:
