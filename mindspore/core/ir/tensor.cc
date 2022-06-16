@@ -877,6 +877,11 @@ void Tensor::data_sync(bool need_wait) const {
   if (device_sync_ == nullptr) {
     return;
   }
+
+  if (data_->is_sub_data()) {
+    return;
+  }
+
   std::vector<size_t> shape_tmp;
   (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), IntToSize);
   auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());

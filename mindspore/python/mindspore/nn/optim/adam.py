@@ -15,6 +15,7 @@
 """adam"""
 import numpy as np
 
+from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.ops import operations as P
@@ -29,6 +30,7 @@ from .optimizer import opt_init_args_register
 from ._dist_optimizer_registry import _register_dist_optimizer
 
 _adam_opt = C.MultitypeFuncGraph("adam_opt")
+_fused_adam_weight_decay = C.MultitypeFuncGraph("fused_adam_weight_decay")
 _scaler_one = Tensor(1, mstype.int32)
 _scaler_ten = Tensor(10, mstype.float32)
 
@@ -263,6 +265,21 @@ def _run_off_load_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, grad
     success = True
     delat_param = opt(moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2, eps, gradient)
     success = F.depend(success, F.assign_add(param, delat_param))
+    return success
+
+
+@_fused_adam_weight_decay.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                                   "Tensor", "Tensor", "Bool", "Bool")
+def _run_fused_adam_weight_decay_opt(opt, beta1, beta2, eps, lr, weight_decay, param, moment1, moment2, gradient,
+                                     decay_flags, optim_filter):
+    """Apply FusedAdamWeightDecay optimizer to the weight parameter using Tensor."""
+    success = True
+    if optim_filter:
+        if decay_flags:
+            out = opt(param, moment1, moment2, lr, beta1, beta2, eps, weight_decay, P.Cast()(gradient, F.dtype(param)))
+        else:
+            out = opt(param, moment1, moment2, lr, beta1, beta2, eps, 0.0, P.Cast()(gradient, F.dtype(param)))
+        return F.depend(success, out)
     return success
 
 
@@ -530,10 +547,10 @@ class Adam(Optimizer):
 
     def _init_distributed_opts(self, use_locking, use_nesterov):
         self.use_dist_optimizer = self.use_distibuted_optimizer()
-        self.dense_adam_opts, self.use_dense_opt_flags =\
-        self.get_distributed_optimizer_list("adam", use_locking, use_nesterov)
-        self.sparse_adam_opts, self.use_sparse_opt_flags =\
-        self.get_distributed_optimizer_list("fused_sparse_adam", use_locking, use_nesterov)
+        self.dense_adam_opts, self.use_dense_opt_flags = \
+            self.get_distributed_optimizer_list("adam", use_locking, use_nesterov)
+        self.sparse_adam_opts, self.use_sparse_opt_flags = \
+            self.get_distributed_optimizer_list("fused_sparse_adam", use_locking, use_nesterov)
 
 
 class AdamWeightDecay(Optimizer):
@@ -692,28 +709,66 @@ class AdamWeightDecay(Optimizer):
         self.eps = Tensor(np.array([eps]).astype(np.float32))
         self.moments1 = self._parameters.clone(prefix="adam_m", init='zeros')
         self.moments2 = self._parameters.clone(prefix="adam_v", init='zeros')
+        self.fused_opt = P.AdamWeightDecay()
+        if context.get_context("device_target") == "CPU":
+            self.use_fused_opt = True
+        else:
+            self.use_fused_opt = False
 
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         weight_decay = self.get_weight_decay()
         lr = self.get_lr()
-        if self.is_group:
-            if self.is_group_lr:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
-                                              lr, weight_decay, self._parameters, self.moments1,
-                                              self.moments2, gradients, self.decay_flags, self.optim_filter)
+
+        if self.use_fused_opt:
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(
+                        F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps),
+                        lr, weight_decay, self._parameters, self.moments1,
+                        self.moments2, gradients, self.decay_flags, self.optim_filter)
+                else:
+                    optim_result = self.hyper_map(
+                        F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps, lr),
+                        weight_decay, self._parameters, self.moments1, self.moments2,
+                        gradients, self.decay_flags, self.optim_filter)
             else:
-                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
-                                              weight_decay, self._parameters, self.moments1, self.moments2,
-                                              gradients, self.decay_flags, self.optim_filter)
+                optim_result = self.hyper_map(
+                    F.partial(_fused_adam_weight_decay, self.fused_opt, self.beta1, self.beta2, self.eps, lr,
+                              weight_decay),
+                    self._parameters, self.moments1, self.moments2,
+                    gradients, self.decay_flags, self.optim_filter)
         else:
-            optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
-                                          self._parameters, self.moments1, self.moments2,
-                                          gradients, self.decay_flags, self.optim_filter)
+            if self.is_group:
+                if self.is_group_lr:
+                    optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps),
+                                                  lr, weight_decay, self._parameters, self.moments1,
+                                                  self.moments2, gradients, self.decay_flags, self.optim_filter)
+                else:
+                    optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr),
+                                                  weight_decay, self._parameters, self.moments1, self.moments2,
+                                                  gradients, self.decay_flags, self.optim_filter)
+            else:
+                optim_result = self.hyper_map(F.partial(_adam_opt, self.beta1, self.beta2, self.eps, lr, weight_decay),
+                                              self._parameters, self.moments1, self.moments2,
+                                              gradients, self.decay_flags, self.optim_filter)
         if self.use_parallel:
             self.broadcast_params(optim_result)
 
         return optim_result
+
+    @Optimizer.target.setter
+    def target(self, value):
+        """
+        If the input value is set to "CPU", the parameters will be updated on the host using the Fused
+        optimizer operation.
+        """
+        self._set_base_target(value)
+        if value == 'CPU':
+            self.fused_opt.add_prim_attr("primitive_target", "CPU")
+            self.use_fused_opt = True
+        else:
+            self.use_fused_opt = False
 
 
 class AdamOffload(Optimizer):
