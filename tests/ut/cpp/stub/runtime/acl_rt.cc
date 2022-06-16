@@ -63,3 +63,16 @@ ACL_FUNC_VISIBILITY aclError aclrtMemcpyAsync(void *dst, size_t destMax, const v
                                               aclrtMemcpyKind kind, aclrtStream stream) {
   return ACL_ERROR_NONE;
 }
+
+/**
+ * @ingroup AscendCL
+ * @brief Specify the device used for computing in the current process, and implicitly create a default context
+ *
+ * @param deviceId [IN]    the device id of the resource used by this process
+ *
+ * @retval ACL_SUCCESS The function is successfully executed.
+ * @retval OtherValues Failure
+ */
+ACL_FUNC_VISIBILITY aclError aclrtSetDevice(int32_t deviceId) {
+  return ACL_ERROR_NONE;
+}

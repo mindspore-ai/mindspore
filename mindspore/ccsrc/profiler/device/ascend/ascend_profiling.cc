@@ -28,6 +28,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/kernel_graph.h"
+#include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ProfilingManager;
 using mindspore::device::ascend::ProfilingReporter;
@@ -68,6 +69,11 @@ void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t d
   profiling_options_ = profiling_options;
   profile_data_path_ = profiling_path;
   device_id_ = device_id;
+
+  aclError ret = aclrtSetDevice(static_cast<int32_t>(device_id));
+  if (ret != ACL_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
+  }
 
   // Init ErrorManager instance in order to get error msg reported by Ascend.
   if (ErrorManager::GetInstance().Init() != 0) {
