@@ -19,22 +19,19 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.ops import operations as P
+from mindspore import ops
 
 
 class NetCosh(nn.Cell):
-    def __init__(self):
-        super(NetCosh, self).__init__()
-        self.cosh = P.Cosh()
-
     def construct(self, x):
-        return self.cosh(x)
+        return ops.cosh(x)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
+                                        (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_graph(dtype, tol):
     """
     Feature: ALL To ALL
@@ -53,7 +50,8 @@ def test_cosh_graph(dtype, tol):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
+                                        (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_py(dtype, tol):
     """
     Feature: ALL To ALL
@@ -63,7 +61,6 @@ def test_cosh_py(dtype, tol):
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype(dtype)
     input_x = Tensor(np_array)
-    net = NetCosh()
-    output = net(input_x)
+    output = input_x.cosh()
     expect = np.cosh(np_array)
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)

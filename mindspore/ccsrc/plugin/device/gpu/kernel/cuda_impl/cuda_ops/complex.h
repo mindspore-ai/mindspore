@@ -352,6 +352,19 @@ HOST_DEVICE inline Complex<T> exp(const Complex<T> &z) {
 }
 
 template <typename T>
+HOST_DEVICE inline Complex<T> cosh(const Complex<T> &z) {
+  Complex<T> result;
+#if defined(__CUDACC__)
+  auto thrust_result = thrust::cosh(thrust::complex<T>(z));
+  result.real(thrust_result.real());
+  result.imag(thrust_result.imag());
+#else
+  result(std::cosh(std::complex<T>(z)));
+#endif
+  return result;
+}
+
+template <typename T>
 HOST_DEVICE inline bool isfinite(const Complex<T> &z) {
   return std::isfinite(z.real()) || std::isfinite(z.imag());
 }
