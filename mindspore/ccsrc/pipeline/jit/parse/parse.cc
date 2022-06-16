@@ -1291,26 +1291,38 @@ bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
   return need_unpack;
 }
 
+AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) {
+  std::string var_name = "self.";
+  std::string attr_name = node.attr("attr").cast<std::string>();
+  (void)var_name.append(attr_name);
+  auto attr_obj = ast()->obj().attr(attr_name.c_str());
+  MS_EXCEPTION_IF_NULL(block);
+  if (py::hasattr(ast()->obj(), attr_name.c_str()) &&
+      (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
+       py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
+       py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj))) {
+    MS_LOG(DEBUG) << "var_name: " << var_name;
+    return block->MakeResolveSymbol(var_name);
+  } else {
+    auto var_node = block->ReadVariable(var_name);
+    // process self.x = np.array([1, 2])
+    // The fallback feature is enabled in default.
+    static const auto use_fallback = (support_fallback() != "0");
+    if (use_fallback && py::hasattr(ast()->obj(), attr_name.c_str()) &&
+        data_converter::IsNumpyArrayInstance(attr_obj)) {
+      var_node->set_interpret(true);
+    }
+    return var_node;
+  }
+}
+
 // Process call attributes of class type define, eg: x.y()
 AnfNodePtr Parser::ParseAttribute(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Attribute";
   // Process class value, eg: self.xx
   if (ast_->target_type() == PARSE_TARGET_OBJECT_INSTANCE) {
     if (ast_->IsClassMember(node)) {
-      std::string var_name = "self.";
-      std::string attr_name = node.attr("attr").cast<std::string>();
-      (void)var_name.append(attr_name);
-      auto attr_obj = ast()->obj().attr(attr_name.c_str());
-      MS_EXCEPTION_IF_NULL(block);
-      if (py::hasattr(ast()->obj(), attr_name.c_str()) &&
-          (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
-           py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
-           py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj))) {
-        MS_LOG(DEBUG) << "var_name: " << var_name;
-        return block->MakeResolveSymbol(var_name);
-      } else {
-        return block->ReadVariable(var_name);
-      }
+      return ProcessAttributeWithClassMember(block, node);
     }
   }
 

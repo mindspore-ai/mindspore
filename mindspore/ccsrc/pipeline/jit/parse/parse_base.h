@@ -172,8 +172,9 @@ enum ResolveTypeDef : int64_t {
 
 // Define the class instance detail type When the type is RESOLVE_TYPE_CLASS_INSTANCE.
 enum ClassInstanceTypeDef {
-  CLASS_INSTANCE_TYPE_CELL = 0,       // Class instance type is Cell.
-  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,  // Class instance type is Primitive.
+  CLASS_INSTANCE_TYPE_CELL = 0,         // Class instance type is Cell.
+  CLASS_INSTANCE_TYPE_PRIMITIVE = 1,    // Class instance type is Primitive.
+  CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2,  // Class instance type is Numpy Array.
   CLASS_INSTANCE_TYPE_INVALID = 0xFF
 };
 
