@@ -2284,14 +2284,6 @@ def gather(input_x, input_indices, axis):
     return F.gather(input_x, input_indices, axis)
 
 
-def pdist(x, p=2.0):
-    r"""
-    Computes the p-norm distance between each pair of row vectors in the input.
-    Refer to :func:`mindspore.ops.pdist` for more detail.
-    """
-    return F.pdist(x, p=p)
-
-
 def split(input_x, axis=0, output_num=1):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.

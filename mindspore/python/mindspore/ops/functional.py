@@ -35,7 +35,6 @@ from .operations import _grad_ops
 from .operations import _csr_ops
 from .operations import linalg_ops
 from .operations.array_ops import UniqueConsecutive
-from .operations import nn_ops as NN
 from .operations.nn_ops import AdaptiveMaxPool2D
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
@@ -964,7 +963,6 @@ tensor_operator_registry.register('soft_shrink', P.SoftShrink)
 tensor_operator_registry.register('svd', linalg_ops.Svd)
 tensor_operator_registry.register('diag', P.Diag)
 tensor_operator_registry.register('unique_consecutive', UniqueConsecutive)
-tensor_operator_registry.register('pdist', NN.Pdist)
 tensor_operator_registry.register('inplace_update', P.InplaceUpdate)
 tensor_operator_registry.register('inplace_add', P.InplaceAdd)
 tensor_operator_registry.register('inplace_sub', P.InplaceSub)
