@@ -141,7 +141,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
   auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
   MS_EXCEPTION_IF_NULL(device_address);
   if ((device_address->GetPtr() == nullptr) &&
-      (!device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize()))) {
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
   // Copy data from host tensor to device.
@@ -186,7 +186,7 @@ void CopyValueNodeStringToDevice(const ValueNodePtr &node, const device::DeviceC
     return;
   }
 
-  if (!device_context->device_res_manager_->AllocateMemory(node_address.get(), node_address->GetSize())) {
+  if (!device_context->device_res_manager_->AllocateMemory(node_address.get())) {
     MS_LOG(EXCEPTION) << "Allocate memory failed";
   }
 
@@ -266,7 +266,7 @@ bool MallocForKernelInput(const std::shared_ptr<OpRuntimeInfo> &runtime_info,
     auto input_address = runtime_info->GetInputDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(input_address);
     if (input_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(input_address.get(), input_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(input_address.get())) {
       return false;
     }
   }
@@ -306,7 +306,7 @@ bool MallocForKernelOutput(const std::shared_ptr<OpRuntimeInfo> &runtime_info, c
       }
     }
     if (device_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(ERROR) << "Allocate output memory failed, node:" << node->fullname_with_scope();
       return false;
     }
@@ -364,7 +364,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     auto device_address = runtime_info->GetWorkspaceDeviceAddress(i);
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
     workspaces.emplace_back(
@@ -376,7 +376,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
     auto device_address = add_workspaces[i];
     MS_EXCEPTION_IF_NULL(device_address);
     if (device_address->GetPtr() == nullptr &&
-        !device_context->device_res_manager_->AllocateMemory(device_address.get(), device_address->GetSize())) {
+        !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
     workspaces.emplace_back(

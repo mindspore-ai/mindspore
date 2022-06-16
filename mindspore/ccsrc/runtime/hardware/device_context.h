@@ -104,8 +104,8 @@ class DeviceResManager {
   virtual void FreeMemory(void *ptr) const = 0;
 
   // Relevant function to allocate and free device memory of DeviceAddress.
-  bool AllocateMemory(DeviceAddress *const &address, size_t size) const;
-  void FreeMemory(DeviceAddress *const &address) const;
+  virtual bool AllocateMemory(DeviceAddress *const &address) const;
+  virtual void FreeMemory(DeviceAddress *const &address) const;
 
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output

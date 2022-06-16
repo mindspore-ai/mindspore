@@ -45,7 +45,7 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
     try {
       // Allocate memory through the device context.
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-      if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+      if (!device_context->device_res_manager_->AllocateMemory(device_tensor)) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
       }
@@ -138,7 +138,7 @@ void MemoryManagerActor::AllocateBatchMemory(const std::vector<DeviceTensor *> *
     try {
       // Allocate memory through the device context.
       device::DynamicMemAllocatorDebugInfo::SetDebugInfo(from_aid.Name(), device::AllocatorType::kKernelOutput);
-      if (!device_context->device_res_manager_->AllocateMemory(device_tensor, device_tensor->GetSize())) {
+      if (!device_context->device_res_manager_->AllocateMemory(device_tensor)) {
         SetOpContextMemoryAllocFail(from_aid.Name(), device_context, device_tensor->GetSize(), op_context);
         return;
       }

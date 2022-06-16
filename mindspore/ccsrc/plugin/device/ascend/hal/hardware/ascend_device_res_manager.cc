@@ -81,6 +81,31 @@ void AscendDeviceResManager::FreeMemory(void *ptr) const {
   mem_manager_->FreeMemFromMemPool(ptr);
 }
 
+bool AscendDeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  MS_EXCEPTION_IF_NULL(runtime_instance_);
+  auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
+  if (device_name_in_address != device_context_->device_context_key().device_name_) {
+    MS_LOG(EXCEPTION) << "The device address type is wrong: type name in address:" << device_name_in_address
+                      << ", type name in context:" << device_context_->device_context_key().device_name_;
+  }
+
+  if (address->GetPtr() != nullptr) {
+    MS_LOG(ERROR) << "Memory leak detected!";
+    return false;
+  }
+
+  runtime_instance_->SetContext();
+  auto device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem());
+  if (!device_ptr) {
+    return false;
+  }
+
+  address->set_ptr(device_ptr);
+  address->set_from_mem_pool(true);
+  return true;
+}
+
 std::vector<void *> AscendDeviceResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list) const {
   MS_EXCEPTION_IF_NULL(runtime_instance_);
   runtime_instance_->SetContext();

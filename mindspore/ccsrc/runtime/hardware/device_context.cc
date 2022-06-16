@@ -63,7 +63,7 @@ void *DeviceResManager::GetStream(size_t stream_id) const {
   return iter->second;
 }
 
-bool DeviceResManager::AllocateMemory(DeviceAddress *const &address, size_t size) const {
+bool DeviceResManager::AllocateMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
   auto device_name_in_address = GetDeviceNameByType(static_cast<const DeviceType>(address->GetDeviceType()));
   if (device_name_in_address != device_context_->device_context_key().device_name_) {
@@ -75,12 +75,12 @@ bool DeviceResManager::AllocateMemory(DeviceAddress *const &address, size_t size
     MS_LOG(EXCEPTION) << "Memory leak detected!";
   }
 
-  auto device_ptr = AllocateMemory(size);
+  auto device_ptr = AllocateMemory(address->GetSize());
   if (!device_ptr) {
+    MS_LOG(WARNING) << "Allocate Memory failed for size: " << address->GetSize();
     return false;
   }
   address->set_ptr(device_ptr);
-  address->SetSize(size);
   address->set_from_mem_pool(true);
   return true;
 }

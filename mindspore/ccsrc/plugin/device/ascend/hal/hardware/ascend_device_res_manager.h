@@ -45,6 +45,7 @@ class AscendDeviceResManager : public DeviceResManager {
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
   void FreeMemory(void *ptr) const override;
+  bool AllocateMemory(DeviceAddress *const &address) const override;
 
   // Allocate continuous device memory according to size list.
   // Communication operators may need continuous memory for input and output

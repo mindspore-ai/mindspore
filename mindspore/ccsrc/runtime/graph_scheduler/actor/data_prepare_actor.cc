@@ -43,7 +43,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const DeviceTensorPtr &device_
   auto allocator_type = node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), allocator_type, 0);
   if ((device_tensor->GetPtr() == nullptr) &&
-      (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize()))) {
+      (!device_context->device_res_manager_->AllocateMemory(device_tensor.get()))) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(strategy, *context, *device_context, node->fullname_with_scope(),
                                                 device_tensor->GetSize());
   }
@@ -145,7 +145,7 @@ void PrepareDataForValue(const ValuePtr &value, const KernelWithIndex &node_with
 
   device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
                                                      0);
-  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+  if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
     SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(GraphExecutionStrategy::kPipeline, *context, *device_context,
                                                 node->fullname_with_scope(), device_tensor->GetSize());
   }
@@ -667,7 +667,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
     UpdateRefCount(device_tensor.get(), true);
 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->DebugString(), device::AllocatorType::kConstantValue, 0);
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                   node->fullname_with_scope(), device_tensor->GetSize());
     }
@@ -710,7 +710,7 @@ void DataPrepareActor::PrepareDataForValueNode(const ValueNodePtr &node, const A
 
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(),
                                                        device::AllocatorType::kConstantValue, 0);
-    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get(), device_tensor->GetSize())) {
+    if (!device_context->device_res_manager_->AllocateMemory(device_tensor.get())) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *device_context,
                                                   node->fullname_with_scope(), device_tensor->GetSize());
     }
@@ -747,8 +747,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
     auto type = backend_node->isa<ValueNode>() ? device::AllocatorType::kConstantValue : device::AllocatorType::kWeight;
     device::DynamicMemAllocatorDebugInfo::SetDebugInfo(backend_node->fullname_with_scope(), type, 0);
     if ((another_device_tensor->GetPtr() == nullptr) &&
-        (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get(),
-                                                                      another_device_tensor->GetSize()))) {
+        (!another_device_context->device_res_manager_->AllocateMemory(another_device_tensor.get()))) {
       SET_OPCONTEXT_MEMORY_ALLOC_FAIL_BY_STRATEGY(real_strategy_, *context, *another_device_context,
                                                   backend_node->fullname_with_scope(),
                                                   another_device_tensor->GetSize());
