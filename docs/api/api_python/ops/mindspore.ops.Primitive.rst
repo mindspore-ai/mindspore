@@ -96,5 +96,6 @@ mindspore.ops.Primitive
         - **out_strategy** (tuple) - 描述算子输出的切分策略，仅针对某些算子，如MatMul。默认值：None。
 
     .. py:method:: update_parameter()
+        :property:
 
         判断此Primitive是否会更新参数的值。

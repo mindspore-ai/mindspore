@@ -27,7 +27,7 @@ mindspore.ops.MaxPool
     - **x** (Tensor) - shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
 
     **输出：**
-    
+
     Tensor，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。
 
     **异常：**

@@ -38,7 +38,7 @@ mindspore.ops.Conv3DTranspose
     - **pad** (Union(int, tuple[int])) - 在输入各维度两侧填充的数量。如果 `pad` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `pad` 。如果 `pad` 是6个整数的Tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `pad[0]` 、 `pad[1]` 、 `pad[2]` 、 `pad[3]` 、 `pad[4]` 和 `pad[5]` 。默认值：0。
     - **stride** (Union(int, tuple[int])) - 三维卷积核的移动步长。数据类型为整型或三个整型的Tuple。一个整数表示在深度、高度和宽度方向的移动步长均为该值。三个整数的Tuple分别表示在深度、高度和宽度方向的移动步长。默认值：1。
     - **dilation** (Union(int, tuple[int])) - 卷积核膨胀尺寸，指定应用卷积核的间隔。默认值: 1。
-    - **group** (int) - 将过滤器拆分为组。目前仅支持取值1。默认值: 1。
+    - **group** (int) - 将过滤器拆分为组。默认值: 1。目前仅支持取值1。
     - **output_padding** (Union(int, tuple[int])) - 为输出的各个维度添加额外长度。默认值: 0。
     - **data_format** (str) - 支持的数据模式。目前仅支持"NCDHW"。
 
@@ -57,7 +57,7 @@ mindspore.ops.Conv3DTranspose
     - **TypeError** - `in_channel` 、 `out_channel` 或 `group` 不是int。
     - **TypeError** - `kernel_size` 、 `stride` 、 `pad` 、 `dilation` 或 `output_padding` 既不是int也不是Tuple。
     - **ValueError** - `in_channel` 、 `out_channel` 、 `kernel_size` 、 `stride` 或 `dilation` 小于1。
-    - **ValueError** - `pad` 小于0.
+    - **ValueError** - `pad` 小于0。
     - **ValueError** - `pad_mode` 取值非"same"、"valid"或"pad"。
     - **ValueError** - `pad` 为长度不等于6的Tuple。
     - **ValueError** - `pad_mode` 未设定为"pad"且 `pad` 不等于(0, 0, 0, 0, 0, 0)。

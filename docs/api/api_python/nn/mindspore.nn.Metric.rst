@@ -38,7 +38,6 @@ mindspore.nn.Metric
         .. note::
             在继承该类自定义评估函数时，需要用装饰器 `mindspore.nn.rearrange_inputs` 修饰 `update` 方法，否则配置的 `indexes` 值不生效。
 
-
         **参数：**
 
         - **indexes** (List(int)) - logits和标签的目标顺序。

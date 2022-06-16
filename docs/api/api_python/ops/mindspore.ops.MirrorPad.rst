@@ -6,12 +6,12 @@ mindspore.ops.MirrorPad
     通过指定的填充模式和大小对输入Tensor进行填充。
 
     **参数：**
-    
+
     - **mode** (str) - 指定填充模式。可选值："REFLECT"和"SYMMETRIC"。
       默认值："REFLECT"。
 
     **输入：**
-    
+
     - **input_x** (Tensor) - shape: :math:`(N, *)` ，其中 :math:`*` 表示任何数量的附加维度。
     - **paddings** (Tensor) - shape为 :math:`(N, 2)` 的矩阵。N为输入Tensor的秩。int类型。
       对于输入的第 `D` 个维度，`paddings[D, 0]` 表示需在输入第 `D` 维头部填充的数量，`paddings[D, 1]` 表示需在输入第 `D` 维尾部填充的数量。
@@ -27,7 +27,7 @@ mindspore.ops.MirrorPad
       更直观的理解请参见下面的样例。
 
     **异常：**
-    
+
     - **TypeError** - `input_x` 或 `padings` 不是Tensor。
     - **TypeError** - `mode` 不是str。
     - **ValueError** - `paddings.size` 不等于2 * len(`input_x`)。

@@ -4,7 +4,7 @@
 .. py:class:: mindspore.ops.ApplyAdadelta
 
     根据Adadelta算法更新相关参数。
-     
+
     Adadelta算法，具体细节可参考论文 `ADADELTA: AN ADAPTIVE LEARNING RATE METHOD <https://arxiv.org/abs/1212.5701>`_ 。
 
     .. math::
@@ -21,7 +21,7 @@
 
     **输入：**
 
-    - **var** (Parameter) - 要更新的权重。任意维度，其数据类型为float32或float16。
+    - **var** (Parameter) - 要更新的权重。数据类型为float32或float16。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
     - **accum** (Parameter) - :math:`\accum` 要更新的累积，shape和数据类型与 `var` 相同。
     - **accum_update** (Parameter) - 更新公式中的 :math:`\accum_update` ，shape和数据类型与 `var` 相同。
     - **lr** (Union[Number, Tensor]) - :math:`\lr` 学习率，必须是Scalar。数据类型为float32或float16。
@@ -38,7 +38,7 @@
     - **accum_update** (Tensor) - 与 `accum_update` 相同的shape和数据类型。
 
     **异常：**
-    
+
     - **TypeError** - 如果 `var` 、 `accum` 、 `accum_update` 、 `lr` 、 `rho` 、 `epsilon` 或 `grad` 的数据类型既不是float16也不是float32。
     - **TypeError** - 如果 `accum_update` 、 `lr` 、 `rho` 或 `epsilon` 既不是数值型也不是Tensor。
     - **RuntimeError** - 如果 `var` 、 `accum` 、 `accum_update` 和 `grad` 不支持数据类型转换。

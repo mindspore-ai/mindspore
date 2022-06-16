@@ -46,7 +46,6 @@ mindspore.nn.MeanSurfaceDistance
 
         - **RuntimeError** - 如果没有先调用update方法。
 
-
     .. py:method:: update(*inputs)
 
         使用 `y_pred`、`y` 和 `label_idx` 更新内部评估结果。

@@ -27,7 +27,7 @@ class SparseToDense(Cell):
     before being passed to the OPS below.
 
     Inputs:
-        - **coo_tensor** (:class:`mindspore.COOTensor`): the sparse COOTensor to convert.
+        - **coo_tensor** (:class:`mindspore.COOTensor`) - the sparse COOTensor to convert.
 
     Outputs:
         Tensor, converted from sparse tensor.

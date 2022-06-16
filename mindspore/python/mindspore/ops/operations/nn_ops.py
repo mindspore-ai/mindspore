@@ -4440,9 +4440,9 @@ class Adam(Primitive):
         - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
           the data type value should be the same as `var`.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.9`
+          the data type value should be the same as `var`. The paper suggested value is :math:`0.9`.
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.999`
+          the data type value should be the same as `var`. The paper suggested value is :math:`0.999`.
         - **epsilon** (float) - Term added to the denominator to improve numerical stability.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
 

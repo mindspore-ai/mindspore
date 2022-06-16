@@ -40,7 +40,7 @@ mindspore.nn.OneHot
 
     **输入：**
 
-    **indices** (Tensor) - 输入索引，任意维度的Tensor，数据类型为int32或int64。
+    - **indices** (Tensor) - 输入索引，任意维度的Tensor，数据类型为int32或int64。
 
     **输出：**
 

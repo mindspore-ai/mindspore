@@ -29,4 +29,3 @@ mindspore.ops.SoftmaxCrossEntropyWithLogits
     - **TypeError** - `logits` 或  `labels` 的数据类型既不是float16也不是float32。
     - **TypeError** - `logits` 或  `labels` 不是Tensor。
     - **ValueError** - `logits` 的shape与 `labels` 的不同。
-    
