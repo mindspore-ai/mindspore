@@ -18,10 +18,11 @@ Testing HWC2CHW op in DE
 import numpy as np
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.transforms as data_trans
-import mindspore.dataset.vision as vision
+import mindspore.dataset.transforms.py_transforms as py_transforms
+import mindspore.dataset.vision.c_transforms as c_vision
+import mindspore.dataset.vision.py_transforms as py_vision
 from mindspore import log as logger
-from util import diff_mse, visualize_list, save_and_check_md5
+from ..dataset.util import diff_mse, visualize_list, save_and_check_md5
 
 GENERATE_GOLDEN = False
 
@@ -40,24 +41,24 @@ def test_hwc2chw_callable():
     assert img.shape == (50, 50, 3)
 
     # test one tensor
-    img1 = vision.HWC2CHW()(img)
+    img1 = c_vision.HWC2CHW()(img)
     assert img1.shape == (3, 50, 50)
 
     # test one tensor with 5 channels
     img2 = np.zeros([50, 50, 5])
     assert img2.shape == (50, 50, 5)
-    img3 = vision.HWC2CHW()(img2)
+    img3 = c_vision.HWC2CHW()(img2)
     assert img3.shape == (5, 50, 50)
 
     # test input multiple tensors
     with pytest.raises(RuntimeError) as info:
         imgs = [img, img]
-        _ = vision.HWC2CHW()(*imgs)
-    assert "The op is OneToOne, can only accept one tensor as input" in str(info.value)
+        _ = c_vision.HWC2CHW()(*imgs)
+    assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
-        _ = vision.HWC2CHW()(img, img)
-    assert "The op is OneToOne, can only accept one tensor as input" in str(info.value)
+        _ = c_vision.HWC2CHW()(img, img)
+    assert "The op is OneToOne, can only accept one tensor as input." in str(info.value)
 
 
 def test_hwc2chw_multi_channels():
@@ -76,7 +77,7 @@ def test_hwc2chw_multi_channels():
     input_data = np.array([raw_data])
     dataset = ds.NumpySlicesDataset(input_data, column_names=["col1"], shuffle=False)
 
-    hwc2chw = vision.HWC2CHW()
+    hwc2chw = c_vision.HWC2CHW()
     dataset = dataset.map(hwc2chw, input_columns=["col1"])
     for item in dataset.create_tuple_iterator(output_numpy=True):
         assert np.allclose(item[0], expect_output)
@@ -92,8 +93,8 @@ def test_hwc2chw(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    hwc2chw_op = vision.HWC2CHW()
+    decode_op = c_vision.Decode()
+    hwc2chw_op = c_vision.HWC2CHW()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
@@ -128,8 +129,8 @@ def test_hwc2chw_md5():
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    hwc2chw_op = vision.HWC2CHW()
+    decode_op = c_vision.Decode()
+    hwc2chw_op = c_vision.HWC2CHW()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
@@ -141,24 +142,24 @@ def test_hwc2chw_md5():
 def test_hwc2chw_comp(plot=False):
     """
     Feature: HWC2CHW op
-    Description: Test HWC2CHW between Python (using ToTensor) and Cpp image augmentation
+    Description: Test HWC2CHW between Python (using ToTensor) and C image augmentation
     Expectation: Image augmentations should be almost the same with mse < 0.001
     """
-    logger.info("Test HWC2CHW with C and Python ToTensor image augmentation comparison")
+    logger.info("Test HWC2CHW with c_transform and py_transform ToTensor comparison")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    decode_op = vision.Decode()
-    hwc2chw_op = vision.HWC2CHW()
+    decode_op = c_vision.Decode()
+    hwc2chw_op = c_vision.HWC2CHW()
     data1 = data1.map(operations=decode_op, input_columns=["image"])
     data1 = data1.map(operations=hwc2chw_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
     transforms = [
-        vision.Decode(True),
-        vision.ToTensor()]
-    transform = data_trans.Compose(transforms)
+        py_vision.Decode(),
+        py_vision.ToTensor()]
+    transform = py_transforms.Compose(transforms)
     data2 = data2.map(operations=transform, input_columns=["image"])
 
     image_c_transposed = []
@@ -168,13 +169,13 @@ def test_hwc2chw_comp(plot=False):
         c_image = item1["image"]
         py_image = (item2["image"] * 255).astype(np.uint8)
 
-        # Compare images between that applying C implementation and Python implementation image augmentations
+        # Compare images between that applying c_transform and py_transform
         mse = diff_mse(py_image, c_image)
         # Note: The images aren't exactly the same due to rounding error
         assert mse < 0.001
-    if plot:
         image_c_transposed.append(c_image.transpose(1, 2, 0))
         image_py_transposed.append(py_image.transpose(1, 2, 0))
+    if plot:
         visualize_list(image_c_transposed, image_py_transposed, visualize_mode=2)
 
 
@@ -188,15 +189,15 @@ def test_hwc2chw_comparison2(plot=False):
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    operations_list = [vision.Decode(to_pil=True),
-                       vision.ToPIL(),
+    operations_list = [py_vision.Decode(),
+                       py_vision.ToPIL(),
                        np.array,
-                       vision.HWC2CHW()]
+                       py_vision.HWC2CHW()]
     data1 = data1.map(operations=operations_list, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[vision.Decode(to_pil=True)], input_columns=["image"])
+    data2 = data2.map(operations=[py_vision.Decode()], input_columns=["image"])
 
     image_transposed = []
     image = []
@@ -218,22 +219,21 @@ def test_hwc2chw_comparison2(plot=False):
 def test_hwc2chw_mix(plot=False):
     """
     Feature: HWC2CHW op
-    Description: Test HWC2CHW C++ implementation in pipeline with mix of prior Python implementation ops
-        (and no Compose op)
+    Description: Test HWC2CHW C++ op in pipeline with mix of prior Python ops (and no Compose op)
     Expectation: Pipelines succeed with comparison mse=0
     """
     logger.info("Test HWC2CHW mix")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    operations_list = [vision.Decode(to_pil=True),
-                       vision.ToPIL(),
-                       vision.HWC2CHW()]
+    operations_list = [py_vision.Decode(),
+                       py_vision.ToPIL(),
+                       c_vision.HWC2CHW()]
     data1 = data1.map(operations=operations_list, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[vision.Decode(to_pil=True)], input_columns=["image"])
+    data2 = data2.map(operations=[py_vision.Decode()], input_columns=["image"])
 
     image_transposed = []
     image = []
@@ -255,23 +255,22 @@ def test_hwc2chw_mix(plot=False):
 def test_hwc2chw_mix_compose(plot=False):
     """
     Feature: HWC2CHW op
-    Description: Test HWC2CHW C++ implementation in pipeline with mix of prior Python implementation ops,
-        and with Compose op
+    Description: Test HWC2CHW C++ op in pipeline with mix of prior Python ops, with Compose op
     Expectation: Pipelines succeed with comparison mse=0
     """
     logger.info("Test HWC2CHW mix")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    operations_list = [vision.Decode(to_pil=True),
-                       vision.ToPIL(),
-                       vision.HWC2CHW()]
-    compose_op = data_trans.Compose(operations_list)
+    operations_list = [py_vision.Decode(),
+                       py_vision.ToPIL(),
+                       c_vision.HWC2CHW()]
+    compose_op = py_transforms.Compose(operations_list)
     data1 = data1.map(operations=compose_op, input_columns=["image"])
 
     # Second dataset
     data2 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-    data2 = data2.map(operations=[vision.Decode(to_pil=True)], input_columns=["image"])
+    data2 = data2.map(operations=[py_vision.Decode()], input_columns=["image"])
 
     image_transposed = []
     image = []
