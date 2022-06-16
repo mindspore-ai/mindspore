@@ -152,7 +152,6 @@ int ScatterNdUpdateCPUKernel::Run() {
   } else {
     out_tensor->FreeData();
     out_tensor->ResetRefCount();
-    in_tensor->allocator()->IncRefCount(in_tensor->data(), out_tensor->ref_count());
     out_tensor->set_data(in_tensor->data());
     out_tensor->set_own_data(in_tensor->own_data());
   }

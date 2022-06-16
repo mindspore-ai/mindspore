@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,11 +112,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual int MallocData(const AllocatorPtr allocator = nullptr);
 
-  // is_force: The reference-count of data is bound with that of tensor. However, when calling the interface,
-  // sometimes, we hope the data can be released anyway, e.g, "Op Reshape" the owner of the data is only the current
-  // tensor regardless of its reference-count. And sometimes, we hope the data can be released based on its
-  // reference-count, e.g, delete the tensor or call the class interface "DecRefCount".
-  virtual void FreeData(bool is_force = true);
+  virtual void FreeData();
 
   void *MutableData() override;
 
@@ -126,8 +122,17 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual void *data() const { return data_; }
 
-  // tensor will hold this data, and free this data in destructor
+  // note: in the case of that old_data is valid, set_data just releases the ownership of it but not frees it. Of
+  //       course, you can call FreeData before calling set_data to ensure the data can be freed by current tensor.
   void set_data(void *data) override {
+    if (this->data_ == data) {
+      return;
+    }
+    if (allocator_ != nullptr) {
+      allocator_->IncRefCount(data, 1);
+
+      allocator_->DecRefCount(this->data_, 1);
+    }
     this->data_ = data;
     this->own_data_ = true;
   }
@@ -143,20 +148,13 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual int init_ref_count() const { return static_cast<int>(this->init_ref_count_); }
 
-  virtual void set_ref_count(int ref_count) {
-    ref_count_ = ref_count;
-    if (allocator_ == nullptr) {
-      return;
-    }
-    allocator_->SetRefCount(data_, ref_count);
-    return;
-  }
+  virtual void set_ref_count(int ref_count) { ref_count_ = ref_count; }
 
   virtual void set_init_ref_count(int ref_count) { this->init_ref_count_ = ref_count; }
 
   virtual void ResetRefCount() { set_ref_count(static_cast<int>(this->init_ref_count_)); }
 
-  virtual void IncRefCount();
+  virtual void IncRefCount() { ++ref_count_; }
 
   virtual void DecRefCount();
 
