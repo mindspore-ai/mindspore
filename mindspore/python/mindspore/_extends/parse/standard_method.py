@@ -1482,13 +1482,6 @@ def repeat(x, repeats, axis=None):
     return P.Concat(axis)(repeated_subs)
 
 
-def celu(x, alpha=1.0):
-    r"""
-    Apply the Hard Shrink function for a tensor. Calculates the output according to the input elements.
-    """
-    return P.CeLU(alpha)(x)
-
-
 def hardshrink(x, lambd=0.5):
     r"""
     Apply the Hard Shrink function for a tensor. Calculates the output according to the input elements.
@@ -2083,11 +2076,11 @@ def float_floordiv(x, y):
     return floor(x / y)
 
 
-def cdist(x, y, p=2.0):
+def ceil(x):
     """
-    Computes batched the p-norm distance between each pair of the two collections of row vectors.
+    Rounds a tensor up to the closest integer element-wise.
     """
-    return F.cdist(x, y, p)
+    return F.ceil(x)
 
 
 #############

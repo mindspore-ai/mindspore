@@ -20,10 +20,12 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr size_t kCdistInputDimsMin = 2;
 abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   for (const auto &item : input_args) {
@@ -38,8 +40,22 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
                              << "', rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
                              << ", rank of input_y: " << y_size << ".";
   }
-  CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "Cdist");
-  int64_t dim_R = y_shape[y_size - 2];
+  if (x_size < kCdistInputDimsMin) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
+                             << kCdistInputDimsMin << ", but got rank of input: " << x_size << ".";
+  }
+
+  if (x_size > kCdistInputDimsMin) {
+    for (size_t i = 0; i < x_size - kCdistInputDimsMin; i++) {
+      if (x_shape[i] != y_shape[i]) {
+        MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                                 << "', the batch shape of 'x' must be the same as the shape of 'y', "
+                                    "but got 'x_shape["
+                                 << i << "]': " << x_shape[i] << " and 'y_shape[" << i << "]': " << y_shape[i];
+      }
+    }
+  }
+  int64_t dim_R = y_shape[y_size - kCdistInputDimsMin];
   auto out_shape = x_shape;
   out_shape.pop_back();
   out_shape.push_back(dim_R);

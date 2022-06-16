@@ -84,29 +84,6 @@ def test_celu_func(data_type):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize("data_type", [np.float32, np.float16])
-def test_celu_tensor(data_type):
-    """
-    Feature: Celu cpu kernel
-    Description: test the celu alpha = 1.0.
-    Expectation: match to np benchmark.
-    """
-    error = 1e-3
-    x = Tensor(np.array([-2.0, -1.0, 1.0, 2.0]).astype(data_type))
-    expect = np.array([-0.86468184, -0.6321212, 1., 2.]).astype(data_type)
-    context.set_context(mode=context.GRAPH_MODE)
-    output = x.celu(1.0)
-    print(output)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
-    context.set_context(mode=context.PYNATIVE_MODE)
-    output = x.celu(1.0)
-    print(output)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
 def test_celu_vmap():
     """
     Feature: celu cpu kernel.

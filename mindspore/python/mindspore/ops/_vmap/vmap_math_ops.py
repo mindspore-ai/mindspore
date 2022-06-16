@@ -89,6 +89,27 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+
+@vmap_rules_getters.register(P.Cdist)
+def get_cdist_vmap_rule(prim, axis_size):
+    """VmapRule for `cdist` operation."""
+    def vmap_rule(x_bdim, y_bdim):
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+
+        if x_dim is None and y_dim is None:
+            out = prim(x, y)
+            return (out, None)
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+
+        out = prim(x, y)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(math_ops.Lerp)
 def get_lerp_vamp_rule(prim, axis_size):
     """VmapRule for ternary operations with broadcasting, such as `Lerp` ."""

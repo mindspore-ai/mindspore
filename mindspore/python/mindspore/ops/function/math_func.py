@@ -64,6 +64,7 @@ def get_x_shape(x_shape):
 # Public Operation Functions.
 #####################################
 absolute = P.Abs()
+tensor_ceil = P.Ceil()
 tensor_add = P.Add()
 neg_tensor = P.Neg()
 tensor_sub = P.Sub()
@@ -348,6 +349,38 @@ def neg(x):
         [-1.  -2.   1.  -2.   0.   3.5]
     """
     return neg_tensor(x)
+
+
+def ceil(x):
+    r"""
+    Rounds a tensor up to the closest integer element-wise.
+
+    .. math::
+
+        out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
+
+    Args:
+        x (Tensor): The input tensor. It's element data type must be float16 or float32.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+
+    Returns:
+        Tensor, has the same shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = Tensor(np.array([1.1, 2.5, -1.5]), mindspore.float32)
+        >>> output = F.ceil(x)
+        >>> print(output)
+        [ 2.  3. -1.]
+    """
+    return tensor_ceil(x)
 
 
 def round(x):
@@ -2954,9 +2987,10 @@ def cdist(x, y, p=2.0):
         ``Ascend`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops import functional as F
         >>> x = Tensor(np.array([[[1.0, 1.0], [2.0, 2.0]]]).astype(np.float32))
         >>> y = Tensor(np.array([[[3.0, 3.0], [3.0, 3.0]]]).astype(np.float32))
-        >>> output = ops.cdist(x, y, 2.0)
+        >>> output = F.cdist(x, y, 2.0)
         >>> print(output)
         [[[2.8284273 2.8284273]
           [1.4142137 1.4142137]]]
@@ -3808,6 +3842,7 @@ __all__ = [
     'erf',
     'erfc',
     'cdist',
+    'ceil',
     'bernoulli',
     'bessel_j0',
     'bessel_j1',
