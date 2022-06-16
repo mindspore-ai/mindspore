@@ -832,12 +832,7 @@ class Tensor(Tensor_):
         """
         Ger product of `self` and `x`. Calculate the outer product of two arrays. If `self` is a 1D
         Tensor of shape :math:`(m,)` and `x` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a Tensor of
-        shape :math:`(m * n)`. If `self` is a Tensor of shape :math:`(*B, m)` and `x` is a Tensor of shape
-        :math:`(*B, n)`, then `output` must be a Tensor of shape :math:`(*B, m, n)`.
-
-        Note:
-            In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D
-            input Tensors.
+        shape :math:`(m * n)`.
 
         Refer to :func:`mindspore.ops.ger` for more detail.
 
@@ -845,8 +840,8 @@ class Tensor(Tensor_):
             x (Tensor): input Tensor, with dtype of float16 or float32.
 
         Returns:
-            Tensor, output matrix with the same dtype as inputs.With `self` shape :math:`(*B, m)` and
-            `x` shape of :math:`(*B, n)`, the `output` has shape :math:`(*B, m, n)`.
+            Tensor, output matrix with the same dtype as inputs.With `self` shape :math:`(m,)` and
+            `x` shape of :math:`(n,)`, the `output` has shape :math:`(m, n)`.
 
         Supported Platforms:
             ``Ascend`` ``CPU``
