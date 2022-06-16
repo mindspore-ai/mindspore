@@ -40,7 +40,7 @@ TypeId ArgMin::get_output_type() const {
   return type_ptr->type_id();
 }
 
-void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape, const int64_t axis_value) {
+void InferImplReduceFuncCalShape(const ShapeVector &x_shape, const int64_t axis_value, ShapeVector *shape) {
   (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
   (void)shape->erase(shape->begin() + axis_value);
 }
@@ -52,32 +52,32 @@ int64_t InferImplArgMinFuncCheckAxis(const PrimitivePtr &prim, const std::vector
   if (!axis_ptr->isa<Int64Imm>()) {
     MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be int.";
   }
-  int64_t axis_ = GetValue<int64_t>(axis_ptr);
+  int64_t data_axis = GetValue<int64_t>(axis_ptr);
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Argmin", input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto input_shape = shape_ptr->shape();
   auto dim = input_shape.size();
 
-  int64_t dim_ = static_cast<int64_t>(dim);
-  if (axis_ < -dim_ || axis_ >= dim_) {
-    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
-                             << "). But got 'axis' = " << axis_ << ".";
+  int64_t data_dim = static_cast<int64_t>(dim);
+  if (data_axis < -data_dim || data_axis >= data_dim) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be in [" << -data_dim << ", " << data_dim
+                             << "). But got 'axis' = " << data_axis << ".";
   }
-  int64_t ret_axis = axis_;
-  if (axis_ >= -dim_ && axis_ < 0) {
-    ret_axis += dim_;
+  int64_t ret_axis = data_axis;
+  if (data_axis >= -data_dim && data_axis < 0) {
+    ret_axis += data_dim;
   }
   return ret_axis;
 }
 
 abstract::ShapePtr ArgMinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ArgMin", input_args, 0);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Argmin", input_args, 0);
   MS_EXCEPTION_IF_NULL(shape_ptr);
   auto input_shape = shape_ptr->shape();
   ShapeVector out_shape = {};
   int64_t axis_value = InferImplArgMinFuncCheckAxis(primitive, input_args);
-  InferImplReduceFuncCalShape(&out_shape, input_shape, axis_value);
+  InferImplReduceFuncCalShape(input_shape, axis_value, &out_shape);
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
@@ -86,7 +86,8 @@ TypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
     MS_LOG(EXCEPTION) << "For '" << prim->name()
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kUInt8, kUInt16, kUInt32,
+                                         kUInt64,  kInt8,    kInt16,   kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
   const std::set<TypePtr> out_valid_types = {kInt32, kInt64};
   ValuePtr out_type_value = prim->GetAttr(kOutputType);
