@@ -7795,3 +7795,73 @@ class SegmentSum(Primitive):
         """Initialize SegmentSum"""
         self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['input_x', 'segment_ids'], outputs=['output'])
+
+
+class FillDiagonal(Primitive):
+    """
+    Fill the main diagonal of a tensor that has at least 2-dimensions.
+    When dims>2, all dimensions of input must be of equal length.
+    This function modifies the input tensor in-place, and returns the input tensor.
+
+    Args:
+        fill_value (float): The fill value.
+        wrap (bool): the diagonal ‘wrapped’ after N columns for tall matrices. Default: False.
+
+    Inputs:
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        The data type must be float32, int32 or int64.
+
+    Outputs:
+        - **y** (Tensor) - Tensor, has the same shape and data type as the input `x`.
+
+    Raises:
+        TypeError: If data type of `input_x` is not one of the following: float32, int32, int64.
+        ValueError: If the dimension of `input_x` is not greater than 1.
+        ValueError: If the size of each dimension is not equal, when the dimension is greater than 2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
+        >>> fill_value = 9.9
+        >>> fill_diagonal = FillDiagonal(fill_value)
+        >>> y = fill_diagonal(x)
+        >>> print(y)
+        [[9.9 2.  3. ]
+         [4.  9.9 6. ]
+         [7.  8.  9.9]]
+        >>> x = Tensor(np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [5, 5, 5]]).astype(np.int32))
+        >>> fill_value = 9.0
+        >>> fill_diagonal = FillDiagonal(fill_value)
+        >>> y = fill_diagonal(x)
+        >>> print(y)
+        [[9 0 0]
+         [1 9 1]
+         [2 2 9]
+         [3 3 3]
+         [4 4 4]
+         [5 5 5]]
+        >>> x = Tensor(np.array([[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3],
+        ...                      [4, 4, 4], [5, 5, 5], [6, 6, 6]]).astype(np.int64))
+        >>> fill_value = 9.0
+        >>> wrap = True
+        >>> fill_diagonal = FillDiagonal(fill_value, wrap)
+        >>> y = fill_diagonal(x)
+        >>> print(y)
+        [[9 0 0]
+         [1 9 1]
+         [2 2 9]
+         [3 3 3]
+         [9 4 4]
+         [5 9 5]
+         [6 6 9]]
+    """
+
+    @prim_attr_register
+    def __init__(self, fill_value, wrap=False):
+        """Initialize FillDiagonal"""
+        validator.check_value_type('fill_value', fill_value, [float], self.name)
+        self.fill_value = fill_value
+        validator.check_value_type('wrap', wrap, [bool], self.name)
+        self.init_prim_io_names(inputs=['input_x'], outputs=['y'])

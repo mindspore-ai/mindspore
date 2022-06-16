@@ -38,6 +38,7 @@ from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations import nn_ops as nps
+from mindspore.ops.operations.array_ops import FillDiagonal
 from mindspore.ops.operations.array_ops import Tril
 from mindspore.ops.operations.array_ops import CheckNumerics
 from mindspore.ops.operations.array_ops import SegmentMax
@@ -2774,6 +2775,11 @@ test_case_nn_ops = [
 ]
 
 test_case_array_ops = [
+    ('FillDiagonal', {
+        'block': FillDiagonal(fill_value=9.9),
+        'desc_inputs': [[8, 8]],
+        'desc_bprop': [[8, 8]],
+        'skip': ['backward']}),
     ('UnravelIndex', {
         'block': UnravelIndex(),
         'desc_inputs': [Tensor(np.array([5, 5]).astype(np.int64)), Tensor(np.array([3, 3]).astype(np.int64))],
