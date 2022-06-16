@@ -132,10 +132,6 @@ int DeConvolutionWinogradCPUKernel::InitParameter() {
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit &unit = deconv_param_->compute_units_[i];
     if (unit.use_winograd_) {
-      if (unit.winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
-        MS_LOG(ERROR) << "unit.winograd_.kh_ is larger than DECONV_WINOGRAD_BUFFER_COUNT, " << unit.winograd_.kh_;
-        return RET_ERROR;
-      }
       if (!deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_) {
         deconv_param_->a_buffer_[unit.winograd_.kh_].buf_init_ = true;
 
@@ -264,15 +260,17 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
       unit.h_size_ = h_size;
       unit.w_size_ = w_size;
 
+      unit.use_winograd_ = false;
       if (h_size == w_size) {
-        unit.use_winograd_ = true;
-
         unit.winograd_.k_ = unit.h_size_;
         unit.winograd_.i_ = DECONV_WINOGRAD_DEFAULT_UNIT;
         unit.winograd_.o_ = DECONV_WINOGRAD_DEFAULT_UNIT + unit.h_size_ - 1;
         unit.winograd_.kh_ = unit.h_size_ + DECONV_WINOGRAD_DEFAULT_UNIT - 1;
         unit.winograd_.kw_ = unit.w_size_ + DECONV_WINOGRAD_DEFAULT_UNIT - 1;
-
+        unit.use_winograd_ =
+          unit.winograd_.kh_ < DECONV_WINOGRAD_BUFFER_COUNT && unit.winograd_.kw_ < DECONV_WINOGRAD_BUFFER_COUNT;
+      }
+      if (unit.use_winograd_) {
         unit.winograd_.b_buffer_ = nullptr;
         unit.weight_ = malloc(unit.winograd_.kh_ * unit.winograd_.kw_ * deconv_param_->oc_up_ * deconv_param_->ic_up_ *
                               sizeof(float));
@@ -281,7 +279,6 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
           return RET_NULL_PTR;
         }
       } else {
-        unit.use_winograd_ = false;
         unit.weight_ = malloc(h_size * w_size * deconv_param_->ic_up_ * deconv_param_->oc_up_ * sizeof(float));
         if (unit.weight_ == nullptr) {
           MS_LOG(ERROR) << "weight_ error!";
