@@ -17,22 +17,7 @@
 #include <math.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/layer_norm_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/layer_norm_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/layer_norm_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/layer_norm_fp32_neon.h"
-#endif
+#include "nnacl/layer_norm_fp32_simd.h"
 
 int LayerNormMeanAndSquare(const float *src, int num, float *mean, float *variance) {
   if (num <= 0) {

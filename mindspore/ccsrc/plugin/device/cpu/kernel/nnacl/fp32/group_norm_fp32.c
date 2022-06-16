@@ -19,22 +19,7 @@
 #include "nnacl/group_norm_parameter.h"
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/group_norm_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/group_norm_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/group_norm_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/group_norm_fp32_neon.h"
-#endif
+#include "nnacl/group_norm_fp32_simd.h"
 
 static void GroupNormFp32MeanVar(const float *input, float *run_mean, float *run_var, int completed_group,
                                  int cur_groups, const GroupNormParameter *param);

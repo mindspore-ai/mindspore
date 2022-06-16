@@ -9,6 +9,16 @@ file(GLOB SIMD_CONFIG_HEADER
     ${NNACL_DIR}/base/*_simd.h.in
     ${NNACL_DIR}/fp32/*_simd.h.in
 )
+function(generate_simd_header_code)
+    foreach(simd_config_file ${SIMD_CONFIG_HEADER})
+        string(REGEX MATCHALL "[0-9A-Za-z_]*_simd.h.in" tmp1 ${simd_config_file})
+        string(REGEX REPLACE "_simd.h.in" "_${SIMD_INSTRUCTION_LOWER}.h" tmp2 ${tmp1})
+        string(REGEX REPLACE "_simd.h.in" "" tmp3 ${tmp1})
+        string(TOLOWER ${tmp3} OP_NAME_LOWER)
+        string(TOUPPER ${tmp3} OP_NAME_UPPER)
+        configure_file(${NNACL_DIR}/op_simd_header_file.h.in ${NNACL_SIMD_DIR}/${tmp3}_simd.h)
+    endforeach()
+endfunction()
 
 function(generate_simd_code SIMD_INSTRUCTION SIMD_BLOCK_NUM SIMD_TARGET)
     string(TOLOWER ${SIMD_INSTRUCTION} SIMD_INSTRUCTION_LOWER)
@@ -38,6 +48,7 @@ generate_simd_code(NEON 4 \"\")
 generate_simd_code(SSE 4 \"sse4.1\")
 generate_simd_code(AVX 8 "\"avx\", \"avx2\"")
 generate_simd_code(AVX512 16 \"avx512f\")
+generate_simd_header_code()
 
 if(ENABLE_CPU)
     set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")

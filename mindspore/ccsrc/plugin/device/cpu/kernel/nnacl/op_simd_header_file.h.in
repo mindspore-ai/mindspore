@@ -13,26 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_NNACL_@OP_NAME_UPPER@_SIMD_H_
+#define MINDSPORE_NNACL_@OP_NAME_UPPER@_SIMD_H_
 
-#include "nnacl/base/cast_base.h"
-#include "nnacl/cast_base_simd.h"
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/avx512/@OP_NAME_LOWER@_avx512.h"
+#endif
 
-void Int32ToFloat32(const int32_t *input, float *output, int number) {
-  int index = 0;
+#ifdef ENABLE_AVX
+#include "nnacl/avx/@OP_NAME_LOWER@_avx.h"
+#endif
 
-  SIMD_RUN_NO_SCALAR(Int32ToFloat32, index, input, output, number);
+#ifdef ENABLE_SSE
+#include "nnacl/sse/@OP_NAME_LOWER@_sse.h"
+#endif
 
-  for (; index < number; ++index) {
-    output[index] = (float)input[index];
-  }
-}
+#ifdef ENABLE_ARM
+#include "nnacl/neon/@OP_NAME_LOWER@_neon.h"
+#endif
 
-void Float32ToInt32(const float *input, int32_t *output, int number) {
-  int index = 0;
-
-  SIMD_RUN_X86_NO_SCALAR(Float32ToInt32, index, input, output, number);
-
-  for (; index < number; ++index) {
-    output[index] = (int32_t)input[index];
-  }
-}
+#endif

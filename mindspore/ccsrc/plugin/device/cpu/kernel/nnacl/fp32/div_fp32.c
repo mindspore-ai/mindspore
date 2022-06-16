@@ -17,22 +17,7 @@
 #include "nnacl/fp32/div_fp32.h"
 #include <math.h>
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/div_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/div_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/div_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/div_fp32_neon.h"
-#endif
+#include "nnacl/div_fp32_simd.h"
 
 int ElementOptDiv(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
   int index = 0;

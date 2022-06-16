@@ -16,22 +16,7 @@
 
 #include "nnacl/fp32/add_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/add_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/add_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/add_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/add_fp32_neon.h"
-#endif
+#include "nnacl/add_fp32_simd.h"
 
 int ElementOptAdd(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param) {
   int index = 0;

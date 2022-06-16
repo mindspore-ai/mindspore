@@ -18,23 +18,7 @@
 #include <float.h>
 #include "nnacl/errorcode.h"
 #include "nnacl/common_func.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/reduce_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/reduce_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/reduce_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/reduce_fp32_neon.h"
-#endif
-
+#include "nnacl/reduce_fp32_simd.h"
 #ifdef ENABLE_NNACL_INFER_SHAPE
 #include "nnacl/reduce_parameter.h"
 #endif

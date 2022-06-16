@@ -17,22 +17,7 @@
 #include <string.h>
 #include <math.h>
 #include "nnacl/fp32/arithmetic_self_fp32.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
-#ifdef ENABLE_AVX512
-#include "nnacl/avx512/arithmetic_self_fp32_avx512.h"
-#endif
-
-#ifdef ENABLE_AVX
-#include "nnacl/avx/arithmetic_self_fp32_avx.h"
-#endif
-
-#ifdef ENABLE_SSE
-#include "nnacl/sse/arithmetic_self_fp32_sse.h"
-#endif
-
-#ifdef ENABLE_ARM
-#include "nnacl/neon/arithmetic_self_fp32_neon.h"
-#endif
+#include "nnacl/arithmetic_self_fp32_simd.h"
 
 int ElementAbs(const float *input, float *output, const int element_size) {
   int i = 0;
