@@ -124,13 +124,18 @@ CUDA_LIB_EXPORT void MaskedSelectGrad(T *input_grad_ptr, const bool *mask_ptr, s
   thrust::inclusive_scan(device, thrust_index_ptr, thrust_index_ptr + broadcast_size, thrust_index_ptr);
 
   // Extract the first index to appear and transform into output index
-  MaskedSelectGradKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(input_broadcast_grad_ptr,
-                                                                                      index_ptr, output_grad_ptr,
-                                                                                      broadcast_size);
-
-  GetResult<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(
-    i[0], i[1], i[2], i[3], i[4], i[5], i[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], input_grad_ptr,
-    input_broadcast_grad_ptr);
+  if (input_broadcast_grad_ptr != nullptr) {
+    MaskedSelectGradKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(input_broadcast_grad_ptr,
+                                                                                        index_ptr, output_grad_ptr,
+                                                                                        broadcast_size);
+    GetResult<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(
+      i[0], i[1], i[2], i[3], i[4], i[5], i[6], o[0], o[1], o[2], o[3], o[4], o[5], o[6], input_grad_ptr,
+      input_broadcast_grad_ptr);
+  } else {
+    MaskedSelectGradKernel<<<GET_BLOCKS(broadcast_size), GET_THREADS, 0, cuda_stream>>>(input_grad_ptr,
+                                                                                        index_ptr, output_grad_ptr,
+                                                                                        broadcast_size);
+  }
 }
 
 template CUDA_LIB_EXPORT void MaskedSelectGrad<uint8_t>(uint8_t *input_grad_ptr,
