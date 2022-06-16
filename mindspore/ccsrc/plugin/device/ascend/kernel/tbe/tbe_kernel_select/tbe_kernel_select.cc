@@ -68,7 +68,9 @@ bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node) {
 }
 
 TbeKernelSelect::TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list)
-    : cnode_ptr_(std::move(kernel_node)), kernel_info_list_(kernel_info_list) {}
+    : cnode_ptr_(std::move(kernel_node)), kernel_info_list_(kernel_info_list) {
+  check_cnode = CheckCNode();
+}
 
 bool TbeKernelSelect::CheckCNode() {
   MS_EXCEPTION_IF_NULL(cnode_ptr_);
@@ -82,15 +84,15 @@ bool TbeKernelSelect::CheckCNode() {
     MS_LOG(INFO) << "Warning: node(" << full_name_ << ") is not supported by tbe ai_core.";
     return false;
   }
+  GetKernelHashName();
   return true;
 }
 
 bool TbeKernelSelect::CheckIsKernelInfoEmpty() {
-  if (!CheckCNode()) {
+  if (!check_cnode) {
     return true;
   }
 
-  auto kernel_hash_name = GetKernelHashName();
   auto iter = select_cache_.find(kernel_hash_name);
   if (iter == select_cache_.end()) {
     TbeMetadataInfoEx();
@@ -101,11 +103,10 @@ bool TbeKernelSelect::CheckIsKernelInfoEmpty() {
 }
 
 bool TbeKernelSelect::FindKernelInfo(const KernelBuildInfoPtr &select_kernel_build_info) {
-  if (!CheckCNode()) {
+  if (!check_cnode) {
     return false;
   }
 
-  auto kernel_hash_name = GetKernelHashName();
   auto iter = select_cache_.find(kernel_hash_name);
   if (iter == select_cache_.end()) {
     TbeMetadataInfoEx();
@@ -127,21 +128,19 @@ bool TbeKernelSelect::FindKernelInfo(const KernelBuildInfoPtr &select_kernel_bui
   return false;
 }
 
-std::string TbeKernelSelect::GetKernelHashName() {
-  nlohmann::json kernel_json;
-  std::string kernel_hash_name;
+void TbeKernelSelect::GetKernelHashName() {
   auto json_creator = std::make_shared<SelectTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
-  bool ret = json_creator->GenNodeHash(cnode_ptr_, &kernel_json);
+  bool ret = json_creator->GenJson(cnode_ptr_, &kernel_json);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Gen node hash failed. [" << cnode_ptr_->fullname_with_scope() << "]";
   }
   kernel_hash_name = json_creator->GetJsonName();
-  return kernel_hash_name;
+  return;
 }
 
 void TbeKernelSelect::TbeMetadataInfoEx() {
-  if (!CheckCNode()) {
+  if (!check_cnode) {
     return;
   }
 
@@ -151,7 +150,6 @@ void TbeKernelSelect::TbeMetadataInfoEx() {
   // if op pattern is FormatAgnostic, can't use select cache
   bool skip_cache = (op_info_ptr->op_pattern() == kFormatAgnosticPattern);
 
-  auto kernel_hash_name = GetKernelHashName();
   auto iter = select_cache_.find(kernel_hash_name);
   if (iter != select_cache_.end() && !skip_cache) {
     for (auto &cache_info : iter->second) {
@@ -369,7 +367,8 @@ bool TbeKernelSelect::TbeCheckSupported(const KernelBuildInfoIter &kernel_build_
   auto kernel_build_info_tmp = AnfAlgo::GetSelectKernelBuildInfo(cnode_ptr_);
   AnfAlgo::SetSelectKernelBuildInfo(*kernel_build_info_iter, cnode_ptr_.get());
   auto &build_manager = kernel::ascend::TbeKernelCompileManager::GetInstance();
-  auto ret = HostCheck::CheckValidDeviceShape(cnode_ptr_) && build_manager.TbeOpCheckSupported(cnode_ptr_);
+  auto ret =
+    HostCheck::CheckValidDeviceShape(cnode_ptr_) && build_manager.TbeOpCheckSupported(cnode_ptr_, &kernel_json);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_tmp, cnode_ptr_.get());
   return ret;
 }

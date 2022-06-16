@@ -72,7 +72,7 @@ class TbeKernelCompileManager {
   void TbeFinalize();
   void TbeInitialize();
   // check support
-  bool TbeOpCheckSupported(const CNodePtr &node);
+  bool TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json);
   // kernel select
   std::string TbeOpSelectFormat(const CNodePtr &node);
   // pre build

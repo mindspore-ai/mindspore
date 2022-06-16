@@ -20,7 +20,9 @@ namespace mindspore {
 namespace kernel {
 namespace ascend {
 std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) { return std::string(); }
-bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node) { return true; }
+bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json) {
+  return true;
+}
 TbeKernelCompileManager::~TbeKernelCompileManager() {}
 bool TbeKernelCompileManager::tbe_init_flag_ = true;
 

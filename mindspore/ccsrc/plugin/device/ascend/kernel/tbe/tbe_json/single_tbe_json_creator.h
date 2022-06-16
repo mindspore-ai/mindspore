@@ -25,13 +25,12 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
   SingleTbeJsonCreator() = default;
   virtual ~SingleTbeJsonCreator() = default;
   bool GenJson(const AnfNodePtr &anf_node, nlohmann::json *kernel_json) override;
-  bool GenNodeHash(const AnfNodePtr &anf_node, nlohmann::json *kernel_json);
+  bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  protected:
   bool GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);
   void GenDataJson(const AnfNodePtr &anf_node, const nlohmann::json &compute_json,
                    std::vector<nlohmann::json> *op_list_json);
-  bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   virtual void GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc);
   bool AssignInputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &inputs_desc,
                         const std::vector<size_t> &inputs_tensor_num, const std::vector<OpIOInfoPtr> &inputs_ptr,

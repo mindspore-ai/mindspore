@@ -25,6 +25,7 @@
 #include <unordered_set>
 #include <vector>
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_creator.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/fusion_tbe_json_creator.h"
 #include "kernel/common_utils.h"
@@ -803,21 +804,23 @@ std::string TbeKernelCompileManager::TbeOpSelectFormat(const CNodePtr &node) {
   return ParseSelectAndCheckResult(json_ret, node);
 }
 
-bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node) {
+bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann::json *kernel_json) {
   MS_EXCEPTION_IF_NULL(node);
   auto full_name = node->fullname_with_scope();
   MS_LOG(DEBUG) << "Check supported for op [" << full_name << "]";
   auto json_creator = std::make_shared<CheckTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
-  nlohmann::json kernel_info;
-  nlohmann::json check_json;
-  if (!json_creator->GenJson(node, &kernel_info)) {
-    MS_LOG(EXCEPTION) << "Gen check json failed.[" << full_name << "]" << trace::DumpSourceLines(node);
+  auto &compute_json = (*kernel_json)[kJOpList].back();
+  auto inputs_json_tmp = compute_json[kJInputDesc];
+  if (!json_creator->GenInputsJson(node, &compute_json)) {
+    MS_LOG(ERROR) << "update inputs json failed, node full name:" << node->fullname_with_scope();
   }
-  JsonAssemble(kCheckSupport, kernel_info, &check_json);
+  nlohmann::json check_json;
+  JsonAssemble(kCheckSupport, *kernel_json, &check_json);
   auto check_ret = DispatchCompileTask(check_json);
   auto json_ret = TurnStrToJson(check_ret);
   std::string check_info = ParseSelectAndCheckResult(json_ret, node);
+  compute_json[kJInputDesc] = inputs_json_tmp;
   return check_info == kFullySupported;
 }
 

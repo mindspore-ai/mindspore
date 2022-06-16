@@ -68,7 +68,7 @@ class TbeKernelSelect {
                                 const std::vector<std::string> &support_format, OpIOInfo *op_io_info_new);
   static std::vector<std::string> SplitStrToVec(const std::string &op_select_json_item);
   std::string OpSelectFormat();
-  std::string GetKernelHashName();
+  void GetKernelHashName();
   bool CheckCNode();
 
   static void PrintSupportedFormat(const SupportFormat &support_format);
@@ -77,6 +77,9 @@ class TbeKernelSelect {
   std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list_;
   std::string node_name_;
   std::string full_name_;
+  nlohmann::json kernel_json;
+  std::string kernel_hash_name;
+  bool check_cnode;
   static mindspore::HashMap<std::string, std::vector<std::shared_ptr<KernelBuildInfo>>> select_cache_;
 };
 }  // namespace kernel

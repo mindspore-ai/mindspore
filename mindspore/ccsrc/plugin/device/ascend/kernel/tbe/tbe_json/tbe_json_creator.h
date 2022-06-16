@@ -70,10 +70,10 @@ class TbeJsonCreator {
   virtual bool GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) { return false; }
   std::string GetJsonName() { return json_name_; }
   size_t GetJsonHash() const { return json_hash_; }
+  virtual bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
 
  protected:
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
-  virtual bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
   virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
   void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
