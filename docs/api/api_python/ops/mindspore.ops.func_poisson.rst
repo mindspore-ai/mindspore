@@ -1,7 +1,7 @@
 ﻿mindspore.ops.poisson
 =====================
 
-.. py:class:: mindspore.ops.poisson(shape, mean, seed=None)
+.. py:function:: mindspore.ops.poisson(shape, mean, seed=None)
 
     根据泊松随机数分布生成随机数。
 

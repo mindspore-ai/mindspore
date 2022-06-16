@@ -1,7 +1,7 @@
 mindspore.ops.bessel_j1
 =======================
 
-.. py:class:: mindspore.ops.bessel_j1()
+.. py:function:: mindspore.ops.bessel_j1()
 
     逐元素计算并返回输入Tensor的Bessel j1函数值
 

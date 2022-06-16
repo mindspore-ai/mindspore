@@ -283,6 +283,17 @@ mindspore.Tensor
 
         复制的Tensor。
 
+    .. py:method:: cosh()
+
+        逐元素计算双曲余弦值。
+
+        .. math::
+            out_i = cosh(x_i)
+
+        **返回：**
+
+        Tensor。
+
     .. py:method:: cumsum(axis=None, dtype=None)
 
         返回指定轴方向上元素的累加值。
@@ -503,10 +514,10 @@ mindspore.Tensor
     
     .. py:method:: gather(input_indices, axis)
 
-        返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为`input_params`。
+        返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。
         .. note::
-            1. input_indices 的值必须在`[0, input_params.shape[axis])`的范围内，结果未定义超出范围。
-            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`类型。
+            1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
+            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
 
         **参数：**
 
@@ -519,8 +530,8 @@ mindspore.Tensor
 
         **异常：**
 
-        - **TypeError** - 如果`axis`不是一个整数。
-        - **TypeError** - 如果`input_indices`不是一个整数类型的Tensor。
+        - **TypeError** - 如果 `axis` 不是一个整数。
+        - **TypeError** - 如果 `input_indices` 不是一个整数类型的Tensor。
     
     .. py:method:: ger(x)
 
@@ -1258,17 +1269,6 @@ mindspore.Tensor
     .. py:method:: tan()
 
         返回每个元素的正切值。
-
-        **返回：**
-
-        Tensor。
-
-    .. py:method:: cosh()
-
-        逐元素计算双曲余弦值。
-
-        .. math::
-            out_i = cosh(x_i)
 
         **返回：**
 

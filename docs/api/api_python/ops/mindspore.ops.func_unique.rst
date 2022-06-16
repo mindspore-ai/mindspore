@@ -1,7 +1,7 @@
 mindspore.ops.unique
 ====================
 
-.. py:class:: mindspore.ops.unique(x)
+.. py:function:: mindspore.ops.unique(x)
 
     对输入Tensor中元素去重，并返回一个索引Tensor，包含输入Tensor中的元素在输出Tensor中的索引。
 

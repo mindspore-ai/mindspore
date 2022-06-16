@@ -1,7 +1,7 @@
 mindspore.conver_model
 ======================
 
-.. py:class:: mindspore.convert_model(mindir_file, convert_file, file_format)
+.. py:function:: mindspore.convert_model(mindir_file, convert_file, file_format)
 
     将MindIR模型转化为其他格式的模型文件。当前版本仅支持转化成ONNX模型。
 

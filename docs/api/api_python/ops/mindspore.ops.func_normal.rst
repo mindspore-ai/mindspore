@@ -1,7 +1,7 @@
 ﻿mindspore.ops.normal
 ====================
 
-.. py:class:: mindspore.ops.normal(shape, mean, stddev, seed=None)
+.. py:function:: mindspore.ops.normal(shape, mean, stddev, seed=None)
 
     根据正态（高斯）随机数分布生成随机数。
 

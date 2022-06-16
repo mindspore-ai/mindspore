@@ -32,7 +32,7 @@ mindspore.communication
     - **TypeError** – 参数 `backend_name` 不是字符串。
     - **RuntimeError** – 1）硬件设备类型无效；2）后台服务无效；3）分布式计算初始化失败；4）未设置环境变量 `RANK_ID` 或 `MINDSPORE_HCCL_CONFIG_PATH` 的情况下初始化HCCL服务。
 
-.. py:class:: mindspore.communication.release()
+.. py:function:: mindspore.communication.release()
 
     释放分布式资源，例如 `HCCL` 或 `NCCL` 服务。
 
@@ -42,7 +42,7 @@ mindspore.communication
 
     - **RuntimeError** - 在释放分布式资源失败时抛出。
 
-.. py:class:: mindspore.communication.get_rank(group=GlobalComm.WORLD_COMM_GROUP)
+.. py:function:: mindspore.communication.get_rank(group=GlobalComm.WORLD_COMM_GROUP)
 
     在指定通信组中获取当前的设备序号。
 
@@ -62,7 +62,7 @@ mindspore.communication
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
 
-.. py:class:: mindspore.communication.get_group_size(group=GlobalComm.WORLD_COMM_GROUP)
+.. py:function:: mindspore.communication.get_group_size(group=GlobalComm.WORLD_COMM_GROUP)
 
     获取指定通信组实例的rank_size。
 
@@ -82,7 +82,7 @@ mindspore.communication
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
 
-.. py:class:: mindspore.communication.get_world_rank_from_group_rank(group, group_rank_id)
+.. py:function:: mindspore.communication.get_world_rank_from_group_rank(group, group_rank_id)
 
     由指定通信组中的设备序号获取通信集群中的全局设备序号。
 
@@ -106,7 +106,7 @@ mindspore.communication
     - **ValueError** – 参数 `group` 是 `hccl_world_group` 或后台不可用。
     - **RuntimeError** – `HCCL` 或 `NCCL` 服务不可用，以及使用CPU版本的MindSpore。
 
-.. py:class:: mindspore.communication.get_group_rank_from_world_rank(world_rank_id, group)
+.. py:function:: mindspore.communication.get_group_rank_from_world_rank(world_rank_id, group)
 
     由通信集群中的全局设备序号获取指定用户通信组中的rank ID。
 
@@ -130,7 +130,7 @@ mindspore.communication
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用，以及使用GPU版本的MindSpore时抛出。
 
-.. py:class:: mindspore.communication.create_group(group, rank_ids)
+.. py:function:: mindspore.communication.create_group(group, rank_ids)
 
     创建用户自定义的通信组实例。
 
@@ -151,7 +151,7 @@ mindspore.communication
     - **ValueError** – 列表rank_ids的长度小于1，或列表rank_ids内有重复数据，以及后台无效。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用，以及使用CPU版本的MindSpore。
 
-.. py:class:: mindspore.communication.get_local_rank(group=GlobalComm.WORLD_COMM_GROUP)
+.. py:function:: mindspore.communication.get_local_rank(group=GlobalComm.WORLD_COMM_GROUP)
 
     获取指定通信组中当前设备的本地设备序号。
 
@@ -173,7 +173,7 @@ mindspore.communication
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
 
-.. py:class:: mindspore.communication.get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP)
+.. py:function:: mindspore.communication.get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP)
 
     获取指定通信组的本地设备总数。
 
@@ -195,7 +195,7 @@ mindspore.communication
     - **ValueError** – 在后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
 
-.. py:class:: mindspore.communication.destroy_group(group)
+.. py:function:: mindspore.communication.destroy_group(group)
 
     注销用户通信组。
 
