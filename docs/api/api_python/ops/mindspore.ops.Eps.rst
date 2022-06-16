@@ -7,7 +7,7 @@ mindspore.ops.Eps
 
     **输入：**
 
-    - **x** (Tensor) - 用于获取其数据类型能表达的最小值的任意维度的Tensor。数据类型必须为float16或float32。
+    - **x** (Tensor) - 用于获取其数据类型能表达的最小值的任意维度的Tensor。数据类型必须为float16，float32或者float64。
 
     **输出：**
 

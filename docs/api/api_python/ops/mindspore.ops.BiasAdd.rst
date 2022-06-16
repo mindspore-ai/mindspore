@@ -7,7 +7,7 @@ mindspore.ops.BiasAdd
 
     **参数：**
 
-    **data_format** (str) - 输入和输出数据的格式。取值为'NHWC'、'NCHW'或'NCDHW'。默认值：'NCHW'。
+    - **data_format** (str) - 输入和输出数据的格式。取值为'NHWC'、'NCHW'或'NCDHW'。默认值：'NCHW'。
 
     **输入：**
 

@@ -15,7 +15,7 @@
         - "axis"的取值范围为[-dims, dims - 1]。"dims"为"input_x"的维度长度。
 
     **参数：**
-    
+
     - **axis** (int) - 指定计算维度。默认值：0。
     - **keep_dims** (bool) - 表示是否减少维度。如果为True，则输出维度和输入维度相同。如果为False，则减少输出维度。默认值：False。
 

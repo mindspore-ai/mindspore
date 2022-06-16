@@ -2,6 +2,7 @@ mindspore.ops.InplaceUpdate
 ===========================
 
 .. py:class:: mindspore.ops.InplaceUpdate(indices)
+
     将 `x` 的特定行更新为 `v` 。
 
     **参数：**
@@ -15,7 +16,7 @@ mindspore.ops.InplaceUpdate
 
     **输出：**
 
-    Tensor, 与 `x` 的shape和数据类型相同。
+    Tensor，与 `x` 的shape和数据类型相同。
 
     **异常：**
 

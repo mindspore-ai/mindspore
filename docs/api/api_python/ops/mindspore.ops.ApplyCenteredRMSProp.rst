@@ -40,11 +40,11 @@
     - **var** (Tensor) - 要更新的权重。
     - **mean_gradient** (Tensor) - 均值梯度，数据类型必须与 `var` 相同。
     - **mean_square** (Tensor) - 均方梯度，数据类型必须与 `var` 相同。
-    - **moment** (Tensor)- `var` 的增量，数据类型必须与 `var` 相同。
+    - **moment** (Tensor) - `var` 的增量，数据类型必须与 `var` 相同。
     - **grad** (Tensor) - 梯度，数据类型必须与 `var` 相同。
     - **learning_rate** (Union[Number, Tensor]) - 学习率。必须是float或Scalar的Tensor，数据类型为float16或float32。
-    - **decay** (float)- 衰减率。
-    - **momentum** (float)- 动量。
+    - **decay** (float) - 衰减率。
+    - **momentum** (float) - 动量。
     - **epsilon** (float) - 添加在分母上的较小值，以避免被零除。
 
     **输出：**

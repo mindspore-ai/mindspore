@@ -13,8 +13,8 @@
     - **output_type** (:class:`mindspore.dtype`) - 指定输出数据类型。默认值： `mindspore.dtype.int32` 。
 
     **输入：**
-    
-    - **input_x** (Tensor)：Argmax的输入，任意维度的Tensor。支持的数据类型如下所示：
+
+    - **input_x** (Tensor) - Argmax的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。支持的数据类型如下所示：
 
       - Ascend：float16和float32。
       - GPU：float16和float32。

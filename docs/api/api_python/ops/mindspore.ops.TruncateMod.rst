@@ -17,16 +17,16 @@ mindspore.ops.TruncateMod
         - 若shape为（D1、D2...、Dn），则D1*D2...*DN<=1000000，n<=8。
 
     **输入：**
-    
+
     - **x** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
     - **y** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
 
     **输出：**
-    
+
     Tensor，shape为输入进行广播后的shape，数据类型为两个输入中精度较高的输入的类型。
 
     **异常：**
-    
+
     - **TypeError** - `x` 和 `y` 数据类型不是以下之一：Tensor、Number、bool。
     - **TypeError** - `x` 和 `y` 均不是Tensor。
     - **ValueError** - `x` 和 `y` 的shape无法进行广播转换。
