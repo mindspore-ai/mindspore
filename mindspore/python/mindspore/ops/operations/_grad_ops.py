@@ -17,13 +17,14 @@
 import math
 from functools import partial
 from mindspore._checkparam import _check_3d_int_or_tuple
+
 from .nn_ops import _check_positive_int_or_tuple
 from .. import signature as sig
-from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
-from ..._checkparam import Validator as validator, Rel
 from .._utils import get_concat_offset
-from ...common import dtype as mstype
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ... import context
+from ..._checkparam import Validator as validator, Rel
+from ...common import dtype as mstype
 from ...communication.management import GlobalComm
 
 
@@ -1131,6 +1132,16 @@ class MaximumGrad(Primitive):
 
     def __call__(self, x, y, dout):
         raise NotImplementedError
+
+
+class MaximumGradGrad(Primitive):
+    """Grad for maximum grad."""
+
+    @prim_attr_register
+    def __init__(self, grad_x=True, grad_y=True):
+        """Initialize MaximumGradGrad"""
+        super().__init__("MaximumGradGrad")
+        self.init_prim_io_names(inputs=['x1', 'x2', 'dy1', 'dy2'], outputs=['sopd_x1', 'sopd_x2', 'sopd_grad'])
 
 
 class MaxPoolGradWithArgmax(_PoolGrad):
