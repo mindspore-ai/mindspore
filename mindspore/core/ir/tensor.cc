@@ -66,6 +66,16 @@ static std::string ShapeToString(const ShapeVector &shape) {
   return str.append("]");
 }
 
+inline static void CopyTensorData(const TensorDataPtr &dest, const TensorDataPtr &src) {
+  auto dest_bytes = dest->nbytes();
+  auto src_bytes = src->nbytes();
+  auto err = common::huge_memcpy(static_cast<uint8_t *>(dest->data()), dest_bytes,
+                                 static_cast<const uint8_t *>(src->const_data()), src_bytes);
+  if (err != EOK) {
+    MS_LOG(EXCEPTION) << "Copy tensor data failed! bytes: " << dest_bytes << "/" << src_bytes << ".";
+  }
+}
+
 template <typename T, typename U>
 std::unique_ptr<T[]> NewData(const U *input, size_t size) {
   if (input == nullptr || size == 0) {
@@ -629,11 +639,7 @@ TensorDataPtr MakeSubData(const TensorPtr &owner, size_t offset, const TensorDat
   auto sub_data = std::make_shared<TensorSubDataImpl<T>>(owner, offset, data->size(), data->ndim());
   // If tensor data is initialized, copy it.
   if (data->const_data() != nullptr) {
-    auto err = common::huge_memcpy(static_cast<uint8_t *>(sub_data->data()), data_bytes,
-                                   static_cast<const uint8_t *>(data->const_data()), data_bytes);
-    if (err != EOK) {
-      MS_LOG(EXCEPTION) << "Copy data failed! size: " << data_bytes << ".";
-    }
+    CopyTensorData(sub_data, data);
   }
   return sub_data;
 }
@@ -785,7 +791,7 @@ void Tensor::ExecuteLazyTask() const {
   }
 }
 
-// assign value to this tensor
+// Assign value to this tensor.
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     lazy_callback_ = tensor.lazy_callback_;
@@ -794,7 +800,13 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     device_sync_ = tensor.device_sync_;
     need_release_device_mem_ = tensor.need_release_device_mem_;
     is_forward_output_ = tensor.is_forward_output_;
-    data_ = tensor.data_;
+    if (data_->is_sub_data()) {
+      // If tensor data is sub data, we should keep data
+      // memory address unchange and copy data to it.
+      CopyTensorData(data_, tensor.data_);
+    } else {
+      data_ = tensor.data_;
+    }
     id_ = tensor.id_;
     event_ = tensor.event_;
     need_wait_ = tensor.need_wait_;
