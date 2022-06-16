@@ -41,31 +41,46 @@ class BiDense(Cell):
     Applies dense connected layer for two inputs. This layer implements the operation as:
 
     .. math::
-        \text{outputs} = X_{1}^{T} * \text{kernel} * X_{2} + \text{bias},
+        y = x_1^T A x_2 + b,
 
-    where :math:`X_{1}` is the first input tensor, math:`X_{2}` is the second input tensor
-    , :math:`\text{kernel}` is a weight matrix with the same data type as the :math:`X` created by the layer
-    , and :math:`\text{bias}` is a bias vector with the same data type as the :math:`X` created by the layer
+    where :math:`x_1` is the first input tensor, math:`x_2` is the second input tensor
+    , :math:`A` is a weight matrix with the same data type as the :math:`x_{*}` created by the layer
+    , and :math:`b` is a bias vector with the same data type as the :math:`x_{*}` created by the layer
     (only if has_bias is True).
 
     Args:
         in1_channels (int): The number of channels in the input1 space.
         in2_channels (int): The number of channels in the input2 space.
         out_channels (int): The number of channels in the output space.
-        weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter. The dtype
-            is same as `x`. The values of str refer to the function `initializer`. Default: None.
-        bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
-            same as `x`. The values of str refer to the function `initializer`. Default: None.
+        weight_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable weight_init parameter.
+            The values of str refer to the function `initializer`. Default: None.
+        bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter.
+            The values of str refer to the function `initializer`. Default: None.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
 
-    Inputs:
-        - **input1** (Tensor) - Tensor of shape :math:`(*, in1\_channels)`. The `in_channels` in `Args` should be equal
-          to :math:`in1\_channels` in `Inputs`.
-        - **input2** (Tensor) - Tensor of shape :math:`(*, in2\_channels)`. The `in_channels` in `Args` should be equal
-          to :math:`in2\_channels` in `Inputs`.
+    Shape:
+        - **input1** - math:`(*, H_{in1})` where :math:`H_{in1}=\text{in1_channels}` and
+          :math:`*` means any number of additional dimensions including none. All but the last dimension
+          of the inputs should be the same.
+        - **input2** - math:`(*, H_{in2})` where :math:`H_{in2}=\text{in2_channels}` and
+          :math:`*` means any number of additional dimensions including none. All but the last dimension
+          of the inputs should be the same.
+        - **output** - math:`(*, H_{out})` where :math:`H_{out}=\text{out_channels}`
+          and all but the last dimension are the same shape as the inputs.
 
-    Outputs:
-        Tensor of shape :math:`(*, out\_channels)`.
+    Dtype:
+        - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input2**.
+        - **input1** (Tensor) - The dtype must be float16 or float32 and be same as **input1**.
+        - **output** (Tensor) - With the same dtype as the inputs.
+
+    Parameters:
+        - **weight** (Parameter) - The learnable weights with shape
+          :math:`(\text{out_channels}, \text{in1_channels}, \text{in2_channels})`.
+          When `weight_init` is `None`, the values are initialized from
+          :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where :math:`k = \frac{1}{\text{in1_channels}}`.
+        - **bias** (Parameter) - The learnable bias of shape :math:`(\text{out_channels})`.
+          If `has_bias` is `True` and `bias_init` is `None`, the values are initialized from
+          :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where :math:`k = \frac{1}{\text{in1_channels}}`.
 
     Raises:
         TypeError: If `in1_channels`, `in2_channels` or `out_channels` is not an int.
