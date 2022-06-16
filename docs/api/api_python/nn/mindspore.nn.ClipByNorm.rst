@@ -1,7 +1,7 @@
 mindspore.nn.ClipByNorm
 ========================
 
-.. py:function:: mindspore.nn.ClipByNorm(axis=None)
+.. py:class:: mindspore.nn.ClipByNorm(axis=None)
 
     对输入Tensor的值进行裁剪，使用 :math:`L_2` 范数控制梯度。
 

@@ -1,7 +1,7 @@
 mindspore.ops.bessel_i1
 =======================
 
-.. py:class:: mindspore.ops.bessel_i1
+.. py:function:: mindspore.ops.bessel_i1
 
     逐元素计算并返回输入Tensor的Bessel i1函数值
 

@@ -1,7 +1,7 @@
 mindspore.ops.bessel_k0
 =======================
 
-.. py:class:: mindspore.ops.bessel_k0()
+.. py:function:: mindspore.ops.bessel_k0()
 
     逐元素计算并返回输入Tensor的Bessel k0函数值
 

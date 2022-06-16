@@ -1,7 +1,7 @@
 mindspore.ops.bessel_k1e
 ========================
 
-.. py:class:: mindspore.ops.bessel_k1e
+.. py:function:: mindspore.ops.bessel_k1e
 
     逐元素计算并返回输入Tensor的Bessel k1e函数值
 

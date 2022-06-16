@@ -1,7 +1,7 @@
 mindspore.connect_network_with_dataset
 =======================================
 
-.. py:class:: mindspore.connect_network_with_dataset(network, dataset_helper)
+.. py:function:: mindspore.connect_network_with_dataset(network, dataset_helper)
 
     将 `network` 与 `dataset_helper` 中的数据集连接。
 
