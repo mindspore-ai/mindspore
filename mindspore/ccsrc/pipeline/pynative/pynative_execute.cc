@@ -1557,6 +1557,13 @@ void ForwardExecutor::GetInputsArgsSpec(const OpExecInfoPtr &op_exec_info,
       SaveIdWithDynamicShape(op_exec_info, id, obj, out_it->second);
     } else {
       const auto &input_abs = GetInputObjAbstract(op_exec_info, i, obj);
+      const auto &shape = input_abs->BuildShape();
+      MS_EXCEPTION_IF_NULL(shape);
+      // For ms function
+      if (shape->IsDynamic()) {
+        MS_LOG(DEBUG) << "Input " << i << " get dynamic shape";
+        op_exec_info->has_dynamic_input = true;
+      }
       args_spec_list->emplace_back(input_abs);
     }
     MS_LOG(DEBUG) << "Set " << i << "th abs " << args_spec_list->back()->ToString();
@@ -2681,10 +2688,11 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
       auto shape = abs->BuildShape();
       MS_EXCEPTION_IF_NULL(shape);
       if (shape->IsDynamic()) {
-        MS_LOG(DEBUG) << "Set arg " << i << ", id " << GetId(args[i])
-                      << ", to be dynamic shape; Arg self abs: " << PyObjToValue(args[i])->ToAbstract()->ToString()
+        const auto &arg_id = GetId(args[i]);
+        MS_LOG(DEBUG) << "Set arg " << i << ", id " << arg_id << ", to be dynamic shape; Arg self abs: "
+                      << PyObjToValue(args[i])->ToAbstract()->Broaden()->ToString()
                       << ", dynamic abs: " << abs->ToString();
-        dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs[GetId(args[i])] = abs;
+        dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs[arg_id] = abs;
       }
     }
   }
