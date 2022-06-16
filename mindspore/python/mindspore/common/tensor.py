@@ -3192,7 +3192,8 @@ class Tensor(Tensor_):
     def gather(self, input_indices, axis):
         r"""
         Returns the slice of the input tensor corresponding to the elements of `input_indices` on the specified `axis`.
-        The shape of input tensor is :math:`(x_1, x_2, ..., x_R)`. For convenience, define it as `input_params`
+        The shape of input tensor is :math:`(x_1, x_2, ..., x_R)`. For convenience, define it as `input_params`,
+        the variable `input_params` refers to input tensor.
 
         The following figure shows the calculation process of Gather commonly:
 
@@ -3201,10 +3202,10 @@ class Tensor(Tensor_):
         where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
 
         .. note::
-             1. The value of input_indices must be in the range of `[0, input_param.shape[axis])`, the result
+            1.The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
                 is undefined out of range.
 
-             2. The data type of input_params cannot be
+            2.The data type of `input_params` cannot be
                 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
                 platform currently.
 
