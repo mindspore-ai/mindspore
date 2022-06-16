@@ -2039,15 +2039,32 @@ void GraphScheduler::LinkDeviceTensorStoreForAutoMonadActor(const std::vector<Ab
 
       MS_LOG(INFO) << "The auto monad actor: " << auto_monad_actor->GetAID().Name()
                    << "has control arrows number:" << auto_monad_actor->output_control_arrows_.size();
-      // Link from copy actor to auto monad actor users.
+      std::vector<AbstractActor *> output_contorl_actors;
       for (auto &output_contorl : auto_monad_actor->output_control_arrows_) {
-        (void)copy_actor->output_control_arrows_.emplace_back(output_contorl);
+        MS_EXCEPTION_IF_NULL(output_contorl);
+        (void)output_contorl_actors.emplace_back(FetchActor(output_contorl->to_op_id_.Name()));
       }
       // Move the control arrows from auto monad actor to auto monad actor users.
       auto_monad_actor->output_control_arrows_.clear();
+      for (auto &output_contorl_actor : output_contorl_actors) {
+        MS_EXCEPTION_IF_NULL(output_contorl_actor);
+        for (auto iter = output_contorl_actor->input_control_arrow_aids_.begin();
+             iter != output_contorl_actor->input_control_arrow_aids_.end();) {
+          if ((*iter).first.Name() == auto_monad_actor->GetAID().Name()) {
+            iter = output_contorl_actor->input_control_arrow_aids_.erase(iter);
+            output_contorl_actor->input_controls_num_--;
+          } else {
+            ++iter;
+          }
+        }
+      }
 
       // Link from auto monad actor to copy actor.
       SchedulerHelper::AddControlArrow(auto_monad_actor, copy_actor.get());
+      // Link from copy actor to auto monad actor users.
+      for (auto &output_contorl_actor : output_contorl_actors) {
+        SchedulerHelper::AddControlArrow(copy_actor.get(), output_contorl_actor);
+      }
     }
   }
 }
