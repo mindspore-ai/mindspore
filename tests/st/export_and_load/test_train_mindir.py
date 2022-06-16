@@ -188,3 +188,4 @@ def test_load_mindir_and_run_with_encryption():
     loaded_net = nn.GraphCell(graph)
     outputs_after_load = loaded_net(inputs0)
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
+    os.remove(mindir_name)
