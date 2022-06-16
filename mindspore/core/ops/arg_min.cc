@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,72 @@ TypeId ArgMin::get_output_type() const {
   return type_ptr->type_id();
 }
 
+void InferImplReduceFuncCalShape(ShapeVector *shape, const ShapeVector &x_shape, const int64_t axis_value) {
+  (void)shape->insert(shape->end(), x_shape.begin(), x_shape.end());
+  (void)shape->erase(shape->begin() + axis_value);
+}
+
+int64_t InferImplArgMinFuncCheckAxis(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  auto axis_ptr = prim->GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(axis_ptr);
+  if (!axis_ptr->isa<Int64Imm>()) {
+    MS_LOG(EXCEPTION) << "For '" << prim->name() << "', 'axis' must be int.";
+  }
+  int64_t axis_ = GetValue<int64_t>(axis_ptr);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("Argmin", input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto input_shape = shape_ptr->shape();
+  auto dim = input_shape.size();
+
+  int64_t dim_ = static_cast<int64_t>(dim);
+  if (axis_ < -dim_ || axis_ >= dim_) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', 'axis' must be in [" << -dim_ << ", " << dim_
+                             << "). But got 'axis' = " << axis_ << ".";
+  }
+  int64_t ret_axis = axis_;
+  if (axis_ >= -dim_ && axis_ < 0) {
+    ret_axis += dim_;
+  }
+  return ret_axis;
+}
+
+abstract::ShapePtr ArgMinInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ArgMin", input_args, 0);
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  auto input_shape = shape_ptr->shape();
+  ShapeVector out_shape = {};
+  int64_t axis_value = InferImplArgMinFuncCheckAxis(primitive, input_args);
+  InferImplReduceFuncCalShape(&out_shape, input_shape, axis_value);
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << ", the input args used for infer shape and type is necessary, but missing it.";
+  }
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, prim->name());
+  const std::set<TypePtr> out_valid_types = {kInt32, kInt64};
+  ValuePtr out_type_value = prim->GetAttr(kOutputType);
+  TypePtr out_type_ptr = dyn_cast<Type>(out_type_value);
+  (void)CheckAndConvertUtils::CheckTypeValid("output_type", out_type_ptr, out_valid_types, prim->name());
+  return out_type_ptr;
+}
+
 MIND_API_OPERATOR_NAME_IMPL(ArgMin, kNameArgMin, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameArgMin, ArgMin);
+abstract::AbstractBasePtr ArgMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, primitive->name());
+  return abstract::MakeAbstract(ArgMinInferShape(primitive, input_args), ArgMinInferType(primitive, input_args));
+}
+
+using Argmin = ArgMin;
+
+REGISTER_PRIMITIVE_EVAL_IMPL(Argmin, prim::kPrimArgMin, ArgMinInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

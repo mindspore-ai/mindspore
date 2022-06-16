@@ -2021,7 +2021,7 @@ class Argmax(PrimitiveWithInfer):
         return mstype.tensor_type(self.output_type)
 
 
-class Argmin(PrimitiveWithInfer):
+class Argmin(Primitive):
     """
     Returns the indices of the minimum value of a tensor across the axis.
 
@@ -2062,19 +2062,6 @@ class Argmin(PrimitiveWithInfer):
         validator.check_type_name("output_type", output_type, [mstype.int32, mstype.int64], self.name)
         self.axis = axis
         self.add_prim_attr('output_type', output_type)
-
-    def infer_shape(self, x_shape):
-        axis = self.axis
-        if axis is None:
-            axis = 0
-        x_rank = len(x_shape)
-        axis = axis + x_rank if axis < 0 else axis
-        ouput_shape = [x_shape[i] for i in range(x_rank) if i != axis]
-        return ouput_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
-        return mstype.tensor_type(self.output_type)
 
 
 class ArgminV2(Primitive):

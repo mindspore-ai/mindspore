@@ -53,8 +53,36 @@ def get_cast_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@constexpr
+def _get_reduce_batch_axis(axis, x_dim, x_ndim):
+    """get batch_axis for reduce* operation."""
+    # For axis, it's value in Union[int, list, tuple]
+    if axis < 0:
+        axis += x_ndim - 1
+    batch_axis = 0
+    if axis < x_dim:
+        batch_axis += axis
+    else:
+        batch_axis += axis + 1
+    return batch_axis
+
+
+@constexpr
+def _get_reduce_out_dim(x_dim, x_ndim, batch_axis):
+    """get out_dim for reduce* operation."""
+    out_dim = 0
+    for i in range(x_ndim):
+        if i == x_dim:
+            break
+        if i == batch_axis:
+            continue
+        else:
+            out_dim += 1
+    return out_dim
+
+
 @vmap_rules_getters.register(P.Argmin)
-def get_unop_vmap_rule(prim, axis_size):
+def get_argmin_vmap_rule(prim, axis_size):
     """VmapRule for `Argmin` operations."""
     if isinstance(prim, str):
         axis = -1
@@ -63,19 +91,16 @@ def get_unop_vmap_rule(prim, axis_size):
         axis = prim.axis
         output_type = prim.output_type
 
-    @constexpr
-    def trans_axis(axis, rank, dim):
-        if axis < 0:
-            axis += rank - 1
-        axis_processed = axis + 1 if dim <= axis else axis
-        return axis_processed
-
     def vmap_rule(x_bdim):
-        var, dim = x_bdim
-        rank = ops.rank(var)
-        axis_new = trans_axis(axis, rank, dim)
-        out = P.Argmin(axis_new, output_type)(var)
-        return (out, dim)
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        var, x_dim = x_bdim
+        x_ndim = ops.rank(var)
+        batch_axis = _get_reduce_batch_axis(axis, x_dim, x_ndim)
+        out = P.Argmin(batch_axis, output_type)(var)
+        out_dim = _get_reduce_out_dim(x_dim, x_ndim, batch_axis)
+        return (out, out_dim)
 
     return vmap_rule
 
