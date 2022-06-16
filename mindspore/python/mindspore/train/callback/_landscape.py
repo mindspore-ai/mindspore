@@ -1005,12 +1005,12 @@ class _PCA:
         del b
         u = np.dot(q, uhat)
 
-        if not transpose:
-            u, vt = self._svd_turn(u, vt)
-        else:
+        if n_samples < n_features:
             u, vt = self._svd_turn(u, vt, u_decision=False)
+        else:
+            u, vt = self._svd_turn(u, vt)
 
-        if transpose:
+        if n_samples < n_features:
             return vt[:n_components, :].T, s[:n_components], u[:, :n_components].T
 
         return u[:, :n_components], s[:n_components], vt[:n_components, :]
