@@ -26,22 +26,6 @@ constexpr const size_t kResizeInputDims = 3;
 
 namespace mindspore {
 namespace kernel {
-void ResizeLinear1DGradGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_byte_size_);
-  output_size_list_.push_back(output_byte_size_);
-}
-
-void ResizeLinear1DGradGpuKernelMod::GetSize() {
-  input_byte_size_ = input_data_unit_size_;
-  for (const auto &shape_item : grad_output_shape_) {
-    input_byte_size_ *= shape_item;
-  }
-  output_byte_size_ = output_data_unit_size_;
-  for (const auto &shape_item : grad_input_shape_) {
-    output_byte_size_ *= shape_item;
-  }
-}
-
 bool ResizeLinear1DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs) {
@@ -78,16 +62,7 @@ bool ResizeLinear1DGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
   kernel_func_ = func_list_[pair.second].second;
-
-  input_data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  output_data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
-
   return true;
-}
-
-void ResizeLinear1DGradGpuKernelMod::ResetResource() {
-  input_size_list_.clear();
-  output_size_list_.clear();
 }
 
 int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
@@ -98,17 +73,14 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
     return ret;
   }
-  ResetResource();
 
   grad_output_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                             inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   batch_ = LongToSize(grad_output_shape_[kIndex0]);
   channel_ = LongToSize(grad_output_shape_[kIndex1]);
   out_width_ = grad_output_shape_[kIndex2];
-
   grad_input_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                            outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-
   in_width_ = grad_input_shape_[kIndex2];
 
   if (grad_output_shape_.size() != kResizeInputDims) {
@@ -117,8 +89,6 @@ int ResizeLinear1DGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << grad_output_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  GetSize();
-  InitSizeLists();
   return KRET_OK;
 }
 

@@ -25,22 +25,6 @@ constexpr const size_t kResizeInputDims = 3;
 
 namespace mindspore {
 namespace kernel {
-void ResizeLinear1DGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(input_byte_size_);
-  output_size_list_.push_back(output_byte_size_);
-}
-
-void ResizeLinear1DGpuKernelMod::GetSize() {
-  input_byte_size_ = input_data_unit_size_;
-  for (const auto &shape_item : input_shape_) {
-    input_byte_size_ *= shape_item;
-  }
-  output_byte_size_ = output_data_unit_size_;
-  for (const auto &shape_item : output_shape_) {
-    output_byte_size_ *= shape_item;
-  }
-}
-
 bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   MS_ERROR_IF_NULL_W_RET_VAL(base_operator, false);
@@ -75,16 +59,7 @@ bool ResizeLinear1DGpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
   kernel_func_ = func_list_[pair.second].second;
-
-  input_data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
-  output_data_unit_size_ = abstract::TypeIdSize(kernel_attr.GetOutputAttr(kIndex0).first);
-
   return true;
-}
-
-void ResizeLinear1DGpuKernelMod::ResetResource() {
-  input_size_list_.clear();
-  output_size_list_.clear();
 }
 
 int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -94,17 +69,14 @@ int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
     return ret;
   }
-  ResetResource();
 
   input_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
   batch_ = LongToSize(input_shape_[kIndex0]);
   channel_ = LongToSize(input_shape_[kIndex1]);
   in_width_ = input_shape_[kIndex2];
-
   output_shape_ = std::vector<int64_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                        outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-
   out_width_ = output_shape_[kIndex2];
 
   if (input_shape_.size() != kResizeInputDims) {
@@ -113,8 +85,6 @@ int ResizeLinear1DGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                   << input_shape_.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  GetSize();
-  InitSizeLists();
   return KRET_OK;
 }
 
