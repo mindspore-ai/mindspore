@@ -948,9 +948,18 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('tan')()(self)
 
     def cosh(self):
-        """
+        r"""
         Computes hyperbolic cosine of `x` element-wise.
-        Refer to :func:`mindspore.ops.cosh` for more detail.
+
+        .. math::
+
+            out_i = \cosh(x_i)
+
+        Returns:
+            Tensor, has the same shape as `x`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -1685,10 +1694,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 
