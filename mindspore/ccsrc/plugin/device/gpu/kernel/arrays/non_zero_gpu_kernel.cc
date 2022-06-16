@@ -64,7 +64,7 @@ int NonZeroGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   auto shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(input_shape_),
                        [](int64_t x) { return x < 0 ? 0 : LongToSize(x); });
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies{});
   if (input_size_ == 0) {
     return KRET_UNKNOWN_SHAPE;
   }
@@ -91,10 +91,7 @@ bool NonZeroGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, co
   }
 
   NonZero(input_ptr, output_ptr, output_size_ptr, input_shape_, input_size_, device_id_, cuda_stream_);
-  auto err = cudaGetLastError();
-  if (err != cudaSuccess) {
-    MS_LOG(EXCEPTION) << "Nonzero kernel failed : " << cudaGetErrorString(err);
-  }
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaGetLastError(), "NonZero kernel failed.");
 
   // Update the final output size of NonZero.
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(

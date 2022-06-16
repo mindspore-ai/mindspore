@@ -45,11 +45,11 @@ int SparseSegmentMeanGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto x_size = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<int64_t>());
+  auto x_size = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
   outer_size_ = LongToSize(x_shape.front());
   inner_size_ = LongToSize(x_size / x_shape.front());
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto indices_size = std::accumulate(indices_shape.begin(), indices_shape.end(), 1, std::multiplies<int64_t>());
+  auto indices_size = std::accumulate(indices_shape.begin(), indices_shape.end(), int64_t(1), std::multiplies{});
   indices_size_ = LongToSize(indices_size);
   auto y_shape = outputs.at(kIndex0)->GetShapeVector();
   segment_size_ = LongToSize(y_shape.front());
