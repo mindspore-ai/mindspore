@@ -1118,6 +1118,36 @@ def get_pdist_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ExpandDims)
+def get_expand_dims_vmap_rule(prim, axis_size):
+    """VmapRule for `ExpandDims`."""
+    @constexpr
+    def process_axis(axis, rank, x_dim):
+        if axis < 0:
+            axis += rank - 1
+        axis_processed = axis + 1 if x_dim <= axis else axis
+        x_dim = x_dim if x_dim < axis_processed else x_dim + 1
+        return axis_processed, x_dim
+
+    def vmap_rule(x_bdim, axis_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, axis_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        axis, axis_dim = axis_bdim
+        rank = ops.rank(x)
+
+        if axis_dim is not None:
+            _raise_value_error("The source axis of shape in `ExpandDims` must be None, but got {}.".format(axis_dim))
+
+        axis, x_dim = process_axis(axis, rank, x_dim)
+        output = prim(x, axis)
+        return (output, x_dim)
+
+    return vmap_rule
+
+
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(NonZero)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.Unique)(get_unsupported_dynamic_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
