@@ -25,6 +25,8 @@
 namespace mindspore {
 namespace opt {
 namespace {
+constexpr auto kAttrFusionSize = "fusion_size";
+
 int64_t GetElemNum(const AnfNodePtr &input_node) {
   MS_EXCEPTION_IF_NULL(input_node);
   int64_t elem_num = 1;
@@ -89,6 +91,19 @@ CNodePtr NewMakeTupleNode(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr
 
   return make_tuple_node;
 }
+
+size_t GetFusionSize(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto prim = GetCNodePrimitive(node);
+  MS_EXCEPTION_IF_NULL(prim);
+  if (prim->HasAttr(kAttrFusionSize)) {
+    auto block_size_int64 = GetValue<int64_t>(prim->GetAttr(kAttrFusionSize));
+    if (block_size_int64 > 0) {
+      return LongToSize(block_size_int64);
+    }
+  }
+  return 0;
+}
 }  // namespace
 
 const BaseRef FlattenConcatFission::DefinePattern() const {
@@ -104,6 +119,9 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
   MS_EXCEPTION_IF_NULL(cnode);
   std::unordered_map<TypeId, std::pair<std::vector<AnfNodePtr>, int64_t>> type_id_to_node_info;
   std::vector<TypeId> output_type_id_order;
+  size_t block_size = GetFusionSize(node);
+
+  std::vector<AnfNodePtr> concat_nodes;
   for (size_t i = 1; i < cnode->inputs().size(); ++i) {
     auto input_node = cnode->input(i);
     MS_EXCEPTION_IF_NULL(input_node);
@@ -120,14 +138,21 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
       type_id_to_node_info[input_type_id] = std::make_pair(concat_inputs, elem_num);
       (void)output_type_id_order.emplace_back(input_type_id);
     } else {
-      (void)iter->second.first.emplace_back(flatten_node);
-      iter->second.second += elem_num;
+      if (block_size > 0 && (iter->second.second + elem_num) * abstract::TypeIdSize(input_type_id) > block_size) {
+        auto concat_node = NewConcatNode(func_graph, iter->second, input_type_id);
+        MS_EXCEPTION_IF_NULL(concat_node);
+        concat_node->set_scope(cnode->scope());
+        (void)concat_nodes.emplace_back(concat_node);
+        iter->second.second = elem_num;
+        iter->second.first = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())), flatten_node};
+      } else {
+        (void)iter->second.first.emplace_back(flatten_node);
+        iter->second.second += elem_num;
+      }
     }
   }
 
-  std::vector<AnfNodePtr> concat_nodes;
-  for (size_t i = 0; i < output_type_id_order.size(); ++i) {
-    auto type_id = output_type_id_order[i];
+  for (auto const &type_id : output_type_id_order) {
     auto &node_info = type_id_to_node_info[type_id];
     auto concat_node = NewConcatNode(func_graph, node_info, type_id);
     MS_EXCEPTION_IF_NULL(concat_node);
