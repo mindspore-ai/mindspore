@@ -1222,32 +1222,11 @@ NodeWithContext ControlNodeParser::FetchBackendParameterWithContextByFrontParame
   return {};
 }
 
-void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes,
+void ControlNodeParser::CreateDeviceTensors(const std::vector<AnfNodePtr> &control_nodes,
                                             const DeviceContext *const default_context) {
-  MS_EXCEPTION_IF_NULL(default_context);
-
-  for (const auto &formal_to_real_parameter : formal_to_real_parameters_) {
-    for (const auto &real_parameter_with_index : formal_to_real_parameter.second) {
-      if (!IsFrontValueNode(real_parameter_with_index)) {
-        continue;
-      }
-
-      const auto &backend_node_with_context =
-        FetchBackendParameterWithContextByFrontParameter(real_parameter_with_index);
-      if (backend_node_with_context.first != nullptr) {
-        (void)front_value_nodes_.emplace(real_parameter_with_index, backend_node_with_context.second);
-        CreateDeviceTensorForValueNode(real_parameter_with_index, backend_node_with_context.first,
-                                       backend_node_with_context.second);
-      } else {
-        (void)front_value_nodes_.emplace(real_parameter_with_index, default_context);
-        CreateDeviceTensorForFrontNode(real_parameter_with_index, default_context);
-      }
-    }
-  }
-
-  // Create device tensors for those value nodes which direct return by a return node.
   for (const auto &control_node : control_nodes) {
-    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch)) {
+    if (common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitch) ||
+        common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimSwitchLayer)) {
       auto input_with_indexs = FetchInputNodeByCNode(control_node);
       for (size_t i = 0; i < input_with_indexs.size(); ++i) {
         MS_EXCEPTION_IF_NULL(input_with_indexs[i].first);
@@ -1290,6 +1269,33 @@ void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &contr
       }
     }
   }
+}
+
+void ControlNodeParser::FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes,
+                                            const DeviceContext *const default_context) {
+  MS_EXCEPTION_IF_NULL(default_context);
+
+  for (const auto &formal_to_real_parameter : formal_to_real_parameters_) {
+    for (const auto &real_parameter_with_index : formal_to_real_parameter.second) {
+      if (!IsFrontValueNode(real_parameter_with_index)) {
+        continue;
+      }
+
+      const auto &backend_node_with_context =
+        FetchBackendParameterWithContextByFrontParameter(real_parameter_with_index);
+      if (backend_node_with_context.first != nullptr) {
+        (void)front_value_nodes_.emplace(real_parameter_with_index, backend_node_with_context.second);
+        CreateDeviceTensorForValueNode(real_parameter_with_index, backend_node_with_context.first,
+                                       backend_node_with_context.second);
+      } else {
+        (void)front_value_nodes_.emplace(real_parameter_with_index, default_context);
+        CreateDeviceTensorForFrontNode(real_parameter_with_index, default_context);
+      }
+    }
+  }
+
+  // Create device tensors for those value nodes which direct return by a return node.
+  CreateDeviceTensors(control_nodes, default_context);
   for (const auto &front_node : front_value_nodes_) {
     MS_LOG(DEBUG) << "Print front value node:" << front_node.first.first->DebugString()
                   << " addr:" << front_node.first.first << " index:" << front_node.first.second;

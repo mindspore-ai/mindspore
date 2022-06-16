@@ -12,30 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test graph fallback control flow."""
-import numpy as np
+""" test graph fallback control flow for after if in if scenario"""
+import pytest
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_while_after_while_in_if_numpy():
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_for_after_if_in_if_tensor_2():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
     Expectation: No exception.
     """
     @ms_function
-    def control_flow_while_after_while_in_if():
-        x = Tensor([1])
-        y = Tensor([2])
-        z = np.array([1]) + np.array([2])
-        if Tensor(z) >= x + y:
-            y = y * x + Tensor([3])
-            while np.array([5]) > z:
-                z += 1
-        while y > x:
-            y -= x
-        return x, y, Tensor(z)
-    res = control_flow_while_after_while_in_if()
-    assert res == (1, 1, 5)
+    def control_flow_for_after_if_in_if():
+        x = list((Tensor([1]), Tensor([2]), Tensor([3])))
+        y = Tensor([0])
+        if x[0] + y == Tensor(1):
+            if x[0] > Tensor(0):
+                x[0] += 5
+            else:
+                x[0] += 7
+        else:
+            x[0] += 2
+            y += 3
+        for i in x:
+            y += i
+        return x[0] + x[1] + y
+    res = control_flow_for_after_if_in_if()
+    assert res == 19

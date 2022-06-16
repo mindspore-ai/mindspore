@@ -51,6 +51,6 @@ AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto type = LessInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(Less, prim::kPrimLess, LessInfer, nullptr, true);
+REGISTER_PRIMITIVE_C(kNameLess, Less);
 }  // namespace ops
 }  // namespace mindspore

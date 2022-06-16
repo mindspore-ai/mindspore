@@ -3746,6 +3746,13 @@ class Less(_LogicBinaryOp):
         >>> print(output)
         [False False True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less(x, y))
+            return Tensor(out)
+        return None
 
 
 class LessEqual(_LogicBinaryOp):
@@ -3765,6 +3772,13 @@ class LessEqual(_LogicBinaryOp):
         >>> print(output)
         [ True False  True]
     """
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = np.array(np.less_equal(x, y))
+            return Tensor(out)
+        return None
 
 
 class LogicalNot(Primitive):

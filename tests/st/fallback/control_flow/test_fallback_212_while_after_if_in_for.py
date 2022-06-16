@@ -83,7 +83,11 @@ def test_while_after_if_in_for_tensor_2():
     assert res_y == 5
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_after_if_in_for_numpy_2():
     """
     Feature: JIT Fallback

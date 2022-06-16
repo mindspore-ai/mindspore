@@ -242,33 +242,6 @@ def test_fallback_tensor_from_numpy():
     print(foo())
 
 
-# EvalCNode: This may be not defined, or it can't be a operator.
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_np_tensor_add():
-    """
-    Feature: Fallback feature
-    Description: support Tensor add.
-    Expectation: No exception.
-    """
-    @ms_function
-    def np_tensor_add():
-        a = Tensor(np.array(4))
-        b = Tensor(np.array(5))
-        tensor_list = [a, b]
-        for tensor in tensor_list:
-            print(tensor)
-        x = 6
-        np_x = np.array(x)
-        c = Tensor(np_x)
-        d = tensor_list[-1] + c
-        tensor_list.append(d)
-        return tensor_list
-
-    tensor_list = np_tensor_add()
-    print("tensor_list:", tensor_list)
-    assert tensor_list[-1] == 11
-
-
 def test_fallback_tensor_binop():
     """
     Feature: Fallback feature

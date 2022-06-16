@@ -33,8 +33,8 @@ def test_while_after_while_in_while_numpy():
     """
     @ms_function
     def control_flow_while_after_while_in_while():
-        x = Tensor([-1])
-        y = Tensor([-2])
+        x = np.array([-1])
+        y = np.array([-2])
         while abs(x) <= abs(y):
             z = np.array([3, 4, 5])
             index = 0
@@ -42,9 +42,9 @@ def test_while_after_while_in_while_numpy():
             while index < 3:
                 z_sum += z[index]
                 index += 1
-            x = x + Tensor(z_sum)
+            x = x + z_sum
         while y < x:
             y += x
-        return x, y
+        return Tensor(x), Tensor(y)
     res = control_flow_while_after_while_in_while()
     assert res == (11, 20)

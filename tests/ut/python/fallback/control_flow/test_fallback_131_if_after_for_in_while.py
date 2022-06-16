@@ -39,24 +39,3 @@ def test_if_after_for_in_while_numpy():
         return Tensor(y + z[0])
     res = control_flow_if_after_for_in_while()
     assert (res.asnumpy() == [-3, -3, -3, -3, -3]).all()
-
-
-def test_if_after_for_in_while_numpy_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_while():
-        x = np.array([5, 4, 3, 2, 1])
-        y = (Tensor(1), Tensor(3), Tensor(5))
-        while sum(x) >= 15:
-            for _ in range(3):
-                x -= 4
-            x = x + 2
-        if sum(y) == 9:
-            return Tensor(x)
-        return y[2]
-    res = control_flow_if_after_for_in_while()
-    assert (res.asnumpy() == [-5, -6, -7, -8, -9]).all()

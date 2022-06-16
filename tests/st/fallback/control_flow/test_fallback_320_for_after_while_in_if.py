@@ -84,9 +84,10 @@ def test_for_after_while_in_if_2():
 
         return x, y
 
-    res_x, res_y = func3202()
-    assert res_x == 5
-    assert res_y == 5
+    with pytest.raises(RuntimeError, match="Currently only supports raise in constant scenarios."):
+        res_x, res_y = func3202()
+        assert res_x == 5
+        assert res_y == 5
 
 
 @pytest.mark.level1

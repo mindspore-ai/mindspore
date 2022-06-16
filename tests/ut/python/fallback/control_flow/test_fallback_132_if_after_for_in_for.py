@@ -65,29 +65,6 @@ def test_if_after_for_in_for_tensor_2():
     assert res == -28
 
 
-def test_if_after_for_in_for_numpy():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_after_for_in_for():
-        x = np.array([3, 2])
-        y = Tensor(np.array([0, 2, 4, 6, 8]))
-        for i in range(2):
-            for j in range(5):
-                y -= j
-            y = y * Tensor(x[i])
-        z = Tensor([7])
-        if sum(y) >= z:
-            z = Tensor(sum(y)) - Tensor([9])
-            return y - z
-        return y + z
-    res = control_flow_if_after_for_in_for()
-    assert (res.asnumpy() == [-73, -61, -49, -37, -25]).all()
-
-
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_if_after_for_in_for_numpy_2():
     """

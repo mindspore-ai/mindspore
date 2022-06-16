@@ -44,31 +44,6 @@ def test_for_after_if_in_if_tensor():
     assert res == 16
 
 
-def test_for_after_if_in_if_tensor_2():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_for_after_if_in_if():
-        x = list((Tensor([1]), Tensor([2]), Tensor([3])))
-        y = Tensor([0])
-        if x[0] + y == Tensor(1):
-            if x[0] > Tensor(0):
-                x[0] += 5
-            else:
-                x[0] += 7
-        else:
-            x[0] += 2
-            y += 3
-        for i in x:
-            y += i
-        return x[0] + x[1] + y
-    res = control_flow_for_after_if_in_if()
-    assert res == 19
-
-
 def test_for_after_if_in_if_numpy():
     """
     Feature: JIT Fallback
