@@ -937,7 +937,7 @@ CNodePtr GenGatherNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
     MS_LOG(ERROR) << "make indices node failed.";
     return nullptr;
   }
-  auto axis_node = BuildIntVecParameterNode(func_graph, {0}, cnode_name + "_indices");
+  auto axis_node = BuildIntVecParameterNode(func_graph, {0}, cnode_name + "_axis");
   if (axis_node == nullptr) {
     MS_LOG(ERROR) << "make indices node failed.";
     return nullptr;
