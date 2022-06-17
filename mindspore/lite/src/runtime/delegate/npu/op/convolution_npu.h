@@ -47,6 +47,8 @@ class ConvolutionNPUOp : public ConvolutionBaseNPUOp {
   int SetConvParam(const schema::Conv2DFusion *conv_prim);
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
   hiai::op::Convolution *conv_ = nullptr;
+  int input_h_;
+  int input_w_;
 };
 
 NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,

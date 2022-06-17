@@ -36,7 +36,6 @@ class NPUInsertTransformPass : public NPUBasePass {
 
  private:
   int total = 0;
-  NPUGraph *subgraph_ = nullptr;
   std::vector<NPUOp *> *all_ops_ = nullptr;
   std::vector<mindspore::MSTensor *> *all_tensors_ = nullptr;
 };

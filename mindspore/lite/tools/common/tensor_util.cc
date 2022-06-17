@@ -286,7 +286,7 @@ size_t GetShapeSize(const std::vector<int32_t> &shape) {
   size_t shapeSize = 1;
   for (auto dim : shape) {
     if (dim <= 0) {
-      MS_LOG(WARNING) << "Dim value less than or equal to 0 found in tensor's shape.";
+      MS_LOG(WARNING) << "Dim value: " << dim << " is less than or equal to 0 found in tensor's shape.";
       return 0;
     }
     shapeSize *= static_cast<size_t>(dim);

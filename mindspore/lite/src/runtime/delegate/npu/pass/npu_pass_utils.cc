@@ -21,11 +21,6 @@
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
 namespace mindspore {
-std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index{
-  {schema::PrimitiveType_Split, {1}},
-  {schema::PrimitiveType_PadFusion, {1, 2}},
-  {schema::PrimitiveType_StridedSlice, {1, 2, 3}}};
-
 NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
                                        const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   std::vector<int> perm = {0, 2, 3, 1};
@@ -58,7 +53,7 @@ void NPUPassUtils::UpdateOp(NPUOp *op, const std::vector<NPUOp *> &in_ops, const
 }
 
 void NPUPassUtils::UpdateNH2NCTransNodePreOp(NPUOp *pre_op, NPUOp *trans_op, NPUOp *op) {
-  // For op before trans, update the out_ops; the output tensor of op is the input tensor of trans.
+  // For op before trans, update the out_ops; the output tensor of op is the input tensor of trans, no need to update.
   std::vector<NPUOp *> out_ops = pre_op->out_ops();
   if (op == nullptr) {
     out_ops.emplace_back(trans_op);
@@ -97,35 +92,11 @@ void NPUPassUtils::UpdateNH2NCTransNodePostOp(NPUOp *trans_op, NPUOp *post_op) {
   post_op->set_in_ops({trans_op});
 }
 
-void NPUPassUtils::UpdateNC2NHPostOpInTensors(NPUOp *op, NPUOp *trans_op, NPUOp *post_op) {
-  // For post_op that doesn't require insert trans op, because the output tensor of op(input tensor of
-  // trans_op) is updated, replace the input tensor of post_op.
-  auto post_in_tensors = post_op->inputs();
-  for (size_t i = 0; i < post_in_tensors.size(); i++) {
-    if (post_in_tensors[i] == op->outputs()[0]) {
-      post_in_tensors[i] = trans_op->inputs()[0];
-      break;
-    }
-  }
-  post_op->set_inputs(post_in_tensors);
-}
-
-void NPUPassUtils::UpdateNC2NHTransNodePostOp(NPUOp *op, NPUOp *trans_op, NPUOp *post_op) {
+void NPUPassUtils::UpdateNC2NHTransNodePostOp(NPUOp *op, NPUOp *trans_op, NPUOp *post_op,
+                                              const mindspore::MSTensor &org_in_tensor) {
   // The input tensor should be replaced with the output tensor of trans_op.
   auto post_in_tensors = post_op->inputs();
-  mindspore::MSTensor old_in_tensor;
-  // find out which input tensor of post_op should be updated
-  for (size_t i = 0; i < post_in_tensors.size(); ++i) {
-    if (OpInputFromOp(post_op, post_in_tensors.at(i)) == op) {
-      old_in_tensor = post_in_tensors.at(i);
-      break;
-    }
-  }
-  if (old_in_tensor == nullptr) {
-    MS_LOG(WARNING) << "Could not find in tensor index";
-    return;
-  }
-  std::replace(post_in_tensors.begin(), post_in_tensors.end(), old_in_tensor, trans_op->outputs().at(0));
+  std::replace(post_in_tensors.begin(), post_in_tensors.end(), org_in_tensor, trans_op->outputs().at(0));
   post_op->set_inputs(post_in_tensors);
 
   // For post_op after trans, op in in_ops should be replaced with trans_op.
@@ -189,23 +160,11 @@ NPUOp *NPUPassUtils::OpInputFromOp(NPUOp *op, mindspore::MSTensor in_tensor) {
 }
 
 std::vector<mindspore::MSTensor> NPUPassUtils::GetNonConstInputs(NPUOp *op) {
-  if (op == nullptr) {
-    return std::vector<mindspore::MSTensor>{};
-  }
-  auto type = op->type();
-  auto it = nodes2const_index.find(type);
-  if (it != nodes2const_index.end()) {
-    auto const_input_indices = it->second;
-    std::vector<mindspore::MSTensor> non_const_in_tensors;
-    auto in_tensors = op->inputs();
-    for (auto i = 0; i < in_tensors.size(); ++i) {
-      if (const_input_indices.find(i) == const_input_indices.end()) {
-        non_const_in_tensors.push_back(in_tensors[i]);
-      }
-    }
-    return non_const_in_tensors;
-  }
-  return op->inputs();
+  MS_CHECK_TRUE_MSG(op != nullptr, {}, "Input op is null!");
+  std::vector<mindspore::MSTensor> non_const_in_tensors;
+  std::copy_if(op->inputs().begin(), op->inputs().end(), std::back_inserter(non_const_in_tensors),
+               [](const auto &tensor) { return !tensor.IsConst(); });
+  return non_const_in_tensors;
 }
 
 bool NPUPassUtils::Scale4dCase(NPUOp *op) {

@@ -117,6 +117,9 @@ ge::DataType ConverterToNPUDataType(DataType type_id) {
     case DataType::kNumberTypeUInt32:
       data_type = ge::DT_UINT32;
       break;
+    case DataType::kNumberTypeBool:
+      data_type = ge::DT_BOOL;
+      break;
     default:
       data_type = ge::DT_UNDEFINED;
       break;

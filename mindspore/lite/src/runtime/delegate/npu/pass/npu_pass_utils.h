@@ -24,7 +24,6 @@
 #include "src/runtime/delegate/npu/op/transpose_npu.h"
 
 namespace mindspore {
-extern std::unordered_map<schema::PrimitiveType, std::set<int>> nodes2const_index;
 class NPUPassUtils {
  public:
   static NPUOp *CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
@@ -44,9 +43,8 @@ class NPUPassUtils {
 
   static void UpdateNH2NCTransNodePostOp(NPUOp *trans_op, NPUOp *post_op);
 
-  static void UpdateNC2NHTransNodePostOp(NPUOp *op, NPUOp *trans_op, NPUOp *post_op);
-
-  static void UpdateNC2NHPostOpInTensors(NPUOp *op, NPUOp *trans_op, NPUOp *post_op);
+  static void UpdateNC2NHTransNodePostOp(NPUOp *op, NPUOp *trans_op, NPUOp *post_op,
+                                         const mindspore::MSTensor &org_in_tensor);
 
   static bool IsNhwc2Nchw(NPUOp *op);
 

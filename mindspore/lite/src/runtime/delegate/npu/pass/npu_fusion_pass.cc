@@ -133,7 +133,7 @@ int NPUFusionPass::UpdatePostOps(NPUOp *cur_op) {
 }
 
 int UpdatePreTensors(NPUOp *cur_op) {
-  auto tensors_vec = NPUPassUtils::GetNonConstInputs(cur_op);
+  auto in_tensors_vec = cur_op->inputs();
   for (auto in_op : cur_op->in_ops()) {
     if (in_op->inputs().empty() || in_op->outputs().empty()) {
       MS_LOG(ERROR) << "in_tensors or out_tensors of input op is empty.";
@@ -155,24 +155,13 @@ int UpdatePreTensors(NPUOp *cur_op) {
       cur_tensor = in_tensor;
     }
 
-    for (size_t i = 0; i < tensors_vec.size(); i++) {
-      if (tensors_vec[i] == out_tensor) {
-        tensors_vec[i] = cur_tensor;
+    for (size_t i = 0; i < in_tensors_vec.size(); i++) {
+      if (in_tensors_vec[i] == out_tensor) {
+        in_tensors_vec[i] = cur_tensor;
       }
     }
   }
-  // add constant inputs back
-  if (nodes2const_index.find(cur_op->type()) != nodes2const_index.end()) {
-    tensors_vec.resize(cur_op->inputs().size());
-    auto const_index = nodes2const_index[cur_op->type()];
-    for (auto index : const_index) {
-      if (index >= cur_op->inputs().size()) {
-        continue;
-      }
-      tensors_vec[index] = cur_op->inputs()[index];
-    }
-  }
-  cur_op->set_inputs(tensors_vec);
+  cur_op->set_inputs(in_tensors_vec);
   return RET_OK;
 }
 
@@ -267,33 +256,77 @@ int NPUFusionPass::CommonFusion(NPUOp *cur_op) {
   return RET_OK;
 }
 
-int NPUFusionPass::FormatFusion(NPUOp *cur_op) {
-  if (cur_op == nullptr) {
-    return RET_ERROR;
-  }
-  auto is_input_op = cur_op->in_ops().empty();
-  NPUOp *pre_op = nullptr;
-  if (!is_input_op) {
-    pre_op = cur_op->in_ops()[0];
-  }
-  auto in_tensor = cur_op->inputs()[0];
-  std::vector<NPUOp *> pre_insert_ops;
-  for (const auto &trans_op : cur_op->out_ops()) {
-    if (trans_op->out_ops().empty() && !is_input_op) {
-      // cur_op is a trans cur_op, it's input cur_op num and input tensor num must be 1
-      cur_op->in_ops()[0]->set_outputs({trans_op->outputs()[0]});
-      // in fp16 mode, tensor data type fp16 need to be changed back.
-      auto tensor = cur_op->in_ops()[0]->outputs()[0];
-      if (tensor.DataType() == DataType::kNumberTypeFloat16) {
-        tensor.SetDataType(DataType::kNumberTypeFloat32);
+void UpdateOutOpsOfPreOp(NPUOp *cur_op, bool found_graph_out_tensor, const mindspore::MSTensor &graph_out_tensor,
+                         const std::vector<NPUOp *> &pre_insert_ops) {
+  MS_ASSERT(cur_op != nullptr);
+  auto is_graph_input = cur_op->in_ops().empty();
+  auto cur_op_in_tensor = cur_op->inputs()[0];
+  if (!is_graph_input) {
+    auto pre_op = cur_op->in_ops()[0];
+    auto pre_out_ops = pre_op->out_ops();
+    size_t cur_op_index = 0;
+    for (size_t index = 0; index < pre_out_ops.size(); index++) {
+      if (pre_out_ops[index] == cur_op) {
+        pre_out_ops.erase(pre_out_ops.begin() + index);
+        cur_op_index = index;
+        index--;
+      } else if (found_graph_out_tensor) {
+        // only in this case, the output of pre_op is specified to 2nd trans op's output and pre_out_ops need update.
+        auto tensors_vec = pre_out_ops[index]->inputs();
+        for (size_t i = 0; i < tensors_vec.size(); i++) {
+          if (tensors_vec[i] == cur_op_in_tensor) {
+            tensors_vec[i] = graph_out_tensor;
+            break;
+          }
+        }
+        pre_out_ops[index]->set_inputs(tensors_vec);
       }
     }
+    pre_out_ops.insert(pre_out_ops.begin() + cur_op_index, pre_insert_ops.begin(), pre_insert_ops.end());
+    pre_op->set_out_ops(pre_out_ops);
+  }
+  return;
+}
+
+int NPUFusionPass::FormatFusion(NPUOp *cur_op) {
+  CHECK_NULL_RETURN(cur_op);
+  auto is_graph_input = cur_op->in_ops().empty();
+  auto cur_op_in_tensor = cur_op->inputs()[0];
+  std::vector<NPUOp *> pre_insert_ops;
+  NPUOp *pre_op = nullptr;
+  if (!is_graph_input) {
+    pre_op = cur_op->in_ops()[0];
+  }
+  mindspore::MSTensor graph_out_tensor;
+  bool found_graph_out_tensor = false;
+  auto graph_outputs = subgraph_->outputs();
+  // if the output of second trans op(s) is graph output, find it out and use it as the pre-op's output.
+  for (const auto &sec_op : cur_op->out_ops()) {
+    if (std::find(graph_outputs.begin(), graph_outputs.end(), sec_op->outputs()[0]) != graph_outputs.end()) {
+      graph_out_tensor = sec_op->outputs()[0];
+      if (!is_graph_input) {
+        found_graph_out_tensor = true;
+        // cur_op is the first trans op, it's input op num and input tensor num must be 1
+        pre_op->set_outputs({graph_out_tensor});
+        // in fp16 mode, tensor data type fp16 need to be changed back.
+        auto tensor = pre_op->outputs()[0];
+        if (tensor.DataType() == DataType::kNumberTypeFloat16) {
+          tensor.SetDataType(DataType::kNumberTypeFloat32);
+        }
+        break;
+      } else {
+        MS_LOG(WARNING) << "Existing graph output equivalent to graph input, which is unsupported now.";
+        return RET_OK;
+      }
+    }
+  }
+  for (const auto &trans_op : cur_op->out_ops()) {
     for (const auto &post_op : trans_op->out_ops()) {
       // update tensor
       auto tensors_vec = post_op->inputs();
       for (size_t i = 0; i < tensors_vec.size(); i++) {
         if (tensors_vec[i] == trans_op->outputs()[0]) {
-          tensors_vec[i] = in_tensor;
+          tensors_vec[i] = found_graph_out_tensor ? graph_out_tensor : cur_op_in_tensor;
           break;
         }
       }
@@ -303,7 +336,7 @@ int NPUFusionPass::FormatFusion(NPUOp *cur_op) {
       auto post_in_ops = post_op->in_ops();
       for (size_t i = 0; i < post_in_ops.size(); i++) {
         if (post_in_ops[i] == trans_op) {
-          if (is_input_op) {
+          if (is_graph_input) {
             post_in_ops.erase(post_in_ops.begin() + i);
           } else {
             post_in_ops[i] = pre_op;
@@ -316,32 +349,13 @@ int NPUFusionPass::FormatFusion(NPUOp *cur_op) {
     }
     RemoveAndFreeOp(trans_op);
   }
-  if (!is_input_op) {
-    auto pre_out_ops = pre_op->out_ops();
-    size_t cur_op_index = 0;
-    for (size_t index = 0; index < pre_out_ops.size(); index++) {
-      if (pre_out_ops[index] == cur_op) {
-        pre_out_ops.erase(pre_out_ops.begin() + index);
-        cur_op_index = index;
-      } else {
-        auto tensors_vec = pre_out_ops[index]->inputs();
-        for (size_t i = 0; i < tensors_vec.size(); i++) {
-          if (tensors_vec[i] == in_tensor) {
-            tensors_vec[i] = pre_op->outputs()[0];
-            break;
-          }
-        }
-        pre_out_ops[index]->set_inputs(tensors_vec);
-      }
-    }
-    pre_out_ops.insert(pre_out_ops.begin() + cur_op_index, pre_insert_ops.begin(), pre_insert_ops.end());
-    pre_op->set_out_ops(pre_out_ops);
-  }
+  UpdateOutOpsOfPreOp(cur_op, found_graph_out_tensor, graph_out_tensor, pre_insert_ops);
   RemoveAndFreeOp(cur_op);
   return RET_OK;
 }
 
 int NPUFusionPass::Run(NPUGraph *subgraph) {
+  subgraph_ = subgraph;
   all_ops_ = subgraph->GetOps();
   for (size_t i = 0; i < all_ops_->size(); i++) {
     auto cur_op = (*all_ops_)[i];

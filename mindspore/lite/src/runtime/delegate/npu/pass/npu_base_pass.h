@@ -30,6 +30,7 @@ class NPUBasePass {
 
  protected:
   std::string name_;
+  NPUGraph *subgraph_ = nullptr;
 };
 }  // namespace mindspore
 

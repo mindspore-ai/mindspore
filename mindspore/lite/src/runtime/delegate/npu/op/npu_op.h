@@ -34,8 +34,7 @@ using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
 namespace mindspore {
 constexpr int NPU_SHAPE_SIZE = 4;
-constexpr int INPUT_SIZE2 = 2;
-constexpr int INPUT_SIZE3 = 3;
+constexpr int REPEAT_TIMES2 = 2;
 
 class NPUOp {
  public:
@@ -136,10 +135,15 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore:
 
   std::set<schema::PrimitiveType> int32_lists = {schema::PrimitiveType_Cast, schema::PrimitiveType_StridedSlice,
                                                  schema::PrimitiveType_Reshape, schema::PrimitiveType_ReduceFusion};
+  std::set<schema::PrimitiveType> bool_lists = {schema::PrimitiveType_Cast,       schema::PrimitiveType_LogicalAnd,
+                                                schema::PrimitiveType_LogicalOr,  schema::PrimitiveType_LogicalNot,
+                                                schema::PrimitiveType_TileFusion, schema::PrimitiveType_BroadcastTo};
   auto support_int32 = in_tensors[0].DataType() == DataType::kNumberTypeInt32 &&
                        find(int32_lists.begin(), int32_lists.end(), primitive->value_type()) != int32_lists.end();
+  auto support_bool = in_tensors[0].DataType() == DataType::kNumberTypeBool &&
+                      find(bool_lists.begin(), bool_lists.end(), primitive->value_type()) != bool_lists.end();
   if (in_tensors[0].DataType() != DataType::kNumberTypeFloat32 &&
-      in_tensors[0].DataType() != DataType::kNumberTypeFloat16 && !support_int32) {
+      in_tensors[0].DataType() != DataType::kNumberTypeFloat16 && !support_int32 && !support_bool) {
     MS_LOG(ERROR) << "Npu does not support datatype " << static_cast<int>(in_tensors[0].DataType()) << " for op type "
                   << primitive->value_type();
     return nullptr;

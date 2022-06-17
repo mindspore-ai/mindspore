@@ -21,11 +21,10 @@
 namespace mindspore {
 int TileNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                          const std::vector<mindspore::MSTensor> &out_tensors) {
-  if (in_tensors.size() != 2) {
-    return RET_ERROR;
-  }
+  MS_CHECK_GE(in_tensors.size(), kInputSize1, RET_NOT_SUPPORT);
   auto multiple_tensor = in_tensors[1];
   if (multiple_tensor.ElementNum() > NPU_SHAPE_SIZE || multiple_tensor.Data() == nullptr) {
+    MS_LOG(WARNING) << "Unsupported multiple parameters for NPU Tile op: " << name_;
     return RET_NOT_SUPPORT;
   }
   return RET_OK;
