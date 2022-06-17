@@ -36,12 +36,17 @@ void FusionActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
 
 void FusionActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(input_control);
-  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control.";
+  MS_EXCEPTION_IF_NULL(context);
+  MS_LOG(DEBUG) << "Actor(" << GetAID().Name() << ") receive the input op control: " << input_control->Name();
 
   // Because the input controls of fusion actor are difficult to eliminate duplication, so only process the first input
   // control when receive the same input controls.
   if (recv_input_control_actors_.count(input_control->Name()) == 0) {
     (void)recv_input_control_actors_.insert(input_control->Name());
+    if (real_input_controls_.count(input_control->Name()) == 0) {
+      std::string err_info = GetAID().Name() + " has no real input control from receiving " + input_control->Name();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), err_info);
+    }
     for (auto &real_input_control_actor : real_input_controls_[input_control->Name()]) {
       MS_EXCEPTION_IF_NULL(real_input_control_actor);
       real_input_control_actor->RunOpControl(input_control, context);

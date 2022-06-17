@@ -39,8 +39,7 @@ constexpr size_t kActorFusionMaxNum = 1000;
 
 void MultiActorFusion::Process(ActorSet *const actor_set, AbstractActor *const) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  if ((!actor_set->custom_actors_.empty()) || (!actor_set->copy_actors_.empty()) ||
-      (!actor_set->super_kernel_actors_.empty())) {
+  if (!actor_set->custom_actors_.empty()) {
     return;
   }
 
@@ -148,36 +147,51 @@ bool GetDependentActors(std::vector<AbstractActorPtr> *const output_actors, cons
   MS_EXCEPTION_IF_NULL(actor);
   MS_EXCEPTION_IF_NULL(need_processed_actors);
 
+  bool is_need_processed = SupportFusion(actor) ? true : false;
+  std::vector<std::string> output_actor_names;
   // Get all the output actors by output data.
-  bool is_need_processed = true;
   for (auto &output_data_arrow : actor->output_data_arrows()) {
     MS_EXCEPTION_IF_NULL(output_data_arrow);
-    // Skip the repeated output.
-    if (std::find_if(output_actors->begin(), output_actors->end(), [&output_data_arrow](auto &output_actor) {
-          return output_data_arrow->to_op_id_.Name() == output_actor->GetAID().Name();
-        }) != output_actors->end()) {
-      continue;
-    }
-    auto iter = need_processed_actors->find(output_data_arrow->to_op_id_.Name());
-    if (iter != need_processed_actors->end()) {
-      (void)output_actors->emplace_back(iter->second);
-      (void)need_processed_actors->erase(iter);
-    } else {
-      is_need_processed = false;
-    }
+    (void)output_actor_names.emplace_back(output_data_arrow->to_op_id_.Name());
   }
   // Get all the output actors by output control.
   for (auto &output_control_arrow : actor->output_control_arrows()) {
     MS_EXCEPTION_IF_NULL(output_control_arrow);
+    (void)output_actor_names.emplace_back(output_control_arrow->to_op_id_.Name());
+  }
+  // Get all the output actors by output partial of control actor.
+  if (IsControlFlowActor(actor->type())) {
+    auto control_actor = dynamic_cast<ControlActor *>(actor.get());
+    MS_EXCEPTION_IF_NULL(control_actor);
+    for (auto &output_partial_arrow : control_actor->output_partial_arrows()) {
+      MS_EXCEPTION_IF_NULL(output_partial_arrow);
+      (void)output_actor_names.emplace_back(output_partial_arrow->to_op_id_.Name());
+    }
+  }
+  // Get all the output actors by output data with branch id of gather actor.
+  if (actor->type() == KernelTransformType::kGatherActor) {
+    auto gather_actor = dynamic_cast<GatherActor *>(actor.get());
+    MS_EXCEPTION_IF_NULL(gather_actor);
+    for (auto &output_data_with_branch_id_arrow : gather_actor->output_data_with_branch_id_arrows()) {
+      for (auto &output_aid : output_data_with_branch_id_arrow.second) {
+        (void)output_actor_names.emplace_back(output_aid.Name());
+      }
+    }
+  }
+
+  for (auto &output_actor_name : output_actor_names) {
     // Skip the repeated output.
-    if (std::find_if(output_actors->begin(), output_actors->end(), [&output_control_arrow](auto &output_actor) {
-          return output_control_arrow->to_op_id_.Name() == output_actor->GetAID().Name();
+    if (std::find_if(output_actors->begin(), output_actors->end(), [&output_actor_name](auto &output_actor) {
+          return output_actor_name == output_actor->GetAID().Name();
         }) != output_actors->end()) {
       continue;
     }
-    auto iter = need_processed_actors->find(output_control_arrow->to_op_id_.Name());
+    auto iter = need_processed_actors->find(output_actor_name);
     if (iter != need_processed_actors->end()) {
       (void)output_actors->emplace_back(iter->second);
+      if (!SupportFusion(iter->second)) {
+        is_need_processed = false;
+      }
       (void)need_processed_actors->erase(iter);
     } else {
       is_need_processed = false;
@@ -201,7 +215,9 @@ std::vector<FusionActorPtr> BuildFusionActorBySeed(
   while (!current_seed_actors.empty()) {
     auto &current_seed_actor = current_seed_actors.front();
     current_seed_actors.pop();
-    (void)need_fused_actors.emplace_back(current_seed_actor);
+    if (SupportFusion(current_seed_actor)) {
+      (void)need_fused_actors.emplace_back(current_seed_actor);
+    }
 
     // Get the outputs of seed actor. If they have dependencies, continue processing. Otherwise, add the output to
     // origin_seed_actors.
@@ -245,12 +261,11 @@ void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
   mindspore::HashMap<std::string, AbstractActorPtr> need_processed_actors;
   for (auto &actor : actors) {
     MS_EXCEPTION_IF_NULL(actor);
-    if (SupportFusion(actor)) {
-      need_processed_actors[actor->GetAID().Name()] = actor;
-    }
+    need_processed_actors[actor->GetAID().Name()] = actor;
   }
 
   // Get the initial seed actors from the outputs of data prepare actor.
+  (void)need_processed_actors.erase(actor_set->data_prepare_actor_->GetAID().Name());
   std::queue<AbstractActorPtr> seed_actors;
   for (auto &output_control_arrow : actor_set->data_prepare_actor_->output_control_arrows()) {
     MS_EXCEPTION_IF_NULL(output_control_arrow);
