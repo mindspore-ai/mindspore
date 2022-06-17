@@ -364,7 +364,7 @@ class CSRMM(Primitive):
         - **indices** (Tensor) - A Tensor.
         - **values** (Tensor) - A Tensor.
         - **shape** (tuple(int)) - A tuple.
-        - **dense_tensor** (Tensor) - A dense Tensor.
+        - **dense** (Tensor) - A dense Tensor.
 
     Outputs:
         Tensor.

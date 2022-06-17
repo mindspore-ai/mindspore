@@ -1047,22 +1047,14 @@ class GraphSplitGpu(GraphSplitByPattern):
                 visited = []
                 op_queue = [start_op]
 
-                def _remove_preceding_ones(shape):
-                    i = 0
-                    while shape[i] == 1 and i < len(shape):
-                        i += 1
-                    return shape[i:]
-
                 def _early_stop(cur_op):
                     if cur_op in end_ops:
                         # If reduce the gather axis, stop early for not fusion.
                         if cur_op.prim == "ReduceSum" and _reduce_exclude(cur_op, gather_axis):
                             return True
                     else:
-                        shape1 = _remove_preceding_ones(consisten_shape)
-                        shape2 = _remove_preceding_ones(cur_op.output.shape)
                         if (cur_op.prim in start_prims and cur_op != start_op) or \
-                                shape1 != shape2:
+                                consisten_shape != cur_op.output.shape:
                             return True
                     return False
 

@@ -4493,7 +4493,7 @@ class CSRTensor(CSRTensor_):
         validator.check_value_type('dense_vector', dense_vector, (Tensor_,), 'CSRTensor.mv')
         return tensor_operator_registry.get("csr_mv")(self, dense_vector)
 
-    def mm(self, dense):
+    def mm(self, dense_matrix):
         """
         Sparse matrix-matrix multiplication.
 
@@ -4501,7 +4501,7 @@ class CSRTensor(CSRTensor_):
             Currently only supports CPU backend with LLVM 12.0.1 installed.
 
         Args:
-            dense_vector (Tensor): A dense Tensor, its shape[0] should be equal to csr_tensor.shape[1]
+            dense_matrix (Tensor): A dense Tensor, its shape[0] should be equal to csr_tensor.shape[1]
 
         Returns:
             Tensor.
@@ -4517,13 +4517,14 @@ class CSRTensor(CSRTensor_):
             >>> values = Tensor([2, 1], dtype=mstype.float32)
             >>> dense_shape = (2, 4)
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
-            >>> Tensor([[1., 2.], [1, 2.], [1, 2.], [1., 2.]], dtype=mstype.float32)
-            >>> print(csr_tensor.mm(dense))
+            >>> dense_matrix = Tensor([[1., 2.], [1, 2.], [1, 2.], [1., 2.]], dtype=mstype.float32)
+            >>> print(csr_tensor.mm(dense_matrix))
             [[2., 4.]
             [1., 2.]]
         """
-        validator.check_value_type('dense_matrix', dense, (Tensor_,), 'CSRTensor.mm')
-        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, self.shape, dense)
+        validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
+        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, \
+            self.shape, dense_matrix)
 
     def sum(self, axis):
         """
