@@ -390,7 +390,8 @@ std::unique_ptr<Byte[]> Encrypt(size_t *encrypt_len, const Byte *plain_data, siz
     unsigned char tag[Byte16];
     if (!BlockEncrypt(block_enc_buf.data(), &block_enc_len, block_buf, key, static_cast<int32_t>(key_len), enc_mode,
                       tag)) {
-      MS_LOG(ERROR) << "Failed to encrypt data, please check if enc_key or enc_mode is valid.";
+      MS_LOG(ERROR)
+        << "Failed to encrypt data, please check if enc_key or enc_mode is valid or the file has been tempered with.";
       return nullptr;
     }
     if (enc_mode == "AES-GCM") {

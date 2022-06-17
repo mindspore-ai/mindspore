@@ -129,7 +129,7 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
         auto plain_data = mindspore::Decrypt(&plain_data_size, reinterpret_cast<const unsigned char *>(model_data),
                                              data_size, dec_key.key, dec_key.len, CharToString(dec_mode));
         if (plain_data == nullptr) {
-          err_msg << "Load model failed. Please check the valid of dec_key and dec_mode.";
+          err_msg << "Load model failed. Please check the valid of dec_key and dec_mode or the file integrity.";
           MS_LOG(ERROR) << err_msg.str();
           return Status(kMEInvalidInput, err_msg.str());
         }

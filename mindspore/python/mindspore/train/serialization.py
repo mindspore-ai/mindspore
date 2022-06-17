@@ -452,7 +452,7 @@ def load(file_name, **kwargs):
         if _is_cipher_file(file_name):
             raise RuntimeError("Load MindIR failed. The file may be encrypted and decrypt failed, you "
                                "can check whether the values of the arguments 'dec_key' and 'dec_mode'"
-                               " are the same as when exported MindIR file.")
+                               " are the same as when exported MindIR file, or check the file integrity.")
         raise RuntimeError("Load MindIR failed.")
     return graph
 
@@ -613,7 +613,7 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
     except BaseException as e:
         if _is_cipher_file(ckpt_file_name):
             logger.critical("Failed to read the checkpoint file '%s'. The file may be encrypted, please pass in the "
-                            "correct 'dec_key'.", ckpt_file_name)
+                            "correct 'dec_key' or check the file integrity.", ckpt_file_name)
         else:
             logger.critical("Failed to read the checkpoint file '%s' , may not have permission to read it, please "
                             "check the correct of the file.", ckpt_file_name)

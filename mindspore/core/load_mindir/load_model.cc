@@ -83,7 +83,8 @@ bool MindIRLoader::ParseModelProto(mind_ir::ModelProto *model, const std::string
     size_t plain_len;
     auto plain_data = Decrypt(&plain_len, path, dec_key_, key_len_, dec_mode_);
     if (plain_data == nullptr) {
-      MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+      MS_LOG(ERROR)
+        << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode or the file integrity.";
       return false;
     }
     if (!model->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
@@ -105,7 +106,8 @@ bool MindIRLoader::ParseGraphProto(mind_ir::GraphProto *graph, const std::string
     size_t plain_len;
     auto plain_data = Decrypt(&plain_len, path, dec_key_, key_len_, dec_mode_);
     if (plain_data == nullptr) {
-      MS_LOG(ERROR) << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode.";
+      MS_LOG(ERROR)
+        << "Decrypt MindIR file failed, please check the correctness of the dec_key or dec_mode or the file integrity.";
       return false;
     }
     if (!graph->ParseFromArray(reinterpret_cast<char *>(plain_data.get()), static_cast<int32_t>(plain_len))) {
