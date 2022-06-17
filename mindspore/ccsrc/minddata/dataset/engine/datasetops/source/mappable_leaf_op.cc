@@ -28,7 +28,7 @@ MappableLeafOp::MappableLeafOp(int32_t num_wkrs, int32_t queue_size, std::shared
 Status MappableLeafOp::ImageDecrypt(const std::string &path, std::shared_ptr<Tensor> *tensor,
                                     const py::function &decrypt) {
   RETURN_UNEXPECTED_IF_NULL(tensor);
-  if (py::isinstance<py::none>(decrypt)) {
+  if (decrypt == nullptr || py::isinstance<py::none>(decrypt)) {
     RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
   } else {
     // Acquire Python GIL
