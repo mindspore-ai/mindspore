@@ -50,42 +50,6 @@ def one_hot_static_shape_test_case(in_type, value_type, out_type):
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-7)
 
 
-class OneHotTensorNet(Cell):
-    def construct(self, indices, depth, on_value, off_value):
-        return indices.one_hot(depth, on_value, off_value)
-
-
-def one_hot_tensor_graph(in_type, value_type, out_type):
-    depth = 5
-    indices = Tensor(np.array([1, 3, 2, 4, 0]).astype(in_type))
-    on_value = Tensor(1.0, value_type)
-    off_value = Tensor(0.0, value_type)
-    net = OneHotTensorNet()
-    output = net(indices, depth, on_value, off_value)
-    expect = np.array([[0.0, 1.0, 0.0, 0.0, 0.0],
-                       [0.0, 0.0, 0.0, 1.0, 0.0],
-                       [0.0, 0.0, 1.0, 0.0, 0.0],
-                       [0.0, 0.0, 0.0, 0.0, 1.0],
-                       [1.0, 0.0, 0.0, 0.0, 0.0]]).astype(out_type)
-
-    assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-7)
-
-
-def one_hot_tensor_pynative(in_type, value_type, out_type):
-    depth = 5
-    indices = Tensor(np.array([1, 3, 2, 4, 0]).astype(in_type))
-    on_value = Tensor(1.0, value_type)
-    off_value = Tensor(0.0, value_type)
-    output = indices.one_hot(depth, on_value, off_value)
-    expect = np.array([[0.0, 1.0, 0.0, 0.0, 0.0],
-                       [0.0, 0.0, 0.0, 1.0, 0.0],
-                       [0.0, 0.0, 1.0, 0.0, 0.0],
-                       [0.0, 0.0, 0.0, 0.0, 1.0],
-                       [1.0, 0.0, 0.0, 0.0, 0.0]]).astype(out_type)
-
-    assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-7)
-
-
 def one_hot_functional(in_type, value_type, out_type):
     depth = 5
     indices = Tensor(np.array([1, 3, 2, 4, 0]).astype(in_type))
@@ -177,7 +141,6 @@ def test_ascend_graph_mode():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     one_hot_static_shape_all_types()
     one_hot_dynamic_shape_test_case(np.int32, mstype.float32, np.float32)
-    one_hot_tensor_graph(np.int32, mstype.float32, np.float32)
 
 
 @pytest.mark.skip(reason='Pls contact me @id: 30026544')
@@ -194,6 +157,5 @@ def test_ascend_pynative_mode():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     one_hot_static_shape_all_types()
     one_hot_dynamic_shape_test_case(np.int32, mstype.float32, np.float32)
-    one_hot_tensor_pynative(np.int32, mstype.float32, np.float32)
     one_hot_functional(np.int32, mstype.float32, np.float32)
     one_hot_vmap(np.int32, mstype.float32)
