@@ -330,6 +330,9 @@ class FTRL(Optimizer):
 
 
 def create_distributed_ftrl(*args, **kwargs):
+    """
+    Create the distributed ApplyFtrl op.
+    """
     ftrl = P.ApplyFtrl(*args, **kwargs)
     ftrl.add_prim_attr("gradient_type", "dense_gradient")
     ftrl.add_prim_attr("parameter_input_index", 0)
@@ -338,6 +341,9 @@ def create_distributed_ftrl(*args, **kwargs):
 
 
 def create_distributed_fused_sparse_ftrl(*args, **kwargs):
+    """
+    Create the distributed FusedSparseFtrl op.
+    """
     sparse_ftrl = P.FusedSparseFtrl(*args, **kwargs)
     sparse_ftrl.add_prim_attr("gradient_type", "sparse_gradient")
     sparse_ftrl.add_prim_attr("parameter_input_index", 0)

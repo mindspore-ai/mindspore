@@ -34,6 +34,9 @@ def _register_dist_optimizer(optimizer_type, creating_func):
 
 
 def empty_creating_func(*args, **kwargs):
+    """
+    Empty function as placeholder.
+    """
     return None
 
 

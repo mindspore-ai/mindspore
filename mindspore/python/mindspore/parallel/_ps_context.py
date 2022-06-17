@@ -46,6 +46,9 @@ def _need_reset_device_target_for_ps(target):
 
 
 def set_ps_enable(enable):
+    """
+    Set ps enable flag.
+    """
     ps_context().set_ps_enable(enable)
     # If this is Server or Scheduler and device target is Ascend, reset the target to CPU
     if _need_reset_device_target_for_ps(context.get_context("device_target")):

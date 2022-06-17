@@ -953,6 +953,9 @@ class AdamOffload(Optimizer):
 
 
 def create_distributed_adam(*args, **kwargs):
+    """
+    Create the distributed Adam op.
+    """
     adam = P.Adam(*args, **kwargs)
     adam.add_prim_attr("gradient_type", "dense_gradient")
     adam.add_prim_attr("parameter_input_index", 0)
@@ -961,6 +964,9 @@ def create_distributed_adam(*args, **kwargs):
 
 
 def create_distributed_fused_sparse_adam(*args, **kwargs):
+    """
+    Create the distributed FusedSparseAdam op.
+    """
     sparse_adam = P.FusedSparseAdam(*args, **kwargs)
     sparse_adam.add_prim_attr("gradient_type", "sparse_gradient")
     sparse_adam.add_prim_attr("parameter_input_index", 0)

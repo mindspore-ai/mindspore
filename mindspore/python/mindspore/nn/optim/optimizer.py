@@ -344,6 +344,9 @@ class Optimizer(Cell):
 
     @staticmethod
     def use_distibuted_optimizer():
+        """
+        Whether use distributed optimizers.
+        """
         return _is_ps_mode() and _enable_distributed_mindrt()
 
     def flatten_gradients(self, gradients):
@@ -804,6 +807,9 @@ class Optimizer(Cell):
         return new_param_group
 
     def get_distributed_optimizer_list(self, optimizer_type, *args, **kwargs):
+        """
+        Get the distributed optimizers list in distributed training mode.
+        """
         return generate_dist_optimizer_list(optimizer_type, self._parameters, *args, **kwargs)
 
     def construct(self, *hyper_params):
