@@ -51,10 +51,7 @@ class ResizeLinear1DGradGpuKernelMod : public NativeGpuKernelMod {
   }
 
  protected:
-  void ResetResource();
-  void InitSizeLists();
   std::vector<KernelAttr> GetOpSupport() override;
-  void GetSize();
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -68,11 +65,6 @@ class ResizeLinear1DGradGpuKernelMod : public NativeGpuKernelMod {
   BaseOperatorPtr kernel_ptr_{nullptr};
   ResizeLinear1DGradFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, ResizeLinear1DGradFunc>> func_list_;
-
-  size_t input_data_unit_size_{0};
-  size_t output_data_unit_size_{0};
-  size_t input_byte_size_{1};
-  size_t output_byte_size_{1};
 
   std::vector<int64_t> grad_output_shape_;
   std::vector<int64_t> grad_input_shape_;
