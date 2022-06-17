@@ -35,8 +35,7 @@ from .math import *
 from .combined import *
 from .timedistributed import *
 from .thor_layer import DenseThor, Conv2dThor, EmbeddingThor, EmbeddingLookupThor
-from .padding import ConstantPad1d, ConstantPad2d, ConstantPad3d, ZeroPad2d
-from .reflectionpad import ReflectionPad1d, ReflectionPad2d
+from .padding import ConstantPad1d, ConstantPad2d, ConstantPad3d, ReflectionPad1d, ReflectionPad2d, ZeroPad2d
 
 __all__ = []
 __all__.extend(activation.__all__)
@@ -56,4 +55,3 @@ __all__.extend(combined.__all__)
 __all__.extend(timedistributed.__all__)
 __all__.extend(thor_layer.__all__)
 __all__.extend(padding.__all__)
-__all__.extend(reflectionpad.__all__)
