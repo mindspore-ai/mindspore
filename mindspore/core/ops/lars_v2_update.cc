@@ -66,13 +66,13 @@ abstract::ShapePtr LARSUpdateInferShape(const PrimitivePtr &primitive, const std
   }
   auto shp_len = weight_decay_shape[kShape].size();
   auto para_name = input_args[4]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, shp_len, kLessEqual, 1);
+  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1);
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, weight_decay_shape[kShape][0], kEqual, 1);
   }
   shp_len = learning_rate_shape[kShape].size();
   para_name = input_args[5]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, shp_len, kLessEqual, 1);
+  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1);
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, learning_rate_shape[kShape][0], kEqual, 1);
   }

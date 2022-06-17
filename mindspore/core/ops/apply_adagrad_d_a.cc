@@ -50,9 +50,12 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, batch_rank, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, batch_rank, primitive->name());
+  auto lr_shape_rank = SizeToLong(lr_shape.size());
+  auto l1_shape_rank = SizeToLong(l1_shape.size());
+  auto l2_shape_rank = SizeToLong(l2_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape_rank, kEqual, batch_rank, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape_rank, kEqual, batch_rank, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape_rank, kEqual, batch_rank, primitive->name());
   (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, batch_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(
@@ -78,23 +81,23 @@ TuplePtr ApplyAdagradDAInferType(const PrimitivePtr &prim, const std::vector<Abs
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // gradient_accumulator、gradient_squared_accumulator、grad must have the same type as var
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"gradient_accumulator_type", gradient_accumulator_type});
-  (void)args.insert({"gradient_squared_accumulator_type", gradient_squared_accumulator_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("gradient_accumulator_type", gradient_accumulator_type));
+  (void)args.insert(std::make_pair("gradient_squared_accumulator_type", gradient_squared_accumulator_type));
+  (void)args.insert(std::make_pair("grad_type", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // lr、l1、l2、global_step_type must be a scalar type
   std::map<std::string, TypePtr> args_lr;
   std::map<std::string, TypePtr> args_l1;
   std::map<std::string, TypePtr> args_l2;
   std::map<std::string, TypePtr> args_global_step;
-  (void)args_lr.insert({"lr_type", lr_type});
+  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);
-  (void)args_l1.insert({"l1_type", l1_type});
+  (void)args_l1.insert(std::make_pair("l1_type", l1_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l1, valid_types, prim_name);
-  (void)args_l2.insert({"l2_type", l2_type});
+  (void)args_l2.insert(std::make_pair("l2_type", l2_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l2, valid_types, prim_name);
-  (void)args_global_step.insert({"global_step_type", global_step_type});
+  (void)args_global_step.insert(std::make_pair("global_step_type", global_step_type));
   const std::set<TypePtr> valid_types1 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_global_step, valid_types1, prim_name);
   return std::make_shared<Tuple>(

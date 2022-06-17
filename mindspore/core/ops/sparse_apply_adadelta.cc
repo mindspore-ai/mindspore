@@ -47,22 +47,23 @@ abstract::TupleShapePtr SparseApplyAdadeltaInferShape(const PrimitivePtr &primit
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
   auto rho_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto grad_shape_rank = SizeToLong(grad_shape.size());
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
   // Args lr rho must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("rho_shape size", rho_shape.size(), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("rho_shape size", SizeToLong(rho_shape.size()), kEqual, 0, prim_name);
   // Args var,accum,accum_update and grad shape must be same
   std::map<std::string, ShapeVector> same_shape_args_map;
-  same_shape_args_map.insert({"accum shape", accum_shape});
-  same_shape_args_map.insert({"accum_updata shape", accum_updata_shape});
-  same_shape_args_map.insert({"grad shape", grad_shape});
+  (void)same_shape_args_map.insert(std::make_pair("accum shape", accum_shape));
+  (void)same_shape_args_map.insert(std::make_pair("accum_updata shape", accum_updata_shape));
+  (void)same_shape_args_map.insert(std::make_pair("grad shape", grad_shape));
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
   // Indices must be rank 1
-  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", SizeToLong(indices_shape.size()), kEqual, 1, prim_name);
   // Grad dimension must be equal or greater than 1
-  (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape_rank, kGreaterEqual, 1, prim_name);
   // Indices size must equal with grad first dimension size
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
@@ -89,21 +90,21 @@ TuplePtr SparseApplyAdadeltaInferType(const PrimitivePtr &prim, const std::vecto
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // Args accum accum_updata and grad must have the same type as var
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"accum", accum_type});
-  args.insert({"accum_updata", accum_updata_type});
-  args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("accum", accum_type));
+  (void)args.insert(std::make_pair("accum_updata", accum_updata_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // Args lr rho must be a scalar type
   std::map<std::string, TypePtr> args2;
-  args2.insert({"lr", lr_type});
+  (void)args2.insert(std::make_pair("lr", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args2, valid_types, prim_name);
   std::map<std::string, TypePtr> args3;
-  args3.insert({"rho", rho_type});
+  (void)args3.insert(std::make_pair("rho", rho_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args3, valid_types, prim_name);
   // Check indices_type
   std::map<std::string, TypePtr> args4;
-  args4.insert({"indices", indices_type});
+  (void)args4.insert(std::make_pair("indices", indices_type));
   const std::set<TypePtr> valid_types2 = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args4, valid_types2, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type, accum_updata_type});

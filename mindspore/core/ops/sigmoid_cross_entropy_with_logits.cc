@@ -57,8 +57,8 @@ TypePtr SigmoidCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
   const std::set<TypePtr> valid_types = {kBool,   kInt,    kInt8,   kInt16, kInt32,   kInt64,   kUInt,    kUInt8,
                                          kUInt16, kUInt32, kUInt64, kFloat, kFloat16, kFloat32, kFloat64, kComplex64};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"logits_type", logits_type});
-  (void)args.insert({"label_type", label_type});
+  (void)args.insert(std::make_pair("logits_type", logits_type));
+  (void)args.insert(std::make_pair("label_type", label_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, primitive->name());
   return logits_type;
 }

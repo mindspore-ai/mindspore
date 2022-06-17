@@ -43,7 +43,9 @@ abstract::ShapePtr SliceGradInferShape(const PrimitivePtr &primitive, const std:
 TypePtr SliceGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("slice_grad_prim_infer", input_args.size(), kEqual, 4, prim_name);
+  auto input_args_rank = SizeToLong(input_args.size());
+  constexpr int64_t kInputNum = 4;
+  (void)CheckAndConvertUtils::CheckInteger("slice_grad_prim_infer", input_args_rank, kEqual, kInputNum, prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

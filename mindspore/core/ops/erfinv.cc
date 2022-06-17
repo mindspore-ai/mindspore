@@ -46,7 +46,8 @@ AbstractBasePtr ErfinvInfer(const abstract::AnalysisEnginePtr &, const Primitive
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t input_num = 1;
-  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", input_args.size(), kEqual, input_num, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_x numbers", SizeToLong(input_args.size()), kEqual, input_num,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

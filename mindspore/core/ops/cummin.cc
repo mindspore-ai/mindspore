@@ -65,7 +65,7 @@ MIND_API_OPERATOR_IMPL(Cummin, BaseOperator);
 AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(primitive);
   auto type = CumminInferType(primitive, input_args);
   auto shape = CumminInferShape(primitive, input_args);

@@ -37,7 +37,7 @@ abstract::ShapePtr TruncInferShape(const PrimitivePtr &primitive, const std::vec
 
 TypePtr TruncInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim->name());
+  CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
   std::set<TypePtr> check_list = {kFloat16, kFloat32, kInt8, kInt32, kUInt8};
   auto input_type = input_args[0]->BuildType();
   CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());

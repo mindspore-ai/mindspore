@@ -47,17 +47,17 @@ abstract::TupleShapePtr ApplyProximalAdagradInferShape(const PrimitivePtr &primi
     batch_rank = GetValue<int64_t>(value_ptr);
   }
 
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, batch_rank, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kEqual, batch_rank, prim_name);
 
   if (grad_shape_ptr->IsDynamic()) {
     return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
   }
   // var, accum and grad must have the same shape
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"accum", accum_shape_ptr});
-  same_shape_args_map.insert({"grad", grad_shape_ptr});
+  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape_ptr));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape_ptr));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape_ptr) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
@@ -83,17 +83,17 @@ TuplePtr ApplyProximalAdagradInferType(const PrimitivePtr &primitive, const std:
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, accum and grad must have the same type
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"accum", accum_type});
-  args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("accum", accum_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // lr, l1, l2 type must be valid
   std::map<std::string, TypePtr> args_lr;
-  args_lr.insert({"lr", lr_type});
+  (void)args_lr.insert(std::make_pair("lr", lr_type));
   std::map<std::string, TypePtr> args_l1;
-  args_l1.insert({"l1", l1_type});
+  (void)args_l1.insert(std::make_pair("l1", l1_type));
   std::map<std::string, TypePtr> args_l2;
-  args_l2.insert({"l2", l2_type});
+  (void)args_l2.insert(std::make_pair("l2", l2_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l1, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l2, valid_types, prim_name);

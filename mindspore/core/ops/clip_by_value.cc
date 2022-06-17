@@ -33,7 +33,8 @@ abstract::ShapePtr ClipByValueInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, kIndex3, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kGreaterEqual, kIndex3,
+                                           prim_name);
   auto shape_element = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kIndex0);
   return shape_element;
 }

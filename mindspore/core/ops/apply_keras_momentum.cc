@@ -41,13 +41,14 @@ abstract::TupleShapePtr ApplyKerasMomentumInferShape(const PrimitivePtr &primiti
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->GetShapeTrack())[kShape];
   auto grad_shape = input_args[3]->BuildShape();
   auto momentum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
+  auto momentum_shape_rank = SizeToLong(momentum_shape.size());
   // lr, momentum must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("momentum_shape size", momentum_shape.size(), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kEqual, 0, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("momentum_shape rank", momentum_shape_rank, kEqual, 0, prim_name);
   // var, accum and grad must have the same shape
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"accum", accum_shape});
-  same_shape_args_map.insert({"grad", grad_shape});
+  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
@@ -74,9 +75,9 @@ TuplePtr ApplyKerasMomentumInferType(const PrimitivePtr &prim, const std::vector
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, accum and grad must have the same type
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"accum", accum_type});
-  args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("accum", accum_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // lr, momentum type must be valid
   (void)CheckAndConvertUtils::CheckTensorTypeValid("lr_dtype", lr_type, valid_types, prim_name);

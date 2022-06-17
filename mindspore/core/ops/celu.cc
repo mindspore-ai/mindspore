@@ -32,7 +32,7 @@ namespace {
 abstract::ShapePtr CeLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", input_args.size(), kGreaterEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   auto shape_element = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   return shape_element;
 }
@@ -40,7 +40,7 @@ abstract::ShapePtr CeLUInferShape(const PrimitivePtr &primitive, const std::vect
 TypePtr CeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  (void)CheckAndConvertUtils::CheckInteger("CeLU input numbers", input_args.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("CeLU input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   MS_EXCEPTION_IF_NULL(input_args[0]);
   auto x_type = input_args[0]->BuildType();

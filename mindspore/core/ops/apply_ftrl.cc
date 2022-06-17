@@ -40,8 +40,8 @@ abstract::ShapePtr ApplyFtrlInferShape(const PrimitivePtr &primitive, const std:
     return var_shape->cast<abstract::ShapePtr>();
   }
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"accum", accum_shape});
-  same_shape_args_map.insert({"linear", linear_shape});
+  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
+  (void)same_shape_args_map.insert(std::make_pair("linear", linear_shape));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
@@ -65,10 +65,10 @@ TypePtr ApplyFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   auto grad_type = input_args[kInputIndex3]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"accum_type", accum_type});
-  (void)args.insert({"linear_type", linear_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("accum_type", accum_type));
+  (void)args.insert(std::make_pair("linear_type", linear_type));
+  (void)args.insert(std::make_pair("grad_type", grad_type));
   // var accum linear grad must have same dtypes
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
@@ -80,10 +80,10 @@ TypePtr ApplyFtrlInferType(const PrimitivePtr &prim, const std::vector<AbstractB
   std::map<std::string, TypePtr> args_l1;
   std::map<std::string, TypePtr> args_l2;
   std::map<std::string, TypePtr> args_lr_power;
-  (void)args_lr.insert({"lr_type", lr_type});
-  (void)args_l1.insert({"l1_type", l1_type});
-  (void)args_l2.insert({"l2_type", l2_type});
-  (void)args_lr_power.insert({"lr_power_type", lr_power_type});
+  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
+  (void)args_l1.insert(std::make_pair("l1_type", l1_type));
+  (void)args_l2.insert(std::make_pair("l2_type", l2_type));
+  (void)args_lr_power.insert(std::make_pair("lr_power_type", lr_power_type));
 
   // lr, l1, l2, lr_power type must be float or scalar tensor with float
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);

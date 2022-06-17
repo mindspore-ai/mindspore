@@ -53,34 +53,42 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   // beta1_power,lr,beta1,beta2,epsilon must be scalar
   const int64_t kInputShape = 1;
-  (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", beta1_power_shape.size(), kLessEqual, kInputShape,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape.size()), kLessEqual,
+                                           kInputShape, prim_name);
   if (beta1_power_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape[0]", beta1_power_shape.size(), kEqual, kInputShape,
+    (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape[0]", SizeToLong(beta1_power_shape.size()), kEqual,
+                                             kInputShape, prim_name);
+  }
+  (void)CheckAndConvertUtils::CheckInteger("lr's rank", SizeToLong(lr_shape.size()), kLessEqual, kInputShape,
+                                           prim_name);
+  if (lr_shape.size() == 1) {
+    (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", SizeToLong(lr_shape.size()), kEqual, kInputShape,
                                              prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("lr's rank", lr_shape.size(), kLessEqual, kInputShape, prim_name);
-  if (lr_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape.size(), kEqual, kInputShape, prim_name);
-  }
-  (void)CheckAndConvertUtils::CheckInteger("beta1's rank", beta1_shape.size(), kLessEqual, kInputShape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("beta1's rank", SizeToLong(beta1_shape.size()), kLessEqual, kInputShape,
+                                           prim_name);
   if (beta1_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta1_shape[0]", beta1_shape.size(), kEqual, kInputShape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("beta1_shape[0]", SizeToLong(beta1_shape.size()), kEqual, kInputShape,
+                                             prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("beta2's rank", beta2_shape.size(), kLessEqual, kInputShape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("beta2's rank", SizeToLong(beta2_shape.size()), kLessEqual, kInputShape,
+                                           prim_name);
   if (beta2_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta2_shape[0]", beta2_shape.size(), kEqual, kInputShape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("beta2_shape[0]", SizeToLong(beta2_shape.size()), kEqual, kInputShape,
+                                             prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", epsilon_shape.size(), kLessEqual, kInputShape, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", SizeToLong(epsilon_shape.size()), kLessEqual, kInputShape,
+                                           prim_name);
   if (epsilon_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape[0]", epsilon_shape.size(), kEqual, kInputShape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape[0]", SizeToLong(epsilon_shape.size()), kEqual, kInputShape,
+                                             prim_name);
   }
 
   // var, m,v and grad must have the same shape
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"m", m_shape});
-  same_shape_args_map.insert({"v", v_shape});
-  same_shape_args_map.insert({"grad", grad_shape});
+  (void)same_shape_args_map.insert(std::make_pair("m", m_shape));
+  (void)same_shape_args_map.insert(std::make_pair("v", v_shape));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
   if (!var_shape_ptr->IsDynamic() && !m_shape_ptr->IsDynamic()) {
     if (*m_shape != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
@@ -127,10 +135,10 @@ TuplePtr ApplyAdaMaxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // m v grad must have the same type as var
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"m_type", m_type});
-  (void)args.insert({"v_type", v_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("m_type", m_type));
+  (void)args.insert(std::make_pair("v_type", v_type));
+  (void)args.insert(std::make_pair("grad_type", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   std::map<std::string, TypePtr> args_beta1_power;
@@ -139,11 +147,11 @@ TuplePtr ApplyAdaMaxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   std::map<std::string, TypePtr> args_beta2;
   std::map<std::string, TypePtr> args_epsilon;
 
-  (void)args_beta1_power.insert({"beta1_power_type", beta1_power_type});
-  (void)args_lr.insert({"lr_type", lr_type});
-  (void)args_beta1.insert({"beta1_type", beta1_type});
-  (void)args_beta2.insert({"beta2_type", beta2_type});
-  (void)args_epsilon.insert({"epsilon_type", epsilon_type});
+  (void)args_beta1_power.insert(std::make_pair("beta1_power_type", beta1_power_type));
+  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
+  (void)args_beta1.insert(std::make_pair("beta1_type", beta1_type));
+  (void)args_beta2.insert(std::make_pair("beta2_type", beta2_type));
+  (void)args_epsilon.insert(std::make_pair("epsilon_type", epsilon_type));
 
   // beta1_power,lr,beta1,beta2,epsilon must be a scalar or zero dimension tensor type
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_beta1_power, valid_types, prim_name);

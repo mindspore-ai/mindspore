@@ -39,7 +39,7 @@ abstract::ShapePtr LpNormInferShape(const PrimitivePtr &primitive, const std::ve
   auto axis = GetValue<std::vector<int64_t>>(primitive->GetAttr("axis"));
   auto keep_dims = GetValue<bool>(primitive->GetAttr("keep_dims"));
   if (input_rank == 0) {
-    CheckAndConvertUtils::CheckInteger("axis size", axis.size(), kEqual, input_rank + 1, prim_name);
+    CheckAndConvertUtils::CheckInteger("axis size", SizeToLong(axis.size()), kEqual, input_rank + 1, prim_name);
     return std::make_shared<abstract::Shape>(input_shape);
   } else {
     CheckAndConvertUtils::CheckInRange("axis size", axis.size(), kIncludeNeither, {0, input_rank + 1}, prim_name);

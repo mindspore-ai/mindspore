@@ -76,8 +76,8 @@ TuplePtr SoftmaxCrossEntropyWithLogitsInferType(const PrimitivePtr &primitive,
   auto label_type = input_args[1]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"logits_type", logits_type});
-  (void)args.insert({"label_type", label_type});
+  (void)args.insert(std::make_pair("logits_type", logits_type));
+  (void)args.insert(std::make_pair("label_type", label_type));
   auto type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, primitive->name());
   return std::make_shared<Tuple>(std::vector<TypePtr>{type, type});
 }

@@ -49,6 +49,7 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
   auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto square_sum_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+  auto square_sum_shape_rank = SizeToLong(square_sum_shape.size());
   auto scale_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   auto offset_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
   auto mean_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
@@ -61,19 +62,19 @@ abstract::TupleShapePtr BNTrainingUpdateInferShape(const PrimitivePtr &primitive
     c_axis = kInputIndex3;
   }
   // input_x rank must be equal to 4
-  (void)CheckAndConvertUtils::CheckInteger("input_x rank", input_x_shape.size(), kEqual, 4, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("input_x rank", SizeToLong(input_x_shape.size()), kEqual, 4, prim_name);
   // sum rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("sum rank", sum_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("sum rank", SizeToLong(sum_shape.size()), kEqual, 1, prim_name);
   // square_sum rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("square_sum rank", square_sum_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("square_sum rank", square_sum_shape_rank, kEqual, 1, prim_name);
   // scale rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("scale rank", scale_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("scale rank", SizeToLong(scale_shape.size()), kEqual, 1, prim_name);
   // offset rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("offset rank", offset_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("offset rank", SizeToLong(offset_shape.size()), kEqual, 1, prim_name);
   // mean rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("mean rank", mean_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("mean rank", SizeToLong(mean_shape.size()), kEqual, 1, prim_name);
   // variance rank must be equal to 1
-  (void)CheckAndConvertUtils::CheckInteger("variance rank", variance_shape.size(), kEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("variance rank", SizeToLong(variance_shape.size()), kEqual, 1, prim_name);
   // sum shape must be equal to input_x_shape[1]
   CheckAndConvertUtils::Check("sum shape", sum_shape[0], kEqual, input_x_shape[c_axis], prim_name, TypeError);
   // square_sum shape must be equal to input_x_shape[1]

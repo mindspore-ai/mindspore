@@ -30,7 +30,8 @@ namespace {
 abstract::ShapePtr GammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("Gamma input numbers", input_args.size(), kGreaterEqual, 2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("Gamma input numbers", SizeToLong(input_args.size()), kGreaterEqual, 2,
+                                           prim_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -92,8 +93,8 @@ TypePtr GammaInferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
   const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("Gamma input numbers", input_args.size(), kGreaterEqual, input_num,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("Gamma input numbers", SizeToLong(input_args.size()), kGreaterEqual,
+                                           input_num, prim_name);
 
   const std::set<TypePtr> shape_valid_types = {kInt32, kInt64};
   MS_EXCEPTION_IF_NULL(input_args[0]);

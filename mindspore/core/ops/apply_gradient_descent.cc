@@ -46,9 +46,9 @@ abstract::ShapePtr ApplyGradientDescentInferShape(const PrimitivePtr &primitive,
   }
   // alpha must be a scalar [Number, Tensor]
   const int64_t kShapeSize = 1;
-  auto alpha_shape_size = alpha_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("alpha's rank'", alpha_shape_size, kLessEqual, kShapeSize, prim_name);
-  if (alpha_shape_size == 1) {
+  auto alpha_shape_rank = SizeToLong(alpha_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("alpha's rank'", alpha_shape_rank, kLessEqual, kShapeSize, prim_name);
+  if (alpha_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, prim_name);
   }
   MS_EXCEPTION_IF_NULL(var_shape_ptr);
@@ -63,12 +63,12 @@ TypePtr ApplyGradientDescentInferType(const PrimitivePtr &prim, const std::vecto
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // delta must have the same type as var
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"delta_type", delta_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("delta_type", delta_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // alpha must be a scalar type
   std::map<std::string, TypePtr> args_alpha;
-  (void)args_alpha.insert({"alpha_type", alpha_type});
+  (void)args_alpha.insert(std::make_pair("alpha_type", alpha_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_alpha, valid_types, prim_name);
   return var_type;
 }
