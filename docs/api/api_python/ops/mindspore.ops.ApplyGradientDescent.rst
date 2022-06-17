@@ -17,7 +17,7 @@
     - **var** (Parameter) - 要更新的变量，为任意维度，其数据类型为float32或float16。
     - **alpha** (Union[Number, Tensor]) - 调节系数，必须是Scalar。数据类型为float32或float16。
     - **delta** (Tensor) - 变化的Tensor，shape和数据类型与 `var` 相同。
-    
+
     **输出：**
 
     Tensor，更新后的 `var` 。

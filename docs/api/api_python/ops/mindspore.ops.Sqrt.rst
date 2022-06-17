@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Sqrt
 
-    计算输入Tensor的平方根。
+    逐元素计算输入Tensor的平方根。
 	
     .. note::
         当输入数据存在一些负数，则负数对应位置上的返回结果为NaN。
@@ -13,7 +13,7 @@
 
     **输入：**
 
-    - **x** (Tensor) - Sqrt的输入，任意维度的Tensor，其秩应小于8，数据类型为数值型。
+    - **x** (Tensor) - Sqrt的输入，数据类型为数值型，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。其秩应小于8。
 
     **输出：**
 

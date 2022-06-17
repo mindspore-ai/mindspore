@@ -8,7 +8,7 @@
     RoI Align通过在特征图上对附近网格点进行双线性插值计算每个采样点。RoI Align不对RoI、其子区域或采样点的中任何坐标执行量化。参阅论文 `Mask R-CNN <https://arxiv.org/abs/1703.06870>`_ 。
 
     **参数：**
-    
+
     - **pooled_height** (int) - 输出特征高度。
     - **pooled_width** (int) - 输出特征宽度。
     - **spatial_scale** (float) - 缩放系数，将原始图像坐标映射到输入特征图坐标。
@@ -20,7 +20,7 @@
       默认值：1。
 
     **输入：**
-    
+
     - **features** (Tensor) - 输入特征，shape: :math:`(N, C, H, W)` 。
     - **rois** (Tensor) - shape: :math:`(rois\_n, 5)` 。数据类型支持float16和float32。
       `rois_n` 为RoI的数量。第二个维度的大小必须为 `5` ，分别代表 :math:`(image\_index, top\_left\_x, top\_left\_y, bottom\_right\_x, bottom\_right\_y)` 。
@@ -28,11 +28,11 @@
       `bottom_right_x` 和 `bottom_right_y` 分别对应RoI右下角坐标的 `x` 和 `y` 值。
 
     **输出：**
-    
+
     Tensor，shape: :math:`(rois\_n, C, pooled\_height, pooled\_width)` 。
 
     **异常：**
-    
+
     - **TypeError** - `pooled_height` 、`pooled_width` 、`sample_num` 或 `roi_end_mode` 不是int类型。
     - **TypeError** - `spatial_scale` 不是float类型。
     - **TypeError** - `features` 或 `rois` 不是Tensor。

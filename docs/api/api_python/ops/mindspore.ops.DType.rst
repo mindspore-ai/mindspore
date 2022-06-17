@@ -15,5 +15,5 @@
 
     **异常：**
 
-    - **TypeError** – 如果 `input_x` 不是Tensor。
+    - **TypeError** - 如果 `input_x` 不是Tensor。
     

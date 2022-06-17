@@ -12,15 +12,15 @@
     - **dtype** (mindspore.dtype) - 输出的数据类型。默认值：mindspore.int32。
 
     **输入：**
-    
+
     - **n** (Tensor[int32]) - shape为 :math:`(1,)` 的输入Tensor，须在[0, `max_length`]内取值。
 
     **输出：**
-    
+
     - **output** (Tensor) - shape: (`max_length`,)，数据类型为 `dtype` 。
 
     **异常：**
-    
+
     - **TypeError** - `max_length` 或 `pad` 不是int类型。
     - **TypeError** - `n` 不是Tensor。
     - **TypeError** - `n` 包含非int元素。

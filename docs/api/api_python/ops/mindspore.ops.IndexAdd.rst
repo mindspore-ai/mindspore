@@ -19,7 +19,7 @@ mindspore.ops.IndexAdd
 
     **输出：**
 
-    Tensor, 与 `x` 的shape和数据类型相同。
+    Tensor，与 `x` 的shape和数据类型相同。
 
     **异常：**
 

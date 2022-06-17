@@ -15,7 +15,7 @@
 
     **输入：**
 
-    - **x** (Tensor) - IsInf的输入，任意维度的Tensor。
+    - **x** (Tensor) - IsInf的输入，shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
     **输出：**
 
