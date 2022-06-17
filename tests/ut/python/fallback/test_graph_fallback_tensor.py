@@ -468,3 +468,32 @@ def test_fallback_ms_tensor_class():
     net = Net()
     res = net()
     assert res == 18
+
+
+def test_fallback_ms_tensor_user():
+    """
+    Feature: Fallback feature
+    Description: Test ms.Tensor() and Tensor created by user in graph mode.
+    Expectation: No exception.
+    """
+    class InnerNet(nn.Cell):
+        def Tensor(self):
+            return 10
+
+        def construct(self):
+            return self.Tensor()
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.inner_net = InnerNet()
+
+        def construct(self):
+            np_array = np.array(8)
+            x = ms.Tensor(np_array)
+            y = self.inner_net.Tensor()
+            return x + y
+
+    net = Net()
+    res = net()
+    assert res == 18
