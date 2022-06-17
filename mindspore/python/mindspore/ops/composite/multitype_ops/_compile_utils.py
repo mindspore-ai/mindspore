@@ -120,11 +120,15 @@ def _tensor_mod(self, other):
 
 
 def _tensor_pow(self, other):
-    if isinstance(self, (tuple, list)):
-        self = sequence_to_tensor(self, F.dtype(other))
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(self))
     return F.tensor_pow(self, other)
+
+
+def _tensor_rpow(self, other):
+    if isinstance(other, (tuple, list)):
+        other = sequence_to_tensor(other, F.dtype(self))
+    return F.tensor_pow(other, self)
 
 
 def _tensor_floordiv(self, other):
@@ -141,6 +145,7 @@ tensor_operator_registry.register('__mul__', _tensor_mul)
 tensor_operator_registry.register('__truediv__', _tensor_div)
 tensor_operator_registry.register('__mod__', _tensor_mod)
 tensor_operator_registry.register('__pow__', _tensor_pow)
+tensor_operator_registry.register('__rpow__', _tensor_rpow)
 tensor_operator_registry.register('__floordiv__', _tensor_floordiv)
 
 
