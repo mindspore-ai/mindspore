@@ -42,6 +42,34 @@ def test_logsoftmax(axis, dtype, error):
     assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('axis', [-1, 0, 2])
+@pytest.mark.parametrize('dtype, error', [(np.float32, 1.0e-5)])
+def test_logsoftmax_vmap(axis, dtype, error):
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax vmap
+    Expectation: the result match to scipy
+    """
+    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    vmap_dim = 2
+    x = np.random.random((3, 5, 7, 4)).astype(dtype)
+
+    output = ops.vmap(ops.log_softmax, (vmap_dim, None), vmap_dim)(Tensor(x), axis)
+
+    expect = np.zeros_like(x).astype(dtype)
+    axis = axis + 3 if axis < 0 else axis
+    axis = axis if axis <= vmap_dim else axis + 1
+    for i in range(x.shape[vmap_dim]):
+        expect[:, :, i, :] = scipy.special.log_softmax(x[:, :, i, :], axis)
+
+    assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
+
+
 class LogSoftmax(nn.Cell):
     def __init__(self, axis=-1):
         super(LogSoftmax, self).__init__()

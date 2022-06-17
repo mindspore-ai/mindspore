@@ -334,6 +334,30 @@ def get_matmul_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.math_ops.MatrixSolve)
+def get_matrix_solve_vmap_rule(prim, axis_size):
+    """VmapRule for `*MatMul` operation."""
+    if isinstance(prim, str):
+        adjoint = False
+    else:
+        adjoint = prim.adjoint
+
+    def vmap_rule(matrix_bdim, rhs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, matrix_bdim, rhs_bdim)
+        if is_all_none:
+            return result
+
+        matrix, matrix_dim = matrix_bdim
+        rhs, rhs_dim = rhs_bdim
+        matrix = _bdim_at_front(matrix, matrix_dim, axis_size)
+        rhs = _bdim_at_front(rhs, rhs_dim, axis_size)
+
+        out = F.matrix_solve(matrix, rhs, adjoint)
+        return out, 0
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.BroadcastTo)
 def get_broadcast_to_vmap_rule(prim, axis_size):
     """VmapRule for `BroadcastTo` operation."""

@@ -501,6 +501,30 @@ def get_kl_div_loss_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.nn_ops.LogSoftmax)
+def get_log_softmax_vmap_rule(prim, axis_size):
+    """VmapRule for 'LogSoftmax' operation."""
+    if isinstance(prim, str):
+        axis = -1
+    else:
+        axis = prim.axis
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+        x, x_dim = x_bdim
+        x_ndim = F.rank(x) - 1
+
+        batch_axis = axis + x_ndim if axis < 0 else axis
+        batch_axis = batch_axis if batch_axis < x_dim else batch_axis + 1
+
+        out = F.log_softmax(x, batch_axis)
+        return out, x_dim
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(NN.LRN)
 def get_lrn_vmap_rule(prim, axis_size):
     """VmapRule for `LRN` operation."""

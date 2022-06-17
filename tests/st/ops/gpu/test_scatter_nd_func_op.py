@@ -18,11 +18,13 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.ops.operations as P
 from mindspore import Tensor, Parameter
 import mindspore.common.dtype as mstype
 import mindspore.ops as ops
 from mindspore.ops.operations.array_ops import ScatterNdMul
 from mindspore.ops.operations.array_ops import ScatterNdMax
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -59,6 +61,43 @@ class TestScatterNdFuncNet(nn.Cell):
     def construct(self):
         out = self.scatter_func(self.inputx, self.indices, self.updates)
         return out
+
+
+class DynamicShapeScatterNet(nn.Cell):
+    def __init__(self, func, input_x, axis=0):
+        super(DynamicShapeScatterNet, self).__init__()
+        self.unique = P.Unique()
+        self.gather = P.Gather()
+        self.scatter_nd_func = func_map.get(func)()
+        self.axis = axis
+        self.input_x = Parameter(input_x)
+
+    def construct(self, scatter_indices, update, indices):
+        unique_indices, _ = self.unique(indices)
+        real_input = self.gather(self.input_x, unique_indices, self.axis)
+        return real_input, self.scatter_nd_func(self.input_x, scatter_indices, update)
+
+
+class VmapScatterNet(nn.Cell):
+    def __init__(self, func_name):
+        super(VmapScatterNet, self).__init__()
+        self.scatter_func = func_map.get(func_name)()
+
+    def construct(self, input_x, indices, updates):
+        self.scatter_func(input_x, indices, updates)
+        return input_x
+
+
+class VMapNet(nn.Cell):
+    def __init__(self, net, input_x, in_axes, out_axes):
+        super(VMapNet, self).__init__()
+        self.input_x = Parameter(input_x, name="input_x")
+        self.net = net
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def construct(self, indices, updates):
+        return vmap(self.net, self.in_axes, self.out_axes)(self.input_x, indices, updates)
 
 
 def scatter_nd_func_np(func, inputx, indices, updates):
@@ -185,3 +224,86 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
     updates = Tensor(np.array([0, 2]), data_type)
 
     compare_scatter_nd_func('div', inputx, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.parametrize("func_name", ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
+def test_scatter_nd_dy_shape(func_name):
+    """
+    Feature: Test ScatterNdSub && ScatterNdAdd DyNamicShape.
+    Description: The input shape may need to broadcast.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    np.random.seed(1)
+
+    input_x = Tensor(np.ones((4, 4, 4)).astype(np.float32))
+    scatter_indices = Tensor(np.array([[0], [2]]).astype(np.int32))
+    updates = Tensor(np.array([[[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]],
+                               [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]).astype(np.float32))
+    indices = Tensor(np.array([i for i in range(0, 4)]).astype(np.int32))
+    net = DynamicShapeScatterNet(func_name, input_x)
+    real_input_x, ms_result = net(scatter_indices, updates, indices)
+    np_result = scatter_nd_func_np(func_name, real_input_x, scatter_indices, updates)
+    np.testing.assert_allclose(np_result, ms_result.asnumpy())
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net = DynamicShapeScatterNet(func_name, input_x)
+    real_input_x, ms_result = net(scatter_indices, updates, indices)
+    np_result = scatter_nd_func_np(func_name, real_input_x, scatter_indices, updates)
+    np.testing.assert_allclose(np_result, ms_result.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min'])
+def test_scatter_func_indices_vmap(func):
+    """
+    Feature: test ScatterNd* vmap.
+    Description: in_axes: (0, 0, None).
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+
+    in_axes = (0, 0, None)
+    out_axes = 0
+    input_x = Tensor(
+        np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
+    indices = Tensor(np.array([[[0, 0], [1, 1]], [[0, 0], [1, 1]]]).astype(np.int32))
+    updates = Tensor(np.array([1.0, 2.2]).astype(np.float32))
+
+    output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
+    expected = np.zeros_like(input_x.asnumpy())
+    for i in range(input_x.shape[0]):
+        expected[i, :] = scatter_nd_func_np(func, input_x[i, :], indices[i, :], updates)
+
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min'])
+def test_scatter_func_update_vmap(func):
+    """
+    Feature: test ScatterNd* vmap.
+    Description: in_axes: (0,  None, 0).
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    in_axes = (0, None, 0)
+    out_axes = 0
+    input_x = Tensor(
+        np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
+    indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
+    updates = Tensor(np.array([[1.0, 2.2], [0.07, 1.23]]).astype(np.float32))
+
+    output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
+    expected = np.zeros_like(input_x.asnumpy())
+    for i in range(input_x.shape[0]):
+        expected[i, :] = scatter_nd_func_np(func, input_x[i, :], indices, updates[i, :])
+
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
