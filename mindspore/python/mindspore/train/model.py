@@ -403,7 +403,7 @@ class Model:
             network = connect_network_with_dataset(network, dataset_helper)
 
         if is_train:
-            _set_training_dataset(dataset_helper)  # pylint: disable=W0212
+            _set_training_dataset(dataset_helper)
 
 
         network.set_train(is_train)

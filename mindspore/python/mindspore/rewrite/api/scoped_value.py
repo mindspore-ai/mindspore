@@ -14,7 +14,7 @@
 # ============================================================================
 """Rewrite module api: ValueType and ScopedValue."""
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 from ..._checkparam import Validator
 
 
@@ -114,21 +114,21 @@ class ScopedValue:
         return cls(ValueType.NamingValue, scope, name)
 
     @staticmethod
-    def create_name_values(names: [str], scopes: [str] = None) -> ['ScopedValue']:
+    def create_name_values(names: Union[list, tuple], scopes: Union[list, tuple] = None) -> ['ScopedValue']:
         """
         Create a list of naming `ScopedValue`.
 
         Args:
-            names: (list[str]): A list of string represents names of referenced variables.
-            scopes: (list[str]): A list of string represents scopes of referenced variables.
+            names: (list[str] or tuple[str]): List or tuple of `str` represents names of referenced variables.
+            scopes: (list[str] or tuple[str]): List or tuple of `str` represents scopes of referenced variables.
 
         Returns:
             An list of instance of `ScopedValue`.
 
         Raises:
             RuntimeError: If the length of names is not equal to the length of scopes when scopes are not None.
-            TypeError: If `names` is not `list` and name in `names` is not `str`.
-            TypeError: If `scopes` is not `list` and scope in `scopes` is not `str`.
+            TypeError: If `names` is not `list` or `tuple` and name in `names` is not `str`.
+            TypeError: If `scopes` is not `list` or `tuple` and scope in `scopes` is not `str`.
         """
         Validator.check_element_type_of_iterable("names", names, [str], "ScopedValue")
         if scopes is not None:
