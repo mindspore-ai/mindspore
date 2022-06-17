@@ -15,25 +15,15 @@
  */
 
 #include "nnacl/fp32/exp_fp32.h"
+#include "nnacl/exp_fp32_simd.h"
 #include <math.h>
 #include <string.h>
 #include "nnacl/errorcode.h"
-#include "nnacl/intrinsics/ms_simd_instructions.h"
 
 void ExpFp32(const float *src, float *dst, int num) {
   int i = 0;
-#ifdef ENABLE_ARM64
-  int count = (num / C4NUM) * C4NUM;
-  for (; i < count; i += C4NUM) {
-    simd_exp128(vld1q_f32(src + i), dst + i);
-  }
-#endif
-#ifdef ENABLE_AVX
-  int count = (num / C8NUM) * C8NUM;
-  for (; i < count; i += C8NUM) {
-    simd_exp256(_mm256_loadu_ps(src + i), dst + i);
-  }
-#endif
+
+  SIMD_RUN_NO_SCALAR(ExpFp32, i, src, dst, num);
   for (; i < num; ++i) {
     simd_exp32(src[i], dst + i);
   }
@@ -53,27 +43,14 @@ int ExpFusionFp32(const void *src_data, void *dst_data, const ExpParameter *para
     ExpFp32(src + start, dst + start, num);
   } else {
     int i = 0;
-#ifdef ENABLE_ARM64
-    MS_FLOAT32X4 scale = MS_MOVQ_F32(param->in_scale_);
-    int count = (num / C4NUM) * C4NUM;
-    for (; i < count; i += C4NUM) {
-      simd_exp128(MS_MULQ_F32(MS_LDQ_F32(src + i), scale), dst + i);
-    }
-#endif
+    SIMD_RUN_NO_SCALAR(ExpFp32WithInScale, i, src, dst, num, param->in_scale_);
     for (; i < num; ++i) {
       simd_exp32(src[i] * param->in_scale_, dst + i);
     }
   }
   if (param->out_scale_ != 1) {
     int i = 0;
-#ifdef ENABLE_ARM64
-    MS_FLOAT32X4 scale = {param->out_scale_, param->out_scale_, param->out_scale_, param->out_scale_};
-    int count = (num / C4NUM) * C4NUM;
-    for (; i < count; i += C4NUM) {
-      simd_exp128(MS_LDQ_F32(src + i), dst + i);
-      MS_STQ_F32(dst + i, MS_MULQ_F32(MS_LDQ_F32(dst + i), scale));
-    }
-#endif
+    SIMD_RUN_NO_SCALAR(ExpFp32WithOutScale, i, src, dst, num, param->out_scale_);
     for (; i < num; ++i) {
       simd_exp32(src[i], dst + i);
       dst[i] *= param->out_scale_;
