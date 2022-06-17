@@ -899,7 +899,7 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
     } else if (output_tmp.size() > 1) {
       outputs->emplace_back(output_tmp);
     } else {
-      MS_LOG(EXCEPTION) << "Output is empty!";
+      MS_LOG(INFO) << "Graph output is empty!";
     }
     return true;
   }
@@ -974,9 +974,9 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
       graph->set_flag(kFlagPyNativeRunInGraph, true);
 
       // The size of control_nodes is at least 1 since there is return node in the graph.
-      if (control_nodes_.size() == 1) {
+      if (control_nodes_.size() == 1 && graphs.size() == 1) {
         MS_LOG(INFO) << "Replace parameter format";
-        // Input tensor is null if there is control-flow in graph.
+        // The input tensors of heterogeneous graphs or control flow graphs are null.
         // Need to get tensor after ParseControlNodes.
         pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs.at(i));
       }
