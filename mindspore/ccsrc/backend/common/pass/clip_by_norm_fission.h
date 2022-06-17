@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FISSION_CLIP_BY_NORM_FISSION_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FISSION_CLIP_BY_NORM_FISSION_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CLIP_BY_NORM_FISSION_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CLIP_BY_NORM_FISSION_H_
 
 #include <memory>
 #include <vector>
@@ -23,14 +23,13 @@
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pattern_engine.h"
 
-// ClipByNorm op is not supported in Ascend
-// This pass will split ClipByNorm op to smaller ops, such as `square`, `sqrt`, `reducesum` to achieve same function
+// This pass will split `ClipByNorm` op to smaller ops, such as `square`, `sqrt`, `reducesum` to achieve same function
 namespace mindspore {
 namespace opt {
-class ClipByNormSplit : public PatternProcessPass {
+class ClipByNormFission : public PatternProcessPass {
  public:
-  explicit ClipByNormSplit(bool multigraph = true) : PatternProcessPass("clip_by_norm_split", multigraph) {}
-  ~ClipByNormSplit() override = default;
+  explicit ClipByNormFission(bool multigraph = true) : PatternProcessPass("clip_by_norm_fission", multigraph) {}
+  ~ClipByNormFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 
@@ -55,4 +54,4 @@ class ClipByNormSplit : public PatternProcessPass {
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_IR_FISSION_CLIP_BY_NORM_FISSION_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CLIP_BY_NORM_FISSION_H_

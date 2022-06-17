@@ -37,7 +37,7 @@ def get_bprop_clip_by_norm(self):
     sqrt_op = P.Sqrt()
     max_op = P.Maximum()
     square_op = P.Square()
-    reduce_sum_op = P.ReduceSum()
+    reduce_sum_op = P.ReduceSum(keep_dims=True)
     sqrt_grad_op = G.SqrtGrad()
     max_grad_op = G.MaximumGrad()
     reduce_sum_axis = self.get_attr_dict()["axis"]

@@ -99,6 +99,7 @@
 #include "backend/common/pass/getitem_tuple.h"
 #include "backend/common/pass/optimize_dependence.h"
 #include "backend/common/pass/erase_visit_attr.h"
+#include "backend/common/pass/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/format_type/insert_cast.h"
 #include "plugin/device/ascend/optimizer/format_type/convert_unsupported_transnode_to_aicpu.h"
 #include "backend/common/pass/eliminate_redundant_op.h"
@@ -137,7 +138,6 @@
 #include "plugin/device/ascend/optimizer/ir_fission/batch_norm_grad_infer_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/split_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/splitv_fission.h"
-#include "plugin/device/ascend/optimizer/ir_fission/clip_by_norm_fission.h"
 #include "plugin/device/ascend/optimizer/format_type/remove_internal_output.h"
 #include "plugin/device/ascend/optimizer/ir_fission/concat_fission.h"
 #include "plugin/device/ascend/optimizer/ir_fission/pack_fission.h"
@@ -351,7 +351,6 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnSplit>());
   ir_fusion_pm->AddPass(std::make_shared<SyncBnGradSplit>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByNormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AdamWeightDecayFission>());
   ir_fusion_pm->AddPass(std::make_shared<ScaleGradFission>());
@@ -412,7 +411,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
-  ir_fusion_pm->AddPass(std::make_shared<ClipByNormSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<ClipByNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
   ir_fusion_pm->AddPass(std::make_shared<ConcatFission>());
