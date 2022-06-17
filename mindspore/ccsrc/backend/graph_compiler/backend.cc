@@ -933,10 +933,16 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
 void MindRTBackend::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *outputs, const FuncGraphPtr &root_graph) {
   bool need_contruct_output = !(distributed::recovery::RecoveryContext::GetInstance()->enable_recovery() &&
                                 distributed::recovery::RecoveryContext::GetInstance()->need_reset());
+  bool is_embedding_cache_server = false;
+#ifdef WITH_BACKEND
+  is_embedding_cache_server = ps::PSContext::instance()->cache_enable() && ps::PSContext::instance()->is_server();
+#endif
   if (need_contruct_output) {
     // Update device address for output node of graph.
     // Summary processing will use the output device address, so must be after the summary processing.
-    actor_set->output_actor_->UpdateOutputDeviceAddress();
+    if (!is_embedding_cache_server) {
+      actor_set->output_actor_->UpdateOutputDeviceAddress();
+    }
 
     // Fetch outputs.
     MS_EXCEPTION_IF_NULL(actor_set->output_actor_);

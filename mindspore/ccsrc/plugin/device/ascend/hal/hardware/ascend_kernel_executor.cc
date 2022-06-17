@@ -394,11 +394,14 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
 
   bool is_dynamic_shape = common::AnfAlgo::IsDynamicShape(kernel);
   if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
-    std::lock_guard<std::mutex> locker(launch_mutex_);
-    // launch atomic clean
-    if (!LaunchAtomicClean(kernel, workspace, outputs)) {
-      MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
-      return false;
+    auto iter = node_atomics_persistent_cache_.find(kernel);
+    if (iter != node_atomics_persistent_cache_.end()) {
+      std::lock_guard<std::mutex> locker(launch_mutex_);
+      // launch atomic clean
+      if (!LaunchAtomicClean(kernel, workspace, outputs)) {
+        MS_LOG(ERROR) << "Launch AtomicClean failed, pre kernel full name: " << kernel->fullname_with_scope();
+        return false;
+      }
     }
   }
 

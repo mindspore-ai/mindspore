@@ -23,6 +23,7 @@
 #include "utils/ms_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "runtime/hardware/device_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -33,7 +34,7 @@ class EmbeddingCachePrefetchActor;
 // to cache large embedding table of a large recommendation network model. The cache level is:
 // Device Cache->Local Host Cache->Remote Cache. The embedding cache prefetch actor is used to perform Local
 // and Device Cache hit analysis and cache prefetching.
-class EmbeddingCacheScheduler {
+class BACKEND_EXPORT EmbeddingCacheScheduler {
  public:
   static EmbeddingCacheScheduler &GetInstance();
 

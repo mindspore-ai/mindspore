@@ -34,6 +34,7 @@
 #else
 #include "distributed/cluster/dummy_cluster_context.h"
 #endif
+#include "frontend/parallel/cache_embedding/ps_embedding_cache_inserter.h"
 
 namespace mindspore {
 namespace parallel {
@@ -314,6 +315,21 @@ class ParameterServerMode : public DistributedExecutionMode {
   std::vector<size_t> ps_optimizer_fusion_segments_;
 };
 
+class EmbeddingCacheMode : public DistributedExecutionMode {
+ public:
+  explicit EmbeddingCacheMode(const FuncGraphPtr &func_graph, NodeLabels *node_labels, uint32_t rank_id,
+                              const std::string &role)
+      : DistributedExecutionMode(func_graph, node_labels, rank_id, role) {}
+  ~EmbeddingCacheMode() = default;
+
+  void PreBuildDistributedGraph() override;
+
+ private:
+  void AddEmbeddingCacheOps() const;
+
+  OperatorLabel GetNodeLabel(const AnfNodePtr &node) const;
+};
+
 // The class is used as an action in pipeline. It will process the graph and split the nodes to each process in the
 // cluster.
 class GraphSplitter {
@@ -387,6 +403,9 @@ class GraphSplitter {
 
   // Judge whether two nodes have the same distributed label.
   bool IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodePtr &node2);
+
+  // Check whether need split distributed graph.
+  bool NeedSplitGraph() const;
 
   FuncGraphPtr func_graph_;
 

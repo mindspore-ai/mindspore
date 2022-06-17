@@ -33,14 +33,71 @@ const ShapeVector kOneDimShape = {1};
 // Two dimensional shape placeholder.
 const ShapeVector kTwoDimsShape = {1, 1};
 
+// One dimensional shape placeholder.
+const ShapeVector kOneDimDynamicShape = {-1};
+// Two dimensional shape placeholder.
+const ShapeVector kTwoDimsDynamicShape = {-1, -1};
+
 // The output tensor number of recv node.
 const size_t kRecvNodeOutputNum = 3;
 
 // The input index of offset of EmbeddingLookup kernel.
 constexpr size_t kEmbeddingLookupOffsetIdx = 2;
 
+// The dims of embedding table.
+constexpr size_t kEmbeddingTableDims = 2;
+
 constexpr char kEmbeddingRemoteCacheNode[] = "EmbeddingRemoteCacheNode";
 constexpr char kEmbeddingLocalCacheNode[] = "EmbeddingLocalCacheNode";
+namespace {
+ValueNodePtr CreateFakeValueNode(const AnfNodePtr &origin_node) {
+  MS_EXCEPTION_IF_NULL(origin_node);
+  abstract::AbstractTensorPtr origin_abstract = origin_node->abstract()->cast<abstract::AbstractTensorPtr>();
+
+  MS_EXCEPTION_IF_NULL(origin_abstract);
+  tensor::TensorPtr fake_tensor = std::make_shared<tensor::Tensor>(origin_abstract->element()->BuildType()->type_id(),
+                                                                   origin_abstract->shape()->shape());
+  MS_EXCEPTION_IF_NULL(fake_tensor);
+  fake_tensor->set_base_shape(origin_abstract->shape()->Clone());
+
+  auto fake_value = NewValueNode(fake_tensor);
+  MS_EXCEPTION_IF_NULL(fake_value);
+  fake_value->set_abstract(fake_tensor->ToAbstract());
+  return fake_value;
+}
+
+AnfNodePtr CreateOutputNode(const FuncGraphPtr &func_graph, const AnfNodePtr &origin_output) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(origin_output);
+  MS_EXCEPTION_IF_NULL(origin_output->abstract());
+  if (origin_output->abstract()->isa<abstract::AbstractTuple>()) {
+    abstract::AbstractBasePtrList new_elements_abs;
+    std::vector<ValuePtr> new_elements_values;
+
+    auto tuple_elements = origin_output->abstract()->cast<abstract::AbstractTuplePtr>()->elements();
+    for (const auto &element : tuple_elements) {
+      MS_EXCEPTION_IF_NULL(element);
+      auto tensor_abstract = element->cast<abstract::AbstractTensorPtr>();
+      if (!tensor_abstract) {
+        MS_LOG(EXCEPTION) << "Only support to replace tuple with all tensor elements.";
+      }
+      auto fake_tensor = std::make_shared<tensor::Tensor>(tensor_abstract->element()->BuildType()->type_id(),
+                                                          tensor_abstract->shape()->shape());
+      MS_EXCEPTION_IF_NULL(fake_tensor);
+      new_elements_abs.push_back(fake_tensor->ToAbstract());
+      new_elements_values.push_back(fake_tensor);
+    }
+    ValueTuplePtr value_tuple = std::make_shared<ValueTuple>(new_elements_values);
+    auto value_tuple_abs = std::make_shared<abstract::AbstractTuple>(new_elements_abs);
+    auto value_tuple_node = NewValueNode(value_tuple);
+    MS_EXCEPTION_IF_NULL(value_tuple_node);
+    value_tuple_node->set_abstract(value_tuple_abs);
+    return value_tuple_node;
+  } else {
+    return CreateFakeValueNode(origin_output);
+  }
+}
+}  // namespace
 
 void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
   MS_EXCEPTION_IF_NULL(root_graph_);
@@ -214,15 +271,21 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
   input_param->set_abstract(param->abstract()->Clone());
   ParameterPtr input_indices = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt32, kOneDimShape));
+  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
+    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
 
   // 2. Create EmbeddingLookup node.
+  auto offset_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kEmbeddingLookupOffsetIdx);
+  MS_EXCEPTION_IF_NULL(offset_node);
+  auto offset_value_node = offset_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(offset_value_node);
+  int64_t offset = GetValue<int64_t>(offset_value_node->value());
+
   PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
-  std::vector<AnfNodePtr> emb_lookup_inputs{
-    NewValueNode(emb_lookup_primitive), input_param, input_indices,
-    common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kEmbeddingLookupOffsetIdx)};
+  std::vector<AnfNodePtr> emb_lookup_inputs{NewValueNode(emb_lookup_primitive), input_param, input_indices};
   auto embedding_cache_lookup_node = graph->NewCNode(emb_lookup_inputs);
   MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node);
+  common::AnfAlgo::SetNodeAttr(kAttrOffset, MakeValue(offset), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
 
@@ -258,35 +321,36 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   MS_EXCEPTION_IF_NULL(input_param);
   MS_EXCEPTION_IF_NULL(param->abstract());
   input_param->set_abstract(param->abstract()->Clone());
+
   ParameterPtr input_indices = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt32, kOneDimShape));
+  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
+    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
+
   ParameterPtr update_values = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
-  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimsShape));
+  std::vector<size_t> emb_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
+  if (emb_shape.size() != kEmbeddingTableDims) {
+    MS_LOG(EXCEPTION) << "Embedding table should be 2 dims for embedding cache mode, but got: " << emb_shape.size()
+                      << " dims";
+  }
+  int64_t emb_dim = SizeToLong(emb_shape.back());
+  ShapeVector update_values_shape = {-1, emb_dim};
+  ShapeVector update_values_min_shape = {1, emb_dim};
+  ShapeVector update_values_max_shape = {1, emb_dim};
+  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(
+    kFloat32,
+    std::make_shared<abstract::Shape>(update_values_shape, update_values_min_shape, update_values_max_shape)));
 
-  // 2. Create Sub node.
-  PrimitivePtr sub_primitive = std::make_shared<Primitive>(kSubOpName);
-  auto sub_value_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kEmbeddingLookupOffsetIdx);
-  int64_t sub_value = GetValue<int64_t>(GetValueNode(sub_value_node));
-  // The input of Sub must be tensor type.
-  auto sub_value_tensor = std::make_shared<tensor::Tensor>(sub_value, kInt32);
-  std::vector<AnfNodePtr> sub_inputs{NewValueNode(sub_primitive), input_indices, NewValueNode(sub_value_tensor)};
-  auto sub_node = graph->NewCNode(sub_inputs);
-  MS_EXCEPTION_IF_NULL(sub_node);
-  sub_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt32, kOneDimShape));
-  common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), sub_node);
-  common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), sub_node);
-
-  // 3. Create ScatterUpdate node.
+  // 2. Create ScatterUpdate node.
   PrimitivePtr embedding_cache_update_primitive = std::make_shared<Primitive>(kScatterUpdateOpName);
   std::vector<AnfNodePtr> embedding_cache_update_inputs{NewValueNode(embedding_cache_update_primitive), input_param,
-                                                        sub_node, update_values};
+                                                        input_indices, update_values};
   auto embedding_cache_update_node = graph->NewCNode(embedding_cache_update_inputs);
   MS_EXCEPTION_IF_NULL(embedding_cache_update_node);
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_update_node);
 
-  // 4. Create return node.
+  // 3. Create return node.
   CNodePtr return_node = CreateReturnNode(graph, embedding_cache_update_node);
   MS_EXCEPTION_IF_NULL(return_node);
   graph->set_return(return_node);
@@ -304,17 +368,25 @@ CNodePtr PsEmbeddingCacheInserter::CreateRecvNode() const {
   MS_EXCEPTION_IF_NULL(root_graph_);
   ParameterPtr input_indices = root_graph_->add_parameter();
   MS_EXCEPTION_IF_NULL(input_indices);
-  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt32, kOneDimShape));
+  input_indices->set_abstract(std::make_shared<abstract::AbstractTensor>(
+    kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
+  auto fake_input_indices_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, kOneDimShape);
+  input_indices->set_default_param(fake_input_indices_tensor);
 
   // The update values input.
   ParameterPtr update_values = root_graph_->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
-  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimsShape));
+  update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(
+    kFloat32, std::make_shared<abstract::Shape>(kTwoDimsDynamicShape, kTwoDimsShape, kTwoDimsShape)));
+  auto fake_update_values_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, kTwoDimsShape);
+  update_values->set_default_param(fake_update_values_tensor);
 
   // The service id input, used to choose service to execute.
   ParameterPtr service_id = root_graph_->add_parameter();
   MS_EXCEPTION_IF_NULL(service_id);
   service_id->set_abstract(std::make_shared<abstract::AbstractTensor>(kInt32, kOneDimShape));
+  auto fake_id_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, kOneDimDynamicShape);
+  service_id->set_default_param(fake_id_tensor);
 
   // 2. Create a RpcRecv node.
   std::vector<AnfNodePtr> recv_inputs = {NewValueNode(std::make_shared<Primitive>(kRpcRecvOpName))};
@@ -431,12 +503,15 @@ bool PsEmbeddingCacheInserter::ConstructEmbeddingCacheGraph() const {
   CNodePtr call_node = root_graph_->NewCNode({switch_layer_node});
   MS_EXCEPTION_IF_NULL(call_node);
 
-  // 4. Replace useless nodes of origin function graph.
+  // 4. Replace origin output and useless nodes of origin function graph.
+  AnfNodePtr old_output = root_graph_->output();
+  AnfNodePtr new_output = CreateOutputNode(root_graph_, old_output);
+  auto final_output_node = root_graph_->NewCNode({NewValueNode(prim::kPrimDepend), new_output, call_node});
+  MS_EXCEPTION_IF_NULL(final_output_node);
+
   auto graph_manager = root_graph_->manager();
   MS_EXCEPTION_IF_NULL(graph_manager);
-  graph_manager->Replace(root_graph_->output(), call_node);
-  auto return_node = root_graph_->get_return();
-  MS_EXCEPTION_IF_NULL(return_node);
+  graph_manager->Replace(root_graph_->output(), final_output_node);
   return true;
 }
 
@@ -452,6 +527,10 @@ bool PsEmbeddingCacheInserter::Run() {
 
   // Set attr(device target attr and graph split label) for all CNodes.
   SetAttrForAllNodes();
+
+  MS_EXCEPTION_IF_NULL(root_graph_);
+  // Need renormalize to infer shape and set abstract.
+  root_graph_->set_flag(kFlagNeedRenormalize, true);
   return true;
 }
 }  // namespace parallel

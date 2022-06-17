@@ -889,7 +889,6 @@ bool AddEmbeddingCachePass(const ResourcePtr &resource) {
 }
 
 std::vector<PassItem> kVmPasses = {
-  {"add_embedding_cache", AddEmbeddingCachePass},
   {"simplify_data_structures", SimplifyDataStructuresPass},
   {"opt_a", OptPassAGroup},
   {"clean_after_opta", CleanAfterOptAPass},

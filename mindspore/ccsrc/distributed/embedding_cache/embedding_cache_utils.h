@@ -24,6 +24,7 @@
 #include "kernel/kernel.h"
 #include "distributed/embedding_cache/embedding_hash_map.h"
 #include "runtime/hardware/device_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace runtime {
@@ -114,7 +115,7 @@ struct EmbeddingCacheStatisticsInfo {
 
 // The EmbeddingCacheTableManager class is used to save all Parameter information for enabling cache, such as device
 // cache size, host cache size, etc., and can allocate memory for the embedding cache table.
-class EmbeddingCacheTableManager {
+class BACKEND_EXPORT EmbeddingCacheTableManager {
  public:
   static EmbeddingCacheTableManager &GetInstance();
 

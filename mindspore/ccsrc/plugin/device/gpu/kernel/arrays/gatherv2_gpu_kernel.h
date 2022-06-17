@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   GatherV2FwdGpuKernelMod() { ResetResource(); }
@@ -43,16 +43,16 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     if (is_dynamic_shape_) {
-      int64_t *axis_device_address = GetDeviceAddress<int64_t>(inputs, 2);  // only get this if in dynamic mode
+      G *axis_device_address = GetDeviceAddress<G>(inputs, 2);  // only get this if in dynamic mode
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(&axis_, axis_device_address, sizeof(int64_t), cudaMemcpyDeviceToHost,
+                                 cudaMemcpyAsync(&axis_, axis_device_address, sizeof(G), cudaMemcpyDeviceToHost,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync axis_ failed");
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(),
                                  "cudaDeviceSyncFailed - GatherV2 - in dynamic mode");
       Reshape();
     }
-    auto input_dim1 = input_shapes_[IntToSize(axis_)];
+    auto input_dim1 = input_shapes_[axis_];
 
     MS_EXCEPTION_IF_NULL(input_addr);
     MS_EXCEPTION_IF_NULL(indices_addr);
@@ -85,7 +85,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     if (!is_dynamic_shape_) {
       int dims = SizeToInt(input_shapes_.size());
-      axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+      axis_ = static_cast<G>(GetAttr<int64_t>(kernel_node, "axis"));
       if (axis_ < -dims || axis_ >= dims) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in the range [-" << dims << "," << dims
                           << "), but got " << axis_;
@@ -115,7 +115,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size = common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
     input_size_list_.push_back(size);
     if (is_dynamic_shape_) {
-      input_size_list_.push_back(sizeof(int64_t));
+      input_size_list_.push_back(sizeof(G));
     }
     size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
     output_size_list_.push_back(size);
@@ -148,7 +148,7 @@ class GatherV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::vector<size_t> indices_shapes_;
   std::vector<size_t> output_shapes_;
   size_t dims_[3] = {};
-  int64_t axis_;
+  G axis_;
   bool is_dynamic_shape_;
   bool is_null_input_;
 };

@@ -27,6 +27,9 @@
 #include "mindspore/core/utils/ms_context.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/draw.h"
+#ifdef WITH_BACKEND
+#include "ps/ps_context.h"
+#endif
 
 namespace mindspore {
 namespace parallel {
@@ -835,12 +838,85 @@ GraphSplitter::GraphSplitter(const FuncGraphPtr &func_graph, uint32_t rank_id, c
     : func_graph_(func_graph),
       rank_id_(rank_id),
       role_(role),
-      mode_(distributed::DistExecutionMode::kPSMode),
       exec_mode_(nullptr),
       this_process_label_({rank_id, role}),
       node_labels_{},
       need_fuse_rpc_nodes_(true) {
+  bool enable_embedding_cache = false;
+#ifdef WITH_BACKEND
+  enable_embedding_cache = ps::PSContext::instance()->cache_enable();
+#endif
+  mode_ = enable_embedding_cache ? distributed::DistExecutionMode::kEmbeddingCacheMode
+                                 : distributed::DistExecutionMode::kPSMode;
   default_label_ = {0, distributed::kEnvRoleOfWorker};
+}
+
+void EmbeddingCacheMode::PreBuildDistributedGraph() {
+  // Only need add embedding cache ops of remote cache.
+  if (role_ != distributed::kEnvRoleOfPServer) {
+    return;
+  }
+
+  // 1. Add embedding cache ops of remote cache, and build service-side graph.
+  AddEmbeddingCacheOps();
+
+  // 2. Get node labels.
+  MS_EXCEPTION_IF_NULL(node_labels_);
+  node_labels_->clear();
+
+  std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(func_graph_->get_return());
+  (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](const AnfNodePtr &node) {
+    MS_EXCEPTION_IF_NULL(node);
+    if (node->isa<CNode>()) {
+      CNodePtr cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      OperatorLabel label = GetNodeLabel(cnode);
+      node_labels_->emplace(node, label);
+    }
+  });
+}
+
+void EmbeddingCacheMode::AddEmbeddingCacheOps() const {
+  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
+  if (worker_num == 0) {
+    MS_LOG(EXCEPTION) << "In embedding cache mode, worker number should be greater than 0.";
+  }
+
+  // Build service-side graph.
+  std::shared_ptr<parallel::PsEmbeddingCacheInserter> embedding_cache_inserter =
+    std::make_shared<parallel::PsEmbeddingCacheInserter>(func_graph_, static_cast<int64_t>(rank_id_), role_,
+                                                         worker_num);
+  if (!embedding_cache_inserter->Run()) {
+    MS_LOG(EXCEPTION) << "Insert ps embedding cache failed.";
+  }
+}
+
+OperatorLabel EmbeddingCacheMode::GetNodeLabel(const AnfNodePtr &node) const {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    MS_LOG(EXCEPTION) << "Only CNode has distributed split label.";
+  }
+
+  CNodePtr cnode = node->cast<CNodePtr>();
+  auto prim_node = cnode->input(0);
+  if (IsValueNode<Primitive>(prim_node)) {
+    auto prim = GetValueNode<PrimitivePtr>(prim_node);
+    MS_EXCEPTION_IF_NULL(prim);
+    if (prim->HasAttr(distributed::kOpLabelRankId) && prim->HasAttr(distributed::kOpLabelRole)) {
+      MS_LOG(INFO) << "CNode which has distributed split label: " << cnode->fullname_with_scope();
+      uint32_t rank_id = static_cast<uint32_t>(GetValue<int64_t>(prim->GetAttr(distributed::kOpLabelRankId)));
+      std::string ms_role = GetValue<std::string>(prim->GetAttr(distributed::kOpLabelRole));
+      return {rank_id, ms_role};
+    }
+  } else {
+    // Get label for call node, 'call' node hasn't primitive to save attrs, so get attrs of 'call' from cnode.
+    if (cnode->HasAttr(distributed::kOpLabelRankId) && cnode->HasAttr(distributed::kOpLabelRole)) {
+      uint32_t rank_id = static_cast<uint32_t>(GetValue<int64_t>(cnode->GetAttr(distributed::kOpLabelRankId)));
+      std::string ms_role = GetValue<std::string>(cnode->GetAttr(distributed::kOpLabelRole));
+      return {rank_id, ms_role};
+    }
+  }
+  return {rank_id_, role_};
 }
 
 GraphSplitter::~GraphSplitter() { node_labels_.clear(); }
@@ -852,9 +928,7 @@ void GraphSplitter::Run() {
   // Step 1: Dye all the nodes of the whole func_graph_.
   DyeGraph();
   // If all nodes are all on this process, no need to split the graph. So return.
-  if (std::find_if(node_labels_.begin(), node_labels_.end(), [&](const auto &node_to_label) {
-        return node_to_label.second != this_process_label_;
-      }) == node_labels_.end()) {
+  if (!NeedSplitGraph()) {
     MS_LOG(INFO) << "No need to build and split distributed graph.";
     return;
   }
@@ -864,6 +938,11 @@ void GraphSplitter::Run() {
 
   // Step 3: Prebuild the distributed graph before it gets split.
   exec_mode_->PreBuildDistributedGraph();
+
+  if (!NeedSplitGraph()) {
+    MS_LOG(INFO) << "No need to build and split distributed graph.";
+    return;
+  }
 
   // Step 4: Create inter-process operators for segments with different labels.
   InterProcessOpEdgesInfo comm_edges = GenerateInterProcessOperators();
@@ -924,6 +1003,8 @@ void GraphSplitter::CreateExecutionMode() {
   }
   if (mode_ == distributed::DistExecutionMode::kPSMode) {
     exec_mode_ = std::make_unique<ParameterServerMode>(func_graph_, &node_labels_, rank_id_, role_);
+  } else if (mode_ == distributed::DistExecutionMode::kEmbeddingCacheMode) {
+    exec_mode_ = std::make_unique<EmbeddingCacheMode>(func_graph_, &node_labels_, rank_id_, role_);
   }
   MS_EXCEPTION_IF_NULL(exec_mode_);
 }
@@ -1349,6 +1430,12 @@ bool GraphSplitter::IsNodesWithSameLabel(const AnfNodePtr &node1, const AnfNodeP
                       << " or 'node2': " << node2->fullname_with_scope() << " is not marked with split label.";
   }
   return node_labels_[node1] == node_labels_[node2];
+}
+
+bool GraphSplitter::NeedSplitGraph() const {
+  return std::find_if(node_labels_.begin(), node_labels_.end(), [&](const auto &node_to_label) {
+           return node_to_label.second != this_process_label_;
+         }) != node_labels_.end();
 }
 }  // namespace parallel
 }  // namespace mindspore

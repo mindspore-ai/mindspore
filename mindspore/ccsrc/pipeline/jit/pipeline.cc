@@ -79,6 +79,7 @@
 #include "fl/server/server.h"
 #include "fl/worker/fl_worker.h"
 #include "distributed/cluster/cluster_context.h"
+#include "runtime/graph_scheduler/embedding_cache_scheduler.h"
 #endif
 
 #ifdef ENABLE_D
@@ -1655,6 +1656,7 @@ void ClearResAtexit() {
   RecordExitStatus();
 #ifdef WITH_BACKEND
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
     (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
   } else if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {

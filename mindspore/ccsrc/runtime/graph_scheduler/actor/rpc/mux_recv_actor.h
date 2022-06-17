@@ -73,7 +73,9 @@ class MuxRecvActor : public RecvActor {
   std::condition_variable is_ready_cv_;
 
   // Whether the actor is finalized_
-  bool finalized_{false};
+  std::atomic_bool finalized_{false};
+
+  uint32_t recv_finalize_msg_cnt_{0};
 };
 
 using MuxRecvActorPtr = std::shared_ptr<MuxRecvActor>;

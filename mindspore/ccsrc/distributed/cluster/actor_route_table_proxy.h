@@ -28,10 +28,10 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 // The timeout in milliseconds for one lookup.
-constexpr uint32_t kDefaultLookupTimeout = 60000;
+constexpr uint32_t kDefaultLookupTimeout = 300000;
 
 // The time in milliseconds between two lookup operations.
-constexpr uint32_t kLookupInterval = 100;
+constexpr uint32_t kLookupInterval = 3000;
 
 // Actor route table proxy for nodes like workers and server. This class helps update actor route table in scheduler
 // across the network.
