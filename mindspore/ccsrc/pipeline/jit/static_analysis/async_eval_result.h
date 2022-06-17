@@ -262,7 +262,19 @@ class AsyncAbstractFuncAtom : public AbstractFuncAtom {
     }
     auto other_async = static_cast<const AsyncAbstractFuncAtom *>(&other);
     MS_EXCEPTION_IF_NULL(other_async);
-    return (async_abstract_ == other_async->async_abstract_ && index_ == other_async->index_);
+    if (index_ != other_async->index_) {
+      return false;
+    }
+    if (async_abstract_ == other_async->async_abstract_) {
+      return true;
+    }
+    auto abs = async_abstract_->TryGetResult();
+    auto other_abs = other_async->async_abstract_->TryGetResult();
+    if (abs != nullptr && other_abs != nullptr) {
+      return *abs == *other_abs;
+    } else {
+      return false;
+    }
   }
 
   std::size_t hash() const override {
@@ -270,7 +282,7 @@ class AsyncAbstractFuncAtom : public AbstractFuncAtom {
     for (const auto i : index_) {
       hash_index = hash_combine(hash_index, std::hash<std::size_t>{}(i));
     }
-    return hash_combine(std::hash<AsyncAbstract *>{}(async_abstract_.get()), hash_index);
+    return hash_index;
   }
 
   AbstractFunctionPtr GetUnique() override;

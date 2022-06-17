@@ -120,7 +120,6 @@ def test_high_grad_train():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_high_grad_environ_eliminate():
     """
@@ -151,11 +150,7 @@ def test_high_grad_environ_eliminate():
     x = np.array([3], np.float32)
     y = np.array([4], np.float32)
     net = AutoNet()
-    out = net(Tensor(x), Tensor(y))
-    print('ms forward: ', out)
     grad_net = F.grad(net, grad_position=(0, 1))
-    fgrad = grad_net(Tensor(x), Tensor(y))
-    print('ms backward: ', fgrad)
     sgrad_net = F.grad(grad_net)
     sgrad = sgrad_net(Tensor(x), Tensor(y))
     print('second grad: ', sgrad)
