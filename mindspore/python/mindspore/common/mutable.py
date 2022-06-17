@@ -108,8 +108,8 @@ def mutable(input_data):
         ...         gradient_function = self.grad_op(self.net)
         ...         return gradient_function(z)
         ...
-        >>> z = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32), \
-                         Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
+        >>> z = mutable((Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32),
+        ...              Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)))
         >>> output = GradNetWrtX(Net())(z)
         >>> print(output)
         (Tensor(shape=[2, 3], dtype=Float32, value=
