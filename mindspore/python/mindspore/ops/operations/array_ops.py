@@ -6433,7 +6433,7 @@ class MaskedSelect(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int64)
+        >>> x = Tensor(np.array([1, 2, 3, 4]), mindspore.int32)
         >>> mask = Tensor(np.array([1, 0, 1, 0]), mindspore.bool_)
         >>> output = ops.MaskedSelect()(x, mask)
         >>> print(output)

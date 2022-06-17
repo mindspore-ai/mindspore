@@ -189,8 +189,8 @@ tensor_operator_registry.register('make_tensor', make_tensor)
 def judge_data_dim(data_dim, min_data_dim=0, max_data_dim=8):
     """Judges whether the data dim is valid."""
     if data_dim < min_data_dim or data_dim > max_data_dim:
-        raise ValueError(f"The input data's dim should in the range of[{min_data_dim}, "
-                         f"{max_data_dim}], bug actually is '{data_dim}'")
+        raise ValueError(f"The input data's dim must in the range of [{min_data_dim}, "
+                         f"{max_data_dim}], but got '{data_dim}'.")
 
 
 @constexpr

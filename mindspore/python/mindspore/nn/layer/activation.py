@@ -316,8 +316,6 @@ class ReLU(Cell):
     r"""
     Rectified Linear Unit activation function.
 
-    Applies the rectified linear unit function element-wise.
-
     .. math::
 
         \text{ReLU}(x) = (x)^+ = \max(0, x),
