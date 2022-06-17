@@ -84,9 +84,14 @@ void RenormCpuKernelMod::CheckAndInitParams() {
   }
 
   auto x_rank = x_shape_.size();
-  if (axis_ < -SizeToLong(x_rank) || axis_ >= SizeToLong(x_rank)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the attribute 'axis' must be in range [" << -x_rank << ", "
-                      << x_rank << "), but got " << axis_;
+  if (x_rank == 0) {
+    if (axis_ != 0) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                        << ", the input is a scala, and the attribute 'dim' must be 0, but got " << axis_;
+    }
+  } else if (axis_ < -SizeToLong(x_rank) || axis_ >= SizeToLong(x_rank)) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the attribute 'dim' must be in range [" << -SizeToLong(x_rank)
+                      << ", " << x_rank << "), but got " << axis_;
   }
   if (axis_ < 0) {
     axis_ += x_rank;

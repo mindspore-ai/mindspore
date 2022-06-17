@@ -3426,7 +3426,7 @@ def renorm(input_x, p, dim, maxnorm):
         ValueError: If the value of `p` less than 1.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Example:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
