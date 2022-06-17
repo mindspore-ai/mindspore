@@ -21,31 +21,36 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class RandomPoissonCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RandomPoissonCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<RandomPoissonCpuKernelMod> {
  public:
   RandomPoissonCpuKernelMod() = default;
   ~RandomPoissonCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node);
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename T>
-  void Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  CNodeWeakPtr cnode_ptr_;
-  TypeId rate_type_{kTypeUnknown};
-  TypeId ouput_type_{kTypeUnknown};
-  size_t seed_{0};
-  size_t seed2_{0};
+  template <typename Tin, typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
+  int64_t seed_{0};
+  int64_t seed2_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_POISSON_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_RANDOM_POISSON_CPU_KERNEL_H_
