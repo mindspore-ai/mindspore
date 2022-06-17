@@ -104,9 +104,15 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(root_graph_->get_return());
   (void)std::for_each(all_nodes.begin(), all_nodes.end(), [this](const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!(node->isa<CNode>() && common::AnfAlgo::GetCNodeName(node) == kEmbeddingLookupOpName)) {
+    if (!node->isa<CNode>()) {
       return;
     }
+
+    const std::string kernel_name = common::AnfAlgo::GetCNodeName(node);
+    if (kernel_name != kGatherV2OpName && kernel_name != kSparseGatherV2OpName) {
+      return;
+    }
+
     const PrimitivePtr &prim = common::AnfAlgo::GetCNodePrimitive(node);
     MS_EXCEPTION_IF_NULL(prim);
     if (!(prim->HasAttr(distributed::kOpLabelRankId) && prim->HasAttr(distributed::kOpLabelRole))) {
@@ -275,16 +281,15 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructEmbeddingLookupSubGraph(const An
     kInt32, std::make_shared<abstract::Shape>(kOneDimDynamicShape, kOneDimShape, kOneDimShape)));
 
   // 2. Create EmbeddingLookup node.
-  auto offset_node = common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), kEmbeddingLookupOffsetIdx);
-  MS_EXCEPTION_IF_NULL(offset_node);
-  auto offset_value_node = offset_node->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(offset_value_node);
-  int64_t offset = GetValue<int64_t>(offset_value_node->value());
-
   PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
   std::vector<AnfNodePtr> emb_lookup_inputs{NewValueNode(emb_lookup_primitive), input_param, input_indices};
   auto embedding_cache_lookup_node = graph->NewCNode(emb_lookup_inputs);
   MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node);
+
+  if (!common::AnfAlgo::HasNodeAttr(kAttrOffset, dyn_cast<CNode>(node))) {
+    MS_LOG(EXCEPTION) << "Can not find offset attr of kernel: " << node->fullname_with_scope();
+  }
+  int64_t offset = common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrOffset);
   common::AnfAlgo::SetNodeAttr(kAttrOffset, MakeValue(offset), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);
   common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), embedding_cache_lookup_node);

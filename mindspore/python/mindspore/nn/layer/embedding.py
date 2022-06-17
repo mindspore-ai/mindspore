@@ -396,7 +396,14 @@ class EmbeddingLookup(Cell):
             offset += self.embedding_table_vocab_dim_list[i]
 
             # Add EmbeddingLookup ops on different servers.
-            embedding_lookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+            if self.target == 'CPU':
+                embedding_lookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
+            else:
+                if self.sparse:
+                    embedding_lookup = P.SparseGatherV2()
+                else:
+                    embedding_lookup = P.Gather()
+                embedding_lookup.add_prim_attr('offset', self.embedding_offset[i])
             embedding_lookup.add_prim_attr('rank_id', i)
             embedding_lookup.add_prim_attr('ms_role', 'MS_PSERVER')
             self.embedding_lookup_list.append(embedding_lookup)
@@ -431,8 +438,10 @@ class EmbeddingLookup(Cell):
         '''
         Construct backbone for EmbeddingLookup operators on servers for embedding cache lookup.
         '''
-        return self.embedding_lookup_list[self.rank_id](self.embedding_table, indices,
-                                                        self.embedding_offset[self.rank_id])
+        if self.target == 'CPU':
+            return self.embedding_lookup_list[self.rank_id](self.embedding_table, indices,
+                                                            self.embedding_offset[self.rank_id])
+        return self.embedding_lookup_list[self.rank_id](self.embedding_table, indices, 0)
 
     def construct(self, indices):
         if self.target == "CPU":
