@@ -227,7 +227,13 @@ def test_train():
     SparseFeature = namedtuple("SparseFeature", ['name', 'voc_size', 'embed_size'])
     sparse_columns = [SparseFeature('a', 7, 6), SparseFeature('b', 136, 18), SparseFeature('c', 3, 6)]
     data_list = gen_data(numeric_columns, sparse_columns, batch_size_list)
+    # For graph mode
     set_seed(0)
-    loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.GRAPH_MODE)
-    expect_loss = np.array([16.476381, 2425.9783, 8769.053], dtype=loss[0].dtype)
-    assert np.allclose(loss, expect_loss, 0.01, 0.01)
+    graph_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.GRAPH_MODE)
+    expect_loss = np.array([16.476381, 2425.9783, 8769.053], dtype=graph_loss[0].dtype)
+    assert np.allclose(graph_loss, expect_loss, 0.01, 0.01)
+    # For PyNative mode
+    set_seed(0)
+    pynative_loss = get_train_loss(numeric_columns, sparse_columns, data_list, context.PYNATIVE_MODE)
+    expect_loss = np.array([16.476381, 2425.9783, 8769.053], dtype=pynative_loss[0].dtype)
+    assert np.allclose(pynative_loss, expect_loss, 0.01, 0.01)
