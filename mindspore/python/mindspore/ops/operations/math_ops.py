@@ -5912,7 +5912,7 @@ class Zeta(Primitive):
 
     Inputs:
         - **x** (Tensor) - A Tensor, types: float32, float64.
-        - **q** (Tensor) - A Tensor, must have the same type as x.
+        - **q** (Tensor) - A Tensor, must have the same shape and type as x.
 
     Outputs:
         Tensor, has the same dtype and shape as the x.

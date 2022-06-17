@@ -19,7 +19,6 @@ from mindspore.common import dtype as mstype
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
-from ...nn.layer import math
 from .. import functional as F
 from .. import operations as P
 from ..operations.math_ops import Trace, Bernoulli, Renorm
@@ -630,7 +629,7 @@ def get_bprop_igamma(self):
     """Grad definition for `Igamma` operation."""
     shape_ = P.Shape()
     igammagrada = G.IgammaGradA()
-    lgamma = math.LGamma()
+    lgamma = nn.LGamma()
     log_ = P.Log()
     exp_ = P.Exp()
     reshape_ = P.Reshape()
@@ -654,7 +653,7 @@ def get_bprop_igammac(self):
     """Grad definition for `Igammac` operation."""
     shape_ = P.Shape()
     igammagrada = G.IgammaGradA()
-    lgamma = math.LGamma()
+    lgamma = nn.LGamma()
     log_ = P.Log()
     exp_ = P.Exp()
     reshape_ = P.Reshape()
