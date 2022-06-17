@@ -265,6 +265,14 @@ std::string AnfUtils::GetCNodeName(const AnfNodePtr &node) {
       }
       return primitive->name();
     }
+
+    // Check whether call node's input is not a value node which contains FuncGraph.
+    auto cnode = dyn_cast<CNode>(node);
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->size() == 0 || !IsValueNode<FuncGraph>(cnode->input(0))) {
+      return "";
+    }
+
     auto func_graph = GetCNodeFuncGraph(node);
     MS_EXCEPTION_IF_NULL(func_graph);
     if (func_graph->has_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL)) {

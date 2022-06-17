@@ -305,6 +305,10 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     // RL Ops
     {prim::kPrimTensorArrayStack, R{InferImplTensorArrayStack, nullptr, true}},
     {prim::kPrimKMeansCentroids, R{InferImplKMeansCentroids, nullptr, true}},
+
+    // RPC Ops
+    {prim::kPrimRpcRecv, R{ops::RpcRecvInfer, nullptr, true}},
+    {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
   };
   return prim_eval_implement_map;
 }

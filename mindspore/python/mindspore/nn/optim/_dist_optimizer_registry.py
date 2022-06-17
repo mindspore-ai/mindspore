@@ -54,7 +54,7 @@ def create_optimizers_on_pserver(optimizer_type, parameters, *args, **kwargs):
     distributed_optimizer_list = []
     use_flag_list = []
     for index, param in enumerate(parameters):
-        if param.is_param_ps:
+        if param.is_param_ps and (not param.cache_enable):
             if optimizer_type not in _create_func_map:
                 raise ValueError("Optimizer type %s is not recognized!" % optimizer_type)
             distributed_optimizer = _create_func_map.get(optimizer_type)(*args, **kwargs)

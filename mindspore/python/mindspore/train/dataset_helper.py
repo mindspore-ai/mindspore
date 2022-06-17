@@ -286,7 +286,7 @@ class DatasetHelper:
                 if context.get_context("mode") == context.GRAPH_MODE:
                     if _is_role_sched() or (_is_role_pserver() and not _enable_distributed_mindrt()):
                         iterclass = _DatasetIterPSServer
-                    elif _is_role_worker() and _is_ps_mode():
+                    elif _is_role_worker() and _is_ps_mode() and not _enable_distributed_mindrt():
                         iterclass = _DatasetIterPSWork
                     elif (context.get_context("device_target") == "Ascend") or \
                          (context.get_context("device_target") == "GPU"):
@@ -391,7 +391,7 @@ class _DatasetIter:
         if not hasattr(dataset, '__transfer_dataset__'):
             if hasattr(dataset, '__loop_size__'):
                 # PS mode does not support loop sink and need get the real sink size.
-                if not (_is_role_worker() and _is_ps_mode()):
+                if not (_is_role_worker() and _is_ps_mode()) or _enable_distributed_mindrt():
                     self.sink_size = dataset.__loop_size__
             create_data_info_queue = (sink_size == 1 and self.sink_count == 1 and dataset.get_dataset_size() != 1
                                       and context.get_context("device_target") == "Ascend" and not self.dynamic_shape)
@@ -448,7 +448,7 @@ class _DatasetIter:
         sink_size = 1
         if hasattr(self.dataset, '__loop_size__'):
             sink_size = self.dataset.__loop_size__
-        elif _is_role_worker() and _is_ps_mode():
+        elif _is_role_worker() and _is_ps_mode() and not _enable_distributed_mindrt():
             # PS mode does not support loop sink.
             sink_size = 1
         else:
