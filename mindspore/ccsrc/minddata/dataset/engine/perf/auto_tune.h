@@ -100,6 +100,13 @@ class AutoTune {
   /// \return status code
   Status GetConnectorCapacity(std::vector<int32_t> *capacities);
 
+  /// Computes current connector queue util percentage
+  /// \param[out] usage_avg_last double return avg util percentage for connector queue
+  /// \param[out] avg_size double to return avg size (usage) of connector queue
+  /// \param[out] avg_capacity double to return avg capacity for connector queue
+  /// \return status code
+  Status GetConnectorUtil(double *usage_avg_last, double *avg_size, double *avg_capacity);
+
   /// Fetches Connector Queue empty frequency for steps or epoch based on mode
   /// \return status code
   Status GetEmptyQueueFrequency(float *empty_freq);
@@ -127,7 +134,10 @@ class AutoTune {
   const int32_t DECREMENT_WORKER = -1;
   // Queue Specifics
   const float_t INPUT_QUEUE_LOW = 0.5;
+
+  // Value to maintain checking for device_queue utlization at.
   const float_t DEVICE_CONNECTOR_UTIL_THRESHOLD = 0.75;
+
   const float_t LEAF_QUEUE_THRESHOLD = 0.9;
   const float_t INPUT_OUTPUT_QUEUE_DIFF_THRESHOLD = 0.35;
   const int64_t INCREMENT_QUEUE_SIZE = 4;
@@ -136,9 +146,15 @@ class AutoTune {
   const float_t MAP_OP_WORKER_LOW_THRESHOLD = 35;
   // Running mode specifics
   enum AutoTuneMode { kAutoTuneModeEpoch, kAutoTuneModeStep };
-  enum AutoTunePhase { kAutoTunePhaseTime, kAutoTuneEnd };
+  enum AutoTunePhase { kAutoTunePhaseTime, kAutoTunePhaseMemory, kAutoTuneEnd };
+  enum AutoTuneMemPhase { kAutoTuneMemInit, kAutoTuneMemSet, kAutotTuneMemCompare };
   // Early stop specifics
-  const int32_t EARLY_STOP_TRIAL_THRESHOLD = 10;
+  const int32_t EARLY_STOP_TRIAL_THRESHOLD_EPOCH = 4;
+  const int32_t EARLY_STOP_TRIAL_THRESHOLD_STEP = 10;
+  // Memory specifics
+  const float MEMORY_COMPARISON_LOWER_BOUND_PERCENT = 0.02;
+  const float QUEUE_REDUCTION_PERCENTAGE_EPOCH = 0.5;
+  const float QUEUE_REDUCTION_PERCENTAGE_STEP = 0.8;
 
   /// Get the out connector capacity of the operator
   /// \param[in] op_id operator id
@@ -163,9 +179,18 @@ class AutoTune {
   /// \return Status code
   Status GetOpsNumWorker(std::map<int32_t, int32_t> *ops_num_workers);
 
+  /// Check whether an op is an unsupported by AutoTune
+  /// \param op_id ID to check
+  /// \return bool to skip or not
+  bool SkipOpsCheck(int op_id);
+
   /// Main AutoTune algorithm
   /// \return Status code
   Status AnalyseTime();
+
+  /// AutoTune memory algorithm
+  /// \return Status code
+  Status AnalyseMemory();
 
   /// Send a ChangeRequest to the operator to update the number of workers
   /// \param op_id operator ID
@@ -208,6 +233,13 @@ class AutoTune {
   /// \return  Status code
   Status ResetWorkersQueue();
 
+  /// Compare current and previous metrics for memory performance in memory phase of
+  /// AT tuning. Logic can be changed without modification to primary function
+  /// \param prev_avg previous comparison value - normally pre-change in pipeline
+  /// \param cur_avg current comparison value - normally post-change in pipeline
+  /// \return decision on good (True) or bad (False) change in metric
+  bool MemoryPhaseCompareMetric(double prev_avg, double cur_avg);
+
   /// Pointer to the tree adapter to get tree info
   TreeAdapter *tree_adapter_;
   /// Pointer to the profiler manager to get statistics
@@ -248,6 +280,14 @@ class AutoTune {
   int32_t phase_1_no_improve_count_;
   std::vector<int32_t> phase_1_best_workers;
   std::vector<int32_t> phase_1_best_queue;
+
+  // phase 2 - Analyse Memory
+  int32_t count_down_;
+  int32_t phase_3_state_;
+  int32_t phase_3_ID_;
+  double avg_batch_time;
+  double phase_3_prev_avg_;
+  std::vector<int32_t> OP_values;
 
   /// True if should save AutoTune configuration
   bool save_autoconfig_;
