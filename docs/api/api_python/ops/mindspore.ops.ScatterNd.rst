@@ -1,5 +1,5 @@
 mindspore.ops.ScatterNd
-========================
+=======================
 
 .. py:class:: mindspore.ops.ScatterNd
 

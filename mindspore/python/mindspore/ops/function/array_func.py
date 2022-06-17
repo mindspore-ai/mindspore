@@ -1304,13 +1304,15 @@ def scatter_nd(indices, updates, shape):
     Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
     depending on indices.
 
-    The empty tensor has rank P and `indices` has rank Q where `Q >= 2`.
+    The empty tensor has rank :math:`P` and `indices` has rank :math:`Q` where :math:`Q \ge 2`.
 
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where `N <= P`.
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where :math:`N \le P`.
 
-    The last dimension of `indices` (with length `N` ) indicates slices along the `N` th dimension of the empty tensor.
+    The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
+    empty tensor.
 
-    `updates` is a tensor of rank `Q-1+P-N`. Its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
+    `updates` is a tensor of rank :math:`Q-1+P-N`,
+    its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
 
     The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
     with two matrices of new values:
@@ -1319,14 +1321,14 @@ def scatter_nd(indices, updates, shape):
 
     Args:
         indices (Tensor): The index of scattering in the new tensor with int32 or int64 data type.
-            The rank of indices must be at least 2 and `indices_shape[-1] <= len(shape)`.
+            The rank of indices must be at least 2 and :math:`indices_shape[-1] \le len(shape)`.
         updates (Tensor): The source Tensor to be scattered.
-            It has shape `indices_shape[:-1] + shape[indices_shape[-1]:]`.
+            It has shape :math:`indices_shape[:-1] + shape[indices_shape[-1]:]`.
         shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
             The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than
             or equal to 2. In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
             And the value of any element in `shape` must be greater than or equal to 1.
-            In other words, :math:`x_1` >= 1, :math:`x_2` >= 1.
+            In other words, :math:`x_1 \ge 1`, :math:`x_2 \ge 1`.
 
     Returns:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
