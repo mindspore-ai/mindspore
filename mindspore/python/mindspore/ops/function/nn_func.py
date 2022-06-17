@@ -20,7 +20,7 @@ from mindspore.ops.operations import nn_ops as NN
 from ...common.tensor import Tensor
 
 
-def adaptive_avg_pool2d(x, output_size):
+def adaptive_avg_pool2d(input_x, output_size):
     r"""
     2D adaptive average pooling for temporal data.
 
@@ -107,7 +107,7 @@ def adaptive_avg_pool2d(x, output_size):
          [[4.5 5.5]]]
     """
     adaptive_avgpool2d_ = P.AdaptiveAvgPool2D(output_size)
-    return adaptive_avgpool2d_(x)
+    return adaptive_avgpool2d_(input_x)
 
 
 def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'):
