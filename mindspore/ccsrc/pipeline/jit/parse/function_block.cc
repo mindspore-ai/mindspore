@@ -211,9 +211,6 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
   if (use_fallback) {
     auto [pred_node, has_found] = FindPredInterpretNode(var_name);
     if (pred_node != nullptr) {
-      if (pred_node->interpret_special_type()) {
-        phi_param->set_interpret_special_type(true);
-      }
       phi_param->set_interpret(true);
     } else if (!has_found) {
       // If the current node is created as a phi node at the first time.(the var_name has not be found in pre blocks)
@@ -222,7 +219,6 @@ AnfNodePtr FunctionBlock::ReadVariable(const std::string &var_name) {
       MS_EXCEPTION_IF_NULL(resolve_node);
       phi_param->set_interpret(resolve_node->interpret());
       phi_param->set_interpret_internal_type(resolve_node->interpret_internal_type());
-      phi_param->set_interpret_special_type(resolve_node->interpret_special_type());
     }
   }
 
@@ -322,13 +318,10 @@ AnfNodePtr FunctionBlock::HandleBuiltinNamespaceInfo(const py::tuple &info) {
   // Handle global namespace info.
   auto resolved_node = GetResolveNode(info);
   auto syntax_support = info[flag_index].cast<int32_t>();
-  if (syntax_support != SYNTAX_SUPPORTED) {
+  if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_HYBRID_TYPE) {
     resolved_node->set_interpret(true);
     if (syntax_support == SYNTAX_UNSUPPORTED_INTERNAL_TYPE) {
       resolved_node->set_interpret_internal_type(true);
-    }
-    if (syntax_support == SYNTAX_UNSUPPORTED_SPECIAL_TYPE) {
-      resolved_node->set_interpret_special_type(true);
     }
   }
   SymbolPtr symbol = std::make_shared<Symbol>(info[symbol_index].cast<std::string>());
@@ -493,9 +486,6 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
         if (arg_node->interpret_internal_type()) {
           phi->set_interpret_internal_type(true);
         }
-      }
-      if (arg_node->interpret_special_type()) {
-        phi->set_interpret_special_type(true);
       }
     }
     // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized

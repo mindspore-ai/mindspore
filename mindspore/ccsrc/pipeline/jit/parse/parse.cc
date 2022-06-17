@@ -788,11 +788,6 @@ FunctionBlockPtr Parser::ParseExpr(const FunctionBlockPtr &block, const py::obje
                    << ", block: " << block << "/"
                    << (block->func_graph() ? block->func_graph()->ToString() : "FG(Null)")
                    << ", Line: " << trace::GetDebugInfo(no_return_node->debug_info(), "", kSourceLineTipDiscard);
-      // Some builtin functions need to be implemented using operators.
-      if (call_node->interpret_special_type()) {
-        block->AddIsolatedNode(call_node);
-        return block;
-      }
       // Some builtin functions need to be implemented using fallback.
       auto isolated_node = HandleInterpret(block, no_return_node, value_object);
       block->AddIsolatedNode(isolated_node);
@@ -1153,38 +1148,41 @@ AnfNodePtr Parser::ParseCall(const FunctionBlockPtr &block, const py::object &no
 
   AnfNodePtr call_function_node = ParseExprNode(block, function_ast_node);
   // Function call arguments should be passed in as groups and unpacked later using unpack call
-  std::vector<AnfNodePtr> packed_arguments;
-  std::vector<AnfNodePtr> group_arguments;
-  bool need_fallback = false;
-  bool need_unpack_args = ParseArgsInCall(block, args, &need_fallback, &packed_arguments, &group_arguments);
-  bool need_unpack_keywords = ParseKeywordsInCall(block, node, &packed_arguments);
-  // If there is stared or keyword argument, unpack may be needed
-  bool need_unpack = need_unpack_args || need_unpack_keywords;
+  ArgsContext args_context = ArgsContext();
+  ParseArgsInCall(block, args, &args_context);
+  ParseKeywordsInCall(block, node, &args_context);
 
-  auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, packed_arguments, group_arguments, need_unpack);
+  auto call_cnode = GenerateAnfNodeForCall(block, call_function_node, args_context);
   static const auto use_fallback = (support_fallback() != "0");
   if (!use_fallback) {
     return call_cnode;
   }
   UpdateInterpretForUserNode(call_cnode, call_function_node);
   MS_EXCEPTION_IF_NULL(call_cnode);
-  // Process special bulitin function(print).
-  if (call_cnode->interpret_special_type() && need_fallback) {
-    call_cnode = HandleInterpret(block, call_cnode, node);
-    return call_cnode;
-  }
-  // Process other bulitin function, for example, sum(np.array(xx))
+
+  // Process bulitin function, for example, sum(np.array(xx))
   py::tuple namespace_info = ast_->CallParserObjMethod(PYTHON_PARSE_GET_BUILTIN_NAMESPACE_SYMBOL, name_id);
   constexpr size_t namespace_info_size = 4;
-  constexpr size_t symbol_index = 1;
   constexpr size_t flag_index = 3;
   if (namespace_info.size() == namespace_info_size) {
     auto syntax_support = namespace_info[flag_index].cast<int32_t>();
-    SymbolPtr symbol = std::make_shared<Symbol>(namespace_info[symbol_index].cast<std::string>());
-    if (syntax_support != SYNTAX_SUPPORTED && syntax_support != SYNTAX_UNSUPPORTED_SPECIAL_TYPE &&
-        name_id == symbol->name()) {
+    if (syntax_support == SYNTAX_HYBRID_TYPE) {
+      // For hybrid type function, such as print, the inputs to the function determine whether the call_cnode is
+      // a graph node or the interpret node. If the inputs contain interpret node (not Tensor), the call_cnode will
+      // be interpretive executived. Otherwise, call_cnode will be a graph node.
+      if (args_context.has_interpret_without_internal) {
+        call_cnode->set_interpret(true);
+        call_cnode = HandleInterpret(block, call_cnode, node);
+      }
+      return call_cnode;
+    } else if (syntax_support != SYNTAX_SUPPORTED) {
       call_cnode->set_interpret(true);
       call_cnode = HandleInterpret(block, call_cnode, node);
+      // For the unsupported type function, if the input to the function contains tensor, the return value of
+      // the function should be graph node too.
+      if (args_context.has_interpret_internal) {
+        call_cnode->set_interpret_internal_type(true);
+      }
     }
   }
   return call_cnode;
@@ -1204,15 +1202,15 @@ CNodePtr MakeUnpackCall(const FuncGraphPtr &func_graph, const AnfNodePtr &call_f
 }
 
 AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_node,
-                                          const std::vector<AnfNodePtr> &packed_arguments,
-                                          const std::vector<AnfNodePtr> &group_arguments, bool need_unpack) const {
+                                          const ArgsContext &args_context) const {
   // If there is keyword arguments or starred, using an unpack_call op to unpack the argument
   MS_EXCEPTION_IF_NULL(block);
-  if (need_unpack) {
-    return MakeUnpackCall(block->func_graph(), call_function_node, packed_arguments);
+  if (args_context.need_unpack) {
+    return MakeUnpackCall(block->func_graph(), call_function_node, args_context.packed_arguments);
   }
   // else there is no keyword arguments and starred, parsed as normal arguments without unpack
   static const auto use_fallback = (support_fallback() != "0");
+  const auto &group_arguments = args_context.group_arguments;
   if (use_fallback && group_arguments.size() == 0 && IsPrimitiveCNode(call_function_node, prim::kPrimPyInterpret)) {
     // call Interpret node is invalid. Do not new call Interpret node.
     // %1 = Interpret_node
@@ -1228,51 +1226,49 @@ AnfNodePtr Parser::GenerateAnfNodeForCall(const FunctionBlockPtr &block, const A
   return call_anf_node;
 }
 
-bool Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, bool *need_fallback,
-                             std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments) {
+void Parser::ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, ArgsContext *args_context) {
   MS_LOG(DEBUG) << "Process ast args in call";
-  MS_EXCEPTION_IF_NULL(packed_arguments);
-  MS_EXCEPTION_IF_NULL(group_arguments);
-  bool need_unpack = false;
   for (size_t i = 0; i < args.size(); i++) {
     auto arg_node = AstSubType(py::cast<int32_t>(ast_->CallParseModFunction(PYTHON_PARSE_GET_AST_TYPE, args[i])));
     if (arg_node == AST_SUB_TYPE_STARRED) {
-      if (!group_arguments->empty()) {
-        packed_arguments->push_back(GenerateMakeTuple(block, *group_arguments));
+      if (!args_context->group_arguments.empty()) {
+        args_context->packed_arguments.push_back(GenerateMakeTuple(block, args_context->group_arguments));
       }
-      packed_arguments->push_back(ParseExprNode(block, python_adapter::GetPyObjAttr(args[i], "value")));
-      group_arguments->clear();
-      need_unpack = true;
+      args_context->packed_arguments.push_back(ParseExprNode(block, python_adapter::GetPyObjAttr(args[i], "value")));
+      args_context->group_arguments.clear();
+      args_context->need_unpack = true;
     } else {
       auto node = ParseExprNode(block, args[i]);
       node = HandleInterpret(block, node, args[i]);
-      *need_fallback =
-        ((node->interpret() || IsPrimitiveCNode(node, prim::kPrimPyInterpret)) && !node->interpret_internal_type());
-      group_arguments->push_back(node);
+      auto internal = node->interpret_internal_type();
+      auto interpret_without_internal =
+        ((node->interpret() || IsPrimitiveCNode(node, prim::kPrimPyInterpret)) && !internal);
+      if (internal) {
+        args_context->has_interpret_internal = true;
+      } else if (interpret_without_internal) {
+        args_context->has_interpret_without_internal = true;
+      }
+      args_context->group_arguments.push_back(node);
     }
   }
-  if (!group_arguments->empty()) {
-    packed_arguments->push_back(GenerateMakeTuple(block, *group_arguments));
+  if (!args_context->group_arguments.empty()) {
+    args_context->packed_arguments.push_back(GenerateMakeTuple(block, args_context->group_arguments));
   }
-  return need_unpack;
 }
 
-bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node,
-                                 std::vector<AnfNodePtr> *packed_arguments) {
+void Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node, ArgsContext *args_context) {
   MS_LOG(DEBUG) << "Process ast key words in call";
-  bool need_unpack = false;
   py::list keywords = python_adapter::GetPyObjAttr(node, "keywords");
   if (!keywords.empty()) {
     MS_EXCEPTION_IF_NULL(block);
-    MS_EXCEPTION_IF_NULL(packed_arguments);
-    need_unpack = true;
+    args_context->need_unpack = true;
     std::vector<AnfNodePtr> keys;
     std::vector<AnfNodePtr> values;
     for (size_t index = 0; index < keywords.size(); index++) {
       auto kw_key = python_adapter::GetPyObjAttr(keywords[index], "arg");
       auto kw_value = python_adapter::GetPyObjAttr(keywords[index], "value");
       if (py::isinstance<py::none>(kw_key)) {
-        packed_arguments->push_back(ParseExprNode(block, kw_value));
+        args_context->packed_arguments.push_back(ParseExprNode(block, kw_value));
       } else {
         auto kw_key_c = kw_key.cast<std::string>();
         keys.push_back(NewValueNode(kw_key_c));
@@ -1289,9 +1285,8 @@ bool Parser::ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object
     make_dict_nodes.push_back(keys_tuple);
     make_dict_nodes.push_back(values_tuple);
     MS_EXCEPTION_IF_NULL(block->func_graph());
-    packed_arguments->push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
+    args_context->packed_arguments.push_back(block->func_graph()->NewCNodeInOrder(std::move(make_dict_nodes)));
   }
-  return need_unpack;
 }
 
 AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) {
@@ -2570,9 +2565,6 @@ void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNo
       user_node->set_interpret_internal_type(true);
     }
   }
-  if (node->interpret_special_type()) {
-    user_node->set_interpret_special_type(true);
-  }
 }
 
 void Parser::UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes) {
@@ -2632,18 +2624,6 @@ bool Parser::CheckNeedConvertInterpret(const FunctionBlockPtr &block, const AnfN
   auto keys = std::get<0>(block->local_py_params());
   if (IsScriptInParams(script_text, global_dict, keys, block->func_graph())) {
     return false;
-  }
-  // If the current node is builtin function(print), and the inputs of node has Tensor,
-  // means that the builtin function can be implemented by using operators in graph mode.
-  bool is_special_node = node->interpret_special_type();
-  if (is_special_node && node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    auto &inputs = cnode->inputs();
-    for (auto input : inputs) {
-      if (IsPrimitiveCNode(input, prim::kPrimPyInterpret) && input->interpret_internal_type()) {
-        return false;
-      }
-    }
   }
   return true;
 }

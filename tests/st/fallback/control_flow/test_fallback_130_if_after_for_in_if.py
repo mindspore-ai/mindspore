@@ -47,7 +47,6 @@ def test_if_after_for_in_if_tensor():
     assert res == 5
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_if_after_for_in_if_numpy():
     """
     Feature: JIT Fallback

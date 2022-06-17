@@ -83,7 +83,6 @@ def test_for_after_while_in_for_2():
     assert res_y == 9
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
 def test_for_after_while_in_for_3():
     """
     Feature: JIT Fallback

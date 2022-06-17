@@ -341,18 +341,6 @@ class MS_CORE_API AnfNode : public Base {
     interpret_flags_[kInterpretInternalType] = interpret_internal_type;
   }
 
-  /// \brief Check if there is an interpret node related to the unsupported special type.
-  ///
-  /// \return True if there is an interpret node related to the unsupported special type, otherwise false.
-  bool interpret_special_type() { return interpret_flags_[kInterpretSpecialType]; }
-
-  /// \brief Whether there is an interpret node with unsupported internal type.
-  ///
-  /// \param[in] interpret_special_type Boolean.
-  void set_interpret_special_type(const bool &interpret_special_type) {
-    interpret_flags_[kInterpretSpecialType] = interpret_special_type;
-  }
-
   SeenNum seen_{0};
   SeenNum extra_seen_{0};
 
@@ -367,8 +355,7 @@ class MS_CORE_API AnfNode : public Base {
  private:
   static constexpr size_t kInterpret = 0;
   static constexpr size_t kInterpretInternalType = 1;
-  static constexpr size_t kInterpretSpecialType = 2;
-  static constexpr size_t kNumInterpretFlags = 3;
+  static constexpr size_t kNumInterpretFlags = 2;
   static constexpr auto kKernelInfoKey = "kernel_info";
 
   ScopePtr scope_;
