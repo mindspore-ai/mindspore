@@ -36,12 +36,29 @@ abstract::ShapePtr ApplyFtrlInferShape(const PrimitivePtr &primitive, const std:
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto accum_shape = input_args[kInputIndex1]->BuildShape();
   auto linear_shape = input_args[kInputIndex2]->BuildShape();
-  if (var_shape->IsDynamic() || accum_shape->IsDynamic() || linear_shape->IsDynamic()) {
+  auto grad_shape = input_args[kInputIndex3]->BuildShape();
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
+  auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
+  auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
+  auto lr_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kGreaterEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kGreaterEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kGreaterEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_power_shape size", lr_power_shape.size(), kGreaterEqual, batch_rank,
+                                           prim_name);
+
+  if (var_shape->IsDynamic() || accum_shape->IsDynamic() || linear_shape->IsDynamic() || grad_shape->IsDynamic()) {
     return var_shape->cast<abstract::ShapePtr>();
   }
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
   (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape));
   (void)same_shape_args_map.insert(std::make_pair("linear", linear_shape));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
