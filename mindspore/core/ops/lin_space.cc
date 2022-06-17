@@ -65,16 +65,7 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   const auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
   const auto stop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(stop_shape_ptr)[kShape];
 
-  size_t start_dims = start_shape.size();
-  size_t stop_dims = stop_shape.size();
-
-  CheckAndConvertUtils::CheckValue<size_t>("dimension of 'start'", start_dims, kEqual, "dimension of 'stop'", stop_dims,
-                                           prim_name);
-
-  for (size_t i = 0; i < start_dims; ++i) {
-    CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dimension of 'start'", start_shape[i], kEqual,
-                                              std::to_string(i) + "th dimension of 'stop'", stop_shape[i], prim_name);
-  }
+  (void)CheckAndConvertUtils::Check("shape of 'start'", start_shape, kEqual, stop_shape, prim_name);
 
   // Checked in LinSpaceInferType, num is a Scalar
   const auto num_value = input_args[kInputIndex2]->BuildValue();
