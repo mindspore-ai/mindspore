@@ -94,37 +94,6 @@ def test_batch_to_space_nd_function():
     np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-class BatchToSpaceNDTensorNet(nn.Cell):
-    def __init__(self, block_shape=2):
-        super(BatchToSpaceNDTensorNet, self).__init__()
-        self.block_shape = block_shape
-
-    def construct(self, x):
-        return x.batch_to_space_nd(self.block_shape, [[0, 0], [0, 0]])
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_batch_to_space_nd_tensor():
-    """
-    Feature: test BatchToSpaceND tensor interface.
-    Description: test tensor interface.
-    Expectation: the result match with numpy result
-    """
-    net = BatchToSpaceNDTensorNet(2)
-    input_x = Tensor(np.arange(4).reshape((4, 1, 1, 1)).astype(np.float32), mindspore.float32)
-    expect = np.array([[[[0, 1],
-                         [2, 3]]]]).astype(np.float32)
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    output = net(input_x)
-    assert (output.asnumpy() == expect).all()
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    output = net(input_x)
-    assert (output.asnumpy() == expect).all()
-
-
 class BatchToSpaceNDDynamicShapeNetMS(nn.Cell):
     def __init__(self, block_shape, crops, axis=1):
         super().__init__()

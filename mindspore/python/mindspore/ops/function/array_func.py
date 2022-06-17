@@ -2301,8 +2301,8 @@ def batch_to_space_nd(input_x, block_shape, crops):
     original H, W dimension and block_shape with given amount to crop from dimension, respectively.
 
     Args:
-        input_x (Tensor) - The input tensor. It must be a 4-D tensor, dimension 0 must be divisible by
-          product of `block_shape`. The data type is float16 or float32.
+        input_x (Tensor): The input tensor. It must be greater or equal to 4-D tensor(equal to 4-D tensor on Ascend),
+            batch dimension must be divisible by product of `block_shape`. The data type is float16 or float32.
         block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
             than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
             number of spatial dimensions. If `block_shape` is an int, the block size of M dimensions are the same,
@@ -2329,7 +2329,11 @@ def batch_to_space_nd(input_x, block_shape, crops):
     Raises:
         TypeError: If `block_shape` is not one of list, tuple, int.
         TypeError: If `crops` is neither list nor tuple.
+        ValueError: If `block_shape` is not one dimensional when `block_shape` is a list or tuple.
         ValueError: If length of `block_shape` or `crops` is not equal to 2.
+        ValueError: If the element of `block_shape` is not an integer larger than 1.
+        ValueError: If shape of `crops` is not (M, 2), where M is the length of `block_shape`.
+        ValueError: If the element of `crops` is not an integer larger than 0.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
