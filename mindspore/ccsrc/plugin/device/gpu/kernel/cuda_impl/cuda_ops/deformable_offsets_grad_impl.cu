@@ -107,17 +107,18 @@ __device__ void DeformableOffsetGradKernel(const uint offset_position_stride,
     }
 
     if (ceil_ceil_valid) {
-      input_x_pos = tmp_input_x_base_pos + ceil_i * input_x_h_stride + ceil_j * input_x_w_stride;
+      current_x_pos = tmp_input_x_base_pos + ceil_i * input_x_h_stride + ceil_j * input_x_w_stride;
+      input_x_pos = static_cast<uint>(current_x_pos);
       ceil_ceil_value = static_cast<float>(input_x[input_x_pos]);
       MsAtomicAdd(output_grad_x + input_x_pos, static_cast<T>(grad_scale * ceil_ceil_weight));
     }
 
-    float delta = -floor_floor_value * floor_weight_j + ceil_floor_value * ceil_weight_j -
-                  floor_ceil_value * floor_weight_j + ceil_ceil_value * ceil_weight_j;
+    float delta = -floor_floor_value * floor_weight_j + ceil_floor_value * floor_weight_j -
+                  floor_ceil_value * ceil_weight_j + ceil_ceil_value * ceil_weight_j;
     delta *= grad_scale;
     output_grad_offset[offset_index_i] += static_cast<T>(delta);
 
-    delta = -floor_floor_value * floor_weight_i - ceil_floor_value * floor_weight_i + floor_ceil_value * ceil_weight_i +
+    delta = -floor_floor_value * floor_weight_i - ceil_floor_value * ceil_weight_i + floor_ceil_value * floor_weight_i +
             ceil_ceil_value * ceil_weight_i;
     delta *= grad_scale;
     output_grad_offset[offset_index_base_pos] += static_cast<T>(delta);

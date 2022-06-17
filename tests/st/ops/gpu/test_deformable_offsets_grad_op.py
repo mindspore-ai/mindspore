@@ -60,7 +60,7 @@ def test_deformable_offsets_grad_nchw(dtype):
                                [0.09, 0.1, 0.1, 0.01],
                                [0.009, 0.01, 0.01, 0.001]]]
                              ).astype(dtype)
-    expect_grad_offset = np.array([-0.32] * 18 + [2.0] * 9).astype(dtype).reshape([1, 27, 1, 1])
+    expect_grad_offset = np.array([0] * 18 + [2.0] * 9).astype(dtype).reshape([1, 27, 1, 1])
     rtol = 1e-5
     if dtype == np.float16:
         rtol = 1e-3
@@ -102,7 +102,7 @@ def test_deformable_offsets_grad_nhwc(dtype):
                                [0.001, 0.001]]
                               ]
                              ).astype(dtype)
-    expect_grad_offset = np.array([-0.32] * 18 + [2.0] * 9).astype(dtype).reshape([1, 1, 1, 27])
+    expect_grad_offset = np.array([0] * 18 + [2.0] * 9).astype(dtype).reshape([1, 1, 1, 27])
     rtol = 1e-5
     if dtype == np.float16:
         rtol = 1e-3
