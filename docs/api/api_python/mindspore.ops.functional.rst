@@ -192,7 +192,7 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.logsumexp
-    mindspore.ops.lp_norm
+    mindspore.ops.norm
 
 .. list-table::
    :widths: 50 50

@@ -113,7 +113,7 @@ from .math_func import (
     tensor_le,
     le,
     lerp,
-    lp_norm,
+    norm,
     round,
     tensor_gt,
     gt,

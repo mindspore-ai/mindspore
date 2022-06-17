@@ -439,7 +439,6 @@ class Tensor(Tensor_):
         self.assign_value_cpp(value)
         return self
 
-
     def item(self, index=None):
         """
         Get the item at the specified index of the tensor.
@@ -612,7 +611,6 @@ class Tensor(Tensor_):
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
-
 
     def view(self, *shape):
         """
@@ -1049,7 +1047,7 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('lerp')(self, end, weight)
 
-    def lp_norm(self, axis, p=2, keep_dims=False, epsilon=1e-12):
+    def norm(self, axis, p=2, keep_dims=False, epsilon=1e-12):
         """
         Returns the matrix norm or vector norm of a given tensor.
 
@@ -1079,12 +1077,12 @@ class Tensor(Tensor_):
 
         Examples:
             >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-            >>> output = input_x.lp_norm([0, 1], p=2)
+            >>> output = input_x.norm([0, 1], p=2)
             >>> print(output)
             [ 9.165152 10.954452]
         """
         self._init_check()
-        return tensor_operator_registry.get('lp_norm')(self, axis, p, keep_dims, epsilon)
+        return tensor_operator_registry.get('norm')(self, axis, p, keep_dims, epsilon)
 
     def renorm(self, p, dim, maxnorm):
         """

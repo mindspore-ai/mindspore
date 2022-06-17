@@ -1306,7 +1306,7 @@ class LpNorm(Primitive):
     .. math::
         output = sum(abs(input)**p)**(1/p)
 
-    Refer to :func:`mindspore.ops.lp_norm` for more detail.
+    Refer to :func:`mindspore.ops.norm` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
