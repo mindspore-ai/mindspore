@@ -41,7 +41,6 @@ void StartFLJobKernel::InitKernel(size_t) {
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
   }
   PBMetadata devices_metas;
   DistributedMetadataStore::GetInstance().RegisterMetadata(kCtxDeviceMetas, devices_metas);
@@ -51,7 +50,7 @@ void StartFLJobKernel::InitKernel(size_t) {
   return;
 }
 
-bool StartFLJobKernel::VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req) {
+bool StartFLJobKernel::VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req, false);
   MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_id(), false);
   MS_ERROR_IF_NULL_W_RET_VAL(start_fl_job_req->fl_name(), false);
@@ -161,7 +160,7 @@ bool StartFLJobKernel::Launch(const uint8_t *req_data, size_t len,
       return false;
     }
   }
-  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
+  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::RelModelResponseCache);
   return true;
 }
 
@@ -260,7 +259,7 @@ ResultCode StartFLJobKernel::ReachThresholdForStartFLJob(const std::shared_ptr<F
   return ResultCode::kSuccess;
 }
 
-DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) {
+DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) const {
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
@@ -336,7 +335,7 @@ void StartFLJobKernel::BuildStartFLJobRsp(const std::shared_ptr<FBBuilder> &fbb,
                                           const std::string &next_req_time,
                                           const std::map<std::string, AddressPtr> &feature_maps,
                                           const schema::CompressType &compressType,
-                                          const std::map<std::string, AddressPtr> &compress_feature_maps) {
+                                          const std::map<std::string, AddressPtr> &compress_feature_maps) const {
   if (fbb == nullptr) {
     MS_LOG(WARNING) << "Input fbb is nullptr.";
     return;

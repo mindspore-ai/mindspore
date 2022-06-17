@@ -116,7 +116,7 @@ void PullWeightKernel::PullWeight(const std::shared_ptr<FBBuilder> &fbb,
 
 void PullWeightKernel::BuildPullWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
                                           const std::string &reason, size_t iteration,
-                                          const std::map<std::string, AddressPtr> &feature_maps) {
+                                          const std::map<std::string, AddressPtr> &feature_maps) const {
   if (fbb == nullptr) {
     MS_LOG(ERROR) << "fbb is nullptr.";
     return;

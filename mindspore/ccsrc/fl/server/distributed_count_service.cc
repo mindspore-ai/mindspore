@@ -50,7 +50,6 @@ void DistributedCountService::RegisterCounter(const std::string &name, size_t gl
                                               const CounterHandlers &counter_handlers) {
   if (!counter_handlers.first_count_handler || !counter_handlers.last_count_handler) {
     MS_LOG(EXCEPTION) << "First count handler or last count handler is not set.";
-    return;
   }
   if (global_threshold_count_.count(name) != 0) {
     MS_LOG(INFO) << "Counter for " << name << " is already set.";

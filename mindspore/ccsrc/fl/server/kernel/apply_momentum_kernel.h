@@ -29,6 +29,10 @@ namespace fl {
 namespace server {
 namespace kernel {
 using mindspore::kernel::ApplyMomentumCpuKernelMod;
+size_t kWeightIndex = 0;
+size_t kAccumulationIndex = 1;
+size_t kLearningRateIndex = 2;
+size_t kMomentumIndex = 4;
 template <typename T>
 class ApplyMomentumKernel : public ApplyMomentumCpuKernelMod, public OptimizerKernelMod {
  public:
@@ -49,10 +53,10 @@ class ApplyMomentumKernel : public ApplyMomentumCpuKernelMod, public OptimizerKe
 
   void GenerateReuseKernelNodeInfo() override {
     MS_LOG(INFO) << "FedAvg reuse 'weight', 'accumulation', 'learning rate' and 'momentum' of the kernel node.";
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, 0));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kAccumulation, 1));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kLearningRate, 2));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kMomentum, 4));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, kWeightIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kAccumulation, kAccumulationIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kLearningRate, kLearningRateIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kMomentum, kMomentumIndex));
     return;
   }
 };

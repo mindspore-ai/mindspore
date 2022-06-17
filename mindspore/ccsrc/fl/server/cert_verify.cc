@@ -16,9 +16,7 @@
 #include "fl/server/cert_verify.h"
 #include <sys/time.h>
 #include <iostream>
-#include <cstdio>
 #include <cstring>
-#include <cstdlib>
 #include <vector>
 #include <iomanip>
 #include <sstream>
@@ -37,7 +35,7 @@ X509 *CertVerify::readCertFromFile(const std::string &certPath) {
   return certObj;
 }
 
-X509 *CertVerify::readCertFromPerm(std::string cert) {
+X509 *CertVerify::readCertFromPerm(std::string cert) const {
   BIO *bio = BIO_new_mem_buf(reinterpret_cast<void *>(cert.data()), -1);
   X509 *certObj = PEM_read_bio_X509(bio, nullptr, nullptr, nullptr);
   BIO_free_all(bio);
@@ -67,7 +65,7 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
 
   int day = 0;
   int sec = 0;
-  int ret = ASN1_TIME_diff(&day, &sec, start, NULL);
+  int ret = ASN1_TIME_diff(&day, &sec, start, nullptr);
   if (ret != 1) {
     return false;
   }
@@ -81,7 +79,7 @@ bool CertVerify::verifyCertTime(const X509 *cert) const {
   }
   day = 0;
   sec = 0;
-  ret = ASN1_TIME_diff(&day, &sec, NULL, end);
+  ret = ASN1_TIME_diff(&day, &sec, nullptr, end);
   if (ret != 1) {
     return false;
   }
@@ -208,7 +206,7 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
   AUTHORITY_KEYID *akeyid = nullptr;
   do {
     int crit = 0;
-    skid = reinterpret_cast<ASN1_OCTET_STRING *>(X509_get_ext_d2i(caCert, NID_subject_key_identifier, &crit, NULL));
+    skid = reinterpret_cast<ASN1_OCTET_STRING *>(X509_get_ext_d2i(caCert, NID_subject_key_identifier, &crit, nullptr));
     if (skid == nullptr) {
       result = false;
       break;
@@ -225,7 +223,8 @@ bool CertVerify::verifyCertKeyID(const X509 *caCert, const X509 *subCert) const 
       }
     }
 
-    akeyid = reinterpret_cast<AUTHORITY_KEYID *>(X509_get_ext_d2i(subCert, NID_authority_key_identifier, &crit, NULL));
+    akeyid =
+      reinterpret_cast<AUTHORITY_KEYID *>(X509_get_ext_d2i(subCert, NID_authority_key_identifier, &crit, nullptr));
     if (akeyid == nullptr) {
       result = false;
       break;
@@ -265,7 +264,7 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
   ASN1_BIT_STRING *lASN1UsageStr = nullptr;
   do {
     int cirt = 0;
-    bcons = reinterpret_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(cert, NID_basic_constraints, &cirt, NULL));
+    bcons = reinterpret_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(cert, NID_basic_constraints, &cirt, nullptr));
     if (bcons == nullptr) {
       result = false;
       break;
@@ -277,7 +276,7 @@ bool CertVerify::verifyExtendedAttributes(const X509 *cert) const {
     }
     MS_LOG(DEBUG) << "Subject Type is CA.";
 
-    lASN1UsageStr = reinterpret_cast<ASN1_BIT_STRING *>(X509_get_ext_d2i(cert, NID_key_usage, NULL, NULL));
+    lASN1UsageStr = reinterpret_cast<ASN1_BIT_STRING *>(X509_get_ext_d2i(cert, NID_key_usage, nullptr, nullptr));
     if (lASN1UsageStr == nullptr) {
       result = false;
       break;
@@ -443,7 +442,7 @@ void CertVerify::sha256Hash(const uint8_t *src, const int src_len, uint8_t *hash
   }
 }
 
-std::string CertVerify::toHexString(const unsigned char *data, const int len) {
+std::string CertVerify::toHexString(const unsigned char *data, const int len) const {
   if (data == nullptr) {
     MS_LOG(WARNING) << "data hash is null.";
     return "";

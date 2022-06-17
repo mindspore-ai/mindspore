@@ -41,7 +41,7 @@ struct Feature {
 class LocalMetaStore {
  public:
   static LocalMetaStore &GetInstance() {
-    static LocalMetaStore instance;
+    static LocalMetaStore instance{};
     return instance;
   }
 
@@ -81,7 +81,7 @@ class LocalMetaStore {
 
   void set_curr_instance_state(InstanceState instance_state);
 
-  const InstanceState curr_instance_state();
+  const InstanceState curr_instance_state() const;
 
   const void put_aggregation_feature_map(const std::string &name, const Feature &feature);
 

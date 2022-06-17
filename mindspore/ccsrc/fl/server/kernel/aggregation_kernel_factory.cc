@@ -15,7 +15,6 @@
  */
 
 #include "fl/server/kernel/aggregation_kernel_factory.h"
-#include <utility>
 
 namespace mindspore {
 namespace fl {

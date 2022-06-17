@@ -43,6 +43,11 @@ class DenseGradAccumKernel : public AggregationKernelMod {
     return true;
   }
 
+  void SetParameterAddress(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                           const std::vector<AddressPtr> &outputs) override {
+    return;
+  }
+
   bool AllReduce() override { return true; }
   void Reset() { accum_count_ = 0; }
 

@@ -59,7 +59,7 @@ bool ExchangeKeysKernel::CountForExchangeKeys(const std::shared_ptr<FBBuilder> &
   return true;
 }
 
-sigVerifyResult ExchangeKeysKernel::VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req) {
+sigVerifyResult ExchangeKeysKernel::VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req, sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req->fl_id(), sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(exchange_keys_req->timestamp(), sigVerifyResult::FAILED);

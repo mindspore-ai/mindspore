@@ -79,7 +79,7 @@ class KernelFactory {
   KernelFactory &operator=(const KernelFactory &) = delete;
 
   // Judge whether the server kernel can be created according to registered ParamsInfo.
-  virtual bool Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) { return true; }
+  virtual bool Matched(const ParamsInfo &params_info, const CNodePtr &kernel_node) = 0;
 
   // Generally, a server kernel can correspond to several ParamsInfo which is registered by the method 'Register' in
   // server kernel's *.cc files.

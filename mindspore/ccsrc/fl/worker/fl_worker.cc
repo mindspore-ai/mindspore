@@ -26,7 +26,7 @@ namespace mindspore {
 namespace fl {
 namespace worker {
 FLWorker &FLWorker::GetInstance() {
-  static FLWorker instance;
+  static FLWorker instance{};
   return instance;
 }
 
@@ -75,7 +75,6 @@ void FLWorker::Run() {
   InitializeFollowerScaler();
   if (!communicator_->Start()) {
     MS_LOG(EXCEPTION) << "Starting communicator failed.";
-    return;
   }
 
   server_num_ = worker_node_->server_num();
@@ -193,7 +192,6 @@ void FLWorker::InitializeFollowerScaler() {
   MS_EXCEPTION_IF_NULL(worker_node_);
   if (!worker_node_->InitFollowerScaler()) {
     MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
-    return;
   }
 
   // Set scaling barriers before scaling.

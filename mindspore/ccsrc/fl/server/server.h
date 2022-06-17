@@ -227,7 +227,7 @@ class BACKEND_EXPORT Server {
 
   // Variables set by ps context.
 #ifdef ENABLE_ARMOUR
-  armour::CipherInit *cipher_init_;
+  armour::CipherInit *cipher_init_ = nullptr;
 #endif
   std::string scheduler_ip_;
   uint16_t scheduler_port_;

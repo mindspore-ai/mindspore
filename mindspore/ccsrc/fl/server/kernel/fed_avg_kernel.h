@@ -57,7 +57,6 @@ class FedAvgKernel : public AggregationKernelMod {
     if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
         kNameToIdxMap.at(cnode_name).at("inputs").count("weight") == 0) {
       MS_LOG(EXCEPTION) << "Can't find index info of weight for kernel " << cnode_name;
-      return;
     }
     cnode_weight_idx_ = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
     auto weight_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, cnode_weight_idx_));

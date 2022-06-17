@@ -50,7 +50,7 @@ class StartFLJobKernel : public RoundKernel {
                                          const schema::RequestFLJob *start_fl_job_req);
 
   // The metadata of device will be stored and queried in updateModel round.
-  DeviceMeta CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req);
+  DeviceMeta CreateDeviceMetadata(const schema::RequestFLJob *start_fl_job_req) const;
 
   // Returns whether the request is valid for startFLJob.For now, the condition is simple. We will add more conditions
   // to device in later versions.
@@ -71,9 +71,9 @@ class StartFLJobKernel : public RoundKernel {
                           const std::string &reason, const bool is_selected, const std::string &next_req_time,
                           const std::map<std::string, AddressPtr> &feature_maps = {},
                           const schema::CompressType &compressType = schema::CompressType_NO_COMPRESS,
-                          const std::map<std::string, AddressPtr> &compress_feature_maps = {});
+                          const std::map<std::string, AddressPtr> &compress_feature_maps = {}) const;
 
-  bool VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req);
+  bool VerifyFLJobRequest(const schema::RequestFLJob *start_fl_job_req) const;
 
   // The executor is for getting the initial model for startFLJob request.
   Executor *executor_;

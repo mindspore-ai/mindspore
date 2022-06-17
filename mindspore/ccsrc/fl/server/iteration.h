@@ -48,7 +48,7 @@ class IterationMetrics;
 class Iteration {
  public:
   static Iteration &GetInstance() {
-    static Iteration instance;
+    static Iteration instance{};
     return instance;
   }
 
@@ -181,8 +181,8 @@ class Iteration {
   Iteration &operator=(const Iteration &) = delete;
 
   // The server does not need to handle the iteration events for now.
-  void ProcessIterationRunningEvent() {}
-  void ProcessIterationEndEvent() {}
+  void ProcessIterationRunningEvent() const {}
+  void ProcessIterationEndEvent() const {}
 
   // Synchronize iteration from the leader server(Rank 0).
   bool SyncIteration(uint32_t rank);
@@ -221,7 +221,7 @@ class Iteration {
   bool SummarizeIteration();
 
   // Update server's hyper-parameters according to the given serialized json(hyper_params_data).
-  bool UpdateHyperParams(const nlohmann::json &json);
+  bool UpdateHyperParams(const nlohmann::json &json) const;
 
   // Reinitialize rounds and round kernels.
   bool ReInitRounds();

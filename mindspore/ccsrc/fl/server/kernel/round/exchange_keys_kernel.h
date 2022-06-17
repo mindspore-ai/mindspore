@@ -36,7 +36,7 @@ enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
 class ExchangeKeysKernel : public RoundKernel {
  public:
-  ExchangeKeysKernel() = default;
+  ExchangeKeysKernel() : executor_(nullptr), iteration_time_window_(0), cipher_key_(nullptr) {}
   ~ExchangeKeysKernel() override = default;
   void InitKernel(size_t required_cnt) override;
   bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
@@ -46,7 +46,7 @@ class ExchangeKeysKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_;
   armour::CipherKeys *cipher_key_;
-  sigVerifyResult VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req);
+  sigVerifyResult VerifySignature(const schema::RequestExchangeKeys *exchange_keys_req) const;
   bool ReachThresholdForExchangeKeys(const std::shared_ptr<FBBuilder> &fbb, const size_t iter_num);
   bool CountForExchangeKeys(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestExchangeKeys *exchange_keys_req,
                             const size_t iter_num);

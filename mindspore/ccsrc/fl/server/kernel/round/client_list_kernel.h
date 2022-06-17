@@ -34,18 +34,18 @@ enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
 class ClientListKernel : public RoundKernel {
  public:
-  ClientListKernel() = default;
+  ClientListKernel() : cipher_init_(nullptr), executor_(nullptr), iteration_time_window_(0) {}
   ~ClientListKernel() override = default;
   void InitKernel(size_t required_cnt) override;
   bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
   bool Reset() override;
   void BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &fbb, const schema::ResponseCode retcode,
                           const string &reason, std::vector<std::string> clients, const string &next_req_time,
-                          const size_t iteration);
+                          const size_t iteration) const;
 
  private:
   armour::CipherInit *cipher_init_;
-  sigVerifyResult VerifySignature(const schema::GetClientList *get_clients_req);
+  sigVerifyResult VerifySignature(const schema::GetClientList *get_clients_req) const;
   bool DealClient(const size_t iter_num, const schema::GetClientList *get_clients_req,
                   const std::shared_ptr<server::FBBuilder> &fbb);
   Executor *executor_;

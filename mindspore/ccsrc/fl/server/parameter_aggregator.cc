@@ -38,11 +38,9 @@ bool ParameterAggregator::Init(const CNodePtr &cnode, size_t threshold_count) {
   MS_LOG(INFO) << "Start initializing kernels for " << common::AnfAlgo::GetCNodeName(cnode);
   if (!InitAggregationKernels(cnode)) {
     MS_LOG(EXCEPTION) << "Initializing aggregation kernels failed.";
-    return false;
   }
   if (!InitOptimizerKernels(cnode)) {
     MS_LOG(EXCEPTION) << "Initializing optimizer kernels failed.";
-    return false;
   }
   return true;
 }
@@ -182,7 +180,6 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
     if (aggr_kernel == nullptr) {
       MS_LOG(EXCEPTION) << "Fail to create aggregation kernel " << name << " for "
                         << common::AnfAlgo::GetCNodeName(cnode);
-      return false;
     }
 
     // set_done_count must be called before InitKernel because InitKernel may use this count.
@@ -192,18 +189,16 @@ bool ParameterAggregator::InitAggregationKernels(const CNodePtr &cnode) {
     const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info = aggr_kernel->reuse_kernel_node_inputs_info();
     if (!AssignMemory(aggr_kernel, cnode, reuse_kernel_node_inputs_info, memory_register_)) {
       MS_LOG(EXCEPTION) << "Assigning memory for kernel " << name << " failed.";
-      return false;
     }
 
     if (!GenerateAggregationKernelParams(aggr_kernel, memory_register_)) {
       MS_LOG(EXCEPTION) << "Generating aggregation kernel parameters for " << name << " failed.";
-      return false;
     }
   }
   return true;
 }
 
-bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &) {
+bool ParameterAggregator::InitOptimizerKernels(const CNodePtr &) const {
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
       ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
     MS_LOG(INFO) << "Federated learning mode doesn't need optimizer kernel.";
@@ -226,13 +221,11 @@ bool ParameterAggregator::AssignMemory(const K server_kernel, const CNodePtr &cn
     MS_LOG(EXCEPTION) << "Server kernel " << typeid(server_kernel.get()).name()
                       << " input number is not matched: input_names size is " << input_names.size()
                       << ", input_size_list size is " << input_size_list.size();
-    return false;
   }
 
   if (reuse_kernel_node_inputs_info.size() > input_names.size()) {
     MS_LOG(EXCEPTION) << "The reuse kernel node information number is invalid: got "
                       << reuse_kernel_node_inputs_info.size() << ", but input_names size is " << input_names.size();
-    return false;
   }
 
   for (size_t i = 0; i < input_names.size(); i++) {
@@ -284,7 +277,7 @@ bool ParameterAggregator::GenerateAggregationKernelParams(
   return true;
 }
 
-std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &) {
+std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const CNodePtr &) const {
   std::vector<std::string> aggregation_algorithm = {};
   if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL ||
       ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
@@ -293,7 +286,6 @@ std::vector<std::string> ParameterAggregator::SelectAggregationAlgorithm(const C
     (void)aggregation_algorithm.emplace_back("DenseGradAccum");
   } else {
     MS_LOG(EXCEPTION) << "Server doesn't support mode " << ps::PSContext::instance()->server_mode();
-    return aggregation_algorithm;
   }
 
   MS_LOG(INFO) << "Aggregation algorithm selection result: " << aggregation_algorithm;
@@ -306,7 +298,6 @@ bool ParameterAggregator::JudgeRequiredAggr(const CNodePtr &cnode) {
   if (kNameToIdxMap.count(cnode_name) == 0 || kNameToIdxMap.at(cnode_name).count("inputs") == 0 ||
       kNameToIdxMap.at(cnode_name).at("inputs").count("weight") == 0) {
     MS_LOG(EXCEPTION) << "Can't find index info of weight for kernel " << cnode_name;
-    return false;
   }
   size_t cnode_weight_idx = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
   auto weight_node =
@@ -315,7 +306,6 @@ bool ParameterAggregator::JudgeRequiredAggr(const CNodePtr &cnode) {
 
   if (!weight_node->isa<Parameter>()) {
     MS_LOG(EXCEPTION) << weight_node->fullname_with_scope() << " is not a parameter.";
-    return false;
   }
   auto param_info = weight_node->cast<ParameterPtr>()->param_info();
   MS_EXCEPTION_IF_NULL(param_info);

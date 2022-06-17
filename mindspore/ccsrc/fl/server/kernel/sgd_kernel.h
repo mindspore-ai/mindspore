@@ -53,11 +53,11 @@ class SGDKernelMod : public SGDCpuKernelMod, public OptimizerKernelMod {
     constexpr int kMomentumIndex = 4;
     constexpr int kStatIndex = 5;
     MS_LOG(INFO) << "SGD reuse 'weight', 'learning rate', 'accumulation', 'momentum' and 'stat' of the kernel node.";
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, kWeightIndex));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kLearningRate, kLearningRateIndex));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kAccumulation, kAccumulationIndex));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kMomentum, kMomentumIndex));
-    reuse_kernel_node_inputs_info_.insert(std::make_pair(kStat, kStatIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kWeight, kWeightIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kLearningRate, kLearningRateIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kAccumulation, kAccumulationIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kMomentum, kMomentumIndex));
+    (void)reuse_kernel_node_inputs_info_.insert(std::make_pair(kStat, kStatIndex));
     return;
   }
 };

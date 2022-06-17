@@ -28,7 +28,6 @@ void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_cou
   MS_LOG(INFO) << "Start Initialize Executor.";
   if (aggregation_count == 0) {
     MS_LOG(EXCEPTION) << "Server aggregation count must be greater than 0";
-    return;
   }
   aggregation_count_ = aggregation_count;
 
@@ -37,7 +36,6 @@ void Executor::Initialize(const FuncGraphPtr &func_graph, size_t aggregation_cou
   bool ret = InitParamAggregator(func_graph);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Initializing parameter aggregators failed.";
-    return;
   }
   initialized_ = true;
   return;
@@ -234,7 +232,7 @@ bool Executor::unmasked() const {
   }
 }
 
-std::string Executor::GetTrainableParamName(const CNodePtr &cnode) {
+std::string Executor::GetTrainableParamName(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   std::string cnode_name = common::AnfAlgo::GetCNodeName(cnode);
   if (kNameToIdxMap.count(cnode_name) == 0) {
@@ -273,7 +271,6 @@ bool Executor::InitParamAggregator(const FuncGraphPtr &func_graph) {
     parameter_mutex_[param_name];
     if (!param_aggr->Init(cnode, aggregation_count_)) {
       MS_LOG(EXCEPTION) << "Initializing parameter aggregator for param_name " << param_name << " failed.";
-      return false;
     }
     MS_LOG(INFO) << "Initializing parameter aggregator for param_name " << param_name << " success.";
   }

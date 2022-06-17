@@ -33,7 +33,7 @@ void ClientListKernel::InitKernel(size_t) {
   cipher_init_ = &armour::CipherInit::GetInstance();
 }
 
-sigVerifyResult ClientListKernel::VerifySignature(const schema::GetClientList *get_clients_req) {
+sigVerifyResult ClientListKernel::VerifySignature(const schema::GetClientList *get_clients_req) const {
   auto fbs_fl_id = get_clients_req->fl_id();
   MS_EXCEPTION_IF_NULL(fbs_fl_id);
   std::string fl_id = fbs_fl_id->str();
@@ -220,7 +220,7 @@ bool ClientListKernel::Reset() {
 void ClientListKernel::BuildClientListRsp(const std::shared_ptr<server::FBBuilder> &fbb,
                                           const schema::ResponseCode retcode, const string &reason,
                                           std::vector<std::string> clients, const string &next_req_time,
-                                          const size_t iteration) {
+                                          const size_t iteration) const {
   auto rsp_reason = fbb->CreateString(reason);
   auto rsp_next_req_time = fbb->CreateString(next_req_time);
   std::vector<flatbuffers::Offset<flatbuffers::String>> clients_vector;

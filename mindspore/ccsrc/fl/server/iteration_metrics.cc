@@ -32,7 +32,6 @@ bool IterationMetrics::Initialize() {
   if (!config_->Initialize()) {
     MS_LOG(EXCEPTION) << "Initializing for Config file path failed!" << config_file_path_
                       << " may be invalid or not exist.";
-    return false;
   }
   ps::core::FileConfig metrics_config;
   if (!ps::core::CommUtil::ParseAndCheckConfigJson(config_.get(), kMetrics, &metrics_config)) {
@@ -43,7 +42,6 @@ bool IterationMetrics::Initialize() {
   auto realpath = Common::CreatePrefixPath(metrics_file_path_.c_str());
   if (!realpath.has_value()) {
     MS_LOG(EXCEPTION) << "Creating path for " << metrics_file_path_ << " failed.";
-    return false;
   }
   metrics_file_.open(realpath.value(), std::ios::app | std::ios::out);
   metrics_file_.close();

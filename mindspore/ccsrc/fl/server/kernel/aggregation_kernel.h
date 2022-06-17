@@ -40,11 +40,9 @@ class AggregationKernelMod : public DeprecatedNativeCpuKernelMod {
 
   // InitKernel and Launch methods are inherited from pure virtual function of DeprecatedNativeCpuKernelMod so it must
   // have implementation.
-  virtual void InitKernel(const CNodePtr &kernel_node) {}
+  virtual void InitKernel(const CNodePtr &kernel_node) = 0;
   virtual bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                      const std::vector<AddressPtr> &outputs) {
-    return true;
-  }
+                      const std::vector<AddressPtr> &outputs) = 0;
   virtual bool AllReduce() = 0;
 
   // Server kernel's memory allocation method, which is different from the workflow in
@@ -62,9 +60,7 @@ class AggregationKernelMod : public DeprecatedNativeCpuKernelMod {
 
   // Some kernels should know the inputs/workspace/outputs addresses at initializing phase. For example, FedAvgKernel.
   virtual void SetParameterAddress(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs) {
-    return;
-  }
+                                   const std::vector<AddressPtr> &outputs) = 0;
 
   // Reinitialize aggregation kernel after scaling operations are done.
   virtual bool ReInitForScaling() { return true; }
@@ -73,12 +69,12 @@ class AggregationKernelMod : public DeprecatedNativeCpuKernelMod {
 
   // Setter and getter of kernels parameters information.
   void set_params_info(const ParamsInfo &params_info) { params_info_ = params_info; }
-  const std::vector<std::string> &input_names() { return params_info_.inputs_names(); }
-  const std::vector<std::string> &workspace_names() { return params_info_.workspace_names(); }
-  const std::vector<std::string> &output_names() { return params_info_.outputs_names(); }
+  const std::vector<std::string> &input_names() const { return params_info_.inputs_names(); }
+  const std::vector<std::string> &workspace_names() const { return params_info_.workspace_names(); }
+  const std::vector<std::string> &output_names() const { return params_info_.outputs_names(); }
 
   // Returns information about whether some inputs should reuse kernel node inputs memory.
-  const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info() { return reuse_kernel_node_inputs_info_; }
+  const ReuseKernelNodeInfo &reuse_kernel_node_inputs_info() const { return reuse_kernel_node_inputs_info_; }
 
  protected:
   virtual void GenerateReuseKernelNodeInfo() = 0;

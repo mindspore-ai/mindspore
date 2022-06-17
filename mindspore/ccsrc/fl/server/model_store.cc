@@ -28,7 +28,6 @@ namespace server {
 void ModelStore::Initialize(uint32_t rank_id, uint32_t max_count) {
   if (!Executor::GetInstance().initialized()) {
     MS_LOG(EXCEPTION) << "Server's executor must be initialized before model storage.";
-    return;
   }
   rank_id_ = rank_id;
   max_model_count_ = max_count;
@@ -144,7 +143,7 @@ const std::map<size_t, CompressTypeMap> &ModelStore::iteration_to_compress_model
 
 size_t ModelStore::model_size() const { return model_size_; }
 
-std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
+std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() const {
   std::map<std::string, AddressPtr> model = Executor::GetInstance().GetModel();
   if (model.empty()) {
     MS_LOG(WARNING) << "Model feature map is empty.";
@@ -175,10 +174,9 @@ std::shared_ptr<MemoryRegister> ModelStore::AssignNewModelMemory() {
 }
 
 std::shared_ptr<MemoryRegister> ModelStore::AssignNewCompressModelMemory(
-  schema::CompressType compressType, const std::map<std::string, AddressPtr> &model) {
+  schema::CompressType compressType, const std::map<std::string, AddressPtr> &model) const {
   if (model.empty()) {
     MS_LOG(EXCEPTION) << "Model feature map is empty.";
-    return nullptr;
   }
   std::map<string, std::vector<float>> feature_maps;
   for (auto &feature_map : model) {
@@ -258,7 +256,6 @@ size_t ModelStore::ComputeModelSize() {
   std::unique_lock<std::mutex> lock(model_mtx_);
   if (iteration_to_model_.empty()) {
     MS_LOG(EXCEPTION) << "Calculating model size failed: model for iteration 0 is not stored yet. ";
-    return 0;
   }
 
   const auto &model = iteration_to_model_[kInitIterationNum];
@@ -358,7 +355,7 @@ void ModelStore::OnIterationUpdate() {
                << total_sub_reference_count;
 }
 
-void ModelStore::SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model) {
+void ModelStore::SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model) const {
   if (rank_id_ != kLeaderServerRank) {
     MS_LOG(INFO) << "Only leader server will save the weight.";
     return;
@@ -389,8 +386,8 @@ void ModelStore::SaveCheckpoint(size_t iteration, const std::map<std::string, Ad
   std::string checkpoint_dir = ps::PSContext::instance()->checkpoint_dir();
   std::string fl_name = ps::PSContext::instance()->fl_name();
 
-  python_adapter::CallPyModFn(mod, PYTHON_MOD_SAFE_WEIGHT, py::str(checkpoint_dir), py::str(fl_name),
-                              py::str(std::to_string(iteration)), dict_data);
+  (void)python_adapter::CallPyModFn(mod, PYTHON_MOD_SAFE_WEIGHT, py::str(checkpoint_dir), py::str(fl_name),
+                                    py::str(std::to_string(iteration)), dict_data);
 }
 }  // namespace server
 }  // namespace fl

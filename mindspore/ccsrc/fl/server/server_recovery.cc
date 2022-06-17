@@ -28,7 +28,6 @@ bool ServerRecovery::Initialize(const std::string &config_file) {
   if (!config_->Initialize()) {
     MS_LOG(EXCEPTION) << "Initializing for server recovery failed. Config file path " << config_file
                       << " may be invalid or not exist.";
-    return false;
   }
 
   // Read the server recovery file path.
@@ -42,14 +41,12 @@ bool ServerRecovery::Initialize(const std::string &config_file) {
       value_json = nlohmann::json::parse(value);
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "The data is not in json format.";
-      return false;
     }
 
     // Parse the storage type.
     uint32_t storage_type = JsonGetKeyWithException<uint32_t>(value_json, ps::kStoreType);
     if (std::to_string(storage_type) != ps::kFileStorage) {
       MS_LOG(EXCEPTION) << "Storage type " << storage_type << " is not supported.";
-      return false;
     }
 
     // Parse storage file path.
@@ -72,7 +69,6 @@ bool ServerRecovery::Recover() {
     server_recovery_json = nlohmann::json::parse(server_recovery_file_);
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "The server recovery file is not in json format.";
-    return false;
   }
   uint64_t current_iter = JsonGetKeyWithException<uint64_t>(server_recovery_json, kCurrentIteration);
   std::string instance_state = JsonGetKeyWithException<std::string>(server_recovery_json, kInstanceState);

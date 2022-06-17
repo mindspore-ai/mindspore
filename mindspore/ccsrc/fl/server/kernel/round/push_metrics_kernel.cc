@@ -96,7 +96,8 @@ ResultCode PushMetricsKernel::PushMetrics(const std::shared_ptr<FBBuilder> &fbb,
   return ResultCode::kSuccess;
 }
 
-void PushMetricsKernel::BuildPushMetricsRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode) {
+void PushMetricsKernel::BuildPushMetricsRsp(const std::shared_ptr<FBBuilder> &fbb,
+                                            const schema::ResponseCode retcode) const {
   MS_ERROR_IF_NULL_WO_RET_VAL(fbb);
   schema::ResponsePushMetricsBuilder rsp_push_metrics_builder(*(fbb.get()));
   rsp_push_metrics_builder.add_retcode(retcode);

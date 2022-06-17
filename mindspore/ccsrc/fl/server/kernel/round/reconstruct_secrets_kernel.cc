@@ -45,7 +45,8 @@ void ReconstructSecretsKernel::InitKernel(size_t required_cnt) {
                                                          {first_cnt_handler, last_cnt_handler});
 }
 
-sigVerifyResult ReconstructSecretsKernel::VerifySignature(const schema::SendReconstructSecret *reconstruct_secret_req) {
+sigVerifyResult ReconstructSecretsKernel::VerifySignature(
+  const schema::SendReconstructSecret *reconstruct_secret_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req, sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req->fl_id(), sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(reconstruct_secret_req->timestamp(), sigVerifyResult::FAILED);

@@ -485,7 +485,7 @@ bool CommUtil::verifyExtendedAttributes(const X509 *caCert) {
   MS_EXCEPTION_IF_NULL(caCert);
   int cirt = 0;
   BASIC_CONSTRAINTS *bcons =
-    reinterpret_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(caCert, NID_basic_constraints, &cirt, NULL));
+    reinterpret_cast<BASIC_CONSTRAINTS *>(X509_get_ext_d2i(caCert, NID_basic_constraints, &cirt, nullptr));
   if (bcons == nullptr) {
     return false;
   }

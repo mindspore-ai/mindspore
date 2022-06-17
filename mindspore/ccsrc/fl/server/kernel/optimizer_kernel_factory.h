@@ -31,7 +31,7 @@ using OptimizerKernelCreator = std::function<std::shared_ptr<OptimizerKernelMod>
 class OptimizerKernelFactory : public KernelFactory<std::shared_ptr<OptimizerKernelMod>, OptimizerKernelCreator> {
  public:
   static OptimizerKernelFactory &GetInstance() {
-    static OptimizerKernelFactory instance;
+    static OptimizerKernelFactory instance{};
     return instance;
   }
 

@@ -46,7 +46,6 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
   }
 
   PBMetadata client_list;
@@ -62,7 +61,7 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   CheckAndTransPara(participation_time_level_str);
 }
 
-bool UpdateModelKernel::VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req) {
+bool UpdateModelKernel::VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req, false);
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->fl_id(), false);
   schema::CompressType upload_compress_type = update_model_req->upload_compress_type();
@@ -170,7 +169,7 @@ void UpdateModelKernel::ResetParticipationTimeAndNum() {
   }
 }
 
-void UpdateModelKernel::RunAggregation() {
+void UpdateModelKernel::RunAggregation() const {
   auto is_last_iter_valid = Executor::GetInstance().RunAllWeightAggregation();
   auto curr_iter_num = LocalMetaStore::GetInstance().curr_iter_num();
   if (is_last_iter_valid) {
@@ -300,7 +299,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
   return ResultCode::kSuccess;
 }
 
-bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_model_req) {
+bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_model_req) const {
   if (ps::PSContext::instance()->upload_compress_type() != kNoCompress &&
       update_model_req->upload_compress_type() != schema::CompressType_NO_COMPRESS) {
     return true;
@@ -329,7 +328,7 @@ bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::str
   return true;
 }
 
-bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req) {
+bool UpdateModelKernel::VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req) const {
   auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
   auto upload_sparse_rate = update_model_req->upload_sparse_rate();
   if (upload_sparse_rate != ps::PSContext::instance()->upload_sparse_rate()) {
@@ -422,7 +421,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
 }
 
 std::map<std::string, UploadData> UpdateModelKernel::ParseFeatureMap(
-  const schema::RequestUpdateModel *update_model_req) {
+  const schema::RequestUpdateModel *update_model_req) const {
   std::map<std::string, UploadData> feature_map;
   auto fbs_feature_map = update_model_req->feature_map();
   for (uint32_t i = 0; i < fbs_feature_map->size(); i++) {
@@ -511,7 +510,7 @@ std::map<std::string, UploadData> UpdateModelKernel::ParseUploadCompressFeatureM
 
 std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
   std::map<std::string, std::vector<float>> *weight_map, const schema::RequestUpdateModel *update_model_req,
-  schema::CompressType upload_compress_type, size_t data_size) {
+  schema::CompressType upload_compress_type, size_t data_size) const {
   std::map<std::string, UploadData> feature_map;
 
   // Get and set decode hyper parameters.
@@ -523,7 +522,7 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
   auto fbs_name_vec = update_model_req->name_vec();
   std::vector<std::string> name_vec;
   for (size_t i = 0; i < fbs_name_vec->size(); ++i) {
-    name_vec.emplace_back(fbs_name_vec->Get(i)->str());
+    (void)name_vec.emplace_back(fbs_name_vec->Get(i)->str());
   }
 
   // Parameter process for decode.
@@ -535,13 +534,13 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
     size_t compress_weight_size = fbs_compress_feature_map->Get(i)->compress_data()->size();
     MS_LOG(DEBUG) << "The compress weight size: " << compress_weight_size;
     for (size_t j = 0; j < compress_weight_size; ++j) {
-      compress_feature_map.compress_data.emplace_back(compress_weight_data[j]);
+      (void)compress_feature_map.compress_data.emplace_back(compress_weight_data[j]);
     }
     compress_feature_map.min_val = fbs_compress_feature_map->Get(i)->min_val();
     compress_feature_map.max_val = fbs_compress_feature_map->Get(i)->max_val();
     MS_LOG(DEBUG) << "Min value: " << compress_feature_map.min_val;
     MS_LOG(DEBUG) << "Max value: " << compress_feature_map.max_val;
-    compress_feature_maps.emplace_back(compress_feature_map);
+    (void)compress_feature_maps.emplace_back(compress_feature_map);
   }
 
   // Decode.
@@ -562,7 +561,7 @@ std::map<std::string, UploadData> UpdateModelKernel::DecodeFeatureMap(
   return feature_map;
 }
 
-ResultCode UpdateModelKernel::CountForAggregation(const std::string &req_fl_id) {
+ResultCode UpdateModelKernel::CountForAggregation(const std::string &req_fl_id) const {
   if (!DistributedCountService::GetInstance().Count(kCountForAggregation, req_fl_id)) {
     MS_LOG(ERROR) << "Counting for aggregation failed for fl id " << req_fl_id;
     return ResultCode::kFail;
@@ -584,7 +583,7 @@ ResultCode UpdateModelKernel::CountForUpdateModel(const std::shared_ptr<FBBuilde
   return ResultCode::kSuccess;
 }
 
-sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateModel *update_model_req) {
+sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateModel *update_model_req) const {
   std::string fl_id = update_model_req->fl_id()->str();
   std::string timestamp = update_model_req->timestamp()->str();
   int iteration = update_model_req->iteration();
@@ -626,7 +625,7 @@ sigVerifyResult UpdateModelKernel::VerifySignature(const schema::RequestUpdateMo
 }
 
 void UpdateModelKernel::BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
-                                            const std::string &reason, const std::string &next_req_time) {
+                                            const std::string &reason, const std::string &next_req_time) const {
   if (fbb == nullptr) {
     MS_LOG(WARNING) << "Input fbb is nullptr.";
     return;
@@ -666,15 +665,15 @@ void UpdateModelKernel::RecordCompletePeriod(const DeviceMeta &device_meta) {
 void UpdateModelKernel::CheckAndTransPara(const std::string &participation_time_level) {
   std::lock_guard<std::mutex> lock(participation_time_and_num_mtx_);
   // The default time level is 5min and 15min, trans time to millisecond
-  participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel1 * kMinuteToSecond * kSecondToMills, 0));
-  participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel2 * kMinuteToSecond * kSecondToMills, 0));
-  participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel1 * kMinuteToSecond * kSecondToMills, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(kDefaultLevel2 * kMinuteToSecond * kSecondToMills, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
   std::vector<std::string> time_levels;
   std::istringstream iss(participation_time_level);
   std::string output;
   while (std::getline(iss, output, ',')) {
     if (!output.empty()) {
-      time_levels.emplace_back(std::move(output));
+      (void)time_levels.emplace_back(std::move(output));
     }
   }
   if (time_levels.size() != kLevelNum) {
@@ -698,9 +697,9 @@ void UpdateModelKernel::CheckAndTransPara(const std::string &participation_time_
   }
   // Save the the parament of user
   participation_time_and_num_.clear();
-  participation_time_and_num_.emplace_back(std::make_pair(level1 * kMinuteToSecond * kSecondToMills, 0));
-  participation_time_and_num_.emplace_back(std::make_pair(level2 * kMinuteToSecond * kSecondToMills, 0));
-  participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(level1 * kMinuteToSecond * kSecondToMills, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(level2 * kMinuteToSecond * kSecondToMills, 0));
+  (void)participation_time_and_num_.emplace_back(std::make_pair(UINT64_MAX, 0));
 }
 
 REG_ROUND_KERNEL(updateModel, UpdateModelKernel)

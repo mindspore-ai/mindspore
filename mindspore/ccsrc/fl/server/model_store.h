@@ -45,7 +45,7 @@ using CompressTypeMap = std::map<schema::CompressType, std::shared_ptr<MemoryReg
 class ModelStore {
  public:
   static ModelStore &GetInstance() {
-    static ModelStore instance;
+    static ModelStore instance{};
     return instance;
   }
 
@@ -54,7 +54,7 @@ class ModelStore {
 
   // Store the model of the given iteration. The model is acquired from Executor. If the current model count is already
   // max_model_count_, the earliest model will be replaced.
-  void StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &model);
+  void StoreModelByIterNum(size_t iteration, const std::map<std::string, AddressPtr> &new_model);
 
   // Get model of the given iteration.
   std::map<std::string, AddressPtr> GetModelByIterNum(size_t iteration);
@@ -86,19 +86,20 @@ class ModelStore {
                                                                 size_t datalen);
 
  private:
-  ModelStore() : max_model_count_(0), model_size_(0), iteration_to_model_({}), iteration_to_compress_model_({}) {}
+  ModelStore()
+      : max_model_count_(0), model_size_(0), iteration_to_model_({}), iteration_to_compress_model_({}), rank_id_(0) {}
   ~ModelStore() = default;
   ModelStore(const ModelStore &) = delete;
   ModelStore &operator=(const ModelStore &) = delete;
 
-  void SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model);
+  void SaveCheckpoint(size_t iteration, const std::map<std::string, AddressPtr> &model) const;
 
   // To store multiple models, new memory must assigned. The max memory size assigned for models is max_model_count_ *
   // model_size_.
-  std::shared_ptr<MemoryRegister> AssignNewModelMemory();
+  std::shared_ptr<MemoryRegister> AssignNewModelMemory() const;
 
   std::shared_ptr<MemoryRegister> AssignNewCompressModelMemory(schema::CompressType compressType,
-                                                               const std::map<std::string, AddressPtr> &model);
+                                                               const std::map<std::string, AddressPtr> &model) const;
 
   // Calculate the model size. This method should be called after iteration_to_model_ is initialized.
   size_t ComputeModelSize();

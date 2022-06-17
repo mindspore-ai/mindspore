@@ -42,7 +42,7 @@ class PushMetricsKernel : public RoundKernel {
 
  private:
   ResultCode PushMetrics(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestPushMetrics *push_metrics_req);
-  void BuildPushMetricsRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode);
+  void BuildPushMetricsRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode) const;
 
   uint32_t local_rank_;
 };

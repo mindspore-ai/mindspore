@@ -17,8 +17,6 @@
 #include "fl/compression/encode_executor.h"
 
 #include <arpa/inet.h>
-#include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <algorithm>
@@ -31,13 +29,13 @@
 namespace mindspore {
 namespace fl {
 namespace compression {
-bool CompressExecutor::EnableCompressWeight(const schema::CompressType compressType) {
+bool CompressExecutor::EnableCompressWeight(const schema::CompressType compressType) const {
   return kCompressTypeMap.count(compressType) > 0;
 }
 
 bool CompressExecutor::construct_compress_weight(std::map<std::string, CompressWeight> *compressWeights,
                                                  std::map<std::string, std::vector<float>> feature_maps,
-                                                 const schema::CompressType compressType) {
+                                                 const schema::CompressType compressType) const {
   if (compressType == schema::CompressType_QUANT) {
     return quant_min_max(compressWeights, feature_maps, kCompressTypeMap.at(compressType));
   }
@@ -45,7 +43,7 @@ bool CompressExecutor::construct_compress_weight(std::map<std::string, CompressW
 }
 
 bool CompressExecutor::quant_min_max(std::map<std::string, CompressWeight> *compressWeights,
-                                     std::map<std::string, std::vector<float>> feature_maps, size_t num_bits) {
+                                     std::map<std::string, std::vector<float>> feature_maps, size_t num_bits) const {
   auto temp1 = static_cast<float>(1 << num_bits) - 1.0f;
   auto temp2 = static_cast<float>(1 << (num_bits - 1));
   for (const auto &feature_map : feature_maps) {
@@ -71,7 +69,7 @@ bool CompressExecutor::quant_min_max(std::map<std::string, CompressWeight> *comp
       auto round_data = round((feature_map.second[i] - min_value) / scale_value - temp2);
       // bit pack can be implemented here in the future
       auto int8_data = int8_t(round_data);
-      compressWeight.compress_data.emplace_back(int8_data);
+      (void)compressWeight.compress_data.emplace_back(int8_data);
     }
     compressWeight.min_val = min_value;
     compressWeight.max_val = max_value;
@@ -82,7 +80,8 @@ bool CompressExecutor::quant_min_max(std::map<std::string, CompressWeight> *comp
   return true;
 }
 
-schema::CompressType CompressExecutor::GetCompressType(const flatbuffers::Vector<int8_t> *download_compress_types) {
+schema::CompressType CompressExecutor::GetCompressType(
+  const flatbuffers::Vector<int8_t> *download_compress_types) const {
   schema::CompressType compressType = schema::CompressType_NO_COMPRESS;
   schema::CompressType context_compress_type;
   if (ps::PSContext::instance()->download_compress_type() == fl::server::kQuant) {
