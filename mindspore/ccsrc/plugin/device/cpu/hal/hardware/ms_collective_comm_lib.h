@@ -24,6 +24,8 @@
 #include "plugin/device/cpu/hal/hardware/ms_communication_group.h"
 #include "distributed/cluster/cluster_context.h"
 #include "fl/server/collective_ops_impl.h"
+#include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
+#include "plugin/device/cpu/hal/hardware/allreduce_impl.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
@@ -47,6 +49,8 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   }
 
   bool Initialize(uint32_t global_rank, uint32_t global_rank_size) override;
+
+  bool Finalize() override;
 
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) override;
 
@@ -78,10 +82,15 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   // Query unique id from scheduler.
   bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const;
 
-  ps::core::AbstractNodePtr node_;
+  std::shared_ptr<ps::core::CollectiveNode> node_;
 
   // This compute graph node is maintained by the clusster context and used for metadata synchronization.
   std::shared_ptr<distributed::cluster::topology::ComputeGraphNode> cgn_;
+
+  std::unique_ptr<AllReduceLauncher> launcher_;
+
+  // Indicates whether the collective node has to synchronize the addresses of all the collective nodes.
+  bool synchronized_{true};
 };
 }  // namespace cpu
 }  // namespace device

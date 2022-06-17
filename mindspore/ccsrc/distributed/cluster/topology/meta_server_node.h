@@ -95,9 +95,8 @@ class MetaServerNode : public NodeBase {
         total_node_num_(node_num),
         topo_state_(TopoState::kInitializing),
         enable_monitor_(true),
-        next_rank_id_(-1),
         node_timeout_(node_timeout) {}
-  ~MetaServerNode() override = default;
+  ~MetaServerNode() override;
 
   bool Initialize() override;
   bool Initialized() override;
@@ -146,6 +145,9 @@ class MetaServerNode : public NodeBase {
   // Recover metadata from the configuration if recovery is enabled.
   bool Recovery();
 
+  // Allocate a new valid rank id for new registered compute graph node.
+  uint32_t AllocateRankId(const std::string &role);
+
   // Persist the required metadata of cluster into storage through configuration.
   bool Persist();
 
@@ -183,9 +185,6 @@ class MetaServerNode : public NodeBase {
   // The start time of this meta server node.
   std::chrono::high_resolution_clock::time_point start_time_;
 
-  // The next assignable rank id for new registered compute graph node.
-  std::atomic<size_t> next_rank_id_;
-
   // The metadata written and read by users.
   std::map<std::string, std::string> metadata_;
 
@@ -195,6 +194,11 @@ class MetaServerNode : public NodeBase {
 
   // A key-value pairs metadata config used for failover recovery if enabled.
   std::unique_ptr<recovery::Configuration> configuration_;
+
+  // The next valid rank id for compute graph nodes.
+  // Note that each role(group) has it's own rank id.
+  std::map<std::string, std::atomic<uint32_t>> next_rank_ids_;
+  mutable std::shared_mutex rank_mutex_;
 };
 }  // namespace topology
 }  // namespace cluster

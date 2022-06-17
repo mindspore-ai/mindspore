@@ -19,6 +19,7 @@
 #include "utils/log_adapter.h"
 #include "distributed/cluster/topology/utils.h"
 #include "distributed/cluster/topology/common.h"
+#include "distributed/recovery/recovery_context.h"
 #include "distributed/constants.h"
 #include "proto/topology.pb.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
@@ -27,6 +28,12 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
+ComputeGraphNode::~ComputeGraphNode() {
+  if (!finalized_) {
+    (void)Finalize(true);
+  }
+}
+
 bool ComputeGraphNode::Initialize() {
   // Init the address of meta server node.
   RETURN_IF_FALSE_WITH_LOG(FillMetaServerAddress(&meta_server_addr_),
@@ -59,7 +66,9 @@ bool ComputeGraphNode::Initialized() { return authenticated_; }
 bool ComputeGraphNode::Finalize(bool force) {
   // Stop the heartbeat thread.
   enable_hb_ = false;
-  heartbeat_.join();
+  if (heartbeat_.joinable()) {
+    heartbeat_.join();
+  }
 
   // Exit the compute graph node from the cluster topology.
   if (!force) {
@@ -102,7 +111,6 @@ bool ComputeGraphNode::Register() {
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
   reg_msg.set_role(role_);
-  reg_msg.set_rank_id(rank_id_);
 
   // Set the local hostname.
   char host_name[MAX_HOSTNAME_LEN] = {0};
@@ -182,6 +190,9 @@ bool ComputeGraphNode::Heartbeat() {
     if (response == nullptr) {
       MS_LOG(ERROR) << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
       while (!Reconnect()) {
+        if (!recovery::IsEnableRecovery()) {
+          MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
+        }
         continue;
       }
     }

@@ -32,6 +32,9 @@ class BACKEND_EXPORT CollectiveNode : public PSWorkerNode {
   bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
+  // Register the address of this collective node and then lookup the addresses of all the other nodes.
+  bool SynchronizeAddresses();
+
  protected:
   bool InitClientToScheduler() override;
 

@@ -67,7 +67,7 @@ enum class MessageName {
 };
 
 // The retry and interval configuration used for the macro `EXECUTE_WITH_RETRY`.
-static const size_t kExecuteRetryNum = 30;
+static const size_t kExecuteRetryNum = 60;
 static const uint32_t kExecuteInterval = 10;
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                   \

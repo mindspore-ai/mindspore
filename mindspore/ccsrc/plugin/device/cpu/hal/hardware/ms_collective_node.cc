@@ -15,19 +15,21 @@
  */
 
 #include <utility>
+#include "distributed/cluster/cluster_context.h"
 #include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
 constexpr char kRankIdPrefix[] = "MCCL_COLLECTIVE_RANK_";
+using ClusterContext = mindspore::distributed::cluster::ClusterContext;
 
 bool CollectiveNode::Start(const uint32_t &timeout) {
   InitNodeNum();
   config_ = std::make_unique<FileConfiguration>(PSContext::instance()->config_file_path());
   MS_EXCEPTION_IF_NULL(config_);
-  if (config_->Initialize() && !Recover()) {
-    MS_LOG(INFO) << "Failed to recover the mccl collective node.";
+  if (!config_->Initialize()) {
+    MS_LOG(WARNING) << "Failed to initialize the configuration for this mccl collective node.";
   }
 
   InitServerHandler();
@@ -40,33 +42,10 @@ bool CollectiveNode::Start(const uint32_t &timeout) {
   }
   is_already_stopped_ = false;
 
-  if (cgn_ != nullptr) {
-    // Register the address of this node.
-    auto rank_id = kRankIdPrefix + std::to_string(cgn_->rank_id());
-    auto address = node_info_.ip_ + ":" + std::to_string(node_info_.port_);
-    cgn_->PutMetadata(rank_id, address, false);
-
-    // Get the addresses of other nodes.
-    const size_t interval = 3;
-    nodes_address_.clear();
-    for (size_t i = 0; i < worker_num_; ++i) {
-      bool success = false;
-      while (!success) {
-        auto other_rank_id = kRankIdPrefix + std::to_string(i);
-        auto other_address = cgn_->GetMetadata(other_rank_id);
-        if (other_address != "") {
-          auto ip = other_address.substr(0, other_address.find(":"));
-          auto port =
-            std::stoi(other_address.substr(other_address.find(":") + 1, other_address.length() - ip.length()));
-          nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
-          success = true;
-        } else {
-          MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered";
-          sleep(interval);
-        }
-      }
-    }
+  if (!SynchronizeAddresses()) {
+    MS_LOG(EXCEPTION) << "Failed to synchronize the addresses of all the cpu collective nodes.";
   }
+
   node_info_.rank_id_ = cgn_->rank_id();
   MS_LOG(INFO) << "The cpu collective rank " << node_info_.rank_id_ << " has been started successfully.";
   return true;
@@ -89,6 +68,48 @@ bool CollectiveNode::Finish(const uint32_t &timeout) {
     return true;
   }
   MS_LOG(INFO) << "The cpu collective node has been finished successfully.";
+  return true;
+}
+
+bool CollectiveNode::SynchronizeAddresses() {
+  if (cgn_ != nullptr) {
+    // Register the address of this node.
+    auto rank_id = kRankIdPrefix + cgn_->role() + "_" + std::to_string(cgn_->rank_id());
+    auto address = node_info_.ip_ + ":" + std::to_string(node_info_.port_);
+
+    const size_t interval = 3;
+    bool success = false;
+    while (!success) {
+      success = cgn_->PutMetadata(rank_id, address);
+      if (!success) {
+        MS_LOG(WARNING) << "Retry to register the address of rank " << rank_id << "...";
+        sleep(interval);
+      } else {
+        MS_LOG(INFO) << "The address of rank " << rank_id << " has been registered successfully.";
+      }
+    }
+
+    // Get the addresses of other nodes.
+    nodes_address_.clear();
+    auto node_num = ClusterContext::instance()->node_num(cgn_->role());
+    for (size_t i = 0; i < node_num; ++i) {
+      success = false;
+      while (!success) {
+        auto other_rank_id = kRankIdPrefix + cgn_->role() + "_" + std::to_string(i);
+        auto other_address = cgn_->GetMetadata(other_rank_id);
+        if (other_address != "") {
+          auto ip = other_address.substr(0, other_address.find(":"));
+          auto port =
+            std::stoi(other_address.substr(other_address.find(":") + 1, other_address.length() - ip.length()));
+          nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
+          success = true;
+        } else {
+          MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered";
+          sleep(interval);
+        }
+      }
+    }
+  }
   return true;
 }
 }  // namespace core

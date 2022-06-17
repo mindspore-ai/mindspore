@@ -35,6 +35,13 @@ constexpr char kNodeId[] = "node_id";
 constexpr char kRecoveryFileName[] = "recovery.dat";
 constexpr char kHostName[] = "host_name";
 constexpr char kRole[] = "role";
+constexpr char kRankId[] = "rank_id";
+
+MetaServerNode::~MetaServerNode() {
+  if (!finalized_) {
+    (void)Finalize(true);
+  }
+}
 
 bool MetaServerNode::Initialize() {
   // Init the address of meta server node.
@@ -61,6 +68,9 @@ bool MetaServerNode::Initialized() {
 }
 
 bool MetaServerNode::Finalize(bool force) {
+  if (finalized_) {
+    return true;
+  }
   if (topo_state_ != TopoState::kFinished && !force) {
     MS_LOG(WARNING) << "The meta server node can not be finalized because there are still " << nodes_.size()
                     << " alive nodes.";
@@ -74,10 +84,13 @@ bool MetaServerNode::Finalize(bool force) {
 
     // Stop the topo monitor thread.
     enable_monitor_ = false;
-    topo_monitor_.join();
+    if (topo_monitor_.joinable()) {
+      topo_monitor_.join();
+    }
     if (force) {
       MS_LOG(INFO) << "The meta server node is forced to finalized.";
     }
+    finalized_ = true;
     return true;
   }
 }
@@ -144,9 +157,9 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
   const auto &node_id = registration.node_id();
   const auto &host_name = registration.host_name();
   const auto &role = registration.role();
-  const auto &rank_id = registration.rank_id();
   std::unique_lock<std::shared_mutex> lock(nodes_mutex_);
   if (nodes_.find(node_id) == nodes_.end()) {
+    auto rank_id = AllocateRankId(role);
     std::shared_ptr<NodeInfo> node_info = std::make_shared<NodeInfo>(node_id);
     node_info->host_name = host_name;
     node_info->role = role;
@@ -160,7 +173,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
 
     RegistrationRespMessage reg_resp_msg;
     reg_resp_msg.set_success(true);
-    reg_resp_msg.set_rank_id(++next_rank_id_);
+    reg_resp_msg.set_rank_id(rank_id);
     reg_resp_msg.set_node_num(total_node_num_);
     std::string content = reg_resp_msg.SerializeAsString();
 
@@ -168,10 +181,13 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     MS_EXCEPTION_IF_NULL(message);
     return message.release();
   } else {
-    MS_LOG(ERROR) << "The node: " << node_id << " have been registered before.";
+    MS_LOG(INFO) << "The node: " << node_id << " have been recovered.";
+    auto node_info = nodes_[node_id];
+    MS_EXCEPTION_IF_NULL(node_info);
 
     RegistrationRespMessage reg_resp_msg;
     reg_resp_msg.set_success(true);
+    reg_resp_msg.set_rank_id(node_info->rank_id);
     std::string content = reg_resp_msg.SerializeAsString();
 
     auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
@@ -294,7 +310,7 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
         continue;
       }
       MS_EXCEPTION_IF_NULL(node_info);
-      if (node_info->rank_id >= 0) {
+      if (node_info->rank_id >= 0 && node_info->rank_id < tmp_hostnames.size()) {
         tmp_hostnames[node_info->rank_id] = node_info->host_name;
       } else {
         MS_LOG(ERROR) << "Invalid rank id: " << node_info->rank_id << " for node: " << node_info->node_id;
@@ -324,10 +340,13 @@ void MetaServerNode::UpdateTopoState() {
     if (topo_state_ == TopoState::kInitializing) {
       // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
       if (ElapsedTime(start_time_) > kTopoInitTimeout) {
-        MS_LOG(ERROR) << "Failed to initialize the cluster topology after waiting for " << kTopoInitTimeout.count()
-                      << " milliseconds.";
-        topo_state_ = TopoState::kFailed;
-        continue;
+        if (recovery::IsEnableRecovery()) {
+          MS_LOG(ERROR) << "Start Scheduler node timeout.";
+          topo_state_ = TopoState::kFailed;
+          continue;
+        } else {
+          MS_LOG(EXCEPTION) << "Start Scheduler node timeout.";
+        }
       }
 
       if (TransitionToInitialized()) {
@@ -348,8 +367,12 @@ void MetaServerNode::UpdateTopoState() {
         time_t now = time(&now);
         auto elapsed = difftime(now, node_info->last_update);
         if (elapsed > node_timeout_) {
-          MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
-          node_info->state = NodeState::kTimeout;
+          if (recovery::IsEnableRecovery()) {
+            MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
+            node_info->state = NodeState::kTimeout;
+          } else {
+            MS_LOG(EXCEPTION) << "The node: " << node_id << " is timed out.";
+          }
         }
       }
     }
@@ -389,6 +412,7 @@ bool MetaServerNode::Recovery() {
 
     // The meta server node is restarted and the metadata of cluster needs to be recovered.
   } else {
+    MS_LOG(INFO) << "Begin to recover the meta server node.";
     std::string states_key = kComputeNodeStates;
     RETURN_IF_FALSE_WITH_LOG(configuration_->Exists(states_key),
                              "Can not find the key " + states_key + " in configuration.");
@@ -407,6 +431,7 @@ bool MetaServerNode::Recovery() {
       time(&(node_info->last_update));
       node_info->host_name = iter.value().at(kHostName);
       node_info->role = iter.value().at(kRole);
+      node_info->rank_id = iter.value().at(kRankId);
       node_info->state = NodeState::kRegistered;
       nodes_[node_id] = node_info;
     }
@@ -414,6 +439,7 @@ bool MetaServerNode::Recovery() {
     if (nodes_.size() == total_node_num_) {
       topo_state_ = TopoState::kInitialized;
     }
+    MS_LOG(INFO) << "The meta server node has been recovered successfully.";
   }
   return true;
 }
@@ -436,12 +462,23 @@ bool MetaServerNode::Persist() {
     MS_EXCEPTION_IF_NULL(iter->second);
     node_state[kHostName] = iter->second->host_name;
     node_state[kRole] = iter->second->role;
+    node_state[kRankId] = iter->second->rank_id;
     node_states[node_id] = node_state;
   }
 
   configuration_->Put(kComputeNodeStates, node_states.dump());
   configuration_->Flush();
   return true;
+}
+
+uint32_t MetaServerNode::AllocateRankId(const std::string &role) {
+  std::shared_lock<std::shared_mutex> lock(rank_mutex_);
+  if (next_rank_ids_.count(role) == 0) {
+    next_rank_ids_[role] = 0;
+  } else {
+    next_rank_ids_[role] += 1;
+  }
+  return next_rank_ids_[role];
 }
 
 TopoState MetaServerNode::TopologyState() { return topo_state_; }

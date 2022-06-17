@@ -38,6 +38,7 @@
 #include "utils/profile.h"
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/common/utils/signal_util.h"
+#include "distributed/cluster/topology/compute_graph_node.h"
 #endif
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
@@ -78,6 +79,12 @@ using distributed::recovery::RecoveryContext;
 namespace {
 constexpr char kNumaEnableEnv[] = "MS_ENABLE_NUMA";
 constexpr char kNumaEnableEnv2[] = "DATASET_ENABLE_NUMA";
+
+// For the transform state synchronization.
+constexpr char kTransformFinishPrefix[] = "TRANSFORM_FINISH_";
+constexpr char kTransformFinishReady[] = "1";
+static const size_t kRetry = 20;
+static const size_t kInterval = 3;
 
 int64_t GetLoopCount(const GraphCompilerInfo &graph_compiler_info) {
   const auto &graphs = graph_compiler_info.graphs_;
@@ -188,78 +195,50 @@ void IntHandler(int, siginfo_t *, void *) {
 bool SendFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
-  if (node->role() != ps::core::NodeRole::WORKER) {
-    return true;
-  }
+  auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
+  MS_EXCEPTION_IF_NULL(cgn);
 
-  auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
-  MS_EXCEPTION_IF_NULL(abstract_node);
-
-  ps::core::SendFinishTransformMessage send_ready_to_run_msg;
-  send_ready_to_run_msg.set_node_id(abstract_node->node_id());
-  send_ready_to_run_msg.set_rank_id(abstract_node->rank_id());
-  send_ready_to_run_msg.set_is_ready(true);
-  send_ready_to_run_msg.set_actor_set_name(actor_set_name);
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  if (!abstract_node->SendToScheduler(send_ready_to_run_msg.SerializeAsString().data(),
-                                      send_ready_to_run_msg.SerializeAsString().size(),
-                                      ps::core::NodeCommand::SEND_FINISH_TRANSFORM, &output)) {
-    MS_LOG(WARNING) << "Failed to send finish transform request to scheduler.";
-    return false;
+  auto key = kTransformFinishPrefix + std::to_string(cgn->rank_id()) + "_" + actor_set_name;
+  size_t retry = kRetry;
+  while (!cgn->PutMetadata(key, kTransformFinishReady)) {
+    if (--retry > 0) {
+      MS_LOG(WARNING) << "Retry to send transform finished state to the meta server node...";
+      sleep(kInterval);
+    } else {
+      MS_LOG(EXCEPTION) << "Failed to send transform finished state to the meta server node.";
+    }
   }
-
-  ps::core::GeneralResponseMsg resp_msg;
-  MS_EXCEPTION_IF_NULL(output);
-  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-  if (!resp_msg.is_success()) {
-    MS_LOG(ERROR) << "Send finish transform to scheduler failed, error msg: " << resp_msg.error();
-    return false;
-  }
+  MS_LOG(INFO) << "The transform finish info has been reported to the meta server for rank: " << cgn->rank_id()
+               << " sub graph: " << actor_set_name;
   return true;
 }
 
 bool QueryFinishTransform(const std::string &actor_set_name) {
   auto node = ClusterContext::instance()->node();
   MS_EXCEPTION_IF_NULL(node);
-  if (node->role() != ps::core::NodeRole::WORKER) {
-    return true;
+  auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
+  MS_EXCEPTION_IF_NULL(cgn);
+
+  size_t retry = kRetry;
+  bool success = true;
+  uint32_t worker_num = ClusterContext::instance()->node_num(distributed::kEnvRoleOfWorker);
+
+  while (--retry > 0) {
+    for (uint32_t i = 0; i < worker_num; ++i) {
+      auto key = kTransformFinishPrefix + std::to_string(cgn->rank_id()) + "_" + actor_set_name;
+      auto value = cgn->GetMetadata(key);
+      if (value != kTransformFinishReady) {
+        MS_LOG(WARNING) << "Waiting for the rank " << i << " to finish the transform stage.";
+        success = false;
+      }
+    }
+    if (!success) {
+      sleep(kInterval);
+    } else {
+      break;
+    }
   }
-
-  auto abstract_node = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
-  MS_EXCEPTION_IF_NULL(abstract_node);
-
-  ps::core::QueryFinishTransformMessage query_msg;
-  query_msg.set_node_id(abstract_node->node_id());
-  query_msg.set_rank_id(abstract_node->rank_id());
-  query_msg.set_actor_set_name(actor_set_name);
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  bool ret = false;
-  while (!ret) {
-    if (!abstract_node->SendToScheduler(query_msg.SerializeAsString().data(), query_msg.SerializeAsString().size(),
-                                        ps::core::NodeCommand::QUERY_FINISH_TRANSFORM, &output)) {
-      MS_LOG(WARNING) << "Failed to send query finish transform request to scheduler.";
-      ret = false;
-      continue;
-    }
-
-    ps::core::QueryFinishTransformRespMessage resp_msg;
-    MS_EXCEPTION_IF_NULL(output);
-    (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-    ret = resp_msg.is_ready();
-    if (!ret) {
-      MS_LOG(INFO) << "There is worker which has not finished transform graph";
-    }
-
-    if (resp_msg.is_worker_timeout()) {
-      MS_LOG(WARNING) << "There is worker timeout";
-      return false;
-    }
-    // The time interval for querying the all worker finish transform graphs status to scheduler: 10 seconds.
-    const uint32_t kWaitDuration = 10;
-    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
-  }
-
-  return ret;
+  return success;
 }
 
 void DoDisasterRecovery(const std::string &actor_set_name) {
@@ -274,7 +253,7 @@ void DoDisasterRecovery(const std::string &actor_set_name) {
 
       RecoveryContext::GetInstance()->ObtainGlobalLatestCkptInfo();
 
-      ret = QueryFinishTransform(actor_set_name);
+      ret = (SendFinishTransform(actor_set_name) && QueryFinishTransform(actor_set_name));
       if (!ret) {
         CollectiveManager::instance()->set_need_reinit(true);
         (void)CollectiveManager::instance()->Finalize();

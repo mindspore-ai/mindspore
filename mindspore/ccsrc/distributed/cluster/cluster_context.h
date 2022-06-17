@@ -29,13 +29,6 @@
 #include "utils/ms_utils.h"
 
 #include "ps/core/cluster_config.h"
-#include "ps/core/node.h"
-#include "ps/core/worker_node.h"
-#include "ps/core/server_node.h"
-#include "ps/core/scheduler_node.h"
-#include "ps/core/ps_worker_node.h"
-#include "ps/core/ps_server_node.h"
-#include "ps/core/ps_scheduler_node.h"
 #include "distributed/cluster/actor_route_table_proxy.h"
 #include "distributed/cluster/topology/node_base.h"
 #include "include/backend/visible.h"
@@ -71,7 +64,7 @@ class BACKEND_EXPORT ClusterContext {
   bool IsScheduler();
 
   // Return node object of this process.
-  const std::shared_ptr<ps::core::Node> &node() const;
+  const std::shared_ptr<topology::NodeBase> &node() const;
 
   // Return the shadow node.
   const std::shared_ptr<topology::NodeBase> &node_base() const;
@@ -91,10 +84,6 @@ class BACKEND_EXPORT ClusterContext {
   // Return actor route proxy for AbstractNode.
   const ActorRouteTableProxyPtr &actor_route_table_proxy() const;
 
-  // Wait cluster networking or re-networking successly, using in disaster recovery to prevent collective communication
-  // ops flapping.
-  void WaitForClusterReady();
-
  private:
   ClusterContext();
 
@@ -110,17 +99,11 @@ class BACKEND_EXPORT ClusterContext {
   void InitSchedulerIp();
   void InitSchedulerPort();
 
-  // Register event callbacks for NODE_TIMEOUT, SCHEDULER_TIMEOUT, etc.
-  void RegisterEventCallback();
-
   // The flag that whether this cluster context instance is already initialized.
   std::atomic_bool inited_;
 
   // The flag that whether this cluster context instance is already finalized.
   std::atomic_bool finalized_;
-
-  // The cluster networking or re-networking successly.
-  std::atomic_bool cluster_ready_;
 
   // The mutex about exiting status of this node.
   std::mutex finish_mutex_;
@@ -131,9 +114,6 @@ class BACKEND_EXPORT ClusterContext {
   // Scheduler information.
   std::string scheduler_host_;
   uint16_t scheduler_port_;
-
-  // The node could be Worker, Server or Scheduler, etc.
-  std::shared_ptr<ps::core::Node> node_;
 
   // The compute graph node or meta server node according to the configuration of this process.
   std::shared_ptr<topology::NodeBase> node_base_;

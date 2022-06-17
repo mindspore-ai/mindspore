@@ -28,10 +28,6 @@ constexpr char kGroupInfoPrefix[] = "group_info_";
 constexpr char kGroupName[] = "group_name";
 constexpr char kUniqueId[] = "unique_id";
 MsCollectiveCommLib::MsCollectiveCommLib() {
-  node_ = std::dynamic_pointer_cast<ps::core::AbstractNode>(ClusterContext::instance()->node());
-  cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
-    ClusterContext::instance()->node_base());
-
   // Generate the global group name with node role.
   global_group_name_ = kMCCLGlobalGroupName;
   MS_LOG(INFO) << "Global group name of MindSpore collective communication library is " << global_group_name_;
@@ -43,10 +39,27 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
     return true;
   }
 
+  launcher_ = std::make_unique<AllReduceLauncher>();
+  CHECK_IF_NULL(launcher_);
+  if (!launcher_->Initialize()) {
+    MS_LOG(EXCEPTION) << "Failed to initialize the allreduce launcher.";
+  }
+  node_ = launcher_->collective_node();
+
+  cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
+    ClusterContext::instance()->node_base());
+
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   initialized_ = true;
   finalized_ = false;
+  return true;
+}
+
+bool MsCollectiveCommLib::Finalize() {
+  if (launcher_ != nullptr) {
+    return launcher_->Finalize();
+  }
   return true;
 }
 
@@ -92,9 +105,19 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
 
 bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) {
   CHECK_IF_NULL(root_info);
+  CHECK_IF_NULL(node_);
   auto group = GetGroup(group_name);
   CHECK_IF_NULL(group);
-  uint32_t group_rank_id = group->GetGroupRank(node_->rank_id());
+
+  if (!synchronized_) {
+    if (!node_->SynchronizeAddresses()) {
+      return false;
+    }
+  } else {
+    synchronized_ = false;
+  }
+
+  uint32_t group_rank_id = group->GetGroupRank(cgn_->rank_id());
   if (group_rank_id == 0) {
     while (!SendUniqueID(group_name, root_info_size, root_info)) {
       MS_LOG(WARNING) << "Send unique id to scheduler failed, retrying...";
@@ -104,16 +127,15 @@ bool MsCollectiveCommLib::BroadcastUniqueID(const std::string &group_name, size_
 
       std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
     }
-    return true;
-  }
+  } else {
+    while (!QueryUniqueID(group_name, root_info_size, root_info)) {
+      MS_LOG(WARNING) << "Query unique id from scheduler failed, retrying...";
+      if (finalized_.load()) {
+        return false;
+      }
 
-  while (!QueryUniqueID(group_name, root_info_size, root_info)) {
-    MS_LOG(WARNING) << "Query unique id from scheduler failed, retrying...";
-    if (finalized_.load()) {
-      return false;
+      std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
     }
-
-    std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
   }
   return true;
 }
@@ -124,33 +146,13 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   CHECK_IF_NULL(node_);
   CHECK_IF_NULL(cgn_);
 
-  ps::core::SendUniqueIDMessage send_unique_id_msg;
-  send_unique_id_msg.set_node_id(node_->node_id());
-  send_unique_id_msg.set_rank_id(0);
-  send_unique_id_msg.set_group_name(group_name);
-  send_unique_id_msg.set_unique_id(root_info, root_info_size);
-
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  if (!node_->SendToScheduler(send_unique_id_msg.SerializeAsString().data(),
-                              send_unique_id_msg.SerializeAsString().size(), NodeCommand::SEND_UNIQUE_ID, &output)) {
-    MS_LOG(WARNING) << "Failed to send unique id request to scheduler.";
-    return false;
-  }
-
-  ps::core::GeneralResponseMsg resp_msg;
-  CHECK_IF_NULL(output);
-  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-  if (!resp_msg.is_success()) {
-    MS_LOG(WARNING) << "Send unique id to scheduler failed, error msg: " << resp_msg.error();
-    return false;
-  }
-
   // Create the group info which contains the unique id and send it to the meta server.
-  std::string group_info_key = kGroupInfoPrefix + group_name;
+  std::string node_role_prefix = cgn_->role() + "_";
+  std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
   if (!cgn_->PutMetadata(group_info_key, root_info, root_info_size)) {
-    MS_LOG(ERROR) << "Failed to send unique id to meta server.";
-    return false;
+    MS_LOG(EXCEPTION) << "Failed to send unique id to the meta server.";
   }
+  MS_LOG(INFO) << "The unique id for group " << group_name << " has been registered to the meta server.";
   return true;
 }
 
@@ -159,28 +161,24 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   CHECK_IF_NULL(node_);
   CHECK_IF_NULL(cgn_);
 
-  ps::core::QueryUniqueIDMessage query_unique_id_msg;
-  query_unique_id_msg.set_node_id(node_->node_id());
-  query_unique_id_msg.set_group_name(group_name);
-  std::shared_ptr<std::vector<unsigned char>> output = nullptr;
-  if (!node_->SendToScheduler(query_unique_id_msg.SerializeAsString().data(),
-                              query_unique_id_msg.SerializeAsString().size(), NodeCommand::QUERY_UNIQUE_ID, &output)) {
-    MS_LOG(WARNING) << "Failed to send query unique id request to scheduler.";
-    return false;
-  }
+  std::string node_role_prefix = cgn_->role() + "_";
+  std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
-  ps::core::QueryUniqueIDRespMessage resp_msg;
-  CHECK_IF_NULL(output);
-  (void)resp_msg.ParseFromArray(output->data(), SizeToInt(output->size()));
-  if (!resp_msg.is_success()) {
-    MS_LOG(INFO) << "Query unique id from scheduer failed, maybe scheduler has not received unique id.";
-    return false;
-  }
-
-  auto ret = memcpy_s(root_info, root_info_size, resp_msg.unique_id().data(), resp_msg.unique_id().length());
-  if (ret != EOK) {
-    MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
-    return false;
+  bool success = false;
+  const size_t interval = 3;
+  while (!success) {
+    auto unique_id = cgn_->GetMetadata(group_info_key);
+    if (unique_id.length() > 0) {
+      auto ret = memcpy_s(root_info, root_info_size, unique_id.data(), unique_id.length());
+      if (ret != EOK) {
+        MS_LOG(WARNING) << "The memcpy_s error, errorno(" << ret << ")";
+        return false;
+      }
+      success = true;
+    } else {
+      MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name << " from the meta server node...";
+      sleep(interval);
+    }
   }
   return true;
 }
@@ -196,7 +194,7 @@ bool MsCollectiveCommLib::AllReduce(const void *send_buff, void *recv_buff, size
   if (reduce_op != CollectiveOpReduceType::Reduce_Sum) {
     MS_LOG(EXCEPTION) << "AllReduce only support reduce sum.";
   }
-  bool ret = AllReduceLauncher::GetInstance().Execute(send_buff, recv_buff, send_count);
+  bool ret = launcher_->Execute(send_buff, recv_buff, send_count);
   return ret;
 }
 
