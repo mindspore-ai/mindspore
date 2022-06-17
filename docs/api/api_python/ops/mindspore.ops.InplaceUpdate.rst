@@ -2,6 +2,7 @@ mindspore.ops.InplaceUpdate
 ===========================
 
 .. py:class:: mindspore.ops.InplaceUpdate(indices)
+
     将 `x` 的特定行更新为 `v` 。
 
     **参数：**

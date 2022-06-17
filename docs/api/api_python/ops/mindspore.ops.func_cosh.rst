@@ -3,7 +3,7 @@ mindspore.ops.cosh
 
 .. py:function:: mindspore.ops.cosh(x)
 
-    逐元素计算`x`的双曲余弦值。
+    逐元素计算 `x` 的双曲余弦值。
 
     .. math::
         out_i = cosh(x_i)
