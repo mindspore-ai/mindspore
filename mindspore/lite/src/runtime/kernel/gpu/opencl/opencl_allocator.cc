@@ -311,12 +311,12 @@ int OpenCLAllocator::RefCount(void *buf) {
   UnLock();
   return -1;
 }
-int OpenCLAllocator::SetRefCount(void *buf, int ref_count) {
-  if (buf == nullptr) {
+int OpenCLAllocator::SetRefCount(void *cl_buf, int ref_count) {
+  if (cl_buf == nullptr) {
     return -1;
   }
   Lock();
-  auto iter = allocated_list_.find(buf);
+  auto iter = allocated_list_.find(cl_buf);
   if (iter != allocated_list_.end()) {
     auto mem_buf = iter->second;
     std::atomic_store(&mem_buf->ref_count_, ref_count);
@@ -326,12 +326,12 @@ int OpenCLAllocator::SetRefCount(void *buf, int ref_count) {
   UnLock();
   return -1;
 }
-int OpenCLAllocator::IncRefCount(void *buf, int ref_count) {
-  if (buf == nullptr) {
+int OpenCLAllocator::IncRefCount(void *cl_buf, int ref_count) {
+  if (cl_buf == nullptr) {
     return -1;
   }
   Lock();
-  auto iter = allocated_list_.find(buf);
+  auto iter = allocated_list_.find(cl_buf);
   if (iter != allocated_list_.end()) {
     auto membuf = iter->second;
     auto ref = std::atomic_fetch_add(&membuf->ref_count_, ref_count);
@@ -341,12 +341,12 @@ int OpenCLAllocator::IncRefCount(void *buf, int ref_count) {
   UnLock();
   return -1;
 }
-int OpenCLAllocator::DecRefCount(void *buf, int ref_count) {
-  if (buf == nullptr) {
+int OpenCLAllocator::DecRefCount(void *cl_buf, int ref_count) {
+  if (cl_buf == nullptr) {
     return -1;
   }
   Lock();
-  auto iter = allocated_list_.find(buf);
+  auto iter = allocated_list_.find(cl_buf);
   if (iter != allocated_list_.end()) {
     auto mem_buf = iter->second;
     auto ref = std::atomic_fetch_sub(&mem_buf->ref_count_, ref_count);
