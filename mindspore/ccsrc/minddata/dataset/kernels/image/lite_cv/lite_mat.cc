@@ -554,9 +554,9 @@ inline void DivideImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst, i
     uint16x8_t dst_l_16x8 = vcombine_u16(dst_ll_16x4, dst_lh_16x4);
     uint16x8_t dst_h_16x8 = vcombine_u16(dst_hl_16x4, dst_hh_16x4);
 
-    int8x8_t dst_l_8x8 = vqmovn_u16(dst_l_16x8);
-    int8x8_t dst_h_8x8 = vqmovn_u16(dst_h_16x8);
-    int8x16_t dst_8x16 = vcombine_u8(dst_l_8x8, dst_h_8x8);
+    uint8x8_t dst_l_8x8 = vqmovn_u16(dst_l_16x8);
+    uint8x8_t dst_h_8x8 = vqmovn_u16(dst_h_16x8);
+    uint8x16_t dst_8x16 = vcombine_u8(dst_l_8x8, dst_h_8x8);
 
     dst_8x16 = vandq_u8(dst_8x16, v_mask);
     vst1q_u8(dst + x, dst_8x16);
@@ -656,7 +656,7 @@ inline void MultiplyImpl(const uint8_t *src0, const uint8_t *src1, uint8_t *dst,
     uint8x16_t v_src01 = vld1q_u8(src0 + x + 16);
     uint8x16_t v_src10 = vld1q_u8(src1 + x);
     uint8x16_t v_src11 = vld1q_u8(src1 + x + 16);
-    uint8x16_t v_dst_l, v_dst_h;
+    uint16x8_t v_dst_l, v_dst_h;
 
     v_dst_l = vmull_u8(vget_low_u8(v_src00), vget_low_u8(v_src10));
     v_dst_h = vmull_u8(vget_high_u8(v_src00), vget_high_u8(v_src10));

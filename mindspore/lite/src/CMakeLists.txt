@@ -359,6 +359,7 @@ set(TRAIN_SRC
         ${TRAIN_SRC_WITH_MD}
         ${EXPRESSION_SRC}
         ${CMAKE_CURRENT_SOURCE_DIR}/common/quant_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/metrics/accuracy.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model_build.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/model_build_impl.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/cxx_api/train/converters.cc
