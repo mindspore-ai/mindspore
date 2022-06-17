@@ -4609,7 +4609,8 @@ class ScatterSub(Primitive):
     Inputs:
         - **input_x** (Parameter) - The target tensor, with data type of Parameter.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
-        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32.
+        - **indices** (Tensor) - The index to do min operation whose data type must be mindspore.int32 or
+          mindspore.int64.
         - **updates** (Tensor) - The tensor doing the min operation with `input_x`,
           the data type is same as `input_x`, the shape is `indices_shape + x_shape[1:]`.
 
