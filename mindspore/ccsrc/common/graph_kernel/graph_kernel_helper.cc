@@ -422,4 +422,27 @@ void SetNodeAttrSafely(const std::string &key, const ValuePtr &value, const AnfN
   // Set attr secondly.
   common::AnfAlgo::SetNodeAttr(key, value, node);
 }
+
+bool IsBufferStitchNode(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto input = cnode->input(kAnfPrimitiveIndex);
+  if (!IsValueNode<FuncGraph>(input)) {
+    return common::AnfAlgo::HasNodeAttr(kAttrStitch, cnode);
+  }
+
+  auto func_graph = GetValueNode<FuncGraphPtr>(input);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  AnfNodePtrList sub_nodes;
+  kernel::GetValidKernelNodes(func_graph, &sub_nodes);
+  for (auto sub_node : sub_nodes) {
+    auto sub_cnode = sub_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(sub_cnode);
+    if (common::AnfAlgo::HasNodeAttr(kAttrStitch, sub_cnode)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 }  // namespace mindspore::graphkernel

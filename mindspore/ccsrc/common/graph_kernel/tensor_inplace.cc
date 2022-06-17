@@ -16,6 +16,7 @@
 
 #include "common/graph_kernel/tensor_inplace.h"
 
+#include <algorithm>
 #include <utility>
 #include <vector>
 #include "common/graph_kernel/model/op_node.h"
@@ -42,6 +43,96 @@ mindspore::HashSet<AnfNodePtr> GetPredecessors(const AnfNodePtr &cur_node) {
   return predecessors;
 }
 
+// check if all nodes are elemwise/broadcast/virtual nodes
+bool ElemwiseBroadcastChecker(const AnfNodePtr &node) {
+  if (auto cnode = node->cast<CNodePtr>()) {
+    // virtual node
+    if (IsPrimitiveCNode(node, prim::kPrimReturn) || IsPrimitiveCNode(node, prim::kPrimMakeTuple) ||
+        IsPrimitiveCNode(node, prim::kPrimReshape)) {
+      return true;
+    }
+    // OneHot is treated as a kind of broadcast node
+    if (IsPrimitiveCNode(node, prim::kPrimOneHot)) {
+      return true;
+    }
+    // elemwise/broadcast
+    auto node_prim = inner::OpRegistry::Instance().NewOp(GetValueNode<PrimitivePtr>(cnode->input(0))->name());
+    return node_prim != nullptr && (node_prim->compute_type() == inner::PrimOp::ComputeType::ELEMWISE ||
+                                    node_prim->compute_type() == inner::PrimOp::ComputeType::BROADCAST);
+  }
+  return true;
+}
+
+// check if it's a reduce graph kernel without multi-filters;
+// case 1: a reduce kernel without multi-filters
+// **********
+// * A      *
+// * |      *
+// * B      *
+// * |      *
+// * Reduce *
+// * |(out1)*
+// **********
+// case 2: a reduce kernel with multi-filters
+// ******************
+// * A              *
+// * |   \          *
+// * |     B        *
+// * Reduce  \(out2)*
+// * |(out1)        *
+// ******************
+bool ReduceChecker(const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph) {
+  auto reduce_node = std::find_if(nodes.begin(), nodes.end(), [](const AnfNodePtr &node) {
+    if (auto cnode = node->cast<CNodePtr>()) {
+      auto node_prim = inner::OpRegistry::Instance().NewOp(GetValueNode<PrimitivePtr>(cnode->input(0))->name());
+      return node_prim != nullptr && node_prim->compute_type() == inner::PrimOp::ComputeType::REDUCE;
+    }
+    return false;
+  });
+  if (reduce_node != nodes.end()) {
+    auto mng = func_graph->manager();
+    if (mng == nullptr) {
+      mng = Manage(func_graph, false);
+      func_graph->set_manager(mng);
+    }
+    auto &users = mng->node_users()[*reduce_node];
+    auto predecessors = GetPredecessors(*reduce_node);
+    // atomic add case
+    auto assign_node = std::find_if(users.begin(), users.end(), [](const std::pair<AnfNodePtr, int> &p) {
+      return IsPrimitiveCNode(p.first, prim::kPrimAssign);
+    });
+    if (assign_node != users.end()) {
+      (void)predecessors.insert(assign_node->first);
+    }
+    for (const auto &n : predecessors) {
+      auto &n_users = mng->node_users()[n];
+      for (const auto &n_user : n_users) {
+        if (!IsPrimitiveCNode(n_user.first, prim::kPrimReturn) &&
+            !IsPrimitiveCNode(n_user.first, prim::kPrimMakeTuple) && predecessors.count(n_user.first) == 0) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
+// supported kernel: 1. elemwise/broadcast kernel 2.reduce kernel without multi-filters
+bool CheckComputeType(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph->get_return());
+  auto all_nodes = TopoSort(func_graph->get_return());
+  // graph kernel of type elemwise or broadcast can pass check
+  if (std::all_of(all_nodes.begin(), all_nodes.end(), ElemwiseBroadcastChecker)) {
+    return true;
+  }
+  // graph kernel of reduce without multi-filters can pass check
+  if (ReduceChecker(all_nodes, func_graph)) {
+    return true;
+  }
+  return false;
+}
+
 // when A and B's relation is case1 or case2, return true; else return false
 // case 1: B is A's only user
 // ********
@@ -52,19 +143,19 @@ mindspore::HashSet<AnfNodePtr> GetPredecessors(const AnfNodePtr &cur_node) {
 // * B    *
 // ********
 // case 2: B is one of A's users and A's other users depend on B
-// *************
-// * A         *
-// * |  \  \   *
-// * |   C ..D *
-// * |   /  /  *
-// * |  E  /   *
-// * | / /     *
-// * B         *
-// *************
+// ***********
+// * A       *
+// * | \\    *
+// * |  C..D *
+// * |  / /  *
+// * | E /   *
+// * |//     *
+// * B       *
+// ***********
 bool NoUsersAfterCurNode(const AnfNodePtr &input, const AnfNodePtr &cur_node, const FuncGraphManagerPtr &mng) {
   if (!input->isa<CNode>()) return false;
   mindspore::HashSet<AnfNodePtr> predecessors = GetPredecessors(cur_node);
-  auto users = mng->node_users()[input];
+  auto &users = mng->node_users()[input];
   return std::all_of(users.begin(), users.end(),
                      [&predecessors](const std::pair<AnfNodePtr, int> &p) { return predecessors.count(p.first) > 0; });
 }
@@ -115,7 +206,7 @@ mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInput
     if (!params[index]->isa<Parameter>()) {
       continue;
     }
-    auto users = mng_sub->node_users()[params[index]];
+    auto &users = mng_sub->node_users()[params[index]];
     for (size_t j = 0; j < predecessors.size(); j++) {
       auto reliable = std::all_of(users.begin(), users.end(), [&predecessors, &j](const std::pair<AnfNodePtr, int> &p) {
         return predecessors[j].count(p.first) > 0;
@@ -151,9 +242,13 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
   for (auto &node : todos) {
-    if (common::AnfAlgo::IsGraphKernel(node)) {
+    if (common::AnfAlgo::IsGraphKernel(node) && !IsBufferStitchNode(node)) {
       auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
       MS_EXCEPTION_IF_NULL(sub_func_graph);
+      // currently support 1. elemwise/broadcast kernel 2.reduce kernel without multi-filters
+      if (!CheckComputeType(sub_func_graph)) {
+        continue;
+      }
       auto in_out_pairs = FindInputOutputPairs(sub_func_graph);
       auto cnode = node->cast<CNodePtr>();
       for (size_t i = 1; i < cnode->inputs().size(); i++) {

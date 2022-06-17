@@ -273,31 +273,8 @@ bool WhiteOpsFilter(const AnfNodePtr &node) {
   return common::AnfAlgo::IsGraphKernel(node) || IsOneOf(node, whiteable_ops);
 }
 
-bool Unfavorable(const AnfNodePtr &node) {
-  // Parallel cannot work with stitching for now.
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input = cnode->input(kAnfPrimitiveIndex);
-  if (!IsValueNode<FuncGraph>(input)) {
-    return common::AnfAlgo::HasNodeAttr(kAttrStitch, cnode);
-  }
-
-  auto func_graph = GetValueNode<FuncGraphPtr>(input);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtrList sub_nodes;
-  kernel::GetValidKernelNodes(func_graph, &sub_nodes);
-  for (auto sub_node : sub_nodes) {
-    auto sub_cnode = sub_node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(sub_cnode);
-    if (common::AnfAlgo::HasNodeAttr(kAttrStitch, sub_cnode)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool Parallelizable(const AnfNodePtr &node) { return WhiteOpsFilter(node) && !Unfavorable(node); }
+// Parallel cannot work with stitching for now.
+bool Parallelizable(const AnfNodePtr &node) { return WhiteOpsFilter(node) && !IsBufferStitchNode(node); }
 
 std::vector<AnfNodePtrList> SearchFromNodes(const AnfNodePtrList &nodes,
                                             const std::function<bool(const AnfNodePtr &)> &filter_func,
