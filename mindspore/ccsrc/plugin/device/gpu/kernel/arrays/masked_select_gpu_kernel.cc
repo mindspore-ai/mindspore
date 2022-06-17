@@ -149,10 +149,10 @@ int MaskedSelectGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   input_size_list_.push_back(mask_size_ * mask_type_size_);
   workspace_size_list_.push_back(broadcast_size_ * sizeof(size_t));  // save prefix sum of mask
   if (input_broadcast_) {
-    workspace_size_list_.push_back(broadcast_size_ * sizeof(input_type_size_));  // save broadcast result of input
+    workspace_size_list_.push_back(broadcast_size_ * input_type_size_);  // save broadcast result of input
   }
   if (mask_broadcast_) {
-    workspace_size_list_.push_back(broadcast_size_ * sizeof(mask_type_size_));  // save broadcast result of mask
+    workspace_size_list_.push_back(broadcast_size_ * mask_type_size_);  // save broadcast result of mask
   }
   output_size_list_.push_back(broadcast_size_ * input_type_size_);
   return KRET_OK;
