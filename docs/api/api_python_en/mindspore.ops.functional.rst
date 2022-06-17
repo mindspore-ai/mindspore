@@ -331,6 +331,7 @@ Array Operation
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.space_to_batch_nd
+    mindspore.ops.split
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_div

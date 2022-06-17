@@ -3144,6 +3144,7 @@ def split(input_x, axis=0, output_num=1):
         TypeError: If `axis` or `output_num` is not an int.
         ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
             or if the `output_num` is less than or equal to 0.
+        ValueError: If `input_x.shape(axis)` is not divisible by `output_num`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
