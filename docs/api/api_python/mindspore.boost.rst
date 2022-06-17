@@ -148,19 +148,19 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     - **ValueError** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
 
     .. py:method:: network_auto_process_eval(network)
-    
+
         使用Boost算法推理。
-    
+
         **参数：**
-    
+
         **network** (Cell) - 推理网络。
 
     .. py:method:: network_auto_process_train(network, optimizer)
-    
+
         使用Boost算法训练。
-    
+
         **参数：**
-    
+
         - **network** (Cell) - 训练网络。
         - **optimizer** (Union[Cell]) - 用于更新权重的优化器。
 
@@ -253,36 +253,36 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     - **TypeError** – 如果 `sens` 不是一个数字。
 
     .. py:method:: adasum_process(loss, grads)
-    
+
         使用Adasum算法训练。
 
         **参数：**
 
         - **loss** (Tensor) – 网络训练的loss值。
         - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
-    
+
         **返回：**
-    
+
         Tensor，网络训练过程中得到的loss值。
-    
+
     .. py:method:: check_adasum_enable()
-    
+
         Adasum算法仅在多卡或者多机场景生效，并且要求卡数符合2的n次方，该函数用来判断adasum算法能否生效。
-    
+
         **返回：**
-    
+
         enable_adasum (bool)，Adasum算法是否生效。
-    
+
     .. py:method:: check_dim_reduce_enable()
-    
+
         获取当前是否使用降维二阶训练算法训练。
-    
+
         **返回：**
-    
+
         enable_dim_reduce (bool)，降维二阶训练算法是否生效。
 
     .. py:method:: gradient_accumulation_process(loss, grads, sens, *inputs)
-    
+
         使用梯度累积算法训练。
 
         **参数：**
@@ -291,21 +291,21 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
         - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
         - **sens** (Tensor) – 作为反向传播输入要填充的缩放数。
         - **inputs** (Tuple(Tensor)) – 网络训练的输入。
-    
+
         **返回：**
-    
+
         Tensor，网络训练过程中得到的loss值。
 
     .. py:method:: gradient_freeze_process(*inputs)
-    
+
         使用梯度冻结算法训练。
 
         **参数：**
 
         - **inputs** (Tuple(Tensor)) – 网络训练的输入。
-    
+
         **返回：**
-    
+
         Tensor，网络训练过程中得到的loss值。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepWithLossScaleCell(network, optimizer, scale_sense)
@@ -504,6 +504,63 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
     **输出：**
 
     - **loss** (Tensor) - 网络loss，标量Tensor。
+
+..  py:class:: mindspore.boost.GroupLossScaleManager(init_loss_scale, loss_scale_groups)
+
+    增强型混合精度算法支持不同损失尺度的多层应用和损失尺度的动态更新。
+
+    **参数：**
+
+    - **init_loss_scale** (Number) - 初始化loss scale。
+    - **loss_scale_groups** (List) - 从参数列表里分离出来的loss scale组。
+
+    **输入：**
+
+    - **x** (Tensor) - 最后一个operator的输出。
+    - **layer1** (int) - 当前网络层的值。
+    - **layer2** (int) - 最后一个网络层的值。
+
+    **输出：**
+
+    - **x** (Tensor) - _DynamicLossScale operator的输出。
+
+    .. py:method:: get_loss_scale()
+
+        获取loss scale的值。
+
+        **返回：**
+
+        bool，`loss_scale` 的值。
+
+    .. py:method:: get_update_cell()
+
+        返回 :class:`mindspore.boost.GroupLossScaleManager` 实例。
+
+        **返回：**
+
+        :class:`mindspore.boost.GroupLossScaleManager` 实例。
+
+    .. py:method:: get_loss_scale_status(loss_scale_number, init_loss_scale)
+
+        生成动态loss scale元组，并设置溢出状态列表。
+
+        **参数：**
+
+        - **loss_scale_number** (int) - loss scale的数量。
+        - **init_loss_scale** (float) - 已初始化的loss scale。
+
+    .. py:method:: update_loss_scale_status(layer, update_ratio)
+
+        更新动态loss scale。
+
+        **参数：**
+
+        - **layer** (int) - 当前层。
+        - **update_ratio** (float) - 更新loss scale的当前比例。
+
+        **输出：**
+
+        float，新loss scale值。
 
 .. automodule:: mindspore.boost
     :members:
