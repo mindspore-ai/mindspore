@@ -14,7 +14,8 @@
     - **MRMInitSegmentError** - 初始化ShardSegment失败。
 
 
-    .. :py:attr: candidate_fields
+    .. py:method:: candidate_fields
+        :property:
 
         返回用于数据分组的候选category字段。
 
@@ -23,7 +24,8 @@
         list[str]，候选category 字段。
 
 
-    .. :py:attr: category_field
+    .. py:method:: category_field
+        :property:
 
         返回用于数据分组的category字段。
 
