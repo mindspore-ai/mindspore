@@ -19,6 +19,7 @@ from functools import wraps
 import numpy as np
 
 from mindspore._c_dataengine import TensorOp, TensorOperation
+from mindspore._c_expression import typing
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
@@ -1124,6 +1125,34 @@ def check_auto_augment(method):
         type_check(policy, (AutoAugmentPolicy,), "policy")
         type_check(interpolation, (Inter,), "interpolation")
         check_fill_value(fill_value)
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_to_tensor(method):
+    """Wrapper method to check the parameters of ToTensor."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [output_type], _ = parse_user_args(method, *args, **kwargs)
+
+        # Check if output_type is mindspore.dtype
+        if isinstance(output_type, (typing.Type,)):
+            return method(self, *args, **kwargs)
+
+        # Special case: Check if output_type is None (which is invalid)
+        if output_type is None:
+            # Use type_check to raise error with descriptive error message
+            type_check(output_type, (typing.Type, np.dtype,), "output_type")
+
+        try:
+            # Check if output_type can be converted to numpy type
+            _ = np.dtype(output_type)
+        except (TypeError, ValueError):
+            # Use type_check to raise error with descriptive error message
+            type_check(output_type, (typing.Type, np.dtype,), "output_type")
+
         return method(self, *args, **kwargs)
 
     return new_method

@@ -94,7 +94,7 @@ def test_to_type_data_type():
     transforms2 = [
         vision.Decode(True),
         vision.ToTensor(),
-        # Note: Convert the datatype from float32 to np.int16.  Use explicit argument name.
+        # Note: Convert the datatype from float32 to np.int32.  Use explicit argument name.
         vision.ToType(data_type=np.int32)
 
     ]
@@ -261,7 +261,7 @@ def test_to_type_05():
         ]
         transform = mindspore.dataset.transforms.Compose(transforms)
         _ = data.map(operations=transform, input_columns=["image"])
-    assert "data type" in str(error_info.value)
+    assert "Argument data_type with value invalid is not of type" in str(error_info.value)
 
 
 def test_to_type_invalid_arg():
@@ -282,7 +282,35 @@ def test_to_type_invalid_arg():
         ]
         transform = mindspore.dataset.transforms.Compose(transforms)
         _ = data.map(operations=transform, input_columns=["image"])
-    assert "unexpected keyword argument" in str(error_info.value)
+    assert "missing a required argument: 'data_type'" in str(error_info.value)
+
+
+def test_to_type_errors():
+    """
+    Feature: ToType op
+    Description: Test ToType with invalid input
+    Expectation: Correct error is thrown as expected
+    """
+    with pytest.raises(TypeError) as error_info:
+        vision.ToType("JUNK")
+    assert "Argument data_type with value JUNK is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.ToType([np.float32])
+    assert "Argument data_type with value [<class 'numpy.float32'>] is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.ToType((np.float32,))
+    assert "Argument data_type with value (<class 'numpy.float32'>,) is not of type" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.ToType((np.int16, np.int8))
+    assert "Argument data_type with value (<class 'numpy.int16'>, <class 'numpy.int8'>) is not of type" \
+           in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.ToType(None)
+    assert "Argument data_type with value None is not of type" in str(error_info.value)
 
 
 def test_np_to_de():
@@ -340,4 +368,5 @@ if __name__ == "__main__":
     test_to_type_04()
     test_to_type_05()
     test_to_type_invalid_arg()
+    test_to_type_errors()
     test_np_to_de()
