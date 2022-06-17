@@ -15,19 +15,13 @@
  */
 
 #include <unordered_map>
+#include <unordered_set>
 #include "src/extendrt/delegate/tensorrt/op/elementwise_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/op/activation_tensorrt.h"
 
 namespace mindspore::lite {
 namespace {
-std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> BOOL_PRIM2NV_ELEM_OP = {
-#if TRT_VERSION_GE(7, 2)
-  {schema::PrimitiveType_LogicalOr, nvinfer1::ElementWiseOperation::kOR},
-  {schema::PrimitiveType_LogicalAnd, nvinfer1::ElementWiseOperation::kAND}
-#endif
-};
-
 std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> NOT_BOOL_PRIM2NV_ELEM_OP = {
 #if TRT_VERSION_GE(7, 2)
   {schema::PrimitiveType_Less, nvinfer1::ElementWiseOperation::kLESS},
@@ -42,7 +36,11 @@ std::unordered_map<schema::PrimitiveType, nvinfer1::ElementWiseOperation> NOT_BO
   {schema::PrimitiveType_MulFusion, nvinfer1::ElementWiseOperation::kPROD},
   {schema::PrimitiveType_Minimum, nvinfer1::ElementWiseOperation::kMIN},
   {schema::PrimitiveType_Maximum, nvinfer1::ElementWiseOperation::kMAX},
-  {schema::PrimitiveType_BiasAdd, nvinfer1::ElementWiseOperation::kSUM}};
+  {schema::PrimitiveType_BiasAdd, nvinfer1::ElementWiseOperation::kSUM},
+#if TRT_VERSION_GE(7, 2)
+  {schema::PrimitiveType_Equal, nvinfer1::ElementWiseOperation::kEQUAL},
+#endif
+};
 }  // namespace
 
 int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
@@ -68,16 +66,6 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     return RET_ERROR;
   }
 
-  bool is_bool_arith = BOOL_PRIM2NV_ELEM_OP.find(type_) != BOOL_PRIM2NV_ELEM_OP.end();
-  if (is_bool_arith) {
-    if (!std::all_of(in_tensors.begin(), in_tensors.end(), [](const mindspore::MSTensor &tensor) {
-          return tensor.DataType() == DataType::kNumberTypeBool;
-        })) {
-      MS_LOG(ERROR) << "invalid input type for : " << op_name_;
-      return RET_ERROR;
-    }
-    element_wise_op_ = BOOL_PRIM2NV_ELEM_OP[type_];
-  }
   bool is_not_bool_arith = NOT_BOOL_PRIM2NV_ELEM_OP.find(type_) != NOT_BOOL_PRIM2NV_ELEM_OP.end();
   if (is_not_bool_arith) {
     if (std::any_of(in_tensors.begin(), in_tensors.end(),
@@ -87,7 +75,7 @@ int ElementWiseTensorRT::IsSupport(const schema::Primitive *primitive,
     }
     element_wise_op_ = NOT_BOOL_PRIM2NV_ELEM_OP[type_];
   }
-  if (!is_bool_arith && !is_not_bool_arith) {
+  if (!is_not_bool_arith) {
     // PrimitiveType_Eltwise
     auto eltwise_op = op_primitive_->value_as_Eltwise();
     if (eltwise_op == nullptr) {
@@ -155,6 +143,20 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
       MS_LOG(WARNING) << "deal with scale and shift for pow op";
     }
   }
+#if TRT_VERSION_GE(7, 2)
+  std::unordered_set<schema::PrimitiveType> bool_producer_ops = {
+    schema::PrimitiveType_Equal, schema::PrimitiveType_Greater, schema::PrimitiveType_Less};
+  if (bool_producer_ops.find(type_) != bool_producer_ops.end()) {
+    auto cast_layer = ctx->network()->addIdentity(*op_out_tensor);
+    if (cast_layer == nullptr) {
+      MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
+      return RET_ERROR;
+    }
+    cast_layer->setOutputType(0, nvinfer1::DataType::kINT32);
+    op_out_tensor = cast_layer->getOutput(0);
+    MS_LOG(INFO) << "bool result cast to int32" << op_name_;
+  }
+#endif
   op_out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_});
   MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
@@ -163,6 +165,9 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
 int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input) {
   int input_x_index = SameTensor(tensorrt_in_tensors_[0].trt_tensor_, &in_tensors_[0]) ? 0 : 1;
+  if (in_tensors_[0].Shape() == in_tensors_[1].Shape() && in_tensors_[0].IsConst()) {
+    input_x_index = 1;
+  }
 
   if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
     int ret = AddConstTensor(ctx);
@@ -300,9 +305,8 @@ REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Minimum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Maximum, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_BiasAdd, ElementWiseTensorRT)
 #if TRT_VERSION_GE(7, 2)
+REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Less, ElementWiseTensorRT)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Greater, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalOr, ElementWiseTensorRT)
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_LogicalAnd, ElementWiseTensorRT)
 #endif
 }  // namespace mindspore::lite

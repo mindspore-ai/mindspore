@@ -19,6 +19,7 @@
 #include <mutex>
 #include "src/common/log_adapter.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "src/extendrt/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
 void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size) {
@@ -87,6 +88,18 @@ int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, c
     MS_LOG(ERROR) << "host tensor is null.";
     return RET_ERROR;
   }
+#if TRT_VERSION_GE(7, 2)
+  if (host_tensor.DataType() == DataType::kNumberTypeBool && !is_host2device) {
+    CudaTensorParam &current_cuda_tensor = cuda_tensor_map_.find(device_tensor_name)->second;
+    auto device_ptr = current_cuda_tensor.data;
+    if (device_ptr == nullptr) {
+      MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
+      return RET_ERROR;
+    }
+    Cast<int32_t, bool>(host_tensor.DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
+                        stream_);
+  }
+#endif
   return SyncMemInHostAndDevice(host_tensor.MutableData(), device_tensor_name, host_tensor.DataSize(), is_host2device,
                                 sync);
 }

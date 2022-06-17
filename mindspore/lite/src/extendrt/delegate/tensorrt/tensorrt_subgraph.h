@@ -57,7 +57,8 @@ class TensorRTSubGraph : public kernel::Kernel {
       schema::PrimitiveType_Cast,         schema::PrimitiveType_ExpandDims,      schema::PrimitiveType_Resize,
       schema::PrimitiveType_Maximum,      schema::PrimitiveType_BiasAdd,         schema::PrimitiveType_LSTM,
       schema::PrimitiveType_RealDiv,      schema::PrimitiveType_LayerNormFusion, schema::PrimitiveType_Greater,
-      schema::PrimitiveType_Less,         schema::PrimitiveType_TopKFusion,      schema::PrimitiveType_TileFusion};
+      schema::PrimitiveType_Less,         schema::PrimitiveType_TopKFusion,      schema::PrimitiveType_TileFusion,
+      schema::PrimitiveType_Equal};
     if (!support_resize) {
       input_batchsize_index_ = -1;
       input_hw_index_ = -1;
@@ -107,6 +108,7 @@ class TensorRTSubGraph : public kernel::Kernel {
   int HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MSTensor &in_tensor);
 
   nvinfer1::Dims ParseInputDimsProfile(const mindspore::MSTensor &in_tensor);
+  int ParseInputsProfile();
 
   bool ValidInputResizeDims(const nvinfer1::Dims &construct_dims, const std::vector<int64_t> &resize_input_shape);
 

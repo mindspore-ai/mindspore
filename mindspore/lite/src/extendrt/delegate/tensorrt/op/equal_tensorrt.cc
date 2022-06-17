@@ -90,5 +90,7 @@ nvinfer1::IPluginV2DynamicExt *EqualPlugin::clone() const noexcept {
   plugin->setPluginNamespace(name_space_.c_str());
   return plugin;
 }
+#if TRT_VERSION_LS(7, 2)
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Equal, EqualTensorRT)
+#endif
 }  // namespace mindspore::lite

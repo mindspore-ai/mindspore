@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include <cuda_runtime_api.h>
 #include <map>
 #include <unordered_set>
 #include <numeric>
 #include <functional>
+#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "src/extendrt/delegate/tensorrt/op/cast_plugin.h"
 #include "src/extendrt/delegate/tensorrt/distribution/distribution_collective.h"
 
 namespace mindspore::lite {
@@ -392,6 +393,29 @@ nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor) {
   return weights;
 }
 
+nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *trt_tensor, nvinfer1::DataType data_type,
+                                 const std::string &name) {
+#if TRT_VERSION_GE(7, 2)
+  data_type == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : data_type;
+  auto cast_layer = ctx->network()->addIdentity(*trt_tensor);
+#else
+  auto plugin = std::make_shared<CastPlugin>(name, trt_tensor->getType(), data_type);
+  nvinfer1::ITensor *inputTensors[] = {trt_tensor};
+  nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
+#endif
+  if (cast_layer == nullptr) {
+    MS_LOG(ERROR) << "create cast layer failed for: " << name;
+    return nullptr;
+  }
+#if TRT_VERSION_GE(7, 2)
+  cast_layer->setOutputType(0, data_type);
+#endif
+  cast_layer->setName(name.c_str());
+  nvinfer1::ITensor *cast_out = cast_layer->getOutput(0);
+  cast_out->setName((name + "_output").c_str());
+  return cast_out;
+}
+
 int SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_) {
   return SetCudaDevice(static_cast<int>(device_info_->GetDeviceID()));
 }
@@ -632,21 +656,6 @@ std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &
   }
   out_dims.nbDims = in_dims.nbDims + 1;
   return std::experimental::optional<nvinfer1::Dims>(out_dims);
-}
-
-void SerializeValue(void **buffer, const void *value, size_t cpy_size) {
-  std::memcpy(*buffer, value, cpy_size);
-  *buffer = static_cast<char *>(*buffer) + cpy_size;
-}
-
-void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size) {
-  if (cpy_size > *buffer_size) {
-    MS_LOG(ERROR) << "invalid desirialize size, buffer size: " << *buffer_size << ", value size: " << cpy_size;
-    return;
-  }
-  std::memcpy(value, *buffer, cpy_size);
-  *buffer = static_cast<const char *>(*buffer) + cpy_size;
-  *buffer_size -= cpy_size;
 }
 
 int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst) {

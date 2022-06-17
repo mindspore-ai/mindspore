@@ -19,7 +19,6 @@
 #include <numeric>
 #include <memory>
 #include <functional>
-#include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cuda_helper.h"
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/cuda_impl/normalize.cuh"

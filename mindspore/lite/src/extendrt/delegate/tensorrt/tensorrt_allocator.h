@@ -40,6 +40,8 @@ class TensorRTAllocator {
 
   void *GetDevicePtr(const std::string &tensor_name);
 
+  void SetCudaStream(cudaStream_t stream) { stream_ = stream; }
+
   std::map<std::string, CudaTensorParam> GetAllDevicePtr();
 
   int SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
@@ -56,6 +58,7 @@ class TensorRTAllocator {
 
  private:
   std::map<std::string, CudaTensorParam> cuda_tensor_map_;
+  cudaStream_t stream_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_TENSORRT_ALLOCATOR_H_

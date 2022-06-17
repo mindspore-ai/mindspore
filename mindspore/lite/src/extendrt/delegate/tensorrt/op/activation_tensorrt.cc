@@ -72,16 +72,8 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
   float alpha = activation_op->alpha();
   nvinfer1::ITensor *activation_input = tensorrt_in_tensors_[0].trt_tensor_;
   if (tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
-    auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_in", nvinfer1::DataType::kINT32,
-                                               nvinfer1::DataType::kFLOAT, device_id_);
-    nvinfer1::ITensor *inputTensors[] = {activation_input};
-    nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
-    if (cast_layer == nullptr) {
-      MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
-      return RET_ERROR;
-    }
-    cast_layer->setName((op_name_ + "_cast_in").c_str());
-    activation_input = cast_layer->getOutput(0);
+    activation_input =
+      TRTTensorCast(ctx, tensorrt_in_tensors_[0].trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
   }
 
   auto activation_layer =
@@ -98,16 +90,8 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // cast to origin type
   nvinfer1::ITensor *out_tensor = activation_layer->getOutput(0);
   if (out_tensor->getType() != ConvertDataType(out_tensors_[0].DataType())) {
-    auto plugin = std::make_shared<CastPlugin>(op_name_ + "_cast_out", out_tensor->getType(),
-                                               ConvertDataType(out_tensors_[0].DataType()), device_id_);
-    nvinfer1::ITensor *inputTensors[] = {activation_layer->getOutput(0)};
-    nvinfer1::IPluginV2Layer *cast_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
-    if (cast_layer == nullptr) {
-      MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
-      return RET_ERROR;
-    }
-    cast_layer->setName((op_name_ + "_cast_out").c_str());
-    out_tensor = cast_layer->getOutput(0);
+    out_tensor = TRTTensorCast(ctx, activation_layer->getOutput(0), ConvertDataType(out_tensors_[0].DataType()),
+                               op_name_ + "_cast_out");
   }
   out_tensor->setName((op_name_ + "_output").c_str());
   this->AddInnerOutTensors(

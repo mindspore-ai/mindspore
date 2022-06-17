@@ -17,10 +17,14 @@
 #define MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_TENSORRT_PLUGIN_H_
 #include <string>
 #include <vector>
+#include "src/common/log_adapter.h"
+#include "include/errorcode.h"
 #include "NvInferRuntimeCommon.h"
-#include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
+#include <NvInfer.h>
 
 namespace mindspore::lite {
+void SerializeValue(void **buffer, const void *value, size_t cpy_size);
+void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size);
 class TensorRTPlugin : public nvinfer1::IPluginV2DynamicExt {
  public:
   TensorRTPlugin(const std::string &layer_name, const std::string &plugin_name, uint32_t device_id = 0)
