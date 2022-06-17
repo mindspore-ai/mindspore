@@ -6055,3 +6055,61 @@ class Cholesky(Primitive):
         """Initialize Cholesky"""
         self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
         validator.check_value_type('upper', upper, [bool], self.name)
+
+
+class CholeskySolve(Primitive):
+    """
+    Given its Cholesky factor `u`, solves a linear system of equations with a positive definite matrix.
+
+    If `upper` is `True`, `u` is upper triangular and `c` is returned such that:
+
+    .. math::
+        c = (u^{T}u)^{{-1}}b
+
+    If `upper` is `False`, `u` is lower triangular and `c` is returned such that:
+
+    .. math::
+        c = (uu^{T})^{{-1}}b
+
+    Args:
+        upper (bool): Flag which indicates whether to consider the Cholesky factor
+            as a lower or upper triangular matrix. Default: False.
+
+    Inputs:
+        - **x1** (Tensor) - Tensor of shape :math:`(*, N, M)`, indicating 2D or 3D matrices,
+          with float32 or float64 data type.
+        - **x2** (Tensor) - Tensor of shape :math:`(*, N, N)`, indicating 2D or 3D square matrices composed of
+          upper or lower triangular Cholesky factor, with float32 or float64 data type.
+
+    Outputs:
+        Tensor, has the same shape and data type as `x1`.
+
+    Raises:
+        TypeError: If `upper` is not a bool.
+        TypeError: If dtype of `x1` and `x2` is not one of: float64, float32.
+        TypeError: If `x1` is not a Tensor.
+        TypeError: If `x2` is not a Tensor.
+        ValueError: If `x1` and `x2` have different batch size.
+        ValueError: If `x1` and `x2` have different row numbers.
+        ValueError: If `x1` is not 2D or 3D matrices.
+        ValueError: If `x2` is not 2D or 3D square matrices.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]), mindspore.float32)
+        >>> x2 = Tensor(np.array([[2, 0, 0], [4, 1, 0], [-1, 1, 2]]), mindspore.float32)
+        >>> net = ops.CholeskySolve()
+        >>> y = net(x1, x2)
+        >>> print(y)
+        [[ 5.8125 -2.625   0.625 ]
+         [-2.625   1.25   -0.25  ]
+         [ 0.625  -0.25    0.25  ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, upper=False):
+        """Initialize CholeskySolve"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+        validator.check_value_type('upper', upper, [bool], self.name)

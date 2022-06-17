@@ -32,6 +32,7 @@ from ..operations import math_ops as math
 from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
 from ..operations.math_ops import ReduceStd
+from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
 
 transpose = P.Transpose()
@@ -680,5 +681,44 @@ def get_bprop_add_v2(self):
 
     def bprop(x, y, out, dout):
         return binop_grad_common(x, y, dout, dout)
+
+    return bprop
+
+
+@bprop_getters.register(CholeskySolve)
+def get_bprop_cholesky_solve(self):
+    """Grad definition for 'CholeskySolve' operation"""
+    batchmatmul_op = P.BatchMatMul()
+    matmul_op = P.MatMul()
+    neg_op = P.Neg()
+    shape_op = P.Shape()
+    upper = self.upper
+    cholesky_solve = CholeskySolve(upper=self.upper)
+    def bprop(x1, x2, out, dout):
+        flag = 0
+        if dout.dtype == mstype.float64:
+            flag = 1
+            x2 = F.cast(x2, mstype.float32)
+            out = F.cast(out, mstype.float32)
+            dout = F.cast(dout, mstype.float32)
+        dx1 = cholesky_solve(dout, x2)
+        if len(shape_op(x2)) == 2:
+            common_term = matmul_op(dx1, transpose(out, (1, 0)))
+            common_term = common_term + transpose(common_term, (1, 0))
+            if upper is True:
+                dx2 = neg_op(matmul_op(x2, common_term))
+            else:
+                dx2 = neg_op(matmul_op(common_term, x2))
+        else:
+            common_term = batchmatmul_op(dx1, transpose(out, (0, 2, 1)))
+            common_term = common_term + transpose(common_term, (0, 2, 1))
+            if upper is True:
+                dx2 = neg_op(batchmatmul_op(x2, common_term))
+            else:
+                dx2 = neg_op(batchmatmul_op(common_term, x2))
+        if flag == 1:
+            dx1 = F.cast(dx1, mstype.float64)
+            dx2 = F.cast(dx2, mstype.float64)
+        return dx1, dx2
 
     return bprop

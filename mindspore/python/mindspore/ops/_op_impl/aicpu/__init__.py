@@ -212,3 +212,4 @@ from .conj import _conj_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
 from .cholesky import _cholesky_aicpu
 from .sspaddmm import _sspaddmm_aicpu
+from .cholesky_solve import _cholesky_solve_aicpu
