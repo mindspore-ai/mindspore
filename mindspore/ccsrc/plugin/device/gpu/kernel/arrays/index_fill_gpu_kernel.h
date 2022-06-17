@@ -21,6 +21,7 @@
 #include <functional>
 #include <map>
 #include <utility>
+#include <memory>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/index_fill_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_class/cuda_class_common.h"
@@ -46,11 +47,10 @@ class IndexFillGpuKernelMod : public NativeGpuKernelMod {
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
  protected:
+  void UpdateSize(const std::vector<KernelTensorPtr> &, const std::vector<KernelTensorPtr> &);
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  void ResetResource() noexcept;
-
   template <typename DataType, typename IndexType>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<AddressPtr> &outputs, void *stream_ptr);
@@ -60,8 +60,8 @@ class IndexFillGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<AddressPtr> &, void *)>;
   static std::vector<std::pair<KernelAttr, IndexFillLaunchFunc>> func_list_;
   IndexFillLaunchFunc kernel_func_;
-  int64_t x_num_;
-  int64_t index_num_;
+  int64_t x_num_{0};
+  int64_t index_num_{0};
   std::vector<int64_t> x_shape_{};
 };
 }  // namespace kernel
