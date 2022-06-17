@@ -23,11 +23,11 @@ mindspore.nn.BiDense
 
     **形状：**
 
-    - **input1** - math:`(*, H_{in1})`，其中 :math:`H_{in1}=\text{in1_channels}`，
+    - **input1** - :math:`(*, H_{in1})`，其中 :math:`H_{in1}=\text{in1_channels}`，
       :math:`*` 为任意维度. input1除最后一维外的维度需与其他输入保持一致。
-    - **input2** - math:`(*, H_{in2})`，其中 :math:`H_{in2}=\text{in2_channels}`，
+    - **input2** - :math:`(*, H_{in2})`，其中 :math:`H_{in2}=\text{in2_channels}`，
       :math:`*` 为任意维度. input2除最后一维外的维度需与其他输入保持一致。
-    - **output** - math:`(*, H_{out})`，其中 :math:`H_{out}=\text{out_channels}`，
+    - **output** - :math:`(*, H_{out})`，其中 :math:`H_{out}=\text{out_channels}`，
       :math:`*` 为任意维度. output除最后一维外的维度需与所有输入保持一致。
 
     **数据类型：**
@@ -39,9 +39,9 @@ mindspore.nn.BiDense
     **权重：**
 
     - **weight** (Parameter) - 权重参数，shape为 :math:`(\text{out_channels}, \text{in1_channels}, \text{in2_channels})`。
-      当`weight_init`设为`None`时, 其初始化值服从 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`，其中 :math:`k = \frac{1}{\text{in1_channels}}`。
+      当 `weight_init` 设为 `None` 时，其初始化值服从 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`，其中 :math:`k = \frac{1}{\text{in1_channels}}`。
     - **bias** (Parameter) - 偏置参数，shape为 :math:`(\text{out_channels})`。
-      当`has_bias`设为`True`且`bias_init`设为`None`时，其初始化值服从 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`，其中 :math:`k = \frac{1}{\text{in1_channels}}`。
+      当 `has_bias` 设为 `True` 且 `bias_init` 设为 `None` 时，其初始化值服从 :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`，其中 :math:`k = \frac{1}{\text{in1_channels}}`。
 
     **异常：**
 
