@@ -378,7 +378,11 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool disable_convert = real_input_node->isa<Parameter>() || real_input_node->isa<ValueNode>();
-  if (disable_convert && context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK)) {
+  // In PyNative mode, the weight data will be copied to the device in the first step,
+  // and there will be no HostToDeviceCopy in the follow-up. If host format conversion is disabled,
+  // the TransData operator will be executed in each subsequent step, resulting in poor performance.
+  if (disable_convert && (context_ptr->get_param<bool>(MS_CTX_ENABLE_LOOP_SINK) ||
+                          context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode)) {
     disable_convert = trans::kFormatWithTransFunc.find(output_format[0]) == trans::kFormatWithTransFunc.end();
   }
   // if not find in host convert format map means the host has not registered the convert function of this format
