@@ -139,20 +139,6 @@ class FederatedLearningManager(Callback):
             raise ValueError(
                 "encrypt_mode must be 'NOT_ENCRYPT' or 'STABLE_PW_ENCRYPT', but got {}.".format(self._encrypt_type))
 
-        if self._is_adaptive_sync():
-            self._as_set_init_state(kwargs)
-            self._as_wrap_cell()
-
-    def _is_adaptive_sync(self):
-        """
-        Determine whether adaptive frequency synchronization is required.
-        """
-        return self._sync_type == "adaptive"
-
-    def _as_set_init_state(self, kwargs):
-        """
-        Setting the initial state for adaptive synchronization.
-        """
         self._as_prefix = "as_abs_grad."
 
         self._min_consistent_rate = kwargs.get("min_consistent_rate", 1.1)
@@ -169,17 +155,27 @@ class FederatedLearningManager(Callback):
         Validator.check_non_negative_int(self._unchanged_round)
 
         self._round_id = 0
-        self._last_param = {_.name: deepcopy(_.asnumpy()) for _ in self._model.trainable_params()
-                            if self._as_prefix not in _.name}
+        self._last_param = dict()
         self._model_size = 0
         self._grads_ema = dict()
         self._abs_grads_ema = dict()
-        for param in self._model.trainable_params():
-            if self._as_prefix not in param.name:
-                self._model_size += np.product(param.shape)
-                self._grads_ema[param.name] = np.zeros(param.shape)
-                self._abs_grads_ema[param.name] = np.zeros(param.shape)
-        self._model_size = float(self._model_size)
+
+        if self._is_adaptive_sync():
+            self._last_param = {_.name: deepcopy(_.asnumpy()) for _ in self._model.trainable_params()
+                                if self._as_prefix not in _.name}
+            for param in self._model.trainable_params():
+                if self._as_prefix not in param.name:
+                    self._model_size += np.product(param.shape)
+                    self._grads_ema[param.name] = np.zeros(param.shape)
+                    self._abs_grads_ema[param.name] = np.zeros(param.shape)
+            self._model_size = float(self._model_size)
+            self._as_wrap_cell()
+
+    def _is_adaptive_sync(self):
+        """
+        Determine whether adaptive frequency synchronization is required.
+        """
+        return self._sync_type == "adaptive"
 
     def _as_wrap_cell(self):
         """
@@ -200,7 +196,10 @@ class FederatedLearningManager(Callback):
         abs_grads = dict()
         for param in self._model.trainable_params():
             if self._as_prefix not in param.name:
-                abs_grads[self._as_prefix + param.name] = np.abs(param.asnumpy() - self._last_param[param.name])
+                try:
+                    abs_grads[self._as_prefix + param.name] = np.abs(param.asnumpy() - self._last_param[param.name])
+                except KeyError:
+                    print("{} is not in self._last_param".format(param.name))
         for param in self._model.trainable_params():
             if self._as_prefix in param.name:
                 try:
@@ -221,14 +220,33 @@ class FederatedLearningManager(Callback):
             if self._as_prefix in param.name:
                 abs_grads[param.name.replace(self._as_prefix, '')] = param.asnumpy() * worker_num
             else:
-                grads[param.name] = (param.asnumpy() - self._last_param[param.name]) * worker_num
+                try:
+                    grads[param.name] = (param.asnumpy() - self._last_param[param.name]) * worker_num
+                except KeyError:
+                    print("{} is not in self._last_param".format(param.name))
         for last_p in self._last_param:
-            self._grads_ema[last_p] = ema_alpha * self._grads_ema[last_p] + (1 - ema_alpha) * grads[last_p]
-            self._abs_grads_ema[last_p] = ema_alpha * self._abs_grads_ema[last_p] + (1 - ema_alpha) * abs_grads[last_p]
-            divide_base = np.where(self._abs_grads_ema[last_p] == 0,
-                                   np.ones(self._abs_grads_ema[last_p].shape), self._abs_grads_ema[last_p])
-            layer_consistent_rate = np.abs(self._grads_ema[last_p]) / divide_base
-            consistent_rate_sum += np.sum(layer_consistent_rate)
+            try:
+                self._grads_ema[last_p] = ema_alpha * self._grads_ema[last_p] + (1 - ema_alpha) * grads[last_p]
+            except KeyError:
+                print("{} is not in self._grads_ema".format(last_p))
+                continue
+            try:
+                self._abs_grads_ema[last_p] = ema_alpha * self._abs_grads_ema[last_p] + (1 - ema_alpha) * abs_grads[
+                    last_p]
+            except KeyError:
+                print("{} is not in self._abs_grads_ema".format(last_p))
+                continue
+            try:
+                divide_base = np.where(self._abs_grads_ema[last_p] == 0,
+                                       np.ones(self._abs_grads_ema[last_p].shape), self._abs_grads_ema[last_p])
+            except KeyError:
+                print("{} is not in self._abs_grads_ema".format(last_p))
+                continue
+            try:
+                layer_consistent_rate = np.abs(self._grads_ema[last_p]) / divide_base
+                consistent_rate_sum += np.sum(layer_consistent_rate)
+            except KeyError:
+                print("{} is not in self._grads_ema".format(last_p))
 
         consistent_rate = float(consistent_rate_sum / self._model_size)
 
