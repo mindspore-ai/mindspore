@@ -603,49 +603,36 @@ class CleanAfterOptARewriter : public BaseRewriter {
     return (this->*(iter->second))(cnode);
   }
 
-  static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth) {
+  static ValuePtr ConvertValueSequenceToValueTuple(const ValuePtr &value, size_t depth, bool *need_convert) {
+    MS_EXCEPTION_IF_NULL(need_convert);
+    MS_EXCEPTION_IF_NULL(value);
     if (depth > kMaxSeqRecursiveDepth) {
       MS_LOG(EXCEPTION) << "List nesting is not allowed more than " << kMaxSeqRecursiveDepth << " levels.";
     }
-    auto value_seq = value->cast<ValueSequencePtr>();
-    if (value_seq != nullptr) {
-      const auto &seq_elements = value_seq->value();
-      // First we check if elements should be converted,
-      // changed_elements maps old element to new element.
-      mindspore::HashMap<ValuePtr, ValuePtr> changed_elements;
-      for (const auto &element : seq_elements) {
-        auto new_element = ConvertValueSequenceToValueTuple(element, depth + 1);
-        if (new_element != nullptr) {
-          (void)changed_elements.emplace(element, new_element);
-        }
-      }
-      if (changed_elements.empty()) {
-        if (value->isa<ValueTuple>()) {
-          // If no elements changed and it is an AbstractTuple, do not convert.
-          return nullptr;
-        }
-        // If no elements changed but it is not an AbstractTuple, convert it by copy elements.
-        return std::make_shared<ValueTuple>(seq_elements);
-      }
-      // Always make new AbstractTuple when elements changed.
+
+    if (value->isa<ValueSequence>()) {
       std::vector<ValuePtr> elements;
-      elements.reserve(seq_elements.size());
-      for (const auto &element : seq_elements) {
-        auto iter = changed_elements.find(element);
-        if (iter != changed_elements.end()) {
-          (void)elements.emplace_back(iter->second);
-        } else {
-          (void)elements.emplace_back(element);
-        }
+      auto value_seq = value->cast<ValueSequencePtr>();
+      std::transform(value_seq->value().begin(), value_seq->value().end(), std::back_inserter(elements),
+                     [&](const ValuePtr &value) -> ValuePtr {
+                       bool is_convert = false;
+                       auto convert_value = ConvertValueSequenceToValueTuple(value, depth + 1, &is_convert);
+                       *need_convert |= is_convert;
+                       return convert_value;
+                     });
+      *need_convert |= value->isa<ValueList>();
+      if (*need_convert) {
+        return std::make_shared<ValueTuple>(elements);
       }
-      return std::make_shared<ValueTuple>(std::move(elements));
     }
+
     return value;
   }
 
   AnfNodePtr ConvertValueNode(const ValueNodePtr &, const ValuePtr &value) override {
-    auto convert_value = ConvertValueSequenceToValueTuple(value, 0);
-    if (convert_value != nullptr && convert_value != value) {
+    bool need_convert = false;
+    auto convert_value = ConvertValueSequenceToValueTuple(value, 0, &need_convert);
+    if (need_convert) {
       return std::make_shared<ValueNode>(convert_value);
     }
     return nullptr;
