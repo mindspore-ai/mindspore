@@ -766,11 +766,7 @@ mindspore.Tensor
 
     .. py:method:: masked_fill(mask, value)
 
-        将掩码位置为True的位置填充指定的值。该Tensor和 `mask` 的shape需相同或可广播。如果 `value` 是shape为 :math:`(*B)` 的Tensor，
-        则当前Tensor的shape需为 :math:`(*B，*N)`， `mask` 的shape需为 :math:`(*B，*M)`，其中 `*N` 和 `*M` 表示相同或可广播的值。
-
-        .. note::
-            Ascend平台暂不支持batch维输入。即，`value` 要求为0维的Tensor或者float类型数据。
+        将掩码位置为True的位置填充指定的值。该Tensor和 `mask` 的shape需相同或可广播。
 
         **参数：**
 

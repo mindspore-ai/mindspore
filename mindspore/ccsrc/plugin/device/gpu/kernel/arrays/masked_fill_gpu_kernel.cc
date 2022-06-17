@@ -29,16 +29,16 @@ template <typename T>
 bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                           const std::vector<AddressPtr> &workspace,
                                           const std::vector<AddressPtr> &outputs) {
-  T *input_addr = GetDeviceAddress<T>(inputs, 0);
-  bool *mask_addr = GetDeviceAddress<bool>(inputs, 1);
-  T *value = GetDeviceAddress<T>(inputs, 2);
-  T *output_addr = GetDeviceAddress<T>(outputs, 0);
+  T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
+  bool *mask_addr = GetDeviceAddress<bool>(inputs, kIndex1);
+  T *value = GetDeviceAddress<T>(inputs, kIndex2);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
 
   if (need_broadcast_) {
     BroadcastMaskedFill(inner_size_, lhs_shape_, rhs_shape_, output_shape_, input_addr, mask_addr, value, output_addr,
-                        reinterpret_cast<cudaStream_t>(cuda_stream_));
+                        device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    ElewiseMaskedFill(inner_size_, output_num_, input_addr, mask_addr, value, output_addr,
+    ElewiseMaskedFill(inner_size_, output_num_, input_addr, mask_addr, value, output_addr, device_id_,
                       reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
@@ -47,6 +47,7 @@ bool MaskedFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
 bool MaskedFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+  batch_rank_ = base_operator->get_batch_rank();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -57,19 +58,24 @@ bool MaskedFillGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const st
   return true;
 }
 
-void MaskedFillGpuKernelMod::BroadcastShape(const std::vector<size_t> &input_shape,
+bool MaskedFillGpuKernelMod::BroadcastShape(const std::vector<size_t> &input_shape,
                                             const std::vector<size_t> &mask_shape,
                                             const std::vector<size_t> &output_shape) {
+  lhs_shape_.clear();
+  rhs_shape_.clear();
+  output_shape_.clear();
   lhs_shape_.resize(MAX_DIMS, 1);
   rhs_shape_.resize(MAX_DIMS, 1);
   output_shape_.resize(MAX_DIMS, 1);
+  output_num_ = 1;
   for (size_t i = 0; i < output_shape.size(); i++) {
     if (need_broadcast_) {
       if (i < MAX_DIMS) {
         output_shape_[i] = output_shape[i];
       } else {
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of output should be less than " << MAX_DIMS
-                          << ", but got " << i;
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the index of output should be less than " << MAX_DIMS
+                      << ", but got " << i;
+        return false;
       }
     }
     output_num_ *= output_shape[i];
@@ -82,8 +88,9 @@ void MaskedFillGpuKernelMod::BroadcastShape(const std::vector<size_t> &input_sha
         lhs_shape_[j + lhs_offset] = input_shape[j];
       } else {
         auto index = j + lhs_offset;
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of input cannot be less than 0 and greater than "
-                          << MAX_DIMS << ", but got " << index;
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the index of input cannot be less than 0 and greater than "
+                      << MAX_DIMS << ", but got " << index;
+        return false;
       }
     }
   }
@@ -95,19 +102,20 @@ void MaskedFillGpuKernelMod::BroadcastShape(const std::vector<size_t> &input_sha
         rhs_shape_[k + rhs_offset] = mask_shape[k];
       } else {
         auto index = k + rhs_offset;
-        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of mask cannot be less than 0 and greater than "
-                          << MAX_DIMS << ", but got " << index;
+        MS_LOG(ERROR) << "For '" << kernel_name_ << "', the index of mask cannot be less than 0 and greater than "
+                      << MAX_DIMS << ", but got " << index;
+        return false;
       }
     }
   }
+  return true;
 }
 
 int MaskedFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs,
                                    const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
-  int ret = KRET_OK;
-  if ((ret = NativeGpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
     return ret;
   }
   std::vector<int64_t> input_shape_vec = inputs.at(kIndex0)->GetShapeVector();
@@ -130,23 +138,33 @@ int MaskedFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   }
   need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(input_shape, mask_shape);
   if (need_broadcast_ && (input_shape.size() > MAX_DIMS || mask_shape.size() > MAX_DIMS)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input and mask cannot be greater than "
-                      << MAX_DIMS << ", but got input: " << input_shape.size() << ", mask: " << mask_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of input and mask cannot be greater than " << MAX_DIMS
+                  << ", but got input: " << input_shape.size() << ", mask: " << mask_shape.size();
+    return KRET_RESIZE_FAILED;
+  }
+  if (LongToSize(batch_rank_) != value_shape.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value shape size should equal to " << batch_rank_
+                  << ", but got " << value_shape.size();
+    return KRET_RESIZE_FAILED;
   }
   size_t batch_size = value_shape.size();
   if (input_shape.size() < batch_size || mask_shape.size() < batch_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of input and mask should not be less than value's, but got input: "
-                      << input_shape.size() << ", mask: " << mask_shape.size() << ", value:" << value_shape.size();
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of input and mask should not be less than value's, but got input: "
+                  << input_shape.size() << ", mask: " << mask_shape.size() << ", value:" << value_shape.size();
+    return KRET_RESIZE_FAILED;
   }
   for (size_t i = 0; i < batch_size; i++) {
     if (input_shape[i] != mask_shape[i] && input_shape[i] != value_shape[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the first " << batch_size
-                        << " shape should be the same for input, mask and value, but got input shape: " << input_shape
-                        << ", mask shape: " << mask_shape << ", value shape: " << value_shape;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the first " << batch_size
+                    << " shape should be the same for input, mask and value, but got input shape: " << input_shape
+                    << ", mask shape: " << mask_shape << ", value shape: " << value_shape;
+      return KRET_RESIZE_FAILED;
     }
   }
-  BroadcastShape(input_shape, mask_shape, output_shape);
+  if (!BroadcastShape(input_shape, mask_shape, output_shape)) {
+    return KRET_RESIZE_FAILED;
+  }
   size_t rank_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<size_t>());
   inner_size_ = output_num_ / rank_size;
   return ret;
@@ -157,6 +175,7 @@ void MaskedFillGpuKernelMod::ResetResource() noexcept {
   is_null_input_ = false;
   output_num_ = 1;
   inner_size_ = 1;
+  batch_rank_ = 0;
   lhs_shape_.clear();
   rhs_shape_.clear();
   output_shape_.clear();
@@ -179,17 +198,66 @@ std::vector<std::pair<KernelAttr, MaskedFillGpuKernelMod::MaskedFillFunc>> Maske
      .AddOutputAttr(kNumberTypeFloat32),
    &MaskedFillGpuKernelMod::LaunchKernel<float>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddOutputAttr(kNumberTypeFloat64),
+   &MaskedFillGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt8)
      .AddOutputAttr(kNumberTypeInt8),
    &MaskedFillGpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeInt16)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt16)
+     .AddOutputAttr(kNumberTypeInt16),
+   &MaskedFillGpuKernelMod::LaunchKernel<int16_t>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kNumberTypeInt32)
      .AddOutputAttr(kNumberTypeInt32),
-   &MaskedFillGpuKernelMod::LaunchKernel<int32_t>}};
+   &MaskedFillGpuKernelMod::LaunchKernel<int32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeInt64)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeInt64)
+     .AddOutputAttr(kNumberTypeInt64),
+   &MaskedFillGpuKernelMod::LaunchKernel<int64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt8)
+     .AddOutputAttr(kNumberTypeUInt8),
+   &MaskedFillGpuKernelMod::LaunchKernel<uint8_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt16)
+     .AddOutputAttr(kNumberTypeUInt16),
+   &MaskedFillGpuKernelMod::LaunchKernel<uint16_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt32)
+     .AddOutputAttr(kNumberTypeUInt32),
+   &MaskedFillGpuKernelMod::LaunchKernel<uint32_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeUInt64)
+     .AddOutputAttr(kNumberTypeUInt64),
+   &MaskedFillGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeBool),
+   &MaskedFillGpuKernelMod::LaunchKernel<bool>},
+};
 
 std::vector<KernelAttr> MaskedFillGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
