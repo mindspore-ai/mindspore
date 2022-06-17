@@ -23,6 +23,7 @@ from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.common.api import ms_function
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
@@ -173,3 +174,20 @@ def test_net_graph_mode_fp64():
     dx = grad_net(Tensor(x, mindspore.float64), output)
     assert dx.asnumpy().shape == x.shape
     assert (dx.asnumpy() == expect_dx).all
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_adaptive_avgpool_vmap():
+    """
+    Feature: test vmap function.
+    Description: test adaptive avgpool op vmap.
+    Expectation: expect correct result.
+    """
+    in_axes = -1
+    x = Tensor(np.random.randn(1, 2, 9, 9, 1, 2).astype(np.float32))
+    net = Net((3, 5))
+    nest_vmap = vmap(vmap(net, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
+    out = nest_vmap(x)
+    assert out.shape == (2, 1, 1, 2, 3, 5)

@@ -21,7 +21,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -94,5 +94,34 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
         output = F.reshape(out, x_shape)
         out_dim = 0
         return (output, out_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.AvgPoolGrad)
+def get_avg_pool_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `AvgPoolGrad`."""
+    chw_reverse_index = -3
+
+    def vmap_rule(x_bdim, y_bdim, dy_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, y_bdim, dy_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        dy, dy_dim = dy_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        dy_shape = F.shape(dy)
+        x = F.reshape(x, (-1,) + x_shape[chw_reverse_index:])
+        y = F.reshape(y, (-1,) + y_shape[chw_reverse_index:])
+        dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
+        out = prim(x, y, dy)
+        out = F.reshape(out, x_shape)
+        return (out, 0)
 
     return vmap_rule

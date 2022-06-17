@@ -22,6 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore.ops import composite as C
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -304,3 +305,39 @@ def test_avgpool3d_4():
                                [79.62501, 112.125, 113.625, 81.625],
                                [125.6875, 176.9375, 179.1875, 128.6875]]]]]).astype(np.float32)
     assert np.allclose(actual_grad[0].asnumpy(), expect_grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_avgpool_vmap():
+    """
+    Feature: test vmap function.
+    Description: test avgpool op vmap.
+    Expectation: expect correct result.
+    """
+    in_axes = -1
+    x = Tensor(np.random.randn(1, 1, 6, 6, 3, 6).astype(np.float32))
+    net = AvgPool(dim=2, kernel_size=2, strides=2, pad_mode="VALID")
+    nest_vmap = vmap(vmap(net, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
+    out = nest_vmap(x)
+    assert out.shape == (6, 3, 1, 1, 3, 3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_avgpool_grad_vmap():
+    """
+    Feature: test vmap function.
+    Description: test avgpoolgrad op vmap.
+    Expectation: expect correct result.
+    """
+    in_axes = -1
+    x = Tensor(np.random.randn(1, 1, 6, 6, 3, 6).astype(np.float32))
+    sens = Tensor(np.random.randn(1, 1, 3, 3, 3, 6).astype(np.float32))
+    avgpool = AvgPool(dim=2, kernel_size=2, strides=2, pad_mode="VALID")
+    net = AvgPoolGrad(avgpool)
+    nest_vmap = vmap(vmap(net, in_axes=in_axes, out_axes=0), in_axes=in_axes, out_axes=0)
+    out = nest_vmap(x, sens)
+    assert out[0].shape == (6, 3, 1, 1, 6, 6)
