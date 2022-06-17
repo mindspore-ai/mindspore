@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import time
 import numpy as np
 import pytest
 
@@ -144,12 +143,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
     x_np = (np.random.randn(*shape) * prop).astype(dtype)
     x = Tensor(x_np)
     x = F.sub(x, 0)
-
-    start_time = time.perf_counter()
     output_vmap = F.vmap(hswish_func, in_axes=(0,))(x)
-    vmap_time = time.perf_counter() - start_time
-
-    start_time_manually = time.perf_counter()
 
     @ms_function
     def manually_batched(xs):
@@ -160,10 +154,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
         return F.stack(output)
 
     output_manually = manually_batched(x)
-    manually_time = time.perf_counter() - start_time_manually
-
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
-    assert vmap_time < manually_time
 
 
 @pytest.mark.level0
@@ -192,12 +183,7 @@ def test_hswish_grad_vmap(dtype, shape=(100, 2)):
     x = Tensor(x_np)
     dy = F.sub(dy, 0)
     x = F.sub(x, 0)
-
-    start_time = time.perf_counter()
     output_vmap = F.vmap(hswish_grad_func, in_axes=(0, 0))(dy, x)
-    vmap_time = time.perf_counter() - start_time
-
-    start_time_manually = time.perf_counter()
 
     @ms_function
     def manually_batched(dys, xs):
@@ -208,7 +194,4 @@ def test_hswish_grad_vmap(dtype, shape=(100, 2)):
         return F.stack(output)
 
     output_manually = manually_batched(dy, x)
-    manually_time = time.perf_counter() - start_time_manually
-
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
-    assert vmap_time < manually_time
