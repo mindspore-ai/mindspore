@@ -20,7 +20,7 @@ from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
     MCCL_WORLD_COMM_GROUP, _get_local_rank_helper, _get_local_size_helper, GlobalComm, \
-    _not_require_collective_comm_lib, _check_mpi_envs
+    _not_require_collective_comm_lib, _check_mpi_envs, _use_old_ps
 from .._c_expression import init_hccl, finalize_hccl, init_gpu_collective, init_cluster
 
 __all__ = ["init", "release", "get_rank", "get_local_rank", "get_group_size",
@@ -127,7 +127,7 @@ def init(backend_name=None):
                         "but got the type : {}".format(type(backend_name)))
 
     if backend_name == "hccl":
-        if _is_ps_mode() and os.getenv("PARALLEL_EXCUTE") == "ms_ps":
+        if not _use_old_ps() and _is_ps_mode():
             # Use MindSpore cluster to build network for Parameter Server traning.
             init_cluster()
             if _is_role_sched() or _is_role_pserver():
