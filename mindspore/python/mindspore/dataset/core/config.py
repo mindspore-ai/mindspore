@@ -25,7 +25,6 @@ Common imported modules in corresponding API examples are as follows:
 import os
 import platform
 import random
-from pathlib import Path
 import numpy
 import mindspore._c_dataengine as cde
 from mindspore import log as logger
@@ -527,36 +526,7 @@ def set_enable_autotune(enable, filepath_prefix=None):
             "Dataset AutoTune is enabled but no json path is specified, check INFO log for tuned result.")
 
     json_filepath = replace_none(filepath_prefix, "")
-
-    rank_id = _get_rank_id()
-
-    path = Path(json_filepath).resolve()
-
-    if not path.is_dir():
-        filename_prefix = path.name
-        # append rank_id and json extension
-        filename = filename_prefix + "_" + rank_id + ".json"
-        json_filepath = str(path.with_name(filename))
-
     _config.set_enable_autotune(enable, save_autoconfig, json_filepath)
-
-
-def _get_rank_id():
-    """
-    INTERNAL USE ONLY
-    Get the rank id
-    :return:rank_id
-    """
-    _init_device_info()
-    rank_id = _config.get_rank_id()
-    # default rank_id is -1 in ConfigManager
-    if rank_id < 0:
-        rank_id = os.getenv("RANK_ID")
-        if not rank_id or not rank_id.isdigit():
-            rank_id = "0"
-    else:
-        rank_id = str(rank_id)
-    return rank_id
 
 
 def get_enable_autotune():

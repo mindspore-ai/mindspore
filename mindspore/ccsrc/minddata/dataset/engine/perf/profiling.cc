@@ -803,6 +803,24 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
   }
 #endif
 
+  std::string rank_id = GetRankID();
+  // Output all profiling data upon request.
+  RETURN_IF_NOT_OK(SaveProfilingData(std::string(profile_data_path), rank_id));
+  RETURN_IF_NOT_OK(ChangeFileMode(std::string(profile_data_path), rank_id));
+  return Status::OK();
+}
+
+ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
+  auto enabled = (profiling_ || autotuning_);
+  if (!enabled) return kNotEnabled;
+  if (tree_ == nullptr) {
+    return kEnabledTreeNotRegistered;
+  } else {
+    return tree_ == tree ? kEnabledTreeRegistered : kEnabledDifferentTreeRegistered;
+  }
+}
+
+std::string ProfilingManager::GetRankID() {
   std::string rank_id;
 #ifdef ENABLE_GPUQUE
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -820,21 +838,7 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
   if (rank_id.empty()) {
     rank_id = "0";
   }
-
-  // Output all profiling data upon request.
-  RETURN_IF_NOT_OK(SaveProfilingData(std::string(profile_data_path), rank_id));
-  RETURN_IF_NOT_OK(ChangeFileMode(std::string(profile_data_path), rank_id));
-  return Status::OK();
-}
-
-ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
-  auto enabled = (profiling_ || autotuning_);
-  if (!enabled) return kNotEnabled;
-  if (tree_ == nullptr) {
-    return kEnabledTreeNotRegistered;
-  } else {
-    return tree_ == tree ? kEnabledTreeRegistered : kEnabledDifferentTreeRegistered;
-  }
+  return rank_id;
 }
 
 uint64_t ProfilingTime::GetCurMilliSecond() {

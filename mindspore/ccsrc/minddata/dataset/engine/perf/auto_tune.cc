@@ -74,7 +74,8 @@ Status AutoTune::Main() {
   RETURN_IF_NOT_OK(profiling_manager_->Stop());
   PostMainLogging();
 #ifndef ENABLE_ANDROID
-  if (output_final_config && (SaveAutotuneConfig(autotune_json_filepath_).IsError())) {
+  if (output_final_config &&
+      (SaveAutotuneConfig(autotune_json_filepath_ + "_" + profiling_manager_->GetRankID() + ".json").IsError())) {
     MS_LOG(WARNING) << "Failed to write the final autotune configuration to disk";
   }
 #endif
@@ -106,7 +107,8 @@ Status AutoTune::ATMainLoop(bool output_intermediate_config) {
 #ifndef ENABLE_ANDROID
       if (last_epoch != cur_epoch_running_ || last_step != cur_step_running_) {
         if (output_intermediate_config &&
-            (SaveAutotuneConfig(tree_adapter_->tree_->GetUniqueId() + "_autotune_" + std::to_string(loop_cnt) + ".json")
+            (SaveAutotuneConfig(autotune_json_filepath_ + "_" + profiling_manager_->GetRankID() + "_" +
+                                std::to_string(loop_cnt) + ".json")
                .IsError())) {
           MS_LOG(WARNING) << "Failed to write the current iteration autotune configuration to disk";
         }
