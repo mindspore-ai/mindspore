@@ -552,6 +552,8 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
   restore_checkpoint_sout_ << "digraph {" << endl;
   // Convert ResizeBilinear attr size to input
   ConvertResizeBilinear(anf_graph_);
+  // Convert SpaceBatch attr to input
+  ConvertSpaceBatchNd(anf_graph_);
   // Convert Tile input1 to int32
   ConvertTile(anf_graph_);
   // Convert all anf node to Operator
@@ -2318,6 +2320,50 @@ void DfGraphConvertor::ConvertResizeBilinear(const FuncGraphPtr anf_graph) {
           auto valuend = NewValueNode(int32_value);
           valuend->set_abstract(size_value->ToAbstract());
           node->add_input(valuend);
+        }
+      }
+    }
+  }
+}
+
+void DfGraphConvertor::ConvertSpaceBatchNd(const FuncGraphPtr anf_graph) {
+  std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph);
+  for (auto &it : nodes) {
+    if (it->isa<CNode>()) {
+      auto node = it->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(node);
+      std::string name = GetCNodeTargetFuncName(node);
+      if (name == prim::kPrimSpaceToBatchND->name() || name == prim::kPrimBatchToSpaceND->name()) {
+        AnfNodePtr op = node->input(0);
+        if (IsValueNode<Primitive>(op)) {
+          auto prim = GetValueNode<PrimitivePtr>(op);
+          MS_EXCEPTION_IF_NULL(prim);
+          ValuePtr block_shape = prim->GetAttr("block_shape");
+          auto int64_value = GetValue<std::vector<int64_t>>(block_shape);
+          std::vector<int32_t> int32_value;
+          (void)std::transform(int64_value.begin(), int64_value.end(), std::back_inserter(int32_value), LongToInt);
+          auto new_value = NewValueNode(int32_value);
+          new_value->set_abstract(block_shape->ToAbstract());
+          node->add_input(new_value);
+          ValuePtr attr_value = nullptr;
+          if (name == prim::kPrimSpaceToBatchND->name()) {
+            attr_value = prim->GetAttr("paddings");
+          } else {
+            attr_value = prim->GetAttr("crops");
+          }
+          std::vector<int64_t> attr_list;
+          if (attr_value->isa<ValueList>()) {
+            const ValueListPtr &value = dyn_cast<ValueList>(attr_value);
+            for (const auto &item : value->value()) {
+              if (item->isa<ValueList>()) {
+                auto value_list = GetValue<std::vector<int64_t>>(item);
+                std::copy(value_list.begin(), value_list.end(), std::back_inserter(attr_list));
+              }
+            }
+          }
+          auto new_value_attr = NewValueNode(attr_list);
+          new_value_attr->set_abstract(attr_value->ToAbstract());
+          node->add_input(new_value_attr);
         }
       }
     }
