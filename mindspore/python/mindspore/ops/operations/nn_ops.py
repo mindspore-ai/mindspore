@@ -2341,7 +2341,7 @@ class BiasAdd(Primitive):
         self.add_prim_attr('data_format', self.format)
 
 
-class TopK(PrimitiveWithInfer):
+class TopK(Primitive):
     """
     Finds values and indices of the `k` largest entries along the last dimension.
 
@@ -2401,20 +2401,6 @@ class TopK(PrimitiveWithInfer):
         self.add_prim_attr("sorted", self.sorted)
         self.init_prim_io_names(inputs=['input', 'k'],
                                 outputs=['values', 'indices'])
-
-    def __infer__(self, input_x, k):
-        x_dtype = input_x['dtype']
-        valid_dtypes = (mstype.int32, mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
-        k_v = k['value']
-        validator.check_value_type('k', k_v, (int,), self.name)
-        x_shape = list(input_x['shape'])
-        ndim = len(x_shape) - 1
-        k_v = validator.check_int_range(k_v, 0, x_shape[ndim] + 1, Rel.INC_NEITHER, "k", int)
-        x_shape[ndim] = k_v
-        return {'shape': (x_shape, x_shape),
-                'dtype': (x_dtype, mstype.int32),
-                'value': None}
 
 
 class NLLLoss(PrimitiveWithInfer):
