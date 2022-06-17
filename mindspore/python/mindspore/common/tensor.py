@@ -817,7 +817,7 @@ class Tensor(Tensor_):
         Examples:
             >>> import numpy as np
             >>> from mindspore import Tensor
-            >>> input_x = Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]).astype('float32'))
+            >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
             >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
             >>> updates = Tensor(np.array([1.0, 2.0]).astype('float32'))
             >>> output = input_x.scatter_div(indices, updates)
@@ -936,7 +936,19 @@ class Tensor(Tensor_):
     def tan(self):
         """
         Computes tangent of `x` element-wise.
-        Refer to :func:`mindspore.ops.tan` for more detail.
+
+        .. math::
+
+            out_i = tan(x_i)
+
+        Returns:
+            Tensor, has the same shape as self.
+
+        Raises:
+            TypeError: If self is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -3659,9 +3671,33 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('hardshrink')(lambd)(self)
 
     def soft_shrink(self, lambd=0.5):
-        """
+        r"""
         Apply the soft shrink function for a tensor. Calculates the output according to the input elements.
-        Refer to :func:`mindspore.ops.SoftShrink` for more detail.
+
+        The formula is defined as follows:
+
+        .. math::
+            \text{SoftShrink}(x) =
+            \begin{cases}
+            x - \lambda, & \text{ if } x > \lambda \\
+            x + \lambda, & \text{ if } x < -\lambda \\
+            0, & \text{ otherwise }
+            \end{cases}
+
+        Args:
+            lambd(float): the :math:`\lambda` must be no less than zero. Default: 0.5.
+
+        Returns:
+            Tensor, has the same shape and data type as self.
+
+        Raises:
+            TypeError: If lambd is not a float.
+            TypeError: If input_x is not a Tensor.
+            TypeError: If dtype of input_x is neither float16 nor float32.
+            ValueError: If lambd is less than 0.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor

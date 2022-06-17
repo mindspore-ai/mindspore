@@ -62,6 +62,7 @@ Activation Functions
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
     mindspore.ops.softsign
+    mindspore.ops.soft_shrink
     mindspore.ops.tanh
 
 Loss Functions

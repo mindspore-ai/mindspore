@@ -10,7 +10,7 @@ mindspore.ops.tan
 
     **参数：**
 
-    - **x** (Tensor) - Tan的输入，任意维度的Tensor，其数据类型为float16或float32。
+    - **x** (Tensor) - Tan的输入，任意维度的Tensor。
 
     **返回：**
 
@@ -18,5 +18,4 @@ mindspore.ops.tan
 
     **异常：**
 
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
     - **TypeError** - `x` 不是Tensor。
