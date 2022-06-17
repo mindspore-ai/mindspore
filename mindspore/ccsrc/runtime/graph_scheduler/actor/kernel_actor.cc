@@ -462,9 +462,18 @@ bool KernelActor::LaunchKernel() {
 
 void KernelActor::PostLaunchKernel(OpContext<DeviceTensor> *const context) {
   if (is_dynamic_shape_) {
-    kernel::UpdateNodeShape(kernel_);
-    AnfAlgo::UpdateOutputAddrSize(kernel_info_, kernel_);
-    AnfAlgo::UpdateInternalParameterShape(internal_parameters_, kernel_);
+    try {
+      kernel::UpdateNodeShape(kernel_);
+      AnfAlgo::UpdateOutputAddrSize(kernel_info_, kernel_);
+      AnfAlgo::UpdateInternalParameterShape(internal_parameters_, kernel_);
+    } catch (const std::exception &e) {
+      if (strategy_ == GraphExecutionStrategy::kPipeline) {
+        MsException::Instance().SetException();
+      }
+      std::string error_info = "Update output shape, size and internal parameter shape after launch exception: " +
+                               kernel_->fullname_with_scope();
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), error_info);
+    }
   }
 
   running_dependent_msg_num_ = SizeToInt(input_datas_num_ + input_controls_num_);
