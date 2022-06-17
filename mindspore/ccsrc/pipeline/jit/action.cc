@@ -996,11 +996,10 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(bc_ptr);
   std::string backend = context_ptr->backend_policy();
   // The graph compiling of mindRT.
-  if ((backend == kMsConvert) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+  if ((backend == kMsConvert || backend == kGeVm) && context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     TaskEmitActionForMindRT(resource);
     return true;
   }
-
   // The graph compiling of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
     auto graph_id = bc_ptr->CompileGraph(NOT_NULL(func_graph));
@@ -1028,7 +1027,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
   }
   std::string backend = MsContext::GetInstance()->backend_policy();
   // The graph running of mindRT.
-  if ((backend == kMsConvert) && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
+  if ((backend == kMsConvert || backend == kGeVm) && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
     ExecuteActionForMindRT(resource);
     return true;
   }
@@ -1423,6 +1422,13 @@ std::vector<ActionItem> GePipeline() {
   (void)actions.emplace_back(std::make_pair("ge_specialized_prepare", GeSpecializedAction));
   (void)actions.emplace_back(std::make_pair("eliminate_ad_related_special_op_node", EliminateAdRelatedSpecialOpNode));
   (void)actions.emplace_back(std::make_pair("validate", ValidateAction));
+#ifdef ENABLE_D
+  // Compile the ANF graph
+  (void)actions.emplace_back(std::make_pair("task_emit", TaskEmitAction));
+
+  // Execute the graph
+  (void)actions.emplace_back(std::make_pair("execute", ExecuteAction));
+#endif
   return actions;
 }
 

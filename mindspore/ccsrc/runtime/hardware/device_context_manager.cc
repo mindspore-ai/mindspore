@@ -15,6 +15,7 @@
  */
 
 #include "runtime/hardware/device_context_manager.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace device {
@@ -41,6 +42,14 @@ void DeviceContextManager::ClearDeviceContexts() {
 
 DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContextKey &device_context_key) {
   std::string device_context_key_str = device_context_key.ToString();
+  std::string name = device_context_key.device_name_;
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->backend_policy() == "ge") {
+    name = "GE";
+    device_context_key_str = "GE_0";
+  }
 
   auto device_context_iter = device_contexts_.find(device_context_key_str);
   if (device_context_iter != device_contexts_.end()) {
@@ -48,14 +57,13 @@ DeviceContext *DeviceContextManager::GetOrCreateDeviceContext(const DeviceContex
   }
 
   std::shared_ptr<DeviceContext> device_context;
-  auto creator_iter = device_context_creators_.find(device_context_key.device_name_);
+  auto creator_iter = device_context_creators_.find(name);
   if (creator_iter != device_context_creators_.end()) {
     device_context = (creator_iter->second)(device_context_key);
     MS_EXCEPTION_IF_NULL(device_context);
     device_contexts_[device_context_key_str] = device_context;
   } else {
-    MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:"
-                      << device_context_key.device_name_ << " is available.";
+    MS_LOG(EXCEPTION) << "Create device context failed, please make sure target device:" << name << " is available.";
   }
   return device_context.get();
 }

@@ -35,12 +35,13 @@ class GraphRunner {
   ~GraphRunner() { sess_ = nullptr; }
   Status RunGraph(const RunOptions &options, const std::vector<MeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs);
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
-  Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs,
-                  const std::vector<TypeId> &me_types);
-  static std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
+  Status RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
+                       std::vector<GeTensorPtr> *outputs);
+  Status BuildAllGraphs();
+  static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
 
  private:
-  std::shared_ptr<ge::Session> sess_;
+  std::shared_ptr<::ge::Session> sess_;
   transform::GraphRunnerOptions options_;
   DfGraphManager &graph_manager_;
 };

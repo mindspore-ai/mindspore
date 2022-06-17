@@ -68,7 +68,7 @@ def test_ge_resnet50_cifar10_ascend():
     cur_model_path = os.path.join(current_path, "resnet")
     list_old = ["total_epochs=config.epoch_size", "config.epoch_size - config.pretrain_epoch_size",
                 "=dataset_sink_mode"]
-    list_new = ["total_epochs=1", "1", "=False"]
+    list_new = ["total_epochs=1", "1", "=True"]
     utils.exec_sed_command(list_old, list_new, os.path.join(cur_model_path, "train.py"))
     dataset = os.path.join(utils.data_root, "cifar-10-batches-bin")
     #Do not execute ckpt graph
@@ -84,7 +84,7 @@ def test_ge_resnet50_cifar10_ascend():
     assert result
     log_file = os.path.join(cur_model_path, "scripts/train/log")
     loss_list = utils.get_loss_data_list(log_file)
-    assert loss_list[-1] < 1.7
+    assert sum(loss_list[-101:-1]) / 100 < 1.7
 
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training

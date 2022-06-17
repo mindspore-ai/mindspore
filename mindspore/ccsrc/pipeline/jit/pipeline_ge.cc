@@ -32,6 +32,7 @@
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/utils.h"
 #include "include/common/utils/python_adapter.h"
+#include "runtime/hardware/device_context_manager.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -66,10 +67,6 @@ void DoExecNonInputGraph(const std::string &phase) {
       return;
     }
   }
-}
-
-void SetGeOption(const std::map<std::string, std::string> &options) {
-  ConfigManager::GetInstance().set_ge_initialize_options(options);
 }
 
 Status CreateSessionAndGraphRunner(bool is_training = true) {
@@ -107,6 +104,11 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
 bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, const std::string &phase) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+    {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+  device_context->Initialize();
   std::vector<int64_t> ge_types;
   (void)std::transform(types.begin(), types.end(), std::back_inserter(ge_types),
                        [](const TypePtr &i) -> int64_t { return transform::ConvertDataType(i->type_id()); });
@@ -190,7 +192,6 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
   TensorOrderMap init_tensors{};
   ConvertObjectToTensors(init_params, &init_tensors);
   transform::BuildGraph(converter, init_tensors);
-
   if (!broadcast_params.is_none()) {
     if (!py::isinstance<py::dict>(broadcast_params)) {
       MS_LOG(ERROR) << "Invalid broadcast params, it must be py::dict type";
@@ -226,7 +227,7 @@ bool AddDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::di
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
   if (phase.find("train") != std::string::npos) {
-    (void)transform::AddGraph(phase, transform::GetComputeGraph(converter), {{"ge.exec.variable_acc", "1"}});
+    (void)transform::AddGraph(phase, transform::GetComputeGraph(converter), {}, {{"ge.exec.variable_acc", "1"}});
   } else {
     (void)transform::AddGraph(phase, transform::GetComputeGraph(converter));
   }
@@ -278,55 +279,6 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
   }
 
   return anf_graph;
-}
-
-void RunGEInitGraph(const py::dict &init_params, const std::string &phase) {
-  MS_LOG(DEBUG) << "ExecInitGraph start.";
-  TensorOrderMap inputs_with_name{};
-  ConvertObjectToTensors(init_params, &inputs_with_name);
-  std::vector<tensor::TensorPtr> inputs;
-  (void)std::transform(inputs_with_name.begin(), inputs_with_name.end(), std::back_inserter(inputs),
-                       [](const std::pair<std::string, tensor::TensorPtr> &item) { return item.second; });
-
-  std::vector<GeTensorPtr> ge_tensors = transform::ConvertInputTensors(inputs, kOpFormat_NCHW);
-  if (ge_tensors.size() != inputs.size()) {
-    MS_LOG(ERROR) << "Args convert to ge tensor error.";
-    return;
-  }
-  MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size() << ".";
-
-  std::vector<GeTensorPtr> ge_outputs;
-  transform::RunOptions run_options;
-
-  run_options.name = phase;
-  if (transform::GetGraphByName(phase) == nullptr) {
-    MS_LOG(WARNING) << "Can not find " << phase << " sub graph, don't need data init subgraph in INFER mode.";
-    return;
-  }
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
-  }
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    py::gil_scoped_release release;
-    Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-    if (ret != Status::SUCCESS) {
-      MS_LOG(EXCEPTION) << "Exec " << phase << " graph failed.";
-    }
-
-    MS_LOG(INFO) << "Exec " << phase << " graph success.";
-
-    if ((ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::DISTRIBUTION) &&
-        (transform::GetGraphByName(BROADCAST_GRAPH_NAME) != nullptr)) {
-      run_options.name = BROADCAST_GRAPH_NAME;
-      ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &ge_outputs);
-      if (ret != Status::SUCCESS) {
-        MS_LOG(EXCEPTION) << "Exec BROADCAST_GRAPH_NAME failed.";
-      }
-      MS_LOG(INFO) << "Exec broadcast graph success.";
-    }
-  }
 }
 
 py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::tuple &data, size_t *count) {
@@ -430,125 +382,6 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
   auto elements = abstract_tuple->elements();
   for (size_t i = 0; i < abstract_tuple->size(); ++i) {
     GetMeRetDataType(elements[i], me_types);
-  }
-}
-
-std::shared_ptr<py::object> DoExecGraphAsync(const FuncGraphPtr &graph, const std::vector<MeTensorPtr> &inputs,
-                                             const std::string &phase) {
-  std::vector<GeTensorPtr> ge_tensors = transform::ConvertInputTensors(inputs, kOpFormat_NCHW);
-  if (ge_tensors.size() != inputs.size()) {
-    MS_LOG(EXCEPTION) << "Convert me args to ge tensor error.";
-  }
-  transform::RunOptions run_options;
-  run_options.name = phase;
-  auto graph_runner = transform::GetGraphRunner();
-  if (graph_runner == nullptr) {
-    MS_LOG(EXCEPTION) << "Can not found GraphRunner.";
-  }
-
-  AnfNodePtr output_node = graph->get_return()->input(1);
-  MS_EXCEPTION_IF_NULL(output_node);
-  std::vector<TypeId> me_types;
-  auto output_c = output_node->cast<CNodePtr>()->abstract();
-  // get output node data types
-  GetMeRetDataType(output_c, &me_types);
-
-  std::vector<MeTensorPtr> me_outputs;
-  {
-    // Release GIL before calling into (potentially long-running) C++ code
-    py::gil_scoped_release release;
-    MS_LOG(DEBUG) << "Run graph begin, inputs size is: " << inputs.size();
-    try {
-      Status ret = transform::RunGraph(graph_runner, run_options, ge_tensors, &me_outputs, me_types);
-      MS_LOG(DEBUG) << "Run graph finish, outputs size is: " << me_outputs.size();
-      if (ret != Status::SUCCESS) {
-        MS_LOG(ERROR) << "Exec graph failed";
-        return nullptr;
-      }
-    } catch (const std::exception &ex) {
-      throw(ex);
-    }
-  }
-
-  if (me_outputs.size() != me_types.size()) {
-    MS_LOG(WARNING) << "Convert output Ge tensor to Me tensor failed";
-  }
-
-  py::tuple outputs(me_outputs.size());
-  for (std::size_t i = 0; i < outputs.size(); i++) {
-    outputs[i] = *me_outputs[i];
-  }
-
-  std::shared_ptr<py::object> ret = nullptr;
-  size_t count = 0;
-  py::object oj = StructureOutput(output_node, outputs, &count);
-  ret = std::make_shared<py::object>(oj);
-
-  return ret;
-}
-
-void ProcessGeArg(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args, const std::string &phase,
-                  std::vector<tensor::TensorPtr> *inputs) {
-  // check the arg and use the GraphExecutorPy args
-  std::size_t size = args.size();
-
-  if (info.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "No phase in executor:" << GetPhasePrefix(phase);
-  }
-
-  auto arg_size = info.at(phase)->arg_list_size;
-  if (size != arg_size) {
-    MS_LOG(EXCEPTION) << "The real arg num : size = " << size << ". graph_arg_size = " << arg_size;
-  }
-
-  // process the first args of tensor
-  // only in dataset normal(non-sink) mode, fp_bp graph need input tensors
-  if (ConfigManager::GetInstance().dataset_mode() == DS_NORMAL_MODE) {
-    for (std::size_t i = 0; i < size; i++) {
-      ValuePtr converted = nullptr;
-      bool succ = parse::ConvertData(args[i], &converted);
-      if (!succ) {
-        MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
-      }
-      if (converted->isa<tensor::Tensor>()) {
-        inputs->push_back(converted->cast<tensor::TensorPtr>());
-      } else {
-        MS_EXCEPTION(TypeError) << "The " << i << "th arg: " << converted->ToString() << " is not tensor.";
-      }
-    }
-  }
-}
-
-py::object ExecDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, const py::tuple &args,
-                       const std::string &phase) {
-  std::string phase_prefix = GetPhasePrefix(phase);
-  if (phase_prefix == "save") {
-    DoExecNonInputGraph(phase);
-    ConfigManager::GetInstance().ResetConfig();
-    return py::none();
-  }
-
-  if (info.count(phase) == 0) {
-    MS_LOG(EXCEPTION) << "There is no phase:" << phase;
-  }
-  FuncGraphPtr anf_graph = info.at(phase)->func_graph;
-
-  std::shared_ptr<py::object> ret_val = std::make_shared<py::object>();
-  // We will not execute graph when output is constant or just input itself.
-  if (IsGraphOutputValueNodeOrParameter(info.at(phase)->func_graph->output(), args, ret_val)) {
-    ConfigManager::GetInstance().ResetConfig();
-    return *ret_val;
-  }
-
-  std::vector<tensor::TensorPtr> inputs;
-  ProcessGeArg(info, args, phase, &inputs);
-
-  std::shared_ptr<py::object> ret = DoExecGraphAsync(anf_graph, inputs, phase);
-  ConfigManager::GetInstance().ResetConfig();
-  if (ret != nullptr) {
-    return *ret;
-  } else {
-    MS_LOG(EXCEPTION) << "Exec graph failed";
   }
 }
 

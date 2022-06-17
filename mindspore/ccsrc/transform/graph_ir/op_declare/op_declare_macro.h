@@ -27,13 +27,13 @@
 
 namespace mindspore::transform {
 #define DECLARE_OP_ADAPTER(T)                                        \
-  using T = ge::op::T;                                               \
+  using T = ::ge::op::T;                                             \
   template <>                                                        \
   const mindspore::HashMap<int, InputDesc> OpAdapter<T>::input_map_; \
   template <>                                                        \
   const mindspore::HashMap<std::string, AttrDesc> OpAdapter<T>::attr_map_;
 
-#define DECLARE_OP_TYPE(T) using T = ge::op::T;
+#define DECLARE_OP_TYPE(T) using T = ::ge::op::T;
 
 #define DECLARE_OP_ATTR(T) \
   template <>              \

@@ -26,11 +26,11 @@ DfGraphPtr BuildMDDatasetGraph(const DatasetGraphParam &param) {
   MS_LOG(INFO) << "BuildMDDatasetGraph.";
 
   // InitData
-  auto d = ge::op::InitData("init_data_tmp").set_attr_channel_name(param.queue_name());
+  auto d = ::ge::op::InitData("init_data_tmp").set_attr_channel_name(param.queue_name());
 
   // set graph inputs & outputs
-  std::vector<ge::Operator> inputs{d};
-  std::vector<ge::Operator> outputs{d};
+  std::vector<::ge::Operator> inputs{d};
+  std::vector<::ge::Operator> outputs{d};
   DfGraphPtr dataset_graph = std::make_shared<DfGraph>("dataset");
   (void)dataset_graph->SetInputs(inputs);
   (void)dataset_graph->SetOutputs(outputs);

@@ -561,11 +561,8 @@ BackendPtr CreateBackend() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string name = context_ptr->backend_policy();
   MS_LOG(INFO) << "CreateBackend is: " << name;
-  if (backend_list.count(name) == 0) {
-    MS_LOG(EXCEPTION) << "Backend is error: " << name;
-  }
 
-  if (name == kMsConvert) {
+  if (name == kMsConvert || name == kGeVm) {
     std::string target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
     uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     BackendPtr backend = nullptr;

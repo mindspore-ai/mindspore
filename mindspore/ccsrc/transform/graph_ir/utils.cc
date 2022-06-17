@@ -208,8 +208,9 @@ GraphRunnerPtr NewGraphRunner(const GraphRunnerOptions &options) {
 
 void SetGraphRunner(const GraphRunnerPtr &runner) { DfGraphManager::GetInstance().SetGraphRunner(runner); }
 void ClearGraph() { DfGraphManager::GetInstance().ClearGraph(); }
-Status AddGraph(const std::string &name, const DfGraphPtr &graph, const OptionMap &options) {
-  return DfGraphManager::GetInstance().AddGraph(name, graph, options);
+Status AddGraph(const std::string &name, const DfGraphPtr &graph, const std::vector<transform::GeTensorPtr> &inputs,
+                const OptionMap &options) {
+  return DfGraphManager::GetInstance().AddGraph(name, graph, inputs, options);
 }
 void SetAnfGraph(const std::string &name, const AnfGraphPtr &anf_graph_ptr) {
   DfGraphManager::GetInstance().SetAnfGraph(name, anf_graph_ptr);
@@ -283,17 +284,21 @@ std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options) {
   return transform::GraphRunner::NewSession(sess_options);
 }
 
+Status BuildAllGraphs(const std::shared_ptr<GraphRunner> &runner) {
+  MS_EXCEPTION_IF_NULL(runner);
+  return runner->BuildAllGraphs();
+}
+
 Status RunGraph(const std::shared_ptr<transform::GraphRunner> &runner, const RunOptions &options,
                 const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(runner);
   return runner->RunGraph(options, inputs, outputs);
 }
 
-Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
-                const std::vector<GeTensorPtr> &inputs, std::vector<MeTensorPtr> *outputs,
-                const std::vector<TypeId> &me_types) {
+Status RunGraphAsync(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
+                     const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(runner);
-  return runner->RunGraph(options, inputs, outputs, me_types);
+  return runner->RunGraphAsync(options, inputs, outputs);
 }
 
 void ClearOpAdapterMap() { transform::OpAdapterMap::get().clear(); }

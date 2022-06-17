@@ -132,7 +132,6 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("build_data_graph", &GraphExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &GraphExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "Get if cell compiled.")
-    .def("run_init_graph", &GraphExecutorPy::RunInitGraph, "Run init Graph.")
     .def("set_py_exe_path", &GraphExecutorPy::PyExePath, py::arg("py_exe_path") = py::str(""),
          "Set python executable path.")
     .def("set_kernel_build_server_dir", &GraphExecutorPy::KernelBuildServerDir,

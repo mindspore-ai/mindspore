@@ -101,7 +101,6 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
                           const py::object &broadcast_params = {}) const;
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params);
-  void RunInitGraph(const py::dict &init_params, const std::string &phase) const;
   void PyExePath(const py::object &py_exe_path);
   void KernelBuildServerDir(const py::object &kernel_build_server_dir);
   py::dict GetParameterLayout(const std::string &phase);

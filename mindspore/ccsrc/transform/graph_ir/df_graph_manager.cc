@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace transform {
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
-                               const OptionMap &options)
-    : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
+                               const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options)
+    : name_(name), id_(id), graph_ptr_(graph_ptr), inputs_(inputs), options_(options) {}
 
 DfGraphManager::DfGraphManager() {
   graph_id_ = 0;
@@ -62,7 +62,8 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr,
+                                const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
@@ -75,7 +76,7 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   }
 
   int id = GenerateId();
-  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, options);
+  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, inputs, options);
   auto ret = graphs_.emplace(name, wrap_ptr);
   if (ret.second == false) {
     MS_LOG(WARNING) << "The graph name:{ " << name << " }is already exists! The old graph will be overwritten!!";
@@ -151,7 +152,7 @@ void DfGraphManager::EraseAnfGraph() {
   anf_graphs_.clear();
 }
 
-void DfGraphManager::SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr) {
+void DfGraphManager::SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr) {
   std::lock_guard<std::mutex> lg(lock_);
   if (sess_ptr == nullptr) {
     MS_LOG(WARNING) << "You are adding a empty Ge Session";
@@ -165,7 +166,7 @@ void DfGraphManager::SetGeSession(const std::shared_ptr<ge::Session> &sess_ptr) 
   sess_ptr_ = sess_ptr;
 }
 
-std::shared_ptr<ge::Session> DfGraphManager::GetGeSession() {
+std::shared_ptr<::ge::Session> DfGraphManager::GetGeSession() {
   std::lock_guard<std::mutex> lg(lock_);
   return sess_ptr_;
 }

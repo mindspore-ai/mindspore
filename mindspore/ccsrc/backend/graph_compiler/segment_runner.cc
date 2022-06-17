@@ -201,10 +201,5 @@ LinConvertResult Convert(const GraphSegmentPtr &segment, const std::string &) {
 }
 
 LinkFuncType MsVmConvert = Convert<VM>;
-
-std::set<std::string> backend_list = {
-  kMsConvert,
-  kMsVm,
-};
 }  // namespace compile
 }  // namespace mindspore

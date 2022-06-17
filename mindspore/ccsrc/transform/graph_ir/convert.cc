@@ -44,16 +44,16 @@
 
 namespace mindspore {
 namespace transform {
-using ge::Operator;
+using ::ge::Operator;
 using mindspore::kAnyValue;
 using std::make_shared;
 using std::shared_ptr;
 using std::string;
 using std::vector;
-using Variable = ge::op::Variable;
-using Constant = ge::op::Constant;
-using Assign = ge::op::Assign;
-using Data = ge::op::Data;
+using Variable = ::ge::op::Variable;
+using Constant = ::ge::op::Constant;
+using Assign = ::ge::op::Assign;
+using Data = ::ge::op::Data;
 using std::endl;
 
 constexpr size_t kInputOffset = 2;
@@ -114,7 +114,7 @@ bool IsDynamicShapeNode(const AnfNodePtr node) {
 void DfGraphConvertor::InitLoopVar(std::vector<ge::Operator> *init_input) {
   MS_EXCEPTION_IF_NULL(init_input);
   if (this->training_) {
-    GeTensorDesc desc(GeShape(), ge::FORMAT_NCHW, ge::DT_INT64);
+    GeTensorDesc desc(GeShape(), ::ge::FORMAT_NCHW, ::ge::DT_INT64);
     auto var_iter_num = std::make_shared<Variable>("npu_runconfig/iterations_per_loop");
     auto var_loop_cond = std::make_shared<Variable>("npu_runconfig/loop_cond");
     auto var_one = std::make_shared<Variable>("npu_runconfig/one");
@@ -204,7 +204,7 @@ void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfN
              << "op_assign" << it.get() << ":2" << endl;
 }
 
-void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<ge::Operator> *init_input) {
+void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<::ge::Operator> *init_input) {
   DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
@@ -272,7 +272,7 @@ void DfGraphConvertor::MakeDatasetHandler(const std::string &name, const size_t 
 
 void DfGraphConvertor::SetupBroadcast(const std::shared_ptr<HcomBroadcast> &broadcast,
                                       const std::vector<GeTensorDesc> &broadcast_desc,
-                                      const DfGraphPtr &broadcast_graph, std::vector<ge::Operator> broadcast_input) {
+                                      const DfGraphPtr &broadcast_graph, std::vector<::ge::Operator> broadcast_input) {
   MS_LOG(INFO) << "build broadcast subgraph";
   if (broadcast_desc.size() != broadcast_input.size()) {
     MS_LOG(EXCEPTION) << "Desc number of BroadCast is not equal to number of Input";
@@ -395,7 +395,7 @@ DfGraphConvertor &DfGraphConvertor::InitParam(const TensorOrderMap &tensors) {
 #if (defined ENABLE_D)
 void DfGraphConvertor::BuildSaveCheckpointGraph() {
   std::vector<Operator> graph_inputs;
-  ge::op::Save save_op("save_parms");
+  ::ge::op::Save save_op("save_parms");
   int save_op_is_active = 0;
   size_t index = 0;
   string name;
@@ -575,12 +575,12 @@ DfGraphConvertor &DfGraphConvertor::ConvertAllNode() {
     DatasetGraphParam param = ConfigManager::GetInstance().dataset_param();
     MS_LOG(INFO) << "Dataset param is " << param.ToString() << ".";
     // GetNext
-    auto iter_getnext_op = make_shared<ge::op::GetNext>("get_next_tmp");
-    std::vector<enum ge::DataType> getnext_types;
+    auto iter_getnext_op = make_shared<::ge::op::GetNext>("get_next_tmp");
+    std::vector<enum ::ge::DataType> getnext_types;
     const auto &origin_ge_types = param.ge_types();
     (void)std::transform(
       origin_ge_types.begin(), origin_ge_types.end(), std::back_inserter(getnext_types),
-      [](int64_t t_num) -> enum ge::DataType { return static_cast<enum ge::DataType>(t_num); });
+      [](int64_t t_num) -> enum ::ge::DataType { return static_cast<enum ::ge::DataType>(t_num); });
     (void)iter_getnext_op->set_attr_output_types(getnext_types);
     (void)iter_getnext_op->set_attr_output_shapes(param.shapes());
     (void)iter_getnext_op->set_attr_channel_name(param.queue_name());
@@ -724,11 +724,11 @@ void SetupDatasetIterGetNextNode(const OperatorPtr &op) {
     size_t output_num = param.ge_types().size();
     MS_LOG(INFO) << "Set iterator_getnext op's output num = " << output_num << ".";
     // set iterator_getnext op's output num
-    shared_ptr<ge::op::GetNext> iter_getnext = std::static_pointer_cast<ge::op::GetNext>(op);
+    shared_ptr<::ge::op::GetNext> iter_getnext = std::static_pointer_cast<::ge::op::GetNext>(op);
     (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
 
     for (uint32_t i = 0; i < output_num; i++) {
-      ge::TensorDesc desc(GeShape(param.shapes()[i]), ge::FORMAT_NCHW, (ge::DataType)param.ge_types()[i]);
+      ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
       // we don't SetRealDimCnt here since GE do not use this output's real-dim
       (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
     }

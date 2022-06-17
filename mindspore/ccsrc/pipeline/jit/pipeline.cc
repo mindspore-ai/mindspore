@@ -777,8 +777,8 @@ std::vector<ActionItem> GetPipeline(const ResourcePtr &resource, const std::stri
   }
 #endif
 
+  compile::SetMindRTEnable();
   if (use_vm && backend != "ge" && !is_air) {
-    compile::SetMindRTEnable();
     if (IsPhaseLoadFromMindIR(phase)) {
       return MindIRPipeline();
     }
@@ -1233,7 +1233,16 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef ENABLE_D
   if (ms_context->backend_policy() == "ge") {
-    return ExecDFGraph(info_, args, phase);
+    std::string phase_prefix = GetPhasePrefix(phase);
+    if (phase_prefix == "save") {
+      auto pos = phase.find('.');
+      std::string origin_phase = phase.substr(pos + 1);
+      FuncGraphPtr func_graph = info_["train." + origin_phase]->func_graph;
+      MS_EXCEPTION_IF_NULL(func_graph);
+      DoExecNonInputGraph("save." + func_graph->ToString());
+      ConfigManager::GetInstance().ResetConfig();
+      return py::none();
+    }
   }
 #endif
   auto ret_val = std::make_shared<py::object>();
@@ -1242,6 +1251,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
       return *ret_val;
     }
   }
+#ifndef ENABLE_D
   if (ms_context->backend_policy() == "ge") {
     // Virtual output constructed for test cases.
     if (!args.empty()) {
@@ -1249,6 +1259,7 @@ py::object GraphExecutorPy::Run(const py::tuple &args, const py::object &phase_o
     }
     return args;
   }
+#endif
   auto iter = info_.find(phase);
   if (iter == info_.end()) {
     MS_LOG(EXCEPTION) << "No executor info. found for phase: " << phase;
@@ -1315,17 +1326,6 @@ void GraphExecutorPy::UpdataParamNodeDefaultInput(
   }
 }
 
-void GraphExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &phase) const {
-#ifdef ENABLE_D
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto backend = ms_context->backend_policy();
-  if (backend == "ge") {
-    RunGEInitGraph(init_params, phase);
-  }
-#endif
-}
-
 void GraphExecutorPy::PyExePath(const py::object &py_exe_path) {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
@@ -1351,7 +1351,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
 #ifndef NO_DLIB
-  if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
+  if (!context::IsTsdOpened(ms_context)) {
     InitPipeline();
   }
 #endif
@@ -1489,6 +1489,11 @@ void InitHccl() {
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     (void)InitPipeline();
+    auto context_ptr = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context_ptr);
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    device_context->Initialize();
     return;
   }
 #endif
@@ -1598,7 +1603,6 @@ FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_
 void ReleaseGeTsd() {
   auto context_ptr = MsContext::GetInstance();
   if (context_ptr != nullptr) {
-    (void)context::FinalizeGe(context_ptr, true);
     (void)context::CloseTsd(context_ptr, true);
   }
 }
@@ -1610,7 +1614,6 @@ void InitPipeline() {
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  (void)context::InitGe(ms_context);
   if (!context::OpenTsd(ms_context)) {
     MS_LOG(EXCEPTION) << "Open tsd failed";
   }
@@ -1619,7 +1622,6 @@ void InitPipeline() {
 void FinalizeBackend() {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  (void)context::FinalizeGe(context_ptr);
   (void)context::CloseTsd(context_ptr);
 }
 

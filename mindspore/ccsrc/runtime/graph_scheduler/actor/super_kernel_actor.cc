@@ -168,6 +168,10 @@ bool SuperKernelActor::CopyInputData(const OpContext<DeviceTensor> *context) {
   for (auto &device_tensor_store_key : device_tensor_store_keys_) {
     auto input_device_tensor = DeviceTensorStore::GetInstance().Fetch(device_tensor_store_key.second.get(),
                                                                       device_contexts_[0]->GetDeviceType());
+    // todo:
+    if (input_device_tensor == nullptr) {
+      continue;
+    }
     MS_EXCEPTION_IF_NULL(input_device_tensor);
     if (device_tensor_store_key.first >= input_nodes.size()) {
       MS_LOG(ERROR) << "The input index:" << device_tensor_store_key.first << "is out of range:" << input_nodes.size();

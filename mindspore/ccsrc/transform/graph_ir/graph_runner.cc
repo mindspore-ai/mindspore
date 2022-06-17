@@ -32,19 +32,20 @@
 #include "common/ge_inner_error_codes.h"
 #endif
 #include "utils/ms_context.h"
+#include "include/common/utils/scoped_long_running.h"
 
 #ifndef ENABLE_LITE_ACL
 namespace py = pybind11;
 #endif
 namespace mindspore {
 namespace transform {
-std::shared_ptr<ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
+std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &sess_options) {
 #ifdef ENABLE_D
-  std::shared_ptr<ge::Session> ret;
+  std::shared_ptr<::ge::Session> ret;
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
-    ret = std::make_shared<ge::Session>(sess_options);
+    ret = std::make_shared<::ge::Session>(sess_options);
     if (ret == nullptr) {
       MS_LOG(EXCEPTION) << "Create GE session failed!";
     }
@@ -76,11 +77,11 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() == "ge") {
     // register the callback function
-    if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ge::GRAPH_SUCCESS) {
+    if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "register callback failed!";
     }
 
-    if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ge::GRAPH_SUCCESS) {
+    if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ::ge::GRAPH_SUCCESS) {
       MS_LOG(EXCEPTION) << "register summary callback failed!";
     }
   }
@@ -127,14 +128,14 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
     return Status::NOT_FOUND;
   }
 
-  // call ge::RunGraph() to exec a graph;
+  // call ::ge::RunGraph() to exec a graph;
   std::vector<GeTensor> ge_inputs;
   std::vector<GeTensor> ge_outputs;
 
   (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(ge_inputs),
                        [](const GeTensorPtr &i) { return *i; });
 
-  MS_LOG(INFO) << "Run the graph in GE with " << ge_inputs.size() << " inputs";
+  MS_LOG(INFO) << "Run the graph " << name << " in GE with " << ge_inputs.size() << " inputs";
 
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
@@ -147,8 +148,9 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
       MS_LOG(ERROR) << "The GE session is null, can't run the graph!";
       return Status::FAILED;
     }
-    ge::Status ret = sess_->RunGraph(static_cast<uint32_t>(wrap_ptr->id_), ge_inputs, ge_outputs);
-    if (ret != ge::GRAPH_SUCCESS) {
+
+    ::ge::Status ret = sess_->RunGraph(static_cast<uint32_t>(wrap_ptr->id_), ge_inputs, ge_outputs);
+    if (ret != ::ge::GRAPH_SUCCESS) {
       MS_LOG(ERROR) << "Call GE RunGraph Failed, ret is: " << ret;
       return Status::FAILED;
     }
@@ -169,8 +171,8 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
   return Status::SUCCESS;
 }
 
-Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
-                             std::vector<MeTensorPtr> *outputs, const std::vector<TypeId> &me_types) {
+Status GraphRunner::RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
+                                  std::vector<GeTensorPtr> *outputs) {
   std::string name = options.name;
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null";
@@ -208,15 +210,8 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<GeTens
   auto call_back = [=, &is_finished, &end_of_sequence, &condition](ge::Status ge_status,
                                                                    std::vector<ge::Tensor> &ge_outputs) {
     if (ge_status == Status::SUCCESS) {
-      if (me_types.size() != ge_outputs.size()) {
-        MS_LOG(EXCEPTION) << "Convert output ge tensor to me tensor failed.";
-      }
       for (size_t i = 0; i < ge_outputs.size(); ++i) {
-        std::shared_ptr<ge::Tensor> ge_tensor_ptr = std::make_shared<ge::Tensor>(ge_outputs[i]);
-        auto me_tensor = TransformUtil::ConvertGeTensor(ge_tensor_ptr, me_types[i]);
-        if (me_tensor != nullptr) {
-          outputs->emplace_back(me_tensor);
-        }
+        outputs->emplace_back(std::make_shared<ge::Tensor>(ge_outputs[i]));
       }
       is_finished = true;
     } else if (ge_status == ge::END_OF_SEQUENCE) {
@@ -306,6 +301,33 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
     MS_LOG(INFO) << "Return Me tensor outputs num is: " << outputs->size();
     return Status::SUCCESS;
   }
+}
+
+Status GraphRunner::BuildAllGraphs() {
+  MS_LOG(INFO) << "Build all graphs";
+  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
+  if (wrappers.empty()) {
+    MS_LOG(INFO) << "The GraphManager is empty!!";
+    return SUCCESS;
+  }
+
+  for (auto &it : wrappers) {
+    MS_LOG(INFO) << "Build the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
+    std::vector<GeTensor> ge_inputs;
+    (void)std::transform(it->inputs_.begin(), it->inputs_.end(), std::back_inserter(ge_inputs),
+                         [](const GeTensorPtr &i) { return *i; });
+
+#ifndef ENABLE_LITE_ACL
+    py::gil_scoped_release release;
+#endif
+#ifdef ENABLE_D
+    if (sess_->BuildGraph(static_cast<uint32_t>(it->id_), ge_inputs) != ge::SUCCESS) {
+      MS_LOG(ERROR) << "Build graph " << it->id_ << " failed.";
+      return FAILED;
+    }
+#endif
+  }
+  return SUCCESS;
 }
 }  // namespace transform
 }  // namespace mindspore

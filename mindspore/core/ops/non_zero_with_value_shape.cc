@@ -43,7 +43,12 @@ AbstractBasePtr NonZeroWithValueShapeInfer(const abstract::AnalysisEnginePtr &, 
   ShapeVector y_shape;
 
   int64_t rank_base = SizeToLong(x_shape->shape().size());
-  int64_t max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
+  int64_t max_size = 0;
+  if (std::any_of(x_shape->shape().begin(), x_shape->shape().end(), [](int64_t dim) { return dim < 0; })) {
+    max_size = std::accumulate(x_shape->max_shape().begin(), x_shape->max_shape().end(), 1, std::multiplies<int64_t>());
+  } else {
+    max_size = std::accumulate(x_shape->shape().begin(), x_shape->shape().end(), 1, std::multiplies<int64_t>());
+  }
 
   (void)y_shape.emplace_back(rank_base);
   // Indices of elements that are non-zero
