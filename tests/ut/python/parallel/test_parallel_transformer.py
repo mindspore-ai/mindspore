@@ -166,10 +166,7 @@ def run_total_transformer_model_head(e_layer,
     model.train(1, dataset, dataset_sink_mode=False)
 
 
-def test_transformer_model():
-    set_auto_parallel_context(device_num=8, global_rank=0,
-                              full_batch=True,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+def run_transformer_model():
     net = Transformer(encoder_layers=1,
                       decoder_layers=2,
                       batch_size=2,
@@ -197,10 +194,32 @@ def test_transformer_model():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
-def test_transformer_model_2d_inputs():
+def test_transformer_model_semi():
+    """
+    Feature: Test Transformer.
+    Description: 3-dim input.
+    Expectation: Successful graph compilation.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0,
                               full_batch=True,
                               parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    run_transformer_model()
+
+
+def test_transformer_model_sp():
+    """
+    Feature: Test Transformer with sharding propagation.
+    Description: 3-dim input.
+    Expectation: Successful graph compilation.
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True, search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_transformer_model()
+
+
+def run_transformer_model_2d_inputs():
     net = Transformer(encoder_layers=1,
                       decoder_layers=2,
                       batch_size=2,
@@ -226,6 +245,31 @@ def test_transformer_model_2d_inputs():
     model = Model(net_with_grad)
 
     model.train(1, dataset, dataset_sink_mode=False)
+
+
+def test_transformer_model_2d_semi():
+    """
+    Feature: Test Transformer.
+    Description: 2-dim input.
+    Expectation: Successful graph compilation.
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    run_transformer_model_2d_inputs()
+
+
+def test_transformer_model_2d_sp():
+    """
+    Feature: Test Transformer with sharding propagation.
+    Description: 2-dim input.
+    Expectation: Successful graph compilation.
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True, search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_transformer_model_2d_inputs()
 
 
 class TestTransformerEmbeddingHead:
@@ -255,19 +299,12 @@ class TestTransformerEmbeddingHead:
                     appear_count += 1
         assert appear_count == target_count
 
-    def test_pipeline_with_embedding(self):
-        """
-        Feature: Test Transformer with embedding as shared
-        Description: When do pipeline training and applied optimzier shard, the embedding which is model parallel will
-                     raise the shape error. This test cast is ensure there is no error raised.
-        Expectation: The number of AssignAdd is not as expected.
-        """
+    def run_pipeline_with_embedding(self):
         bs = 16
         pp = 2
         context.set_auto_parallel_context(device_num=8, global_rank=0, pipeline_stages=pp,
                                           full_batch=True,
                                           enable_parallel_optimizer=True)
-        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         cf = TransformerOpParallelConfig(data_parallel=1, model_parallel=4, pipeline_stage=pp, vocab_emb_dp=False)
         pipeline_net = TransformerEncoderNet(batch_size=bs // pp,
                                              en_layer=2, de_layer=0, parallel_config=cf)
@@ -284,11 +321,29 @@ class TestTransformerEmbeddingHead:
         run_network_function(dataset, pipeline_cell_net)
         self.virtual_assign_add_from_ir(pattern=r'AssignAdd(', target_count=35)
 
+    def test_pipeline_with_embedding_semi(self):
+        """
+        Feature: Test Transformer with embedding as shared
+        Description: When do pipeline training and applied optimzier shard, the embedding which is model parallel will
+                     raise the shape error. This test cast is ensure there is no error raised.
+        Expectation: The number of AssignAdd is not as expected.
+        """
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        self.run_pipeline_with_embedding()
 
-def test_transformer_model_int64_inputs():
-    set_auto_parallel_context(device_num=8, global_rank=0,
-                              full_batch=True,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    def test_pipeline_with_embedding_sp(self):
+        """
+        Feature: Test Transformer with embedding as shared, using sharding propagation.
+        Description: When do pipeline training and applied optimzier shard, the embedding which is model parallel will
+                     raise the shape error. This test cast is ensure there is no error raised.
+        Expectation: The number of AssignAdd is not as expected.
+        """
+        context.set_auto_parallel_context(parallel_mode="auto_parallel", search_mode="sharding_propagation")
+        set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+        self.run_pipeline_with_embedding()
+
+
+def run_transformer_model_int64_inputs():
     net = Transformer(encoder_layers=1,
                       decoder_layers=2,
                       batch_size=2,
@@ -317,14 +372,67 @@ def test_transformer_model_int64_inputs():
         model.train(1, dataset, dataset_sink_mode=False)
 
 
+def test_transformer_model_int64_semi():
+    """
+    Feature: Test Transformer.
+    Description: int64 input.
+    Expectation: Successful graph compilation.
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    run_transformer_model_int64_inputs()
+
+
+def test_transformer_model_int64_sp():
+    """
+    Feature: Test Transformer with sharding propagation.
+    Description: int64 input.
+    Expectation: Successful graph compilation.
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              full_batch=True, search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_transformer_model_int64_inputs()
+
+
 def test_transformer_model_head_parallel_only_encoder():
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     run_total_transformer_model_head(e_layer=2, d_layer=0, arg_parallel_config=local_config)
 
 
+def test_transformer_model_head_parallel_only_encoder_sp():
+    """
+    Feature: Test Transformer with sharding propagation.
+    Description: only encode.
+    Expectation: Successful graph compilation.
+    """
+    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
+    set_auto_parallel_context(search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_total_transformer_model_head(e_layer=2, d_layer=0, arg_parallel_config=local_config,
+                                     mode=ParallelMode.AUTO_PARALLEL)
+
+
 def test_transformer_model_head_parallel():
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     run_total_transformer_model_head(e_layer=1, d_layer=1, arg_parallel_config=local_config)
+
+
+def test_transformer_model_head_parallel_sp():
+    """
+    Feature: Test Transformer with sharding propagation.
+    Description: 1 encode and 1 decode.
+    Expectation: Successful graph compilation.
+    """
+    local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
+    set_auto_parallel_context(search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_total_transformer_model_head(e_layer=1, d_layer=1, arg_parallel_config=local_config,
+                                     mode=ParallelMode.AUTO_PARALLEL)
 
 
 def test_transformer_model_head_parallel_decoder():
@@ -353,8 +461,7 @@ def pipeline_single_transformer(grad_accumulation_shard=False):
     """
     set_auto_parallel_context(device_num=64,
                               full_batch=True,
-                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+                              pipeline_stages=pipeline_config.pipeline_stage, global_rank=0)
     context.set_auto_parallel_context(parallel_optimizer_config=
                                       {"gradient_accumulation_shard": grad_accumulation_shard})
 
@@ -394,6 +501,19 @@ def test_pipeline_transformer_gradient_shard_true():
     Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard True
     Expectation: The compile passed
     """
+    set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    pipeline_single_transformer(grad_accumulation_shard=True)
+
+
+def test_pipeline_transformer_gradient_shard_true_sp():
+    """
+    Feature: Gradient Accumulation Shard for Pipeline and Gradient Accumulation with sharding propagation
+    Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard True
+    Expectation: The compile passed
+    """
+    set_auto_parallel_context(search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
     pipeline_single_transformer(grad_accumulation_shard=True)
 
 
@@ -403,6 +523,19 @@ def test_pipeline_transformer_gradient_shard_false():
     Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard False
     Expectation: The compile passed
     """
+    set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    pipeline_single_transformer(grad_accumulation_shard=False)
+
+
+def test_pipeline_transformer_gradient_shard_false_sp():
+    """
+    Feature: Gradient Accumulation Shard for Pipeline and Gradient Accumulation with sharding propagation
+    Description: Test a single transformer model with pipeline parallel with grad_accumulation_shard False
+    Expectation: The compile passed
+    """
+    set_auto_parallel_context(search_mode="sharding_propagation",
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
     pipeline_single_transformer(grad_accumulation_shard=False)
 
 

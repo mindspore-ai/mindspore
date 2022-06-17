@@ -22,6 +22,7 @@ from mindspore.context import set_auto_parallel_context, ParallelMode
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.parallel.nn import Transformer, TransformerOpParallelConfig, MoEConfig, CrossEntropyLoss
+from mindspore.parallel import set_algo_parameters
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import TrainOneStepCell, _VirtualDatasetCell
 from mindspore.train import Model
@@ -80,15 +81,7 @@ class NetWithLossMoe(nn.Cell):
         return self.add(predict, moe_loss)
 
 
-def test_transformer_model():
-    """
-    Feature: Test Transformer+MoE, with All2All enabled.
-    Description: 3-dim input.
-    Expectation: Successful graph compilation with All2All included.
-    """
-    set_auto_parallel_context(device_num=16, global_rank=0,
-                              full_batch=True, enable_alltoall=True,
-                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+def run_transformer_model():
     net = Transformer(encoder_layers=1,
                       decoder_layers=1,
                       batch_size=2,
@@ -116,15 +109,32 @@ def test_transformer_model():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
-def test_transformer_model_2d():
+def test_transformer_model_semi():
     """
     Feature: Test Transformer+MoE, with All2All enabled.
-    Description: 2-dim input.
+    Description: 3-dim input.
     Expectation: Successful graph compilation with All2All included.
     """
     set_auto_parallel_context(device_num=16, global_rank=0,
                               full_batch=True, enable_alltoall=True,
                               parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    run_transformer_model()
+
+
+def test_transformer_model_sp():
+    """
+    Feature: Test Transformer+MoE, with All2All enabled and sharding propagation.
+    Description: 3-dim input.
+    Expectation: Successful graph compilation with All2All included.
+    """
+    set_auto_parallel_context(device_num=16, global_rank=0, search_mode="sharding_propagation",
+                              full_batch=True, enable_alltoall=True,
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_transformer_model()
+
+
+def run_transformer_model_2d():
     net = Transformer(encoder_layers=1,
                       decoder_layers=1,
                       batch_size=2,
@@ -153,6 +163,31 @@ def test_transformer_model_2d():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
+def test_transformer_model_2d_semi():
+    """
+    Feature: Test Transformer+MoE, with All2All enabled.
+    Description: 2-dim input.
+    Expectation: Successful graph compilation with All2All included.
+    """
+    set_auto_parallel_context(device_num=16, global_rank=0,
+                              full_batch=True, enable_alltoall=True,
+                              parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    run_transformer_model_2d()
+
+
+def test_transformer_model_2d_sp():
+    """
+    Feature: Test Transformer+MoE, with All2All enabled and sharding propagation.
+    Description: 2-dim input.
+    Expectation: Successful graph compilation with All2All included.
+    """
+    set_auto_parallel_context(device_num=16, global_rank=0, search_mode="sharding_propagation",
+                              full_batch=True, enable_alltoall=True,
+                              parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    run_transformer_model_2d()
+
+
 class TransformerNet(nn.Cell):
     """Transformer with loss"""
     def __init__(self, en_layer, de_layer, parallel_config):
@@ -176,9 +211,6 @@ class TransformerNet(nn.Cell):
 
 
 def moe_with_loss_plus_mutiparallel(local_parallel_config):
-    set_auto_parallel_context(device_num=16, enable_alltoall=True,
-                              full_batch=True, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
-
     encoder_input_value = Tensor(np.ones((2, 20, 64)), mstype.float32)
     encoder_input_mask = Tensor(np.ones((2, 20, 20)), mstype.float16)
     decoder_input_value = Tensor(np.ones((2, 10, 64)), mstype.float32)
@@ -205,6 +237,8 @@ def test_moe_expert_parallel1():
     Description: 3-dim input.
     Expectation: Successful graph compilation with All2All included.
     """
+    set_auto_parallel_context(device_num=16, enable_alltoall=True,
+                              full_batch=True, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     local_p_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=4, expert_parallel=2)
     moe_with_loss_plus_mutiparallel(local_p_config)
 
@@ -215,21 +249,52 @@ def test_moe_expert_parallel2():
     Description: 3-dim input.
     Expectation: Successful graph compilation with All2All included.
     """
+    set_auto_parallel_context(device_num=16, enable_alltoall=True,
+                              full_batch=True, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
     local_p_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=8, expert_parallel=1)
     moe_with_loss_plus_mutiparallel(local_p_config)
 
 
 def test_moe_expert_parallel3():
     """
+    Feature: Test Transformer+MoE for data_parallel plus expert_parallel, with All2All enabled
+             and sharding propagation.
+    Description: 3-dim input.
+    Expectation: Successful graph compilation with All2All included.
+    """
+    set_auto_parallel_context(device_num=16, enable_alltoall=True, search_mode="sharding_propagation",
+                              full_batch=True, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    local_p_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=4, expert_parallel=2)
+    moe_with_loss_plus_mutiparallel(local_p_config)
+
+
+def test_moe_expert_parallel4():
+    """
+    Feature: Test Transformer+MoE for data_parallel plus expert_parallel, with All2All enabled
+             and sharding propagation.
+    Description: 3-dim input.
+    Expectation: Successful graph compilation with All2All included.
+    """
+    set_auto_parallel_context(device_num=16, enable_alltoall=True, search_mode="sharding_propagation",
+                              full_batch=True, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
+    set_algo_parameters(elementwise_op_strategy_follow=False, fully_use_devices=False)
+    local_p_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=8, expert_parallel=1)
+    moe_with_loss_plus_mutiparallel(local_p_config)
+
+
+def test_moe_expert_parallel_exception1():
+    """
     Feature: Test Transformer+MoE for data_parallel plus expert_parallel, with All2All enabled.
     Description: 3-dim input.
-    Expectation: Successful graph compilation.
+    Expectation: Raise ValueError.
     """
     local_p_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, expert_parallel=2)
     with pytest.raises(ValueError):
         moe_with_loss_plus_mutiparallel(local_p_config)
 
-def test_moe_expert_parallel_exception():
+
+def test_moe_expert_parallel_exception2():
     """
     Feature: Test Transformer+MoE for data_parallel plus expert_parallel, with All2All enabled.
     Description: data_parallel*model_parallel*expert_parallel > device_num
