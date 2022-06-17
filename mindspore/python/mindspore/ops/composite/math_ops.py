@@ -17,10 +17,10 @@ import numpy as np
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import Validator as validator
-from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from mindspore.ops.operations._inner_ops import DynamicResizeNearestNeighbor
+from ..function.math_func import cummin as cummin_
 from .. import operations as P
 
 
@@ -725,22 +725,6 @@ def matmul(x1, x2, dtype=None):
     return res
 
 
-@constexpr
-def _create_cummin_perm(axis, x_shape):
-    """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
-    len_axis = len(x_shape)
-    if not isinstance(axis, int):
-        raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
-    if axis < -len_axis or axis > len_axis:
-        raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
-    prem = [i for i in range(len_axis)]
-    if axis < 0:
-        axis = axis + len_axis
-    prem[0], prem[axis] = axis, 0
-    prem = tuple(prem)
-    return prem
-
-
 def cummin(x, axis):
     r"""
     Computation of the cumulative minimum of elements of 'x' in the dimension axis,
@@ -782,18 +766,7 @@ def cummin(x, axis):
         >>> print(output[1])
         [0 1 1 1 4 4]
     """
-    cummin_op = inner.Cummin(axis=0)
-    if axis == 0:
-        out1, out2 = cummin_op(x)
-    else:
-        transpose = P.Transpose()
-        x_shape = P.Shape()(x)
-        prem = _create_cummin_perm(axis, x_shape)
-        x = transpose(x, prem)
-        out1, out2 = cummin_op(x)
-        out1 = transpose(out1, prem)
-        out2 = transpose(out2, prem)
-    return [out1, out2]
+    return cummin_(x, axis)
 
 
 def resize_nearest_neighbor(input_x, size, align_corners=False):

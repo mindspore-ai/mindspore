@@ -19,13 +19,13 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
-import mindspore.ops.operations.array_ops as P
+import mindspore.ops as ops
 
 
 class IndexFillNet(nn.Cell):
     def __init__(self):
         super(IndexFillNet, self).__init__()
-        self.index_fill = P.IndexFill()
+        self.index_fill = ops.index_fill
 
     def construct(self, x, dim, index, value):
         out = self.index_fill(x, dim, index, value)
@@ -33,7 +33,6 @@ class IndexFillNet(nn.Cell):
 
 
 def compare_with_numpy(x, dim, index, value):
-    # Graph Mode
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     ms_x = Tensor(x)
     ms_dim = dim

@@ -1961,6 +1961,29 @@ class Tensor(Tensor_):
             return tensor_operator_registry.get('cumsum')()(x, axis).astype(dtype, copy=False)
         return tensor_operator_registry.get('cumsum')()(x, axis)
 
+    def cummin(self, axis):
+        """
+        Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
+        is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
+        each maximum value.
+        """
+        return tensor_operator_registry.get('cummin')(self, axis)
+
+    def cummax(self, axis):
+        """
+        Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
+        is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
+        each maximum value.
+        """
+        return tensor_operator_registry.get('cummax')(self, axis)
+
+    def index_fill(self, dim, index, value):
+        """
+        Fills the elements under the dim dimension of the self tensor with the input value
+        by selecting the indices in the order given in index.
+        """
+        return tensor_operator_registry.get('index_fill')(self, dim, index, value)
+
     def inplace_update(self, v, indices):
         """
         Update some rows of a tensor with values of v according to the specified indices.

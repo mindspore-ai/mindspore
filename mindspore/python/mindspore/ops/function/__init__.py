@@ -91,7 +91,8 @@ from .array_func import (
     broadcast_to,
     adaptive_max_pool2d,
     col2im,
-    split
+    split,
+    index_fill,
 )
 from .parameter_func import (
     assign,
@@ -212,6 +213,9 @@ from .math_func import (
     gumbel_softmax,
     matmul,
     baddbmm,
+    cummin,
+    cummax,
+    sparse_segment_mean,
 )
 from .nn_func import (
     adaptive_avg_pool2d,

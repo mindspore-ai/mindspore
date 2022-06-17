@@ -200,6 +200,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"squeeze", std::string("squeeze")},                                // P.squeeze()
        {"astype", std::string("astype")},                                  // P.cast()
        {"cumsum", std::string("cumsum")},                                  // P.cumsum()
+       {"cummin", std::string("cummin")},                                  // cummin()
+       {"cummax", std::string("cummax")},                                  // cummax()
+       {"index_fill", std::string("index_fill")},                          // index_fill()
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
        {"inplace_add", std::string("inplace_add")},                        // P.InplaceAdd

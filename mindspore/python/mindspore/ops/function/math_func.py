@@ -24,6 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from mindspore.ops.operations._inner_ops import Cummin
 from mindspore._checkparam import check_is_number
 from ..operations.math_ops import (
     Bernoulli,
@@ -39,6 +40,7 @@ from ..operations.math_ops import (
     Renorm,
     Lcm,
     Gcd,
+    SparseSegmentMean,
 )
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
@@ -139,6 +141,7 @@ log_matrix_determinant_ = P.LogMatrixDeterminant()
 exp2_ = P.Pow()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
+sparse_segment_mean_ = SparseSegmentMean()
 
 
 #####################################
@@ -3316,6 +3319,93 @@ def rad2deg(x):
 #####################################
 
 
+@constexpr
+def _create_cummin_perm(axis, x_shape):
+    """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
+    len_axis = len(x_shape)
+    if not isinstance(axis, int):
+        raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
+    if axis < -len_axis or axis > len_axis:
+        raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
+    prem = [i for i in range(len_axis)]
+    if axis < 0:
+        axis = axis + len_axis
+    prem[0], prem[axis] = axis, 0
+    prem = tuple(prem)
+    return prem
+
+
+def cummin(x, axis):
+    r"""
+    Computation of the cumulative minimum of elements of 'x' in the dimension axis,
+    and the index location of each maximum value found in the dimension 'axis'.
+
+    It returns the cumulative minimum of elements and the index.
+
+    .. math::
+        \begin{array}{ll} \\
+            y{i} = min(x{1}, x{2}, ... , x{i})
+        \end{array}
+
+    Args:
+        x (Tensor): The input tensor, rank of `input_x` > 0.
+        axis (Int): The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
+          to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
+          from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
+          from the last dimension. For example, -1 means the last dimension.
+
+    Outputs:
+        - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
+        - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If 'axis' is not an int.
+        ValueError:If 'axis' is out the range of [-len(`input_x`.shape) to len(`input_x`.shape) - 1]
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> a = Tensor([-0.2284, -0.6628,  0.0975,  0.2680, -1.3298, -0.4220], mindspore.float32)
+        >>> output = ops.cummin(a, axis=0)
+        >>> print(output[0])
+        [-0.2284 -0.6628 -0.6628 -0.6628 -1.3298 -1.3298]
+        >>> print(output[1])
+        [0 1 1 1 4 4]
+    """
+    cummin_op = Cummin(axis=0)
+    if axis == 0:
+        out1, out2 = cummin_op(x)
+    else:
+        transpose = P.Transpose()
+        x_shape = P.Shape()(x)
+        prem = _create_cummin_perm(axis, x_shape)
+        x = transpose(x, prem)
+        out1, out2 = cummin_op(x)
+        out1 = transpose(out1, prem)
+        out2 = transpose(out2, prem)
+    return [out1, out2]
+
+
+def cummax(x, axis):
+    """
+    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
+    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
+    each maximum value.
+    """
+    return ops.Cummax(axis=axis)(x)
+
+
+def sparse_segment_mean(x, indices, segment_ids):
+    """
+    Computes the mean along sparse segments of a tensor.
+    """
+    return sparse_segment_mean_(x, indices, segment_ids)
+
+
 def logsumexp(x, axis, keep_dims=False):
     r"""
     Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
@@ -3863,6 +3953,9 @@ __all__ = [
     'truncate_mod',
     'gumbel_softmax',
     'matmul',
-    'baddbmm'
+    'baddbmm',
+    'cummin',
+    'cummax',
+    'sparse_segment_mean',
 ]
 __all__.sort()

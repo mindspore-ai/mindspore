@@ -28,8 +28,8 @@ from ..operations.array_ops import (
     Col2Im,
     ScatterNdMax,
     ScatterNdMul,
+    IndexFill,
 )
-
 from ..operations.nn_ops import AdaptiveMaxPool2D
 from ...common import Tensor
 
@@ -74,6 +74,7 @@ range_ = P.Range()
 zeros_like_ = P.ZerosLike()
 cast_ = P.Cast()
 tensor_select_ = P.Select()
+index_fill_ = IndexFill()
 
 
 @constexpr
@@ -2742,6 +2743,18 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
     return AdaptiveMaxPool2D(output_size, return_indices)(input_x)
 
 
+def index_fill(x, dim, index, value):
+    """
+    Fills the elements under the dim dimension of the self tensor with the input value
+    by selecting the indices in the order given in index.
+    """
+    if isinstance(dim, int) and not isinstance(dim, bool):
+        dim = cast_(dim, mstype.int32)
+    if isinstance(value, (float, int)) and not isinstance(value, bool):
+        value = cast_(value, x.dtype)
+    return index_fill_(x, dim, index, value)
+
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -3236,6 +3249,7 @@ __all__ = [
     'meshgrid',
     'broadcast_to',
     'col2im',
-    'split'
+    'split',
+    "index_fill",
 ]
 __all__.sort()
