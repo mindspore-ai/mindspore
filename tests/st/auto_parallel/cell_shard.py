@@ -76,9 +76,7 @@ class BasicBlock(nn.Cell):
         super(BasicBlock, self).__init__()
 
         self.conv1 = _conv3x3(in_channels, out_channels, stride=stride)
-        self.bn1 = _fused_bn(out_channels, momentum=momentum)
         self.conv2 = _conv3x3(out_channels, out_channels)
-        self.bn2 = _fused_bn(out_channels, momentum=momentum)
         self.relu = P.ReLU()
         self.down_sample_layer = None
         self.downsample = (in_channels != out_channels)
@@ -174,7 +172,6 @@ class ResNet(nn.Cell):
                              "layer_num, inchannel, outchannel list must be 4!")
 
         self.conv1 = _conv7x7(3, 64, stride=2)
-        self.bn1 = _fused_bn(64)
         self.relu = P.ReLU()
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, pad_mode='same')
 
@@ -381,6 +378,6 @@ def test_train_feed(num_classes=65536):
     model = Model(net, loss_fn=loss, optimizer=opt)
     model.train(3, dataset, dataset_sink_mode=False, callbacks=parallel_callback)
     loss_value = np.array(parallel_callback.loss_list)
-    expect_out = [11.087254, 10.876551, 10.13067]
+    expect_out = [11.087254, 10.876551, 10.057782]
     print(loss_value)
     assert np.allclose(loss_value, expect_out, 0.0001, 0.0001)

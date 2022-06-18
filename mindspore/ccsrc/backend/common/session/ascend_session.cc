@@ -1661,7 +1661,7 @@ void AscendSession::SyncStream() const {
 }
 
 std::shared_ptr<device::Bucket> AscendSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
-  auto bucket = std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size);
+  auto bucket = std::make_shared<device::ascend::AscendBucket>(bucket_id, bucket_size, device_id_);
 
   auto kernel_runtime = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
   MS_EXCEPTION_IF_NULL(kernel_runtime);

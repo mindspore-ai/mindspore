@@ -718,7 +718,10 @@ uint32_t GPUKernelExecutor::GetRankID() const {
 }
 
 std::shared_ptr<Bucket> GPUKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
-  auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  auto device_context = res_manager_->device_context_;
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto bucket = std::make_shared<GPUBucket>(bucket_id, bucket_size, device_context->device_context_key().device_id_);
   MS_EXCEPTION_IF_NULL(bucket);
   // One computation stream, one communication stream.
   const size_t min_num_of_stream = 2;

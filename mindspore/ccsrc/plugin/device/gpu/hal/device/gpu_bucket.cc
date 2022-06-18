@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "abstract/utils.h"
+#include "utils/ms_context.h"
 #include "plugin/device/gpu/hal/device/gpu_event.h"
 #include "plugin/device/gpu/hal/device/gpu_device_address.h"
 #include "plugin/device/gpu/hal/device/gpu_memory_allocator.h"
@@ -42,8 +43,8 @@ size_t AlignMemorySize(size_t size) {
 }
 }  // namespace
 namespace mindspore::device::gpu {
-GPUBucket::GPUBucket(uint32_t id, uint32_t bucket_size)
-    : Bucket(id, bucket_size, kNcclWorldGroup, "GPU"), collective_handle_(nullptr) {}
+GPUBucket::GPUBucket(uint32_t id, uint32_t bucket_size, uint32_t device_id)
+    : Bucket(id, bucket_size, kNcclWorldGroup, kGPUDevice, device_id), collective_handle_(nullptr) {}
 
 DeviceAddressPtr GPUBucket::CreateDeviceAddress(size_t size, TypeId type_id, const std::string &format) const {
   return std::make_shared<GPUDeviceAddress>(nullptr, size, format, type_id, device_name_, device_id_);
@@ -172,6 +173,5 @@ void GPUBucket::Init(const std::vector<void *> &compute_streams, const std::vect
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  device_id_ = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 }
 }  // namespace mindspore::device::gpu

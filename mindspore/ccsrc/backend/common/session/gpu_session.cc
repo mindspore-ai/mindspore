@@ -747,7 +747,7 @@ void GPUSession::SyncStream() const {
 }
 
 std::shared_ptr<device::Bucket> GPUSession::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) {
-  auto bucket = std::make_shared<device::gpu::GPUBucket>(bucket_id, bucket_size);
+  auto bucket = std::make_shared<device::gpu::GPUBucket>(bucket_id, bucket_size, device_id_);
 
   auto kernel_runtime = device::KernelRuntimeManager::Instance().GetCurrentKernelRuntime();
   MS_EXCEPTION_IF_NULL(kernel_runtime);

@@ -30,14 +30,14 @@
 namespace mindspore::device {
 class Bucket {
  public:
-  Bucket(uint32_t id, uint32_t bucket_size, std::string group, std::string device_name)
+  Bucket(uint32_t id, uint32_t bucket_size, std::string group, std::string device_name, uint32_t device_id)
       : id_(id),
         bucket_size_(bucket_size),
         full_(false),
         stream_(nullptr),
         compute_stream_(nullptr),
         total_size_(0),
-        device_id_(0),
+        device_id_(device_id),
         device_name_(std::move(device_name)),
         group_(std::move(group)),
         pre_event_(nullptr),

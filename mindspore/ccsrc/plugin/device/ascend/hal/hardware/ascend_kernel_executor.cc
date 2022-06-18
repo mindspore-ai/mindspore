@@ -280,7 +280,10 @@ void AscendKernelExecutor::PreprocessBeforeRunSingleOpGraph(const KernelGraphPtr
 }
 
 std::shared_ptr<Bucket> AscendKernelExecutor::CreateBucket(uint32_t bucket_id, uint32_t bucket_size) const {
-  auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size);
+  MS_EXCEPTION_IF_NULL(res_manager_);
+  auto device_context = res_manager_->device_context_;
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto bucket = std::make_shared<AscendBucket>(bucket_id, bucket_size, device_context->device_context_key().device_id_);
   MS_EXCEPTION_IF_NULL(bucket);
 
   // For data-parallel, there is no communication in forward and backward process, the only communication ops arise
