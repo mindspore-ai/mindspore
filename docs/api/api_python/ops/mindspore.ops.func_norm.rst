@@ -1,7 +1,7 @@
-mindspore.ops.lp_norm
-=====================
+mindspore.ops.norm
+==================
 
-.. py:function:: mindspore.ops.lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
+.. py:function:: mindspore.ops.norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12)
 
     返回给定Tensor的矩阵范数或向量范数。
 

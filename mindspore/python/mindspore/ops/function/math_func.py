@@ -3451,7 +3451,7 @@ def logsumexp(x, axis, keep_dims=False):
     return x_logsumexp + x_max
 
 
-def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
+def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     r"""
     Returns the matrix norm or vector norm of a given tensor.
 
@@ -3485,7 +3485,7 @@ def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
 
     Examples:
         >>> input_x = Tensor(np.array([[[1.0, 2.0], [3.0, 4.0]], [[5.0, 6.0], [7.0, 8.0]]]).astype(np.float32))
-        >>> output = ops.lp_norm(input_x, [0, 1], p=2)
+        >>> output = ops.norm(input_x, [0, 1], p=2)
         >>> print(output)
         [ 9.165152 10.954452]
     """
@@ -3858,7 +3858,7 @@ __all__ = [
     'tensor_le',
     'le',
     'lerp',
-    'lp_norm',
+    'norm',
     'tensor_gt',
     'logaddexp',
     'mv',

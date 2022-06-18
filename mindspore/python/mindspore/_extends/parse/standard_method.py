@@ -391,10 +391,10 @@ def swapaxes(x, axis1, axis2):
     new_perm = None
     if axis2 + 1 < x.ndim:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
         new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-            perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -2044,9 +2044,9 @@ def lerp(start, end, weight):
     return F.lerp(start, end, weight)
 
 
-def lp_norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
+def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     """Returns the matrix norm or vector norm of a given tensor."""
-    return F.lp_norm(input_x, axis, p, keep_dims, epsilon)
+    return F.norm(input_x, axis, p, keep_dims, epsilon)
 
 
 def renorm(input_x, p, dim, maxnorm):
