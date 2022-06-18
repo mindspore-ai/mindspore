@@ -85,8 +85,6 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(kErfOpName, {1});
   Register(kSparseApplyAdagradOpName, {2});
   Register(kResizeNearestNeighborGradOpName, {1});
-  Register(kResizeNearestNeighborV2OpName, {1});
-  Register(kResizeNearestNeighborV2GradOpName, {1});
   Register(kApplyRMSPropOpname, {5, 6, 7});
   Register(kResizeBilinearV2OpName, {1});
   Register(kReduceProdOpName, {1});
