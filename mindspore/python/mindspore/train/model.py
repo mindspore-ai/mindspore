@@ -343,10 +343,16 @@ class Model:
                                  f" framework will automatically build an evaluation network with `network` and"
                                  f" `loss_fn`.")
 
-            net_set_inputs = self._network.get_inputs()
-            loss_set_inputs = self._loss_fn.get_inputs()
+            if self._network.get_inputs() is not None:
+                net_set_inputs = self._network.get_inputs()
+            if self._loss_fn.get_inputs() is not None:
+                loss_set_inputs = self._loss_fn.get_inputs()
             self._eval_network = nn.WithEvalCell(self._network, self._loss_fn, self._amp_level in ["O2", "O3", "auto"])
-            self._eval_network.set_inputs(net_set_inputs, loss_set_inputs)
+            if self._network.get_inputs() is not None:
+                if self._loss_fn.get_inputs() is not None:
+                    self._eval_network.set_inputs(net_set_inputs, loss_set_inputs)
+                else:
+                    self._eval_network.set_inputs(net_set_inputs)
             self._eval_indexes = [0, 1, 2]
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
