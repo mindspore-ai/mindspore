@@ -42,6 +42,9 @@ void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
+    return;
+  }
   if (input_shape_.size() != tensor_in_and_out_dims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
   }
@@ -78,7 +81,7 @@ void FractionalAvgPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_func_ = func_list_[index].second;
 }
 
-static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_length, size_t output_length,
+static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(int64_t input_length, int64_t output_length,
                                                                 int64_t seed) {
   std::vector<int64_t> cum_seq(output_length + 1, 0);
   std::vector<int64_t> diff(output_length, 0);
@@ -100,10 +103,10 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
       const double u = dis2(random) * max_u;
       cum_seq[0] = 1;
       cum_seq[output_length] = input_length + 1;
-      for (size_t i = 1; i < output_length; ++i) {
+      for (size_t i = 1; i < LongToSize(output_length); ++i) {
         cum_seq[i] = static_cast<int>(ceil(alpha * (i + u)));
       }
-      for (size_t i = 0; i < output_length; ++i) {
+      for (size_t i = 0; i < LongToSize(output_length); ++i) {
         diff[i] = cum_seq[i + 1] - cum_seq[i];
       }
       return diff;
@@ -111,7 +114,7 @@ static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_len
   }
 }
 
-static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, size_t output_length, int64_t seed) {
+static std::vector<int64_t> GeneratePoolingSequenceRandom(int64_t input_length, int64_t output_length, int64_t seed) {
   if (output_length == 0) {
     MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
   } else {
@@ -126,7 +129,7 @@ static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, s
   }
 }
 
-std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_length, bool pseudo_random,
+std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t output_length, bool pseudo_random,
                                              int64_t seed) {
   std::vector<int64_t> diff;
   if (output_length == 0) {
@@ -142,7 +145,7 @@ std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_
       }
     }
     int k = input_length / output_length;
-    for (size_t i = 0; i < output_length; i++) {
+    for (size_t i = 0; i < LongToSize(output_length); i++) {
       if (diff[i] < k || diff[i] > k + 1) {
         MS_EXCEPTION(ValueError) << "For FractionalAvgPool, GeneratePoolingSequence diff[" << i << "] is error";
       }
@@ -204,7 +207,7 @@ bool FractionalAvgPoolCpuKernelMod::FractionalAvgPoolLaunch(const std::vector<Ad
   for (size_t i = 0; i < width_cum_seq.size(); ++i) {
     *(col_pooling_sequence_ptr + i) = width_cum_seq[i];
   }
-  size_t batch_len = input_shape_[kInputShapeIndexN];
+  size_t batch_len = static_cast<size_t>(input_shape_[kInputShapeIndexN]);
   const int64_t height_max = input_shape_[kInputShapeIndexH] - 1;
   auto shard_fractional_avg_pool = [this, input_ptr, output_ptr, height_cum_seq, width_cum_seq, height_max](
                                      size_t start, size_t end) {

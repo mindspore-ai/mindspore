@@ -76,11 +76,11 @@ class CropAndResizeGradBoxesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, CropAndResizeGradBoxesFunc>> func_list_;
   CropAndResizeGradBoxesFunc kernel_func_;
-  std::vector<size_t> grads_shape_;
-  std::vector<size_t> image_shape_;
-  std::vector<size_t> boxes_shape_;
-  std::vector<size_t> box_in_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector grads_shape_;
+  ShapeVector image_shape_;
+  ShapeVector boxes_shape_;
+  ShapeVector box_in_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

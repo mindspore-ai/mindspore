@@ -56,22 +56,16 @@ class TensorShapeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_count;
     }
 
-    std::vector<size_t> prev_node_output_shape_tmp = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    is_null_input_ = CHECK_SHAPE_NULL(prev_node_output_shape_tmp, kernel_name, "input");
+    auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
-    input_size_ = 1;
-    for (const size_t &e : prev_node_output_shape_tmp) {
-      input_size_ *= e;
-      // shapes are Tensors with elements of type S (int32, or int64) but
-      // GetPrevNodeOutputInferShape returns vector of size_t, so we use
-      // an S* for allocated output memory and cast to an integral type here,
-      // otherwise the memcpy will fail silently.
-      prev_node_output_shape_.push_back(e);
+    input_size_ = SizeOf(shape);
+    for (auto x : shape) {
+      prev_node_output_shape_.push_back(static_cast<S>(x));
     }
-
     output_size_ = prev_node_output_shape_.size();
 
     InitSizeLists();

@@ -42,6 +42,9 @@ void FractionalMaxPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
+    return;
+  }
   if (input_shape_.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'x' must be 4-dimensional.";
   }
@@ -125,7 +128,8 @@ static std::vector<int64_t> GeneratePoolingSequenceRandom(size_t input_length, s
   }
 }
 
-std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_length, bool pseudo_random, int seed) {
+std::vector<int64_t> GeneratePoolingSequence(int64_t input_length, int64_t output_length, bool pseudo_random,
+                                             int seed) {
   std::vector<int64_t> diff;
   if (output_length == 0) {
     MS_EXCEPTION(ValueError) << "For FractionalAvgPool, output_length got 0, please check it.";
@@ -140,7 +144,7 @@ std::vector<int64_t> GeneratePoolingSequence(size_t input_length, size_t output_
       }
     }
     int k = input_length / output_length;
-    for (size_t i = 0; i < output_length; i++) {
+    for (size_t i = 0; i < LongToSize(output_length); i++) {
       if (diff[i] < k || diff[i] > k + 1) {
         MS_EXCEPTION(ValueError) << "For FractionalAvgPool, GeneratePoolingSequence diff[" << i << "] is error";
       }
@@ -165,7 +169,7 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<Ad
   int64_t *col_pooling_sequence_ptr = reinterpret_cast<int64_t *>(outputs[2]->addr);
   MS_EXCEPTION_IF_NULL(col_pooling_sequence_ptr);
   for (size_t i = 0; i < kInputDims; i++) {
-    output_shape_[i] = static_cast<size_t>(std::floor(input_shape_[i] / pooling_ratio_[i]));
+    output_shape_[i] = static_cast<int64_t>(std::floor(input_shape_[i] / pooling_ratio_[i]));
     if (output_shape_[i] <= 0) {
       MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', outputsize[" << i << "] cannot be 0.";
     }
@@ -215,7 +219,7 @@ bool FractionalMaxPoolCpuKernelMod::FractionalMaxPoolLaunch(const std::vector<Ad
       }
     }
   };
-  CPUKernelUtils::ParallelFor(task, input_shape_[kInputShapeIndexN]);
+  CPUKernelUtils::ParallelFor(task, static_cast<size_t>(input_shape_[kInputShapeIndexN]));
   return true;
 }
 

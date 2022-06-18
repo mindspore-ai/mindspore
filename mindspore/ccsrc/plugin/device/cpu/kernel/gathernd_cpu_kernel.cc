@@ -58,23 +58,26 @@ void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   indices_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shapes_, indices_shapes_, output_shapes_})) {
+    return;
+  }
 
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 
   // ReShape()
   size_t dim_of_indices = 1;
   for (size_t i = 0; i < indices_shapes_.size() - IntToSize(1); ++i) {
-    dim_of_indices *= indices_shapes_[i];
+    dim_of_indices *= LongToSize(indices_shapes_[i]);
   }
 
   size_t dim_after_indices = 1;
-  size_t dim_indices_last = indices_shapes_[indices_shapes_.size() - IntToSize(1)];
+  size_t dim_indices_last = LongToSize(indices_shapes_[indices_shapes_.size() - IntToSize(1)]);
   if (dim_indices_last == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of indices_shapes_[" << indices_shapes_.size()
                       << " - 1] can not be 0.";
   }
   for (size_t i = dim_indices_last; i < input_shapes_.size(); i++) {
-    dim_after_indices *= input_shapes_[i];
+    dim_after_indices *= LongToSize(input_shapes_[i]);
   }
 
   (void)dims_.emplace_back(dim_of_indices);
@@ -91,7 +94,7 @@ void GatherNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
   for (size_t i = dim_indices_last - 1; i > 0; --i) {
     batch_strides_[i - 1] = input_shapes_[i - 1];
-    batch_indices_[i - 1] = batch_indices_[i] * SizeToInt(input_shapes_[i]);
+    batch_indices_[i - 1] = batch_indices_[i] * LongToInt(input_shapes_[i]);
   }
 
   std::vector<KernelAttr> support_list;

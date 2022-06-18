@@ -48,9 +48,9 @@ class IgammaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> a_shape_;
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> z_shape_;
+  std::vector<int64_t> a_shape_;
+  std::vector<int64_t> x_shape_;
+  std::vector<int64_t> z_shape_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);

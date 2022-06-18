@@ -261,7 +261,7 @@ void ProfilingReporter::BuildTensorData(MsprofGeTensorData *tensor_data, const C
                                         uint32_t tensor_type) {
   MS_EXCEPTION_IF_NULL(tensor_data);
   tensor_data->tensorType = tensor_type;
-  std::vector<size_t> shape;
+  std::vector<int64_t> shape;
   string data_format;
   uint32_t vm_data_type;
   if (tensor_type == MSPROF_GE_TENSOR_TYPE_INPUT) {

@@ -54,9 +54,10 @@ class IsCloseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   float rtol_{1e-5};
   float atol_{1e-8};
   bool equal_nan_{true};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> other_shape_;
-  std::vector<size_t> output_shape_;
+
+  ShapeVector input_shape_;
+  ShapeVector other_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

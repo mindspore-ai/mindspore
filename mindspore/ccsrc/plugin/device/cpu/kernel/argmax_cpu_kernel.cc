@@ -25,13 +25,7 @@ constexpr size_t kArgMaxInputsNum = 1;
 constexpr size_t kArgMaxOutputsNum = 1;
 constexpr char kKernelName[] = "ArgMax";
 
-int64_t get_element_num(const std::vector<int64_t> &shape) {
-  int64_t size = 1;
-  for (int64_t i = 0; i < static_cast<int64_t>(shape.size()); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
 template <typename T>
 bool check_validation(const std::vector<int64_t> &shape, const int64_t num_before_axis, const int64_t num_after_axis,

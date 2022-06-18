@@ -25,8 +25,8 @@ namespace kernel {
 namespace {
 constexpr size_t kDynamicStitchOutputNum = 1;
 }  // namespace
-size_t GetShapeSize(const std::vector<size_t> &shape) {
-  return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
+int64_t GetShapeSize(const ShapeVector &shape) {
+  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
 }
 
 template <typename T>
@@ -41,14 +41,14 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   for (size_t i = 0; i < input_tuple_num_; ++i) {
     auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
     auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
-    for (size_t j = 0; j < shape_size; ++j) {
+    for (auto j = 0; j < shape_size; ++j) {
       max_index = std::max(indice[j], max_index);
     }
   }
   first_dim_size = max_index + 1;
 
   std::vector<TypeId> dtypes{AnfAlgo::GetOutputDeviceDataType(node_, 0)};
-  std::vector<size_t> result_shape{IntToSize(first_dim_size)};
+  ShapeVector result_shape{first_dim_size};
   auto data0_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, input_tuple_num_);
   auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0).size();
   for (size_t d = indice_dims; d < data0_shape.size(); ++d) {
@@ -57,7 +57,7 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {result_shape}, node_.get());
 
   size_t num_out_dims = 2;
-  std::vector<size_t> out_dims(num_out_dims, 0);
+  ShapeVector out_dims(num_out_dims, 0);
   for (size_t out_dim = 0; out_dim <= num_out_dims - 1; ++out_dim) {
     out_dims[out_dim] = out_dim >= result_shape.size() ? 1 : result_shape[out_dim];
   }
@@ -66,13 +66,13 @@ bool DynamicStitchCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPt
   }
 
   auto merged = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t slice_size = out_dims[1];
+  size_t slice_size = LongToSize(out_dims[1]);
   size_t slice_bytes = slice_size * sizeof(T);
   for (size_t i = 0; i < input_tuple_num_; i++) {
     auto indice = reinterpret_cast<int32_t *>(inputs[i]->addr);
     auto data = reinterpret_cast<T *>(inputs[i + input_tuple_num_]->addr);
     auto shape_size = GetShapeSize(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, i));
-    for (size_t j = 0; j < shape_size; ++j) {
+    for (auto j = 0; j < shape_size; ++j) {
       auto ret = memcpy_s(merged + indice[j] * slice_size, slice_bytes, data + j * slice_size, slice_bytes);
       if (ret != 0) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;

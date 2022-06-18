@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <vector>
 
-using ShapeVector = std::vector<int64_t>;
+using ShapeValueDType = int64_t;
+using ShapeVector = std::vector<ShapeValueDType>;
 
 #endif  // MINDSPORE_CORE_MINDAPI_BASE_SHAPE_VECTOR_H_

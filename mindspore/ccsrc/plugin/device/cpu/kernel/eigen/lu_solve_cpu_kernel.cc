@@ -43,8 +43,8 @@ void LUSolverCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   CHECK_KERNEL_INPUTS_NUM(input_num, kLUInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kLUOutputsNum, kernel_name_);
-  auto a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex);
-  auto b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUbIndex);
+  auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUaIndex));
+  auto b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLUbIndex));
   if (a_shape.empty() || b_shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " input a or b matrix shape invalid.";
   }
@@ -60,7 +60,7 @@ void LUSolverCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     b_row_ = b_shape.at(b_shape.size() - kRowIndex);
     b_col_ = b_shape.at(b_shape.size() - kColIndex);
   }
-  auto output_lu_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex);
+  auto output_lu_shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, kLuIndex));
   if (output_lu_shape.empty()) {
     MS_LOG_EXCEPTION << kernel_name_ << " output lu shape invalid.";
   }

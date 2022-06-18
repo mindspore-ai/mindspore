@@ -57,7 +57,7 @@ class SquareSumAllFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
     }
     InitSizeLists();
     return true;

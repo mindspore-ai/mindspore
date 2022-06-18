@@ -61,8 +61,8 @@ class MirrorPadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t output_size_{1};
   int64_t mode_{0};
   int64_t num_paddings_{0};
-  std::vector<int64_t> input_shape_;
-  std::vector<int64_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

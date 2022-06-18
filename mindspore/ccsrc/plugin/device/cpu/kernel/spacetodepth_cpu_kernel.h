@@ -49,8 +49,8 @@ class SpaceToDepthCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   SpaceToDepthFunc kernel_func_;
 
   size_t block_size_{0};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

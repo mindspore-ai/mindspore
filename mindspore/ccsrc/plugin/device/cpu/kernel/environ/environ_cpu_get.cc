@@ -35,12 +35,15 @@ void EnvironGetCpuKernelMod::InitKernel(const CNodePtr &node) {
   auto value_shapes = AnfAlgo::GetOutputDeviceShape(node, 0);
   auto default_value_type = AnfAlgo::GetInputDeviceDataType(node, 2);
   auto default_value_shapes = AnfAlgo::GetInputDeviceShape(node, 2);
+  if (AnfAlgo::IsShapesDynamic({value_shapes, default_value_shapes})) {
+    return;
+  }
   if ((value_type != default_value_type) || (value_shapes != default_value_shapes)) {
     MS_LOG(EXCEPTION) << "The env value checks invalid, kernel: " << node->fullname_with_scope();
   }
   value_size_ = GetTypeByte(TypeIdToType(value_type));
   for (auto &i : value_shapes) {
-    value_size_ *= i;
+    value_size_ *= static_cast<size_t>(i);
   }
 
   input_size_list_.push_back(handle_size_);

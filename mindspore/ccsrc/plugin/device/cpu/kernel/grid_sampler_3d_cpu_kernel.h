@@ -46,9 +46,9 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> grid_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> x_shape_;
+  std::vector<int64_t> grid_shape_;
+  std::vector<int64_t> output_shape_;
   std::vector<size_t> x_stride_;
   std::vector<size_t> grid_stride_;
   std::vector<size_t> output_stride_;
@@ -66,7 +66,7 @@ class GridSampler3DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   T reflect_coordinates(T coord, int64_t twice_low, int64_t twice_high);
 
-  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W);
+  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
 };
 }  // namespace kernel
 }  // namespace mindspore

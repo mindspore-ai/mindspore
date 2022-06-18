@@ -30,8 +30,13 @@ constexpr size_t kOutputDim = 2;
 void NonZeroCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
+    return;
+  }
+  input_shape_ = Convert2SizeT(input_shape);
+  output_shape_ = Convert2SizeT(output_shape);
   input_rank_ = input_shape_.size();
   node_wpt_ = kernel_node;
   if (input_shape_.size() < kInputMinDim) {
@@ -74,7 +79,7 @@ bool NonZeroCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   if (!node_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node_ << ".";
   }
-  std::vector<size_t> output_shape = {non_zero_num, input_rank_};
+  ShapeVector output_shape = {SizeToLong(non_zero_num), SizeToLong(input_rank_)};
   std::vector<TypeId> dtype = {AnfAlgo::GetOutputDeviceDataType(node_, 0)};
   common::AnfAlgo::SetOutputInferTypeAndShape(dtype, {output_shape}, node_.get());
 

@@ -90,11 +90,14 @@ void SparseApplyFtrlCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_nod
 void SparseApplyFtrlCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  std::vector<size_t> linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  std::vector<size_t> grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  ShapeVector var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  ShapeVector accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  ShapeVector linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+  ShapeVector grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
+  ShapeVector indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
+  if (AnfAlgo::IsShapesDynamic({var_shape, accum_shape, linear_shape, grad_shape, indices_shape})) {
+    return;
+  }
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'var' must be at least 1-D, but got scalar or None.";
   }
@@ -131,7 +134,7 @@ void SparseApplyFtrlCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << indices_shape.size() << "-D.";
   }
   indices_size_ = indices_shape[0];
-  if (grad_shape[0] != indices_size_) {
+  if (grad_shape[0] != SizeToLong(indices_size_)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the first dimension value of 'grad' must be equal to "
                          "the first dimension value of 'indices', but got the first dimension value of 'grad': "

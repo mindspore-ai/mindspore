@@ -34,11 +34,14 @@ void GridSampler3DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kTwo);
   dx_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kZero);
   dgrid_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kOne);
-  dx_size_ = dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree] * dx_shape_[kFour];
-  grid_size_ = grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree];
+  if (AnfAlgo::IsShapesDynamic({x_shape_, grad_shape_, grid_shape_, dx_shape_, dgrid_shape_})) {
+    return;
+  }
+  dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree] * dx_shape_[kFour]);
+  grid_size_ = LongToSize(grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree]);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
   size_t stride_tmp = kOne;
-  auto stride_compute = [&](std::vector<size_t> &stride, std::vector<size_t> shape) {
+  auto stride_compute = [&](std::vector<size_t> &stride, std::vector<int64_t> shape) {
     for (int i = kFour; i > -static_cast<int>(kOne); i--) {
       stride.insert(stride.begin(), stride_tmp);
       stride_tmp *= shape[i];
@@ -87,7 +90,7 @@ void GridSampler3DGradCpuKernelMod::BilinearKernel(std::vector<T *> addr, std::v
   T bnw = (x_tse - x) * (y_tse - y) * (z - z_tse), bne = (x - x_tsw) * (y_tsw - y) * (z - z_tsw);
   T bsw = (x_tne - x) * (y - y_tne) * (z - z_tne), bse = (x - x_tnw) * (y - y_tnw) * (z - z_tnw);
   T gx = static_cast<T>(kZero), gy = static_cast<T>(kZero), gz = static_cast<T>(kZero);
-  for (size_t c = kZero; c < x_shape_[kOne];
+  for (size_t c = kZero; c < LongToSize(x_shape_[kOne]);
        c++, ptr[kZero] += grad_stride_[kOne], ptr[kOne] += x_stride_[kOne], ptr[kTwo] += dx_stride_[kOne]) {
     T grad_out = addr[kZero][ptr[kZero]];
     safe_add_3d(&addr[kTwo][ptr[kTwo]], z_tnw, y_tnw, x_tnw, dx_stride_[kTwo], dx_stride_[kThree], dx_stride_[kFour],
@@ -173,9 +176,9 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
                                                 const size_t &n) {
   size_t grid_ptr_N = n * grid_stride_[kZero];
   size_t dgrid_ptr_NDHW = n * dgrid_stride_[kZero];
-  for (size_t d = kZero; d < grid_shape_[kOne]; d++) {
-    for (size_t h = kZero; h < grid_shape_[kTwo]; h++) {
-      for (size_t w = kZero; w < grid_shape_[kThree]; w++, dgrid_ptr_NDHW += dgrid_stride_[kThree]) {
+  for (size_t d = kZero; d < LongToSize(grid_shape_[kOne]); d++) {
+    for (size_t h = kZero; h < LongToSize(grid_shape_[kTwo]); h++) {
+      for (size_t w = kZero; w < LongToSize(grid_shape_[kThree]); w++, dgrid_ptr_NDHW += dgrid_stride_[kThree]) {
         size_t grid_ptr_NDHW = grid_ptr_N + d * grid_stride_[kOne] + h * grid_stride_[kTwo] + w * grid_stride_[kThree];
         T x = grid_addr[grid_ptr_NDHW];
         T y = grid_addr[grid_ptr_NDHW + grid_stride_[kFour]];
@@ -200,7 +203,7 @@ void GridSampler3DGradCpuKernelMod::ComputeTask(T *grad_addr, T *x_addr, T *grid
           size_t grad_ptr_NCDHW =
             n * grad_stride_[kZero] + d * grad_stride_[kTwo] + h * grad_stride_[kThree] + w * grad_stride_[kFour];
           size_t dx_ptr_NC = n * dx_stride_[kZero];
-          for (size_t c = kZero; c < x_shape_[kOne];
+          for (size_t c = kZero; c < LongToSize(x_shape_[kOne]);
                c++, grad_ptr_NCDHW += grad_stride_[kOne], dx_ptr_NC += dx_stride_[kOne]) {
             safe_add_3d(&dx_addr[dx_ptr_NC], z_nearest, y_nearest, x_nearest, dx_stride_[kTwo], dx_stride_[kThree],
                         dx_stride_[kFour], x_shape_[kTwo], x_shape_[kThree], x_shape_[kFour],
@@ -223,7 +226,7 @@ void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   auto grid_data_addr = reinterpret_cast<T *>(inputs[kTwo]->addr);
   auto dx_data_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
   auto dgrid_data_addr = reinterpret_cast<T *>(outputs[kOne]->addr);
-  size_t loop_count = x_shape_[kZero];
+  size_t loop_count = LongToSize(x_shape_[kZero]);
   for (size_t i = kZero; i < dx_size_; i++) {
     dx_data_addr[i] = static_cast<T>(kZero);
   }
@@ -241,7 +244,7 @@ void GridSampler3DGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
 }
 
 template <typename T>
-T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, size_t size,
+T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T coord, int64_t size,
                                                                             const std::string &padding_mode,
                                                                             bool align_corners, T *grad_x) {
   T grad_clip, grad_refl;
@@ -253,15 +256,15 @@ T GridSampler3DGradCpuKernelMod::grid_sampler_compute_source_index_set_grad(T co
     coord = ((coord + kOne) * size - kOne) / kTwo;
   }
   if (padding_mode == "border") {
-    coord = clip_coordinates_set_grad(coord, static_cast<int64_t>(size), &grad_clip);
+    coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_clip;
   } else if (padding_mode == "reflection") {
     if (align_corners) {
-      coord = reflect_coordinates_set_grad(coord, static_cast<int64_t>(kZero), kTwo * (size - kOne), &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, kZero, kTwo * (size - kOne), &grad_refl);
     } else {
-      coord = reflect_coordinates_set_grad(coord, -static_cast<int64_t>(kOne), kTwo * size - kOne, &grad_refl);
+      coord = reflect_coordinates_set_grad(coord, -kOne, kTwo * size - kOne, &grad_refl);
     }
-    coord = clip_coordinates_set_grad(coord, static_cast<int64_t>(size), &grad_clip);
+    coord = clip_coordinates_set_grad(coord, size, &grad_clip);
     *grad_x = (*grad_x) * grad_refl * grad_clip;
   }
   return coord;
@@ -313,16 +316,16 @@ T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice
 
 template <typename T>
 void GridSampler3DGradCpuKernelMod::safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH,
-                                                size_t sW, size_t D, size_t H, size_t W, T delta) {
+                                                size_t sW, int64_t D, int64_t H, int64_t W, T delta) {
   if (within_bounds_3d(d, h, w, D, H, W)) {
     data[d * sD + h * sH + w * sW] += static_cast<T>(delta);
   }
 }
 
-bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W) {
-  int64_t iD = static_cast<int64_t>(D);
-  int64_t iH = static_cast<int64_t>(H);
-  int64_t iW = static_cast<int64_t>(W);
+bool GridSampler3DGradCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) {
+  int64_t iD = D;
+  int64_t iH = H;
+  int64_t iW = W;
   return d >= 0 && d < iD && h >= 0 && h < iH && w >= 0 && w < iW;
 }
 

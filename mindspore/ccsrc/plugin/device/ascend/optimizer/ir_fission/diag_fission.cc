@@ -28,39 +28,37 @@ constexpr size_t kDiagInputNum = 1;
 constexpr size_t kDiagInputMaxDim = 4;
 
 template <typename T>
-void SetAssistTensorData(void *data, const T &value, size_t dims_size) {
+void SetAssistTensorData(void *data, const T &value, int64_t dims_size) {
   MS_EXCEPTION_IF_NULL(data);
   auto tensor_data = reinterpret_cast<T *>(data);
-  for (size_t i = 0; i < dims_size; ++i) {
-    tensor_data[(1 + dims_size) * i] = value;
+  for (size_t i = 0; i < static_cast<size_t>(dims_size); ++i) {
+    tensor_data[(1 + static_cast<size_t>(dims_size)) * i] = value;
   }
 }
 }  // namespace
 
 ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                           const std::vector<size_t> &ori_shape) const {
+                                           const ShapeVector &ori_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
-  std::vector<size_t> output_shape(ori_shape);
-  size_t dims = 1;
+  ShapeVector output_shape(ori_shape);
+  ShapeValueDType dims = 1;
   for (size_t i = 0; i < ori_shape.size(); i++) {
     dims = dims * ori_shape[i];
   }
   (void)output_shape.insert(output_shape.end(), ori_shape.begin(), ori_shape.end());
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
-  std::vector<int64_t> assist_shape;
-  std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(assist_shape), SizeToLong);
-  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, assist_shape);
+  tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, output_shape);
   AbstractBasePtr x_abstract;
   if (type == kNumberTypeInt32) {
     SetAssistTensorData<int32_t>(tensor->data_c(), 1, dims);
-    x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, assist_shape);
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, output_shape);
   } else if (type == kNumberTypeFloat16) {
     SetAssistTensorData<float16>(tensor->data_c(), float16(static_cast<float>(1)), dims);
-    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, assist_shape);
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat16, output_shape);
   } else if (type == kNumberTypeFloat32) {
     SetAssistTensorData<float>(tensor->data_c(), static_cast<float>(1), dims);
-    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, assist_shape);
+    x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, output_shape);
   } else {
     MS_EXCEPTION(TypeError) << "The type of node [" << node->DebugString()
                             << "] should be int32, float16 or float32, but got" << node->Type()->ToString();

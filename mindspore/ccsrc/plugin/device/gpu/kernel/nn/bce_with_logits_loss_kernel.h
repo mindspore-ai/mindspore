@@ -81,7 +81,7 @@ class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "logits") ||
                      CHECK_SHAPE_NULL(weight_shape_, kernel_name_, "weight") ||
                      CHECK_SHAPE_NULL(pos_weight_shape_, kernel_name_, "pos_weight");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape_, weight_shape_, pos_weight_shape_})) {
       InitSizeLists();
       return true;
     }
@@ -97,25 +97,16 @@ class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of pos_weight cannot be less than 1, but got "
                         << pos_weight_shape_.size();
     }
-    input_size_ = 1;
     if (input_shape_.size() > MAX_LOGITS_DIMENSION) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of logits cannot be greater than "
                         << MAX_LOGITS_DIMENSION << ", but got " << input_shape_.size();
     }
-    for (size_t i = 0; i < input_shape_.size(); i++) {
-      input_size_ *= input_shape_[i];
-    }
+    input_size_ = SizeOf(input_shape_);
     // weight shape
-    weight_size_ = 1;
-    for (size_t i = 0; i < weight_shape_.size(); i++) {
-      weight_size_ *= weight_shape_[i];
-    }
+    weight_size_ = SizeOf(weight_shape_);
     weight_need_broadcast_ = NeedBroadcast(&weight_shape_, input_shape_);
     // pos_weight shape
-    pos_weight_size_ = 1;
-    for (size_t i = 0; i < pos_weight_shape_.size(); i++) {
-      pos_weight_size_ *= pos_weight_shape_[i];
-    }
+    pos_weight_size_ = SizeOf(pos_weight_shape_);
     pos_weight_need_broadcast_ = NeedBroadcast(&pos_weight_shape_, input_shape_);
     InitSizeLists();
     return true;
@@ -153,7 +144,7 @@ class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  bool NeedBroadcast(std::vector<size_t> *shape, const std::vector<size_t> &result_shape) {
+  bool NeedBroadcast(ShapeVector *shape, const ShapeVector &result_shape) {
     // result_shape is larger that shape
     // and shape is able to broadcasted to result_shape
     if (shape->size() < result_shape.size()) {
@@ -176,9 +167,9 @@ class BCEWithLogitsLossKernelMod : public DeprecatedNativeGpuKernelMod {
   bool pos_weight_need_broadcast_;
   bool is_null_input_;
   std::string kernel_name_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> weight_shape_;
-  std::vector<size_t> pos_weight_shape_;
+  ShapeVector input_shape_;
+  ShapeVector weight_shape_;
+  ShapeVector pos_weight_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

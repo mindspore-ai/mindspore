@@ -42,6 +42,7 @@ void CheckValidCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (!is_match) {
     MS_LOG(EXCEPTION) << "CheckValid does not support this kernel data type: " << kernel_attr;
   }
+
   kernel_func_ = func_list_[index].second;
 }
 

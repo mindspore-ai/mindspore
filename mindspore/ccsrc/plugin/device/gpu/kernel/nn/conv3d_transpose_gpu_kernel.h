@@ -117,7 +117,7 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool CheckNull(const std::vector<size_t> filter_shape, const std::vector<size_t> input_shape) {
+  bool CheckNull(const ShapeVector filter_shape, const ShapeVector input_shape) {
     is_null_input_ =
       CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") || CHECK_SHAPE_NULL(input_shape, kernel_name_, "dout");
     if (is_null_input_) {
@@ -147,10 +147,14 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto filter_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape, filter_shape})) {
+      return true;
+    }
+
     if (CheckNull(filter_shape, input_shape)) {
       return true;
     }
-    std::vector<size_t> output_shape;
+    ShapeVector output_shape;
     GetInputShape(kernel_node, &output_shape);
     if (data_format_ == kOpFormat_NDHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
@@ -354,18 +358,17 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
+  void GetInputShape(const CNodePtr &kernel_node, ShapeVector *input_shape) {
     auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_size");
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t {
+                         [](const ValuePtr &e) -> int64_t {
                            auto cast_value = e->cast<Int64ImmPtr>();
                            MS_EXCEPTION_IF_NULL(cast_value);
-                           return static_cast<int>(cast_value->value());
+                           return static_cast<int64_t>(cast_value->value());
                          });
   }
 
-  void Set5DDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape,
-                 const std::vector<size_t> &filter_shape) {
+  void Set5DDesc(const ShapeVector &input_shape, const ShapeVector &output_shape, const ShapeVector &filter_shape) {
     const int kNbDims = 5;
     int dim_a[kNbDims];
     int stride_a_in[kNbDims];
@@ -412,11 +415,11 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "dilation[0]: " << dilation_[0] << ", dilation[1]: " << dilation_[1];
     }
   }
-  void UpdatePaddingAndDilation(const std::vector<size_t> &input_shape, const std::vector<size_t> &filter_shape,
-                                int *pad_list, int *stride_pad_list) {  // pad_mode_ = same
+  void UpdatePaddingAndDilation(const ShapeVector &input_shape, const ShapeVector &filter_shape, int *pad_list,
+                                int *stride_pad_list) {  // pad_mode_ = same
     const size_t kIdxOffset = 2;
     for (size_t i = 0; i < kConv3dDimSize; i++) {
-      int pad_sum = SizeToInt(filter_shape[i + kIdxOffset]) * dilation_[i + kIdxOffset] - stride_[i + kIdxOffset] -
+      int pad_sum = LongToInt(filter_shape[i + kIdxOffset]) * dilation_[i + kIdxOffset] - stride_[i + kIdxOffset] -
                     dilation_[i + kIdxOffset] + 1;
       if (pad_sum >= 0) {
         int pad_0 = pad_sum / kSymmetricCoef;
@@ -458,21 +461,18 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int input_dim_a[kDataSize];
     int input_strideApadded[kDataSize];
     if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
-      auto padded_shape = {IntToSize(n_), IntToSize(c_),
-                           IntToSize(old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * padding_diff[kHead3DPadIdx]),
-                           IntToSize(old_height_ + (1 + stride_[kHeight3DStrideIdx]) * padding_diff[kTail3DPadIdx]),
-                           IntToSize(old_width_ + (1 + stride_[kWidth3DStrideIdx]) * padding_diff[kTop3DPadIdx])};
+      ShapeVector padded_shape = {n_, c_, old_depth_ + (1 + stride_[kDepth3DStrideIdx]) * padding_diff[kHead3DPadIdx],
+                                  old_height_ + (1 + stride_[kHeight3DStrideIdx]) * padding_diff[kTail3DPadIdx],
+                                  old_width_ + (1 + stride_[kWidth3DStrideIdx]) * padding_diff[kTop3DPadIdx]};
       SetDimA(padded_shape, dim_a, kDataSize, data_format_);
       SetStrideA(padded_shape, strideApadded, kDataSize, data_format_);
-      std::vector<size_t> input_padded_shape = {IntToSize(input_n_), IntToSize(input_c_),
-                                                IntToSize(input_old_depth_ + padding_diff[0]),
-                                                IntToSize(input_old_height_ + padding_diff[kTail3DPadIdx]),
-                                                IntToSize(input_old_width_ + padding_diff[kTop3DPadIdx])};
+      ShapeVector input_padded_shape = {input_n_, input_c_, input_old_depth_ + padding_diff[0],
+                                        input_old_height_ + padding_diff[kTail3DPadIdx],
+                                        input_old_width_ + padding_diff[kTop3DPadIdx]};
       SetDimA(input_padded_shape, input_dim_a, kDataSize, data_format_);
       SetStrideA(input_padded_shape, input_strideApadded, kDataSize, data_format_);
     } else if (data_format_ == kOpFormat_NDHWC) {
-      auto padded_shape = {IntToSize(n_), IntToSize(old_depth_ + pad_depth_), IntToSize(old_height_ + pad_height_),
-                           IntToSize(old_width_ + pad_width_), IntToSize(c_)};
+      ShapeVector padded_shape = {n_, old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_, c_};
       SetDimA(padded_shape, dim_a, kDataSize, data_format_);
       SetStrideA(padded_shape, strideApadded, kDataSize, data_format_);
     }
@@ -490,8 +490,8 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cudnnSetConvolutionNdDescriptor failed");
   }
 
-  void SetPad(const CNodePtr &kernel_node, const std::vector<size_t> &input_shape,
-              const std::vector<size_t> &filter_shape, std::vector<int> *pad_list, std::vector<int> *stride_pad_list) {
+  void SetPad(const CNodePtr &kernel_node, const ShapeVector &input_shape, const ShapeVector &filter_shape,
+              std::vector<int> *pad_list, std::vector<int> *stride_pad_list) {
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     const size_t kFilterSize = 5;
     (void)CheckSize(filter_shape.size(), kFilterSize, "weight shape");
@@ -542,8 +542,7 @@ class Conv3dTransposeFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         int dim_a[kDataLen];
         int strideApadded[kDataLen];
         if (data_format_ == kOpFormat_NCDHW || data_format_ == kOpFormat_DEFAULT) {
-          auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(stride_pad_depth_),
-                               IntToSize(stride_pad_height_), IntToSize(stride_pad_width_)};
+          ShapeVector padded_shape = {n_, c_, stride_pad_depth_, stride_pad_height_, stride_pad_width_};
           SetDimA(padded_shape, dim_a, kDataLen, data_format_);
           SetStrideA(padded_shape, strideApadded, kDataLen, data_format_);
         }

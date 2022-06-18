@@ -47,7 +47,7 @@ class FillV2CpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   TypeId output_dtype_{kTypeUnknown};
   TypeId input1_dtype_{kTypeUnknown};
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

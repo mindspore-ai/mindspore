@@ -48,17 +48,17 @@ constexpr size_t kNum2 = 2;
 #define Int64_matrix Eigen::TensorMap<Eigen::Tensor<int64_t, 2, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned>
 #define Int64_flat Eigen::TensorMap<Eigen::Tensor<int64_t, 1, Eigen::RowMajor, Eigen::DenseIndex>, Eigen::Aligned>
 
-const std::vector<size_t> GetStrides(const std::vector<size_t> &shape) {
+const std::vector<size_t> GetStrides(const ShapeVector &shape) {
   std::vector<size_t> result(shape.size());
   size_t product = 1;
   for (int64_t i = SizeToLong(shape.size()) - 1; i >= 0; --i) {
     result[i] = product;
-    product *= shape[i];
+    product *= LongToSize(shape[i]);
   }
   return result;
 }
 
-bool GroupShape(const std::vector<size_t> &input_shape, std::vector<size_t> *grouped_shape) {
+bool GroupShape(const ShapeVector &input_shape, ShapeVector *grouped_shape) {
   const size_t min_shape_size = 2;
   if (input_shape.size() < min_shape_size) {
     return false;
@@ -67,7 +67,7 @@ bool GroupShape(const std::vector<size_t> &input_shape, std::vector<size_t> *gro
   return true;
 }
 
-bool CheckShapesMatch(const std::vector<size_t> &shape1, const std::vector<size_t> &shape2) {
+bool CheckShapesMatch(const ShapeVector &shape1, const ShapeVector &shape2) {
   if (shape1.size() != shape2.size()) {
     return false;
   }
@@ -79,15 +79,14 @@ bool CheckShapesMatch(const std::vector<size_t> &shape1, const std::vector<size_
   return true;
 }
 
-void GetCommonShape(const std::vector<size_t> &shape1, const std::vector<size_t> &shape2,
-                    std::vector<size_t> *group_shape) {
-  std::vector<size_t> group_shape_1;
+void GetCommonShape(const ShapeVector &shape1, const ShapeVector &shape2, ShapeVector *group_shape) {
+  ShapeVector group_shape_1;
   if (!GroupShape(shape1, &group_shape_1)) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "
                       << "the shape rank of input x1 must be at least 2, "
                       << "but got " << shape1.size() << ".";
   }
-  std::vector<size_t> group_shape_2;
+  ShapeVector group_shape_2;
   if (!GroupShape(shape2, &group_shape_2)) {
     MS_LOG(EXCEPTION) << "For DenseToDenseSerOperation, "
                       << "the shape rank of input x2 must be at least 2, "
@@ -101,8 +100,7 @@ void GetCommonShape(const std::vector<size_t> &shape1, const std::vector<size_t>
   group_shape->assign(group_shape_1.begin(), group_shape_1.end());
 }
 
-void GetGroupIdx(const int64_t flat_group_index, const std::vector<size_t> &group_shape,
-                 std::vector<size_t> *group_indices) {
+void GetGroupIdx(const int64_t flat_group_index, const ShapeVector &group_shape, std::vector<size_t> *group_indices) {
   group_indices->clear();
   int64_t running_flat_group_index = flat_group_index;
   for (int64_t group_dim_index = SizeToLong(group_shape.size()) - 1; group_dim_index >= 0; --group_dim_index) {
@@ -196,14 +194,16 @@ void DenseToDenseSetOperationCpuKernelMod::SetCompute(const std::set<T> &set1, c
 template <typename T>
 bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kernel::AddressPtr> &inputs,
                                                           const std::vector<kernel::AddressPtr> &outputs,
-                                                          const std::vector<size_t> &output_shape,
-                                                          const size_t num_values,
+                                                          const ShapeVector &output_shape, const size_t num_values,
                                                           const std::map<std::vector<size_t>, std::set<T>> *sets) {
   auto out_indices_ptr = reinterpret_cast<int64_t *>(outputs[kOutput1]->addr);
   auto out_values_ptr = reinterpret_cast<T *>(outputs[kOutput2]->addr);
   auto out_shape_ptr = reinterpret_cast<int64_t *>(outputs[kOutput3]->addr);
   size_t output_shape_size = output_shape.size();
-  std::vector<std::vector<size_t>> infer_shape = {{num_values, output_shape_size}, {num_values}, {output_shape_size}};
+  auto num_values_signed = SizeToLong(num_values);
+  auto output_shape_size_signed = SizeToLong(output_shape_size);
+  std::vector<ShapeVector> infer_shape = {
+    {num_values_signed, output_shape_size_signed}, {num_values_signed}, {output_shape_size_signed}};
   std::vector<TypeId> infer_type(kOutputNum);
   for (size_t i = 0; i < kOutputNum; i++) {
     infer_type[i] = AnfAlgo::GetOutputDeviceDataType(node_ptr_, i);
@@ -242,7 +242,7 @@ bool DenseToDenseSetOperationCpuKernelMod::PopulateOutput(const std::vector<kern
 template <typename T>
 bool DenseToDenseSetOperationCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                         const std::vector<kernel::AddressPtr> &outputs) {
-  std::vector<size_t> group_shape;
+  ShapeVector group_shape;
   const auto x1_shape = AnfAlgo::GetInputDeviceShape(node_ptr_, kInputX1);
   const auto x2_shape = AnfAlgo::GetInputDeviceShape(node_ptr_, kInputX2);
   GetCommonShape(x1_shape, x2_shape, &group_shape);

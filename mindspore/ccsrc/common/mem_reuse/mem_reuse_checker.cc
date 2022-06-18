@@ -71,9 +71,8 @@ int64_t MemReuseChecker::CalculOriInput(const KernelGraph *graph) const {
         ou_type = common::AnfAlgo::GetOutputInferDataType(item, index);
       }
       size_t type_size = GetTypeByte(TypeIdToType(ou_type));
-      std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(item, index);
-      size_t tensor_size =
-        shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+      auto shape = AnfAlgo::GetOutputDeviceShape(item, index);
+      size_t tensor_size = type_size * SizeOf(shape);
       auto checker_size = SizeToLong(tensor_size);
       static_input_size += checker_size;
     }

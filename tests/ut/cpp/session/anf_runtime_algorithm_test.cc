@@ -247,7 +247,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputFormat) {
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim::kPrimAdd), kernel_graph->NewParameter(),
                                     kernel_graph->NewParameter()};
   auto add = kernel_graph->NewCNode(inputs);
-  std::vector<size_t> shape = {1, 2, 3, 4};
+  ShapeVector shape = {1, 2, 3, 4};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32, kNumberTypeFloat32}, {shape, shape}, add.get());
   MS_EXCEPTION_IF_NULL(add);
   add->set_kernel_info(std::make_shared<KernelInfo>());
@@ -377,9 +377,9 @@ TEST_F(AnfRuntimeAlgorithmTest, GetOutputDeviceShape) {
   d_kernel_info->set_select_kernel_build_info(builder.Build());
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 0)[2], 224);
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 1)[0], 2);
-  std::vector<size_t> expect_shape{2, 224, 224, 32};
+  ShapeVector expect_shape{2, 224, 224, 32};
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 2), expect_shape);
-  std::vector<size_t> nz_expect_shape{1, 2, 1, 1, 16, 16};
+  ShapeVector nz_expect_shape{1, 2, 1, 1, 16, 16};
   EXPECT_EQ(AnfAlgo::GetOutputDeviceShape(add, 3), nz_expect_shape);
 }
 
@@ -409,7 +409,7 @@ TEST_F(AnfRuntimeAlgorithmTest, GetInputDeviceShape) {
   d_kernel_info->set_select_kernel_build_info(builder.Build());
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 0)[2], 224);
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 1)[1], 32);
-  std::vector<size_t> expect_shape{2, 224, 224, 32};
+  ShapeVector expect_shape{2, 224, 224, 32};
   EXPECT_EQ(AnfAlgo::GetInputDeviceShape(add, 2), expect_shape);
   EXPECT_THROW(common::AnfAlgo::GetPrevNodeOutputInferShape(nullptr, 0), std::runtime_error);
 }
@@ -586,20 +586,20 @@ TEST_F(AnfRuntimeAlgorithmTest, SetOutputInferTypeAndShape) {
   auto add = kernel_graph->NewCNode(inputs);
   // set none abstract
   std::vector<TypeId> none_types = {};
-  std::vector<std::vector<size_t>> none_shapes = {};
+  std::vector<ShapeVector> none_shapes = {};
   EXPECT_THROW(common::AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, nullptr), std::runtime_error);
   common::AnfAlgo::SetOutputInferTypeAndShape(none_types, none_shapes, add.get());
   EXPECT_EQ((*add->abstract()), abstract::AbstractNone());
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
-  std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};
+  std::vector<ShapeVector> single_shapes = {{2, 32, 224, 224}};
   EXPECT_THROW(common::AnfAlgo::SetOutputInferTypeAndShape(none_types, single_shapes, add.get()), std::runtime_error);
   common::AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, add.get());
   EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 0), kFloat32->type_id());
   EXPECT_EQ(common::AnfAlgo::GetOutputInferShape(add, 0).size(), 4);
   // set multiple input
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
-  std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
+  std::vector<ShapeVector> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
   common::AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, add.get());
   EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 0), kFloat16->type_id());
   EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(add, 1), kFloat32->type_id());
@@ -616,14 +616,14 @@ TEST_F(AnfRuntimeAlgorithmTest, CopyAbstract) {
   auto first_add = kernel_graph->NewCNode(first_inputs);
   // set single input
   std::vector<TypeId> single_types = {kFloat32->type_id()};
-  std::vector<std::vector<size_t>> single_shapes = {{2, 32, 224, 224}};
+  std::vector<ShapeVector> single_shapes = {{2, 32, 224, 224}};
   common::AnfAlgo::SetOutputInferTypeAndShape(single_types, single_shapes, first_add.get());
   // set multiple input
   std::vector<AnfNodePtr> second_inputs;
   second_inputs.push_back(NewValueNode(prim::kPrimAdd));
   auto second_add = kernel_graph->NewCNode(second_inputs);
   std::vector<TypeId> mutiple_types = {kFloat16->type_id(), kFloat32->type_id(), kFloat64->type_id()};
-  std::vector<std::vector<size_t>> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
+  std::vector<ShapeVector> mutiple_shapes = {{2, 32, 224, 224}, {2, 32, 224, 224}, {2, 32, 224, 224}};
   common::AnfAlgo::SetOutputInferTypeAndShape(mutiple_types, mutiple_shapes, second_add.get());
   common::AnfAlgo::CopyAbstract(second_add, first_add.get());
   EXPECT_EQ(common::AnfAlgo::GetOutputInferDataType(first_add, 0), kFloat16->type_id());

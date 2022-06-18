@@ -43,7 +43,7 @@ void LarsV2Fission::CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const
   square_sum_all->set_scope(lars_v2->scope());
 
   auto types = {kNumberTypeFloat32, kNumberTypeFloat32};
-  std::vector<size_t> shape;
+  ShapeVector shape;
   auto shapes = {shape, shape};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, square_sum_all.get());
   CreateMultipleOutputsOfAnfNode(graph, square_sum_all, kSquareSumOutputNum, square_sum_all_outputs);

@@ -48,8 +48,8 @@ class ArgMaxAndMinWithValueGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     small_ = (kernel_name == "ArgMinWithValue") ? true : false;
-    std::vector<size_t> shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 1);
+    auto shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 1));
     is_null_input_ =
       CHECK_SHAPE_NULL(shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {

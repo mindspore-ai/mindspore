@@ -38,12 +38,12 @@ class TbeKernelReduceSelecter {
   bool IsFracZAndC1HWNCoC0Common(const std::string &format, SupportFormat *support_format) const;
   void GetReduceAttrKeepDim();
   void AssignSupportFormat(const std::string &support_format_str, SupportFormat *support_format) const;
-  bool Is4DShape(const std::vector<size_t> &shape) const;
-  bool Is5DShape(const std::vector<size_t> &shape) const;
-  void PadScalarShape(std::vector<size_t> *shape) const;
+  bool Is4DShape(const ShapeVector &shape) const;
+  bool Is5DShape(const ShapeVector &shape) const;
+  void PadScalarShape(ShapeVector *shape) const;
   CNodePtr cnode_ptr_;
-  std::vector<size_t> input_shape_{};
-  std::vector<size_t> output_shape_{};
+  ShapeVector input_shape_{};
+  ShapeVector output_shape_{};
   std::vector<int64_t> axis_{};
   bool keep_dims_ = false;
 };

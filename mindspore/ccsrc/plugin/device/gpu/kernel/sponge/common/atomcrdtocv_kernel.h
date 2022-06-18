@@ -46,9 +46,9 @@ class AtomCrdToCVGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_old_crd = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape_box = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
 
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_old_crd.size(); i++) ele_old_crd *= shape_old_crd[i];
-    for (size_t i = 0; i < shape_box.size(); i++) ele_box *= shape_box[i];
+    ele_crd *= SizeOf(shape_crd);
+    ele_old_crd *= SizeOf(shape_old_crd);
+    ele_box *= SizeOf(shape_box);
 
     InitSizeLists();
     return true;

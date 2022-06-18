@@ -32,10 +32,8 @@ bool TensorArrayWriteKernelMod::Init(const CNodePtr &kernel_node) {
   kernel_node_ = kernel_node;
   type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kSecondInputIndex);
   shapes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kSecondInputIndex);
-  value_size_ = GetTypeByte(TypeIdToType(type_));
-  for (auto i : shapes_) {
-    value_size_ *= i;
-  }
+  value_size_ = GetTypeByte(TypeIdToType(type_)) * SizeOf(shapes_);
+
   InitSizeLists();
   return true;
 }

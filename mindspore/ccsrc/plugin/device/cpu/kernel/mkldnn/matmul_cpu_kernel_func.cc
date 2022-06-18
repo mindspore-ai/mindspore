@@ -36,9 +36,12 @@ using dims = dnnl::memory::dims;
 void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> a_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> b_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  std::vector<int64_t> o_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({a_shape, b_shape, o_shape})) {
+    return;
+  }
   if (a_shape.size() < kRankMin || b_shape.size() < kRankMin || o_shape.size() < kRankMin) {
     MS_LOG(EXCEPTION) << "The tensor rank of MatMul must be greater than or equal to " << kRankMin;
   }
@@ -47,16 +50,16 @@ void MatMulCpuKernelFunc::InitFunc(const CNodePtr &kernel_node) {
   auto rank = a_shape.size();
   int64_t batch = 1;
   for (size_t i = 0; i < rank - kIndexOffset; ++i) {
-    batch *= SizeToLong(a_shape[i]);
+    batch *= a_shape[i];
   }
 
-  int64_t dim_m = SizeToLong(o_shape[rank - kIndexOffset]);
-  int64_t dim_n = SizeToLong(o_shape[rank - 1]);
+  int64_t dim_m = o_shape[rank - kIndexOffset];
+  int64_t dim_n = o_shape[rank - 1];
   int64_t dim_k = 1;
   if (trans_a) {
-    dim_k = SizeToLong(a_shape[rank - kIndexOffset]);
+    dim_k = a_shape[rank - kIndexOffset];
   } else {
-    dim_k = SizeToLong(a_shape[rank - 1]);
+    dim_k = a_shape[rank - 1];
   }
 
   dims src_dims, weights_dims, dst_dims, a_strides, b_strides, o_strides;

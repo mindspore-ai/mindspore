@@ -69,17 +69,9 @@ class SigmoidCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < logits_shape.size(); i++) {
-      logits_size_ *= logits_shape[i];
-    }
-
-    for (size_t i = 0; i < labels_shape.size(); i++) {
-      labels_size_ *= labels_shape[i];
-    }
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      outputs_size_ *= output_shape[i];
-    }
+    logits_size_ *= SizeOf(logits_shape);
+    labels_size_ *= SizeOf(labels_shape);
+    outputs_size_ *= SizeOf(output_shape);
 
     InitSizeLists();
     return true;

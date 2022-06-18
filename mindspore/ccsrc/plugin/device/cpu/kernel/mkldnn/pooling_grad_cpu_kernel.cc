@@ -69,7 +69,10 @@ void PoolingGradCpuKernelMod::InitPoolingGradFields(const CNodePtr &kernel_node)
 void PoolingGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   InitPoolingGradFields(kernel_node);
-  std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  auto src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  if (IsDynamic(src_shape)) {
+    return;
+  }
   const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "PoolingGrad only supports 4D/5D input, but got " << src_dim << "D";

@@ -116,13 +116,13 @@ class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_rank_ = input_shape_.size();
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
-      input_size_ *= input_shape_[i];
+      input_size_ *= static_cast<size_t>(input_shape_[i]);
     }
 
     k_ = GetAttr<int64_t>(kernel_node, "k");
 
-    inner_size_ = input_shape_[1];
-    outer_size_ = input_shape_[0];
+    inner_size_ = static_cast<size_t>(input_shape_[1]);
+    outer_size_ = static_cast<size_t>(input_shape_[0]);
 
     if (std::is_same<T, half>::value) {
       // min value representable by float16, std::numeric_limits doesn't support half
@@ -153,18 +153,18 @@ class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_shape_[0] * sizeof(int32_t));
-    output_size_list_.push_back(input_shape_[0] * sizeof(bool));
+    input_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * sizeof(int32_t));
+    output_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * sizeof(bool));
     if (k_ > 0) {
-      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(T));
-      workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(int32_t));
+      workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(T));
+      workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(int32_t));
     }
 
     // remove later! urgent fix for bug: topk has incorrect output for float16
     if (std::is_same<T, half>::value) {
       workspace_size_list_.push_back(input_size_ * sizeof(float));
       if (k_ > 0) {
-        workspace_size_list_.push_back(input_shape_[0] * k_ * sizeof(float));
+        workspace_size_list_.push_back(static_cast<size_t>(input_shape_[0]) * k_ * sizeof(float));
       }
     }
   }
@@ -173,7 +173,7 @@ class InTopKGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t input_size_;
   T top_k_init_;
   int64_t k_;
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   size_t input_rank_;
 
   // for topk

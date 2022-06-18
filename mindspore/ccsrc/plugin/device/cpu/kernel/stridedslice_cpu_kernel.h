@@ -88,8 +88,8 @@ class StridedSliceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   int cal_num_per_thread_{1};
   bool parallel_{false};
   ParallelStrategy parallel_strategy_{kOnSplitAxis};
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
   StridedSliceParameter slice_param_;
 };
 }  // namespace kernel

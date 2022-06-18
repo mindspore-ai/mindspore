@@ -42,18 +42,11 @@ int LerpCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto start_shape = inputs.at(kIndex0)->GetShapeVector();
-  start_shape_.clear();
-  (void)std::transform(start_shape.begin(), start_shape.end(), std::back_inserter(start_shape_), LongToSize);
-  end_shape_.clear();
-  auto end_shape = inputs.at(kIndex1)->GetShapeVector();
-  (void)std::transform(end_shape.begin(), end_shape.end(), std::back_inserter(end_shape_), LongToSize);
-  weight_shape_.clear();
-  auto weight_shape = inputs.at(kIndex2)->GetShapeVector();
-  output_shape_.clear();
-  (void)std::transform(weight_shape.begin(), weight_shape.end(), std::back_inserter(weight_shape_), LongToSize);
-  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
+
+  start_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  end_shape_ = inputs.at(kIndex1)->GetShapeVector();
+  weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  output_shape_ = outputs.at(kIndex0)->GetShapeVector();
   output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
   return KRET_OK;
 }

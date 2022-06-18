@@ -59,6 +59,8 @@ inline size_t IntToSize(int u) {
   return static_cast<size_t>(u);
 }
 
+inline size_t LongToSizeClipNeg(int64_t u) { return u < 0 ? 0 : static_cast<size_t>(u); }
+
 inline size_t LongToSize(int64_t u) {
   if (u < 0) {
     MS_LOG(EXCEPTION) << "The int64_t value(" << u << ") is less than 0.";
@@ -229,6 +231,31 @@ inline uint32_t Uint32tAddWithOverflowCheck(uint32_t x, uint32_t y) {
 inline uint8_t *AddressOffset(void *address, size_t offset) {
   MS_EXCEPTION_IF_NULL(address);
   return static_cast<uint8_t *>(address) + offset;
+}
+
+inline std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
+  std::vector<int64_t> result;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
+  return result;
+}
+
+inline std::vector<int64_t> Convert2Long(const std::vector<size_t> &v) {
+  std::vector<int64_t> result;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToLong);
+  return result;
+}
+
+inline std::vector<size_t> Convert2SizeT(const std::vector<int64_t> &v) {
+  std::vector<size_t> result;
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), LongToSize);
+  return result;
+}
+
+inline std::vector<size_t> Convert2SizeTClipNeg(const std::vector<int64_t> &v) {
+  std::vector<size_t> result;
+  auto ConvertFunc = [](int64_t v) -> size_t { return v < 0 ? 0 : static_cast<int64_t>(v); };
+  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), ConvertFunc);
+  return result;
 }
 }  // namespace mindspore
 

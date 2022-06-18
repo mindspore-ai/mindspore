@@ -34,9 +34,12 @@ void DataFormatVecPermuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   dim_ = input_shape_.size();
+  if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
+    return;
+  }
   // check attr
-  std::vector<size_t> shape1 = {4};
-  std::vector<size_t> shape2 = {4, 2};
+  std::vector<int64_t> shape1 = {4};
+  std::vector<int64_t> shape2 = {4, 2};
   if (src_format_ != "NHWC" && src_format_ != "NCHW") {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", src_format must be 'NHWC' or 'NCHW' , but got " << src_format_
                       << ".";

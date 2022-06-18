@@ -76,7 +76,7 @@ class UnpackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         return true;
       }
       for (size_t j = 0; j < _shape.size(); j++) {
-        _size *= _shape[j];
+        _size *= static_cast<size_t>(_shape[j]);
       }
       output_size_list_.push_back(_size * sizeof(T));
     }
@@ -89,9 +89,9 @@ class UnpackFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
       if (i > IntToSize(axis_)) {
-        dims_after_axis_ *= input_shape[i];
+        dims_after_axis_ *= static_cast<size_t>(input_shape[i]);
       }
     }
     input_size_list_.push_back(input_size_ * sizeof(T));

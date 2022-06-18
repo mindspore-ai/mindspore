@@ -133,8 +133,8 @@ class LuSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  private:
   bool InitInputSize(const CNodePtr &kernel_node) {
-    auto input_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto input_b_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto input_a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto input_b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
     constexpr size_t input_min_dim = 1;
     if (input_a_shape.size() <= input_min_dim || input_b_shape.size() <= input_min_dim) {
       MS_LOG_EXCEPTION << kernel_name_ << " LuSolveGpuKernelMod input shape size is " << input_a_shape.size()

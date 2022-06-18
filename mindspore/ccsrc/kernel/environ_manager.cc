@@ -100,7 +100,7 @@ bool EnvironMgr::CheckEnvInput(const CNodePtr &kernel_node) const {
   return true;
 }
 
-bool EnvironMgr::IsScalarTensor(TypeId type, const std::vector<size_t> &shape) const {
+bool EnvironMgr::IsScalarTensor(TypeId type, const std::vector<int64_t> &shape) const {
   if (type == kObjectTypeTensorType) {
     MS_LOG(ERROR) << "The type is invalid: " << type;
     return false;

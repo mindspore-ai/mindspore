@@ -29,7 +29,6 @@ kernel::KernelBuildInfoPtr ReplaceNodeByProxy::GenerateKernelBuildInfo(const CNo
   std::vector<std::string> outputs_device_format;
   std::vector<TypeId> inputs_device_type;
   std::vector<TypeId> outputs_device_type;
-  std::vector<std::vector<size_t>> outputs_shape;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
@@ -40,7 +39,6 @@ kernel::KernelBuildInfoPtr ReplaceNodeByProxy::GenerateKernelBuildInfo(const CNo
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
     outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));
-    outputs_shape.push_back(common::AnfAlgo::GetOutputInferShape(cnode, output_index));
   }
   builder.SetFusionType(AnfAlgo::GetFusionType(cnode));
   builder.SetProcessor(AnfAlgo::GetProcessor(cnode));

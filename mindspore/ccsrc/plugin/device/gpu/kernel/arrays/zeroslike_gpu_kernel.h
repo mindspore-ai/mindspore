@@ -51,14 +51,14 @@ class ZerosLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
 
-    std::vector<size_t> input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
       return true;
     }
     for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
     }
 
     InitSizeLists();

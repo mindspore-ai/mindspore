@@ -59,9 +59,9 @@ class CTCLossCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
-  std::vector<size_t> probs_shape_;
-  std::vector<size_t> indices_dims_;
-  std::vector<size_t> labels_dims_;
+  ShapeVector probs_shape_;
+  ShapeVector indices_dims_;
+  ShapeVector labels_dims_;
   size_t num_class_{0};
   size_t max_time_{0};
   size_t batch_size_{0};

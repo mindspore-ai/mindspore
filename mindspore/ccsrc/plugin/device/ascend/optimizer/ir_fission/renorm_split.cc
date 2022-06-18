@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-void FreshRenormInferShape(const CNodePtr &node, std::vector<size_t> in_shape, const TypeId &type) {
+void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const TypeId &type) {
   MS_EXCEPTION_IF_NULL(node);
   auto dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, "dim");
   if (dim < 0) {
@@ -37,10 +37,8 @@ void FreshRenormInferShape(const CNodePtr &node, std::vector<size_t> in_shape, c
   if (common::AnfAlgo::IsDynamicShape(node)) {
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, 0);
     auto min_shape = common::AnfAlgo::GetOutputMinShape(node, 0);
-    std::vector<int64_t> shape_tmp;
-    std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
     common::AnfAlgo::SetOutputTypeAndDetailShape(
-      {type}, {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)}, node.get());
+      {type}, {std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape)}, node.get());
     return;
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({type}, {in_shape}, node.get());
@@ -83,9 +81,7 @@ const AnfNodePtr RenormSplit::Process(const FuncGraphPtr &func_graph, const AnfN
                                               node};
   auto broadcast_node = NewCNode(broadcast_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(broadcast_node);
-  std::vector<int64_t> shape;
-  (void)std::transform(in_shape.begin(), in_shape.end(), std::back_inserter(shape), SizeToLong);
-  common::AnfAlgo::SetNodeAttr("shape", MakeValue(shape), broadcast_node);
+  common::AnfAlgo::SetNodeAttr("shape", MakeValue(in_shape), broadcast_node);
   common::AnfAlgo::SetOutputInferTypeAndShape({type}, {in_shape}, broadcast_node.get());
 
   std::vector<AnfNodePtr> mul_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimMul->name())),

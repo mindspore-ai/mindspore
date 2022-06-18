@@ -85,27 +85,33 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (IsDynamic(input_shape)) {
+    return;
+  }
   if (input_shape.size() < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of 'input_x' must be greater than or equal to 1, but got "
                       << input_shape.size() << ".";
   }
-  first_dim_size = SizeToInt(input_shape[0]);
+  first_dim_size = LongToInt(input_shape[0]);
   input_size_ = 1;
   inner_size_ = 1;
   if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of 'input_x' can not be empty.";
   }
 
+  int64_t size_tmp = 1;
   for (size_t i = 1; i < input_shape.size(); i++) {
-    inner_size_ *= input_shape[i];
+    size_tmp *= input_shape[i];
   }
-  input_size_ = input_shape[0] * inner_size_;
+  inner_size_ = LongToSize(size_tmp);
+  input_size_ = LongToSize(input_shape[0]) * inner_size_;
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  indices_size_ = 1;
+  size_tmp = 1;
   for (size_t i = 0; i < indices_shape.size(); i++) {
-    indices_size_ *= indices_shape[i];
+    size_tmp *= indices_shape[i];
   }
+  indices_size_ = LongToSize(size_tmp);
   InitComputeFunc();
 }
 

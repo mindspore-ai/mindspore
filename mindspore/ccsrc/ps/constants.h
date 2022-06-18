@@ -28,6 +28,7 @@
 
 #include "ps/core/communicator/request_process_result_code.h"
 #include "distributed/persistent/data.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ps {
@@ -199,8 +200,8 @@ using Lengths = std::vector<int>;
 using WeightPtr = std::shared_ptr<Weight>;
 using PersistentWeightPtr = std::shared_ptr<PersistentWeight>;
 using GradPtr = std::shared_ptr<Grad>;
-using InputsShape = std::vector<std::shared_ptr<std::vector<size_t>>>;
-using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>>;
+using InputsShape = std::vector<std::shared_ptr<ShapeVector>>;
+using InputsShapePtr = std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>>;
 
 constexpr size_t INDEX_NOT_SEND = UINT_MAX;
 using OptimOriginIdx = std::map<std::string, size_t>;

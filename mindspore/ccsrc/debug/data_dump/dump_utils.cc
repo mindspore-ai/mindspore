@@ -89,9 +89,7 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
   if (trans_flag) {
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
   } else {
-    auto shape = AnfAlgo::GetOutputDeviceShape(node, index);
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(*int_shapes),
-                         [](size_t inner_item) { return SizeToInt(inner_item); });
+    *int_shapes = AnfAlgo::GetOutputDeviceShape(node, index);
   }
 }
 

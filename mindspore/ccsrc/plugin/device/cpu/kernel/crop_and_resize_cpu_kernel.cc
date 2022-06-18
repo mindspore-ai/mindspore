@@ -40,8 +40,8 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                   << input_image_shape_len << "-D.";
   }
 
-  input_height_ = SizeToInt(input_image_shape[IMAGE_HEIGHT]);
-  input_width_ = SizeToInt(input_image_shape[IMAGE_WEIGHT]);
+  input_height_ = LongToInt(input_image_shape[IMAGE_HEIGHT]);
+  input_width_ = LongToInt(input_image_shape[IMAGE_WEIGHT]);
 
   //  input boxes
   auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, BOXES);
@@ -79,13 +79,13 @@ void CropAndResizeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto output_shape_len = output_shape.size();
   output_size_ = 1;
   for (size_t i = 0; i < output_shape_len; i++) {
-    output_size_ *= SizeToInt(output_shape[i]);
+    output_size_ *= LongToInt(output_shape[i]);
   }
 
   //  set expected output params
-  final_height_ = SizeToInt(output_shape[HEIGHT]);
-  final_width_ = SizeToInt(output_shape[WEIGHT]);
-  channel_ = SizeToInt(output_shape[CHANNEL]);
+  final_height_ = LongToInt(output_shape[HEIGHT]);
+  final_width_ = LongToInt(output_shape[WEIGHT]);
+  channel_ = LongToInt(output_shape[CHANNEL]);
 
   //  get op parameters
   string method = common::AnfAlgo::GetNodeAttr<string>(kernel_node, "method");

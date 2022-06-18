@@ -57,8 +57,8 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    std::vector<size_t> input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
@@ -70,20 +70,14 @@ class ResizeBilinearGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "got the dimension of input: " << input_shape.size()
                         << ", the dimension of output: " << output_shape.size();
     }
-    n_ = SizeToInt(input_shape[0]);
-    c_ = SizeToInt(input_shape[1]);
-    input_h_ = SizeToInt(input_shape[2]);
-    input_w_ = SizeToInt(input_shape[3]);
-    output_h_ = SizeToInt(output_shape[2]);
-    output_w_ = SizeToInt(output_shape[3]);
-    input_size_ = sizeof(T);
-    for (auto x : input_shape) {
-      input_size_ *= x;
-    }
-    output_size_ = sizeof(T);
-    for (auto x : output_shape) {
-      output_size_ *= x;
-    }
+    n_ = LongToInt(input_shape[0]);
+    c_ = LongToInt(input_shape[1]);
+    input_h_ = LongToInt(input_shape[2]);
+    input_w_ = LongToInt(input_shape[3]);
+    output_h_ = LongToInt(output_shape[2]);
+    output_w_ = LongToInt(output_shape[3]);
+    input_size_ = sizeof(T) * SizeOf(input_shape);
+    output_size_ = sizeof(T) * SizeOf(output_shape);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     half_pixel_centers_ = GetAttr<bool>(kernel_node, "half_pixel_centers");
     InitSizeLists();

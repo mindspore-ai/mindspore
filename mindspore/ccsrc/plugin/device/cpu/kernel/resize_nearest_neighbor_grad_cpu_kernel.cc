@@ -30,8 +30,8 @@ constexpr size_t kResizeNearestNeighborGradOutputsShapeSize = 4;
 void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  std::vector<size_t> output_size = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto output_size = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 
@@ -49,8 +49,8 @@ void ResizeNearestNeighborGradCpuKernelMod::InitKernel(const CNodePtr &kernel_no
   channel_ = input_shape[1];
   in_height_ = input_shape[2];
   in_width_ = input_shape[3];
-  out_height_ = output_size[2];
-  out_width_ = output_size[3];
+  out_height_ = LongToSize(output_size[2]);
+  out_width_ = LongToSize(output_size[3]);
   height_scale_ = Scaling(out_height_, in_height_, align_corners_);
   width_scale_ = Scaling(out_width_, in_width_, align_corners_);
 }

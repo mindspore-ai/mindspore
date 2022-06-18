@@ -37,9 +37,9 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     weight_index_ = 1;
     diff_dst_index_ = 0;
   }
-  std::vector<size_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  std::vector<size_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, weight_index_);
-  std::vector<size_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, diff_dst_index_);
+  std::vector<int64_t> src_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  std::vector<int64_t> weight_shape = AnfAlgo::GetInputDeviceShape(kernel_node, weight_index_);
+  std::vector<int64_t> dst_shape = AnfAlgo::GetInputDeviceShape(kernel_node, diff_dst_index_);
   size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Conv grad only supports 4D/5D input, but got " << src_dim << "D!";
@@ -51,9 +51,10 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (src_dim == SHAPE_5D && format != NCDHW) {
     MS_LOG(EXCEPTION) << kernel_name_ << " only supports 5D input with NCDHW format, but got format " << format;
   }
-  dnnl::memory::dims kernel_size;
-  (void)std::transform(weight_shape.begin() + NC_LEN, weight_shape.end(), std::back_inserter(kernel_size),
-                       [](const size_t &value) { return SizeToLong(value); });
+  if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
+    return;
+  }
+  dnnl::memory::dims kernel_size(weight_shape.begin(), weight_shape.end());
   const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {

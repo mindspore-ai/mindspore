@@ -81,26 +81,23 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
                         << "', the dimension of input and output must be the same, but got the dimension of input: "
                         << shape_size_ << ", the dimension of output: " << output_shape.size();
     }
-    input_size_ = 1;
+
     for (size_t i = 0; i < shape_size_; i++) {
-      input_size_ *= input_shape[i];
       if (input_shape[i] == 0) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of input at " << i << " index cannot be 0, "
                           << "but got " << input_shape[i];
       }
-      input_shape_.push_back(input_shape[i]);
+      input_shape_.push_back(LongToInt(input_shape[i]));
     }
-    input_size_ *= sizeof(T);
-    output_size_ = 1;
+    input_size_ = sizeof(T) * SizeOf(input_shape);
     for (size_t i = 0; i < shape_size_; i++) {
-      output_size_ *= output_shape[i];
-      if (input_shape[i] == 0) {
+      if (output_shape[i] == 0) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the shape of output at " << i << " index cannot be 0, "
-                          << "but got " << input_shape[i];
+                          << "but got " << output_shape[i];
       }
-      output_shape_.push_back(output_shape[i]);
+      output_shape_.push_back(LongToInt(output_shape[i]));
     }
-    output_size_ *= sizeof(T);
+    output_size_ = sizeof(T) * SizeOf(output_shape);
     align_corners_ = GetAttr<bool>(kernel_node, "align_corners");
     InitSizeLists();
     return true;

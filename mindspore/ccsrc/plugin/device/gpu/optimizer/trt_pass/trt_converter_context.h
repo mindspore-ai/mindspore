@@ -73,7 +73,7 @@ class TrtConverterContext : public std::enable_shared_from_this<TrtConverterCont
 
   // Create and keep temporary weight, as constant folding demanding new weight excluded in graph,
   // which should release until building finish.
-  std::shared_ptr<tensor::Tensor> CreateTempWeight(const TypeId &type, const std::vector<size_t> &shape);
+  std::shared_ptr<tensor::Tensor> CreateTempWeight(const TypeId &type, const ShapeVector &shape);
 
   std::shared_ptr<nvinfer1::INetworkDefinition> network() const { return network_; }
 

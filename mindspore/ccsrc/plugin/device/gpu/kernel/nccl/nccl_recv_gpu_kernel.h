@@ -53,7 +53,7 @@ class NcclRecvGpuKernel : public NcclGpuKernelMod {
     group_name_ = GetAttr<std::string>(kernel_node, kAttrGroup);
     nccl_data_type_ = nccl_dtype(AnfAlgo::GetOutputDeviceDataType(kernel_node, 0));
 
-    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
       InitSizeLists();

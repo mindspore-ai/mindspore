@@ -86,7 +86,7 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     auto dy_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(dy_shape, kernel_name_, "input");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(dy_shape)) {
       InitSizeLists();
       return true;
     }
@@ -103,7 +103,7 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (pos == std::string::npos || pos >= num_dims_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'C' character must be in 'format', but got " << format;
     }
-    bias_size_ = dy_shape[pos];
+    bias_size_ = LongToSizeClipNeg(dy_shape[pos]);
     auto num_dims_fix = std::max(num_dims_, 4UL);
     for (size_t i = 0; i < num_dims_fix; i++) {
       dy_shape_.push_back((i < num_dims_) ? dy_shape[i] : 1);
@@ -112,12 +112,8 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         same_dims_ = false;
       }
     }
-    for (size_t i = 0; i < dy_shape_.size(); i++) {
-      dy_num_ *= dy_shape_[i];
-    }
-    for (size_t i = 0; i < db_shape_.size(); i++) {
-      db_num_ *= db_shape_[i];
-    }
+    dy_num_ *= SizeOf(dy_shape_);
+    db_num_ *= SizeOf(db_shape_);
     data_format_ = input_device_format;  // for opt implementation
     if (format == kOpFormat_NHWC) {
       data_format_ = kOpFormat_NHWC;
@@ -193,8 +189,8 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       std::unique_ptr<int[]> dy_dims = std::make_unique<int[]>(cudnn_dims);
       std::unique_ptr<int[]> db_dims = std::make_unique<int[]>(cudnn_dims);
       for (size_t i = 0; i < cudnn_dims; i++) {
-        dy_dims[i] = SizeToInt(dy_shape_[i]);
-        db_dims[i] = SizeToInt(db_shape_[i]);
+        dy_dims[i] = LongToInt(dy_shape_[i]);
+        db_dims[i] = LongToInt(db_shape_[i]);
       }
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                   cudnnSetTensorNdDescriptorEx(dy_desc_, cudnn_compute_format_, cudnn_data_type_,
@@ -243,9 +239,9 @@ class BiasAddGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t dy_num_;  // for own implementation
   size_t db_num_;
   size_t num_dims_;
-  size_t bias_size_;              // for own implementation
-  std::vector<size_t> dy_shape_;  // for own implementation
-  std::vector<size_t> db_shape_;  // for own implementation
+  size_t bias_size_;      // for own implementation
+  ShapeVector dy_shape_;  // for own implementation
+  ShapeVector db_shape_;  // for own implementation
   std::string data_format_ = kOpFormat_NCHW;
   // for cudnn implementation
   cudnnHandle_t cudnn_handle_;

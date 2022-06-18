@@ -47,8 +47,8 @@ class LstsqCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> input_0_shape_;
-  std::vector<size_t> input_1_shape_;
+  std::vector<int64_t> input_0_shape_;
+  std::vector<int64_t> input_1_shape_;
   TypeId dtype_0_{kTypeUnknown};
   TypeId dtype_1_{kTypeUnknown};
 };

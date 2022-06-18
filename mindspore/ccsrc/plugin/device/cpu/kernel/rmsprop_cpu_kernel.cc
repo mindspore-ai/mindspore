@@ -91,7 +91,7 @@ void RMSPropCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     momentum_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "momentum");
     epsilon_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "epsilon");
   }
-  auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   for (auto &dim : input_shape) {
     size_ *= dim;

@@ -52,9 +52,9 @@ class UnsortedSegmentMaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto input_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto segment_ids_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto segment_ids_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto output_shapes = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(segment_ids_shapes, kernel_name, "segment_ids") ||
                      CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
@@ -76,23 +76,23 @@ class UnsortedSegmentMaxGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     num_segments_ = output_shapes[0];
     input_size_ = 1;
     for (size_t i = 0; i < input_shapes.size(); i++) {
-      input_size_ *= input_shapes[i];
+      input_size_ *= static_cast<size_t>(input_shapes[i]);
     }
 
     segment_ids_size_ = 1;
     for (size_t i = 0; i < segment_ids_shapes.size(); i++) {
-      segment_ids_size_ *= segment_ids_shapes[i];
+      segment_ids_size_ *= static_cast<size_t>(segment_ids_shapes[i]);
     }
 
     output_size_ = 1;
     for (size_t i = 0; i < output_shapes.size(); i++) {
-      output_size_ *= output_shapes[i];
+      output_size_ *= static_cast<size_t>(output_shapes[i]);
     }
 
-    outer_size_ = input_shapes[0];
+    outer_size_ = static_cast<size_t>(input_shapes[0]);
     inner_size_ = 1;
     for (size_t i = 1; i < input_shapes.size(); i++) {
-      inner_size_ *= input_shapes[i];
+      inner_size_ *= static_cast<size_t>(input_shapes[i]);
     }
 
     InitSizeLists();

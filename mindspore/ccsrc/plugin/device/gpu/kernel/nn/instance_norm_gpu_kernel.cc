@@ -57,14 +57,14 @@ int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_x");
   if (is_null_input_) {
     return KRET_OK;
   }
 
-  batch_ = input_shape[kIndex0];
-  channel_ = input_shape[kIndex1];
+  batch_ = LongToSize(input_shape[kIndex0]);
+  channel_ = LongToSize(input_shape[kIndex1]);
 
   CheckTensorSize({input_shape});
   const int batch = 1;

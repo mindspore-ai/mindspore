@@ -70,9 +70,9 @@ void ScatterNdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   Check(kernel_node);
-  auto shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  auto shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  auto indices_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto updates_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
   auto indices_unit_rank = indices_shape.back();
   if (indices_unit_rank > shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_

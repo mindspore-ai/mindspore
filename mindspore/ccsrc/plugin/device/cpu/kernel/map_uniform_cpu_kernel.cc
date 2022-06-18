@@ -57,10 +57,7 @@ void MapUniformCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
   }
   auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  batch_size_ = 1;
-  for (size_t i = 0; i < input_x_shape.size(); ++i) {
-    batch_size_ *= input_x_shape[i];
-  }
+  batch_size_ = SizeOf(input_x_shape);
   MS_LOG(INFO) << "Input size: " << batch_size_;
   auto input_x = reinterpret_cast<T *>(inputs[0]->addr);
   auto per_group_size = *reinterpret_cast<T *>(inputs[1]->addr);

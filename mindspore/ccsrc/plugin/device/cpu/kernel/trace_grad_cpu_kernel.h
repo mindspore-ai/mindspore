@@ -56,7 +56,7 @@ class TraceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   TypeId values_type_{kTypeUnknown};
 };
 }  // namespace kernel

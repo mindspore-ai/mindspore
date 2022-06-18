@@ -82,7 +82,7 @@ class NMSWithMaskFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    num_input_ = input_shape[0];  // Get N value in [N,5] data
+    num_input_ = LongToSizeClipNeg(input_shape[0]);  // Get N value in [N,5] data
     ceil_power_2 = NmsRoundUpPower2(num_input_);
 
     input_size_ = num_input_ * sizeof(T) * box_size_;  // 5 values per bbox

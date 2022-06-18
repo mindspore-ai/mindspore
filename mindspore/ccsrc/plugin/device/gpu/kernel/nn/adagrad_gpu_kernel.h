@@ -84,21 +84,15 @@ class AdagradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
                      CHECK_SHAPE_NULL(accumulation_shape, kernel_name_, "accum") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "grad");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({variable_shape, accumulation_shape, gradient_shape})) {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < variable_shape.size(); i++) {
-      variable_size_ *= variable_shape[i];
-    }
 
-    for (size_t i = 0; i < accumulation_shape.size(); i++) {
-      accumulation_size_ *= accumulation_shape[i];
-    }
+    variable_size_ *= SizeOf(variable_shape);
+    accumulation_size_ *= SizeOf(accumulation_shape);
+    gradient_size_ *= SizeOf(gradient_shape);
 
-    for (size_t i = 0; i < gradient_shape.size(); i++) {
-      gradient_size_ *= gradient_shape[i];
-    }
     InitSizeLists();
     return true;
   }

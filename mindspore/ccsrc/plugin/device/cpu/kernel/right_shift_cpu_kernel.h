@@ -42,9 +42,9 @@ class RightShiftCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   TypeId input_type_1_{kTypeUnknown};
   TypeId input_type_2_{kTypeUnknown};
-  std::vector<size_t> input_shape_1_;
-  std::vector<size_t> input_shape_2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_1_;
+  ShapeVector input_shape_2_;
+  ShapeVector output_shape_;
   template <typename T>
   bool IntCompute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>

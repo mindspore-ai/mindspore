@@ -56,9 +56,9 @@ class GcdCpuKernelMod : public NativeCpuKernelMod {
 
   static std::vector<std::pair<KernelAttr, GcdLaunchFunc>> func_list_;
   GcdLaunchFunc kernel_func_;
-  std::vector<size_t> x1_shape_;
-  std::vector<size_t> x2_shape_;
-  std::vector<size_t> y_shape_;
+  ShapeVector x1_shape_;
+  ShapeVector x2_shape_;
+  ShapeVector y_shape_;
   bool need_bcast_{false};
 };
 }  // namespace kernel

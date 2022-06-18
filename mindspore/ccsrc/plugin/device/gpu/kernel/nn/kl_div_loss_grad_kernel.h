@@ -50,13 +50,11 @@ class KLDivLossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
     kernel_node_ = kernel_node;
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(input_shape)) {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ *= SizeOf(input_shape);
     string reduction = GetAttr<string>(kernel_node, "reduction");
     reduction_ = kReductionModeMap[reduction];
     InitSizeLists();

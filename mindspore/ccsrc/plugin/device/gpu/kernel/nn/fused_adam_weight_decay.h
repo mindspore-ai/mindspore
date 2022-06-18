@@ -44,10 +44,7 @@ class FusedAdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    element_nums_ = 1;
-    for (auto i : shape) {
-      element_nums_ *= i;
-    }
+    element_nums_ = SizeOf(shape);
 
     InitSizeLists();
     return true;

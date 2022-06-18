@@ -47,7 +47,7 @@ bool SetIOIputSize(const std::shared_ptr<AnfNode> &anf_node, const size_t &input
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_size_list);
   for (size_t i = 0; i < input_num; i++) {
-    std::vector<size_t> shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetInputDeviceShape(anf_node, i);
     if (AnfAlgo::GetInputDeviceDataType(anf_node, i) == kObjectTypeString) {
       if (!anf_node->isa<CNode>()) {
         MS_LOG(EXCEPTION) << "anf_node is not CNode.";
@@ -93,7 +93,7 @@ bool SetIOSize(const std::shared_ptr<AnfNode> &anf_node, const std::shared_ptr<A
     output_num = 0;
   }
   for (size_t i = 0; i < output_num; i++) {
-    std::vector<size_t> shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
+    auto shape_i = AnfAlgo::GetOutputDeviceShape(anf_node, i);
     TypePtr type_ptr = TypeIdToType(AnfAlgo::GetOutputDeviceDataType(anf_node, i));
     int64_t size_i = 1;
     if (!GetShapeSize(shape_i, type_ptr, &size_i)) {
@@ -222,7 +222,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
     ::mindspore::Tensor *node_inputs = proto->add_inputs();
     MS_EXCEPTION_IF_NULL(node_inputs);
     TypeId input_type = AnfAlgo::GetInputDeviceDataType(anf_node, input_index);
-    std::vector<size_t> input_shape;
+    std::vector<int64_t> input_shape;
     int32_t input_data_type;
     if (input_type == kObjectTypeString) {
       auto cnode = anf_node->cast<CNodePtr>();
@@ -232,7 +232,7 @@ void SetNodeInputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef 
       MS_EXCEPTION_IF_NULL(value_ptr);
       auto value = GetValue<std::string>(value_ptr);
       input_shape.push_back(1);
-      input_shape.push_back(value.size());
+      input_shape.push_back(static_cast<int64_t>(value.size()));
       input_data_type = AicpuOpUtil::MsTypeToProtoType(kTypeUnknown);
     } else {
       input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
@@ -266,7 +266,7 @@ void SetNodeOutputs(const std::shared_ptr<AnfNode> &anf_node, mindspore::NodeDef
   for (size_t output_index = 0; output_index < output_num; output_index++) {
     ::mindspore::Tensor *node_outputs = proto->add_outputs();
     MS_EXCEPTION_IF_NULL(node_outputs);
-    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
     mindspore::TensorShape *tensorShape = node_outputs->mutable_tensor_shape();
     MS_EXCEPTION_IF_NULL(tensorShape);
     for (auto item : output_shape) {
@@ -350,7 +350,7 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
   auto *inputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t input_index = 0; input_index < input_num; input_index++) {
     TypeId input_type = AnfAlgo::GetInputDeviceDataType(anf_node, input_index);
-    std::vector<size_t> input_shape;
+    std::vector<int64_t> input_shape;
     int32_t input_data_type;
     if (input_type == kObjectTypeString) {
       auto cnode = anf_node->cast<CNodePtr>();
@@ -359,7 +359,7 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
       auto value_ptr = GetValueNode(input_node);
       auto value = GetValue<std::string>(value_ptr);
       input_shape.push_back(1);
-      input_shape.push_back(value.size());
+      input_shape.push_back(static_cast<int64_t>(value.size()));
       input_data_type = AicpuOpUtil::MsTypeToProtoType(kTypeUnknown);
     } else {
       input_shape = AnfAlgo::GetInputDeviceShape(anf_node, input_index);
@@ -369,7 +369,7 @@ uint64_t SetExtInfoInputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
 
     size_t input_shape_index = 0;
     for (; input_shape_index < input_shape.size(); input_shape_index++) {
-      inputs[input_index].dims[input_shape_index] = SizeToLong(input_shape[input_shape_index]);
+      inputs[input_index].dims[input_shape_index] = input_shape[input_shape_index];
     }
     if (input_shape.size() < kMaxShapeDims) {
       inputs[input_index].dims[input_shape_index] = LLONG_MIN;
@@ -389,14 +389,14 @@ uint64_t SetExtInfoOutputShapeType(char *ext_info_buf, uint64_t ext_info_offset,
 
   auto *outputs = reinterpret_cast<ShapeAndType *>(ext_info_buf + ext_info_offset);
   for (size_t output_index = 0; output_index < output_num; output_index++) {
-    std::vector<size_t> output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
+    auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
     TypeId output_type = AnfAlgo::GetOutputDeviceDataType(anf_node, output_index);
     int32_t output_data_type = AicpuOpUtil::MsTypeToProtoType(output_type);
     outputs[output_index].type = output_data_type;
 
     size_t output_shape_index = 0;
     for (; output_shape_index < output_shape.size(); output_shape_index++) {
-      outputs[output_index].dims[output_shape_index] = SizeToLong(output_shape[output_shape_index]);
+      outputs[output_index].dims[output_shape_index] = output_shape[output_shape_index];
     }
     if (output_shape_index < kMaxShapeDims) {
       outputs[output_index].dims[output_shape_index] = LLONG_MIN;

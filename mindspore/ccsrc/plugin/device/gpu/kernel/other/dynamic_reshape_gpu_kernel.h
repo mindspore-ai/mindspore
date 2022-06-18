@@ -53,9 +53,9 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    auto input_x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto input_shape_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto output_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
+    auto input_x_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto input_shape_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     data_type_size_ = mindspore::kernel::GetDtypeNbyte(TypeIdToString(data_type, true));
     shape_size_ = input_shape_shape.size();
@@ -81,9 +81,9 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void SyncData() override {
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), 0);
-    std::vector<size_t> output_shape;
+    ShapeVector output_shape;
     std::transform(real_output_shape_.begin(), real_output_shape_.end(), std::back_inserter(output_shape),
-                   [](const S &value) { return static_cast<size_t>(value); });
+                   [](const S &value) { return static_cast<int64_t>(value); });
     common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicReshape, real output shape is " << output_shape;
   }

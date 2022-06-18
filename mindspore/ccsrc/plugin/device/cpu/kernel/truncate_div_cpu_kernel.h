@@ -55,9 +55,9 @@ class TruncateDivCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, TruncateDivFunc>> func_list_;
   TruncateDivFunc kernel_func_;
 
-  std::vector<size_t> input_shape_1_;
-  std::vector<size_t> input_shape_2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_1_;
+  ShapeVector input_shape_2_;
+  ShapeVector output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

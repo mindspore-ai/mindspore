@@ -68,7 +68,7 @@ class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
     }
     // check input_shape
-    auto input_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -82,15 +82,15 @@ class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
     // get input and out put information
     input_size_ = 1;
     for (size_t i = 0; i < shape_size_; i++) {
-      input_size_ *= input_shape[i];
+      input_size_ *= static_cast<size_t>(input_shape[i]);
     }
     input_size_ *= sizeof(T);
     output_size_ = input_size_;
 
-    in_ = input_shape[0];
-    ic_ = input_shape[1];
-    ih_ = input_shape[2];
-    iw_ = input_shape[3];
+    in_ = static_cast<size_t>(input_shape[0]);
+    ic_ = static_cast<size_t>(input_shape[1]);
+    ih_ = static_cast<size_t>(input_shape[2]);
+    iw_ = static_cast<size_t>(input_shape[3]);
 
     on_ = in_;
     oc_ = ic_ * block_size_ * block_size_;

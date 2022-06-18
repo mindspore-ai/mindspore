@@ -61,8 +61,8 @@ class TileCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
   void TileMultipleCompute(void);
 
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> y_shape_;
+  ShapeVector x_shape_;
+  ShapeVector y_shape_;
   std::vector<int> multiples_;
   TypeId dtype_{kTypeUnknown};
   using TypeKernel = std::function<void(TileCpuKernelMod *, const std::vector<AddressPtr> &inputs,

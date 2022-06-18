@@ -57,7 +57,7 @@ void GeneratePaddingForPadMode(const PaddingInfo &padding_info, std::vector<int6
 }
 }  // namespace
 
-void DeprecatedMKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::vector<size_t> &src_shape,
+void DeprecatedMKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const std::vector<int64_t> &src_shape,
                                            const PaddingInfo &padding_info) const {
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(padding_info.padding_l);
@@ -69,7 +69,7 @@ void DeprecatedMKLCpuKernelMod::GetPadding(const CNodePtr &kernel_node, const st
   const size_t dim_exclude_nc = src_dim - NC_LEN;
   std::vector<int64_t> shape_exclude_nc;
   for (size_t i = NC_LEN; i < src_dim; ++i) {
-    shape_exclude_nc.push_back(SizeToLong(src_shape[i]));
+    shape_exclude_nc.push_back(src_shape[i]);
   }
 
   if (padding_info.pad_mode == PAD_MODE_LOWER_SAME || padding_info.pad_mode == PAD_MODE_UPPER_SAME) {
@@ -151,7 +151,7 @@ dnnl::memory::format_tag DeprecatedMKLCpuKernelMod::GetDefaultFormatTag(const dn
   return tag_vec[rank - 1];
 }
 
-dnnl::memory::desc DeprecatedMKLCpuKernelMod::GetDefaultMemDesc(const std::vector<size_t> &shape) const {
+dnnl::memory::desc DeprecatedMKLCpuKernelMod::GetDefaultMemDesc(const std::vector<int64_t> &shape) const {
   dnnl::memory::dims dims;
   if (shape.empty()) {
     (void)dims.insert(dims.end(), 1);
@@ -264,7 +264,7 @@ void DeprecatedMKLCpuKernelMod::Reorder(dnnl::memory *src_mem, dnnl::memory *dst
   MS_LOG(DEBUG) << "begin to invoke primitive::execute";
 }
 
-void MKLCpuKernelMod::GetPadding(const BaseOperatorPtr &base_operator, const std::vector<size_t> &src_shape,
+void MKLCpuKernelMod::GetPadding(const BaseOperatorPtr &base_operator, const std::vector<int64_t> &src_shape,
                                  const PaddingInfo &padding_info) const {
   MS_EXCEPTION_IF_NULL(base_operator);
   MS_EXCEPTION_IF_NULL(padding_info.padding_l);

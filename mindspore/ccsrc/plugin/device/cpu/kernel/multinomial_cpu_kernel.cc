@@ -24,12 +24,15 @@ void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({input_shape_})) {
+    return;
+  }
 
   // The dimensions of input tensor must be 1 or 2, with data type of float32.
   if (input_shape_.size() == 1) {
-    workspace_size_list_.push_back(input_shape_[0] * sizeof(float));
+    workspace_size_list_.push_back(LongToSize(input_shape_[0]) * sizeof(float));
   } else if (input_shape_.size() == 2) {
-    workspace_size_list_.push_back(input_shape_[1] * sizeof(float));
+    workspace_size_list_.push_back(LongToSize(input_shape_[1]) * sizeof(float));
   }
 
   seed_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));

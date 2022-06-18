@@ -39,11 +39,11 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   // Index type is restricted to int32 by kernel prim.
   size_t index_type_size = sizeof(int);
   data_type_size_ = GetDtypeNbyte(TypeIdToString(data_type, true));
-  auto first_data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_);
+  auto first_data_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_));
   auto first_index_dims = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size();
   one_data_ele_num_ = 1;
   for (size_t d = first_index_dims; d < first_data_shape.size(); ++d) {
-    one_data_ele_num_ *= first_data_shape[d];
+    one_data_ele_num_ *= LongToSizeClipNeg(first_data_shape[d]);
   }
   for (size_t i = 0; i < n_; i++) {
     auto data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_ + i);
@@ -68,7 +68,7 @@ void DynamicStitchKernelMod::SyncData() {
   CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr_)),
                              "DynamicStitch cudaStreamSynchronized failed");
   auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node_.lock(), 0);
-  output_shape[0] = IntToSize(max_index_) + 1;
+  output_shape[0] = max_index_ + 1;
   auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node_.lock(), n_);
   common::AnfAlgo::SetOutputInferTypeAndShape({data_type}, {output_shape}, kernel_node_.lock().get());
   MS_LOG(DEBUG) << "Run PostExecute for dynamicstitch, real output shape is " << output_shape;

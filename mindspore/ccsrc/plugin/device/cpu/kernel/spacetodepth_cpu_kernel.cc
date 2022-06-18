@@ -62,11 +62,11 @@ bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t size = inputs[0]->size / sizeof(T);
 
-  std::vector<size_t> input_shape = input_shape_;
-  std::vector<size_t> output_shape = output_shape_;
+  auto input_shape = input_shape_;
+  auto output_shape = output_shape_;
   size_t block_size = block_size_;
   size_t input_dimension = input_shape.size();
-  size_t input_strides[3] = {1, 1, 1};
+  int64_t input_strides[3] = {1, 1, 1};
 
   for (size_t i = input_dimension - 1; i >= 1; --i) {
     for (size_t j = 0; j < i; ++j) {
@@ -83,7 +83,7 @@ bool SpaceToDepthCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
         tmp_pos %= input_strides[j];
       }
       input_pos_array.back() = tmp_pos;
-      size_t output_pos = input_pos_array[0];
+      int64_t output_pos = input_pos_array[0];
       output_pos =
         (output_pos * output_shape[1]) +
         (input_pos_array[1] +

@@ -75,9 +75,9 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int> end_;
   std::vector<int> strides_;
   std::vector<int> size_;
-  std::vector<size_t> input_shape_;
+  ShapeVector input_shape_;
   std::vector<size_t> input_element_num_;
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
   TypeId dtype_{kTypeUnknown};
   std::string kernel_type_{kUnknown};

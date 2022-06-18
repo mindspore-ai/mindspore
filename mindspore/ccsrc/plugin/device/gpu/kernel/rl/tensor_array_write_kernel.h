@@ -38,7 +38,7 @@ class TensorArrayWriteKernelMod : public DeprecatedNativeGpuKernelMod {
 
  private:
   size_t value_size_;
-  std::vector<size_t> shapes_;
+  ShapeVector shapes_;
   TypeId type_;
 };
 

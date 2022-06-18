@@ -57,18 +57,6 @@ void UpdateDumpFlagAndDebugInfo(const CNodePtr &node, const std::vector<AnfNodeP
 }
 }  // namespace
 
-std::vector<int64_t> Convert2Int(const std::vector<size_t> &v) {
-  std::vector<int64_t> result;
-  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToInt);
-  return result;
-}
-
-std::vector<int64_t> Convert2Long(const std::vector<size_t> &v) {
-  std::vector<int64_t> result;
-  (void)std::transform(v.begin(), v.end(), std::back_inserter(result), SizeToLong);
-  return result;
-}
-
 bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<AnfNodePtr> &nodes) {
   mindspore::HashSet<AnfNodePtr> visited_nodes;
   return IsDepend(graph, node, nodes, &visited_nodes);
@@ -950,7 +938,6 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr>
   std::vector<std::string> outputs_device_format;
   std::vector<TypeId> inputs_device_type;
   std::vector<TypeId> outputs_device_type;
-  std::vector<std::vector<size_t>> outputs_shape;
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   for (size_t idx = 0; idx < node_list.size(); ++idx) {
     auto cnode = utils::cast<CNodePtr>(node_list[idx]);
@@ -964,7 +951,6 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr>
     for (size_t output_index = 0; output_index < output_num; ++output_index) {
       (void)outputs_device_format.emplace_back(kOpFormat_DEFAULT);
       (void)outputs_device_type.emplace_back(common::AnfAlgo::GetOutputInferDataType(cnode, output_index));
-      (void)outputs_shape.emplace_back(common::AnfAlgo::GetOutputInferShape(cnode, output_index));
     }
   }
   builder.SetInputsFormat(inputs_device_format);

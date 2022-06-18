@@ -459,11 +459,8 @@ void ControlActor::UpdateDynamicShapeInParameter() {
     auto node = input_device_tensors_[i]->GetNodeIndex().first;
     MS_EXCEPTION_IF_NULL(node);
     auto shape = trans::GetRuntimePaddingShape(node, input_device_tensors_[i]->GetNodeIndex().second);
-    std::vector<size_t> shape_tmp;
-    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), IntToSize);
-
     for (const auto &parameter : backend_parameters_[i]) {
-      common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape_tmp}, parameter.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape({input_device_tensors_[i]->type_id()}, {shape}, parameter.get());
     }
   }
 }

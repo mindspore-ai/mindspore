@@ -124,6 +124,11 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input must be 2 or 4, but got "
                         << shape.size();
     }
+
+    if (IsDynamic(shape)) {
+      return true;
+    }
+
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -245,25 +250,25 @@ class BatchNormGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  void SetTensorDescriptor(const std::string &format, const std::vector<size_t> &shape) {
+  void SetTensorDescriptor(const std::string &format, const ShapeVector &shape) {
     cudnnTensorFormat_t cudnn_format;
     if (shape.size() == 2) {
-      batch_ = SizeToInt(shape[0]);
-      channel_ = SizeToInt(shape[1]);
+      batch_ = LongToInt(shape[0]);
+      channel_ = LongToInt(shape[1]);
       height_ = 1;
       width_ = 1;
       cudnn_format = CUDNN_TENSOR_NCHW;
     } else if (format == kOpFormat_NHWC) {
-      batch_ = SizeToInt(shape[0]);
-      height_ = SizeToInt(shape[1]);
-      width_ = SizeToInt(shape[2]);
-      channel_ = SizeToInt(shape[3]);
+      batch_ = LongToInt(shape[0]);
+      height_ = LongToInt(shape[1]);
+      width_ = LongToInt(shape[2]);
+      channel_ = LongToInt(shape[3]);
       cudnn_format = CUDNN_TENSOR_NHWC;
     } else {
-      batch_ = SizeToInt(shape[0]);
-      channel_ = SizeToInt(shape[1]);
-      height_ = SizeToInt(shape[2]);
-      width_ = SizeToInt(shape[3]);
+      batch_ = LongToInt(shape[0]);
+      channel_ = LongToInt(shape[1]);
+      height_ = LongToInt(shape[2]);
+      width_ = LongToInt(shape[3]);
       cudnn_format = CUDNN_TENSOR_NCHW;
     }
 

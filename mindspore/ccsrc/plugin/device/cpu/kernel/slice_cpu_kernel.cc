@@ -86,12 +86,12 @@ void SliceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   data_size_ = size_pair->second;
 }
 
-void SliceCpuKernelMod::InitSliceParam(const std::vector<size_t> &input_shape, const std::vector<int64_t> &begin,
+void SliceCpuKernelMod::InitSliceParam(const ShapeVector &input_shape, const std::vector<int64_t> &begin,
                                        const std::vector<int64_t> &size) {
   origin_dim_size_ = input_shape.size();
   for (size_t i = 0; i < DIMENSION_8D; i++) {
     if (i < input_shape.size()) {
-      int dim_len = SizeToInt(input_shape[i]);
+      int dim_len = LongToInt(input_shape[i]);
       int begin_pos = LongToInt(begin[i]);
       int slice_size = LongToInt(size[i]);
       if (slice_size == -1) {
@@ -150,7 +150,7 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
                         << "', the dimensions of 'begin' and 'size' must be 1, but got the dimension of 'begin': "
                         << begin_shape.size() << " and the dimension of 'size': " << size_shape.size();
     }
-    if (begin_shape[0] != input_shape.size() || size_shape[0] != input_shape.size()) {
+    if (begin_shape[0] != SizeToLong(input_shape.size()) || size_shape[0] != SizeToLong(input_shape.size())) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the lengths of 'begin' and 'size' must be equal to "
                            "the dimension of input tensor, but got the length of 'begin' "
@@ -162,7 +162,7 @@ bool SliceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
     std::vector<int64_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
     std::vector<int64_t> size{size_ptr, size_ptr + size_shape[0]};
     for (size_t i = 0; i < begin.size(); ++i) {
-      if (input_shape[i] < LongToSize(begin[i] + size[i])) {
+      if (input_shape[i] < begin[i] + size[i]) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_
                           << "', slice shape should be not greater than origin shape. But in dimension i=" << i
                           << ", origin shape 'input_shape[i]' is " << input_shape[i]

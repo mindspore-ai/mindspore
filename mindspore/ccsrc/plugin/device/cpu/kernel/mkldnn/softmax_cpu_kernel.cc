@@ -29,7 +29,7 @@ constexpr size_t kSoftmaxOutputsNum = 1;
 void SoftmaxCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<int> axis_list;
   std::vector<int64_t> axis_list_me = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
   (void)std::transform(axis_list_me.begin(), axis_list_me.end(), std::back_inserter(axis_list),

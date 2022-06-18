@@ -29,9 +29,9 @@ void SegmentMaxCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   segment_ids_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   output_dtype_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  input_x_num_ = CPUKernelUtils::CalcElementNum(input_x_shape_);
-  segment_ids_num_ = CPUKernelUtils::CalcElementNum(segment_ids_shape_);
-  output_num_ = CPUKernelUtils::CalcElementNum(output_shape_);
+  input_x_num_ = SizeOf(input_x_shape_);
+  segment_ids_num_ = SizeOf(segment_ids_shape_);
+  output_num_ = SizeOf(output_shape_);
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -126,7 +126,7 @@ bool SegmentMaxCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> 
   for (size_t i = 0; i < output_num_; ++i) {
     output_data_addr[i] = static_cast<T1>(0);
   }
-  const size_t num_compare_per = input_x_num_ / input_x_shape_[0];
+  const size_t num_compare_per = input_x_num_ / LongToSize(input_x_shape_[0]);
   const size_t num_segments = segments.size();
   if (num_segments < kSegmentsThreshold) {
     for (size_t i = 0; i < num_segments; ++i) {

@@ -59,6 +59,9 @@ void FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod::InitKernel(const CNodePt
   argmax_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
   argmax_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex2);
   data_format_ = common::AnfAlgo::GetNodeAttr<string>(kernel_node, FORMAT);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, out_backprop_shape_, argmax_shape_})) {
+    return;
+  }
   size_t input_dims = input_shape_.size();
   size_t out_backprop_dims = out_backprop_shape_.size();
   size_t argmax_dims = argmax_shape_.size();

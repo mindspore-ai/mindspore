@@ -24,13 +24,7 @@ namespace {
 constexpr size_t kDimNum = 2;
 }
 
-size_t get_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+int64_t get_element_num(const std::vector<int64_t> &shape) { return SizeToLong(SizeOf(shape)); }
 
 void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   node_wpt_ = kernel_node;
@@ -42,6 +36,9 @@ void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto lu_data_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   auto lu_pivots_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  if (AnfAlgo::IsShapesDynamic({x_shape, lu_data_shape, lu_pivots_shape})) {
+    return;
+  }
   if (lu_data_shape.size() < kDimNum) {
     MS_EXCEPTION(ValueError) << "For LuSolveCPUKercel lu_data's dimensions must be greater than or equal to 2.";
   }
@@ -115,13 +112,13 @@ void LuSolveCpuKernelMod::LuSolve(const std::vector<kernel::AddressPtr> &inputs,
   auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_y = reinterpret_cast<T2 *>(outputs[0]->addr);
   size_t lu_dims = input_1_Shape.size();
-  size_t lu_maxtrix_sizes = input_1_Shape[lu_dims - 2];
+  size_t lu_maxtrix_sizes = LongToSize(input_1_Shape[lu_dims - 2]);
   size_t b_dim = input_0_Shape.size();
-  size_t b_m = input_0_Shape[b_dim - 1];
+  size_t b_m = LongToSize(input_0_Shape[b_dim - 1]);
   typedef Eigen::Matrix<T1, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> MatrixXd;
   MatrixXd matrix_b = Eigen::Map<MatrixXd>(b_working_ptr, lu_maxtrix_sizes, b_m);
   MatrixXd matrix_A = Eigen::Map<MatrixXd>(lu_working_ptr, lu_maxtrix_sizes, lu_maxtrix_sizes);
-  for (size_t i = 0; i < input_0_Shape[b_dim - kDimNum]; i++) {
+  for (size_t i = 0; i < LongToSize(input_0_Shape[b_dim - kDimNum]); i++) {
     matrix_b.row(i).swap(matrix_b.row(*(pivots_working_ptr + i) - 1));
   }
   MatrixXd L = matrix_A.template triangularView<Eigen::UnitLower>();
@@ -142,20 +139,20 @@ bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
   auto input_0_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 0);
   auto input_1_Shape = AnfAlgo::GetInputDeviceShape(node_wpt_, 1);
   auto output_Shape = AnfAlgo::GetOutputDeviceShape(node_wpt_, 0);
-  size_t input0_element_num = get_element_num(input_0_Shape);
-  size_t input1_element_num = get_element_num(input_1_Shape);
-  size_t output_element_num = get_element_num(output_Shape);
+  auto input0_element_num = get_element_num(input_0_Shape);
+  auto input1_element_num = get_element_num(input_1_Shape);
+  auto output_element_num = get_element_num(output_Shape);
   std::vector<T1> input_0(input_x0, input_x0 + input0_element_num);
   std::vector<T1> input_1(input_x1, input_x1 + input1_element_num);
   size_t b_dims = input_0_Shape.size();
-  std::vector<size_t> b_dims_vector = input_0_Shape;
+  std::vector<int64_t> b_dims_vector = input_0_Shape;
   size_t lu_dims = input_1_Shape.size();
-  std::vector<size_t> lu_dims_vector = input_1_Shape;
-  size_t b_stride = input_0_Shape[b_dims - 1] * input_0_Shape[b_dims - 2];
-  size_t lu_stride = input_1_Shape[lu_dims - 1] * input_1_Shape[lu_dims - 2];
-  size_t pivots_stride = input_1_Shape[lu_dims - 1];
+  std::vector<int64_t> lu_dims_vector = input_1_Shape;
+  size_t b_stride = static_cast<size_t>(input_0_Shape[b_dims - 1] * input_0_Shape[b_dims - 2]);
+  size_t lu_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1] * input_1_Shape[lu_dims - 2]);
+  size_t pivots_stride = static_cast<size_t>(input_1_Shape[lu_dims - 1]);
   MS_EXCEPTION_IF_ZERO("b_stride", b_stride);
-  size_t batch_num = output_element_num / b_stride;
+  size_t batch_num = static_cast<size_t>(output_element_num / b_stride);
   if (b_dims == lu_dims) {
     for (size_t i = 0; i < batch_num; i++) {
       T1 *b_working_ptr = input_0.data() + i * b_stride;
@@ -164,8 +161,8 @@ bool LuSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
       LuSolve<T1, T2>(inputs, outputs, b_working_ptr, lu_working_ptr, pivots_working_ptr, b_stride, i);
     }
   } else {
-    std::vector<size_t> b_shape = b_dims_vector;
-    std::vector<size_t> lu_shape = lu_dims_vector;
+    std::vector<int64_t> b_shape = b_dims_vector;
+    std::vector<int64_t> lu_shape = lu_dims_vector;
     for (size_t i = 0; i < kDimNum; i++) {
       b_shape.pop_back();
       lu_shape.pop_back();

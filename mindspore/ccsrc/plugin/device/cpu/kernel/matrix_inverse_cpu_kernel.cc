@@ -68,7 +68,7 @@ void MatrixInverseCpuKernelMod::LaunchMatrixInverse(const std::vector<AddressPtr
   T *output_ptr = reinterpret_cast<T *>(outputs[0]->addr);
   MS_EXCEPTION_IF_NULL(output_ptr);
   // Judge whether the input shape matches
-  auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0));
   if (shape.size() < kNumber2) {
     MS_LOG(EXCEPTION) << "Input x must be at least rank 2.";
   }

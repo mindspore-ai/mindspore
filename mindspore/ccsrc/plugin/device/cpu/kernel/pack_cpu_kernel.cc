@@ -40,13 +40,13 @@ void PackFwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   // calculate elements while dim >= axis
   auto first_input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   for (size_t i = IntToSize(axis_); i < first_input_shape.size(); i++) {
-    dims_behind_axis_ *= first_input_shape[i];
+    dims_behind_axis_ *= static_cast<size_t>(first_input_shape[i]);
   }
 
   auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
   output_size_ = 1;
   for (size_t i = 0; i < output_shape.size(); i++) {
-    output_size_ *= output_shape[i];
+    output_size_ *= static_cast<size_t>(output_shape[i]);
   }
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);

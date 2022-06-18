@@ -577,16 +577,23 @@ ShapeVector AnfAlgo::GetOutputInferShapeSigned(const AnfNodePtr &node, size_t ou
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
-std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
-                                                 size_t output_idx) {
+inline ShapeVector GetShape(const abstract::BaseShapePtr &base_shape) {
+  auto shape_ptr = base_shape->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  return shape_ptr->shape();
+}
+
+ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const abstract::BaseShapePtr &base_shape,
+                                         size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(base_shape);
   if (base_shape->isa<abstract::Shape>()) {
-    if (output_idx == 0) {
-      return AnfUtils::TransShapeToSizet(base_shape->cast<abstract::ShapePtr>());
+    if (output_idx != 0) {
+      MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
+                        << trace::DumpSourceLines(node);
     }
-    MS_LOG(EXCEPTION) << "The node " << node->DebugString() << "is a single output node but got index [" << output_idx
-                      << trace::DumpSourceLines(node);
+
+    return GetShape(base_shape);
   } else if (base_shape->isa<abstract::TupleShape>()) {
     auto tuple_shape = base_shape->cast<abstract::TupleShapePtr>();
     MS_EXCEPTION_IF_NULL(tuple_shape);
@@ -596,34 +603,34 @@ std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, const a
     }
     auto b_shp = (*tuple_shape)[output_idx];
     if (b_shp->isa<abstract::Shape>()) {
-      return AnfUtils::TransShapeToSizet(b_shp->cast<abstract::ShapePtr>());
+      return GetShape(b_shp);
     } else if (b_shp->isa<abstract::NoShape>()) {
-      return std::vector<size_t>();
+      return ShapeVector();
     } else if (b_shp->isa<abstract::TupleShape>()) {
       // Usually there is no tuple in tuple for the shape of the kernel graph parameter, but there will be such a
       // scenario when dump ir is in the compilation process, here return an empty shape so that dump ir can work
       // normally.
       MS_LOG(INFO) << "The output shape of node:" << node->DebugString() << " index:" << output_idx
                    << " is a TupleShape:" << base_shape->ToString();
-      return std::vector<size_t>();
+      return ShapeVector();
     } else {
       MS_LOG(EXCEPTION) << "The output type of ApplyKernel index:" << output_idx
                         << " should be a NoShape , ArrayShape or a TupleShape, but it is " << base_shape->ToString()
                         << "node :" << node->DebugString() << "." << trace::DumpSourceLines(node);
     }
   } else if (base_shape->isa<abstract::NoShape>()) {
-    return std::vector<size_t>();
+    return ShapeVector();
   }
   MS_LOG(EXCEPTION) << "The output type of ApplyKernel should be a NoShape , ArrayShape or a TupleShape, but it is "
                     << base_shape->ToString() << " node : " << node->DebugString() << trace::DumpSourceLines(node);
 }
 
-std::vector<size_t> AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
+ShapeVector AnfAlgo::GetOutputInferShape(const AnfNodePtr &node, size_t output_idx) {
   MS_EXCEPTION_IF_NULL(node);
   return GetOutputInferShape(node, node->Shape(), output_idx);
 }
 
-std::vector<size_t> AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
+ShapeVector AnfAlgo::GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx) {
   KernelWithIndex kernel_with_index = AnfAlgo::GetPrevNodeOutput(node, input_idx);
   return AnfAlgo::GetOutputInferShape(kernel_with_index.first, kernel_with_index.second);
 }
@@ -753,8 +760,8 @@ void AnfAlgo::SetOutputTypeAndDetailShape(const std::vector<TypeId> &types,
 }
 
 // set infer shapes and types of anf node
-void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
-                                         const std::vector<std::vector<size_t>> &shapes, AnfNode *node) {
+void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const std::vector<ShapeVector> &shapes,
+                                         AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   auto node_ptr = node->cast<AnfNodePtr>();
   std::string node_name = "";
@@ -773,17 +780,14 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
     node->set_abstract(std::make_shared<abstract::AbstractNone>());
   } else if (shapes.size() == 1 && tuple_node == kNodeTupleOutSet.end()) {
     // single output handle
-    ShapeVector shape_int;
     abstract::AbstractTensorPtr abstract = nullptr;
     if (abstract_ptr != nullptr) {
       auto max_shape0 = GetOutputMaxShape(node_ptr, 0);
       auto min_shape0 = GetOutputMinShape(node_ptr, 0);
-      std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
       abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]),
-                                                  std::make_shared<abstract::Shape>(shape_int, min_shape0, max_shape0));
+                                                  std::make_shared<abstract::Shape>(shapes[0], min_shape0, max_shape0));
     } else {
-      std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
-      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
+      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shapes[0]);
     }
     node->set_abstract(abstract);
   } else {
@@ -795,13 +799,11 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types,
       if (abstract_ptr != nullptr) {
         auto max_shape = GetOutputMaxShape(node_ptr, i);
         auto min_shape = GetOutputMinShape(node_ptr, i);
-        std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
         abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]),
-                                                    std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+                                                    std::make_shared<abstract::Shape>(shapes[i], min_shape, max_shape));
       } else {
-        std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
         abstract =
-          std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shape_int));
+          std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shapes[i]));
       }
       abstract_list.emplace_back(abstract);
     }
@@ -1279,8 +1281,8 @@ void AnfAlgo::GetRealDynamicShape(const std::vector<size_t> &shape, NotNull<std:
   }
 }
 
-static std::vector<int64_t> GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
-                                                      ShapeType type) {
+static ShapeVector GetShapeFromSequenceShape(const abstract::SequenceShapePtr &sequeue_shape_ptr, size_t index,
+                                             ShapeType type) {
   MS_EXCEPTION_IF_NULL(sequeue_shape_ptr);
   auto shape_list = sequeue_shape_ptr->shape();
   if (index >= shape_list.size()) {
@@ -1314,21 +1316,21 @@ static std::vector<int64_t> GetOutputMinOrMaxShape(const AnfNodePtr &anf_node, s
   }
 }
 
-std::vector<int64_t> AnfAlgo::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfAlgo::GetInputMaxShape(const AnfNodePtr &anf_node, size_t index) {
   auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
   return GetOutputMaxShape(input_node_with_index.first, input_node_with_index.second);
 }
 
-std::vector<int64_t> AnfAlgo::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfAlgo::GetInputMinShape(const AnfNodePtr &anf_node, size_t index) {
   auto input_node_with_index = AnfAlgo::GetPrevNodeOutput(anf_node, index);
   return GetOutputMinShape(input_node_with_index.first, input_node_with_index.second);
 }
 
-std::vector<int64_t> AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfAlgo::GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index) {
   return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMaxShape);
 }
 
-std::vector<int64_t> AnfAlgo::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
+ShapeVector AnfAlgo::GetOutputMinShape(const AnfNodePtr &anf_node, size_t index) {
   return GetOutputMinOrMaxShape(anf_node, index, ShapeType::kMinShape);
 }
 
@@ -1482,18 +1484,6 @@ void AnfAlgo::GetRealInputs(const AnfNodePtr &node, std::vector<KernelWithIndex>
     auto input_node = AnfAlgo::GetInputNode(node->cast<CNodePtr>(), input_index);
     GetRealOutputRecursively(input_node, 0, inputs);
   }
-}
-
-bool AnfAlgo::IsTensorBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-  if (lhs.size() != rhs.size()) {
-    return true;
-  }
-  for (size_t i = 0; i < lhs.size(); i++) {
-    if (lhs[i] != rhs[i]) {
-      return true;
-    }
-  }
-  return false;
 }
 
 bool AnfAlgo::IsControlOpExecInBackend(const AnfNodePtr &node) {

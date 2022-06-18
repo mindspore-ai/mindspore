@@ -25,19 +25,13 @@ namespace {
 constexpr size_t kGatherDGradInputsNum = 2;
 constexpr size_t kGatherDGradOutputsNum = 1;
 
-size_t get_element_num(const std::vector<size_t> &shape) {
-  size_t size = 1;
-  for (size_t i = 0; i < shape.size(); i++) {
-    size *= shape[i];
-  }
-  return size;
-}
+size_t get_element_num(const ShapeVector &shape) { return SizeOf(shape); }
 
 template <typename I, typename T>
 void GatherDGradCopyTask(size_t cur, std::vector<size_t> *pos, T *input, I *index, const int &dim, T *output,
-                         const std::vector<size_t> &output_shape, const std::vector<size_t> &out_cargo_size,
+                         const ShapeVector &output_shape, const std::vector<size_t> &out_cargo_size,
                          const std::vector<size_t> &input_cargo_size) {
-  for (size_t i = 0; i < output_shape[cur]; ++i) {
+  for (size_t i = 0; i < LongToSize(output_shape[cur]); ++i) {
     (*pos)[cur] = i;
     if (cur == output_shape.size() - 1) {
       size_t input_offset = 0;
@@ -123,7 +117,7 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
 
   // check index
   index_size = get_element_num(index_shape_);
-  int max_index = SizeToInt(output_shape_[axis_]);
+  int max_index = LongToInt(output_shape_[axis_]);
   for (size_t i = 0; i < index_size; ++i) {
     if (index[i] >= max_index || index[i] < -max_index) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'index' must be in [" << -max_index << ", "
@@ -142,12 +136,12 @@ bool GatherDGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
   // out_cargo_size
   std::vector<size_t> out_cargo_size = std::vector<size_t>(output_shape_.size(), 1);
   for (int i = out_cargo_size.size() - 2; i >= 0; --i) {
-    out_cargo_size[i] = output_shape_[i + 1] * out_cargo_size[i + 1];
+    out_cargo_size[i] = LongToSize(output_shape_[i + 1]) * out_cargo_size[i + 1];
   }
   // input_cargo_size
   std::vector<size_t> input_cargo_size = std::vector<size_t>(input_shape_.size(), 1);
   for (int i = input_cargo_size.size() - 2; i >= 0; --i) {
-    input_cargo_size[i] = input_shape_[i + 1] * input_cargo_size[i + 1];
+    input_cargo_size[i] = LongToSize(input_shape_[i + 1]) * input_cargo_size[i + 1];
   }
 
   // copy task

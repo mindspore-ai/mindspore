@@ -32,6 +32,10 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
+  auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
+  if (AnfAlgo::IsShapesDynamic({anchor_boxes_shape, gt_boxes_shape})) {
+    return;
+  }
   constexpr size_t BOX_SHAPE_SIZE = 2;
   constexpr size_t BOX_SIZE_INDEX = 0;
   constexpr size_t BOX_COORDINATE_INDEX = 1;
@@ -40,13 +44,12 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'anchor_boxes' must be [N, 4], but got: " << Vector2Str(anchor_boxes_shape);
   }
-  anchor_boxes_size_ = anchor_boxes_shape[BOX_SIZE_INDEX];
-  auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
+  anchor_boxes_size_ = static_cast<size_t>(anchor_boxes_shape[BOX_SIZE_INDEX]);
   if (gt_boxes_shape.size() != BOX_SHAPE_SIZE || gt_boxes_shape[BOX_COORDINATE_INDEX] != kBoxCoordinateLen) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'gt_boxes' must be [N, 4], but got: " << Vector2Str(gt_boxes_shape);
   }
-  gt_boxes_size_ = gt_boxes_shape[BOX_SIZE_INDEX];
+  gt_boxes_size_ = static_cast<size_t>(gt_boxes_shape[BOX_SIZE_INDEX]);
   iou_size_ = anchor_boxes_size_ * gt_boxes_size_;
   std::string iou_mode = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "mode");
   if (iou_mode != "iou" && iou_mode != "iof") {

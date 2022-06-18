@@ -37,9 +37,9 @@ class ZetaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  std::vector<size_t> input0_shape_;
-  std::vector<size_t> input1_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input0_shape_;
+  ShapeVector input1_shape_;
+  ShapeVector output_shape_;
   TypeId dtype_{kTypeUnknown};
   template <typename T>
   bool CheckZeta(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,

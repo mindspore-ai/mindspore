@@ -68,7 +68,10 @@ void ScatterMaxCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  auto indices_unit_rank = indices_shape.back();
+  if (AnfAlgo::IsShapesDynamic({shape, indices_shape, updates_shape})) {
+    return;
+  }
+  auto indices_unit_rank = LongToSize(indices_shape.back());
   if (indices_unit_rank > shape.size()) {
     MS_EXCEPTION(ValueError)
       << "For '" << kernel_name_
@@ -85,12 +88,12 @@ void ScatterMaxCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   indices_unit_rank_ = SizeToInt(indices_unit_rank);
   unit_size_ = 1;
   for (size_t i = indices_shape.size() - 1; i < updates_shape.size(); ++i) {
-    unit_size_ *= SizeToInt(updates_shape[i]);
+    unit_size_ *= LongToInt(updates_shape[i]);
   }
   num_units_ = 1;
   num_units_ *= updates_shape[indices_shape.size() - kNumUnits];
   for (int i = SizeToInt(indices_shape.size()) - 3; i >= 0; i--) {
-    num_units_ *= updates_shape[i];
+    num_units_ *= LongToSize(updates_shape[i]);
   }
   int out_stride = 1;
   out_strides_.push_back(out_stride);

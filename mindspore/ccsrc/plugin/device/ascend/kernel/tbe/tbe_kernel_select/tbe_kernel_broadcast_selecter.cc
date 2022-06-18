@@ -103,9 +103,9 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupport5HD(SupportFormat *support_fo
       }
     }
     auto shape_tmp = input_shapes_[0];
-    auto broadcast_c_axis = std::any_of(
-      input_shapes_.begin(), input_shapes_.end(),
-      [&shape_tmp](const std::vector<size_t> &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
+    auto broadcast_c_axis =
+      std::any_of(input_shapes_.begin(), input_shapes_.end(),
+                  [&shape_tmp](const ShapeVector &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
     if (broadcast_c_axis) {
       MS_LOG(INFO) << "This node broadcast c channel.";
       return false;
@@ -186,7 +186,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportC1HWNCoC0(SupportFormat *supp
     }
     auto shape_tmp = input_shapes_[0];
     auto broadcast_nc_axis =
-      std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const std::vector<size_t> &elem) {
+      std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const ShapeVector &elem) {
         return (shape_tmp.at(kChannelC) != elem.at(kChannelC) || shape_tmp.at(kChannelN) != elem.at(kChannelN));
       });
     if (broadcast_nc_axis) {
@@ -230,7 +230,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
     }
   } else {
     auto less_2dims = std::any_of(input_shapes_.begin(), input_shapes_.end(),
-                                  [](const std::vector<size_t> &elem) { return elem.size() < kShape2dDims; });
+                                  [](const ShapeVector &elem) { return elem.size() < kShape2dDims; });
     if (less_2dims) {
       MS_LOG(INFO) << "This node dim less 2.";
       return false;
@@ -238,7 +238,7 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportFracNZ(SupportFormat *support
 
     auto shape_tmp = input_shapes_[0];
     auto broadcast_last_dim =
-      std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const std::vector<size_t> &elem) {
+      std::any_of(input_shapes_.begin(), input_shapes_.end(), [&shape_tmp](const ShapeVector &elem) {
         return (shape_tmp.at(shape_tmp.size() - 1) != elem.at(elem.size() - 1)) ||
                (shape_tmp.at(shape_tmp.size() - 2) != elem.at(elem.size() - 2));
       });
@@ -285,9 +285,9 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
       }
     }
     auto shape_tmp = input_shapes_[0];
-    auto broadcast_c_axis = std::any_of(
-      input_shapes_.begin(), input_shapes_.end(),
-      [&shape_tmp](const std::vector<size_t> &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
+    auto broadcast_c_axis =
+      std::any_of(input_shapes_.begin(), input_shapes_.end(),
+                  [&shape_tmp](const ShapeVector &elem) { return shape_tmp.at(kChannelC) != elem.at(kChannelC); });
     if (broadcast_c_axis) {
       MS_LOG(INFO) << "This node broadcast c channel.";
       return false;
@@ -300,13 +300,9 @@ bool TbeKernelBroadCastSelecter::IsBroadCastSupportNDC1HWC0(SupportFormat *suppo
   return true;
 }
 
-bool TbeKernelBroadCastSelecter::Is4DShape(const std::vector<size_t> &shape) const {
-  return shape.size() == kShape4dDims;
-}
+bool TbeKernelBroadCastSelecter::Is4DShape(const ShapeVector &shape) const { return shape.size() == kShape4dDims; }
 
-bool TbeKernelBroadCastSelecter::Is5DShape(const std::vector<size_t> &shape) const {
-  return shape.size() == kShape5dDims;
-}
+bool TbeKernelBroadCastSelecter::Is5DShape(const ShapeVector &shape) const { return shape.size() == kShape5dDims; }
 
 bool TbeKernelBroadCastSelecter::IsSameShape() const {
   auto shape = input_shapes_.begin();
@@ -323,14 +319,14 @@ bool TbeKernelBroadCastSelecter::IsSameShape() const {
   return true;
 }
 
-void TbeKernelBroadCastSelecter::PadScalarShape(std::vector<size_t> *shape) const {
+void TbeKernelBroadCastSelecter::PadScalarShape(ShapeVector *shape) const {
   MS_EXCEPTION_IF_NULL(shape);
   if (shape->empty()) {
     shape->emplace_back(1);
   }
 }
 
-bool TbeKernelBroadCastSelecter::IsScalarShape(const std::vector<size_t> &shape) const {
+bool TbeKernelBroadCastSelecter::IsScalarShape(const ShapeVector &shape) const {
   return (shape.size() == 1 && shape[0] == 1);
 }
 

@@ -92,15 +92,15 @@ bool MatrixSetDiagV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     MS_LOG(EXCEPTION) << "For MatrixSetDiagV3, input x dims must be greater equal than 2 while got " << input_dims
                       << ".";
   }
-  input_columns_ = x_shape_[input_dims - 1];
-  input_rows_ = x_shape_[input_dims - toCalRow];
+  input_columns_ = static_cast<size_t>(x_shape_[input_dims - 1]);
+  input_rows_ = static_cast<size_t>(x_shape_[input_dims - toCalRow]);
   input_numelements_ = static_cast<size_t>(inputs[0]->size / sizeof(T));
 
   size_t diagonal_dims = diagonal_shape_.size();
-  diagonal_columns_ = diagonal_shape_[diagonal_dims - 1];
+  diagonal_columns_ = static_cast<size_t>(diagonal_shape_[diagonal_dims - 1]);
   diagonal_rows_ = 1;
   if (diagonal_dims > 1) {
-    diagonal_rows_ = diagonal_shape_[diagonal_dims - toCalRow];
+    diagonal_rows_ = static_cast<size_t>(diagonal_shape_[diagonal_dims - toCalRow]);
   }
 
   k_len_ = static_cast<size_t>(inputs[kIndexK]->size / sizeof(int32_t));

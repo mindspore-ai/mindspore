@@ -58,12 +58,8 @@ class OnesLikeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    size_t shape_size = input_shape.size();
 
-    input_size_ = sizeof(T);
-    for (size_t i = 0; i < shape_size; i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ = sizeof(T) * SizeOf(input_shape);
     output_size_ = input_size_;
     InitSizeLists();
     return true;

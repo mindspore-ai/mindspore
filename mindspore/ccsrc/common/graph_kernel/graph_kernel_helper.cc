@@ -293,14 +293,8 @@ ShapeVector GetShape(const AnfNodePtr &node) {
 }
 
 ShapeVector GetDeviceShape(const AnfNodePtr &node) {
-  ShapeVector res_device_shape;
-  auto device_shape = AnfAlgo::GetOutputDeviceShape(node, 0);
-  if (device_shape.empty()) {
-    res_device_shape.push_back(1);
-  } else {
-    (void)std::transform(device_shape.begin(), device_shape.end(), std::back_inserter(res_device_shape), SizeToLong);
-  }
-  return res_device_shape;
+  ShapeVector res_device_shape = AnfAlgo::GetOutputDeviceShape(node, 0);
+  return res_device_shape.empty() ? ShapeVector({1}) : res_device_shape;
 }
 
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node) {

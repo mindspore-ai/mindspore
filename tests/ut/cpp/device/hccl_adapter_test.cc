@@ -39,8 +39,7 @@ class TestHcclAdapter : public UT::Common {
     return all_to_all_v;
   }
 
-  void SetOutputs(const CNodePtr &cnode, const std::vector<std::vector<size_t>> &shape,
-                  const std::vector<TypeId> &data_type) {
+  void SetOutputs(const CNodePtr &cnode, const std::vector<ShapeVector> &shape, const std::vector<TypeId> &data_type) {
     common::AnfAlgo::SetOutputInferTypeAndShape(data_type, shape, cnode.get());
     kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
     builder.SetFusionType(kernel::FusionType::OPAQUE);
@@ -54,7 +53,7 @@ class TestHcclAdapter : public UT::Common {
     AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), cnode.get());
   }
 
-  std::vector<AnfNodePtr> CreateInputs(const FuncGraphPtr &graph, const std::vector<std::vector<size_t>> &shape,
+  std::vector<AnfNodePtr> CreateInputs(const FuncGraphPtr &graph, const std::vector<ShapeVector> &shape,
                                        const std::vector<TypeId> &data_type) {
     MS_EXCEPTION_IF_NULL(graph);
     if (shape.size() != data_type.size()) {
@@ -63,8 +62,8 @@ class TestHcclAdapter : public UT::Common {
     std::vector<AnfNodePtr> res;
     for (size_t i = 0; i < shape.size(); ++i) {
       auto node = graph->NewCNode(std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>("AnyNameOp"))});
-      common::AnfAlgo::SetOutputInferTypeAndShape(std::vector<TypeId>{data_type[i]},
-                                                  std::vector<std::vector<size_t>>{shape[i]}, node.get());
+      common::AnfAlgo::SetOutputInferTypeAndShape(std::vector<TypeId>{data_type[i]}, std::vector<ShapeVector>{shape[i]},
+                                                  node.get());
       kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
       builder.SetFusionType(kernel::FusionType::OPAQUE);
       builder.SetProcessor(kernel::Processor::AICORE);

@@ -69,7 +69,7 @@ class EighGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "', a should be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
                         << A_shape[kDim1] << "].";
     }
-    m_ = A_shape[0];
+    m_ = LongToSizeClipNeg(A_shape[0]);
     InitSizeLists();
     return true;
   }

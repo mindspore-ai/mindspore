@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
+bool NeedOptimize(const TypeId &dtype, const ShapeVector &shape, const std::vector<int64_t> &axis) {
   if (dtype != kNumberTypeFloat32) {
     MS_LOG(INFO) << "ReduceMin's input Dtype is not float32, no need to optimize!";
     return false;
@@ -44,7 +44,7 @@ bool NeedOptimize(const TypeId &dtype, const std::vector<size_t> &shape, const s
   return true;
 }
 
-std::vector<int64_t> CalFirstAxis(const std::vector<size_t> &shape, const std::vector<int64_t> &axis) {
+std::vector<int64_t> CalFirstAxis(const ShapeVector &shape, const std::vector<int64_t> &axis) {
   std::vector<int64_t> axis_fisrt;
   int64_t last_dim = SizeToLong(shape.size() - 1);
   std::copy_if(axis.begin(), axis.end(), std::back_inserter(axis_fisrt),
@@ -68,9 +68,8 @@ std::vector<int64_t> CalFirstAxis(const std::vector<size_t> &shape, const std::v
   return axis_fisrt;
 }
 
-std::vector<size_t> GetInferShape(const std::vector<size_t> &shape, const std::vector<int64_t> &axis_first,
-                                  bool keep_dims) {
-  std::vector<size_t> shape_first;
+ShapeVector GetInferShape(const ShapeVector &shape, const std::vector<int64_t> &axis_first, bool keep_dims) {
+  ShapeVector shape_first;
   for (size_t item = 0; item < shape.size(); ++item) {
     if (axis_first.end() != std::find(axis_first.begin(), axis_first.end(), item)) {
       if (keep_dims) {
@@ -138,7 +137,7 @@ const AnfNodePtr ReduceMinFission::Process(const FuncGraphPtr &graph, const AnfN
   // Create reduce_min1
   CNodePtr reduce_min1 = CreateReduceMin(graph, cnode->input(1), cnode);
   std::vector<int64_t> axis_first = CalFirstAxis(shape, axis);
-  std::vector<size_t> shape_first = GetInferShape(shape, axis_first, keep_dims);
+  auto shape_first = GetInferShape(shape, axis_first, keep_dims);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape_first}, reduce_min1.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(axis_first), reduce_min1);
 

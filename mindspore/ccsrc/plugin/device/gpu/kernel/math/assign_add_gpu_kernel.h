@@ -61,10 +61,7 @@ class AssignAddFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    input_size_ = sizeof(T);
-    for (size_t i : input_shape) {
-      input_size_ = i * input_size_;
-    }
+    input_size_ = sizeof(T) * SizeOf(input_shape);
     InitSizeLists();
     return true;
   }

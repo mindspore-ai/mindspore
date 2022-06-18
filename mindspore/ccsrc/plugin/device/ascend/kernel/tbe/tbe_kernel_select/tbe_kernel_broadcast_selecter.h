@@ -38,10 +38,10 @@ class TbeKernelBroadCastSelecter {
 
  private:
   bool IsSameShape() const;
-  void PadScalarShape(std::vector<size_t> *shape) const;
-  bool Is4DShape(const std::vector<size_t> &shape) const;
-  bool Is5DShape(const std::vector<size_t> &shape) const;
-  bool IsScalarShape(const std::vector<size_t> &shape) const;
+  void PadScalarShape(ShapeVector *shape) const;
+  bool Is4DShape(const ShapeVector &shape) const;
+  bool Is5DShape(const ShapeVector &shape) const;
+  bool IsScalarShape(const ShapeVector &shape) const;
   bool HasScalarInput() const;
   void GenOutputSupportFormat(const std::string &support_format, SupportFormatItem *output_support_item) const;
   void AssignSupportFormat(const std::string &support_format_str, SupportFormat *support_format) const;
@@ -49,8 +49,8 @@ class TbeKernelBroadCastSelecter {
   CNodePtr cnode_ptr_;
   size_t input_num_{};
   size_t output_num_{};
-  std::vector<std::vector<size_t>> input_shapes_;
-  std::vector<std::vector<size_t>> output_shapes_;
+  std::vector<ShapeVector> input_shapes_;
+  std::vector<ShapeVector> output_shapes_;
 };
 }  // namespace kernel
 }  // namespace mindspore

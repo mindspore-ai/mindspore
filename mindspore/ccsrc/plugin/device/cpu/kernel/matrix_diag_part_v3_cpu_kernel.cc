@@ -117,9 +117,9 @@ bool MatrixDiagPartV3CpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
     MS_LOG(EXCEPTION) << "For MatrixDiagPartV3, input x dims must be greater equal than 2 while got " << input_dims
                       << ".";
   }
-  num_cols_ = SizeToLong(x_shape_[input_dims - 1]);
+  num_cols_ = x_shape_[input_dims - 1];
   const size_t toCalRow = 2;
-  num_rows_ = SizeToLong(x_shape_[input_dims - toCalRow]);
+  num_rows_ = x_shape_[input_dims - toCalRow];
   size_t input_numelements = static_cast<size_t>(inputs[0]->size / sizeof(T));
   num_array_ = (SizeToLong(input_numelements)) / (num_rows_ * num_cols_);
 

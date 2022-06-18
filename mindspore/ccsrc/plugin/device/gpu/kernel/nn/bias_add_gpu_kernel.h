@@ -63,6 +63,9 @@ class BiasAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(x_shape)) {
+      return true;
+    }
     auto num_dims = x_shape.size();
     is_null_input_ = CHECK_SHAPE_NULL(x_shape, kernel_name_, "input_x");
     if (is_null_input_) {
@@ -86,8 +89,8 @@ class BiasAddGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     std::unique_ptr<int[]> x_dims = std::make_unique<int[]>(cudnn_dims);
     std::unique_ptr<int[]> b_dims = std::make_unique<int[]>(cudnn_dims);
     for (size_t i = 0; i < cudnn_dims; i++) {
-      x_dims[i] = (i < num_dims) ? SizeToInt(x_shape[i]) : 1;
-      b_dims[i] = (i == pos) ? SizeToInt(x_shape[i]) : 1;
+      x_dims[i] = (i < num_dims) ? LongToInt(x_shape[i]) : 1;
+      b_dims[i] = (i == pos) ? LongToInt(x_shape[i]) : 1;
     }
 
     auto input_device_format = AnfAlgo::GetInputFormat(kernel_node, 0);

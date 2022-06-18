@@ -139,11 +139,11 @@ void TileCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const
   if (input_num == kTileDynamicInputsNum) {
     auto multiples_addr = reinterpret_cast<int32_t *>(inputs[1]->addr);
     auto multiple_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 1);
-    size_t multiple_nums = 1;
+    int64_t multiple_nums = 1;
     for (size_t i = 0; i < multiple_shape.size(); ++i) {
       multiple_nums *= multiple_shape[i];
     }
-    for (size_t i = 0; i < multiple_nums; ++i) {
+    for (size_t i = 0; i < LongToSize(multiple_nums); ++i) {
       (void)multiples_.emplace_back(multiples_addr[i]);
     }
     TileMultipleCompute();

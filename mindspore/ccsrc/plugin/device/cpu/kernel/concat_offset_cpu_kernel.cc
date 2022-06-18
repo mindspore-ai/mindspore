@@ -61,8 +61,8 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node_);
-  std::vector<size_t> offset{0};
-  size_t all_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0)[axis_];
+  ShapeVector offset{0};
+  auto all_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0)[axis_];
 
   // cal offset
   for (size_t i = 1; i < input_num; i++) {
@@ -80,13 +80,13 @@ bool ConcatOffsetCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kConcatOffsetOutputShapeSize << ", but got:" << output_shape.size();
   }
-  if (output_shape[0] != input_num) {
+  if (LongToSize(output_shape[0]) != input_num) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the first dimension value of output must be equal to "
                          "the number of input, but got the first dimension value of output: "
                       << output_shape[0] << ", and the number of input: " << input_num;
   }
-  size_t rank = output_shape[1];
+  size_t rank = LongToSize(output_shape[1]);
   size_t idx = 0;
   for (size_t i = 0; i < input_num; ++i) {
     for (size_t j = 0; j < rank; ++j) {

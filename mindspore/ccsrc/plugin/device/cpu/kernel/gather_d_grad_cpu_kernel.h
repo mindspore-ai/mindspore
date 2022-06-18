@@ -45,9 +45,9 @@ class GatherDGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, GatherDGradFunc>> func_list_;
   GatherDGradFunc kernel_func_;
 
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> index_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector index_shape_;
+  ShapeVector output_shape_;
   int32_t axis_{1};
 };
 }  // namespace kernel

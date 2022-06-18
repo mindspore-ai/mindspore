@@ -40,6 +40,9 @@ void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({input_x_shape, input_y_shape})) {
+    return;
+  }
   if (input_x_shape.size() != input_y_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'x' and 'y' must have the same dimension, but got the dimension of 'x': "
@@ -51,7 +54,7 @@ void AssignCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                         << "', the 'x' and 'y' must have the same shape, but got the shape of 'x': "
                         << Vector2Str(input_x_shape) << " and the shape of 'y': " << Vector2Str(input_y_shape);
     }
-    batch_size_ *= input_x_shape[i];
+    batch_size_ *= LongToSize(input_x_shape[i]);
   }
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   auto type_len = input_x_dtype_size_map.find(input_x_dtype_);

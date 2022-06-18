@@ -100,7 +100,7 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    auto probs_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th);
+    auto probs_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th));
     auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput1st);
     auto labels_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput2nd);
     auto sequence_length_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput3rd);
@@ -128,15 +128,11 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << indice_dims.size();
     }
     label_size_ = sizeof(int);
-    for (auto i : labels_dims) {
-      label_size_ *= i;
-    }
+    label_size_ *= SizeOf(labels_dims);
     label_indice_size_ = sizeof(int64_t);
-    for (auto i : indice_dims) {
-      label_indice_size_ *= i;
-    }
+    label_indice_size_ *= SizeOf(indice_dims);
 
-    sequence_lengths_size_ = sequence_length_dims[0] * sizeof(int);
+    sequence_lengths_size_ = LongToSizeClipNeg(sequence_length_dims[0]) * sizeof(int);
     preprocess_collapse_repeated_ = GetAttr<bool>(kernel_node, "preprocess_collapse_repeated");
     ctc_merge_repeated_ = GetAttr<bool>(kernel_node, "ctc_merge_repeated");
     ignore_longer_outputs_than_inputs_ = GetAttr<bool>(kernel_node, "ignore_longer_outputs_than_inputs");

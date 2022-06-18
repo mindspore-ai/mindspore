@@ -78,6 +78,7 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
+
   // For Scalar Tensor, input shape is empty.
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   is_scalar_input_ = input_shape.empty();
@@ -85,22 +86,20 @@ int ReductionCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     return KRET_OK;
   }
   is_scalar_input_ = false;
-  std::vector<size_t> input_shape_;
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   // For Reduction kernel, mkl required keep_dims is True.
   // So we should recover output_shape from input_shape.
   // axis_'s validation has been check in core/ops/lp_norm.cc, just using it.
   std::vector<size_t> axis;
-  int64_t input_rank = SizeToLong(input_shape_.size());
+  int64_t input_rank = SizeToLong(input_shape.size());
   (void)std::transform(axis_.begin(), axis_.end(), std::back_inserter(axis), [&input_rank](const int64_t &dim) {
     return dim < 0 ? LongToSize(dim + input_rank) : LongToSize(dim);
   });
 
-  std::vector<size_t> mkl_output_shape = input_shape_;
+  auto mkl_output_shape = input_shape;
   for (const auto &dim : axis) {
     mkl_output_shape[dim] = 1;
   }
-  dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape_);
+  dnnl::memory::desc src_desc = GetDefaultMemDesc(input_shape);
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(mkl_output_shape);
   auto desc = GetReductionDesc(src_desc, dst_desc);
   auto prim_desc = CreateDesc<dnnl::reduction::primitive_desc>(desc, engine_);

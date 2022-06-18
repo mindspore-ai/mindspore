@@ -39,7 +39,7 @@ bool TensorArrayStackKernelMod::Init(const CNodePtr &kernel_node) {
   is_dynamic_ = GetAttr<bool>(kernel_node, "is_dynamic_shape");
   auto size = GetAttr<int64_t>(kernel_node, "size");
   for (auto i : shape) {
-    shapes_.push_back(LongToSize(i));
+    shapes_.push_back(LongToSizeClipNeg(i));
   }
   type_ = GetAttr<TypePtr>(kernel_node, "dtype");
   ele_size_ = GetTypeByte(type_);
@@ -68,7 +68,7 @@ void TensorArrayStackKernelMod::SyncData() {
   auto shape = shapes_;
   shape.insert(shape.begin(), tensor_size);
   MS_LOG(DEBUG) << "After postexecute, the real shape of TensorArrayStack is " << shape;
-  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {shape}, kernel_node_.lock().get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({type_->type_id()}, {Convert2Long(shape)}, kernel_node_.lock().get());
 }
 
 void TensorArrayStackKernelMod::ResetResource() noexcept {

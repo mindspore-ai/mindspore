@@ -47,10 +47,10 @@ class RestrainForceWithAtomenergyAndVirialGpuKernelMod : public DeprecatedNative
     auto shape_crd_ref = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto shape_scaler = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_restrain_list.size(); i++) ele_restrain_list *= shape_restrain_list[i];
-    for (size_t i = 0; i < shape_crd_ref.size(); i++) ele_crd_ref *= shape_crd_ref[i];
+    ele_crd *= SizeOf(shape_crd);
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_restrain_list *= SizeOf(shape_restrain_list);
+    ele_crd_ref *= SizeOf(shape_crd_ref);
 
     InitSizeLists();
     return true;

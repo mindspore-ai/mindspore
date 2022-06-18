@@ -34,7 +34,7 @@
 namespace mindspore::graphkernel {
 // Add CastCNode
 CNodePtr AddCastCNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
-                      const TypeId &input_type, const TypeId &output_type, const std::vector<size_t> &origin_shape,
+                      const TypeId &input_type, const TypeId &output_type, const ShapeVector &origin_shape,
                       const TypeId &origin_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr cast = func_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())), input});

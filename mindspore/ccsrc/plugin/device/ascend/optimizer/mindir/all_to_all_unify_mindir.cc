@@ -31,7 +31,7 @@ namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
 constexpr size_t kAllToAllInputIdx = 1;
 
-inline int64_t NormalizeDim(const std::vector<size_t> &shape, int64_t dim) {
+inline int64_t NormalizeDim(const ShapeVector &shape, int64_t dim) {
   return dim < 0 ? SizeToLong(shape.size()) + dim : dim;
 }
 
@@ -85,9 +85,9 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
     MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_dim
                       << "] = " << shape[LongToSize(split_dim)] << trace::DumpSourceLines(all_to_all);
   }
-  shape[LongToSize(split_dim)] /= static_cast<size_t>(split_count);
+  shape[LongToSize(split_dim)] /= split_count;
   std::vector<TypeId> dtypes(split_count, dtype);
-  if (AnfUtils::IsShapeDynamic(shape)) {
+  if (IsDynamic(shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_input, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_input, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
@@ -95,13 +95,10 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
       min_shape[LongToSize(split_dim)] /= split_count;
     }
 
-    ShapeVector new_shape;
-    std::transform(shape.begin(), shape.end(), std::back_inserter(new_shape), SizeToLong);
-
-    std::vector<BaseShapePtr> shapes(split_count, std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape));
+    std::vector<BaseShapePtr> shapes(split_count, std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
     common::AnfAlgo::SetOutputTypeAndDetailShape(dtypes, shapes, split_v.get());
   } else {
-    std::vector<std::vector<size_t>> shapes(split_count, shape);
+    std::vector<ShapeVector> shapes(split_count, shape);
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, split_v.get());
   }
 
@@ -176,8 +173,8 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
     MS_LOG(EXCEPTION) << "Invalid concat dim " << concat_dim << " is greater than shape size " << single_shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }
-  single_shape[LongToSize(concat_dim)] *= static_cast<size_t>(split_count);
-  if (AnfUtils::IsShapeDynamic(single_shape)) {
+  single_shape[LongToSize(concat_dim)] *= split_count;
+  if (IsDynamic(single_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(all_to_all_v_outputs[0], 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(all_to_all_v_outputs[0], 0);
     if (!min_shape.empty() && !max_shape.empty()) {
@@ -185,11 +182,9 @@ CNodePtr AllToAllUnifyMindIR::CreateConcatNode(const FuncGraphPtr &graph, const 
       min_shape[LongToSize(concat_dim)] *= split_count;
     }
 
-    ShapeVector new_shape;
-    (void)std::transform(single_shape.begin(), single_shape.end(), std::back_inserter(new_shape), SizeToLong);
-    common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
-                                                 {std::make_shared<abstract::Shape>(new_shape, min_shape, max_shape)},
-                                                 concat.get());
+    common::AnfAlgo::SetOutputTypeAndDetailShape(
+      {common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
+      {std::make_shared<abstract::Shape>(single_shape, min_shape, max_shape)}, concat.get());
   } else {
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(all_to_all_v_outputs[0], 0)},
                                                 {single_shape}, concat.get());

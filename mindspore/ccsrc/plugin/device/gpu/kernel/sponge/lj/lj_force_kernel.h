@@ -45,12 +45,12 @@ class LJForceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_d_LJ_a = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 6);
     auto shape_d_LJ_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 7);
 
-    for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
-    for (size_t i = 0; i < shape_LJtype.size(); i++) ele_LJtype *= shape_LJtype[i];
-    for (size_t i = 0; i < shape_charge.size(); i++) ele_charge *= shape_charge[i];
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_d_LJ_a.size(); i++) ele_d_LJ_a *= shape_d_LJ_a[i];
-    for (size_t i = 0; i < shape_d_LJ_b.size(); i++) ele_d_LJ_b *= shape_d_LJ_b[i];
+    ele_uint_crd *= SizeOf(shape_uint_crd);
+    ele_LJtype *= SizeOf(shape_LJtype);
+    ele_charge *= SizeOf(shape_charge);
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_d_LJ_a *= SizeOf(shape_d_LJ_a);
+    ele_d_LJ_b *= SizeOf(shape_d_LJ_b);
 
     InitSizeLists();
     return true;

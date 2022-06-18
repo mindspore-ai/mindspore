@@ -46,6 +46,9 @@ void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto diag_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_index);
   auto diag_k_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, diag_k_index);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
+  if (AnfAlgo::IsShapesDynamic({input_shape, diag_shape, diag_k_shape, output_shape})) {
+    return;
+  }
 
   constexpr size_t temporary_2d_dim = 2;
   constexpr size_t temporary_1d_dim = 1;
@@ -60,13 +63,13 @@ void MatrixSetDiagCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   size_t input_rank = input_shape.size();
   for (size_t i = 0; i < input_rank - temporary_2d_dim; ++i) {
-    outer_batch_ *= SizeToInt(input_shape.at(i));
+    outer_batch_ *= LongToInt(input_shape.at(i));
   }
   input_shape_ = input_shape;
-  inner_rows_ = SizeToInt(input_shape.at(input_rank - temporary_2d_dim));
-  inner_cols_ = SizeToInt(input_shape.at(input_rank - temporary_1d_dim));
+  inner_rows_ = LongToInt(input_shape.at(input_rank - temporary_2d_dim));
+  inner_cols_ = LongToInt(input_shape.at(input_rank - temporary_1d_dim));
 
-  expected_num_diags_ = diag_shape.size() == input_rank ? SizeToInt(diag_shape.at(input_rank - temporary_2d_dim)) : 1;
+  expected_num_diags_ = diag_shape.size() == input_rank ? LongToInt(diag_shape.at(input_rank - temporary_2d_dim)) : 1;
 
   data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }

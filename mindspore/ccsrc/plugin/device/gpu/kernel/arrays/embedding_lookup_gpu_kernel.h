@@ -116,7 +116,7 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   void Reshape() {
     int64_t axis = 0;
-    size_t dim_before_axis = 1;
+    int64_t dim_before_axis = 1;
     for (size_t i = 0; i < LongToSize(axis); i++) {
       dim_before_axis *= output_shapes_[i];
     }
@@ -124,7 +124,7 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < indices_shapes_.size(); i++) {
       dim_of_indices *= indices_shapes_[i];
     }
-    size_t dim_after_indices = 1;
+    int64_t dim_after_indices = 1;
     for (size_t i = LongToSize(axis) + indices_shapes_.size(); i < output_shapes_.size(); i++) {
       dim_after_indices *= output_shapes_[i];
     }
@@ -133,20 +133,20 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
     dims_[2] = dim_after_indices;
     return;
   }
-  size_t GetSize(const std::vector<size_t> &shape) const {
+  size_t GetSize(const std::vector<int64_t> &shape) const {
     if (shape.size() == 0) {
       return 0;
     }
     size_t result = sizeof(T);
     for (size_t i = 0; i < shape.size(); i++) {
-      result *= shape[i];
+      result *= static_cast<size_t>(shape[i]);
     }
     return result;
   }
 
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> indices_shapes_;
-  std::vector<size_t> output_shapes_;
+  std::vector<int64_t> input_shapes_;
+  std::vector<int64_t> indices_shapes_;
+  std::vector<int64_t> output_shapes_;
   size_t dims_[3] = {};
   int64_t offset_;
   bool is_dynamic_shape_;

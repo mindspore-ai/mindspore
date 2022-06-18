@@ -22,6 +22,7 @@
 
 namespace mindspore {
 namespace kernel {
+namespace {
 constexpr size_t kArgMinInputsNum = 1;
 constexpr size_t kArgMinOutputsNum = 1;
 constexpr char kKernelName[] = "Argmin";
@@ -33,6 +34,7 @@ int64_t get_element_num(const std::vector<int64_t> &shape) {
   }
   return size;
 }
+}  // namespace
 
 template <typename T, typename S>
 bool check_validation(const std::vector<int64_t> &shape, const int64_t num_before_axis, const int64_t num_after_axis,
@@ -149,11 +151,7 @@ int ArgminCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     }
   }
   dim_axis_ = shape_[LongToSize(axis_)];
-  std::vector<size_t> shape_t(shape_len);
-  for (size_t k = 0; k < shape_len; ++k) {
-    shape_t[k] = LongToSize(shape_[k]);
-  }
-  axisIterator_.Init(shape_t, LongToSize(axis_));
+  axisIterator_.Init(shape_, LongToSize(axis_));
   size_t element_size = axisIterator_.OuterSize() * axisIterator_.InnerSize() * axisIterator_.AxisSize();
   (void)workspace_size_list_.emplace_back((sizeof(size_t) * element_size));
   return KRET_OK;

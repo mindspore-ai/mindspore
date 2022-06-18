@@ -32,14 +32,17 @@ void GridSampler3DCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kZero);
   grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kOne);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kZero);
-  output_number_ =
-    output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] * output_shape_[kThree] * output_shape_[kFour];
+  if (AnfAlgo::IsShapesDynamic({x_shape_, grid_shape_, output_shape_})) {
+    return;
+  }
+  output_number_ = static_cast<size_t>(output_shape_[kZero] * output_shape_[kOne] * output_shape_[kTwo] *
+                                       output_shape_[kThree] * output_shape_[kFour]);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
   size_t stride_tmp = kOne;
-  auto stride_compute = [&](std::vector<size_t> &stride, std::vector<size_t> shape) {
+  auto stride_compute = [&](std::vector<size_t> &stride, std::vector<int64_t> shape) {
     for (int i = kFour; i > -static_cast<int>(kOne); i--) {
       (void)stride.insert(stride.begin(), stride_tmp);
-      stride_tmp *= shape[static_cast<size_t>(i)];
+      stride_tmp *= static_cast<size_t>(shape[static_cast<size_t>(i)]);
     }
     stride_tmp = kOne;
   };
@@ -220,9 +223,8 @@ T GridSampler3DCpuKernelMod::reflect_coordinates(T coord, int64_t twice_low, int
   }
 }
 
-bool GridSampler3DCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W) {
-  return d >= 0 && d < static_cast<int64_t>(D) && h >= 0 && h < static_cast<int64_t>(H) && w >= 0 &&
-         w < static_cast<int64_t>(W);
+bool GridSampler3DCpuKernelMod::within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W) {
+  return d >= 0 && d < D && h >= 0 && h < H && w >= 0 && w < W;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, GridSampler3D, GridSampler3DCpuKernelMod);

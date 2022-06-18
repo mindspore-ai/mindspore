@@ -103,7 +103,7 @@ void UpdateKernelInfo(const std::vector<AnfNodePtr> &node_list) {
   }
 }
 
-bool CanConvertDefaultShapeToNZ(const std::vector<size_t> &shape) {
+bool CanConvertDefaultShapeToNZ(const ShapeVector &shape) {
   for (size_t i = 1; i <= shape.size(); ++i) {
     if (i > 2) {
       break;
@@ -115,7 +115,7 @@ bool CanConvertDefaultShapeToNZ(const std::vector<size_t> &shape) {
   return true;
 }
 
-std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, const std::vector<int64_t> &axis) {
+std::vector<int64_t> DefaultToFracNZAxis(const ShapeVector &ori_shape, const std::vector<int64_t> &axis) {
   std::vector<int64_t> frac_nz_axis = axis;
   auto shape_len = ori_shape.size();
   for (size_t i = 0; i < axis.size(); ++i) {
@@ -131,23 +131,6 @@ std::vector<int64_t> DefaultToFracNZAxis(const std::vector<size_t> &ori_shape, c
     }
   }
   return frac_nz_axis;
-}
-
-std::vector<size_t> GetReducedFracNZShape(const std::vector<size_t> &ori_shape, const std::vector<int64_t> &axis,
-                                          bool keep_dims) {
-  std::vector<size_t> result;
-  std::set<size_t> positive_idx;
-  for (const auto &a : axis) {
-    (void)positive_idx.insert(a >= 0 ? LongToSize(a) : ori_shape.size() + LongToSize(a));
-  }
-  for (size_t i = 0; i < ori_shape.size(); ++i) {
-    if (positive_idx.count(i) == 0) {
-      result.push_back(ori_shape[i]);
-    } else if (keep_dims) {
-      result.push_back(1);
-    }
-  }
-  return result;
 }
 
 void UpdateFracNZReduceOp(const CNodePtr &cnode) {

@@ -41,7 +41,7 @@ class FillDiagonalCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   TypeId input_type_{kTypeUnknown};
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   float fill_value_;
   bool wrap_;
 };

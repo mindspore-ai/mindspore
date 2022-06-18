@@ -83,10 +83,7 @@ class FloatStatusGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    input_size_ = sizeof(T);
-    for (size_t x : shape) {
-      input_size_ = input_size_ * x;
-    }
+    input_size_ = sizeof(T) * SizeOf(shape);
     auto iter = kOpTypeMap.find(kernel_name);
     if (iter == kOpTypeMap.end()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << ", only support these types: FloatStatus, IsInf, IsNan, IsFinite "

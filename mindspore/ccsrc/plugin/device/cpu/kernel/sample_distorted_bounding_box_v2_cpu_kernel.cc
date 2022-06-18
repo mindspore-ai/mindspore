@@ -199,6 +199,9 @@ void SampleDistortedBoundingBoxV2CPUKernelMod::InitKernel(const CNodePtr &kernel
 
   auto shape_image_size = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto shape_bounding_boxes = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({shape_image_size, shape_bounding_boxes})) {
+    return;
+  }
   seed = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed");
   seed2 = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2");
   aspect_ratio_range = common::AnfAlgo::GetNodeAttr<std::vector<float>>(kernel_node, "aspect_ratio_range");

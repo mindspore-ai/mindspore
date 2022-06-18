@@ -72,11 +72,11 @@ class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     size_t offset = output_shapes.size() - input_shapes.size();
     for (size_t i = 0; i < input_shapes.size(); i++) {
-      input_shape_[i + offset] = input_shapes[i];
+      input_shape_[i + offset] = LongToSizeClipNeg(input_shapes[i]);
     }
 
     for (size_t j = 0; j < output_shapes.size(); j++) {
-      output_shape_[j] = output_shapes[j];
+      output_shape_[j] = LongToSizeClipNeg(output_shapes[j]);
     }
 
     InitSizeLists();

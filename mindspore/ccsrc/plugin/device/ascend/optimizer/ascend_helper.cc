@@ -35,7 +35,7 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
-bool NeedInsertTransData(const std::vector<size_t> &origin_shape, const std::string &format) {
+bool NeedInsertTransData(const ShapeVector &origin_shape, const std::string &format) {
   bool shape_check = origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % kCubeSize != 0);
   return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
 }
@@ -72,10 +72,8 @@ CNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp
       common::AnfAlgo::SetNodeAttr(kAttrReshapePaddingAxis, MakeValue(padding_axis), reshape);
     }
   } else {
-    std::vector<size_t> shape_size_t;
-    std::transform(dst_shape->shape().begin(), dst_shape->shape().end(), std::back_inserter(shape_size_t), LongToSize);
     common::AnfAlgo::SetOutputInferTypeAndShape({common::AnfAlgo::GetOutputInferDataType(input_node, 0)},
-                                                {shape_size_t}, reshape.get());
+                                                {dst_shape->shape()}, reshape.get());
   }
 
   common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), reshape);
@@ -157,7 +155,7 @@ AnfNodePtr GetTransInputNodePtr(const FuncGraphPtr &func_graph, const CNodePtr &
     MS_EXCEPTION_IF_NULL(input_node);
     common::AnfAlgo::SetNodeInput(node, input_node, index);
   }
-  std::vector<size_t> origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
+  ShapeVector origin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, index);
   std::string dest_format = AnfAlgo::GetInputFormat(node, index);
   if (NeedInsertTransData(origin_shape, dest_format)) {
     MS_LOG(DEBUG) << node->DebugString() << "Insert transdata " << AnfAlgo::GetInputFormat(node, index)
@@ -176,7 +174,7 @@ AnfNodePtr InsertTransOpForSingleOutput(const FuncGraphPtr &func_graph, const An
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string output_format = AnfAlgo::GetOutputFormat(node, 0);
-  std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   if (output_format == kOpFormat_NC1KHKWHWC0) {
     MS_LOG(EXCEPTION) << "Got the hw format " << output_format << "when insert the transdata node "
                       << node->DebugString() << trace::DumpSourceLines(node);
@@ -211,7 +209,7 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
                         << node->DebugString() << trace::DumpSourceLines(node);
     }
     auto tuple_getitem = CreatTupleGetItemNode(func_graph, node, output_idx);
-    std::vector<size_t> origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
+    auto origin_shape = common::AnfAlgo::GetOutputInferShape(node, output_idx);
     if (NeedInsertTransData(origin_shape, output_format)) {
       auto trans_op = AddTransOpNodeToGraph(func_graph, tuple_getitem, kernel_select, 0, false);
       if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node, output_idx)) {

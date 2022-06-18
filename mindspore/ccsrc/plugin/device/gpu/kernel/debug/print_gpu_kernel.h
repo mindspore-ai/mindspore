@@ -238,7 +238,7 @@ class PrintGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::unordered_map<int64_t, int64_t> value_type_;
   // size_in_byte, typeid
   std::vector<std::tuple<size_t, TypeId>> input_info_;
-  std::vector<std::vector<size_t>> input_shape_;
+  std::vector<std::vector<int64_t>> input_shape_;
 
   bool is_null_input_;
 };

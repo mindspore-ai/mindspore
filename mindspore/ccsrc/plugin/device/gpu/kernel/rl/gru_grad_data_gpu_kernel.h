@@ -114,7 +114,7 @@ class GruGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
-    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -179,7 +179,7 @@ class GruGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
                         << weight_shape.size();
     }
-    size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
+    size_t weight_size = LongToSizeClipNeg(weight_shape[0] * weight_shape[1] * weight_shape[2]) * sizeof(T);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnGetRNNParamsSize(handle_, rnn_desc_, dx_desc_[0], &weight_size_, cudnn_data_type_),
                                 "get weight_size_ failed");

@@ -85,10 +85,8 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     return KRET_RESIZE_FAILED;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  input_shape_.clear();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  size_t input_element_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_shape_ = inputs.at(kIndex0)->GetShapeVector();
+  size_t input_element_num = SizeOf(input_shape_);
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;
@@ -109,7 +107,7 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                                       "For 'Activation', cudnnCreateActivationDescriptor failed.");
   cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(inputs.at(kIndex0)->GetDtype()));
   CheckTensorSize({input_shape_});
-  std::vector<size_t> shape;
+  ShapeVector shape;
   double coef = (mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) ? 6.0 : 0.0;
   if (mode_ == CUDNN_ACTIVATION_ELU) {
     auto elu_ptr = std::dynamic_pointer_cast<ops::Elu>(base_operator);
@@ -121,17 +119,17 @@ int ActivationFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
     cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
     "For 'Activation', cudnnSetActivationDescriptor failed.");
   const int split_dim = 4;
-  if (input_shape.size() <= split_dim) {
+  if (input_shape_.size() <= split_dim) {
     ShapeNdTo4d(input_shape_, &shape);
     if (inputs.at(kIndex0)->GetFormat() == mindspore::Format::NHWC) {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, SizeToInt(shape[0]),
-                                   SizeToInt(shape[3]), SizeToInt(shape[1]), SizeToInt(shape[2])),
+        cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, LongToInt(shape[0]),
+                                   LongToInt(shape[3]), LongToInt(shape[1]), LongToInt(shape[2])),
         "For 'Activation', cudnnSetTensor4dDescriptor failed.");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
-        cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(shape[0]),
-                                   SizeToInt(shape[1]), SizeToInt(shape[2]), SizeToInt(shape[3])),
+        cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, LongToInt(shape[0]),
+                                   LongToInt(shape[1]), LongToInt(shape[2]), LongToInt(shape[3])),
         "For 'Activation', cudnnSetTensor4dDescriptor failed.");
     }
   } else {

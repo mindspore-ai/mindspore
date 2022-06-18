@@ -40,8 +40,8 @@ void DropoutGradBwdCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << input_shape.size() << ", and the dimension of 'input_mask': " << input_mask_shape.size();
   }
   num_count_ = 1;
-  for (size_t x : input_shape) {
-    num_count_ *= x;
+  for (auto x : input_shape) {
+    num_count_ *= static_cast<size_t>(x);
   }
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   keep_prob_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "keep_prob");

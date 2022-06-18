@@ -38,6 +38,7 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(ERROR) << "GatherFwdGpu's kernel function is not initialized.";
       return false;
     }
+
     return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
@@ -81,9 +82,9 @@ class GatherFwdGpuKernelMod : public NativeGpuKernelMod {
   GatherFwdFunc kernel_func_;
   static std::vector<std::pair<KernelAttr, GatherFwdFunc>> func_list_;
 
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> index_shapes_;
-  std::vector<size_t> output_shapes_;
+  ShapeVector input_shapes_;
+  ShapeVector index_shapes_;
+  ShapeVector output_shapes_;
 
   size_t dims_[4] = {};
   bool is_null_input_{false};

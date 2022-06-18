@@ -40,13 +40,13 @@ void LstmCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
   auto output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   auto output_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, 0);
   auto output_types = std::vector<TypeId>(output_num, output_type);
-  std::vector<std::vector<size_t>> output_shapes;
+  std::vector<ShapeVector> output_shapes;
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
     auto shape = common::AnfAlgo::GetOutputInferShape(kernel_node, output_index);
     (void)output_shapes.emplace_back(shape);
   }
   size_t len = reserve_size_ / IntToSize(kGateNum);
-  output_shapes[kOutputWorkSpaceIndex] = {len, 1};
+  output_shapes[kOutputWorkSpaceIndex] = {SizeToLong(len), 1};
   common::AnfAlgo::SetOutputInferTypeAndShape(output_types, output_shapes, kernel_node.get());
 }
 
@@ -122,16 +122,19 @@ void LstmCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 
 void LstmCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   constexpr int kBidirectional = 2;
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  std::vector<size_t> src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto src_h_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  auto src_c_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+  if (AnfAlgo::IsShapesDynamic({src_shape, src_h_shape, src_c_shape})) {
+    return;
+  }
   bidirectional_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "bidirectional");
   input_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "input_size"));
   hidden_size_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "hidden_size"));
   num_layers_ = LongToInt(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_layers"));
   has_bias_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "has_bias");
-  batch_size_ = SizeToInt(src_shape[1]);
-  seq_len_ = SizeToInt(src_shape[0]);
+  batch_size_ = src_shape[1];
+  seq_len_ = src_shape[0];
   num_directions_ = 1;
   if (bidirectional_) {
     num_directions_ = kBidirectional;
@@ -149,7 +152,7 @@ void LstmCpuKernelMod::CheckParam(const CNodePtr &kernel_node) {
   }
   weight_size_ = weight_size_ * num_directions_;
   weight_h_size_ = weight_h_size_ * num_directions_;
-  if (num_directions_ * num_layers_ != SizeToInt(src_h_shape[0])) {
+  if (num_directions_ * num_layers_ != src_h_shape[0]) {
     MS_LOG(EXCEPTION) << "Error iteration shape!";
   }
   if (src_shape.size() != 3 || src_h_shape.size() != 3 || src_c_shape.size() != 3) {

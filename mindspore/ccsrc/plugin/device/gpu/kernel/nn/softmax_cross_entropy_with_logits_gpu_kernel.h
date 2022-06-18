@@ -130,7 +130,7 @@ class SoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
     auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(logits_shape, kernel_name_, "logits") || CHECK_SHAPE_NULL(labels_shape, kernel_name_, "labels");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({logits_shape, labels_shape})) {
       InitSizeLists();
       return;
     }
@@ -139,25 +139,19 @@ class SoftmaxCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
     size_t logits_dims = logits_shape.size();
     batch_size_ = 1;
     for (size_t i = 0; i < logits_dims - 1; i++) {
-      batch_size_ *= logits_shape[i];
+      batch_size_ *= LongToSizeClipNeg(logits_shape[i]);
     }
-    channel_size_ = logits_shape[logits_dims - 1];
+    channel_size_ = LongToSizeClipNeg(logits_shape[logits_dims - 1]);
     height_ = 1;
     width_ = 1;
     logits_size_ = sizeof(T) * batch_size_ * channel_size_ * height_ * width_;
+    labels_size_ = sizeof(S) * SizeOf(labels_shape);
 
-    labels_size_ = 1;
-    size_t labels_dims = labels_shape.size();
-    for (size_t i = 0; i < labels_dims; i++) {
-      labels_size_ *= labels_shape[i];
-    }
-    labels_size_ *= sizeof(S);
-
-    output1_size_ = logits_size_ / logits_shape[logits_dims - 1];
+    output1_size_ = logits_size_ / LongToSizeClipNeg(logits_shape[logits_dims - 1]);
     output2_size_ = logits_size_;
     softmax_output_logits_size_ = logits_size_;
   }
-  void CheckShapeValidation(const std::vector<size_t> &logits_shape, const std::vector<size_t> &labels_shape) {
+  void CheckShapeValidation(const ShapeVector &logits_shape, const ShapeVector &labels_shape) {
     size_t logits_dim_length = logits_shape.size();
     size_t labels_dim_length = labels_shape.size();
     if (logits_dim_length == 0) {

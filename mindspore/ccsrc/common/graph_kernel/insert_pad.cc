@@ -28,7 +28,7 @@ GVAR_DEF(PrimitivePtr, kPrimPadAkg, std::make_shared<Primitive>("PadAkg"));
 }  // namespace prim
 namespace graphkernel {
 namespace {
-using vec = std::vector<size_t>;
+using vec = std::vector<int64_t>;
 constexpr size_t MAX_PER_DIM_SHAPE = 4096;
 constexpr int64_t MAX_ALL_SHAPE = static_cast<int64_t>(3e10);
 

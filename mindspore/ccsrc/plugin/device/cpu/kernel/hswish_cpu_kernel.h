@@ -45,7 +45,7 @@ class HSwishCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                         const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, HSwishFunc>> func_list_;
   HSwishFunc kernel_func_;
-  std::vector<size_t> x_shape_;
+  ShapeVector x_shape_;
   uint64_t tensor_size_ = 1;
 };
 }  // namespace kernel

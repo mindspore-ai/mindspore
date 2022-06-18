@@ -109,9 +109,9 @@ class GruGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 3, but got "
                         << input_shape.size();
     }
-    seq_len_ = SizeToInt(input_shape[0]);
-    batch_size_ = SizeToInt(input_shape[1]);
-    input_size_ = SizeToInt(input_shape[kIndexTwo]);
+    seq_len_ = LongToInt(input_shape[0]);
+    batch_size_ = LongToInt(input_shape[1]);
+    input_size_ = LongToInt(input_shape[kIndexTwo]);
 
     input_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "input_size"));
     hidden_size_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "hidden_size"));
@@ -166,7 +166,7 @@ class GruGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
                         << weight_shape.size();
     }
-    size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[kIndexTwo] * sizeof(T);
+    size_t weight_size = LongToSizeClipNeg(weight_shape[0] * weight_shape[1] * weight_shape[kIndexTwo]) * sizeof(T);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnGetRNNParamsSize(handle_, rnn_desc_, x_desc_[0], &weight_size_, cudnn_data_type_),
                                 "get weight_size_ failed");

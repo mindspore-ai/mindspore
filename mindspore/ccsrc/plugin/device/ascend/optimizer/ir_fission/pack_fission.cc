@@ -52,6 +52,7 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
     MS_LOG(EXCEPTION) << "The concat_dim value " << axis << "is out of range"
                       << trace::DumpSourceLines(origin_pack_cnode);
   }
+
   ShapeVector new_shape = output_shape->shape();
   ShapeVector new_shape_min = output_shape->min_shape();
   ShapeVector new_shape_max = output_shape->max_shape();

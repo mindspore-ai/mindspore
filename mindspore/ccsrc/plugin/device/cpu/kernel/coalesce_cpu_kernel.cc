@@ -51,11 +51,11 @@ bool CoalesceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
   for (size_t i = 0; i < output_nm; i++) {
     dtypes[i] = AnfAlgo::GetOutputDeviceDataType(node_, i);
   }
-  std::vector<size_t> dims;
-  (void)dims.emplace_back(shape_size_);
-  (void)dims.emplace_back(jump + 1);
-  std::vector<size_t> dim;
-  (void)dim.emplace_back(jump + 1);
+  ShapeVector dims;
+  (void)dims.emplace_back(SizeToLong(shape_size_));
+  (void)dims.emplace_back(SizeToLong(jump) + 1);
+  ShapeVector dim;
+  (void)dim.emplace_back(SizeToLong(jump) + 1);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {dims, dim, common::AnfAlgo::GetOutputInferShape(node_, 2)},
                                               node_.get());
   return true;

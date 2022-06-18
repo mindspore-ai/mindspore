@@ -41,11 +41,11 @@ class AddcmulCpuKernelMod : public DeprecatedNativeCpuKernelMod {
 
  private:
   TypeId dtype_{kTypeUnknown};
-  std::vector<size_t> input_shape0_;
-  std::vector<size_t> input_shape1_;
-  std::vector<size_t> input_shape2_;
-  std::vector<size_t> input_shape3_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape0_;
+  std::vector<int64_t> input_shape1_;
+  std::vector<int64_t> input_shape2_;
+  std::vector<int64_t> input_shape3_;
+  std::vector<int64_t> output_shape_;
   size_t output_size_{1};
   size_t data_shape_size_{0};
   size_t inputx_shape_size_{0};

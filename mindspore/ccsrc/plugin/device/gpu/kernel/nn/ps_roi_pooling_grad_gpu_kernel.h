@@ -105,19 +105,15 @@ class PsROIPoolingBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    auto dx_shape_size = dx_shape.size();
-    dx_size_ = sizeof(T);
-    for (size_t i = 0; i < dx_shape_size; i++) {
-      dx_size_ *= dx_shape[i];
-    }
+    dx_size_ = sizeof(T) * SizeOf(dx_shape);
 
     if (rois_shape.size() != ROI_SHAPE_SIZE) {
       MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of rois_shape must be 2 "
                         << "(number_rois, (bs, xmin, ymin, xmax, ymax)), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }
-    rois_shape_ = {static_cast<int>(rois_shape[ROI_SHAPE_INDEX0]), static_cast<int>(rois_shape[ROI_SHAPE_INDEX1])};
-    rois_size_ = rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1] * sizeof(T);
+    rois_shape_ = {LongToInt(rois_shape[ROI_SHAPE_INDEX0]), LongToInt(rois_shape[ROI_SHAPE_INDEX1])};
+    rois_size_ = LongToSizeClipNeg(rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1]) * sizeof(T);
 
     if (mapping_channel_shape.size() != MAPPING_CHANNEL_SHAPE) {
       MS_LOG(EXCEPTION) << "For 'PsROIPoolingFwdGpuKernelMod', the rank of mapping_channel_shape must be"

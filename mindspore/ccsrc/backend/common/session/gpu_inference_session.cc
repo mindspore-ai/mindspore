@@ -146,10 +146,10 @@ bool GpuInferenceSession::CompareInput(const tensor::TensorPtr &input, const Par
 
   // compare shape
   auto input_shape = input->shape();
-  vector<size_t> trans_input;
+  vector<int64_t> trans_input;
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(trans_input),
                        [](const int64_t dim) { return static_cast<size_t>(dim); });
-  auto is_scalar_shape = [](const vector<size_t> &shape) {
+  auto is_scalar_shape = [](const vector<int64_t> &shape) {
     return shape.empty() || (shape.size() == 1 && shape[0] == 1);
   };
   if ((!is_scalar_shape(trans_input) || !is_scalar_shape(parameter_shape)) && (trans_input != parameter_shape)) {

@@ -124,6 +124,9 @@ class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+    if (AnfAlgo::IsShapesDynamic({in_shape, dy_shape})) {
+      return true;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "x") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy");
     if (is_null_input_) {
       InitSizeLists();
@@ -132,7 +135,7 @@ class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     CheckTensorSize({in_shape});
     data_format_ = kOpFormat_NCDHW;
 
-    std::vector<size_t> filter_shape;
+    ShapeVector filter_shape;
     GetFilterShape(kernel_node, &filter_shape);
     num_output_elements_ = 1;
     for (auto x : filter_shape) {
@@ -141,11 +144,11 @@ class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     compute_format_ = CUDNN_TENSOR_NCHW;
     (void)CheckSize(in_shape.size(), kInputDimSize, "input shape");
-    n_ = SizeToInt(in_shape[kInDimIdxForN]);
-    c_ = SizeToInt(in_shape[kInDimIdxForC]);
-    old_depth_ = SizeToInt(in_shape[kInDimIdxForD]);
-    old_height_ = SizeToInt(in_shape[kInDimIdxForH]);
-    old_width_ = SizeToInt(in_shape[kInDimIdxForW]);
+    n_ = LongToInt(in_shape[kInDimIdxForN]);
+    c_ = LongToInt(in_shape[kInDimIdxForC]);
+    old_depth_ = LongToInt(in_shape[kInDimIdxForD]);
+    old_height_ = LongToInt(in_shape[kInDimIdxForH]);
+    old_width_ = LongToInt(in_shape[kInDimIdxForW]);
     SetNDDesc(dy_shape, filter_shape, in_shape);
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, group_),
@@ -297,18 +300,17 @@ class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
   }
 
-  void GetFilterShape(const CNodePtr &kernel_node, std::vector<size_t> *filter_shape) {
+  void GetFilterShape(const CNodePtr &kernel_node, ShapeVector *filter_shape) {
     auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "filter_size");
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*filter_shape),
-                         [](const ValuePtr &e) -> size_t {
+                         [](const ValuePtr &e) -> int64_t {
                            auto cast_value = e->cast<Int64ImmPtr>();
                            MS_EXCEPTION_IF_NULL(cast_value);
-                           return static_cast<int>(cast_value->value());
+                           return static_cast<int64_t>(cast_value->value());
                          });
   }
 
-  void SetNDDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &filter_shape,
-                 const std::vector<size_t> &in_shape) {
+  void SetNDDesc(const ShapeVector &dy_shape, const ShapeVector &filter_shape, const ShapeVector &in_shape) {
     const int kDims = 5;
     int dimA[kDims];
     int strideAin[kDims];
@@ -386,8 +388,7 @@ class Conv3dGradFilterGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
                           << ", but got " << data_format_;
       }
-      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
-                           IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
+      ShapeVector padded_shape = {n_, c_, old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_};
       SetDimA(padded_shape, dimA, kNumDims, data_format_);
       SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
       CHECK_CUDNN_RET_WITH_EXCEPT(

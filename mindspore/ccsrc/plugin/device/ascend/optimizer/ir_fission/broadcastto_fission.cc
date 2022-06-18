@@ -60,10 +60,8 @@ CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &inpu
   CNodePtr broadcastto_node = NewCNode(broadcastto_inputs, func_graph);
   broadcastto_node->set_scope(input_node->scope());
   broadcastto_node->set_abstract(input_node->abstract());
-  std::vector<size_t> out_shape;
-  std::transform(broad_shape.begin(), broad_shape.end(), std::back_inserter(out_shape), SizeToLong);
   common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue<std::vector<int64_t>>(broad_shape), broadcastto_node);
-  common::AnfAlgo::SetOutputInferTypeAndShape({input_type}, {out_shape}, broadcastto_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({input_type}, {broad_shape}, broadcastto_node.get());
   return broadcastto_node;
 }
 

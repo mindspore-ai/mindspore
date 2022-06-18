@@ -68,7 +68,7 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
-    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
     auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(update_shape, kernel_name_, "update");
@@ -104,14 +104,14 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void CheckAtrrAndShapeValid(const CNodePtr &kernel_node) {
     auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    size_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
+    int64_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<int64_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' must be the same "
                         << "but got the size of 'begin': " << begin_.size()
                         << ", the size of 'strides':" << strides_.size() << ", the size of 'end':" << end_.size();
     }
     auto len = begin_.size();
-    size_t total_input_num = 1;
+    int64_t total_input_num = 1;
     for (size_t i = 0; i < len; ++i) {
       MS_EXCEPTION_IF_ZERO("strides_[i]", strides_[i]);
       total_input_num *= ((end_[i] - begin_[i]) / strides_[i]);

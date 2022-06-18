@@ -63,10 +63,10 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "DynamicBroadcastGradiendArgs needs " << kInputNum << " inputs, but get " << input_num;
     }
-    auto s0_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto s1_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto r0_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    auto r1_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 1);
+    auto s0_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto s1_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto r0_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
+    auto r1_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 1));
     if (s0_shape.size() != 1 || s1_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "Inputs must be [1-D], but get " << s0_shape.size() << "-D and " << s1_shape.size() << "-D.";
     }
@@ -76,8 +76,8 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
 
     input_size_list_.push_back(s0_size);
     input_size_list_.push_back(s1_size);
-    output_size_list_.push_back(r0_shape[0] * sizeof(S));
-    output_size_list_.push_back(r1_shape[0] * sizeof(S));
+    output_size_list_.push_back(static_cast<size_t>(r0_shape[0]) * sizeof(S));
+    output_size_list_.push_back(static_cast<size_t>(r1_shape[0]) * sizeof(S));
     is_need_retrieve_output_shape_ = true;
     return true;
   }
@@ -89,8 +89,8 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
 
  protected:
   void SyncData() override {
-    std::vector<size_t> r0_shape{r0_size_};
-    std::vector<size_t> r1_shape{r1_size_};
+    ShapeVector r0_shape{SizeToLong(r0_size_)};
+    ShapeVector r1_shape{SizeToLong(r1_size_)};
     common::AnfAlgo::SetOutputInferTypeAndShape({TypeId::kNumberTypeInt64, TypeId::kNumberTypeInt64},
                                                 {r0_shape, r1_shape}, kernel_node_.lock().get());
     MS_LOG(DEBUG) << "Run PostExecute for DynamicBroadcastGradientArgs, real r0 shape is " << r0_shape

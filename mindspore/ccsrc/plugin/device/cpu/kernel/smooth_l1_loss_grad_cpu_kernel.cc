@@ -33,10 +33,8 @@ void SmoothL1LossGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (beta_ == 0.0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
   }
-  std::vector<size_t> x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  for (const uint64_t &d : x_shape) {
-    tensor_size_ *= d;
-  }
+  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  tensor_size_ = SizeOf(x_shape);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

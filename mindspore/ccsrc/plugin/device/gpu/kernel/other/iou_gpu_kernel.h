@@ -80,14 +80,9 @@ class IOUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < gt_boxes_shape.size(); i++) {
       gt_boxes_size_ *= gt_boxes_shape[i];
     }
-
-    for (size_t i = 0; i < anchor_boxes_shape.size(); i++) {
-      anchor_boxes_size_ *= anchor_boxes_shape[i];
-    }
-
-    for (size_t i = 0; i < iou_shape.size(); i++) {
-      iou_size_ *= iou_shape[i];
-    }
+    gt_boxes_size_ *= SizeOf(gt_boxes_shape);
+    anchor_boxes_size_ *= SizeOf(anchor_boxes_shape);
+    iou_size_ *= SizeOf(iou_shape);
 
     InitSizeLists();
 

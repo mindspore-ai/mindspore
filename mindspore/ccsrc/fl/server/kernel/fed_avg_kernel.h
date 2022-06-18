@@ -60,7 +60,7 @@ class FedAvgKernel : public AggregationKernelMod {
       return;
     }
     cnode_weight_idx_ = kNameToIdxMap.at(cnode_name).at("inputs").at("weight");
-    std::vector<size_t> weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, cnode_weight_idx_);
+    auto weight_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, cnode_weight_idx_));
     size_t weight_size =
       std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(T), std::multiplies<size_t>());
     size_t new_weight_size = weight_size;

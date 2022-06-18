@@ -50,9 +50,9 @@ class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto input_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto ids_shapes = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto output_shapes = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto ids_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto output_shapes = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
                      CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
@@ -71,15 +71,15 @@ class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto axis = ids_shapes.size();
     for (size_t i = 0; i < input_shapes.size(); i++) {
       if (i < axis) {
-        input_dim0_ *= input_shapes[i];
+        input_dim0_ *= static_cast<size_t>(input_shapes[i]);
       } else {
-        input_dim1_ *= input_shapes[i];
+        input_dim1_ *= static_cast<size_t>(input_shapes[i]);
       }
     }
 
-    output_dim0_ = output_shapes[0];
+    output_dim0_ = static_cast<size_t>(output_shapes[0]);
     for (size_t j = 1; j < output_shapes.size(); j++) {
-      output_dim1_ *= output_shapes[j];
+      output_dim1_ *= static_cast<size_t>(output_shapes[j]);
     }
 
     InitSizeLists();

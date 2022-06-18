@@ -53,7 +53,7 @@ class StridedSliceGpuKernelMod : public DeprecatedNativeGpuKernelMod, public Str
     if (input_num == DynamicInputNum) {
       is_dynamic_attr_ = true;
     }
-    input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
     kernel_node_ = kernel_node;
     null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (null_output_) {

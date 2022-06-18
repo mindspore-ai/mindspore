@@ -19,13 +19,13 @@
 namespace mindspore {
 namespace kernel {
 namespace ps {
-void PServerKernel::Shard(std::vector<size_t> *shape, int axis) {
+void PServerKernel::Shard(ShapeVector *shape, int axis) {
   MS_EXCEPTION_IF_NULL(shape);
   if ((*shape).size() <= IntToSize(axis)) {
     MS_LOG(EXCEPTION) << "Shape size is invalid.";
   }
   (*shape)[IntToSize(axis)] =
-    LongToSize(Util::LocalShard(SizeToLong((*shape)[IntToSize(axis)]), SizeToLong(rank_id_), SizeToLong(pserver_num_)));
+    LongToSize(Util::LocalShard((*shape)[IntToSize(axis)], SizeToLong(rank_id_), SizeToLong(pserver_num_)));
 }
 }  // namespace ps
 }  // namespace kernel

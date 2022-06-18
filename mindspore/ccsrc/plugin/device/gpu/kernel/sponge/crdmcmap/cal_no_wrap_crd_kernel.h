@@ -44,9 +44,9 @@ class CalculateNoWrapCrdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_box = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto shape_box_map_times = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
 
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_box.size(); i++) ele_box *= shape_box[i];
-    for (size_t i = 0; i < shape_box_map_times.size(); i++) ele_box_map_times *= shape_box_map_times[i];
+    ele_crd *= SizeOf(shape_crd);
+    ele_box *= SizeOf(shape_box);
+    ele_box_map_times *= SizeOf(shape_box_map_times);
 
     InitSizeLists();
     return true;

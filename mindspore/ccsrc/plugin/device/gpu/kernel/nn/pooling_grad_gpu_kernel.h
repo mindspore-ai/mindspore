@@ -96,7 +96,7 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool InitShape(const CNodePtr &kernel_node, int *dimA, int *strideAin, int *dimAy, int *strideAiny, int *dimAdy,
                  int *strideAdy, int *dimAout, int *strideAout, int nbDims) {
-    std::vector<size_t> dout_shape, input_mask, output_shape, input_shape;
+    ShapeVector dout_shape, input_mask, output_shape, input_shape;
     if (kernel_name_ == kAvgPool3DGradOpName) {
       dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
       output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -119,7 +119,7 @@ class PoolingGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(input_mask, kernel_name_, "mask") ||
       CHECK_SHAPE_NULL(dout_shape, kernel_name_, "dout") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, output_shape, input_mask, dout_shape})) {
       InitSizeLists();
       return true;
     }

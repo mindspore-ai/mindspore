@@ -109,8 +109,9 @@ bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs
   }
   size_t output_size_ = 1;
   for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= output_shape_[i];
+    output_size_ *= LongToSize(output_shape_[i]);
   }
+
   size_t input1_size = input_shape_1_[input_shape_1_.size() - 1];
   size_t input2_size = input_shape_2_[input_shape_2_.size() - 1];
   size_t output_size = input1_size * input2_size;

@@ -257,11 +257,8 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
     in_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "in_shapes");
   } else {
     for (size_t i = 0; i < common::AnfAlgo::GetInputTensorNum(kernel_node); i++) {
-      std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
-      std::vector<int64_t> in_shape_tmp;
-      (void)std::for_each(in_shape.begin(), in_shape.end(),
-                          [&in_shape_tmp](size_t c) { in_shape_tmp.push_back(SizeToLong(c)); });
-      (void)in_shapes.emplace_back(in_shape_tmp);
+      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, i);
+      (void)in_shapes.emplace_back(in_shape);
     }
   }
 
@@ -269,11 +266,8 @@ void PyFuncCpuKernelMod::BuildFuncInfo(const CNodePtr &kernel_node) {
     out_shapes = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "out_shapes");
   } else {
     for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel_node); i++) {
-      std::vector<size_t> out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
-      std::vector<int64_t> out_shape_tmp;
-      (void)std::for_each(out_shape.begin(), out_shape.end(),
-                          [&out_shape_tmp](size_t c) { out_shape_tmp.push_back(SizeToLong(c)); });
-      (void)out_shapes.emplace_back(out_shape_tmp);
+      auto out_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
+      (void)out_shapes.emplace_back(out_shape);
     }
   }
 

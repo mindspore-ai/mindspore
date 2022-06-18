@@ -132,7 +132,7 @@ AnfNodePtr InsertForOutput(const FuncGraphPtr &func_graph, const CNodePtr &orig_
   return make_tuple;
 }
 
-AnfNodePtr InsertTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node, const std::vector<size_t> &in_shape,
+AnfNodePtr InsertTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node, const ShapeVector &in_shape,
                            int64_t axis) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);

@@ -61,9 +61,9 @@ void CholeskyCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   CHECK_KERNEL_INPUTS_NUM(input_num, kInputsNum, kernel_name_);
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kOutputsNum, kernel_name_);
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kInputIndex));
   InitMatrixInfo(input_shape, &input_row_, &input_col_);
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex);
+  auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, kOutputIndex));
   InitMatrixInfo(output_shape, &output_row_, &output_col_);
   if (common::AnfAlgo::HasNodeAttr("upper", kernel_node)) {
     flag_ = false;

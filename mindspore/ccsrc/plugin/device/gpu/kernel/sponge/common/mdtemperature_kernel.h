@@ -43,10 +43,10 @@ class MDTemperatureGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_atom_vel = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto shape_atom_mass = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
-    for (size_t i = 0; i < shape_start.size(); i++) ele_start *= shape_start[i];
-    for (size_t i = 0; i < shape_end.size(); i++) ele_end *= shape_end[i];
-    for (size_t i = 0; i < shape_atom_vel.size(); i++) ele_atom_vel *= shape_atom_vel[i];
-    for (size_t i = 0; i < shape_atom_mass.size(); i++) ele_atom_mass *= shape_atom_mass[i];
+    ele_start *= SizeOf(shape_start);
+    ele_end *= SizeOf(shape_end);
+    ele_atom_vel *= SizeOf(shape_atom_vel);
+    ele_atom_mass *= SizeOf(shape_atom_mass);
 
     InitSizeLists();
     return true;

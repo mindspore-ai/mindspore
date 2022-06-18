@@ -140,8 +140,8 @@ AnfNodePtr ConstructFilter(const FuncGraphPtr &func_graph, const std::vector<int
   MS_EXCEPTION_IF_NULL(func_graph);
   // assist tensor 1
   int64_t c1 = (fc + kC0 - 1) / kC0;
-  std::vector<int64_t> assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
-  std::vector<size_t> infer_shape = {IntToSize(1), LongToSize(fc), LongToSize(kd), LongToSize(kh), LongToSize(kw)};
+  ShapeVector assist_shape = {c1 * kd * kh * kw, 1, kC0, kC0};  // frac_z_3d
+  ShapeVector infer_shape = {1, fc, kd, kh, kw};
   float val = 1.0 / (kd * kh * kw);
   if (divisor_override != 0) {
     val = 1.0 / divisor_override;
@@ -160,7 +160,6 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   MS_EXCEPTION_IF_NULL(func_graph);
   //  assist tensor 2
   std::vector<int64_t> assist_shape = {fn, fc, dd, dh, dw};  // NCDHW
-  auto infer_shape = {LongToSize(fn), LongToSize(fc), LongToSize(dd), LongToSize(dh), LongToSize(dw)};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   MS_EXCEPTION_IF_NULL(tensor);
   auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
@@ -206,13 +205,13 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto value_node = kernel_graph->NewValueNode(x_abstract, tensor);
   kernel_graph->AddValueNodeToGraph(value_node);
-  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {infer_shape}, value_node.get());
+  common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat16}, {assist_shape}, value_node.get());
   return value_node;
 }
 }  // namespace
 
-AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, const std::vector<int64_t> &assist_shape,
-                                    const std::vector<size_t> &infer_shape, int64_t cnt) {
+AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, const ShapeVector &assist_shape,
+                                    const ShapeVector &infer_shape, int64_t cnt) {
   tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   MS_EXCEPTION_IF_NULL(assist_tensor);
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
@@ -265,14 +264,14 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
                       << ", but got in_shape is " << dims_in.size() << "-D, out_shape is " << dims_out.size()
                       << trace::DumpSourceLines(node);
   }
-  auto fn = SizeToLong(dims_in[kDim0]);
-  auto fc = SizeToLong(dims_in[kDim1]);
-  auto fd = SizeToLong(dims_in[kDim2]);
-  auto fh = SizeToLong(dims_in[kDim3]);
-  auto fw = SizeToLong(dims_in[kDim4]);
-  auto dout = SizeToLong(dims_out[kDim2]);
-  auto dh = SizeToLong(dims_out[kDim3]);
-  auto dw = SizeToLong(dims_out[kDim4]);
+  auto fn = dims_in[kDim0];
+  auto fc = dims_in[kDim1];
+  auto fd = dims_in[kDim2];
+  auto fh = dims_in[kDim3];
+  auto fw = dims_in[kDim4];
+  auto dout = dims_out[kDim2];
+  auto dh = dims_out[kDim3];
+  auto dw = dims_out[kDim4];
   // kernel size
   int64_t kd;
   int64_t kh;

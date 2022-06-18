@@ -57,7 +57,7 @@ void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   node_wpt_ = kernel_node;
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   if (input_shape.empty() || input_shape.size() > kEmbeddingLookupInputParamsMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of input must be 1-"
                       << kEmbeddingLookupInputParamsMaxDim << "D, but got " << input_shape.size() << "D.";
@@ -67,11 +67,10 @@ void EmbeddingLookUpCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   for (size_t i = 1; i < input_shape.size(); ++i) {
     outer_dim_size_ *= input_shape[i];
   }
-  indices_lens_ = 1;
-  std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  for (const auto &shape : indices_shape) {
-    indices_lens_ *= shape;
-  }
+
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  indices_lens_ = SizeOf(indices_shape);
+
   indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   if (common::AnfAlgo::HasNodeAttr(kAttrOffset, kernel_node)) {
     offset_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrOffset);
@@ -86,7 +85,7 @@ void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     if (!node) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
     }
-    std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+    auto input_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
     if (input_shape.empty()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimension of input must be at least 1D, but got empty input.";
@@ -98,7 +97,7 @@ void EmbeddingLookUpCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
     }
 
     indices_lens_ = 1;
-    std::vector<size_t> indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+    auto indices_shape = Convert2SizeT(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1));
     for (const auto &shape : indices_shape) {
       indices_lens_ *= shape;
     }

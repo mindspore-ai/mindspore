@@ -34,7 +34,7 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const 
   DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
   MS_EXCEPTION_IF_NULL(kernel_node);
   size_t type_size = sizeof(float);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
   (void)workspace_size_list_.emplace_back(tensor_size);
 }
@@ -42,8 +42,11 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitInputOutputSize(const 
 void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  std::vector<size_t> label_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto label_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({shape, label_shape})) {
+    return;
+  }
   if (label_shape.size() > 1) {
     MS_LOG(EXCEPTION) << "Labels shape length must be equal to Logits shape length minus 1";
   }
@@ -52,8 +55,8 @@ void SparseSoftmaxCrossEntropyWithLogitsCpuKernelMod::InitKernel(const CNodePtr 
   if (mem_dims.size() != 2) {
     MS_LOG(EXCEPTION) << "SparseSoftmaxCrossEntropyWithLogits kernel dims invalid " << mem_dims.size();
   }
-  batch_size_ = shape[0];
-  class_num_ = shape[1];
+  batch_size_ = static_cast<size_t>(shape[0]);
+  class_num_ = static_cast<size_t>(shape[1]);
   if (batch_size_ == 0 || class_num_ == 0) {
     MS_LOG(EXCEPTION) << "Invalid batch size or class num input!";
   }

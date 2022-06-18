@@ -92,7 +92,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
-        size *= IntToSize(shape[j]);
+        size *= LongToSizeClipNeg(shape[j]);
       }
       size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
       input_size_list_.push_back(aligned_size);
@@ -107,7 +107,7 @@ class NcclCollectiveGpuKernel : public NcclGpuKernelMod {
       }
       size_t size = sizeof(T);
       for (size_t j = 0; j < shape.size(); j++) {
-        size *= IntToSize(shape[j]);
+        size *= LongToSizeClipNeg(shape[j]);
       }
       size_t aligned_size = (nccl_kernel_type_ != NCCL_ALL_REDUCE) ? size : AlignMemorySize(size);
       output_size_list_.push_back(aligned_size);

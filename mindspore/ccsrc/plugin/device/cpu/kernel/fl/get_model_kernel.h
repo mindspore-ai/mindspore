@@ -124,7 +124,7 @@ class GetModelKernelMod : public DeprecatedNativeCpuKernelMod {
       MS_LOG(INFO) << "Parameter name is " << weight_name;
       weight_name_to_input_idx_.insert(std::make_pair(weight_name, i));
 
-      auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+      auto weight_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i));
       size_t weight_size_ =
         std::accumulate(weight_shape.begin(), weight_shape.end(), sizeof(float), std::multiplies<float>());
       input_size_list_.push_back(weight_size_);

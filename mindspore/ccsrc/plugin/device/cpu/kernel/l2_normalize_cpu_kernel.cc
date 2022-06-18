@@ -41,12 +41,12 @@ class L2NormalizeCpuFunc : public DeprecatedCpuKernelFunc {
   void CalcDenominator(const T *input_addr, const size_t reduce_size, const int dims,
                        std::unique_ptr<T[]> *denominator_addr);
 
-  void CalcOutput(const T *input_addr, const std::vector<size_t> &reduce_shape, const size_t output_size,
-                  T *output_addr, std::unique_ptr<T[]> const &denominator_addr);
+  void CalcOutput(const T *input_addr, const ShapeVector &reduce_shape, const size_t output_size, T *output_addr,
+                  std::unique_ptr<T[]> const &denominator_addr);
 
  private:
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
   T epsilon_{0};
   int axis_{0};
   void CheckParam(const CNodePtr &kernel_node);
@@ -88,12 +88,12 @@ void L2NormalizeCpuFunc<T>::CalcDenominator(const T *input_addr, const size_t re
       axes[k] = i;
       ++k;
     } else {
-      stride *= input_shape_[i];
+      stride *= LongToSize(input_shape_[i]);
     }
   }
   axes[k] = axis_size;
 
-  std::vector<size_t> transpose_shape(input_shape_.size());
+  ShapeVector transpose_shape(input_shape_.size());
   for (size_t i = 0; i < IntToSize(dims); ++i) {
     transpose_shape[i] = input_shape_[axes[i]];
   }
@@ -122,9 +122,8 @@ void L2NormalizeCpuFunc<T>::CalcDenominator(const T *input_addr, const size_t re
 }
 
 template <typename T>
-void L2NormalizeCpuFunc<T>::CalcOutput(const T *input_addr, const std::vector<size_t> &reduce_shape,
-                                       const size_t output_size, T *output_addr,
-                                       std::unique_ptr<T[]> const &denominator_addr) {
+void L2NormalizeCpuFunc<T>::CalcOutput(const T *input_addr, const ShapeVector &reduce_shape, const size_t output_size,
+                                       T *output_addr, std::unique_ptr<T[]> const &denominator_addr) {
   BroadcastIterator broad_base_iter(input_shape_, reduce_shape, output_shape_);
   auto task = [&](size_t start, size_t end) {
     auto iter = broad_base_iter;
@@ -161,11 +160,11 @@ bool L2NormalizeCpuFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &input
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
   int dims = SizeToInt(input_shape_.size());
-  std::vector<size_t> reduce_shape = input_shape_;
+  auto reduce_shape = input_shape_;
   size_t reduce_size = 1;
   reduce_shape[axis_] = 1;
   for (size_t i = 0; i < input_shape_.size(); ++i) {
-    reduce_size *= reduce_shape[i];
+    reduce_size *= LongToSize(reduce_shape[i]);
   }
   auto denominator_addr = std::make_unique<T[]>(reduce_size);
 

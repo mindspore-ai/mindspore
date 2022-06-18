@@ -120,27 +120,23 @@ void ClipByNormCpuKernelMod::InitIOShape(const std::vector<KernelTensorPtr> &inp
   MS_EXCEPTION_IF_CHECK_FAIL(outputs.size() == 1, "The size of output tensors should be 1.");
   // Init `input_x` shape
   MS_EXCEPTION_IF_NULL(inputs[0]);
-  const auto x_origin_shape = inputs[0]->GetShapeVector();
-  if (!IsValidShape(x_origin_shape)) {
+  x_shape_ = inputs[0]->GetShapeVector();
+  if (!IsValidShape(x_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", x_shape not supports dynamic shape.";
   }
-  std::transform(x_origin_shape.begin(), x_origin_shape.end(), std::back_inserter(x_shape_), LongToSize);
   x_dim_ = x_shape_.size();
   // Init 'clip_norm' shape
   MS_EXCEPTION_IF_NULL(inputs[1]);
-  const auto clip_norm_origin_shape = inputs[1]->GetShapeVector();
-  if (!IsValidShape(clip_norm_origin_shape)) {
+  clip_norm_shape_ = inputs[1]->GetShapeVector();
+  if (!IsValidShape(clip_norm_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", clip_norm_shape not support dynamic shape.";
   }
-  std::transform(clip_norm_origin_shape.begin(), clip_norm_origin_shape.end(), std::back_inserter(clip_norm_shape_),
-                 LongToSize);
   // Init output shape
   MS_EXCEPTION_IF_NULL(outputs[0]);
-  const auto output_origin_shape = outputs[0]->GetShapeVector();
-  if (!IsValidShape(output_origin_shape)) {
+  output_shape_ = outputs[0]->GetShapeVector();
+  if (!IsValidShape(output_shape_)) {
     MS_EXCEPTION(ValueError) << "For " << kernel_name_ << ", output_shape not supports dynamic shape.";
   }
-  std::transform(output_origin_shape.begin(), output_origin_shape.end(), std::back_inserter(output_shape_), LongToSize);
   MS_EXCEPTION_IF_CHECK_FAIL(output_shape_ == x_shape_, "Output shape should be same with input x shape.");
 }
 
@@ -179,23 +175,20 @@ void ClipByNormCpuKernelMod::InitSizeLists() {
   auto x_size = std::accumulate(x_shape_.begin(), x_shape_.end(), x_type_size, std::multiplies<size_t>());
   x_size = std::max(x_size, x_type_size);
   size_t clip_norm_type_size = GetTypeByte(TypeIdToType(data_type_.second));
-  auto clip_norm_size =
-    std::accumulate(clip_norm_shape_.begin(), clip_norm_shape_.end(), clip_norm_type_size, std::multiplies<size_t>());
+  size_t clip_norm_size = SizeOf(clip_norm_shape_);
   clip_norm_size = std::max(clip_norm_size, clip_norm_type_size);
   input_size_list_.emplace_back(x_size);
   input_size_list_.emplace_back(clip_norm_size);
   // Init workspace size list
   size_t float_type_size = sizeof(float);
-  auto l2_norm_out_size = std::accumulate(l2_norm_output_shape_.begin(), l2_norm_output_shape_.end(), float_type_size,
-                                          std::multiplies<size_t>());
+  auto l2_norm_out_size = float_type_size * SizeOf(l2_norm_output_shape_);
   l2_norm_out_size = std::max(l2_norm_out_size, float_type_size);
   // This workspace size used for l2_norm calculation
   workspace_size_list_.emplace_back(l2_norm_out_size);
   // This workspace size used for `x/l2_norm(x)` calculation
   workspace_size_list_.emplace_back((x_size / x_type_size) * float_type_size);
   // Init output size list
-  auto output_size =
-    std::accumulate(output_shape_.begin(), output_shape_.end(), float_type_size, std::multiplies<size_t>());
+  auto output_size = float_type_size * SizeOf(output_shape_);
   output_size = std::max(output_size, float_type_size);
   output_size_list_.emplace_back(output_size);
 }
@@ -233,7 +226,7 @@ void ClipByNormCpuKernelMod::L2NormLaunch(T *x_addr, float *l2_norm_output_addr,
       axes[k] = i;
       ++k;
     } else {
-      stride *= x_shape_[i];
+      stride *= LongToSize(x_shape_[i]);
       ++j;
     }
   }
@@ -242,7 +235,7 @@ void ClipByNormCpuKernelMod::L2NormLaunch(T *x_addr, float *l2_norm_output_addr,
     ++k;
   }
   // Calculate transpose shape
-  std::vector<size_t> transpose_shape(x_shape_.size());
+  ShapeVector transpose_shape(x_shape_.size());
   for (size_t i = 0; i < x_dim_; ++i) {
     transpose_shape[i] = x_shape_[axes[i]];
   }

@@ -65,15 +65,12 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(input_shape)) {
       InitSizeLists();
       return true;
     }
 
-    num_count_ = 1;
-    for (size_t x : input_shape) {
-      num_count_ *= x;
-    }
+    num_count_ = SizeOf(input_shape);
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
     if (!states_init_) {
       int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");

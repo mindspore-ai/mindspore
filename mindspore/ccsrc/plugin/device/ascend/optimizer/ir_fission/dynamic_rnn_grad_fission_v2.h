@@ -45,9 +45,8 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
   void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                        const RNNShapeSpecs &specs, std::vector<std::vector<AnfNodePtr>> *result_nodes) const;
   AnfNodePtr CreateLSTMSPlitV(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
-                              const std::vector<std::vector<size_t>> &split_shapes,
-                              const std::vector<TypeId> &split_types, const std::vector<int64_t> &size_split,
-                              size_t num_split_x) const;
+                              const std::vector<ShapeVector> &split_shapes, const std::vector<TypeId> &split_types,
+                              const std::vector<int64_t> &size_split, size_t num_split_x) const;
   void CreateTLoopNodeWithEdge(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                                const std::vector<std::vector<AnfNodePtr>> &result_nodes, size_t num_split_x,
                                const RNNShapeSpecs &specs,

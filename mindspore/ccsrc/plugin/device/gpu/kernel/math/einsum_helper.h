@@ -47,7 +47,7 @@ constexpr int DIM_FOUR = 4;
 constexpr int HALF_TYPE_WORK_SIZE_MUL = 2;
 constexpr int ELL_LEN = 3;
 // tuple<>:0:操作信息{diagonal, transpose, reduce_sum}, 1:input_shape, 2:operate_param, 3: out_shape
-using OpStruct = std::tuple<std::string, std::vector<size_t>, std::vector<size_t>, std::vector<size_t>>;
+using OpStruct = std::tuple<std::string, std::vector<int64_t>, std::vector<size_t>, std::vector<int64_t>>;
 template <typename T>
 class EinsumHelper {
  public:
@@ -70,10 +70,10 @@ class EinsumHelper {
     }
     return static_cast<int64_t>(cur_char - 'A' + BIG_C_BEGIN);
   }
-  size_t GetShapeSize(const std::vector<size_t> &shape) {
+  size_t GetShapeSize(const std::vector<int64_t> &shape) {
     size_t size = sizeof(T);
     for (auto &dim : shape) {
-      size *= dim;
+      size *= static_cast<size_t>(dim);
     }
     return size;
   }
@@ -85,7 +85,7 @@ class EinsumHelper {
     data_type_ = cur_type;
   }
   bool Preprocess(const std::string &orig_equatioin, const std::string &node_name,
-                  const std::vector<std::vector<size_t>> &input_shapes, std::vector<size_t> *out_shape,
+                  const std::vector<std::vector<int64_t>> &input_shapes, std::vector<int64_t> *out_shape,
                   std::vector<std::vector<OpStruct>> *single_op, std::vector<OpStruct> *res_op) {
     std::string equation = orig_equatioin;
     node_name_ = node_name;
@@ -544,7 +544,7 @@ class EinsumHelper {
     CalTranspose<T>(size, input_ptr, d_shape_ptr, d_info_ptr, inp_shape.size(), output_ptr,
                     reinterpret_cast<cudaStream_t>(stream_ptr));
   }
-  bool SegLeftEquation(const std::string &left_equation, const std::vector<std::vector<size_t>> &input_shapes) {
+  bool SegLeftEquation(const std::string &left_equation, const std::vector<std::vector<int64_t>> &input_shapes) {
     size_t cur_element = 0;
     auto found_ell = false;
     for (size_t idx = 0; idx < left_equation.length(); ++idx) {
@@ -616,7 +616,7 @@ class EinsumHelper {
   }
 
   bool SegRightEquationWithArrow(const std::string &left_equation, const std::string &right_equation,
-                                 std::vector<size_t> *out_shape) {
+                                 ShapeVector *out_shape) {
     auto found_ell = false;
     if (right_equation.length() == 0) {
       out_size_ = 0;
@@ -668,7 +668,7 @@ class EinsumHelper {
     }
     return true;
   }
-  bool SegRightEquationWithoutArrow(const std::string &left_equation, std::vector<size_t> *out_shape) {
+  bool SegRightEquationWithoutArrow(const std::string &left_equation, std::vector<int64_t> *out_shape) {
     if (left_equation.find('.') != std::string::npos) {
       perm_idx_ = element_shape_map_[ELL_VAL].size();
       out_shape->insert(out_shape->begin(), element_shape_map_[ELL_VAL].begin(), element_shape_map_[ELL_VAL].end());
@@ -684,7 +684,7 @@ class EinsumHelper {
     return true;
   }
 
-  bool ElementMapShape(const std::vector<std::vector<size_t>> &input_shapes) {
+  bool ElementMapShape(const std::vector<std::vector<int64_t>> &input_shapes) {
     for (size_t idx_input = 0; idx_input < input_shapes.size(); ++idx_input) {
       auto cur_shape = input_shapes[idx_input];
       size_t idx_left = 0;
@@ -721,8 +721,8 @@ class EinsumHelper {
           --idx_shape_right;
           --idx_element_right;
         }
-        std::vector<size_t> temp_vec(input_shapes[idx_input].begin() + idx_left,
-                                     input_shapes[idx_input].begin() + idx_shape_right + 1);
+        ShapeVector temp_vec(input_shapes[idx_input].begin() + idx_left,
+                             input_shapes[idx_input].begin() + idx_shape_right + 1);
 
         if (element_shape_map_.find(ELL_VAL) != element_shape_map_.end()) {
           if (element_shape_map_[ELL_VAL] != temp_vec) {
@@ -742,36 +742,38 @@ class EinsumHelper {
     }
     return true;
   }
-  void CalAxisShape(const std::vector<size_t> &axis_val, const std::vector<size_t> &shape_val, size_t *idx,
-                    std::vector<size_t> *re_shape, std::vector<size_t> *res_trans_axis) {
+  void CalAxisShape(const std::vector<size_t> &axis_val, const ShapeVector &shape_val, size_t *idx,
+                    ShapeVector *re_shape, std::vector<size_t> *res_trans_axis) {
     for (auto val : axis_val) {
       (*re_shape)[*idx] = shape_val[val];
       (*res_trans_axis)[val] = (*idx)++;
     }
   }
-  bool MulOrDot(size_t sum_dims_size, const std::vector<size_t> &sig_src_shape, std::vector<size_t> *res_inp_shape,
+  bool MulOrDot(size_t sum_dims_size, const ShapeVector &sig_src_shape, ShapeVector *res_inp_shape,
                 std::vector<OpStruct> *res_op) {
-    std::vector<size_t> res_out_shape;
+    ShapeVector res_out_shape;
     if (sum_dims_size == 0) {
-      res_out_shape = std::vector<size_t>(res_inp_shape->size());
+      res_out_shape = ShapeVector(res_inp_shape->size());
       for (size_t idx = 0; idx < res_inp_shape->size(); ++idx) {
         res_out_shape[idx] = (*res_inp_shape)[idx] == 1 ? sig_src_shape[idx] : (*res_inp_shape)[idx];
       }
-      res_op->emplace_back(std::make_tuple("Mul", (*res_inp_shape), sig_src_shape, res_out_shape));
+      res_op->emplace_back(
+        std::make_tuple("Mul", (*res_inp_shape), Convert2SizeTClipNeg(sig_src_shape), res_out_shape));
       (*res_inp_shape) = res_out_shape;
       return true;
     }
 
     if (sum_dims_size == res_inp_shape->size()) {
       res_out_shape = {1};
-      res_op->emplace_back(std::make_tuple("Dot", (*res_inp_shape), sig_src_shape, res_out_shape));
+      res_op->emplace_back(
+        std::make_tuple("Dot", (*res_inp_shape), Convert2SizeTClipNeg(sig_src_shape), res_out_shape));
       (*res_inp_shape) = res_out_shape;
       return true;
     }
     return false;
   }
   void SumPair(std::vector<OpStruct> *res_op, std::vector<OpStruct> *single_op, std::vector<size_t> *sum_dims,
-               std::vector<size_t> *res_inp_shape, const std::vector<size_t> &sig_src_shape) {
+               ShapeVector *res_inp_shape, const ShapeVector &sig_src_shape) {
     if (MulOrDot(sum_dims->size(), sig_src_shape, res_inp_shape, res_op)) {
       return;
     }
@@ -784,15 +786,15 @@ class EinsumHelper {
     std::vector<size_t> lo;
     std::vector<size_t> ro;
     std::vector<size_t> lro;
-    size_t lo_size = 1;
-    size_t ro_size = 1;
-    size_t lro_size = 1;
-    size_t sum_size = 1;
+    int64_t lo_size = 1;
+    int64_t ro_size = 1;
+    int64_t lro_size = 1;
+    int64_t sum_size = 1;
 
-    std::vector<size_t> sig_out_shape;
-    std::vector<size_t> sig_inp_shape = sig_src_shape;
+    ShapeVector sig_out_shape;
+    auto sig_inp_shape = sig_src_shape;
     std::vector<size_t> op_info;
-    std::vector<size_t> res_out_shape;
+    ShapeVector res_out_shape;
     for (size_t idx = 0; idx < res_inp_shape->size(); ++idx) {
       bool sl = (*res_inp_shape)[idx] > 1;
       bool sr = sig_inp_shape[idx] > 1;
@@ -849,16 +851,17 @@ class EinsumHelper {
     }
     single_op->emplace_back(std::make_tuple("Transpose", sig_inp_shape, sig_trans_axis, sig_out_shape));
 
-    std::vector<size_t> res_inp_reshape = {lro_size, lo_size, sum_size};
-    std::vector<size_t> sig_inp_reshape = {lro_size, sum_size, ro_size};
-    std::vector<size_t> res_out_reshape = {lro_size, lo_size, ro_size};
-    res_op->emplace_back(std::make_tuple("Bmm", res_inp_reshape, sig_inp_reshape, res_out_reshape));
+    ShapeVector res_inp_reshape = {lro_size, lo_size, sum_size};
+    ShapeVector sig_inp_reshape = {lro_size, sum_size, ro_size};
+    ShapeVector res_out_reshape = {lro_size, lo_size, ro_size};
+    res_op->emplace_back(
+      std::make_tuple("Bmm", res_inp_reshape, Convert2SizeTClipNeg(sig_inp_reshape), res_out_reshape));
 
-    std::vector<size_t> res_re_shape(lro.size() + lo.size() + sum_dims->size() + ro.size());
+    ShapeVector res_re_shape(LongToSize(lro.size() + lo.size() + sum_dims->size() + ro.size()));
     size_t idx = 0;
     CalAxisShape(lro, (*res_inp_shape), &idx, &res_re_shape, &res_trans_axis);
     CalAxisShape(lo, (*res_inp_shape), &idx, &res_re_shape, &res_trans_axis);
-    std::vector<size_t> shape_val(sum_dims_bool.size(), 1);
+    ShapeVector shape_val(sum_dims_bool.size(), 1);
     CalAxisShape((*sum_dims), shape_val, &idx, &res_re_shape, &res_trans_axis);
     CalAxisShape(ro, sig_inp_shape, &idx, &res_re_shape, &res_trans_axis);
     (*res_inp_shape) = res_re_shape;
@@ -878,8 +881,8 @@ class EinsumHelper {
     return;
   }
 
-  bool CalOutShape(const std::string &equation, const std::vector<std::vector<size_t>> &input_shapes,
-                   std::vector<size_t> *out_shape) {
+  bool CalOutShape(const std::string &equation, const std::vector<std::vector<int64_t>> &input_shapes,
+                   std::vector<int64_t> *out_shape) {
     std::string seg_arrow = "->";
     auto seg_pos = equation.find(seg_arrow);
     std::string left_equation = equation.substr(0, seg_pos);
@@ -908,7 +911,7 @@ class EinsumHelper {
     }
     return ret_flag;
   }
-  void StatSingleOp(const std::vector<std::vector<size_t>> &input_shapes,
+  void StatSingleOp(const std::vector<std::vector<int64_t>> &input_shapes,
                     std::vector<std::vector<OpStruct>> *single_op) {
     std::vector<size_t> op_info;
     for (size_t idx = 0; idx < input_shapes.size(); ++idx) {
@@ -950,7 +953,7 @@ class EinsumHelper {
       (*single_op)[idx].emplace_back(std::make_tuple("Transpose", sig_inp_shape, op_info, sig_out_shape));
     }
   }
-  void StatCalProcess(const std::vector<std::vector<size_t>> &input_shapes,
+  void StatCalProcess(const std::vector<std::vector<int64_t>> &input_shapes,
                       std::vector<std::vector<OpStruct>> *single_op, std::vector<OpStruct> *res_op) {
     StatSingleOp(input_shapes, single_op);
     // dim_last_op
@@ -1028,7 +1031,7 @@ class EinsumHelper {
   cublasOperation_t transpose_x1_;
   cublasOperation_t transpose_x2_;
   std::vector<size_t> element_count_;
-  std::unordered_map<size_t, std::vector<size_t>> element_shape_map_;
+  std::unordered_map<size_t, std::vector<int64_t>> element_shape_map_;
   std::vector<std::vector<size_t>> left_elements_;
   std::vector<int64_t> label_perm_idx_;
   std::vector<void *> workspace_ptr_;

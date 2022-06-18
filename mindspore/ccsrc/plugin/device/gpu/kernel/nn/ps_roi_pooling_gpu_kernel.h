@@ -120,8 +120,8 @@ class PsROIPoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "(number_rois, (bs, xmin, ymin, xmax, ymax)), "
                         << "but got the rank of rois_shape: " << rois_shape.size();
     }
-    rois_size_ = rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1] * sizeof(T);
-    rois_shape_ = {static_cast<int>(rois_shape[ROI_SHAPE_INDEX0]), static_cast<int>(rois_shape[ROI_SHAPE_INDEX1])};
+    rois_size_ = LongToSizeClipNeg(rois_shape[ROI_SHAPE_INDEX0] * rois_shape[ROI_SHAPE_INDEX1]) * sizeof(T);
+    rois_shape_ = {LongToInt(rois_shape[ROI_SHAPE_INDEX0]), LongToInt(rois_shape[ROI_SHAPE_INDEX1])};
 
     // Get primitive args
     pooled_height_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "pooled_height"));

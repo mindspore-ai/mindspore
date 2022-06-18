@@ -67,8 +67,6 @@ class MS_CORE_API AnfUtils {
   using CustomActorCallback = std::function<void(void *args)>;
   static bool IsDimUnknown(const abstract::ShapePtr &shape);
   static bool IsShapeDynamic(const abstract::ShapePtr &shape);
-  static bool IsShapeDynamic(const std::vector<size_t> &shape);
-  static bool IsShapeDynamic(const std::vector<int64_t> &shape);
   static bool IsNodeOutputDynamicShape(const CNodePtr &node);
   static bool IsDimUnknown(const AnfNodePtr &node);
   // check whether the anf node is a real kernel that can run on device,parameter and constant is real kernel too

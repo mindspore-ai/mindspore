@@ -73,7 +73,7 @@ class RMSPropGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       momentum_ = GetAttr<float>(kernel_node, "momentum");
       epsilon_ = GetAttr<float>(kernel_node, "epsilon");
     }
-    auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, node_name, "var");
     if (is_null_input_) {
       InitSizeLists();

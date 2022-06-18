@@ -75,8 +75,8 @@ const AnfNodePtr AddReluV2Fusion::Process(const FuncGraphPtr &graph, const AnfNo
     return nullptr;
   }
 
-  std::vector<size_t> shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(tensor_add, 0);
-  std::vector<size_t> shape2 = common::AnfAlgo::GetPrevNodeOutputInferShape(tensor_add, 1);
+  auto shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(tensor_add, 0);
+  auto shape2 = common::AnfAlgo::GetPrevNodeOutputInferShape(tensor_add, 1);
   if (shape1 != shape2) {
     return nullptr;
   }

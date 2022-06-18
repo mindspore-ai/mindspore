@@ -33,8 +33,11 @@ void GridSampler2DGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   grid_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kTwo);
   dx_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kZero);
   dgrid_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, kOne);
-  dx_size_ = dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree];
-  grid_size_ = grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree];
+  if (AnfAlgo::IsShapesDynamic({x_shape_, grad_shape_, grid_shape_, dx_shape_, dgrid_shape_})) {
+    return;
+  }
+  dx_size_ = LongToSize(dx_shape_[kZero] * dx_shape_[kOne] * dx_shape_[kTwo] * dx_shape_[kThree]);
+  grid_size_ = LongToSize(grid_shape_[kZero] * grid_shape_[kOne] * grid_shape_[kTwo] * grid_shape_[kThree]);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
   interpolation_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "interpolation_mode");
   padding_mode_ = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "padding_mode");

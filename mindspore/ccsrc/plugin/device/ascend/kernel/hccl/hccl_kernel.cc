@@ -361,7 +361,7 @@ int HcclKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<K
 
   MS_LOG(INFO) << "Start to InitOp. Node info: " << cnode->DebugString();
 
-  std::vector<std::vector<size_t>> hccl_kernel_input_shape_list;
+  std::vector<ShapeVector> hccl_kernel_input_shape_list;
   if (!HcomUtil::GetKernelInputShape(cnode, &hccl_kernel_input_shape_list)) {
     MS_LOG(EXCEPTION) << "GetKernelInputShape fail! Node info: " << cnode->DebugString();
   }

@@ -40,9 +40,9 @@ class NthElementCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-  std::vector<size_t> input_n_shape_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_n_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
   int32_t input_n_val_{0};
   size_t input_elements_{0};
   size_t output_elements_{0};

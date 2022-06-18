@@ -46,7 +46,7 @@ class DenseToDenseSetOperationCpuKernelMod : public DeprecatedNativeCpuKernelMod
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   template <typename T>
   bool PopulateOutput(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs,
-                      const std::vector<size_t> &output_shape, const size_t num_values,
+                      const ShapeVector &output_shape, const size_t num_values,
                       const std::map<std::vector<size_t>, std::set<T>> *sets);
   template <typename T>
   void SetCompute(const std::set<T> &set1, const std::set<T> &set2, std::set<T> *result);

@@ -54,11 +54,11 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   }
 
  private:
-  std::vector<size_t> grad_shape_;
-  std::vector<size_t> x_shape_;
-  std::vector<size_t> grid_shape_;
-  std::vector<size_t> dx_shape_;
-  std::vector<size_t> dgrid_shape_;
+  std::vector<int64_t> grad_shape_;
+  std::vector<int64_t> x_shape_;
+  std::vector<int64_t> grid_shape_;
+  std::vector<int64_t> dx_shape_;
+  std::vector<int64_t> dgrid_shape_;
   std::vector<size_t> grad_stride_;
   std::vector<size_t> x_stride_;
   std::vector<size_t> grid_stride_;
@@ -77,7 +77,7 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   void ComputeTask(T *grad_addr, T *x_addr, T *grid_addr, T *dx_addr, T *dgrid_addr, const size_t &n);
 
   template <typename T>
-  T grid_sampler_compute_source_index_set_grad(T coord, size_t size, const std::string &padding_mode,
+  T grid_sampler_compute_source_index_set_grad(T coord, int64_t size, const std::string &padding_mode,
                                                bool align_corners, T *grad_x);
 
   template <typename T>
@@ -87,10 +87,10 @@ class GridSampler3DGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   T clip_coordinates_set_grad(T x, int64_t clip_limit, T *grad_x);
 
   template <typename T>
-  void safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW, size_t D, size_t H,
-                   size_t W, T delta);
+  void safe_add_3d(T *data, int64_t d, int64_t h, int64_t w, size_t sD, size_t sH, size_t sW, int64_t D, int64_t H,
+                   int64_t W, T delta);
 
-  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, size_t D, size_t H, size_t W);
+  bool within_bounds_3d(int64_t d, int64_t h, int64_t w, int64_t D, int64_t H, int64_t W);
 };
 }  // namespace kernel
 }  // namespace mindspore

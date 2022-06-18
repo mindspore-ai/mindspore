@@ -41,18 +41,18 @@ bool TensorShapeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inpu
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
   }
   auto output_addr = reinterpret_cast<int64_t *>(outputs[0]->addr);
-  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node_, 0);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(node_, 0);
   if (output_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output must be 1-D, but got: " << output_shape.size();
   }
-  if (output_shape[0] != input_shape.size()) {
+  if (output_shape[0] != SizeToLong(input_shape.size())) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', 'output_shape[0]' must be equal to the dimension of input, but got 'output_shape[0]': "
                       << output_shape[0] << " and the dimension of input: " << input_shape.size();
   }
-  for (size_t i = 0; i < output_shape[0]; ++i) {
+  for (size_t i = 0; i < LongToSize(output_shape[0]); ++i) {
     output_addr[i] = input_shape[i];
   }
   return true;

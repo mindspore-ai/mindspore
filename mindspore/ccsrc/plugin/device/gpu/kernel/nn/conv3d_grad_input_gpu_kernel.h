@@ -109,20 +109,20 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto dy_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
     is_null_input_ =
       CHECK_SHAPE_NULL(filter_shape, kernel_name_, "weight") || CHECK_SHAPE_NULL(dy_shape, kernel_name_, "dy");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({filter_shape, dy_shape})) {
       InitSizeLists();
       return true;
     }
-    std::vector<size_t> input_shape;
+    ShapeVector input_shape;
     GetInputShape(kernel_node, &input_shape);
     compute_format_ = CUDNN_TENSOR_NCHW;
     CheckTensorSize({input_shape});
     (void)CheckSize(input_shape.size(), 5, "input");
-    n_ = SizeToInt(input_shape[0]);
-    c_ = SizeToInt(input_shape[1]);
-    old_depth_ = SizeToInt(input_shape[2]);
-    old_height_ = SizeToInt(input_shape[3]);
-    old_width_ = SizeToInt(input_shape[4]);
+    n_ = LongToInt(input_shape[0]);
+    c_ = LongToInt(input_shape[1]);
+    old_depth_ = LongToInt(input_shape[2]);
+    old_height_ = LongToInt(input_shape[3]);
+    old_width_ = LongToInt(input_shape[4]);
     SetNDDesc(dy_shape, input_shape, filter_shape);
     group_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "group"));
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnSetConvolutionGroupCount(conv_desc_, group_),
@@ -264,18 +264,17 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     algo_ = perf_results.algo;
   }
 
-  void GetInputShape(const CNodePtr &kernel_node, std::vector<size_t> *input_shape) {
+  void GetInputShape(const CNodePtr &kernel_node, ShapeVector *input_shape) {
     auto shp_tuple_x = GetAttrAndConvertValueTuple(kernel_node, "input_size");
     (void)std::transform(std::begin(shp_tuple_x), std::end(shp_tuple_x), std::back_inserter(*input_shape),
-                         [](const ValuePtr &e) -> size_t {
+                         [](const ValuePtr &e) -> int64_t {
                            auto cast_value = e->cast<Int64ImmPtr>();
                            MS_EXCEPTION_IF_NULL(cast_value);
-                           return static_cast<int>(cast_value->value());
+                           return static_cast<int64_t>(cast_value->value());
                          });
   }
 
-  void SetNDDesc(const std::vector<size_t> &dy_shape, const std::vector<size_t> &input_shape,
-                 const std::vector<size_t> &filter_shape) {
+  void SetNDDesc(const ShapeVector &dy_shape, const ShapeVector &input_shape, const ShapeVector &filter_shape) {
     const int kDims = 5;
     int dimA[kDims];
     int strideAin[kDims];
@@ -354,8 +353,7 @@ class Conv3dGradInputGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the value of 'data_format' only support 'NCDHW' right now "
                           << ", but got " << data_format_;
       }
-      auto padded_shape = {IntToSize(n_), IntToSize(c_), IntToSize(old_depth_ + pad_depth_),
-                           IntToSize(old_height_ + pad_height_), IntToSize(old_width_ + pad_width_)};
+      ShapeVector padded_shape = {n_, c_, old_depth_ + pad_depth_, old_height_ + pad_height_, old_width_ + pad_width_};
       SetDimA(padded_shape, dimA, kNumDims, data_format_);
       SetStrideA(padded_shape, strideApadded, kNumDims, data_format_);
       CHECK_CUDNN_RET_WITH_EXCEPT(

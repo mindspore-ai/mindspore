@@ -74,7 +74,7 @@ bool FakeQuantPerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   }
 
   // init size
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();

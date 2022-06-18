@@ -119,7 +119,7 @@ abstract::BaseShapePtr GetValidShapeFromAbstract(const abstract::AbstractBasePtr
 }
 
 KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract, const TypeId &real_type, size_t idx,
-                                   const std::vector<size_t> &device_shape_adaptively, const std::string &format_str) {
+                                   const ShapeVector &device_shape_adaptively, const std::string &format_str) {
   auto tag_abstract = cur_abstract->Clone();
   if (cur_abstract->isa<abstract::AbstractTuple>()) {
     auto abs_tuple = cur_abstract->Clone()->cast<abstract::AbstractTuplePtr>();
@@ -130,12 +130,9 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
   }
 
   TypePtr tag_type_ptr = TypeIdToType(real_type);
-  ShapeVector tag_shape;
-  (void)std::transform(device_shape_adaptively.begin(), device_shape_adaptively.end(), std::back_inserter(tag_shape),
-                       SizeToLong);
   auto abstract_shape_ptr = GetValidShapeFromAbstract(tag_abstract);
   auto new_abstract = std::make_shared<abstract::AbstractTensor>(tag_type_ptr, abstract_shape_ptr);
-  TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, tag_shape};
+  TensorInfo tensor_info{GetFormatFromStrToEnum(format_str), new_abstract, device_shape_adaptively};
   KernelTensorPtr res_tensor = std::make_shared<KernelTensor>();
   res_tensor->SetTensorInfo(tensor_info);
   return res_tensor;
@@ -553,19 +550,7 @@ std::string GetProcessor(const AnfNodePtr &anf_node) {
   return device;
 }
 
-bool IsSameShape(const std::vector<size_t> &shape_a, const std::vector<size_t> &shape_b) {
-  if (shape_a.size() != shape_b.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < shape_a.size(); ++i) {
-    if (shape_a[i] != shape_b[i]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool IsSameShape(const std::vector<int64_t> &shape_a, const std::vector<int64_t> &shape_b) {
+bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b) {
   if (shape_a.size() != shape_b.size()) {
     return false;
   }
@@ -696,11 +681,11 @@ std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode) {
 }
 
 void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                   std::vector<int64_t> *stride, std::vector<size_t> *input_shape) {
+                   std::vector<int64_t> *stride, ShapeVector *input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
-  std::vector<size_t> &_input_shape = *input_shape;
+  auto &_input_shape = *input_shape;
   if (_begin.size() != _end.size() || _begin.size() != _stride.size() || _begin.size() > _input_shape.size()) {
     MS_LOG(EXCEPTION) << "For '" << common::AnfAlgo::GetCNodeName(kernel_node)
                       << "', the length of 'begin', 'stride' and 'end' should be equal "
@@ -716,17 +701,17 @@ void FillEmptyDims(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std
     }
 
     if (i < _begin.size()) {
-      int64_t dim = SizeToLong(_input_shape[i]);
+      int64_t dim = _input_shape[i];
       _begin[i] = std::min(_begin[i] < 0 ? std::max(_begin[i] + dim, static_cast<int64_t>(0)) : _begin[i], dim - 1);
     } else {
       _begin.push_back(0);
     }
 
     if (i < _end.size()) {
-      int64_t dim = SizeToLong(_input_shape[i]);
+      int64_t dim = _input_shape[i];
       _end[i] = std::max(_end[i] < 0 ? _end[i] + dim : std::min(_end[i], dim), static_cast<int64_t>(-1));
     } else {
-      _end.push_back(i < _input_shape.size() ? SizeToLong(_input_shape[i]) : 1);
+      _end.push_back(i < _input_shape.size() ? _input_shape[i] : 1);
     }
 
     if (i >= _stride.size()) {
@@ -749,31 +734,31 @@ std::vector<bool> Dec2Bin(const int64_t &mask) {
 }
 
 void ComputeBeginMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, const std::vector<int64_t> &stride,
-                      const std::vector<size_t> &input_shape) {
+                      const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
   auto begin_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrBeginMask);
   auto begin_mask = Dec2Bin(begin_mask_int);
   for (size_t i = 0; i < begin_mask.size(); i++) {
     if (i < kStridedSliceMaxDims && begin_mask[i]) {
-      _begin[i] = stride[i] < 0 ? SizeToLong(input_shape[i]) - 1 : 0;
+      _begin[i] = stride[i] < 0 ? input_shape[i] - 1 : 0;
     }
   }
 }
 
 void ComputeEndMask(const CNodePtr &kernel_node, std::vector<int64_t> *end, const std::vector<int64_t> &stride,
-                    const std::vector<size_t> &input_shape) {
+                    const ShapeVector &input_shape) {
   std::vector<int64_t> &_end = *end;
   auto end_mask_int = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, kAttrEndMask);
   auto end_mask = Dec2Bin(end_mask_int);
   for (size_t j = 0; j < end_mask.size(); j++) {
     if (j < kStridedSliceMaxDims && end_mask[j]) {
-      _end[j] = stride[j] < 0 ? -1 : SizeToLong(input_shape[j]);
+      _end[j] = stride[j] < 0 ? -1 : input_shape[j];
     }
   }
 }
 
 void ComputeEllipsisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                         std::vector<int64_t> *stride, const std::vector<size_t> &input_shape) {
+                         std::vector<int64_t> *stride, const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
@@ -782,14 +767,14 @@ void ComputeEllipsisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begi
   for (size_t k = 0; k < ellipsis_mask.size(); k++) {
     if (k < kStridedSliceMaxDims && ellipsis_mask[k]) {
       _begin[k] = 0;
-      _end[k] = SizeToLong(input_shape[k]);
+      _end[k] = input_shape[k];
       _stride[k] = 1;
     }
   }
 }
 
 void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                       std::vector<int64_t> *stride, const std::vector<size_t> &input_shape) {
+                       std::vector<int64_t> *stride, const ShapeVector &input_shape) {
   std::vector<int64_t> &_begin = *begin;
   std::vector<int64_t> &_end = *end;
   std::vector<int64_t> &_stride = *stride;
@@ -798,7 +783,7 @@ void ComputNewAxisMask(const CNodePtr &kernel_node, std::vector<int64_t> *begin,
   for (size_t l = 0; l < new_axis_mask.size(); l++) {
     if (l < kStridedSliceMaxDims && new_axis_mask[l]) {
       _begin[l] = 0;
-      _end[l] = SizeToLong(input_shape[l]);
+      _end[l] = input_shape[l];
       _stride[l] = 1;
     }
   }
@@ -819,7 +804,7 @@ void ComputShrinkAxisMask(const CNodePtr &kernel_node, const std::vector<int64_t
 }
 
 void ParseStrideSliceMasks(const CNodePtr &kernel_node, std::vector<int64_t> *begin, std::vector<int64_t> *end,
-                           std::vector<int64_t> *stride, const std::vector<size_t> &input_shape) {
+                           std::vector<int64_t> *stride, const ShapeVector &input_shape) {
   ComputeBeginMask(kernel_node, begin, *stride, input_shape);
   ComputeEndMask(kernel_node, end, *stride, input_shape);
   ComputeEllipsisMask(kernel_node, begin, end, stride, input_shape);
@@ -906,22 +891,22 @@ void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, co
   }
 }
 
-bool GetShapeSize(const std::vector<size_t> &shape, const TypePtr &type_ptr, int64_t *size_i) {
+bool GetShapeSize(const ShapeVector &shape, const TypePtr &type_ptr, int64_t *size_i) {
   MS_EXCEPTION_IF_NULL(type_ptr);
   size_t type_byte = GetTypeByte(type_ptr);
   if (type_byte == 0) {
     return false;
   }
   for (size_t j = 0; j < shape.size(); j++) {
-    size_i[0] = LongMulWithOverflowCheck(size_i[0], static_cast<int64_t>(shape[j]));
+    if (shape[j] <= 0) {
+      MS_LOG(DEBUG) << "shape[" << shape << "] has invalid value(less equal 0), set size to 0";
+      size_i[0] = 0;
+      return true;
+    }
+    size_i[0] = LongMulWithOverflowCheck(size_i[0], shape[j]);
   }
   size_i[0] = LongMulWithOverflowCheck(size_i[0], SizeToInt(type_byte));
   return true;
-}
-
-void CastShapeSizeToLong(const std::vector<size_t> &shape, std::vector<int64_t> *long_shape) {
-  MS_EXCEPTION_IF_NULL(long_shape);
-  (void)std::transform(shape.begin(), shape.end(), std::back_inserter(*long_shape), SizeToLong);
 }
 
 void CheckSliceValid(const std::vector<int64_t> &start, const std::vector<int64_t> &stop,
@@ -1337,14 +1322,12 @@ void UpdateNodeShape(const CNodePtr &cnode) {
     return;
   }
   std::vector<TypeId> type_ids;
-  std::vector<std::vector<size_t>> shapes;
+  std::vector<ShapeVector> shapes;
   size_t output_num = output_tensor.size();
   for (size_t i = 0; i < output_num; ++i) {
     MS_EXCEPTION_IF_NULL(output_tensor[i]);
     auto out_shape = output_tensor[i]->GetShapeVector();
-    std::vector<size_t> u_out_shape;
-    std::transform(out_shape.begin(), out_shape.end(), std::back_inserter(u_out_shape), LongToSize);
-    shapes.emplace_back(std::move(u_out_shape));
+    shapes.emplace_back(std::move(out_shape));
     type_ids.emplace_back(output_tensor[i]->GetDtype());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());

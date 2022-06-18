@@ -32,10 +32,9 @@ class PServerKernel {
   ~PServerKernel() = default;
   PServerKernel(const PServerKernel &) = delete;
   PServerKernel &operator=(const PServerKernel &) = delete;
-  virtual void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
-  virtual void InitKernel(const CNodePtr &cnode,
-                          const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &) {}
-  virtual void ReInit(const std::vector<std::vector<size_t>> &) {}
+  virtual void InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &) {}
+  virtual void InitKernel(const CNodePtr &cnode, const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &) {}
+  virtual void ReInit(const std::vector<ShapeVector> &) {}
   virtual bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
   virtual void UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids, const float *update_vals,
@@ -47,7 +46,7 @@ class PServerKernel {
 
  protected:
   virtual void ReInit(const std::vector<AddressPtr> &) {}
-  void Shard(std::vector<size_t> *shape, int axis);
+  void Shard(ShapeVector *shape, int axis);
 
   size_t rank_id_;
   size_t pserver_num_;

@@ -47,9 +47,9 @@ class MaskedSelectCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                                               const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, MaskedSelectFunc>> func_list_;
   MaskedSelectFunc kernel_func_;
-  std::vector<size_t> input_shape_a_;
-  std::vector<size_t> input_shape_b_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_a_;
+  std::vector<int64_t> input_shape_b_;
+  std::vector<int64_t> output_shape_;
   uint64_t tensor_size_ = 1;
   CNodeWeakPtr node_wpt_;
 };

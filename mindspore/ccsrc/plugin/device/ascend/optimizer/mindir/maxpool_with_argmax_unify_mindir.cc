@@ -75,8 +75,9 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
                       << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);
   }
-  argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
-  argmax_shape[kDim3] = (output_shape[kDim2] * output_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
+  argmax_shape[kDim2] = ksize[kDim1] * ksize[kDim2];
+  argmax_shape[kDim3] =
+    (output_shape[kDim2] * output_shape[kDim3] + SizeToLong(kAlignBytes) - 1) / SizeToLong(kAlignBytes) + 1;
   auto types = {common::AnfAlgo::GetOutputInferDataType(maxpool_with_argmax, 0), argmax_dtype};
   auto shapes = {output_shape, argmax_shape};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
@@ -114,8 +115,9 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
     MS_LOG(EXCEPTION) << "Argmax or kernel_size's shape dim should be equal to 4, but got argmax dim: "
                       << argmax_shape.size() << ", kernel_size dim: " << ksize.size() << trace::DumpSourceLines(node);
   }
-  argmax_shape[kDim3] = (argmax_shape[kDim2] * argmax_shape[kDim3] + kAlignBytes - 1) / kAlignBytes + 1;
-  argmax_shape[kDim2] = LongToSize(ksize[kDim1] * ksize[kDim2]);
+  argmax_shape[kDim3] =
+    (argmax_shape[kDim2] * argmax_shape[kDim3] + SizeToLong(kAlignBytes) - 1) / SizeToLong(kAlignBytes) + 1;
+  argmax_shape[kDim2] = ksize[kDim1] * ksize[kDim2];
   common::AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
   return maxpool_grad_with_argmax;

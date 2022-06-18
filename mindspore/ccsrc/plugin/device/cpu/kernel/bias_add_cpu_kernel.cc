@@ -32,6 +32,9 @@ void BiasAddCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   bias_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({input_shape_, bias_shape_})) {
+    return;
+  }
   data_shape_ = input_shape_.size();
   if (input_shape_.size() < kBiasAddMinDim || input_shape_.size() > kBiasAddMaxDim) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -59,15 +62,15 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   auto *output_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
   if (input_shape_.size() > 2) {
-    size_t hw_size = 1;
+    int64_t hw_size = 1;
     for (size_t i = 2; i < input_shape_.size(); ++i) {
       hw_size *= input_shape_[i];
     }
 
-    size_t c_size = input_shape_[1];
-    for (size_t n = 0; n < input_shape_[0]; ++n) {
-      for (size_t c = 0; c < c_size; ++c) {
-        size_t offset = n * c_size * hw_size + c * hw_size;
+    int64_t c_size = input_shape_[1];
+    for (int64_t n = 0; n < input_shape_[0]; ++n) {
+      for (int64_t c = 0; c < c_size; ++c) {
+        size_t offset = LongToSize(n * c_size * hw_size + c * hw_size);
         size_t hw = 0;
 #ifdef ENABLE_AVX
         constexpr size_t C8NUM = 8;
@@ -84,7 +87,7 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
           out_ptr += C8NUM;
         }
 #endif
-        for (; hw < hw_size; ++hw) {
+        for (; hw < LongToSize(hw_size); ++hw) {
           output_addr[offset + hw] = src_addr[offset + hw] + bias_addr[c];
         }
       }
@@ -92,13 +95,13 @@ bool BiasAddCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   } else {
     auto task = [&](size_t start, size_t end) {
       for (size_t n = start; n < end; ++n) {
-        size_t n_offset = input_shape_[1] * n;
+        size_t n_offset = LongToSize(input_shape_[1] * n);
         if (ElementAdd(src_addr + n_offset, bias_addr, output_addr + n_offset, input_shape_[1]) != NNACL_OK) {
           MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', ElementAdd failed.";
         }
       }
     };
-    ParallelLaunchAutoSearch(task, input_shape_[0], this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, LongToSize(input_shape_[0]), this, &parallel_search_info_);
   }
 
   return true;

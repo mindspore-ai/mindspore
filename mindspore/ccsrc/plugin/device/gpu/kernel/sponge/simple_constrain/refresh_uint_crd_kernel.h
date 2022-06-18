@@ -46,10 +46,10 @@ class RefreshUintCrdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_test_frc = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto shape_mass_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
 
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_quarter_cof.size(); i++) ele_quarter_cof *= shape_quarter_cof[i];
-    for (size_t i = 0; i < shape_test_frc.size(); i++) ele_test_frc *= shape_test_frc[i];
-    for (size_t i = 0; i < shape_mass_inverse.size(); i++) ele_mass_inverse *= shape_mass_inverse[i];
+    ele_crd *= SizeOf(shape_crd);
+    ele_quarter_cof *= SizeOf(shape_quarter_cof);
+    ele_test_frc *= SizeOf(shape_test_frc);
+    ele_mass_inverse *= SizeOf(shape_mass_inverse);
 
     InitSizeLists();
     return true;

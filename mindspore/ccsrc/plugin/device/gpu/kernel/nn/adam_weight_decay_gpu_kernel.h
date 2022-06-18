@@ -88,25 +88,14 @@ class AdamWeightDecayGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_, "var") ||
                      CHECK_SHAPE_NULL(m_shape, kernel_name_, "m") || CHECK_SHAPE_NULL(v_shape, kernel_name_, "v") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({variable_shape, m_shape, v_shape, gradient_shape})) {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < variable_shape.size(); i++) {
-      variable_size_ *= variable_shape[i];
-    }
-
-    for (size_t i = 0; i < m_shape.size(); i++) {
-      m_size_ *= m_shape[i];
-    }
-
-    for (size_t i = 0; i < v_shape.size(); i++) {
-      v_size_ *= v_shape[i];
-    }
-
-    for (size_t i = 0; i < gradient_shape.size(); i++) {
-      gradient_size_ *= gradient_shape[i];
-    }
+    variable_size_ *= SizeOf(variable_shape);
+    m_size_ *= SizeOf(m_shape);
+    v_size_ *= SizeOf(v_shape);
+    gradient_size_ *= SizeOf(gradient_shape);
 
     InitSizeLists();
     return true;

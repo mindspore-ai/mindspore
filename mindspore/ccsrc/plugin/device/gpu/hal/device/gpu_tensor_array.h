@@ -29,7 +29,7 @@ namespace device {
 namespace gpu {
 class GPUTensorArray : public TensorArray {
  public:
-  GPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
+  GPUTensorArray(const string &name, const TypePtr &dtype, const ShapeVector &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~GPUTensorArray() override = default;
   void FreeMemory(const DeviceMemPtr addr) override;

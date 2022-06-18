@@ -75,17 +75,10 @@ class CheckValidGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < anchor_boxes_shape.size(); i++) {
-      anchor_boxes_size_ *= anchor_boxes_shape[i];
-    }
 
-    for (size_t i = 0; i < img_metas_shape.size(); i++) {
-      img_metas_size_ *= img_metas_shape[i];
-    }
-
-    for (size_t i = 0; i < valid_shape.size(); i++) {
-      valid_size_ *= valid_shape[i];
-    }
+    anchor_boxes_size_ *= SizeOf(anchor_boxes_shape);
+    img_metas_size_ *= SizeOf(img_metas_shape);
+    valid_size_ *= SizeOf(valid_shape);
 
     InitSizeLists();
 

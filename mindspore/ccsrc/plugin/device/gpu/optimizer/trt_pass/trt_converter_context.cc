@@ -273,11 +273,8 @@ std::tuple<std::map<size_t, size_t>, std::vector<session::KernelWithIndex>> TrtC
   return std::make_tuple(anf_trt_index_map, trt_output_list);
 }
 
-std::shared_ptr<tensor::Tensor> TrtConverterContext::CreateTempWeight(const TypeId &type,
-                                                                      const std::vector<size_t> &shape) {
-  ShapeVector shape_int;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_int), SizeToLong);
-  auto tensor = std::make_shared<tensor::Tensor>(type, shape_int);
+std::shared_ptr<tensor::Tensor> TrtConverterContext::CreateTempWeight(const TypeId &type, const ShapeVector &shape) {
+  auto tensor = std::make_shared<tensor::Tensor>(type, shape);
   temp_weights_.push_back(tensor);
   return tensor;
 }

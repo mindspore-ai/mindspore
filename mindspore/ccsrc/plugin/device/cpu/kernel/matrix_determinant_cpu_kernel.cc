@@ -76,8 +76,8 @@ void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<Ad
   if (dims[dims.size() - kNumber1] != dims[dims.size() - kNumber2]) {
     MS_LOG(EXCEPTION) << "The last two dimensions of Input x must be equal.";
   }
-  size_t m = dims[dims.size() - 1];
-  size_t n = 1;
+  size_t m = LongToSize(dims[dims.size() - 1]);
+  int64_t n = 1;
   for (size_t i = kNumber0; i < dims.size() - kNumber2; i++) {
     n *= dims[i];
   }
@@ -94,7 +94,7 @@ void MatrixDeterminantCpuKernelMod::LaunchMatrixDeterminant(const std::vector<Ad
       *(output + k) = result;
     }
   };
-  CPUKernelUtils::ParallelFor(task, n);
+  CPUKernelUtils::ParallelFor(task, LongToSize(n));
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixDeterminant, MatrixDeterminantCpuKernelMod);

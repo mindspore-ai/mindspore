@@ -16,10 +16,6 @@ import os
 import pytest
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_ps_embedding_heterogeneous_conv2d_adam():
     return_code = os.system(
         "bash shell_run_test.sh Ascend /home/workspace/mindspore_dataset/mnist 1 1 127.0.0.1 8085"

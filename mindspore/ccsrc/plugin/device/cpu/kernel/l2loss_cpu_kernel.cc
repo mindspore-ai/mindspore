@@ -30,10 +30,8 @@ void L2LossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  tensor_size_ = 1;
-  for (const size_t &d : input_shape_) {
-    tensor_size_ *= d;
-  }
+
+  tensor_size_ = SizeOf(input_shape_);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   std::vector<KernelAttr> support_list;

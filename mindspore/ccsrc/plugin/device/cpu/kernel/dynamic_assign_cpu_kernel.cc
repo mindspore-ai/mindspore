@@ -65,9 +65,12 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
   }
   auto input_x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   auto input_y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  if (AnfAlgo::IsShapesDynamic({input_x_shape, input_y_shape})) {
+    return;
+  }
   batch_size_ = 1;
   for (size_t i = 0; i < input_x_shape.size(); ++i) {
-    batch_size_ *= input_x_shape[i];
+    batch_size_ *= LongToSize(input_x_shape[i]);
   }
 
   if (input_x_shape.size() != input_y_shape.size()) {
@@ -104,9 +107,7 @@ void DynamicAssignCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inpu
     auto node_ptr = out_node->cast<ParameterPtr>();
     auto value = node_ptr->default_param();
     auto tensor = value->cast<std::shared_ptr<tensor::Tensor>>();
-    ShapeVector shape_tmp;
-    (void)std::transform(input_x_shape.begin(), input_x_shape.end(), std::back_inserter(shape_tmp), SizeToLong);
-    tensor->set_shape(shape_tmp);
+    tensor->set_shape(input_x_shape);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output must be a Parameter.";
   }

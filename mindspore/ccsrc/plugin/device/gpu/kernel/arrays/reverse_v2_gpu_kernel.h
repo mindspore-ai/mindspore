@@ -90,7 +90,7 @@ class ReverseV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     input_size_ = 1;
     for (size_t i = 0; i < input_rank_; i++) {
-      input_size_ *= input_shape_[i];
+      input_size_ *= static_cast<size_t>(input_shape_[i]);
     }
 
     strides_.resize(input_rank_);
@@ -141,7 +141,7 @@ class ReverseV2GpuKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   size_t input_size_;
   size_t input_rank_;
-  std::vector<size_t> input_shape_;
+  std::vector<int64_t> input_shape_;
   std::vector<int64_t> strides_;
   std::vector<int64_t> axis_;
   bool is_null_input_;

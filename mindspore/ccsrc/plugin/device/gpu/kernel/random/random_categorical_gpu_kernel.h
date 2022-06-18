@@ -99,7 +99,7 @@ class RandomCategoricalGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
-    auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto logits_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
     is_null_input_ = CHECK_SHAPE_NULL(logits_shape, kernel_name, "logits");
     if (is_null_input_) {
       InitSizeLists();

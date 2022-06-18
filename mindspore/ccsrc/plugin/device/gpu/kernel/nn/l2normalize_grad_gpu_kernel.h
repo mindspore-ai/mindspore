@@ -106,7 +106,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
 
-  bool CheckInputShape(const std::vector<size_t> &output_shape) {
+  bool CheckInputShape(const ShapeVector &output_shape) {
     for (auto &shape : input_shape_list_) {
       if (output_shape != shape) {
         MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input and output must be the same, but "
@@ -114,6 +114,10 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                           << ", the shape of output: " << CONVERT_VECTOR_TO_STRING(output_shape);
       }
     }
+    if (IsDynamic(input_shape_list_[0])) {
+      return true;
+    }
+
     is_null_input_ = CHECK_SHAPE_NULL(input_shape_list_[0], kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -143,7 +147,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(output_shape)) {
       InitSizeLists();
       return true;
     }
@@ -151,12 +155,8 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
 
-    output_size_ = sizeof(T);
-    for (auto dim : output_shape) {
-      output_size_ *= dim;
-    }
-
-    std::vector<size_t> output_reduce_shape = output_shape;
+    output_size_ = sizeof(T) * SizeOf(output_shape);
+    ShapeVector output_reduce_shape = output_shape;
     if ((size_t)axis_ >= output_shape.size()) {
       MS_LOG(EXCEPTION) << "For 'L2NormalizeGradGpuKernelMod', axis_ must be less than the rank of output "
                         << "but got axis_: " << axis_ << ", rank of output: " << output_shape.size();
@@ -168,9 +168,9 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     output_shape_.resize(MAX_DIMS, 1);
     all_match_ = true;
     for (size_t i = 0; i < output_shape.size(); i++) {
-      output_shape_[i] = output_shape[i];
-      lhs_shape_[i] = output_shape[i];
-      rhs_shape_[i] = output_reduce_shape[i];
+      output_shape_[i] = LongToSizeClipNeg(output_shape[i]);
+      lhs_shape_[i] = LongToSizeClipNeg(output_shape[i]);
+      rhs_shape_[i] = LongToSizeClipNeg(output_reduce_shape[i]);
       if (lhs_shape_[i] != rhs_shape_[i]) {
         all_match_ = false;
       }
@@ -263,9 +263,9 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "cudnnSetReduceTensorDescriptor failed");
     return;
   }
-  void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<size_t> inputA;
-    std::vector<size_t> outputC_shape = output_shape;
+  void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape) {
+    ShapeVector inputA;
+    ShapeVector outputC_shape = output_shape;
     constexpr int split_dim = 4;
     CheckTensorSize({input_shape, output_shape});
     if (input_shape.size() <= split_dim) {
@@ -281,7 +281,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
 
-    std::vector<size_t> outputC;
+    ShapeVector outputC;
 
     if (outputC_shape.size() <= split_dim) {
       ShapeNdTo4d(outputC_shape, &outputC);
@@ -312,7 +312,7 @@ class L2NormalizeGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool is_null_input_;
   std::string kernel_name_;
 
-  std::vector<std::vector<size_t> > input_shape_list_;
+  std::vector<ShapeVector> input_shape_list_;
   size_t output_size_;
   size_t workspace_size_;
   float epsilon_;

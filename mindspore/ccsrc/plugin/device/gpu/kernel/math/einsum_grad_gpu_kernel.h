@@ -84,7 +84,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         MS_LOG(ERROR) << "For " << node_name_ << ", input types should be the same, but it does not.";
         return false;
       }
-      std::vector<size_t> in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
+      auto in_shape = AnfAlgo::GetInputDeviceShape(kernel_node, idx);
       input_shapes_.push_back(in_shape);
     }
     std::string equation = GetAttr<std::string>(kernel_node, "equation");
@@ -200,9 +200,9 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     int two_op_cnt = max_x_idx - 1;
     while (idx_op >= 0) {
       auto name = std::get<IDX_NAME>(res_op_[idx_op]);
-      auto shape_a = std::get<IDX_INP_SHAPE>(res_op_[idx_op]);
+      auto shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[idx_op]));
       auto shape_b = std::get<IDX_PARAM>(res_op_[idx_op]);
-      auto shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op]);
+      auto shape_c = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(res_op_[idx_op]));
       if (single_op_func_.count(name) != 0) {
         func_helper_.SingleElementProcessGrad(name, src_ptr, dst_ptr, shape_a, shape_b, stream_ptr);
         if (dst_ptr == work0) {
@@ -216,9 +216,9 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         if (idx_op >= 0) {
           name = std::get<IDX_NAME>(res_op_[idx_op]);
           while (idx_op >= 0 && single_op_func_.count(name) != 0) {
-            shape_a = std::get<IDX_INP_SHAPE>(res_op_[idx_op]);
+            shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[idx_op]));
             shape_b = std::get<IDX_PARAM>(res_op_[idx_op]);
-            shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op]);
+            shape_c = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(res_op_[idx_op]));
             func_helper_.SingleElementProcessGrad(name, src_ptr, dst_ptr, shape_a, shape_b, stream_ptr);
             --idx_op;
             T *temp_ptr = dst_ptr;
@@ -231,9 +231,9 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         }
       }
       name = std::get<IDX_NAME>(res_op_[idx_op]);
-      shape_a = std::get<IDX_INP_SHAPE>(res_op_[idx_op]);
+      shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[idx_op]));
       shape_b = std::get<IDX_PARAM>(res_op_[idx_op]);
-      shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op]);
+      shape_c = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(res_op_[idx_op]));
       T *mid_res;
       if (two_op_cnt == 0) {
         mid_res = GetDeviceAddress<T>(outputs, 0);
@@ -273,9 +273,9 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       T *dst_ptr = work0;
       for (int idx = single_op_[idx_op].size() - 1; idx >= 0; --idx) {
         auto name = std::get<IDX_NAME>(single_op_[idx_op][idx]);
-        auto inp_shape = std::get<IDX_INP_SHAPE>(single_op_[idx_op][idx]);
+        auto inp_shape = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(single_op_[idx_op][idx]));
         auto op_param = std::get<IDX_PARAM>(single_op_[idx_op][idx]);
-        auto dout_shape = std::get<IDX_OUT_SHAPE>(single_op_[idx_op][idx]);
+        auto dout_shape = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(single_op_[idx_op][idx]));
         func_helper_.SingleElementProcessGrad(name, src_ptr, dst_ptr, inp_shape, op_param, stream_ptr);
         T *temp = src_ptr;
         src_ptr = dst_ptr;
@@ -301,14 +301,14 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       T *out_ptr = GetDeviceAddress<T>(outputs, idx_op);
       T *dst_ptr = out_ptr;
       auto name = std::get<IDX_NAME>(single_op_[idx_op][0]);
-      auto inp_shape = std::get<IDX_INP_SHAPE>(single_op_[idx_op][0]);
+      auto inp_shape = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(single_op_[idx_op][0]));
       auto op_param = std::get<IDX_PARAM>(single_op_[idx_op][0]);
       func_helper_.SingleElementProcess(name, inp_ptr, dst_ptr, inp_shape, op_param, stream_ptr);
       src_ptr = dst_ptr;
       dst_ptr = work0;
       for (size_t idx = 1; idx < single_op_[idx_op].size(); ++idx) {
         name = std::get<IDX_NAME>(single_op_[idx_op][idx]);
-        inp_shape = std::get<IDX_INP_SHAPE>(single_op_[idx_op][idx]);
+        inp_shape = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(single_op_[idx_op][idx]));
         op_param = std::get<IDX_PARAM>(single_op_[idx_op][idx]);
         func_helper_.SingleElementProcess(name, src_ptr, dst_ptr, inp_shape, op_param, stream_ptr);
         T *temp = src_ptr;
@@ -336,9 +336,9 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *work0 = GetDeviceAddress<T>(workspace, work_idx);
     while (idx_op < res_op_.size()) {
       auto name = std::get<IDX_NAME>(res_op_[idx_op]);
-      auto shape_a = std::get<IDX_INP_SHAPE>(res_op_[idx_op]);
+      auto shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[idx_op]));
       auto shape_b = std::get<IDX_PARAM>(res_op_[idx_op]);
-      auto shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op]);
+      auto shape_c = Convert2SizeTClipNeg(std::get<IDX_OUT_SHAPE>(res_op_[idx_op]));
       T *src_ptr_2 = GetDeviceAddress<T>(outputs, two_op_cnt + 1);
       func_helper_.TwoElementProcess(name, src_ptr, src_ptr_2, dst_ptr, shape_a, shape_b, shape_c, stream_ptr);
       ++idx_op;
@@ -348,7 +348,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       if (idx_op < res_op_.size()) {
         name = std::get<IDX_NAME>(res_op_[idx_op]);
         while (idx_op < res_op_.size() && single_op_func_.count(name) != 0) {
-          auto shape_a = std::get<IDX_INP_SHAPE>(res_op_[idx_op]);
+          auto shape_a = Convert2SizeTClipNeg(std::get<IDX_INP_SHAPE>(res_op_[idx_op]));
           auto shape_b = std::get<IDX_PARAM>(res_op_[idx_op]);
           func_helper_.SingleElementProcess(name, src_ptr, dst_ptr, shape_a, shape_b, stream_ptr);
           T *temp = src_ptr;
@@ -361,7 +361,7 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         }
       }
       if (src_ptr != middle_res_ptr) {
-        shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op - 1]);
+        auto shape_c = std::get<IDX_OUT_SHAPE>(res_op_[idx_op - 1]);
         size_t size = func_helper_.GetShapeSize(shape_c);
         CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(middle_res_ptr, src_ptr, size, cudaMemcpyDeviceToDevice,
                                                           reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -379,8 +379,8 @@ class EinsumGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t work_size_;
   size_t shape_size_;
   size_t reduce_sum_wrok_size_;
-  std::vector<std::vector<size_t>> input_shapes_;
-  std::vector<size_t> out_shape_;
+  std::vector<std::vector<int64_t>> input_shapes_;
+  std::vector<int64_t> out_shape_;
   std::vector<std::vector<OpStruct>> single_op_;
   std::vector<OpStruct> res_op_;
   std::set<std::string> single_op_func_ = {"ReduceSum", "Diagonal", "Transpose"};

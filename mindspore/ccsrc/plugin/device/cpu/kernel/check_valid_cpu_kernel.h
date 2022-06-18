@@ -52,9 +52,9 @@ class CheckValidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, CheckValidFunc>> func_list_;
   CheckValidFunc kernel_func_;
-  std::vector<size_t> anchor_box_shape_;
-  std::vector<size_t> img_metas_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> anchor_box_shape_;
+  std::vector<int64_t> img_metas_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

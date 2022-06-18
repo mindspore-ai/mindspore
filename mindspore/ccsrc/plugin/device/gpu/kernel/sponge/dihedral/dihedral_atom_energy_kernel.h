@@ -47,17 +47,17 @@ class DihedralAtomEnergyGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_gams = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 9);
     auto shape_pn = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 10);
 
-    for (size_t i = 0; i < shape_uint_crd.size(); i++) ele_uint_crd *= shape_uint_crd[i];
-    for (size_t i = 0; i < shape_scaler.size(); i++) ele_scaler *= shape_scaler[i];
-    for (size_t i = 0; i < shape_atom_a.size(); i++) ele_atom_a *= shape_atom_a[i];
-    for (size_t i = 0; i < shape_atom_b.size(); i++) ele_atom_b *= shape_atom_b[i];
-    for (size_t i = 0; i < shape_atom_c.size(); i++) ele_atom_c *= shape_atom_c[i];
-    for (size_t i = 0; i < shape_atom_d.size(); i++) ele_atom_d *= shape_atom_d[i];
-    for (size_t i = 0; i < shape_ipn.size(); i++) ele_ipn *= shape_ipn[i];
-    for (size_t i = 0; i < shape_pk.size(); i++) ele_pk *= shape_pk[i];
-    for (size_t i = 0; i < shape_gamc.size(); i++) ele_gamc *= shape_gamc[i];
-    for (size_t i = 0; i < shape_gams.size(); i++) ele_gams *= shape_gams[i];
-    for (size_t i = 0; i < shape_pn.size(); i++) ele_pn *= shape_pn[i];
+    ele_uint_crd *= SizeOf(shape_uint_crd);
+    ele_scaler *= SizeOf(shape_scaler);
+    ele_atom_a *= SizeOf(shape_atom_a);
+    ele_atom_b *= SizeOf(shape_atom_b);
+    ele_atom_c *= SizeOf(shape_atom_c);
+    ele_atom_d *= SizeOf(shape_atom_d);
+    ele_ipn *= SizeOf(shape_ipn);
+    ele_pk *= SizeOf(shape_pk);
+    ele_gamc *= SizeOf(shape_gamc);
+    ele_gams *= SizeOf(shape_gams);
+    ele_pn *= SizeOf(shape_pn);
     InitSizeLists();
     return true;
   }

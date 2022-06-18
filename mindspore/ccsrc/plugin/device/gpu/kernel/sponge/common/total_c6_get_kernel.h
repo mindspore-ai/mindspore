@@ -41,8 +41,8 @@ class TotalC6GetGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_atom_lj_type = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape_lj_b = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
 
-    for (size_t i = 0; i < shape_atom_lj_type.size(); i++) ele_atom_lj_type *= shape_atom_lj_type[i];
-    for (size_t i = 0; i < shape_lj_b.size(); i++) ele_lj_b *= shape_lj_b[i];
+    ele_atom_lj_type *= SizeOf(shape_atom_lj_type);
+    ele_lj_b *= SizeOf(shape_lj_b);
 
     InitSizeLists();
     return true;

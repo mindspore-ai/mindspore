@@ -244,22 +244,22 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                                 "cudnnSetReduceTensorDescriptor failed");
     return;
   }
-  void InferInAndOutDesc(const std::vector<size_t> &input_shape, const std::vector<size_t> &output_shape) {
-    std::vector<size_t> inputA;
-    std::vector<size_t> outputC_shape = output_shape;
+  void InferInAndOutDesc(const ShapeVector &input_shape, const ShapeVector &output_shape) {
+    ShapeVector inputA;
+    ShapeVector outputC_shape = output_shape;
     const int split_dim = 4;
     CheckTensorSize({input_shape, output_shape});
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &inputA);
       CHECK_CUDNN_RET_WITH_EXCEPT(
         kernel_node_,
-        cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(inputA[0]),
-                                   SizeToInt(inputA[1]), SizeToInt(inputA[2]), SizeToInt(inputA[3])),
+        cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, LongToInt(inputA[0]),
+                                   LongToInt(inputA[1]), LongToInt(inputA[2]), LongToInt(inputA[3])),
         "cudnnSetTensor4dDescriptor failed");
     } else {
       CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_, kernel_node_);
       for (auto dim : input_shape) {
-        inputA.emplace_back(SizeToInt(dim));
+        inputA.emplace_back(dim);
       }
     }
 
@@ -283,7 +283,7 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return;
     }
 
-    std::vector<size_t> outputC;
+    ShapeVector outputC;
     if (!keep_dims_) {
       for (auto i : axis_) {
         (void)(outputC_shape.insert(outputC_shape.begin() + i, 1));
@@ -300,7 +300,7 @@ class ArrayReduceGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     } else {
       CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_node_);
       for (auto dim : outputC_shape) {
-        outputC.emplace_back(SizeToInt(dim));
+        outputC.emplace_back(dim);
       }
     }
 

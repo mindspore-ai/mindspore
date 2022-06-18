@@ -44,12 +44,11 @@ class GetCenterOfMassGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto shape_atom_mass = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
     auto shape_residue_mass_inverse = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 4);
 
-    for (size_t i = 0; i < shape_start.size(); i++) ele_start *= shape_start[i];
-    for (size_t i = 0; i < shape_end.size(); i++) ele_end *= shape_end[i];
-    for (size_t i = 0; i < shape_crd.size(); i++) ele_crd *= shape_crd[i];
-    for (size_t i = 0; i < shape_atom_mass.size(); i++) ele_atom_mass *= shape_atom_mass[i];
-    for (size_t i = 0; i < shape_residue_mass_inverse.size(); i++)
-      ele_residue_mass_inverse *= shape_residue_mass_inverse[i];
+    ele_start *= SizeOf(shape_start);
+    ele_end *= SizeOf(shape_end);
+    ele_crd *= SizeOf(shape_crd);
+    ele_atom_mass *= SizeOf(shape_atom_mass);
+    ele_residue_mass_inverse *= SizeOf(shape_residue_mass_inverse);
 
     InitSizeLists();
     return true;

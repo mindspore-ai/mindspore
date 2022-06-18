@@ -50,8 +50,8 @@ class FractionalMaxPool3DWithFixedKsizeCPUKernelMod : public DeprecatedNativeCpu
   template <typename scalar_t>
   bool DoComputeWithRandomSamplesType(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                       TypeId random_samples_type);
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> random_samples_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> random_samples_shape_;
   std::vector<int64_t> output_shape_;
   std::vector<float> ksize_;
   std::string data_format_;

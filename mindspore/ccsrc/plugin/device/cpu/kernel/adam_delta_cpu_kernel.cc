@@ -70,11 +70,16 @@ void AdamDeltaCpuKernelMod::LaunchAdamDelta(T *delta, T *m, T *v, float lr, floa
 void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  std::vector<size_t> delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  std::vector<size_t> m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kMIndex);
-  std::vector<size_t> v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVIndex);
-  std::vector<size_t> grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kGradIndex);
+  auto delta_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  auto m_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kMIndex);
+  auto v_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kVIndex);
+  auto grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, kGradIndex);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+
+  if (AnfAlgo::IsShapesDynamic({delta_shape, m_shape, v_shape})) {
+    return;
+  }
+
   if (!IsSameShape(delta_shape, m_shape)) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'delta' must be the same as the shape of 'm', but got the shape of 'delta': "
@@ -96,7 +101,7 @@ void AdamDeltaCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   elem_num_ = 1;
   for (size_t i = 0; i < delta_shape.size(); ++i) {
-    elem_num_ *= delta_shape[i];
+    elem_num_ *= static_cast<size_t>(delta_shape[i]);
   }
   if (elem_num_ < 1) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'delta' must be at least 1-D, but got empty shape!";

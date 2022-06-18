@@ -68,7 +68,10 @@ void ScatterMinCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   auto updates_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
-  auto indices_unit_rank = indices_shape.back();
+  if (AnfAlgo::IsShapesDynamic({shape, indices_shape, updates_shape})) {
+    return;
+  }
+  auto indices_unit_rank = LongToSize(indices_shape.back());
   if (indices_unit_rank > shape.size()) {
     MS_EXCEPTION(ValueError)
       << "For '" << kernel_name_

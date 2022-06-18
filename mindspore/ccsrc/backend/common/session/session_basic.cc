@@ -80,12 +80,7 @@ MS_REG_SESSION(kSessionBasic, SessionBasic);
 namespace {
 const int kSummaryGetItem = 2;
 const size_t max_depth = 128;
-bool IsShapeDynamic(const abstract::ShapePtr &shape) {
-  if (shape == nullptr) {
-    return false;
-  }
-  return std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
-}
+
 bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
   auto node = kernel.first;
   MS_EXCEPTION_IF_NULL(manager);
@@ -203,23 +198,24 @@ BaseRef CreateNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
   if (type_id == kTypeUnknown) {
     type_id = common::AnfAlgo::GetOutputInferDataType(node, output_index);
   }
-  std::vector<int64_t> temp_shape;
+
   auto shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
-  (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
   if (common::AnfAlgo::IsDynamicShape(node)) {
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, output_index);
-    temp_shape = abstract::ShapeSize(max_shape) > abstract::ShapeSize(temp_shape) ? max_shape : temp_shape;
+    if (abstract::ShapeSize(max_shape) > abstract::ShapeSize(shape)) {
+      shape = max_shape;
+    }
   }
   tensor::TensorPtr tensor;
   bool is_internal_output = graph->IsInternalOutput(node, output_index);
   if (is_internal_output) {
     tensor = graph->GetInternalOutputTensor(node, output_index);
     if (tensor == nullptr) {
-      tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+      tensor = std::make_shared<tensor::Tensor>(type_id, shape);
       graph->AddInternalOutputTensor(node, output_index, tensor);
     }
   } else {
-    tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    tensor = std::make_shared<tensor::Tensor>(type_id, shape);
   }
   MS_EXCEPTION_IF_NULL(tensor);
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
@@ -477,7 +473,7 @@ void CheckInputTensorShape(const TensorPtr &tensor, const CNodePtr &kernel, size
                       << "] of kernel: " << common::AnfAlgo::GetCNodeName(kernel) << trace::DumpSourceLines(kernel);
   }
   for (size_t i = 0; i < tensor_shape.size(); i++) {
-    if (tensor_shape[i] < 0 || static_cast<size_t>(tensor_shape[i]) != input_shape[i]) {
+    if (tensor_shape[i] < 0 || tensor_shape[i] != input_shape[i]) {
       MS_LOG(EXCEPTION) << "The input tensor's shape: " << tensor_shape
                         << " is not equal to expected shape: " << input_shape << " for input[" << input_index
                         << "] of kernel: " << common::AnfAlgo::GetCNodeName(kernel) << trace::DumpSourceLines(kernel);
@@ -1292,7 +1288,7 @@ void SessionBasic::SetInputNodeUsage(const KernelGraphPtr &graph, const FuncGrap
         node_ptr->SetNotUsedByRealKernelInGraph(graph->graph_id());
       }
       auto shape = node_ptr->Shape();
-      if (IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
+      if (AnfUtils::IsShapeDynamic(shape->cast<abstract::ShapePtr>())) {
         node_ptr->set_has_dynamic_shape(true);
       }
     }
@@ -1442,8 +1438,8 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }
         for (size_t i = 0; i < input_shape.size(); i += 1) {
-          if (input_shape[i] < 0 || (!is_parallel_forward_ms_function &&
-                                     static_cast<size_t>(input_shape[i]) != param_shape[i] && !is_dynamic)) {
+          if (input_shape[i] < 0 ||
+              (!is_parallel_forward_ms_function && input_shape[i] != param_shape[i] && !is_dynamic)) {
             MS_LOG(EXCEPTION) << "Input tensor shape(" << input_shape << ") and parameter shape(" << param_shape
                               << ") are different, input index: " << index << ", parameter: " << param->DebugString();
           }
@@ -1916,9 +1912,7 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
                   << ", device address " << tensor->device_address().get();
     if (common::AnfAlgo::IsDynamicShape(node)) {
       const auto &updated_shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
-      ShapeVector int_shape;
-      (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-      (void)tensor->set_shape(int_shape);
+      (void)tensor->set_shape(updated_shape);
     }
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
@@ -2011,9 +2005,7 @@ void SessionBasic::UpdateOutputTensors(const VectorRef *outputs,
 
         if (common::AnfAlgo::IsDynamicShape(node)) {
           const auto &updated_shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
-          ShapeVector int_shape;
-          (void)std::transform(updated_shape.begin(), updated_shape.end(), std::back_inserter(int_shape), SizeToInt);
-          (void)tensor->set_shape(int_shape);
+          (void)tensor->set_shape(updated_shape);
         }
       }
       if (tensor->NeedSyncDeviceToHostImmediately()) {
@@ -2041,10 +2033,7 @@ void SessionBasic::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::Ten
     }
     auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
     if (!common::AnfAlgo::IsParameterWeight(parameter)) {
-      vector<int64_t> input_shape;
-      auto parameter_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
-      (void)std::transform(parameter_shape.begin(), parameter_shape.end(), std::back_inserter(input_shape),
-                           [](const size_t dim) { return SizeToLong(dim); });
+      vector<int64_t> input_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
       auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
       auto data_type = kernel_build_info->GetOutputDeviceType(0);
       auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
@@ -2168,9 +2157,7 @@ void SessionBasic::Summary(KernelGraph *graph) {
     auto address = AnfAlgo::GetOutputAddr(node, index, false);
     auto shape = common::AnfAlgo::GetOutputInferShape(node, index);
     TypeId type_id = common::AnfAlgo::GetOutputInferDataType(node, index);
-    std::vector<int64_t> temp_shape;
-    (void)std::copy(shape.begin(), shape.end(), std::back_inserter(temp_shape));
-    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, temp_shape);
+    tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type_id, shape);
     MS_EXCEPTION_IF_NULL(address);
     if (!address->GetPtr()) {
       continue;
@@ -2435,7 +2422,7 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
       idx->set_abstract(std::make_shared<abstract::AbstractScalar>(imm));
       auto getitem = graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), cnode, idx});
       std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(cnode, output_index)};
-      std::vector<std::vector<size_t>> shapes = {common::AnfAlgo::GetOutputInferShape(cnode, output_index)};
+      auto shapes = {common::AnfAlgo::GetOutputInferShape(cnode, output_index)};
       common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, getitem.get());
       make_tuple_inputs.push_back(getitem);
     }

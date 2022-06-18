@@ -95,7 +95,7 @@ bool ArgMinWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 void ArgMinWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  shape_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
   size_t shape_len = shape_.size();
   if (shape_len == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'input_x' must be at least 1, but got 0.";

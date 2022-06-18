@@ -66,7 +66,7 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
                             CNodePtr trt_node) {
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<TypeId> make_tuple_types;
-  std::vector<std::vector<size_t>> make_tuple_shapes;
+  std::vector<ShapeVector> make_tuple_shapes;
 
   for (size_t out_idx = 0; out_idx < anf_trt_index_map.size(); out_idx++) {
     // Get TrtNode output index
@@ -85,7 +85,7 @@ CNodePtr BuildMakeTupleNode(const FuncGraphPtr root, const std::map<size_t, size
 
     // Set tuple_getitem_cnode abstract.
     std::vector<TypeId> types = {common::AnfAlgo::GetOutputInferDataType(trt_node, trt_index)};
-    std::vector<std::vector<size_t>> shapes = {common::AnfAlgo::GetOutputInferShape(trt_node, trt_index)};
+    std::vector<ShapeVector> shapes = {common::AnfAlgo::GetOutputInferShape(trt_node, trt_index)};
     common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, tuple_getitem_cnode.get());
 
     // Build make tuple inputs.

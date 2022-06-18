@@ -52,10 +52,13 @@ void PoolingCpuKernelMod::InitPoolingFields(const CNodePtr &kernel_node) {
 void PoolingCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   InitPoolingFields(kernel_node);
-  std::vector<size_t> src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto src_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   const size_t src_dim = src_shape.size();
   if (src_dim != SHAPE_4D && src_dim != SHAPE_5D) {
     MS_LOG(EXCEPTION) << "Pooling only supports 4D/5D input, but got " << src_dim << "D!";
+  }
+  if (AnfAlgo::IsShapesDynamic({src_shape, dst_shape_})) {
+    return;
   }
   const dnnl::memory::desc src_desc = GetDefaultMemDesc(src_shape);
   const dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape_);
@@ -99,9 +102,9 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
       padding_invalid_.size() + NC_LEN < SHAPE_5D) {
     MS_LOG(ERROR) << "The dst_shape must be 5D, the kernel and the padding_invalid must be 3D!";
   }
-  const size_t d_max = dst_shape_[D_INDEX] - 1;
-  const size_t h_max = dst_shape_[H_INDEX] - 1;
-  const size_t w_max = dst_shape_[W_INDEX] - 1;
+  const auto d_max = LongToSize(dst_shape_[D_INDEX] - 1);
+  const auto h_max = LongToSize(dst_shape_[H_INDEX] - 1);
+  const auto w_max = LongToSize(dst_shape_[W_INDEX] - 1);
   const size_t d_index = D_INDEX - NC_LEN;
   const size_t h_index = H_INDEX - NC_LEN;
   const size_t w_index = W_INDEX - NC_LEN;
@@ -130,8 +133,9 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
             const int kernel_index = std::stoi(bin, nullptr, base);
             const int64_t valid_kernel_size = valid_kernel_array[kernel_index];
             if (valid_kernel_size != kernel_size) {
-              const size_t index = i * dst_shape_[D_INDEX] * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] +
-                                   d * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] + h * dst_shape_[W_INDEX] + w;
+              const size_t index =
+                static_cast<size_t>(i * dst_shape_[D_INDEX] * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] +
+                                    d * dst_shape_[H_INDEX] * dst_shape_[W_INDEX] + h * dst_shape_[W_INDEX] + w);
               dst[index] = dst[index] * LongToFloat(kernel_size) / LongToFloat(valid_kernel_size);
             }
           }
@@ -139,7 +143,8 @@ void PoolingCpuKernelMod::EliminateInvalidPadding(float *dst) {
       }
     }
   };
-  ParallelLaunchAutoSearch(task, dst_shape_[N_INDEX] * dst_shape_[C_INDEX], this, &parallel_search_info_);
+  ParallelLaunchAutoSearch(task, static_cast<size_t>(dst_shape_[N_INDEX] * dst_shape_[C_INDEX]), this,
+                           &parallel_search_info_);
 }
 
 void PoolingCpuKernelMod::ReComputeDivisor(float *dst) {

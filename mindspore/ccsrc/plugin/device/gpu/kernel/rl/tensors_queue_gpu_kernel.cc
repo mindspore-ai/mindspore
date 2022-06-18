@@ -138,10 +138,7 @@ bool TensorsQueueGetKernelMod::Init(const CNodePtr &kernel_node) {
   input_size_list_.push_back(sizeof(int64_t));
 
   for (int64_t i = 0; i < elements_num_; i++) {
-    size_t value_size = GetTypeByte(type);
-    for (auto x : shapes[i]) {
-      value_size *= LongToSize(x);
-    }
+    size_t value_size = GetTypeByte(type) * SizeOf(shapes[i]);
     output_size_list_.push_back(value_size);
   }
   return true;

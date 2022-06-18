@@ -58,14 +58,11 @@ class ApplyGradientDescentKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "var");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(input_shape)) {
       InitSizeLists();
       return true;
     }
-    input_size_ = 1;
-    for (size_t i = 0; i < input_shape.size(); i++) {
-      input_size_ *= input_shape[i];
-    }
+    input_size_ = SizeOf(input_shape);
     InitSizeLists();
     return true;
   }

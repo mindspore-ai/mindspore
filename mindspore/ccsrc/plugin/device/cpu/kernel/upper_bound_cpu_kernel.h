@@ -48,9 +48,9 @@ class UpperBoundCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, UpperBoundFunc>> func_list_;
   UpperBoundFunc kernel_func_;
 
-  std::vector<size_t> sorted_x_shape_;
-  std::vector<size_t> values_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> sorted_x_shape_;
+  std::vector<int64_t> values_shape_;
+  std::vector<int64_t> output_shape_;
   size_t sorted_x_num_;
   size_t values_num_;
   size_t output_num_;

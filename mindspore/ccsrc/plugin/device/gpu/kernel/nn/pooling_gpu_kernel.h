@@ -86,6 +86,9 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
+      return true;
+    }
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {

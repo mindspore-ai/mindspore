@@ -87,14 +87,9 @@ class BoundingBoxDecodeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t i = 0; i < logits_shape.size(); i++) {
       rois_size_ *= logits_shape[i];
     }
-
-    for (size_t i = 0; i < labels_shape.size(); i++) {
-      deltas_size_ *= labels_shape[i];
-    }
-
-    for (size_t i = 0; i < output_shape.size(); i++) {
-      bboxes_size_ *= output_shape[i];
-    }
+    rois_size_ *= SizeOf(logits_shape);
+    deltas_size_ *= SizeOf(labels_shape);
+    bboxes_size_ *= SizeOf(output_shape);
 
     InitSizeLists();
 

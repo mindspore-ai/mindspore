@@ -39,9 +39,9 @@ class DropoutCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
-  std::vector<size_t> mask_shape_;
+  ShapeVector input_shape_;
+  ShapeVector output_shape_;
+  ShapeVector mask_shape_;
   TypeId dtype_{kTypeUnknown};
   float keep_prob_{0.0};
   uint64_t tensor_size_{1};

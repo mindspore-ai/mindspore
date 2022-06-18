@@ -63,7 +63,7 @@ TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
   return result;
 }
 
-std::vector<size_t> CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
+ShapeVector CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto iter = shape_map_.find(node);
   if (iter != shape_map_.end()) {
@@ -75,8 +75,8 @@ std::vector<size_t> CacheManager::GetOutputShape(const AnfNodePtr &node, size_t 
     return {};
   }
   auto output_nums = common::AnfAlgo::GetOutputTensorNum(node);
-  std::map<size_t, std::vector<size_t>> index_to_shapes;
-  std::vector<size_t> result = {};
+  std::map<size_t, ShapeVector> index_to_shapes;
+  ShapeVector result = {};
   for (size_t i = 0; i < output_nums; i++) {
     auto output_shape = common::AnfAlgo::GetOutputInferShape(node, i);
     (void)index_to_shapes.emplace(i, output_shape);

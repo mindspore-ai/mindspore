@@ -35,6 +35,9 @@ void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   compute_eigen_vectors_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
   lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (AnfAlgo::IsShapesDynamic({A_shape})) {
+    return;
+  }
   if (A_shape.size() != kShape2dDims) {
     MS_LOG(EXCEPTION) << "Wrong array shape. For '" << kernel_name_ << "', a must be 2D, but got [" << A_shape.size()
                       << "] dimensions.";
@@ -44,7 +47,7 @@ void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << "', a must be a squre matrix like [N X N], but got [" << A_shape[kDim0] << " X "
                       << A_shape[kDim1] << "].";
   }
-  m_ = A_shape[kDim0];
+  m_ = LongToSize(A_shape[kDim0]);
 
   auto kernel_attr = GetKernelAttrFromNode(kernel_node);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());

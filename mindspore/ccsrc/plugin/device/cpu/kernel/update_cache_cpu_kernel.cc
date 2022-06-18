@@ -66,20 +66,17 @@ void UpdateCacheCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   MS_EXCEPTION_IF_NULL(node);
   auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
   auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 2);
+  if (AnfAlgo::IsShapesDynamic({indices_shape, update_shape})) {
+    return;
+  }
   if (update_shape.size() < kMinUpdateShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'update' must be at least "
                       << kMinUpdateShapeSize << "D, but got: " << update_shape.size() << "D";
   }
-  batch_size_ = 1;
-  for (size_t i = 0; i < indices_shape.size(); ++i) {
-    batch_size_ *= indices_shape[i];
-  }
+  batch_size_ = SizeOf(indices_shape);
   MS_LOG(INFO) << "UpdateCache batch_size:" << batch_size_;
-  update_size_ = 1;
-  for (size_t i = 0; i < update_shape.size(); ++i) {
-    update_size_ *= SizeToLong(update_shape[i]);
-  }
-  update_length_ = update_shape[1];
+  update_size_ = SizeOf(update_shape);
+  update_length_ = LongToSize(update_shape[1]);
   char *input_x = reinterpret_cast<char *>(inputs[0]->addr);
   T *indices = reinterpret_cast<T *>(inputs[1]->addr);
   char *update = reinterpret_cast<char *>(inputs[2]->addr);

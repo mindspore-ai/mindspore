@@ -33,7 +33,7 @@ void TensorArrayWriteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   shapes_ = AnfAlgo::GetInputDeviceShape(kernel_node, kSecondInputIndex);
   value_size_ = GetTypeByte(TypeIdToType(type_));
   for (auto i : shapes_) {
-    value_size_ *= i;
+    value_size_ *= static_cast<size_t>(i);
   }
   input_size_list_.push_back(sizeof(int64_t));
   input_size_list_.push_back(sizeof(int64_t));

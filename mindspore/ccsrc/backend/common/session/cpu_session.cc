@@ -257,10 +257,8 @@ void CPUSession::UpdateDynamicOutputShape(const std::map<tensor::TensorPtr, Kern
       const auto &kernel = tensor_node.second.first;
       const auto &output_index = tensor_node.second.second;
       const auto &shape = common::AnfAlgo::GetOutputInferShape(kernel, output_index);
-      std::vector<int64_t> refresh_shape;
-      (void)std::copy(shape.begin(), shape.end(), std::back_inserter(refresh_shape));
       MS_EXCEPTION_IF_NULL(tensor_node.first);
-      tensor_node.first->set_shape(refresh_shape);
+      tensor_node.first->set_shape(shape);
     }
   }
 }

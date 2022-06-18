@@ -45,9 +45,9 @@ class GatherNdCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, GatherNdFunc>> func_list_;
   GatherNdFunc kernel_func_;
 
-  std::vector<size_t> input_shapes_;
-  std::vector<size_t> indices_shapes_;
-  std::vector<size_t> output_shapes_;
+  ShapeVector input_shapes_;
+  ShapeVector indices_shapes_;
+  ShapeVector output_shapes_;
 
   std::vector<size_t> dims_;
   std::vector<int> batch_indices_;

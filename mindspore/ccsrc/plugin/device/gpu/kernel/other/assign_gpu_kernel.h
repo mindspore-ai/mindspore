@@ -60,10 +60,7 @@ class AssignGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    input_size_ = sizeof(T);
-    for (size_t x : shape) {
-      input_size_ = input_size_ * x;
-    }
+    input_size_ = sizeof(T) * SizeOf(shape);
     InitSizeLists();
     return true;
   }

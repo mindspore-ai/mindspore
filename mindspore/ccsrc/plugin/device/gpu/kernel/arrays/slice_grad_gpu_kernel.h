@@ -73,7 +73,7 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       is_strided_slice_ = true;
       std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
       for (auto x : shapex) {
-        input_shape_.push_back(static_cast<size_t>(x));
+        input_shape_.push_back(x);
       }
       for (auto i = input_shape_.size(); i < kSliceGradDefaultInputShapeSize; i++) {
         (void)input_shape_.insert(input_shape_.begin(), 1);
@@ -107,17 +107,19 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       ShapeNdTo4d(dy_shape, &dy_shape_);
       begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
       CalcBeginAndSize(data_format, kSliceGradDefaultInputShapeSize);
-      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
+      input_size_ =
+        static_cast<size_t>(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T));
     } else {
       ShapeNdTo7d(dy_shape, &dy_shape_);
       begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
       CalcBeginAndSize(data_format, kSliceGradMaxInputShapeSize);
-      input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
-                    input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T);
+      input_size_ =
+        static_cast<size_t>(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
+                            input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T));
     }
     output_size_ = sizeof(T);
     for (auto x : dy_shape_) {
-      output_size_ = output_size_ * x;
+      output_size_ = output_size_ * static_cast<size_t>(x);
     }
     InitSizeLists();
     return true;
@@ -170,8 +172,8 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   std::vector<int64_t> begin_;
   std::vector<int64_t> size_;
   std::vector<int64_t> strides_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> dy_shape_;
+  ShapeVector input_shape_;
+  ShapeVector dy_shape_;
 
   bool is_strided_slice_;
   bool is_null_input_;

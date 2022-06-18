@@ -100,20 +100,9 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
       (void)output_shape_.insert(output_shape_.begin(), 1);
     }
 
-    output_size_ = 1;
-    for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
-    }
-
-    op_para_.in_elements_num0_ = 1;
-    for (size_t i = 0; i < input_shape1_.size(); ++i) {
-      op_para_.in_elements_num0_ *= input_shape1_[i];
-    }
-
-    op_para_.in_elements_num1_ = 1;
-    for (size_t i = 0; i < input_shape2_.size(); ++i) {
-      op_para_.in_elements_num1_ *= input_shape2_[i];
-    }
+    output_size_ = SizeOf(output_shape_);
+    op_para_.in_elements_num0_ = SizeOf(input_shape1_);
+    op_para_.in_elements_num1_ = SizeOf(input_shape2_);
 
     size_t l = input_shape1_.size();
     if (l < output_shape_.size()) {
@@ -224,11 +213,11 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
   size_t output_size_{1};
   ArithmeticParameter op_para_{};
 
-  std::vector<size_t> input_shape1_;
-  std::vector<size_t> input_shape2_;
+  ShapeVector input_shape1_;
+  ShapeVector input_shape2_;
   std::vector<size_t> input_element_num1_;
   std::vector<size_t> input_element_num2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
 
   using TypeComputeFunc = std::function<void(ArithmeticCpuTypeFunc *, const T *in_x, const T *in_y, T *out)>;

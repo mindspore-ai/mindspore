@@ -88,25 +88,11 @@ class SparseApplyProximalAdagradKernelMod : public DeprecatedNativeGpuKernelMod 
       InitSizeLists();
       return true;
     }
-    for (size_t i = 0; i < variable_shape.size(); i++) {
-      variable_size_ *= variable_shape[i];
-    }
-
-    for (size_t i = 0; i < accumulation_shape.size(); i++) {
-      accumulation_size_ *= accumulation_shape[i];
-    }
-
-    for (size_t i = 0; i < learning_rate_shape.size(); i++) {
-      learning_rate_size_ *= learning_rate_shape[i];
-    }
-
-    for (size_t i = 0; i < gradient_shape.size(); i++) {
-      gradient_size_ *= gradient_shape[i];
-    }
-
-    for (size_t i = 0; i < indices_shape.size(); i++) {
-      indices_size_ *= indices_shape[i];
-    }
+    variable_size_ *= SizeOf(variable_shape);
+    accumulation_size_ *= SizeOf(accumulation_shape);
+    learning_rate_size_ *= SizeOf(learning_rate_shape);
+    gradient_size_ *= SizeOf(gradient_shape);
+    indices_size_ *= SizeOf(indices_shape);
     InitSizeLists();
     return true;
   }

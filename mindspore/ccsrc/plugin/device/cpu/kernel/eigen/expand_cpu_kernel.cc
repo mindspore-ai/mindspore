@@ -47,10 +47,10 @@ void ExpandCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (output_num != kExpandOutputsNum) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the number of output is 1, but got " << output_num << ".";
   }
-  input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  input_x_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
   input_x_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  output_y_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  input_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShape(kernel_node, 0));
+  output_y_shape_ = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShape(kernel_node, 0));
 }
 
 bool ExpandCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,

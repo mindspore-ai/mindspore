@@ -108,8 +108,8 @@ class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod 
 
  private:
   int64_t handle_{-1};
-  std::vector<size_t> indices_shape_;
-  std::vector<size_t> priorities_shape_;
+  std::vector<int64_t> indices_shape_;
+  std::vector<int64_t> priorities_shape_;
   std::shared_ptr<PriorityReplayBuffer> prioriory_replay_buffer_{nullptr};
 };
 

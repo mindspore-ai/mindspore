@@ -132,9 +132,8 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
   gather_v2->set_scope(origin_node->scope());
 
   auto shape = common::AnfAlgo::GetOutputInferShape(origin_node, 0);
-  shape[shape.size() - 1] = pad_dim_size;
-  if (AnfUtils::IsShapeDynamic(shape)) {
-    ShapeVector shape_tmp;
+  shape[shape.size() - 1] = SizeToLong(pad_dim_size);
+  if (IsDynamic(shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(origin_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(origin_node, 0);
     if (!min_shape.empty() && !max_shape.empty()) {
@@ -142,8 +141,7 @@ CNodePtr GatherV2DsFission::CreateGatherV2Ds(const FuncGraphPtr &graph, const CN
       max_shape[max_shape.size() - 1] = SizeToLong(pad_dim_size);
     }
 
-    std::transform(shape.begin(), shape.end(), std::back_inserter(shape_tmp), SizeToLong);
-    std::vector<BaseShapePtr> shapes = {std::make_shared<abstract::Shape>(shape_tmp, min_shape, max_shape)};
+    std::vector<BaseShapePtr> shapes = {std::make_shared<abstract::Shape>(shape, min_shape, max_shape)};
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(origin_node, 0)}, shapes,
                                                  gather_v2.get());
   } else {
@@ -172,7 +170,7 @@ CNodePtr GatherV2DsFission::CreateSlice(const FuncGraphPtr &graph, const CNodePt
   auto gather_v2_shape = common::AnfAlgo::GetOutputInferShape(gather_v2, 0);
   std::vector<size_t> offsets(gather_v2_shape.size(), 0);
   common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(offsets)), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(gather_v2_shape)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(gather_v2_shape), slice);
   return slice;
 }
 

@@ -28,9 +28,8 @@ using mindspore::ps::Util;
 constexpr int kAxis = 0;
 constexpr size_t kEmbeddingLookUpPSInputSize = 3;
 
-void EmbeddingLookUpPSKernelMod::InitKernel(
-  const std::shared_ptr<std::vector<std::shared_ptr<std::vector<size_t>>>> &shapes) {
-  const std::vector<std::shared_ptr<std::vector<size_t>>> &shape_vec = *shapes;
+void EmbeddingLookUpPSKernelMod::InitKernel(const std::shared_ptr<std::vector<std::shared_ptr<ShapeVector>>> &shapes) {
+  const std::vector<std::shared_ptr<ShapeVector>> &shape_vec = *shapes;
   if (shape_vec.size() < kEmbeddingLookUpPSInputSize) {
     MS_LOG(EXCEPTION) << "EmbeddingLookUpPSKernelMod needs " << kEmbeddingLookUpPSInputSize << " input shapes, but got "
                       << shape_vec.size();
@@ -38,42 +37,39 @@ void EmbeddingLookUpPSKernelMod::InitKernel(
   for (auto shape : shape_vec) {
     MS_EXCEPTION_IF_NULL(shape);
   }
-  input_shape_ = *(shape_vec[0]);
-  if (input_shape_.empty()) {
+  auto input_shape = *(shape_vec[0]);
+  if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "Input shape can not empty";
   }
-  first_dim_size_ = input_shape_[0];
-  for (size_t i = 1; i < input_shape_.size(); ++i) {
-    outer_dim_size_ *= input_shape_[i];
-  }
+
+  first_dim_size_ = LongToSize(input_shape[0]);
+  outer_dim_size_ *= SizeOf(input_shape);
   auto indices_shape = *(shape_vec[1]);
-  indices_lens_ = 1;
-  for (auto shape : indices_shape) {
-    indices_lens_ = indices_lens_ * shape;
-  }
+  indices_lens_ = SizeOf(indices_shape);
   size_t output_index = 2;
   auto output_shape = *(shape_vec[output_index]);
 
   int64_t offset = 0;
   for (size_t i = 0; i < rank_id_; i++) {
-    offset += Util::LocalShard(SizeToLong(input_shape_[kAxis]), SizeToLong(i), SizeToLong(pserver_num_));
+    offset += Util::LocalShard(input_shape[kAxis], SizeToLong(i), SizeToLong(pserver_num_));
   }
   offset_ = offset;
 
   // input shape must be sharded after computing offset_;
-  Shard(&input_shape_, kAxis);
+  Shard(&input_shape, kAxis);
 
-  size_t output_size =
-    std::accumulate(output_shape.begin(), output_shape.end(), sizeof(float), std::multiplies<size_t>());
+  input_shape_ = Convert2SizeT(input_shape);
+
+  size_t output_size = sizeof(float) * SizeOf(output_shape);
   (void)output_size_list_.emplace_back(output_size);
 }
 
-void EmbeddingLookUpPSKernelMod::ReInit(const std::vector<std::vector<size_t>> &shapes) {
+void EmbeddingLookUpPSKernelMod::ReInit(const std::vector<ShapeVector> &shapes) {
   if (shapes.empty() || shapes[0].empty()) {
     MS_LOG(EXCEPTION) << "Shape can not empty";
   }
   const auto &indices_shape = shapes[0];
-  indices_lens_ = indices_shape[0];
+  indices_lens_ = LongToSize(indices_shape[0]);
 
   size_t output_size = sizeof(float) * indices_lens_;
   for (size_t i = kAxis + 1; i < input_shape_.size(); i++) {

@@ -52,8 +52,8 @@ class OnesLikeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   static std::vector<std::pair<KernelAttr, OnesLikeFunc>> func_list_;
   OnesLikeFunc kernel_func_;
 
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> output_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

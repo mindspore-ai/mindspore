@@ -62,7 +62,7 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
 
     output_size_ = 1;
     for (size_t i = 0; i < output_shape_.size(); ++i) {
-      output_size_ *= output_shape_[i];
+      output_size_ *= LongToSize(output_shape_[i]);
     }
 
     size_t l = input_shape1_.size();
@@ -119,11 +119,11 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
   size_t output_size_{1};
   TypeId dtype_{kTypeUnknown};
 
-  std::vector<size_t> input_shape1_;
-  std::vector<size_t> input_shape2_;
+  ShapeVector input_shape1_;
+  ShapeVector input_shape2_;
   std::vector<size_t> input_element_num1_;
   std::vector<size_t> input_element_num2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
 };
 
@@ -195,19 +195,19 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
   size_t output_size_{1};
   TypeId dtype_{kTypeUnknown};
 
-  std::vector<size_t> input_shape1_;
-  std::vector<size_t> input_shape2_;
+  ShapeVector input_shape1_;
+  ShapeVector input_shape2_;
   std::vector<size_t> input_element_num1_;
   std::vector<size_t> input_element_num2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
 };
 
 template <typename T>
 template <typename Op>
 void ArithLogicCpuTypeFunc<T>::BinaryOp(const T *input1, const T *input2, bool *out, Op op) {
-  size_t input1_size = 1;
-  size_t input2_size = 2;
+  int64_t input1_size = 1;
+  int64_t input2_size = 2;
 
   for (size_t i = 0; i < output_shape_.size(); i++) {
     input1_size *= input_shape1_[i];

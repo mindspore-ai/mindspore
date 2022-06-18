@@ -40,10 +40,8 @@ bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-void MatrixBandPartCpuKernelMod::BroadcastShape(const std::vector<size_t> &x_shape,
-                                                const std::vector<size_t> &lower_shape,
-                                                const std::vector<size_t> &upper_shape,
-                                                const std::vector<size_t> &output_shape) {
+void MatrixBandPartCpuKernelMod::BroadcastShape(const ShapeVector &x_shape, const ShapeVector &lower_shape,
+                                                const ShapeVector &upper_shape, const ShapeVector &output_shape) {
   broadcast_x_shape_.clear();
   broadcast_lower_shape_.clear();
   broadcast_upper_shape_.clear();
@@ -52,8 +50,8 @@ void MatrixBandPartCpuKernelMod::BroadcastShape(const std::vector<size_t> &x_sha
   broadcast_lower_shape_.resize(kMaxDims, 1);
   broadcast_upper_shape_.resize(kMaxDims, 1);
   broadcast_output_shape_.resize(kMaxDims, 1);
-  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape);
-  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape);
+  auto expanded_lower_shape = ops::GetExpandedShape<int64_t>(lower_shape);
+  auto expanded_upper_shape = ops::GetExpandedShape<int64_t>(upper_shape);
 
   for (size_t i = 0; i < output_shape.size(); i++) {
     broadcast_output_shape_[i] = output_shape[i];
@@ -84,20 +82,13 @@ int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto x_shape_temp = inputs.at(kIndex0)->GetShapeVector();
-  auto lower_shape_temp = inputs.at(kIndex1)->GetShapeVector();
-  auto upper_shape_temp = inputs.at(kIndex2)->GetShapeVector();
-  auto output_shape_temp = outputs.at(kIndex0)->GetShapeVector();
-  std::vector<size_t> x_shape{};
-  std::vector<size_t> lower_shape{};
-  std::vector<size_t> upper_shape{};
-  std::vector<size_t> output_shape{};
-  (void)std::transform(x_shape_temp.begin(), x_shape_temp.end(), std::back_inserter(x_shape), LongToSize);
-  (void)std::transform(lower_shape_temp.begin(), lower_shape_temp.end(), std::back_inserter(lower_shape), LongToSize);
-  (void)std::transform(upper_shape_temp.begin(), upper_shape_temp.end(), std::back_inserter(upper_shape), LongToSize);
-  (void)std::transform(output_shape_temp.begin(), output_shape_temp.end(), std::back_inserter(output_shape),
-                       LongToSize);
-  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
+
+  auto x_shape = inputs.at(kIndex0)->GetShapeVector();
+  auto lower_shape = inputs.at(kIndex1)->GetShapeVector();
+  auto upper_shape = inputs.at(kIndex2)->GetShapeVector();
+  auto output_shape = outputs.at(kIndex0)->GetShapeVector();
+
+  size_t input_element_num = SizeOf(x_shape);
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;
@@ -109,8 +100,8 @@ int MatrixBandPartCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
                   << "but got " << x_shape.size() << "D.";
     return KRET_RESIZE_FAILED;
   }
-  m_ = x_shape[dim_size_ - kDim2];
-  n_ = x_shape[dim_size_ - kDim1];
+  m_ = LongToSize(x_shape[dim_size_ - kDim2]);
+  n_ = LongToSize(x_shape[dim_size_ - kDim1]);
   if (m_ == 0 || n_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the size of -2 axis or -1 axis can not be 0, "
                   << "but got m_=" << m_ << ", n_=" << n_;

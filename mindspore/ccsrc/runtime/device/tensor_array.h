@@ -30,14 +30,14 @@ namespace device {
 class TensorArray {
  public:
   // Base TensorArray. Constructed by name, dtype and shapes.
-  TensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
+  TensorArray(const string &name, const TypePtr &dtype, const ShapeVector &shapes)
       : name_(name), dtype_(dtype), shapes_(shapes), valid_size_(0), max_size_(0), is_dynamic_(true) {}
   virtual ~TensorArray() = default;
 
   // Check the index in valid range. Used in Read().
   virtual bool CheckReadIndexLogical(const int64_t index);
   // Check the dtype and shape of the input data. Used in Write().
-  virtual bool CheckValue(const TypeId &dtype, const std::vector<size_t> &shape);
+  virtual bool CheckValue(const TypeId &dtype, const ShapeVector &shape);
 
   // Function Write() is used to insert or append dev_value to the position of index.
   virtual bool Write(const int64_t index, const mindspore::kernel::AddressPtr &dev_value);
@@ -76,7 +76,7 @@ class TensorArray {
  protected:
   std::string name_;
   TypePtr dtype_;
-  std::vector<size_t> shapes_;
+  ShapeVector shapes_;
   size_t valid_size_;
   int64_t max_size_;
   bool is_dynamic_;

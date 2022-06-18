@@ -28,7 +28,7 @@ constexpr size_t kCdistGradInputNum = 4;
 constexpr int64_t kInputXDimP = -1;
 constexpr int64_t kInputYDimR = -2;
 
-std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vector<size_t> y_shape) {
+ShapeVector CalCdistBroadCastShape(ShapeVector x_shape, ShapeVector y_shape) {
   (void)x_shape.insert(x_shape.end() + kInputXDimP, 1);
   (void)y_shape.insert(y_shape.end() + kInputYDimR, 1);
   if (x_shape.size() != y_shape.size()) {
@@ -38,7 +38,7 @@ std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vec
     return x_shape;
   }
   auto length = x_shape.size();
-  std::vector<size_t> broadcast_shape;
+  ShapeVector broadcast_shape;
   (void)std::copy(x_shape.begin(), x_shape.end() - SizeToLong(length), std::back_inserter(broadcast_shape));
   for (size_t i = length; i > 0; --i) {
     if (x_shape[length - i] == 1) {
@@ -56,7 +56,7 @@ std::vector<size_t> CalCdistBroadCastShape(std::vector<size_t> x_shape, std::vec
 }
 
 AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, int64_t dim,
-                              const std::vector<size_t> &need_shape, const PatternProcessPass &pass) {
+                              const ShapeVector &need_shape, const PatternProcessPass &pass) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   // Add ExpandDims Node
@@ -74,9 +74,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
     NewValueNode(std::make_shared<Primitive>(prim::kPrimBroadcastTo->name())), expand_dims};
   auto broadcast_to = pass.NewCNode(broadcast_to_inputs, func_graph);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {need_shape}, broadcast_to.get());
-  std::vector<int64_t> shape;
-  (void)std::transform(need_shape.begin(), need_shape.end(), std::back_inserter(shape), LongToSize);
-  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(shape), broadcast_to);
+  common::AnfAlgo::SetNodeAttr(kAttrShape, MakeValue(need_shape), broadcast_to);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), broadcast_to);
   return broadcast_to;
 }

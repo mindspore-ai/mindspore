@@ -98,7 +98,7 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input_x") ||
                      CHECK_SHAPE_NULL(padding_shape, kernel_name, "paddings") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, padding_shape, output_shape})) {
       InitSizeLists();
       return true;
     }
@@ -117,13 +117,13 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     for (auto in_shape : input_shape) {
-      input_size_ *= in_shape;
-      input_shape_.push_back(in_shape);
+      input_size_ *= LongToSizeClipNeg(in_shape);
+      input_shape_.push_back(LongToInt(in_shape));
     }
     num_input_ = input_size_;
     input_size_ *= sizeof(T);
 
-    num_paddings_ = padding_shape[0];
+    num_paddings_ = LongToSizeClipNeg(padding_shape[0]);
     input_size_ += IntToSize(kSymmetricCoef) * num_paddings_ * sizeof(int64_t);
 
     output_size_ = sizeof(T);
@@ -133,8 +133,8 @@ class MirrorPadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << "got the " << output_shape.size();
     }
     for (auto x : output_shape) {
-      output_size_ *= x;
-      output_shape_.push_back(x);
+      output_size_ *= LongToSizeClipNeg(x);
+      output_shape_.push_back(LongToInt(x));
     }
 
     int max_width = input_shape_[kIndexForMaxWidth];

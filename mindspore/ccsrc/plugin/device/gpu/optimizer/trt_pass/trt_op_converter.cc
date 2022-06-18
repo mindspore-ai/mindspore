@@ -98,9 +98,9 @@ ConvertResult AddElementLayer(AnfNodePtr node, std::shared_ptr<TrtConverterConte
     return {false, {}};
   }
 
-  const std::vector<size_t> &x1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  const std::vector<size_t> &x2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  const std::vector<size_t> &y_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  const auto &x1_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
+  const auto &x2_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1));
+  const ShapeVector &y_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
 
   auto Broadcast = [&context, &y_shape](nvinfer1::ITensor *tensor, const std::vector<size_t> &x_shape) {
     if (x_shape.size() == y_shape.size()) {
@@ -208,7 +208,7 @@ ConvertResult AddReduceLayer(AnfNodePtr node, std::shared_ptr<TrtConverterContex
   }
 
   // Calculate reduce axes bitmask
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   const ValuePtr &value = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("axis");
   uint32_t reduce_axes = 0;
   if (value->isa<ValueTuple>() || value->isa<ValueList>()) {
@@ -366,7 +366,7 @@ MS_TRT_CONVERTER_FUNC_REG(ReLU6) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   nvinfer1::Dims dim;
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
@@ -401,7 +401,7 @@ MS_TRT_CONVERTER_FUNC_REG(GeLU) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   nvinfer1::Dims dim;
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
@@ -452,7 +452,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSigmoid) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   nvinfer1::Dims dim;
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
@@ -493,7 +493,7 @@ MS_TRT_CONVERTER_FUNC_REG(HSwish) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   nvinfer1::Dims dim;
   dim.nbDims = SizeToInt(x_shape.size());
   std::fill(dim.d, dim.d + dim.nbDims, 1);
@@ -550,8 +550,8 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
     // Apply addFullyConnected: y = x * w^T + b
     nvinfer1::Weights bias{nvinfer1::DataType::kFLOAT, nullptr, 0};
     const auto &w_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-    auto *layer =
-      context->network()->addFullyConnected(*x_reshape->getOutput(0), w_shape[0], *inputs[1].weight(), bias);
+    auto *layer = context->network()->addFullyConnected(*x_reshape->getOutput(0), LongToSize(w_shape[0]),
+                                                        *inputs[1].weight(), bias);
     MS_EXCEPTION_IF_NULL(layer);
 
     // Reshape x from (M, N, 1, 1) to (M, N)
@@ -564,10 +564,10 @@ MS_TRT_CONVERTER_FUNC_REG(MatMul) {
   } else {
     auto op1 = transpose_a ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
     auto op2 = transpose_b ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
-    const std::vector<size_t> &x1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-    const std::vector<size_t> &x2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-    nvinfer1::ITensor *x1 = ToTensor(&inputs[0], x1_shape, context);
-    nvinfer1::ITensor *x2 = ToTensor(&inputs[1], x2_shape, context);
+    const auto &x1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+    const auto &x2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+    nvinfer1::ITensor *x1 = ToTensor(&inputs[0], Convert2SizeTClipNeg(x1_shape), context);
+    nvinfer1::ITensor *x2 = ToTensor(&inputs[1], Convert2SizeTClipNeg(x2_shape), context);
     auto *layer = context->network()->addMatrixMultiply(*x1, op1, *x2, op2);
     MS_EXCEPTION_IF_NULL(layer);
     return {true, {layer->getOutput(0)}};
@@ -587,8 +587,8 @@ MS_TRT_CONVERTER_FUNC_REG(BatchMatMul) {
   const auto &trt_transpose1 = transpose_a ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
   const auto &trt_transpose2 = transpose_b ? nvinfer1::MatrixOperation::kTRANSPOSE : nvinfer1::MatrixOperation::kNONE;
 
-  std::vector<size_t> shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
-  std::vector<size_t> shape2 = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  auto shape1 = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
+  auto shape2 = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1));
   nvinfer1::ITensor *tensor1 = ToTensor(&inputs[0], shape1, context);
   nvinfer1::ITensor *tensor2 = ToTensor(&inputs[1], shape2, context);
   auto *layer = context->network()->addMatrixMultiply(*tensor1, trt_transpose1, *tensor2, trt_transpose2);
@@ -616,7 +616,7 @@ MS_TRT_CONVERTER_FUNC_REG(BiasAdd) {
 
   // Convert bias to ITensor same dims as x.
   std::vector<size_t> unsqueeze_bias_dims(x_shape.size(), 1);
-  unsqueeze_bias_dims[pos] = SizeToInt(bias_shape[0]);
+  unsqueeze_bias_dims[pos] = LongToInt(bias_shape[0]);
   nvinfer1::ITensor *bias = ToTensor(&inputs[1], unsqueeze_bias_dims, context);
 
   // Create Broadcast Add layer.
@@ -666,8 +666,8 @@ MS_TRT_CONVERTER_FUNC_REG(BatchNorm) {
   auto epsilon = common::AnfAlgo::GetNodeAttr<float>(node, "epsilon");
 
   const TypeId &type = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 1);
-  const std::vector<size_t> &shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
-  int64_t channel_num = SizeToLong(shape[0]);
+  const auto &shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  int64_t channel_num = shape[0];
   auto coeff = context->CreateTempWeight(type, shape);
   auto bias = context->CreateTempWeight(type, shape);
   auto coeff_value = static_cast<float *>(coeff->data_c());
@@ -735,7 +735,7 @@ MS_TRT_CONVERTER_FUNC_REG(Conv2DBackpropInput) {
   const auto &output_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   const nvinfer1::Weights &bias{nvinfer1::DataType::kFLOAT, nullptr, 0};
   auto *layer = context->network()->addDeconvolutionNd(
-    *(inputs[0].tensor()), SizeToInt(output_shape[1]),
+    *(inputs[0].tensor()), LongToInt(output_shape[1]),
     nvinfer1::DimsHW{LongToInt(kernel_size[0]), LongToInt(kernel_size[1])}, *(inputs[1].weight()), bias);
   MS_EXCEPTION_IF_NULL(layer);
 
@@ -811,7 +811,7 @@ MS_TRT_CONVERTER_FUNC_REG(Softmax) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   const ValuePtr &value = common::AnfAlgo::GetCNodePrimitive(node)->GetAttr("axis");
   uint32_t reduce_axes = 0;
   if (value->isa<ValueTuple>() || value->isa<ValueList>()) {
@@ -842,7 +842,7 @@ MS_TRT_CONVERTER_FUNC_REG(LogSoftmax) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   const auto &axis = common::AnfAlgo::GetNodeAttr<int64_t>(node, "axis");
   int offset = axis >= 0 ? LongToInt(axis) : LongToInt(axis + input_shape.size());
   uint32_t reduce_axes = 1UL << offset;
@@ -865,12 +865,12 @@ MS_TRT_CONVERTER_FUNC_REG(Gather) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
   auto axis = common::AnfAlgo::GetNodeAttr<int64_t>(node, "axis");
   axis = axis >= 0 ? axis : axis + input_shape.size();
 
   nvinfer1::ITensor *input = ToTensor(&inputs[0], input_shape, context);
-  const std::vector<size_t> &indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1);
+  const auto &indices_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 1));
   nvinfer1::ITensor *indices = ToTensor(&inputs[1], indices_shape, context);
 
   auto *layer = context->network()->addGather(*input, *indices, LongToInt(axis));
@@ -887,7 +887,7 @@ MS_TRT_CONVERTER_FUNC_REG(Cast) {
     return {false, {}};
   }
 
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+  const auto &input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0));
   nvinfer1::ITensor *input = ToTensor(&inputs[0], input_shape, context);
 
   const TypeId &dst_type = common::AnfAlgo::GetOutputInferDataType(node, 0);
@@ -917,7 +917,7 @@ MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
   }
 
   // Calculate reduce axes
-  const std::vector<size_t> &input_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
+  const auto &input_shape = common::AnfAlgo::GetOutputInferShape(node, 0);
   auto begin_norm_axis = common::AnfAlgo::GetNodeAttr<int64_t>(node, "begin_norm_axis");
   begin_norm_axis = begin_norm_axis >= 0 ? begin_norm_axis : begin_norm_axis + input_shape.size();
   uint32_t reduce_axes = 0;
@@ -928,7 +928,7 @@ MS_TRT_CONVERTER_FUNC_REG(LayerNorm) {
   // Reshape gamma and beta for broadcast
   auto begin_params_axis = common::AnfAlgo::GetNodeAttr<int64_t>(node, "begin_params_axis");
   begin_params_axis = begin_params_axis >= 0 ? begin_params_axis : begin_params_axis + input_shape.size();
-  std::vector<size_t> param_shape = input_shape;
+  auto param_shape = Convert2SizeTClipNeg(input_shape);
   for (size_t j = 0; j < LongToSize(begin_params_axis); j++) {
     param_shape[j] = 1;
   }

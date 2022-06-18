@@ -93,7 +93,7 @@ bool ArgMaxWithValueCpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  shape_ = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShape(kernel_node, 0));
   size_t shape_len = shape_.size();
   int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);

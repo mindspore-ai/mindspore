@@ -28,7 +28,7 @@ namespace device {
 namespace cpu {
 class CPUTensorArray : public TensorArray {
  public:
-  CPUTensorArray(const string &name, const TypePtr &dtype, const std::vector<size_t> &shapes)
+  CPUTensorArray(const string &name, const TypePtr &dtype, const ShapeVector &shapes)
       : TensorArray(name, dtype, shapes) {}
   ~CPUTensorArray() override = default;
   void FreeMemory(const DeviceMemPtr addr) override;

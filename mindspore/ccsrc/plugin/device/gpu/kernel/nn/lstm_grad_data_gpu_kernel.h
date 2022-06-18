@@ -114,6 +114,9 @@ class LstmGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto input_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (IsDynamic(input_shape)) {
+      return true;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();
@@ -123,8 +126,8 @@ class LstmGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be less than 2, but got "
                         << input_shape.size();
     }
-    seq_len_ = SizeToInt(input_shape[0]);
-    batch_size_ = SizeToInt(input_shape[1]);
+    seq_len_ = LongToInt(input_shape[0]);
+    batch_size_ = LongToInt(input_shape[1]);
     GetAttrs(kernel_node);
     cudnnRNNInputMode_t input_mode = CUDNN_LINEAR_INPUT;
     cudnnDirectionMode_t direction = bidirectional_ ? CUDNN_BIDIRECTIONAL : CUDNN_UNIDIRECTIONAL;
@@ -170,8 +173,8 @@ class LstmGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 #endif
     const size_t kPrevOutput4th = 4;
     auto weight_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput4th);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "weight");
-    if (is_null_input_) {
+    is_null_input_ = CHECK_SHAPE_NULL(weight_shape, kernel_name, "weight");
+    if (is_null_input_ || IsDynamic(weight_shape)) {
       InitSizeLists();
       return true;
     }
@@ -179,7 +182,7 @@ class LstmGradDataGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of weight cannot be less than 3, but got "
                         << weight_shape.size();
     }
-    size_t weight_size = weight_shape[0] * weight_shape[1] * weight_shape[2] * sizeof(T);
+    size_t weight_size = LongToSizeClipNeg(weight_shape[0] * weight_shape[1] * weight_shape[2]) * sizeof(T);
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                 cudnnGetRNNParamsSize(handle_, rnn_desc_, dx_desc_[0], &weight_size_, cudnn_data_type_),
                                 "get weight_size_ failed");

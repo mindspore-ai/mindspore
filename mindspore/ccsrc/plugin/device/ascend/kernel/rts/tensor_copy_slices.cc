@@ -99,12 +99,9 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
                       << " output_type_id_:" << output_type_id_;
   }
 
-  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 0);
-  auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 1);
-  auto output_shape = AnfAlgo::GetOutputDeviceShape(anf_node, 0);
-  CastShapeSizeToLong(input_shape, &input_shape_);
-  CastShapeSizeToLong(update_shape, &update_shape_);
-  CastShapeSizeToLong(output_shape, &output_shape_);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 0);
+  update_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(anf_node, 1);
+  output_shape_ = AnfAlgo::GetOutputDeviceShape(anf_node, 0);
 }
 
 void *TensorCopySlices::VoidPointerOffset(void *ptr, size_t offset) const {

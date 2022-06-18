@@ -72,9 +72,9 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   std::string kernel_name_;
   TypeId input_type_1_{kTypeUnknown};
   TypeId input_type_2_{kTypeUnknown};
-  std::vector<size_t> input_shape_1_;
-  std::vector<size_t> input_shape_2_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_1_;
+  ShapeVector input_shape_2_;
+  ShapeVector output_shape_;
   size_t output_size_ = 1;
   const size_t max_dims_{7};
 };

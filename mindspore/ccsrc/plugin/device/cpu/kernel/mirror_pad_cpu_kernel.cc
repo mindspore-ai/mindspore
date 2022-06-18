@@ -52,24 +52,18 @@ void MirrorPadCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'mode' must be 'REFLECT' or 'SYMMETRIC', but got " << mode;
   }
 
-  std::vector<size_t> input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  shape_size_ = input_shape.size();
-  (void)input_shape.insert(input_shape.begin(), kPadMaxSupportDim - shape_size_, 1);
+  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  shape_size_ = input_shape_.size();
+  (void)input_shape_.insert(input_shape_.begin(), SizeToLong(kPadMaxSupportDim - shape_size_), 1);
   shape_size_ = kPadMaxSupportDim;
 
-  for (size_t i = 0; i < shape_size_; ++i) {
-    tensor_size_ *= input_shape[i];
-    input_shape_.push_back(SizeToLong(input_shape[i]));
-  }
+  tensor_size_ = SizeOf(input_shape_);
 
-  std::vector<size_t> padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  num_paddings_ = SizeToLong(padding_shape[0]);
+  auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  num_paddings_ = padding_shape[0];
 
-  auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  for (auto x : output_shape) {
-    output_size_ *= x;
-    output_shape_.push_back(SizeToLong(x));
-  }
+  output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+  output_size_ = SizeOf(output_shape_);
 
   int64_t max_width = input_shape_[3];
   int64_t max_height = input_shape_[2];

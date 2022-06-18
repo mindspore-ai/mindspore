@@ -71,17 +71,14 @@ class CombineMomentumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       input_num_ = 7;
     }
     for (size_t i = 0; i < num_; i++) {
-      element_num_ = 1;
       auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i * input_num_ + input_num_ - 5);
       is_null_input_ = CHECK_SHAPE_NULL(variable_shape, kernel_name_,
                                         "input[" + std::to_string(i * input_num_ + input_num_ - 5) + "]");
-      if (is_null_input_) {
+      if (is_null_input_ || IsDynamic(variable_shape)) {
         InitSizeLists();
         return true;
       }
-      for (size_t j = 0; j < variable_shape.size(); j++) {
-        element_num_ *= variable_shape[j];
-      }
+      element_num_ = SizeOf(variable_shape);
       elements_.push_back(element_num_);
       InitSizeLists();
     }

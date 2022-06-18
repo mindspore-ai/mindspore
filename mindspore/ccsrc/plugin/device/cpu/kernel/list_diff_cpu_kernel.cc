@@ -48,8 +48,8 @@ void ListDiffCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex0);
   auto y_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndex1);
-  x_size_ = static_cast<int64_t>(x_shape[0]);
-  y_size_ = static_cast<int64_t>(y_shape[0]);
+  x_size_ = x_shape[0];
+  y_size_ = y_shape[0];
   auto out_idx = common::AnfAlgo::GetNodeAttr<TypePtr>(kernel_node, kAttrOutIdx);
   MS_EXCEPTION_IF_NULL(out_idx);
   idx_type_ = out_idx->type_id();
@@ -96,8 +96,8 @@ bool ListDiffCPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, c
     if (!node_) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', cnode_ptr_(kernel_node) is expired. Error no: " << node_;
     }
-    std::vector<size_t> out_shape = {static_cast<size_t>(out_size_)};
-    std::vector<size_t> idx_shape = {static_cast<size_t>(out_size_)};
+    ShapeVector out_shape = {out_size_};
+    ShapeVector idx_shape = {out_size_};
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(node_);
     std::vector<TypeId> dtypes(output_num);
     for (size_t i = 0; i < output_num; i++) {

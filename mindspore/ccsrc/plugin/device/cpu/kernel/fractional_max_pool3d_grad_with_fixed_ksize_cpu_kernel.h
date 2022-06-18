@@ -41,9 +41,9 @@ class FractionalMaxPool3DGradWithFixedKsizeCPUKernelMod : public DeprecatedNativ
   template <typename backprop_t>
   bool DoComputeWithArgmaxType(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                                TypeId argmax_type);
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> out_backprop_shape_;
-  std::vector<size_t> argmax_shape_;
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> out_backprop_shape_;
+  std::vector<int64_t> argmax_shape_;
   std::string data_format_;
   TypeId out_backprop_type_;
   TypeId argmax_type_;

@@ -116,7 +116,7 @@ void PsEmbeddingCacheInserter::GetEmbeddingLookupNodes() {
     int64_t rank_id_attr = GetValue<int64_t>(prim->GetAttr(distributed::kOpLabelRankId));
     std::string node_role_attr = GetValue<std::string>(prim->GetAttr(distributed::kOpLabelRole));
     if (rank_id_attr == rank_id_ && node_role_attr == node_role_) {
-      std::vector<size_t> shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
+      auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
       shapes_to_nodes_[shape] = node;
     }
   });
@@ -329,12 +329,12 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
 
   ParameterPtr update_values = graph->add_parameter();
   MS_EXCEPTION_IF_NULL(update_values);
-  std::vector<size_t> emb_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
+  auto emb_shape = common::AnfAlgo::GetOutputInferShape(param, 0);
   if (emb_shape.size() != kEmbeddingTableDims) {
     MS_LOG(EXCEPTION) << "Embedding table should be 2 dims for embedding cache mode, but got: " << emb_shape.size()
                       << " dims";
   }
-  int64_t emb_dim = SizeToLong(emb_shape.back());
+  int64_t emb_dim = emb_shape.back();
   ShapeVector update_values_shape = {-1, emb_dim};
   ShapeVector update_values_min_shape = {1, emb_dim};
   ShapeVector update_values_max_shape = {1, emb_dim};

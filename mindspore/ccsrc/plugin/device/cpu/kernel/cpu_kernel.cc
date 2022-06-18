@@ -116,7 +116,7 @@ void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_no
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
     TypeId type_id = AnfAlgo::GetInputDeviceDataType(kernel_node, input_index);
     size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    std::vector<size_t> shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
+    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, input_index);
     size_t tensor_size =
       shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     tensor_size = std::max(tensor_size, type_size);
@@ -124,12 +124,7 @@ void DeprecatedNativeCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_no
   }
   size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    TypeId type_id = AnfAlgo::GetOutputDeviceDataType(kernel_node, output_index);
-    size_t type_size = GetTypeByte(TypeIdToType(type_id));
-    std::vector<size_t> shape = AnfAlgo::GetOutputDeviceShape(kernel_node, output_index);
-    size_t tensor_size =
-      shape.empty() ? type_size : std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
-    tensor_size = std::max(tensor_size, type_size);
+    size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(kernel_node, output_index);
     (void)output_size_list_.emplace_back(tensor_size);
   }
 }
@@ -196,7 +191,7 @@ void DeprecatedNativeCpuKernelMod::SetCpuRefMapToKernelInfo(const CNodePtr &appl
   }
 }
 
-void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
+void CPUKernelUtils::ExpandDimsTo4(ShapeVector *shape) {
   MS_EXCEPTION_IF_NULL(shape);
   auto len = shape->size();
   const size_t expect_dims = 4;
@@ -207,29 +202,28 @@ void CPUKernelUtils::ExpandDimsTo4(std::vector<size_t> *shape) {
   }
 }
 
-size_t CPUKernelUtils::CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2,
-                                  size_t dim3) {
+size_t CPUKernelUtils::CalcOffset(const ShapeVector &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3) {
   size_t offset = dim0 * shape[1] * shape[2] * shape[3] + dim1 * shape[2] * shape[3] + dim2 * shape[3] + dim3;
   return offset;
 }
 
-size_t CPUKernelUtils::GetElementNumOnAxis(const std::vector<size_t> &shape, int axis) {
+size_t CPUKernelUtils::GetElementNumOnAxis(const ShapeVector &shape, int axis) {
   if (axis < 0) {
     axis = axis + SizeToInt(shape.size());
   }
-  size_t result = 1;
+  int64_t result = 1;
   for (int j = 3; j > axis; --j) {
     result *= shape[j];
   }
-  return result;
+  return LongToSize(result);
 }
 
-void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num) {
+void CPUKernelUtils::GetElementNumEveryDim(const ShapeVector &shape, std::vector<size_t> *element_num) {
   size_t accumulation = 1;
   MS_EXCEPTION_IF_NULL(element_num);
   (void)element_num->emplace_back(1);
   for (size_t i = shape.size() - 1; i > 0; --i) {
-    accumulation *= shape[i];
+    accumulation *= LongToSizeClipNeg(shape[i]);
     (void)element_num->emplace_back(accumulation);
   }
   std::reverse(element_num->begin(), element_num->end());
@@ -393,12 +387,12 @@ void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
   }
 }
 
-std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &shape, int axis) {
+ShapeVector CPUKernelUtils::FlatShapeByAxis(const ShapeVector &shape, int axis) {
   if (axis < 0) {
     axis = axis + SizeToInt(shape.size());
   }
-  size_t dim_row = 1;
-  size_t dim_col = 1;
+  int64_t dim_row = 1;
+  int64_t dim_col = 1;
   for (size_t i = 0; i < shape.size(); ++i) {
     if (SizeToInt(i) < axis) {
       dim_row *= shape[i];
@@ -408,11 +402,10 @@ std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &s
   }
   // referred to Copy elision https://en.cppreference.com/w/cpp/language/copy_elision
   // returning a vector won't cause extra vector constructed or moved
-  return std::vector<size_t>{dim_row, dim_col};
+  return ShapeVector{dim_row, dim_col};
 }
 
-BroadcastIterator::BroadcastIterator(std::vector<size_t> input_shape_a, std::vector<size_t> input_shape_b,
-                                     std::vector<size_t> output_shape)
+BroadcastIterator::BroadcastIterator(ShapeVector input_shape_a, ShapeVector input_shape_b, ShapeVector output_shape)
     : input_shape_a_(std::move(input_shape_a)),
       input_shape_b_(std::move(input_shape_b)),
       output_shape_(std::move(output_shape)) {
@@ -455,12 +448,12 @@ void BroadcastIterator::GenNextPos() {
 void BroadcastIterator::BroadcastShape() {
   int input_dimension_a = input_shape_a_.size();
   if (input_dimension_a < output_dimension_) {
-    (void)input_shape_a_.insert(input_shape_a_.begin(), IntToSize(output_dimension_ - input_dimension_a), 1);
+    (void)input_shape_a_.insert(input_shape_a_.begin(), IntToLong(output_dimension_ - input_dimension_a), 1);
   }
 
   int input_dimension_b = input_shape_b_.size();
   if (input_dimension_b < output_dimension_) {
-    (void)input_shape_b_.insert(input_shape_b_.begin(), IntToSize(output_dimension_ - input_dimension_b), 1);
+    (void)input_shape_b_.insert(input_shape_b_.begin(), IntToLong(output_dimension_ - input_dimension_b), 1);
   }
 }
 
@@ -489,8 +482,8 @@ MultipleBroadcastIterator::MultipleBroadcastIterator(std::vector<shape_info> mul
   BroadcastShape();
   input_pos_.resize(multi_inputs_.size());
   // Allocate strides memory
-  multi_inputs_strides_.resize(multi_inputs_.size(), std::vector<size_t>(output_dimension_, 0));
-  multi_inputs_back_strides_.resize(multi_inputs_.size(), std::vector<size_t>(output_dimension_, 0));
+  multi_inputs_strides_.resize(multi_inputs_.size(), std::vector<int64_t>(output_dimension_, 0));
+  multi_inputs_back_strides_.resize(multi_inputs_.size(), std::vector<int64_t>(output_dimension_, 0));
   coordinates_.resize(output_dimension_);
   InitStrides();
 }
@@ -527,7 +520,7 @@ void MultipleBroadcastIterator::BroadcastShape() {
   for (auto &multi_input : multi_inputs_) {
     int input_dimension = SizeToInt(multi_input.size());
     if (input_dimension < output_dimension_) {
-      (void)multi_input.insert(multi_input.begin(), IntToSize(output_dimension_ - input_dimension), 1);
+      (void)multi_input.insert(multi_input.begin(), IntToLong(output_dimension_ - input_dimension), 1);
     }
   }
 }
@@ -546,8 +539,7 @@ void MultipleBroadcastIterator::InitStrides() {
   }
 }
 
-TransposeIterator::TransposeIterator(std::vector<size_t> output_shape, std::vector<size_t> axes,
-                                     const std::vector<size_t> &input_shape)
+TransposeIterator::TransposeIterator(ShapeVector output_shape, std::vector<size_t> axes, const ShapeVector &input_shape)
     : shape_(std::move(output_shape)), axes_(std::move(axes)) {
   // Calculate strides
   dimension_ = shape_.size();
@@ -589,12 +581,12 @@ void TransposeIterator::GenNextPos() {
   }
 }
 
-std::vector<size_t> CPUKernelUtils::GetBroadcastShape(const std::vector<size_t> &x, const std::vector<size_t> &y) {
+ShapeVector CPUKernelUtils::GetBroadcastShape(const ShapeVector &x, const ShapeVector &y) {
   size_t x_len = x.size();
   size_t y_len = y.size();
   size_t length = x_len < y_len ? x_len : y_len;
-  std::vector<size_t> broadcast_shape;
-  std::vector<size_t> broadcast_shape_back;
+  ShapeVector broadcast_shape;
+  ShapeVector broadcast_shape_back;
   for (int i = -length; i < 0; ++i) {
     if (x[x_len + i] == 1) {
       broadcast_shape_back.push_back(y[y_len + i]);
@@ -619,17 +611,17 @@ std::vector<size_t> CPUKernelUtils::GetBroadcastShape(const std::vector<size_t> 
   return broadcast_shape;
 }
 
-void AxisIterator::Init(const std::vector<size_t> &input_shape, size_t axis) {
+void AxisIterator::Init(const ShapeVector &input_shape, size_t axis) {
   outer_size_ = 1;
   for (size_t i = 0; i < axis; i++) {
-    outer_size_ *= input_shape[i];
+    outer_size_ *= LongToSize(input_shape[i]);
   }
 
   axis_size_ = input_shape[axis];
 
   inner_size_ = 1;
   for (size_t i = axis + 1; i < input_shape.size(); ++i) {
-    inner_size_ *= input_shape[i];
+    inner_size_ *= LongToSize(input_shape[i]);
   }
 }
 

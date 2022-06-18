@@ -84,7 +84,7 @@ void CalSplitAttrs(SplitvNodeInfo *splitv_node_info) {
   }
   int64_t num_split = 0;
   int64_t split_middle_size = splitv_node_info->base_shape[splitv_node_info->split_dim];
-  std::vector<size_t> shape_tmp(splitv_node_info->base_shape);
+  auto shape_tmp(splitv_node_info->base_shape);
   // [top, bottom, left, right]
   int64_t first_size =
     splitv_node_info->split_dim == kWDim ? splitv_node_info->send_lens[kDim2] : splitv_node_info->send_lens[0];
@@ -96,7 +96,7 @@ void CalSplitAttrs(SplitvNodeInfo *splitv_node_info) {
     ++num_split;
     splitv_node_info->size_splits.push_back(first_size);
     split_middle_size -= first_size;
-    shape_tmp[splitv_node_info->split_dim] = static_cast<size_t>(first_size);
+    shape_tmp[splitv_node_info->split_dim] = first_size;
     splitv_node_info->shapes.push_back(shape_tmp);
   }
   if (splitv_node_info->is_last) {
@@ -105,18 +105,18 @@ void CalSplitAttrs(SplitvNodeInfo *splitv_node_info) {
     if (split_middle_size > 0) {
       ++num_split;
       splitv_node_info->size_splits.push_back(split_middle_size);
-      shape_tmp[splitv_node_info->split_dim] = static_cast<size_t>(split_middle_size);
+      shape_tmp[splitv_node_info->split_dim] = split_middle_size;
       splitv_node_info->shapes.push_back(shape_tmp);
     }
     // last
     ++num_split;
     splitv_node_info->size_splits.push_back(last_size);
-    shape_tmp[splitv_node_info->split_dim] = static_cast<size_t>(last_size);
+    shape_tmp[splitv_node_info->split_dim] = last_size;
     splitv_node_info->shapes.push_back(shape_tmp);
   } else if (split_middle_size > 0) {
     ++num_split;
     splitv_node_info->size_splits.push_back(split_middle_size);
-    shape_tmp[splitv_node_info->split_dim] = static_cast<size_t>(split_middle_size);
+    shape_tmp[splitv_node_info->split_dim] = split_middle_size;
     splitv_node_info->shapes.push_back(shape_tmp);
   }
   splitv_node_info->num_split = num_split;
@@ -132,17 +132,17 @@ CNodePtr CreateSliceNode(const FuncGraphPtr &graph, const std::vector<AnfNodePtr
 
   auto slice = pass.NewCNode(slice_input, graph);
   MS_EXCEPTION_IF_NULL(slice);
-  std::vector<size_t> slice_shape(slice_node_info.base_shape);
-  std::vector<size_t> begins(slice_shape.size(), 0);
+  ShapeVector slice_shape(slice_node_info.base_shape);
+  std::vector<int64_t> begins(slice_shape.size(), 0);
 
   slice_shape[slice_node_info.slice_dim] = slice_node_info.slice_size;
   begins[slice_node_info.slice_dim] = slice_node_info.slice_begin;
 
-  std::vector<std::vector<size_t>> shapes = {slice_shape};
+  std::vector<ShapeVector> shapes = {slice_shape};
   std::vector<TypeId> dtypes(1, slice_node_info.input_dtype);
   common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, shapes, slice.get());
-  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(Convert2Long(begins)), slice);
-  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(Convert2Long(slice_shape)), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrBegin, MakeValue(begins), slice);
+  common::AnfAlgo::SetNodeAttr(kAttrSize, MakeValue(slice_shape), slice);
   return slice;
 }
 
@@ -183,26 +183,21 @@ CNodePtr CreateSplitNode(const FuncGraphPtr &graph, const AnfNodePtr &split_inpu
   return make_tuple;
 }
 
-std::vector<std::vector<size_t>> CalAllToAllvOutputShape(const std::vector<size_t> &base_shape,
-                                                         const std::vector<int64_t> &recv_lens,
-                                                         const std::vector<int64_t> &recv_rank_ids) {
+std::vector<ShapeVector> CalAllToAllvOutputShape(const ShapeVector &base_shape, const std::vector<int64_t> &recv_lens,
+                                                 const std::vector<int64_t> &recv_rank_ids) {
   if (SizeToLong(base_shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Wrong base_shape size: " << base_shape.size() << ", it should be equal to 4.";
   }
-  std::vector<std::vector<size_t>> shapes = {};
-  std::vector<std::vector<size_t>> ori_shapes = {
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenTopIdx]), base_shape[kWDim]},
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenTopIdx]),
-     static_cast<size_t>(recv_lens[kLenRightIdx])},
-    {base_shape[0], base_shape[1], base_shape[kHDim], static_cast<size_t>(recv_lens[kLenRightIdx])},
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenBottomIdx]),
-     static_cast<size_t>(recv_lens[kLenRightIdx])},
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenBottomIdx]), base_shape[kWDim]},
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenBottomIdx]),
-     static_cast<size_t>(recv_lens[kLenLeftIdx])},
-    {base_shape[0], base_shape[1], base_shape[kHDim], static_cast<size_t>(recv_lens[kLenLeftIdx])},
-    {base_shape[0], base_shape[1], static_cast<size_t>(recv_lens[kLenTopIdx]),
-     static_cast<size_t>(recv_lens[kLenLeftIdx])}};
+  std::vector<ShapeVector> shapes = {};
+  std::vector<ShapeVector> ori_shapes = {
+    {base_shape[0], base_shape[1], recv_lens[kLenTopIdx], base_shape[kWDim]},
+    {base_shape[0], base_shape[1], recv_lens[kLenTopIdx], recv_lens[kLenRightIdx]},
+    {base_shape[0], base_shape[1], base_shape[kHDim], recv_lens[kLenRightIdx]},
+    {base_shape[0], base_shape[1], recv_lens[kLenBottomIdx], recv_lens[kLenRightIdx]},
+    {base_shape[0], base_shape[1], recv_lens[kLenBottomIdx], base_shape[kWDim]},
+    {base_shape[0], base_shape[1], recv_lens[kLenBottomIdx], recv_lens[kLenLeftIdx]},
+    {base_shape[0], base_shape[1], base_shape[kHDim], recv_lens[kLenLeftIdx]},
+    {base_shape[0], base_shape[1], recv_lens[kLenTopIdx], recv_lens[kLenLeftIdx]}};
 
   for (size_t idx = 0; idx < recv_rank_ids.size(); ++idx) {
     if (recv_rank_ids[idx] != kInvalidId) {
@@ -367,7 +362,7 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   if (SizeToLong(base_shape.size()) != kShapeSize) {
     MS_LOG(EXCEPTION) << "Invalid shape size " << base_shape.size() << ", only support NCHW input now!";
   }
-  std::vector<std::vector<size_t>> shapes = CalAllToAllvOutputShape(base_shape, recv_lens, recv_rank_ids);
+  auto shapes = CalAllToAllvOutputShape(base_shape, recv_lens, recv_rank_ids);
 
   // erase -1 in send_rank_ids
   std::vector<int64_t> real_send_rank_ids(send_rank_ids.size());
@@ -511,7 +506,7 @@ std::vector<CNodePtr> NeighborExchangeV2Fusion::CreateSplitNodes(const FuncGraph
 
 CNodePtr NeighborExchangeV2Fusion::CreateConcatNode(const FuncGraphPtr &graph,
                                                     const std::vector<AnfNodePtr> &concat_input,
-                                                    const std::vector<std::vector<size_t>> &output_shape,
+                                                    const std::vector<ShapeVector> &output_shape,
                                                     const std::vector<TypeId> &output_dtype, int64_t axis,
                                                     int64_t input_nums) const {
   MS_EXCEPTION_IF_NULL(graph);
@@ -542,11 +537,11 @@ CNodePtr NeighborExchangeV2Fusion::CreateLeftRightConcat(const FuncGraphPtr &gra
 
   if (recv_rank_ids[first_ids] != kInvalidId) {
     ++input_num;
-    single_shape[kDim2] += static_cast<size_t>(recv_lens[0]);  // H in NCHW
+    single_shape[kDim2] += recv_lens[0];  // H in NCHW
   }
   if (recv_rank_ids[last_ids] != kInvalidId) {
     ++input_num;
-    single_shape[kDim2] += static_cast<size_t>(recv_lens[1]);  // H in NCHW
+    single_shape[kDim2] += recv_lens[1];  // H in NCHW
   }
   if (is_left) {
     concat_input.insert(concat_input.end(), all_to_all_v_outputs.rbegin(), all_to_all_v_outputs.rbegin() + input_num);
@@ -572,8 +567,8 @@ CNodePtr NeighborExchangeV2Fusion::CreateMiddleConcat(const FuncGraphPtr &graph,
   auto single_shape = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
   size_t first_idx = concat_dim == kWDim ? kIndex6 : kIndex0;
   size_t last_idx = concat_dim == kWDim ? kIndex2 : kIndex4;
-  size_t first_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim2]) : static_cast<size_t>(recv_lens[0]);
-  size_t last_len = concat_dim == kWDim ? static_cast<size_t>(recv_lens[kDim3]) : static_cast<size_t>(recv_lens[1]);
+  auto first_len = concat_dim == kWDim ? recv_lens[kDim2] : recv_lens[0];
+  auto last_len = concat_dim == kWDim ? recv_lens[kDim3] : recv_lens[1];
 
   // left
   if (recv_rank_ids[first_idx] != kInvalidId) {
@@ -667,11 +662,9 @@ CNodePtr NeighborExchangeV2Fusion::CreateConcatNodes(const FuncGraphPtr &graph, 
 
   std::vector<AnfNodePtr> concat_input_all = {NewValueNode(std::make_shared<Primitive>(kConcatOpName))};
   auto neighbor_exchange_v2_input = neighbor_exchange_v2->input(kNeighborExchangeV2InputIdx);
-  std::vector<size_t> shape_all = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
-  shape_all[kDim2] =
-    recv_rank_ids[kRankIdZero] != kInvalidId ? shape_all[kDim2] + static_cast<size_t>(recv_lens[0]) : shape_all[kDim2];
-  shape_all[kDim2] =
-    recv_rank_ids[kRankIdFour] != kInvalidId ? shape_all[kDim2] + static_cast<size_t>(recv_lens[1]) : shape_all[kDim2];
+  auto shape_all = common::AnfAlgo::GetOutputInferShape(neighbor_exchange_v2_input, 0);
+  shape_all[kDim2] = recv_rank_ids[kRankIdZero] != kInvalidId ? shape_all[kDim2] + recv_lens[0] : shape_all[kDim2];
+  shape_all[kDim2] = recv_rank_ids[kRankIdFour] != kInvalidId ? shape_all[kDim2] + recv_lens[1] : shape_all[kDim2];
   int64_t input_nums_all = 0;
   // left concat
   if (is_left) {
@@ -802,7 +795,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradFusion::CreateSplitNodesForGrad(cons
       split_num->push_back(0);
     }
     for (size_t i = 0; i < split_outputs_top_bottom.size(); ++i) {
-      std::vector<size_t> base_shape(shape);
+      ShapeVector base_shape(shape);
       base_shape[kHDim] = size_split_h[i];
       splitv_w_node_info.base_shape = base_shape;
       auto split_v_left_right = CreateSplitNode(graph, split_outputs_top_bottom[i], &splitv_w_node_info, *this);
@@ -828,7 +821,7 @@ std::vector<CNodePtr> NeighborExchangeV2GradFusion::CreateSplitNodesForGrad(cons
 
 CNodePtr NeighborExchangeV2GradFusion::CreatePadNode(const FuncGraphPtr &graph, const AnfNodePtr &input,
                                                      const std::vector<int64_t> &begin,
-                                                     const std::vector<int64_t> &size, const std::vector<size_t> &shape,
+                                                     const std::vector<int64_t> &size, const ShapeVector &shape,
                                                      TypeId dtype) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(input);
@@ -836,7 +829,7 @@ CNodePtr NeighborExchangeV2GradFusion::CreatePadNode(const FuncGraphPtr &graph, 
   auto pad = NewCNode(pad_inputs, graph);
   std::vector<std::vector<int64_t>> paddings;
   for (size_t i = 0; i < shape.size(); ++i) {
-    paddings.emplace_back(std::vector<int64_t>{begin[i], static_cast<int64_t>(shape[i]) - begin[i] - size[i]});
+    paddings.emplace_back(std::vector<int64_t>{begin[i], shape[i] - begin[i] - size[i]});
   }
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {shape}, pad.get());
   common::AnfAlgo::SetNodeAttr(kAttrPaddings, MakeValue(paddings), pad);
@@ -884,28 +877,24 @@ CNodePtr NeighborExchangeV2GradFusion::CreateSplitGradNodes(const FuncGraphPtr &
   }
   // create pad nodes
   // slice begin & size
-  std::vector<std::vector<int64_t>> begins = {{0, 0, 0, 0},
-                                              {0, 0, 0, static_cast<int64_t>(centerx_shape[kDim3]) - recv_lens[kDim3]},
-                                              {0, 0, 0, static_cast<int64_t>(centerx_shape[kDim3]) - recv_lens[kDim3]},
-                                              {0, 0, static_cast<int64_t>(centerx_shape[kDim2]) - recv_lens[kDim1],
-                                               static_cast<int64_t>(centerx_shape[kDim3]) - recv_lens[kDim3]},
-                                              {0, 0, static_cast<int64_t>(centerx_shape[kDim2]) - recv_lens[kDim1], 0},
-                                              {0, 0, static_cast<int64_t>(centerx_shape[kDim2]) - recv_lens[kDim1], 0},
-                                              {0, 0, 0, 0},
-                                              {0, 0, 0, 0}};
+  std::vector<std::vector<int64_t>> begins = {
+    {0, 0, 0, 0},
+    {0, 0, 0, centerx_shape[kDim3] - recv_lens[kDim3]},
+    {0, 0, 0, centerx_shape[kDim3] - recv_lens[kDim3]},
+    {0, 0, centerx_shape[kDim2] - recv_lens[kDim1], centerx_shape[kDim3] - recv_lens[kDim3]},
+    {0, 0, centerx_shape[kDim2] - recv_lens[kDim1], 0},
+    {0, 0, centerx_shape[kDim2] - recv_lens[kDim1], 0},
+    {0, 0, 0, 0},
+    {0, 0, 0, 0}};
   std::vector<std::vector<int64_t>> sizes = {
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[0],
-     static_cast<int64_t>(centerx_shape[kDim3])},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[0], recv_lens[kDim3]},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]),
-     static_cast<int64_t>(centerx_shape[kDim2]), recv_lens[kDim3]},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[1], recv_lens[kDim3]},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[1],
-     static_cast<int64_t>(centerx_shape[kDim3])},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[1], recv_lens[kDim2]},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]),
-     static_cast<int64_t>(centerx_shape[kDim2]), recv_lens[kDim2]},
-    {static_cast<int64_t>(centerx_shape[0]), static_cast<int64_t>(centerx_shape[1]), recv_lens[0], recv_lens[kDim2]}};
+    {centerx_shape[0], centerx_shape[1], recv_lens[0], centerx_shape[kDim3]},
+    {centerx_shape[0], centerx_shape[1], recv_lens[0], recv_lens[kDim3]},
+    {centerx_shape[0], centerx_shape[1], centerx_shape[kDim2], recv_lens[kDim3]},
+    {centerx_shape[0], centerx_shape[1], recv_lens[1], recv_lens[kDim3]},
+    {centerx_shape[0], centerx_shape[1], recv_lens[1], centerx_shape[kDim3]},
+    {centerx_shape[0], centerx_shape[1], recv_lens[1], recv_lens[kDim2]},
+    {centerx_shape[0], centerx_shape[1], centerx_shape[kDim2], recv_lens[kDim2]},
+    {centerx_shape[0], centerx_shape[1], recv_lens[0], recv_lens[kDim2]}};
   std::vector<CNodePtr> pad_nodes;
   size_t output_index = 0;
   for (size_t i = 0; i < recv_rank_ids.size(); ++i) {

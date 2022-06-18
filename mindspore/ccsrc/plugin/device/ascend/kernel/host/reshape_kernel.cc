@@ -45,7 +45,7 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
                       << trace::DumpSourceLines(cnode);
   }
 
-  size_t x_num = shape_x[0];
+  auto x_num = shape_x[0];
   std::vector<int64_t> x{SizeToLong(x_num)};
 
   auto x_shape_value = std::make_shared<tensor::Tensor>(type_x, x);
@@ -60,7 +60,7 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   } else {
     auto x_value = reinterpret_cast<int *>(x_shape_value->data_c());
     MS_EXCEPTION_IF_NULL(x_value);
-    for (size_t i = 0; i < x_num; i++) {
+    for (int64_t i = 0; i < x_num; i++) {
       input_shape.push_back(static_cast<int64_t>(*x_value));
       ++x_value;
     }

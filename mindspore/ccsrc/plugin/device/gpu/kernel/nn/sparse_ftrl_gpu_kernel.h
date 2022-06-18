@@ -75,7 +75,7 @@ class SparseFtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     gradient_size_ = sizeof(T);
     indices_size_ = sizeof(S);
 
-    auto variable_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto variable_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
     auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
@@ -96,28 +96,17 @@ class SparseFtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
     }
 
-    for (size_t i = 0; i < accumulation_shape.size(); i++) {
-      accumulation_size_ *= accumulation_shape[i];
-    }
-
-    for (size_t i = 0; i < linear_shape.size(); i++) {
-      linear_size_ *= linear_shape[i];
-    }
-
-    for (size_t i = 0; i < gradient_shape.size(); i++) {
-      gradient_size_ *= gradient_shape[i];
-    }
-
-    for (size_t i = 0; i < indices_shape.size(); i++) {
-      indices_size_ *= indices_shape[i];
-    }
+    accumulation_size_ *= SizeOf(accumulation_shape);
+    linear_size_ *= SizeOf(linear_shape);
+    gradient_size_ *= SizeOf(gradient_shape);
+    indices_size_ *= SizeOf(indices_shape);
 
     lr_ = GetAttr<float>(kernel_node, "lr");
     l1_ = GetAttr<float>(kernel_node, "l1");
     l2_ = GetAttr<float>(kernel_node, "l2");
     lr_power_ = GetAttr<float>(kernel_node, "lr_power");
     use_locking_ = GetAttr<bool>(kernel_node, "use_locking");
-    num_index_ = indices_shape[0];
+    num_index_ = LongToSizeClipNeg(indices_shape[0]);
 
     InitSizeLists();
     return true;

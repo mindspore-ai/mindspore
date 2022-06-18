@@ -73,7 +73,7 @@ class MatrixSetDiagCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   int max_diag_len_{0};
   int outer_batch_{1};
   bool is_single_diag_{true};
-  std::vector<size_t> input_shape_;
+  ShapeVector input_shape_;
   // <super_matrix_diag_align, sub_matrix_diag_align>
   std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> alignment_{MatrixDiag::RIGHT, MatrixDiag::LEFT};
   TypeId data_type_{0};
