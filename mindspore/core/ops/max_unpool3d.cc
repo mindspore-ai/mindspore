@@ -39,9 +39,6 @@ abstract::ShapePtr MaxUnpool3DInferShapeCompute(const std::string &data_format, 
     int64_t out_w = static_cast<int64_t>((in_shape[kInputIndex4] - 1) * strides[kInputIndex4] - 2 * pads[kInputIndex4] +
                                          ksize[kInputIndex4]);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], in_shape[kInputIndex1], out_d, out_h, out_w};
-    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-      MS_LOG(EXCEPTION) << "MaxUnpool3D: Output size is not valid.";
-    }
     if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
@@ -76,9 +73,6 @@ abstract::ShapePtr MaxUnpool3DInferShapeCompute(const std::string &data_format, 
     int64_t out_w = static_cast<int64_t>((in_shape[kInputIndex3] - 1) * strides[kInputIndex3] - 2 * pads[kInputIndex3] +
                                          ksize[kInputIndex3]);
     std::vector<int64_t> out_shape = {in_shape[kInputIndex0], out_d, out_h, out_w, in_shape[kInputIndex4]};
-    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
-      MS_LOG(EXCEPTION) << "MaxUnpool3D: Output size is not valid.";
-    }
     if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
@@ -159,6 +153,8 @@ AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const Prim
   auto infer_shape = MaxUnpool3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+std::string MaxUnpool3D::get_format() const { return GetValue<std::string>(GetAttr(kFormat)); }
+
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool3D, prim::kPrimMaxUnpool3D, MaxUnpool3DInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

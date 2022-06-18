@@ -73,6 +73,7 @@ AbstractBasePtr MaxUnpool3DGradInfer(const abstract::AnalysisEnginePtr &, const 
   auto infer_shape = MaxUnpool3DGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+std::string MaxUnpool3DGrad::get_format() const { return GetValue<std::string>(GetAttr(kFormat)); }
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool3DGrad, prim::kPrimMaxUnpool3DGrad, MaxUnpool3DGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

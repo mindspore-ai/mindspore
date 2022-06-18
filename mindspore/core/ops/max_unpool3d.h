@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_MAXUNPOOL3D_H_
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -29,6 +30,7 @@ class MIND_API MaxUnpool3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxUnpool3D);
   MaxUnpool3D() : BaseOperator(kNameMaxUnpool3D) { InitIOName({"x", "argmax"}, {"y"}); }
+  std::string get_format() const;
 };
 
 abstract::AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
