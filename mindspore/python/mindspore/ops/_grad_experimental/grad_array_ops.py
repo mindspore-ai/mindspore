@@ -16,7 +16,6 @@
 """array_ops"""
 
 from mindspore import Tensor
-from mindspore.ops.primitive import constexpr
 from ...common import dtype as mstype
 from ...numpy.array_ops import where
 from .._grad.grad_math_ops import binop_grad_common
@@ -25,7 +24,6 @@ from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.array_ops import Tril
 from ..operations.array_ops import MatrixDiagV3
 from ..operations.array_ops import MatrixDiagPartV3
-from ..operations.array_ops import ResizeNearestNeighborV2
 from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Triu
 from ..operations.array_ops import IdentityN
@@ -38,12 +36,6 @@ from ..operations.array_ops import SegmentMean
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
-from ..operations import _grad_ops as G
-
-
-@constexpr
-def _create_tensor(data, dtype):
-    return Tensor(data, dtype=dtype)
 
 
 def _segment_min_or_max_grad(segment_sum_op, input_x, segment_ids, output, dout):
@@ -269,25 +261,6 @@ def get_bprop_identity_n(self):
 
     def bprop(x, out, dout):
         return (dout,)
-
-    return bprop
-
-
-@bprop_getters.register(ResizeNearestNeighborV2)
-def get_bprop_resize_nearest_neighbor_v2(self):
-    """Generate bprop for ResizeNearestNeighborV2"""
-    align_corners = self.align_corners
-    half_pixel_centers = self.half_pixel_centers
-    data_format = self.data_format
-    grad_op = G.ResizeNearestNeighborV2Grad(align_corners, half_pixel_centers, data_format)
-
-    def bprop(x, size, output, dout):
-        x_shape = P.Shape()(x)
-        grad_in_size = x_shape[1:3]
-        if data_format == 'NCHW':
-            grad_in_size = x_shape[2:4]
-        dx = grad_op(dout, _create_tensor(grad_in_size, mstype.int32))
-        return dx, zeros_like(grad_in_size)
 
     return bprop
 
