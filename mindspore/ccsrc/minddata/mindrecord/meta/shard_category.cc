@@ -37,7 +37,9 @@ ShardCategory::ShardCategory(const std::string &category_field, int64_t num_elem
 Status ShardCategory::Execute(ShardTaskList &tasks) { return Status::OK(); }
 
 int64_t ShardCategory::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
-  if (dataset_size == 0) return dataset_size;
+  if (dataset_size == 0) {
+    return dataset_size;
+  }
   if (dataset_size > 0 && num_classes > 0 && num_categories_ > 0 && num_elements_ > 0) {
     num_classes = std::min(num_categories_, num_classes);
     if (num_classes == 0) {

@@ -91,7 +91,9 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
       int64_t count = 0;
       if (nums_per_shard_.empty()) {
         for (int64_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-          if (no_of_samples_ != 0 && count == no_of_samples_) break;
+          if (no_of_samples_ != 0 && count == no_of_samples_) {
+            break;
+          }
           new_tasks.AssignTask(tasks, i % total_no);  // rounding up. if overflow, go back to start
           count++;
         }
@@ -99,7 +101,9 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
         // Get samples within a specific range
         int64_t i = partition_id_ - 1 >= 0 ? nums_per_shard_[partition_id_ - 1] : 0;
         for (; i < nums_per_shard_[partition_id_]; i++) {
-          if (no_of_samples_ != 0 && count == no_of_samples_) break;
+          if (no_of_samples_ != 0 && count == no_of_samples_) {
+            break;
+          }
           new_tasks.AssignTask(tasks, i % total_no);
           count++;
         }
@@ -113,7 +117,9 @@ Status ShardSample::UpdateTasks(ShardTaskList &tasks, int64_t taking) {
       total_no > 0, "[Internal ERROR] 'total_no' should be positive but got: " + std::to_string(total_no));
     int64_t cnt = 0;
     for (int64_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
-      if (no_of_samples_ != 0 && cnt == no_of_samples_) break;
+      if (no_of_samples_ != 0 && cnt == no_of_samples_) {
+        break;
+      }
       new_tasks.AssignTask(tasks, tasks.permutation_[i % total_no]);
       cnt++;
     }
@@ -129,8 +135,12 @@ Status ShardSample::Execute(ShardTaskList &tasks) {
     for (int64_t x = 0; x < denominator_; x++) {
       int64_t samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
       int64_t remainder = (num_rows_ + offset_) % denominator_;
-      if (x < remainder) samples_per_buffer_++;
-      if (x < offset_) samples_per_buffer_--;
+      if (x < remainder) {
+        samples_per_buffer_++;
+      }
+      if (x < offset_) {
+        samples_per_buffer_--;
+      }
       old_v += samples_per_buffer_;
       // nums_per_shard_ is used to save the current shard's ending index
       nums_per_shard_.push_back(old_v);

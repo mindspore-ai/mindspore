@@ -73,7 +73,9 @@ void ShardTaskList::PopBack() { task_list_.pop_back(); }
 int64_t ShardTaskList::Size() const { return static_cast<int64_t>(task_list_.size()); }
 
 int64_t ShardTaskList::SizeOfRows() const {
-  if (task_list_.size() == 0) return static_cast<int64_t>(0);
+  if (task_list_.size() == 0) {
+    return static_cast<int64_t>(0);
+  }
 
   // 1 task is 1 page
   const size_t kBlobInfoIndex = 2;
@@ -101,7 +103,9 @@ ShardTask &ShardTaskList::GetRandomTask() {
 ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks, bool replacement, int64_t num_elements,
                                      int64_t num_samples) {
   ShardTaskList res;
-  if (category_tasks.empty()) return res;
+  if (category_tasks.empty()) {
+    return res;
+  }
   auto total_categories = category_tasks.size();
   res.categories = static_cast<int64_t>(total_categories);
   if (replacement == false) {
@@ -112,7 +116,9 @@ ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks,
     int64_t count = 0;
     for (int64_t task_no = 0; task_no < minTasks; task_no++) {
       for (int64_t i = 0; i < total_categories; i++) {
-        if (num_samples != 0 && count == num_samples) break;
+        if (num_samples != 0 && count == num_samples) {
+          break;
+        }
         res.InsertTask(std::move(category_tasks[i].GetTaskByID(task_no)));
         count++;
       }
@@ -128,7 +134,9 @@ ShardTaskList ShardTaskList::Combine(std::vector<ShardTaskList> &category_tasks,
     int64_t count = 0;
     for (int64_t i = 0; i < total_categories; i++) {
       for (int64_t j = 0; j < maxTasks; j++) {
-        if (num_samples != 0 && count == num_samples) break;
+        if (num_samples != 0 && count == num_samples) {
+          break;
+        }
         res.InsertTask(category_tasks[i].GetRandomTask());
         count++;
       }

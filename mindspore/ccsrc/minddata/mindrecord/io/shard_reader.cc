@@ -655,8 +655,9 @@ Status ShardReader::ReadRowGroupCriteria(int group_id, int shard_id,
 int ShardReader::SelectCallback(void *p_data, int num_fields, char **p_fields, char **p_col_names) {
   auto *records = static_cast<std::vector<std::vector<std::string>> *>(p_data);
   if (num_fields > 0 && num_fields <= kMaxFieldCount) {
-    for (int i = 0; i < num_fields; ++i)
+    for (int i = 0; i < num_fields; ++i) {
       if (p_fields[i] == nullptr) p_fields[i] = const_cast<char *>("");
+    }
   }
   records->emplace_back(p_fields, p_fields + num_fields);
   return 0;
@@ -697,7 +698,9 @@ std::vector<std::vector<uint64_t>> ShardReader::GetImageOffset(int page_id, int 
     MS_LOG(DEBUG) << "Succeed to get " << image_offsets.size() << " records from index.";
   }
   std::vector<std::vector<uint64_t>> res;
-  for (int i = static_cast<int>(image_offsets.size()) - 1; i >= 0; i--) res.emplace_back(std::vector<uint64_t>{0, 0});
+  for (int i = static_cast<int>(image_offsets.size()) - 1; i >= 0; i--) {
+    res.emplace_back(std::vector<uint64_t>{0, 0});
+  }
   for (int i = 0; i < static_cast<int>(image_offsets.size()); i++) {
     const auto &image_offset = image_offsets[i];
     res[i][0] = std::stoull(image_offset[0]) + kInt64Len;
@@ -894,7 +897,9 @@ Status ShardReader::GetLabels(int page_id, int shard_id, const std::vector<std::
     auto db = database_paths_[shard_id];
     std::string fields;
     for (unsigned int i = 0; i < columns.size(); ++i) {
-      if (i > 0) fields += ',';
+      if (i > 0) {
+        fields += ',';
+      }
       uint64_t schema_id = column_schema_id_[columns[i]];
       fields += columns[i] + "_" + std::to_string(schema_id);
     }
@@ -1309,7 +1314,9 @@ Status ShardReader::CreateTasks(const std::vector<std::tuple<int, int, int, uint
     RETURN_IF_NOT_OK_MR((*op)(tasks_));
   }
 
-  if (tasks_.permutation_.empty()) tasks_.MakePerm();
+  if (tasks_.permutation_.empty()) {
+    tasks_.MakePerm();
+  }
   num_rows_ = tasks_.Size();
   MS_LOG(INFO) << "The total number of samples is " << num_rows_
                << ", the number of samples after sampling is: " << tasks_.sample_ids_.size();
@@ -1473,7 +1480,9 @@ Status ShardReader::UnCompressBlob(const std::vector<uint8_t> &raw_blob_data,
   auto loaded_columns = selected_columns_.size() == 0 ? shard_column_->GetColumnName() : selected_columns_;
   auto blob_fields = GetBlobFields().second;
   for (uint32_t i_col = 0; i_col < loaded_columns.size(); ++i_col) {
-    if (std::find(blob_fields.begin(), blob_fields.end(), loaded_columns[i_col]) == blob_fields.end()) continue;
+    if (std::find(blob_fields.begin(), blob_fields.end(), loaded_columns[i_col]) == blob_fields.end()) {
+      continue;
+    }
     const unsigned char *data = nullptr;
     std::unique_ptr<unsigned char[]> data_ptr;
     uint64_t n_bytes = 0;
@@ -1523,7 +1532,9 @@ void ShardReader::ShuffleTask() {
       }
     }
   }
-  if (tasks_.permutation_.empty()) tasks_.MakePerm();
+  if (tasks_.permutation_.empty()) {
+    tasks_.MakePerm();
+  }
 }
 
 const std::vector<int64_t> *ShardReader::GetSampleIds() {
