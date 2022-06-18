@@ -574,28 +574,24 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
-    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] HWC2CHW: load image failed.");
-    }
-    if (input_cv->Rank() == 2) {
+    if (input->Rank() == kMinImageRank) {
       // If input tensor is 2D, we assume we have hw dimensions
       *output = input;
       return Status::OK();
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      input_cv->shape().Size() > kChannelIndexHWC,
-      "HWC2CHW: rank of input data should be greater than:" + std::to_string(kChannelIndexHWC) +
-        ", but got:" + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
-    if (input_cv->shape().Size() != kDefaultImageRank) {
-      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape should be <H,W,C>, but got rank: " +
-                               std::to_string(input_cv->shape().Size()));
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] HWC2CHW: load image failed.");
+    }
+    if (input_cv->Rank() != kDefaultImageRank) {
+      RETURN_STATUS_UNEXPECTED("HWC2CHW: image shape should be <H,W> or <H,W,C>, but got rank: " +
+                               std::to_string(input_cv->Rank()));
     }
     cv::Mat output_img;
 
     int height = input_cv->shape()[0];
     int width = input_cv->shape()[1];
+    int num_channels = input_cv->shape()[kChannelIndexHWC];
 
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, input_cv->type(), &output_cv));
