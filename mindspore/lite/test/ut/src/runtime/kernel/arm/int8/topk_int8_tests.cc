@@ -40,7 +40,7 @@ TEST_F(TestTopKInt8, TopK) {
   std::vector<lite::Tensor *> inputs = {&in_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor0, &out_tensor1};
 
-  TopkParameter parameter = {{}, 2, true, 3, 4};
+  TopkParameter parameter = {{}, 2, 2, true, 3, 4, 1};
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, NHWC, schema::PrimitiveType_TopKFusion};
 
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);

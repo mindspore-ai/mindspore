@@ -33,6 +33,7 @@ PrimitiveCPtr TFTopKParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "The begin_mask attr should be specified";
     return nullptr;
   }
+  prim->set_axis(-1);
   prim->set_sorted(attr_value.b());
 
   *output_size = 2;

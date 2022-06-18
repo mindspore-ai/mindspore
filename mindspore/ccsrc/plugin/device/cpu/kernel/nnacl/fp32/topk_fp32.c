@@ -39,57 +39,65 @@ int IndexSortCmp(const void *a, const void *b) {
 }
 
 void Topk(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter) {
-  int last_dim_size = parameter->last_dim_size_;
-  int loop_num = parameter->loop_num_;
+  int dim_size = parameter->dim_size_;
+  int outer_loop_num = parameter->outer_loop_num_;
+  int inner_loop_num = parameter->inner_loop_num_;
   int k = parameter->k_;
   TopkNode *top_map = (TopkNode *)parameter->topk_node_list_;
 
   float *cur_input_data = (float *)input_data;
   float *cur_output_data = (float *)output_data;
   int32_t *cur_output_index = output_index;
-  for (int i = 0; i < loop_num; i++) {
-    for (int j = 0; j < last_dim_size; j++) {
-      top_map[j].element = *(cur_input_data + j);
-      top_map[j].index = j;
+  for (int i = 0; i < outer_loop_num; i++) {
+    int in_offset = i * dim_size * inner_loop_num;
+    int out_offset = i * k * inner_loop_num;
+    for (int j = 0; j < inner_loop_num; j++) {
+      for (int m = 0; m < dim_size; m++) {
+        int offset = in_offset + m * inner_loop_num + j;
+        top_map[m].element = *(cur_input_data + offset);
+        top_map[m].index = m;
+      }
+      qsort(top_map, dim_size, sizeof(top_map[0]), DescendCmp);
+      if (!parameter->sorted_) {
+        qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
+      }
+      for (int m = 0; m < k; m++) {
+        int offset = out_offset + m * inner_loop_num + j;
+        cur_output_data[offset] = top_map[m].element;
+        cur_output_index[offset] = top_map[m].index;
+      }
     }
-    qsort(top_map, last_dim_size, sizeof(top_map[0]), DescendCmp);
-    if (!parameter->sorted_) {
-      qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
-    }
-    for (int m = 0; m < k; m++) {
-      cur_output_data[m] = top_map[m].element;
-      cur_output_index[m] = top_map[m].index;
-    }
-    cur_input_data += last_dim_size;
-    cur_output_data += k;
-    cur_output_index += k;
   }
 }
 
 void TopkInt(void *input_data, void *output_data, int32_t *output_index, TopkParameter *parameter) {
-  int last_dim_size = parameter->last_dim_size_;
-  int loop_num = parameter->loop_num_;
+  int dim_size = parameter->dim_size_;
+  int outer_loop_num = parameter->outer_loop_num_;
+  int inner_loop_num = parameter->inner_loop_num_;
   int k = parameter->k_;
   TopkNode *top_map = (TopkNode *)parameter->topk_node_list_;
 
   int *cur_input_data = (int *)input_data;
   int *cur_output_data = (int *)output_data;
   int32_t *cur_output_index = output_index;
-  for (int i = 0; i < loop_num; i++) {
-    for (int j = 0; j < last_dim_size; j++) {
-      top_map[j].element = *(cur_input_data + j);
-      top_map[j].index = j;
+  for (int i = 0; i < outer_loop_num; i++) {
+    int in_offset = i * dim_size * inner_loop_num;
+    int out_offset = i * k * inner_loop_num;
+    for (int j = 0; j < inner_loop_num; j++) {
+      for (int m = 0; m < dim_size; m++) {
+        int offset = in_offset + m * inner_loop_num + j;
+        top_map[m].element = *(cur_input_data + offset);
+        top_map[m].index = m;
+      }
+      qsort(top_map, dim_size, sizeof(top_map[0]), DescendCmp);
+      if (!parameter->sorted_) {
+        qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
+      }
+      for (int m = 0; m < k; m++) {
+        int offset = out_offset + m * inner_loop_num + j;
+        cur_output_data[offset] = top_map[m].element;
+        cur_output_index[offset] = top_map[m].index;
+      }
     }
-    qsort(top_map, last_dim_size, sizeof(top_map[0]), DescendCmp);
-    if (!parameter->sorted_) {
-      qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
-    }
-    for (int m = 0; m < k; m++) {
-      cur_output_data[m] = top_map[m].element;
-      cur_output_index[m] = top_map[m].index;
-    }
-    cur_input_data += last_dim_size;
-    cur_output_data += k;
-    cur_output_index += k;
   }
 }

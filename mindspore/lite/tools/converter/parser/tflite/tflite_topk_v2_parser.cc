@@ -28,7 +28,7 @@ PrimitiveCPtr TfliteTopKV2Parser::Parse(const std::unique_ptr<tflite::OperatorT>
                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto prim = std::make_unique<ops::TopKFusion>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
-
+  prim->set_axis(-1);
   prim->set_sorted(true);
 
   return prim->GetPrim();
