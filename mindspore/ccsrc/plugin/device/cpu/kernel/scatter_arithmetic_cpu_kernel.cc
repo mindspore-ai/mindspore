@@ -85,7 +85,8 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (IsDynamic(input_shape)) {
+  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (IsDynamic(input_shape) || IsDynamic(indices_shape)) {
     return;
   }
   if (input_shape.size() < 1) {
@@ -106,7 +107,6 @@ void ScatterArithmeticCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
   }
   inner_size_ = LongToSize(size_tmp);
   input_size_ = LongToSize(input_shape[0]) * inner_size_;
-  auto indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
   size_tmp = 1;
   for (size_t i = 0; i < indices_shape.size(); i++) {
     size_tmp *= indices_shape[i];

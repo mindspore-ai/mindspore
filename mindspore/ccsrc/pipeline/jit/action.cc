@@ -980,7 +980,12 @@ void SetRunMode(const ResourcePtr &resource) {
   auto mode = context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE);
   auto is_task_sink = context_ptr->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
   auto enable_hccl = context_ptr->get_param<bool>(MS_CTX_ENABLE_HCCL);
-  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI()) {
+  // After the distributed interface on D is unified, the following flag and judgment will be removed.
+  bool enbale_distributed_mindrt = false;
+#ifdef WITH_BACKEND
+  enbale_distributed_mindrt = ps::PSContext::instance()->enable_distributed_mindrt();
+#endif
+  if (!is_task_sink && mode == kGraphMode && enable_hccl && !common::UseMPI() && !enbale_distributed_mindrt) {
     MS_LOG(EXCEPTION) << "Current execute mode must launch process with OpenMPI";
   }
 }
