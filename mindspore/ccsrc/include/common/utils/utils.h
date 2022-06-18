@@ -392,8 +392,6 @@ constexpr auto kHcomOpTypeReceive = "HcomReceive";
 constexpr auto kHcomOpTypeReduceScatter = "HcomReduceScatter";
 
 // attr key name
-constexpr auto kAttrAlignCorners = "align_corners";
-constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";
 constexpr auto kAttrInputNames = "input_names";
 constexpr auto kAttrAttrNames = "attr_names";
 constexpr auto kAttrIsAiCpuKernel = "is_AICPU_kernel";
