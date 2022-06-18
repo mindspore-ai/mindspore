@@ -625,9 +625,10 @@ class ReduceMean(_Reduce):
         >>> print(result)
         (3, 1, 5, 6)
         >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
-        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
-        ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
-        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+        >>> x = Tensor(np.array([[[2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2]],
+        ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
+        ... mindspore.float32)
         >>> output = op(x)
         >>> print(output)
         [[[5.]]]
@@ -648,16 +649,21 @@ class ReduceMean(_Reduce):
         >>> # case 4: Reduces a dimension along the axis 2
         >>> output = op(x, 2)
         >>> print(output)
-        [[[1.       ]
-          [2.       ]
-          [3.       ]]
-         [[4.       ]
-          [5.       ]
-          [6.       ]]
-         [[7.0000005]
-          [8.       ]
-          [9.       ]]]
+        [[[ 2.]
+          [ 2.]
+          [ 2.]]
+         [[ 4.]
+          [ 5.]
+          [ 6.]]
+         [[ 6.]
+          [ 8.]
+          [10.]]]
     """
+
+    @prim_attr_register
+    def __init__(self, keep_dims=False):
+        """Initialize ReduceMean"""
+        super(ReduceMean, self).__init__(keep_dims)
 
 
 class ReduceSum(_Reduce):
