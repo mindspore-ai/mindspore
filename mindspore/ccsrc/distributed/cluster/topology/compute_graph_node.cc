@@ -98,15 +98,15 @@ bool ComputeGraphNode::Finalize(bool force) {
 bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(hb_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
-  RETURN_IF_FALSE_WITH_LOG(hb_client_->Disconnect(server_url),
-                           "Failed to disconnect from the meta server node url: " << server_url);
-  RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url),
-                           "Failed to connect to the meta server node url: " << server_url);
+  if (!hb_client_->IsConnected(server_url)) {
+    RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url),
+                             "Failed to connect to the meta server node url: " << server_url);
+  }
 
-  RETURN_IF_FALSE_WITH_LOG(tcp_client_->Disconnect(server_url),
-                           "Failed to disconnect from the meta server node url: " << server_url);
-  RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
-                           "Failed to connect to the meta server node url: " << server_url);
+  if (!tcp_client_->IsConnected(server_url)) {
+    RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
+                             "Failed to connect to the meta server node url: " << server_url);
+  }
 
   RegistrationMessage reg_msg;
   reg_msg.set_node_id(node_id_);
@@ -213,9 +213,8 @@ bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const s
     if (!success) {
       // Retry to reconnect to the meta server.
       MS_LOG(ERROR) << error;
-      while (!Reconnect()) {
-        continue;
-      }
+      sleep(kExecuteInterval);
+      (void)Reconnect();
     }
   }
   return success;
@@ -232,17 +231,16 @@ bool ComputeGraphNode::Reconnect() {
   }
 
   // Reconnect to the meta server node.
-  const size_t retry = 3;
-  size_t total_retry = retry;
-  const size_t connect_retry = retry;
-  while (!tcp_client_->IsConnected(server_url) && total_retry-- > 0) {
-    tcp_client_->Connect(server_url, connect_retry);
+  if (!tcp_client_->IsConnected(server_url)) {
+    tcp_client_->Connect(server_url, kNoRetry);
   }
-  total_retry = retry;
-  while (!hb_client_->IsConnected(server_url) && total_retry-- > 0) {
-    hb_client_->Connect(server_url, connect_retry);
+  if (!tcp_client_->IsConnected(server_url)) {
+    return false;
   }
-  return tcp_client_->IsConnected(server_url) && hb_client_->IsConnected(server_url);
+  if (!hb_client_->IsConnected(server_url)) {
+    hb_client_->Connect(server_url, kNoRetry);
+  }
+  return hb_client_->IsConnected(server_url);
 }
 
 bool ComputeGraphNode::SendMessageToMSN(const std::string msg_name, const std::string &msg_body, bool sync) {
