@@ -377,7 +377,7 @@ Status PyExecute::operator()(const std::shared_ptr<Tensor> &input_tensor, std::s
       de_tensor_list = std::move(de_output_list);
     }
     CHECK_FAIL_RETURN_UNEXPECTED(de_tensor_list.size() > 0,
-                                 "[internal] transformation resulted in a tensor with size=0!");
+                                 "[Internal] Transformation resulted in a tensor with size=0!");
     *out = std::move(de_tensor_list.getRow())[0];
   } else {
     std::string err_msg = "Your input device is not supported. (Option: CPU)";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -864,6 +864,17 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
                        [&max_value](const auto &s) { return s * max_value; });
   *data = py::array(py::dtype("S" + std::to_string(max_value)), shape_.AsVector(), strides, tmp_data);
   data_allocator_->deallocate(reinterpret_cast<uchar *>(tmp_data));
+  return Status::OK();
+}
+Status Tensor::GetDataAsNumpyUnicodeStrings(py::array *data) {
+  RETURN_UNEXPECTED_IF_NULL(data);
+  std::vector<std::string_view> string_pointers;
+  string_pointers.reserve(Size());
+  // Iterate over tensor and create a vector of string_views of strings in the tensor.
+  (void)std::transform(begin<std::string_view>(), end<std::string_view>(), std::back_inserter(string_pointers),
+                       [](const auto &element) { return element; });
+  *data = py::array(py::cast(string_pointers));
+  data->resize(shape_.AsVector());
   return Status::OK();
 }
 #endif

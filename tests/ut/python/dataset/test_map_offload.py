@@ -20,7 +20,6 @@ import mindspore.common.dtype as mstype
 import mindspore.dataset.vision as C
 import mindspore.dataset.transforms as C2
 
-
 DATA_DIR = "../data/dataset/testPK/data"
 BATCH_SIZE = 2
 
@@ -47,6 +46,30 @@ def test_offload():
                                       dataset_1.create_tuple_iterator(num_epochs=1, output_numpy=True)):
         np.testing.assert_array_equal(img_0, img_1)
         break
+
+
+def test_offload_string():
+    """
+    Feature: Test map offload flag with string tensors.
+    Description: Input is text dataset.
+    Expectation: Output should be same with activated or deactivated offload (incl. decoded text).
+    """
+
+    # Dataset with offload activated.
+    data0 = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
+
+    # Dataset with offload not activated.
+    data1 = ds.TextFileDataset("../data/dataset/testVocab/words.txt", shuffle=False)
+
+    # Use Data Transforms PadEnd op in operations list for Map
+    padend_op = C2.PadEnd([100], pad_value='<pad>')
+
+    data0 = data0.map(operations=[padend_op], input_columns=["text"], offload=True)
+    data1 = data1.map(operations=[padend_op], input_columns=["text"])
+
+    for d0, d1 in zip(data0.create_dict_iterator(num_epochs=1, output_numpy=True),
+                      data1.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        np.testing.assert_array_equal(d0['text'], (d1['text']))
 
 
 def test_auto_offload():
@@ -104,6 +127,7 @@ def test_offload_multi_column():
     Description: Input is an image dataset, copy the image column and apply map operations to both images.
     Expectation: Output should be same with both offload activated and deactivated.
     """
+
     def copy_column(x, y):
         return x, x, y
 
@@ -141,6 +165,7 @@ def test_offload_column_mapping():
     Description: Input is an image dataset, copy the image column, then apply offload to only copied column.
     Expectation: The offload model dataset column index value is 1 (second column).
     """
+
     def copy_column(x, y):
         return x, x, y
 
@@ -417,6 +442,7 @@ def test_offload_with_dict_itr():
 
 if __name__ == "__main__":
     test_offload()
+    test_offload_string()
     test_auto_offload()
     test_offload_column_validation()
     test_offload_column_mapping()

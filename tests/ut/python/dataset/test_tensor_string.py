@@ -31,6 +31,10 @@ def test_basic():
     arr = n.as_array()
     np.testing.assert_array_equal(x, arr)
 
+    arr2 = n.as_decoded_array()
+    np.testing.assert_array_equal(x, np.char.encode(arr2))
+    np.testing.assert_array_equal(np.char.decode(x), arr2)
+
 
 def compare(strings, dtype='S'):
     arr = np.array(strings, dtype=dtype)

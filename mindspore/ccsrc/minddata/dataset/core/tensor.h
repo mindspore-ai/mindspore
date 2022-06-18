@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -441,11 +441,19 @@ class Tensor {
 
 #ifdef ENABLE_PYTHON
   /// Constructs numpy array from input tensor
-  /// \param[in] data this data is the location of python data
+  /// \param[out] data this data is the location of python data
   /// \return Status code
   Status GetDataAsNumpy(py::array *data);
 
+  /// Constructs numpy array of strings
+  /// \param[out] data this data is the location of python data
+  /// \return Status code
   Status GetDataAsNumpyStrings(py::array *data);
+
+  /// Constructs numpy array of strings which are already decoded ('U')
+  /// \param[out] data this data is the location of python data
+  /// \return Status code
+  Status GetDataAsNumpyUnicodeStrings(py::array *data);
 
   static Status GetBufferInfo(Tensor *t, py::buffer_info *out);
 #endif
