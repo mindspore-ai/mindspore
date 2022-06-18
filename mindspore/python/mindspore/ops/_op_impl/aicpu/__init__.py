@@ -119,6 +119,7 @@ from .uniform_real import _uniform_real_aicpu
 from .standard_laplace import _standard_laplace_aicpu
 from .strided_slice import _strided_slice_aicpu
 from .neg import _neg_aicpu
+from .div_no_nan import _div_no_nan_aicpu
 from .strided_slice_grad import _strided_slice_grad_aicpu
 from .end_of_sequence import _end_of_sequence_aicpu
 from .fused_sparse_adam import _fused_sparse_adam_aicpu

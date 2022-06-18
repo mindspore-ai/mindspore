@@ -2782,11 +2782,11 @@ class Div(_MathBinaryOp):
         return None
 
 
-class DivNoNan(_MathBinaryOp):
+class DivNoNan(Primitive):
     r"""
-    Computes a safe divide and returns 0 if the y is zero.
+    Computes a safe divide and returns 0 if the x2 is zero.
 
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    Inputs of `x1` and `x2` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
     When the inputs are two tensors,
     dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
@@ -2795,16 +2795,16 @@ class DivNoNan(_MathBinaryOp):
 
     .. math::
         output_{i} = \begin{cases}
-        0, & \text{ if } y_{i} = 0\\
-        x_{i} / y_{i}, & \text{ if } y_{i} \ne 0
+        0, & \text{ if } x2_{i} = 0\\
+        x1_{i} / x2_{i}, & \text{ if } x2_{i} \ne 0
         \end{cases}
 
     Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+        - **x1** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
           a bool or a tensor whose data type is
           `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
           `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+        - **x2** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
           a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
           When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
@@ -2814,24 +2814,27 @@ class DivNoNan(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+        TypeError: If `x1` and `x2` is not a number.Number or a bool or a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
-        >>> y = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
-        >>> div_no_nan = ops.DivNoNan()
-        >>> output = div_no_nan(x, y)
+        >>> from mindspore.ops.operations.math_ops import DivNoNan
+        >>> x1 = Tensor(np.array([-1.0, 0., 1.0, 5.0, 6.0]), mindspore.float32)
+        >>> x2 = Tensor(np.array([0., 0., 0., 2.0, 3.0]), mindspore.float32)
+        >>> div_no_nan = DivNoNan()
+        >>> output = div_no_nan(x1, x2)
         >>> print(output)
         [0.  0.  0.  2.5 2. ]
     """
 
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
     @prim_attr_register
     def __init__(self):
-        """Initialize _BinaryOp"""
-        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+        """Initialize DivNoNan"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
 
 class MulNoNan(_MathBinaryOp):

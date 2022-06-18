@@ -142,6 +142,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
   void RealDiv(const T *input1, const T *input2, T *out);
   void RealDivComplex(const T *input1, const T *input2, T *out);
   void Div(const T *input1, const T *input2, T *out);
+  void DivNoNan(const T *input1, const T *input2, T *out);
   void FloorDiv(const T *input1, const T *input2, T *out);
   void Mod(const T *input1, const T *input2, T *out);
   void FloorMod(const T *input1, const T *input2, T *out);
@@ -189,6 +190,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
                                {prim::kPrimSub->name(), &ArithmeticCpuTypeFunc<T>::Sub},
                                {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
                                {prim::kPrimDiv->name(), &ArithmeticCpuTypeFunc<T>::Div},
+                               {prim::kPrimDivNoNan->name(), &ArithmeticCpuTypeFunc<T>::DivNoNan},
                                {prim::kPrimMod->name(), &ArithmeticCpuTypeFunc<T>::Mod},
                                {prim::kPrimFloorMod->name(), &ArithmeticCpuTypeFunc<T>::FloorMod},
                                {prim::kPrimPow->name(), &ArithmeticCpuTypeFunc<T>::Pow},
@@ -207,6 +209,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
         {prim::kPrimRealDiv->name(), &ArithmeticCpuTypeFunc<T>::RealDivComplex},
         {prim::kPrimXdivy->name(), &ArithmeticCpuTypeFunc<T>::XdivyComplex},
         {prim::kPrimMul->name(), &ArithmeticCpuTypeFunc<T>::Mul},
+        {prim::kPrimDivNoNan->name(), &ArithmeticCpuTypeFunc<T>::DivNoNan},
         {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
@@ -494,6 +497,27 @@ void ArithmeticCpuTypeFunc<T>::DivComplex(const T *input1, const T *input2, T *o
           out[i] = std::numeric_limits<T>::quiet_NaN();
           continue;
         }
+        continue;
+      }
+      out[i] = dividend / divisor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+}
+
+template <typename T>
+void ArithmeticCpuTypeFunc<T>::DivNoNan(const T *input1, const T *input2, T *out) {
+  BroadcastIterator base_iter(input_shape1_, input_shape2_, output_shape_);
+  auto task = [&input1, &input2, &out, &base_iter](size_t start, size_t end) {
+    auto iter = base_iter;
+    iter.SetPos(start);
+    for (size_t i = start; i < end; i++) {
+      auto dividend = input1[iter.GetInputPosA()];
+      auto divisor = input2[iter.GetInputPosB()];
+      iter.GenNextPos();
+      auto zero = (T)0;
+      if (divisor == zero) {
+        out[i] = zero;
         continue;
       }
       out[i] = dividend / divisor;
@@ -845,6 +869,23 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
      SpecializeArithFunc<complex128>}}},
+  {prim::kPrimDivNoNan->name(),
+   {{KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+     SpecializeArithFunc<float16>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+     SpecializeArithFunc<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     SpecializeArithFunc<double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     SpecializeArithFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     SpecializeArithFunc<complex128>}}},
   {prim::kPrimPow->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      SpecializeArithFunc<int32_t>},
@@ -1059,6 +1100,9 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mul,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(kMul); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Div,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimDiv->name()); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, DivNoNan, []() {
+  return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimDivNoNan->name());
+});
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Pow,
                                  []() { return std::make_shared<ArithmeticCpuKernelMod>(prim::kPrimPow->name()); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, RealDiv,

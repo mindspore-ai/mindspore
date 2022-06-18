@@ -16,10 +16,11 @@
 
 #include "ops/div_no_nan.h"
 
-#include <map>
-#include <string>
 #include <algorithm>
+#include <complex>
+#include <map>
 #include <set>
+#include <string>
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/tensor_construct_utils.h"
@@ -51,26 +52,19 @@ void DivNoNanImpl(void *x1, void *x2, void *result, size_t size) {
 }
 
 abstract::ShapePtr DivNoNanInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const int64_t valid_size = 2;
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, valid_size,
-                                           prim_name);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
-  MS_EXCEPTION_IF_NULL(input_args[1]);
   CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 1);
   return BroadCastInferShape(prim_name, input_args);
 }
 
 TypePtr DivNoNanInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
   std::map<std::string, TypePtr> types;
+  const std::set<TypePtr> valid_types = {kInt8,    kInt32,   kInt64,     kUInt8,     kFloat16,
+                                         kFloat32, kFloat64, kComplex64, kComplex128};
   (void)types.emplace("x1", input_args[0]->BuildType());
   (void)types.emplace("x2", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return input_args[0]->BuildType();
 }
 
@@ -166,8 +160,11 @@ ValuePtr DivNoNanInferValue(const PrimitivePtr &prim, const std::vector<Abstract
 MIND_API_OPERATOR_IMPL(DivNoNan, BaseOperator);
 AbstractBasePtr DivNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
-  auto infer_shape = DivNoNanInferShape(primitive, input_args);
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t kInputsNum = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
   auto infer_type = DivNoNanInferType(primitive, input_args);
+  auto infer_shape = DivNoNanInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(DivNoNan, prim::kPrimDivNoNan, DivNoNanInfer, DivNoNanInferValue, true);
