@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <complex>
+#include <cmath>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -28,21 +30,40 @@
 namespace mindspore {
 namespace ops {
 namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
+
+template <typename T>
+void ImpleLog(void *origin, void *target, size_t size) {
+  MS_EXCEPTION_IF_NULL(origin);
+  MS_EXCEPTION_IF_NULL(target);
+  auto origin_data = reinterpret_cast<T *>(origin);
+  auto target_data = reinterpret_cast<T *>(target);
+  for (size_t i = 0; i < size; ++i) {
+    target_data[i] = static_cast<T>(log(static_cast<double>(origin_data[i])));
+  }
+}
+
+template <typename T>
+void ImpleComplexLog(void *origin, void *target, size_t size) {
+  MS_EXCEPTION_IF_NULL(origin);
+  MS_EXCEPTION_IF_NULL(target);
+  auto origin_data = reinterpret_cast<T *>(origin);
+  auto target_data = reinterpret_cast<T *>(target);
+  for (size_t i = 0; i < size; ++i) {
+    target_data[i] = static_cast<T>(log(origin_data[i]));
+  }
+}
+
 abstract::ShapePtr LogInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", int64_t(input_args.size()), kEqual, 1, prim_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
-  auto in_shape = shape_map[kShape];
-  auto min_shape = shape_map[kMinShape];
-  auto max_shape = shape_map[kMaxShape];
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
-    return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
-  }
-  return std::make_shared<abstract::Shape>(in_shape);
+  (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, 0);
+  auto x = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
 }
 
 TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -56,7 +77,98 @@ TypePtr LogInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   (void)types.emplace("x", input_args[0]->BuildType());
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("x_type", input_args[0]->BuildType(), valid_params_types, op_name);
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types_with_complex, prim->name());
+  return input_args[0]->BuildType();
+}
+ValuePtr LogInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(prim);
+  if (input_args.empty()) {
+    return nullptr;
+  }
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[kInputIndex0]->BuildValue();
+  if (x == nullptr) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(x);
+  auto x_tensor = x->cast<tensor::TensorPtr>();
+  if (x_tensor == nullptr) {
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto data_size = x_tensor->DataSize();
+  auto dtype = x_tensor->data_type();
+  auto infer_shape = LogInferShape(prim, input_args);
+  MS_EXCEPTION_IF_NULL(infer_shape);
+  auto shape = infer_shape->shape();
+  auto result_tensor = std::make_shared<tensor::Tensor>(dtype, shape);  // same shape and dtype
+  auto x_datac = x_tensor->data_c();
+  MS_EXCEPTION_IF_NULL(result_tensor);
+  auto result_datac = result_tensor->data_c();
+  switch (dtype) {
+    case kNumberTypeInt8: {
+      ImpleLog<int8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt16: {
+      ImpleLog<int16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt32: {
+      ImpleLog<int32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeInt64: {
+      ImpleLog<int64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt8: {
+      ImpleLog<uint8_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt16: {
+      ImpleLog<uint16_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt32: {
+      ImpleLog<uint32_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeUInt64: {
+      ImpleLog<uint64_t>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat16: {
+      ImpleLog<float16>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat32: {
+      ImpleLog<float>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeFloat64: {
+      ImpleLog<double>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeComplex64: {
+      ImpleComplexLog<std::complex<float>>(x_datac, result_datac, data_size);
+      break;
+    }
+    case kNumberTypeComplex128: {
+      ImpleComplexLog<std::complex<double>>(x_datac, result_datac, data_size);
+      break;
+    }
+    default: {
+      MS_EXCEPTION(TypeError)
+        << "For '" << prim->name()
+        << "', the supported data type is ['int8', 'int16', 'int32', 'int64', 'uint8', "
+           "'uint16','uint32', 'uint64','float16', 'float32', 'float64', 'complex64', 'complex128'], but got "
+        << x_tensor->ToString();
+    }
+  }
+  return result_tensor;
 }
 }  // namespace
 
@@ -65,6 +177,6 @@ AbstractBasePtr LogInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
                          const std::vector<AbstractBasePtr> &input_args) {
   return abstract::MakeAbstract(LogInferShape(primitive, input_args), LogInferType(primitive, input_args));
 }
-REGISTER_PRIMITIVE_C(kNameLog, Log);
+REGISTER_PRIMITIVE_EVAL_IMPL(Log, prim::kPrimLog, LogInfer, LogInferValue, true);
 }  // namespace ops
 }  // namespace mindspore

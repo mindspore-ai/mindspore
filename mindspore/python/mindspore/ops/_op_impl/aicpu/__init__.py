@@ -27,6 +27,7 @@ from .blackman_window import _blackman_window_aicpu
 from .no_repeat_ngram import _no_repeat_ngram_aicpu
 from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
+from .log import _log_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
