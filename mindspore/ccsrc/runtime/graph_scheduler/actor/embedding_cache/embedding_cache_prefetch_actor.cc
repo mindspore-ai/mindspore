@@ -432,6 +432,11 @@ void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_n
 void EmbeddingCachePrefetchActor::Run() {
   running_ = true;
 
+  // Bind device to current thread to gain device control privileges
+  MS_EXCEPTION_IF_NULL(device_context_);
+  MS_EXCEPTION_IF_NULL(device_context_->device_res_manager_);
+  device_context_->device_res_manager_->BindDeviceToCurrentThread();
+
   // Wait initialize parameters on remote.
   // Prevents the subsequent prefetch cache from failing due to the long initialization time of the large parameter on
   // the remote side.
