@@ -1480,6 +1480,8 @@ class RandomAffine(TensorOperation, PyTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
+        if self.c_resample is None:
+            raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.RandomAffineOperation(self.degrees, self.translate, self.scale, self.shear,
                                          self.c_resample, self.fill_value)
 
@@ -1493,7 +1495,8 @@ class RandomAffine(TensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly affine transformed image.
         """
-
+        if self.py_resample is None:
+            raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.random_affine(img,
                                   self.degrees,
                                   self.translate,
@@ -2397,6 +2400,8 @@ class RandomResizedCrop(TensorOperation, PyTensorOperation):
             - Inter.PILCUBIC, means interpolation method is bicubic interpolation like implemented in pillow, input
               should be in 3 channels format.
 
+            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
+
         max_attempts (int, optional): The maximum number of attempts to propose a valid
             crop_area (default=10). If exceeded, fall back to use center_crop instead.
 
@@ -2446,6 +2451,8 @@ class RandomResizedCrop(TensorOperation, PyTensorOperation):
         self.max_attempts = max_attempts
 
     def parse(self):
+        if self.c_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, self.c_interpolation,
                                               self.max_attempts)
 
@@ -2459,6 +2466,8 @@ class RandomResizedCrop(TensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly cropped and resized image.
         """
+        if self.py_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.random_resize_crop(img, self.size, self.scale, self.ratio,
                                        self.py_interpolation, self.max_attempts)
 
@@ -2701,6 +2710,8 @@ class RandomRotation(TensorOperation, PyTensorOperation):
         self.fill_value = fill_value
 
     def parse(self):
+        if self.c_resample is None:
+            raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.RandomRotationOperation(self.degrees, self.c_resample, self.expand, self.c_center,
                                            self.fill_value)
 
@@ -2714,6 +2725,8 @@ class RandomRotation(TensorOperation, PyTensorOperation):
         Returns:
             PIL Image, randomly rotated image.
         """
+        if self.py_resample is None:
+            raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.random_rotation(img, self.degrees, self.py_resample, self.expand, self.py_center, self.fill_value)
 
 
@@ -3011,6 +3024,8 @@ class Resize(TensorOperation, PyTensorOperation):
         self.random = False
 
     def parse(self):
+        if self.c_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with NumPy input.")
         return cde.ResizeOperation(self.c_size, self.c_interpolation)
 
     def execute_py(self, img):
@@ -3023,6 +3038,8 @@ class Resize(TensorOperation, PyTensorOperation):
         Returns:
             PIL Image, resized image.
         """
+        if self.py_interpolation is None:
+            raise TypeError("Current Interpolation is not supported with PIL input.")
         return util.resize(img, self.py_size, self.py_interpolation)
 
 
