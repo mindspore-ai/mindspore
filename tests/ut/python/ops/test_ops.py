@@ -46,8 +46,6 @@ from mindspore.ops.operations.array_ops import SegmentMax
 from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
 from mindspore.ops.operations.array_ops import IdentityN
-from mindspore.ops.operations.array_ops import SegmentMean
-from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.random_ops import NonDeterministicInts
 from mindspore.ops.operations.random_ops import TruncatedNormal
 from mindspore.ops.operations.other_ops import SampleDistortedBoundingBoxV2
@@ -3266,19 +3264,6 @@ test_case_array_ops = [
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
                         Tensor([0, 0, 2], mstype.int64)],
         'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-    }),
-    ('SegmentMean', {
-        'block': SegmentMean(),
-        'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
-                        Tensor([0, 0, 2], mstype.int64)],
-        'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-    }),
-    ('SegmentProd', {
-        'block': SegmentProd(),
-        'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),
-                        Tensor([0, 0, 2], mstype.int64)],
-        'desc_bprop': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8)],
-        'skip': ['backward']
     }),
 ]
 
