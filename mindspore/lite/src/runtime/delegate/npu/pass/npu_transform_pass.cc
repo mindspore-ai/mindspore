@@ -131,9 +131,8 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
   // but using same one in_tensor.
   for (auto i = 0; i < post_insert_ops.size(); ++i) {
     auto post_insert_op = post_insert_ops.at(i);
-    // nc2nh op out tensor: 1st op uses original out_tensor, remaining ops use newly created out tensor.
+    // nc2nh op out tensor: abandon original out_tensor, all ops use newly created out tensor.
     std::vector<mindspore::MSTensor> nc2nh_outputs{};
-
     auto origin_out_tensor = op->outputs().at(0);
     auto out_tensor_name = op->name() + "_post_trans" + "_Nchw2Nhwc_" + std::to_string(i) + "_out_tensor";
     auto out_tensor = mindspore::MSTensor::CreateTensor(out_tensor_name, origin_out_tensor.DataType(),
@@ -157,7 +156,7 @@ int NPUTransformPass::InsertPostNodes(NPUOp *op, std::vector<NPUOp *> *trans_ops
     NPUPassUtils::UpdateOp(post_trans_op, {op}, {post_insert_op}, post_trans_op->inputs(), post_trans_op->outputs());
     trans_ops->push_back(post_trans_op);
     // update post op inputs in_ops
-    NPUPassUtils::UpdateNC2NHTransNodePostOp(op, post_trans_op, post_insert_op);
+    NPUPassUtils::UpdateNC2NHTransNodePostOp(op, post_trans_op, post_insert_op, origin_out_tensor);
   }
   // for those non-insert post ops, update their in_tensor
   for (auto non_insert_op : post_non_insert_ops) {

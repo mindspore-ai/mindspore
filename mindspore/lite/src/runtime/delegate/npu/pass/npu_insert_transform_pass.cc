@@ -24,11 +24,19 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore {
-std::set<mindspore::schema::PrimitiveType> insert_nodes = {
-  schema::PrimitiveType_Concat,       schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
-  schema::PrimitiveType_Activation,   schema::PrimitiveType_Split,     schema::PrimitiveType_PadFusion,
-  schema::PrimitiveType_StridedSlice, schema::PrimitiveType_MulFusion, schema::PrimitiveType_DivFusion,
-  schema::PrimitiveType_Cast};
+std::set<mindspore::schema::PrimitiveType> format_depend_nodes = {
+  schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion,
+  schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,
+  schema::PrimitiveType_CropAndResize, schema::PrimitiveType_InstanceNorm,
+  schema::PrimitiveType_ArgMaxFusion,  schema::PrimitiveType_FullConnection,
+  schema::PrimitiveType_ScaleFusion,   schema::PrimitiveType_ExpandDims,
+  schema::PrimitiveType_Unsqueeze,     schema::PrimitiveType_SliceFusion,
+  schema::PrimitiveType_BroadcastTo,   schema::PrimitiveType_TileFusion,
+  schema::PrimitiveType_Resize,        schema::PrimitiveType_MatMulFusion,
+  schema::PrimitiveType_Gather,        schema::PrimitiveType_Gather,
+  schema::PrimitiveType_Squeeze,       schema::PrimitiveType_Reshape,
+  schema::PrimitiveType_Unsqueeze,     schema::PrimitiveType_Transpose,
+};
 
 // this pass goal is to minimize subgraphs generated
 // by inserting nchw2nhwc or nhwc2nchw before or after the operator (e.g. concat, add, etc..) together with
@@ -50,7 +58,7 @@ std::set<mindspore::schema::PrimitiveType> insert_nodes = {
 
 InsertState NPUInsertTransformPass::GetInsertState(NPUOp *op) {
   // filter out irrelevant op
-  if (insert_nodes.find(op->type()) == insert_nodes.end()) {
+  if (format_depend_nodes.find(op->type()) != format_depend_nodes.end()) {
     return InsertState::InsertNone;
   }
   // current op is target op
@@ -102,7 +110,7 @@ InsertState NPUInsertTransformPass::GetInsertState(NPUOp *op) {
   // won't insert if total input output are all transpose tensor, the fusion pass will handle this.
   size_t transpose_tensor_num = transpose_input_num + transpose_output_num;
   size_t connected_in_out_tensor_num = in_out_tensor_num - graph_output_num - graph_input_num;
-  if (transpose_tensor_num == 0 || transpose_tensor_num * INPUT_SIZE2 < connected_in_out_tensor_num ||
+  if (transpose_tensor_num == 0 || transpose_tensor_num * REPEAT_TIMES2 < connected_in_out_tensor_num ||
       transpose_tensor_num == in_out_tensor_num) {
     return InsertState::InsertNone;
   }
@@ -165,7 +173,7 @@ int NPUInsertTransformPass::InsertTransNode(NPUOp *op, NPUOp *post_op, const min
     NPUPassUtils::UpdateNH2NCTransNodePreOp(op, nh2nc_op, post_op);
   }
   if (post_op != nullptr) {
-    NPUPassUtils::UpdateNC2NHTransNodePostOp(op, nc2nh_op, post_op);
+    NPUPassUtils::UpdateNC2NHTransNodePostOp(op, nc2nh_op, post_op, trans_in_tensor);
   } else {
     // post_op nullptr mean output, we remain graph output tensor name unchanged
     auto graph_output_name = trans_in_tensor.Name();
@@ -187,13 +195,7 @@ int NPUInsertTransformPass::InsertPreNodes(NPUOp *op, std::vector<NPUOp *> *tran
       continue;
     }
     // if this tensor is input of graph, pre_op is nullptr.
-    auto it = find(op->inputs().begin(), op->inputs().end(), tensor);
-    if (it == op->inputs().end()) {
-      MS_LOG(ERROR) << "Find in tensor index error";
-      return RET_ERROR;
-    }
-    size_t index = it - op->inputs().begin();
-    ret = InsertTransNode(pre_op, op, op->inputs().at(index), trans_ops);
+    ret = InsertTransNode(pre_op, op, tensor, trans_ops);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Insert nhwc2nchw op and nchw2nhwc op before op " << op->name() << " failed.";
       return ret;
@@ -257,7 +259,7 @@ int NPUInsertTransformPass::Run(NPUGraph *subgraph) {
   all_ops_ = subgraph_->GetOps();
   all_tensors_ = subgraph_->GetInsertTensors();
   std::vector<NPUOp *> insert_ops;
-  for (int j = 0; j < INPUT_SIZE2; ++j) {
+  for (int j = 0; j < REPEAT_TIMES2; ++j) {
     for (size_t i = 0; i < all_ops_->size(); i++) {
       auto op = (*all_ops_)[i];
       auto insert_state = GetInsertState(op);

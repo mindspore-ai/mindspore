@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/delegate/npu/op/convolution_npu.h"
+#include <algorithm>
 #include "src/runtime/delegate/npu/op/convolution_depthwise_npu.h"
 #include "src/runtime/delegate/npu/op/convolution_int8_npu.h"
 #include "src/runtime/delegate/npu/op/convolution_depthwise_int8_npu.h"
@@ -31,22 +32,14 @@ int ConvolutionNPUOp::IsSupport(const schema::Primitive *primitive, const std::v
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  CHECK_NULL_RETURN(conv_prim->stride());
-  auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
-  auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
-  auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
-  if (stride_h > in_shape[NHWC_H] || stride_w > in_shape[NHWC_W]) {
-    MS_LOG(WARNING) << "Npu convolution does not support stride greater than input size.";
-    return RET_NOT_SUPPORT;
-  }
   return RET_OK;
 }
 
 int ConvolutionNPUOp::SetConvParam(const schema::Conv2DFusion *conv_prim) {
   auto group = static_cast<int>(conv_prim->group());
   CHECK_NULL_RETURN(conv_prim->stride());
-  auto stride_h = static_cast<int>(*(conv_prim->stride()->begin()));
-  auto stride_w = static_cast<int>(*(conv_prim->stride()->begin() + 1));
+  auto stride_h = std::min(static_cast<int>(*(conv_prim->stride()->begin())), input_h_);
+  auto stride_w = std::min(static_cast<int>(*(conv_prim->stride()->begin() + 1)), input_w_);
   CHECK_NULL_RETURN(conv_prim->dilation());
   auto dilation_h = static_cast<int>(*(conv_prim->dilation()->begin()));
   auto dilation_w = static_cast<int>(*(conv_prim->dilation()->begin() + 1));
@@ -85,6 +78,9 @@ int ConvolutionNPUOp::Init(const schema::Primitive *primitive, const std::vector
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
+  auto in_shape = in_tensors[0].Shape();  // default format: nhwc, RunPass not called
+  input_h_ = in_shape[NHWC_H];
+  input_w_ = in_shape[NHWC_W];
   auto ret = SetConvParam(conv_prim);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set npu op parameter for convolution op " << name_ << " failed.";

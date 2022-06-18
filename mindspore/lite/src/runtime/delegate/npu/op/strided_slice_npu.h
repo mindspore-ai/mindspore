@@ -51,9 +51,6 @@ class StridedSliceNPUOp : public NPUOp {
 
   int HandleAxis() override;
 
-  int SetCast(const ge::Operator *input, const ge::Operator *cur_op, const mindspore::MSTensor in_tensor,
-              const mindspore::MSTensor out_tensor);
-
  private:
   hiai::op::StridedSlice *strided_slice_ = nullptr;
   hiai::op::CastT *in_cast_ = nullptr;

@@ -138,6 +138,25 @@ int ArithmeticSelfNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in
   return RET_OK;
 }
 
+int ArithmeticSelfNPUOp::SetNPUInputs(
+  const std::vector<mindspore::MSTensor> &in_tensors, const std::vector<mindspore::MSTensor> &out_tensors,
+  const std::vector<ge::Operator *> &npu_inputs,
+  const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) {
+  auto ret = SetNPUInputs(in_tensors, out_tensors, npu_inputs);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ArithmeticSelfNPUOp SetNPUInputs failed";
+    return RET_ERROR;
+  }
+  if (index2_multi_out_index.empty()) {
+    return RET_OK;
+  }
+  for (auto it : index2_multi_out_index) {
+    MS_LOG(INFO) << name_ << "set input " << it.first << " from " << it.second.first << " output " << it.second.second;
+    op_->SetInput(it.first, *it.second.first, it.second.second);
+  }
+  return RET_OK;
+}
+
 ge::Operator *ArithmeticSelfNPUOp::GetNPUOp() { return this->op_; }
 
 ArithmeticSelfNPUOp::~ArithmeticSelfNPUOp() {

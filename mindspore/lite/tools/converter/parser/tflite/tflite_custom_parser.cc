@@ -133,7 +133,7 @@ PrimitiveCPtr TfliteCustomParser::Predict(const std::vector<uint8_t> &custom_att
   auto prim = std::make_unique<ops::CustomPredict>();
   MS_CHECK_TRUE_RET(prim != nullptr, nullptr);
   MS_CHECK_TRUE_RET(custom_attr.data() != nullptr, nullptr);
-  MS_CHECK_GE(custom_attr.size(), kInputSize1, nullptr);
+  MS_CHECK_GE(custom_attr.size(), C8NUM, nullptr);
   auto out_num = reinterpret_cast<const int *>(custom_attr.data())[0];
   auto weight_thres = reinterpret_cast<const float *>(custom_attr.data())[1];
   prim->set_output_num(static_cast<int64_t>(out_num));

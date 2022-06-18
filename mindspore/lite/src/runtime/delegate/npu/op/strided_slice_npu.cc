@@ -49,6 +49,14 @@ int StridedSliceNPUOp::Init(const schema::Primitive *primitive, const std::vecto
     MS_LOG(ERROR) << "New stridedSlice npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
+  if (need_cast_) {
+    in_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_in_cast");
+    out_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_out_cast");
+    if (in_cast_ == nullptr || out_cast_ == nullptr) {
+      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+  }
   auto strided_slice_prim = primitive->value_as_StridedSlice();
   if (strided_slice_prim == nullptr) {
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
@@ -72,11 +80,13 @@ int StridedSliceNPUOp::SetNPUInputs(const std::vector<mindspore::MSTensor> &in_t
   strided_slice_->set_attr_new_axis_mask(new_axis_mask_);
   // StridedSliceV2 supports setting axes, but it will cause an endless loop.
   if (need_cast_) {
-    auto ret = SetCast(npu_inputs[0], strided_slice_, in_tensors[0], out_tensors[0]);
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Insert Cast operator for op " << name_ << " failed.";
-      return ret;
-    }
+    in_cast_->set_input_x(*(npu_inputs[0]));
+    in_cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<DataType>(in_tensors[0].DataType())));
+    in_cast_->set_attr_dst_dtype(ge::DT_FLOAT);
+    strided_slice_->set_input_x(*in_cast_);
+    out_cast_->set_input_x(*strided_slice_);
+    out_cast_->set_attr_src_dtype(ge::DT_FLOAT);
+    out_cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<DataType>(out_tensors[0].DataType())));
   } else {
     strided_slice_->set_input_x(*npu_inputs[0]);
   }
@@ -125,24 +135,6 @@ int StridedSliceNPUOp::HandleAxis() {
   ellipsis_mask_ = MaskDataNHWC2NCHW(ellipsis_mask_);
   shrink_axis_mask_ = MaskDataNHWC2NCHW(shrink_axis_mask_);
   new_axis_mask_ = MaskDataNHWC2NCHW(new_axis_mask_);
-  return RET_OK;
-}
-
-int StridedSliceNPUOp::SetCast(const ge::Operator *input, const ge::Operator *cur_op,
-                               const mindspore::MSTensor in_tensor, const mindspore::MSTensor out_tensor) {
-  in_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_in_cast");
-  out_cast_ = new (std::nothrow) hiai::op::CastT(name_ + "_out_cast");
-  if (in_cast_ == nullptr || out_cast_ == nullptr) {
-    MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
-  in_cast_->set_input_x(*input);
-  in_cast_->set_attr_src_dtype(ConverterToNPUDataType(static_cast<DataType>(in_tensor.DataType())));
-  in_cast_->set_attr_dst_dtype(ge::DT_FLOAT);
-  strided_slice_->set_input_x(*in_cast_);
-  out_cast_->set_input_x(*cur_op);
-  out_cast_->set_attr_src_dtype(ge::DT_FLOAT);
-  out_cast_->set_attr_dst_dtype(ConverterToNPUDataType(static_cast<DataType>(out_tensor.DataType())));
   return RET_OK;
 }
 

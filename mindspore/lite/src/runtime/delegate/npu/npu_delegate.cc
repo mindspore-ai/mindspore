@@ -53,6 +53,7 @@
 #include "src/runtime/delegate/npu/op/unsqueeze_npu.h"
 #include "src/runtime/delegate/npu/op/abs_npu.h"
 #include "src/runtime/delegate/npu/op/flatten_npu.h"
+#include "src/runtime/delegate/npu/op/broadcast_to_npu.h"
 #include "src/runtime/delegate/npu/npu_graph.h"
 #include "src/runtime/delegate/delegate_utils.h"
 #include "src/runtime/delegate/npu/pass/npu_transform_pass.h"
@@ -108,13 +109,13 @@ Status NPUDelegate::Init() {
   }
   if (!npu_manager_->IsSupportNPU()) {
     MS_LOG(DEBUG) << "Checking that npu is unsupported.";
-    free(npu_manager_);
+    delete npu_manager_;
     npu_manager_ = nullptr;
     return mindspore::kLiteNotSupport;
   }
   pass_manager_ = new (std::nothrow) NPUPassManager();
   if (pass_manager_ == nullptr) {
-    free(npu_manager_);
+    delete npu_manager_;
     npu_manager_ = nullptr;
     MS_LOG(ERROR) << "New npu pass manager failed.";
     return mindspore::kLiteNullptr;
@@ -187,6 +188,7 @@ Status NPUDelegate::Init() {
     {schema::PrimitiveType_Unsqueeze, GetNPUOp<UnsqueezeNPUOp>},
     {schema::PrimitiveType_Abs, GetNPUOp<AbsNPUOp>},
     {schema::PrimitiveType_Flatten, GetNPUOp<FlattenNPUOp>},
+    {schema::PrimitiveType_BroadcastTo, GetNPUOp<BroadcastToNPUOp>},
   };
   return mindspore::kSuccess;
 }

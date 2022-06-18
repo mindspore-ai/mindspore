@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ARITHMETIC_SELF_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ARITHMETIC_SELF_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_BROADCAST_TO_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_BROADCAST_TO_NPU_H_
 #include <vector>
 #include <string>
-#include <utility>
-#include <unordered_map>
-#include "include/graph/op/math_defs.h"
+#include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
 namespace mindspore {
-class ArithmeticSelfNPUOp : public NPUOp {
+class BroadcastToNPUOp : public NPUOp {
  public:
-  ArithmeticSelfNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                      const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
+  BroadcastToNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
+                   const std::vector<mindspore::MSTensor> &out_tensors, std::string name)
       : NPUOp(primitive, in_tensors, out_tensors, name) {}
-
-  ~ArithmeticSelfNPUOp() override;
+  ~BroadcastToNPUOp() override;
 
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override {
-    return RET_OK;
-  }
+                const std::vector<mindspore::MSTensor> &out_tensors) override;
 
   int Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
            const std::vector<mindspore::MSTensor> &out_tensors) override;
@@ -44,14 +39,10 @@ class ArithmeticSelfNPUOp : public NPUOp {
                    const std::vector<mindspore::MSTensor> &out_tensors,
                    const std::vector<ge::Operator *> &npu_inputs) override;
 
-  int SetNPUInputs(const std::vector<mindspore::MSTensor> &in_tensors,
-                   const std::vector<mindspore::MSTensor> &out_tensors, const std::vector<ge::Operator *> &npu_inputs,
-                   const std::unordered_map<int, std::pair<ge::Operator *, int>> &index2_multi_out_index) override;
-
   ge::Operator *GetNPUOp() override;
 
  private:
-  ge::Operator *op_ = nullptr;
+  hiai::op::BroadcastTo *broadcast_to_ = nullptr;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETICSELF_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_BROADCAST_TO_NPU_H_

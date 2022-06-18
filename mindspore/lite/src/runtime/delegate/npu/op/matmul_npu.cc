@@ -44,13 +44,7 @@ int MatMulNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector
 }
 
 int MatMulNPUOp::SetActivation(const ge::Operator *input) {
-  act_op_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
-  if (act_op_ == nullptr) {
-    MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
   act_op_->set_input_x(*input);
-
   auto act_mode = ConverterToNPUActivationMode(act_type_);
   if (act_mode == ACTIVATION_INVALID) {
     MS_LOG(ERROR) << "Unsupported activation type for matmul op " << name_;
@@ -67,7 +61,6 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
     MS_LOG(ERROR) << "Get null primitive value for op ." << name_;
     return RET_ERROR;
   }
-  act_type_ = matmul_prim->activation_type();
   auto input_dims_a = in_tensors[0].Shape().size();
   auto input_dims_b = in_tensors[1].Shape().size();
   if (input_dims_a == NPU_SHAPE_SIZE && input_dims_b == NPU_SHAPE_SIZE) {
@@ -99,6 +92,16 @@ int MatMulNPUOp::Init(const schema::Primitive *primitive, const std::vector<mind
       return RET_ERROR;
     }
   }
+
+  act_type_ = matmul_prim->activation_type();
+  if (act_type_ != schema::ActivationType_NO_ACTIVATION) {
+    act_op_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
+    if (act_op_ == nullptr) {
+      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+  }
+
   return RET_OK;
 }
 
