@@ -565,7 +565,9 @@ void Parser::GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, 
     if (py::isinstance<py::none>(defaults[i])) {
       default_values.push_back(NewValueNode(kNull));
     } else {
-      default_values.push_back(ParseExprNode(block, defaults[i]));
+      AnfNodePtr arg_node = ParseExprNode(block, defaults[i]);
+      arg_node = HandleInterpret(block, arg_node, defaults[i]);
+      default_values.push_back(arg_node);
     }
   }
   MS_EXCEPTION_IF_NULL(block->func_graph());
@@ -673,6 +675,7 @@ FunctionBlockPtr Parser::ParseLambdaFunction(const py::object &node, const Funct
 
   py::object body_node = python_adapter::GetPyObjAttr(node, "body");
   AnfNodePtr lambda_body_node = ParseExprNode(func_block, body_node);
+  lambda_body_node = HandleInterpret(block, lambda_body_node, body_node);
   current_fg->set_output(lambda_body_node);
   GenerateArgsDefaultValueForFunction(func_block, node);
   return func_block;
@@ -1297,23 +1300,22 @@ AnfNodePtr Parser::ProcessAttributeWithClassMember(const FunctionBlockPtr &block
   (void)var_name.append(attr_name);
   auto attr_obj = ast()->obj().attr(attr_name.c_str());
   MS_EXCEPTION_IF_NULL(block);
-  if (py::hasattr(ast()->obj(), attr_name.c_str()) &&
-      (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
-       py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
-       py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj))) {
-    MS_LOG(DEBUG) << "var_name: " << var_name;
+  MS_LOG(DEBUG) << "var_name: " << var_name;
+  bool check_need_resolve = py::hasattr(ast()->obj(), attr_name.c_str()) &&
+                            (py::hasattr(attr_obj, PYTHON_PRIMITIVE_FLAG) || py::isinstance<py::int_>(attr_obj) ||
+                             py::isinstance<py::float_>(attr_obj) || py::isinstance<py::bool_>(attr_obj) ||
+                             py::isinstance<py::str>(attr_obj) || data_converter::IsCellInstance(attr_obj));
+  if (check_need_resolve) {
     return block->MakeResolveSymbol(var_name);
-  } else {
-    auto var_node = block->ReadVariable(var_name);
-    // process self.x = np.array([1, 2])
-    // The fallback feature is enabled in default.
-    static const auto use_fallback = (support_fallback() != "0");
-    if (use_fallback && py::hasattr(ast()->obj(), attr_name.c_str()) &&
-        data_converter::IsNumpyArrayInstance(attr_obj)) {
-      var_node->set_interpret(true);
-    }
-    return var_node;
   }
+  auto var_node = block->ReadVariable(var_name);
+  // Process numpy array, eg: self.x = np.array([1, 2])
+  // The fallback feature is enabled in default.
+  static const auto use_fallback = (support_fallback() != "0");
+  if (use_fallback && py::hasattr(ast()->obj(), attr_name.c_str()) && data_converter::IsNumpyArrayInstance(attr_obj)) {
+    var_node->set_interpret(true);
+  }
+  return var_node;
 }
 
 // Process call attributes of class type define, eg: x.y()
@@ -1572,8 +1574,9 @@ AnfNodePtr Parser::ParseSubscript(const FunctionBlockPtr &block, const py::objec
   AnfNodePtr slice = ParseExprNode(block, slice_node);
   slice = HandleInterpret(block, slice, slice_node);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  auto new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
-  UpdateInterpretForUserNode(new_node, value);
+  AnfNodePtr new_node = block->func_graph()->NewCNodeInOrder({op_getitem, value, slice});
+  UpdateInterpretForUserNode(new_node, {value, slice});
+  new_node = HandleInterpret(block, new_node, node);
   return new_node;
 }
 
@@ -1586,10 +1589,16 @@ AnfNodePtr Parser::ParseSlice(const FunctionBlockPtr &block, const py::object &n
   py::object stop = python_adapter::GetPyObjAttr(node, "upper");
   py::object step = python_adapter::GetPyObjAttr(node, "step");
   AnfNodePtr start_node = ParseExprNode(block, start);
+  start_node = HandleInterpret(block, start_node, start);
   AnfNodePtr stop_node = ParseExprNode(block, stop);
+  stop_node = HandleInterpret(block, stop_node, stop);
   AnfNodePtr step_node = ParseExprNode(block, step);
+  step_node = HandleInterpret(block, step_node, step);
   MS_EXCEPTION_IF_NULL(block->func_graph());
-  return block->func_graph()->NewCNodeInOrder({op_makeslice, start_node, stop_node, step_node});
+  AnfNodePtr slice_node = block->func_graph()->NewCNodeInOrder({op_makeslice, start_node, stop_node, step_node});
+  UpdateInterpretForUserNode(slice_node, {start_node, stop_node, step_node});
+  slice_node = HandleInterpret(block, slice_node, node);
+  return slice_node;
 }
 
 // Process a extslice
@@ -1653,8 +1662,12 @@ AnfNodePtr Parser::ParseDict(const FunctionBlockPtr &block, const py::object &no
   std::vector<AnfNodePtr> key_nodes;
   std::vector<AnfNodePtr> value_nodes;
   for (size_t i = 0; i < keys.size(); i++) {
-    key_nodes.push_back(ParseExprNode(block, keys[i]));
-    value_nodes.push_back(ParseExprNode(block, values[i]));
+    AnfNodePtr key_node = ParseExprNode(block, keys[i]);
+    key_node = HandleInterpret(block, key_node, keys[i]);
+    key_nodes.push_back(key_node);
+    AnfNodePtr value_node = ParseExprNode(block, values[i]);
+    value_node = HandleInterpret(block, value_node, values[i]);
+    value_nodes.push_back(value_node);
   }
   return ParseDictByKeysAndValues(block, key_nodes, value_nodes);
 }
@@ -1922,21 +1935,6 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   return after_block;
 }
 
-CNodePtr Parser::GenerateIteratorInFor(const FunctionBlockPtr &block, const py::object &node,
-                                       const AnfNodePtr &op_iter) {
-  py::object iter_node = python_adapter::GetPyObjAttr(node, "iter");
-  AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
-  MS_EXCEPTION_IF_NULL(block->func_graph());
-  return block->func_graph()->NewCNodeInOrder({op_iter, iter_anf_node});
-}
-
-CNodePtr Parser::GenerateCondInFor(const ParameterPtr &iter_param, const FunctionBlockPtr &header_block,
-                                   const AnfNodePtr &op_hasnext) {
-  MS_EXCEPTION_IF_NULL(header_block);
-  MS_EXCEPTION_IF_NULL(header_block->func_graph());
-  return header_block->func_graph()->NewCNodeInOrder({op_hasnext, iter_param});
-}
-
 FunctionBlockPtr Parser::GenerateBlock(const TraceInfoPtr &trace_info) {
   TraceGuard trace_guard(trace_info);
   FunctionBlockPtr block = MakeFunctionBlock(*this);
@@ -2059,6 +2057,7 @@ FunctionBlockPtr Parser::ParseForRepeat(const FunctionBlockPtr &block, const py:
   py::object iter_obj = python_adapter::GetPyObjAttr(node, "iter");
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   MS_EXCEPTION_IF_NULL(iter_node);
+  iter_node = HandleInterpret(header_block, iter_node, iter_obj);
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   ParameterPtr header_iter_param = header_block->func_graph()->add_parameter();
   AnfNodePtr header_len = header_block->MakeResolveSymbol(NAMED_PRIMITIVE_LEN);
@@ -2181,7 +2180,9 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
-  CNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  condition_node = HandleInterpret(block, condition_node, test_node);
+  AnfNodePtr bool_node =
+    IsPrimitiveCNode(condition_node, prim::kPrimPyInterpret) ? condition_node : block->ForceToBoolNode(condition_node);
 
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
@@ -2203,6 +2204,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(true_block->func_graph()->debug_info());
   true_block->func_graph()->debug_info()->set_location(GetLocation(bodyNode));
   AnfNodePtr true_node = ParseExprNode(true_block, bodyNode);
+  true_node = HandleInterpret(true_block, true_node, bodyNode);
 
   // Process the orelse branch
   py::object orelseNode = python_adapter::GetPyObjAttr(node, "orelse");
@@ -2210,6 +2212,7 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(false_block->func_graph()->debug_info());
   false_block->func_graph()->debug_info()->set_location(GetLocation(orelseNode));
   AnfNodePtr false_node = ParseExprNode(false_block, orelseNode);
+  false_node = HandleInterpret(false_block, false_node, orelseNode);
 
   true_block->func_graph()->set_output(true_node);
   false_block->func_graph()->set_output(false_node);
@@ -2449,6 +2452,7 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
                                      const AnfNodePtr &assigned_node) {
   // Now only support the self.xx = xxxxx, can't support x.y = xxxx
   AnfNodePtr target_node = ParseExprNode(block, target_object);
+  target_node = HandleInterpret(block, target_node, target_object);
   MS_EXCEPTION_IF_NULL(target_node);
 
   auto attr_name = target_object.attr("attr").cast<std::string>();
@@ -2482,7 +2486,9 @@ void Parser::HandleAssignSubscript(const FunctionBlockPtr &block, const py::obje
   py::object value_obj = python_adapter::GetPyObjAttr(target_object, "value");
   py::object slice_obj = python_adapter::GetPyObjAttr(target_object, "slice");
   AnfNodePtr value_node = ParseExprNode(block, value_obj);
+  value_node = HandleInterpret(block, value_node, value_obj);
   AnfNodePtr slice_node = ParseExprNode(block, slice_obj);
+  slice_node = HandleInterpret(block, slice_node, slice_obj);
   MS_EXCEPTION_IF_NULL(block->func_graph());
   CNodePtr setitem_app = block->func_graph()->NewCNodeInOrder({op_setitem, value_node, slice_node, assigned_node});
   // Getitem apply should return the sequence data structure itself
@@ -2777,7 +2783,8 @@ FunctionBlockPtr Parser::MakeAssertErrorBlock(const FunctionBlockPtr &block, con
 
   py::object msg_node = python_adapter::GetPyObjAttr(node, "msg");
   if (!py::isinstance<py::none>(msg_node)) {
-    auto msg = ParseExprNode(block, msg_node);
+    AnfNodePtr msg = ParseExprNode(block, msg_node);
+    msg = HandleInterpret(block, msg, msg_node);
     (void)inputs.emplace_back(msg);
   }
 
