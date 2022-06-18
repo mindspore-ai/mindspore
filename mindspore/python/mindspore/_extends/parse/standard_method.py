@@ -1860,20 +1860,6 @@ def inplace_update(x, v, indices):
     return F.inplace_update(x, v, indices)
 
 
-def inplace_add(x, v, indices):
-    """
-    Add v into specified rows of x according to indices.
-    """
-    return F.inplace_add(x, v, indices)
-
-
-def inplace_sub(x, v, indices):
-    """
-    Subtract v from specified rows of x according to indices.
-    """
-    return F.inplace_sub(x, v, indices)
-
-
 def coo_to_csr(x):
     """convert coo to csr."""
     row_indices = x.indices[:, 0]

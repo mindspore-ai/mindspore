@@ -205,8 +205,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"index_fill", std::string("index_fill")},                          // index_fill()
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
-       {"inplace_add", std::string("inplace_add")},                        // P.InplaceAdd
-       {"inplace_sub", std::string("inplace_sub")},                        // P.InplaceSub
        {"lerp", std::string("lerp")},                                      // lerp()
        {"log_matrix_determinant", std::string("log_matrix_determinant")},  // log_matrix_determinant()
        {"matrix_determinant", std::string("matrix_determinant")},          // log_matrix_determinant()
