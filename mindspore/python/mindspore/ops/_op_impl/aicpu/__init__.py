@@ -216,3 +216,4 @@ from .scatter_nd_min import _scatter_nd_min_aicpu
 from .cholesky import _cholesky_aicpu
 from .sspaddmm import _sspaddmm_aicpu
 from .cholesky_solve import _cholesky_solve_aicpu
+from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
