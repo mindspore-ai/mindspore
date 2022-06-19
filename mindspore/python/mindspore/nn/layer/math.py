@@ -105,9 +105,10 @@ class ReduceLogSumExp(Cell):
         self.exp = P.Exp()
         self.sum = P.ReduceSum(keep_dims)
         self.log = P.Log()
+        self.max = P.ReduceMax()
 
     def construct(self, x):
-        x_max = x.max()
+        x_max = self.max(x)
         exp = self.exp(x - x_max)
         sumexp = self.sum(exp, self.axis)
         logsumexp = self.log(sumexp)
