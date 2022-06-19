@@ -313,6 +313,13 @@ std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segm
   return result;
 }
 
+bool IsOneOfRealGraphInput(const FuncGraphPtr &func_graph, const AnfNodePtr &input) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  MS_EXCEPTION_IF_NULL(input);
+  auto all_inputs = func_graph->get_inputs();
+  return std::count(all_inputs.begin(), all_inputs.end(), input) != 0;
+}
+
 void ParameterServerMode::PreBuildDistributedGraph() {
   MS_LOG(INFO) << "Start pre-building distribtued graph in Parameter Server mode.";
   MS_EXCEPTION_IF_NULL(node_labels_);
@@ -481,8 +488,14 @@ void ParameterServerMode::ProcessForSplitOptimizer() {
     for (size_t i = 0; i < common::AnfAlgo::GetInputNum(ps_optimizer); i++) {
       auto input = common::AnfAlgo::GetInputNode(ps_optimizer, i);
       // If the input is not a cnode, no inter-process edge is added so no node with multiple inputs should be created.
+      // Unless it's a real input.
       if (!input->isa<CNode>()) {
-        continue;
+        if (IsOneOfRealGraphInput(func_graph_, input)) {
+          MS_LOG(INFO) << "The input " << i << " of optimizer " << ps_optimizer->fullname_with_scope() << ": "
+                       << input->fullname_with_scope() << " is a real input from data.";
+        } else {
+          continue;
+        }
       }
 
       if (i == gradient_index) {
@@ -1151,7 +1164,11 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
     // there's no need to add communication nodes.
     if (!input_i->isa<CNode>() || IsNodesWithSameLabel(input_i, cnode) ||
         common::AnfAlgo::GetCNodeName(input_i) == "Load") {
-      continue;
+      if (IsOneOfRealGraphInput(func_graph_, input_i) && !IsNodesWithSameLabel(input_i, cnode)) {
+        MS_LOG(INFO) << "The input " << input_i->fullname_with_scope() << " needs to be split.";
+      } else {
+        continue;
+      }
     }
 
     InterProcessEdgeLabel edge_label = GenerateEdgeLabel(input_i, cnode);
@@ -1176,12 +1193,18 @@ InterProcessOpEdgesInfo GraphSplitter::GenerateInterProcessOpsForNodeInputs(cons
 InterProcessEdgeLabel GraphSplitter::GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) {
   MS_EXCEPTION_IF_NULL(src_node);
   MS_EXCEPTION_IF_NULL(dst_node);
-  std::string src_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, src_node->cast<CNodePtr>())
-                                      ? common::AnfAlgo::GetNodeAttr<std::string>(src_node, kAttrInterProcessEdgeLabel)
-                                      : "";
-  std::string dst_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, dst_node->cast<CNodePtr>())
-                                      ? common::AnfAlgo::GetNodeAttr<std::string>(dst_node, kAttrInterProcessEdgeLabel)
-                                      : "";
+  std::string src_node_edge_label = "";
+  std::string dst_node_edge_label = "";
+  if (src_node->isa<CNode>()) {
+    src_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, src_node->cast<CNodePtr>())
+                            ? common::AnfAlgo::GetNodeAttr<std::string>(src_node, kAttrInterProcessEdgeLabel)
+                            : "";
+  }
+  if (dst_node->isa<CNode>()) {
+    dst_node_edge_label = common::AnfAlgo::HasNodeAttr(kAttrInterProcessEdgeLabel, dst_node->cast<CNodePtr>())
+                            ? common::AnfAlgo::GetNodeAttr<std::string>(dst_node, kAttrInterProcessEdgeLabel)
+                            : "";
+  }
   if (!src_node_edge_label.empty() && !dst_node_edge_label.empty()) {
     if (src_node_edge_label != dst_node_edge_label) {
       MS_LOG(EXCEPTION) << "The edge label name of src node and dst node should be same."
