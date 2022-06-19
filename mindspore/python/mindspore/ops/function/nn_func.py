@@ -687,8 +687,8 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
     Examples:
 
         >>> # Case 1: Indices labels
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
-        >>> target = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
         >>> output = ops.cross_entropy(inputs, target)
         >>> # Case 2: Probability labels
         >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
@@ -768,8 +768,8 @@ def nll_loss(inputs, target, weight=None, ignore_index=-100, reduction='mean', l
 
     Examples:
 
-        >>> inputs = mindspore.Tensor(np.random.randn(3, 5))
-        >>> target = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> inputs = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> target = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
         >>> output = ops.nll_loss(inputs, target)
 
     """
