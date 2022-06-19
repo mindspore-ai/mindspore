@@ -231,6 +231,7 @@ Optimizer
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.nn.Adadelta
     mindspore.nn.Adagrad
     mindspore.nn.Adam
     mindspore.nn.AdamOffload
