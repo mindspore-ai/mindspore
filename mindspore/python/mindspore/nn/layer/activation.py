@@ -130,7 +130,7 @@ class Softmin(Cell):
         TypeError: If `axis` is neither an int nor a tuple.
         TypeError: If dtype of `x` is neither float16 nor float32.
         ValueError: If `axis` is a tuple whose length is less than 1.
-        ValueError: If `axis` is a tuple whose elements are not all in the range [-len(x), len(x)).
+        ValueError: If `axis` is a tuple whose elements are not all in the range [-x.ndim, x.ndim).
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -141,7 +141,7 @@ class Softmin(Cell):
         >>> softmin = nn.Softmin()
         >>> output = softmin(x)
         >>> print(output)
-        [0.03168 0.01166 0.0861  0.636   0.2341 ]
+        [0.2341  0.636  0.0862  0.01165  0.03168 ]
         >>> assert(1.0 == output.sum())
     """
 
@@ -467,7 +467,7 @@ class SiLU(Cell):
 
         \text{SiLU}(x) = x * \sigma(x),
 
-    where math::`\sigma(x)` is Sigmoid function, which is defined as:
+    where :math:`x_i` is input, :math:`\sigma(x)` is Sigmoid function, which is defined as:
 
     .. math::
 
