@@ -3108,14 +3108,18 @@ def bernoulli(x, p=0.5, seed=-1):
         ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3], mindspore.int8))
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int8)
         >>> output = ops.bernoulli(input_x, p=1.0)
         >>> print(output)
-        [1, 1, 1]
-        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0], mindspore.float32))
+        [1 1 1]
+        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0]), mindspore.float32)
         >>> output = ops.bernoulli(input_x, input_p)
         >>> print(output)
-        [0, 1, 1]
+        [0 1 1]
     """
     bernoulli_ = Bernoulli(seed)
     return bernoulli_(x, p)

@@ -1,7 +1,7 @@
-﻿mindspore.ops.bernoulli
+mindspore.ops.bernoulli
 =======================
 
-.. py:class:: mindspore.ops.bernoulli(x, p=0.5, seed=-1)
+.. py:function:: mindspore.ops.bernoulli(x, p=0.5, seed=-1)
 
     以p的概率随机将输出的元素设置为0或1，服从伯努利分布。
 

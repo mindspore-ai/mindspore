@@ -5950,15 +5950,15 @@ class Bernoulli(Primitive):
         ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1, 2, 3], mindspore.int8))
-        >>> bernoulli = P.Bernoulli()
+        >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int8)
+        >>> bernoulli = Bernoulli()
         >>> output = bernoulli(input_x, p=1.0)
         >>> print(output)
-        [1, 1, 1]
-        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0], mindspore.float32))
+        [1 1 1]
+        >>> input_p = Tensor(np.array([0.0, 1.0, 1.0]), mindspore.float32)
         >>> output = bernoulli(input_x, input_p)
         >>> print(output)
-        [0, 1, 1]
+        [0 1 1]
     """
 
     @prim_attr_register
