@@ -35,9 +35,6 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto accum_shape = input_args[kInputIndex1]->BuildShape();
   auto accum_update_shape = input_args[kInputIndex2]->BuildShape();
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  auto rho_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->BuildShape())[kShape];
-  auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->BuildShape())[kShape];
   auto grad_shape = input_args[kInputIndex6]->BuildShape();
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto accum_shape_ptr = accum_shape->cast<abstract::ShapePtr>();
@@ -69,26 +66,6 @@ abstract::TupleShapePtr ApplyAdadeltaInferShape(const PrimitivePtr &primitive,
         << "', 'var' and 'grad' must have the same shape when is not dynamic. But got 'var' shape: "
         << var_shape->ToString() << ", 'grad' shape: " << grad_shape->ToString() << ".";
     }
-  }
-  const int64_t kShapeSize = 1;
-  auto lr_shape_size = lr_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("lr's rank'", lr_shape_size, kLessEqual, kShapeSize, primitive->name());
-  if (lr_shape_size == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize, primitive->name());
-  }
-
-  auto rho_shape_size = rho_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("rho's rank'", rho_shape_size, kLessEqual, kShapeSize, primitive->name());
-  if (rho_shape_size == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("rho_shape[0]", rho_shape[0], kEqual, kShapeSize, primitive->name());
-  }
-
-  auto epsilon_shape_size = epsilon_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("epsilon's rank'", epsilon_shape_size, kLessEqual, kShapeSize,
-                                           primitive->name());
-  if (epsilon_shape_size == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape[0]", epsilon_shape[0], kEqual, kShapeSize,
-                                             primitive->name());
   }
 
   return std::make_shared<abstract::TupleShape>(

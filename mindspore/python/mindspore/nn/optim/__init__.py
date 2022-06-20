@@ -35,7 +35,8 @@ from .thor import thor
 from .adafactor import AdaFactor
 from .adasum import AdaSumByDeltaWeightWrapCell, AdaSumByGradWrapCell
 from .adamax import AdaMax
+from .adadelta import Adadelta
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam', 'AdamOffload',
            'Lamb', 'SGD', 'ASGD', 'Rprop', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad', 'thor', 'AdaFactor',
-           'AdaSumByDeltaWeightWrapCell', 'AdaSumByGradWrapCell', 'AdaMax']
+           'AdaSumByDeltaWeightWrapCell', 'AdaSumByGradWrapCell', 'AdaMax', 'Adadelta']

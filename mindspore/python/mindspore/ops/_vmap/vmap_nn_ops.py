@@ -21,7 +21,52 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
-    _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule
+    _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _update_prim_attr
+
+
+@vmap_rules_getters.register(P.ApplyAdadelta)
+def get_apply_adadelta_rule(prim, axis_size):
+    """VmapRule for `ApplyAdadelta` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+
+    def vmap_rule(var_bdim, accum_bdim, accum_update_bdim, lr_bdim, rho_bdim, epsilon_bdim, grad_bdim, u_monad):
+        var, var_dim = var_bdim
+        accum, accum_dim = accum_bdim
+        accum_update, accum_update_dim = accum_update_bdim
+        lr, lr_dim = lr_bdim
+        rho, rho_dim = rho_bdim
+        epsilon, epsilon_dim = epsilon_bdim
+        grad, grad_dim = grad_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [accum, accum_dim, lr_dim, rho_dim, epsilon_dim, grad_dim]):
+                ValueError("The source axis of `var` is None, but the source "
+                           "axis of `accum/accum_dim/lr/rho/epsilon/grad` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            var, accum, accum_update = prim(var, accum, accum_update, lr, rho, epsilon, grad, u_monad)
+            return (var, None), (accum, None), (accum_update, None)
+        if var_dim != 0 or accum_dim != var_dim or accum_update_dim != var_dim:
+            ValueError(
+                "For `{}`, the source axis of `var` must be equal to `accum` and `accum_update`, and not equal to 0, "
+                "but got the source axis of `var`: {}, `accum`: {}, `accum_update`: {}.".format(
+                    prim_name, var_dim, accum_dim, accum_update_dim))
+
+        _update_prim_attr(prim, 'batch_rank', batch_rank)
+
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        rho = _bdim_at_front(rho, rho_dim, axis_size)
+        epsilon = _bdim_at_front(epsilon, epsilon_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+
+        var, accum, accum_update = prim(var, accum, accum_update, lr, rho, epsilon, grad, u_monad)
+        return (var, 0), (accum, 0), (accum_update, 0)
+
+    return vmap_rule
 
 
 @vmap_rules_getters.register(P.ApplyProximalAdagrad)
