@@ -4,6 +4,7 @@ mindspore.ops.deformable_conv2d
 .. py:function:: mindspore.ops.deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1, deformable_groups=1, modulated=True)
 
     给定4D的Tensor输入 `x` ， `weight` 和 `offsets` ，计算一个2D的可变形卷积。可变形卷积运算可以表达如下：
+
     可变形卷积v1：
 
     .. math::
@@ -20,11 +21,11 @@ mindspore.ops.deformable_conv2d
 
     - **x** (Tensor) - 一个四维Tensor，表示输入图像。数据格式为"NCHW"，shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 。Dytpe为float16或float32。
     - **weight** (Tensor) - 一个四维Tensor，表示可学习的滤波器。数据类型必须与 `x` 相同，shape为 :math:`(C_{out}, C_{in} / groups, H_{f}, W_{f})` 。
-    - **offsets** (Tensor) - 一个四维Tensor，存储x和y坐标的偏移，以及可变形卷积的输入掩码mask。数据格式为"NCHW"，shape为 :math:`(batch, 3 * deformable_groups * H_{f} * W_{f}, H_{out}, W_{out})` ，注意其中C维度的存储顺序为(offset_x, offset_y, mask)。数据类型必须与 `x` 相同。
+    - **offsets** (Tensor) - 一个四维Tensor，存储x和y坐标的偏移，以及可变形卷积的输入掩码mask。数据格式为"NCHW"，shape为 :math:`(batch, 3 * deformable\_groups * H_{f} * W_{f}, H_{out}, W_{out})` ，注意其中C维度的存储顺序为(offset_x, offset_y, mask)。数据类型必须与 `x` 相同。
     - **kernel_size** (tuple[int]) - 一个包含两个整数的元组，表示卷积核的大小。
     - **strides** (tuple[int]) - 一个包含四个整数的元组，表示对于输入的每个维度的滑动窗口步长。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。
     - **padding** (tuple[int]) - 一个包含四个整数的元组，表示沿（上，下，左，右）四个方向往输入填充的像素点个数。
-    - **bias** (Tensor, 可选) - 一个一维Tensor，表示加到卷积输出的偏置参数。shape为 :math:`(out_channels)` 。默认值为None。
+    - **bias** (Tensor, 可选) - 一个一维Tensor，表示加到卷积输出的偏置参数。shape为 :math:`(out\_channels)` 。默认值为None。
     - **dilations** (tuple[int], 可选) - 一个包含四个整数的元组，表示对于输入的每个维度的膨胀系数。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。默认值为(1, 1, 1, 1)。
     - **groups** (int, 可选) - 一个int32类型的整数，表示从输入通道到输出通道的阻塞连接数。输入通道数和输出通道数必须都能被 `groups` 整除。默认值为1。
     - **deformable_groups** (int, 可选) - 一个int32类型的整数，表示可变形卷积组数。输入通道数必须能被 `deformable_groups` 整除。默认值为1。
