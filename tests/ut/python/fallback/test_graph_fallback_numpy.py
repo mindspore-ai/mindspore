@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 import numpy.random as rand
 from mindspore import ms_function, context, Tensor
+import mindspore.nn as nn
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -563,3 +564,24 @@ def test_np_random():
         return Tensor(b)
     res = np_random()
     print(res)
+
+
+def test_np_init():
+    """
+    Feature: JIT Fallback
+    Description: Test numpy defined in init in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.x = np.array([1, 2])
+
+        def construct(self):
+            y = np.array([3, 4])
+            print(self.x)
+            return Tensor(y + self.x)
+
+    net = Net()
+    res = net()
+    assert (res.asnumpy() == [4, 6]).all()

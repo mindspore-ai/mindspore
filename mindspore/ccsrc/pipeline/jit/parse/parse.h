@@ -208,6 +208,7 @@ class Parser {
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
+  AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node);
 
   // Transform tail call to parallel call.
   void TransformParallelCall();

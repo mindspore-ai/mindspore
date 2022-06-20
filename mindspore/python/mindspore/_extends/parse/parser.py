@@ -59,6 +59,7 @@ RESOLVE_TYPE_INVALID = 0xFF
 # When the type is RESOLVE_TYPE_CLASS_INSTANCE
 CLASS_INSTANCE_TYPE_CELL = 0            # class instance type is Cell
 CLASS_INSTANCE_TYPE_PRIMITIVE = 1       # class instance type is Primitive
+CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2     # Class instance type is Numpy Array
 CLASS_INSTANCE_TYPE_INVALID = 0xFF
 
 # Ast main type
@@ -341,6 +342,8 @@ def get_class_instance_type(obj):
         return CLASS_INSTANCE_TYPE_CELL
     if isinstance(obj, ops.Primitive):
         return CLASS_INSTANCE_TYPE_PRIMITIVE
+    if isinstance(obj, numpy.ndarray):
+        return CLASS_INSTANCE_TYPE_NUMPY_ARRAY
     return CLASS_INSTANCE_TYPE_INVALID
 
 

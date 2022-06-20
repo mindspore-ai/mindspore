@@ -668,8 +668,13 @@ ClassInstanceTypeDef GetClassInstanceType(const py::object &obj) {
 // Check if the object is Cell instance.
 bool IsCellInstance(const py::object &obj) {
   auto class_type = GetClassInstanceType(obj);
-  bool is_cell = (class_type == CLASS_INSTANCE_TYPE_CELL);
-  return is_cell;
+  return class_type == CLASS_INSTANCE_TYPE_CELL;
+}
+
+// Check if the object is Numpy Array instance.
+bool IsNumpyArrayInstance(const py::object &obj) {
+  auto class_type = GetClassInstanceType(obj);
+  return class_type == CLASS_INSTANCE_TYPE_NUMPY_ARRAY;
 }
 
 // Check if the object is MsClass instance.
