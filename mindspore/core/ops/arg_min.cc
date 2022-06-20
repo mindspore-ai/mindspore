@@ -81,7 +81,7 @@ abstract::ShapePtr ArgMinInferShape(const PrimitivePtr &primitive, const std::ve
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TensorTypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "For '" << prim->name()
                       << ", the input args used for infer shape and type is necessary, but missing it.";
@@ -93,7 +93,7 @@ TypePtr ArgMinInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   ValuePtr out_type_value = prim->GetAttr(kOutputType);
   TypePtr out_type_ptr = dyn_cast<Type>(out_type_value);
   (void)CheckAndConvertUtils::CheckTypeValid("output_type", out_type_ptr, out_valid_types, prim->name());
-  return out_type_ptr;
+  return std::make_shared<TensorType>(out_type_ptr);
 }
 
 MIND_API_OPERATOR_NAME_IMPL(ArgMin, kNameArgMin, BaseOperator);
