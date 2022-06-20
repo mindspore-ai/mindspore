@@ -34,7 +34,9 @@
       - "O1": 启用boost模式, 性能将提升约20%, 准确率保持不变。
       - "O2": 启用boost模式, 性能将提升约30%, 准确率下降小于3%。
 
-      如果你想设置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py` 。
+      如果想自行配置boost模式, 可以将 `boost_config_dict` 设置为 `boost.py`。
+      为使功能生效，需要同时设置optimizer、eval_network或metric参数。
+      注意：当前默认开启的优化仅适用部分网络，并非所有网络都能获得相同收益。建议在图模式+Ascend平台下开启该模式，同时为了获取更好的加速效果，请参考文档配置boost_config_dict。
 
     .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None)
 

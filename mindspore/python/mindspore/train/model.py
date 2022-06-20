@@ -146,7 +146,13 @@ class Model:
               the accuracy is reduced by less than 3%.
 
             If you want to config boost mode by yourself, you can set boost_config_dict as `boost.py`.
+            In order for this function to work, you need to set the optimizer, eval_network or metric parameters
+            at the same time.
 
+            Notice: The current optimization enabled by default only applies to some networks, and not all networks
+            can obtain the same benefits.  It is recommended to enable this function on
+            the Graph mode + Ascend platform, and for better acceleration, refer to the documentation to configure
+            boost_config_dict.
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import nn
@@ -233,6 +239,7 @@ class Model:
             self._loss_scale_manager_set = True
 
     def _check_amp_level_arg(self, optimizer, amp_level):
+        """Check amp level arg"""
         if optimizer is None and amp_level != "O0":
             raise ValueError(
                 "Auto mixed precision will not work because 'optimizer' is None.Please set amp_level='O0' "
