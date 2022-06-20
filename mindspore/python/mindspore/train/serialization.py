@@ -610,15 +610,15 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode):
             if pb_content is None:
                 raise ValueError("For 'load_checkpoint', failed to decrypt the checkpoint file.")
         checkpoint_list.ParseFromString(pb_content)
-    except BaseException as e:
+    except BaseException:
         if _is_cipher_file(ckpt_file_name):
-            logger.critical("Failed to read the checkpoint file '%s'. The file may be encrypted, please pass in the "
-                            "correct 'dec_key' or check the file integrity.", ckpt_file_name)
+            err_info = "Failed to read the checkpoint file {}. The file may be encrypted or tempered with, " \
+                     "please pass in the correct 'dec_key' or check the file integrity.".format(ckpt_file_name)
         else:
-            logger.critical("Failed to read the checkpoint file '%s' , may not have permission to read it, please "
-                            "check the correct of the file.", ckpt_file_name)
-        raise ValueError(e.__str__() + "\nFor 'load_checkpoint', failed to read the checkpoint file {}, may not have "
-                                       "permission to read it.".format(ckpt_file_name))
+            err_info = "Failed to read the checkpoint file {}. May not have permission to read it, please check" \
+                     " the correct of the file.".format(ckpt_file_name)
+        logger.error(err_info)
+        raise ValueError(err_info)
     return checkpoint_list
 
 
