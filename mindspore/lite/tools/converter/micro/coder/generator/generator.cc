@@ -201,6 +201,7 @@ int Generator::CodeStaticContent() {
     const_blocks.emplace_back(std::make_pair(net_src_file_path_ + "debug_utils.c", debug_utils_c));
   }
   if (config_->target() == kCortex_M) {
+    const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "benchmark.h", benchmark_h_cortex));
     const_blocks.emplace_back(std::make_pair(net_main_file_path_ + "data.h", data_h_cortex));
     const_blocks.emplace_back(
       std::make_pair(config_->code_path() + "/" + "cortex-m7.toolchain.cmake", cortex_m7_toolchain));
@@ -264,6 +265,7 @@ int Generator::CodeWeightFile() {
       MS_LOG(ERROR) << "Weight init code generation error ";
       return RET_ERROR;
     }
+    cofs << "int __errno; \n";
     cofs << "unsigned char g_buf[" << ctx_->total_buffer_size() + ctx_->weight_buffer_size() << "]; \n";
     cofs << "unsigned char * " << ctx_->buffer_name() << " = &g_buf[0]; \n";
     cofs << "unsigned char * " << ctx_->weight_name() << " = &g_buf[" << ctx_->total_buffer_size() << "]; \n";
