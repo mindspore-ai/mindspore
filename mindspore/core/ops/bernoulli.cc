@@ -56,9 +56,9 @@ TypePtr BernoulliInferType(const PrimitivePtr &primitive, const std::vector<Abst
 
 MIND_API_OPERATOR_IMPL(Bernoulli, BaseOperator);
 
-void Bernoulli::Init(const int64_t seed) { this->set_seed(seed); }
+void Bernoulli::Init(int64_t seed) { this->set_seed(seed); }
 
-void Bernoulli::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+void Bernoulli::set_seed(int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
 
 int64_t Bernoulli::get_seed() const {
   auto value_ptr = this->GetAttr(kSeed);
