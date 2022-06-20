@@ -135,6 +135,225 @@ def test_to_tensor_float16():
         np.testing.assert_almost_equal(img2, img1, 3)
 
 
+def test_to_tensor_eager_float16():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with float16 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.float16)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_float64():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with float64 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.float64)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_int32():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with int32 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.int32)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_int64():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with int64 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.int64)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_uint32():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with uint32 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.uint32)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_uint64():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor with various supported output_type values in eager scenario with uint64 image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    def test_config(my_output_type, output_dtype):
+        image = np.random.randn(128, 128, 3).astype(np.uint64)
+        op = py_vision.ToTensor(output_type=my_output_type)
+        out = op(image)
+
+        assert out.dtype == output_dtype
+
+        image = image / 255
+        image = image.astype(my_output_type)
+        image = np.transpose(image, (2, 0, 1))
+
+        np.testing.assert_almost_equal(out, image, 5)
+
+    test_config(np.float16, "float16")
+    test_config(np.float32, "float32")
+    test_config(np.float64, "float64")
+    test_config(np.int8, "int8")
+    test_config(np.int16, "int16")
+    test_config(np.int32, "int32")
+    test_config(np.int64, "int64")
+    test_config(np.uint8, "uint8")
+    test_config(np.uint16, "uint16")
+    test_config(np.uint32, "uint32")
+    test_config(np.uint64, "uint64")
+    test_config(np.bool, "bool")
+
+
+def test_to_tensor_eager_bool():
+    """
+    Feature: ToTensor Op
+    Description: Test ToTensor in eager scenario with bool image
+    Expectation: Test runs successfully and results are verified
+    """
+
+    image = np.random.randint(0, 255, (128, 128, 3)).astype(np.bool)
+    my_np_type = np.uint8
+    op = py_vision.ToTensor(output_type=my_np_type)
+    out = op(image)
+
+    assert out.dtype == "uint8"
+
+
 def test_to_tensor_errors():
     """
     Feature: ToTensor op
@@ -177,11 +396,34 @@ def skip_test_to_tensor_errors2():
     assert "Argument output_type with value None is not of type" in str(error_info.value)
 
 
+def test_to_tensor_eager_error_string():
+    """
+    Feature: ToTensor op
+    Description: Test ToTensor in eager scenario with string image
+    Expectation: Correct error is thrown as expected
+    """
+    image = np.random.randint(0, 255, (128, 128, 3)).astype(np.str)
+    my_np_type = np.uint8
+    with pytest.raises(TypeError) as error_info:
+        op = py_vision.ToTensor(output_type=my_np_type)
+        _ = op(image)
+    assert "ufunc 'true_divide' not supported for the input types" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_to_tensor_float32()
     test_to_tensor_float64()
     test_to_tensor_int32()
     test_to_tensor_eager()
     test_to_tensor_float16()
+    test_to_tensor_eager_float16()
+    test_to_tensor_eager_float64()
+    test_to_tensor_eager_int32()
+    test_to_tensor_eager_int64()
+    test_to_tensor_eager_uint32()
+    test_to_tensor_eager_uint64()
+    test_to_tensor_eager_int32()
+    test_to_tensor_eager_bool()
     test_to_tensor_errors()
     skip_test_to_tensor_errors2()
+    test_to_tensor_eager_error_string()
