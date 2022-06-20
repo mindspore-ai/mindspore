@@ -17,14 +17,11 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_META_SERVER_NODE_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_META_SERVER_NODE_H_
 
-#include <time.h>
 #include <string>
 #include <memory>
 #include <map>
 #include <thread>
-#include <chrono>
 #include <shared_mutex>
-#include "distributed/cluster/topology/common.h"
 #include "distributed/rpc/tcp/tcp_server.h"
 #include "distributed/recovery/configuration.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -33,21 +30,6 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
-// Indicates the state of the cluster physical topology.
-enum class TopoState {
-  // All the nodes of this cluster are in the process of starting up.
-  kInitializing = 0,
-
-  // All the nodes of this cluster has been started and registered to the meta server node successfully.
-  kInitialized,
-
-  // The topo of this cluster failed to construct at specified time.
-  kFailed,
-
-  // All the nodes of this cluster have finished their tasks and unregistered successfully.
-  kFinished
-};
-
 // Indicates the state of compute graph node.
 enum class NodeState {
   // This node is newly created and unauthenticated.
@@ -91,11 +73,7 @@ class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id, const std::string &role, const size_t &node_num,
                           uint64_t node_timeout = kDefaultNodeTimeout)
-      : NodeBase(node_id, role),
-        total_node_num_(node_num),
-        topo_state_(TopoState::kInitializing),
-        enable_monitor_(true),
-        node_timeout_(node_timeout) {}
+      : NodeBase(node_id, role), total_node_num_(node_num), enable_monitor_(true), node_timeout_(node_timeout) {}
   ~MetaServerNode() override;
 
   bool Initialize() override;
@@ -173,17 +151,11 @@ class MetaServerNode : public NodeBase {
   // The total legal number of compute graph nodes.
   size_t total_node_num_;
 
-  // The state of the topology consisting of compute graph nodes.
-  TopoState topo_state_;
-
   // The monitor thread for update the topo state.
   std::thread topo_monitor_;
 
   // The switch for the topo monitor thread.
   std::atomic<bool> enable_monitor_;
-
-  // The start time of this meta server node.
-  std::chrono::high_resolution_clock::time_point start_time_;
 
   // The metadata written and read by users.
   std::map<std::string, std::string> metadata_;

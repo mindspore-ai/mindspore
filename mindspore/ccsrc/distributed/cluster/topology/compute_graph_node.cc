@@ -17,7 +17,7 @@
 #include <utility>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
-#include "distributed/cluster/topology/utils.h"
+#include "utils/ms_exception.h"
 #include "distributed/cluster/topology/common.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/constants.h"
@@ -99,12 +99,12 @@ bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(hb_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
   if (!hb_client_->IsConnected(server_url)) {
-    RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url),
+    RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url, kNoRetry),
                              "Failed to connect to the meta server node url: " << server_url);
   }
 
   if (!tcp_client_->IsConnected(server_url)) {
-    RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url),
+    RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url, kNoRetry),
                              "Failed to connect to the meta server node url: " << server_url);
   }
 
@@ -138,8 +138,10 @@ bool ComputeGraphNode::Register() {
   if (reg_resp_msg.success()) {
     authenticated_ = true;
     rank_id_ = reg_resp_msg.rank_id();
+    MS_LOG(INFO) << "The compute graph node: " << node_id_ << " has been registered successfully.";
     return true;
   } else {
+    MS_LOG(INFO) << "Failed to register the compute graph node: " << node_id_;
     return false;
   }
 }
@@ -171,36 +173,51 @@ bool ComputeGraphNode::Unregister() {
 }
 
 bool ComputeGraphNode::Heartbeat() {
-  MS_EXCEPTION_IF_NULL(hb_client_);
+  try {
+    MS_EXCEPTION_IF_NULL(hb_client_);
 
-  MS_LOG(INFO) << "The heartbeat thread is started.";
-  size_t interval = 3;
-  size_t timeout = 10;
+    MS_LOG(INFO) << "The heartbeat thread is started.";
+    size_t interval = 3;
+    size_t timeout = 10;
 
-  while (enable_hb_) {
-    HeartbeatMessage hb_msg;
-    hb_msg.set_node_id(node_id_);
-
-    const auto &server_url = meta_server_addr_.GetUrl();
-    std::string content = hb_msg.SerializeAsString();
-    auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
-    MS_EXCEPTION_IF_NULL(message);
-
-    MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
-    if (response == nullptr) {
-      MS_LOG(ERROR) << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
-      while (!Reconnect()) {
-        if (!recovery::IsEnableRecovery()) {
-          MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
-        }
-        continue;
+    while (enable_hb_) {
+      if (topo_state_ == TopoState::kInitializing && ElapsedTime(start_time_) > kTopoInitTimeout) {
+        MS_LOG(EXCEPTION) << "Building networking for " << role_ << " failed.";
       }
+      HeartbeatMessage hb_msg;
+      hb_msg.set_node_id(node_id_);
+
+      const auto &server_url = meta_server_addr_.GetUrl();
+      std::string content = hb_msg.SerializeAsString();
+      auto message = CreateMessage(server_url, MessageName::kHeartbeat, content);
+      MS_EXCEPTION_IF_NULL(message);
+
+      MessageBase *response = hb_client_->ReceiveSync(std::move(message), timeout);
+      if (response == nullptr) {
+        MS_LOG(ERROR)
+          << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
+        while (!Reconnect()) {
+          if (!recovery::IsEnableRecovery() && topo_state_ != TopoState::kInitializing) {
+            MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
+          } else {
+            MS_LOG(ERROR) << "Failed to connect to the meta server.";
+          }
+          continue;
+        }
+      } else {
+        auto &body = response->body;
+        HeartbeatRespMessage resp_msg;
+        resp_msg.ParseFromArray(body.c_str(), body.length());
+        topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
+      }
+
+      sleep(interval);
     }
 
-    sleep(interval);
+    MS_LOG(INFO) << "The heartbeat thread is finished.";
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
   }
-
-  MS_LOG(INFO) << "The heartbeat thread is finished.";
   return true;
 }
 

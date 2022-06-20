@@ -17,7 +17,11 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_NODE_BASE_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_CLUSTER_TOPOLOGY_NODE_BASE_H_
 
+#include <time.h>
+#include <chrono>
 #include <string>
+#include "distributed/cluster/topology/common.h"
+#include "distributed/cluster/topology/utils.h"
 
 namespace mindspore {
 namespace distributed {
@@ -30,7 +34,12 @@ namespace topology {
 class NodeBase {
  public:
   explicit NodeBase(const std::string &node_id, const std::string &role)
-      : node_id_(node_id), rank_id_(-1), role_(role), finalized_(false) {}
+      : node_id_(node_id),
+        rank_id_(-1),
+        role_(role),
+        finalized_(false),
+        start_time_(Now()),
+        topo_state_(TopoState::kInitializing) {}
   virtual ~NodeBase() = default;
 
   // Prepare the resources hold in this node.
@@ -65,6 +74,12 @@ class NodeBase {
 
   // Indicates whether the finalize method of this node has been called.
   bool finalized_;
+
+  // The start time of this meta server node.
+  std::chrono::high_resolution_clock::time_point start_time_;
+
+  // The state of the topology consisting of compute graph nodes.
+  TopoState topo_state_;
 };
 }  // namespace topology
 }  // namespace cluster

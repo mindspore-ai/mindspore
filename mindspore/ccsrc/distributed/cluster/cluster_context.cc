@@ -44,7 +44,8 @@ ClusterContext::ClusterContext()
 ClusterContext::~ClusterContext() {
   if (!finalized_) {
     try {
-      (void)Finalize();
+      const uint32_t timeout = 0;
+      (void)Finalize(timeout);
     } catch (std::exception &) {
       MS_LOG(ERROR) << "Failed to finalize cluster context.";
     }
@@ -72,6 +73,7 @@ bool ClusterContext::Initialize() {
 
   // Step 2: Build network for this cluster. Every process will block in this method until networking is done.
   if (!BuildCluster()) {
+    MsException::Instance().CheckException();
     MS_LOG(ERROR) << "Building networking for " << node_role_ << " failed.";
     return false;
   }
@@ -94,8 +96,10 @@ bool ClusterContext::Finalize(uint32_t timeout) {
     return true;
   }
   MS_EXCEPTION_IF_NULL(node_base_);
+
+  bool force = (timeout == 0);
   size_t interval = 5;
-  while (!node_base_->Finalize()) {
+  while (!node_base_->Finalize(force)) {
     MS_LOG(WARNING) << "Retry to finalize the node...";
     sleep(interval);
   }

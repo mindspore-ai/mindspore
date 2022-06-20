@@ -15,6 +15,7 @@
  */
 
 #include <utility>
+#include "utils/ms_exception.h"
 #include "distributed/cluster/cluster_context.h"
 #include "plugin/device/cpu/hal/hardware/ms_collective_node.h"
 
@@ -87,6 +88,7 @@ bool CollectiveNode::SynchronizeAddresses() {
       } else {
         MS_LOG(INFO) << "The address of rank " << rank_id << " has been registered successfully.";
       }
+      MsException::Instance().CheckException();
     }
 
     // Get the addresses of other nodes.
@@ -107,6 +109,7 @@ bool CollectiveNode::SynchronizeAddresses() {
           MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered";
           sleep(interval);
         }
+        MsException::Instance().CheckException();
       }
     }
   }

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
-static bool FillMetaServerAddress(struct MetaServerAddress *address) {
+__attribute__((unused)) static bool FillMetaServerAddress(struct MetaServerAddress *address) {
   MS_EXCEPTION_IF_NULL(address);
 
   // Get the address of meta server from the environment.

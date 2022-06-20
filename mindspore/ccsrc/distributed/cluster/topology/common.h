@@ -24,6 +24,21 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
+// Indicates the state of the cluster physical topology.
+enum class TopoState {
+  // All the nodes of this cluster are in the process of starting up.
+  kInitializing = 0,
+
+  // All the nodes of this cluster has been started and registered to the meta server node successfully.
+  kInitialized,
+
+  // The topo of this cluster failed to construct at specified time.
+  kFailed,
+
+  // All the nodes of this cluster have finished their tasks and unregistered successfully.
+  kFinished
+};
+
 // The address of meta server node used by compute graph nodes to register and get addresses of other compute graph
 // nodes dynamically.
 struct MetaServerAddress {
@@ -67,9 +82,9 @@ enum class MessageName {
 };
 
 // The retry and interval configuration used for the macro `EXECUTE_WITH_RETRY`.
-static const size_t kExecuteRetryNum = 10;
+static const size_t kExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
-static const uint32_t kExecuteInterval = 10;
+static const uint32_t kExecuteInterval = 3;
 
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                   \
   do {                                                                       \

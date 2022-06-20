@@ -37,6 +37,11 @@ message HeartbeatMessage {
   string node_id = 1;
 }
 
+message HeartbeatRespMessage {
+  bool success = 1;
+  uint32 topo_state = 2;
+}
+
 message MetadataMessage {
   string name = 1;
   bytes value = 2;
