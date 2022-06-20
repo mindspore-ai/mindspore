@@ -100,7 +100,7 @@ def test_padv3_edge():
     np.testing.assert_almost_equal(expect, res_ms)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_padv3_vmap():
