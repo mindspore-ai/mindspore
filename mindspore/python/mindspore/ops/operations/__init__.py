@@ -104,7 +104,7 @@ from .other_ops import (Assign, IOU, BoundingBoxDecode, BoundingBoxEncode,
                         CheckValid, Partial, Depend, identity, CheckBprop, Push, Pull, PullWeight, PushWeight,
                         PushMetrics, StartFLJob, UpdateModel, GetModel, PyFunc, ExchangeKeys, GetKeys,
                         _DynamicLossScale)
-from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, UniformInt, UniformReal,
+from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, RandomGamma, Poisson, UniformInt, UniformReal,
                          RandomCategorical, StandardLaplace, Multinomial, UniformCandidateSampler,
                          LogUniformCandidateSampler)
 from .rl_ops import (BufferAppend, BufferGetItem, BufferSample)
@@ -274,6 +274,7 @@ __all__ = [
     'StandardNormal',
     'Multinomial',
     'Gamma',
+    'RandomGamma',
     'Poisson',
     'UniformInt',
     'UniformReal',

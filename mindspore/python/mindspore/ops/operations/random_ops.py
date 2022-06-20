@@ -246,6 +246,65 @@ class StandardLaplace(PrimitiveWithInfer):
         return out
 
 
+class RandomGamma(Primitive):
+    r"""
+    Produces random positive floating-point values x, distributed according to probability density function:
+
+    .. note::
+        - Random seed: A set of regular random numbers can be obtained through some complex mathematical algorithms,
+          and the random seed is the initial value of this random number. If the random seed is the same, the random
+          number obtained will not change.
+        - Global random seed and operator-level random seed are not set: Use the default value as the random seed.
+        - Global random seed is set, but operator-level random seed is not set: A global random seed will splice
+          with a randomly generated seed.
+        - Global random seed is not set, operator-level random seed is set: The default global random seed is used,
+          and splices with the operator-level random seed.
+        - Both Global random and operator-level random seed are set: The global random seed will splice with the
+          operator-level random seed.
+
+    Args:
+        seed (int): The operator-level random seed, used to generate random numbers, must be non-negative. Default: 0.
+        seed2 (int): The global random seed and it will combile with the operator-level random seed to determine the
+            final generated random number, must be non-negative. Default: 0.
+
+    Inputs:
+        - **shape** (Tensor) - The shape of random tensor to be generated.
+        Must be one of the following types: int32, int64. 1-D integer tensor.
+        - **alpha** (Tensor) - α is the shape parameter of RandomGamma distribution.
+        It must be greater than 0. Must be one of the following types: half, float32, float64.
+
+    Outputs:
+        Tensor. The shape should be equal to the concat shape between the input `shape` and `alpha`.
+        The dtype is the same type as alpha.
+
+    Raises:
+        TypeError: If data type of `seed` or `seed2` is not int.
+        TypeError: If `shape` or `alpha` is not a Tensor.
+        TypeError: If data type of `alpha` is not float32.
+        ValueError: If `shape` is not a constant value.
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> shape = Tensor(np.array([3, 1, 2]), mstype.int32)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
+        >>> gamma = ops.RandomGamma(seed=3)
+        >>> output = gamma(shape, alpha)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 2, 2, 2)
+    """
+
+    @prim_attr_register
+    def __init__(self, seed=0, seed2=0):
+        """Initialize Gamma"""
+        self.init_prim_io_names(inputs=['shape', 'alpha'], outputs=['output'])
+        self.add_prim_attr("side_effect_hidden", True)
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
+
+
 class Gamma(PrimitiveWithInfer):
     r"""
     Produces random positive floating-point values x, distributed according to probability density function:
@@ -288,22 +347,22 @@ class Gamma(PrimitiveWithInfer):
         ValueError: If `shape` is not a constant value.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> beta = Tensor(np.array([1.0]), mstype.float32)
-        >>> gamma = ops.Gamma(seed=3)
-        >>> output = gamma(shape, alpha, beta)
+        >>> random_gamma = ops.RandomGamma(seed=3)
+        >>> output = random_gamma(shape, alpha, beta)
         >>> result = output.shape
         >>> print(result)
-        (3, 1, 2, 2, 2)
+        (3, 2, 2)
     """
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
-        """Initialize Gamma"""
+        """Initialize RandomGamma"""
         self.init_prim_io_names(inputs=['shape', 'alpha', 'beta'], outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
         Validator.check_non_negative_int(seed, "seed", self.name)
@@ -320,11 +379,10 @@ class Gamma(PrimitiveWithInfer):
         Validator.check_tensor_dtype_valid("beta", beta["dtype"], [mstype.float32], self.name)
         broadcast_shape = get_broadcast_shape(alpha['shape'], beta['shape'], self.name,
                                               arg_name1="alpha", arg_name2="beta")
-        out_shape = list(shape_v)
-        out_shape.extend(broadcast_shape)
-
+        broadcast_shape = get_broadcast_shape(broadcast_shape, shape_v, self.name,
+                                              arg_name1="broadcast_alpha_beta", arg_name2="shape")
         out = {
-            'shape': out_shape,
+            'shape': broadcast_shape,
             'dtype': mstype.float32,
             'value': None}
         return out

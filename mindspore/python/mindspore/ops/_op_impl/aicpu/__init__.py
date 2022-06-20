@@ -111,6 +111,7 @@ from .mirror_pad_grad import _mirror_pad_grad_aicpu
 from .mul import _mul_aicpu
 from .standard_normal import _standard_normal_aicpu
 from .gamma import _gamma_aicpu
+from .random_gamma import _random_gamma_aicpu
 from .sub import _sub_aicpu
 from .poisson import _poisson_aicpu
 from .update_cache import _update_cache_aicpu
