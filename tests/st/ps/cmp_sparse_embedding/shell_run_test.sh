@@ -22,7 +22,6 @@ export MS_WORKER_NUM=$2
 export MS_SERVER_NUM=$3
 export MS_SCHED_HOST=$4
 export MS_SCHED_PORT=$5
-
 export MS_ROLE=MS_SCHED
 for((i=0;i<1;i++));
 do
