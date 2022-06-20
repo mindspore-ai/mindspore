@@ -247,6 +247,12 @@ target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turb
                                           mindspore::opencv_imgcodecs mindspore::opencv_imgproc mindspore::tinyxml2
                                           mindspore::sentencepiece_train ${ICU_LIB})
 
+if(ENABLE_GPUQUE)
+    target_link_libraries(_c_dataengine PRIVATE
+                          ${CUDNN_LIBRARY_PATH}
+                          ${CUDA_PATH}/lib64/libcudart.so
+                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
+endif()
 
 if(ENABLE_TDTQUE)
     target_link_libraries(_c_dataengine PRIVATE ${ACL} ${ACL_TDT_CHANNEL})
