@@ -61,11 +61,12 @@ def _adjoint(a):
 
 
 def _safe_reciprocal(x, epsilon=1e-20):
-    return x * _reciprocal(x * x + epsilon)
+    # Reciprocal do not support float64, force to float32
+    return x * _reciprocal(_cast(x * x + epsilon, mindspore.float32))
 
 
 @constexpr
-def _make_padding(value, dtype):
+def _make_tensor(value, dtype):
     return Tensor(value, dtype)
 
 
@@ -76,9 +77,15 @@ def _make_zero_matrix(shape, dtype):
 
 def _matrix_diag(diagonal):
     diagonal_shape = _shape(diagonal)
-    assist_matrix_shape = diagonal_shape + (diagonal_shape[-1],)
-    assist_matrix = _make_zero_matrix(assist_matrix_shape, _dtype(diagonal))
-    return arrays.MatrixSetDiagV3()(assist_matrix, diagonal, _k_0)
+    row = _make_tensor(diagonal_shape[-1], mindspore.int32)
+    return arrays.MatrixDiagV3()(diagonal, _k_0, row, row, _make_tensor(0, _dtype(diagonal)))
+
+
+def _mat_mul(x, y):
+    shape = _shape(x)
+    if len(shape) > 2:
+        return math.BatchMatMul()(x, y)
+    return math.MatMul()(x, y)
 
 
 @bprop_getters.register(linalg.Svd)
@@ -88,7 +95,6 @@ def get_bprop_svd(self):
     compute_uv = self.compute_uv
 
     svd = linalg.Svd(compute_uv=True)
-    mat_mul = math.MatMul()
     square = math.Square()
     matrix_set_diag = arrays.MatrixSetDiagV3()
     expand_dims = arrays.ExpandDims()
@@ -96,7 +102,7 @@ def get_bprop_svd(self):
     def bprop(a, out, dout):
         if not compute_uv:
             s, u, v = svd(a)
-            da = mat_mul(u, mat_mul(_matrix_diag(_cast(dout, _dtype(a))), _adjoint(v)))
+            da = _mat_mul(u, _mat_mul(_matrix_diag(_cast(dout[0], _dtype(a))), _adjoint(v)))
             return (da,)
 
         a_shape = _shape(a)
@@ -127,32 +133,32 @@ def get_bprop_svd(self):
         v1 = v[..., :, :m]
         dv1 = dv[..., :, :m]
 
-        u_gu = mat_mul(_adjoint(u), du)
-        v_gv = mat_mul(_adjoint(v1), dv1)
+        u_gu = _mat_mul(_adjoint(u), du)
+        v_gv = _mat_mul(_adjoint(v1), dv1)
 
         f_u = f * u_gu
         f_v = f * v_gv
         ds_mat = _matrix_diag(_cast(ds, _dtype(a)))
-        term1_nouv = (ds_mat + mat_mul(f_u + _adjoint(f_u), s_mat) + mat_mul(s_mat, f_v + _adjoint(f_v)))
+        term1_nouv = (ds_mat + _mat_mul(f_u + _adjoint(f_u), s_mat) + _mat_mul(s_mat, f_v + _adjoint(f_v)))
 
-        term1 = mat_mul(u, mat_mul(term1_nouv, _adjoint(v1)))
+        term1 = _mat_mul(u, _mat_mul(term1_nouv, _adjoint(v1)))
 
         if m == n:
             da_before_transpose = term1
         else:
             gv1t = _matrix_transpose(dv1)
-            gv1t_v1 = mat_mul(gv1t, v1)
-            term2_nous = gv1t - mat_mul(gv1t_v1, _adjoint(v1))
+            gv1t_v1 = _mat_mul(gv1t, v1)
+            term2_nous = gv1t - _mat_mul(gv1t_v1, _adjoint(v1))
 
             if full_matrices:
                 v2 = v[..., :, m:n]
                 d_v2 = dv[..., :, m:n]
 
-                v1t_gv2 = mat_mul(_adjoint(v1), d_v2)
-                term2_nous -= mat_mul(v1t_gv2, _adjoint(v2))
+                v1t_gv2 = _mat_mul(_adjoint(v1), d_v2)
+                term2_nous -= _mat_mul(v1t_gv2, _adjoint(v2))
 
-            u_s_inv = mat_mul(u, s_inv_mat)
-            term2 = mat_mul(u_s_inv, term2_nous)
+            u_s_inv = _mat_mul(u, s_inv_mat)
+            term2 = _mat_mul(u_s_inv, term2_nous)
 
             da_before_transpose = term1 + term2
 
