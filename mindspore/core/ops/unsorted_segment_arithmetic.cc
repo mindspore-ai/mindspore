@@ -83,8 +83,21 @@ abstract::ShapePtr UnsortedSegmentArithmeticInferShape(const PrimitivePtr &primi
     }
   }
 
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto batch_rank_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(batch_rank_ptr);
+  }
+
   std::vector<int64_t> out_shape;
+  if (batch_rank != 0) {
+    for (int64_t i = 0; i < batch_rank; i++) {
+      out_shape.push_back(x_shape.at(i));
+    }
+  }
+
   out_shape.push_back(num_segments_value);
+
   for (size_t i = ids_shape.size(); i < x_shape.size(); i++) {
     out_shape.push_back(x_shape.at(i));
   }
@@ -104,7 +117,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
                             << "', segment_ids must be a tensor, but got: " << ids_ptr->ToString() << ".";
   }
   std::set<TypePtr> ids_type_set = {kInt32, kInt64};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids type", ids_ptr, ids_type_set, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("segment_ids", ids_ptr, ids_type_set, prim_name);
 
   /* check num_segments */
   auto num_ptr = input_args[kInputIndex2]->BuildType();
@@ -118,7 +131,7 @@ TypePtr UnsortedSegmentArithmeticInferType(const PrimitivePtr &primitive,
                               << "', num_segments must be an integer, but got: " << num_ptr->ToString() << ".";
     }
   }
-  (void)CheckAndConvertUtils::CheckTypeValid("num_segments type", num_ptr, num_type_set, prim_name);
+  (void)CheckAndConvertUtils::CheckTypeValid("num_segments", num_ptr, num_type_set, prim_name);
 
   /* check input_x */
   auto in_type_ptr = input_args[kInputIndex0]->BuildType();

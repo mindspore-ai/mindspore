@@ -3735,6 +3735,60 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('dense_to_sparse_csr')(self)
 
+    def unsorted_segment_min(self, segment_ids, num_segments):
+        """
+        Apply the unsorted segment min function for a tensor. Calculates the output according to the input elements.
+        Refer to :func:`mindspore.ops.UnsortedSegmentMin` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+            >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
+            >>> num_segments = 2
+            >>> output = x.unsorted_segment_min(segment_ids, num_segments)
+            >>> print(output)
+            [[1. 2. 3.]
+             [4. 2. 1.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unsorted_segment_min')(self, segment_ids, num_segments)
+
+    def unsorted_segment_max(self, segment_ids, num_segments):
+        """
+        Apply the unsorted segment max function for a tensor. Calculates the output according to the input elements.
+        Refer to :func:`mindspore.ops.UnsortedSegmentMax` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+            >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
+            >>> num_segments = 2
+            >>> output = x.unsorted_segment_max(segment_ids, num_segments)
+            >>> print(output)
+            [[1. 2. 3.]
+             [4. 5. 6.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unsorted_segment_max')(self, segment_ids, num_segments)
+
+    def unsorted_segment_prod(self, segment_ids, num_segments):
+        """
+        Apply the unsorted segment prod function for a tensor. Calculates the output according to the input elements.
+        Refer to :func:`mindspore.ops.UnsortedSegmentProd` for more detail.
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
+            >>> segment_ids = Tensor(np.array([0, 1, 0]).astype(np.int32))
+            >>> num_segments = 2
+            >>> output = x.unsorted_segment_prod(segment_ids, num_segments)
+            >>> print(output)
+            [[4. 4. 3.]
+             [4. 5. 6.]]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('unsorted_segment_prod')(self, segment_ids, num_segments)
+
     def unique_consecutive(self, return_idx=False, return_counts=False, axis=None):
         """
         Returns the elements that are unique in each consecutive group of equivalent elements in the input tensor.

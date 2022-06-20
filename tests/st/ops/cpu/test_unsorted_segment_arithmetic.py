@@ -20,9 +20,8 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
-
-
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 UnsortedSegmentArith_func_map = {
@@ -115,6 +114,7 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
     Description: test cases for UnsortedSegment* operator
     Expectation: the result match numpy implementation.
     """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     x = Tensor(np.array([1, 2, 3, 4]), data_type)
     segment_ids = Tensor(np.array([0, 0, 1, 2]), index_type)
     num_segments = 5
@@ -138,6 +138,7 @@ def test_unsorted_segment_arithmetic_mul_d(func, data_type, index_type):
     Description: test cases for UnsortedSegment* operator
     Expectation: the result match numpy implementation.
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
     x = Tensor(np.random.randint(0, 100, size=[2, 3, 4, 3, 2]), data_type)
     segment_ids = Tensor(np.random.randint(0, 5, size=[2, 3]), index_type)
     num_segments = 5
@@ -146,3 +147,136 @@ def test_unsorted_segment_arithmetic_mul_d(func, data_type, index_type):
     graph_output = net(x, segment_ids)
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['min', 'max'])
+def test_tensor_check(func):
+    """
+    Feature: test_tensor_check.
+    Description: test cases for tensor func
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
+    segment_ids = Tensor(np.array([0, 0, 1, 2]), mstype.int32)
+    num_segments = 5
+
+    if func == 'min':
+        output_ms = x.unsorted_segment_min(segment_ids, num_segments)
+    if func == 'max':
+        output_ms = x.unsorted_segment_max(segment_ids, num_segments)
+
+    expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
+    np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['min', 'max'])
+def test_functional_check(func):
+    """
+    Feature: test_functional_check.
+    Description: test cases for functional func.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
+    segment_ids = Tensor(np.array([0, 0, 1, 2]), mstype.int32)
+    num_segments = 5
+
+    if func == 'min':
+        output_ms = F.unsorted_segment_min(x, segment_ids, num_segments)
+    if func == 'max':
+        output_ms = F.unsorted_segment_max(x, segment_ids, num_segments)
+
+    expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
+    np.testing.assert_array_almost_equal(output_ms.asnumpy(), expected)
+
+
+def min_vmap_graph(x, segment_ids, num_segments):
+    return P.UnsortedSegmentMin()(x, segment_ids, num_segments)
+
+
+def max_vmap_graph(x, segment_ids, num_segments):
+    return P.UnsortedSegmentMax()(x, segment_ids, num_segments)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['min', 'max'])
+def test_vmap(func):
+    """
+    Feature: test_vmap.
+    Description: in_axes : 0, None, None
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+    x = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
+    segment_ids = Tensor(np.random.randint(0, 5, size=[4]), mstype.int32)
+    num_segments = 5
+    in_axes = (0, None, None)
+    out_axes = 0
+
+    if func == 'min':
+        vmap_graph = min_vmap_graph
+    if func == 'max':
+        vmap_graph = max_vmap_graph
+
+    vmap_round_net = ops.vmap(ops.vmap(vmap_graph, in_axes, out_axes), in_axes, out_axes)
+    output = vmap_round_net(x, segment_ids, num_segments)
+
+    expected = []
+    for i in range(0, 2):
+        for j in range(0, 3):
+            x_s = x[i, j]
+            out_s = unsorted_segment_arith_expected(func, x_s, segment_ids, num_segments)
+            expected.append(out_s)
+
+    output_shape = (2, 3, 5, 5)
+    expected = np.array(expected).reshape(output_shape)
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['min', 'max'])
+def test_vmap2(func):
+    """
+    Feature: test_vmap.
+    Description: in_axes : 0, 0, None
+    Expectation: the result match with numpy result
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+    x = Tensor(np.random.rand(2, 3, 4, 5).astype(np.float32))
+    segment_ids = Tensor(np.random.randint(0, 5, size=[2, 3, 4]), mstype.int32)
+    num_segments = 5
+    in_axes = (0, 0, None)
+    out_axes = 0
+
+    if func == 'min':
+        vmap_graph = min_vmap_graph
+    if func == 'max':
+        vmap_graph = max_vmap_graph
+
+    vmap_round_net = ops.vmap(ops.vmap(vmap_graph, in_axes, out_axes), in_axes, out_axes)
+    output = vmap_round_net(x, segment_ids, num_segments)
+
+    expected = []
+    for i in range(0, 2):
+        for j in range(0, 3):
+            x_s = x[i, j]
+            ids_s = segment_ids[i, j]
+            out_s = unsorted_segment_arith_expected(func, x_s, ids_s, num_segments)
+            expected.append(out_s)
+
+    output_shape = (2, 3, 5, 5)
+    expected = np.array(expected).reshape(output_shape)
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
