@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 #include "utils/numa_interface.h"
+
 #include <dlfcn.h>
+#include <numaif.h>
+
+#include <cerrno>
 #include <memory>
 #include <mutex>
+#include <string>
 #include "utils/log_adapter.h"
 
 #define RETURN_STATUS_UNEXPECTED(_e)                                \
@@ -94,9 +99,18 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
   if (numa_bitmask_setbit_func == nullptr) {
     RETURN_STATUS_UNEXPECTED("Numa api: numa_bitmask_setbit not found.");
   }
-  auto numa_bind_func = GetNumaAdapterFunc(handle, "numa_bind");
-  if (numa_bind_func == nullptr) {
-    RETURN_STATUS_UNEXPECTED("Numa api: numa_bind not found.");
+  // fix: numa_bind failed with "set_mempolicy operation not permitted" on cloud env
+  auto numa_run_on_node_mask_func = GetNumaAdapterFunc(handle, "numa_run_on_node_mask");
+  if (numa_run_on_node_mask_func == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Numa api: numa_run_on_node_mask not found.");
+  }
+  auto set_mempolicy_func = GetNumaAdapterFunc(handle, "set_mempolicy");
+  if (set_mempolicy_func == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Numa api: set_mempolicy not found.");
+  }
+  auto numa_set_membind_func = GetNumaAdapterFunc(handle, "numa_set_membind");
+  if (numa_set_membind_func == nullptr) {
+    RETURN_STATUS_UNEXPECTED("Numa api: numa_set_membind not found.");
   }
   auto numa_bitmask_free_func = GetNumaAdapterFunc(handle, "numa_bitmask_free");
   if (numa_bitmask_free_func == nullptr) {
@@ -106,7 +120,9 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
   auto numa_allocate_nodemask = (struct bitmask * (*)(void))(numa_allocate_nodemask_func);
   auto numa_bitmask_clearall = (struct bitmask * (*)(struct bitmask *))(numa_bitmask_clearall_func);
   auto numa_bitmask_setbit = (struct bitmask * (*)(struct bitmask *, unsigned int))(numa_bitmask_setbit_func);
-  auto numa_bind = (void (*)(struct bitmask *))(numa_bind_func);
+  auto numa_run_on_node_mask = (int (*)(struct bitmask *))(numa_run_on_node_mask_func);
+  auto set_mempolicy = (int (*)(int, const uint64_t *, uint64_t))(set_mempolicy_func);
+  auto numa_set_membind = (void (*)(struct bitmask *))(numa_set_membind_func);
   auto numa_bitmask_free = (void (*)(struct bitmask *))(numa_bitmask_free_func);
   int numa_node_max_id = numa_max_node();
   if (numa_node_max_id < 0) {
@@ -117,7 +133,21 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
     auto bm = numa_allocate_nodemask();
     numa_bitmask_clearall(bm);
     numa_bitmask_setbit(bm, numa_bind_id);
-    numa_bind(bm);
+    if (numa_run_on_node_mask(bm) < 0) {
+      MS_LOG(WARNING) << "Try to bind numa id: " << numa_bind_id
+                      << ", but execute numa_run_on_node_mask failed, errno: " << std::strerror(errno)
+                      << ". Please use mindspore.dataset.config.set_numa_enable(False) to disable numa bind.";
+      numa_bitmask_free(bm);
+      return Status::OK();
+    }
+    if (set_mempolicy(MPOL_BIND, bm->maskp, bm->size + 1) < 0) {
+      MS_LOG(WARNING) << "Try to bind numa id: " << numa_bind_id
+                      << ", but execute set_mempolicy failed, errno: " << std::strerror(errno)
+                      << ". Please use mindspore.dataset.config.set_numa_enable(False) to disable numa bind.";
+      numa_bitmask_free(bm);
+      return Status::OK();
+    }
+    numa_set_membind(bm);
     numa_bitmask_free(bm);
   } else {
     RETURN_STATUS_UNEXPECTED("Value error, rank_id is a negative value.");
