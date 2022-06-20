@@ -325,9 +325,21 @@ inline T *GetDeviceAddress(const std::vector<AddressPtr> &addr_list, size_t inde
     return nullptr;
   }
 
-  if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
-    MS_LOG(ERROR) << "The device address is empty, address index: " << index << ", and the length of 'addr_list' is "
+  if (addr_list[index] == nullptr) {
+    MS_LOG(ERROR) << "The device address is nullptr, address index: " << index << ", and the length of 'addr_list' is "
                   << addr_list.size();
+    return nullptr;
+  }
+
+  if (addr_list[index]->addr == nullptr) {
+    MS_LOG(ERROR) << "The memory of device address is nullptr, address index: " << index
+                  << ", and the length of 'addr_list' is " << addr_list.size();
+    return nullptr;
+  }
+
+  if (addr_list[index]->size == 0) {
+    MS_LOG(ERROR) << "The size of device address is zero, address index: " << index
+                  << ", and the length of 'addr_list' is " << addr_list.size();
     return nullptr;
   }
 

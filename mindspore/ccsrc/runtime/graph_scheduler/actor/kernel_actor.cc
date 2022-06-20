@@ -233,6 +233,9 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(kernel_);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (IsRunningFailed(context)) {
+    return;
+  }
   PreLaunchKernel(context);
 
   try {

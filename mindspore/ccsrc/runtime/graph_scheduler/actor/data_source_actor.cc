@@ -128,6 +128,9 @@ void DeviceQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *co
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(data_kernel_);
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
+  if (IsRunningFailed(context)) {
+    return;
+  }
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }
@@ -241,6 +244,9 @@ void HostQueueDataSourceActor::SendMemoryFreeReq(OpContext<DeviceTensor> *const 
 
 void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  if (IsRunningFailed(context)) {
+    return;
+  }
   if (buffers_.size() == 0) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "The data queue is empty.");
   }

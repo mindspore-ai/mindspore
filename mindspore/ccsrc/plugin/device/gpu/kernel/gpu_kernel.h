@@ -195,10 +195,24 @@ class DeprecatedNativeGpuKernelMod : public NativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "Address index(" << index << ") out of range(" << addr_list.size() << ")";
     }
 
-    if ((addr_list[index] == nullptr) || (addr_list[index]->addr == nullptr) || (addr_list[index]->size == 0)) {
+    if (addr_list[index] == nullptr) {
       auto kernel_node = kernel_node_.lock();
       const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
-      MS_LOG(EXCEPTION) << "The device address is empty, address index: " << index << ", op name is: " << prim_name;
+      MS_LOG(EXCEPTION) << "The device address is nullptr, address index: " << index << ", op name is: " << prim_name;
+    }
+
+    if (addr_list[index]->addr == nullptr) {
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
+      MS_LOG(EXCEPTION) << "The memory of device address is nullptr, address index: " << index
+                        << ", op name is: " << prim_name;
+    }
+
+    if (addr_list[index]->size == 0) {
+      auto kernel_node = kernel_node_.lock();
+      const std::string &prim_name = (kernel_node == nullptr ? "" : common::AnfAlgo::GetCNodeName(kernel_node));
+      MS_LOG(EXCEPTION) << "The size of device address is zero, address index: " << index
+                        << ", op name is: " << prim_name;
     }
 
     return reinterpret_cast<T *>(addr_list[index]->addr);
