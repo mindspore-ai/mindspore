@@ -188,24 +188,6 @@ AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTuple>(rets);
 }
 
-AbstractBasePtr InferImplFusedSparseAdam(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                         const AbstractBasePtrList &args_spec_list) {
-  // the output is useless, so we dont have to focus on the output shape
-  constexpr size_t dx_index = 1;
-  constexpr size_t dscale_index = 2;
-  constexpr size_t dbias_index = 3;
-  MS_EXCEPTION_IF_NULL(args_spec_list[dx_index]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[dscale_index]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[dbias_index]);
-
-  auto dx = args_spec_list[dx_index]->Broaden();
-  auto dscale = args_spec_list[dscale_index]->Broaden();
-  auto dbias = args_spec_list[dbias_index]->Broaden();
-
-  AbstractBasePtrList rets = {dx, dscale, dbias};
-  return std::make_shared<AbstractTuple>(rets);
-}
-
 AbstractBasePtr InferImplBiasAddGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: at least one tensor(y_backprop)

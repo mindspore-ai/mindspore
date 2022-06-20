@@ -29,6 +29,7 @@ beta1 = 0.9
 beta2 = 0.999
 epsilon = 1e-8
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -41,7 +42,13 @@ class Net(nn.Cell):
         return self.fused_sparse_lazy_adam(self.var, self.m, self.v, beta1_power, beta2_power,
                                            lr, beta1, beta2, epsilon, grad, indices)
 
+
 def test_net():
+    """
+    Feature: FusedSparseLazyAdam
+    Description: normal inputs
+    Expectation: the result meets the expectation
+    """
     gradient = Tensor(np.array([0.22948648, 0.14569908, 0.92861906, 0.66870148])
                       .reshape([2, 1, 2]).astype(np.float32))
     indices = Tensor([0, 1], mstype.int32)
@@ -51,3 +58,43 @@ def test_net():
     print(net.var.data)
     print(net.m.data)
     print(net.v.data)
+
+
+def test_fused_sparse_lazy_adam_dynamic():
+    """
+    Feature: FusedSparseLazyAdam
+    Description: dynamic inputs
+    Expectation: the result meets the expectation
+    """
+
+    class DynamicNet(nn.Cell):
+        def __init__(self):
+            super(DynamicNet, self).__init__()
+            self.unique = P.Unique()
+            self.gather = P.Gather()
+            self.axis = 0
+
+            self.sparse_apply_adam = P.FusedSparseLazyAdam()
+            self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+            self.m = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="m")
+            self.v = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="v")
+
+        def construct(self, grad, indices, indices_dy):
+            indices_dy, _ = self.unique(indices_dy)
+            grad = self.gather(grad, indices_dy, self.axis)
+            indices = self.gather(indices, indices_dy, self.axis)
+            out = self.sparse_apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
+                                         epsilon, grad, indices)
+            return out
+
+    net = DynamicNet()
+    gradient = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]], [[0.1, 0.1]]]), mstype.float32)
+    indices = Tensor([0, 1, 2], mstype.int32)
+
+    indices_dy = Tensor([0, 1], mstype.int32)
+    net(gradient, indices, indices_dy)
+    print(net.var.data)
+    expect_var = np.array([[[0.9997121, 0.9997121]],
+                           [[0.9997121, 0.9997121]],
+                           [[1, 1]]]).astype(np.float32)
+    assert np.allclose(net.var.data.asnumpy(), expect_var)

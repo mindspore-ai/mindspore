@@ -556,6 +556,9 @@ GVAR_DEF(PrimitivePtr, kPrimAvgPoolGradV1, std::make_shared<Primitive>("AvgPoolG
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2D, std::make_shared<Primitive>(kAdaptiveMaxPool2D));
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool3D, std::make_shared<Primitive>(kAdaptiveMaxPool3D));
 GVAR_DEF(PrimitivePtr, kPrimFusedSparseAdam, std::make_shared<Primitive>("FusedSparseAdam"));
+GVAR_DEF(PrimitivePtr, kPrimFusedSparseFtrl, std::make_shared<Primitive>("FusedSparseFtrl"));
+GVAR_DEF(PrimitivePtr, kPrimFusedSparseLazyAdam, std::make_shared<Primitive>("FusedSparseLazyAdam"));
+GVAR_DEF(PrimitivePtr, kPrimFusedSparseProximalAdagrad, std::make_shared<Primitive>("FusedSparseProximalAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimFusedBatchNorm, std::make_shared<Primitive>("FusedBatchNorm"));
 GVAR_DEF(PrimitivePtr, kPrimConv2D, std::make_shared<Primitive>("Conv2D"));
 GVAR_DEF(PrimitivePtr, kPrimConv3D, std::make_shared<Primitive>("Conv3D"));

@@ -302,6 +302,10 @@ constexpr auto kHalfPixelCenters = "half_pixel_centers";
 constexpr auto kConstant = "constant";
 constexpr auto kReflect = "reflect";
 constexpr auto kEdge = "edge";
+constexpr auto kLr = "lr";
+constexpr auto kL1 = "l1";
+constexpr auto kL2 = "l2";
+constexpr auto kLrPower = "lr_power";
 constexpr auto kArgmaxType = "argmax_type";
 
 enum Index : size_t {
