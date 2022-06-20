@@ -19,11 +19,12 @@
 
 #include <vector>
 #include "backend/common/session/kernel_graph.h"
+#include "runtime/hardware/device_context.h"
 
 namespace mindspore::pynative {
 class GraphAdapter {
  public:
-  static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph);
+  static void UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph, const device::DeviceContext *device_context);
   static bool ReplaceBpropGraphParameter(const KernelGraphPtr &graph,
                                          const std::vector<tensor::TensorPtr> &input_tensors);
   static void GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph);

@@ -30,6 +30,7 @@
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
+#include "pipeline/jit/action.h"
 #include "pipeline/jit/pass.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
@@ -1432,6 +1433,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
 
     const auto &mindrt_backend = std::dynamic_pointer_cast<compile::MindRTBackend>(backend);
     MS_EXCEPTION_IF_NULL(mindrt_backend);
+    SetRunMode(func_graph, mindrt_backend.get());
     auto &actor_info = mindrt_backend->CompileGraphs(func_graph);
     VectorRef args;
     if (need_run) {
