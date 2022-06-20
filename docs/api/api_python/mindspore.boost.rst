@@ -505,9 +505,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     - **loss** (Tensor) - 网络loss，标量Tensor。
 
-..  py:class:: mindspore.boost.GroupLossScaleManager(init_loss_scale, loss_scale_groups)
+.. py:class:: mindspore.boost.GroupLossScaleManager(init_loss_scale, loss_scale_groups)
 
-    增强型混合精度算法支持不同损失尺度的多层应用和损失尺度的动态更新。
+    增强型混合精度算法支持不同loss scale的多层应用和损失尺度的动态更新。
 
     **参数：**
 
@@ -540,7 +540,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         :class:`mindspore.boost.GroupLossScaleManager` 实例。
 
-    .. py:method:: get_loss_scale_status(loss_scale_number, init_loss_scale)
+    .. py:method:: set_loss_scale_status(loss_scale_number, init_loss_scale)
 
         生成动态loss scale元组，并设置溢出状态列表。
 
@@ -560,7 +560,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **输出：**
 
-        float，新loss scale值。
+        float，新loss scale的值。
 
 .. automodule:: mindspore.boost
     :members:
