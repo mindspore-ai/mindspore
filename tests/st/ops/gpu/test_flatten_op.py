@@ -200,8 +200,8 @@ def test_flatten_vmap():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     np.random.seed(0)
-    in_np = np.random.rand(3, 4, 5).astype(np.float32)
-    output_np = np.reshape(in_np, (3, 20))
+    in_np = np.random.rand(2, 3, 4, 5).astype(np.float32)
+    output_np = np.reshape(in_np, (2, 3, 20))
 
     in_tensor = Tensor(in_np)
     vmap_round_net = ops.vmap(flatten_graph)

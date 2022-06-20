@@ -20,6 +20,7 @@ flatten_op_info = AiCPURegOp("Flatten") \
     .fusion_type("OPAQUE") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_Default, DataType.I8_Default) \
     .dtype_format(DataType.I16_Default, DataType.I16_Default) \
     .dtype_format(DataType.I32_Default, DataType.I32_Default) \
@@ -31,6 +32,7 @@ flatten_op_info = AiCPURegOp("Flatten") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
+
 
 @op_info_register(flatten_op_info)
 def _flatten_aicpu():
