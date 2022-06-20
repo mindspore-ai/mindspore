@@ -3815,10 +3815,10 @@ class Tensor(Tensor_):
 
     def split(self, axis=0, output_num=1):
         """
-        Splits the input tensor into output_num of tensors along the given axis and output numbers.
+        Splits a tensor into output_num of tensors along the given axis and output numbers.
 
-        The `input_x` tensor will be split into equally sized sub-tensors.
-        This requires that `input_x.shape(axis)` is divisible by `output_num`.
+        The tensor will be split into equally sized sub-tensors.
+        This requires that `self.shape(axis)` is divisible by `output_num`.
 
         Args:
             axis (int): Index of the split position. Default: 0.
@@ -3826,12 +3826,13 @@ class Tensor(Tensor_):
 
         Returns:
             tuple[Tensor], the shape of each output tensor is the same, which is
-            :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with `input_x`.
+            :math:`(y_1, y_2, ..., y_S)`. And the data type is the same with the tensor.
 
         Raises:
             TypeError: If `axis` or `output_num` is not an int.
-            ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
+            ValueError: If `axis` is out of the range [-len(`self.shape`), len(`self.shape`)),
                 or if the `output_num` is less than or equal to 0.
+            ValueError: If `self.shape(axis)` is not divisible by `output_num`.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
