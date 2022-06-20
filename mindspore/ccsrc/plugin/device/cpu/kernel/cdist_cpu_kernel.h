@@ -46,17 +46,12 @@ class CdistCpuKernelMod : public NativeCpuKernelMod {
   bool DoLaunch(int task_id);
 
  private:
-  template <typename T>
   bool LaunchKernel(int64_t start, int64_t end);
 
-  template <typename T>
   void InitFunc(float p);
 
-  using DistFunc = std::function<void(const void *a, const void *b, void *c, int64_t m, float p)>;
+  using DistFunc = std::function<void(const float *a, const float *b, float *c, int64_t m, float p)>;
   DistFunc dist_func_;
-
-  using CDistKernelFunc = std::function<bool(CdistCpuKernelMod *, int64_t start, int64_t end)>;
-  CDistKernelFunc kernel_func_;
 
   int64_t batch_;
   int64_t r0_;

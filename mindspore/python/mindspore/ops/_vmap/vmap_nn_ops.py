@@ -77,7 +77,6 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
     else:
         batch_rank = 1
 
-    prim.add_prim_attr('batch_rank', batch_rank)
     prim_name = prim.name
 
     def vmap_rule(var_bdim, accum_bdim, lr_bdim, l1_bdim, l2_bdim, grad_bdim, u_monad):
@@ -100,6 +99,7 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
             raise ValueError("For `{}`, the source axis of `var` must be equal to `accum`, and not equal to 0, "
                              "but got the source axis of `var`: {}, `accum`: {}.".format(prim_name, var_dim, accum_dim))
 
+        _update_prim_attr(prim, 'batch_rank', batch_rank)
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         l1 = _bdim_at_front(l1, l1_dim, axis_size)
         l2 = _bdim_at_front(l2, l2_dim, axis_size)

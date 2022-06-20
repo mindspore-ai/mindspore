@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 from mindspore import dtype
 from mindspore.ops.functional import vmap
 
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
 class NetCeil(nn.Cell):
@@ -37,7 +37,7 @@ class NetCeil(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ceil_fp32():
     """
@@ -53,7 +53,7 @@ def test_ceil_fp32():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_ceil_fp16():
     """
@@ -69,7 +69,7 @@ def test_ceil_fp16():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_tensor_ceil():
     """
@@ -86,7 +86,7 @@ def test_tensor_ceil():
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_func_ceil():
     """
@@ -102,9 +102,8 @@ def test_func_ceil():
     assert np.allclose(output.asnumpy(), expect)
 
 
-
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap():
     """
@@ -128,9 +127,8 @@ def test_vmap():
     assert np.allclose(output.asnumpy(), expect)
 
 
-
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_vmap2():
     """
@@ -147,6 +145,7 @@ def test_vmap2():
                      [[1.5, 1.4], [2.3, 2.0]], [[1.8, 1.0], [2.9, 2.0]]]).astype(np.float32)
     x = Tensor(np_x)
     expect = np.ceil(np_x)
-    vmap_ceil = vmap(vmap(cal_ceil, in_axes=(0), out_axes=0), in_axes=(0), out_axes=0)
+    vmap_ceil = vmap(vmap(cal_ceil, in_axes=(0), out_axes=0),
+                     in_axes=(0), out_axes=0)
     output = vmap_ceil(x)
     assert np.allclose(output.asnumpy(), expect)

@@ -156,6 +156,9 @@
 #define SIMD_MUL_N_F32(val1, val2) MS_EXPAND(SIMD_MUL_F32(val1, SIMD_MOV_F32(val2)))
 #define SIMD_MUL_N_EPI32(val1, val2) MS_EXPAND(SIMD_MUL_EPI32(val1, SIMD_MOV_EPI32(val2)))
 
+// pow (float) op
+#define SIMD_POW_F32 MS_SIMD_INSTRUCTION_F32(MS_POW)
+
 // fma (float/int) op
 #define SIMD_FMADD_F32 MS_SIMD_INSTRUCTION_F32(MS_FMADD)
 

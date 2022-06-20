@@ -25,6 +25,7 @@
 #define MS512_F32_GETI(src, i) src.m512_f32[i]
 #else
 #include <x86intrin.h>
+#define MS_F32X16_GETI(src, i) src[i]
 #define MS512_F32_GETI(src, i) src[i]
 #endif
 
@@ -88,6 +89,27 @@
 #define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 #define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
+
+static inline MS_FLOAT32X16 MS_POW512_F32(MS_FLOAT32X16 src1, MS_FLOAT32X16 src2) {
+  MS_FLOAT32X16 dst;
+  MS512_F32_GETI(dst, 0) = powf(MS512_F32_GETI(src1, 0), MS512_F32_GETI(src2, 0));
+  MS512_F32_GETI(dst, 1) = powf(MS512_F32_GETI(src1, 1), MS512_F32_GETI(src2, 1));
+  MS512_F32_GETI(dst, 2) = powf(MS512_F32_GETI(src1, 2), MS512_F32_GETI(src2, 2));
+  MS512_F32_GETI(dst, 3) = powf(MS512_F32_GETI(src1, 3), MS512_F32_GETI(src2, 3));
+  MS512_F32_GETI(dst, 4) = powf(MS512_F32_GETI(src1, 4), MS512_F32_GETI(src2, 4));
+  MS512_F32_GETI(dst, 5) = powf(MS512_F32_GETI(src1, 5), MS512_F32_GETI(src2, 5));
+  MS512_F32_GETI(dst, 6) = powf(MS512_F32_GETI(src1, 6), MS512_F32_GETI(src2, 6));
+  MS512_F32_GETI(dst, 7) = powf(MS512_F32_GETI(src1, 7), MS512_F32_GETI(src2, 7));
+  MS512_F32_GETI(dst, 8) = powf(MS512_F32_GETI(src1, 8), MS512_F32_GETI(src2, 8));
+  MS512_F32_GETI(dst, 9) = powf(MS512_F32_GETI(src1, 9), MS512_F32_GETI(src2, 9));
+  MS512_F32_GETI(dst, 10) = powf(MS512_F32_GETI(src1, 10), MS512_F32_GETI(src2, 10));
+  MS512_F32_GETI(dst, 11) = powf(MS512_F32_GETI(src1, 11), MS512_F32_GETI(src2, 11));
+  MS512_F32_GETI(dst, 12) = powf(MS512_F32_GETI(src1, 12), MS512_F32_GETI(src2, 12));
+  MS512_F32_GETI(dst, 13) = powf(MS512_F32_GETI(src1, 13), MS512_F32_GETI(src2, 13));
+  MS512_F32_GETI(dst, 14) = powf(MS512_F32_GETI(src1, 14), MS512_F32_GETI(src2, 14));
+  MS512_F32_GETI(dst, 15) = powf(MS512_F32_GETI(src1, 15), MS512_F32_GETI(src2, 15));
+  return dst;
+}
 
 #define MS_DIV512_EPI32(src1, src2) \
   _mm512_cvttps_epi32(MS_DIV512_F32(_mm512_cvtepi32_ps(src1), _mm512_cvtepi32_ps(src2)))

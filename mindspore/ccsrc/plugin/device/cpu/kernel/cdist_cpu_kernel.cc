@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include <utility>
 #include <algorithm>
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/cdist_fp32.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -27,86 +28,17 @@ const std::vector<KernelAttr> kernel_attr = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)}};
 }  // namespace
 
-template <typename T>
-void CdistZeroNormalcompute(const void *in_data0, const void *in_data1, void *out_data, int64_t m, float p) {
-  const auto *a = reinterpret_cast<const T *>(in_data0);
-  const auto *b = reinterpret_cast<const T *>(in_data1);
-  auto *c = reinterpret_cast<T *>(out_data);
-  T result = 0;
-  for (int64_t i = 0; i < m; i++) {
-    auto x = std::abs(a[i] - b[i]);
-    result += std::min(std::ceil(x), 1.0f);
-  }
-  *c = result;
-}
-
-template <typename T>
-void CdistOneNormalcompute(const void *in_data0, const void *in_data1, void *out_data, int64_t m, float p) {
-  const auto *a = reinterpret_cast<const T *>(in_data0);
-  const auto *b = reinterpret_cast<const T *>(in_data1);
-  auto *c = reinterpret_cast<T *>(out_data);
-  T result = 0;
-  for (int64_t i = 0; i < m; i++) {
-    auto x = std::abs(a[i] - b[i]);
-    result += x;
-  }
-  *c = result;
-}
-
-template <typename T>
-void CdistTwoNormalcompute(const void *in_data0, const void *in_data1, void *out_data, int64_t m, float p) {
-  const auto *a = reinterpret_cast<const T *>(in_data0);
-  const auto *b = reinterpret_cast<const T *>(in_data1);
-  auto *c = reinterpret_cast<T *>(out_data);
-  T result = 0;
-  for (int64_t i = 0; i < m; i++) {
-    auto x = std::abs(a[i] - b[i]);
-    result += x * x;
-  }
-  result = std::sqrt(result);
-  *c = result;
-}
-
-template <typename T>
-void CdistPNormalcompute(const void *in_data0, const void *in_data1, void *out_data, int64_t m, float p) {
-  const auto *a = reinterpret_cast<const T *>(in_data0);
-  const auto *b = reinterpret_cast<const T *>(in_data1);
-  auto *c = reinterpret_cast<T *>(out_data);
-  T result = 0;
-  for (int64_t i = 0; i < m; i++) {
-    auto x = std::abs(a[i] - b[i]);
-    result += std::pow(x, p);
-  }
-  *c = std::pow(result, 1.0 / p);
-}
-
-template <typename T>
-void CdistInfNormalcompute(const void *in_data0, const void *in_data1, void *out_data, int64_t m, float p) {
-  const auto *a = reinterpret_cast<const T *>(in_data0);
-  const auto *b = reinterpret_cast<const T *>(in_data1);
-  auto *c = reinterpret_cast<T *>(out_data);
-  T result = 0;
-  for (int64_t i = 0; i < m; i++) {
-    auto x = std::abs(a[i] - b[i]);
-    result = std::max(result, x);
-  }
-  *c = result;
-}
-
-template <typename T>
 void CdistCpuKernelMod::InitFunc(float p) {
-  kernel_func_ = &CdistCpuKernelMod::LaunchKernel<T>;
-
   if (p == 0.0) {
-    dist_func_ = CdistZeroNormalcompute<T>;
+    dist_func_ = CdistZeroNormalOpt;
   } else if (p == 1.0) {
-    dist_func_ = CdistOneNormalcompute<T>;
+    dist_func_ = CdistOneNormalOpt;
   } else if (p == 2.0) {
-    dist_func_ = CdistTwoNormalcompute<T>;
+    dist_func_ = CdistTwoNormalOpt;
   } else if (std::isinf(p)) {
-    dist_func_ = CdistInfNormalcompute<T>;
+    dist_func_ = CdistInfNormalOpt;
   } else {
-    dist_func_ = CdistPNormalcompute<T>;
+    dist_func_ = CdistPNormalOpt;
   }
 }
 
@@ -123,7 +55,7 @@ bool CdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   auto input_type_id = inputs[0]->GetDtype();
   switch (input_type_id) {
     case kNumberTypeFloat32:
-      InitFunc<float>(p_);
+      InitFunc(p_);
       break;
     default:
       MS_LOG(ERROR) << "cdist kernel does not support " << TypeIdToString(input_type_id);
@@ -161,11 +93,10 @@ int CdistCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
   return 0;
 }
 
-template <typename T>
 bool CdistCpuKernelMod::LaunchKernel(int64_t start, int64_t end) {
-  const auto *in_data0 = reinterpret_cast<T *>(in_data0_) + start * r0_ * m_;
-  const auto *in_data1 = reinterpret_cast<T *>(in_data1_) + start * r1_ * m_;
-  auto *out_data = reinterpret_cast<T *>(out_data_) + start * r0_ * r1_;
+  const auto *in_data0 = reinterpret_cast<float *>(in_data0_) + start * r0_ * m_;
+  const auto *in_data1 = reinterpret_cast<float *>(in_data1_) + start * r1_ * m_;
+  auto *out_data = reinterpret_cast<float *>(out_data_) + start * r0_ * r1_;
 
   for (int64_t b_i = 0; b_i < end - start; b_i++) {
     for (int64_t p_i = 0; p_i < r0_; p_i++) {
@@ -190,7 +121,7 @@ bool CdistCpuKernelMod::DoLaunch(int task_id) {
   int64_t start = batch_per_thread * task_id;
   int64_t end = start + batch_per_thread;
   end = std::min(end, batch_);
-  return kernel_func_(this, start, end);
+  return LaunchKernel(start, end);
 }
 
 int CdistRun(void *cdata, int task_id, float lhs_scale, float rhs_scale) {

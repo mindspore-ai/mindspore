@@ -36,7 +36,8 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
 
     @constexpr
     def _get_reshape_shape(shape, keep_dim=0):
-        new_batch_size = reduce(lambda x, y: x * y, shape if keep_dim == 0 else shape[:-keep_dim])
+        new_batch_size = reduce(
+            lambda x, y: x * y, shape if keep_dim == 0 else shape[:-keep_dim])
         return (new_batch_size,) if keep_dim == 0 else (new_batch_size, *shape[-keep_dim:])
 
     if isinstance(prim, str):
@@ -82,7 +83,8 @@ def get_nll_loss_grad_vmap_rule(prim, axis_size):
             if lg_dim != 0:
                 loss_grad = mnp.moveaxis(loss_grad, lg_dim, 0)
                 loss_grad_shape = F.shape(loss_grad)
-            loss_grad = F.reshape(loss_grad, _get_reshape_shape(loss_grad_shape))
+            loss_grad = F.reshape(
+                loss_grad, _get_reshape_shape(loss_grad_shape))
 
         if target_dim is not None:
             if target_dim != 0:
@@ -122,6 +124,30 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
         dy = F.reshape(dy, (-1,) + dy_shape[chw_reverse_index:])
         out = prim(x, y, dy)
         out = F.reshape(out, x_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.CdistGrad)
+def get_cdist_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `cdist grad` operation."""
+    def vmap_rule(grad_bdim, x_bdim, y_bdim, cdist_bdim):
+        is_all_none, result = vmap_general_preprocess(prim,
+                                                      grad_bdim, x_bdim, y_bdim, cdist_bdim)
+        if is_all_none:
+            return result
+        grad, grad_dim = grad_bdim
+        x, x_dim = x_bdim
+        y, y_dim = y_bdim
+        cdist, cdist_dim = cdist_bdim
+
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        y = _bdim_at_front(y, y_dim, axis_size)
+        cdist = _bdim_at_front(cdist, cdist_dim, axis_size)
+
+        out = prim(grad, x, y, cdist)
         return (out, 0)
 
     return vmap_rule
