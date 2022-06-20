@@ -15,9 +15,19 @@
 
 """Defines parameter operators with functional form."""
 
+from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from ...common import dtype as mstype
+from ...common.seed import _get_graph_seed
 from .._primitive_cache import _get_cache_prim
+
+
+@constexpr(reuse_result=False)
+def _get_seed(op_seed, kernel_name):
+    "Get the graph-level seed."
+    return _get_graph_seed(op_seed, kernel_name)
 
 
 def standard_laplace(shape, seed=0, seed2=0):
@@ -57,7 +67,6 @@ def standard_laplace(shape, seed=0, seed2=0):
     return output
 
 
-
 def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
     r"""
     Generates random samples from a given categorical distribution tensor.
@@ -95,8 +104,82 @@ def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
     return random_categorical_(x, num_sample, seed)
 
 
+def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
+    """
+    Generates random numbers according to the Uniform random number distribution.
+
+    Note:
+        The number in tensor minval should be strictly less than maxval at any position after broadcasting.
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated.
+          The format is :math:`(N,*)` where :math:`*` means, any number of additional dimensions
+          and the length of :math:`(N,*)` should be less than 8 in broadcast operation.
+        minval (Tensor): The distribution parameter `a`.
+          It defines the minimum possible generated value, with int32 or float32 data type.
+          If dtype is int32, only one number is allowed.
+        maxval (Tensor): The distribution parameter `b`.
+          It defines the maximum possible generated value, with int32 or float32 data type.
+          If dtype is int32, only one number is allowed.
+        seed (int): Seed is used as entropy source for the random number engines to generate pseudo-random numbers,
+          must be non-negative. Default: None, which will be treated as 0.
+        dtype (mindspore.dtype): Type of the Uniform distribution. If it is int32, it generates numbers from discrete
+          uniform distribution; if it is float32, it generates numbers from continuous uniform distribution. It only
+          supports these two data types. Default: mindspore.float32.
+
+    Returns:
+        Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
+        of `minval` and `maxval`.
+        The dtype is designated as the input `dtype`.
+
+    Raises:
+        TypeError: If `shape` is not tuple.
+        TypeError: If 'minval' or 'maxval' is neither int32 nor float32
+            and dtype of 'minval' is not the same as 'maxval'.
+        TypeError: If `seed` is not an int.
+        TypeError: If 'dtype' is neither int32 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> from mindspore import Tensor, ops
+        >>> import mindspore
+        >>> import numpy as np
+        >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
+        >>> shape = (4, 2)
+        >>> minval = Tensor(1, mindspore.int32)
+        >>> maxval = Tensor(2, mindspore.int32)
+        >>> output = F.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
+        >>>
+        >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
+        >>> shape = (3, 1, 2)
+        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
+        >>> maxval = Tensor([8.0, 10.0], mindspore.float32)
+        >>> output = F.uniform(shape, minval, maxval, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
+    """
+    minval_dtype = F.dtype(minval)
+    maxval_dtype = F.dtype(maxval)
+    const_utils.check_type_valid(dtype, [mstype.int32, mstype.float32], 'uniform')
+    const_utils.check_tensors_dtype_same(minval_dtype, dtype, "uniform")
+    const_utils.check_tensors_dtype_same(maxval_dtype, dtype, "uniform")
+    seed1, seed2 = _get_seed(seed, "uniform")
+    if const_utils.is_same_type(dtype, mstype.int32):
+        random_uniform = P.UniformInt(seed1, seed2)
+        value = random_uniform(shape, minval, maxval)
+    else:
+        uniform_real = P.UniformReal(seed1, seed2)
+        random_uniform = uniform_real(shape)
+        value = random_uniform * (maxval - minval) + minval
+    return value
+
+
 __all__ = [
     'standard_laplace',
-    'random_categorical'
+    'random_categorical',
+    'uniform',
 ]
 __all__.sort()

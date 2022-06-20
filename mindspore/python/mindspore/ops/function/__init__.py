@@ -275,6 +275,7 @@ from .sparse_func import (
 from .random_func import (
     standard_laplace,
     random_categorical,
+    uniform,
 )
 from .image_func import (
     resize_bilinear,
