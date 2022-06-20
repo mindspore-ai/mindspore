@@ -3772,9 +3772,28 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('dense_to_sparse_csr')(self)
 
     def unsorted_segment_min(self, segment_ids, num_segments):
-        """
-        Apply the unsorted segment min function for a tensor. Calculates the output according to the input elements.
-        Refer to :func:`mindspore.ops.UnsortedSegmentMin` for more detail.
+        r"""
+        Computes the minimum of a tensor along segments.
+
+        Note:
+            - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
+              the maximum value of the type of self.
+            - The `segment_ids` must be non-negative tensor.
+
+        Args:
+            segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
+                                  the value must be non-negative tensor. The data type must be int32.
+            num_segments (int): The value specifies the number of distinct `segment_ids`.
+
+        Returns:
+            Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+        Raises:
+            TypeError: If `num_segments` is not an int.
+            ValueError: If length of shape of `segment_ids` is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -3790,9 +3809,28 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('unsorted_segment_min')(self, segment_ids, num_segments)
 
     def unsorted_segment_max(self, segment_ids, num_segments):
-        """
-        Apply the unsorted segment max function for a tensor. Calculates the output according to the input elements.
-        Refer to :func:`mindspore.ops.UnsortedSegmentMax` for more detail.
+        r"""
+        Computes the maximum along segments of a tensor.
+
+        Note:
+            - If the segment_id i is absent in the segment_ids, then output[i] will be filled with
+              the minimum value of the type of self.
+            - The `segment_ids` must be non-negative tensor.
+
+        Args:
+            segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
+                                  the value must be non-negative tensor. The data type must be int32.
+            num_segments (int): The value specifies the number of distinct `segment_ids`.
+
+        Returns:
+            Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+        Raises:
+            TypeError: If `num_segments` is not an int.
+            ValueError: If length of shape of `segment_ids` is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> from mindspore import Tensor
@@ -3808,9 +3846,27 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('unsorted_segment_max')(self, segment_ids, num_segments)
 
     def unsorted_segment_prod(self, segment_ids, num_segments):
-        """
-        Apply the unsorted segment prod function for a tensor. Calculates the output according to the input elements.
-        Refer to :func:`mindspore.ops.UnsortedSegmentProd` for more detail.
+        r"""
+        Computes the product of a tensor along segments.
+
+        Note:
+            - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 1.
+            - The `segment_ids` must be non-negative tensor.
+
+        Args:
+            segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
+                                  the value must be non-negative tensor. The data type must be int32.
+            num_segments (int): The value specifies the number of distinct `segment_ids`.
+
+        Returns:
+            Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
+
+        Raises:
+            TypeError: If `num_segments` is not an int.
+            ValueError: If length of shape of `segment_ids` is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``
 
         Examples:
             >>> from mindspore import Tensor

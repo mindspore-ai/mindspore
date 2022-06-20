@@ -341,6 +341,9 @@ Array Operation
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tile
     mindspore.ops.transpose
+    mindspore.ops.unsorted_segment_min
+    mindspore.ops.unsorted_segment_max
+    mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
 
