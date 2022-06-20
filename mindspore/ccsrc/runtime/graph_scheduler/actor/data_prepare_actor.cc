@@ -375,18 +375,21 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
       } else if (strategy_ == GraphExecutionStrategy::kStep) {
         PrepareDataForStepMode(input_tensors, context);
       }
-
-      UpdateGraphsRefNodeAddress(graph_compiler_info_->graphs_);
-
-      // Debug actor is blocked, must wait debug actor callback message to process continue.
-      if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
-        SendDebugReq(context);
-        return;
-      }
     } catch (const std::exception &e) {
       std::string error_info = e.what();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
     }
+  }
+
+  if (IsRunningFailed(context)) {
+    return;
+  }
+
+  UpdateGraphsRefNodeAddress(graph_compiler_info_->graphs_);
+  // Debug actor is blocked, must wait debug actor callback message to process continue.
+  if (debug_aid_ != nullptr && strategy_ == GraphExecutionStrategy::kPipeline) {
+    SendDebugReq(context);
+    return;
   }
 
   // Allocate continuous memory and send output to trigger the step running.
@@ -429,6 +432,10 @@ void DataPrepareActor::SendMemoryAllocReq(OpContext<DeviceTensor> *const context
 
 void DataPrepareActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  if (IsRunningFailed(context)) {
+    return;
+  }
+
   PostRun(context);
 }
 

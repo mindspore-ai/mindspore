@@ -243,6 +243,8 @@ class ActorDispatcher {
   static bool is_memory_free_sync_;
 };
 
+bool IsRunningFailed(const OpContext<DeviceTensor> *context);
+
 void ComputeThreadNums(size_t *actor_thread_num, size_t *actor_and_kernel_thread_num);
 
 bool IsDeviceQueueDSActor(const AnfNodePtr &node, GraphExecutionStrategy strategy = GraphExecutionStrategy::kPipeline);

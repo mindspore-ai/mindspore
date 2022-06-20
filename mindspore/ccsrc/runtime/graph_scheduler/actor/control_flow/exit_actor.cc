@@ -69,6 +69,9 @@ void ExitActor::SendOutput(OpContext<DeviceTensor> *const context) {
 
 void ExitActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
+  if (IsRunningFailed(context)) {
+    return;
+  }
 
   // 1.Send output in base class.
   ControlActor::SendOutput(context);
