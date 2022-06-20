@@ -109,7 +109,7 @@ class TopCellInfo {
   void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
   bool hook_changed() const { return hook_changed_; }
   void set_hook_changed(bool hook_changed) { hook_changed_ = hook_changed; }
-  void set_sub_cell_hook_changed(const std::string &sub_cell) { sub_cell_hook_changed_.emplace(sub_cell); }
+  void set_sub_cell_hook_changed(const std::string &sub_cell) { (void)sub_cell_hook_changed_.emplace(sub_cell); }
   const CellIdWithBackwardHookOp &cell_backward_hook_op() const { return cell_backward_hook_op_; }
   void RecordCellBackwardHookOp(const std::string &cell_order, const AnfNodePtr &hook_op);
   void ClearCellHookOp() { cell_backward_hook_op_.clear(); }
@@ -135,7 +135,8 @@ class TopCellInfo {
   void set_already_run_cell_id(const std::string &already_run_cell_id) { already_run_cell_id_ = already_run_cell_id; }
   const std::string &input_args_id() const { return input_args_id_; }
   void set_input_args_id(const std::string &input_args_id) { input_args_id_ = input_args_id; }
-  std::string &all_op_info() { return all_op_info_; }
+  const std::string &all_op_info() const { return all_op_info_; }
+  void set_all_op_info(const std::string &all_op_info) { all_op_info_ = all_op_info; }
   const std::string &grad_operation() const { return grad_operation_; }
   void set_grad_operation(const std::string &grad_operation) { grad_operation_ = grad_operation; }
   const abstract::AbstractBasePtr &last_output_abs() const { return last_output_abs_; }
@@ -263,7 +264,7 @@ class GradExecutor {
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
   AnfNodePtr GetInput(const py::object &obj, bool op_mask) const;
-  std::string GetCellId(const py::object &cell, const py::args &args);
+  std::string GetCellId(const py::object &cell, const py::args &args) const;
   void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) const;
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   // Construct grad graph for ms_function
@@ -272,8 +273,9 @@ class GradExecutor {
   py::object GradMsFunction(const py::object &out, const py::args &args);
   void GradMsFunctionInner(const std::string &phase, const py::object &out, const py::args &args,
                            const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph);
-  void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out, const FuncGraphPtr &ms_func_graph);
-  void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value);
+  void SaveDynShapeAbsForMsFunction(const py::args &args, const py::object &out,
+                                    const FuncGraphPtr &ms_func_graph) const;
+  void UpdateMsFunctionForwardTensors(const OpExecInfoPtr &op_exec_info, const ValuePtr &new_forward_value) const;
   CNodePtr MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
                                     const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
@@ -315,7 +317,7 @@ class GradExecutor {
   void HandleInputArgsForTopCell(const py::args &args, bool is_bprop_top);
   void InitResourceAndDfBuilder(const std::string &cell_id, const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::object &cell, const py::args &args, bool is_topest);
-  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled);
+  void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compiled) const;
   // Manage resource when run grad process.
   bool IsBpropGraph(const std::string &cell_id);
   bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) const;
@@ -368,7 +370,6 @@ class GradExecutor {
   }
   void MarkMsFunctionNodes(const pipeline::ResourcePtr &resource);
 
- private:
   bool grad_flag_{false};
   bool enable_op_cache_{true};
   bool grad_is_running_{false};
@@ -421,7 +422,7 @@ class ForwardExecutor {
   void ClearRes();
   CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
   // Replace input hook node with its input node when not in its own cell scope.
-  AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node);
+  AnfNodePtr GetRealInputNodeBySkipHook(const AnfNodePtr &input_node) const;
   void set_lazy_build(bool lazy_build) { lazy_build_ = lazy_build; }
   DynamicShapeInfoPtr dynamic_shape_info_ptr();
   void SetDynamicInput(const py::object &cell, const py::args &args);

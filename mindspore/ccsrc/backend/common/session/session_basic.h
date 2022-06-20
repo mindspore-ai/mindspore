@@ -154,7 +154,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
                            std::vector<std::string> *outputs_name) const;
   std::vector<tensor::TensorPtr> GetInputNeedLockTensors(const GraphId &graph_id,
-                                                         const std::vector<tensor::TensorPtr> &inputs);
+                                                         const std::vector<tensor::TensorPtr> &inputs) const;
   // Get graph by graph id, if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
   void ClearGraph();
