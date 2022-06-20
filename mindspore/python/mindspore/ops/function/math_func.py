@@ -1291,6 +1291,8 @@ def cosh(x):
         Tensor, has the same shape as `x`.
 
     Raises:
+        TypeError: If the dtype of `x` is not one of the following types:
+                   float16, float32, float64, complex64, complex128.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
