@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -68,34 +67,6 @@ def test_for_after_for_in_if_2():
     res_x, res_y = func3302()
     assert res_x == 4
     assert res_y == 4
-
-
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
-def test_for_after_for_in_if_3():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-
-    @ms_function
-    def func3303():
-        x = np.array([1, 2, 3])
-        y = np.array([5, 6, 7])
-        k = []
-        if x[2] < y[0]:
-            y = y - x
-            for i in y:
-                k.append(i)
-
-        z = Tensor(k)
-        out = 0
-        for i in z:
-            out = out * i
-        return out
-
-    res = func3303()
-    assert res == 64
 
 
 def test_for_after_for_in_if_4():

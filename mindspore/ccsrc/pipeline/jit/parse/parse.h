@@ -226,6 +226,9 @@ class Parser {
   void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes);
   // Make interpret node.
   AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
+  // Convert interpret iter node to list.
+  AnfNodePtr ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
+                                            const py::object iter_obj);
   // Check if the node need interpreting.
   AnfNodePtr HandleInterpret(const FunctionBlockPtr &block, const AnfNodePtr &value_node,
                              const py::object &value_object);

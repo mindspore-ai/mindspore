@@ -93,7 +93,7 @@ class Script final : public Named {
   ~Script() override = default;
   MS_DECLARE_PARENT(Script, Named);
 
-  std::string script() { return script_; }
+  std::string script() const { return script_; }
   abstract::AbstractBasePtr ToAbstract() override {
     return std::make_shared<abstract::AbstractScript>(shared_from_base<Script>());
   }
