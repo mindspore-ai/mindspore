@@ -39,11 +39,7 @@ void GetShapeAndType(const CNodePtr &kernel_node, std::vector<std::vector<int>> 
   MS_EXCEPTION_IF_NULL(shapes);
   MS_EXCEPTION_IF_NULL(types);
   std::vector<std::vector<int64_t>> shapes_me;
-  if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
-    shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "max_shapes");
-  } else {
-    shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
-  }
+  shapes_me = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(kernel_node, "shapes");
   (void)std::transform(shapes_me.begin(), shapes_me.end(), std::back_inserter(*shapes),
                        [](const std::vector<int64_t> &values) {
                          std::vector<int> shape;
