@@ -15,10 +15,21 @@
  */
 
 #include "plugin/device/gpu/kernel/nn/flatten_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cast_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 namespace {
+// complex64
+MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                      FlattenFwdGpuKernelMod, Complex<float>)
+
+// complex128
+MS_REG_GPU_KERNEL_ONE(Reshape, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                      FlattenFwdGpuKernelMod, Complex<double>)
+
 // float64
 MS_REG_GPU_KERNEL_ONE(Flatten, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
                       FlattenFwdGpuKernelMod, double)
@@ -117,6 +128,18 @@ MS_REG_GPU_KERNEL_ONE(ExpandDims, KernelAttr().AddInputAttr(kNumberTypeBool).Add
 
 // dynamic kernel:
 namespace {
+// complex64
+MS_REG_GPU_KERNEL_TWO(
+  Reshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+  FlattenFwdGpuKernelMod, Complex<float>, int64_t)
+
+// complex128
+MS_REG_GPU_KERNEL_TWO(
+  Reshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+  FlattenFwdGpuKernelMod, Complex<double>, int64_t)
+
 // float64
 MS_REG_GPU_KERNEL_TWO(
   Reshape,
