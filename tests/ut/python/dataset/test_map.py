@@ -16,12 +16,10 @@
 Test Map op in Dataset
 """
 import pytest
-import numpy as np
 import mindspore.dataset as ds
 import mindspore.dataset.text as text
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
-import mindspore.dataset.vision.py_transforms as py_vision
 
 DATA_DIR = "../data/dataset/testPK/data"
 
@@ -147,51 +145,32 @@ def test_map_text_and_data_transforms():
     assert res == [4, 5, 3, 6, 7, 2], res
 
 
-def test_map_with_exact_log():
+def test_map_operations1():
     """
     Feature: Map op
-    Description: Python operation just print once log
-    Expectation: Raise exact error info
+    Description: Test Map op with operations in multiple formats
+    Expectation: Dataset pipeline runs successfully and results are verified
     """
-    class GetDatasetGenerator:
-        def __init__(self):
-            np.random.seed(58)
-            self.__data = np.random.sample((50, 2))
-            self.__label = np.random.sample((50, 1))
-            self.__label2 = np.random.sample((50, 1))
-            self.__label3 = np.random.sample((50, 1))
-            self.__label4 = np.random.sample((50, 1))
 
-        def __getitem__(self, index):
-            return (self.__data[index], self.__label[index], self.__label2[index],
-                    self.__label3[index], self.__label4[index])
+    class RandomHorizontal(vision.RandomHorizontalFlip):
+        def __init__(self, p):
+            self.p = p
+            super().__init__(p)
 
-        def __len__(self):
-            return len(self.__data)
+    data1 = ds.ImageFolderDataset(DATA_DIR, num_samples=5)
+    # Use 2 different formats to list ops for map operations
+    data1 = data1.map(operations=[vision.Decode(to_pil=True),
+                                  vision.RandomCrop(512),
+                                  RandomHorizontal(0.5)], input_columns=["image"])
 
-    dataset_generator = GetDatasetGenerator()
-    dataset = ds.GeneratorDataset(dataset_generator, ["data", "label", "label2", "label3", "label4"], shuffle=False)
-
-    def pyfunc(x, y, z, m, n):
-        return (x, y, z, m, n)
-
-    dataset = dataset.map(operations=pyfunc, input_columns=["data", "label", "label2", "label3", "label4"])
-
-    py_trans = [py_vision.Resize((388, 388))]
-    dataset = dataset.map(operations=py_trans, input_columns=["data"])
-
-    # output exact info without duplicate info
-    with pytest.raises(RuntimeError) as info:
-        for data in dataset.create_dict_iterator():
-            print(data["data"], data["label"])
-    print("-----{}++++".format(info.value), flush=True)
-    assert str(info.value).count("Exception thrown from PyFunc") == 1
-    assert str(info.value).count("Caught TypeError in map") == 1
-    assert str(info.value).count("img should be PIL image") == 1
+    num_iter = 0
+    for _ in data1.create_dict_iterator(num_epochs=1):  # each data is a dictionary
+        num_iter += 1
+    assert num_iter == 5
 
 
 if __name__ == '__main__':
     test_map_c_transform_exception()
     test_map_py_transform_exception()
     test_map_text_and_data_transforms()
-    test_map_with_exact_log()
+    test_map_operations1()
