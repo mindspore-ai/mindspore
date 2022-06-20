@@ -1102,19 +1102,15 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     }
   }
 
+  // Link copy actor to exit actor.
   for (const auto &copy_actor : actor_set->copy_actors_) {
-    if (copy_actor->output_data_arrows_.size() != 0 || copy_actor->output_control_arrows_.size() != 0) {
+    if ((!copy_actor->output_data_arrows_.empty()) || (!copy_actor->output_control_arrows_.empty())) {
       continue;
     }
-    if (copy_actor->input_control_arrow_aids_.empty()) {
-      MS_LOG(EXCEPTION) << "Invalid copy actor:" << copy_actor->GetAID();
+    if (copy_actor->from_kernel_ == nullptr) {
+      MS_LOG(EXCEPTION) << "Invalid copy actor:" << copy_actor->GetAID().Name();
     }
-    auto from_actor = FetchActor(copy_actor->input_control_arrow_aids_[0].first.Name());
-    MS_EXCEPTION_IF_NULL(from_actor);
-    auto kernel_actor = dynamic_cast<KernelActor *>(from_actor);
-    MS_EXCEPTION_IF_NULL(kernel_actor);
-    MS_EXCEPTION_IF_NULL(kernel_actor->kernel_);
-    auto graph = kernel_actor->kernel_->func_graph();
+    auto graph = copy_actor->from_kernel_->func_graph();
     MS_EXCEPTION_IF_NULL(graph);
     auto kernel_graph = std::dynamic_pointer_cast<KernelGraph>(graph);
     MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -1123,6 +1119,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
     MS_EXCEPTION_IF_NULL(exit_actor);
     SchedulerHelper::AddControlArrow(copy_actor.get(), exit_actor);
   }
+
   LinkControlArrowByKernelGraphGroup(graph_compiler_info);
 }
 
