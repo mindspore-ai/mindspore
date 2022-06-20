@@ -63,7 +63,11 @@ CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vect
   MS_EXCEPTION_IF_NULL(concat_node);
   concat_node->set_abstract(abstract);
 
+  size_t input_num = node_info.first.size() - 1;
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(input_num), concat_node);
+  std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
+  common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
 }
 
@@ -111,7 +115,8 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
     auto input_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
     auto iter = type_id_to_node_info.find(input_type_id);
     if (iter == type_id_to_node_info.end()) {
-      std::vector<AnfNodePtr> concat_inputs = {NewValueNode(prim::kPrimConcat), flatten_node};
+      std::vector<AnfNodePtr> concat_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimConcat->name())),
+                                               flatten_node};
       type_id_to_node_info[input_type_id] = std::make_pair(concat_inputs, elem_num);
       (void)output_type_id_order.emplace_back(input_type_id);
     } else {
@@ -126,14 +131,7 @@ const AnfNodePtr FlattenConcatFission::Process(const FuncGraphPtr &func_graph, c
     auto &node_info = type_id_to_node_info[type_id];
     auto concat_node = NewConcatNode(func_graph, node_info, type_id);
     MS_EXCEPTION_IF_NULL(concat_node);
-
-    size_t input_num = node_info.first.size() - 1;
-    common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
-    common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(input_num), concat_node);
-    std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
-    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
     concat_node->set_scope(cnode->scope());
-
     (void)concat_nodes.emplace_back(concat_node);
   }
 
