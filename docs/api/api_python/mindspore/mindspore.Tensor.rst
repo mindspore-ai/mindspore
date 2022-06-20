@@ -600,50 +600,6 @@ mindspore.Tensor
 
         初始化的Tensor。
 
-    .. py:method:: inplace_add(v, indices)
-
-        根据 `indices`，将 `v` 加到原Tensor中。
-
-        .. note::
-            `indices` 只能沿着最高轴进行索引。
-
-        **参数：**
-
-        - **v** (Tensor) - 待加的值。
-        - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。
-
-        **返回：**
-
-        Tensor，更新后的Tensor。
-
-        **异常：**
-
-        - **TypeError** - `indices` 不是int或tuple。
-        - **TypeError** - `indices` 是元组，但是其中的元素不是int。
-        - **ValueError** - Tensor的shape与 `v` 的shape不同。
-
-    .. py:method:: inplace_sub(v, indices)
-
-        根据 `indices`，将 `v` 从原Tensor中减掉。
-
-        .. note::
-            `indices` 只能沿着最高轴进行索引。
-
-        **参数：**
-
-        - **v** (Tensor) - 待减去的值。
-        - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。
-
-        **返回：**
-
-        Tensor，更新后的Tensor。
-
-        **异常：**
-
-        - **TypeError** - `indices` 不是int或tuple。
-        - **TypeError** - `indices` 是元组，但是其中的元素不是int。
-        - **ValueError** - Tensor的shape与 `v` 的shape不同。
-
     .. py:method:: inplace_update(v, indices)
 
         根据 `indices` 以 `v` 来更新Tensor中的值。
