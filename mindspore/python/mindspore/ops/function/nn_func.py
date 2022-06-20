@@ -384,6 +384,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     r"""
     Given 4D tensor inputs `x`, `weight` and `offsets`, compute a 2D deformable convolution. The deformable convolution
     operation can be expressed as follow:
+
     Deformable Convolution v1:
 
     .. math::
@@ -404,7 +405,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         weight (Tensor): A 4D tensor of learnable filters. Must have the same type as `x`.
             The shape is :math:`(C_{out}, C_{in} / groups, H_{f}, W_{f})`.
         offsets (Tensor): A 4D tensor of x-y coordinates offset and mask. With the format "NCHW",
-            the shape is :math:`(batch, 3 * deformable_groups * H_{f} * W_{f}, H_{out}, W_{out})`. Note the C dimension
+            the shape is :math:`(batch, 3 * deformable\_groups * H_{f} * W_{f}, H_{out}, W_{out})`. Note the C dimension
             is stored in the order of (offset_x, offset_y, mask). Must have the same type as `x`.
         kernel_size (tuple[int]): A tuple of 2 integers. The size of kernel.
         strides (tuple[int]): A tuple of 4 integers. The stride of the sliding window for each dimension of
@@ -413,7 +414,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
         bias (Tensor, Optional): An 1D tensor of additive biases to the filter outputs.
-            The shape is :math:`(out_channels)`. Defaults to None.
+            The shape is :math:`(out\_channels)`. Defaults to None.
         dilations (tuple[int], Optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
             to 1. Defaults to (1, 1, 1, 1).
