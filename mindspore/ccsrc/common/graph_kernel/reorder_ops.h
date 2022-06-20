@@ -47,7 +47,7 @@ class ReorderOps : public opt::Pass {
                                       const CNodePtr &node) const;
   bool ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, const FuncGraphManagerPtr &mng,
                                     const CNodePtr &node) const;
-  bool ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph);
+  bool ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) const;
 };
 using ReorderOpsPtr = std::shared_ptr<ReorderOps>;
 }  // namespace mindspore::graphkernel

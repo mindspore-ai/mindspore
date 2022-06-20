@@ -121,7 +121,7 @@ mindspore::HashMap<size_t, std::vector<std::pair<AnfNodePtr, size_t>>> FindInput
     }
     auto users = mng_sub->node_users()[params[index]];
     for (size_t j = 0; j < predecessors.size(); j++) {
-      auto reliable = std::all_of(users.begin(), users.end(), [&predecessors, &j](const std::pair<AnfNodePtr, int> &p) {
+      auto reliable = std::all_of(users.begin(), users.end(), [&predecessors, j](const std::pair<AnfNodePtr, int> &p) {
         return predecessors[j].count(p.first) > 0;
       });
       if (!reliable) {
@@ -172,7 +172,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
           // input - output pair suitable for inplace assign
           auto outs = in_out_pairs[i - 1];
           auto candidate =
-            std::find_if(outs.begin(), outs.end(), [&cnode, &i](const std::pair<AnfNodePtr, size_t> &node) {
+            std::find_if(outs.begin(), outs.end(), [&cnode, i](const std::pair<AnfNodePtr, size_t> &node) {
               return CheckShapeType(cnode->input(i), node.first);
             });
           if (candidate != outs.end()) {

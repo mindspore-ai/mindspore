@@ -722,7 +722,7 @@ void GraphKernelRecompute::LinkIntoTargetFuncGraph(
   mng->KeepRoots({gt});
 }
 
-void GraphKernelRecompute::Process(const Candidate &candidate) {
+void GraphKernelRecompute::Process(const Candidate &candidate) const {
   FuncGraphPtr new_funcgraph;
   AnfNodePtrList inputs;
   std::function<std::pair<bool, size_t>(const Candidate &, const AnfNodePtr &)> edge_match_func;
