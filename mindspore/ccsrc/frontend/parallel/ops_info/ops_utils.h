@@ -441,6 +441,7 @@ constexpr char GATHER_ND[] = "GatherNd";
 constexpr char UNSORTEF_SEGMENT_MIND[] = "UnsortedSegmentMinD";
 constexpr char UNSORTEF_SEGMENT_PRODD[] = "UnsortedSegmentProdD";
 constexpr char UNSORTED_SEGMENT_SUM[] = "UnsortedSegmentSum";
+constexpr char CUSTOM[] = "CUSTOM";
 constexpr char UNSORTED_SEGMENT_MIN[] = "UnsortedSegmentMin";
 constexpr char UNSORTED_SEGMENT_MAX[] = "UnsortedSegmentMax";
 constexpr char UNSORTED_SEGMENT_PROD[] = "UnsortedSegmentProd";

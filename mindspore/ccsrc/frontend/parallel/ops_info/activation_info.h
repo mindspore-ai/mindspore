@@ -119,6 +119,23 @@ class Softmax : public ActivationBase {
   std::vector<int64_t> axis_;
 };
 
+class CustomInfo : public ActivationBase {
+ public:
+  explicit CustomInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                      const PrimitiveAttrs &attrs)
+      : ActivationBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SoftmaxCost>()) {}
+  ~CustomInfo() override = default;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+
+ protected:
+  Status CheckStrategy(const StrategyPtr &strategy) override;
+  Status GetAttrs() override;
+
+ private:
+  std::vector<int64_t> axis_;
+};
+
 class SoftmaxInfo : public Softmax {
  public:
   SoftmaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
