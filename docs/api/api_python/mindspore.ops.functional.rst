@@ -311,6 +311,7 @@ Array操作
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
+    mindspore.ops.concat
     mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.flatten
