@@ -259,7 +259,7 @@ def test_scatter_nd_dy_shape(func_name):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_indices_vmap(func):
     """
     Feature: test ScatterNd* vmap.
@@ -286,7 +286,7 @@ def test_scatter_func_indices_vmap(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_update_vmap(func):
     """
     Feature: test ScatterNd* vmap.

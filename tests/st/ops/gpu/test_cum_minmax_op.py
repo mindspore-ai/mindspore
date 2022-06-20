@@ -13,43 +13,49 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
+import pytest
+import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
-import mindspore.context as context
 from mindspore import Tensor
+from mindspore.ops.functional import vmap
+from mindspore.ops.operations import _inner_ops as inner
 
 
 class Net(nn.Cell):
     def __init__(self, op, axis):
         super(Net, self).__init__()
-        self.axis = axis
         if op == "Cummin":
-            self.op = ops.cummin
+            self.op = inner.Cummin(axis)
         elif op == "Cummax":
-            self.op = ops.cummax
+            self.op = ops.Cummax(axis)
         else:
             raise ValueError("op value error.")
 
     def construct(self, x):
-        return self.op(x, self.axis)
+        return self.op(x)
 
 
-def cum_minmax_compare(op, x, expected, axis, data_type):
-    net = Net(op, axis)
+def cum_minmax_compare(op, x, expected, axis, data_type, is_vmap=False):
     x = np.array(x).astype(data_type)
     expected = (np.array(expected[0]).astype(data_type), np.array(expected[1]).astype(data_type))
 
     # Pynative
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    output = net(Tensor(x))
+    if not is_vmap:
+        output = Net(op, axis)(Tensor(x))
+    else:
+        output = VmapNet(op, axis)(Tensor(x))
     assert np.allclose(output[0].asnumpy(), expected[0], equal_nan=True)
     assert np.allclose(output[1].asnumpy(), expected[1])
 
     # Graph
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    output = net(Tensor(x))
+    if not is_vmap:
+        output = Net(op, axis)(Tensor(x))
+    else:
+        output = VmapNet(op, axis)(Tensor(x))
     assert np.allclose(output[0].asnumpy(), expected[0], equal_nan=True)
     assert np.allclose(output[1].asnumpy(), expected[1])
 
@@ -57,7 +63,7 @@ def cum_minmax_compare(op, x, expected, axis, data_type):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("data_type", [np.uint8, np.int8, np.int32, np.float16, np.float32])
+@pytest.mark.parametrize("data_type", [np.uint8, np.int8, np.int32, np.float16])
 def test_cummin_multi_dims(data_type):
     """
     Feature: Op Cummin
@@ -127,3 +133,63 @@ def test_cumminmax_nan(data_type):
 
     cum_minmax_compare("Cummin", x, cummin_output, axis, data_type)
     cum_minmax_compare("Cummax", x, cummax_output, axis, data_type)
+
+
+class VmapNet(nn.Cell):
+    def __init__(self, op, axis):
+        super(VmapNet, self).__init__()
+        self.net = Net(op=op, axis=axis)
+        self.ops = vmap(self.net, in_axes=0, out_axes=0)
+
+    def construct(self, x):
+        return self.ops(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cummin_vmap_net():
+    """
+    Feature: Support vmap for Cummin operator.
+    Description:  test cases of vmap for Cummin operator.
+    Expectation: success.
+    """
+    op = "Cummin"
+    axis = 0
+    x = [[[-9, -10, -2, 8, 5], [2, -6, 0, -9, -1], [2, 6, -8, -9, -3], [-10, 4, 2, -10, -2]],
+         [[-7, 1, 5, -5, 5], [-6, -8, -9, -8, 4], [9, -10, -1, 5, 4], [5, -7, -2, -3, 1]],
+         [[-8, 5, 4, 6, 6], [-10, 6, 4, -1, 6], [-5, 7, 5, 6, 5], [7, -9, 9, 8, 9]]]
+    cummin_output = (
+        [[[-9, -10, -2, 8, 5], [-9, -10, -2, -9, -1], [-9, -10, -8, -9, -3], [-10, -10, -8, -10, -3]],
+         [[-7, 1, 5, -5, 5], [-7, -8, -9, -8, 4], [-7, -10, -9, -8, 4], [-7, -10, -9, -8, 1]],
+         [[-8, 5, 4, 6, 6], [-10, 5, 4, -1, 6], [-10, 5, 4, -1, 5], [-10, -9, 4, -1, 5]]],
+        [[[0, 0, 0, 0, 0], [0, 0, 0, 1, 1], [0, 0, 2, 2, 2], [3, 0, 2, 3, 2]],
+         [[0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 2, 1, 1, 2], [0, 2, 1, 1, 3]],
+         [[0, 0, 0, 0, 0], [1, 0, 1, 1, 1], [1, 0, 1, 1, 2], [1, 3, 1, 1, 2]]])
+
+    cum_minmax_compare(op, x, cummin_output, axis, np.float32, is_vmap=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cummax_vmap_net():
+    """
+    Feature: Support vmap for Cummax operator.
+    Description:  test cases of vmap for Cummax operator.
+    Expectation: success.
+    """
+    op = "Cummax"
+    axis = 1
+    x = [[[3, 1, 6, 9, -2], [-4, -2, 1, -4, 9], [-10, -3, 2, -5, -9], [5, 3, -3, -7, 6]],
+         [[-7, 1, 7, -7, -10], [-10, 4, -4, -2, 2], [9, -6, -2, -6, 3], [3, -6, 4, 1, 4]],
+         [[0, -3, 8, -3, -1], [7, -8, -4, -8, -5], [1, 4, -10, 0, 3], [-9, 6, 3, 8, 8]]]
+    cummax_output = (
+        [[[3, 3, 6, 9, 9], [-4, -2, 1, 1, 9], [-10, -3, 2, 2, 2], [5, 5, 5, 5, 6]],
+         [[-7, 1, 7, 7, 7], [-10, 4, 4, 4, 4], [9, 9, 9, 9, 9], [3, 3, 4, 4, 4]],
+         [[0, 0, 8, 8, 8], [7, 7, 7, 7, 7], [1, 4, 4, 4, 4], [-9, 6, 6, 8, 8]]],
+        [[[0, 0, 2, 3, 3], [0, 1, 2, 2, 4], [0, 1, 2, 2, 2], [0, 0, 0, 0, 4]],
+         [[0, 1, 2, 2, 2], [0, 1, 1, 1, 1], [0, 0, 0, 0, 0], [0, 0, 2, 2, 4]],
+         [[0, 0, 2, 2, 2], [0, 0, 0, 0, 0], [0, 1, 1, 1, 1], [0, 1, 1, 3, 4]]])
+
+    cum_minmax_compare(op, x, cummax_output, axis, np.float32, is_vmap=True)

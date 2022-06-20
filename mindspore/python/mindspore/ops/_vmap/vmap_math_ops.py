@@ -22,6 +22,7 @@ from mindspore.ops import constexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
 from mindspore.ops.operations import linalg_ops
+from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
@@ -59,6 +60,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseAnd)
 @vmap_rules_getters.register(P.BitwiseOr)
 @vmap_rules_getters.register(P.BitwiseXor)
+@vmap_rules_getters.register(P.IsClose)
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
 
@@ -662,6 +664,34 @@ def get_log_matrix_determinant_vmap_rule(prim, axis_size):
             return (sign, 0), (determinant, 0)
         sign, determinant = prim(x)
         return (sign, x_dim), (determinant, x_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Cummax)
+@vmap_rules_getters.register(_inner_ops.Cummin)
+def get_cum_min_max_vmap_rule(prim, axis_size):
+    """VmapRule for `Cummax` and `Cummin` operation."""
+
+    cum_fun_map = {
+        "Cummin": _inner_ops.Cummin,
+        "Cummax": P.Cummax,
+    }
+    axis = prim.axis
+    prim_name = prim.name
+    prim_class = cum_fun_map.get(prim_name)
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        old_x_ndim = F.rank(x) - 1
+        old_axis = axis if axis >= 0 else axis + old_x_ndim
+        new_axis = old_axis if old_axis < x_dim else old_axis + 1
+        value, index = prim_class(new_axis)(x)
+        return (value, x_dim), (index, x_dim)
 
     return vmap_rule
 
