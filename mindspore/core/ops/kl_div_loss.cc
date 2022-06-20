@@ -74,6 +74,17 @@ AbstractBasePtr KLDivLossInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputsNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputsNum, primitive->name());
+  auto input_x = input_args[kInputIndex0];
+  auto input_target = input_args[kInputIndex1];
+  auto op_name = primitive->name();
+  if (!input_x->isa<abstract::AbstractTensor>()) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", logits should be a Tensor.";
+  }
+
+  if (!input_target->isa<abstract::AbstractTensor>()) {
+    MS_EXCEPTION(TypeError) << "For " << op_name << ", labels should be a Tensor.";
+  }
+
   auto infer_shape = KLDivLossInferShape(primitive, input_args);
   auto infer_type = KLDivLossInferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
