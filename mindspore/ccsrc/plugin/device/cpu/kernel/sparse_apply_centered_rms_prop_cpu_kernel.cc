@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <utility>
+#include <map>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -26,6 +27,7 @@ namespace kernel {
 namespace {
 constexpr size_t kSparseApplyCenteredRMSPropInputsNum = 10;
 constexpr size_t kSparseApplyCenteredRMSPropOutputsNum = 1;
+using KernelRunFunc = SparseApplyCenteredRMSPropCpuKernelMod::KernelRunFunc;
 
 #define ADD_KERNEL(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11) \
   KernelAttr()                                                   \
@@ -42,9 +44,49 @@ constexpr size_t kSparseApplyCenteredRMSPropOutputsNum = 1;
     .AddOutputAttr(kNumberType##t11)
 }  // namespace
 
-void SparseApplyCenteredRMSPropCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool SparseApplyCenteredRMSPropCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                  const std::vector<KernelTensorPtr> &inputs,
+                                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (inputs.size() != kSparseApplyCenteredRMSPropInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSparseApplyCenteredRMSPropInputsNum
+                  << ", but got " << inputs.size();
+    return false;
+  }
+  if (outputs.size() != kSparseApplyCenteredRMSPropOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size must be " << kSparseApplyCenteredRMSPropOutputsNum
+                  << ", but got " << outputs.size();
+    return false;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+void SparseApplyCenteredRMSPropCpuKernelMod::ResetResource() noexcept {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  indices_data_type_ = kNumberTypeInt32;
+  indices_size_ = 0;
+  var_first_dim_size_ = 0;
+  var_outer_dim_size_ = 1;
+}
+
+int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                   const std::vector<KernelTensorPtr> &inputs,
+                                                   const std::vector<KernelTensorPtr> &outputs,
+                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
   enum input_index : size_t {
     Var_no,
     Mg_no,
@@ -57,16 +99,16 @@ void SparseApplyCenteredRMSPropCpuKernelMod::InitKernel(const CNodePtr &kernel_n
     Grad_no,
     Indices_no
   };
-  auto var_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Var_no);
-  auto mg_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Mg_no);
-  auto ms_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Ms_no);
-  auto mom_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Mom_no);
-  auto lr_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Lr_no);
-  auto rho_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Rho_no);
-  auto momentum_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Momentum_no);
-  auto epsilon_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Epsilon_no);
-  auto grad_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Grad_no);
-  auto indices_shape = AnfAlgo::GetInputDeviceShape(kernel_node, Indices_no);
+  auto var_shape = inputs[Var_no]->GetShapeVector();
+  auto mg_shape = inputs[Mg_no]->GetShapeVector();
+  auto ms_shape = inputs[Ms_no]->GetShapeVector();
+  auto mom_shape = inputs[Mom_no]->GetShapeVector();
+  auto lr_shape = inputs[Lr_no]->GetShapeVector();
+  auto rho_shape = inputs[Rho_no]->GetShapeVector();
+  auto momentum_shape = inputs[Momentum_no]->GetShapeVector();
+  auto epsilon_shape = inputs[Epsilon_no]->GetShapeVector();
+  auto grad_shape = inputs[Grad_no]->GetShapeVector();
+  auto indices_shape = inputs[Indices_no]->GetShapeVector();
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, var must be at least 1D";
   } else {
@@ -108,18 +150,12 @@ void SparseApplyCenteredRMSPropCpuKernelMod::InitKernel(const CNodePtr &kernel_n
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, epsilon is not a scalar, got shape: "
                       << Vector2Str(epsilon_shape) << ".";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, this kernel data type are not supported: " << kernel_attr
-                      << ".";
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>
 bool SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                          const std::vector<kernel::AddressPtr> &,
                                                           const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyCenteredRMSPropInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyCenteredRMSPropOutputsNum, kernel_name_);
@@ -159,8 +195,8 @@ bool SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel(const std::vector<kern
   return true;
 }
 
-std::vector<std::pair<KernelAttr, SparseApplyCenteredRMSPropCpuKernelMod::SparseApplyCenteredRMSPropFunc>>
-  SparseApplyCenteredRMSPropCpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyCenteredRMSPropCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {ADD_KERNEL(Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int8, Int32, Int8),
      &SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel<int32_t, int8_t>},
     {ADD_KERNEL(Int16, Int16, Int16, Int16, Int16, Int16, Int16, Int16, Int16, Int32, Int16),
@@ -205,12 +241,7 @@ std::vector<std::pair<KernelAttr, SparseApplyCenteredRMSPropCpuKernelMod::Sparse
      &SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel<int64_t, float>},
     {ADD_KERNEL(Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64, Float64, Int64, Float64),
      &SparseApplyCenteredRMSPropCpuKernelMod::LaunchKernel<int64_t, double>}};
-
-std::vector<KernelAttr> SparseApplyCenteredRMSPropCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SparseApplyCenteredRMSPropFunc> &pair) { return pair.first; });
-  return support_list;
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseApplyCenteredRMSProp, SparseApplyCenteredRMSPropCpuKernelMod);

@@ -19,39 +19,39 @@
 
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "plugin/device/cpu/kernel/sparse_optimizer_cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyCenteredRMSPropCpuKernelMod : public SparseOptimizerCpuKernelMod {
+class SparseApplyCenteredRMSPropCpuKernelMod : public SparseOptimizerCpuKernelMod,
+                                               public MatchKernelHelper<SparseApplyCenteredRMSPropCpuKernelMod> {
  public:
   SparseApplyCenteredRMSPropCpuKernelMod() = default;
   ~SparseApplyCenteredRMSPropCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
-  };
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
   template <typename I, typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
 
  protected:
-  std::vector<KernelAttr> GetOpSupport() override;
-
- private:
-  using SparseApplyCenteredRMSPropFunc =
-    std::function<bool(SparseApplyCenteredRMSPropCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, SparseApplyCenteredRMSPropFunc>> func_list_;
-  SparseApplyCenteredRMSPropFunc kernel_func_;
-  size_t indices_size_{0};
-  size_t var_first_dim_size_{0};
-  size_t var_outer_dim_size_{1};
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  void ResetResource() noexcept;
 };
 }  // namespace kernel
 }  // namespace mindspore
