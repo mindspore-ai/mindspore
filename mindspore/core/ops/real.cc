@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,13 +43,14 @@ TypePtr RealInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   auto input_tensor = input_type->cast<TensorTypePtr>();
   TypeId input_tensor_id = input_tensor->element()->type_id();
   if (input_tensor_id == kNumberTypeComplex64) {
-    return kFloat32;
+    return std::make_shared<TensorType>(kFloat32);
   }
   if (input_tensor_id == kNumberTypeComplex128) {
-    return kFloat64;
+    return std::make_shared<TensorType>(kFloat64);
   }
   return input_type;
 }
+}  // namespace
 
 AbstractBasePtr RealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
@@ -59,7 +60,6 @@ AbstractBasePtr RealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
 
   return abstract::MakeAbstract(RealInferShape(primitive, input_args), RealInferType(primitive, input_args));
 }
-}  // namespace
 
 MIND_API_OPERATOR_IMPL(Real, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Real, prim::kPrimReal, RealInfer, nullptr, true);

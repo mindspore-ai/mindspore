@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_COMPLEX_H_
-#define MINDSPORE_CORE_OPS_COMPLEX_H_
-#include <memory>
-#include <vector>
+#ifndef MINDSPORE_CORE_OPS_ANGLE_H_
+#define MINDSPORE_CORE_OPS_ANGLE_H_
 
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameComplex = "Complex";
+constexpr auto kNameAngle = "Angle";
 
-/// \brief Returns a complex Tensor from the real and imaginary part.
-/// Refer to Python API @ref mindspore.ops.Complex for more details.
-class MIND_API Complex : public BaseOperator {
+class MIND_API Angle : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(Complex);
-  /// \brief Constructor.
-  Complex() : BaseOperator(kNameComplex) { InitIOName({"real", "imag"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Complex for the inputs.
-  void Init() {}
+  MIND_API_BASE_MEMBER(Angle);
+  Angle() : BaseOperator(kNameAngle) { InitIOName({"input"}, {"output"}); }
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_COMPLEX_H_
+#endif  // MINDSPORE_CORE_OPS_ANGLE_H_

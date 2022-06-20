@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,21 +55,13 @@ TypePtr ComplexInferType(const PrimitivePtr &prim, const std::vector<AbstractBas
   std::map<std::string, TypePtr> types;
   auto real_input_type = input_args[kInputIndex0]->BuildType();
   auto imag_input_type = input_args[kInputIndex1]->BuildType();
-  (void)types.emplace("real_input", real_input_type);
-  (void)types.emplace("imag_input", imag_input_type);
+  (void)types.emplace("real", real_input_type);
+  (void)types.emplace("imag", imag_input_type);
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, std::set<TypePtr>{kFloat32, kFloat64}, prim->name());
   auto real_input_tensor = real_input_type->cast<TensorTypePtr>();
   TypeId real_input_tensor_id = real_input_tensor->element()->type_id();
-  return real_input_tensor_id == kNumberTypeFloat32 ? kComplex64 : kComplex128;
-}
-
-AbstractBasePtr ComplexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-
-  return abstract::MakeAbstract(ComplexInferShape(primitive, input_args), ComplexInferType(primitive, input_args));
+  return real_input_tensor_id == kNumberTypeFloat32 ? std::make_shared<TensorType>(kComplex64)
+                                                    : std::make_shared<TensorType>(kComplex128);
 }
 
 ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -96,9 +88,8 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
   }
 
   if (real_tensor->data_type() != imag_tensor->data_type()) {
-    MS_EXCEPTION(TypeError) << "For 'ComplexInfer', the real part and imaginary part of input must have the same "
-                               "data type. But got real type: "
-                            << real_tensor->data_type() << ", imaginary type: " << imag_tensor->data_type() << ".";
+    MS_EXCEPTION(TypeError) << "For Complex, inputs of Complex should be same, but got " << real_tensor->data_type()
+                            << "and " << imag_tensor->data_type() << " .";
   }
 
   auto data_size = real_tensor->DataSize();
@@ -128,6 +119,16 @@ ValuePtr ComplexInferValue(const PrimitivePtr &prim, const std::vector<AbstractB
   return result_tensor;
 }
 }  // namespace
+
+AbstractBasePtr ComplexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = ComplexInferType(primitive, input_args);
+  auto infer_shape = ComplexInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
 
 MIND_API_OPERATOR_IMPL(Complex, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(Complex, prim::kPrimComplex, ComplexInfer, ComplexInferValue, true);

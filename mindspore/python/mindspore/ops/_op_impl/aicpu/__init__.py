@@ -131,6 +131,10 @@ from .meshgrid import _meshgrid_aicpu
 from .div import _div_aicpu
 from .xdivy import _xdivy_aicpu
 from .xlogy import _xlogy_aicpu
+from .real import _real_aicpu
+from .imag import _imag_aicpu
+from .complex import _complex_aicpu
+from .angle import _angle_aicpu
 from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu

@@ -38,6 +38,7 @@ from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import CholeskySolve
+from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations import nn_ops as nps
 from mindspore.ops.operations.array_ops import FillDiagonal
 from mindspore.ops.operations.array_ops import Tril
@@ -1537,6 +1538,23 @@ test_case_math_ops = [
         'block': P.RealDiv(),
         'desc_inputs': [[512, 1024], [512, 1024]],
         'desc_bprop': [[512, 1024]]}),
+    ('Real', {
+        'block': Real(),
+        'desc_inputs': [Tensor(np.ones(4).astype(np.complex64))],
+        'desc_bprop': [Tensor(np.ones(4).astype(np.float32))]}),
+    ('Imag', {
+        'block': Imag(),
+        'desc_inputs': [Tensor(np.ones(4).astype(np.complex64))],
+        'desc_bprop': [Tensor(np.ones(4).astype(np.float32))]}),
+    ('Complex', {
+        'block': Complex(),
+        'desc_inputs': [Tensor(np.ones(4).astype(np.float32)),
+                        Tensor(np.ones(4).astype(np.float32))],
+        'desc_bprop': [Tensor(np.ones(4).astype(np.complex64))]}),
+    ('Angle', {
+        'block': Angle(),
+        'desc_inputs': [Tensor(np.ones(4).astype(np.complex64))],
+        'skip': ['backward']}),
     ('FloorDiv', {
         'block': P.FloorDiv(),
         'desc_inputs': [Tensor(np.random.rand(4).astype(np.float16)),
