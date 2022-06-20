@@ -17,7 +17,11 @@
 #include "plugin/device/cpu/kernel/smooth_l1_loss_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include <string>
+#include <map>
+#include <functional>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/smooth_l1_loss.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,35 +29,12 @@ namespace {
 constexpr size_t kSmoothL1LossInputsNum = 2;
 constexpr size_t kSmoothL1LossOutputsNum = 1;
 }  // namespace
-void SmoothL1LossCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  beta_ = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "beta");
-  if (beta_ == 0.0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
-  }
-  auto x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  tensor_size_ = SizeOf(x_shape);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SmoothL1Loss does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
-}
 
 template <typename T>
-bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                            const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossOutputsNum, kernel_name_);
-  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T zero = (T)0.0;
-  T half = (T)0.5;
-  T beta = (T)beta_;
+void SmoothL1LossCpuKernelMod::CalElements(const T *predict_addr, const T *target_addr, T *result_addr) {
+  T zero = static_cast<T>(0.0);
+  T half = static_cast<T>(0.5);
+  T beta = static_cast<T>(beta_);
   auto task = [&](size_t start, size_t end) {
     for (uint64_t i = start; i < end; ++i) {
       T diff = predict_addr[i] - target_addr[i];
@@ -68,20 +49,106 @@ bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
     }
   };
   ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
+  return;
+}
+
+template <typename T>
+bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &workspace,
+                                            const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSmoothL1LossInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSmoothL1LossOutputsNum, kernel_name_);
+  const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
+  const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
+  T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  if (reduction_ == ReductionType::NONE) {
+    CalElements(predict_addr, target_addr, result_addr);
+    return true;
+  }
+
+  T *workspace_addr = reinterpret_cast<T *>(workspace[0]->addr);
+  CalElements(predict_addr, target_addr, workspace_addr);
+
+  result_addr[0] = std::accumulate(workspace_addr, workspace_addr + tensor_size_, static_cast<T>(0.0));
+  if (reduction_ == ReductionType::SUM) {
+    return true;
+  }
+
+  result_addr[0] /= static_cast<T>(tensor_size_);
   return true;
 }
 
-std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::SmoothL1LossFunc>> SmoothL1LossCpuKernelMod::func_list_ = {
-  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &SmoothL1LossCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &SmoothL1LossCpuKernelMod::LaunchKernel<float>}};
+bool SmoothL1LossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs) {
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::SmoothL1Loss>(base_operator);
+  MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr, false);
 
-std::vector<KernelAttr> SmoothL1LossCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SmoothL1LossFunc> &pair) { return pair.first; });
-  return support_list;
+  kernel_name_ = kernel_ptr->name();
+  if (inputs.size() != kSmoothL1LossInputsNum || outputs.size() != kSmoothL1LossOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size must be " << kSmoothL1LossInputsNum << " and "
+                  << kSmoothL1LossOutputsNum << ", but got " << inputs.size() << " and " << outputs.size();
+    return false;
+  }
+
+  beta_ = kernel_ptr->get_beta();
+  if (beta_ == 0.0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", the 'beta' can not be 0.";
+    return false;
+  }
+
+  std::string reduction = kernel_ptr->get_reduction();
+  if (reduction == "none") {
+    reduction_ = ReductionType::NONE;
+  } else if (reduction == "mean") {
+    reduction_ = ReductionType::MEAN;
+  } else if (reduction == "sum") {
+    reduction_ = ReductionType::SUM;
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', reduction: " << reduction << " not support now.";
+    return false;
+  }
+
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+
+  return true;
+}
+
+int SmoothL1LossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs,
+                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  // when reduction is not set to none, we need extra space to record the result, with the same size with predict_size.
+  if (reduction_ != ReductionType::NONE) {
+    this->workspace_size_list_.push_back(input_size_list_[0]);
+  }
+
+  auto predict_shape = inputs[kIndex0]->GetShapeVector();
+  auto target_shape = inputs[kIndex1]->GetShapeVector();
+  if (predict_shape != target_shape) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the predict_shape should be same as target_shape, but got predict_shape: " << predict_shape
+                  << ", and target_shape" << target_shape;
+    return KRET_RESIZE_FAILED;
+  }
+  tensor_size_ = std::accumulate(predict_shape.begin(), predict_shape.end(), 1, std::multiplies<int64_t>());
+  return KRET_OK;
+}
+
+#define SMOOTH_L1_LOSS_CPU_REG(MS_T, T) \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), &SmoothL1LossCpuKernelMod::LaunchKernel<T>
+
+const std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::KernelRunFunc>>
+  &SmoothL1LossCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::KernelRunFunc>> func_list = {
+    {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat16, float16)},
+    {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat32, float)},
+    {SMOOTH_L1_LOSS_CPU_REG(kNumberTypeFloat64, double)},
+  };
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SmoothL1Loss, SmoothL1LossCpuKernelMod);

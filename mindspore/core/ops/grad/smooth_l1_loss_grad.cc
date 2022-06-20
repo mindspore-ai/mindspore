@@ -25,7 +25,10 @@
 
 namespace mindspore {
 namespace ops {
-void SmoothL1LossGrad::Init(const float beta) { this->set_beta(beta); }
+void SmoothL1LossGrad::Init(const float beta, const std::string reduction) {
+  this->set_beta(beta);
+  this->set_reduction(reduction);
+}
 
 void SmoothL1LossGrad::set_beta(const float beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
 
@@ -33,6 +36,15 @@ float SmoothL1LossGrad::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<float>(value_ptr);
+}
+
+void SmoothL1LossGrad::set_reduction(const std::string reduction) {
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+
+std::string SmoothL1LossGrad::get_reduction() const {
+  auto value_ptr = this->GetAttr(kReduction);
+  return GetValue<std::string>(value_ptr);
 }
 
 namespace {
@@ -46,7 +58,10 @@ abstract::ShapePtr SmoothL1LossGradInferShape(const PrimitivePtr &primitive,
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
   auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
   abstract::CheckShapeSame(prim_name, prediction, target);
-  abstract::CheckShapeSame(prim_name, prediction, dloss);
+  std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
+  if (reduction == "none") {
+    abstract::CheckShapeSame(prim_name, prediction, dloss);
+  }
   auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();

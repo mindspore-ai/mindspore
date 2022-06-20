@@ -940,6 +940,75 @@ def _nll_loss(inputs, target, target_dim=-1, weight=None, ignore_index=None, red
     return loss
 
 
+def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
+    r"""
+    Computes smooth L1 loss, a robust L1 loss.
+
+    SmoothL1Loss is a Loss similar to MSELoss but less sensitive to outliers as described in the
+    `Fast R-CNN <https://arxiv.org/abs/1504.08083>`_ by Ross Girshick.
+
+    Given two input :math:`x,\  y` of length :math:`N`, the unreduced SmoothL1Loss can be described
+    as follows:
+
+    .. math::
+        L_{i} =
+        \begin{cases}
+        \frac{0.5 (x_i - y_i)^{2}}{\text{beta}}, & \text{if } |x_i - y_i| < \text{beta} \\
+        |x_i - y_i| - 0.5 \text{beta}, & \text{otherwise. }
+        \end{cases}
+
+    If `reduction` is not `none`, then:
+
+    .. math::
+        L =
+        \begin{cases}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum'.}
+        \end{cases}
+
+    Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
+    Its default value is 1.0. :math:`N` is the batch size.
+
+    Note:
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean'.
+
+    Args:
+        beta (float): A parameter used to control the point where the function will change from
+            quadratic to linear. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: "none".
+
+    Inputs:
+        - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
+          additional dimensions. Data type must be float16 or float32.
+        - **labels** (Tensor) - Ground truth data, tensor of shape :math:`(N, *)`,
+          same shape and dtype as the `logits`.
+
+    Outputs:
+        Tensor, loss float tensor. When reduction is set to "none", output has same shape and dtype as the `logits`.
+        When reduction is set to "mean" or "sum", the output is 1-D tensor with one element.
+
+    Raises:
+        TypeError: If `beta` is not a float.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
+        ValueError: If `beta` is less than or equal to 0.
+        ValueError: If shape of `logits` is not the same as `labels`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> loss = ops.SmoothL1Loss()
+        >>> logits = Tensor(np.array([1, 2, 3]), mindspore.float32)
+        >>> labels = Tensor(np.array([1, 2, 2]), mindspore.float32)
+        >>> output = loss(logits, labels)
+        >>> print(output)
+        [0.  0.  0.5]
+    """
+
+    return P.SmoothL1Loss(beta, reduction)(logits, labels)
+
+
 def intopk(x1, x2, k):
     r"""
     Determines whether the targets are in the top `k` predictions.
