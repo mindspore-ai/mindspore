@@ -26,7 +26,7 @@ from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
-    get_unary_grad_vmap_rule, _update_prim_attr
+    get_unary_grad_vmap_rule, _update_prim_attr, _bdim_at_any
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 
@@ -618,6 +618,45 @@ def get_renorm_rule(prim, axis_size):
         out = F.reshape(out, from_shape)
         out = mnp.moveaxis(out, des_dim, src_dim)
         return (out, batch_dim)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.LinSpace)
+def get_linspace_rule(prim, axis_size):
+    """VmapRule for `LinSpace` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_linspace = P.LinSpace()
+    batch_linspace.add_prim_attr('batch_rank', batch_rank)
+    prim_name = batch_linspace.name
+
+    def vmap_rule(start_bdim, stop_bdim, num_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, start_bdim, stop_bdim, num_bdim)
+        if is_all_none:
+            return result
+
+        start, start_dim = start_bdim
+        stop, stop_dim = stop_bdim
+        num, num_dim = num_bdim
+
+        if num_dim is not None:
+            _raise_value_error("The source axis of `num` in `{}` must be None, "
+                               "but got {}.".format(prim_name, num_dim))
+
+        out_dim = start_dim
+        if start_dim != stop_dim:
+            if start_dim is None:
+                start = _bdim_at_any(start, start_dim, stop_dim, axis_size)
+                out_dim = stop_dim
+            else:
+                stop = _bdim_at_any(stop, stop_dim, start_dim, axis_size)
+
+        result = batch_linspace(start, stop, num)
+        return result, out_dim
 
     return vmap_rule
 

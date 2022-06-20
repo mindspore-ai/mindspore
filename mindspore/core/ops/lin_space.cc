@@ -65,18 +65,30 @@ abstract::ShapePtr LinSpaceInferShape(const PrimitivePtr &primitive, const std::
   const auto start_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(start_shape_ptr)[kShape];
   const auto stop_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(stop_shape_ptr)[kShape];
 
-  (void)CheckAndConvertUtils::Check("shape of 'start'", start_shape, kEqual, stop_shape, prim_name);
-
   // Checked in LinSpaceInferType, num is a Scalar
   const auto num_value = input_args[kInputIndex2]->BuildValue();
   const int64_t num = num_value->cast<Int64ImmPtr>()->value();
 
   CheckAndConvertUtils::CheckValue<int64_t>("num", num, kGreaterThan, 0, prim_name);
 
-  ShapeVector out_shape(start_shape.begin(), start_shape.end());
-  out_shape.push_back(num);
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = LongToSize(GetValue<int64_t>(value_ptr));
+  }
 
-  return std::make_shared<abstract::Shape>(out_shape);
+  (void)CheckAndConvertUtils::CheckValue("rank of 'start'", start_shape.size(), kEqual, batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckValue("rank of 'stop'", stop_shape.size(), kEqual, batch_rank, prim_name);
+
+  if (batch_rank == 0) {
+    ShapeVector out_shape = {num};
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else {
+    (void)CheckAndConvertUtils::Check("shape of 'start'", start_shape, kEqual, stop_shape, prim_name);
+    ShapeVector out_shape(start_shape.begin(), start_shape.end());
+    out_shape.push_back(num);
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
 }
 }  // namespace
 MIND_API_OPERATOR_IMPL(LinSpace, BaseOperator);

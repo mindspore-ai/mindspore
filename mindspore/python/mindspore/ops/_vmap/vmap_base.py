@@ -188,6 +188,26 @@ def vmap_monad_rule(prim, axis_size):
     return vmap_rule
 
 
+def _bdim_at_any(x, src, dst, axis_size):
+    """
+    Moves source axes of an array to the dst axis, and other axes remain in their original order. If the source axes
+    is 'None', broadcasts the array at dst axis with axis_size.
+
+    Args:
+        x (Tensor or Scalar): The input tensor or scalar. The data type should be one of the following types: float16,
+            float32, int32, int8, uint8, bool.
+        src (int or None): The source axis needs to be moved.
+        dst (int): The destination axis needs to be moved to.
+        axis_size (int): The size of the dst axis to be broadcast.
+
+    Returns:
+        Tensor, array with moved axes.
+    """
+    if src is None:
+        return _broadcast_by_axis(x, dst, axis_size)
+    return mnp.moveaxis(x, src, dst)
+
+
 def _bdim_at_front(x, src, axis_size):
     """
     Moves source axes of an array to the foremost, and other axes remain in their original order. If the source axes
@@ -202,9 +222,7 @@ def _bdim_at_front(x, src, axis_size):
     Returns:
         Tensor, array with moved axes.
     """
-    if src is None:
-        return _broadcast_by_axis(x, 0, axis_size)
-    return mnp.moveaxis(x, src, 0)
+    return _bdim_at_any(x, src, 0, axis_size)
 
 
 def _bdim_at_back(x, src, axis_size):
@@ -221,9 +239,7 @@ def _bdim_at_back(x, src, axis_size):
     Returns:
         Tensor, array with moved axes.
     """
-    if src is None:
-        return _broadcast_by_axis(x, -1, axis_size)
-    return mnp.moveaxis(x, src, -1)
+    return _bdim_at_any(x, src, -1, axis_size)
 
 
 def get_assign_vmap_rule(prim, axis_size):
