@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include "ir/meta_func_graph.h"
+#include "../ccsrc/pybind_api/ir/primitive_py.h"
 
 namespace mindspore {
 // namespace to support composite operators definition
@@ -88,6 +89,13 @@ class VmapGeneralRule : public MetaFuncGraph {
   FuncGraphPtr fg_{nullptr};
 };
 using VmapGeneralRulePtr = std::shared_ptr<VmapGeneralRule>;
+
+class VmapGeneralRulePyAdapter : public VmapGeneralRule {
+ public:
+  explicit VmapGeneralRulePyAdapter(const std::string &name, const PrimitivePyAdapterPtr &prim, int64_t axis_size)
+      : VmapGeneralRule(name, prim->attached_primitive(), axis_size) {}
+  ~VmapGeneralRulePyAdapter() override = default;
+};
 }  // namespace prim
 }  // namespace mindspore
 

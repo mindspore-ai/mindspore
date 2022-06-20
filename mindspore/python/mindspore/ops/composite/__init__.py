@@ -29,7 +29,7 @@ from .multitype_ops.zeros_like_impl import zeros_like
 from .random_ops import normal, laplace, uniform, gamma, poisson, multinomial
 from .math_ops import count_nonzero, tensor_dot, dot, batch_dot, matmul, cummin
 from .array_ops import repeat_elements, sequence_mask
-from .vmap_ops import _VmapGeneralPreprocess
+from .vmap_ops import _VmapGeneralPreprocess, _VmapGeneralRule
 
 
 __all__ = [
