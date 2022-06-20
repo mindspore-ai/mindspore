@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_UNIFORM_REAL_H_
-#define MINDSPORE_CORE_OPS_UNIFORM_REAL_H_
+#ifndef MINDSPORE_CORE_OPS_UNIFORM_INT_H_
+#define MINDSPORE_CORE_OPS_UNIFORM_INT_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -26,16 +26,16 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameUniformReal = "UniformReal";
-/// \brief Produces random floating-point values i, uniformly distributed to the interval [0, 1).
+constexpr auto kNameUniformInt = "UniformInt";
+/// \brief Produces random floating-point values i, uniformly distributed to the interval [minval, maxval).
 /// Refer to Python API @ref mindspore.ops.UniformReal for more details.
 
-class MIND_API UniformReal : public BaseOperator {
+class MIND_API UniformInt : public BaseOperator {
  public:
-  MIND_API_BASE_MEMBER(UniformReal);
+  MIND_API_BASE_MEMBER(UniformInt);
   /// \brief Constructor.
-  UniformReal() : BaseOperator(kNameUniformReal) { InitIOName({"shape"}, {"output"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.UniformReal for the inputs.
+  UniformInt() : BaseOperator(kNameUniformInt) { InitIOName({"shape", "minval", "maxval"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.UniformInt for the inputs.
   void Init(int64_t seed, int64_t seed2);
   /// \brief Set seed.
   void set_seed(int64_t seed);
@@ -50,9 +50,10 @@ class MIND_API UniformReal : public BaseOperator {
   /// \return seed2.
   int64_t get_seed2() const;
 };
-abstract::AbstractBasePtr UniformRealInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+
+abstract::AbstractBasePtr UniformIntInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_UNIFORM_REAL_H_
+#endif  // MINDSPORE_CORE_OPS_UNIFORM_INT_H_

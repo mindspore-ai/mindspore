@@ -172,7 +172,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         TypeError: If 'dtype' is neither int32 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -193,19 +193,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> print(result)
         (3, 2, 2)
     """
-    minval_dtype = F.dtype(minval)
-    maxval_dtype = F.dtype(maxval)
-    const_utils.check_type_valid(dtype, [mstype.int32, mstype.float32], 'uniform')
-    const_utils.check_tensors_dtype_same(minval_dtype, dtype, "uniform")
-    const_utils.check_tensors_dtype_same(maxval_dtype, dtype, "uniform")
-    seed1, seed2 = _get_seed(seed, "uniform")
-    if const_utils.is_same_type(dtype, mstype.int32):
-        random_uniform = P.UniformInt(seed1, seed2)
-        value = random_uniform(shape, minval, maxval)
-    else:
-        uniform_real = P.UniformReal(seed1, seed2)
-        random_uniform = uniform_real(shape)
-        value = random_uniform * (maxval - minval) + minval
+    value = F.uniform(shape, minval, maxval, seed, dtype)
     return value
 
 

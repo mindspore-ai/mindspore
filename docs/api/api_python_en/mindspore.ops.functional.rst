@@ -298,6 +298,7 @@ Randomly Generating Operators
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.standard_normal
+    mindspore.ops.uniform
 
 Array Operation
 ^^^^^^^^^^^^^^^
