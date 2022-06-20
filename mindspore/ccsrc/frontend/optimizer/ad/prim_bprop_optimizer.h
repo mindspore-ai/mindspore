@@ -157,7 +157,8 @@ class PrimBpropOptimizer {
   void ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList &op_args, abstract::AbstractBasePtrList *abs_list);
 
   // add out && dout to abs list
-  abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out, const abstract::AbstractBasePtrList &abs_list);
+  abstract::AbstractBasePtrList AddOutToAbsList(const ValuePtr &out,
+                                                const abstract::AbstractBasePtrList &abs_list) const;
 
   // do opt without input info, no infer
   PrimBpropOptGraphInfoPtr PrimBpropOptStep1(const FuncGraphPtr &bprop_fg);

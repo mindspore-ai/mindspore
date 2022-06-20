@@ -239,7 +239,7 @@ bool DynamicParser::IsDynamicCell(const py::object &cell) {
   auto ast = std::make_shared<parse::ParseFunctionAst>(cell);
   bool success = ast->InitParseAstInfo(parse::PYTHON_MOD_GET_PARSE_METHOD);
   if (!success) {
-    MS_LOG(ERROR) << "Parse code to ast tree failed";
+    MS_LOG(DEBUG) << "Parse code to ast tree failed";
     return false;
   }
   py::object fn_node = ast->GetAstNode();

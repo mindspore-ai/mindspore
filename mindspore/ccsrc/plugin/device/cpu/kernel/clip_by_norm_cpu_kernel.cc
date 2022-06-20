@@ -214,7 +214,7 @@ bool ClipByNormCpuKernelMod::LaunchFunc(const std::vector<AddressPtr> &inputs, c
 }
 
 template <typename T>
-void ClipByNormCpuKernelMod::L2NormLaunch(T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size) {
+void ClipByNormCpuKernelMod::L2NormLaunch(const T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size) {
   // Calculate transpose axes and stride
   size_t j = 0;
   size_t k = 0;
@@ -264,7 +264,7 @@ void ClipByNormCpuKernelMod::L2NormLaunch(T *x_addr, float *l2_norm_output_addr,
 }
 
 template <typename T>
-void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, float *div_output_addr,
+void ClipByNormCpuKernelMod::DivLaunch(const T *x_addr, const float *l2_norm_output_addr, float *div_output_addr,
                                        size_t div_output_size) {
   // Run div calculation
   if (x_shape_.empty()) {  // The input x is a scalar tensor
@@ -300,8 +300,8 @@ void ClipByNormCpuKernelMod::DivLaunch(T *x_addr, float *l2_norm_output_addr, fl
 }
 
 template <typename T, typename S>
-void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(T *x_addr, float *div_output_addr, S *clip_norm_addr,
-                                                     float *output_addr, size_t output_size) {
+void ClipByNormCpuKernelMod::ClipNormMulAndCmpLaunch(const T *x_addr, const float *div_output_addr,
+                                                     const S *clip_norm_addr, float *output_addr, size_t output_size) {
   if (x_shape_.empty()) {  // The input x is a scalar tensor
     float mul_output = div_output_addr[0] * static_cast<float>(clip_norm_addr[0]);
     float x = static_cast<float>(x_addr[0]);

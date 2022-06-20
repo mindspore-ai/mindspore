@@ -328,16 +328,7 @@ class _MindsporeFunctionExecutor:
 
         if context.get_context("precompile_only"):
             return None
-        new_inputs = []
-        for i in args_list:
-            if isinstance(i, (Tensor, CSRTensor, COOTensor)):
-                new_inputs.append(i)
-            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
-                new_inputs.append(i)
-            elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
-                new_inputs.append(i)
-            elif self.enable_tuple_broaden and isinstance(i, tuple) and _check_all_tensor(i):
-                new_inputs.append(i)
+        new_inputs = self._generate_run_args(args_list)
         output = self._graph_executor(tuple(new_inputs), phase)
         if context.get_context("mode") == context.PYNATIVE_MODE:
             _pynative_executor.set_graph_phase(phase)
@@ -379,6 +370,28 @@ class _MindsporeFunctionExecutor:
                 compile_args = tuple(self.input_signature)
                 _pynative_executor.set_dynamic_input(self.obj, *compile_args)
         return compile_args
+
+    def _generate_run_args(self, args_list):
+        """
+        Generate input args, which are required for running.
+
+        Args:
+            args_list (Tuple): Actual input args.
+
+        Returns:
+            new_inputs, new input args, which are required for running.
+        """
+        new_inputs = []
+        for i in args_list:
+            if isinstance(i, (Tensor, CSRTensor, COOTensor)):
+                new_inputs.append(i)
+            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
+                new_inputs.append(i)
+            elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
+                new_inputs.append(i)
+            elif self.enable_tuple_broaden and isinstance(i, tuple) and _check_all_tensor(i):
+                new_inputs.append(i)
+        return new_inputs
 
 
 # The attributes used to identify a given object.

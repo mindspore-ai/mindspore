@@ -1944,8 +1944,8 @@ void SessionBasic::UpdateOutputAbstract(const std::shared_ptr<KernelGraph> &kern
   }
 }
 
-std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(const GraphId &graph_id,
-                                                                     const std::vector<tensor::TensorPtr> &inputs) {
+std::vector<tensor::TensorPtr> SessionBasic::GetInputNeedLockTensors(
+  const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs) const {
   auto graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(graph);
   if (!graph->has_optimizer()) {

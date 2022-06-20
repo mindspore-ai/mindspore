@@ -80,6 +80,7 @@ abstract::ShapePtr ClipByNormInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr ClipByNormInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args_abs) {
+  MS_EXCEPTION_IF_NULL(primitive);
   auto x_type = CheckAndConvertUtils::GetTensorInputType(kNameClipByNorm, input_args_abs, 0);
   auto clip_norm_type = CheckAndConvertUtils::GetTensorInputType(kNameClipByNorm, input_args_abs, 1);
   const std::set<TypePtr> supported_types{kFloat16, kFloat32};
