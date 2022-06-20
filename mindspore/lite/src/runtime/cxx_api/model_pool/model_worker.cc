@@ -19,9 +19,6 @@
 #include "src/common/common.h"
 #include "nnacl/op_base.h"
 namespace mindspore {
-namespace {
-const int kNumInitBatch = 2000;
-}
 bool ModelWorker::IsAvailable() {
   bool expected = true;
   return available_.compare_exchange_strong(expected, false);
@@ -39,24 +36,26 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
                                      const std::shared_ptr<WorkerConfig> &worker_config,
                                      const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
                                      bool *create_success) {
-  auto status = Init(model_buf, size, worker_config);
+  worker_config_ = worker_config;
+  predict_task_queue_ = predict_task_queue;
+  numa::NUMAAdapter::GetInstance()->Bind(worker_config_->numa_id);
+  auto status = Init(model_buf, size);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed in model worker.";
     *create_success = false;
     create_work_done_ = true;
     create_work_done_condition_.notify_one();
   }
-  auto numa_node_id = worker_config->numa_id;
-  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
-  Run(task_queue_id, predict_task_queue);
+  Run();
 }
 
-void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
-  predict_task_queue_ = predict_task_queue;
+void ModelWorker::Run() {
+  auto numa_node_id = worker_config_->numa_id;
+  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
   create_work_done_ = true;
   create_work_done_condition_.notify_one();
-  while (!predict_task_queue->IsPredictTaskDone()) {
-    auto task = predict_task_queue->GetPredictTask(node_id, this);
+  while (!predict_task_queue_->IsPredictTaskDone()) {
+    auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);
     if (task == nullptr) {
       MS_LOG(DEBUG) << "task queue is empty, wait task ...";
       continue;
@@ -70,24 +69,23 @@ void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &pred
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model predict failed.";
       task->ready = true;
-      predict_task_queue->ActiveTask(task);
+      predict_task_queue_->ActiveTask(task);
       continue;
     }
     task->ready = true;
-    predict_task_queue->ActiveTask(task);
+    predict_task_queue_->ActiveTask(task);
   }
 }
 
-Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<WorkerConfig> &worker_config) {
+Status ModelWorker::Init(const char *model_buf, size_t size) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
-  MS_CHECK_TRUE_MSG(worker_config != nullptr, kLiteError, "worker_config is nullptr in model worker.");
   model_ = std::make_shared<Model>();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
   mindspore::ModelType model_type = kMindIR_Lite;
-  for (auto &section : worker_config->config_info) {
+  for (auto &section : worker_config_->config_info) {
     for (auto &config : section.second) {
       auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));
       if (status != kSuccess) {
@@ -96,7 +94,7 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
       }
     }
   }
-  auto status = model_->Build(model_buf, size, model_type, worker_config->context);
+  auto status = model_->Build(model_buf, size, model_type, worker_config_->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;

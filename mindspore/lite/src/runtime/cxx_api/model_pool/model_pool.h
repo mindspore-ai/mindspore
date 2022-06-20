@@ -51,20 +51,20 @@ class ModelPool {
 
  private:
   ModelPoolConfig CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config);
-  std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  std::shared_ptr<Context> GetInitContext(const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_config, const std::shared_ptr<Context> &context);
 
   std::shared_ptr<mindspore::Context> GetDefaultContext();
   std::shared_ptr<Context> GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
-  Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
+  Status SetDefaultOptimalModelNum(int thread_num);
 
   Status SetModelBindMode(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                           std::shared_ptr<Context> model_context);
   Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                              int thread_num);
-  void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
-                       int thread_num);
+  Status SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+                         int thread_num);
 
   Status SplitInputTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<std::vector<MSTensor>> *new_inputs,
                                  size_t batch_split_num);
@@ -88,6 +88,23 @@ class ModelPool {
   Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
                                              const std::vector<int> &logical_core_list);
 
+  Status InitNumaParameter();
+
+  Status InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
+                               std::vector<std::vector<int>> *bind_core_list, std::vector<int> *bind_numa_list);
+
+  Status SetWorkersNumaId(std::vector<int> *numa_node_id);
+
+  ModelPoolConfig CreateGpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                           const std::shared_ptr<Context> &init_context);
+
+  ModelPoolConfig CreateCpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                           const std::shared_ptr<Context> &init_context,
+                                           const std::vector<std::vector<int>> &all_worker_bind_list,
+                                           const std::vector<int> &numa_node_id);
+
+  Status CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config);
+
  private:
   // different workers get tasks from different task queues.
   // currently task queues are distinguished according to different numa node numbers.
@@ -109,16 +126,17 @@ class ModelPool {
   std::queue<size_t> free_tasks_id_;
 
   // use numa
-  int numa_node_num_ = 1;
-  int used_numa_node_num_ = 0;
-  bool use_numa_bind_mode_ = false;
+  bool numa_available_ = false;
+  size_t numa_node_num_ = 1;
   std::vector<std::vector<int>> numa_physical_cores_;
   std::vector<std::vector<int>> numa_logical_cores_;
+  bool use_numa_bind_mode_ = false;
+  size_t used_numa_node_num_ = 0;  // Initialize in SetNumaBindStrategy
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
 
   // split batch
   bool use_split_batch_ = false;
-  bool is_user_data_ = false;  // use in split batch
+  bool is_user_data_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_MODEL_POOL_H_

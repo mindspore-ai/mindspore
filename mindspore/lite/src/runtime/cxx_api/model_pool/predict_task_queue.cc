@@ -22,6 +22,10 @@ PredictTaskQueue::~PredictTaskQueue() {
     delete[] predict_task_;
     predict_task_ = nullptr;
   }
+  if (idle_worker_num_ != nullptr) {
+    delete[] idle_worker_num_;
+    idle_worker_num_ = nullptr;
+  }
 }
 
 void PredictTaskQueue::SetPredictTaskDone() {
@@ -53,7 +57,11 @@ Status PredictTaskQueue::InitTaskQueue(size_t num, size_t max_queue_size) {
     return kLiteNullptr;
   }
 #endif
-  waite_worker_num_.resize(num, 0);
+  idle_worker_num_ = new (std::nothrow) std::atomic_int[num]();
+  if (idle_worker_num_ == nullptr) {
+    MS_LOG(ERROR) << "new wait worker num list failed.";
+    return kLiteError;
+  }
   return kSuccess;
 }
 
@@ -63,14 +71,14 @@ void PredictTaskQueue::WaitUntilPredictActive(PredictTask *task, int node_id) {
     task->task_done_condition.wait(result_lock);
   }
   task->ready = false;
-  waite_worker_num_.at(node_id) += 1;
+  idle_worker_num_[node_id] += 1;
   return;
 }
 
 void PredictTaskQueue::ActiveTask(PredictTask *task) { task->task_done_condition.notify_one(); }
 
 void PredictTaskQueue::PushPredictTask(PredictTask *task, int node_id) {
-  waite_worker_num_.at(node_id) -= 1;
+  idle_worker_num_[node_id] -= 1;
 #ifdef USE_HQUEUE
   while (!predict_task_[node_id].Enqueue(task)) {
   }

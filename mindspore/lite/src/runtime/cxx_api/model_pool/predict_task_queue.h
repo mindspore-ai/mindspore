@@ -57,9 +57,9 @@ class PredictTaskQueue {
 
   bool IsPredictTaskDone() const { return predict_task_done_; }
   void SetPredictTaskDone();
-  int GetWaitModelNum(int node_id) const { return waite_worker_num_.at(node_id); }
-  void DecreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) -= num; }
-  void IncreaseWaitModelNum(int num, int node_id) { waite_worker_num_.at(node_id) += num; }
+  int GetWaitModelNum(int node_id) const { return idle_worker_num_[node_id]; }
+  void DecreaseWaitModelNum(int num, int node_id) { idle_worker_num_[node_id] -= num; }
+  void IncreaseWaitModelNum(int num, int node_id) { idle_worker_num_[node_id] += num; }
 
  private:
   // use an array to save predict tasks, different numa nodes correspond to different arrays
@@ -68,7 +68,7 @@ class PredictTaskQueue {
 #else
   std::queue<PredictTask *> *predict_task_;
 #endif
-  std::vector<int> waite_worker_num_;
+  std::atomic_int *idle_worker_num_;
   std::mutex mtx_predict_task_;
   std::condition_variable task_pop_cond_;
   std::condition_variable task_push_cond_;
