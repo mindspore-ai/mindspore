@@ -155,7 +155,13 @@ AnfNodePtr ClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, cons
                                             const AnfNodePtr &clip_norm, const ShapeVector &shape_vec,
                                             const TypeId &type_id) const {
   auto mul = CreateCNodeBase(func_graph, {x, clip_norm}, kMulOpName, x);
-  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
+  auto output_shape = shape_vec;
+  auto clip_norm_shape = GetOutputInferShape(clip_norm);
+  if (clip_norm_shape.size() > output_shape.size()) {
+    output_shape = clip_norm_shape;
+  }
+
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), output_shape);
   mul->set_abstract(abs);
   return mul;
 }
