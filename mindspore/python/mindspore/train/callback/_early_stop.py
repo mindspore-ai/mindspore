@@ -156,8 +156,6 @@ class EarlyStopping(Callback):
 
         if current is None:
             return
-        if current.shape != ():
-            raise ValueError("EarlyStopping only supports scalar monitor now.")
 
         if self.restore_best_weights and self.best_weights_param_dict is None:
             self.best_weights_param_dict = copy.deepcopy(cb_params.train_network.parameters_dict())
@@ -217,11 +215,13 @@ class EarlyStopping(Callback):
             monitor_candidates = cb_params.get("eval_results", {})
             monitor_value = monitor_candidates.get(self.monitor)
 
-        if not monitor_value:
+        if monitor_value is None:
             support_keys = set(["loss"] + list(monitor_candidates.keys()))
             logger.warning('Early stopping is conditioned on %s, '
                            'which is not available. Available choices are: %s',
                            self.monitor, support_keys)
+        if isinstance(monitor_value, np.ndarray) and monitor_value.shape != ():
+            raise ValueError("EarlyStopping only supports scalar monitor now.")
         return np.array(monitor_value) if monitor_value else None
 
 

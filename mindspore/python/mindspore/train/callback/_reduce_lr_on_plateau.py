@@ -154,8 +154,6 @@ class ReduceLROnPlateau(Callback):
 
         if reduce_monitor_value is None:
             return
-        if reduce_monitor_value.shape != ():
-            raise ValueError("ReduceLROnPlateau only supports scalar monitor now.")
 
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1
@@ -204,11 +202,13 @@ class ReduceLROnPlateau(Callback):
             monitor_candidates = cb_params.get("eval_results", {})
             monitor_value = monitor_candidates.get(self.monitor)
 
-        if not monitor_value:
+        if monitor_value is None:
             support_keys = set(["loss"] + list(monitor_candidates.keys()))
             logger.warning('Learning rate reduction is conditioned on %s, '
                            'which is not available. Available choices are: %s',
                            self.monitor, support_keys)
+        if isinstance(monitor_value, np.ndarray) and monitor_value.shape != ():
+            raise ValueError("EarlyStopping only supports scalar monitor now.")
         return np.array(monitor_value) if monitor_value else None
 
 
