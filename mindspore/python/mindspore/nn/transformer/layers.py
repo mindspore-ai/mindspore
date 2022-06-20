@@ -383,12 +383,15 @@ class _Linear(Cell):
         x = P.Reshape()(x, (-1, self.in_channels))
         if self.expert_flag:
             x = P.Reshape()(x, (self.outer_batch, self.expert_num, -1, self.in_channels))
+        ori_dtype = F.dtype(x)
         weight = self.cast(self.weight, self.dtype)
+        x = self.cast(x, self.dtype)
         x = self.matmul(x, weight)
         if self.has_bias:
             x = self.bias_add(x, self.cast(self.bias, self.dtype))
         if self.activation_flag:
             x = self.activation(x)
+        x = F.cast(x, ori_dtype)
         output = P.Reshape()(x, out_shape)
         return output
 
