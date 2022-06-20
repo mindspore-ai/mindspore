@@ -87,7 +87,8 @@ if(ENABLE_MINDDATA)
                 ./distributed/rpc/tcp/*.cc
                 ./distributed/cluster/*.cc
                 ./distributed/cluster/topology/*.cc
-                ./distributed/recovery/*.cc)
+                ./distributed/recovery/*.cc
+                ./distributed/embedding_cache/*.cc)
         list(APPEND UT_SRCS ${UT_DISTRIBUTED_SRCS})
     endif()
     if(NOT ENABLE_PYTHON)
@@ -206,6 +207,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/distributed/persistent/*.cc"
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/topology/*.cc"
+        "../../../mindspore/ccsrc/distributed/embedding_cache/*.cc"
         "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"
         "../../../mindspore/ccsrc/profiler/device/profiling.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
