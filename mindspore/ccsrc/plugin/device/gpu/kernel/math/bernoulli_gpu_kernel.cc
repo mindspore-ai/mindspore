@@ -51,21 +51,12 @@ bool BernoulliGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     if (!kernel_ptr_->HasAttr(seed_str)) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', has no attribute of seed";
     }
-    int64_t seed = GetValue<int64_t>(kernel_ptr_->GetAttr(seed_str));
-    if (seed == -1) {
-      seed = time(NULL);
-    }
-    if (seed < 0) {
+    seed_ = GetValue<int64_t>(kernel_ptr_->GetAttr(seed_str));
+    if (seed_ < 0 && seed_ != -1) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'seed' must be -1 or positive integer, "
-                    << "but got " << seed;
+                    << "but got " << seed_;
       return false;
     }
-    uint64_t seed_ = static_cast<uint64_t>(seed);
-    CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&curand_generator_, CURAND_RNG_PSEUDO_DEFAULT),
-                                 "Failed to create generator");
-    MS_EXCEPTION_IF_NULL(curand_generator_);
-    CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(curand_generator_, seed_),
-                                 "Failed to SetPseudoRandomGeneratorSeed");
     states_init_ = true;
   }
   cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
@@ -114,10 +105,12 @@ int BernoulliGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     }
     p_count_ *= p_shape[j];
   }
-  for (size_t k = 0; k < x_shape.size(); k++) {
-    if (x_shape_[k] != p_shape_[k] && p_shape_[k] != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input p " << p_shape << " cannot be broadcast to"
-                        << " the shape of input x " << x_shape;
+  if (need_broadcast_) {
+    for (size_t k = 0; k < x_shape.size(); k++) {
+      if (x_shape_[k] != p_shape_[k] && p_shape_[k] != 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input p " << p_shape
+                          << " cannot be broadcast to the shape of input x " << x_shape;
+      }
     }
   }
   size_t input_size = x_count_ * unit_size_;
@@ -125,7 +118,7 @@ int BernoulliGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   size_t p_size = p_count_ * p_unit_size_;
   input_size_list_.emplace_back(p_size);
   output_size_list_.emplace_back(input_size);
-  size_t workspace_size = x_count_ * sizeof(float);
+  size_t workspace_size = 0;
   workspace_size_list_.emplace_back(workspace_size);
   return KRET_OK;
 }
@@ -147,22 +140,17 @@ bool BernoulliGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   T *p = GetDeviceAddress<T>(inputs, kIndex1);
   S *y = GetDeviceAddress<S>(outputs, kIndex0);
-  auto *rand_f = GetDeviceAddress<float>(workspace, kIndex0);
-  CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(curand_generator_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-                               "For BernoulliGpuKernelMod failed to set stream for generator");
-  // For curandGen only supports float or double.
-  // To generate random float data for every channel.
-  CHECK_CURAND_RET_WITH_EXCEPT(curandGenerateUniform(curand_generator_, rand_f, x_count_),
-                               "For BernoulliGpuKernelMod failed to generate uniform");
-  if (!CheckRange(p, p_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_))) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the elements of the input p should be in range [0, 1]";
-    return false;
+  uint64_t seed;
+  if (seed_ == -1) {
+    seed = static_cast<uint64_t>(time(NULL));
+  } else {
+    seed = static_cast<uint64_t>(seed_);
   }
   if (need_broadcast_) {
-    BroadcastBernoulliForward(x_shape_, p_shape_, p, y, rand_f, x_count_, device_id_,
+    BroadcastBernoulliForward(x_shape_, p_shape_, p, y, seed, x_count_, device_id_,
                               reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
-    BernoulliForward(p, y, rand_f, x_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    BernoulliForward(p, y, seed, x_count_, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   }
   return true;
 }

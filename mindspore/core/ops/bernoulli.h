@@ -35,6 +35,14 @@ class MIND_API Bernoulli : public BaseOperator {
   Bernoulli() : BaseOperator(kNameBernoulli) { InitIOName({"x", "p"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Bernoulli for the inputs.
   void Init(const int64_t seed = -1);
+  /// \brief Method to set seed attribute.
+  ///
+  /// \param[in] seed Define the seed of the random method.
+  void set_seed(const int64_t seed);
+  /// \brief Method to get seed attribute.
+  ///
+  /// \return a value to indicate seed.
+  int64_t get_seed() const;
 };
 
 abstract::AbstractBasePtr BernoulliInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

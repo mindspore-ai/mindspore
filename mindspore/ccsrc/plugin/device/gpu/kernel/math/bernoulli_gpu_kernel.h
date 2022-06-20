@@ -60,6 +60,7 @@ class BernoulliGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
  private:
+  int64_t seed_{-1};
   size_t unit_size_{1};
   size_t p_unit_size_{1};
   bool is_null_input_{false};
