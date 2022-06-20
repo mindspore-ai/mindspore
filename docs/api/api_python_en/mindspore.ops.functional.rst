@@ -61,6 +61,7 @@ Activation Functions
     mindspore.ops.fast_gelu
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
+    mindspore.ops.log_softmax
     mindspore.ops.softsign
     mindspore.ops.tanh
 

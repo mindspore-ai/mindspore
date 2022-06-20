@@ -396,29 +396,7 @@ class LogSoftmax(Primitive):
     r"""
     Log Softmax activation function.
 
-    Applies the Log Softmax function to the input tensor on the specified axis.
-    Supposes a slice in the given axis, :math:`x` for each element :math:`x_i`,
-    the Log Softmax function is shown as follows:
-
-    .. math::
-        \text{output}(x_i) = \log \left(\frac{\exp(x_i)} {\sum_{j = 0}^{N-1}\exp(x_j)}\right),
-
-    where :math:`N` is the length of the Tensor.
-
-    Args:
-        axis (int): The axis to perform the Log softmax operation. Default: -1.
-
-    Inputs:
-        - **logits** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
-          additional dimensions, with float16 or float32 data type.
-
-    Outputs:
-        Tensor, with the same type and shape as the logits.
-
-    Raises:
-        TypeError: If `axis` is not an int.
-        TypeError: If dtype of `logits` is neither float16 nor float32.
-        ValueError: If `axis` is not in range [-len(logits.shape), len(logits.shape)).
+    Refer to :func:`mindspore.ops.log_softmax` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
