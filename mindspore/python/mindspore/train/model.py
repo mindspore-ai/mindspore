@@ -395,8 +395,13 @@ class Model:
     def _get_metrics(self):
         """Get metrics local values."""
         metrics = dict()
+        # Embedding cache server as a storage service, no need to execute eval, just give fake metrics.
+        is_embedding_cache_server = _is_role_pserver() and _cache_enable()
         for key, value in self._metric_fns.items():
-            metrics[key] = value.eval()
+            if not is_embedding_cache_server:
+                metrics[key] = value.eval()
+            else:
+                metrics[key] = 0
         return metrics
 
     def _get_scaling_sens(self):
@@ -998,8 +1003,13 @@ class Model:
                              "the value of epoch in train {} separately."
                              .format(train_dataset._warmup_epoch, epoch))
 
-        if dataset_sink_mode and _is_ps_mode() and not _cache_enable():
-            raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
+        # Parameter server and embedding cache mode check.
+        if _is_ps_mode():
+            if dataset_sink_mode and not _cache_enable():
+                raise ValueError("Parameter server mode does not support 'data_sink_mode=True'.")
+            if not dataset_sink_mode and _cache_enable():
+                raise ValueError("Embedding cache mode should run with 'data_sink_mode=True'.")
+
 
         Validator.check_is_int(sink_size)
         Validator.check_non_negative_int(epoch)
@@ -1396,6 +1406,13 @@ class Model:
         cb_params.network = self._network
 
         self._clear_metrics()
+
+        # Embedding cache server as a storage service, no need to execute eval.
+        is_embedding_cache_server = _is_role_pserver() and _cache_enable()
+        if is_embedding_cache_server:
+            metrics = self._get_metrics()
+            cb_params.metrics = metrics
+            return metrics
 
         if context.get_context("device_target") == "CPU" and dataset_sink_mode:
             dataset_sink_mode = False

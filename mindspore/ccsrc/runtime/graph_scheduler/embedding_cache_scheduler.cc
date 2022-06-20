@@ -191,11 +191,17 @@ void CheckGraphValidForEmbeddingCache(const KernelGraph &graph) {
 
 EmbeddingCacheScheduler &EmbeddingCacheScheduler::GetInstance() {
   static EmbeddingCacheScheduler instance{};
+  if (!instance.initialized_) {
+    instance.Initialize();
+  }
   return instance;
 }
 
 void EmbeddingCacheScheduler::Initialize() {
   if (!CheckEnableEmbeddingCache()) {
+    return;
+  }
+  if (initialized_) {
     return;
   }
 
@@ -204,12 +210,13 @@ void EmbeddingCacheScheduler::Initialize() {
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device_context_ = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
-  MS_EXCEPTION_IF_NULL(device_context_);
-  device_context_->Initialize();
+  DeviceContext *device_context =
+    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  MS_EXCEPTION_IF_NULL(device_context);
+  device_context->Initialize();
 
   // Create and initialize EmbeddingCachePrefetchActor.
-  embedding_cache_prefetch_actor_ = std::make_shared<EmbeddingCachePrefetchActor>(device_context_);
+  embedding_cache_prefetch_actor_ = std::make_shared<EmbeddingCachePrefetchActor>(device_context);
   MS_EXCEPTION_IF_NULL(embedding_cache_prefetch_actor_);
 
   initialized_ = true;
@@ -254,7 +261,8 @@ bool EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph, size
   return false;
 }
 
-void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const KernelGraphPtr &graph) {
+void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const DeviceContext *device_context,
+                                                             const KernelGraphPtr &graph) {
   if (allocated_embed_cache_mem_) {
     return;
   }
@@ -263,7 +271,7 @@ void EmbeddingCacheScheduler::AllocMemForEmbeddingCacheTable(const KernelGraphPt
   size_t batch_ids_num = 0;
   MS_EXCEPTION_IF_CHECK_FAIL(ParseBatchIdsNum(graph, &batch_ids_num), "Parse batch ids number failed.");
   embedding_cache_table_manager.set_batch_ids_num(batch_ids_num);
-  embedding_cache_table_manager.AllocMemForEmbeddingCacheTable(device_context_);
+  embedding_cache_table_manager.AllocMemForEmbeddingCacheTable(device_context);
 
   allocated_embed_cache_mem_ = true;
 }
@@ -277,7 +285,7 @@ void EmbeddingCacheScheduler::SetEmbedCachedParamAddress(const DeviceContext *de
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   MS_EXCEPTION_IF_NULL(graph);
-  AllocMemForEmbeddingCacheTable(graph);
+  AllocMemForEmbeddingCacheTable(device_context, graph);
 
   bool checked_embedding_cache = false;
   // Set cached parameter address by addr of embedding cache tables.
