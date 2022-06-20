@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, C
 
 TensorList::~TensorList() {
   if (!this->tensors_.empty()) {
-    this->TensorList::FreeData(false);
+    this->TensorList::FreeData();
     this->FreeTensorListData();
   }
 }
@@ -97,7 +97,7 @@ int TensorList::MallocData(const AllocatorPtr allocator) {
   return RET_OK;
 }
 
-void TensorList::FreeData(bool is_force) {
+void TensorList::FreeData() {
   if (this->IsConst() || this->IsGraphInput()) {
     return;
   }
@@ -106,7 +106,7 @@ void TensorList::FreeData(bool is_force) {
     if (tensor == nullptr) {
       continue;
     }
-    tensor->FreeData(is_force);
+    tensor->FreeData();
   }
 }
 

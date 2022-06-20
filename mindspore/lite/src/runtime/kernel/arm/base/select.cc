@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,13 +94,10 @@ int MoveTensorListData(lite::TensorList *dst_tensorlist, lite::TensorList *src_t
     auto &src_tensor = src_tensorlist->tensors()[i];
     auto &dst_tensor = dst_tensorlist->tensors()[i];
 
-    if (src_tensor->allocator() != nullptr) {
-      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-    }
-    dst_tensor->set_own_data(src_tensor->own_data());
     if (src_tensor->data() != nullptr) {
       dst_tensor->set_data(src_tensor->data());
     }
+    dst_tensor->set_own_data(src_tensor->own_data());
     dst_tensor->set_shape(src_tensor->shape());
   }
   return RET_OK;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -323,8 +323,6 @@ void MoveCommonTensorData(Tensor *dst_tensor, Tensor *src_tensor) {
   dst_tensor->ResetRefCount();
   dst_tensor->set_allocator(src_tensor->allocator());
 
-  src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-
   if (src_tensor->data() != nullptr) {
     dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
   }
@@ -390,10 +388,6 @@ void MoveTensorListTensorData(TensorList *dst_tensorlist, TensorList *src_tensor
   for (size_t i = 0; i < src_tensorlist_tensors_size; ++i) {
     auto &src_tensor = src_tensorlist->tensors()[i];
     auto &dst_tensor = dst_tensorlist->tensors()[i];
-
-    if (src_tensor->allocator() != nullptr) {
-      src_tensor->allocator()->IncRefCount(src_tensor->data(), dst_tensor->ref_count());
-    }
     dst_tensor->set_own_data(src_tensor->own_data());
     if (src_tensor->data() != nullptr) {
       dst_tensor->set_data(src_tensor->MutableData()); /* using MutableData to sync GPU data */
