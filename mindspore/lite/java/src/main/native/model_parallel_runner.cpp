@@ -142,6 +142,50 @@ Java_com_mindspore_ModelParallelRunner_getOutputs(JNIEnv *env, jobject thiz, jlo
   return GetParallelInOrOutTensors(env, thiz, model_parallel_runner_ptr, false);
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_ModelParallelRunner_predictWithOutput(
+  JNIEnv *env, jobject thiz, jlong model_parallel_runner_ptr, jlongArray inputs, jlongArray outputs) {
+  auto *pointer = reinterpret_cast<mindspore::ModelParallelRunner *>(model_parallel_runner_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Model runner pointer from java is nullptr");
+    return false;
+  }
+
+  auto input_size = static_cast<int>(env->GetArrayLength(inputs));
+  jlong *input_data = env->GetLongArrayElements(inputs, nullptr);
+  std::vector<mindspore::MSTensor> c_inputs;
+  for (int i = 0; i < input_size; i++) {
+    auto *tensor_pointer = reinterpret_cast<void *>(input_data[i]);
+    if (tensor_pointer == nullptr) {
+      MS_LOGE("input tensor pointer from java is nullptr");
+      return false;
+    }
+    auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
+    c_inputs.push_back(ms_tensor);
+  }
+  env->ReleaseLongArrayElements(inputs, input_data, JNI_ABORT);
+
+  auto output_size = static_cast<int>(env->GetArrayLength(outputs));
+  jlong *output_data = env->GetLongArrayElements(outputs, nullptr);
+  std::vector<mindspore::MSTensor> c_outputs;
+  for (int i = 0; i < output_size; i++) {
+    auto *tensor_pointer = reinterpret_cast<void *>(output_data[i]);
+    if (tensor_pointer == nullptr) {
+      MS_LOGE("output tensor pointer from java is nullptr");
+      return false;
+    }
+    auto &ms_tensor = *static_cast<mindspore::MSTensor *>(tensor_pointer);
+    c_outputs.push_back(ms_tensor);
+  }
+  env->ReleaseLongArrayElements(outputs, output_data, JNI_ABORT);
+
+  auto ret = pointer->Predict(c_inputs, &c_outputs);
+  if (ret != mindspore::kSuccess) {
+    MS_LOGE("predict failed.");
+    return false;
+  }
+  return true;
+}
+
 extern "C" JNIEXPORT jobject JNICALL Java_com_mindspore_ModelParallelRunner_predict(JNIEnv *env, jobject thiz,
                                                                                     jlong model_parallel_runner_ptr,
                                                                                     jlongArray inputs) {

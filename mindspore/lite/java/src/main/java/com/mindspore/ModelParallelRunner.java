@@ -94,6 +94,20 @@ public class ModelParallelRunner {
         for (int i = 0; i < inputs.size(); i++) {
             inputsPtrArray[i] = inputs.get(i).getMSTensorPtr();
         }
+        if(outputs.size() != 0){
+            long[] outputsPtrArray = new long[outputs.size()];
+            for (int i = 0; i < outputs.size(); i++) {
+                if(outputs.get(i) == null){
+                    return false;
+                }
+                outputsPtrArray[i] = outputs.get(i).getMSTensorPtr();
+            }
+            boolean ret = predictWithOutput(modelParallelRunnerPtr, inputsPtrArray, outputsPtrArray);
+            if (!ret) {
+                return false;
+            }
+            return true;
+        }
         List<Long> outputPtrs = predict(modelParallelRunnerPtr, inputsPtrArray);
         if (outputPtrs.isEmpty()) {
             return false;
@@ -151,6 +165,8 @@ public class ModelParallelRunner {
     private native long init(String modelPath, long runnerConfigPtr);
 
     private native List<Long> predict(long modelParallelRunnerPtr, long[] inputs);
+
+    private native boolean predictWithOutput(long modelParallelRunnerPtr, long[] inputs, long[] outputs);
 
     private native List<Long> getInputs(long modelParallelRunnerPtr);
 

@@ -591,8 +591,8 @@ bool LiteModel::CheckQuantAllInit(
 
 Model *ImportFromPath(const char *model_path) { return LiteImportFromPath(model_path); }
 
-Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
-  auto *model = new (std::nothrow) LiteModel();
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, const std::string &path) {
+  auto *model = new (std::nothrow) LiteModel(path);
   if (model == nullptr) {
     MS_LOG(ERROR) << "new model fail!";
     return nullptr;

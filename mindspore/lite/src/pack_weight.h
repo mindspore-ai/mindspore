@@ -33,24 +33,28 @@ struct ModelConstWeight {
   std::map<const void *, void *> origin_and_packed_pair;
   std::shared_ptr<Allocator> allocator = nullptr;
   int numa_id = -1;
+  std::unordered_map<int, void *> tensors_data;
 };
 
 class PackWeight {
  public:
   PackWeight() = default;
   ~PackWeight();
-  STATUS InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id = -1);
+  STATUS InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id = -1, bool copy_buf = false);
   char *GetNumaModelBuf(const char *model_buf, int numa_id);
   STATUS StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
+  STATUS ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index);
 
  private:
   void FreePackedWeight(ModelConstWeight *weight);
+  void FreeTensorData(ModelConstWeight *weight);
 
+  bool copy_buf_ = false;
   std::mutex mtx_weight_;
   std::unordered_map<const char *, ModelConstWeight *> buf_model_weight_;
   std::unordered_map<const char *, std::vector<int>> numa_model_buf_;
-  std::unordered_map<const char *, char *> model_buf_map_;
+  std::unordered_map<const char *, std::vector<char *>> model_buf_map_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_PACK_WEIGHT_H_

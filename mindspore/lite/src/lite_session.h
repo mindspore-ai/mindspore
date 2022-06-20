@@ -144,6 +144,7 @@ class LiteSession : public session::LiteSession {
   void RuntimeAllocatorInitSubgraph();
   virtual int RuntimeAllocatorValid();
   RuntimeAllocatorPtr runtime_allocator_ = nullptr;
+  std::string ParseWeightPath();
 
  protected:
   InnerContext *context_ = nullptr;
