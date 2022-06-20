@@ -38,6 +38,7 @@ std::string SizeToString(const std::vector<T> &size) {
 
 Status PadToSizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+  RETURN_IF_NOT_OK(ValidateImageDtype("PadToSize", input->type()));
   RETURN_IF_NOT_OK(ValidateImageRank("PadToSize", input->Rank()));
   std::vector<dsize_t> image_size;
   RETURN_IF_NOT_OK(ImageSize(input, &image_size));

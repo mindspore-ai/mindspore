@@ -24,7 +24,8 @@ import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore.dataset.vision import Border, ConvertMode
 
-DATA_DIR_10 = "../data/dataset/testCifar10Data"
+IMAGE_DIR = "../data/dataset/testPK/data"
+CIFAR10_DIR = "../data/dataset/testCifar10Data"
 
 
 def test_pad_to_size_size():
@@ -33,17 +34,19 @@ def test_pad_to_size_size():
     Description: Test parameter `size`
     Expectation: Output image shape is as expected
     """
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
-    transforms = [vision.PadToSize(100)]
+    dataset = ds.ImageFolderDataset(IMAGE_DIR, num_samples=10)
+    transforms = [vision.Decode(to_pil=False),
+                  vision.PadToSize(5000)]
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
-        assert data["image"].shape == (100, 100, 3)
+        assert data["image"].shape == (5000, 5000, 3)
 
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
-    transforms = [vision.PadToSize((52, 66))]
+    dataset = ds.ImageFolderDataset(IMAGE_DIR, num_samples=10)
+    transforms = [vision.Decode(to_pil=True),
+                  vision.PadToSize((2500, 4500))]
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
-        assert data["image"].shape == (52, 66, 3)
+        assert data["image"].shape == (2500, 4500, 3)
 
 
 def test_pad_to_size_offset():
@@ -52,25 +55,25 @@ def test_pad_to_size_offset():
     Description: Test parameter `offset`
     Expectation: Output image shape is as expected
     """
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     transforms = [vision.PadToSize((61, 57), None)]  # offset = None
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
         assert data["image"].shape == (61, 57, 3)
 
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     transforms = [vision.PadToSize((61, 57), ())]  # offset is empty
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
         assert data["image"].shape == (61, 57, 3)
 
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     transforms = [vision.PadToSize((61, 57), 5)]  # offset is int
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
         assert data["image"].shape == (61, 57, 3)
 
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     transforms = [vision.PadToSize((61, 57), (3, 7))]  # offset is sequence
     dataset = dataset.map(operations=transforms, input_columns=["image"])
     for data in dataset.create_dict_iterator(num_epochs=1):
@@ -100,7 +103,7 @@ def test_pad_to_size_grayscale():
     Description: Test on grayscale image
     Expectation: Output image shape is as expected
     """
-    dataset = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     transforms = [vision.ConvertColor(ConvertMode.COLOR_RGB2GRAY),
                   vision.PadToSize(97)]
     dataset = dataset.map(operations=transforms, input_columns=["image"])
@@ -116,13 +119,13 @@ def test_pad_to_size_vs_pad():
     """
     original_size = (32, 32)
 
-    dataset_pad_to_size = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset_pad_to_size = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     target_size = (50, 101)
     offset = (5, 13)
     transforms_pad_to_size = [vision.PadToSize(target_size, offset, fill_value=200, padding_mode=Border.CONSTANT)]
     dataset_pad_to_size = dataset_pad_to_size.map(operations=transforms_pad_to_size, input_columns=["image"])
 
-    dataset_pad = ds.Cifar10Dataset(DATA_DIR_10, num_samples=10, shuffle=False)
+    dataset_pad = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10, shuffle=False)
     left = offset[1]
     top = offset[0]
     right = target_size[1] - original_size[1] - left
@@ -175,7 +178,8 @@ def test_pad_to_size_check():
                        data=np.random.random((28, 28, 4)))
     test_invalid_input(RuntimeError, "input tensor is not in shape of <H,W> or <H,W,C>",
                        data=np.random.random(28))
-    test_invalid_input(RuntimeError, "load image failed", data=np.random.random((28, 28, 3)).astype(np.str))
+    test_invalid_input(RuntimeError, "Currently unsupported data type: [uint32, int64, uint64, string]",
+                       data=np.random.random((28, 28, 3)).astype(np.str))
 
 
 if __name__ == "__main__":

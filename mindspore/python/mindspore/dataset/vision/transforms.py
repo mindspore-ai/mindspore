@@ -1318,6 +1318,7 @@ class PadToSize(TensorOperation):
             self.offset = [offset, offset] if isinstance(offset, int) else offset
         self.fill_value = tuple([fill_value] * 3) if isinstance(fill_value, int) else fill_value
         self.padding_mode = Border.to_c_type(padding_mode)
+        self.implementation = Implementation.C
 
     def parse(self):
         return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)

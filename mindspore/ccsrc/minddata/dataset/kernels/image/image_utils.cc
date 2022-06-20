@@ -123,6 +123,32 @@ Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *siz
   return Status::OK();
 }
 
+Status ValidateImageDtype(const std::string &op_name, DataType dtype) {
+  uint8_t type = dtype.AsCVType();
+  if (type == kCVInvalidType) {
+    std::string type_name = "unknown";
+    if (type < DataType::NUM_OF_TYPES) {
+      type_name = std::string(DataType::kTypeInfo[type].name_);
+    }
+    std::string err_msg = op_name + ": Cannot convert [" + type_name + "] to OpenCV type." +
+                          " Currently unsupported data type: [uint32, int64, uint64, string]";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
+Status ValidateImageRank(const std::string &op_name, int32_t rank) {
+  if (rank != kMinImageRank && rank != kDefaultImageRank) {
+    std::string err_msg =
+      op_name + ": input tensor is not in shape of <H,W> or <H,W,C>, but got rank: " + std::to_string(rank);
+    if (rank == 1) {
+      err_msg = err_msg + ". You may need to perform Decode first.";
+    }
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  return Status::OK();
+}
+
 bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel) {
   if (tensor == nullptr) {
     return false;
@@ -1796,18 +1822,6 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("SlicePatches: " + std::string(e.what()));
   }
-}
-
-Status ValidateImageRank(const std::string &op_name, int32_t rank) {
-  if (rank != kMinImageRank && rank != kDefaultImageRank) {
-    std::string err_msg =
-      op_name + ": input tensor is not in shape of <H,W> or <H,W,C>, but got rank: " + std::to_string(rank);
-    if (rank == 1) {
-      err_msg = err_msg + ". You may need to perform Decode first.";
-    }
-    RETURN_STATUS_UNEXPECTED(err_msg);
-  }
-  return Status::OK();
 }
 
 Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
