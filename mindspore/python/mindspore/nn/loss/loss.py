@@ -1647,8 +1647,8 @@ class NLLLoss(LossBase):
 
     Examples:
 
-        >>> logits = mindspore.Tensor(np.random.randn(3, 5))
-        >>> labels = mindspore.Tensor(np.array([1, 0, 4]))
+        >>> logits = mindspore.Tensor(np.random.randn(3, 5), mindspore.float32)
+        >>> labels = mindspore.Tensor(np.array([1, 0, 4]), mindspore.int32)
         >>> loss = nn.NLLLoss()
         >>> output = loss(logits, labels)
     """
