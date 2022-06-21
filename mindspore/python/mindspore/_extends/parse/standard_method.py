@@ -82,6 +82,33 @@ def mean(x, axis=(), keep_dims=False):
     return reduce_mean(x, axis)
 
 
+def prod(x, axis=(), keep_dims=False):
+    """
+    Reduces a dimension of a tensor by product all elements in the dimension.
+
+    Args:
+        x (Tensor): Input Tensor.
+        axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
+            when axis is None or empty tuple, reduce all dimensions. Default: ().
+        keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+
+    Returns:
+        Tensor, has the same data type as input tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+        >>> output = input_x.prod()
+        >>> print(output)
+        6.0
+    """
+    return F.reduce_prod(x, axis, keep_dims)
+
+
 def all_(x, axis=(), keep_dims=False):
     """
     Check all array elements along a given axis evaluate to True.
@@ -844,8 +871,8 @@ def diagonal(x, offset=0, axis1=0, axis2=1):
             e = P.Concat(0)((e_upper, e_lower)).astype(dtype)
     e = P.BroadcastTo(shape)(e)
 
-    prod = F.tensor_mul(x, e)
-    res = F.reduce_sum(prod.astype(mstype.float32), -1)
+    prod_val = F.tensor_mul(x, e)
+    res = F.reduce_sum(prod_val.astype(mstype.float32), -1)
 
     begin = ()
     for i in range(ndim - 2):
