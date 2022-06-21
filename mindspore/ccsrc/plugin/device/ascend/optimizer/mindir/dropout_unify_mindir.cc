@@ -192,6 +192,9 @@ CNodePtr CreateDropoutGenMaskCNode(const FuncGraphPtr &func_graph, const CNodePt
   }
   CNodePtr dropout_gen_mask = opt::NewCNode(dropout_gen_mask_inputs, func_graph, {dropout});
   MS_EXCEPTION_IF_NULL(dropout_gen_mask);
+  if (dropout->HasPrimalAttr(kAttrFusion)) {
+    dropout_gen_mask->AddPrimalAttr(kAttrFusion, dropout->GetPrimalAttr(kAttrFusion));
+  }
 
   std::shared_ptr<abstract::AbstractTensor> gen_mask_abstract;
   if (input_shape->IsDynamic()) {
