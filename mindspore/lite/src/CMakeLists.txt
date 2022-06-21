@@ -559,7 +559,7 @@ endif()
 
 ########################## build optimize and float16 library #################################
 if(PLATFORM_ARM)
-    if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT MACHINE_LINUX_ARM64)
+    if(PLATFORM_ARM64 AND NOT TARGET_HIMIX AND NOT TARGET_MIX210 AND NOT MACHINE_LINUX_ARM64)
         target_link_libraries(mindspore-lite cpu_opt_kernel_mid nnacl_optimize_mid)
         target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid nnacl_optimize_mid)
     endif()
