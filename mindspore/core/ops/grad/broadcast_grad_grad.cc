@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "ops/grad/maximum_grad_grad.h"
 #include <vector>
 #include <set>
 #include "ops/op_utils.h"
+#include "ops/grad/minimum_grad_grad.h"
+#include "ops/grad/maximum_grad_grad.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
@@ -40,8 +41,8 @@ bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs) {
   return true;
 }
 
-abstract::TupleShapePtr MaximumGradGradInferShape(const PrimitivePtr &primitive,
-                                                  const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 4;
@@ -70,7 +71,7 @@ abstract::TupleShapePtr MaximumGradGradInferShape(const PrimitivePtr &primitive,
     << " vs 'grad_x2' shape: " << dx2_shape;
 }
 
-TuplePtr MaximumGradGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr BroadcastGradGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   constexpr int64_t input_num = 4;
@@ -90,12 +91,13 @@ TuplePtr MaximumGradGradInferType(const PrimitivePtr &primitive, const std::vect
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MinimumGradGrad, BaseOperator);
 MIND_API_OPERATOR_IMPL(MaximumGradGrad, BaseOperator);
-abstract::AbstractBasePtr MaximumGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args) {
+abstract::AbstractBasePtr BroadcastGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto infer_type = MaximumGradGradInferType(primitive, input_args);
-  auto infer_shape = MaximumGradGradInferShape(primitive, input_args);
+  auto infer_type = BroadcastGradGradInferType(primitive, input_args);
+  auto infer_shape = BroadcastGradGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 void MaximumGradGrad::Init(const bool grad_x, const bool grad_y) {
@@ -118,6 +120,23 @@ bool MaximumGradGrad::get_grad_y() const {
   MS_EXCEPTION_IF_NULL(value_ptr);
   return GetValue<bool>(value_ptr);
 }
-REGISTER_PRIMITIVE_EVAL_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, MaximumGradGradInfer, nullptr, true);
+
+void MinimumGradGrad::set_grad_x(const bool grad_x) { (void)this->AddAttr(kGradX, api::MakeValue(grad_x)); }
+
+void MinimumGradGrad::set_grad_y(const bool grad_y) { (void)this->AddAttr(kGradY, api::MakeValue(grad_y)); }
+
+bool MinimumGradGrad::get_grad_x() const {
+  auto value_ptr = GetAttr(kGradX);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<bool>(value_ptr);
+}
+
+bool MinimumGradGrad::get_grad_y() const {
+  auto value_ptr = GetAttr(kGradY);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<bool>(value_ptr);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(MaximumGradGrad, prim::kPrimMaximumGradGrad, BroadcastGradGradInfer, nullptr, true);
+REGISTER_PRIMITIVE_EVAL_IMPL(MinimumGradGrad, prim::kPrimMinimumGradGrad, BroadcastGradGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

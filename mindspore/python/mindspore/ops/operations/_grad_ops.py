@@ -1221,6 +1221,16 @@ class MinimumGrad(Primitive):
         raise NotImplementedError
 
 
+class MinimumGradGrad(Primitive):
+    """Grad for minimum_grad."""
+    @prim_attr_register
+    def __init__(self):
+        """Initialize MinimumGradGrad"""
+        super().__init__("MinimumGradGrad")
+        self.init_prim_io_names(inputs=['x1', 'x2', 'grad_y1', 'grad_y2'],
+                                outputs=['sopd_x1', 'sopd_x2', 'sopd_grads'])
+
+
 class L2NormalizeGrad(PrimitiveWithInfer):
     r"""
     Gradients of L2 normalize.

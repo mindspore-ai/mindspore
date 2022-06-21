@@ -679,6 +679,20 @@ def get_bprop_trace(self):
     return bprop
 
 
+@bprop_getters.register(G.MinimumGrad)
+def get_bprop_minimum_grad(self):
+    """Grad definition for 'MinimumGrad' operation"""
+    input_grad = G.MinimumGradGrad()
+
+    def bprop(grad, x1, x2, out, dout):
+        sopd_x1, sopd_x2, sopd_grads = input_grad(x1, x2, dout[0], dout[1])
+        sopd_x1 = 0
+        sopd_x2 = 0
+        return (sopd_x1, sopd_x2, sopd_grads)
+
+    return bprop
+
+
 @bprop_getters.register(Bernoulli)
 def get_bprop_bernoulli(self):
     """"Grad definition for 'Bernoulli' operation."""
