@@ -501,6 +501,19 @@ STATUS CaffeModelParser::ConvertLayerQuantParams(const caffe::LayerParameter &la
   auto quant_params_holder =
     std::make_shared<QuantParamHolder>(layer.bottom_size() + weight.blobs_size(), layer.top_size());
   MSLITE_CHECK_PTR(quant_params_holder);
+#ifdef ENABLE_ACL_QUANT_PARAM
+  // set quant parameter to output tensor of quant.
+  if (layer.type() == "Quant") {
+    QuantParamT quant_param;
+    const caffe::QuantParameter &layer_quant_param = layer.quant_param();
+    MS_CHECK_TRUE_RET(layer_quant_param.has_scale(), RET_ERROR);
+    quant_param.scale = layer_quant_param.scale();
+    MS_CHECK_TRUE_RET(layer_quant_param.has_offset(), RET_ERROR);
+    quant_param.zeroPoint = *(reinterpret_cast<int8_t *>(const_cast<char *>(layer_quant_param.offset().c_str())));
+    quant_param.inited = true;
+    quant_params_holder->set_output_quant_param(0, {quant_param});
+  }
+#endif
   primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
@@ -556,6 +569,23 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
         buf[j] = layer.blobs(i).double_data(j);
       }
       tensor_info = CreateTensorInfo(buf.get(), count * sizeof(float), shape_vector, TypeId::kNumberTypeFloat32);
+#ifdef ENABLE_ACL_QUANT_PARAM
+    } else if (layer.blobs(i).has_int8_data()) {
+      const int8_t *data_ptr = reinterpret_cast<int8_t *>(const_cast<char *>(layer.blobs(i).int8_data().c_str()));
+      MSLITE_CHECK_PTR(data_ptr);
+      count = std::accumulate(shape_vector.begin(), shape_vector.end(), 1, std::multiplies<int>());
+      tensor_info = CreateTensorInfo(data_ptr, count * sizeof(int8_t), shape_vector, TypeId::kNumberTypeInt8);
+    } else if (layer.blobs(i).int32_data_size() > 0) {
+      count = layer.blobs(i).int32_data_size();
+      const int *data_ptr = layer.blobs(i).int32_data().data();
+      MSLITE_CHECK_PTR(data_ptr);
+      tensor_info = CreateTensorInfo(data_ptr, count * sizeof(int), shape_vector, TypeId::kNumberTypeInt32);
+    } else if (layer.blobs(i).uint64_data_size() > 0) {
+      count = layer.blobs(i).uint64_data_size();
+      const size_t *data_ptr = layer.blobs(i).uint64_data().data();
+      MSLITE_CHECK_PTR(data_ptr);
+      tensor_info = CreateTensorInfo(data_ptr, count * sizeof(size_t), shape_vector, TypeId::kNumberTypeUInt64);
+#endif
     } else {
       count = layer.blobs(i).data_size();
       const float *data_ptr = layer.blobs(i).data().data();

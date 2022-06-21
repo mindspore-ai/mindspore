@@ -50,6 +50,8 @@ ADD_CONVERTER_TBE_OP(ResizeNearestNeighborV2)
 ADD_CONVERTER_TBE_OP(Conv2DBackpropInputV2)
 ADD_CONVERTER_TBE_OP(ConcatV2D)
 ADD_CONVERTER_TBE_OP(FillV1)
+ADD_CONVERTER_TBE_OP(Quant)
+ADD_CONVERTER_TBE_OP(Dequant)
 }  // namespace acl
 }  // namespace lite
 }  // namespace mindspore
