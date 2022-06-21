@@ -74,41 +74,6 @@ def test_if_by_if_basic():
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_tensor_condition():
-    """
-    Feature: control flow function.
-    Description: Switch condition is tensor determinate condition.
-    Expectation: Null.
-    """
-
-    class Net(Cell):
-        def construct(self, x, y):
-            if x < 5:
-                x = y + 2
-                for p in range(1):
-                    x = p * x
-                    if x >= y:
-                        x = 2 * x
-
-            if x <= 5:
-                x = 2 + y
-            elif x >= 2:
-                x = x * y
-
-            return x + y
-
-    context.set_context(mode=context.GRAPH_MODE)
-    x = np.array([3], np.float32)
-    y = np.array([1], np.float32)
-    net = Net()
-    out = net(Tensor(x), Tensor(y))
-    assert np.allclose(out.asnumpy(), np.array([4.], np.float32))
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_branch_same_shape():
     """
     Feature: control flow function.
