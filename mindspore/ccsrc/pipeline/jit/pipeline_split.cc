@@ -143,9 +143,6 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
     auto node_users = node_users_map[input_parameter];
     for (auto node_user : node_users) {
       auto cnode = node_user.first->cast<CNodePtr>();
-      if (IsValueNode<FuncGraph>(cnode->inputs()[0])) {
-        graph_sets.insert(GetValueNode<FuncGraphPtr>(cnode->inputs()[0]));
-      }
       if (IsValueNode<Primitive>(cnode->inputs()[0])) {
         graph_sets.insert(cnode->func_graph());
       }
@@ -192,7 +189,7 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
       for (auto node_user : node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
         for (size_t input_index = 1; input_index < cnode->inputs().size(); input_index++) {
-          if (!IsValueNode<Primitive>(cnode->inputs()[0])) {
+          if (!IsValueNode<Primitive>(cnode->inputs()[0]) && !IsValueNode<FuncGraph>(cnode->inputs()[0])) {
             continue;
           }
           bool is_node_input_flag = !(IsValueNode<mindspore::tensor::Tensor>(cnode->inputs()[input_index]) ||

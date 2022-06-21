@@ -2588,6 +2588,10 @@ void ParallelCommunication(const FuncGraphPtr &root, const std::vector<AnfNodePt
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>()) {
       auto cnode = node->cast<CNodePtr>();
+      if (IsValueNode<FuncGraph>(cnode->input(0))) {
+        StepRedistribution(cnode, tensor_redistribution);
+        continue;
+      }
       // the make_tuple is parallel care node, but it may have not operator info
       if ((!IsParallelCareNode(cnode) || !cnode->has_user_data<OperatorInfo>()) && !IsControlFlowNode(cnode)) {
         continue;
@@ -2880,7 +2884,10 @@ void MarkForwardCNode(const FuncGraphPtr &root) {
 
   if (graph_set.empty()) {
     MS_LOG(INFO) << "Can not find the forward graph, so mark the ops in root graph";
-    SetForwardFlag(all_nodes);
+    auto fgs = root->manager()->func_graphs();
+    for (auto &fg : fgs) {
+      SetForwardFlag(fg->nodes());
+    }
   } else {
     for (auto &func_graph : graph_set) {
       MS_LOG(INFO) << "The sub graph size of root is " << root->func_graphs_used().size();

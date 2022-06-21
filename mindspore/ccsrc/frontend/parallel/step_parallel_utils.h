@@ -44,6 +44,7 @@ TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info)
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager);
 bool IsControlFlowNode(const AnfNodePtr &node);
 int64_t GetTupleGetItemIndex(const CNodePtr &cnode);
+AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node = nullptr);
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes);
 void RedistributionNextNode(const AnfNodePtr &cnode, const FuncGraphManagerPtr &manager, NodeUsersMap *node_users_map,

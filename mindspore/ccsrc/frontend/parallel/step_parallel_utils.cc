@@ -91,6 +91,46 @@ TensorInfo GetInputsTensorInfo(const std::pair<AnfNodePtr, int64_t> &param_info)
   return tensor_info;
 }
 
+AnfNodePtr GetRealKernelNode(const AnfNodePtr &node, int64_t get_item_index, CNodePtr *call_node) {
+  if (IsPrimitiveCNode(node, prim::kPrimDepend) || IsPrimitiveCNode(node, prim::kPrimLoad) ||
+      IsPrimitiveCNode(node, prim::kPrimCast)) {
+    return GetRealKernelNode(node->cast<CNodePtr>()->input(1), get_item_index, call_node);
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    auto cnode = node->cast<CNodePtr>();
+    auto cur_get_item_index = LongToInt(GetTupleGetItemIndex(cnode));
+    auto tuple_getitem_input = cnode->input(1);
+    auto pass_through_node = GetRealKernelNode(tuple_getitem_input, cur_get_item_index, call_node);
+    return GetRealKernelNode(pass_through_node, get_item_index, call_node);
+  }
+  if (get_item_index != -1 && IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+    auto make_tuple_cnode = node->cast<CNodePtr>();
+    auto make_tuple_input = make_tuple_cnode->input(LongToSize(get_item_index + 1));
+    return GetRealKernelNode(make_tuple_input, -1, call_node);
+  }
+  if (node->isa<CNode>() && IsValueNode<FuncGraph>(node->cast<CNodePtr>()->input(0))) {
+    if (call_node != nullptr && *call_node == nullptr) {
+      *call_node = node->cast<CNodePtr>();
+    }
+    auto cnode = node->cast<CNodePtr>();
+    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+    auto output = GetRealKernelNode(graph->output(), get_item_index, call_node);
+    MS_EXCEPTION_IF_NULL(output);
+    if (output->isa<Parameter>()) {
+      auto parameters = graph->parameters();
+      auto pos_iter = std::find(parameters.begin(), parameters.end(), output);
+      // If can't find in parameters, the parameter is a fv.
+      if (pos_iter == parameters.end()) {
+        return output;
+      }
+      auto pos = std::distance(parameters.begin(), pos_iter);
+      return GetRealKernelNode(cnode->input(LongToSize(pos + 1)), -1, call_node);
+    }
+    return output;
+  }
+  return node;
+}
+
 AnfNodePtr CheckMakeTupleSplit(const AnfNodePtr &node, const FuncGraphManagerPtr &manager) {
   auto node_users = manager->node_users()[node];
 
@@ -211,6 +251,7 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
       auto param = fg_parameters[node_pair.second - 1];
       MS_EXCEPTION_IF_NULL(param);
       RedistributionNextNode(param, manager, node_users_map, get_item_index, next_nodes);
+      continue;
     }
     if (IsPrimitiveCNode(use_cnode, prim::kPrimTupleGetItem)) {
       get_item_index = LongToInt(GetTupleGetItemIndex(use_cnode));
@@ -231,6 +272,22 @@ void RedistributionNextNode(const AnfNodePtr &node, const FuncGraphManagerPtr &m
 
 void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager,
                            std::vector<AnfNodePtr> *pre_nodes) {
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
+    auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr);
+    if (!pre_node) {
+      return;
+    }
+    auto pre_cnode = pre_node->cast<CNodePtr>();
+    if (!pre_cnode) {
+      return;
+    }
+    if (IsParallelCareNode(pre_cnode) && pre_cnode->has_user_data<OperatorInfo>()) {
+      pre_nodes->push_back(pre_cnode);
+    } else {
+      RedistributionPreNode(pre_cnode, pre_cnode->func_graph()->manager(), pre_nodes);
+    }
+  }
   if (IsControlFlowNode(cnode)) {
     auto switch_cnode = cnode->input(0)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(switch_cnode);
@@ -243,7 +300,7 @@ void RedistributionPreNode(const CNodePtr &cnode, const FuncGraphManagerPtr &man
     RedistributionPreNode(fg_out, manager, pre_nodes);
   }
   if (IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
-      IsPrimitiveCNode(cnode, prim::kPrimCast)) {
+      IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimAllReduce)) {
     auto cnode_input = cnode->input(1)->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode_input);
     RedistributionPreNode(cnode_input, manager, pre_nodes);

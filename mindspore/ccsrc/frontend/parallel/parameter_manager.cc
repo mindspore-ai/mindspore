@@ -592,6 +592,33 @@ static std::pair<AnfNodePtr, bool> FindParameterByParameter(const AnfNodePtr &no
   return std::make_pair(node, false);
 }
 
+static std::pair<AnfNodePtr, bool> FindParameterByFuncGraph(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
+  MS_EXCEPTION_IF_NULL(fg);
+  auto fg_parameters = fg->parameters();
+
+  auto pre_node = GetRealKernelNode(fg->output(), -1, nullptr);
+  auto pre_cnode = pre_node->cast<CNodePtr>();
+  for (size_t index = 1; index < pre_cnode->inputs().size(); ++index) {
+    auto res = FindParameter(pre_cnode->input(index), pre_cnode->func_graph());
+    if (!res.first) {
+      continue;
+    }
+    return res;
+  }
+  // If nothing found in the sub graphs, we search from the inputs of the graph.
+  for (size_t index = 1; index < fg_parameters.size(); ++index) {
+    auto res = FindParameter(cnode->input(index), fg);
+    if (!res.first) {
+      continue;
+    }
+    return res;
+  }
+  return std::make_pair(nullptr, false);
+}
+
 // Only used for InsertMirrorOps
 std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
   if (!node->isa<Parameter>() && !node->isa<CNode>() && !node->isa<ValueNode>()) {
@@ -623,7 +650,9 @@ std::pair<AnfNodePtr, bool> FindParameter(const AnfNodePtr &node, const FuncGrap
   if (IsParallelCareNode(cnode) && !IsInAllGatherNodeList(cnode)) {
     return std::make_pair(nullptr, false);
   }
-
+  if (IsValueNode<FuncGraph>(cnode->input(0))) {
+    return FindParameterByFuncGraph(node);
+  }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(prim_anf_node);
   for (size_t index = 0; index < cnode->inputs().size(); ++index) {
