@@ -709,7 +709,7 @@ class RandomCategorical(PrimitiveWithInfer):
         TypeError: If neither `num_sample` nor `seed` is an int.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -738,27 +738,6 @@ class RandomCategorical(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=['logits', 'num_samples', 'seed'],
                                 outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
-
-    def __infer__(self, logits, num_samples, seed):
-        logits_dtype = logits['dtype']
-        valid_dtypes = (mstype.float32, mstype.float16, mstype.float64)
-        Validator.check_tensor_dtype_valid('logits', logits_dtype, valid_dtypes, self.name)
-        num_samples_v = num_samples['value']
-        seed_v = seed['value']
-        Validator.check_value_type('num_samples', num_samples_v, (int,), self.name)
-        Validator.check_value_type('seed', seed_v, (int,), self.name)
-        Validator.check_positive_int(num_samples_v, "num_samples", self.name)
-        x_shape = list(logits['shape'])
-        if len(x_shape) != 2:
-            raise ValueError(f"For '{self.name}', the shape of 'logits' must be 2-dimension, "
-                             f"but got {len(x_shape)}.")
-        ndim = len(x_shape) - 1
-        x_shape[ndim] = num_samples_v
-        self.add_prim_attr('num_samples', num_samples_v)
-        self.add_prim_attr('seed', seed_v)
-        return {'shape': (x_shape),
-                'dtype': (self.dtype),
-                'value': None}
 
 
 class Multinomial(PrimitiveWithInfer):

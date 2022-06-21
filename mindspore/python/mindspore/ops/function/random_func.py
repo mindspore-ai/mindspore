@@ -16,6 +16,7 @@
 """Defines parameter operators with functional form."""
 
 from mindspore.ops import operations as P
+from ...common import dtype as mstype
 from .._primitive_cache import _get_cache_prim
 
 
@@ -56,7 +57,46 @@ def standard_laplace(shape, seed=0, seed2=0):
     return output
 
 
+
+def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
+    r"""
+    Generates random samples from a given categorical distribution tensor.
+
+    Args:
+        dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
+            mindspore.int32 and mindspore.int64. Default: mindspore.int64.
+
+    Inputs:
+        - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
+        - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
+        - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
+
+    Outputs:
+        - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+
+    Raises:
+        TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
+        TypeError: If `logits` is not a Tensor.
+        TypeError: If neither `num_sample` nor `seed` is an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> x = np.random.random((10, 5)).astype(np.float32)
+        >>> net = F.random_categorical(x, 8)
+        >>> output = net(Tensor(x))
+        >>> result = output.shape
+        >>> print(result)F
+        (10, 8)
+    """
+    random_categorical_ = P.RandomCategorical(dtype)
+    return random_categorical_(x, num_sample, seed)
+
+
 __all__ = [
-    'standard_laplace'
+    'standard_laplace',
+    'random_categorical'
 ]
 __all__.sort()
