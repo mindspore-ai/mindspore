@@ -19,8 +19,8 @@ mindspore.dataset.text
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - TextTensorOperation，所有文本数据处理操作的基类，派生自TensorOperation。
 
-Transforms
-----------
+变换
+---
 
 .. mscnnoteautosummary::
     :toctree: dataset_text
@@ -49,8 +49,8 @@ Transforms
     mindspore.dataset.text.WordpieceTokenizer
 
 
-Utilities
----------
+工具
+---
 
 .. mscnnoteautosummary::
     :toctree: dataset_text
