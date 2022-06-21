@@ -55,6 +55,7 @@
 #include "src/runtime/gpu/opencl/opencl_runtime.h"
 #endif
 #include "include/registry/register_kernel_interface.h"
+#include "src/pack_weight_manager.h"
 
 namespace mindspore::lite {
 namespace {
@@ -143,14 +144,9 @@ int CastKernelWeight(const kernel::SubGraphType &belong_subgraph_type, const ker
 
 int CopyConstTensorData(const std::vector<Tensor *> &tensors, int op_type) {
   // packed kernels such as conv don't need to copy because weight will be packed in kernel
-  if (IsPackedOp(op_type)) {
+  if (lite::PackWeightManager::GetInstance()->IsCopyTensor(op_type)) {
     return RET_OK;
   }
-#ifdef SERVER_INFERENCE
-  if (IsShareConstOp(op_type)) {
-    return RET_OK;
-  }
-#endif
   for (auto *tensor : tensors) {
     // only copy non-copied const tensor
     if (!tensor->IsConst() && tensor->data() != nullptr) {

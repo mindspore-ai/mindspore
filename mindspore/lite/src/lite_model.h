@@ -343,7 +343,7 @@ class LiteModel : public Model {
   const std::string model_path_;
 };
 
-Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf);
+Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf, const std::string &path = "");
 LiteModel *LiteImportFromPath(const char *model_path);
 Model *ImportFromPath(const char *model_path);
 }  // namespace lite

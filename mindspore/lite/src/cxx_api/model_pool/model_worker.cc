@@ -19,9 +19,6 @@
 #include "src/common/common.h"
 #include "nnacl/op_base.h"
 namespace mindspore {
-namespace {
-const int kNumInitBatch = 2000;
-}
 bool ModelWorker::IsAvailable() {
   bool expected = true;
   return available_.compare_exchange_strong(expected, false);
@@ -35,28 +32,33 @@ void ModelWorker::WaitCreateWorkerDone() {
   return;
 }
 
-void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size, int node_id,
-                                     const std::shared_ptr<Context> &model_context,
+void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
+                                     const std::shared_ptr<WorkerConfig> &worker_config,
                                      const std::shared_ptr<PredictTaskQueue> &predict_task_queue,
                                      bool *create_success) {
-  auto status = Init(model_buf, size, model_context);
+  worker_config_ = worker_config;
+  predict_task_queue_ = predict_task_queue;
+  numa::NUMAAdapter::GetInstance()->Bind(worker_config_->numa_id);
+  auto status = Init(model_buf, size);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "init failed in model worker.";
     *create_success = false;
     create_work_done_ = true;
     create_work_done_condition_.notify_one();
   }
-  Run(node_id, predict_task_queue);
+  Run();
 }
 
-void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &predict_task_queue) {
-  predict_task_queue_ = predict_task_queue;
+void ModelWorker::Run() {
+  auto numa_node_id = worker_config_->numa_id;
+  int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
   create_work_done_ = true;
   create_work_done_condition_.notify_one();
-  while (!predict_task_queue->IsPredictTaskDone()) {
-    auto task = predict_task_queue->GetPredictTask(node_id, this);
+  while (!predict_task_queue_->IsPredictTaskDone()) {
+    auto task = predict_task_queue_->GetPredictTask(task_queue_id, this);
     if (task == nullptr) {
-      break;
+      MS_LOG(DEBUG) << "task queue is empty, wait task ...";
+      continue;
     }
     available_ = false;
     auto inputs = task->inputs;
@@ -67,55 +69,32 @@ void ModelWorker::Run(int node_id, const std::shared_ptr<PredictTaskQueue> &pred
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model predict failed.";
       task->ready = true;
-      predict_task_queue->ActiveTask(task);
+      predict_task_queue_->ActiveTask(task);
       continue;
     }
     task->ready = true;
-    predict_task_queue->ActiveTask(task);
+    predict_task_queue_->ActiveTask(task);
   }
 }
 
-Status ModelWorker::ResizeInit() {
-  auto inputs = model_->GetInputs();
-  std::vector<std::vector<int64_t>> new_input_shape;
-  for (size_t input_idx = 0; input_idx < inputs.size(); input_idx++) {
-    new_input_shape.push_back(inputs[input_idx].Shape());
-    if (new_input_shape[input_idx][0] == -1) {
-      // only support resize for batch dim
-      new_input_shape[input_idx][0] = kNumInitBatch;
-    } else {
-      // If the batch dimension is not -1, no resize processing is performed
-      return kSuccess;
-    }
-  }
-  auto status = model_->Resize(inputs, new_input_shape);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "model resize failed in init. ret=" << status;
-    return kLiteError;
-  }
-  inputs = model_->GetInputs();
-  for (auto &input : inputs) {
-    input.MutableData();
-  }
-  std::vector<MSTensor> out;
-  status = model_->Predict(inputs, &out);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "init resize failed. ret=" << status;
-    return kLiteError;
-  }
-  return kSuccess;
-}
-
-Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_ptr<Context> &model_context) {
+Status ModelWorker::Init(const char *model_buf, size_t size) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, kLiteError, "model_buf is nullptr in model worker.");
-  MS_CHECK_TRUE_MSG(model_context != nullptr, kLiteError, "model_context is nullptr in model worker.");
   model_ = std::make_shared<Model>();
   if (model_ == nullptr) {
     MS_LOG(ERROR) << "model is nullptr.";
     return kLiteNullptr;
   }
   mindspore::ModelType model_type = kMindIR_Lite;
-  auto status = model_->Build(model_buf, size, model_type, model_context);
+  for (auto &section : worker_config_->config_info) {
+    for (auto &config : section.second) {
+      auto status = model_->UpdateConfig(section.first, std::make_pair(config.first, config.second));
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << "Update Config failed, status=" << status;
+        return status;
+      }
+    }
+  }
+  auto status = model_->Build(model_buf, size, model_type, worker_config_->context);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model build failed in ModelPool Init";
     return status;
@@ -126,14 +105,13 @@ Status ModelWorker::Init(const char *model_buf, size_t size, const std::shared_p
     MS_LOG(ERROR) << "model worker get empty input/output.";
     return kLiteError;
   }
-  if (need_init_resize_) {
-    status = ResizeInit();
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "init resize failed. ret=" << status;
-      return kLiteError;
-    }
-  }
   return kSuccess;
+}
+
+Status ModelWorker::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  std::lock_guard<std::mutex> worker_lock(mtx_worker_);
+  MS_LOG(DEBUG) << "UpdateConfig now.";
+  return model_->UpdateConfig(section, config);
 }
 
 std::vector<MSTensor> ModelWorker::GetInputs() { return origin_worker_inputs_; }
@@ -197,13 +175,14 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
       return kLiteError;
     }
   }
+  bool need_copy_output = true;
   auto model_output = model_->GetOutputs();
   for (size_t i = 0; i < outputs->size(); i++) {
     if (outputs->at(i).MutableData() != nullptr) {
       /* user set graph-output-tensor from outside */
       model_output[i].SetData(outputs->at(i).MutableData());
       model_output[i].SetAllocator(nullptr);
-      need_copy_output_ = false;
+      need_copy_output = false;
     }
   }
   for (size_t i = 0; i < inputs.size(); i++) {
@@ -219,7 +198,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   for (size_t i = 0; i < model_input.size(); i++) {
     model_input[i].SetData(nullptr);
   }
-  if (need_copy_output_) {
+  if (need_copy_output) {
     status = CopyOutputTensor(model_output, outputs);
     if (status != kSuccess) {
       available_ = true;

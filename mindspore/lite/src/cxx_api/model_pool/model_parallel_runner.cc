@@ -19,6 +19,10 @@
 #include "src/common/log_adapter.h"
 #include "src/cpu_info.h"
 namespace mindspore {
+namespace {
+constexpr size_t kMaxSectionNum = 100;
+constexpr size_t kMaxConfigNumPerSection = 1000;
+}  // namespace
 #ifdef USE_GLOG
 extern "C" {
 extern void mindspore_log_init();
@@ -35,7 +39,25 @@ int32_t RunnerConfig::GetWorkersNum() const { return data_->workers_num; }
 
 std::shared_ptr<Context> RunnerConfig::GetContext() const { return data_->context; }
 
+void RunnerConfig::SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config) {
+  if (data_->config_info.size() > kMaxSectionNum) {
+    return;
+  }
+  if (config.size() > kMaxConfigNumPerSection) {
+    return;
+  }
+  data_->config_info[section] = config;
+  return;
+}
+
+std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfigInfo() const {
+  return data_->config_info;
+}
+
 Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+#ifdef USE_GLOG
+  mindspore::mindspore_log_init();
+#endif
   if (!PlatformInstructionSetSupportCheck()) {
     return kLiteNotSupport;
   }
@@ -44,9 +66,6 @@ Status ModelParallelRunner::Init(const std::string &model_path, const std::share
     MS_LOG(ERROR) << "model pool is nullptr.";
     return kLiteNullptr;
   }
-#ifdef USE_GLOG
-  mindspore::mindspore_log_init();
-#endif
   auto status = model_pool_->Init(model_path, runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";

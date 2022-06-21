@@ -22,6 +22,7 @@
 #include <string>
 #include <queue>
 #include <map>
+#include <set>
 #include "src/runtime/dynamic_mem_allocator.h"
 #include "include/api/status.h"
 #include "include/api/context.h"
@@ -29,10 +30,6 @@
 #include "src/cxx_api/model_pool/model_worker.h"
 #include "src/cxx_api/model_pool/predict_task_queue.h"
 namespace mindspore {
-struct WorkerConfig {
-  std::shared_ptr<Context> context = nullptr;
-  int numa_id = 0;
-};
 using ModelPoolConfig = std::vector<std::shared_ptr<WorkerConfig>>;
 
 class ModelPool {
@@ -43,6 +40,8 @@ class ModelPool {
 
   Status Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config = nullptr);
 
+  Status UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config);
+
   std::vector<MSTensor> GetInputs();
 
   std::vector<MSTensor> GetOutputs();
@@ -52,20 +51,20 @@ class ModelPool {
 
  private:
   ModelPoolConfig CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config);
-  std::shared_ptr<Context> InitContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  std::shared_ptr<Context> GetInitContext(const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_config, const std::shared_ptr<Context> &context);
 
   std::shared_ptr<mindspore::Context> GetDefaultContext();
-  std::shared_ptr<Context> InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
-  Status SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context);
+  std::shared_ptr<Context> GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config);
+  Status SetDefaultOptimalModelNum(int thread_num);
 
-  Status SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+  Status SetModelBindMode(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                           std::shared_ptr<Context> model_context);
-  Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+  Status SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                              int thread_num);
-  void SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
-                       int thread_num);
+  Status SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+                         int thread_num);
 
   Status SplitInputTensorByBatch(const std::vector<MSTensor> &inputs, std::vector<std::vector<MSTensor>> *new_inputs,
                                  size_t batch_split_num);
@@ -81,20 +80,63 @@ class ModelPool {
                              const MSKernelCallBack &before, const MSKernelCallBack &after,
                              int max_wait_worker_node_id);
 
+  PredictTask *CreatePredictTask(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                 const MSKernelCallBack &before, const MSKernelCallBack &after, size_t *task_id);
+
+  void UpdateFreeTaskId(size_t id);
+
+  Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
+                                             const std::vector<int> &logical_core_list);
+
+  Status InitNumaParameter();
+
+  Status InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
+                               std::vector<std::vector<int>> *bind_core_list, std::vector<int> *bind_numa_list);
+
+  Status SetWorkersNumaId(std::vector<int> *numa_node_id);
+
+  ModelPoolConfig CreateGpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                           const std::shared_ptr<Context> &init_context);
+
+  ModelPoolConfig CreateCpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                           const std::shared_ptr<Context> &init_context,
+                                           const std::vector<std::vector<int>> &all_worker_bind_list,
+                                           const std::vector<int> &numa_node_id);
+
+  Status CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config);
+
+ private:
+  // different workers get tasks from different task queues.
+  // currently task queues are distinguished according to different numa node numbers.
+  // if you do not distinguish between numa nodes, the default task queue number is 0.
+  // task queue id <=> worker : sort workers by performance.
+  std::unordered_map<int, std::vector<std::shared_ptr<ModelWorker>>> all_model_workers_;
+
+  // save all worker thread
   std::vector<std::thread> worker_thread_vec_;
+  std::mutex predict_task_mutex_;
   std::vector<MSTensor> model_pool_inputs_;
   std::vector<MSTensor> model_pool_outputs_;
   size_t workers_num_ = 1;
-  std::mutex predict_task_mutex_;
-  bool is_user_data_ = false;
-  int numa_node_num_ = 1;
-  int used_numa_node_num_ = 0;
-  bool use_numa_bind_mode_ = false;
+
+  // create predict task
   std::shared_ptr<PredictTaskQueue> predict_task_queue_ = nullptr;
+  PredictTask *tasks_ = nullptr;
+  std::mutex task_id_mutex_;
+  std::queue<size_t> free_tasks_id_;
+
+  // use numa
+  bool numa_available_ = false;
+  size_t numa_node_num_ = 1;
+  std::vector<std::vector<int>> numa_physical_cores_;
+  std::vector<std::vector<int>> numa_logical_cores_;
+  bool use_numa_bind_mode_ = false;
+  size_t used_numa_node_num_ = 0;  // Initialize in SetNumaBindStrategy
   std::unordered_map<int, std::shared_ptr<Allocator>> numa_allocator_;
+
+  // split batch
   bool use_split_batch_ = false;
-  std::vector<std::shared_ptr<ModelWorker>> all_model_worker_;
-  bool create_worker_success_ = true;
+  bool is_user_data_ = false;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_CXX_API_MODEL_POOL_MODEL_POOL_H_

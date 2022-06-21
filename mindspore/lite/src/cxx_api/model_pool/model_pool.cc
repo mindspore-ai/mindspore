@@ -18,17 +18,21 @@
 #include <future>
 #include "src/common/log_adapter.h"
 #include "include/lite_types.h"
-#include "src/common/config_file.h"
 #include "src/runtime/inner_allocator.h"
 #include "src/common/file_utils.h"
 #include "src/pack_weight_manager.h"
 #include "src/runtime/numa_adapter.h"
 #include "src/common/common.h"
-
 namespace mindspore {
 namespace {
 constexpr int kNumDeviceInfo = 2;
+constexpr int kNumIndex = 2;
+constexpr int kNumCoreDataLen = 3;
 constexpr int kNumMaxTaskQueueSize = 1000;
+constexpr int kNumPhysicalCoreThreshold = 32;
+constexpr int kDefaultWorkerNumPerPhysicalCpu = 4;
+constexpr int kDefaultThreadsNum = 8;
+constexpr int kInvalidNumaId = -1;
 int GetCoreNum() {
   int core_num = 1;
 #if defined(_MSC_VER) || defined(_WIN32)
@@ -40,76 +44,224 @@ int GetCoreNum() {
 #endif
   return core_num;
 }
+
+Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vector<int> *logical_list) {
+  int processor_id = -1;
+  int physical_id = -1;
+  int core_id = -1;
+  // physical id <=> one physical cpu core id
+  std::unordered_map<int, std::vector<int>> ids;
+  std::ifstream infile("/proc/cpuinfo", std::ios::in);
+  std::string line;
+  int data_size = 0;
+  while (getline(infile, line)) {
+    auto line_size = line.size();
+    if (line.find("processor") != std::string::npos) {
+      auto it = line.find(": ") + kNumIndex;
+      processor_id = std::atoi(line.substr(it, line_size - 1).c_str());
+      data_size++;
+    }
+    if (line.find("physical id") != std::string::npos) {
+      auto it = line.find(": ") + kNumIndex;
+      physical_id = std::atoi(line.substr(it, line_size - 1).c_str());
+      data_size++;
+    }
+    if (line.find("core id") != std::string::npos) {
+      auto it = line.find(": ") + kNumIndex;
+      core_id = std::atoi(line.substr(it, line_size - 1).c_str());
+      data_size++;
+    }
+    if (data_size == kNumCoreDataLen) {
+      if (core_id == -1 && physical_id == -1) {
+        MS_LOG(DEBUG) << "All cores are physical cores.";
+        int core_size = GetCoreNum();
+        for (int core_num = 0; core_num < core_size; core_num++) {
+          physical_list->push_back(core_num);
+        }
+        return kSuccess;
+      }
+      data_size = 0;
+      if (ids.find(physical_id) == ids.end()) {
+        std::vector<int> core_id_list = {core_id};
+        ids.insert(std::make_pair(physical_id, core_id_list));
+        physical_list->push_back(processor_id);
+        continue;
+      }
+      if (find(ids[physical_id].begin(), ids[physical_id].end(), core_id) == ids[physical_id].end()) {
+        ids[physical_id].push_back(core_id);
+        physical_list->push_back(processor_id);
+        continue;
+      } else {
+        logical_list->push_back(processor_id);
+      }
+    }
+  }
+  return kSuccess;
+}
+
+int GetDefaultThreadNum() {
+  std::vector<int> physical_core_lite;
+  std::vector<int> logical_core_list;
+  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "DistinguishPhysicalAndLogical failed.";
+    return 0;
+  }
+  auto physical_core_size = physical_core_lite.size();
+  if (physical_core_lite.size() < kNumPhysicalCoreThreshold) {
+    return physical_core_size / kDefaultWorkerNumPerPhysicalCpu;
+  } else {
+    return kDefaultThreadsNum;
+  }
+}
 }  // namespace
 
-Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_model_bind_list,
+Status ModelPool::DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
+                                                      const std::vector<int> &logical_core_list) {
+  std::vector<std::vector<int>> all_numa_core_list;
+  auto numa_num = numa::NUMAAdapter::GetInstance()->NodesNum();
+  for (int i = 0; i < numa_num; i++) {
+    std::vector<int> numa_cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(i);
+    if (numa_cpu_list.empty()) {
+      MS_LOG(ERROR) << i << "-th numa node does not exist";
+      return kLiteError;
+    }
+    all_numa_core_list.push_back(numa_cpu_list);
+  }
+  MS_CHECK_TRUE_MSG(!all_numa_core_list.empty(), kLiteError, "numa core list is empty.");
+  for (auto one_numa_list : all_numa_core_list) {
+    MS_CHECK_TRUE_MSG(!one_numa_list.empty(), kLiteError, "one numa core list is empty.");
+    std::vector<int> physical_cores;
+    std::vector<int> logical_cores;
+    for (auto core_id : one_numa_list) {
+      if (find(physical_core_list.begin(), physical_core_list.end(), core_id) != physical_core_list.end()) {
+        physical_cores.push_back(core_id);
+      } else if (find(logical_core_list.begin(), logical_core_list.end(), core_id) != logical_core_list.end()) {
+        logical_cores.push_back(core_id);
+      } else {
+        MS_LOG(ERROR) << "core id not belong physical/logical core id.";
+        return kLiteError;
+      }
+    }
+    numa_physical_cores_.push_back(physical_cores);
+    numa_logical_cores_.push_back(logical_cores);
+  }
+  return kSuccess;
+}
+
+/*
+ * bind numa:
+ *      worker 1    worker 2    worker 3    worker 4
+ *         |           |           |          |
+ *       numa 0  ->  numa 1  ->  numa 0  ->  numa 1
+ *
+ *  core num: 16          worker num: 4          thread num: 4
+ *  physical core id: 0,2,4,6,8,10,12,14    logic core id: 1,3,5,7,9,11,13,15
+ *  numa 0: 0,1,2,3,4,5,6,7    numa 1: 8,9,10,11,12,13,14,15
+ *
+ * result of bind numa:
+ *                physical                 logic
+ *  numa 0:   worker1: 0,2,4,6       worker3: 1,3,5,7
+ *  numa 1:   worker2: 8,10,12,14    worker4: 9,11,13,15
+ *
+ * */
+Status ModelPool::SetNumaBindStrategy(std::vector<std::vector<int>> *all_worker_bind_list,
                                       std::vector<int> *numa_node_id, int thread_num) {
   if (MS_UNLIKELY(thread_num == 0)) {
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
   }
-  if (thread_num * static_cast<int>(workers_num_) > GetCoreNum()) {
-    MS_LOG(ERROR) << "thread num or worker num is wrong ,not support param.";
-    return kLiteNotSupport;
+  if (numa_physical_cores_.empty()) {
+    MS_LOG(ERROR) << "numa physical cores is empty.";
+    return kLiteError;
   }
-  for (size_t i = 0; i < workers_num_;) {
-    std::vector<int> cpu_list = numa::NUMAAdapter::GetInstance()->GetCPUList(used_numa_node_num_);
-    if (static_cast<int>(cpu_list.size()) < thread_num) {
-      MS_LOG(ERROR) << "one numa node do not have enough cpu core for bind thread.";
+  if (numa_physical_cores_.front().size() < static_cast<size_t>(thread_num)) {
+    MS_LOG(ERROR) << "thread num more than physical core num. one numa physical core size: "
+                  << numa_physical_cores_.front().size();
+    return kLiteError;
+  }
+  std::vector<int> physical_index(numa_physical_cores_.size(), 0);  // numa node size
+  std::vector<int> logical_index(numa_logical_cores_.size(), 0);
+  size_t bind_numa_id = 0;
+  for (size_t i = 0; i < workers_num_; i++) {
+    if (bind_numa_id >= numa_physical_cores_.size()) {
+      used_numa_node_num_ = bind_numa_id;
+      bind_numa_id = 0;
+    }
+    std::vector<int> worker_bind_list;
+    if (physical_index[bind_numa_id] + static_cast<size_t>(thread_num) <= numa_physical_cores_[bind_numa_id].size()) {
+      worker_bind_list.insert(worker_bind_list.begin(),
+                              numa_physical_cores_[bind_numa_id].begin() + physical_index[bind_numa_id],
+                              numa_physical_cores_[bind_numa_id].begin() + physical_index[bind_numa_id] + thread_num);
+      physical_index[bind_numa_id] += thread_num;
+    } else if (logical_index[bind_numa_id] + static_cast<size_t>(thread_num) <=
+               numa_logical_cores_[bind_numa_id].size()) {
+      worker_bind_list.insert(worker_bind_list.begin(),
+                              numa_logical_cores_[bind_numa_id].begin() + logical_index[bind_numa_id],
+                              numa_logical_cores_[bind_numa_id].begin() + logical_index[bind_numa_id] + thread_num);
+      logical_index[bind_numa_id] += thread_num;
+    } else {
+      MS_LOG(ERROR) << "not find core id in physical and logical.";
       return kLiteError;
     }
-    for (size_t j = 0; j < cpu_list.size() / thread_num; j++) {
-      std::vector<int> bind_id;
-      bind_id.insert(bind_id.begin(), cpu_list.begin() + j * thread_num, cpu_list.begin() + (j + 1) * thread_num);
-      all_model_bind_list->push_back(bind_id);
-      numa_node_id->push_back(used_numa_node_num_);
-      i++;
+    all_worker_bind_list->push_back(worker_bind_list);
+    numa_node_id->push_back(bind_numa_id);
+    bind_numa_id++;
+  }
+  used_numa_node_num_ = used_numa_node_num_ != 0 ? used_numa_node_num_ : bind_numa_id;
+  return kSuccess;
+}
+
+Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+                                  int thread_num) {
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "thread num is zero.";
+    return kLiteError;
+  }
+  std::vector<int> physical_core_lite;
+  std::vector<int> logical_core_list;
+  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "distinguish physical and logical failed.";
+    return kLiteError;
+  }
+  std::vector<int> all_core_list = physical_core_lite;
+  all_core_list.insert(all_core_list.end(), logical_core_list.begin(), logical_core_list.end());
+  size_t core_id = 0;
+  for (size_t i = 0; i < workers_num_; i++) {
+    std::vector<int> bind_id;
+    for (int j = 0; j < thread_num; j++) {
+      if (core_id >= all_core_list.size()) {
+        core_id = 0;
+      }
+      bind_id.push_back(all_core_list[core_id]);
+      core_id++;
     }
-    used_numa_node_num_++;
+    all_model_bind_list->push_back(bind_id);
+    numa_node_id->push_back(kInvalidNumaId);
   }
   return kSuccess;
 }
 
-void ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
-                                int thread_num) {
-  if (thread_num == 0) {
-    MS_LOG(ERROR) << "thread num is zero.";
-    return;
-  }
-  int core_num = GetCoreNum();
-  int core_id = 0;
-  for (size_t i = 0; i < workers_num_; i++) {
-    std::vector<int> bind_id;
-    for (int j = 0; j < thread_num; j++) {
-      if (core_id >= core_num) {
-        core_id = 0;
-      }
-      bind_id.push_back(core_id);
-      core_id++;
-    }
-    all_model_bind_list->push_back(bind_id);
-    numa_node_id->push_back(-1);
-  }
-}
-
-Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Context> &context) {
-  if (context->GetThreadNum() <= 0) {
-    MS_LOG(ERROR) << "The number of threads in the context is set to less than 1.";
+Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
+  if (thread_num <= 0) {
+    MS_LOG(ERROR) << "the number of threads set in the context is less than 1.";
     return kLiteError;
   }
   if (use_numa_bind_mode_) {
     // now only supports the same number of cores per numa node
     // do not use if there are extra cores
-    int one_numa_node_cpu_size = numa::NUMAAdapter::GetInstance()->GetCPUList(0).size();
-    if (context->GetThreadNum() > one_numa_node_cpu_size) {
-      MS_LOG(ERROR) << "thread num more than numa node cpu cores.";
-      return kLiteError;
-    } else {
-      workers_num_ = one_numa_node_cpu_size / static_cast<int>(context->GetThreadNum()) * numa_node_num_;
+    auto worker_num = 0;
+    for (auto one_numa_physical : numa_physical_cores_) {
+      worker_num += (one_numa_physical.size() / thread_num);
     }
+    for (auto one_numa_logical : numa_logical_cores_) {
+      worker_num += (one_numa_logical.size() / thread_num);
+    }
+    workers_num_ = worker_num;
   } else {
-    // each model binds all kernels in order
-    workers_num_ = GetCoreNum() / static_cast<int>(context->GetThreadNum());
+    // each worker binds all available cores in order
+    workers_num_ = GetCoreNum() / thread_num;
   }
   return kSuccess;
 }
@@ -117,6 +269,16 @@ Status ModelPool::SetDefaultOptimalModelNum(const std::shared_ptr<mindspore::Con
 std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   MS_LOG(DEBUG) << "use default config.";
   auto context = std::make_shared<Context>();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "create default context failed.";
+    return nullptr;
+  }
+  auto thread_num = GetDefaultThreadNum();
+  if (thread_num == 0) {
+    MS_LOG(ERROR) << "computer thread num failed.";
+    return nullptr;
+  }
+  context->SetThreadNum(thread_num);
   auto &device_list = context->MutableDeviceInfo();
   auto device_info = std::make_shared<CPUDeviceInfo>();
   if (device_info == nullptr) {
@@ -128,10 +290,18 @@ std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   return context;
 }
 
-std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto context = runner_config->GetContext();
   if (context == nullptr) {
     MS_LOG(ERROR) << "user set config context nullptr.";
+    return nullptr;
+  }
+  if (context->GetThreadNum() <= 0) {
+    MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
+    return nullptr;
+  }
+  if (!context->GetThreadAffinityCoreList().empty()) {
+    MS_LOG(ERROR) << "parallel predict not support user set core list.";
     return nullptr;
   }
   auto device_list = context->MutableDeviceInfo();
@@ -154,10 +324,6 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
         MS_LOG(ERROR) << "model pool not support enable fp16.";
         return nullptr;
       }
-      if (context->GetThreadNum() <= 0) {
-        MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
-        return nullptr;
-      }
     } else {
       MS_LOG(ERROR) << "context is invalid; If you want run in GPU, you must set gpu device first, and then set cpu "
                        "device";
@@ -167,16 +333,12 @@ std::shared_ptr<Context> ModelPool::InitUserDefineContext(const std::shared_ptr<
   return context;
 }
 
-std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConfig> &runner_config) {
+std::shared_ptr<Context> ModelPool::GetInitContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   std::shared_ptr<mindspore::Context> context = nullptr;
   if (runner_config != nullptr && runner_config->GetContext() != nullptr) {
-    use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available() &&
-                          runner_config->GetContext()->GetThreadAffinityMode() == lite::HIGHER_CPU;
-    numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
-    context = InitUserDefineContext(runner_config);
+    use_numa_bind_mode_ = numa_available_ && runner_config->GetContext()->GetThreadAffinityMode() == lite::HIGHER_CPU;
+    context = GetUserDefineContext(runner_config);
   } else {
-    use_numa_bind_mode_ = numa::NUMAAdapter::GetInstance()->Available();
-    numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
     context = GetDefaultContext();
   }
   if (context == nullptr) {
@@ -186,17 +348,17 @@ std::shared_ptr<Context> ModelPool::InitContext(const std::shared_ptr<RunnerConf
   return context;
 }
 
-Status ModelPool::SetModelBindMode(std::vector<std::vector<int>> *all_model_bind_list, std::vector<int> *numa_node_id,
+Status ModelPool::SetModelBindMode(std::vector<std::vector<int>> *all_worker_bind_list, std::vector<int> *numa_node_id,
                                    std::shared_ptr<Context> model_context) {
-  if (numa::NUMAAdapter::GetInstance()->Available()) {
-    auto status =
-      SetNumaBindStrategy(all_model_bind_list, numa_node_id, static_cast<int>(model_context->GetThreadNum()));
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "SetNumaBindStrategy failed.";
-      return kLiteError;
-    }
+  Status status;
+  if (numa_available_) {
+    status = SetNumaBindStrategy(all_worker_bind_list, numa_node_id, static_cast<int>(model_context->GetThreadNum()));
   } else {
-    SetBindStrategy(all_model_bind_list, numa_node_id, static_cast<int>(model_context->GetThreadNum()));
+    status = SetBindStrategy(all_worker_bind_list, numa_node_id, static_cast<int>(model_context->GetThreadNum()));
+  }
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Set  bind strategy failed.";
+    return kLiteError;
   }
   return kSuccess;
 }
@@ -205,7 +367,7 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
                                 const std::shared_ptr<Context> &context) {
   if ((runner_config != nullptr && runner_config->GetWorkersNum() == 0) || runner_config == nullptr) {
     // the user does not define the number of models, the default optimal number of models is used
-    auto status = SetDefaultOptimalModelNum(context);
+    auto status = SetDefaultOptimalModelNum(context->GetThreadNum());
     if (status != kSuccess) {
       MS_LOG(ERROR) << "SetDefaultOptimalModelNum failed.";
       return kLiteError;
@@ -214,58 +376,55 @@ Status ModelPool::SetWorkersNum(const std::shared_ptr<RunnerConfig> &runner_conf
     // User defined number of models
     workers_num_ = runner_config->GetWorkersNum();
   } else {
-    MS_LOG(ERROR) << "user set worker num" << runner_config->GetWorkersNum() << " < 0";
+    MS_LOG(ERROR) << "user set worker num " << runner_config->GetWorkersNum() << " < 0";
     return kLiteError;
   }
   return kSuccess;
 }
 
-ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config) {
-  ModelPoolConfig model_pool_config;
-  auto init_context = InitContext(runner_config);
-  if (init_context == nullptr) {
-    MS_LOG(ERROR) << "context is nullptr.";
-    return model_pool_config;
-  }
-  auto status = SetWorkersNum(runner_config, init_context);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "set worker num failed.";
-    return model_pool_config;
-  }
-  auto device_num = init_context->MutableDeviceInfo().size();
-  if (device_num == 0) {
-    MS_LOG(ERROR) << "device_info is null.";
-    return {};
-  }
-  if (device_num > 1) {
-    // GPU
-    auto worker_config = std::make_shared<WorkerConfig>();
-    if (worker_config == nullptr) {
-      MS_LOG(ERROR) << "new worker config failed.";
-      return model_pool_config;
+Status ModelPool::SetWorkersNumaId(std::vector<int> *numa_node_id) {
+  if (!numa_available_) {
+    MS_LOG(WARNING) << "numa is not available.";
+    numa_node_id->resize(workers_num_, kInvalidNumaId);
+  } else {
+    size_t numa_id = 0;
+    for (size_t i = 0; i < workers_num_; i++) {
+      if (numa_id == numa_node_num_) {
+        numa_id = 0;
+      }
+      numa_node_id->push_back(numa_id);
+      numa_id++;
     }
-    worker_config->context = init_context;
-    worker_config->numa_id = -1;
-    used_numa_node_num_ = 1;
-    workers_num_ = 1;
-    model_pool_config.push_back(worker_config);
-    return model_pool_config;
+    used_numa_node_num_ = workers_num_ < numa_node_num_ ? workers_num_ : numa_node_num_;
   }
-  // init all bind list
-  std::vector<std::vector<int>> all_model_bind_list;
-  std::vector<int> numa_node_id;
-  if (init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
-    status = SetModelBindMode(&all_model_bind_list, &numa_node_id, init_context);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "SetModelBindMode failed.";
-      return {};
-    }
-  } else if (init_context->GetThreadAffinityMode() == lite::MID_CPU) {
-    MS_LOG(ERROR) << "not support bind MID_CPU.";
-    return {};
-  }
+  return kSuccess;
+}
 
-  // create all model context
+ModelPoolConfig ModelPool::CreateGpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                                    const std::shared_ptr<Context> &init_context) {
+  ModelPoolConfig model_pool_gpu_config;
+  auto worker_config = std::make_shared<WorkerConfig>();
+  if (worker_config == nullptr) {
+    MS_LOG(ERROR) << "new worker config failed.";
+    return {};
+  }
+  if (runner_config != nullptr) {
+    worker_config->config_info = runner_config->GetConfigInfo();
+  }
+  worker_config->worker_id = 0;
+  worker_config->context = init_context;
+  worker_config->numa_id = -1;
+  used_numa_node_num_ = 1;
+  workers_num_ = 1;
+  model_pool_gpu_config.push_back(worker_config);
+  return model_pool_gpu_config;
+}
+
+ModelPoolConfig ModelPool::CreateCpuModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config,
+                                                    const std::shared_ptr<Context> &init_context,
+                                                    const std::vector<std::vector<int>> &all_worker_bind_list,
+                                                    const std::vector<int> &numa_node_id) {
+  ModelPoolConfig model_pool_config;
   for (size_t i = 0; i < workers_num_; i++) {
     auto context = std::make_shared<Context>();
     if (context == nullptr) {
@@ -282,13 +441,12 @@ ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerCon
     context->SetInterOpParallelNum(init_context->GetInterOpParallelNum());
     if (init_context->GetThreadAffinityMode() != lite::NO_BIND) {
       // bind by core id
-      worker_config->numa_id = numa_node_id[i];
-      context->SetThreadAffinity(all_model_bind_list[i]);
+      context->SetThreadAffinity(all_worker_bind_list[i]);
     } else {
       // not bind core , not use numa
-      worker_config->numa_id = -1;
       context->SetThreadAffinity(init_context->GetThreadAffinityMode());
     }
+    worker_config->numa_id = numa_node_id[i];
     auto &new_device_list = context->MutableDeviceInfo();
     std::shared_ptr<CPUDeviceInfo> device_info = std::make_shared<CPUDeviceInfo>();
     if (device_info == nullptr) {
@@ -301,14 +459,82 @@ ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerCon
     } else {
       allocator = init_context->MutableDeviceInfo().front()->GetAllocator();
     }
+    if (allocator == nullptr) {
+      MS_LOG(ERROR) << "new allocator failed.";
+      return {};
+    }
     if (numa_allocator_.find(worker_config->numa_id) == numa_allocator_.end()) {
       numa_allocator_.insert(std::make_pair(worker_config->numa_id, allocator));
     }
     device_info->SetAllocator(allocator);
     device_info->SetEnableFP16(false);
     new_device_list.push_back(device_info);
+    if (runner_config != nullptr) {
+      worker_config->config_info = runner_config->GetConfigInfo();
+    }
     worker_config->context = context;
+    worker_config->worker_id = i;
     model_pool_config.push_back(worker_config);
+  }
+  return model_pool_config;
+}
+
+Status ModelPool::InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
+                                        std::vector<std::vector<int>> *bind_core_list,
+                                        std::vector<int> *bind_numa_list) {
+  if (init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
+    auto status = SetModelBindMode(bind_core_list, bind_numa_list, init_context);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "SetModelBindMode failed.";
+      return kLiteError;
+    }
+  } else if (init_context->GetThreadAffinityMode() == lite::NO_BIND) {
+    auto status = SetWorkersNumaId(bind_numa_list);
+    if (status != kSuccess) {
+      MS_LOG(ERROR) << "set worker numa id failed in NO_BIND";
+      return kLiteError;
+    }
+  } else {
+    MS_LOG(ERROR) << "not support bind MID_CPU.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
+ModelPoolConfig ModelPool::CreateModelPoolConfig(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto init_context = GetInitContext(runner_config);
+  if (init_context == nullptr) {
+    MS_LOG(ERROR) << "context is nullptr.";
+    return {};
+  }
+  auto status = SetWorkersNum(runner_config, init_context);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "set worker num failed.";
+    return {};
+  }
+  // init all bind list
+  std::vector<std::vector<int>> bind_core_list;
+  std::vector<int> bind_numa_list;
+  status = InitModelPoolBindList(init_context, &bind_core_list, &bind_numa_list);
+  // if numa is not applicable or numa is not available, numa id is -1
+  if (status != kSuccess || bind_numa_list.empty()) {
+    MS_LOG(ERROR) << "init model pool bind list failed.";
+    return {};
+  }
+  auto device_num = init_context->MutableDeviceInfo().size();
+  if (device_num == 0) {
+    MS_LOG(ERROR) << "device_info is null.";
+    return {};
+  }
+  if (device_num > 1) {
+    return CreateGpuModelPoolConfig(runner_config, init_context);
+  }
+  // create all worker config
+  ModelPoolConfig model_pool_config =
+    CreateCpuModelPoolConfig(runner_config, init_context, bind_core_list, bind_numa_list);
+  if (model_pool_config.empty()) {
+    MS_LOG(ERROR) << "create cpu model pool config failed.";
+    return {};
   }
   return model_pool_config;
 }
@@ -353,7 +579,81 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
   return outputs;
 }
 
+Status ModelPool::InitNumaParameter() {
+  numa_available_ = numa::NUMAAdapter::GetInstance()->Available();
+  if (!numa_available_) {
+    MS_LOG(DEBUG) << "numa node is unavailable.";
+    return kSuccess;
+  }
+  numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
+  std::vector<int> physical_core_lite;
+  std::vector<int> logical_core_list;
+  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "distinguish physical and logical failed.";
+    return kLiteError;
+  }
+  status = DistinguishPhysicalAndLogicalByNuma(physical_core_lite, logical_core_list);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "distinguish physical and logical by numa failed.";
+    return kLiteError;
+  }
+  return kSuccess;
+}
+
+Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config) {
+  std::shared_ptr<ModelWorker> model_worker = nullptr;
+  if (model_pool_config.size() != workers_num_) {
+    MS_LOG(ERROR) << "model pool config size is wrong.";
+    return kLiteError;
+  }
+  bool create_worker_success = true;
+  for (size_t i = 0; i < workers_num_; i++) {
+    int numa_node_id = model_pool_config[i]->numa_id;
+    auto ret = lite::PackWeightManager::GetInstance()->InitPackWeight(graph_buf, size, numa_node_id);
+    MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
+    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
+    MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
+    model_worker = std::make_shared<ModelWorker>();
+    if (model_worker == nullptr) {
+      MS_LOG(ERROR) << "model worker is nullptr.";
+      return kLiteNullptr;
+    }
+    int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
+    predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
+    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
+                                             model_pool_config[i], predict_task_queue_, &create_worker_success));
+    if (all_model_workers_.find(task_queue_id) != all_model_workers_.end()) {
+      all_model_workers_[task_queue_id].push_back(model_worker);
+    } else {
+      all_model_workers_[task_queue_id] = {model_worker};
+    }
+  }
+  // wait for all workers to be created successfully
+  for (auto &item : all_model_workers_) {
+    auto &workers = item.second;
+    for (auto &worker : workers) {
+      worker->WaitCreateWorkerDone();
+      if (!create_worker_success) {
+        MS_LOG(ERROR) << "worker init failed.";
+        return kLiteError;
+      }
+    }
+  }
+  // init model pool input and output
+  if (model_worker != nullptr) {
+    model_pool_inputs_ = model_worker->GetInputs();
+    model_pool_outputs_ = model_worker->GetOutputs();
+  }
+  return kSuccess;
+}
+
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+  Status status = InitNumaParameter();
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "Init numa parameter failed.";
+    return kLiteError;
+  }
   // create model pool config
   auto model_pool_config = CreateModelPoolConfig(runner_config);
   if (model_pool_config.empty()) {
@@ -366,10 +666,14 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "create PredictTaskQueue failed, predict task queue is nullptr.";
     return kLiteNullptr;
   }
-  if (use_numa_bind_mode_) {
-    predict_task_queue_->SetTaskQueueNum(used_numa_node_num_);
+  if (numa_available_) {
+    status = predict_task_queue_->InitTaskQueue(used_numa_node_num_, kNumMaxTaskQueueSize);
   } else {
-    predict_task_queue_->SetTaskQueueNum(1);
+    status = predict_task_queue_->InitTaskQueue(1, kNumMaxTaskQueueSize);
+  }
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "predict task queue init failed, status=" << status;
+    return kLiteError;
   }
   // read model by path and init packed weight by buffer
   size_t size = 0;
@@ -378,46 +682,39 @@ Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<Runn
     MS_LOG(ERROR) << "read file failed.";
     return kLiteNullptr;
   }
-  // create worker
-  std::shared_ptr<ModelWorker> model_worker = nullptr;
-  if (model_pool_config.size() != workers_num_) {
-    MS_LOG(ERROR) << "model pool config size is wrong.";
+  status = CreateWorkers(graph_buf, size, model_pool_config);
+  if (status != kSuccess) {
+    delete[] graph_buf;
+    graph_buf = nullptr;
+    MS_LOG(ERROR) << "create worker failed.";
     return kLiteError;
-  }
-  for (size_t i = 0; i < workers_num_; i++) {
-    int numa_node_id = model_pool_config[i]->numa_id;
-    auto ret = lite::PackWeightManager::GetInstance()->InitByBuf(graph_buf, size, numa_node_id);
-    MS_CHECK_FALSE_MSG(ret != kSuccess, kLiteError, "InitWeightManagerByBuf failed.");
-    auto new_model_buf = lite::PackWeightManager::GetInstance()->GetNumaModelBuf(graph_buf, numa_node_id);
-    MS_CHECK_TRUE_MSG(new_model_buf != nullptr, kLiteError, "get model buf is nullptr from PackWeightManager");
-    model_worker = std::make_shared<ModelWorker>();
-    if (model_worker == nullptr) {
-      MS_LOG(ERROR) << "model worker is nullptr.";
-      return kLiteNullptr;
-    }
-    int task_queue_id = numa_node_id != -1 ? numa_node_id : 0;
-    predict_task_queue_->IncreaseWaitModelNum(1, task_queue_id);
-    worker_thread_vec_.push_back(std::thread(&ModelWorker::CreateThreadWorker, model_worker, new_model_buf, size,
-                                             task_queue_id, model_pool_config[i]->context, predict_task_queue_,
-                                             &create_worker_success_));
-    all_model_worker_.push_back(model_worker);
-  }
-  for (size_t i = 0; i < workers_num_; i++) {
-    auto work = all_model_worker_[i];
-    work->WaitCreateWorkerDone();
-    if (!create_worker_success_) {
-      MS_LOG(ERROR) << "init failed.";
-      return kLiteError;
-    }
-  }
-  // init model pool input and output
-  if (model_worker != nullptr) {
-    model_pool_inputs_ = model_worker->GetInputs();
-    model_pool_outputs_ = model_worker->GetOutputs();
   }
   if (graph_buf != nullptr) {
     delete[] graph_buf;
     graph_buf = nullptr;
+  }
+  // initialize the task pool
+  tasks_ = new (std::nothrow) PredictTask[kNumMaxTaskQueueSize]();
+  if (tasks_ == nullptr) {
+    MS_LOG(ERROR) << "new task failed.";
+    return kLiteNullptr;
+  }
+  for (size_t i = 0; i < kNumMaxTaskQueueSize; i++) {
+    free_tasks_id_.push(i);
+  }
+  return kSuccess;
+}
+
+Status ModelPool::UpdateConfig(const std::string &section, const std::pair<std::string, std::string> &config) {
+  for (auto &item : all_model_workers_) {
+    auto &workers = item.second;
+    for (auto &worker : workers) {
+      auto status = worker->UpdateConfig(section, config);
+      if (status != kSuccess) {
+        MS_LOG(ERROR) << "model pool update config failed, status=" << status;
+        return status;
+      }
+    }
   }
   return kSuccess;
 }
@@ -521,9 +818,9 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
     }
     size_t all_data_size = 0;
     size_t all_batch_size = 0;
-    std::vector<size_t> per_bacth_data_size;
+    std::vector<size_t> per_batch_data_size;
     for (size_t batch = 0; batch < outputs->size(); batch++) {
-      per_bacth_data_size.push_back(all_data_size);
+      per_batch_data_size.push_back(all_data_size);
       all_data_size += outputs->at(batch).at(i).DataSize();
       all_batch_size += outputs->at(batch).at(i).Shape().front();
     }
@@ -551,7 +848,7 @@ Status ModelPool::ConcatPredictOutput(std::vector<std::vector<MSTensor>> *output
         MS_LOG(ERROR) << "output data is nullptr.";
         return kLiteError;
       }
-      memcpy(reinterpret_cast<float *>(all_out_data) + per_bacth_data_size[j] / sizeof(float),
+      memcpy(reinterpret_cast<float *>(all_out_data) + per_batch_data_size[j] / sizeof(float),
              reinterpret_cast<float *>(out_data), outputs->at(j)[i].DataSize());
     }
     auto new_tensor = mindspore::MSTensor::CreateTensor(outputs->at(0)[i].Name(), outputs->at(0)[i].DataType(),
@@ -592,7 +889,7 @@ Status ModelPool::FreeSplitTensor(std::vector<std::vector<MSTensor>> *new_inputs
 std::shared_ptr<ModelWorker> ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker_node_id, int *max_wait_worker_num) {
   *max_wait_worker_node_id = 0;
   *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(0);
-  for (int i = 1; i < used_numa_node_num_; i++) {
+  for (size_t i = 1; i < used_numa_node_num_; i++) {
     int worker_num = predict_task_queue_->GetWaitModelNum(i);
     if (*max_wait_worker_num < worker_num) {
       *max_wait_worker_num = worker_num;
@@ -600,8 +897,12 @@ std::shared_ptr<ModelWorker> ModelPool::GetMaxWaitWorkerNum(int *max_wait_worker
     }
   }
   if (*max_wait_worker_num > 0 && !use_split_batch_) {
-    for (auto &worker : all_model_worker_) {
+    auto &workers = all_model_workers_[*max_wait_worker_node_id];
+    auto task_queue_id = *max_wait_worker_node_id;
+    for (auto &worker : workers) {
       if (worker->IsAvailable()) {
+        *max_wait_worker_num = predict_task_queue_->GetWaitModelNum(task_queue_id);
+        *max_wait_worker_node_id = task_queue_id;
         return worker;
       }
     }
@@ -613,7 +914,6 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
                                       const MSKernelCallBack &before, const MSKernelCallBack &after,
                                       int max_wait_worker_node_id) {
   size_t batch_split_num = predict_task_queue_->GetWaitModelNum(max_wait_worker_node_id);
-  predict_task_queue_->DecreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
   std::vector<std::vector<MSTensor>> new_inputs;
   std::vector<std::vector<MSTensor>> new_outputs;
   auto status = SplitInputTensorByBatch(inputs, &new_inputs, batch_split_num);
@@ -627,19 +927,21 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
     return kLiteError;
   }
 
-  std::vector<std::shared_ptr<PredictTask>> tasks;
+  std::vector<PredictTask *> tasks;
+  tasks.reserve(batch_split_num);
+  std::vector<size_t> tasks_id(batch_split_num);
   for (size_t i = 0; i < batch_split_num; i++) {
-    auto predict_task = std::make_shared<PredictTask>(&new_inputs[i], &new_outputs.at(i), before, after);
-    if (predict_task == nullptr) {
-      MS_LOG(ERROR) << "predict task is nullptr.";
+    auto task = CreatePredictTask(new_inputs[i], &new_outputs[i], before, after, &tasks_id[i]);
+    if (task == nullptr) {
       return kLiteNullptr;
     }
-    predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
-    tasks.push_back(predict_task);
+    predict_task_queue_->PushPredictTask(task, max_wait_worker_node_id);
+    tasks.push_back(task);
   }
   predict_task_mutex_.unlock();
   for (size_t i = 0; i < batch_split_num; i++) {
-    predict_task_queue_->WaitUntilPredictActive(tasks[i]);
+    predict_task_queue_->WaitUntilPredictActive(tasks[i], max_wait_worker_node_id);
+    UpdateFreeTaskId(tasks_id[i]);
   }
   status = ConcatPredictOutput(&new_outputs, outputs, max_wait_worker_node_id);
   if (status != kSuccess) {
@@ -651,8 +953,31 @@ Status ModelPool::PredictBySplitBatch(const std::vector<MSTensor> &inputs, std::
     MS_LOG(ERROR) << "free split tensor failed.";
     return kLiteError;
   }
-  predict_task_queue_->IncreaseWaitModelNum(batch_split_num, max_wait_worker_node_id);
   return kSuccess;
+}
+
+PredictTask *ModelPool::CreatePredictTask(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                                          const MSKernelCallBack &before, const MSKernelCallBack &after,
+                                          size_t *task_id) {
+  std::lock_guard<std::mutex> lock(task_id_mutex_);
+  if (!free_tasks_id_.empty()) {
+    auto item = free_tasks_id_.front();
+    *task_id = item;
+    free_tasks_id_.pop();
+    PredictTask *task = &tasks_[*task_id];
+    task->inputs = &inputs;
+    task->outputs = outputs;
+    task->before = before;
+    task->after = after;
+    return task;
+  } else {
+    return nullptr;
+  }
+}
+
+void ModelPool::UpdateFreeTaskId(size_t id) {
+  std::lock_guard<std::mutex> lock(task_id_mutex_);
+  free_tasks_id_.push(id);
 }
 
 Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
@@ -667,8 +992,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     return kLiteError;
   }
   auto batch = inputs[0].Shape()[0];
-  if (use_split_batch_ && predict_task_queue_->GetTaskNum(max_wait_worker_node_id) == 0 && max_wait_worker_num > 1 &&
-      batch >= max_wait_worker_num) {
+  if (use_split_batch_ && max_wait_worker_num > 1 && batch >= max_wait_worker_num) {
     // split batch
     auto status = PredictBySplitBatch(inputs, outputs, before, after, max_wait_worker_node_id);
     if (status != kSuccess) {
@@ -678,6 +1002,7 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
     }
     return kSuccess;
   } else if (available_worker != nullptr) {
+    predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
     // dispatch tasks directly to workers
     predict_task_mutex_.unlock();
     auto ret = available_worker->Predict(inputs, outputs, before, after);
@@ -685,25 +1010,21 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
       MS_LOG(ERROR) << "direct predict failed.";
       return kLiteError;
     }
+    predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
     return kSuccess;
   } else {
     // do predict
-    if (predict_task_queue_->GetTaskNum(max_wait_worker_node_id) > kNumMaxTaskQueueSize) {
+    size_t task_id;
+    auto task = CreatePredictTask(inputs, outputs, before, after, &task_id);
+    if (task == nullptr) {
       MS_LOG(ERROR) << "The number of waiting tasks in the queue exceeds the limit, ret=" << kLiteServiceDeny;
       predict_task_mutex_.unlock();
       return kLiteServiceDeny;
     }
-    predict_task_queue_->DecreaseWaitModelNum(1, max_wait_worker_node_id);
-    auto predict_task = std::make_shared<PredictTask>(&inputs, outputs, before, after);
-    if (predict_task == nullptr) {
-      MS_LOG(ERROR) << "predict_task is nullptr.";
-      predict_task_mutex_.unlock();
-      return kLiteNullptr;
-    }
-    predict_task_queue_->PushPredictTask(predict_task, max_wait_worker_node_id);
+    predict_task_queue_->PushPredictTask(task, max_wait_worker_node_id);
     predict_task_mutex_.unlock();
-    predict_task_queue_->WaitUntilPredictActive(predict_task);
-    predict_task_queue_->IncreaseWaitModelNum(1, max_wait_worker_node_id);
+    predict_task_queue_->WaitUntilPredictActive(task, max_wait_worker_node_id);
+    UpdateFreeTaskId(task_id);
   }
   return kSuccess;
 }
@@ -711,6 +1032,10 @@ Status ModelPool::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTen
 ModelPool::~ModelPool() {
   if (predict_task_queue_ != nullptr) {
     predict_task_queue_->SetPredictTaskDone();
+  }
+  if (tasks_ != nullptr) {
+    delete[] tasks_;
+    tasks_ = nullptr;
   }
   for (auto &th : worker_thread_vec_) {
     if (th.joinable()) {
