@@ -1717,16 +1717,15 @@ FunctionBlockPtr Parser::ParseGlobal(const FunctionBlockPtr &block, const py::ob
 // Process a if statement
 FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast If";
+  MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
   condition_node = HandleInterpret(block, condition_node, test_node);
-  MS_EXCEPTION_IF_NULL(block);
   AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
   bool_node = HandleInterpret(block, bool_node, test_node);
 
-  FunctionBlockPtr true_block = nullptr;
-  FunctionBlockPtr false_block = nullptr;
+  FunctionBlockPtr true_block = nullptr, false_block = nullptr, after_block = nullptr;
   auto block_fg = block->func_graph();
   MS_EXCEPTION_IF_NULL(block_fg);
   {
@@ -1740,7 +1739,6 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
 
   MakeConditionBlocks(block, true_block, false_block);
 
-  FunctionBlockPtr after_block = nullptr;
   {
     TraceGuard guard(std::make_shared<TraceIfStmtAfterBranch>(block_fg->debug_info()));
     after_block = MakeFunctionBlock(*this);
@@ -1770,6 +1768,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     } else {
       MS_LOG(DEBUG) << "Ignore the true_end block for transform to parallem call, true_block: "
                     << true_block->ToString() << ", true_end: " << true_end->ToString();
+      (void)ignored_if_latter_call_graphs_.insert(after_block);
     }
     if (use_fallback) {
       UpdateBlockPyParams(after_block, true_end);
@@ -1792,6 +1791,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
     } else {
       MS_LOG(DEBUG) << "Ignore the false_end block for transform to parallem call, false_block: "
                     << false_block->ToString() << ", false_end: " << false_end->ToString();
+      (void)ignored_if_latter_call_graphs_.insert(after_block);
     }
     if (use_fallback) {
       UpdateBlockPyParams(after_block, false_end);
