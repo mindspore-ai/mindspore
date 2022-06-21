@@ -34,6 +34,34 @@ constexpr char kAttrSorted[] = "sorted";
 constexpr char kAttrStrides[] = "strides";
 constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 
+bool CheckValueType(const AnfNodePtr &input_node, size_t inputs_num) {
+  auto value_node = input_node->cast<ValueNodePtr>();
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  if (!value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION(ValueError) << "The strides of StridedSliceGrad must be a constant." << inputs_num;
+  }
+  auto tensor = value->cast<tensor::TensorPtr>();
+  TypePtr data_type = tensor->Dtype();
+  MS_EXCEPTION_IF_NULL(data_type);
+  TypeId type_id = data_type->type_id();
+  auto element_size = tensor->data().size();
+  if (type_id == kNumberTypeInt32) {
+    auto *data = reinterpret_cast<int *>(tensor->data_c());
+    if ((data[element_size - 1]) != 1) {
+      return false;
+    }
+  } else if (type_id == kNumberTypeInt64) {
+    auto *data = reinterpret_cast<int64_t *>(tensor->data_c());
+    if ((data[element_size - 1]) != 1) {
+      return false;
+    }
+  } else {
+    MS_EXCEPTION(TypeError) << "The strides of StridedSliceGrad must be int.";
+  }
+  return true;
+}
+
 static bool CheckStridedSlice(const CNodePtr &cnode) {
   // check stride[-1] != 1
   if (common::AnfAlgo::HasNodeAttr(kAttrStrides, cnode)) {
@@ -47,31 +75,11 @@ static bool CheckStridedSlice(const CNodePtr &cnode) {
     if (inputs.size() == kInputNum + 1) {
       auto input_node = inputs[kInputNum];
       MS_EXCEPTION_IF_NULL(input_node);
-      auto value_node = input_node->cast<ValueNodePtr>();
-      MS_EXCEPTION_IF_NULL(value_node);
-      auto value = value_node->value();
-      if (value->isa<tensor::Tensor>()) {
-        auto tensor = value->cast<tensor::TensorPtr>();
-        TypePtr data_type = tensor->Dtype();
-        MS_EXCEPTION_IF_NULL(data_type);
-        TypeId type_id = data_type->type_id();
-        auto element_size = tensor->data().size();
-        if (type_id == kNumberTypeInt32) {
-          auto *data = reinterpret_cast<int *>(tensor->data_c());
-          if ((data[element_size - 1]) != 1) {
-            return false;
-          }
-        } else if (type_id == kNumberTypeInt64) {
-          auto *data = reinterpret_cast<int64_t *>(tensor->data_c());
-          if ((data[element_size - 1]) != 1) {
-            return false;
-          }
-        } else {
-          MS_EXCEPTION(TypeError) << "The strides of StridedSliceGrad must be int.";
-        }
-      } else {
-        MS_EXCEPTION(ValueError) << "The strides of StridedSliceGrad must be a constant." << inputs.size();
+      // Input node can be a cnode, like cast or transdata, which output is a valuenode
+      if (input_node->isa<CNode>()) {
+        return true;
       }
+      return CheckValueType(input_node, inputs.size());
     }
   }
 

@@ -2693,6 +2693,7 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
                       << PyObjToValue(args[i])->ToAbstract()->Broaden()->ToString()
                       << ", dynamic abs: " << abs->ToString();
         dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs[arg_id] = abs;
+        (void)node_abs_map_.erase(arg_id);
       }
     }
   }
@@ -3009,10 +3010,19 @@ void GradExecutor::HandleInputArgsForTopCell(const py::args &args, bool is_bprop
     auto param_i = only_tensors[i];
     const auto &param_i_value = PyObjToValue(param_i);
     input_param_values.emplace_back(param_i_value);
-    auto param_i_abs = param_i_value->ToAbstract();
-    MS_EXCEPTION_IF_NULL(param_i_abs);
-    new_param->set_abstract(param_i_abs->Broaden());
     const auto &param_i_id = GetId(param_i);
+    abstract::AbstractBasePtr param_i_abs = nullptr;
+    auto item = forward()->dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs.find(param_i_id);
+    if (item != forward()->dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs.end()) {
+      MS_LOG(DEBUG) << "Param " << i << " is dynamic input";
+      param_i_abs = item->second;
+    } else {
+      param_i_abs = param_i_value->ToAbstract();
+      MS_EXCEPTION_IF_NULL(param_i_abs);
+      param_i_abs = param_i_abs->Broaden();
+    }
+    MS_EXCEPTION_IF_NULL(param_i_abs);
+    new_param->set_abstract(param_i_abs);
     SetTupleArgsToGraphInfoMap(curr_g(), param_i, new_param, true);
     SetNodeMapInGraphInfoMap(curr_g(), param_i_id, new_param);
     SetParamNodeMapInGraphInfoMap(curr_g(), param_i_id, new_param);
@@ -3110,6 +3120,18 @@ void GradExecutor::NewGraphInner(py::object *ret, const py::object &cell, const 
   }
 }
 
+void GradExecutor::ChangeTopCellInfo(const TopCellInfoPtr &top_cell, const std::vector<ShapeVector> &new_args_shape) {
+  MS_EXCEPTION_IF_NULL(top_cell);
+  std::string new_cell_id = top_cell->cell_self_info()->cell_self_id;
+  for (size_t i = 0; i < new_args_shape.size(); ++i) {
+    new_cell_id += "_" + top_cell->cell_self_info()->args_shape[i]->ToString();
+    new_cell_id += top_cell->cell_self_info()->args_type[i]->ToString();
+  }
+  MS_LOG(DEBUG) << "Change top cell " << top_cell->cell_id() << " to be dynamic " << new_cell_id;
+  top_cell->set_cell_id(new_cell_id);
+  top_cell->set_already_run_cell_id(GetAlreadyRunCellId(new_cell_id));
+}
+
 TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeByAuto(const TopCellInfoPtr &top_cell,
                                                                const std::vector<ShapeVector> &new_args_shape,
                                                                const py::object &cell, const py::args &args) {
@@ -3127,15 +3149,7 @@ TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeByAuto(const TopCellInfo
   MS_LOG(DEBUG) << "Set dynamic input for auto dynamic shape";
   forward()->SetDynamicInput(cell, args);
   forward()->SetFeedDynamicInputAbs(cell, args);
-  // Change cell id
-  std::string new_cell_id = top_cell->cell_self_info()->cell_self_id;
-  for (size_t i = 0; i < new_args_shape.size(); ++i) {
-    new_cell_id += "_" + top_cell->cell_self_info()->args_shape[i]->ToString();
-    new_cell_id += top_cell->cell_self_info()->args_type[i]->ToString();
-  }
-  MS_LOG(DEBUG) << "Change top cell " << top_cell->cell_id() << " to be dynamic " << new_cell_id;
-  top_cell->set_cell_id(new_cell_id);
-  top_cell->set_already_run_cell_id(GetAlreadyRunCellId(new_cell_id));
+  ChangeTopCellInfo(top_cell, new_args_shape);
   return top_cell;
 }
 
@@ -3163,15 +3177,7 @@ TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeBySetInputs(const TopCel
       }
     }
   }
-  // Change cell id
-  std::string new_cell_id = top_cell->cell_self_info()->cell_self_id;
-  for (size_t i = 0; i < new_args_shape.size(); ++i) {
-    new_cell_id += "_" + top_cell->cell_self_info()->args_shape[i]->ToString();
-    new_cell_id += top_cell->cell_self_info()->args_type[i]->ToString();
-  }
-  MS_LOG(DEBUG) << "Change top cell " << top_cell->cell_id() << " to be dynamic " << new_cell_id;
-  top_cell->set_cell_id(new_cell_id);
-  top_cell->set_already_run_cell_id(GetAlreadyRunCellId(new_cell_id));
+  ChangeTopCellInfo(top_cell, new_args_shape);
   return top_cell;
 }
 
