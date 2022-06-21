@@ -8675,29 +8675,7 @@ class SoftShrink(Primitive):
     r"""
     Applies the SoftShrink function element-wise.
 
-    .. math::
-        \text{SoftShrink}(x) =
-        \begin{cases}
-        x - \lambda, & \text{ if } x > \lambda \\
-        x + \lambda, & \text{ if } x < -\lambda \\
-        0, & \text{ otherwise }
-        \end{cases}
-
-    Args:
-        lambd(Float): the :math:`\lambda` must be no less than zero for the SoftShrink formulation. Default: 0.5.
-
-    Inputs:
-        - **input_x** (Tensor) - The input of SoftShrink with data type of float16 or float32.
-          Any number of additional dimensions.
-
-    Outputs:
-        Tensor, has the same shape and data type as `input_x`.
-
-    Raises:
-        TypeError: If lambd is not a float.
-        TypeError: If input_x is not a Tensor.
-        TypeError: If dtype of input_x is neither float16 nor float32.
-        ValueError: If lambd is less than 0.
+    Refer to :func:`mindspore.ops.soft_shrink` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

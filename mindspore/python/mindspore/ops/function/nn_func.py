@@ -365,8 +365,31 @@ def softsign(x):
 
 def soft_shrink(x, lambd=0.5):
     r"""
-    Soft shrink activation function. Calculates the output according to the input elements.
-    Refer to :func:`mindspore.ops.SoftShrink` for more detail.
+    Applies the SoftShrink function element-wise.
+
+    .. math::
+        \text{SoftShrink}(x) =
+        \begin{cases}
+        x - \lambda, & \text{ if } x > \lambda \\
+        x + \lambda, & \text{ if } x < -\lambda \\
+        0, & \text{ otherwise }
+        \end{cases}
+
+    Args:
+        x (Tensor): The input of soft shrink with data type of float16 or float32.
+        lambd(float): The :math:`\lambda` must be no less than zero. Default: 0.5.
+
+    Outputs:
+        Tensor, has the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If lambd is not a float.
+        TypeError: If input_x is not a Tensor.
+        TypeError: If dtype of input_x is neither float16 nor float32.
+        ValueError: If lambd is less than 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float32)

@@ -1124,13 +1124,11 @@ def tan(x):
     Args:
         x (Tensor): The shape of tensor is
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-            Data type must be float16 or float32.
 
     Returns:
         Tensor, has the same shape as `x`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
