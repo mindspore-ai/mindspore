@@ -349,6 +349,7 @@ Array操作
     mindspore.ops.transpose
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
+    mindspore.ops.unique_with_pad
 
 .. list-table::
    :widths: 50 50

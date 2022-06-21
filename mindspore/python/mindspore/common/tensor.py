@@ -3872,6 +3872,46 @@ class Tensor(Tensor_):
             return output, counts
         return output
 
+    def unique_with_pad(self, pad_num):
+        """
+        Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
+
+        The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
+        The returned tuple(`y`, `idx`) after the self tensor is processed by the unique operator,
+        in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
+        the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
+        to make it have the same shape as the Tensor `idx`.
+
+        Args:
+            pad_num (int): Pad num. The data type is an int.
+
+        Returns:
+            tuple(Tensor), tuple of 2 tensors, `y` and `idx`.
+            - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as self tensor.
+            - idx (Tensor) - The index of each value of self tensor in the unique output `y`,
+                the shape and data type same as self tensor.
+
+        Raises:
+            TypeError: If dtype of self tensor is neither int32 nor int64.
+            ValueError: If length of shape of self tensor is not equal to 1.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor(np.array([1, 1, 2, 2, 3, 1]), mstype.int32)
+            >>> output, idx = x.unique_with_pad(pad_num=0)
+            >>> print(output)
+            [1 2 3 0 0 0]
+            >>> print(idx)
+            [0 0 1 1 2 0]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("unique_with_pad")()(self, pad_num)
+
     def diag(self):
         r"""
         Constructs a diagonal tensor with a given diagonal values.

@@ -24,7 +24,7 @@ enum Target { kX86 = 0, kCortex_M = 1, kARM32 = 2, kARM64 = 3, kAllTargets = 4, 
 enum CodeMode { Inference = 0, Train = 1, Code_Unknown = 99 };
 
 struct MicroParam {
-  std::string codegen_mode;
+  std::string codegen_mode = "Inference";
   std::string target;
   bool enable_micro{false};
   bool support_parallel{false};

@@ -730,6 +730,13 @@ def unique_consecutive(x, return_idx=False, return_counts=False, axis=None):
     return F.unique_consecutive(x, return_idx, return_counts, axis)
 
 
+def unique_with_pad(x, pad_num):
+    """
+    Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
+    """
+    return F.unique_with_pad(x, pad_num)
+
+
 def resize(x, *new_shape):
     """
     Changes shape and size of array in-place.
