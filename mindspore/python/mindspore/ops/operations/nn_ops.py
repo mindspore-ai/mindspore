@@ -6945,35 +6945,16 @@ class Dropout2D(PrimitiveWithInfer):
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
     to a 2-dimensional feature map with the shape of HW).
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 2D tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob` using samples
-    from a Bernoulli distribution.
-
     Dropout2D can improve the independence between channel feature maps.
 
-    Args:
-        keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            means dropping out 20% of channels. Default: 0.5.
-
-    Inputs:
-        - **x** (Tensor) - A 4-D tensor with shape :math:`(N, C, H, W)`, where N is the batch size, C is the number
-          of channels, H is the feature height, and W is the feature width. The data type should be int8, int16, int32,
-          int64, float16 or float32.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
-
-    Raises:
-        TypeError: If the data type of `keep_prob` is not float.
-        ValueError: If `keep_prob` is out of the range [0.0, 1.0];
-                    or if the dim of input is not 4-D.
+    Refer to :func:`mindspore.ops.dropout2d` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout = ops.Dropout2D(keep_prob=0.5)
+        >>> from mindspore.ops.operations.nn_ops import Dropout2D
+        >>> dropout = Dropout2D(keep_prob=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output.shape)
@@ -6994,29 +6975,9 @@ class Dropout3D(PrimitiveWithInfer):
     with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
     the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a 3D tensor input[i,j,k].
-    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob`
-    using samples from a Bernoulli distribution.
-
     Dropout3D can improve the independence between channel feature maps.
 
-    Args:
-        keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            means dropping out 20% of channels. Default: 0.5.
-
-    Inputs:
-        - **x** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`, where N is the batch size, C is the number
-          of channels, D is the feature depth, H is the feature height, and W is the feature width.
-          The data type should be int8, int16, int32, int64, float16 or float32.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
-
-    Raises:
-        TypeError: If the data type of `keep_prob` is not float.
-        ValueError: If `keep_prob` is out of the range [0.0, 1.0];
-                    or if the dim of input is not 5-D.
+    Refer to :func:`mindspore.ops.dropout3d` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
