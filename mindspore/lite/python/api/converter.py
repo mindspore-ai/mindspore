@@ -19,7 +19,7 @@ Converter API.
 import os
 from enum import Enum
 
-from ._checkparam import check_isinstance, check_input_shape
+from ._checkparam import check_isinstance, check_input_shape, check_config_info
 from .lib import _c_lite_wrapper
 from .tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, format_cxx_py_map
 
@@ -91,8 +91,8 @@ class Converter:
         decrypt_mode: , enable_encryption: False, encrypt_key: , infer: False, train_model: False, no_fusion: False.
     """
 
-    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
-                 input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
+    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", section="", config_info=None,
+                 weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
                  output_data_type=DataType.FLOAT32, export_mindir=False,
                  decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="",
                  infer=False, train_model=False, no_fusion=False):
@@ -101,6 +101,8 @@ class Converter:
         check_isinstance("output_file", output_file, str)
         check_isinstance("weight_file", weight_file, str)
         check_isinstance("config_file", config_file, str)
+        check_isinstance("section", section, str)
+        check_config_info("config_info", config_info, enable_none=True)
         check_isinstance("weight_fp16", weight_fp16, bool)
         check_input_shape("input_shape", input_shape, enable_none=True)
         check_isinstance("input_format", input_format, Format)
@@ -127,6 +129,7 @@ class Converter:
         if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
             raise ValueError(f"Converter's init failed, decrypt_mode must be AES-GCM or AES-CBC.")
         input_shape_ = {} if input_shape is None else input_shape
+        config_info_ = {} if config_info is None else config_info
 
         fmk_type_py_cxx_map = {
             FmkType.TF: _c_lite_wrapper.FmkType.kFmkTypeTf,
@@ -142,6 +145,8 @@ class Converter:
             self._converter.set_config_file(config_file)
         if weight_fp16:
             self._converter.set_weight_fp16(weight_fp16)
+        if section != "" and config_info is not None:
+            self._converter.set_config_info(section, config_info_)
         if input_shape is not None:
             self._converter.set_input_shape(input_shape_)
         if input_format != Format.NHWC:
@@ -169,6 +174,7 @@ class Converter:
 
     def __str__(self):
         res = f"config_file: {self._converter.get_config_file()}, " \
+              f"config_info: {self._converter.get_config_info()}, " \
               f"weight_fp16: {self._converter.get_weight_fp16()}, " \
               f"input_shape: {self._converter.get_input_shape()}, " \
               f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())}, " \

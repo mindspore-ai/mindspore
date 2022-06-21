@@ -57,3 +57,19 @@ def check_input_shape(input_shape_name, input_shape, enable_none=True):
                 raise TypeError(f"{input_shape_name} value's element must be int, but got "
                                 f"{type(element)} at index {j}.")
     return input_shape
+
+
+def check_config_info(config_info_name, config_info, enable_none=True):
+    """Check config_info's type is dict{string:string}"""
+    if enable_none:
+        if config_info is None:
+            return config_info
+    if not isinstance(config_info, dict):
+        raise TypeError(f"{config_info_name} must be dict, but got {format(type(config_info))}.")
+    for key in config_info:
+        if not isinstance(key, str):
+            raise TypeError(f"{config_info_name} key {key} must be str, but got {type(key)}.")
+        if not isinstance(config_info[key], str):
+            raise TypeError(f"{config_info_name} val must be str, but got "
+                            f"{type(config_info[key])} at key {key}.")
+    return config_info
