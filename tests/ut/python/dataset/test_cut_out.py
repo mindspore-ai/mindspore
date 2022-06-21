@@ -266,9 +266,33 @@ def test_cut_out_comp_chw():
         logger.info("dtype of image_2: {}".format(image_2.dtype))
 
 
+def test_cutout_4channel_chw():
+    """
+    Feature: CutOut op
+    Description: Test CutOut Op with multi-channel CHW input
+    Expectation: Test succeeds.
+    """
+    image = np.random.randn(4, 1024, 856).astype(np.uint8)
+    op = vision.CutOut(length=500, num_patches=3, is_hwc=False)
+    op(image)
+
+
+def test_cutout_4channel_hwc():
+    """
+    Feature: CutOut op
+    Description: Test CutOut Op with multi-channel HWC input
+    Expectation: Test succeeds.
+    """
+    image = np.random.randn(1024, 856, 4).astype(np.uint8)
+    op = vision.CutOut(length=500, num_patches=3, is_hwc=True)
+    op(image)
+
+
 if __name__ == "__main__":
     test_cut_out_op(plot=True)
     test_cut_out_op_multicut(plot=True)
     test_cut_out_md5()
     test_cut_out_comp_hwc(plot=True)
     test_cut_out_comp_chw()
+    test_cutout_4channel_chw()
+    test_cutout_4channel_hwc()

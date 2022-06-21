@@ -314,13 +314,11 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 /// \param num_patches: number of boxes to cut out from the image
 /// \param bounded: boolean flag to toggle between random erasing and cutout
 /// \param random_color: whether or not random fill value should be used
-/// \param fill_r: red fill value for erase
-/// \param fill_g: green fill value for erase
-/// \param fill_b: blue fill value for erase
+/// \param fill_colors: vector of color fill values for erase
 /// \param is_hwc: Check if input is HWC/CHW format
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
-             uint8_t fill_r = 0, uint8_t fill_g = 0, uint8_t fill_b = 0, bool is_hwc = true);
+             std::vector<uint8_t> fill_colors = {}, bool is_hwc = true);
 
 /// \brief Pads the input image and puts the padded image in the output
 /// \param input: input Tensor

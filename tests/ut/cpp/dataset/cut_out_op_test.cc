@@ -32,7 +32,7 @@ class MindDataTestCutOutOp : public UT::CVOP::CVOpCommon {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestCutOutOp, TestOp) {
   MS_LOG(INFO) << "Doing testCutOut.";
-  auto op = std::make_unique<CutOutOp>(50, 50, 5, false, 0, 0, 0);
+  auto op = std::make_unique<CutOutOp>(50, 50, 5, false);
 
   EXPECT_TRUE(op->OneToOne());
   Status s = op->Compute(input_tensor_, &output_tensor_);
@@ -41,4 +41,3 @@ TEST_F(MindDataTestCutOutOp, TestOp) {
   EXPECT_EQ(input_tensor_->shape()[2], output_tensor_->shape()[2]);
   EXPECT_EQ(s, Status::OK());
 }
-

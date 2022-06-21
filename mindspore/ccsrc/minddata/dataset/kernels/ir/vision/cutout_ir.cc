@@ -42,8 +42,9 @@ Status CutOutOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> CutOutOperation::Build() {
+  std::vector<uint8_t> fill;
   std::shared_ptr<CutOutOp> tensor_op =
-    std::make_shared<CutOutOp>(length_, length_, num_patches_, false, 0, 0, 0, is_hwc_);
+    std::make_shared<CutOutOp>(length_, length_, num_patches_, false, fill, is_hwc_);
   return tensor_op;
 }
 

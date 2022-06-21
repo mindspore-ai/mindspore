@@ -360,7 +360,7 @@ def test_tfrecord_invalid_files():
     data = ds.TFRecordDataset(files, SCHEMA_FILE, shuffle=ds.Shuffle.FILES)
 
     with pytest.raises(RuntimeError) as info:
-        _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).get_next()
+        _ = data.create_dict_iterator(num_epochs=1, output_numpy=True).__next__()
     assert "cannot be opened" in str(info.value)
     assert "not valid tfrecord files" in str(info.value)
     assert valid_file not in str(info.value)

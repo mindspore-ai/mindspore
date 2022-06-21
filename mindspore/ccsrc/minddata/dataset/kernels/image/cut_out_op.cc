@@ -16,6 +16,7 @@
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 
 #include <random>
+#include <utility>
 
 #include "minddata/dataset/core/cv_tensor.h"
 #include "minddata/dataset/kernels/image/image_utils.h"
@@ -25,21 +26,16 @@
 namespace mindspore {
 namespace dataset {
 const bool CutOutOp::kDefRandomColor = false;
-const uint8_t CutOutOp::kDefFillR = 0;
-const uint8_t CutOutOp::kDefFillG = 0;
-const uint8_t CutOutOp::kDefFillB = 0;
 
 // constructor
-CutOutOp::CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color, uint8_t fill_r,
-                   uint8_t fill_g, uint8_t fill_b, bool is_hwc)
+CutOutOp::CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color,
+                   std::vector<uint8_t> fill_colors, bool is_hwc)
     : rnd_(GetSeed()),
       box_height_(box_height),
       box_width_(box_width),
       num_patches_(num_patches),
       random_color_(random_color),
-      fill_r_(fill_r),
-      fill_g_(fill_g),
-      fill_b_(fill_b),
+      fill_colors_(std::move(fill_colors)),
       is_hwc_(is_hwc) {}
 
 // main function call for cut out
@@ -47,8 +43,8 @@ Status CutOutOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   IO_CHECK(input, output);
   std::shared_ptr<CVTensor> inputCV = CVTensor::AsCVTensor(input);
   // cut out will clip the erasing area if the box is near the edge of the image and the boxes are black
-  RETURN_IF_NOT_OK(Erase(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_r_,
-                         fill_g_, fill_b_, is_hwc_));
+  RETURN_IF_NOT_OK(
+    Erase(inputCV, output, box_height_, box_width_, num_patches_, false, random_color_, &rnd_, fill_colors_, is_hwc_));
   return Status::OK();
 }
 }  // namespace dataset
