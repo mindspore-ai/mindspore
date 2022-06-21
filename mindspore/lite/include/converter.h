@@ -78,6 +78,7 @@ class MS_API Converter {
   bool GetNoFusion();
 
   Status Convert();
+  void *Convert(size_t *data_size);
 
  private:
   std::shared_ptr<ConverterPara> data_;
