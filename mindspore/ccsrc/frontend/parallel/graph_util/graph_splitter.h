@@ -210,6 +210,8 @@ CNodePtr CreateRecvNode(const FuncGraphPtr &func_graph, const InterProcessOpEdge
 // Calculate the index to segment number map.
 std::map<size_t, size_t> GetRealIndexToSeg(const std::vector<size_t> &split_segment, size_t real_size);
 
+bool IsOneOfRealGraphInput(const FuncGraphPtr &func_graph, const AnfNodePtr &input);
+
 // Base class for different execution modes. It builds distributed graphs, optimize execution performance, etc.
 class DistributedExecutionMode {
  public:
