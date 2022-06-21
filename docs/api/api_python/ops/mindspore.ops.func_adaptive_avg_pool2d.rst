@@ -11,7 +11,7 @@ mindspore.ops.adaptive_avg_pool2d
 
     对于2维的自适应平均池化操作，有如下公式：
 
-    ..  math::
+    .. math::
         \begin{align}
         h_{start} &= floor(i * H_{in} / H_{out})\\
         h_{end} &= ceil((i + 1) * H_{in} / H_{out})\\

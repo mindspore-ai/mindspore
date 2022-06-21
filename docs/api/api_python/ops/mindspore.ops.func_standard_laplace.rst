@@ -1,5 +1,5 @@
-mindspore.ops.eye
-==================
+mindspore.ops.standard_laplace
+==============================
 
 .. py:function:: mindspore.ops.standard_laplace(shape, seed=0, seed2=0)
 

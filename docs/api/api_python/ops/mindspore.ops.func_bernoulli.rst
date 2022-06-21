@@ -15,7 +15,7 @@ mindspore.ops.bernoulli
     - **p** (Union[Tensor, float], optional) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
     - **seed** (int, optional) - 随机种子，用于生成随机数，数值范围是正数，默认取当前时间。默认值：-1。
 
-    **输出：**
+    **返回：**
 
     - **output** (Tensor) - shape和数据类型与 `x` 相同。
 
