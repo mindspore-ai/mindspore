@@ -3735,7 +3735,10 @@ class Tensor(Tensor_):
             >>> from mindspore import Tensor
             >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
             >>> output = x.to_coo()
-            >>> print(output)
+            >>> print(output.indices, output.values, output.shape)
+            [[0 0]
+             [1 0]] [ 1. -5.] (2, 2)
+
         """
         self._init_check()
         return tensor_operator_registry.get('dense_to_sparse_coo')(self)
@@ -3766,7 +3769,8 @@ class Tensor(Tensor_):
             >>> from mindspore import Tensor
             >>> x = Tensor(np.array([[1,  0], [-5, 0]]), mindspore.float32)
             >>> output = x.to_csr()
-            >>> print(output)
+            >>> print(output.indptr, output.indices, output.values, output.shape)
+            [0 1 2] [0 0] [ 1. -5.] (2, 2)
         """
         self._init_check()
         return tensor_operator_registry.get('dense_to_sparse_csr')(self)

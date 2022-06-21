@@ -384,6 +384,17 @@ Type Conversion
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
+Sparse Operation
+^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.dense_to_sparse_coo
+    mindspore.ops.dense_to_sparse_csr
+
 Parameter Operation Oprators
 ----------------------------
 
