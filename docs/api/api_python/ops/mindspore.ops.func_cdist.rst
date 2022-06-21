@@ -22,4 +22,4 @@ mindspore.ops.cdist
     - **TypeError** - `p` 不是float32。
     - **ValueError** - `p` 是负数。
     - **ValueError** - `input_x` 与 `input_y` 维度不同。
-    - **ValueError** - `input_x` 与 `input_y` 的维度小于2。
+    - **ValueError** - `input_x` 与 `input_y` 的维度不是2，也不是3。

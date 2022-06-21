@@ -26,7 +26,7 @@ from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_assign_vmap_rule, \
     get_unop_vmap_rule, _raise_value_error, _bdim_at_front, _broadcast_by_axis, _handle_broadcasting, \
-    get_unary_grad_vmap_rule
+    get_unary_grad_vmap_rule, _update_prim_attr
 from ..operations.math_ops import (Bernoulli, BesselJ0, BesselJ1, BesselK0, BesselK0e, BesselY0, BesselY1, BesselK1,
                                    BesselK1e)
 
@@ -92,6 +92,10 @@ def get_broadcast_binary_op_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Cdist)
 def get_cdist_vmap_rule(prim, axis_size):
     """VmapRule for `cdist` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
 
     def vmap_rule(x_bdim, y_bdim):
         x, x_dim = x_bdim
@@ -100,7 +104,7 @@ def get_cdist_vmap_rule(prim, axis_size):
         if x_dim is None and y_dim is None:
             out = prim(x, y)
             return (out, None)
-
+        _update_prim_attr(prim, 'batch_rank', batch_rank)
         x = _bdim_at_front(x, x_dim, axis_size)
         y = _bdim_at_front(y, y_dim, axis_size)
 

@@ -21,7 +21,8 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front
+from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front,\
+     _update_prim_attr
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -132,6 +133,11 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.CdistGrad)
 def get_cdist_grad_vmap_rule(prim, axis_size):
     """VmapRule for `cdist grad` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
     def vmap_rule(grad_bdim, x_bdim, y_bdim, cdist_bdim):
         is_all_none, result = vmap_general_preprocess(prim,
                                                       grad_bdim, x_bdim, y_bdim, cdist_bdim)
@@ -142,6 +148,7 @@ def get_cdist_grad_vmap_rule(prim, axis_size):
         y, y_dim = y_bdim
         cdist, cdist_dim = cdist_bdim
 
+        _update_prim_attr(prim, 'batch_rank', batch_rank)
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         x = _bdim_at_front(x, x_dim, axis_size)
         y = _bdim_at_front(y, y_dim, axis_size)

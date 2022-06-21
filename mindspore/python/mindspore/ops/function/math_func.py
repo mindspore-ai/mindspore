@@ -2984,7 +2984,7 @@ def cdist(x, y, p=2.0):
         TypeError: If `p` is not a float.
         ValueError: If `p` is a negative float.
         ValueError: If dimension of `x` is not the same as `y`.
-        ValueError: If dimension of `x` or `y` is less than 2.
+        ValueError: If dimension of `x` or `y` is neither 2 nor 3.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
