@@ -2094,7 +2094,6 @@ AnfNodePtr GradExecutor::MakeValueNode(const py::object &obj, const std::string 
     MS_LOG(EXCEPTION) << "Failed to convert obj to value node.";
   }
   auto node = NewValueNode(converted_ret);
-  node->set_abstract(converted_ret->ToAbstract());
   SetNodeMapInGraphInfoMap(curr_g(), obj_id, node);
   return node;
 }
