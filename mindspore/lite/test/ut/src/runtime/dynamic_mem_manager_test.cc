@@ -40,16 +40,16 @@ class DynamicMemManagerTest : public mindspore::CommonTest {
 };
 
 TEST_F(DynamicMemManagerTest, test_init) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   ASSERT_EQ(mem->all_datas_.size(), 1);
   ASSERT_EQ(mem->all_datas_.begin()->second, kAllocUnitSize);
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_succ) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -67,8 +67,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_succ) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_succ2) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize5);
   ASSERT_NE(data, nullptr);
@@ -86,8 +86,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_succ2) {
 }
 
 TEST_F(DynamicMemManagerTest, test_free_succ) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -98,8 +98,8 @@ TEST_F(DynamicMemManagerTest, test_free_succ) {
 }
 
 TEST_F(DynamicMemManagerTest, test_double_free) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -113,15 +113,15 @@ TEST_F(DynamicMemManagerTest, test_double_free) {
 }
 
 TEST_F(DynamicMemManagerTest, test_free_nullptr_succ) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   mem->Free(nullptr);
 }
 
 TEST_F(DynamicMemManagerTest, test_free_wrong_addr) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   void *data = malloc(kTestAllocSize);
   mem->Free(data);
@@ -129,8 +129,8 @@ TEST_F(DynamicMemManagerTest, test_free_wrong_addr) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_2_buf) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -159,8 +159,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_2_buf) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_2_buf_free) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -194,8 +194,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_2_buf_free) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_2_buf_free2) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -225,8 +225,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_2_buf_free2) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_3_buf) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -266,8 +266,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_3_buf) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_order) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -319,8 +319,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_order) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_unorder) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -372,8 +372,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_unorder) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_order2) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -425,8 +425,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_3_buf_free_order2) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_4_buf_free_unorder) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize);
   ASSERT_NE(data, nullptr);
@@ -467,8 +467,8 @@ TEST_F(DynamicMemManagerTest, test_malloc_4_buf_free_unorder) {
 }
 
 TEST_F(DynamicMemManagerTest, test_malloc_4_buf_free_unorder2) {
-  DynamicMemManager mem_manager_;
-  auto mem = mem_manager_.GetMemOperator(-1);
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
   ASSERT_NE(mem, nullptr);
   auto data = mem->Malloc(kTestAllocSize4);
   ASSERT_NE(data, nullptr);
@@ -520,6 +520,24 @@ TEST_F(DynamicMemManagerTest, test_malloc_4_buf_free_unorder2) {
   } else {
     ASSERT_EQ(mem->free_blocks_.begin()->first, kAllocUnitSize - kTestAllocSize2 - kTestAllocSize3 - kTestAllocSize4);
   }
+}
+
+TEST_F(DynamicMemManagerTest, test_set_ref_count) {
+  DynamicMemManager mem_manager;
+  auto mem = mem_manager.GetMemOperator(-1);
+  ASSERT_NE(mem, nullptr);
+  auto data = mem->Malloc(kTestAllocSize);
+  ASSERT_NE(data, nullptr);
+  ASSERT_EQ(mem->free_blocks_.size(), 1);
+  mem->SetRefCount(data, 1);
+  auto ref_count = mem->RefCount(data);
+  ASSERT_EQ(ref_count, 1);
+  ref_count = mem->IncRefCount(data, 1);
+  ASSERT_EQ(ref_count, 2);
+  ref_count = mem->IncRefCount(data, 1);
+  ASSERT_EQ(ref_count, 3);
+  ref_count = mem->DecRefCount(data, 1);
+  ASSERT_EQ(ref_count, 2);
 }
 }  // namespace mindspore
 
