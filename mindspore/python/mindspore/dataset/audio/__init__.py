@@ -37,12 +37,13 @@ Descriptions of common data processing terms are as follows:
 - TensorOperation, the base class of all data processing operations implemented in C++.
 - AudioTensorOperation, the base class of all audio processing operations. It is a derived class of TensorOperation.
 """
+from . import transforms
+from . import utils
 from .transforms import AllpassBiquad, AmplitudeToDB, Angle, BandBiquad, BandpassBiquad, BandrejectBiquad, BassBiquad, \
     Biquad, ComplexNorm, ComputeDeltas, Contrast, DBToAmplitude, DCShift, DeemphBiquad, DetectPitchFrequency, Dither, \
     EqualizerBiquad, Fade, Flanger, FrequencyMasking, Gain, GriffinLim, HighpassBiquad, InverseMelScale, LFilter, \
     LowpassBiquad, Magphase, MaskAlongAxis, MaskAlongAxisIID, MelScale, MuLawDecoding, MuLawEncoding, Overdrive, \
     Phaser, PhaseVocoder, Resample, RiaaBiquad, SlidingWindowCmn, SpectralCentroid, Spectrogram, TimeMasking, \
-    TimeStretch, TrebleBiquad, Vol
-from . import transforms
-from .utils import create_dct, melscale_fbanks, BorderType, DensityFunction, FadeShape, GainType, Interpolation, \
-    MelType, Modulation, NormMode, NormType, ResampleMethod, ScaleType, WindowType
+    TimeStretch, TrebleBiquad, Vad, Vol
+from .utils import BorderType, DensityFunction, FadeShape, GainType, Interpolation, MelType, Modulation, NormMode, \
+    NormType, ResampleMethod, ScaleType, WindowType, create_dct, melscale_fbanks

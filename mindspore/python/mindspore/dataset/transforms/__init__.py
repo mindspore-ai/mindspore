@@ -39,5 +39,5 @@ from .. import vision
 from . import c_transforms
 from . import py_transforms
 from . import transforms
-from .transforms import not_random, Relational, Compose, Concatenate, Duplicate, Fill, Mask, OneHot, PadEnd, Plugin, \
-    RandomApply, RandomChoice, RandomOrder, Slice, TypeCast, Unique
+from .transforms import Compose, Concatenate, Duplicate, Fill, Mask, OneHot, PadEnd, Plugin, RandomApply, \
+    RandomChoice, RandomOrder, Relational, Slice, TypeCast, Unique, not_random

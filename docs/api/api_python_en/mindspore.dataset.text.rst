@@ -3,48 +3,54 @@ mindspore.dataset.text
 
 .. automodule:: mindspore.dataset.text
 
-mindspore.dataset.text.transforms
----------------------------------
+Transforms
+----------
 
 .. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.dataset.text.transforms.BasicTokenizer
-    mindspore.dataset.text.transforms.BertTokenizer
-    mindspore.dataset.text.transforms.CaseFold
-    mindspore.dataset.text.transforms.JiebaTokenizer
-    mindspore.dataset.text.transforms.Lookup
-    mindspore.dataset.text.transforms.Ngram
-    mindspore.dataset.text.transforms.NormalizeUTF8
-    mindspore.dataset.text.transforms.PythonTokenizer
-    mindspore.dataset.text.transforms.RegexReplace
-    mindspore.dataset.text.transforms.RegexTokenizer
-    mindspore.dataset.text.transforms.SentencePieceTokenizer
-    mindspore.dataset.text.transforms.SlidingWindow
-    mindspore.dataset.text.transforms.ToNumber
-    mindspore.dataset.text.transforms.TruncateSequencePair
-    mindspore.dataset.text.transforms.UnicodeCharTokenizer
-    mindspore.dataset.text.transforms.UnicodeScriptTokenizer
-    mindspore.dataset.text.transforms.WhitespaceTokenizer
-    mindspore.dataset.text.transforms.WordpieceTokenizer
+    mindspore.dataset.text.BasicTokenizer
+    mindspore.dataset.text.BertTokenizer
+    mindspore.dataset.text.CaseFold
+    mindspore.dataset.text.FilterWikipediaXML
+    mindspore.dataset.text.JiebaTokenizer
+    mindspore.dataset.text.Lookup
+    mindspore.dataset.text.Ngram
+    mindspore.dataset.text.NormalizeUTF8
+    mindspore.dataset.text.PythonTokenizer
+    mindspore.dataset.text.RegexReplace
+    mindspore.dataset.text.RegexTokenizer
+    mindspore.dataset.text.SentencePieceTokenizer
+    mindspore.dataset.text.SlidingWindow
+    mindspore.dataset.text.ToNumber
+    mindspore.dataset.text.ToVectors
+    mindspore.dataset.text.TruncateSequencePair
+    mindspore.dataset.text.UnicodeCharTokenizer
+    mindspore.dataset.text.UnicodeScriptTokenizer
+    mindspore.dataset.text.WhitespaceTokenizer
+    mindspore.dataset.text.WordpieceTokenizer
 
 
-mindspore.dataset.text.utils
-----------------------------
+Utilities
+---------
 
 .. msnoteautosummary::
     :toctree: dataset_text
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.dataset.text.CharNGram
+    mindspore.dataset.text.FastText
+    mindspore.dataset.text.GloVe
     mindspore.dataset.text.JiebaMode
     mindspore.dataset.text.NormalizeForm
     mindspore.dataset.text.SentencePieceModel
     mindspore.dataset.text.SentencePieceVocab
     mindspore.dataset.text.SPieceTokenizerLoadType
     mindspore.dataset.text.SPieceTokenizerOutType
-    mindspore.dataset.text.to_str
-    mindspore.dataset.text.to_bytes
+    mindspore.dataset.text.Vectors
     mindspore.dataset.text.Vocab
+    mindspore.dataset.text.to_bytes
+    mindspore.dataset.text.to_str

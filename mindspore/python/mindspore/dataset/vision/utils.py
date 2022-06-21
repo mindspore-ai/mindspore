@@ -24,227 +24,6 @@ from mindspore import log as logger
 import mindspore._c_dataengine as cde
 
 
-class Inter(IntEnum):
-    """
-    Interpolation Modes.
-
-    Possible enumeration values are: Inter.NEAREST, Inter.ANTIALIAS, Inter.LINEAR, Inter.BILINEAR, Inter.CUBIC,
-    Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC.
-
-    - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
-    - Inter.ANTIALIAS: means the interpolation method is antialias interpolation.
-    - Inter.LINEAR: means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
-    - Inter.BILINEAR: means interpolation method is bilinear interpolation.
-    - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
-    - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
-    - Inter.AREA: means interpolation method is pixel area interpolation.
-    - Inter.PILCUBIC: means interpolation method is bicubic interpolation like implemented in pillow, input
-      should be in 3 channels format.
-    """
-    NEAREST = 0
-    ANTIALIAS = 1
-    BILINEAR = LINEAR = 2
-    BICUBIC = CUBIC = 3
-    AREA = 4
-    PILCUBIC = 5
-
-    @staticmethod
-    def to_python_type(inter_type):
-        """
-        Function to return Python type for Interpolation Mode.
-        """
-        if Image.__version__ >= "9.1.0":
-            python_values = {Inter.NEAREST: Image.Resampling.NEAREST,
-                             Inter.ANTIALIAS: Image.Resampling.LANCZOS,
-                             Inter.LINEAR: Image.Resampling.BILINEAR,
-                             Inter.CUBIC: Image.Resampling.BICUBIC}
-        else:
-            python_values = {Inter.NEAREST: Image.NEAREST,
-                             Inter.ANTIALIAS: Image.ANTIALIAS,
-                             Inter.LINEAR: Image.LINEAR,
-                             Inter.CUBIC: Image.CUBIC}
-        return python_values.get(inter_type)
-
-    @staticmethod
-    def to_c_type(inter_type):
-        """
-        Function to return C type for Interpolation Mode.
-        """
-        c_values = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
-                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
-                    Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
-                    Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
-                    Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
-
-        return c_values.get(inter_type)
-
-
-class Border(str, Enum):
-    """
-    Padding Mode, Border Type.
-
-    Possible enumeration values are: Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC.
-
-    - Border.CONSTANT: means it fills the border with constant values.
-    - Border.EDGE: means it pads with the last value on the edge.
-    - Border.REFLECT: means it reflects the values on the edge omitting the last value of edge.
-    - Border.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
-
-    Note: This class derived from class str to support json serializable.
-    """
-    CONSTANT: str = "constant"
-    EDGE: str = "edge"
-    REFLECT: str = "reflect"
-    SYMMETRIC: str = "symmetric"
-
-    @staticmethod
-    def to_python_type(border_type):
-        """
-        Function to return Python type for Border Type.
-        """
-        python_values = {Border.CONSTANT: 'constant',
-                         Border.EDGE: 'edge',
-                         Border.REFLECT: 'reflect',
-                         Border.SYMMETRIC: 'symmetric'}
-        return python_values.get(border_type)
-
-    @staticmethod
-    def to_c_type(border_type):
-        """
-        Function to return C type for Border Type.
-        """
-        c_values = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
-                    Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
-                    Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
-                    Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
-
-        return c_values.get(border_type)
-
-
-class ImageBatchFormat(IntEnum):
-    """
-    Data Format of images after batch operation.
-
-    Possible enumeration values are: ImageBatchFormat.NHWC, ImageBatchFormat.NCHW.
-
-    - ImageBatchFormat.NHWC: in orders like, batch N, height H, width W, channels C to store the data.
-    - ImageBatchFormat.NCHW: in orders like, batch N, channels C, height H, width W to store the data.
-    """
-    NHWC = 0
-    NCHW = 1
-
-    @staticmethod
-    def to_c_type(image_batch_format):
-        """
-        Function to return C type for ImageBatchFormat.
-        """
-        c_values = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
-                    ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
-
-        return c_values.get(image_batch_format)
-
-
-class ConvertMode(IntEnum):
-    """
-    The color conversion mode.
-
-    Possible enumeration values are as follows:
-
-    - ConvertMode.COLOR_BGR2BGRA: convert BGR format images to BGRA format images.
-    - ConvertMode.COLOR_RGB2RGBA: convert RGB format images to RGBA format images.
-    - ConvertMode.COLOR_BGRA2BGR: convert BGRA format images to BGR format images.
-    - ConvertMode.COLOR_RGBA2RGB: convert RGBA format images to RGB format images.
-    - ConvertMode.COLOR_BGR2RGBA: convert BGR format images to RGBA format images.
-    - ConvertMode.COLOR_RGB2BGRA: convert RGB format images to BGRA format images.
-    - ConvertMode.COLOR_RGBA2BGR: convert RGBA format images to BGR format images.
-    - ConvertMode.COLOR_BGRA2RGB: convert BGRA format images to RGB format images.
-    - ConvertMode.COLOR_BGR2RGB: convert BGR format images to RGB format images.
-    - ConvertMode.COLOR_RGB2BGR: convert RGB format images to BGR format images.
-    - ConvertMode.COLOR_BGRA2RGBA: convert BGRA format images to RGBA format images.
-    - ConvertMode.COLOR_RGBA2BGRA: convert RGBA format images to BGRA format images.
-    - ConvertMode.COLOR_BGR2GRAY: convert BGR format images to GRAY format images.
-    - ConvertMode.COLOR_RGB2GRAY: convert RGB format images to GRAY format images.
-    - ConvertMode.COLOR_GRAY2BGR: convert GRAY format images to BGR format images.
-    - ConvertMode.COLOR_GRAY2RGB: convert GRAY format images to RGB format images.
-    - ConvertMode.COLOR_GRAY2BGRA: convert GRAY format images to BGRA format images.
-    - ConvertMode.COLOR_GRAY2RGBA: convert GRAY format images to RGBA format images.
-    - ConvertMode.COLOR_BGRA2GRAY: convert BGRA format images to GRAY format images.
-    - ConvertMode.COLOR_RGBA2GRAY: convert RGBA format images to GRAY format images.
-    """
-    COLOR_BGR2BGRA = 0
-    COLOR_RGB2RGBA = COLOR_BGR2BGRA
-    COLOR_BGRA2BGR = 1
-    COLOR_RGBA2RGB = COLOR_BGRA2BGR
-    COLOR_BGR2RGBA = 2
-    COLOR_RGB2BGRA = COLOR_BGR2RGBA
-    COLOR_RGBA2BGR = 3
-    COLOR_BGRA2RGB = COLOR_RGBA2BGR
-    COLOR_BGR2RGB = 4
-    COLOR_RGB2BGR = COLOR_BGR2RGB
-    COLOR_BGRA2RGBA = 5
-    COLOR_RGBA2BGRA = COLOR_BGRA2RGBA
-    COLOR_BGR2GRAY = 6
-    COLOR_RGB2GRAY = 7
-    COLOR_GRAY2BGR = 8
-    COLOR_GRAY2RGB = COLOR_GRAY2BGR
-    COLOR_GRAY2BGRA = 9
-    COLOR_GRAY2RGBA = COLOR_GRAY2BGRA
-    COLOR_BGRA2GRAY = 10
-    COLOR_RGBA2GRAY = 11
-
-    @staticmethod
-    def to_c_type(mode):
-        """
-        Function to return C type for color mode.
-        """
-        c_values = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
-                    ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
-                    ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
-                    ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
-                    ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
-                    ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
-                    ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
-                    ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
-                    ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
-                    ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
-                    ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
-                    ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
-                    ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
-                    ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
-                    ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
-                    ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
-                    ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
-                    ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
-                    ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
-                    ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
-                    }
-
-        return c_values.get(mode)
-
-
-class SliceMode(IntEnum):
-    """
-    Mode to Slice Tensor into multiple parts.
-
-    Possible enumeration values are: SliceMode.PAD, SliceMode.DROP.
-
-    - SliceMode.PAD: pad some pixels before slice the Tensor if needed.
-    - SliceMode.DROP: drop remainder pixels before slice the Tensor if needed.
-    """
-    PAD = 0
-    DROP = 1
-
-    @staticmethod
-    def to_c_type(mode):
-        """
-        Function to return C type for SliceMode.
-        """
-        c_values = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
-                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
-
-        return c_values.get(mode)
-
-
 class AutoAugmentPolicy(str, Enum):
     """
     AutoAugment policy for different datasets.
@@ -331,22 +110,225 @@ class AutoAugmentPolicy(str, Enum):
         return c_values.get(policy)
 
 
-def parse_padding(padding):
-    """ Parses and prepares the padding tuple"""
+class Border(str, Enum):
+    """
+    Padding Mode, Border Type.
 
-    if isinstance(padding, numbers.Number):
-        padding = [padding] * 4
-    if len(padding) == 2:
-        logger.warning("The behavior when `padding` is a sequence of length 2 will change from padding left/top "
-                       "with the first value and right/bottom with the second, to padding left/right with the "
-                       "first one and top/bottom with the second in the future. Or you can pass in a 4-element "
-                       "sequence to specify left, top, right and bottom respectively.")
-        left = top = padding[0]
-        right = bottom = padding[1]
-        padding = (left, top, right, bottom,)
-    if isinstance(padding, list):
-        padding = tuple(padding)
-    return padding
+    Possible enumeration values are: Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC.
+
+    - Border.CONSTANT: means it fills the border with constant values.
+    - Border.EDGE: means it pads with the last value on the edge.
+    - Border.REFLECT: means it reflects the values on the edge omitting the last value of edge.
+    - Border.SYMMETRIC: means it reflects the values on the edge repeating the last value of edge.
+
+    Note: This class derived from class str to support json serializable.
+    """
+    CONSTANT: str = "constant"
+    EDGE: str = "edge"
+    REFLECT: str = "reflect"
+    SYMMETRIC: str = "symmetric"
+
+    @staticmethod
+    def to_python_type(border_type):
+        """
+        Function to return Python type for Border Type.
+        """
+        python_values = {Border.CONSTANT: 'constant',
+                         Border.EDGE: 'edge',
+                         Border.REFLECT: 'reflect',
+                         Border.SYMMETRIC: 'symmetric'}
+        return python_values.get(border_type)
+
+    @staticmethod
+    def to_c_type(border_type):
+        """
+        Function to return C type for Border Type.
+        """
+        c_values = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
+                    Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
+                    Border.REFLECT: cde.BorderType.DE_BORDER_REFLECT,
+                    Border.SYMMETRIC: cde.BorderType.DE_BORDER_SYMMETRIC}
+
+        return c_values.get(border_type)
+
+
+class ConvertMode(IntEnum):
+    """
+    The color conversion mode.
+
+    Possible enumeration values are as follows:
+
+    - ConvertMode.COLOR_BGR2BGRA: convert BGR format images to BGRA format images.
+    - ConvertMode.COLOR_RGB2RGBA: convert RGB format images to RGBA format images.
+    - ConvertMode.COLOR_BGRA2BGR: convert BGRA format images to BGR format images.
+    - ConvertMode.COLOR_RGBA2RGB: convert RGBA format images to RGB format images.
+    - ConvertMode.COLOR_BGR2RGBA: convert BGR format images to RGBA format images.
+    - ConvertMode.COLOR_RGB2BGRA: convert RGB format images to BGRA format images.
+    - ConvertMode.COLOR_RGBA2BGR: convert RGBA format images to BGR format images.
+    - ConvertMode.COLOR_BGRA2RGB: convert BGRA format images to RGB format images.
+    - ConvertMode.COLOR_BGR2RGB: convert BGR format images to RGB format images.
+    - ConvertMode.COLOR_RGB2BGR: convert RGB format images to BGR format images.
+    - ConvertMode.COLOR_BGRA2RGBA: convert BGRA format images to RGBA format images.
+    - ConvertMode.COLOR_RGBA2BGRA: convert RGBA format images to BGRA format images.
+    - ConvertMode.COLOR_BGR2GRAY: convert BGR format images to GRAY format images.
+    - ConvertMode.COLOR_RGB2GRAY: convert RGB format images to GRAY format images.
+    - ConvertMode.COLOR_GRAY2BGR: convert GRAY format images to BGR format images.
+    - ConvertMode.COLOR_GRAY2RGB: convert GRAY format images to RGB format images.
+    - ConvertMode.COLOR_GRAY2BGRA: convert GRAY format images to BGRA format images.
+    - ConvertMode.COLOR_GRAY2RGBA: convert GRAY format images to RGBA format images.
+    - ConvertMode.COLOR_BGRA2GRAY: convert BGRA format images to GRAY format images.
+    - ConvertMode.COLOR_RGBA2GRAY: convert RGBA format images to GRAY format images.
+    """
+    COLOR_BGR2BGRA = 0
+    COLOR_RGB2RGBA = COLOR_BGR2BGRA
+    COLOR_BGRA2BGR = 1
+    COLOR_RGBA2RGB = COLOR_BGRA2BGR
+    COLOR_BGR2RGBA = 2
+    COLOR_RGB2BGRA = COLOR_BGR2RGBA
+    COLOR_RGBA2BGR = 3
+    COLOR_BGRA2RGB = COLOR_RGBA2BGR
+    COLOR_BGR2RGB = 4
+    COLOR_RGB2BGR = COLOR_BGR2RGB
+    COLOR_BGRA2RGBA = 5
+    COLOR_RGBA2BGRA = COLOR_BGRA2RGBA
+    COLOR_BGR2GRAY = 6
+    COLOR_RGB2GRAY = 7
+    COLOR_GRAY2BGR = 8
+    COLOR_GRAY2RGB = COLOR_GRAY2BGR
+    COLOR_GRAY2BGRA = 9
+    COLOR_GRAY2RGBA = COLOR_GRAY2BGRA
+    COLOR_BGRA2GRAY = 10
+    COLOR_RGBA2GRAY = 11
+
+    @staticmethod
+    def to_c_type(mode):
+        """
+        Function to return C type for color mode.
+        """
+        c_values = {ConvertMode.COLOR_BGR2BGRA: cde.ConvertMode.DE_COLOR_BGR2BGRA,
+                    ConvertMode.COLOR_RGB2RGBA: cde.ConvertMode.DE_COLOR_RGB2RGBA,
+                    ConvertMode.COLOR_BGRA2BGR: cde.ConvertMode.DE_COLOR_BGRA2BGR,
+                    ConvertMode.COLOR_RGBA2RGB: cde.ConvertMode.DE_COLOR_RGBA2RGB,
+                    ConvertMode.COLOR_BGR2RGBA: cde.ConvertMode.DE_COLOR_BGR2RGBA,
+                    ConvertMode.COLOR_RGB2BGRA: cde.ConvertMode.DE_COLOR_RGB2BGRA,
+                    ConvertMode.COLOR_RGBA2BGR: cde.ConvertMode.DE_COLOR_RGBA2BGR,
+                    ConvertMode.COLOR_BGRA2RGB: cde.ConvertMode.DE_COLOR_BGRA2RGB,
+                    ConvertMode.COLOR_BGR2RGB: cde.ConvertMode.DE_COLOR_BGR2RGB,
+                    ConvertMode.COLOR_RGB2BGR: cde.ConvertMode.DE_COLOR_RGB2BGR,
+                    ConvertMode.COLOR_BGRA2RGBA: cde.ConvertMode.DE_COLOR_BGRA2RGBA,
+                    ConvertMode.COLOR_RGBA2BGRA: cde.ConvertMode.DE_COLOR_RGBA2BGRA,
+                    ConvertMode.COLOR_BGR2GRAY: cde.ConvertMode.DE_COLOR_BGR2GRAY,
+                    ConvertMode.COLOR_RGB2GRAY: cde.ConvertMode.DE_COLOR_RGB2GRAY,
+                    ConvertMode.COLOR_GRAY2BGR: cde.ConvertMode.DE_COLOR_GRAY2BGR,
+                    ConvertMode.COLOR_GRAY2RGB: cde.ConvertMode.DE_COLOR_GRAY2RGB,
+                    ConvertMode.COLOR_GRAY2BGRA: cde.ConvertMode.DE_COLOR_GRAY2BGRA,
+                    ConvertMode.COLOR_GRAY2RGBA: cde.ConvertMode.DE_COLOR_GRAY2RGBA,
+                    ConvertMode.COLOR_BGRA2GRAY: cde.ConvertMode.DE_COLOR_BGRA2GRAY,
+                    ConvertMode.COLOR_RGBA2GRAY: cde.ConvertMode.DE_COLOR_RGBA2GRAY,
+                    }
+
+        return c_values.get(mode)
+
+
+class ImageBatchFormat(IntEnum):
+    """
+    Data Format of images after batch operation.
+
+    Possible enumeration values are: ImageBatchFormat.NHWC, ImageBatchFormat.NCHW.
+
+    - ImageBatchFormat.NHWC: in orders like, batch N, height H, width W, channels C to store the data.
+    - ImageBatchFormat.NCHW: in orders like, batch N, channels C, height H, width W to store the data.
+    """
+    NHWC = 0
+    NCHW = 1
+
+    @staticmethod
+    def to_c_type(image_batch_format):
+        """
+        Function to return C type for ImageBatchFormat.
+        """
+        c_values = {ImageBatchFormat.NHWC: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NHWC,
+                    ImageBatchFormat.NCHW: cde.ImageBatchFormat.DE_IMAGE_BATCH_FORMAT_NCHW}
+
+        return c_values.get(image_batch_format)
+
+
+class Inter(IntEnum):
+    """
+    Interpolation Modes.
+
+    Possible enumeration values are: Inter.NEAREST, Inter.ANTIALIAS, Inter.LINEAR, Inter.BILINEAR, Inter.CUBIC,
+    Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC.
+
+    - Inter.NEAREST: means interpolation method is nearest-neighbor interpolation.
+    - Inter.ANTIALIAS: means the interpolation method is antialias interpolation.
+    - Inter.LINEAR: means interpolation method is bilinear interpolation, here is the same as Inter.BILINEAR.
+    - Inter.BILINEAR: means interpolation method is bilinear interpolation.
+    - Inter.CUBIC: means the interpolation method is bicubic interpolation, here is the same as Inter.BICUBIC.
+    - Inter.BICUBIC: means the interpolation method is bicubic interpolation.
+    - Inter.AREA: means interpolation method is pixel area interpolation.
+    - Inter.PILCUBIC: means interpolation method is bicubic interpolation like implemented in pillow, input
+      should be in 3 channels format.
+    """
+    NEAREST = 0
+    ANTIALIAS = 1
+    BILINEAR = LINEAR = 2
+    BICUBIC = CUBIC = 3
+    AREA = 4
+    PILCUBIC = 5
+
+    @staticmethod
+    def to_python_type(inter_type):
+        """
+        Function to return Python type for Interpolation Mode.
+        """
+        if Image.__version__ >= "9.1.0":
+            python_values = {Inter.NEAREST: Image.Resampling.NEAREST,
+                             Inter.ANTIALIAS: Image.Resampling.LANCZOS,
+                             Inter.LINEAR: Image.Resampling.BILINEAR,
+                             Inter.CUBIC: Image.Resampling.BICUBIC}
+        else:
+            python_values = {Inter.NEAREST: Image.NEAREST,
+                             Inter.ANTIALIAS: Image.ANTIALIAS,
+                             Inter.LINEAR: Image.LINEAR,
+                             Inter.CUBIC: Image.CUBIC}
+        return python_values.get(inter_type)
+
+    @staticmethod
+    def to_c_type(inter_type):
+        """
+        Function to return C type for Interpolation Mode.
+        """
+        c_values = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
+                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
+                    Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
+                    Inter.AREA: cde.InterpolationMode.DE_INTER_AREA,
+                    Inter.PILCUBIC: cde.InterpolationMode.DE_INTER_PILCUBIC}
+
+        return c_values.get(inter_type)
+
+
+class SliceMode(IntEnum):
+    """
+    Mode to Slice Tensor into multiple parts.
+
+    Possible enumeration values are: SliceMode.PAD, SliceMode.DROP.
+
+    - SliceMode.PAD: pad some pixels before slice the Tensor if needed.
+    - SliceMode.DROP: drop remainder pixels before slice the Tensor if needed.
+    """
+    PAD = 0
+    DROP = 1
+
+    @staticmethod
+    def to_c_type(mode):
+        """
+        Function to return C type for SliceMode.
+        """
+        c_values = {SliceMode.PAD: cde.SliceMode.DE_SLICE_PAD,
+                    SliceMode.DROP: cde.SliceMode.DE_SLICE_DROP}
+
+        return c_values.get(mode)
 
 
 def get_image_num_channels(image):
@@ -397,3 +379,21 @@ def get_image_size(image):
         return size_list
 
     raise TypeError("Input image is not of type {0} or {1}, but got: {2}.".format(np.ndarray, Image.Image, type(image)))
+
+
+def parse_padding(padding):
+    """ Parses and prepares the padding tuple"""
+
+    if isinstance(padding, numbers.Number):
+        padding = [padding] * 4
+    if len(padding) == 2:
+        logger.warning("The behavior when `padding` is a sequence of length 2 will change from padding left/top "
+                       "with the first value and right/bottom with the second, to padding left/right with the "
+                       "first one and top/bottom with the second in the future. Or you can pass in a 4-element "
+                       "sequence to specify left, top, right and bottom respectively.")
+        left = top = padding[0]
+        right = bottom = padding[1]
+        padding = (left, top, right, bottom,)
+    if isinstance(padding, list):
+        padding = tuple(padding)
+    return padding

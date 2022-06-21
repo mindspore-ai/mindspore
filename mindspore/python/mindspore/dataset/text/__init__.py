@@ -30,22 +30,14 @@ Descriptions of common data processing terms are as follows:
 - TextTensorOperation, the base class of all text processing operations. It is a derived class of TensorOperation.
 """
 import platform
-from .transforms import Lookup, JiebaTokenizer, UnicodeCharTokenizer, Ngram, WordpieceTokenizer, \
-    TruncateSequencePair, ToNumber, SlidingWindow, SentencePieceTokenizer, PythonTokenizer, ToVectors
-from .utils import to_str, to_bytes, JiebaMode, Vocab, NormalizeForm, SentencePieceVocab, SentencePieceModel, \
-    SPieceTokenizerOutType, SPieceTokenizerLoadType, Vectors, FastText, GloVe, CharNGram
 
-__all__ = [
-    "Lookup", "JiebaTokenizer", "UnicodeCharTokenizer", "Ngram",
-    "to_str", "to_bytes", "Vocab", "WordpieceTokenizer", "TruncateSequencePair", "ToNumber",
-    "PythonTokenizer", "SlidingWindow", "SentencePieceVocab", "SentencePieceTokenizer", "SPieceTokenizerOutType",
-    "SentencePieceModel", "SPieceTokenizerLoadType", "JiebaMode", "NormalizeForm", "Vectors", "ToVectors", "FastText",
-    "GloVe", "CharNGram"
-]
+from . import transforms
+from . import utils
+from .transforms import JiebaTokenizer, Lookup, Ngram, PythonTokenizer, SentencePieceTokenizer, SlidingWindow, \
+    ToNumber, ToVectors, TruncateSequencePair, UnicodeCharTokenizer, WordpieceTokenizer
+from .utils import CharNGram, FastText, GloVe, JiebaMode, NormalizeForm, SentencePieceModel, SentencePieceVocab, \
+    SPieceTokenizerLoadType, SPieceTokenizerOutType, Vectors, Vocab, to_bytes, to_str
 
 if platform.system().lower() != 'windows':
-    from .transforms import UnicodeScriptTokenizer, WhitespaceTokenizer, CaseFold, NormalizeUTF8, \
-        RegexReplace, RegexTokenizer, BasicTokenizer, BertTokenizer
-
-    __all__.extend(["UnicodeScriptTokenizer", "WhitespaceTokenizer", "CaseFold", "NormalizeUTF8",
-                    "RegexReplace", "RegexTokenizer", "BasicTokenizer", "BertTokenizer"])
+    from .transforms import BasicTokenizer, BertTokenizer, CaseFold, FilterWikipediaXML, NormalizeUTF8, RegexReplace, \
+        RegexTokenizer, UnicodeScriptTokenizer, WhitespaceTokenizer
