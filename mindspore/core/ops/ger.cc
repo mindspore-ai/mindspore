@@ -32,13 +32,29 @@ abstract::ShapePtr GerInferShape(const PrimitivePtr &primitive, const std::vecto
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-
   auto first_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto second_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x1 rank", SizeToLong(first_input_shape.size()), kGreaterEqual, 1,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("x2 rank", SizeToLong(second_input_shape.size()), kGreaterEqual, 1,
-                                           prim_name);
+
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+
+  if (batch_rank == 0) {
+    (void)CheckAndConvertUtils::CheckInteger("x1 rank", SizeToLong(first_input_shape.size()), kEqual, kGerShapeNum1,
+                                             prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("x2 rank", SizeToLong(second_input_shape.size()), kEqual, kGerShapeNum1,
+                                             prim_name);
+
+    std::vector<int64_t> out_shape = {first_input_shape[0], second_input_shape[0]};
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("x1 rank", SizeToLong(first_input_shape.size()), kGreaterEqual,
+                                           kGerShapeNum2, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("x2 rank", SizeToLong(second_input_shape.size()), kGreaterEqual,
+                                           kGerShapeNum2, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("two inputs rank", SizeToLong(first_input_shape.size()), kEqual,
                                            SizeToLong(second_input_shape.size()), prim_name);
 

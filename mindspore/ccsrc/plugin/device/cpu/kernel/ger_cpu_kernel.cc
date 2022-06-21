@@ -25,12 +25,15 @@
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/matmul_fp32.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 const size_t kGerInputsNum = 2;
 const size_t kGerOutputsNum = 1;
+const size_t kNoBatchNum = 1;
 }  // namespace
 
 bool GerCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -67,22 +70,28 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
     return ret;
   }
-  std::vector<int64_t> input_shape_1 = inputs[0]->GetShapeVector();
-  std::vector<int64_t> input_shape_2 = inputs[1]->GetShapeVector();
-  std::vector<int64_t> output_shape = outputs[0]->GetShapeVector();
-  auto in_shape_size_1 = input_shape_1.size();
-  auto in_shape_size_2 = input_shape_2.size();
+
+  input_shape_1_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                       inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  input_shape_2_ = std::vector<size_t>(inputs.at(kIndex1)->GetDeviceShapeAdaptively().begin(),
+                                       inputs.at(kIndex1)->GetDeviceShapeAdaptively().end());
+  output_shape_ = std::vector<size_t>(outputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
+                                      outputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
+  auto in_shape_size_1 = input_shape_1_.size();
+  auto in_shape_size_2 = input_shape_2_.size();
+
+  if (input_shape_1_.size() > max_dims_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the dimension of input should be less than or equal to max_dims 7, but got "
+                      << input_shape_1_.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
   if (in_shape_size_1 != in_shape_size_2) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input1 shape size should be the same as input2 shape size, but got"
                   << " input1 shape size " << in_shape_size_1 << " input2 shape size " << in_shape_size_2;
     return KRET_RESIZE_FAILED;
   }
 
-  (void)std::transform(input_shape_1.begin(), input_shape_1.end(), std::back_inserter(input_shape_1_), LongToSize);
-  (void)std::transform(input_shape_2.begin(), input_shape_2.end(), std::back_inserter(input_shape_2_), LongToSize);
-  (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-
-  batches_ = 1;
   for (size_t shape_index = 0; shape_index < input_shape_1_.size() - 1; shape_index++) {
     if (input_shape_1_[shape_index] != input_shape_2_[shape_index]) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', the " << shape_index << "th dimension of shape size of input1 and"
@@ -93,38 +102,131 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
     batches_ *= input_shape_1_[shape_index];
   }
 
+  in1dim_ = input_shape_1_[input_shape_1_.size() - 1];
+  in2dim_ = input_shape_2_[input_shape_2_.size() - 1];
+  outdim_ = in1dim_ * in2dim_;
+
+  if (input_type_1_ == kNumberTypeFloat16) {
+    // get float space float_input1, float_input2, float_output
+    workspace_size_list_.push_back(batches_ * in1dim_ * sizeof(float));
+    workspace_size_list_.push_back(batches_ * in2dim_ * sizeof(float));
+    workspace_size_list_.push_back(batches_ * outdim_ * sizeof(float));
+    if (batches_ != kNoBatchNum) {
+      launch_func_ = &GerCpuKernelMod::LaunchBatchesFp16;
+    } else {
+      launch_func_ = &GerCpuKernelMod::LaunchNoBatchesFp16;
+    }
+  } else if (input_type_1_ == kNumberTypeFloat32) {
+    if (batches_ != kNoBatchNum) {
+      launch_func_ = &GerCpuKernelMod::LaunchBatches;
+    } else {
+      launch_func_ = &GerCpuKernelMod::LaunchNoBatches;
+    }
+  } else {
+    MS_LOG(ERROR) << "Ger kernel does not support " << TypeIdToString(input_type_1_);
+    return false;
+  }
+
   return KRET_OK;
 }
 
+bool GerCpuKernelMod::LaunchBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &workspace,
+                                        const std::vector<kernel::AddressPtr> &outputs) {
+  float16 *input1 = reinterpret_cast<float16 *>(inputs[kIndex0]->addr);
+  float16 *input2 = reinterpret_cast<float16 *>(inputs[kIndex1]->addr);
+  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
+  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
+  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
+  float16 *output = reinterpret_cast<float16 *>(outputs[kIndex0]->addr);
+
+  auto task = [this, &float_input1, &float_input2, &input1, &input2, &output, &float_output](size_t start, size_t end) {
+    for (size_t i = start * this->in1dim_; i < end * this->in1dim_; ++i) {
+      float_input1[i] = static_cast<float>(input1[i]);
+    }
+    for (size_t i = start * this->in2dim_; i < end * this->in2dim_; ++i) {
+      float_input2[i] = static_cast<float>(input2[i]);
+    }
+
+    for (size_t i = start; i < end; i++) {
+      MatMulOpt(float_input1 + i * this->in1dim_, float_input2 + i * this->in2dim_, float_output + i * this->outdim_, 0,
+                ActType_No, 1, this->in1dim_, this->in2dim_, this->in2dim_, 1);
+    }
+
+    for (size_t i = start * this->outdim_; i < end * this->outdim_; ++i) {
+      output[i] = static_cast<float16>(float_output[i]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, batches_, this, &parallel_search_info_);
+  return true;
+}
+
+bool GerCpuKernelMod::LaunchNoBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+                                          const std::vector<kernel::AddressPtr> &workspace,
+                                          const std::vector<kernel::AddressPtr> &outputs) {
+  float16 *input1 = reinterpret_cast<float16 *>(inputs[kIndex0]->addr);
+  float16 *input2 = reinterpret_cast<float16 *>(inputs[kIndex1]->addr);
+  float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
+  float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
+  float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
+  float16 *output = reinterpret_cast<float16 *>(outputs[kIndex0]->addr);
+
+  for (size_t i = 0; i < ((inputs[kIndex0]->size) / sizeof(float16)); ++i) {
+    float_input1[i] = static_cast<float>(input1[i]);
+  }
+  for (size_t i = 0; i < ((inputs[kIndex1]->size) / sizeof(float16)); ++i) {
+    float_input2[i] = static_cast<float>(input2[i]);
+  }
+
+  auto task = [this, &float_input1, &float_input2, &float_output, &output](size_t start, size_t end) {
+    MatMulOpt(float_input1 + start, float_input2, float_output + start * this->in2dim_, 0, ActType_No, 1, end - start,
+              this->in2dim_, this->in2dim_, 1);
+
+    for (size_t i = start * this->in2dim_; i < end * this->in2dim_; ++i) {
+      output[i] = static_cast<float16>(float_output[i]);
+    }
+  };
+  ParallelLaunchAutoSearch(task, in1dim_, this, &parallel_search_info_);
+  return true;
+}
+
+bool GerCpuKernelMod::LaunchBatches(const std::vector<kernel::AddressPtr> &inputs,
+                                    const std::vector<kernel::AddressPtr> &workspace,
+                                    const std::vector<kernel::AddressPtr> &outputs) {
+  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->addr);
+  float *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
+    for (size_t i = start; i < end; i++) {
+      MatMulOpt(input1 + i * this->in1dim_, input2 + i * this->in2dim_, output + i * this->outdim_, 0, ActType_No, 1,
+                this->in1dim_, this->in2dim_, this->in2dim_, 1);
+    }
+  };
+  ParallelLaunchAutoSearch(task, batches_, this, &parallel_search_info_);
+  return true;
+}
+
+bool GerCpuKernelMod::LaunchNoBatches(const std::vector<kernel::AddressPtr> &inputs,
+                                      const std::vector<kernel::AddressPtr> &workspace,
+                                      const std::vector<kernel::AddressPtr> &outputs) {
+  float *input1 = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  float *input2 = reinterpret_cast<float *>(inputs[kIndex1]->addr);
+  float *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  auto task = [this, &input1, &input2, &output](size_t start, size_t end) {
+    MatMulOpt(input1 + start, input2, output + start * this->in2dim_, 0, ActType_No, 1, end - start, this->in2dim_,
+              this->in2dim_, 1);
+  };
+  ParallelLaunchAutoSearch(task, in1dim_, this, &parallel_search_info_);
+  return true;
+}
+
 template <typename T>
-bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+bool GerCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<AddressPtr> &workspace,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGerInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGerOutputsNum, kernel_name_);
-  T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-  T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
-  T *output = reinterpret_cast<T *>(outputs[0]->addr);
-  if (output_shape_.size() == 0) {
-    (void)output_shape_.insert(output_shape_.begin(), 1);
-  }
-  size_t output_size_ = 1;
-  for (size_t i = 0; i < output_shape_.size(); ++i) {
-    output_size_ *= LongToSize(output_shape_[i]);
-  }
-
-  size_t input1_size = input_shape_1_[input_shape_1_.size() - 1];
-  size_t input2_size = input_shape_2_[input_shape_2_.size() - 1];
-  size_t output_size = input1_size * input2_size;
-  auto task = [&input1, &input2, &output, input1_size, input2_size, output_size](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      size_t batch_index = i / output_size;
-      size_t input1_index = (i % output_size) / input2_size + batch_index * input1_size;
-      size_t input2_index = (i % output_size) % input2_size + batch_index * input2_size;
-      output[i] = static_cast<T>(input1[input1_index] * input2[input2_index]);
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
-  return true;
+  return launch_func_(this, inputs, workspace, outputs);
 }
 
 const std::vector<std::pair<KernelAttr, GerCpuKernelMod::KernelRunFunc>> &GerCpuKernelMod::GetFuncList() const {

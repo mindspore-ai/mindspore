@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGer = "Ger";
+constexpr int64_t kGerShapeNum1 = 1;
+constexpr int64_t kGerShapeNum2 = 2;
 /// \brief Ger product of `x1` and `x2`. Calculate the outer product of two one-dimensional arrays.
 /// Refer to Python API @ref mindspore.ops.Ger for more details.
 class MIND_API Ger : public BaseOperator {

@@ -56,8 +56,23 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
+  using LaunchFunc = std::function<bool(GerCpuKernelMod *, const std::vector<kernel::AddressPtr> &inputs,
+                                        const std::vector<kernel::AddressPtr> &workspace,
+                                        const std::vector<kernel::AddressPtr> &outputs)>;
+  LaunchFunc launch_func_;
+
+  bool LaunchBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+                         const std::vector<kernel::AddressPtr> &workspace,
+                         const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchNoBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+                           const std::vector<kernel::AddressPtr> &workspace,
+                           const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                     const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchNoBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                       const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
   std::string kernel_name_;
@@ -67,6 +82,10 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
   std::vector<size_t> input_shape_2_;
   std::vector<size_t> output_shape_;
   size_t batches_{1};
+  size_t in1dim_;
+  size_t in2dim_;
+  size_t outdim_;
+  const size_t max_dims_{7};
 };
 }  // namespace kernel
 }  // namespace mindspore

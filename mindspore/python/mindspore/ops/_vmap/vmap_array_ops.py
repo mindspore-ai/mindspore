@@ -894,6 +894,13 @@ def get_padding_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.Ger)
 def get_ger_vmap_rule(prim, axis_size):
     """VmapRule for `Ger`."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = P.Ger()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(x1_bdim, x2_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x1_bdim, x2_bdim)
@@ -904,7 +911,7 @@ def get_ger_vmap_rule(prim, axis_size):
         x2, x2_dim = x2_bdim
         x1 = _bdim_at_front(x1, x1_dim, axis_size)
         x2 = _bdim_at_front(x2, x2_dim, axis_size)
-        out = prim(x1, x2)
+        out = batch_prim(x1, x2)
         return (out, 0)
 
     return vmap_rule

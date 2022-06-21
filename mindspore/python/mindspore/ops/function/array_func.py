@@ -617,12 +617,7 @@ def ger(x1, x2):
     r"""
     Ger product of `x1` and `x2`. Calculate the outer product of two arrays. If `x1` is a 1D Tensor of
     shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
-    :math:`(m, n)`. If `x1` is a Tensor of shape :math:`(*B, m)` and `x2` is a Tensor of shape :math:`(*B, n)`, then
-    `output` must be a Tensor of shape :math:`(*B, m, n)`.
-
-    Notes:
-        In Ascend, batch dimension input is not supported. Specifically, `x1` and `x2` are both required to be 1D input
-        Tensors.
+    :math:`(m, n)`.
 
     Args:
         x1 (Tensor): input Tensor, with dtype of float16 or float32.
@@ -633,10 +628,9 @@ def ger(x1, x2):
         `x2` shape of :math:`(*B, n)`, the `output` has shape :math:`(*B, m, n)`.
 
     Raises:
-        TypeError: If `x1` or `x2` is not a Tensor.
+        TypeError: If `x1` or `x2` is not a 1-D Tensor.
         TypeError: If the dtype of `x1` and `x2` is neither float16 nor float32.
         TypeError: If the dtype of `x1` and `x2` are not the same.
-        ValueError: If the batch dimension shapes :math:`(*B,)` of `x1` and `x2` are different.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
