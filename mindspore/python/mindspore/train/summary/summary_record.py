@@ -194,7 +194,7 @@ class SummaryRecord:
         self.close()
 
     def set_mode(self, mode):
-        """
+        r"""
         Set the model running phase. Different phases affect data recording.
 
         Args:
@@ -222,7 +222,7 @@ class SummaryRecord:
         self._mode = mode
 
     def add_value(self, plugin, name, value):
-        """
+        r"""
         Add value to be recorded later.
 
         Args:
@@ -309,7 +309,7 @@ class SummaryRecord:
                              f'eval_lineage, dataset_graph, custom_lineage_data, graph, landscape]')
 
     def record(self, step, train_network=None, plugin_filter=None):
-        """
+        r"""
         Record the summary.
 
         Args:
@@ -434,7 +434,7 @@ class SummaryRecord:
 
     @property
     def log_dir(self):
-        """
+        r"""
         Get the full path of the log file.
 
         Returns:
@@ -450,7 +450,7 @@ class SummaryRecord:
         return self.file_info['file_path']
 
     def flush(self):
-        """
+        r"""
         Flush the buffer and write buffer data to disk.
 
         Call it to make sure that all pending events have been written to disk.
