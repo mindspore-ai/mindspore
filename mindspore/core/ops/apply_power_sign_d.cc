@@ -97,7 +97,7 @@ TuplePtr ApplyPowerSignDInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto sign_decay_type = input_args[kInputIndex4]->BuildType();
   auto beta_type = input_args[kInputIndex5]->BuildType();
   auto grad_type = input_args[kInputIndex6]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   args.insert({"var", var_type});
   args.insert({"m", m_type});
