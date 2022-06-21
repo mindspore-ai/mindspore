@@ -31,6 +31,7 @@ from ..operations.array_ops import Fills
 from ..operations.array_ops import UniqueConsecutive
 from ..operations.array_ops import Col2Im
 from ..operations.array_ops import NonZero
+from ..operations.array_ops import IndexFill
 
 
 @vmap_rules_getters.register("Cast")
@@ -1138,6 +1139,38 @@ def get_gather_vmap_rule(prim, axis_size):
         output = prim(x, indices, axis)
 
         return (output, axis)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(IndexFill)
+def get_index_fill_rule(prim, axis_size):
+    """VmapRule for `IndexFill` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = IndexFill()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(x_bdim, dim_bdim, index_bdim, value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, dim_bdim, index_bdim, value_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        dim, dim_dim = dim_bdim
+        index, index_dim = index_bdim
+        value, value_dim = value_bdim
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        dim = _bdim_at_front(dim, dim_dim, axis_size)
+        index = _bdim_at_front(index, index_dim, axis_size)
+        value = _bdim_at_front(value, value_dim, axis_size)
+
+        out = batch_prim(x, dim, index, value)
+        return out, 0
 
     return vmap_rule
 

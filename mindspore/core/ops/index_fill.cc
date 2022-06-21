@@ -58,24 +58,30 @@ TypePtr IndexFillInferType(const PrimitivePtr &primitive, const std::vector<Abst
 abstract::ShapePtr IndexFillInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
 
   // Input 'dim' must be a tensor with a value or a scalar.
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
     auto dim_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
     auto dim_rank = SizeToLong(dim_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("rank of 'dim'", dim_rank, kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'dim'", dim_rank, kEqual, batch_rank, prim_name);
   }
 
   // Input 'index' must be a scalar/vector.
   auto index_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto index_rank = SizeToLong(index_shape.size());
-  (void)CheckAndConvertUtils::CheckInRange("rank of 'index'", index_rank, kIncludeBoth, {0, 1}, prim_name);
+  (void)CheckAndConvertUtils::CheckInRange("rank of 'index'", index_rank, kIncludeBoth, {batch_rank, batch_rank + 1},
+                                           prim_name);
 
   // Input 'value' must be a tensor with a value or a scalar.
   if (input_args[kInputIndex3]->isa<abstract::AbstractTensor>()) {
     auto value_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
     auto value_rank = SizeToLong(value_shape.size());
-    (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, 0, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("rank of 'value'", value_rank, kEqual, batch_rank, prim_name);
   }
 
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
