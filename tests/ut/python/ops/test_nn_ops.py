@@ -660,6 +660,11 @@ test_cases = [
                         Tensor(np.ones([1, 5, 4, 4], np.float32)),
                         Tensor(np.ones([1, 5, 4, 4], np.float32))],
     }),
+    ('Unflatten', {
+        'block': nn.Unflatten(1, (2, 5)),
+        'desc_inputs': [Tensor(np.ones([2, 10, 5]))],
+        'skip': ['backward']
+    }),
 ]
 
 test_cases_for_verify_exception = [
