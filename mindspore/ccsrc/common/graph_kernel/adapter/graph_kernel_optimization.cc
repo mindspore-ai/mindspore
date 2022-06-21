@@ -59,6 +59,7 @@
 #include "common/graph_kernel/floatstatus_addn_fusion.h"
 #include "common/graph_kernel/parallel_optimizer.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
+#include "common/graph_kernel/compact_tensor_liveness.h"
 #include "common/graph_kernel/graph_kernel_build.h"
 
 namespace mindspore::graphkernel {
@@ -215,6 +216,8 @@ PassManagerPtr GraphKernelOptimizer::Combine() const {
   pm->Add(std::make_shared<SpreadUpdateState>(), level);
   pm->Add(std::make_shared<ParallelOpFusion>(target, ParallelConfig(PARALLEL_OPS_LIMIT)), level, is_gpu || is_ascend);
 
+  // For memory efficiency, insert UpdateState for op with no cnode/param inputs to avoid early launching
+  pm->Add(std::make_shared<CompactTensorLiveness>(), OptLevel_2);
   return pm;
 }
 
