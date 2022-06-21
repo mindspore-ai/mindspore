@@ -20,12 +20,14 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include "utils/ms_context.h"
 #include "runtime/device/bucket.h"
 
 namespace mindspore::device::ascend {
 class AscendBucket : public Bucket {
  public:
-  AscendBucket(uint32_t id, uint32_t bucket_size) : Bucket(id, bucket_size, kHcclWorldGroup, "Ascend") {}
+  AscendBucket(uint32_t id, uint32_t bucket_size, uint32_t device_id)
+      : Bucket(id, bucket_size, kHcclWorldGroup, kAscendDevice, device_id) {}
   ~AscendBucket() override = default;
 
   void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;

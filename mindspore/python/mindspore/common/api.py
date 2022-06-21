@@ -48,6 +48,7 @@ ms_compile_cache = set()
 cells_compile_cache = {}
 
 BROADCAST_PHASE = "_broadcast_"
+_PYNATIVE_PARRALLEL_FUNC_NAME = "after_shard"
 
 
 def _convert_python_data(data):
@@ -297,7 +298,7 @@ class _MindsporeFunctionExecutor:
             self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
-        if is_pynative_parallel():
+        if is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
 
         if not is_compile:
@@ -311,7 +312,8 @@ class _MindsporeFunctionExecutor:
         if self.obj is not None:
             args_list = args_list[1:]
 
-        if is_pynative_parallel() and not hasattr(self.shard_parent_obj, "keep_input_unchanged"):
+        if is_pynative_parallel() and not hasattr(self.shard_parent_obj, "keep_input_unchanged") and \
+            self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
             device_num = context.get_auto_parallel_context('device_num')
             new_args_list = ()
             for arg in args_list:
@@ -482,7 +484,6 @@ def ms_function(fn=None, input_signature=None, hash_args=None):
             hash_obj = _get_ms_function_hash(hash_args)
         else:
             hash_obj = int(time.time() * 1e9)
-        _pynative_parallel_func_name = "after_shard"
 
         @wraps(func)
         def staging_specialize(*args):
@@ -490,7 +491,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None):
             if args and not isinstance(args[0], PythonTensor) and hasattr(args[0], func.__name__):
                 process_obj = args[0]
             # only the function or cell instance wrapped by shard will fall into this branch
-            if is_pynative_parallel() and func.__name__ == _pynative_parallel_func_name:
+            if is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
                 process_obj = args[0]
                 args = args[1:]
             out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj)(*args)

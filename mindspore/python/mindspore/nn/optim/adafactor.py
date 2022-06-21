@@ -17,6 +17,7 @@ from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.log import logging
 from mindspore.common.initializer import initializer
+from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -398,6 +399,7 @@ class AdaFactor(Optimizer):
         """
         return False
 
+    @ms_function
     def construct(self, gradients):
         gradients = self.flatten_gradients(gradients)
         lr = self.get_lr()

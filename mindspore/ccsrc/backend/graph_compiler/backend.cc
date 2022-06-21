@@ -1056,7 +1056,11 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
     } else {
       cnode_ref_count = iter->second;
     }
-    graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
+
+    MS_EXCEPTION_IF_NULL(root_graph_);
+    if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
+      graph_compiler_->CalculateForwardOpOutputCount(graph, inputs[graph_index], &forward_op_output_tensor_id_);
+    }
 
     for (const auto &kernel : graph->execution_order()) {
       InputTensorInfo input_tensor_info;

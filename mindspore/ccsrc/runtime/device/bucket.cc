@@ -52,12 +52,8 @@ void Bucket::Launch() {
   pre_event_->WaitEvent();
   LaunchAllReduce();
   post_event_->RecordEvent();
+  post_event_->WaitEvent();
   UpdateTensorAddr();
-  // pass event to the tensor
-  for (auto &tensor : grad_tensor_list_) {
-    MS_EXCEPTION_IF_NULL(tensor);
-    tensor->SetDeviceEvent(post_event_);
-  }
   MS_LOG(INFO) << "Bucket launch cost:" << (GetTime() - start) * 1e6 << " us";
 }
 

@@ -25,7 +25,7 @@
 namespace mindspore::device::gpu {
 class GPUBucket : public Bucket {
  public:
-  GPUBucket(uint32_t id, uint32_t bucket_size);
+  GPUBucket(uint32_t id, uint32_t bucket_size, uint32_t device_id);
   ~GPUBucket() override = default;
 
   void Init(const std::vector<void *> &compute_streams, const std::vector<void *> &communication_streams) override;

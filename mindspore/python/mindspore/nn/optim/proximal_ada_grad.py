@@ -16,6 +16,7 @@
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.common import Tensor
 import mindspore.common.dtype as mstype
+from mindspore.common.api import ms_function
 from mindspore._checkparam import Validator as validator
 from .optimizer import Optimizer
 from .optimizer import opt_init_args_register
@@ -196,6 +197,7 @@ class ProximalAdagrad(Optimizer):
         self.opt = P.ApplyProximalAdagrad(use_locking=use_locking)
         self.sparse_opt = P.SparseApplyProximalAdagrad(use_locking=use_locking)
 
+    @ms_function
     def construct(self, grads):
         params = self._parameters
         accum = self.accum
