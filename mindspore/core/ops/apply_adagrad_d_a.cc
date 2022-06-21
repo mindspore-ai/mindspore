@@ -45,11 +45,15 @@ abstract::TupleShapePtr ApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex6]->BuildShape())[kShape];
   auto global_step_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
-  const int64_t input_num_ = 0;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, input_num_, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, input_num_, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, input_num_, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, input_num_,
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kEqual, batch_rank, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", l1_shape.size(), kEqual, batch_rank, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", l2_shape.size(), kEqual, batch_rank, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("global_step_shape size", global_step_shape.size(), kEqual, batch_rank,
                                            primitive->name());
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{var_shape, gradient_accumulator_shape, gradient_squared_accumulator_shape});

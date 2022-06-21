@@ -59,6 +59,9 @@ class ApplyAdagradDACpuKernelMod : public NativeCpuKernelMod {
   void LaunchApplyAdagradDA(T *var, T *gradient_accumulator, T *gradient_squared_accumulator, const T *grad,
                             const T *lr, const T *l1, const T *l2, const int *global_step, size_t start,
                             size_t end) const;
+  int64_t batch_size_{1};
+  int64_t batch_rank_{0};
+  int64_t input_elements_;
   TypeId dtype_{kTypeUnknown};
 };
 }  // namespace kernel
