@@ -285,6 +285,7 @@ Tensor创建
     mindspore.ops.eye
     mindspore.ops.fill
     mindspore.ops.fills
+    mindspore.ops.linspace
     mindspore.ops.ones
     mindspore.ops.ones_like
     mindspore.ops.zeros_like

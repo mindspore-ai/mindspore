@@ -1935,25 +1935,19 @@ def linspace(start, stop, num):
         &output = [start, start+step, start+2*step, ... , stop]
         \end{aligned}
 
-    Note:
-        In Ascend and GPU, batch dimension input is not supported. Specifically, `start` and `stop` are both required
-        to be 0-D input Tensors.
-
     Args:
-        start (Tensor): Start value of interval. The data type must be float32. The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        stop (Tensor): Last value of interval. The data type must be float32. The shape of tensor must
-            be the same as `start`.
+        start (Tensor): Start value of interval. The tensor data type must be float32 and with shape of 0-D.
+        stop (Tensor): Last value of interval. The tensor data type must be float32 and with shape of 0-D.
         num (int): Number of ticks in the interval, inclusive of start and stop.
             Must be positive int number.
 
     Outputs:
-        Tensor, has the same dtype as `start`, and the shape of :math:`(N, *, num)`
+        Tensor, has the same dtype as `start`, and the shape of :math:`(num)`
 
     Raises:
         TypeError: If `start` or `stop` is not a Tensor.
         TypeError: If dtype of `start` or dtype of `stop` is not float32.
-        ValueError: If shape of `start` is not the same as `stop`.
+        ValueError: If shape of `start` or shape of stop` is not 0-D.
         TypeError: If `num` is not int.
         ValueError: If `num` is not positive int number.
 
@@ -1967,17 +1961,6 @@ def linspace(start, stop, num):
         >>> output = ops.linspace(start, stop, num)
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
-        >>> start = Tensor([[2, 3, 5], [4, 6, 8]], mindspore.float32)
-        >>> stop = Tensor([[-4, 7, -2], [-10, 26, 18]], mindspore.float32)
-        >>> num = 5
-        >>> output = ops.linspace(start, stop, num)
-        >>> print(output)
-        [[[  2.     0.5   -1.    -2.5   -4.  ]
-          [  3.     4.     5.     6.     7.  ]
-          [  5.     3.25   1.5   -0.25  -2.  ]]
-         [[  4.     0.5   -3.    -6.5  -10.  ]
-          [  6.    11.    16.    21.    26.  ]
-          [  8.    10.5   13.    15.5   18.  ]]]
     """
     return linspace_(start, stop, num)
 
