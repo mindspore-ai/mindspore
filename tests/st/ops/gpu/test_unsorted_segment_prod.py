@@ -31,14 +31,14 @@ def init_result(func, shape, dtype):
     if func == 'sum':
         result = np.zeros(shape, dtype)
     if func == 'min':
-        if dtype == np.int32:
+        if dtype in [np.int32, np.uint8, np.int16, np.int8, np.int64, np.uint16, np.uint32, np.uint64]:
             result = result * np.iinfo(dtype).max
-        if dtype == np.float32:
+        if dtype in [np.float32, np.float64]:
             result = result * np.finfo(dtype).max
     if func == 'max':
-        if dtype == np.int32:
+        if dtype in [np.int32, np.uint8, np.int16, np.int8, np.int64, np.uint16, np.uint32, np.uint64]:
             result = result * np.iinfo(dtype).min
-        if dtype == np.float32:
+        if dtype in [np.float32, np.float64]:
             result = result * np.finfo(dtype).min
     return result
 
@@ -99,7 +99,7 @@ class UnsortedSegmentProdNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
-@pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_1D(func, data_type, index_type):
     """
@@ -133,10 +133,6 @@ def test_2D(func, data_type, index_type):
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor(np.random.randint(0, 100, size=[3, 4]), data_type)
     segment_ids = Tensor(np.random.randint(0, 4, size=[3]), index_type)
-    input_x = Tensor([[1, 2, 3, 4],
-                      [5, 6, 7, 8],
-                      [9, 10, 11, 12]], mstype.float32)
-    segment_ids = Tensor([2, 1, 1], mstype.int32)
     num_segments = 4
 
     net = UnsortedSegmentProdNet(num_segments)
@@ -190,7 +186,7 @@ class UnsortedSegmentProdDynNet(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['prod'])
-@pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_dyn_ab(func, data_type, index_type):
     """

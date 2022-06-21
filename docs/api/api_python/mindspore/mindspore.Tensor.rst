@@ -625,7 +625,7 @@ mindspore.Tensor
         - **TypeError** - `lambd` 不是float。
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
-        - **TypeError** - `lambd` 小于0。
+        - **ValueError** - `lambd` 小于0。
 
     .. py:method:: inplace_update(v, indices)
 
@@ -1255,6 +1255,10 @@ mindspore.Tensor
         **返回：**
 
         Tensor。
+
+        **异常：**
+
+        - **TypeError** - 当前输入不是Tensor。
 
     .. py:method:: scatter_add(indices, updates)
 
