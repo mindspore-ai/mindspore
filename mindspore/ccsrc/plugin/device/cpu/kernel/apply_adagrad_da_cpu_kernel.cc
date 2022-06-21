@@ -121,7 +121,7 @@ void ApplyAdagradDACpuKernelMod::CheckTypeSize(T inputs, int64_t input_size, con
 
 void ApplyAdagradDACpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &outputs) {
-  // inputs: var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step
+  // Inputs: var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradDAOutputsNum, kernel_name_);
   CheckShapeAndDtypeEqual(inputs[kAccIndex]->size, inputs[kVarIndex]->size, "gradient_accumulator", "var");
@@ -179,7 +179,7 @@ void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   const int *global_step = reinterpret_cast<int *>(inputs[kStepIndex]->addr);
 
   for (int64_t b = 0; b < batch_size_; b++) {
-    // multithreading
+    // Multithreading
     auto task = [this, &var, &gradient_accumulator, &gradient_squared_accumulator, &grad, &lr, &l1, &l2, &global_step](
                   size_t start, size_t end) {
       LaunchApplyAdagradDA(var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step,
@@ -234,7 +234,7 @@ void ApplyAdagradDACpuKernelMod::LaunchApplyAdagradDA(T *var, T *gradient_accumu
     auto x_value = minus_one * lr[0] * tmp_val;
     auto y_value = static_cast<T>(l2[0]) * static_cast<T>(global_step[0]) * static_cast<T>(lr[0]) +
                    sqrt(gradient_squared_accumulator[i]);
-    // update var
+    // Update var
     var[i] = static_cast<T>(x_value) / static_cast<T>(y_value);
   }
 }

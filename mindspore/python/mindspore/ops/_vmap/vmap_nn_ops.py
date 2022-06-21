@@ -679,7 +679,7 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
             var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
                                                                            gradient_squared_accumulator, grad, lr, l1,
                                                                            l2,
-                                                                           global_step)  # prim为低维ApplyAdagradDA算子；
+                                                                           global_step)  # Low dimensional operator
             return (var, None), (gradient_accumulator, None), (gradient_squared_accumulator, None)
         if var_dim != 0 or var_dim != gradient_accumulator_dim or var_dim != gradient_squared_accumulator_dim:
             raise ValueError(
@@ -689,7 +689,7 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
                 f"'gradient_accumulator_dim': {gradient_accumulator_dim}, "
                 f"'gradient_squared_accumulator_dim': {gradient_squared_accumulator_dim}")
 
-        _update_prim_attr(prim, 'batch_rank', batch_rank)  # 将prim的batch_rank属性更新；
+        _update_prim_attr(prim, 'batch_rank', batch_rank)  # Update the batch_rank attribute of prim
 
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         lr = _bdim_at_front(lr, lr_dim, axis_size)
@@ -700,7 +700,7 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
         var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
                                                                        gradient_squared_accumulator, grad, lr, l1,
                                                                        l2,
-                                                                       global_step)  # prim为高维ApplyAdagradDA算子；
+                                                                       global_step)  # High dimensional operator;
         return (var, 0), (gradient_accumulator, 0), (gradient_squared_accumulator, 0)
 
     return vmap_rule
