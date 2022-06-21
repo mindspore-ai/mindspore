@@ -855,15 +855,15 @@ const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0,
 const std::set<std::string> kNoPaddingFormatSet = {kOpFormat_ChannelLast, kOpFormat_FRAC_NZ, kOpFormat_FRACTAL_ZN_RNN,
                                                    kOpFormat_ND_RNN_BIAS};
 
-const std::set<std::string> DynamicShapeConstInputToAttr = {kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName,
-                                                            kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
-                                                            kReduceAllOpName, kReduceAnyOpName,  kConcatOpName};
+const std::set<std::string> DynamicShapeConstInputToAttr = {
+  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
+  kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kTransposeOpName};
 
 const std::set<std::string> NeedConvertToValueNodeSet = {kStridedSliceGradOpName};
 
 const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
-  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName,
-  kReduceMaxOpName, kReduceAllOpName,  kReduceAnyOpName,       kConcatOpName,    kReduceSumOpName};
+  kCastOpName,      kExpandDimsOpName, kEmbeddingLookupOpName, kReduceMinOpName, kReduceMeanOpName, kReduceMaxOpName,
+  kReduceAllOpName, kReduceAnyOpName,  kConcatOpName,          kReduceSumOpName, kTransposeOpName};
 
 const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,
