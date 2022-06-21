@@ -31,25 +31,17 @@ namespace ops {
 namespace {
 abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto indices = CheckAndConvertUtils::CheckIntOrTupleInt("indices", primitive->GetAttr(kIndices), primitive->name());
 
-  constexpr auto inputs_num = 2;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, primitive->name());
-  auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack());
-  auto v_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack());
-
-  if (x_shape_map.empty()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input x must be Tensor.";
-  }
-  if (v_shape_map.empty()) {
-    MS_EXCEPTION(TypeError) << "For '" << primitive->name() << ", the input v must be Tensor.";
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x_shape_ptr);
+  auto v_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  MS_EXCEPTION_IF_NULL(v_shape_ptr);
+  if (x_shape_ptr->IsDynamic() || v_shape_ptr->IsDynamic()) {
+    return x_shape_ptr->cast<abstract::ShapePtr>();
   }
 
-  auto x_in_shape = x_shape_map[kShape];
-  auto x_min_shape = x_shape_map[kMinShape];
-  auto x_max_shape = x_shape_map[kMaxShape];
-
-  auto v_in_shape = v_shape_map[kShape];
+  auto x_in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto v_in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(v_shape_ptr)[kShape];
 
   // check dimensions except for the first one
   CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
@@ -60,6 +52,8 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
                                               std::to_string(i) + "th dim of v", v_in_shape.at(i), primitive->name());
   }
 
+  auto indices = CheckAndConvertUtils::CheckIntOrTupleInt("indices", primitive->GetAttr(kIndices), primitive->name());
+
   // check indices
   CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, "v.shape[0]",
                                            LongToSize(v_in_shape.at(0)), primitive->name());
@@ -68,10 +62,7 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
                                                 {0, x_in_shape.at(0)}, primitive->name());
   }
 
-  if (!x_min_shape.empty() && !x_max_shape.empty()) {
-    return std::make_shared<abstract::Shape>(x_in_shape, x_min_shape, x_max_shape);
-  }
-  return std::make_shared<abstract::Shape>(x_in_shape);
+  return x_shape_ptr->cast<abstract::ShapePtr>();
 }
 
 TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -123,6 +114,8 @@ MIND_API_OPERATOR_IMPL(InplaceSub, BaseOperator);
 MIND_API_OPERATOR_IMPL(InplaceUpdate, BaseOperator);
 AbstractBasePtr InplaceOpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
+  constexpr auto inputs_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, inputs_num, primitive->name());
   auto dtype = InplaceOpInferType(primitive, input_args);
   auto shape = InplaceOpInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, dtype);
