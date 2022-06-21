@@ -15,9 +15,11 @@
 """
 Testing AdjustGamma op in DE
 """
+import cv2
 import numpy as np
 from numpy.testing import assert_allclose
-import PIL
+from PIL import Image
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
@@ -54,7 +56,7 @@ def test_adjust_gamma_c_eager():
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
-    img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
+    img_in2 = Image.open("../data/dataset/apple.jpg").convert("RGB")
 
     adjustgamma_op2 = vision.AdjustGamma(10, 1)
     img_out2 = adjustgamma_op2(img_in2)
@@ -69,13 +71,13 @@ def test_adjust_gamma_py_eager():
     """
     # Eager 3-channel
     rgb_flat = generate_numpy_random_rgb((64, 3)).astype(np.uint8)
-    img_in = PIL.Image.fromarray(rgb_flat.reshape((8, 8, 3)))
+    img_in = Image.fromarray(rgb_flat.reshape((8, 8, 3)))
 
     adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
     assert img_out is not None
 
-    img_in2 = PIL.Image.open("../data/dataset/apple.jpg").convert("RGB")
+    img_in2 = Image.open("../data/dataset/apple.jpg").convert("RGB")
 
     adjustgamma_op2 = vision.AdjustGamma(10, 1)
     img_out2 = adjustgamma_op2(img_in2)
@@ -105,7 +107,7 @@ def test_adjust_gamma_py_eager_gray():
     """
     # Eager 1-channel
     rgb_flat = generate_numpy_random_rgb((64, 1)).astype(np.uint8)
-    img_in = PIL.Image.fromarray(rgb_flat.reshape((8, 8)))
+    img_in = Image.fromarray(rgb_flat.reshape((8, 8)))
 
     adjustgamma_op = vision.AdjustGamma(10, 1)
     img_out = adjustgamma_op(img_in)
@@ -360,12 +362,67 @@ def test_adjust_gamma_pipeline_py_gray():
                         atol=0)
 
 
+def test_adjust_gamma_eager_image_type():
+    """
+    Feature: AdjustGamma op
+    Description: Test AdjustGamma op eager support test for variety of image input types
+    Expectation: Receive non-None output image from op
+    """
+
+    def test_config(my_input):
+        my_output = vision.AdjustGamma(gamma=1.2, gain=1.0)(my_input)
+        assert my_output is not None
+
+    # Test with OpenCV images
+    img = cv2.imread("../data/dataset/apple.jpg")
+    test_config([img, img])
+    test_config((img, img))
+
+    # Test with NumPy array input
+    img = np.random.randint(0, 1, (100, 100, 3)).astype(np.uint8)
+    test_config([img, img])
+    test_config((img, img))
+
+
+def test_adjust_gamma_eager_invalid_image_type_pil():
+    """
+    Feature: AdjustGamma op
+    Description: Exception eager support test for PIL image and error input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_msg):
+        with pytest.raises(TypeError) as error_info:
+            _ = vision.AdjustGamma(gamma=1.2, gain=1.0)(my_input)
+        assert error_msg in str(error_info.value)
+
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    test_config([img, img], "Invalid user input. Got <class 'list'>")
+    test_config((img, img), "Invalid user input. Got <class 'tuple'>")
+
+
+def test_adjust_gamma_eager_invalid_image_type():
+    """
+    Feature: AdjustGamma op
+    Description: Exception eager support test for error input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_msg):
+        with pytest.raises(RuntimeError) as error_info:
+            _ = vision.AdjustGamma(gamma=1.2, gain=1.0)(my_input)
+        assert error_msg in str(error_info.value)
+
+    test_config(1, "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
+    test_config(1.0, "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
+    test_config((1.0, 2.0), "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
+
+
 if __name__ == "__main__":
     test_adjust_gamma_c_eager()
     test_adjust_gamma_py_eager()
     test_adjust_gamma_c_eager_gray()
     test_adjust_gamma_py_eager_gray()
-
     test_adjust_gamma_invalid_gamma_param_c()
     test_adjust_gamma_invalid_gamma_param_py()
     test_adjust_gamma_invalid_gain_param_c()
@@ -373,3 +430,6 @@ if __name__ == "__main__":
     test_adjust_gamma_pipeline_c()
     test_adjust_gamma_pipeline_py()
     test_adjust_gamma_pipeline_py_gray()
+    test_adjust_gamma_eager_image_type()
+    test_adjust_gamma_eager_invalid_image_type_pil()
+    test_adjust_gamma_eager_invalid_image_type()
