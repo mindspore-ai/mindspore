@@ -3431,7 +3431,9 @@ class MapDataset(UnionBaseDataset):
         """
         # Count the number of old legacy data and vision c_transforms and py_transforms
         count_old_transforms = sum(
-            [1 if "c_transforms" in str(op) or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
+            [1 if "c_transforms" in str(op)
+             or isinstance(op, (c_transforms.TensorOperation, py_transforms.PyTensorOperation))
+             or ("py_transforms" in str(op) and not isinstance(op, FuncWrapper))
              else 0 for op in operations])
         # Count the number of new unified data and vision transforms
         count_new_transforms = sum([1 if hasattr(op, "implementation") and not isinstance(op, FuncWrapper)
