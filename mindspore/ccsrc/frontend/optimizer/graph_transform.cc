@@ -22,12 +22,26 @@
 namespace mindspore {
 /* namespace to support opt */
 namespace opt {
+bool ContainSparseTensor(const abstract::AbstractBasePtr &abs) {
+  MS_EXCEPTION_IF_NULL(abs);
+  if (abs->isa<abstract::AbstractSparseTensor>()) {
+    return true;
+  }
+  if (abs->isa<abstract::AbstractTuple>()) {
+    auto vec = abs->cast<abstract::AbstractTuplePtr>()->elements();
+    return std::any_of(vec.begin(), vec.end(), ContainSparseTensor);
+  }
+  return false;
+}
+
+bool IsTuple(const AnfNodePtr &param) {
+  // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
+  return param->abstract() != nullptr && param->abstract()->isa<abstract::AbstractTuple>() &&
+         !ContainSparseTensor(param->abstract());
+}
+
 bool FuncGraphHasTupleInput(const FuncGraphPtr &fg) {
-  auto is_tuple = [](const AnfNodePtr &param) {
-    auto abs = param->abstract();
-    return abs != nullptr && abs->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(param);
-  };
-  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), is_tuple);
+  return std::any_of(fg->parameters().cbegin(), fg->parameters().cend(), IsTuple);
 }
 
 std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const AnfNodePtr &node,
@@ -40,7 +54,7 @@ std::vector<AnfNodePtr> TransformTupleArgument(const FuncGraphPtr &fg, const Anf
     idx->set_abstract(abstract_scalar);
     auto elem_node = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
     elem_node->set_abstract(elements[i]);
-    if (elements[i]->isa<abstract::AbstractTuple>() && !common::AnfAlgo::CheckAbsSparseTensor(elements[i])) {
+    if (elements[i]->isa<abstract::AbstractTuple>()) {
       auto nodes = TransformTupleArgument(fg, elem_node, elements[i]->cast<abstract::AbstractTuplePtr>());
       tuple_node_expanded.insert(tuple_node_expanded.end(), nodes.begin(), nodes.end());
     } else {

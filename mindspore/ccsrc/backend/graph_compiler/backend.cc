@@ -166,6 +166,13 @@ void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs,
     MS_EXCEPTION_IF_NULL(csr_values);
     inputs->push_back(csr_values);
     MS_LOG(INFO) << "For CSRTensor, push index: " << index;
+  } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
+    auto coo = utils::cast<tensor::COOTensorPtr>(arg);
+    MS_EXCEPTION_IF_NULL(coo);
+    auto coo_values = coo->GetTensorAt(index);
+    MS_EXCEPTION_IF_NULL(coo_values);
+    inputs->push_back(coo_values);
+    MS_LOG(INFO) << "For COOTensor, push index: " << index;
   } else if (utils::isa<ValuePtr>(arg)) {
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);

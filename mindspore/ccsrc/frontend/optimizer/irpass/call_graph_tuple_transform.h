@@ -51,9 +51,13 @@ bool FlattenArgs(const FuncGraphPtr &fg, const AnfNodePtrList &args, size_t star
     if (abs == nullptr) {
       MS_LOG(EXCEPTION) << "Null abs of arg:" << arg->DebugString();
     }
-    if (!abs->isa<abstract::AbstractTuple>() || abs->isa<abstract::AbstractSparseTensor>()) {
+    if (!abs->isa<abstract::AbstractTuple>()) {
       new_args->push_back(arg);
       continue;
+    }
+    // If SparseTensor, Tuple(SparseTensor,...) or Tuple(...,(..., SparseTensor)), return false and skip this pass.
+    if (ContainSparseTensor(abs)) {
+      return false;
     }
     auto new_arg = TransformTupleArgument(fg, arg, abs->cast<abstract::AbstractTuplePtr>());
     new_args->insert(new_args->end(), new_arg.begin(), new_arg.end());
