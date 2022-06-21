@@ -991,6 +991,9 @@ class Tensor(Tensor_):
         Returns:
             Tensor.
 
+        Raises:
+            TypeError: If dtype of self tensor is not float16 or float32.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 

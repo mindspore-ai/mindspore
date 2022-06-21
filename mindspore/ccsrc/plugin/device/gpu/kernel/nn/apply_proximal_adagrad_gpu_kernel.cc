@@ -35,7 +35,7 @@ bool ApplyProximalAdagradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-
+  batch_rank_ = base_operator->get_batch_rank();
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
@@ -90,26 +90,58 @@ int ApplyProximalAdagradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return KRET_RESIZE_FAILED;
   }
 
-  if (!lr_shape.empty()) {
+  if (!IsSameShape(lr_shape, l1_shape)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', 'lr' must be a scalar,and dimension of 'lr' must be 0,but got the dimension of 'lr': "
-                  << Vector2Str(lr_shape);
-    return KRET_RESIZE_FAILED;
-  }
-  if (!l1_shape.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
-                  << Vector2Str(l1_shape);
-    return KRET_RESIZE_FAILED;
-  }
-  if (!l2_shape.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
-                  << Vector2Str(l2_shape);
+                  << "', the shape of 'lr' must be the same as the shape of 'l1', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and the shape of 'l1': " << Vector2Str(l1_shape);
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = input_size_list_[0] / unit_size_;
+  if (!IsSameShape(lr_shape, l2_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'lr' must be the same as the shape of 'l2', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and the shape of 'l2': " << Vector2Str(l2_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+    return KRET_RESIZE_FAILED;
+  }
+
+  batch_size_ = 1;
+  if (!lr_shape.empty()) {
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), batch_size_, std::multiplies<int64_t>());
+  }
+  if (batch_size_ <= 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
+    return KRET_RESIZE_FAILED;
+  }
+
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = input_elements_ / batch_size_;
+  if (batch_rank_ > 1) {
+    if (var_shape.size() < lr_shape.size()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
+                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+      return KRET_RESIZE_FAILED;
+    }
+    std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
+    if (!IsSameShape(lr_shape, var_batch_shape)) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the batch shape of 'var' must be the same as the shape of 'lr', "
+                       "but got the batch shape of 'var': "
+                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+      return KRET_RESIZE_FAILED;
+    }
+  }
+
   return ret;
 }
 
@@ -130,7 +162,7 @@ bool ApplyProximalAdagradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
   auto grad = reinterpret_cast<T *>(inputs[kGradIndex]->addr);
 
-  CalApplyProximalAdagrad(input_elements_, lr, l1, l2, grad, var, accum, device_id_,
+  CalApplyProximalAdagrad(input_elements_, batch_size_, lr, l1, l2, grad, var, accum, device_id_,
                           reinterpret_cast<cudaStream_t>(cuda_stream));
 
   return true;
