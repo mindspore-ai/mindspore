@@ -24,7 +24,7 @@ import pytest
 def test_runner_config_01():
     with pytest.raises(TypeError) as raise_info:
         cpu_device_info = mslite.CPUDeviceInfo()
-        runner_config = mslite.RunnerConfig(context=cpu_device_info, workers_num=4)
+        runner_config = mslite.RunnerConfig(context=cpu_device_info, workers_num=4, config_info=None)
     assert "context must be Context" in str(raise_info.value)
 
 
@@ -33,7 +33,7 @@ def test_runner_config_02():
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        runner_config = mslite.RunnerConfig(context=context, workers_num="4")
+        runner_config = mslite.RunnerConfig(context=context, workers_num="4", config_info=None)
     assert "workers_num must be int" in str(raise_info.value)
 
 
@@ -42,15 +42,70 @@ def test_runner_config_03():
         cpu_device_info = mslite.CPUDeviceInfo()
         context = mslite.Context()
         context.append_device_info(cpu_device_info)
-        runner_config = mslite.RunnerConfig(context=context, workers_num=-4)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=-4, config_info=None)
     assert "workers_num must be positive" in str(raise_info.value)
 
 
 def test_runner_config_04():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=None, config_info=1)
+    assert "config_info must be dict" in str(raise_info.value)
+
+
+def test_runner_config_05():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=None, config_info={1: {"test": "test"}})
+    assert "config_info_key must be str" in str(raise_info.value)
+
+
+def test_runner_config_06():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=None, config_info={"test": "test"})
+    assert "config_info_value must be dict" in str(raise_info.value)
+
+
+def test_runner_config_07():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=None, config_info={"test": {1: "test"}})
+    assert "config_info_value_key must be str" in str(raise_info.value)
+
+
+def test_runner_config_08():
+    with pytest.raises(TypeError) as raise_info:
+        cpu_device_info = mslite.CPUDeviceInfo()
+        context = mslite.Context()
+        context.append_device_info(cpu_device_info)
+        runner_config = mslite.RunnerConfig(context=context, workers_num=None, config_info={"test": {"test": 1}})
+    assert "config_info_value_value must be str" in str(raise_info.value)
+
+
+def test_runner_config_09():
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context()
     context.append_device_info(cpu_device_info)
-    runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+    runner_config = mslite.RunnerConfig(context=context, workers_num=4, config_info=None)
+    assert "workers num:" in str(runner_config)
+
+
+def test_runner_config_10():
+    cpu_device_info = mslite.CPUDeviceInfo()
+    context = mslite.Context()
+    context.append_device_info(cpu_device_info)
+    config_info = {"weight": {"weight_path": "path of model weight"}}
+    runner_config = mslite.RunnerConfig(context=context, workers_num=4, config_info=config_info)
+    assert "config info:" in str(runner_config)
 
 
 # ============================ ModelParallelRunner ============================

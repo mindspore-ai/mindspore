@@ -42,45 +42,71 @@ class Converter:
     """
     Converter is used to convert third-party models.
 
+    Note:
+        If the default value of the parameter is none, it means the parameter is not set.
+
     Args:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
             FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
-        model_file (str): Input model file. e.g. "/home/user/model.prototxt". Options:
-            TF: *.pb | CAFFE: *.prototxt | ONNX: *.onnx | MINDIR: *.mindir | TFLITE: *.tflite | PYTORCH *.pt or *.pth.
-        output_file (str): Output model file path. Will add .ms automatically.
+        model_file (str): Path of the input model. e.g. "/home/user/model.prototxt". Options:
+            TF: "*.pb" | CAFFE: "*.prototxt" | ONNX: "*.onnx" | MINDIR: "*.mindir" | TFLITE: "*.tflite" |
+            PYTORCH "*.pt" or "*.pth".
+        output_file (str): Path of the output model. The suffix .ms can be automatically generated.
             e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
-        weight_file (str, optional): Input model weight file. Needed only when fmk_type is CAFFE, default: "".
-            e.g. "/home/user/model.caffemodel".
+        weight_file (str, optional): Input model weight file. Required only when fmk_type is FmkType.CAFFE.
+            e.g. "/home/user/model.caffemodel". Default: "".
         config_file (str, optional): Configuration for post-training, offline split op to parallel,
-            disable op fusion ability and set plugin so path e.g. "/home/user/model.cfg", default: "".
+            disable op fusion ability and set plugin so path. e.g. "/home/user/model.cfg". Default: "".
         weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
-            only effective for const tensor in Float32 data type. True | False, default: False.
-        input_shape (dict{string:list[int]}, optional): Set the dimension of the model input,
+            only effective for const tensor in Float32 data type. Default: False.
+        input_shape (dict{str:list[int]}, optional): Set the dimension of the model input,
             the order of input dimensions is consistent with the original model. For some models, the model structure
             can be further optimized, but the transformed model may lose the characteristics of dynamic shape.
-            e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}, default: {}.
+            e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}. Default: {}.
         input_format (Format, optional): Assign the input format of exported model. Only Valid for 4-dimensional input.
-            Options: Format.NHWC | Format.NCHW, default: Format.NHWC.
-        input_data_type (DataType, optional): Data type of input tensors, default is same with the type defined in
-            model, default: DataType.FLOAT32.
-        output_data_type (DataType, optional): Data type of output and output tensors,
-            default is same with the type defined in model, default: DataType.FLOAT32.
-        export_mindir (bool, optional): Whether to export MindIR pb. True | False, default: False.
+            Options: Format.NHWC | Format.NCHW. Default: Format.NHWC.
+        input_data_type (DataType, optional): Data type of input tensors. The default type is same with the type
+            defined in model. Default: DataType.FLOAT32.
+        output_data_type (DataType, optional): Data type of output tensors.
+            The default type is same with the type defined in model. Default: DataType.FLOAT32.
+        export_mindir (bool, optional): Whether to export MindIR pb. Default: False.
         decrypt_key (str, optional): The key used to decrypt the file, expressed in hexadecimal characters.
-            Only valid when fmk_type is MINDIR, default: "".
+            Only valid when fmk_type is FmkType.MINDIR. Default: "".
         decrypt_mode (str, optional): Decryption method for the MindIR file. Only valid when dec_key is set.
-            "AES-GCM" | "AES-CBC", default: "AES-GCM".
-        enable_encryption (str, optional): Whether to export the encryption model. True | False, default: False.
+            Options: "AES-GCM" | "AES-CBC". Default: "AES-GCM".
+        enable_encryption (bool, optional): Whether to export the encryption model. Default: False.
         encrypt_key (str, optional): The key used to encrypt the file, expressed in hexadecimal characters.
-            Only support AES-GCM and the key length is 16, default: "".
-        infer (bool, optional): Whether to do pre-inference after convert. True | False, default: False.
-        train_model (bool, optional): whether the model is going to be trained on device. True | False, default: False.
-        no_fusion(bool, optional): Avoid fusion optimization. True | False, default: False.
+            Only support AES-GCM and the key length is 16. Default: "".
+        infer (bool, optional): Whether to do pre-inference after convert. Default: False.
+        train_model (bool, optional): whether the model is going to be trained on device. Default: False.
+        no_fusion(bool, optional): Avoid fusion optimization, fusion optimization is allowed by default. Default: False.
 
     Raises:
-        TypeError: type of input parameters are invalid.
-        ValueError: value of input parameters are invalid.
-        RuntimeError: file path does not exist
+        TypeError: `fmk_type` is not a FmkType.
+        TypeError: `model_file` is not a str.
+        TypeError: `output_file` is not a str.
+        TypeError: `weight_file` is not a str.
+        TypeError: `config_file` is not a str.
+        TypeError: `weight_fp16` is not a bool.
+        TypeError: `input_shape` is not a dict or None.
+        TypeError: `input_shape` is a dict, but the values are not list.
+        TypeError: `input_shape` is a dict, the values are list, but the value's elements are not int.
+        TypeError: `input_format` is not a Format.
+        TypeError: `input_data_type` is not a DataType.
+        TypeError: `output_data_type` is not a DataType.
+        TypeError: `export_mindir` is not a bool.
+        TypeError: `decrypt_key` is not a str.
+        TypeError: `decrypt_mode` is not a str.
+        TypeError: `enable_encryption` is not a bool.
+        TypeError: `encrypt_key` is not a str.
+        TypeError: `infer` is not a bool.
+        TypeError: `train_model` is not a bool.
+        TypeError: `no_fusion` is not a bool.
+        ValueError: `input_format` is neither Format.NCHW nor Format.NHWC when it is a Format.
+        ValueError: `decrypt_mode` is neither "AES-GCM" nor "AES-CBC" when it is a str.
+        RuntimeError: `model_file` does not exist.
+        RuntimeError: `weight_file` is not "", but `weight_file` does not exist.
+        RuntimeError: `config_file` is not "", but `config_file` does not exist.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -186,7 +212,7 @@ class Converter:
 
     def converter(self):
         """
-        Converter is used to convert a third-party model to a MindSpore model.
+        Perform conversion, and convert the third-party model to the mindspire model.
 
         Raises:
             RuntimeError: converter model failed.

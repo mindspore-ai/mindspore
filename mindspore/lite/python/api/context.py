@@ -15,9 +15,7 @@
 """
 Context API.
 """
-import os
-
-from ._checkparam import check_isinstance, check_list_of_element, check_input_shape
+from ._checkparam import check_isinstance, check_list_of_element
 from .lib import _c_lite_wrapper
 
 __all__ = ['Context', 'DeviceInfo', 'CPUDeviceInfo', 'GPUDeviceInfo', 'AscendDeviceInfo']
@@ -27,16 +25,33 @@ class Context:
     """
     Context is used to store environment variables during execution.
 
+    The context should be configured before running the program.
+    If it is not configured, it will be automatically set according to the device target by default.
+
+    Note:
+        If core_list and mode are set by SetThreadAffinity at the same time, the core_list is effective, but the mode
+        is not effective.
+        If the default value of the parameter is none, it means the parameter is not set.
+
     Args:
-        thread_num (int, optional): Set the number of threads at runtime.
-        thread_affinity_mode (int, optional): Set the thread affinity to CPU cores.
-            0: no affinities, 1: big cores first, 2: little cores first
-        thread_affinity_core_list (list[int], optional): Set the thread lists to CPU cores.
+        thread_num (int, optional): Set the number of threads at runtime. Default: None.
+        thread_affinity_mode (int, optional): Set the thread affinity to CPU cores. Default: None.
+
+            - 0: no affinities.
+            - 1: big cores first.
+            - 2: little cores first.
+
+        thread_affinity_core_list (list[int], optional): Set the thread lists to CPU cores. Default: None.
         enable_parallel (bool, optional): Set the status whether to perform model inference or training in parallel.
+            Default: False.
 
     Raises:
-        TypeError: type of input parameters are invalid.
-        ValueError: value of input parameters are invalid.
+        TypeError: `thread_num` is not an int or None.
+        TypeError: `thread_affinity_mode` is not an int or None.
+        TypeError: `thread_affinity_core_list` is not a list or None.
+        TypeError: `thread_affinity_core_list` is a list, but the elements are not int or None.
+        TypeError: `enable_parallel` is not a bool.
+        ValueError: `thread_num` is less than 0.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -75,13 +90,13 @@ class Context:
 
     def append_device_info(self, device_info):
         """
-        Append one user-defined device info to the context
+        Append one user-defined device info to the context.
 
         Args:
-            device_info (Union[CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo]): device info.
+            device_info (DeviceInfo): the instance of device info.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `device_info` is not a DeviceInfo.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -92,7 +107,7 @@ class Context:
             device_list: 0, .
         """
         if not isinstance(device_info, DeviceInfo):
-            raise TypeError("device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo, but got {}.".format(
+            raise TypeError("device_info must be DeviceInfo, but got {}.".format(
                 type(device_info)))
         self._context.append_device_info(device_info._device_info)
 
@@ -108,13 +123,13 @@ class DeviceInfo:
 
 class CPUDeviceInfo(DeviceInfo):
     """
-    Helper class to set cpu device info.
+    Helper class to set cpu device info, and it inherits DeviceInfo base class.
 
     Args:
-        enable_fp16(bool, optional): enables to perform the float16 inference.
+        enable_fp16(bool, optional): enables to perform the float16 inference. Default: False.
 
     Raises:
-        TypeError: type of input parameters are invalid.
+        TypeError: `enable_fp16` is not a bool.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -139,15 +154,16 @@ class CPUDeviceInfo(DeviceInfo):
 
 class GPUDeviceInfo(DeviceInfo):
     """
-    Helper class to set gpu device info.
+    Helper class to set gpu device info, and it inherits DeviceInfo base class.
 
     Args:
-        device_id(int, optional): The device id.
-        enable_fp16(bool, optional): enables to perform the float16 inference.
+        device_id(int, optional): The device id. Default: 0.
+        enable_fp16(bool, optional): enables to perform the float16 inference. Default: False.
 
     Raises:
-        TypeError: type of input parameters are invalid.
-        ValueError: value of input parameters are invalid.
+        TypeError: `device_id` is not an int.
+        TypeError: `enable_fp16` is not a bool.
+        ValueError: `device_id` is less than 0.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -181,10 +197,10 @@ class GPUDeviceInfo(DeviceInfo):
 
     def get_rank_id(self):
         """
-        Get rank id from context.
+        Get the ID of the current device in the cluster from context.
 
         Returns:
-            int, the rank id of the context.
+            int, the ID of the current device in the cluster, which starts from 0.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -197,10 +213,10 @@ class GPUDeviceInfo(DeviceInfo):
 
     def get_group_size(self):
         """
-        Get group size from context.
+        Get the number of the clusters from context.
 
         Returns:
-            int, the group size of the context.
+            int, the number of the clusters.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -214,88 +230,38 @@ class GPUDeviceInfo(DeviceInfo):
 
 class AscendDeviceInfo(DeviceInfo):
     """
-    Helper class to set Ascend device infos.
+    Helper class to set Ascend device infos, and it inherits DeviceInfo base class.
 
     Args:
-        device_id(int, optional): The device id.
-        input_format (str, optional): Manually specify the model input format, the value can be "NCHW", "NHWC", etc.
-        input_shape (dict{int:list[int]}, optional): Set shape of model inputs. e.g. {1: [1, 2, 3, 4], 2: [4, 3, 2, 1]}.
-        precision_mode (str, optional): Model precision mode, the value can be "force_fp16", "allow_fp32_to_fp16",
-            "must_keep_origin_dtype" or "allow_mix_precision". Default: "force_fp16".
-        op_select_impl_mode (str, optional): The operator selection mode, the value can be "high_performance" or
-            "high_precision". Default: "high_performance".
-        dynamic_batch_size (list[int], optional): the dynamic image size of model inputs. e.g. [2, 4]
-        dynamic_image_size (str, optional): image size hw e.g. "66,88;32,64" means h1:66,w1:88; h2:32,w2:64.
-        fusion_switch_config_path (str, optional): Configuration file path of the convergence rule, including graph
-             convergence and UB convergence. The system has built-in graph convergence and UB convergence rules, which
-             are enableed by default. You can disable the reuls specified in the file by setting this parameter.
-        insert_op_cfg_path (str, optional): Path of aipp config file.
+        device_id(int, optional): The device id. Default: 0.
 
     Raises:
-        TypeError: type of input parameters are invalid.
-        ValueError: value of input parameters are invalid.
-        RuntimeError: file path does not exist
+        TypeError: `device_id` is not an int.
+        ValueError: `device_id` is less than 0.
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0, input_format="NCHW", \
-        ...                      input_shape={1: [1, 3, 28, 28]}, precision_mode="force_fp16", \
-        ...                      op_select_impl_mode="high_performance", dynamic_batch_size=None, \
-        ...                      dynamic_image_size="", fusion_switch_config_path="", insert_op_cfg_path="")
+        >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
         >>> print(ascend_device_info)
+        device_type: DeviceType.kAscend, device_id: 0.
         >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
         >>> context = mslite.Context()
-        >>> context.append_device_info(mslite.CPUDeviceInfo(gpu_device_info))
-        >>> context.append_device_info(mslite.CPUDeviceInfo(ascend_device_info))
+        >>> context.append_device_info(ascend_device_info)
+        >>> context.append_device_info(cpu_device_info)
         >>> print(context)
         thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
         device_list: 3, 0, .
     """
 
-    def __init__(self, device_id=0, input_format=None, input_shape=None, precision_mode="force_fp16",
-                 op_select_impl_mode="high_performance", dynamic_batch_size=None, dynamic_image_size="",
-                 fusion_switch_config_path="", insert_op_cfg_path=""):
+    def __init__(self, device_id=0):
         super(AscendDeviceInfo, self).__init__()
         check_isinstance("device_id", device_id, int)
-        check_isinstance("input_format", input_format, str, enable_none=True)
-        check_input_shape("input_shape", input_shape, enable_none=True)
-        check_isinstance("precision_mode", precision_mode, str)
-        check_isinstance("op_select_impl_mode", op_select_impl_mode, str)
-        check_list_of_element("dynamic_batch_size", dynamic_batch_size, int, enable_none=True)
-        check_isinstance("dynamic_image_size", dynamic_image_size, str)
-        check_isinstance("fusion_switch_config_path", fusion_switch_config_path, str)
-        check_isinstance("insert_op_cfg_path", insert_op_cfg_path, str)
         if device_id < 0:
             raise ValueError(f"AscendDeviceInfo's init failed, device_id must be positive.")
-        if fusion_switch_config_path != "":
-            if not os.path.exists(fusion_switch_config_path):
-                raise RuntimeError(f"AscendDeviceInfo's init failed, fusion_switch_config_path does not exist!")
-        if insert_op_cfg_path != "":
-            if not os.path.exists(insert_op_cfg_path):
-                raise RuntimeError(f"AscendDeviceInfo's init failed, insert_op_cfg_path does not exist!")
-        input_format_list = "" if input_format is None else input_format
-        input_shape_list = {} if input_shape is None else input_shape
-        batch_size_list = [] if dynamic_batch_size is None else dynamic_batch_size
         self._device_info = _c_lite_wrapper.AscendDeviceInfoBind()
         self._device_info.set_device_id(device_id)
-        self._device_info.set_input_format(input_format_list)
-        self._device_info.set_input_shape(input_shape_list)
-        self._device_info.set_precision_mode(precision_mode)
-        self._device_info.set_op_select_impl_mode(op_select_impl_mode)
-        self._device_info.set_dynamic_batch_size(batch_size_list)
-        self._device_info.set_dynamic_image_size(dynamic_image_size)
-        self._device_info.set_fusion_switch_config_path(fusion_switch_config_path)
-        self._device_info.set_insert_op_cfg_path(insert_op_cfg_path)
 
     def __str__(self):
         res = f"device_type: {self._device_info.get_device_type()}, " \
-              f"device_id: {self._device_info.get_device_id()}, " \
-              f"input_format: {self._device_info.get_input_format()}, " \
-              f"input_shape: {self._device_info.get_input_shape()}, " \
-              f"precision_mode: {self._device_info.get_precision_mode()}, " \
-              f"op_select_impl_mode: {self._device_info.get_op_select_impl_mode()}, " \
-              f"dynamic_batch_size: {self._device_info.get_dynamic_batch_size()}, " \
-              f"dynamic_image_size: {self._device_info.get_dynamic_image_size()}, " \
-              f"fusion_switch_config_path: {self._device_info.get_fusion_switch_config_path()}, " \
-              f"insert_op_cfg_path: {self._device_info.get_insert_op_cfg_path()}."
+              f"device_id: {self._device_info.get_device_id()}."
         return res
