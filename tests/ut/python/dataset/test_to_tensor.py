@@ -18,6 +18,7 @@ Testing ToTensor op in DE
 import numpy as np
 import pytest
 
+import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 
@@ -178,7 +179,7 @@ def test_to_tensor_float64_eager():
     Expectation: Test runs successfully and results are verified
     """
 
-    def test_config(my_output_type, output_dtype):
+    def test_config(my_output_type, output_dtype, result_output_type=None):
         image = np.random.randn(128, 128, 3).astype(np.float64)
         op = vision.ToTensor(output_type=my_output_type)
         out = op(image)
@@ -186,7 +187,10 @@ def test_to_tensor_float64_eager():
         assert out.dtype == output_dtype
 
         image = image / 255
-        image = image.astype(my_output_type)
+        if result_output_type is None:
+            image = image.astype(my_output_type)
+        else:
+            image = image.astype(result_output_type)
         image = np.transpose(image, (2, 0, 1))
 
         np.testing.assert_almost_equal(out, image, 5)
@@ -203,6 +207,19 @@ def test_to_tensor_float64_eager():
     test_config(np.uint32, "uint32")
     test_config(np.uint64, "uint64")
     test_config(np.bool, "bool")
+
+    test_config(mstype.float16, "float16", np.float16)
+    test_config(mstype.float32, "float32", np.float32)
+    test_config(mstype.float64, "float64", np.float64)
+    test_config(mstype.int8, "int8", np.int8)
+    test_config(mstype.int16, "int16", np.int16)
+    test_config(mstype.int32, "int32", np.int32)
+    test_config(mstype.int64, "int64", np.int64)
+    test_config(mstype.uint8, "uint8", np.uint8)
+    test_config(mstype.uint16, "uint16", np.uint16)
+    test_config(mstype.uint32, "uint32", np.uint32)
+    test_config(mstype.uint64, "uint64", np.uint64)
+    test_config(mstype.bool_, "bool", np.bool)
 
 
 def test_to_tensor_int32_eager():
