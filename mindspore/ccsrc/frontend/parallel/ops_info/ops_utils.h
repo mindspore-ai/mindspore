@@ -152,6 +152,7 @@ constexpr char END[] = "end";
 constexpr char STRIDES[] = "strides";
 constexpr char GROUP[] = "group";
 constexpr char FUSION[] = "fusion";
+constexpr char COMM_REUSE[] = "comm_reuse";
 constexpr char DO_MIRROR[] = "do_mirror";
 constexpr char ADD_ACCU[] = "add_accu";
 constexpr char RECOMPUTE[] = "recompute";

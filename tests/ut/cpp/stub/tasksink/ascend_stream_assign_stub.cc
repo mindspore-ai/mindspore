@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ void AscendStreamAssign::GetWaitStreams(vector<uint32_t> *wait_active_stream_lis
 void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) { return; }
 
 void AscendStreamAssign::AssignStreamForNonTaskSink(const std::vector<CNodePtr> &kernels) { return; }
+
+uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &) { return 200; }
 }  // namespace ascend
 
 void KernelAdjust::InsertDeviceLoopCtrl(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) { return; }

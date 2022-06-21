@@ -449,6 +449,7 @@ constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrNotDelayFusion = "not_delay_fusion";
 constexpr auto kAttrGroup = "group";
+constexpr auto kAttrRankList = "rank_list";
 constexpr auto kAttrGroups = "groups";
 constexpr auto kAttrGroupBack = "group_back";
 constexpr auto kAttrFracZGroup = "fracz_group";

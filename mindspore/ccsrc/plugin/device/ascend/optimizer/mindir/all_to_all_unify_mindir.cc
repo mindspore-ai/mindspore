@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "include/common/utils/comm_manager.h"
 #include "backend/common/optimizer/helper.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -146,6 +147,9 @@ CNodePtr AllToAllUnifyMindIR::CreateAllToAllvNode(const FuncGraphPtr &graph, con
   common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(rank_ids), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroupRankIds, MakeValue<std::vector<uint32_t>>(group_rank_ids), all_to_all_v);
+  if (all_to_all->HasAttr(parallel::COMM_REUSE) && GetValue<bool>(all_to_all->GetAttr(parallel::COMM_REUSE))) {
+    all_to_all_v->AddAttr(parallel::COMM_REUSE, MakeValue(true));
+  }
   MS_LOG(INFO) << "Create AllToAllv success, split count " << split_count << ", rank size " << rank_size;
   return all_to_all_v;
 }

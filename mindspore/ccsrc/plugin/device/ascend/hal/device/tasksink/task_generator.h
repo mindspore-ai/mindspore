@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -70,6 +71,7 @@ class TaskGenerator {
   bool LaunchAllKernel(const std::vector<CNodePtr> &anf_node_list, std::vector<TaskInfoPtr> *task_info_list,
                        uint32_t graph_id);
   void DumpTaskInfo(const string &real_filename);
+  std::vector<CNodePtr> ReorderDistribute(const std::vector<CNodePtr> &anf_node_list);
   static void SaveTaskDebugInfoToFile(const std::string &real_filename,
                                       const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 };
