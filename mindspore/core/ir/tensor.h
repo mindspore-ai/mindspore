@@ -769,6 +769,8 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   /// \return [TensorPtr] The values.
   TensorPtr GetValues() { return values_; }
 
+  TensorPtr GetTensorAt(size_t index) const;
+
   /// \brief Compare two cootensor objects to see if they have same address.
   ///
   /// \param[in] coo_tensor The cootensor object to be compared.
