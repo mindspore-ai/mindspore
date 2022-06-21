@@ -890,6 +890,53 @@ def log_softmax(logits, axis=-1):
     return P.LogSoftmax(axis)(logits)
 
 
+def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
+    r"""
+    Local Response Normalization.
+
+    .. math::
+
+        b_{c} = a_{c}\left(k + \frac{\alpha}{n}
+        \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
+
+    where the :math:`a_{c}` indicates the specific value of the pixel corresponding to c in feature map;
+    where the :math:`n/2` indicates the `depth_radius`; where the :math:`k` indicates the `bias`;
+    where the :math:`\alpha` indicates the `alpha`; where the :math:`\beta` indicates the `beta`.
+
+    Args:
+        depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D. Default: 5.
+        bias (float): An offset (usually positive to avoid dividing by 0). Default: 1.0.
+        alpha (float): A scale factor, usually positive. Default: 1.0.
+        beta (float): An exponent. Default: 0.5.
+        norm_region (str): Specifies normalization region. Options: "ACROSS_CHANNELS". Default: "ACROSS_CHANNELS".
+        x (Tensor): A 4-D Tensor with float16 or float32 data type.
+
+    Returns:
+        Tensor, with the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `depth_radius` is not an int.
+        TypeError: If `bias`, `alpha` or `beta` is not a float.
+        TypeError: If `norm_region` is not a str.
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
+        ...                       [[0.3], [0.4]]]]), mindspore.float32)
+        >>> output = ops.lrn(input_x)
+        >>> print(output)
+        [[[[0.09534626]
+           [0.1825742 ]]
+          [[0.2860388 ]
+           [0.3651484 ]]]]
+    """
+    lrn_op = NN.LRN(depth_radius, bias, alpha, beta, norm_region)
+    return lrn_op(x)
+
+
 def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
     """
     Given an `input_x` and a flow-field `grid`, computes the `output` using `input_x` values and pixel locations from
@@ -1019,6 +1066,7 @@ __all__ = [
     'soft_shrink',
     'intopk',
     'log_softmax',
+    'lrn',
     'hardswish',
     'softsign',
     'pdist',

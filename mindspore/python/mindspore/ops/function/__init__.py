@@ -231,6 +231,7 @@ from .nn_func import (
     soft_shrink,
     intopk,
     log_softmax,
+    lrn,
     hardswish,
     softsign,
     pdist,
