@@ -19,6 +19,11 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
 from ...common.tensor import Tensor
 
+slice_ = P.Slice()
+fast_gelu_ = P.FastGeLU()
+softsign_ = P.Softsign()
+hardswish_ = P.HSwish()
+
 
 def adaptive_avg_pool2d(input_x, output_size):
     r"""
@@ -178,12 +183,6 @@ def avg_pool2d(x, kernel_size=1, strides=1, pad_mode='valid', data_format='NCHW'
     return P.AvgPool(kernel_size, strides, pad_mode, data_format)(x)
 
 
-slice_ = P.Slice()
-fast_gelu_ = P.FastGeLU()
-softsign_ = P.Softsign()
-hardswish_ = P.HSwish()
-
-
 def celu(x, alpha=1.0):
     r"""
     Computes celu (Continuously differentiable exponential linear units) of input tensors element-wise.
@@ -220,6 +219,98 @@ def celu(x, alpha=1.0):
     """
     celu_op = P.CeLU(alpha)
     return celu_op(x)
+
+
+def dropout2d(x, keep_prob=0.5):
+    """
+    During training, randomly zeroes some channels of the input tensor with probability 1-`keep_prob`
+    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math: `NCHW`,
+    the channel feature map refers
+    to a 2-dimensional feature map with the shape of :math: `HW`).
+
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    `2D` tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    probability 1-`keep_prob`.
+
+    `Dropout2D` can improve the independence between channel feature maps.
+
+    Args:
+        x (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
+            of channels, `H` is the feature height, and `W` is the feature width. The data type must be int8,
+            int16, int32, int64, float16 or float32.
+        keep_prob (float): The keeping probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
+            which means dropping out 20% of channels. Default: 0.5.
+
+    Returns:
+        output (Tensor): With the same shape and data type as `x`.
+        mask (Tensor): With the same shape as `x` and the data type is bool.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If the data type of `keep_prob` is not float.
+        ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
+        ValueError: If `x` shape is not `4D`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> dropout2d_op = ops.dropout2d(keep_prob=0.5)
+        >>> input_x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
+        >>> output, mask = dropout2d_op(input_x)
+        >>> print(output.shape)
+        (2, 1, 2, 3)
+    """
+    dropout_2d_op = NN.Dropout2D(keep_prob)
+    return dropout_2d_op(x)
+
+
+def dropout3d(x, keep_prob=0.5):
+    """
+    During training, randomly zeroes some channels of the input tensor
+    with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor
+    with a shape of :math: `NCDHW`,
+    the channel feature map refers to a 3-dimensional feature map with a shape of :math: `DHW`).
+
+    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    `3D` tensor input[i,j].
+    Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
+    probability 1-`keep_prob`.
+
+    `Dropout3D` can improve the independence between channel feature maps.
+
+    Args:
+        x (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
+            of channels, `D` is the feature depth, `H` is the feature height, and `W` is the feature width.
+            The data type must be int8, int16, int32, int64, float16 or float32.
+        keep_prob (float): The keeping probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
+            which means dropping out 20% of channels. Default: 0.5.
+
+    Returns:
+        output (Tensor): With the same shape and data type as `x`.
+        mask (Tensor): With the same shape as `x` and the data type is bool.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If the data type of `keep_prob` is not float.
+        ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
+        ValueError: If `x` shape is not 5D.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> dropout3d_op = ops.dropout2D(keep_prob=0.5)
+        >>> input_x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
+        >>> output, mask = dropout3d_op(input_x)
+        >>> print(output.shape)
+        (2, 1, 2, 1, 2)
+    """
+    dropout_3d_op = NN.Dropout3D(keep_prob)
+    return dropout_3d_op(x)
 
 
 def fast_gelu(x):
@@ -1014,6 +1105,8 @@ __all__ = [
     'avg_pool2d',
     'celu',
     'deformable_conv2d',
+    'dropout2d',
+    'dropout3d',
     'fast_gelu',
     'hardshrink',
     'soft_shrink',

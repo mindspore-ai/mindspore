@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include <map>
+#include <random>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -28,7 +29,7 @@ namespace mindspore {
 namespace kernel {
 class DropoutNdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<DropoutNdCpuKernelMod> {
  public:
-  DropoutNdCpuKernelMod() { ResetResource(); }
+  DropoutNdCpuKernelMod() = default;
   ~DropoutNdCpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -48,8 +49,6 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
   std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  void ResetResource() noexcept;
-
   bool CheckDropOutNdShape();
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
@@ -57,12 +56,11 @@ class DropoutNdCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelpe
 
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  size_t batches_{1};
   size_t channels_{1};
   size_t input_elements_{1};
-  size_t element_per_channel_{1};
-  float keep_prob_{0.0};
-  std::vector<KernelTensorPtr> outputs_ = {};
+  float keep_prob_{0.0f};
+  std::default_random_engine generator_;
+  std::bernoulli_distribution distribution_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -21,7 +21,6 @@
 #include <set>
 #include <map>
 #include <functional>
-#include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "mindspore/core/ops/dropout_nd.h"
 
@@ -47,18 +46,14 @@ bool DropoutNdCpuKernelMod::CheckDropOutNdShape() {
     MS_LOG(ERROR) << "For 'DropoutNd', it only support Dropout2D or Dropout3D, right now, but got " << kernel_name_;
     return false;
   }
-  if (nd_dims < expected_dims) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << ", it's input dims must larger than " << expected_dims << "D, but got  "
+  if (nd_dims != expected_dims) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", it's input dims must equal to " << expected_dims << "D, but got  "
                   << nd_dims << "D.";
     return false;
   }
-  // Flatten input shape to [batch, channels, XHW] for VMap.
-  batches_ = 1;
-  for (size_t i = 0; i < nd_dims - expected_dims; ++i) {
-    batches_ *= input_shape_.at(i);
-  }
+  // Flatten input shape to [channels, XHW].
   channels_ = 1;
-  for (size_t i = nd_dims - expected_dims; i < nd_dims - last_remain_dim; ++i) {
+  for (size_t i = 0; i < nd_dims - last_remain_dim; ++i) {
     channels_ *= input_shape_.at(i);
   }
   return true;
@@ -83,50 +78,31 @@ bool DropoutNdCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
                   << kernel_name_;
     return false;
   }
-  if ((keep_prob_ < 0.0) || (keep_prob_ > 1.0)) {
+  if ((keep_prob_ < 0.0f) || (keep_prob_ > 1.0f)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'keep_prob' should be in range [0.0, 1.0], "
                   << "but got " << keep_prob_;
     return false;
   }
-
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
-    return false;
-  }
-
-  return true;
+  std::bernoulli_distribution::param_type dis_param(keep_prob_);
+  distribution_.param(dis_param);
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 int DropoutNdCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
-  if (!CheckDropOutNdShape() || channels_ == 0) {
+  input_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  input_elements_ =
+    std::accumulate(input_shape_.begin(), input_shape_.end(), decltype(input_shape_)::value_type(1), std::multiplies{});
+  if (!CheckDropOutNdShape()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input dims is invalid, should be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";
     return KRET_RESIZE_FAILED;
   }
-  // The number of elements per channel
-  element_per_channel_ = input_elements_ / channels_;
-  size_t workspace_size = channels_ * sizeof(float);
-  workspace_size_list_.emplace_back(workspace_size);
   return KRET_OK;
-}
-
-void DropoutNdCpuKernelMod::ResetResource() noexcept {
-  input_elements_ = 0;
-  keep_prob_ = 0.0;
-  batches_ = 0;
-  channels_ = 0;
-  element_per_channel_ = 0;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
 }
 
 template <typename T>
@@ -134,11 +110,10 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &workspaces,
                                          const std::vector<AddressPtr> &outputs) {
   const T *input = GetDeviceAddress<T>(inputs, kIndex0);
-  auto workspace = GetDeviceAddress<float>(workspaces, kIndex0);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   auto mask = GetDeviceAddress<bool>(outputs, kIndex1);
   // When keep_prob equal to 0.0, output default to zero, mask default to false.
-  if (keep_prob_ == 0.0) {
+  if (keep_prob_ == 0.0f) {
     auto ret = memset_s(output, outputs.at(kIndex0)->size, 0, outputs.at(kIndex0)->size);
     if (ret != EOK) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error.";
@@ -149,24 +124,24 @@ bool DropoutNdCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
     }
     return true;
   }
-
-  T scale = static_cast<T>(1.f / keep_prob_);
-  // Generate random data for every channel
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::bernoulli_distribution dis(keep_prob_);
-  for (size_t batch = 0; batch < batches_; ++batch) {
-    for (size_t channel = 0; channel < channels_; ++channel) {
-      workspace[batch * channels_ + channel] = static_cast<float>(dis(gen));
+  size_t inner_size = input_elements_ / channels_;
+  float scale = 1.0f / keep_prob_;
+  // Get channel index over all samples.
+  auto task_generate_rand = [this, &inner_size, &mask](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      bool drop = static_cast<float>(distribution_(generator_)) <= keep_prob_;
+      std::fill(mask + i * inner_size, mask + (i + 1) * inner_size, drop);
     }
-  }
-  auto task = [this, &input, &workspace, &output, &mask, &scale](size_t start, size_t end) {
+  };
+  ParallelLaunchAutoSearch(task_generate_rand, channels_, this, &parallel_search_info_, pool_);
+
+  auto task = [this, &scale, &input, &output, &mask](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      // Get channel index over all samples.
-      size_t per_batch_channel_index = i / element_per_channel_ / batches_;
-      bool drop_f = workspace[per_batch_channel_index] <= keep_prob_;
-      mask[i] = static_cast<bool>(drop_f);
-      output[i] = scale * input[i] * static_cast<T>(drop_f);
+      if constexpr (std::is_same<T, float16>::value) {
+        output[i] = static_cast<T>(scale) * input[i] * static_cast<T>(mask[i]);
+      } else {
+        output[i] = scale * input[i] * mask[i];
+      }
     }
   };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);

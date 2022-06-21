@@ -225,6 +225,8 @@ from .nn_func import (
     adaptive_avg_pool2d,
     avg_pool2d,
     celu,
+    dropout2d,
+    dropout3d,
     deformable_conv2d,
     fast_gelu,
     hardshrink,
