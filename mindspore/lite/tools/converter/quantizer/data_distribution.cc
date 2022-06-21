@@ -112,7 +112,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     float left_scale = 0.0f;
     if (left_upper > start) {
       left_scale = left_upper - start;
-      if (this->histogram_[left_upper - 1] != 0) {
+      if (!IsZero(this->histogram_[left_upper - 1])) {
         count += left_scale;
       }
     }
@@ -120,12 +120,13 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     double right_scale = 0.0f;
     if (right_lower < end) {
       right_scale = end - right_lower;
-      if (this->histogram_[right_lower] != 0) {
+      if (!IsZero(this->histogram_[right_lower])) {
         count += right_scale;
       }
     }
     std::for_each(this->histogram_.begin() + left_upper, this->histogram_.begin() + right_lower, [&count](float item) {
-      if (item != 0) {
+      bool is_zero = (item <= kEps && item >= -kEps);
+      if (!is_zero) {
         count += 1;
       }
     });
@@ -133,14 +134,14 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
       continue;
     }
     const float average_num = quantized_histogram->at(i) / count;
-    if (left_upper > start && this->histogram_[left_upper - 1] != 0) {
+    if (left_upper > start && !IsZero(this->histogram_[left_upper - 1])) {
       expanded_histogram->at(left_upper - 1) += average_num * left_scale;
     }
-    if (right_lower < end && this->histogram_[right_lower] != 0) {
+    if (right_lower < end && !IsZero(this->histogram_[right_lower])) {
       expanded_histogram->at(right_lower) += average_num * right_scale;
     }
     for (int k = left_upper; k < right_lower; ++k) {
-      if (this->histogram_[k] != 0) {
+      if (!IsZero(this->histogram_[k])) {
         expanded_histogram->at(k) += average_num;
       }
     }

@@ -33,8 +33,6 @@
 namespace mindspore::lite::quant {
 using lite::RET_ERROR;
 using lite::RET_OK;
-static const std::set<std::string> kSupportCLENode = {
-  schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion)};
 static const float kDefaultScale = 1;
 int CLEStrategy::Run() {
   MS_LOG(INFO) << "CLE start to find pattern.";

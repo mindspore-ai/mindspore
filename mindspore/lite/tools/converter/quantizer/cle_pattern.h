@@ -31,6 +31,7 @@ struct CombinationLayer {
 };
 constexpr size_t kInputsNum2 = 2;
 constexpr size_t kInputsNum3 = 3;
+enum ConvNode { COMMON_CONV, DEPTHWISE_CONV };
 class CLEPattern : public opt::MultiplePatternProcessPass {
  public:
   explicit CLEPattern(const std::string &name = "CLEPattern", bool multigraph = true)
