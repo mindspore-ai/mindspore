@@ -174,7 +174,8 @@ CNodePtr GetRecomputeDropoutGenMask(const FuncGraphPtr &func_graph, const CNodeP
   };
   auto recompute_genmask = std::find_if(node_list.begin(), node_list.end(), find_recompute_genmask);
   if (recompute_genmask == node_list.end()) {
-    MS_LOG(EXCEPTION) << "Can not find DropoutGenMask with recompute id " << recompute_id;
+    MS_LOG(INFO) << "Can not find DropoutGenMask with recompute id " << recompute_id;
+    return nullptr;
   }
   return (*recompute_genmask)->cast<CNodePtr>();
 }
@@ -359,10 +360,11 @@ const AnfNodePtr DropoutUnifyMindIR0::Process(const FuncGraphPtr &func_graph, co
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
 
   // CreateDropoutGenMask
-  CNodePtr dropout_gen_mask;
+  CNodePtr dropout_gen_mask = nullptr;
   if (dropout_cnode->HasAttr(kAttrRecomputeId)) {
     dropout_gen_mask = GetRecomputeDropoutGenMask(func_graph, dropout_cnode);
-  } else {
+  }
+  if (dropout_gen_mask == nullptr) {
     dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
   }
   // CreateDropoutDoMask
@@ -401,10 +403,11 @@ const AnfNodePtr DropoutUnifyMindIR1::Process(const FuncGraphPtr &func_graph, co
   auto input_shape = GetDropoutInputShape(dropout_input);
   auto use_v3 = WhetherUseDropoutV3(dropout_cnode, input_shape);
   // CreateDropoutGenMask
-  CNodePtr dropout_gen_mask;
+  CNodePtr dropout_gen_mask = nullptr;
   if (dropout_cnode->HasAttr(kAttrRecomputeId)) {
     dropout_gen_mask = GetRecomputeDropoutGenMask(func_graph, dropout_cnode);
-  } else {
+  }
+  if (dropout_gen_mask == nullptr) {
     dropout_gen_mask = CreateDropoutGenMaskCNode(func_graph, dropout_cnode, keep_prob_value, input_shape, use_v3);
   }
   // CreateDropoutDoMask
