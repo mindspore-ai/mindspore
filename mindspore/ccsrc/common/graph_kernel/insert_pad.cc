@@ -44,9 +44,9 @@ const auto GetPadShape = [](size_t K, size_t M, size_t N) {
 const auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
-  K = shape_a[size - 2];
-  M = shape_a[size - 1];
-  N = shape_b[size - 1];
+  K = LongToSize(shape_a[size - 2]);
+  M = LongToSize(shape_a[size - 1]);
+  N = LongToSize(shape_b[size - 1]);
   std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_K);
   pad_shape_a->push_back(pad_M);
@@ -59,9 +59,9 @@ const auto TransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad
 const auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
-  K = shape_a[size - 2];
-  M = shape_a[size - 1];
-  N = shape_b[size - 2];
+  K = LongToSize(shape_a[size - 2]);
+  M = LongToSize(shape_a[size - 1]);
+  N = LongToSize(shape_b[size - 2]);
   std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_K);
   pad_shape_a->push_back(pad_M);
@@ -74,9 +74,9 @@ const auto TransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_sh
 const auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
-  K = shape_a[size - 1];
-  M = shape_a[size - 2];
-  N = shape_b[size - 2];
+  K = LongToSize(shape_a[size - 1]);
+  M = LongToSize(shape_a[size - 2]);
+  N = LongToSize(shape_b[size - 2]);
   std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_M);
   pad_shape_a->push_back(pad_K);
@@ -89,9 +89,9 @@ const auto NotTransATransB = [](const vec &shape_a, const vec &shape_b, vec *pad
 const auto NotTransANotTransB = [](const vec &shape_a, const vec &shape_b, vec *pad_shape_a, vec *pad_shape_b) {
   size_t K, M, N, pad_K, pad_M, pad_N;
   size_t size = shape_a.size();
-  K = shape_a[size - 1];
-  M = shape_a[size - 2];
-  N = shape_b[size - 1];
+  K = LongToSize(shape_a[size - 1]);
+  M = LongToSize(shape_a[size - 2]);
+  N = LongToSize(shape_b[size - 1]);
   std::tie(pad_K, pad_M, pad_N) = GetPadShape(K, M, N);
   pad_shape_a->push_back(pad_M);
   pad_shape_a->push_back(pad_K);

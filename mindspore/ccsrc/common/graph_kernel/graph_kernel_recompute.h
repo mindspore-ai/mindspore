@@ -119,7 +119,7 @@ class GraphKernelRecompute : public opt::Pass {
 
  private:
   bool DoRun(const FuncGraphPtr &func_graph, bool use_csr = false);
-  void Process(const Candidate &candidate);
+  void Process(const Candidate &candidate) const;
   std::pair<FuncGraphPtr, AnfNodePtrList> CloneGraph(const CNodePtr &source_graph,
                                                      const AnfNodePtrList &recompute_edges) const;
   void LinkIntoTargetFuncGraph(

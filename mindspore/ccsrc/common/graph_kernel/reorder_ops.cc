@@ -321,7 +321,7 @@ bool ReorderOps::ReorderCastUpTypeInsensitive(const FuncGraphPtr &func_graph, co
   return true;
 }
 
-bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) {
+bool ReorderOps::ReorderCastTypeInsensitive(const FuncGraphPtr &func_graph) const {
   // Reorder cast node and type insensitive node in graph kernel sub-graph, this function has several limitations,
   //   see the comments that start will "Limitation:" in this file.
   // Limitation: Assuming the type insensitive node will not change the type of input nodes, otherwise it can be seen

@@ -60,7 +60,7 @@ class EqualCount : public OpDesc {
     auto shape_size = input_x->shape.size();
     std::vector<int64_t> axis(shape_size);
     for (size_t i = 0; i < shape_size; ++i) {
-      axis[i] = i;
+      axis[i] = SizeToLong(i);
     }
     auto result = gb.ReduceSum(cast_val, axis, false);
     result = gb.Reshape(result, {1});

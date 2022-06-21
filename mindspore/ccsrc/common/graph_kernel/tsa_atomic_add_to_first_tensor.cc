@@ -208,7 +208,7 @@ void TsaAtomicAddToFirstTensor::ProcessOriginalCNode(
 
 void TsaAtomicAddToFirstTensor::ProcessTsa(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node,
                                            const std::vector<InplaceAssignerInfo> &atomic_add_infos,
-                                           const FuncGraphManagerPtr &mng) {
+                                           const FuncGraphManagerPtr &mng) const {
   auto origin_composite_node = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(origin_composite_node);
 
