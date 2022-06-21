@@ -243,6 +243,48 @@ struct DivNoNanFunc<half2> {
   }
 };
 
+// XDivy check if lhs is less than epsilon, XDivy support half, float, double
+template <typename T>
+struct XDivyFunc {
+  // default T is float
+  __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    return lhs < kFloatEplison && lhs > -kFloatEplison ? 0.0 : (lhs / rhs);
+  }
+};
+
+template <>
+struct XDivyFunc<int> {
+  __device__ __host__ __forceinline__ int operator()(const int &lhs, const int &rhs) {
+    return lhs == 0 ? 0 : (lhs / rhs);
+  }
+};
+
+template <>
+struct XDivyFunc<half> {
+  __device__ __host__ __forceinline__ half operator()(const half &lhs, const half &rhs) {
+    if (__half2float(lhs) < (0.00007) && __half2float(lhs) > -0.00007) {
+      return static_cast<half>(0.0);
+    }
+    return __float2half_rn(__half2float(lhs) / __half2float(rhs));
+  }
+};
+
+template <>
+struct XDivyFunc<half2> {
+  __device__ __host__ __forceinline__ half2 operator()(const half2 &lhs, const half2 &rhs) {
+    float2 l = __half22float2(lhs);
+    float2 r = __half22float2(rhs);
+    if ((l.x < kFloatEplison && l.x > -kFloatEplison) || (l.y < kFloatEplison && l.y > -kFloatEplison)) {
+      l.x = 0.0;
+      l.y = 0.0;
+    } else {
+      l.x = l.x / r.x;
+      l.y = l.y / r.y;
+    }
+    return __float22half2_rn(l);
+  }
+};
+
 // convert to float to fix accuracy issue
 template <typename T>
 struct FloorDivFunc {
@@ -635,6 +677,8 @@ void ElewiseArithKernel(const int &nums, enum BroadcastOpType op, const T *x0, c
       return ElewiseArithKernel<T, FloorModFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_ATAN2:
       return ElewiseArithKernel<T, Atan2Func<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_XDIVY:
+      return ElewiseArithKernel<T, XDivyFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -1026,6 +1070,11 @@ void BroadcastArith(const std::vector<size_t> &x0_dims, const std::vector<size_t
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_ATAN2:
       return BroadcastArithKernel<T, Atan2Func<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_XDIVY:
+      return BroadcastArithKernel<T, XDivyFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);

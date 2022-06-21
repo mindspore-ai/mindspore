@@ -25,6 +25,7 @@
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {

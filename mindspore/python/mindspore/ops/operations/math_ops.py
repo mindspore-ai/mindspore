@@ -3198,7 +3198,7 @@ class Xdivy(Primitive):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
@@ -3209,12 +3209,54 @@ class Xdivy(Primitive):
         [ 1.   2.  -0.5]
     """
 
-    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+    # Let x/y using diff sig_dtype to disable implicit conversion
+    __mindspore_signature__ = (
+        sig.make_sig('x', dtype=sig.sig_dtype.T),
+        sig.make_sig('y', dtype=sig.sig_dtype.T1)
+    )
 
     @prim_attr_register
     def __init__(self):
         """Initialize Xdivy."""
         self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+    def infer_shape(self, x_shape, y_shape):
+        """
+        Infer shape for output of Xdivy
+        :param x_shape: input shape of x
+        :param y_shape: input shape of y
+        :return:
+        """
+        output_shape = get_broadcast_shape(x_shape, y_shape, self.name)
+        return output_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        """
+        Infer type for output of Xdivy
+        :param x_dtype: input type of x
+        :param y_dtype: input type of y
+        :return:
+        """
+        args = {'x': x_dtype, 'y': y_dtype}
+        validator.check_scalar_or_tensor_types_same(args,
+                                                    [mstype.float16, mstype.float32, mstype.float64, mstype.complex64,
+                                                     mstype.complex128], self.name, True)
+        return x_dtype
+
+    def infer_value(self, x, y):
+        """
+        Infer value for constant folding
+        :param x:
+        :param y:
+        :return:
+        """
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            out = x / y
+            out = np.array(out, x.dtype)
+            return Tensor(out)
+        return None
 
 
 class Xlogy(Primitive):

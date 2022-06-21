@@ -132,6 +132,8 @@ from .math_func import (
     tensor_floordiv,
     floor_div,
     floordiv,
+    tensor_xdivy,
+    xdivy,
     tensor_pow,
     pow,
     pows,

@@ -155,6 +155,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"__add__", std::string("add")},                                    // C.add
        {"__sub__", std::string("sub")},                                    // C.sub
        {"__mul__", std::string("mul")},                                    // C.mul
+       {"xdivy", std::string("xdivy")},                                    // P.Xdivy
        {"abs", std::string("abs_")},                                       // C.abs_
        {"mean", std::string("mean")},                                      // C.mean
        {"__truediv__", std::string("truediv")},                            // C.truediv

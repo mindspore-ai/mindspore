@@ -3907,6 +3907,43 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('diag')()(self)
 
+    def xdivy(self, y):
+        """
+        Divides self tensor by the input tensor element-wise. Returns zero when self is zero.
+
+        self and `y` comply with the implicit type conversion rules to make the data types consistent.
+        'y' must be tensor or scalar, When y is tensor, dtypes of self and y cannot be bool at the same time,
+        and the shapes of them could be broadcast. When y is scalar, the scalar could only be a constant.
+
+        Inputs:
+            - **y** (Union[Tensor, Number, bool]) - The second input is a number,
+              or a bool when the first input is a tensor, or a tensor whose data type is float16,
+              float32, float64, complex64, complex128 or bool.
+
+        Outputs:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `y` is not one of the following: Tensor, Number, bool.
+            TypeError: If dtype of self and 'y' is not in [float16, float32, float64, complex64, complex128, bool].
+            ValueError: If self could not be broadcast to a tensor with shape of `y`.
+            RuntimeError: If the data type of `y` conversion of Parameter is given
+                          but data type conversion of Parameter is not supported.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
+            >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+            >>> output = x.xdivy(y)
+            >>> print(output)
+            [ 1.   2.  -0.5]
+        """
+        self._init_check()
+        return tensor_operator_registry.get("xdivy")(self, y)
+
     def split(self, axis=0, output_num=1):
         """
         Splits a tensor into output_num of tensors along the given axis and output numbers.
