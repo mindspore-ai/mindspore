@@ -41,24 +41,24 @@ from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace, Cl
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
 
-# define return value
+# Define return value
 RET_SUCCESS = 0
 RET_FAILURE = 0xFF
 
-# define resolve type
-RESOLVE_TYPE_NONE = 0                   # resolve None
-RESOLVE_TYPE_FUNCTION = 1               # resolve function
-RESOLVE_TYPE_METHOD = 2                 # resolve class method
-RESOLVE_TYPE_CLASS_TYPE = 3             # resolve class type
-RESOLVE_TYPE_CLASS_INSTANCE = 4         # resolve the class instance of common class
-RESOLVE_TYPE_NUMPY_INT_NUMBER = 5       # resolve numpy int number
-RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 6     # resolve numpy float number
+# Define resolve type
+RESOLVE_TYPE_NONE = 0                   # Resolve None
+RESOLVE_TYPE_FUNCTION = 1               # Resolve function
+RESOLVE_TYPE_METHOD = 2                 # Resolve class method
+RESOLVE_TYPE_CLASS_TYPE = 3             # Resolve class type
+RESOLVE_TYPE_CLASS_INSTANCE = 4         # Resolve the class instance of common class
+RESOLVE_TYPE_NUMPY_INT_NUMBER = 5       # Resolve numpy int number
+RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 6     # Resolve numpy float number
 RESOLVE_TYPE_INVALID = 0xFF
 
-# define the class instance detail type
+# Define the class instance detail type
 # When the type is RESOLVE_TYPE_CLASS_INSTANCE
-CLASS_INSTANCE_TYPE_CELL = 0            # class instance type is Cell
-CLASS_INSTANCE_TYPE_PRIMITIVE = 1       # class instance type is Primitive
+CLASS_INSTANCE_TYPE_CELL = 0            # Class instance type is Cell
+CLASS_INSTANCE_TYPE_PRIMITIVE = 1       # Class instance type is Primitive
 CLASS_INSTANCE_TYPE_NUMPY_ARRAY = 2     # Class instance type is Numpy Array
 CLASS_INSTANCE_TYPE_INVALID = 0xFF
 
@@ -79,14 +79,14 @@ AST_SUB_TYPE_ATTRIBUTE = 9             # ast.Attribute
 AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 
 # Syntax support
-SYNTAX_SUPPORTED = 0                   # supported syntax
-SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1   # unsupported internal type
-SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # unsupported external type
-SYNTAX_UNSUPPORTED_SPECIAL_TYPE = 3    # unsupported special type
-SYNTAX_UNSUPPORTED_NAMESPACE = 4       # unsupported namespace
+SYNTAX_SUPPORTED = 0                   # Supported syntax
+SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1   # Unsupported internal type
+SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # Unsupported external type
+SYNTAX_UNSUPPORTED_SPECIAL_TYPE = 3    # Unsupported special type
+SYNTAX_UNSUPPORTED_NAMESPACE = 4       # Unsupported namespace
 
 # Process expr statement white list
-# add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
+# Add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
 parse_expr_statement_white_list = (
     "append", "insert",
 )
@@ -273,7 +273,7 @@ def get_object_key(obj):
         obj_id = "%s_ID%d" % (tag, id(obj))
     logger.debug("obj_key: %s, obj_id: %s", obj_key, obj_id)
 
-    # method has same id of different instance
+    # Method has same id of different instance
     if isinstance(obj, types.MethodType):
         method_instance = obj.__self__
         instance_id = "%s_ID%d" % (str(method_instance.__class__.__name__), id(method_instance))
@@ -321,7 +321,7 @@ def get_obj_type(obj):
         if support_fallback_ != '0':
             obj_type = RESOLVE_TYPE_INVALID
         else:
-            # here for ndarray, just print its shape (in case of the array to large and print many data in screen)
+            # Here for ndarray, just print its shape (in case of the array to large and print many data in screen)
             is_ndarray = type(obj).__name__ == 'ndarray' and hasattr(obj, 'shape')
             raise TypeError(f"Not support for this object with type '{type(obj)}' and "
                             f"{'shape' if is_ndarray else 'value'} '{obj.shape if is_ndarray else obj}'.")
@@ -336,7 +336,7 @@ def check_obj_bool(obj):
 
 def get_class_instance_type(obj):
     """Get the class instance detail type."""
-    # check the obj type
+    # Check the obj type
     logger.debug("Get the class type(%r)", obj)
     if isinstance(obj, nn.Cell):
         return CLASS_INSTANCE_TYPE_CELL
@@ -511,7 +511,7 @@ def convert_to_ms_tensor(data):
 
 
 def get_object_description(obj, fname, fline):
-    """return method or funcition description for error report, include location, class name, etc."""
+    """Return method or funcition description for error report, include location, class name, etc."""
     if isinstance(obj, types.MethodType):
         obj_cls = obj.__self__.__class__
         class_name = f"{obj_cls.__module__}.{obj_cls.__qualname__}"
@@ -554,7 +554,7 @@ def expand_expr_statement(node):
 
 def get_ast_namespace_symbol(obj):
     """Get obj type and namespace and symbol."""
-    # step 1:get symbol from object map
+    # Get symbol from object map.
     ops_info = parse_object_map.get(type(obj), SYMBOL_UNDEFINE)
     logger.debug("ops info: %r", ops_info)
     return ops_info
@@ -600,11 +600,11 @@ def get_node_type(node):
     """Process an ast node."""
     method_name = f"{node.__class__.__name__}"
     node_type = [method_name]
-    # judge the ast main type
+    # Judge the ast main type.
     if isinstance(node, ast.stmt):
         node_type.append(AST_MAIN_TYPE_STMT)
     elif isinstance(node, (ast.expr, ast.slice)) or node is None:
-        # ast.slice and ast.expr should be expr
+        # ast.slice and ast.expr should be expr.
         node_type.append(AST_MAIN_TYPE_EXPR)
     else:
         node_type.append(AST_MAIN_TYPE_UNKNOWN)
@@ -612,7 +612,7 @@ def get_node_type(node):
 
 
 def get_args_default_values(node):
-    """get the args'default values of parse object."""
+    """Get the args'default values of parse object."""
     nondefaults = [None] * (len(node.args.args) - len(node.args.defaults))
     defaults = nondefaults + node.args.defaults + node.args.kw_defaults
     if node.args.vararg:
@@ -625,18 +625,18 @@ def get_args_default_values(node):
 def get_args(node):
     """Get the arg of parse object."""
     args = []
-    # process position args
+    # Process position args.
     for arg in node.args.args:
         args.append(arg)
 
-    # process kwonlyargs: kwonlyargs is append after position args
+    # Process kwonlyargs: kwonlyargs is append after position args.
     if node.args.kwonlyargs:
         for kwarg in node.args.kwonlyargs:
             args.append(kwarg)
-    # process vararg: vararg is append after kwonlyargs
+    # Process vararg: vararg is append after kwonlyargs.
     if node.args.vararg:
         args.append(node.args.vararg)
-    # process kwarg: kwarg is append after vararg
+    # Process kwarg: kwarg is append after vararg.
     if node.args.kwarg:
         args.append(node.args.kwarg)
     return args
