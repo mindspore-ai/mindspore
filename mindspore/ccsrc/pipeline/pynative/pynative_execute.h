@@ -143,12 +143,17 @@ class TopCellInfo {
   CellSelfInfoPtr cell_self_info() const { return cell_self_info_; }
   void set_cell_self_info(const CellSelfInfoPtr &cell_self_info) { cell_self_info_ = cell_self_info; }
   void SetCellSelfInfoForTopCell(const py::object &cell, const py::args &args);
-  mindspore::HashSet<std::string> &sub_cell_list() { return sub_cell_list_; }
-  std::set<std::string> &forward_op_output_id() { return forward_op_output_id_; }
+  void EraseFromSubCellList(const std::string &cell_id) { (void)sub_cell_list_.erase(cell_id); }
+  void SetSubCellList(const std::string &cell_id) { (void)sub_cell_list_.emplace(cell_id); }
+  const mindspore::HashSet<std::string> &sub_cell_list() const { return sub_cell_list_; }
   bool IsSubCell(const std::string &cell_id) const;
   void CheckSubCellHookChanged();
-  OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() { return graph_info_map_; }
-  OpInfoWithTensorId &op_info_with_tensor_id() { return op_info_with_tensor_id_; }
+  void SetGraphInfoMap(const FuncGraphPtr &fg, const GraphInfoPtr &graph_info) { graph_info_map_[fg] = graph_info; }
+  const OrderedMap<FuncGraphPtr, GraphInfoPtr> &graph_info_map() const { return graph_info_map_; }
+  void SetOpInfoWithTensorId(const std::string &op_info, const std::string &tensor_id) {
+    (void)op_info_with_tensor_id_[op_info].emplace_back(tensor_id);
+  }
+  const OpInfoWithTensorId &op_info_with_tensor_id() const { return op_info_with_tensor_id_; }
   TensorIdWithTensorObject &tensor_id_with_tensor_object() { return tensor_id_with_tensor_object_; }
   ad::KPynativeCellPtr k_pynative_cell_ptr() const { return k_pynative_cell_ptr_; }
   void set_k_pynative_cell_ptr(const ad::KPynativeCellPtr &k_pynative_cell_ptr) {
@@ -196,8 +201,6 @@ class TopCellInfo {
   // Record backward hook ops for each cell object.
   // Each cell object has two backward hook ops.
   CellIdWithBackwardHookOp cell_backward_hook_op_;
-  // Record forward output tensor id
-  std::set<std::string> forward_op_output_id_;
   OpInfoWithTensorId op_info_with_tensor_id_;
   TensorIdWithTensorObject tensor_id_with_tensor_object_;
   OpInfoWithMsFuncForwardTensors op_info_with_ms_func_forward_tensors_;
@@ -219,16 +222,17 @@ class GradExecutor {
   explicit GradExecutor(const ForwardExecutorPtr &forward_executor = nullptr)
       : forward_executor_(ForwardExecutorWeakPtr(forward_executor)) {}
 
-  std::function<void(py::object *, const py::object &, const py::args &)> InitGraph = [this](auto &&PH1, auto &&PH2,
-                                                                                             auto &&PH3) {
+  std::function<void(const py::object *, const py::object &, const py::args &)> InitGraph = [this](auto &&PH1,
+                                                                                                   auto &&PH2,
+                                                                                                   auto &&PH3) {
     NewGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3));
   };
-  std::function<void(py::object *, const py::object &, const py::object &, const py::args &)> LinkGraph =
+  std::function<void(const py::object *, const py::object &, const py::object &, const py::args &)> LinkGraph =
     [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4) {
       EndGraphInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2),
                     std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4));
     };
-  std::function<void(py::object *, const prim::GradOperationPtr &, const py::object &, const py::object &,
+  std::function<void(const py::object *, const prim::GradOperationPtr &, const py::object &, const py::object &,
                      const py::object &, const py::args &)>
     GradGraph = [this](auto &&PH1, auto &&PH2, auto &&PH3, auto &&PH4, auto &&PH5, auto &&PH6) {
       GradNetInner(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3),
@@ -258,10 +262,9 @@ class GradExecutor {
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
   void set_graph_phase(const std::string &graph_phase) { graph_phase_ = graph_phase; }
   bool in_cell_with_custom_bprop_() const { return custom_bprop_cell_count_ > 0; }
-  std::set<std::string> &forward_op_output_id() const { return top_cell()->forward_op_output_id(); }
-  AnfNodePtr GetInput(const py::object &obj, bool op_mask);
+  AnfNodePtr GetInput(const py::object &obj, bool op_mask) const;
   std::string GetCellId(const py::object &cell, const py::args &args);
-  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info);
+  void RecordGradOpInfo(const OpExecInfoPtr &op_exec_info) const;
   bool need_construct_graph() const { return !cell_stack_.empty() && grad_flag_; }
   // Construct grad graph for ms_function
   bool eliminate_forward() const { return eliminate_forward_; }
@@ -274,7 +277,7 @@ class GradExecutor {
   CNodePtr MakeAdjointForMsFunction(const FuncGraphPtr &ms_func_graph, const FuncGraphPtr &grad_graph,
                                     const py::object &actual_out, const py::args &args, const ValuePtr &actual_out_v);
   void MakeCNodeForMsFunction(const FuncGraphPtr &ms_func_graph, const py::args &args, ValuePtrList *input_values,
-                              CNodePtr *ms_function_cnode);
+                              CNodePtr *ms_function_cnode) const;
   void SaveOutputNodeMap(const std::string &obj_id, const py::object &out_real, const CNodePtr &cnode);
   void DoOpGrad(const OpExecInfoPtr &op_exec_info, const CNodePtr &cnode, const ValuePtr &op_out);
   // Update forward tensors info
@@ -316,46 +319,49 @@ class GradExecutor {
   bool IsBpropGraph(const std::string &cell_id);
   bool IsCellObjIdEq(const std::string &l_cell_id, const std::string &r_cell_id) const;
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
-  void NewGraphInner(py::object *ret, const py::object &cell, const py::args &args);
-  void EndGraphInner(py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
+  void NewGraphInner(const py::object *ret, const py::object &cell, const py::args &args);
+  void EndGraphInner(const py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
   ValuePtr GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node);
-  void UpdateSensValueForDynamicShapeOutput(const py::object &out);
+  void UpdateSensValueForDynamicShapeOutput(const py::object &out) const;
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
   std::string GetAlreadyRunCellId(const std::string &cell_id);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args);
-  void GradNetInner(py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
+  void GradNetInner(const py::object *ret, const prim::GradOperationPtr &grad, const py::object &cell,
                     const py::object &weights, const py::object &grad_position, const py::args &args);
   FuncGraphPtr GetBpropGraph(const prim::GradOperationPtr &grad, const py::object &cell,
                              const std::vector<AnfNodePtr> &weights, const std::vector<size_t> &grad_position,
                              size_t arg_size, const py::args &args);
-  std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
+  std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder) const;
+  void CheckParamShapeAndType(const AnfNodePtr &param, const ParameterPtr &param_node,
+                              const abstract::AbstractBasePtr &input_abs,
+                              const abstract::AbstractBasePtr &param_tensor_abs, const std::string &input_shape);
   void UpdateParamAbsByArgs(const py::list &args, const FuncGraphPtr &bprop_graph);
   std::vector<size_t> GetGradPositionArgs(const py::object &grad_position);
-  void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args);
+  void ShallowCopySensValue(const py::tuple &input_args, bool has_sens, VectorRef *run_args) const;
   // Manage resource for construct forward graph.
   const std::string &graph_phase() const { return graph_phase_; }
-  AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id);
-  AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id);
-  AnfNodePtr CreateMakeTupleNode(const py::object &obj, const std::string &obj_id);
-  AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id);
-  void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &id, const AnfNodePtr &node,
-                                      const std::vector<int64_t> &index_sequence, bool is_param = false);
+  AnfNodePtr GetObjNode(const py::object &obj, const std::string &obj_id) const;
+  AnfNodePtr MakeValueNode(const py::object &obj, const std::string &obj_id) const;
+  AnfNodePtr CreateMakeTupleNode(const py::object &obj, const std::string &obj_id) const;
+  AnfNodePtr CreateTupleGetItemNode(const std::string &obj_id) const;
+  void SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
+                                      const std::vector<int64_t> &index_sequence, bool is_param = false) const;
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
-                                  bool is_param = false);
+                                  bool is_param = false) const;
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) const {
-    auto &graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map().at(g);
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->params[id] = param;
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 int64_t index = -1) const {
-    auto &graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map().at(g);
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, std::vector<int64_t>{index});
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 const std::vector<int64_t> &index) const {
-    auto &graph_info = top_cell()->graph_info_map()[g];
+    auto &graph_info = top_cell()->graph_info_map().at(g);
     MS_EXCEPTION_IF_NULL(graph_info);
     graph_info->node_map[id] = std::make_pair(node, index);
   }
@@ -405,9 +411,12 @@ class ForwardExecutor {
   };
 
   void RunOpInner(py::object *ret, const OpExecInfoPtr &op_exec_info);
-  OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
+  OpExecInfoPtr GenerateOpExecInfo(const py::args &args) const;
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
-  mindspore::HashMap<std::string, abstract::AbstractBasePtr> &node_abs_map() { return node_abs_map_; }
+  void ClearNodeAbsMap() { node_abs_map_.clear(); }
+  void EraseFromNodeAbsMap(const std::string &id) { (void)node_abs_map_.erase(id); }
+  void SetNodeAbsMap(const std::string &id, const abstract::AbstractBasePtr &abs) { node_abs_map_[id] = abs; }
+  const mindspore::HashMap<std::string, abstract::AbstractBasePtr> &node_abs_map() const { return node_abs_map_; }
   void ClearRes();
   CNodePtr ConstructForwardGraph(const OpExecInfoPtr &op_exec_info);
   // Replace input hook node with its input node when not in its own cell scope.
@@ -423,13 +432,13 @@ class ForwardExecutor {
 
  private:
   GradExecutorPtr grad() const;
-  MsBackendPolicy GetBackendPolicy(const OpExecInfoPtr &op_exec_info);
+  MsBackendPolicy GetBackendPolicy(const OpExecInfoPtr &op_exec_info) const;
   py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
   void RunMixedPrecisionCastOp(const OpExecInfoPtr &op_exec_info, py::object *ret);
   py::object RunOpInVM(const OpExecInfoPtr &op_exec_info);
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info);
-  void SetNonCostantValueAbs(const AbstractBasePtr &abs, size_t i, const std::string &id);
+  void SetNonCostantValueAbs(const AbstractBasePtr &abs, const std::string &id);
   AbstractBasePtr GetTupleInputAbstract(const OpExecInfoPtr &op_exec_info, const py::object &obj, const std::string &id,
                                         size_t input_index);
   AbstractBasePtr GetInputObjAbstract(const OpExecInfoPtr &op_exec_info, size_t i, const py::object &obj);
@@ -438,7 +447,7 @@ class ForwardExecutor {
                            bool *prim_cache_hit);
   void GetOpOutput(const OpExecInfoPtr &op_exec_info, const abstract::AbstractBasePtrList &args_spec_list,
                    const CNodePtr &cnode, bool prim_cache_hit, py::object *ret);
-  void DoNopOutput(const OpExecInfoPtr &op_exec_info, ValuePtr *out_real_value);
+  void DoNopOutput(const OpExecInfoPtr &op_exec_info, ValuePtr *out_real_value) const;
   // Mix precision and Implicit transform
   void SetCastForInputs(const OpExecInfoPtr &op_exec_info);
   void SetTensorMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
