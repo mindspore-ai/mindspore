@@ -2424,3 +2424,55 @@ TEST_F(MindDataTestPipeline, TestAdjustSharpnessParamCheck) {
   // Expect failure: invalid value of AdjustSharpness
   EXPECT_EQ(iter1, nullptr);
 }
+
+/// Feature: AdjustSaturation op
+/// Description: Test AdjustSaturation pipeline
+/// Expectation: Create an ImageFolder dataset then do auto AjustSaturation on it 
+TEST_F(MindDataTestPipeline, TestAdjustSaturation) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSaturation.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto adjustsaturation_op = vision::AdjustSaturation(2.0);
+
+  ds = ds->Map({adjustsaturation_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: AdjustSaturation op
+/// Description: Test parameter check
+/// Expectation: Error logs are as expected
+TEST_F(MindDataTestPipeline, TestAdjustSaturationParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSaturationParamCheck.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Negative saturation_factor
+  // Create objects for the tensor ops
+  auto adjustsaturation_op = vision::AdjustSaturation(-1);
+  auto ds1 = ds->Map({adjustsaturation_op});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid value of AdjustSaturation
+  EXPECT_EQ(iter1, nullptr);
+}

@@ -2868,3 +2868,20 @@ TEST_F(MindDataTestExecute, TestAdjustSharpnessEager) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: AdjustSaturation
+/// Description: Test executing Decode then AdjustSaturation op with eager mode
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAdjustSaturationEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustSaturationEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto adjust_saturation_op = vision::AdjustSaturation(1.0);
+
+  auto transform = Execute({decode, adjust_saturation_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}
