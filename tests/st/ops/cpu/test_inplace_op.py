@@ -30,6 +30,24 @@ class InplaceUpdate(nn.Cell):
         return x.inplace_update(v, self.indices)
 
 
+class InplaceAdd(nn.Cell):
+    def __init__(self, indices):
+        super(InplaceAdd, self).__init__()
+        self.indices = indices
+
+    def construct(self, x, v):
+        return ops.inplace_add(x, v, self.indices)
+
+
+class InplaceSub(nn.Cell):
+    def __init__(self, indices):
+        super(InplaceSub, self).__init__()
+        self.indices = indices
+
+    def construct(self, x, v):
+        return ops.inplace_sub(x, v, self.indices)
+
+
 def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
     result = x.copy()
     if v.shape[0] == 1:
@@ -154,7 +172,7 @@ def test_inplace_update(shape, indice_len, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
-def test_vmap_inplace_ops(shape, indice_len, dtype):
+def test_vmap_inplace_update(shape, indice_len, dtype):
     """
     Feature: test vmap inplace operators
     Description: test vmap inplace operators
@@ -171,4 +189,54 @@ def test_vmap_inplace_ops(shape, indice_len, dtype):
     expected = np.zeros(shape=shape)
     for i in range(shape[0]):
         expected[i] = inplace_op_np('update', x[i], v, indices)
+    np.allclose(result.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+def test_vmap_inplace_add(shape, indice_len, dtype):
+    """
+    Feature: test vmap inplace operators
+    Description: test vmap inplace operators
+    Expectation: result is the same as expected
+    """
+    context.set_context(device_target='CPU')
+    x = np.random.random(shape).astype(dtype)
+    v = np.random.random((indice_len,) + shape[2:]).astype(dtype)
+    indices = np.random.choice(list(range(shape[1])), indice_len, replace=False)
+    indices = tuple((int(i) for i in indices))
+
+    inplace_op = InplaceAdd(indices)
+    result = vmap(inplace_op, in_axes=(0, None), out_axes=0)(Tensor(x), Tensor(v))
+    expected = np.zeros(shape=shape)
+    for i in range(shape[0]):
+        expected[i] = inplace_op_np('add', x[i], v, indices)
+    np.allclose(result.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+def test_vmap_inplace_sub(shape, indice_len, dtype):
+    """
+    Feature: test vmap inplace operators
+    Description: test vmap inplace operators
+    Expectation: result is the same as expected
+    """
+    context.set_context(device_target='CPU')
+    x = np.random.random(shape).astype(dtype)
+    v = np.random.random((indice_len,) + shape[2:]).astype(dtype)
+    indices = np.random.choice(list(range(shape[1])), indice_len, replace=False)
+    indices = tuple((int(i) for i in indices))
+
+    inplace_op = InplaceSub(indices)
+    result = vmap(inplace_op, in_axes=(0, None), out_axes=0)(Tensor(x), Tensor(v))
+    expected = np.zeros(shape=shape)
+    for i in range(shape[0]):
+        expected[i] = inplace_op_np('sub', x[i], v, indices)
     np.allclose(result.asnumpy(), expected)

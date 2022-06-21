@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore import ops
+from mindspore.ops.functional import vmap
 
 
 class NetCosh(nn.Cell):
@@ -62,5 +63,24 @@ def test_cosh_py(dtype, tol):
     np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype(dtype)
     input_x = Tensor(np_array)
     output = input_x.cosh()
+    expect = np.cosh(np_array)
+    assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
+def test_vmap_cosh(dtype, tol):
+    """
+    Feature: test vmap inplace operators
+    Description: test vmap inplace operators
+    Expectation: result is the same as expected
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    np_array = np.random.random((3, 4, 2, 1)).astype(dtype)
+    input_x = Tensor(np_array)
+    net = NetCosh()
+    output = vmap(net, 0)(input_x)
     expect = np.cosh(np_array)
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)

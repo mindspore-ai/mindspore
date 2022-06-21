@@ -80,3 +80,30 @@ def test_matrix_solve_complex(adjoint, m, k, dtype, error):
     expected = np.linalg.solve(matrix_np, rhs)
 
     assert np.allclose(result, expected, atol=error, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('adjoint', [True, False])
+@pytest.mark.parametrize('dtype, error', [(np.float32, 1e-5), (np.float64, 1e-12)])
+def test_matrix_solve_vmap(adjoint, dtype, error):
+    """
+    Feature: ALL To ALL
+    Description: test cases for MatrixSolve
+    Expectation: the result match to scipy
+    """
+    np.random.seed(0)
+    context.set_context(device_target="CPU")
+
+    matrix_shape = (3, 2, 5, 5)
+    rhs_shape = (3, 2, 5, 4)
+
+    matrix = np.random.normal(-10, 10, np.prod(matrix_shape)).reshape(matrix_shape).astype(dtype)
+    rhs = np.random.normal(-10, 10, np.prod(rhs_shape)).reshape(rhs_shape).astype(dtype)
+    matrix_np = np.swapaxes(matrix, -1, -2) if adjoint else matrix
+
+    result = ops.vmap(ops.matrix_solve, (0, 0, None))(Tensor(matrix), Tensor(rhs), adjoint).asnumpy()
+    expected = np.linalg.solve(matrix_np, rhs)
+
+    assert np.allclose(result, expected, atol=error, rtol=error)

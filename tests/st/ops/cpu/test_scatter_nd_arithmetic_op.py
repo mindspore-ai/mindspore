@@ -120,7 +120,7 @@ def compare_with_numpy(func, lock, input_x, indices, updates):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.float64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_small_float(lock, func, data_type, index_type):
@@ -140,7 +140,7 @@ def test_scatter_nd_small_float(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_small_int(lock, func, data_type, index_type):
@@ -160,7 +160,7 @@ def test_scatter_nd_small_int(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
@@ -188,7 +188,7 @@ def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True, False])
-@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_one_value(lock, func, data_type, index_type):
@@ -208,7 +208,7 @@ def test_scatter_nd_one_value(lock, func, data_type, index_type):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('lock', [True])
-@pytest.mark.parametrize('func', ['mul', 'sub', 'add'])
+@pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_lock(lock, func, data_type, index_type):
@@ -276,54 +276,51 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_scatter_func_indices_vmap():
+@pytest.mark.parametrize('func', ['add', 'sub', 'div'])
+def test_scatter_func_indices_vmap(func):
     """
-    Feature: test scatter_nd_add  && scatter_nd_sub vmap.
+    Feature: test ScatterNd* vmap.
     Description: in_axes: (0, 0, None).
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    func = 'add'
+
     in_axes = (0, 0, None)
     out_axes = 0
     input_x = Tensor(
         np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
     indices = Tensor(np.array([[[0, 0], [1, 1]], [[0, 0], [1, 1]]]).astype(np.int32))
     updates = Tensor(np.array([1.0, 2.2]).astype(np.float32))
+
     output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
-    benchmark_output = np.array([[[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]], [[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]]]).astype(
-        np.float32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
-    func = 'sub'
-    benchmark_output = np.array([[[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]], [[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]]]).astype(
-        np.float32)
-    output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
-    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
+    expected = np.zeros_like(input_x.asnumpy())
+    for i in range(input_x.shape[0]):
+        expected[i, :] = scatter_nd_np(func, input_x[i, :], indices[i, :], updates)
+
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_scatter_func_update_vmap():
+@pytest.mark.parametrize('func', ['add', 'sub', 'div'])
+def test_scatter_func_update_vmap(func):
     """
-    Feature: test scatter_nd_add && scatter_nd_sub vmap.
+    Feature: test ScatterNd* vmap.
     Description: in_axes: (0,  None, 0).
     Expectation: the result match with numpy result
     """
     context.set_context(mode=context.GRAPH_MODE)
-    func = 'add'
     in_axes = (0, None, 0)
     out_axes = 0
     input_x = Tensor(
         np.array([[[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], [[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]]).astype(np.float32))
     indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
     updates = Tensor(np.array([[1.0, 2.2], [0.07, 1.23]]).astype(np.float32))
+
     output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
-    benchmark_output = np.array([[[0.9, 0.3, 3.6], [0.4, 2.7, -3.2]], [[-0.03, 0.3, 3.6], [0.4, 1.73, -3.2]]]).astype(
-        np.float32)
-    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
-    func = 'sub'
-    benchmark_output = np.array(
-        [[[-1.1, 0.3, 3.6], [0.4, -1.7, -3.2]], [[-0.17, 0.3, 3.6], [0.4, -0.73, -3.2]]]).astype(np.float32)
-    output = VMapNet(VmapScatterNet(func), input_x, in_axes, out_axes)(indices, updates)
-    np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
+    expected = np.zeros_like(input_x.asnumpy())
+    for i in range(input_x.shape[0]):
+        expected[i, :] = scatter_nd_np(func, input_x[i, :], indices, updates[i, :])
+
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)

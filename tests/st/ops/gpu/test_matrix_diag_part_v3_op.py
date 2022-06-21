@@ -182,7 +182,7 @@ def test_matrix_diag_part_v3_primitive_negative_k():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
-def test_matrix_diag_part_v3_primitive():
+def test_matrix_diag_part_v3_vmap():
     """
     Feature: MatrixDiagPartV3 operator.
     Description: Compatible with np.diag.
@@ -198,7 +198,10 @@ def test_matrix_diag_part_v3_primitive():
                                 [5, 6, 7, 8]]]), mstype.float32)
     k = Tensor((1, 3), mstype.int32)
     padding_value = Tensor(9, mstype.float32)
-    result = MatrixDiagPartV3(align=align)(input_x, k, padding_value).asnumpy()
+
+    diag_part = MatrixDiagPartV3Net(align=align)
+    result = ops.vmap(diag_part, (0, None, None))(input_x, k, padding_value).asnumpy()
+
     expect = np.array([[[9, 9, 4],
                         [9, 3, 8],
                         [2, 7, 6]],
