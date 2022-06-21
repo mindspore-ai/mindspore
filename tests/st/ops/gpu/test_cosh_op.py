@@ -21,6 +21,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore import ops
 from mindspore.ops.functional import vmap
+from mindspore import dtype as mstype
 
 
 class NetCosh(nn.Cell):
@@ -63,6 +64,30 @@ def test_cosh_py(dtype, tol):
     np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype(dtype)
     input_x = Tensor(np_array)
     output = input_x.cosh()
+    expect = np.cosh(np_array)
+    assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_cosh_dynamic_shape():
+    """
+    Feature: test test_cosh_dynamic_shape dynamic_shape feature.
+    Description: test padding test_cosh_dynamic_shape feature.
+    Expectation: Success.
+    """
+    dtype, tol = np.float32, 1.e-5
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    np_array = np.array([-1, -0.5, 0, 0.5, 1]).astype(dtype)
+    input_x = Tensor(np_array)
+
+    dynamic_net = NetCosh()
+    place_holder = Tensor(shape=[None], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder)
+
+    output = dynamic_net(input_x)
     expect = np.cosh(np_array)
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 

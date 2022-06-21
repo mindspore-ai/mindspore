@@ -15,9 +15,19 @@
 
 
 import mindspore.context as context
-from mindspore import Tensor, ops
+from mindspore import Tensor, ops, nn
+from mindspore import dtype as mstype
 import numpy as np
 import pytest
+
+
+class MatrixSolveNet(nn.Cell):
+    def __init__(self, adjoint=False):
+        super(MatrixSolveNet, self).__init__()
+        self.adjoint = adjoint
+
+    def construct(self, matrix, rhs):
+        return ops.matrix_solve(matrix, rhs, self.adjoint)
 
 
 @pytest.mark.level0
@@ -104,6 +114,37 @@ def test_matrix_solve_vmap(adjoint, dtype, error):
     matrix_np = np.swapaxes(matrix, -1, -2) if adjoint else matrix
 
     result = ops.vmap(ops.matrix_solve, (0, 0, None))(Tensor(matrix), Tensor(rhs), adjoint).asnumpy()
+    expected = np.linalg.solve(matrix_np, rhs)
+
+    assert np.allclose(result, expected, atol=error, rtol=error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_matrix_solve_dynamic_shape():
+    """
+    Feature: ALL To ALL
+    Description: test cases for MatrixSolve
+    Expectation: the result match to scipy
+    """
+    adjoint = True
+    rhs_shape = [2, 3, 4]
+    matrix_shape = [2, 3, 3]
+    dtype, error = np.float32, 1e-5
+
+    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+
+    matrix = np.random.normal(-10, 10, np.prod(matrix_shape)).reshape(matrix_shape).astype(dtype)
+    rhs = np.random.normal(-10, 10, np.prod(rhs_shape)).reshape(rhs_shape).astype(dtype)
+    matrix_np = np.swapaxes(matrix, -1, -2) if adjoint else matrix
+
+    dynamic_net = MatrixSolveNet(adjoint=adjoint)
+    place_holder = Tensor(shape=[2, 3, None], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder, place_holder)
+
+    result = dynamic_net(Tensor(matrix), Tensor(rhs)).asnumpy()
     expected = np.linalg.solve(matrix_np, rhs)
 
     assert np.allclose(result, expected, atol=error, rtol=error)
