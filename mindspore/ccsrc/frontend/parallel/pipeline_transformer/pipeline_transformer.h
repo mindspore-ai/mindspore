@@ -51,6 +51,7 @@ class PipelineTransformer {
         per_stage_rank_num_(per_stage_rank_num) {}
   virtual ~PipelineTransformer() = default;
   void Coloring();
+  void LabelGenMaskFusion();
   void MainGraph();
   void LabelMicroBatch();
   void BroadCastColoring();
