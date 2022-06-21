@@ -143,11 +143,11 @@ def to_tensor(img, output_type):
         img (numpy.ndarray), Converted image.
     """
     if not (is_pil(img) or is_numpy(img)):
-        raise TypeError("img should be PIL image or NumPy array. Got {}.".format(type(img)))
+        raise TypeError("The input image should be of type numpy.ndarray or PIL.Image.Image. Got {}.".format(type(img)))
 
     img = np.asarray(img)
     if img.ndim not in (2, 3):
-        raise TypeError("img dimension should be 2 or 3. Got {}.".format(img.ndim))
+        raise TypeError("The dimension of input image should be 2 or 3. Got {}.".format(img.ndim))
 
     if img.ndim == 2:
         img = img[:, :, None]
@@ -170,7 +170,23 @@ def to_pil(img):
     """
     if not is_pil(img):
         if not isinstance(img, np.ndarray):
-            raise TypeError("The input of ToPIL should be ndarray. Got {}".format(type(img)))
+            raise TypeError("The input image should be of type numpy.ndarray or PIL.Image.Image. "
+                            "Got {}.".format(type(img)))
+        if img.ndim not in (2, 3):
+            raise ValueError("The dimension of input image should be 2 or 3. Got {}.".format(img.ndim))
+        if img.ndim == 2:
+            img = np.expand_dims(img, 2)
+        if img.shape[-1] > 4:
+            raise ValueError("The channel of input image should not exceed 4. Got {}.".format(img.shape[-1]))
+        if img.shape[-1] == 1:
+            if img.dtype not in (np.bool_, np.int8, np.int16, np.int32, np.uint8, np.uint16, np.uint32, np.float32,
+                                 np.float64):
+                raise TypeError("The input image type {} is not supported when "
+                                "image shape is [H, W] or [H, W, 1].".format(img.dtype))
+            img = img[:, :, 0]
+        elif img.dtype != np.uint8:
+            raise TypeError("The input image type {} is not supported when "
+                            "image shape is [H, W, 2], [H, W, 3] or [H, W, 4].".format(img.dtype))
         return Image.fromarray(img)
     return img
 

@@ -15,11 +15,12 @@
 """
 Testing RandomCropDecodeResize op in DE
 """
+import pytest
+
+from mindspore import log as logger
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
-from mindspore import log as logger
-from util import diff_mse, visualize_image, save_and_check_md5, \
-    config_get_set_seed, config_get_set_num_parallel_workers
+from util import diff_mse, visualize_image, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
@@ -85,6 +86,22 @@ def test_random_crop_decode_resize_md5():
     ds.config.set_num_parallel_workers((original_num_parallel_workers))
 
 
+def test_random_crop_decode_resize_invalid():
+    """
+    Feature: RandomCropDecodeResize
+    Description: Test RandomCropDecodeResize with invalid input
+    Expectation: Error is raised as expected
+    """
+    with pytest.raises(ValueError) as error_info:
+        vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, -1))
+    assert "not within the required interval of (0, 16777216]" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        vision.RandomCropDecodeResize((256, 512), (1, 1), (0.5, 0.5), max_attempts=True)
+    assert "not of type (<class 'int'>,)" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_random_crop_decode_resize_op(plot=True)
     test_random_crop_decode_resize_md5()
+    test_random_crop_decode_resize_invalid()

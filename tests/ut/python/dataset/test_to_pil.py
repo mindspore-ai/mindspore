@@ -15,6 +15,9 @@
 """
 Testing ToPIL op in DE
 """
+import numpy as np
+import pytest
+
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
@@ -51,6 +54,7 @@ def test_to_pil_01():
     filename = "to_pil_01_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
+
 def test_to_pil_02():
     """
     Feature: ToPIL op
@@ -76,6 +80,55 @@ def test_to_pil_02():
     filename = "to_pil_02_result.npz"
     save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
 
+
+def test_to_pil_invalid_type():
+    """
+    Feature: ToPIL
+    Description: Test ToPIL with invalid image type
+    Expectation: Error is raised as expected
+    """
+    image = list(np.random.randint(0, 255, (32, 32, 3)))
+    to_pil = vision.ToPIL()
+    with pytest.raises(TypeError) as error_info:
+        to_pil(image)
+    assert "should be of type numpy.ndarray or PIL.Image.Image" in str(error_info.value)
+
+
+def test_to_pil_invalid_shape():
+    """
+    Feature: ToPIL
+    Description: Test ToPIL with invalid image shape
+    Expectation: Error is raised as expected
+    """
+    image = np.random.randint(0, 255, (32, 32, 4, 3)).astype(np.uint8)
+    to_pil = vision.ToPIL()
+    with pytest.raises(ValueError) as error_info:
+        to_pil(image)
+    assert "dimension of input image should be 2 or 3" in str(error_info.value)
+
+    image = np.random.randint(0, 255, (32, 32, 5)).astype(np.uint8)
+    to_pil = vision.ToPIL()
+    with pytest.raises(ValueError) as error_info:
+        to_pil(image)
+    assert "channel of input image should not exceed 4" in str(error_info.value)
+
+
+def test_to_pil_invalid_dtype():
+    """
+    Feature: ToPIL
+    Description: Test ToPIL with invalid image dtype
+    Expectation: Error is raised as expected
+    """
+    image = np.random.randint(0, 255, (32, 32, 3)).astype(np.int16)
+    to_pil = vision.ToPIL()
+    with pytest.raises(TypeError) as error_info:
+        to_pil(image)
+    assert "image type int16 is not supported" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_to_pil_01()
     test_to_pil_02()
+    test_to_pil_invalid_type()
+    test_to_pil_invalid_shape()
+    test_to_pil_invalid_dtype()

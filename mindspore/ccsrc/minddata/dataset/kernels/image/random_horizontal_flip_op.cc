@@ -26,6 +26,12 @@ Status RandomHorizontalFlipOp::Compute(const TensorRow &input, TensorRow *output
   IO_CHECK_VECTOR(input, output);
   const auto output_count = input.size();
   output->resize(output_count);
+
+  for (const auto &image : input) {
+    RETURN_IF_NOT_OK(ValidateImageDtype("RandomHorizontalFlip", image->type()));
+    RETURN_IF_NOT_OK(ValidateImageRank("RandomHorizontalFlip", image->Rank()));
+  }
+
   if (distribution_(rnd_)) {
     for (size_t i = 0; i < input.size(); i++) {
       RETURN_IF_NOT_OK(HorizontalFlip(input[i], &(*output)[i]));

@@ -3367,7 +3367,7 @@ class ToPIL(PyTensorOperation):
         The conversion mode will be determined by the data type using :class:`PIL.Image.fromarray`.
 
     Raises:
-        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image`.
+        TypeError: If the input image is not of type :class:`numpy.ndarray` or :class:`PIL.Image.Image`.
 
     Supported Platforms:
         ``CPU``
@@ -3412,7 +3412,7 @@ class ToTensor(TensorOperation):
             Default: :class:`numpy.float32`.
 
     Raises:
-        TypeError: If the input image is not of type :class:`PIL.Image` or :class:`numpy.ndarray`.
+        TypeError: If the input image is not of type :class:`PIL.Image.Image` or :class:`numpy.ndarray`.
         TypeError: If dimension of the input image is not 2 or 3.
 
     Supported Platforms:
