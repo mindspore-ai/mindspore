@@ -1729,6 +1729,8 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
                                                     const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
   // Link depend(custom, custom) or depend(custom, kernel) or depend(internal parameter, custom).
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -1759,7 +1761,7 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
 
       AbstractActor *from_actor = nullptr;
       // InternalParameter --> CustomActor.
-      if (IsInternalParameter(from_node, graph)) {
+      if (IsInternalParameter(from_node, graph) && (!parser->IsInited())) {
         auto front_output_with_index = graph->GetFrontNodeByInternalParameter(from_node);
         auto front_output_node = front_output_with_index.first;
         MS_EXCEPTION_IF_NULL(front_output_node);
@@ -1790,8 +1792,6 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
   }
 
   // In control flow, no input actors should be linked to entrance actors.
-  const auto &parser = graph_compiler_info.control_node_parser_;
-  MS_EXCEPTION_IF_NULL(parser);
   if (parser->IsInited()) {
     return;
   }

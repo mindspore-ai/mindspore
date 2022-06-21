@@ -310,3 +310,23 @@ def test_dynamic_getitem_slice_startoversize():
     common_func(ms_net, np_net)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     common_func(ms_net, np_net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_getitem_tuple_1():
+    """
+    Feature: Test Tensor slice for dynamic shape in feed mode.
+    Description: The input shape is dynamic and the tensor index is advanced tuple.
+    Expectation: Assert the result is equal the numpy result.
+    """
+    index1 = (2, True, 0)
+    index2 = (-2, True, slice(0, 2, None))
+    ms_net = TensorGetItem(index1, index2)
+    np_net = NumpyGetItem(index1, index2)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    common_func(ms_net, np_net)
