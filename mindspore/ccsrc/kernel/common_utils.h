@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_KERNEL_COMMON_UTILS_H_
 
 #include <dirent.h>
+#include <limits>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -164,6 +165,23 @@ std::string GetProcessorStr(const AnfNodePtr &anf_node);
 Processor GetProcessorFromContext();
 std::string GetStrProcessorFromContext();
 float Scaling(size_t in_size, size_t out_size, bool align_corners);
+inline float Scaler(const size_t x, const float scale, bool half_pixel_centers) {
+  if (half_pixel_centers) {
+    /**
+     * function with a std::floor(), so instead of subtracting the 0.5 as we
+     * do in HalfPixelScale, we leave it as is, as the std::floor does the
+     * correct thing.
+     * */
+    return (static_cast<float>(x) + 0.5f) * scale;
+  } else {
+    /**
+     * Older incorrect scaling method that causes all resizes to have a slight
+     * translation leading to inconsistent results. For example, a flip then a
+     * resize gives different results then a resize then a flip.
+     * */
+    return static_cast<float>(x) * scale;
+  }
+}
 float ScaleGrid(const int x, const float scale);
 FusionType GetFusionTypeByName(const std::string &name);
 std::string GetFusionNameByType(const kernel::FusionType &type);
