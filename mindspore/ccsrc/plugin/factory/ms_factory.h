@@ -73,7 +73,7 @@ class Factory {
 template <class C>
 class KernelRegistrar {
  public:
-  explicit KernelRegistrar(const std::string &name, std::function<std::shared_ptr<C>()> creator) {
+  explicit KernelRegistrar(const std::string &name, std::function<std::shared_ptr<C>()> creator) noexcept {
     Factory<C>::Instance().Register(name, std::move(creator));
   }
   ~KernelRegistrar() = default;

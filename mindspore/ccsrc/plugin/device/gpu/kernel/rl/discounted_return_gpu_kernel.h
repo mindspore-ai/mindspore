@@ -63,6 +63,9 @@ class DiscountedReturnGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     for (size_t j = 0; j < reward_shape.size(); j++) {
       total_elements *= LongToInt(reward_shape[j]);
     }
+
+    MS_EXCEPTION_IF_ZERO("timestep", timestep_);
+    MS_EXCEPTION_IF_ZERO("env_num", env_num_);
     element_per_env_ = total_elements / timestep_ / env_num_;
 
     input_size_list_.push_back(total_elements * sizeof(T));

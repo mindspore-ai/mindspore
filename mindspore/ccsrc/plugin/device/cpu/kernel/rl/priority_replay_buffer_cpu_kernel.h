@@ -40,7 +40,6 @@ class PriorityReplayBufferCreateCpuKernel : public DeprecatedNativeCpuKernelMod 
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
     return support_list;
@@ -99,7 +98,6 @@ class PriorityReplayBufferUpdateCpuKernel : public DeprecatedNativeCpuKernelMod 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {
       KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64)};
@@ -125,7 +123,6 @@ class PriorityReplayBufferDestroyCpuKernel : public DeprecatedNativeCpuKernelMod
   bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override;
 
- protected:
   std::vector<KernelAttr> GetOpSupport() override {
     static std::vector<KernelAttr> support_list = {KernelAttr().AddOutputAttr(kNumberTypeInt64)};
     return support_list;
