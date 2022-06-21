@@ -33,6 +33,7 @@ class Vocab;
 
 // Transform operations for text
 namespace text {
+constexpr int kStatusSum = 4;
 // Char arrays storing name of corresponding classes (in alphabetical order)
 constexpr char kBasicTokenizerOperation[] = "BasicTokenizer";
 constexpr char kBertTokenizerOperation[] = "BertTokenizer";
