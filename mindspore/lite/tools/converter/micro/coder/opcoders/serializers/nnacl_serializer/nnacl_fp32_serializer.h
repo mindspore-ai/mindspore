@@ -33,6 +33,7 @@
 #include "nnacl/splice_parameter.h"
 #include "nnacl/lstm_parameter.h"
 #include "nnacl/group_norm_parameter.h"
+#include "nnacl/activation_parameter.h"
 #include "wrapper/fp32/dequant_int8_to_fp32_wrapper.h"
 #include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/fp32/strided_slice_fp32.h"
@@ -65,6 +66,7 @@ class NNaclFp32Serializer : public Serializer {
   void CodeStruct(const std::string &name, const SpliceWrapperParam &splice_param);
   void CodeStruct(const std::string &name, const TransFuncStr trans_func_str);
   void CodeStruct(const std::string &name, const GroupNormParameter &gn_param);
+  void CodeStruct(const std::string &name, const ActivationParameter &activation_parameter);
   void CodeStruct(const std::string &name, const OpParameter &op_param);
   void CodeArrayStruct(const std::string &name, TensorC *tensorC, std::vector<Tensor *> tensor);
 

@@ -16,7 +16,11 @@
 
 #include "wrapper/thread/micro_thread_pool.h"
 #include <stdlib.h>
+#include <time.h>
 #include "wrapper/thread/micro_core_affinity.h"
+
+ThreadPool *g_pool;
+int global_verbose;
 
 void *work_routine(void *args) {
   while (1) {
@@ -60,7 +64,7 @@ int CreateThreadPool(int thread_num) {
     return RET_TP_SYSTEM_ERROR;
   }
   for (int i = 0; i < thread_num; i++) {
-    if (pthread_create(&g_pool->thread_id[i], NULL, work_routine, g_pool) != 0) {
+    if (pthread_create(&g_pool->thread_id[i], NULL, work_routine, g_pool)) {
       return RET_TP_SYSTEM_ERROR;
     }
   }
@@ -71,7 +75,7 @@ int SetCoreAffinity(int bind_mode) {
   if (g_pool == NULL) {
     return RET_TP_ERROR;
   }
-  return BindThreads(bind_mode);
+  return BindThreads(bind_mode, g_pool);
 }
 
 int GetCurrentThreadNum() {
@@ -90,6 +94,7 @@ int ParallelLaunch(int (*func)(void *, int, float, float), void *content, int ta
   if (task_num == 0) {
     return 0;
   }
+
   if (task_num == 1) {
     int ret = func(content, 0, 0, 1);
     return ret;
@@ -145,4 +150,5 @@ void ClearThreadPool() {
   pthread_mutex_destroy(&g_pool->queue_lock);
   pthread_cond_destroy(&g_pool->queue_ready);
   free(g_pool);
+  g_pool = NULL;
 }

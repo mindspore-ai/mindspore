@@ -20,6 +20,8 @@
 #include "coder/opcoders/serializers/nnacl_serializer/nnacl_int8_serializer.h"
 #include "coder/opcoders/file_collector.h"
 #include "coder/opcoders/parallel.h"
+#include "coder/wrapper/int8/matmul_int8_wrapper.h"
+
 namespace mindspore::lite::micro::nnacl {
 int MatMulBaseInt8Coder::ReSize(CoderContext *const context) {
   ResizeParameter();
@@ -36,7 +38,12 @@ int MatMulBaseInt8Coder::InitTmpBuffer() {
   MS_CHECK_PTR(pack_a_ptr_);
   b_pack_ptr_size_ = param_->batch * param_->col_align_ * param_->deep_16_ * sizeof(int8_t);
   if (param_->b_const_) {
-    pack_b_ptr_ = reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
+    if (target_ == kCortex_M) {
+      pack_b_ptr_ =
+        reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, b_pack_ptr_size_, kOfflinePackWeight));
+    } else {
+      pack_b_ptr_ = reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, kOnlineSize, kOnlinePackWeight));
+    }
   } else {
     pack_b_ptr_ = reinterpret_cast<int8_t *>(allocator_->Malloc(kNumberTypeInt8, b_pack_ptr_size_, kWorkspace));
   }
@@ -46,15 +53,28 @@ int MatMulBaseInt8Coder::InitTmpBuffer() {
   MS_CHECK_PTR(input_sums_);
   weight_bias_sums_size_ = static_cast<size_t>(param_->batch * param_->col_align_ * sizeof(int));
   if (param_->b_const_) {
-    weight_bias_sums_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, kOnlineSize, kOnlinePackWeight));
+    if (target_ == kCortex_M) {
+      weight_bias_sums_ =
+        reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, weight_bias_sums_size_, kOfflinePackWeight));
+    } else {
+      weight_bias_sums_ = reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, kOnlineSize, kOnlinePackWeight));
+    }
   } else {
     weight_bias_sums_ =
       reinterpret_cast<int *>(allocator_->Malloc(kNumberTypeInt32, weight_bias_sums_size_, kWorkspace));
   }
   MS_CHECK_PTR(weight_bias_sums_);
-  if (param_->b_const_) {
-    *reinterpret_cast<int32_t *>(pack_b_ptr_) = b_pack_ptr_size_;
-    *reinterpret_cast<int32_t *>(weight_bias_sums_) = weight_bias_sums_size_;
+  if (param_->b_const_ && target_ == kCortex_M) {
+    // For MCU init filter offline
+    memset(weight_bias_sums_, 0, weight_bias_sums_size_);
+    InitInt8MatrixB(reinterpret_cast<int8_t *>(filter_tensor_->data()), weight_bias_sums_, pack_b_ptr_, param_->batch,
+                    param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
+                    quant_.filter_zp_, reinterpret_cast<int *>(bias_tensor_->data()), param_->b_transpose_,
+                    filter_per_channel_);
+    MemoryAllocator::GetInstance()->FreeTensor(bias_tensor_);
+    bias_tensor_ = nullptr;
+    MemoryAllocator::GetInstance()->FreeTensor(filter_tensor_);
+    filter_tensor_ = nullptr;
   }
   return RET_OK;
 }
@@ -200,7 +220,7 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   std::string bias_ptr_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);
   bias_ptr_str = (bias_ptr_str == "") ? "NULL" : bias_ptr_str;
 
-  if (param_->b_const_) {
+  if (param_->b_const_ && target_ != kCortex_M) {
     init_code.CodeBufferOffsetExpression(weight_bias_sums_, context->weight_name(), context->weight_offset_name(),
                                          context->weight_size_name(), weight_bias_sums_size_);
     init_code.CodeBufferOffsetExpression(pack_b_ptr_, context->weight_name(), context->weight_offset_name(),

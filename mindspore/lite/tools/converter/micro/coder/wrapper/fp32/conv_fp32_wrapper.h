@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_CONV_WINOGRAD_FP32_WRAPPER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_CONV_WINOGRAD_FP32_WRAPPER_H_
-#include "nnacl/fp32/winograd_utils.h"
-#include "nnacl/fp32/conv_winograd_fp32.h"
+#ifndef MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_CONV_FP32_WRAPPER_H_
+#define MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_CONV_FP32_WRAPPER_H_
+#include "nnacl/conv_parameter.h"
 #ifdef __cplusplus
-#include <string>
-typedef struct TransFuncStr {
-  std::string in_func_;
-  std::string out_func_;
-} TransFuncStr;
 extern "C" {
 #endif
 
 typedef struct {
   const float *input_data_;
-  const float *trans_weight_;
+  float *packed_input_;
+  const float *packed_weight_;
   const float *bias_data_;
+  float *col_major_input_;
   float *output_data_;
-  TmpBufferAddress *buffer_list_;
   const ConvParameter *conv_param_;
-  TransFuncList trans_func_;
-} ConvWinogradFp32Args;
+} ConvFp32Args;
 
-int ConvWinogradFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
+int ConvFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_MICRO_CODER_WRAPPER_FP32_CONV_WINOGRAD_FP32_WRAPPER_H_
+#endif  // MINDSPORE_LITE_MICRO_CODER_WRAPPER_FP32_CONV_FP32_WRAPPER_H_

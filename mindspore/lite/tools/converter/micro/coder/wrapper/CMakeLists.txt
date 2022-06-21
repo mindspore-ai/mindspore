@@ -7,6 +7,7 @@ else()
 endif()
 
 if(PLATFORM_ARM64 OR PLATFORM_ARM32)
+    add_compile_definitions(_GNU_SOURCE)
     add_compile_definitions(ENABLE_NEON)
     add_compile_definitions(ENABLE_ARM)
 endif()

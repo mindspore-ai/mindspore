@@ -114,10 +114,12 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
   // init struct ScaleParameters
   Collect(context,
           {
+            "wrapper/fp32/scale_fp32_wrapper.h",
             "nnacl/scale.h",
             "nnacl/fp32/scale_fp32.h",
           },
           {
+            "scale_fp32_wrapper.c",
             "scale_fp32.c",
           });
 
@@ -129,10 +131,17 @@ int ScaleFP32Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("DoScaleRelu6", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
                         "&scale_parameter");
       break;
-    case schema::ActivationType_RELU:
-      code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
-                        "&scale_parameter");
+    case schema::ActivationType_RELU: {
+      if (!support_parallel_) {
+        code.CodeFunction("DoScaleRelu", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId,
+                          "&scale_parameter");
+      } else {
+        code.CodeBaseStruct("ScaleFp32Args", kRunArgs, input_tensor_, output_tensor_, scale_, offset_,
+                            "&scale_parameter");
+        code.CodeFunction(kParallelLaunch, "DoScaleReluRun", kRunArgsAddr, "scale_parameter.op_parameter_.thread_num_");
+      }
       break;
+    }
     case schema::ActivationType_NO_ACTIVATION:
       code.CodeFunction("DoScale", input_tensor_, output_tensor_, scale_, offset_, kDefaultTaskId, "&scale_parameter");
       break;

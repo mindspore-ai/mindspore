@@ -54,6 +54,18 @@ Tensor *MemoryAllocator::MallocTensor(TypeId data_type, const std::vector<int> &
   return result;
 }
 
+void MemoryAllocator::FreeTensor(Tensor *t) {
+  if (t == nullptr) return;
+  std::string addr = GetRuntimeAddr(t);
+  saved_weights_addr_.erase(addr);
+  origin_weights_addr_.erase(t);
+  bool t_origin = (malloc_weights_addr_.find(t) != malloc_weights_addr_.end());
+  malloc_weights_addr_.erase(t);
+  if (t_origin) {
+    delete t;
+  }
+}
+
 void MemoryAllocator::Free() {
   for (auto iter = malloc_weights_addr_.begin(); iter != malloc_weights_addr_.end();) {
     Tensor *tensor = iter->first;

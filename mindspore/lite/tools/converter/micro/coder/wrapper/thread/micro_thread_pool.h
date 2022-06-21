@@ -24,7 +24,7 @@
 typedef struct Task {
   int (*func)(void *, int, float, float);
   void *content;
-  atomic_int finished;
+  volatile atomic_int finished;
   atomic_int status;  // return status, RET_OK
 } Task;
 
@@ -42,8 +42,6 @@ typedef struct ThreadPool {
   TaskHandle *tasks;
   int shutdown;
 } ThreadPool;
-
-static ThreadPool *g_pool;
 
 int CreateThreadPool(int thread_num);
 

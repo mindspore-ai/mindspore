@@ -37,6 +37,18 @@ typedef struct ArithmeticWrapperInfo {
   ArithmeticFuncType arithmetic_func_type_;
 } ArithmeticWrapperInfo;
 
+typedef struct {
+  const void *input0_;
+  const void *input1_;
+  void *output_;
+  int size_;
+  bool is_opt_;
+  ArithmeticFuncType func_type_;
+  const void *arithmetic_func_;
+  const ArithmeticParameter *param;
+  int thread_num_;
+} ArithmeticFp32Args;
+
 typedef int (*ArithmeticRun)(const float *input0, const float *input1, float *output, const int element_size);
 typedef int (*ArithmeticOptRun)(const float *input0, const float *input1, float *output, const int element_size,
                                 const ArithmeticParameter *param);
@@ -59,6 +71,8 @@ void BatchScalarCalc(const void *input0, const void *input1, void *output, int b
 void BroadcastRun(const void *input0, const void *input1, void *output, int dim, int out_count, int out_thread_stride,
                   int break_pos, int data_type_len, ArithmeticFuncType arithmetic_func_type,
                   const void *arithmetic_func, const ArithmeticParameter *param);
+
+int ArithmeticFp32Run(void *cdata, int task_id, float lhs_scale, float rhs_scale);
 
 #ifdef __cplusplus
 }

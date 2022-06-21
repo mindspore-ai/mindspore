@@ -236,6 +236,9 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
             "conv_common_base.c",
             "minimal_filtering_generator.c",
           });
+  if (support_parallel_) {
+    Collect(context, {"wrapper/fp32/conv_winograd_fp32_wrapper.h"}, {"conv_winograd_fp32_wrapper.c"});
+  }
   if (target_ == kARM32) {
     Collect(context, {}, {},
             {
@@ -272,9 +275,15 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
        << allocator_->GetRuntimeAddr(col_buffer_) << "};\n";
   code.CodeStruct("conv_parameter", *conv_param_);
   code.CodeStruct("trans_func", trans_func_str_);
-  // code operator func
-  code.CodeFunction("ConvWinogardFp32", input_tensor_, trans_weight_, new_bias_, output_tensor_,
-                    "tmp_buffer_address_list", kDefaultTaskId, "&conv_parameter", "trans_func");
+  if (support_parallel_) {
+    code.CodeBaseStruct("ConvWinogradFp32Args", kRunArgs, input_tensor_, trans_weight_, new_bias_, output_tensor_,
+                        "tmp_buffer_address_list", "&conv_parameter", "trans_func");
+    code.CodeFunction(kParallelLaunch, "ConvWinogradFp32Run", kRunArgsAddr, "conv_parameter.thread_num_");
+  } else {
+    // code operator func
+    code.CodeFunction("ConvWinogardFp32", input_tensor_, trans_weight_, new_bias_, output_tensor_,
+                      "tmp_buffer_address_list", kDefaultTaskId, "&conv_parameter", "trans_func");
+  }
   context->AppendCode(code.str());
   return RET_OK;
 }

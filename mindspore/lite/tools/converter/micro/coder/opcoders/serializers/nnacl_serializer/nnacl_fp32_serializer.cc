@@ -61,8 +61,7 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const SoftmaxParam
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const ConvParameter &conv_parameter) {
-  code << "    " << gThreadNum << " = 1;\n";
-  code << "    int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
+  code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
   CodeBaseStruct<false>(
     "ConvParameter", name, conv_parameter.op_parameter_, "{0}", conv_parameter.kernel_h_, conv_parameter.kernel_w_,
     conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_, conv_parameter.dilation_w_,
@@ -166,6 +165,10 @@ void NNaclFp32Serializer::CodeStruct(const std::string &name, const TransFuncStr
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const GroupNormParameter &gn_param) {
   CodeBaseStruct("GroupNormParameter", name, gn_param.op_parameter_, gn_param.epsilon_, gn_param.num_groups_,
                  gn_param.channel_, gn_param.unit_, gn_param.batch_, gn_param.affine_);
+}
+void NNaclFp32Serializer::CodeStruct(const std::string &name, const ActivationParameter &activation_parameter) {
+  CodeBaseStruct("ActivationParameter", name, activation_parameter.op_parameter_, activation_parameter.type_,
+                 activation_parameter.alpha_, activation_parameter.min_val_, activation_parameter.max_val_);
 }
 
 void NNaclFp32Serializer::CodeStruct(const std::string &name, const OpParameter &op_param) {

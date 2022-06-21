@@ -30,12 +30,15 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
   int count = input_tensor_->ElementsNum();
   Collect(context,
           {
+            "wrapper/fp32/activation_fp32_wrapper.h",
             "nnacl/fp32/activation_fp32.h",
           },
           {
+            "activation_fp32_wrapper.c",
             "activation_fp32.c",
           });
   NNaclFp32Serializer code;
+
   switch (activation_parameter->type_) {
     case schema::ActivationType_RELU:
       code.CodeFunction("Fp32Relu", input_tensor_, count, output_tensor_);
@@ -47,7 +50,14 @@ int ActivationFP32Coder::DoCode(CoderContext *const context) {
       code.CodeFunction("LRelu", input_tensor_, count, output_tensor_, activation_parameter->alpha_);
       break;
     case schema::ActivationType_SIGMOID:
-      code.CodeFunction("Sigmoid", input_tensor_, count, output_tensor_);
+      if (!support_parallel_) {
+        code.CodeFunction("Sigmoid", input_tensor_, count, output_tensor_);
+      } else {
+        code.CodeStruct("activation_param", *activation_parameter);
+        code.CodeBaseStruct("ActivationFp32Args", kRunArgs, input_tensor_, count, output_tensor_, 0.0f,
+                            "&activation_param");
+        code.CodeFunction(kParallelLaunch, "DoSigmoid", kRunArgsAddr, "activation_param.op_parameter_.thread_num_");
+      }
       break;
     case schema::ActivationType_TANH:
       code.CodeFunction("Tanh", input_tensor_, count, output_tensor_);

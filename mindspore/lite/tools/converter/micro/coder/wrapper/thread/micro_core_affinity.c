@@ -17,7 +17,11 @@
 #include "wrapper/thread/micro_core_affinity.h"
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <pthread.h>
+#include "nnacl/op_base.h"
 
 int GetCpuCoreNum() {
 #ifdef __ANDROID__
@@ -188,7 +192,7 @@ int SetAffinity(const pthread_t thread_id, cpu_set_t *cpu_set) {
 }
 #endif
 
-int FreeScheduleThreads(const int *bind_id) {
+int FreeScheduleThreads(const int *bind_id, ThreadPool *g_pool) {
 #if defined(BIND_CORE)
   cpu_set_t mask;
   CPU_ZERO(&mask);
@@ -206,15 +210,39 @@ int FreeScheduleThreads(const int *bind_id) {
   return RET_TP_OK;
 }
 
-int BindThreadsToCore(const int *bind_id) {
+#if defined(BIND_CORE)
+static int Unisolate(int cpu_id) {
+  char path[C64NUM];
+  int ret = snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/isolate", cpu_id);
+  if (ret >= sizeof(path)) {
+    LOG_ERROR("snprintf exceeded size");
+    return RET_TP_ERROR;
+  }
+  FILE *fh = fopen(path, "w");
+  if (fh == NULL) {
+    LOG_ERROR("cannot open file %s", path);
+    return RET_TP_ERROR;
+  }
+  fprintf(fh, "%s", "0");
+  fclose(fh);
+  return RET_TP_OK;
+}
+#endif  // BIND_CORE
+
+int BindThreadsToCore(const int *bind_id, ThreadPool *g_pool) {
 #if defined(BIND_CORE)
   int thread_num = g_pool->max_thread_num;
   for (size_t i = 0; i < thread_num; i++) {
     cpu_set_t mask;
     CPU_ZERO(&mask);
     CPU_SET(bind_id[i], &mask);
-    int ret = SetAffinity(g_pool->thread_id[i], &mask);
+    int ret = Unisolate(bind_id[i]);
     if (ret != RET_TP_OK) {
+      LOG_ERROR("cannot remove isolation from cpu %d", bind_id[i]);
+    }
+    ret = SetAffinity(g_pool->thread_id[i], &mask);
+    if (ret != RET_TP_OK) {
+      LOG_ERROR("error binding task %zu to core %d\n", i, bind_id[i]);
       return ret;
     }
   }
@@ -222,7 +250,7 @@ int BindThreadsToCore(const int *bind_id) {
   return RET_TP_OK;
 }
 
-int BindThreads(enum BindMode bind_mode) {
+int BindThreads(enum BindMode bind_mode, ThreadPool *g_pool) {
 #if defined(BIND_CORE)
   int bind_id[MAX_CPU_ID];
   int ret = InitBindCoreId(g_pool->max_thread_num, bind_mode, bind_id);
@@ -230,9 +258,9 @@ int BindThreads(enum BindMode bind_mode) {
     return ret;
   }
   if (bind_mode == Power_NoBind) {
-    return FreeScheduleThreads(bind_id);
+    return FreeScheduleThreads(bind_id, g_pool);
   } else {
-    return BindThreadsToCore(bind_id);
+    return BindThreadsToCore(bind_id, g_pool);
   }
 #endif  // BIND_CORE
   return RET_TP_OK;
