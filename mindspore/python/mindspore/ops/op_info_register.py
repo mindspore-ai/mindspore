@@ -414,7 +414,7 @@ class AkgCpuRegOp(AkgRegOp):
     """Class for AkgCpu op info register"""
 
     def __init__(self, op_name):
-        super(AkgCpuRegOp, self).__init__(op_name, "LLVM")
+        super(AkgCpuRegOp, self).__init__(op_name, "CPU")
 
 
 class AiCPURegOp(CpuRegOp):

@@ -16,3 +16,4 @@
 """akg ops"""
 from . import ascend
 from . import gpu
+from . import cpu

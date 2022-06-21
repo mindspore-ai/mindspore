@@ -340,7 +340,8 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
                                return CheckKernelInfo(alternative_kernel_info, builder->Build());
                              });
     if (!match) {
-      MS_LOG(ERROR) << "Not find op[" << op_name << "] which both match data type and format in akg";
+      auto [msg, etype] = KernelNotSupportWarning(kernel_node, input_types, output_types, true);
+      MS_EXCEPTION(etype) << msg;
     }
   }
 }

@@ -1064,7 +1064,7 @@ AbstractBasePtr InferImplCSRMM(const AnalysisEnginePtr &, const PrimitivePtr &pr
   if (dense_shape[kIndexZero] != sparse_shape[kIndexOne]) {
     MS_EXCEPTION(ValueError) << "The dense's shape[0] should be equal to csr tensor's shape[1]"
                              << ", but dense's shape[0] is: " << dense_shape[kIndexZero]
-                             << "and csr tensor's shape[1] is" << sparse_shape[kIndexOne];
+                             << " and csr tensor's shape[1] is " << sparse_shape[kIndexOne];
   }
 
   ShapeVector out_shape = {sparse_shape[kIndexZero], dense_shape[kIndexOne]};

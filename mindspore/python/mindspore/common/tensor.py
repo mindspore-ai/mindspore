@@ -4631,8 +4631,8 @@ class CSRTensor(CSRTensor_):
             >>> csr_tensor = CSRTensor(indptr, indices, values, dense_shape)
             >>> dense_matrix = Tensor([[1., 2.], [1, 2.], [1, 2.], [1., 2.]], dtype=mstype.float32)
             >>> print(csr_tensor.mm(dense_matrix))
-            [[2., 4.]
-            [1., 2.]]
+            [[2. 4.]
+            [1. 2.]]
         """
         validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
         return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, \
