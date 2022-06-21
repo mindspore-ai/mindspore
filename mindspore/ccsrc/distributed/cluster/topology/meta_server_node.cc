@@ -18,9 +18,9 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include "utils/ms_exception.h"
 #include "proto/topology.pb.h"
 #include "distributed/rpc/tcp/constants.h"
-#include "distributed/cluster/topology/utils.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/recovery/file_configuration.h"
 #include "distributed/cluster/topology/meta_server_node.h"
@@ -91,6 +91,7 @@ bool MetaServerNode::Finalize(bool force) {
       MS_LOG(INFO) << "The meta server node is forced to finalized.";
     }
     finalized_ = true;
+    MsException::Instance().CheckException();
     return true;
   }
 }
@@ -242,8 +243,11 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
     auto &node = nodes_[node_id];
     time(&(node->last_update));
 
-    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess,
-                                  std::to_string(static_cast<int>(MessageName::kSuccess)));
+    HeartbeatRespMessage resp_msg;
+    resp_msg.set_success(static_cast<bool>(MessageName::kSuccess));
+    resp_msg.set_topo_state(static_cast<uint32_t>(topo_state_));
+    auto content = resp_msg.SerializeAsString();
+    auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
     MS_EXCEPTION_IF_NULL(response);
     return response.release();
   } else {
@@ -333,53 +337,57 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
 }
 
 void MetaServerNode::UpdateTopoState() {
-  while (enable_monitor_) {
-    nodes_mutex_.lock();
+  try {
+    while (enable_monitor_) {
+      nodes_mutex_.lock();
 
-    // Update the state of topology.
-    if (topo_state_ == TopoState::kInitializing) {
-      // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
-      if (ElapsedTime(start_time_) > kTopoInitTimeout) {
-        if (recovery::IsEnableRecovery()) {
-          MS_LOG(ERROR) << "Start Scheduler node timeout.";
-          topo_state_ = TopoState::kFailed;
-          continue;
-        } else {
-          MS_LOG(EXCEPTION) << "Start Scheduler node timeout.";
-        }
-      }
-
-      if (TransitionToInitialized()) {
-        continue;
-      }
-      MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
-                   << nodes_.size() << "/" << total_node_num_ << ")";
-    } else if (topo_state_ == TopoState::kInitialized) {
-      if (nodes_.size() == 0) {
-        topo_state_ = TopoState::kFinished;
-      }
-
-      // Update the state of compute graph nodes.
-      for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
-        auto node_id = iter->first;
-        auto node_info = iter->second;
-        MS_EXCEPTION_IF_NULL(node_info);
-        time_t now = time(&now);
-        auto elapsed = difftime(now, node_info->last_update);
-        if (elapsed > node_timeout_) {
+      // Update the state of topology.
+      if (topo_state_ == TopoState::kInitializing) {
+        // Set the state of topo to `kFailed` if the topology is still in process of initializtion but timed out.
+        if (ElapsedTime(start_time_) > kTopoInitTimeout) {
           if (recovery::IsEnableRecovery()) {
-            MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
-            node_info->state = NodeState::kTimeout;
+            MS_LOG(ERROR) << "Start Scheduler node timeout.";
+            topo_state_ = TopoState::kFailed;
+            continue;
           } else {
-            MS_LOG(EXCEPTION) << "The node: " << node_id << " is timed out.";
+            MS_LOG(EXCEPTION) << "Start Scheduler node timeout.";
+          }
+        }
+
+        if (TransitionToInitialized()) {
+          continue;
+        }
+        MS_LOG(INFO) << "The cluster topology is in the process of constructing, current alive node num: ("
+                     << nodes_.size() << "/" << total_node_num_ << ")";
+      } else if (topo_state_ == TopoState::kInitialized) {
+        if (nodes_.size() == 0) {
+          topo_state_ = TopoState::kFinished;
+        }
+
+        // Update the state of compute graph nodes.
+        for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+          auto node_id = iter->first;
+          auto node_info = iter->second;
+          MS_EXCEPTION_IF_NULL(node_info);
+          time_t now = time(&now);
+          auto elapsed = difftime(now, node_info->last_update);
+          if (elapsed > node_timeout_) {
+            if (recovery::IsEnableRecovery()) {
+              MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
+              node_info->state = NodeState::kTimeout;
+            } else {
+              MS_LOG(EXCEPTION) << "The node: " << node_id << " is timed out.";
+            }
           }
         }
       }
-    }
-    nodes_mutex_.unlock();
+      nodes_mutex_.unlock();
 
-    static const size_t interval = 3;
-    sleep(interval);
+      static const size_t interval = 3;
+      sleep(interval);
+    }
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
   }
 }
 
