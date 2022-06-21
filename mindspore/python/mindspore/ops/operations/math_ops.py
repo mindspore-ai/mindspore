@@ -1048,7 +1048,7 @@ class Bucketize(Primitive):
         TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
-        ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> class Bucketize(nn.Cell):
