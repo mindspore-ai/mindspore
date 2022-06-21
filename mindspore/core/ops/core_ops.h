@@ -211,6 +211,7 @@ constexpr auto kUpsampleTrilinear3D = "UpsampleTrilinear3D";
 constexpr auto kUpsampleNearest3D = "UpsampleNearest3D";
 constexpr auto kHSwish = "HSwish";
 constexpr auto kHSwishGrad = "HSwishGrad";
+constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
@@ -711,6 +712,7 @@ GVAR_DEF(PrimitivePtr, kPrimPdist, std::make_shared<Primitive>("Pdist"));
 GVAR_DEF(PrimitivePtr, kPrimRenorm, std::make_shared<Primitive>(kRenorm));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3D, std::make_shared<Primitive>("UpsampleTrilinear3D"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleNearest3D, std::make_shared<Primitive>("UpsampleNearest3D"));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradDA, std::make_shared<Primitive>(kSparseApplyAdagradDA));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

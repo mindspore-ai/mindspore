@@ -9890,3 +9890,109 @@ class UpsampleNearest3D(Primitive):
             validator.check_float(item, 0, Rel.GT, 'scales_item', self.name)
         self.add_prim_attr('output_size', output_size)
         self.add_prim_attr('scales', scales)
+
+
+class SparseApplyAdagradDA(Primitive):
+    r"""
+    Update `var` according to the proximal adagrad scheme.
+
+    .. math::
+        \begin{array}{ll} \\
+            grad_accum += grad \\
+            grad_squared_accum += grad * grad \\
+            tmp_val=sign(grad_accum) * max\left \{|grad_accum|-l1*global_step, 0\right \}
+                    if l1>0 else grad_accum \\
+            x_value = -1 * lr * tmp_val \\
+            y_value = l2 * global_step * lr + \sqrt{grad_squared_accum} \\
+            var = x_value / y_value
+        \end{array}
+
+    Inputs of `var`, `grad_accum`, `grad_square_accum` and `grad`
+    comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, lower priority data type will be converted to the
+    relatively highest priority data type.
+
+    Args:
+        use_locking (bool): If `True`, updating of the `var` and `accum` tensors will be protected by a lock.
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable to be updated. The data type must be float16 or float32.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **grad_accum** (Parameter) - The dict of mutable tensor grad_accum. Must have the same
+          shape and dtype as `var`.
+        - **grad_square_accum** (Parameter) - The dict of mutable tensor grad_square_accum.
+          Must have the same shape and dtype as `var`.
+        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          If there are duplicates in `indices`, the behavior is undefined. Must be one of the
+          following types: int32, int64 and indices.shape[0] = grad.shape[0].
+        - **lr** (Union[Number, Tensor]) - Scaling factor. Must be a scalar. Must have the same type as `var`.
+        - **l1** (Union[Number, Tensor]) -  L1 regularization. Must be a scalar. Must have the same type as `var`.
+        - **l2** (Union[Number, Tensor]) -  L2 regularization. Must be a scalar. Must have the same type as `var`.
+        - **global_step** (Union[Number, Tensor]) - Training step number. Must be a scalar.
+          Must be one of the following types: int32, int64.
+
+    Outputs:
+        Tensor, with the same type and shape as 'var'.
+
+    Raises:
+        TypeError: If `var`, `grad_accum`, `grad_square_accum` is not a Parameter.
+        TypeError: If `grad` is not a Tensor.
+        TypeError: If `lr`, `l1`, `l2` or `global_step` is neither a Number nor a Tensor.
+        TypeError: If use_locking is not a bool.
+        TypeError: If dtype of `var`, `grad_accum`, `grad_square_accum`, `grad_accum`,
+                   `lr`, `l1`, `l2` is neither float16 nor float32.
+        TypeError: If dtype of `grad_accum`, `grad_square_accum`, `grad_accum`
+                     is not same as `var`.
+        TypeError: If dtype of `indices` is neither int32 nor int64.
+        TypeError: If shape of `indices` is not same as shape of first dimension of `grad`.
+        TypeError: If dtype of `global_step` is not int64.
+        ValueError: If the shape size of `lr`, `l1`, `l2` and `global_step` is not 0.
+        RuntimeError: If the data type of `var`, `grad_accum`, `grad_square_accum` and `grad`
+                      conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore.ops.operations.nn_ops as nn_ops
+        >>> var = Tensor(np.array([[1,2], [1,2]]).astype(np.float32))
+        >>> grad_accum = Tensor(np.array([[2,1], [3,1]]).astype(np.float32))
+        >>> grad_square_accum = Tensor(np.array([[4,1], [5,1]]).astype(np.float32))
+        >>> grad = Tensor(np.array([[5,1], [6,1]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0, 1], dtype=np.int32))
+        >>> lr = Tensor(2, mstype.float32)
+        >>> l1 = Tensor(-1, mstype.float32)
+        >>> l2 = Tensor(1, mstype.float32)
+        >>> global_step=Tensor(1, mstype.int64)
+        >>> sparse_apply_adagrad_da = nn_ops.SparseApplyAdagradDA()
+        >>> output = sparse_apply_adagrad_da(var, grad_accum, grad_square_accum,
+                                             grad, indices, lr, l1, l2, global_step)
+        >>> print(output)
+        [[-1.8956923 -1.1715728]
+         [-2.1420605 -1.1715728]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad_accum', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad_square_accum', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T),
+        sig.make_sig('l1', dtype=sig.sig_dtype.T),
+        sig.make_sig('l2', dtype=sig.sig_dtype.T),
+        sig.make_sig('global_step', dtype=sig.sig_dtype.T2)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize SparseApplyAdagradDA"""
+        self.init_prim_io_names(inputs=['var', 'grad_accum', 'grad_square_accum',
+                                        'grad', 'indices', 'lr', 'l1', 'l2', 'global_step'],
+                                outputs=['var'])
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)

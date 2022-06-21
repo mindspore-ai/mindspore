@@ -71,6 +71,7 @@ from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.operations.nn_ops import NthElement
+from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
 from mindspore.ops.operations.nn_ops import PSROIPooling
 from mindspore.ops.operations.nn_ops import AvgPoolV1
 from mindspore.ops.operations._grad_ops import AvgPoolGradV1
@@ -1217,6 +1218,19 @@ class AvgPoolGradV1Net(nn.Cell):
     def construct(self, orig_input, grad):
         orig_input_shape = self.to_arr(self.shape(orig_input))
         return self.avgpool_grad_v1(orig_input_shape, grad)
+
+
+class SparseApplyAdagradDANet(nn.Cell):
+    def __init__(self, use_locking=False):
+        super(SparseApplyAdagradDANet, self).__init__()
+        self.sparse_apply_adagrad_da = SparseApplyAdagradDA(use_locking)
+
+
+    def construct(self, var, grad_accum, grad_square_accum, grad, indices, lr,
+                  l1, l2, global_step):
+        out = self.sparse_apply_adagrad_da(var, grad_accum, grad_square_accum, grad,
+                                           indices, lr, l1, l2, global_step)
+        return out
 
 
 test_case_math_ops = [
@@ -2806,6 +2820,18 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32)),
                         Tensor(np.arange(-0.9, 0.9, 0.05).reshape((2, 3, 3, 2)).astype(np.float32))],
         'desc_bprop': [Tensor(np.arange(-0.9, 0.9, 0.05).reshape((2, 2, 3, 3)).astype(np.float32))]}),
+    ('SparseApplyAdagradDA', {
+        'block': SparseApplyAdagradDANet(),
+        'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
+                        Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32)),
+                        Tensor(np.array([[0.3, 0.6], [0.3, 0.6]]).astype(np.float32)),
+                        Tensor(np.array([[0.4, 0.5], [0.2, 0.1]]).astype(np.float32)),
+                        Tensor(np.array([0, 1]).astype(np.int32)),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(0.001, mstype.float32),
+                        Tensor(1, mstype.int64)],
+        'skip': ['backward']}),
 ]
 
 test_case_array_ops = [
