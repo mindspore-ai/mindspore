@@ -261,6 +261,9 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"col2im", std::string("col2im")},                                  // P.Col2Im
        {"split", std::string("split")},                                    // P.Split()
+       {"xlogy", std::string("xlogy")},                                    // P.Xlogy()
+       {"erf", std::string("erf")},                                        // P.Erf()
+       {"erfc", std::string("erfc")},                                      // P.Erfc()
      }},
     {kObjectTypeRowTensorType,
      {

@@ -2715,20 +2715,7 @@ class Erfc(Primitive):
     r"""
     Computes the complementary error function of `x` element-wise.
 
-    .. math::
-
-        erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
-
-    Inputs:
-        - **x** (Tensor) - The input tensor. The data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
-
-    Outputs:
-        Tensor, has the same shap dtype as the `x`.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not float16 or float32.
+    Refer to :func:`mindspore.ops.erfc` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU``  ``CPU``
@@ -3408,34 +3395,7 @@ class Xlogy(Primitive):
     Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
     Returns zero when `x` is zero.
 
-    .. math::
-
-        out_i = x_{i}\ln{y_{i}}
-
-    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
-    The inputs must be two tensors or one tensor and one scalar.
-    When the inputs are two tensors,
-    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
-    When the inputs are one tensor and one scalar,
-    the scalar could only be a constant.
-
-    Inputs:
-        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
-          a bool or a tensor whose data type is
-          `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-          `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
-          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
-          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
-
-    Outputs:
-        Tensor, the shape is the same as the one after broadcasting,
-        and the data type is the one with higher precision or higher digits among the two inputs.
-
-    Raises:
-        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
-        TypeError: If dtype of `x` and `y` is not in [float16, float32, float64].
-        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+    Refer to :func:`mindspore.ops.xlogy` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``CPU``

@@ -148,6 +148,7 @@ exp2_ = P.Pow()
 truncate_div_ = P.TruncateDiv()
 truncate_mod_ = P.TruncateMod()
 sparse_segment_mean_ = SparseSegmentMean()
+xlogy_ = P.Xlogy()
 
 
 #####################################
@@ -1156,6 +1157,54 @@ def tan(x):
         [-1.5574081 0. 1.5574081]
     """
     return tan_(x)
+
+
+def xlogy(x, y):
+    r"""
+    Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Returns zero when `x` is zero.
+
+    .. math::
+
+        out_i = x_{i}\ln{y_{i}}
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors,
+    dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar,
+    the scalar could only be a constant.
+
+    Args:
+        - **x** (Union[Tensor, number.Number, bool]) - The first input is a number.Number or
+          a bool or a tensor whose data type is
+          `number <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_ or
+          `bool_ <https://www.mindspore.cn/docs/en/r1.8/api_python/mindspore.html#mindspore.dtype>`_.
+        - **y** (Union[Tensor, number.Number, bool]) - The second input is a number.Number or
+          a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+          When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Raises:
+        TypeError: If `x` and `y` is not a number.Number or a bool or a Tensor.
+        TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64].
+        ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+        >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+        >>> xlogy = ops.Xlogy()
+        >>> output = xlogy(x, y)
+        >>> print(output)
+        [-3.465736   0.        2.7725887]
+    """
+    return xlogy_(x, y)
 
 
 def asin(x):
@@ -4518,5 +4567,6 @@ __all__ = [
     'sparse_segment_mean',
     'log2',
     'approximate_equal',
+    'xlogy'
 ]
 __all__.sort()
