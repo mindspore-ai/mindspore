@@ -23,7 +23,7 @@ namespace opt {
 /**
  * Try Expand cnode for front end graph.
  */
-FuncGraphPtr TryExpandCNodeFE(const AnfNodePtr &node);
+AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node);
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_EXPANDER_H

@@ -328,6 +328,11 @@ void AscendGraphOptimization::UnifyMindIR(const KernelGraphPtr &graph) {
 }
 
 void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
+  auto mng = graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(graph, true);
+    graph->set_manager(mng);
+  }
   bool do_expand = false;
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
@@ -347,12 +352,14 @@ void AscendGraphOptimization::SetOperatorInfo(const KernelGraphPtr &graph) {
         constexpr int one = 1;
         return std::get<one>(res).empty();
       };
-      auto expand_fg = graphkernel::TryExpandCNode(node, f);
-      if (expand_fg == nullptr) {
+      auto cnode = graphkernel::TryExpandCNode(node, f);
+      if (cnode == nullptr) {
         MS_EXCEPTION(etype) << msg;
       }
+      (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";
-      graphkernel::InlineExpandFuncGraph(node, expand_fg);
+      auto expand_fg = GetCNodeFuncGraph(cnode);
+      graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
       do_expand = true;
     }
   }

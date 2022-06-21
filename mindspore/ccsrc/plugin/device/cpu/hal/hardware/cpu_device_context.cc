@@ -225,6 +225,11 @@ void SetKernelInfoBeforeCreateKernel(const std::vector<CNodePtr> &nodes) {
 void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
 #ifdef ENABLE_AKG
   bool do_expand = false;
+  auto mng = graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(graph, true);
+    graph->set_manager(mng);
+  }
 #endif
   auto &node_list = graph->execution_order();
   for (auto &node : node_list) {
@@ -238,13 +243,15 @@ void CPUKernelExecutor::SetOperatorInfo(const KernelGraphPtr &graph) const {
         auto res = SetKernelInfoWithMsg(n);
         return res.first.empty();
       };
-      auto expand_fg = graphkernel::TryExpandCNode(node, f);
-      if (expand_fg == nullptr) {
+      auto cnode = graphkernel::TryExpandCNode(node, f);
+      if (cnode == nullptr) {
         MS_EXCEPTION(etype) << msg;
       }
-      do_expand = true;
+      (void)mng->Replace(node, cnode);
       MS_LOG(INFO) << msg << " but expand success.";
-      graphkernel::InlineExpandFuncGraph(node, expand_fg);
+      auto expand_fg = GetCNodeFuncGraph(cnode);
+      graphkernel::InlineExpandFuncGraph(cnode, expand_fg);
+      do_expand = true;
 #else
       MS_EXCEPTION(etype) << msg;
 #endif

@@ -33,7 +33,7 @@ class MIND_API BroadcastTo : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BroadcastTo);
   /// \brief Constructor.
-  BroadcastTo() : BaseOperator(kNameBroadcastTo) {}
+  BroadcastTo() : BaseOperator(kNameBroadcastTo) { InitIOName({"x"}, {"y"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.BroadcastTo for the inputs.
   void Init(const std::vector<int64_t> &shape);
   /// \brief Set shape.
