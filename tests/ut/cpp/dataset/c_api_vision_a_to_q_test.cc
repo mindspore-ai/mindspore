@@ -2372,3 +2372,55 @@ TEST_F(MindDataTestPipeline, TestTrivialAugmentWideInvalidFillValue) {
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
+
+/// Feature: AdjustSharpness op
+/// Description: Test AdjustSharpness pipeline
+/// Expectation: Create an ImageFolder dataset then do auto AjustSharpness on it 
+TEST_F(MindDataTestPipeline, TestAdjustSharpness) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSharpness.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto adjustsharpness_op = vision::AdjustSharpness(2.0);
+
+  ds = ds->Map({adjustsharpness_op});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  iter->Stop();
+}
+
+/// Feature: AdjustSharpness op
+/// Description: Test parameter check
+/// Expectation: Error logs are as expected
+TEST_F(MindDataTestPipeline, TestAdjustSharpnessParamCheck) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestAdjustSharpnessParamCheck.";
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Case 1: Negative sharpness_factor
+  // Create objects for the tensor ops
+  auto adjustsharpness_op = vision::AdjustSharpness(-1);
+  auto ds1 = ds->Map({adjustsharpness_op});
+  EXPECT_NE(ds1, nullptr);
+  // Create an iterator over the result of the above dataset
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  // Expect failure: invalid value of AdjustSharpness
+  EXPECT_EQ(iter1, nullptr);
+}

@@ -2851,3 +2851,20 @@ TEST_F(MindDataTestExecute, TestAdjustBrightness) {
   Status rc = transform(image, &image);
   EXPECT_EQ(rc, Status::OK());
 }
+
+/// Feature: AdjustSharpness
+/// Description: Test executing Decode then AdjustSharpness op with eager mode
+/// Expectation: The data is processed successfully
+TEST_F(MindDataTestExecute, TestAdjustSharpnessEager) {
+  MS_LOG(INFO) << "Doing MindDataTestExecute-TestAdjustSharpnessEager.";
+  // Read images
+  auto image = ReadFileToTensor("data/dataset/apple.jpg");
+
+  // Transform params
+  auto decode = vision::Decode();
+  auto adjust_sharpness_op = vision::AdjustSharpness(1.0);
+
+  auto transform = Execute({decode, adjust_sharpness_op});
+  Status rc = transform(image, &image);
+  EXPECT_EQ(rc, Status::OK());
+}
