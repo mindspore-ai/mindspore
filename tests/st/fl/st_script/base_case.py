@@ -33,6 +33,8 @@ class BaseCase:
     start_fl_job_time_window = 30000
     update_model_time_window = 30000
     encrypt_type = "NOT_ENCRYPT"
+    download_compress_type = "NO_COMPRESS"
+    upload_compress_type = "NO_COMPRESS"
 
     # ENV for Client
     lite_lib_path = os.path.join(script_path, "libs")

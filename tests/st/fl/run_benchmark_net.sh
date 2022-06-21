@@ -71,18 +71,19 @@ fi
 
 
 # get resources for v1.8.0
+# to support rollback we provide multi version of data
 mkdir -p ${base_path}/fl_resources
-if [ ! -f ${FL_RESOURCE_PATH}/v1.8.0.tar ]; then
-   echo "${FL_RESOURCE_PATH}/v1.8.0.tar not exist."
+if [ ! -f ${FL_RESOURCE_PATH}/v1.8.0_encrypt_st.tar ]; then
+   echo "${FL_RESOURCE_PATH}/v1.8.0_encrypt_st not exist."
    exit 1
 fi
-tar -xf ${FL_RESOURCE_PATH}/v1.8.0.tar -C ${base_path}/fl_resources
+tar -xf ${FL_RESOURCE_PATH}/v1.8.0_encrypt_st.tar -C ${base_path}/fl_resources
 
 export FL_RESOURCE_PATH=${base_path}/fl_resources
 export X86_PKG_PATH=${X86_PKG_PATH}
 export FL_JDK_PATH=${FL_JDK_PATH}
 export FL_MODELS_PATH=${FL_MODELS_PATH}
 
-pytest -s -v -m fl_cluster st_script
+pytest -s -v st_script
 ret=$?
 exit $ret
