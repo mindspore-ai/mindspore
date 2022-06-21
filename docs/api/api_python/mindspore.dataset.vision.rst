@@ -24,8 +24,8 @@ API样例中常用的导入模块如下：
 - TensorOperation，所有C++实现的数据处理操作的基类。
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
-Transforms
-----------
+变换
+---
 
 .. mscnautosummary::
     :toctree: dataset_vision
@@ -98,8 +98,8 @@ Transforms
     mindspore.dataset.vision.UniformAugment
     mindspore.dataset.vision.VerticalFlip
 
-Utilities
----------
+工具
+---
 
 .. mscnautosummary::
     :toctree: dataset_vision

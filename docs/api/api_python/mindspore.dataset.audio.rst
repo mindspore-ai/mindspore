@@ -3,8 +3,8 @@ mindspore.dataset.audio
 
 .. include:: dataset_audio/mindspore.dataset.audio.rst
 
-Transforms
-----------
+变换
+---
 
 .. mscnautosummary::
     :toctree: dataset_audio
@@ -55,8 +55,8 @@ Transforms
     mindspore.dataset.audio.Vad
     mindspore.dataset.audio.Vol
 
-Utilities
----------
+工具
+---
 
 .. mscnautosummary::
     :toctree: dataset_audio
