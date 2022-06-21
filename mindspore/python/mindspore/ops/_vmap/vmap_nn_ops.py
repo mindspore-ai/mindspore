@@ -472,6 +472,35 @@ def get_kl_div_loss_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.KLDivLossGrad)
+def get_kl_div_loss_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `KLDivLossGrad`."""
+    if isinstance(prim, str):
+        prim = Primitive(prim)
+        reduction = "mean"
+    else:
+        reduction = prim.reduction
+
+    kldivloss_grad = G.KLDivLossGrad(reduction=reduction)
+
+    def vmap_rule(dy_bdim, x_bdim, target_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dy_bdim, x_bdim, target_bdim)
+        if is_all_none:
+            return result
+
+        dy, dy_dim = dy_bdim
+        x, x_dim = x_bdim
+        target, target_dim = target_bdim
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        target = _bdim_at_front(target, target_dim, axis_size)
+
+        out = kldivloss_grad(dy, x, target)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(NN.LRN)
 def get_lrn_vmap_rule(prim, axis_size):
     """VmapRule for `LRN` operation."""
