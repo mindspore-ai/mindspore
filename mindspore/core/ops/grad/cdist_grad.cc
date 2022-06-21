@@ -32,6 +32,11 @@ abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std:
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
@@ -43,6 +48,11 @@ abstract::ShapePtr CdistGradInferShape(const PrimitivePtr &primitive, const std:
     MS_EXCEPTION(ValueError) << "For 'CdistGrad', rank of input_x and input_y must be equal, but got input_x size: "
                              << x_size << ", input_y size: " << y_size << ".";
   }
+
+  if (batch_rank == 0) {
+    CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "Cdist");
+  }
+
   if (x_size < kCdistGradInputDimsMin) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
                              << kCdistGradInputDimsMin << ", but got rank of input: " << x_size << ".";

@@ -31,6 +31,11 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto y_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   auto x_size = x_shape.size();
@@ -39,6 +44,9 @@ abstract::ShapePtr CdistInferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', rank of input_x and input_y must be equal, but got rank of input_x: " << x_size
                              << ", rank of input_y: " << y_size << ".";
+  }
+  if (batch_rank == 0) {
+    CheckAndConvertUtils::CheckInRange("input_x dim", x_size, kIncludeBoth, {2, 3}, "CdistGrad");
   }
   if (x_size < kCdistInputDimsMin) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', rank of input must be greater than "
