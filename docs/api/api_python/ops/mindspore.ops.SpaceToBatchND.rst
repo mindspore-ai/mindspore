@@ -35,7 +35,7 @@ mindspore.ops.SpaceToBatchND
 
     **异常：**
 
-    - **TypeError** - 如果 `block_shape` 不是 list, tuple 或者 int。
+    - **TypeError** - 如果 `block_shape` 不是 list，tuple 或者 int。
     - **TypeError** - 如果 `paddings` 不是 list 或者 tuple。
     - **ValueError** - 如果当 `block_shape` 为 list 或 tuple， `block_shape` 不是一维。
     - **ValueError** - 如果 Ascend 平台上 `block_shape` 长度不是2。

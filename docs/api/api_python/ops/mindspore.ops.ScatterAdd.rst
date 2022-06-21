@@ -21,7 +21,7 @@ mindspore.ops.ScatterAdd
 
     **输入：**
 
-    - **input_x** (Parameter) - ScatterAdd的输入，任意维度的Parameter。
+    - **input_x** (Parameter) - ScatterAdd的输入，任意维度的Parameter。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
     - **indices** (Tensor) - 指定相加操作的索引，数据类型为mindspore.int32或者mindspore.int64。
     - **updates** (Tensor) - 指定与 `input_x` 相加操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape + x.shape[1:]` 。
 
