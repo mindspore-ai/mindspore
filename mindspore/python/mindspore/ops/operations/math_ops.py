@@ -5670,30 +5670,7 @@ class MatrixSolve(Primitive):
     """
     Solves systems of linear equations.
 
-    Args:
-        adjoint(bool): Indicating whether to solve with matrix or its (block-wise) adjoint. Default: False.
-
-    Inputs:
-        - **matrix** (Tensor) - The shape of tensor is :math:`[..., M, M]`.
-        - **rhs** (Tensor) - The shape of tensor is :math:`[..., M, K]`. 'rhs' must have the same type as `matrix`.
-
-    Outputs:
-        A Tensor. Has the same type and shape as 'rhs'.
-
-    Raises:
-        TypeError: If adjoint is not the type of bool.
-        TypeError: If the type of matrix is not one of the following dtype:
-                   mstype.float16, mstype.float32, mstype.float64, mstype.complex64, mstype.complex128.
-        TypeError: If the type of `matrix` is not the same as that of `rhs`.
-        ValueError: If the rank of `matrix` less than 2.
-        ValueError: If the dimension of `matrix` is not the same as `rhs`.
-        ValueError: If the inner-most 2 dimension of `matrix` is not the same.
-        ValueError: If the inner-most 2 dimension of `rhs` does not match `matrix`.
-
-    Supported Platforms:
-        ``CPU``
-
-    Examples:
+    Refer to :func:`mindspore.ops.matrix_solve` for more detail.
     """
 
     @prim_attr_register

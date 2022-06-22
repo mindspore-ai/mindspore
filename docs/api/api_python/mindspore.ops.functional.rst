@@ -267,6 +267,7 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.matmul
+    mindspore.ops.matrix_solve
     mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
