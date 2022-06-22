@@ -121,6 +121,58 @@ def test_single_for_x_in_xs():
         for i in x:
             y += i
         return Tensor(y)
-    with pytest.raises(TypeError) as err:
+    res = control_flow_for()
+    assert np.allclose(res.asnumpy(), 3.3)
+
+
+def test_single_for_x_in_xs_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for():
+        y = np.array(0)
+        for i in np.array([1.1, 2.2]):
+            y += i
+        return Tensor(y)
+    res = control_flow_for()
+    assert np.allclose(res.asnumpy(), 3.3)
+
+
+def test_single_for_wrong_xs():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for():
+        y = np.array(0)
+        for i in np.int64(1):
+            y += i
+        return Tensor(y)
+
+    with pytest.raises(TypeError) as info:
         control_flow_for()
-    assert "Parsing syntax 'for x in xs', xs can not be interpret node " in str(err.value)
+    assert "object is not iterable" in str(info.value)
+
+
+def test_single_for_wrong_xs_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for():
+        x = np.int64(1)
+        y = np.array(0)
+        for i in x:
+            y += i
+        return Tensor(y)
+
+    with pytest.raises(TypeError) as info:
+        control_flow_for()
+    assert "object is not iterable" in str(info.value)

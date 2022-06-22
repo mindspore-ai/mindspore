@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow for after if in for scenario"""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -66,7 +65,6 @@ def test_for_after_if_in_for_tensor_2():
     assert res == 1
 
 
-@pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
 def test_for_after_if_in_for_numpy():
     """
     Feature: JIT Fallback
@@ -82,14 +80,13 @@ def test_for_after_if_in_for_numpy():
             y += 1
             if sum(x) > 15:
                 break
-        for _ in y:
-            x += y
+        for i in y:
+            x += i
         return Tensor(max(x))
     res = control_flow_for_after_if_in_for()
     assert res == 11
 
 
-@pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
 def test_for_after_if_in_for_numpy_2():
     """
     Feature: JIT Fallback
@@ -110,6 +107,6 @@ def test_for_after_if_in_for_numpy_2():
             y += 2
         for i in range(3):
             a += y[i]
-        return Tensor(max(x))
+        return Tensor(a)
     res = control_flow_for_after_if_in_for()
-    assert res == 17
+    assert res == 26

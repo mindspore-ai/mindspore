@@ -1945,6 +1945,38 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   return ParseForUnroll(block, node);
 }
 
+AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
+                                                  const py::object iter_obj) {
+  // For interpret iter_node, convert it to list. xs --> list(xs).
+  py::object iter_id = python_adapter::GetPyObjAttr(iter_obj, "id");
+  if (!py::isinstance<py::none>(iter_id)) {
+    // If variable is assigned, for example:
+    //     xs = np.array([1, 2, 3, 4])
+    //     for x in xs
+    const std::string &iter_id_str = iter_id.cast<py::str>();
+    return MakeInterpretNode(block, iter_node, "list(" + iter_id_str + ")");
+  }
+  // If variable is not assigned, for example:
+  //     for x in np.array([1, 2, 3, 4])
+  const auto &interpret_iter_node =
+    IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) ? iter_node : HandleInterpret(block, iter_node, iter_obj);
+  constexpr size_t script_index = 1;
+  auto iter_cnode = interpret_iter_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(iter_cnode);
+  auto iter_cnode_inputs = iter_cnode->inputs();
+  auto iter_script_input = iter_cnode_inputs[script_index];
+  if (!IsValueNode<Script>(iter_script_input)) {
+    MS_LOG(EXCEPTION) << "The second input to iter node: " << interpret_iter_node->DebugString()
+                      << " should be a script value node but got: " << iter_script_input->DebugString() << ".";
+  }
+  auto script = iter_script_input->cast<ValueNodePtr>();
+  auto script_val = script->value()->cast<ScriptPtr>();
+  auto script_text = script_val->script();
+  auto new_script_val = NewValueNode(std::make_shared<Script>("list(" + script_text + ")"));
+  iter_cnode_inputs[script_index] = new_script_val;
+  return block->func_graph()->NewCNodeInOrder(iter_cnode_inputs);
+}
+
 // Implement unroll for statement with tuple/getitem.
 FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast For by loop variable";
@@ -1962,9 +1994,7 @@ FunctionBlockPtr Parser::ParseForUnroll(const FunctionBlockPtr &block, const py:
   bool interpret_without_internal =
     IsPrimitiveCNode(iter_node, prim::kPrimPyInterpret) && !iter_node->interpret_internal_type();
   if (iter_node->interpret() || interpret_without_internal) {
-    MS_EXCEPTION(TypeError) << "Parsing syntax 'for x in xs', xs can not be interpret node but got "
-                            << iter_node->DebugString()
-                            << ".\nNodeInfo: " << trace::GetDebugInfo(iter_node->debug_info());
+    iter_node = ConvertInterpretIterNodeToList(block, iter_node, iter_obj);
   }
   // Generate node for loop count and convert it to tensor, to make the loop not unroll
   CNodePtr scalar_len = block->func_graph()->NewCNodeInOrder({op_len, iter_node});

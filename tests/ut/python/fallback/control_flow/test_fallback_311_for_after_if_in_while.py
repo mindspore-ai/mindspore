@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow for after if in while scenario"""
-import pytest
 import numpy as np
 from mindspore import Tensor, ms_function, context
 
@@ -42,7 +41,6 @@ def test_for_after_if_in_while_numpy():
     assert res == -4
 
 
-@pytest.mark.skip(reason='Not support to get attribute for InterpretObject.')
 def test_for_after_if_in_while_numpy_2():
     """
     Feature: JIT Fallback
@@ -62,4 +60,4 @@ def test_for_after_if_in_while_numpy_2():
             y += i - 20
         return sum(y)
     res = control_flow_for_after_if_in_while()
-    assert res == 18
+    assert res == -222
