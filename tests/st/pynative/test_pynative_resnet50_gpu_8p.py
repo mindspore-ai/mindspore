@@ -15,7 +15,7 @@
 import os
 import pytest
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_single
 def test_pynative_resnet50_gpu_8p_performance():
