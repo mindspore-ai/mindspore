@@ -79,6 +79,7 @@ class Node : public NodeBase, public std::enable_shared_from_this<Node> {
   const NodePtr &input(size_t i) const { return inputs_[i]; }
   const NodePtrList &inputs() const { return inputs_; }
   const mindspore::HashMap<Node *, std::set<size_t>> &users() const { return users_; }
+  size_t tensor_size(bool in_bytes = false) const;
 
  protected:
   mutable std::string debug_name_;  // only used in Dump function

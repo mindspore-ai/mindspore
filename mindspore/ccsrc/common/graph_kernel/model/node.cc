@@ -16,6 +16,7 @@
 #include "common/graph_kernel/model/node.h"
 #include <sstream>
 #include <utility>
+#include "abstract/utils.h"
 
 namespace mindspore::graphkernel::inner {
 void Node::SetBaseInfo(const NodeBaseList &baseinfo) {
@@ -92,5 +93,10 @@ void Node::RemoveUser(Node *const user, size_t index) {
       (void)users_.erase(iter);
     }
   }
+}
+
+size_t Node::tensor_size(bool in_bytes) const {
+  size_t size = LongToSize(abstract::ShapeSize(this->shape));
+  return in_bytes ? abstract::TypeIdSize(this->type) * size : size;
 }
 }  // namespace mindspore::graphkernel::inner

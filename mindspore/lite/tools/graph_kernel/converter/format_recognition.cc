@@ -91,21 +91,29 @@ void SetOutputsFormat(const CNodePtr &cnode) {
       }
     }
   }
-  std::vector<std::string> outputs_format(AnfUtils::GetOutputTensorNum(cnode), output_format);
-  cnode->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+  if (IsPrimitiveCNode(cnode, prim::kPrimMakeTuple)) {
+    std::vector<std::string> outputs_format(cnode->size() - 1, output_format);
+    cnode->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+  } else {
+    std::vector<std::string> outputs_format(AnfUtils::GetOutputTensorNum(cnode), output_format);
+    cnode->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+  }
 }
 
 void FixFormatsBeforeTranspose(const CNodePtr &cnode) {
-  if (IsPrimitiveCNode(cnode, prim::kPrimReturn)) {
-    return;
-  }
   for (size_t i = 1; i < cnode->size(); i++) {
-    auto prev_cnode = cnode->input(i)->cast<CNodePtr>();
-    if (IsPrimitiveCNode(prev_cnode, prim::kPrimTranspose)) {
+    auto prev_node = cnode->input(i);
+    if (IsPrimitiveCNode(prev_node, prim::kPrimTranspose)) {
       continue;
     }
-    if (prev_cnode != nullptr && GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat)).size() != 0) {
-      auto prev_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat))[0];
+    auto outputs_format = GetValue<std::vector<std::string>>(cnode->GetAttr(kOutputsFormat));
+    if (outputs_format.empty()) {
+      MS_LOG(EXCEPTION) << "The outputs_format of node " << cnode->fullname_with_scope() << " is empty.";
+    }
+    if (prev_node->isa<CNode>()) {
+      auto prev_cnode = prev_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(prev_cnode);
+      auto prev_format = outputs_format[0];
       if (ExtractOutputFormat(cnode).second) {
         // input node need to fix format when current node is nhwc->nchw or nchw->nhwc
         if (prev_format == kOpFormat_NCHW) {
@@ -114,29 +122,27 @@ void FixFormatsBeforeTranspose(const CNodePtr &cnode) {
           prev_format = kOpFormat_NCHW;
         }
       }
-      std::vector<std::string> outputs_format(AnfUtils::GetOutputTensorNum(prev_cnode), prev_format);
-      prev_cnode->AddAttr(kOutputsFormat, MakeValue(outputs_format));
+      std::vector<std::string> outputs_formats(AnfUtils::GetOutputTensorNum(prev_cnode), prev_format);
+      prev_cnode->AddAttr(kOutputsFormat, MakeValue(outputs_formats));
+    } else if (prev_node->isa<Parameter>()) {
+      // save parameter's format in callback instance
+      inner::NodeBase nodebase = {{}, TypeId::kMetaTypeBegin, outputs_format[0]};
+      Callback::Instance()->SetBasicNodeKernelInfo(prev_node, {nodebase});
     }
   }
 }
 }  // namespace
 
 bool FormatRecognition::Run(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  MS_EXCEPTION_IF_NULL(func_graph->get_return());
-  auto mng = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto todos = TopoSort(func_graph->get_return());
+  auto todos = TopoSort(func_graph->output());
   for (auto &node : todos) {
     if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
-      SetOutputsFormat(cnode);
+      SetOutputsFormat(node->cast<CNodePtr>());
     }
   }
   for (auto it = todos.rbegin(); it != todos.rend(); it++) {
     if ((*it)->isa<CNode>()) {
-      auto cnode = (*it)->cast<CNodePtr>();
-      FixFormatsBeforeTranspose(cnode);
+      FixFormatsBeforeTranspose((*it)->cast<CNodePtr>());
     }
   }
   return true;
