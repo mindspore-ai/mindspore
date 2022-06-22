@@ -44,7 +44,7 @@ class RunnerConfig {
   /// \brief Set the config before runtime. Only valid for ModelParallelRunner.
   ///
   /// \param[in] config store environment variables before runtime.
-  void SetConfigInfo(const std::string &key, const std::map<std::string, std::string> &config);
+  void SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config);
 
   /// \brief Get the current config setting. Only valid for ModelParallelRunner.
   ///
