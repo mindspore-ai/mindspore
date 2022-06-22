@@ -38,6 +38,7 @@ from ..operations.math_ops import (
     BesselK1e,
     MatrixSolve,
     Renorm,
+    Hypot,
     Lcm,
     Gcd,
     SparseSegmentMean,
@@ -2724,6 +2725,39 @@ def minimum(x, y):
         Float32
     """
     return minimum_(x, y)
+
+
+def hypot(x1, x2):
+    """
+    Computes hypotenuse of input tensors element-wise as legs of a right triangle.
+    The shape of two inputs should be broadcastable, and data type of them should be
+    one of: float32, float64
+
+    Args:
+        - **x1** (Tensor) - The first input tensor.
+        - **x2** (Tensor) - The second input tensor.
+
+    Returns:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is one
+        with higher precision in the two inputs.
+
+    Raises:
+        TypeError: If data type `x1` or `x2` is not float32 or float64.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([3., 5., 7.]))
+        >>> x2 = Tensor(np.array([4., 12., 24.]))
+        >>> y = ops.hypot(x1, x2)
+        >>> print(y)
+        [ 5. 13. 25.]
+    """
+
+    hypot_ = Hypot()
+    return hypot_(x1, x2)
 
 
 def logaddexp(x1, x2):

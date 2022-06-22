@@ -2539,6 +2539,43 @@ class Log1p(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
+class Hypot(Primitive):
+    """
+    Computes hypotenuse of input tensors element-wise as legs of a right triangle.
+    The shape of two inputs should be broadcastable, and data type of them should be
+    one of: float32, float64
+
+    Inputs:
+        - **x1** (Tensor) - The first input tensor.
+        - **x2** (Tensor) - The second input tensor.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting, and the data type is one
+        with higher precision in the two inputs.
+
+    Raises:
+        TypeError: If data type `x1` or `x2` is not float32 or float64.
+        ValueError: If shape of two inputs are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x1 = Tensor(np.array([3., 5., 7.]))
+        >>> x2 = Tensor(np.array([4., 12., 24.]))
+        >>> hypot_ = ops.Hypot()
+        >>> y = hypot_(x1, x2)
+        >>> print(y)
+        [ 5. 13. 25.]
+    """
+
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
+
+
 class Erf(Primitive):
     r"""
     Computes the Gauss error function of `x` element-wise.

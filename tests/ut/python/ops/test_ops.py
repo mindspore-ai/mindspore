@@ -56,6 +56,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
+from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
 from mindspore.ops.operations.math_ops import Gcd
@@ -1607,6 +1608,10 @@ test_case_math_ops = [
         'block': P.Sub(),
         'desc_inputs': [[3], [3]],
         'desc_bprop': [[3]]}),
+    ('Hypot', {
+        'block': Hypot(),
+        'desc_inputs': [Tensor(np.array([3, 5, 7]).astype(np.float32)),
+                        Tensor(np.array([4, 12, 24]).astype(np.float32))]}),
     ('Select', {
         'block': P.Select(),
         'desc_inputs': [Tensor(np.array([[True, False, False], [False, True, True]])),
