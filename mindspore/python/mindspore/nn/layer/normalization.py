@@ -933,6 +933,71 @@ class _InstanceNorm(Cell):
 class InstanceNorm1d(_InstanceNorm):
     r"""
     Instance Normalization layer over a 3D input.
+
+    This layer applies Instance Normalization over a 3D input (a mini-batch of 1D inputs with
+    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
+    of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    :math:`\gamma` and :math:`\beta` are learnable parameter vectors of size num_features if affine is True.
+    The standard-deviation is calculated via the biased estimator.
+
+    This layer uses instance statistics computed from input data in both training and evaluation modes.
+
+    InstanceNorm1d and BatchNorm1d are very similar, but have some differences. InstanceNorm1d is applied on each
+    channel of channeled data like RGB images, but BatchNorm1d is usually applied on each batch of batched data.
+
+    Note:
+        Note that the formula for updating the running_mean and running_var is
+        :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
+        where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.
+
+    Args:
+        num_features (int): `C` from an expected input of size (N, C, L).
+        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        momentum (float): A floating hyperparameter of the momentum for the
+            running_mean and running_var computation. Default: 0.1.
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, L)`. Data type: float16 or float32.
+
+    Outputs:
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, L)`. Same type and
+        shape as the `x`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Raises:
+        TypeError: If the type of `num_features` is not int.
+        TypeError: If the type of `eps` is not float.
+        TypeError: If the type of `momentum` is not float.
+        TypeError: If the type of `affine` is not bool.
+        TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
+            float32.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
+            exists.
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> net = nn.InstanceNorm1d(3)
+        >>> x = Tensor(np.ones([2, 3, 5]), mindspore.float32)
+        >>> output = net(x)
+        >>> print(output.shape)
+        (2, 3, 5)
     """
 
     def __init__(self,
@@ -964,8 +1029,8 @@ class InstanceNorm2d(_InstanceNorm):
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    \gamma and \beta are learnable parameter vectors of size num_features if affine is True. The standard-deviation
-    is calculated via the biased estimator.
+    :math:`\gamma` and :math:`\beta` are learnable parameter vectors of size num_features if affine is True.
+    The standard-deviation is calculated via the biased estimator.
 
     This layer uses instance statistics computed from input data in both training and evaluation modes.
 
@@ -999,10 +1064,10 @@ class InstanceNorm2d(_InstanceNorm):
         ``GPU``
 
     Raises:
-        TypeError: If `num_features` is not an int.
-        TypeError: If `eps` is not a float.
-        TypeError: If `momentum` is not a float.
-        TypeError: If `affine` is not a bool.
+        TypeError: If the type of `num_features` is not int.
+        TypeError: If the type of `eps` is not float.
+        TypeError: If the type of `momentum` is not float.
+        TypeError: If the type of `affine` is not bool.
         TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
             float32.
         ValueError: If `num_features` is less than 1.
@@ -1042,6 +1107,71 @@ class InstanceNorm2d(_InstanceNorm):
 class InstanceNorm3d(_InstanceNorm):
     r"""
     Instance Normalization layer over a 5D input.
+
+    This layer applies Instance Normalization over a 5D input (a mini-batch of 3D inputs with
+    additional channel dimension) as described in the paper `Instance Normalization: The Missing Ingredient for
+    Fast Stylization <https://arxiv.org/abs/1607.08022>`_. It rescales and recenters the feature using a mini-batch
+    of data and the learned parameters which can be described in the following formula.
+
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    :math:`\gamma` and :math:`\beta` are learnable parameter vectors of size num_features if affine is True.
+    The standard-deviation is calculated via the biased estimator.
+
+    This layer uses instance statistics computed from input data in both training and evaluation modes.
+
+    InstanceNorm3d and BatchNorm3d are very similar, but have some differences. InstanceNorm3d is applied on each
+    channel of channeled data like RGB images, but BatchNorm3d is usually applied on each batch of batched data.
+
+    Note:
+        Note that the formula for updating the running_mean and running_var is
+        :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
+        where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.
+
+    Args:
+        num_features (int): `C` from an expected input of size (N, C, D, H, W).
+        eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
+        momentum (float): A floating hyperparameter of the momentum for the
+            running_mean and running_var computation. Default: 0.1.
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
+        gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'ones'.
+        beta_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the beta weight.
+            The values of str refer to the function `initializer` including 'zeros', 'ones', etc. Default: 'zeros'.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, D, H, W)`. Data type: float16 or float32.
+
+    Outputs:
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, D, H, W)`. Same type and
+        shape as the `x`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Raises:
+        TypeError: If the type of `num_features` is not int.
+        TypeError: If the type of `eps` is not float.
+        TypeError: If the type of `momentum` is not float.
+        TypeError: If the type of `affine` is not bool.
+        TypeError: If the type of `gamma_init`/`beta_init` is not same, or if the initialized element type is not
+            float32.
+        ValueError: If `num_features` is less than 1.
+        ValueError: If `momentum` is not in range [0, 1].
+        KeyError: If any of `gamma_init`/`beta_init` is str and the homonymous class inheriting from `Initializer` not
+            exists.
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> net = nn.InstanceNorm3d(3)
+        >>> x = Tensor(np.ones([2, 3, 5, 2, 2]), mindspore.float32)
+        >>> output = net(x)
+        >>> print(output.shape)
+        (2, 3, 5, 2, 2)
     """
 
     def __init__(self,
