@@ -1140,13 +1140,18 @@ EvalResultPtr EvalOnePrim(const PrimitivePtr &primitive, const AbstractBasePtrLi
   if (evaluator == nullptr) {
     MS_LOG(EXCEPTION) << "The evaluator of the primitive is not defined (" << primitive->name() << ").";
   }
-  if (!evaluator->isa<TrivialPrimEvaluator>()) {
-    MS_LOG(EXCEPTION) << "Prim " << primitive->ToString() << " should build a TrivialPrimEvaluator, but "
-                      << evaluator->ToString();
-  }
   auto trivial_evaluator = dyn_cast<TrivialPrimEvaluator>(evaluator);
-  auto eval_result = trivial_evaluator->EvalPrim(nullptr, arg_specs);
-  return eval_result;
+  if (trivial_evaluator != nullptr) {
+    return trivial_evaluator->EvalPrim(nullptr, arg_specs);
+  }
+  // Support MakeTuple/MakeList ops in PyNative mode.
+  auto transition_evaluator = dyn_cast<TransitionPrimEvaluator>(evaluator);
+  if (transition_evaluator != nullptr &&
+      (transition_evaluator->isa<MakeTupleEvaluator>() || transition_evaluator->isa<MakeListEvaluator>())) {
+    return transition_evaluator->EvalPrim(nullptr, arg_specs, nullptr, nullptr);
+  }
+  MS_LOG(EXCEPTION) << "The primitive '" << primitive->ToString() << "' should be built as a TrivialPrimEvaluator, but "
+                    << evaluator->ToString();
 }
 }  // namespace abstract
 }  // namespace mindspore

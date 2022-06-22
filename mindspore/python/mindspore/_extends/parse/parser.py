@@ -382,7 +382,7 @@ def _convert_tuple_to_args_kwargs(params):
 
 def is_supported_create_instance_type(cls_type):
     """Check if cls_type is a supported instance type."""
-    return issubclass(cls_type, (nn.Cell, ops.Primitive)) or _is_ms_class(cls_type)
+    return issubclass(cls_type, (nn.Cell, ops.Primitive, ops.GradOperation)) or _is_ms_class(cls_type)
 
 
 def create_instance(cls_type, params=None):

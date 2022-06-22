@@ -99,7 +99,6 @@ class NetM(nn.Cell):
 
     def __init__(self, name, axis):
         super(NetM, self).__init__()
-        # self.relu = nn.ReLU()
         self.name = name
         self.axis = axis
         self.softmax = nn.Softmax(self.axis)
@@ -218,3 +217,35 @@ def test_create_cell_with_tensor():
     t = Tensor(np.zeros((2, 2), np.float), dtype.float32)
     with pytest.raises(TypeError):
         print(WrapCell()(t))
+
+
+def test_create_grad_operation():
+    """
+    Feature: Create instance for GradOperation.
+    Description: Create instance for GradOperation, and use it.
+    Expectation: No exception.
+    """
+    class NetInner(nn.Cell):
+        def __init__(self):
+            super(NetInner, self).__init__()
+            self.mul = P.Mul()
+            self.p = Parameter(Tensor(np.array([1.0], np.float32)), name='p')
+
+        def construct(self, x, y):
+            z = x * self.p
+            out = self.mul(y, z)
+            return out
+
+    class GradNetWrtInputsAndParams(nn.Cell):
+        def __init__(self, net):
+            super(GradNetWrtInputsAndParams, self).__init__()
+            self.net = net
+            self.params = self.net.trainable_params()
+
+        def construct(self, x, y):
+            gradient_function = ops.GradOperation(get_all=True, get_by_list=True)(self.net, self.params)
+            return gradient_function(x, y)
+
+    a = Tensor([[1, 2, 3]], dtype.float32)
+    b = Tensor([[7, 8, 9], [10, 11, 12], [13, 14, 15]], dtype.float32)
+    GradNetWrtInputsAndParams(NetInner())(a, b)
