@@ -105,6 +105,13 @@ bool TensorType::operator==(const Type &other) const {
   return *element_type_ == *other_elem_type;
 }
 
+TypePtr SparseTensorType::DeepCopy() const {
+  if (element_type_ == nullptr || IsGeneric()) {
+    return std::make_shared<SparseTensorType>();
+  }
+  return std::make_shared<SparseTensorType>(element_type_->DeepCopy());
+}
+
 TypePtr RowTensorType::DeepCopy() const {
   MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {

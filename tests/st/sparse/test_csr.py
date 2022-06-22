@@ -437,13 +437,13 @@ def test_csrops_export_and_import_mindir():
             super(TestCSRNet, self).__init__()
             self.shape = shape
 
-        def construct(self, indptr, indices, values, dence_tensor, dense_vector):
+        def construct(self, indptr, indices, values, dense_tensor, dense_vector):
             csr_tensor = CSRTensor(indptr, indices, values, self.shape)
             dense1 = F.csr_reduce_sum(csr_tensor, 1)
             dense2 = F.csr_mv(csr_tensor, dense_vector)
             dense3 = dense1 * dense2
-            sparse1 = csr_tensor * dence_tensor
-            sparse2 = dence_tensor * csr_tensor
+            sparse1 = csr_tensor * dense_tensor
+            sparse2 = dense_tensor * csr_tensor
             return dense1, dense2, dense3, sparse1, sparse2
 
     indptr = Tensor([0, 1, 2], dtype=mstype.int32)

@@ -783,33 +783,6 @@ bool AbstractTuple::ContainsAllBroadenTensors() const {
   return true;
 }
 
-template <typename T>
-const T AbstractTuple::GetAbsPtrAt(size_t index) const {
-  if (index >= size()) {
-    MS_LOG(EXCEPTION) << "Index should be in range of [0, " << size() << "), but got " << index
-                      << " for abstract: " << ToString();
-    return nullptr;
-  }
-  AbstractBasePtr base = elements()[index];
-  MS_EXCEPTION_IF_NULL(base);
-  return base->cast<T>();
-}
-
-BaseShapePtrList AbstractTuple::ElementsShapeTupleRecursive() const {
-  BaseShapePtrList element_shape_list;
-  for (const auto &element : elements()) {
-    MS_EXCEPTION_IF_NULL(element);
-    if (element->isa<AbstractTuple>()) {
-      for (const auto &scalar : element->cast<AbstractTuplePtr>()->elements()) {
-        MS_EXCEPTION_IF_NULL(scalar);
-        element_shape_list.push_back(scalar->BuildShape());
-      }
-    }
-    element_shape_list.push_back(element->BuildShape());
-  }
-  return element_shape_list;
-}
-
 bool AbstractList::operator==(const AbstractList &other) const { return AbstractSequence::operator==(other); }
 
 bool AbstractList::operator==(const AbstractBase &other) const {
@@ -1423,6 +1396,60 @@ bool AbstractBasePtrListDeepEqual(const AbstractBasePtrList &lhs, const Abstract
   return true;
 }
 
+// SparseTensor
+template <typename T>
+const T AbstractSparseTensor::GetAbsPtrAt(size_t index) const {
+  if (index >= size()) {
+    MS_LOG(EXCEPTION) << "Index should be in range of [0, " << size() << "), but got " << index
+                      << " for abstract: " << ToString();
+    return nullptr;
+  }
+  AbstractBasePtr base = elements()[index];
+  MS_EXCEPTION_IF_NULL(base);
+  return base->cast<T>();
+}
+
+BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
+  BaseShapePtrList element_shape_list;
+  for (const auto &element : elements()) {
+    MS_EXCEPTION_IF_NULL(element);
+    auto abs_tuple = element->cast<AbstractTuplePtr>();
+    if (abs_tuple == nullptr) {
+      element_shape_list.push_back(element->BuildShape());
+    } else {
+      for (const auto &scalar : abs_tuple->elements()) {
+        MS_EXCEPTION_IF_NULL(scalar);
+        element_shape_list.push_back(scalar->BuildShape());
+      }
+    }
+  }
+  return element_shape_list;
+}
+
+const TypeId AbstractSparseTensor::GetTypeIdAt(size_t index) const {
+  size_t shape_idx = size() - 1;
+  if (index < shape_idx) {
+    auto abs_tensor = GetAbsPtrAt<abstract::AbstractTensorPtr>(index);
+    MS_EXCEPTION_IF_NULL(abs_tensor);
+    return abs_tensor->BuildType()->type_id();
+  } else if (index < shape_idx + shape()->size()) {
+    return shape()->elements()[index - shape_idx]->BuildType()->type_id();
+  }
+  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx + shape()->size() << "), but got " << index
+                    << " for " << ToString();
+  return kTypeUnknown;
+}
+
+TypePtr AbstractSparseTensor::BuildType() const { return std::make_shared<SparseTensorType>(); }
+
+const AbstractTuplePtr AbstractSparseTensor::shape() const {
+  auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(size() - 1);
+  if (res == nullptr) {
+    MS_LOG(EXCEPTION) << "Get shape nullptr in AbstractSparseTensor: " << ToString();
+  }
+  return res;
+}
+
 // RowTensor
 TypePtr AbstractRowTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(element());
@@ -1516,21 +1543,6 @@ std::string AbstractRowTensor::ToString() const {
 }
 
 // COOTensor
-const TypeId AbstractCOOTensor::GetTypeIdAt(size_t index) const {
-  if (index == kIndicesIdx) {
-    return indices()->BuildType()->type_id();
-  }
-  if (index == kValuesIdx) {
-    return values()->BuildType()->type_id();
-  }
-  if (index < kShapeIdx + shape()->size()) {
-    return shape()->elements()[index - kShapeIdx]->BuildType()->type_id();
-  }
-  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << kShapeIdx + shape()->size() << "), but got " << index
-                    << " for " << ToString();
-  return kTypeUnknown;
-}
-
 TypePtr AbstractCOOTensor::BuildType() const {
   MS_EXCEPTION_IF_NULL(values());
   TypePtr element_type = values()->element()->BuildType();
@@ -1562,7 +1574,7 @@ std::string AbstractCOOTensor::ToString() const {
 const AbstractTensorPtr AbstractCOOTensor::indices() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Get indices nullptr in AbstractCOOTensor: " << ToString();
+    MS_LOG(EXCEPTION) << "Get indices nullptr in AbstractCOOTensor: " << ToString();
   }
   return res;
 }
@@ -1570,15 +1582,7 @@ const AbstractTensorPtr AbstractCOOTensor::indices() const {
 const AbstractTensorPtr AbstractCOOTensor::values() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Get values nullptr in AbstractCOOTensor: " << ToString();
-  }
-  return res;
-}
-
-const AbstractTuplePtr AbstractCOOTensor::shape() const {
-  auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(kShapeIdx);
-  if (res == nullptr) {
-    MS_LOG(ERROR) << "Get shape nullptr in AbstractCOOTensor: " << ToString();
+    MS_LOG(EXCEPTION) << "Get values nullptr in AbstractCOOTensor: " << ToString();
   }
   return res;
 }
@@ -1612,28 +1616,10 @@ std::string AbstractCSRTensor::ToString() const {
   return buffer.str();
 }
 
-const TypeId AbstractCSRTensor::GetTypeIdAt(size_t index) const {
-  if (index == kIndptrIdx) {
-    return indptr()->BuildType()->type_id();
-  }
-  if (index == kIndicesIdx) {
-    return indices()->BuildType()->type_id();
-  }
-  if (index == kValuesIdx) {
-    return values()->BuildType()->type_id();
-  }
-  if (index < kShapeIdx + shape()->size()) {
-    return shape()->elements()[index - kShapeIdx]->BuildType()->type_id();
-  }
-  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << kShapeIdx + shape()->size() << "), but got " << index
-                    << " for " << ToString();
-  return kTypeUnknown;
-}
-
 const AbstractTensorPtr AbstractCSRTensor::indptr() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndptrIdx);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Get indptr nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(EXCEPTION) << "Get indptr nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }
@@ -1641,7 +1627,7 @@ const AbstractTensorPtr AbstractCSRTensor::indptr() const {
 const AbstractTensorPtr AbstractCSRTensor::indices() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kIndicesIdx);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Get indices nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(EXCEPTION) << "Get indices nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }
@@ -1649,15 +1635,7 @@ const AbstractTensorPtr AbstractCSRTensor::indices() const {
 const AbstractTensorPtr AbstractCSRTensor::values() const {
   auto res = GetAbsPtrAt<abstract::AbstractTensorPtr>(kValuesIdx);
   if (res == nullptr) {
-    MS_LOG(ERROR) << "Get values nullptr in AbstractCSRTensor: " << ToString();
-  }
-  return res;
-}
-
-const AbstractTuplePtr AbstractCSRTensor::shape() const {
-  auto res = GetAbsPtrAt<abstract::AbstractTuplePtr>(kShapeIdx);
-  if (res == nullptr) {
-    MS_LOG(ERROR) << "Get shape nullptr in AbstractCSRTensor: " << ToString();
+    MS_LOG(EXCEPTION) << "Get values nullptr in AbstractCSRTensor: " << ToString();
   }
   return res;
 }
