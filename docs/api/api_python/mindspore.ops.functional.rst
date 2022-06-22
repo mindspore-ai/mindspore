@@ -422,7 +422,9 @@ Parameter操作算子
     mindspore.ops.scatter_min
     mindspore.ops.scatter_max
     mindspore.ops.scatter_nd_add
+    mindspore.ops.scatter_nd_div
     mindspore.ops.scatter_nd_max
+    mindspore.ops.scatter_nd_min
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
     mindspore.ops.scatter_update
