@@ -14,6 +14,7 @@
 # ============================================================================
 """ test Activations """
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -225,3 +226,38 @@ def test_compile_threshold():
     net = NetThreshold(threshold=0.1, value=1.0)
     input_data = Tensor(np.array([[0.1, 0.2, 0.3], [0.0, 0.1, 0.2]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
+
+
+class NetTanhshrink(nn.Cell):
+    """Tanhshrink"""
+
+    def __init__(self):
+        super(NetTanhshrink, self).__init__()
+        self.tanhshrink = nn.Tanhshrink()
+
+    def construct(self, x):
+        return self.tanhshrink(x)
+
+
+def test_compile_tanhshrink():
+    """
+    Feature: Test Tanhshrink
+    Description: Test the functionality of tanhshrink
+    Expectation: success
+    """
+    net = NetTanhshrink()
+    input_data = Tensor(np.array([1, 2, 3, 2, 1]).astype(np.float16))
+    _cell_graph_executor.compile(net, input_data)
+
+
+def test_invalid_inputs_tanhshrink():
+    """
+    Feature: Test Tanhshrink
+    Description: Test the functionality of tanhshrink
+    Expectation: success
+    """
+    # case 1:input is not float16 or float32
+    with pytest.raises(TypeError):
+        net = NetTanhshrink()
+        input_data = Tensor(np.array([1, 2, 3, 2, 1]).astype(np.float64))
+        net(input_data)
