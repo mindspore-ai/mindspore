@@ -32,10 +32,6 @@ namespace parallel {
 // main step of Auto-parallel
 bool StepAutoParallel(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer);
 
-bool IsSplittableOperator(const std::string &);
-
-bool IsAutoParallelCareNode(const CNodePtr &);
-
 void InitCostGraph();
 
 Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root);

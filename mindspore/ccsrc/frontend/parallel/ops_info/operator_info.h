@@ -95,6 +95,7 @@ class OperatorInfo {
   const OperatorCostPtr &operator_cost() const { return operator_cost_; }
   void set_cost(const OperatorCostPtr &cost) { operator_cost_ = cost; }
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
+  Shapes GenerateParamStrategy(const Shapes &default_strategy);
 
   virtual std::shared_ptr<Strategys> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
@@ -225,6 +226,7 @@ class OperatorInfo {
   virtual Status InferTensorInfo();
   virtual void InferReplaceOps() {}
   virtual Status CheckOutputStrategy(const StrategyPtr &out_strategy);
+  virtual Shapes InferParamStrategy(const Shapes &default_strategy);
   Status CheckStrategyValue(const StrategyPtr &strategy, const Shapes &inputs_shape);
   void SetRepeatedCalcDevMatrix();
   void ResetTensorMapIfRepeatedCalc();
@@ -369,8 +371,6 @@ Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inpu
 // or ([a, 1], [1, b]) or ([a, b, c, d], [1, b, c, d]) or ([a, b, c, 1], [1, b, c, d])
 Status GenerateStrategiesWithBroadcast(int64_t stage_id, const Shapes &inputs_shape, const Shapes &splittable_inputs,
                                        std::vector<StrategyPtr> *sp_vector);
-
-Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
 std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequence);
 ValuePtr MakeListValue(const std::vector<int64_t> &v);
 ValuePtr MakeTupleListValue(const Shapes &v);

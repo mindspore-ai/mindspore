@@ -2107,6 +2107,21 @@ float OperatorInfo::GetFloatAttr(const std::string &attr_name) {
   return attr_iter->second->cast<FP32ImmPtr>()->value();
 }
 
+Shapes OperatorInfo::GenerateParamStrategy(const Shapes &default_strategy) {
+  if (InferAttrs() != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << ": infer attrs failed";
+  }
+
+  Shapes ret = InferParamStrategy(default_strategy);
+  MS_LOG(INFO) << name_ << ": the default strategy is " << default_strategy << ", the ret strategy is " << ret;
+  return ret;
+}
+
+Shapes OperatorInfo::InferParamStrategy(const Shapes &default_strategy) {
+  MS_LOG(WARNING) << name_ << ": it is not supported to infer param strategy, return the default strategy";
+  return default_strategy;
+}
+
 std::vector<ValuePtr> GetValueSequence(const ValuePtr &sequence) {
   MS_EXCEPTION_IF_NULL(sequence);
   std::vector<ValuePtr> ret;

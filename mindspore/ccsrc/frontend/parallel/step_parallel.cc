@@ -34,7 +34,7 @@
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_manager.h"
-#include "frontend/parallel/dynamic_creator.h"
+#include "frontend/parallel/ops_info/ops_info_head_files.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/graph_util/node_info.h"
@@ -62,9 +62,6 @@ namespace parallel {
 static const std::set<std::string> COMMUNICATION_OPS = {ALL_REDUCE, ALL_GATHER, ALL_TO_ALL, REDUCE_SCATTER};
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL};
-// g_RefMap, for CNode B input i is a RefKey[Parameter C],
-// it will be one item in map with key: C, and value: (B, i)
-std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
 const uint32_t MAX_BFS_DEPTH = 7;
 
 void SetMiniStepOpDoMirrorLabel(std::vector<AnfNodePtr> new_node_input, bool do_mirror, bool accu_flag) {
@@ -1228,52 +1225,6 @@ void BackwardCommunication(const FuncGraphPtr &root, const OperatorInfoPtr &dist
   }
 }
 
-std::string GetDisOpName(const std::string &prim_name) {
-  std::string op_name = prim_name;
-  if (!prim_name.empty() && (prim_name[0] == '_')) {
-    op_name = prim_name.substr(1);
-  }
-  return op_name + "Info";
-}
-
-OperatorInfoPtr OperatorInstanceByName(const std::string &name, const PrimitiveAttrs &attrs,
-                                       const std::vector<Shapes> &shape_list) {
-  if (shape_list.size() != 2) {
-    MS_LOG(ERROR) << "The size of shape list is not 2";
-    return nullptr;
-  }
-  if (name.length() == 0) {
-    MS_LOG(EXCEPTION) << "Length of name is zero!";
-  }
-  std::string distribute_opname = GetDisOpName(name);
-  OperatorInfoPtr operator_ =
-    (OperatorInfoPtr)DynCreator::Instance().Create(distribute_opname, shape_list[0], shape_list[1], attrs, TOTAL_OPS);
-  if (operator_ == nullptr) {
-    MS_LOG(INFO) << "Create " << name << " failed";
-    return nullptr;
-  }
-  std::string origin_name = operator_->name();
-  operator_->set_name(origin_name + std::to_string(TOTAL_OPS));
-  MS_LOG(INFO) << "Successfully created operator " << origin_name;
-  ++TOTAL_OPS;
-  return operator_;
-}
-
-OperatorInfoPtr OperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
-                                 const std::vector<Shapes> &shape_list) {
-  MS_EXCEPTION_IF_NULL(prim);
-  OperatorInfoPtr operator_ = OperatorInstanceByName(prim->name(), attrs, shape_list);
-  if (operator_ == nullptr) {
-    if (IsInBatchParallelBlackList(prim)) {
-      MS_LOG(EXCEPTION) << "Operator " << prim->name() << " is not supported yet in auto parallel mode.";
-    }
-    MS_LOG(INFO) << "Create " << prim->name() << " failed, use batch parallel";
-    operator_ = OperatorInstanceByName(BATCH_PARALLEL, attrs, shape_list);
-    MS_EXCEPTION_IF_NULL(operator_);
-  }
-  return operator_;
-}
-
 OperatorInfoPtr NewOperatorInstance(const PrimitivePtr &prim, const PrimitiveAttrs &attrs,
                                     std::vector<Shapes> shape_list) {
   OperatorInfoPtr operator_ = OperatorInstance(prim, attrs, shape_list);
@@ -1319,71 +1270,6 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
   }
 
   return strategyPtr;
-}
-
-Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(func_graph);
-
-  std::vector<AnfNodePtr> parameters = FindParameterByRefKeyNode(node, func_graph);
-  if (parameters.size() != 1) {
-    MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
-  }
-
-  Shapes input_shapes;
-  input_shapes = GetNodeShape(parameters[0]);
-  if (input_shapes.size() != 1) {
-    MS_LOG(EXCEPTION) << "Get input shape failed";
-  }
-
-  MS_LOG(INFO) << "The parameter shape is " << ShapeToString(input_shapes[0]);
-  return input_shapes;
-}
-
-std::vector<Shapes> ExtractShape(const CNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  Shapes shape_inputs, shape_outputs;
-  std::vector<Shapes> shape_all;
-  std::vector<AnfNodePtr> all_inputs = node->inputs();
-
-  size_t inputs_size = all_inputs.size();
-  for (size_t i = 1; i < inputs_size; ++i) {
-    Shapes input_shapes;
-    AnfNodePtr input = all_inputs[i];
-    if (HasAbstractMonad(input)) {
-      continue;
-    }
-    if (IsValueNode<RefKey>(input)) {
-      auto func_graph = node->func_graph();
-      MS_EXCEPTION_IF_NULL(func_graph);
-      std::vector<AnfNodePtr> parameters = FindParameterByRefKeyNode(input, func_graph);
-      if (parameters.size() != 1) {
-        MS_LOG(EXCEPTION) << "Find parameter by ref key node failed";
-      }
-      std::pair<AnfNodePtr, int64_t> node_pair = std::make_pair(node, SizeToLong(i));
-      g_RefMap[parameters[0]] = node_pair;
-      input_shapes = GetRefKeyNodeShape(input, func_graph);
-    } else if (input->isa<CNode>() || IsValueNode<Tensor>(input) || input->isa<Parameter>() ||
-               ((IsValueNode<ValueList>(input) || IsValueNode<ValueTuple>(input)) && (inputs_size == 2))) {
-      input_shapes = GetNodeShape(input);
-    } else {
-      continue;
-    }
-    if (input_shapes.size() != 1) {
-      if (inputs_size == 2) {  // like concat
-        shape_inputs = input_shapes;
-        break;
-      } else {
-        MS_LOG(EXCEPTION) << "ExtractShape: Get input shape failed";
-      }
-    }
-    shape_inputs.push_back(input_shapes[0]);
-  }
-  shape_all.push_back(shape_inputs);
-  // extract out shape
-  shape_outputs = GetNodeShape(node);
-  shape_all.push_back(shape_outputs);
-  return shape_all;
 }
 
 std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &node, int32_t recursion_num) {
@@ -2953,6 +2839,11 @@ CommInfo GetCommInfo() {
 }
 
 Status ParallelInit() {
+  static bool parallel_init_flag = false;
+  if (parallel_init_flag) {
+    return SUCCESS;
+  }
+
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
@@ -3003,11 +2894,11 @@ Status ParallelInit() {
     return FAILED;
   }
 
+  parallel_init_flag = true;
   MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: " << global_rank
                << ", communication_backend: " << comm_info.communication_backend
                << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
                << ", gradient_fp32_sync: " << ParallelContext::GetInstance()->gradient_fp32_sync();
-
   return SUCCESS;
 }
 

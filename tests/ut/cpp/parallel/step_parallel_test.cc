@@ -15,6 +15,7 @@
  */
 #include "common/common_test.h"
 #include "frontend/parallel/step_parallel.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/common/debug/draw.h"
@@ -203,6 +204,9 @@ FuncGraphManagerPtr Make_Manager(int64_t condition = 0) {
   return manager;
 }
 
+/// Feature: test get python path
+/// Description:
+/// Expectation: the python path is right
 TEST_F(TestStepParallel, GetPythonPath1) {
   OperatorName operator_name = "AllReduce";
   const std::string expect = "mindspore.ops.operations";
@@ -210,6 +214,9 @@ TEST_F(TestStepParallel, GetPythonPath1) {
   ASSERT_EQ(temp, expect);
 }
 
+/// Feature: test get python path
+/// Description:
+/// Expectation: the python path is right
 TEST_F(TestStepParallel, GetPythonPath2) {
   OperatorName operator_name = "Add";
   const std::string expect = "mindspore.ops.operations";
@@ -217,6 +224,9 @@ TEST_F(TestStepParallel, GetPythonPath2) {
   ASSERT_EQ(temp, expect);
 }
 
+/// Feature: test extract strategy
+/// Description:
+/// Expectation: the strategy is right
 TEST_F(TestStepParallel, ExtractStrategy) {
   Dimensions v1 = {2, 2};
   Dimensions v2 = {4, 4};
@@ -234,6 +244,9 @@ TEST_F(TestStepParallel, ExtractStrategy) {
   ASSERT_EQ(strategy_expect, strategy_test);
 }
 
+/// Feature: test extract shape
+/// Description:
+/// Expectation: the shape is right
 TEST_F(TestStepParallel, ExtractShape) {
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
@@ -242,6 +255,9 @@ TEST_F(TestStepParallel, ExtractShape) {
   EXPECT_THROW({ ExtractShape(node); }, std::runtime_error);
 }
 
+/// Feature: test extract shape
+/// Description:
+/// Expectation: the shape is right
 TEST_F(TestStepParallel, ExtractShape1) {
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
@@ -254,6 +270,9 @@ TEST_F(TestStepParallel, ExtractShape1) {
   ASSERT_EQ(shape_test, shape_expect);
 }
 
+/// Feature: test extract shape
+/// Description:
+/// Expectation: the shape is right
 TEST_F(TestStepParallel, ExtractShape2) {
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
@@ -262,6 +281,9 @@ TEST_F(TestStepParallel, ExtractShape2) {
   EXPECT_THROW({ ExtractShape(node); }, std::runtime_error);
 }
 
+/// Feature: test extract shape
+/// Description:
+/// Expectation: the shape is right
 TEST_F(TestStepParallel, ExtractShape3) {
   Shape inputs_x_dims = {64, 32};
   Shape inputs_y_dims = {32, 64};
@@ -346,6 +368,9 @@ TEST_F(TestStepParallel, CreateOpInstance1) {
   EXPECT_THROW({ CreateOpInstance(args.first, op_name, "test"); }, std::runtime_error);
 }
 
+/// Feature: test OperatorInstance in auto parallel.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, OperatorInstance) {
   // create  attrs and prim
   PrimitivePtr prim = NewValueNode(prim::kPrimMatMul)->value()->cast<PrimitivePtr>();
@@ -369,6 +394,9 @@ TEST_F(TestStepParallel, OperatorInstance) {
   ASSERT_EQ(name_expect, name_test);
 }
 
+/// Feature: test ExtractInformation in auto parallel.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ExtractInformation) {
   FuncGraphManagerPtr manager = Make_Manager();
   FuncGraphSet graphs = manager->func_graphs();
@@ -378,6 +406,9 @@ TEST_F(TestStepParallel, ExtractInformation) {
   ExtractInformation(all_nodes);
 }
 
+/// Feature: test ExtractInformation in auto parallel.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ExtractInformation2) {
   FuncGraphManagerPtr manager = Make_Manager(2);
   FuncGraphSet graphs = manager->func_graphs();
@@ -387,6 +418,9 @@ TEST_F(TestStepParallel, ExtractInformation2) {
   EXPECT_THROW({ ExtractInformation(all_nodes); }, std::runtime_error);
 }
 
+/// Feature: test ExtractInformation in auto parallel.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ExtractInformation3) {
   FuncGraphManagerPtr manager = Make_Manager(3);
   FuncGraphSet graphs = manager->func_graphs();
@@ -396,6 +430,9 @@ TEST_F(TestStepParallel, ExtractInformation3) {
   EXPECT_THROW({ ExtractInformation(all_nodes); }, std::runtime_error);
 }
 
+/// Feature: test ForwardCommunication.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ForwardCommunication1) {
   ValuePtr attr0_value = MakeValue(REDUCE_OP_SUM);
   ValuePtr attr1_value = MakeValue("0-1-2");
@@ -444,6 +481,9 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
   }
 }
 
+/// Feature: test ForwardCommunication.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ForwardCommunication2) {
   OperatorVector op_list;
   FuncGraphManagerPtr manager = Make_Manager();
@@ -467,6 +507,9 @@ TEST_F(TestStepParallel, ForwardCommunication2) {
   }
 }
 
+/// Feature: test ForwardCommunication.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, ForwardCommunication3) {
   OperatorVector op_list;
   FuncGraphManagerPtr manager = Make_Manager();
@@ -494,6 +537,9 @@ TEST_F(TestStepParallel, ForwardCommunication3) {
   }
 }
 
+/// Feature: test GetTensorInLayout.
+/// Description:
+/// Expectation: success.
 TEST_F(TestStepParallel, GetTensorInLayout) {
   // create  attrs and prim
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
