@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,13 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-LocalEdge::LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node,
-                     std::shared_ptr<Node> dst_node)
-    : Edge(id, type, weight, src_node, dst_node) {}
+LocalEdge::LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, NodeIdType src_id, NodeIdType dst_id)
+    : Edge(id, type, weight, src_id, dst_id) {}
 
 Status LocalEdge::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
-  auto itr = features_.find(feature_type);
+  auto itr = std::find_if(
+    features_.begin(), features_.end(),
+    [feature_type](std::pair<FeatureType, std::shared_ptr<Feature>> item) { return item.first == feature_type; });
   if (itr != features_.end()) {
     *out_feature = itr->second;
     return Status::OK();
@@ -37,11 +38,14 @@ Status LocalEdge::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature>
 }
 
 Status LocalEdge::UpdateFeature(const std::shared_ptr<Feature> &feature) {
-  auto itr = features_.find(feature->type());
+  auto itr = std::find_if(
+    features_.begin(), features_.end(),
+    [feature](std::pair<FeatureType, std::shared_ptr<Feature>> item) { return item.first == feature->type(); });
+
   if (itr != features_.end()) {
     RETURN_STATUS_UNEXPECTED("Feature already exists");
   } else {
-    features_[feature->type()] = feature;
+    features_.emplace_back(std::make_pair(feature->type(), feature));
     return Status::OK();
   }
 }

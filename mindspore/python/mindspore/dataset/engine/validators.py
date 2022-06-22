@@ -28,7 +28,7 @@ from ..core.validator_helpers import parse_user_args, type_check, type_check_lis
     INT32_MAX, check_valid_detype, check_dir, check_file, check_sampler_shuffle_shard_options, \
     validate_dataset_param_value, check_padding_options, check_gnn_list_or_ndarray, check_gnn_list_of_pair_or_ndarray, \
     check_num_parallel_workers, check_columns, check_pos_int32, check_valid_str, check_dataset_num_shards_shard_id, \
-    check_valid_list_tuple
+    check_valid_list_tuple, check_dict
 
 from . import datasets
 from . import samplers
@@ -1838,7 +1838,7 @@ def check_gnn_graphdata(method):
             check_num_parallel_workers(num_parallel_workers)
         type_check(hostname, (str,), "hostname")
         if check_hostname(hostname) is False:
-            raise ValueError("The hostname is illegal")
+            raise ValueError("The hostname is illegal.")
         type_check(working_mode, (str,), "working_mode")
         if working_mode not in {'local', 'client', 'server'}:
             raise ValueError("Invalid working mode, please enter 'local', 'client' or 'server'.")
@@ -1852,13 +1852,65 @@ def check_gnn_graphdata(method):
     return new_method
 
 
+def check_gnn_graph(method):
+    """check the input arguments of Graph."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [edges, node_feat, edge_feat, graph_feat, node_type, edge_type, num_parallel_workers, working_mode,
+         hostname, port, num_client, auto_shutdown], _ = parse_user_args(method, *args, **kwargs)
+
+        type_check(edges, (list, np.ndarray), "edges")
+        check_dict(node_feat, str, np.ndarray, "node_feat")
+        check_dict(edge_feat, str, np.ndarray, "edge_feat")
+        check_dict(graph_feat, str, np.ndarray, "graph_feat")
+        if node_type:
+            type_check(node_type, (list, np.ndarray), "node_type")
+        if edge_type:
+            type_check(edge_type, (None, list, np.ndarray), "edge_type")
+
+        # check shape of node_feat and edge_feat
+        num_nodes = np.max(edges) + 1
+        if node_feat and isinstance(node_feat, dict):
+            num_nodes = node_feat[list(node_feat.keys())[0]].shape[0]
+        if node_feat:
+            for key, value in node_feat.items():
+                if len(value.shape) != 2 or value.shape[0] != num_nodes:
+                    raise ValueError("value of item '{0}' in node_feat should with shape [num_nodes, num_node_features]"
+                                     "(here num_nodes is: {1}), but got: {2}".format(key, num_nodes, value.shape))
+        if edge_feat:
+            for key, value in edge_feat.items():
+                if len(value.shape) != 2 or value.shape[0] != edges.shape[1]:
+                    raise ValueError("value of item '{0}' in edge_feat should with shape [num_edges, num_node_features]"
+                                     "(here num_edges is: {1}), but got: {2}".format(key, edges.shape[1], value.shape))
+
+        if num_parallel_workers is not None:
+            check_num_parallel_workers(num_parallel_workers)
+        type_check(hostname, (str,), "hostname")
+        if check_hostname(hostname) is False:
+            raise ValueError("The hostname is illegal.")
+        type_check(working_mode, (str,), "working_mode")
+        if working_mode not in {'local', 'client', 'server'}:
+            raise ValueError("Invalid working mode, please enter 'local', 'client' or 'server'.")
+        type_check(port, (int,), "port")
+        check_value(port, (1024, 65535), "port")
+        type_check(num_client, (int,), "num_client")
+        check_value(num_client, (1, 255), "num_client")
+        type_check(auto_shutdown, (bool,), "auto_shutdown")
+        return method(self, *args, **kwargs)
+    return new_method
+
+
 def check_gnn_get_all_nodes(method):
     """A wrapper that wraps a parameter checker around the GNN `get_all_nodes` function."""
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [node_type], _ = parse_user_args(method, *args, **kwargs)
-        type_check(node_type, (int,), "node_type")
+        if "GraphData" in str(type(self)):
+            type_check(node_type, (int,), "node_type")
+        else:
+            type_check(node_type, (str,), "node_type")
 
         return method(self, *args, **kwargs)
 
@@ -1871,7 +1923,10 @@ def check_gnn_get_all_edges(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [edge_type], _ = parse_user_args(method, *args, **kwargs)
-        type_check(edge_type, (int,), "edge_type")
+        if "GraphData" in str(type(self)):
+            type_check(edge_type, (int,), "edge_type")
+        else:
+            type_check(edge_type, (str,), "edge_type")
 
         return method(self, *args, **kwargs)
 
@@ -1912,7 +1967,10 @@ def check_gnn_get_all_neighbors(method):
         [node_list, neighbour_type, _], _ = parse_user_args(method, *args, **kwargs)
 
         check_gnn_list_or_ndarray(node_list, 'node_list')
-        type_check(neighbour_type, (int,), "neighbour_type")
+        if "GraphData" in str(type(self)):
+            type_check(neighbour_type, (int,), "neighbour_type")
+        else:
+            type_check(neighbour_type, (str,), "neighbour_type")
 
         return method(self, *args, **kwargs)
 
@@ -1933,7 +1991,10 @@ def check_gnn_get_sampled_neighbors(method):
             raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}.".format(
                 'neighbor_nums', len(neighbor_nums)))
 
-        check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
+        if "GraphData" in str(type(self)):
+            check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types')
+        else:
+            check_gnn_list_or_ndarray(neighbor_types, 'neighbor_types', str)
         if not neighbor_types or len(neighbor_types) > 6:
             raise ValueError("Wrong number of input members for {0}, should be between 1 and 6, got {1}.".format(
                 'neighbor_types', len(neighbor_types)))
@@ -1956,7 +2017,11 @@ def check_gnn_get_neg_sampled_neighbors(method):
 
         check_gnn_list_or_ndarray(node_list, 'node_list')
         type_check(neg_neighbor_num, (int,), "neg_neighbor_num")
-        type_check(neg_neighbor_type, (int,), "neg_neighbor_type")
+
+        if "GraphData" in str(type(self)):
+            type_check(neg_neighbor_type, (int,), "neg_neighbor_type")
+        else:
+            type_check(neg_neighbor_type, (str,), "neg_neighbor_type")
 
         return method(self, *args, **kwargs)
 
@@ -2026,7 +2091,23 @@ def check_gnn_get_node_feature(method):
                 raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                     node_list, node_list.dtype))
 
-        check_gnn_list_or_ndarray(feature_types, 'feature_types')
+        if "GraphData" in str(type(self)):
+            check_gnn_list_or_ndarray(feature_types, 'feature_types')
+        else:
+            check_gnn_list_or_ndarray(feature_types, 'feature_types', data_type=str)
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_gnn_get_graph_feature(method):
+    """A wrapper that wraps a parameter checker around the GNN `get_graph_feature` function."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [feature_types], _ = parse_user_args(method, *args, **kwargs)
+        check_gnn_list_or_ndarray(feature_types, 'feature_types', str)
 
         return method(self, *args, **kwargs)
 
@@ -2048,7 +2129,10 @@ def check_gnn_get_edge_feature(method):
                 raise TypeError("Each member in {0} should be of type int32. Got {1}.".format(
                     edge_list, edge_list.dtype))
 
-        check_gnn_list_or_ndarray(feature_types, 'feature_types')
+        if "GraphData" in str(type(self)):
+            check_gnn_list_or_ndarray(feature_types, 'feature_types')
+        else:
+            check_gnn_list_or_ndarray(feature_types, 'feature_types', data_type=str)
 
         return method(self, *args, **kwargs)
 

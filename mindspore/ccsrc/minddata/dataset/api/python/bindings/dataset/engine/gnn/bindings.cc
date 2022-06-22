@@ -16,6 +16,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl_bind.h"
 
+#include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
 #include "minddata/dataset/engine/gnn/graph_data_client.h"
 #include "minddata/dataset/engine/gnn/graph_data_impl.h"
@@ -23,18 +24,44 @@
 
 namespace mindspore {
 namespace dataset {
+const char kInvalidPath[] = "invalid_dataset_file_path";
+using FeatureType = std::int16_t;
+
 PYBIND_REGISTER(
   Graph, 0, ([](const py::module *m) {
     (void)py::class_<gnn::GraphData, std::shared_ptr<gnn::GraphData>>(*m, "GraphDataClient")
-      .def(py::init([](const std::string &dataset_file, int32_t num_workers, const std::string &working_mode,
-                       const std::string &hostname, int32_t port) {
+      .def(py::init([](const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                       const std::string &working_mode, const std::string &hostname, int32_t port) {
         std::shared_ptr<gnn::GraphData> out;
         if (working_mode == "local") {
-          out = std::make_shared<gnn::GraphDataImpl>(dataset_file, num_workers);
+          out = std::make_shared<gnn::GraphDataImpl>(data_format, dataset_file, num_workers);
         } else if (working_mode == "client") {
           out = std::make_shared<gnn::GraphDataClient>(dataset_file, hostname, port);
         }
         THROW_IF_ERROR(out->Init());
+        return out;
+      }))
+      .def(py::init([](const std::string &data_format, int32_t num_nodes, const py::array &edges,
+                       const py::dict &node_feat, const py::dict &edge_feat, const py::dict &graph_feat,
+                       const py::array &node_type, const py::array &edge_type, int32_t num_workers,
+                       const std::string &working_mode, const std::string &hostname, int32_t port) {
+        std::shared_ptr<gnn::GraphData> out;
+        std::shared_ptr<Tensor> edge_tensor, node_type_tensor, edge_type_tensor;
+        std::unordered_map<FeatureType, std::shared_ptr<Tensor>> node_feat_map, edge_feat_map, graph_feat_map;
+
+        THROW_IF_ERROR(convertNumpyData(edges, node_feat, edge_feat, graph_feat, node_type, edge_type, &edge_tensor,
+                                        &node_feat_map, &edge_feat_map, &graph_feat_map, &node_type_tensor,
+                                        &edge_type_tensor));
+
+        if (working_mode == "local") {
+          out = std::make_shared<gnn::GraphDataImpl>(data_format, kInvalidPath, num_workers);
+          THROW_IF_ERROR(out->Init(std::move(num_nodes), std::move(edge_tensor), std::move(node_feat_map),
+                                   std::move(edge_feat_map), std::move(graph_feat_map), std::move(node_type_tensor),
+                                   std::move(edge_type_tensor)));
+        } else if (working_mode == "client") {
+          out = std::make_shared<gnn::GraphDataClient>(kInvalidPath, hostname, port);
+          THROW_IF_ERROR(out->Init());
+        }
         return out;
       }))
       .def("get_all_nodes",
@@ -97,6 +124,12 @@ PYBIND_REGISTER(
           THROW_IF_ERROR(g.GetEdgeFeature(edge_list, feature_types, &out));
           return out.getRow();
         })
+      .def("get_graph_feature",
+           [](gnn::GraphData &g, std::vector<gnn::FeatureType> feature_types) {
+             TensorRow out;
+             THROW_IF_ERROR(g.GetGraphFeature(feature_types, &out));
+             return out.getRow();
+           })
       .def("graph_info",
            [](gnn::GraphData &g) {
              py::dict out;
@@ -114,12 +147,31 @@ PYBIND_REGISTER(
       .def("stop", [](gnn::GraphData &g) { THROW_IF_ERROR(g.Stop()); });
 
     (void)py::class_<gnn::GraphDataServer, std::shared_ptr<gnn::GraphDataServer>>(*m, "GraphDataServer")
-      .def(py::init([](const std::string &dataset_file, int32_t num_workers, const std::string &hostname, int32_t port,
-                       int32_t client_num, bool auto_shutdown) {
+      .def(py::init([](const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                       const std::string &hostname, int32_t port, int32_t client_num, bool auto_shutdown) {
         std::shared_ptr<gnn::GraphDataServer> out;
-        out =
-          std::make_shared<gnn::GraphDataServer>(dataset_file, num_workers, hostname, port, client_num, auto_shutdown);
+        out = std::make_shared<gnn::GraphDataServer>(data_format, dataset_file, num_workers, hostname, port, client_num,
+                                                     auto_shutdown);
         THROW_IF_ERROR(out->Init());
+        return out;
+      }))
+      .def(py::init([](const std::string &data_format, int32_t num_nodes, const py::array &edges,
+                       const py::dict &node_feat, const py::dict &edge_feat, const py::dict &graph_feat,
+                       const py::array &node_type, const py::array &edge_type, int32_t num_workers,
+                       const std::string &hostname, int32_t port, int32_t client_num, bool auto_shutdown) {
+        std::shared_ptr<gnn::GraphDataServer> out;
+        std::shared_ptr<Tensor> edge_tensor, node_type_tensor, edge_type_tensor;
+        std::unordered_map<FeatureType, std::shared_ptr<Tensor>> node_feat_map, edge_feat_map, graph_feat_map;
+
+        THROW_IF_ERROR(convertNumpyData(edges, node_feat, edge_feat, graph_feat, node_type, edge_type, &edge_tensor,
+                                        &node_feat_map, &edge_feat_map, &graph_feat_map, &node_type_tensor,
+                                        &edge_type_tensor));
+
+        out = std::make_shared<gnn::GraphDataServer>(data_format, kInvalidPath, num_workers, hostname, port, client_num,
+                                                     auto_shutdown);
+        THROW_IF_ERROR(out->Init(std::move(num_nodes), std::move(edge_tensor), std::move(node_feat_map),
+                                 std::move(edge_feat_map), std::move(graph_feat_map), std::move(node_type_tensor),
+                                 std::move(edge_type_tensor)));
         return out;
       }))
       .def("stop", [](gnn::GraphDataServer &g) { THROW_IF_ERROR(g.Stop()); })
