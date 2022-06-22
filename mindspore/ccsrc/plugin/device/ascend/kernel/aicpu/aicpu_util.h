@@ -76,7 +76,7 @@ constexpr auto kDynamicStitch = "DynamicStitch";
 constexpr auto kSearchSorted = "SearchSorted";
 constexpr auto kResizeBilinear = "ResizeBilinear";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
-constexpr auto kScatterElements = "ScatterElements";
+constexpr auto kTensorScatterElements = "TensorScatterElements";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
@@ -94,7 +94,7 @@ constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
 const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,   kDynamicStitch,
-                                          kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kScatterElements};
+                                          kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kTensorScatterElements};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
@@ -122,7 +122,8 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kSampleDistortedBoundingBoxV2, "SampleDistortedBoundingBoxExt2"},
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
-  {kAvgPoolGradV1, "AvgPoolGrad"}};
+  {kAvgPoolGradV1, "AvgPoolGrad"},
+  {kTensorScatterElements, "ScatterElements"}};
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
   uint32_t ioAddrNum;      // Input and output address number

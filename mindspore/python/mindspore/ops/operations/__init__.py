@@ -46,8 +46,8 @@ from .array_ops import (Argmax, Argmin, Cast, Concat, Pack, Stack, Unpack, Unsta
                         BatchToSpace, SpaceToBatchND, BatchToSpaceND, BroadcastTo, ReverseSequence,
                         EmbeddingLookup, Unique, GatherD, Identity, Range, MaskedFill, MaskedSelect, SearchSorted,
                         TensorScatterUpdate, TensorScatterMax, TensorScatterMin, TensorScatterAdd, TensorScatterSub,
-                        TensorScatterMul, TensorScatterDiv,
-                        ScatterElements, ScatterAddWithAxis, ExtractVolumePatches, LowerBound, UpperBound, Cummax)
+                        TensorScatterMul, TensorScatterDiv, ExtractVolumePatches, LowerBound,
+                        UpperBound, Cummax)
 from .comm_ops import (AllGather, AllReduce, NeighborExchange, NeighborExchangeV2, AlltoAll, _AllSwap, ReduceScatter,
                        Broadcast,
                        _MirrorOperator, _MirrorMiniStepOperator, _MiniStepAllGather, ReduceOp, _VirtualDataset,
@@ -502,8 +502,6 @@ __all__ = [
     "TensorScatterSub",
     "TensorScatterMul",
     "TensorScatterDiv",
-    "ScatterElements",
-    "ScatterAddWithAxis",
     "SoftShrink",
     "FFT3D",
     "IFFT3D",

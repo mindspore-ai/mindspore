@@ -213,7 +213,6 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimUnsortedSegmentMin, R{InferImplUnsortedSegmentMin, nullptr, true}},
     {prim::kPrimScatterAdd, R{InferImplScatterAdd, nullptr, true}},
     {prim::kPrimScatterSub, R{InferImplScatterSub, nullptr, true}},
-    {prim::kPrimScatterElements, R{InferImplScatterElements, nullptr, true}},
     {prim::kPrimSubAndFilter, R{InferImplSubAndFilter, nullptr, true}},
     {prim::kPrimMapCacheIdx, R{InferImplMapCacheIdx, nullptr, true}},
     {prim::kPrimDynamicAssign, R{InferImplDynamicAssign, nullptr, true}},

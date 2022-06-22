@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ REG_ADPT_DESC(L2Loss, kNameL2Loss, ADPT_DESC(L2Loss))
 INPUT_MAP(ScatterElements) = {{1, INPUT_DESC(data)}, {2, INPUT_DESC(indices)}, {3, INPUT_DESC(updates)}};
 ATTR_MAP(ScatterElements) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())}};
 OUTPUT_MAP(ScatterElements) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(ScatterElements, kNameScatterElements, ADPT_DESC(ScatterElements))
+REG_ADPT_DESC(ScatterElements, kNameTensorScatterElements, ADPT_DESC(ScatterElements))
 
 // FullyConnection
 INPUT_MAP(FullyConnection) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(w)}, {3, INPUT_DESC(b)}, {4, INPUT_DESC(offset_w)}};

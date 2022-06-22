@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/scatter_elements.h"
+#include "ops/tensor_scatter_elements.h"
 #include <map>
 #include <set>
 #include <string>
@@ -26,8 +26,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr TensorScatterElementsInferShape(const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto input_x_shape_ptr = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
@@ -56,7 +56,7 @@ abstract::ShapePtr ScatterElementsInferShape(const PrimitivePtr &primitive,
   return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
 }
 
-TypePtr ScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr TensorScatterElementsInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
   std::set<TypePtr> type_set = {kInt32, kInt64};
@@ -70,19 +70,30 @@ TypePtr ScatterElementsInferType(const PrimitivePtr &primitive, const std::vecto
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(ScatterElements, BaseOperator);
-AbstractBasePtr ScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args) {
+MIND_API_OPERATOR_IMPL(TensorScatterElements, BaseOperator);
+AbstractBasePtr TensorScatterElementsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 3;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto infer_type = ScatterElementsInferType(primitive, input_args);
-  auto infer_shape = ScatterElementsInferShape(primitive, input_args);
+  auto infer_type = TensorScatterElementsInferType(primitive, input_args);
+  auto infer_shape = TensorScatterElementsInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-void ScatterElements::Init(const int64_t axis) { this->set_axis(axis); }
-void ScatterElements::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
-int64_t ScatterElements::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
-REGISTER_PRIMITIVE_EVAL_IMPL(ScatterElements, prim::kPrimScatterElements, ScatterElementsInfer, nullptr, true);
+void TensorScatterElements::Init(const int64_t axis, const std::string reduction) {
+  this->set_axis(axis);
+  this->set_reduction(reduction);
+}
+void TensorScatterElements::set_axis(const int64_t axis) { (void)AddAttr(kAxis, api::MakeValue(axis)); }
+int64_t TensorScatterElements::get_axis() const { return GetValue<int64_t>(GetAttr(kAxis)); }
+void TensorScatterElements::set_reduction(const std::string reduction) {
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+std::string TensorScatterElements::get_reduction() const {
+  auto value_ptr = GetAttr(kReduction);
+  return GetValue<std::string>(value_ptr);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(TensorScatterElements, prim::kPrimTensorScatterElements, TensorScatterElementsInfer,
+                             nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

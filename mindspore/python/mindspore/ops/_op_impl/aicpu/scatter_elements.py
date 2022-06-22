@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-"""ScatterElements op"""
+"""TensorScatterElements op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-scatter_elements_op_info = AiCPURegOp("ScatterElements") \
+scatter_elements_op_info = AiCPURegOp("TensorScatterElements") \
     .fusion_type("OPAQUE") \
     .attr("axis", "int") \
     .input(0, "data", "required") \
@@ -31,5 +31,5 @@ scatter_elements_op_info = AiCPURegOp("ScatterElements") \
 
 @op_info_register(scatter_elements_op_info)
 def _scatter_elements_aicpu():
-    """ScatterElements AiCPU register"""
+    """TensorScatterElements AiCPU register"""
     return

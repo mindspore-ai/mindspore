@@ -17,7 +17,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore.ops.operations.array_ops import TensorScatterElements
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.scatter_elements = P.ScatterElements(1)
+        self.scatter_elements = TensorScatterElements(0)
 
     def construct(self, data, indices, updates):
         return self.scatter_elements(data, indices, updates)
@@ -38,7 +38,7 @@ def test_net():
     net = Net()
     tdata = Tensor(data)
     tindices = Tensor(indices)
-    tupdates = net(updates)
+    tupdates = Tensor(updates)
     output = net(tdata, tindices, tupdates)
     print(output.asnumpy())
     assert np.all([[0.0, 0.0, 3.0], [0.0, 5.0, 0.0], [7.0, 0.0, 0.0]] == output.asnumpy())
