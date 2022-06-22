@@ -23,7 +23,7 @@ mindspore.dataset.transforms
 - PyTensorOperation，所有Python实现的数据处理操作的基类。
 
 变换
----
+-----
 
 .. mscnautosummary::
     :toctree: dataset_transforms
@@ -45,7 +45,7 @@ mindspore.dataset.transforms
     mindspore.dataset.transforms.Unique
 
 工具
----
+-----
 
 .. mscnautosummary::
     :toctree: dataset_transforms

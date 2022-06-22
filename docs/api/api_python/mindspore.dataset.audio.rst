@@ -4,7 +4,7 @@ mindspore.dataset.audio
 .. include:: dataset_audio/mindspore.dataset.audio.rst
 
 变换
----
+-----
 
 .. mscnautosummary::
     :toctree: dataset_audio
@@ -56,7 +56,7 @@ mindspore.dataset.audio
     mindspore.dataset.audio.Vol
 
 工具
----
+-----
 
 .. mscnautosummary::
     :toctree: dataset_audio
