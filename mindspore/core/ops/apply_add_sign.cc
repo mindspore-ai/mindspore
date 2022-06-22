@@ -61,21 +61,24 @@ abstract::TupleShapePtr ApplyAddSignInferShape(const PrimitivePtr &primitive,
     }
   }
   const int64_t kShapeSize = 1;
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape_size", lr_shape.size(), kLessEqual, kShapeSize, prim_name);
-  if (lr_shape.size() == 1) {
+  auto lr_shape_rank = SizeToLong(lr_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape_rank", lr_shape_rank, kLessEqual, kShapeSize, prim_name);
+  if (lr_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", lr_shape[0], kEqual, kShapeSize, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("alpha_shape_size", alpha_shape.size(), kLessEqual, kShapeSize, prim_name);
-  if (alpha_shape.size() == 1) {
+  auto alpha_shape_rank = SizeToLong(alpha_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("alpha_shape_rank", alpha_shape_rank, kLessEqual, kShapeSize, prim_name);
+  if (alpha_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("alpha_shape[0]", alpha_shape[0], kEqual, kShapeSize, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape_size", sign_decay_shape.size(), kLessEqual, kShapeSize,
-                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape_rank", SizeToLong(sign_decay_shape.size()), kLessEqual,
+                                           kShapeSize, prim_name);
   if (sign_decay_shape.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape[0]", sign_decay_shape[0], kEqual, kShapeSize, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("beta_shape_size", beta_shape.size(), kLessEqual, kShapeSize, prim_name);
-  if (beta_shape.size() == 1) {
+  auto beta_shape_rank = SizeToLong(beta_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("beta_shape_rank", beta_shape_rank, kLessEqual, kShapeSize, prim_name);
+  if (beta_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("beta_shape[0]", beta_shape[0], kEqual, kShapeSize, prim_name);
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape, m_shape});
@@ -99,21 +102,21 @@ TuplePtr ApplyAddSignInferType(const PrimitivePtr &prim, const std::vector<Abstr
   auto grad_type = input_args[kInputIndex6]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"m_type", m_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("m_type", m_type));
+  (void)args.insert(std::make_pair("grad_type", grad_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args, valid_types, prim_name);
   std::map<std::string, TypePtr> args_lr;
-  (void)args_lr.insert({"lr_type", lr_type});
+  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);
   std::map<std::string, TypePtr> args_alpha;
-  (void)args_alpha.insert({"alpha_type", alpha_type});
+  (void)args_alpha.insert(std::make_pair("alpha_type", alpha_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_alpha, valid_types, prim_name);
   std::map<std::string, TypePtr> args_sign_decay;
-  (void)args_sign_decay.insert({"sign_decay_type", sign_decay_type});
+  (void)args_sign_decay.insert(std::make_pair("sign_decay_type", sign_decay_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_sign_decay, valid_types, prim_name);
   std::map<std::string, TypePtr> args_beta;
-  (void)args_beta.insert({"beta_type", beta_type});
+  (void)args_beta.insert(std::make_pair("beta_type", beta_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_beta, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, m_type});
 }

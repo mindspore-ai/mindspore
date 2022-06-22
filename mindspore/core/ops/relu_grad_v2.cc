@@ -76,8 +76,8 @@ MIND_API_OPERATOR_IMPL(ReluGradV2, BaseOperator);
 AbstractBasePtr ReluGradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  (void)CheckAndConvertUtils::CheckInteger("ReluGradV2 infer", input_args.size(), kEqual, kReluGradV2InputNum,
-                                           primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("ReluGradV2 infer", SizeToLong(input_args.size()), kEqual,
+                                           kReluGradV2InputNum, primitive->name());
   auto type = ReluGradV2InferType(primitive, input_args);
   auto shape = ReluGradV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

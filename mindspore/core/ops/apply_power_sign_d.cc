@@ -44,23 +44,25 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
   auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
   auto logbase_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->GetShapeTrack())[kShape];
+  auto logbase_shape_rank = SizeToLong(logbase_shape.size());
   auto sign_decay_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex4]->GetShapeTrack())[kShape];
+  auto sign_decay_shape_rank = SizeToLong(sign_decay_shape.size());
   auto beta_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex5]->GetShapeTrack())[kShape];
   auto grad_shape = input_args[kInputIndex6]->BuildShape();
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kLessEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kLessEqual, 1, prim_name);
   if (lr_shape.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape[0] size", lr_shape[0], kEqual, 1, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("logbase_shape size", logbase_shape.size(), kLessEqual, 1, prim_name);
-  if (logbase_shape.size() == 1) {
+  (void)CheckAndConvertUtils::CheckInteger("logbase_shape rank", logbase_shape_rank, kLessEqual, 1, prim_name);
+  if (logbase_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("logbase_shape[0] size", logbase_shape[0], kEqual, 1, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape size", sign_decay_shape.size(), kLessEqual, 1, prim_name);
-  if (sign_decay_shape.size() == 1) {
+  (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape rank", sign_decay_shape_rank, kLessEqual, 1, prim_name);
+  if (sign_decay_shape_rank == 1) {
     (void)CheckAndConvertUtils::CheckInteger("sign_decay_shape[0] size", sign_decay_shape[0], kEqual, 1, prim_name);
   }
-  (void)CheckAndConvertUtils::CheckInteger("beta_shape size", beta_shape.size(), kLessEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("beta_shape size", SizeToLong(beta_shape.size()), kLessEqual, 1, prim_name);
   if (beta_shape.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("beta_shape[0] size", beta_shape[0], kEqual, 1, prim_name);
   }
@@ -69,8 +71,8 @@ abstract::TupleShapePtr ApplyPowerSignDInferShape(const PrimitivePtr &primitive,
   }
   // var, m and grad must have the same shape
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"m", m_shape});
-  same_shape_args_map.insert({"grad", grad_shape});
+  (void)same_shape_args_map.insert(std::make_pair("m", m_shape));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
@@ -99,9 +101,9 @@ TuplePtr ApplyPowerSignDInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto grad_type = input_args[kInputIndex6]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"m", m_type});
-  args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("m", m_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("lr_dtype", lr_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("logbase_dtype", logbase_type, valid_types, prim_name);

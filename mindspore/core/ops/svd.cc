@@ -34,7 +34,7 @@ abstract::BaseShapePtr SvdInferShape(const PrimitivePtr &prim, const std::vector
 
   auto a_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto ndim = a_shape.size();
-  (void)CheckAndConvertUtils::CheckInteger("ndim", ndim, kGreaterEqual, kSizeTwo, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("ndim", SizeToLong(ndim), kGreaterEqual, kSizeTwo, prim->name());
   auto m = a_shape[ndim - kIndexTwo];
   auto n = a_shape[ndim - kIndexOne];
   auto p = std::min(m, n);

@@ -34,14 +34,12 @@ abstract::ShapePtr NonZeroInferShape(const PrimitivePtr &primitive, const std::v
   auto prim_name = primitive->name();
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto x_shape = x_shape_map[kMaxShape].empty() ? x_shape_map[kShape] : x_shape_map[kMaxShape];
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_shape.size(), kGreaterEqual, kNonZeroInputMinDim,
-                                           prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_shape.size(), kLessEqual, kNonZeroInputMaxDim,
-                                           prim_name);
+  auto x_rank = SizeToLong(x_shape.size());
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_rank, kGreaterEqual, kNonZeroInputMinDim, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("dimension of 'x'", x_rank, kLessEqual, kNonZeroInputMaxDim, prim_name);
 
   auto x_num = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
 
-  int64_t x_rank = SizeToLong(x_shape.size());
   ShapeVector output_shape = {abstract::Shape::SHP_ANY, x_rank};
   ShapeVector min_shape = {0, x_rank};
   ShapeVector max_shape = {x_num, x_rank};

@@ -28,19 +28,25 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
   const int MAX_SHAPE = 2048;
   const int d = 2;
   const int w = 4;
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, primitive->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto x_shape = x_shape_map[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("input shape", x_shape.size(), kEqual, 5, primitive->name());
+  constexpr int64_t shape_size = 5;
+  (void)CheckAndConvertUtils::CheckInteger("input shape", SizeToLong(x_shape.size()), kEqual, shape_size,
+                                           primitive->name());
   auto x_v = x_shape[2] * x_shape[3] * x_shape[4];
   (void)CheckAndConvertUtils::CheckInteger("x_d * x_h * x_w", x_v, kLessEqual, MAX_SHAPE, primitive->name());
   std::vector<int64_t> kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
   std::vector<int64_t> strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
-  (void)CheckAndConvertUtils::CheckInteger("kernel_size_length", kernel_size.size(), kEqual, 5, primitive->name());
-  (void)CheckAndConvertUtils::CheckInteger("strides_length", strides.size(), kEqual, 5, primitive->name());
+  constexpr int64_t kernel_size_num = 5;
+  (void)CheckAndConvertUtils::CheckInteger("kernel_size_length", SizeToLong(kernel_size.size()), kEqual,
+                                           kernel_size_num, primitive->name());
+  constexpr int64_t strides_num = 5;
+  (void)CheckAndConvertUtils::CheckInteger("strides_length", SizeToLong(strides.size()), kEqual, strides_num,
+                                           primitive->name());
   auto padding = GetValue<std::string>(primitive->GetAttr(kPadding));
   for (auto &item : strides) {
     (void)CheckAndConvertUtils::Check("strides", item, kGreaterThan, 0, primitive->name());
@@ -81,7 +87,7 @@ abstract::ShapePtr ExtractVolumePatchesInferShape(const PrimitivePtr &primitive,
 
 TypePtr ExtractVolumePatchesInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  (void)CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, 1, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }

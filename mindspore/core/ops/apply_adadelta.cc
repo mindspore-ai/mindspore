@@ -84,22 +84,22 @@ TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector
 
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"accum_type", accum_type});
-  (void)args.insert({"accum_update_type", accum_update_type});
-  (void)args.insert({"grad_type", grad_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("accum_type", accum_type));
+  (void)args.insert(std::make_pair("accum_update_type", accum_update_type));
+  (void)args.insert(std::make_pair("grad_type", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
 
   std::map<std::string, TypePtr> args_lr;
-  (void)args_lr.insert({"lr_type", lr_type});
+  (void)args_lr.insert(std::make_pair("lr_type", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);
 
   std::map<std::string, TypePtr> args_rho;
-  (void)args_rho.insert({"rho_type", rho_type});
+  (void)args_rho.insert(std::make_pair("rho_type", rho_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_rho, valid_types, prim_name);
 
   std::map<std::string, TypePtr> args_epsilon;
-  (void)args_epsilon.insert({"epsilon_type", epsilon_type});
+  (void)args_epsilon.insert(std::make_pair("epsilon_type", epsilon_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_epsilon, valid_types, prim_name);
 
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type, accum_update_type});

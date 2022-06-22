@@ -55,8 +55,8 @@ TypePtr ZetaInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto input_x = input_args[0]->BuildType();
   auto input_q = input_args[1]->BuildType();
   std::map<std::string, TypePtr> args_type;
-  (void)args_type.insert({"x", input_x});
-  (void)args_type.insert({"q", input_q});
+  (void)args_type.insert(std::make_pair("x", input_x));
+  (void)args_type.insert(std::make_pair("q", input_q));
   auto output_type = CheckAndConvertUtils::CheckTensorTypeSame(args_type, valid_types, primitive->name());
   return output_type;
 }

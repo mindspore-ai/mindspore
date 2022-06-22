@@ -37,21 +37,21 @@ abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &pr
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   int64_t shp_len = alpha_shape.size();
   std::string para_name = input_args[kInputIndex1]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, shp_len, kLessEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, alpha_shape[kInputIndex0], kEqual, 1, primitive->name());
   }
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   shp_len = l1_shape.size();
   para_name = input_args[kInputIndex2]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, shp_len, kLessEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, l1_shape[kInputIndex0], kEqual, 1, primitive->name());
   }
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
   shp_len = l2_shape.size();
   para_name = input_args[kInputIndex3]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, shp_len, kLessEqual, 1, primitive->name());
+  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
   if (shp_len == 1) {
     (void)CheckAndConvertUtils::CheckInteger(para_name, l2_shape[kInputIndex0], kEqual, 1, primitive->name());
   }
@@ -83,18 +83,18 @@ TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, delta must have the same type as var
   std::map<std::string, TypePtr> args;
-  (void)args.insert({"var_type", var_type});
-  (void)args.insert({"delta_type", delta_type});
+  (void)args.insert(std::make_pair("var_type", var_type));
+  (void)args.insert(std::make_pair("delta_type", delta_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // alpha、l1、l2 must be a scalar type
   std::map<std::string, TypePtr> args_alpha;
   std::map<std::string, TypePtr> args_l1;
   std::map<std::string, TypePtr> args_l2;
-  (void)args_alpha.insert({"alpha_type", alpha_type});
+  (void)args_alpha.insert(std::make_pair("alpha_type", alpha_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_alpha, valid_types, prim_name);
-  (void)args_l1.insert({"l1_type", l1_type});
+  (void)args_l1.insert(std::make_pair("l1_type", l1_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l1, valid_types, prim_name);
-  (void)args_l2.insert({"l2_type", l2_type});
+  (void)args_l2.insert(std::make_pair("l2_type", l2_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_l2, valid_types, prim_name);
   return var_type;
 }

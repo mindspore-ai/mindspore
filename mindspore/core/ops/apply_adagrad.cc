@@ -39,7 +39,7 @@ abstract::TupleShapePtr ApplyAdagradInferShape(const PrimitivePtr &primitive,
   auto accum_shape_ptr = input_args[kInputIndex1]->BuildShape();
   auto grad_shape_ptr = input_args[kInputIndex3]->BuildShape();
   // lr must be scalar or size equal with 1
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kLessEqual, 1, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", SizeToLong(lr_shape.size()), kLessEqual, 1, prim_name);
   if (lr_shape.size() == 1) {
     (void)CheckAndConvertUtils::CheckInteger("lr_shape's first rank must be 1", lr_shape[0], kEqual, 1, prim_name);
   }
@@ -48,8 +48,8 @@ abstract::TupleShapePtr ApplyAdagradInferShape(const PrimitivePtr &primitive,
   }
   // var, accum and grad must have the same shape
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
-  same_shape_args_map.insert({"accum", accum_shape_ptr});
-  same_shape_args_map.insert({"grad", grad_shape_ptr});
+  (void)same_shape_args_map.insert(std::make_pair("accum", accum_shape_ptr));
+  (void)same_shape_args_map.insert(std::make_pair("grad", grad_shape_ptr));
   for (auto &elem : same_shape_args_map) {
     if (*elem.second != *var_shape_ptr) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', evaluator arg '" << elem.first
@@ -73,13 +73,13 @@ TuplePtr ApplyAdagradInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
   // var, accum and grad must have the same type
   std::map<std::string, TypePtr> args;
-  args.insert({"var", var_type});
-  args.insert({"accum", accum_type});
-  args.insert({"grad", grad_type});
+  (void)args.insert(std::make_pair("var", var_type));
+  (void)args.insert(std::make_pair("accum", accum_type));
+  (void)args.insert(std::make_pair("grad", grad_type));
   (void)CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim_name);
   // lr type must be valid
   std::map<std::string, TypePtr> args_lr;
-  args_lr.insert({"lr", lr_type});
+  (void)args_lr.insert(std::make_pair("lr", lr_type));
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(args_lr, valid_types, prim_name);
   return std::make_shared<Tuple>(std::vector<TypePtr>{var_type, accum_type});
 }
