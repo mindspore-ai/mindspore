@@ -874,7 +874,9 @@ void TensorValueToVector(const ValuePtr &value, VectorRef *outputs) {
         MS_EXCEPTION_IF_NULL(tensor);
         outputs->emplace_back(tensor);
       } else if (element->isa<ValueTuple>()) {
-        TensorValueToVector(element, outputs);
+        VectorRef tuple;
+        TensorValueToVector(element, &tuple);
+        outputs->emplace_back(tuple);
       }
     }
   } else if (value->isa<tensor::Tensor>()) {
@@ -892,10 +894,11 @@ bool IsGraphOutputValueNodeOrParameter(const AnfNodePtr &graph_output, const Vec
     VectorRef output_tmp;
     ValuePtr value = GetValueNode(graph_output);
     TensorValueToVector(value, &output_tmp);
-    if (output_tmp.size() == 1) {
-      *outputs = std::move(output_tmp);
-    } else if (output_tmp.size() > 1) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<ValueTuple>()) {
       outputs->emplace_back(output_tmp);
+    } else if (value->isa<tensor::Tensor>()) {
+      *outputs = output_tmp;
     } else {
       MS_LOG(INFO) << "Graph output is empty!";
     }
