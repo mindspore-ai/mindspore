@@ -100,7 +100,7 @@ class MindDataTestGNNGraph : public UT::Common {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetEdgesFromNodes) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -118,7 +118,7 @@ TEST_F(MindDataTestGNNGraph, TestGetEdgesFromNodes) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -162,7 +162,7 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighborsSpecialFormat) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -206,7 +206,7 @@ TEST_F(MindDataTestGNNGraph, TestGetAllNeighborsSpecialFormat) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -331,7 +331,7 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
   std::string path = "data/mindrecord/testGraphData/testdata";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -377,7 +377,7 @@ TEST_F(MindDataTestGNNGraph, TestGetNegSampledNeighbors) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
   std::string path = "data/mindrecord/testGraphData/sns";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 
@@ -406,7 +406,7 @@ TEST_F(MindDataTestGNNGraph, TestRandomWalk) {
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestGNNGraph, TestRandomWalkDefaults) {
   std::string path = "data/mindrecord/testGraphData/sns";
-  GraphDataImpl graph(path, 1);
+  GraphDataImpl graph("mindrecord", path, 1);
   Status s = graph.Init();
   EXPECT_TRUE(s.IsOk());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ GraphDataClient::~GraphDataClient() { (void)Stop(); }
 
 Status GraphDataClient::Init() {
 #if defined(_WIN32) || defined(_WIN64)
-  RETURN_STATUS_UNEXPECTED("Graph data client is not supported in Windows OS");
+  RETURN_STATUS_UNEXPECTED("Graph data client is not supported in Windows OS.");
 #else
   if (!registered_) {
     std::string server_address;
@@ -81,6 +81,8 @@ Status GraphDataClient::Stop() {
   if (registered_) {
     RETURN_IF_NOT_OK(UnRegisterToServer());
   }
+#else
+  RETURN_STATUS_UNEXPECTED("Graph data client is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -93,6 +95,8 @@ Status GraphDataClient::GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> 
   request.set_op_name(GET_ALL_NODES);
   request.add_type(static_cast<google::protobuf::int32>(node_type));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -105,6 +109,8 @@ Status GraphDataClient::GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> 
   request.set_op_name(GET_ALL_EDGES);
   request.add_type(static_cast<google::protobuf::int32>(edge_type));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -119,6 +125,8 @@ Status GraphDataClient::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_li
     request.add_id(static_cast<google::protobuf::int32>(edge_id));
   }
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -139,6 +147,8 @@ Status GraphDataClient::GetEdgesFromNodes(const std::vector<std::pair<NodeIdType
   }
 
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -156,6 +166,8 @@ Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list
   request.add_type(static_cast<google::protobuf::int32>(neighbor_type));
   request.set_format(static_cast<google::protobuf::int32>(format));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -180,6 +192,8 @@ Status GraphDataClient::GetSampledNeighbors(const std::vector<NodeIdType> &node_
   }
   request.set_strategy(static_cast<google::protobuf::int32>(strategy));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -197,6 +211,8 @@ Status GraphDataClient::GetNegSampledNeighbors(const std::vector<NodeIdType> &no
   request.add_number(static_cast<google::protobuf::int32>(samples_num));
   request.add_type(static_cast<google::protobuf::int32>(neg_neighbor_type));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -221,6 +237,8 @@ Status GraphDataClient::GraphDataClient::RandomWalk(const std::vector<NodeIdType
   walk_param->set_q(step_away_param);
   walk_param->set_default_id(static_cast<google::protobuf::int32>(default_node));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -257,6 +275,8 @@ Status GraphDataClient::GetNodeFeature(const std::shared_ptr<Tensor> &nodes,
   } else {
     RETURN_STATUS_UNEXPECTED("RPC failed: The number of returned tensor is abnormal");
   }
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -293,6 +313,23 @@ Status GraphDataClient::GetEdgeFeature(const std::shared_ptr<Tensor> &edges,
   } else {
     RETURN_STATUS_UNEXPECTED("RPC failed: The number of returned tensor is abnormal");
   }
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
+#endif
+  return Status::OK();
+}
+
+Status GraphDataClient::GetGraphFeature(const std::vector<FeatureType> &feature_types, TensorRow *out) {
+  RETURN_UNEXPECTED_IF_NULL(out);
+#if !defined(_WIN32) && !defined(_WIN64)
+  CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Input feature_types is empty.");
+  for (auto i = 0; i < feature_types.size(); i++) {
+    std::shared_ptr<Tensor> fea_tensor;
+    RETURN_IF_NOT_OK(GetStoredGraphFeature(feature_types[i], &fea_tensor));
+    out->emplace_back(std::move(fea_tensor));
+  }
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -343,17 +380,23 @@ Status GraphDataClient::GraphInfo(py::dict *out) {
       for (const auto &feature_type : response.edge_feature_type()) {
         meta_info.edge_feature_type.emplace_back(static_cast<FeatureType>(feature_type));
       }
+      for (const auto &feature_type : response.graph_feature_type()) {
+        meta_info.graph_feature_type.emplace_back(static_cast<FeatureType>(feature_type));
+      }
       (*out)["node_type"] = py::cast(meta_info.node_type);
       (*out)["edge_type"] = py::cast(meta_info.edge_type);
       (*out)["node_num"] = py::cast(meta_info.node_num);
       (*out)["edge_num"] = py::cast(meta_info.edge_num);
       (*out)["node_feature_type"] = py::cast(meta_info.node_feature_type);
       (*out)["edge_feature_type"] = py::cast(meta_info.edge_feature_type);
+      (*out)["graph_feature_type"] = py::cast(meta_info.graph_feature_type);
     }
   } else {
     auto error_code = status.error_code();
     RETURN_STATUS_UNEXPECTED(status.error_message() + ". GRPC Code " + std::to_string(error_code));
   }
+#else
+  RETURN_STATUS_UNEXPECTED("This operation is not supported in Windows OS.");
 #endif
   return Status::OK();
 }
@@ -514,6 +557,16 @@ Status GraphDataClient::GetEdgeDefaultFeature(FeatureType feature_type, std::sha
   return Status::OK();
 }
 
+Status GraphDataClient::GetStoredGraphFeature(FeatureType feature_type, std::shared_ptr<Tensor> *out_feature) {
+  auto itr = graph_feature_map_.find(feature_type);
+  if (itr == graph_feature_map_.end()) {
+    std::string err_msg = "Invalid feature type:" + std::to_string(feature_type);
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+  *out_feature = itr->second;
+  return Status::OK();
+}
+
 Status GraphDataClient::RegisterToServer() {
   RETURN_IF_NOT_OK(CheckPid());
   void *tag;
@@ -547,15 +600,20 @@ Status GraphDataClient::RegisterToServer() {
       shared_memory_key_ = static_cast<key_t>(response.shared_memory_key());
       shared_memory_size_ = response.shared_memory_size();
       MS_LOG(INFO) << "Register success, recv data_schema:" << response.data_schema();
-      for (auto feature_info : response.default_node_feature()) {
+      for (const auto &feature_info : response.default_node_feature()) {
         std::shared_ptr<Tensor> tensor;
         RETURN_IF_NOT_OK(PbToTensor(&feature_info.feature(), &tensor));
         default_node_feature_map_[feature_info.type()] = tensor;
       }
-      for (auto feature_info : response.default_edge_feature()) {
+      for (const auto &feature_info : response.default_edge_feature()) {
         std::shared_ptr<Tensor> tensor;
         RETURN_IF_NOT_OK(PbToTensor(&feature_info.feature(), &tensor));
         default_edge_feature_map_[feature_info.type()] = tensor;
+      }
+      for (const auto &feature_info : response.graph_feature()) {
+        std::shared_ptr<Tensor> tensor;
+        RETURN_IF_NOT_OK(PbToTensor(&feature_info.feature(), &tensor));
+        graph_feature_map_[feature_info.type()] = tensor;
       }
     } else {
       RETURN_STATUS_UNEXPECTED(response.error_msg());
@@ -611,8 +669,11 @@ Status GraphDataClient::InitFeatureParser() {
   graph_shared_memory_ = std::make_unique<GraphSharedMemory>(shared_memory_size_, shared_memory_key_);
   RETURN_IF_NOT_OK(graph_shared_memory_->GetSharedMemory());
   // build feature parser
-  graph_feature_parser_ = std::make_unique<GraphFeatureParser>(ShardColumn(data_schema_));
-
+  if (data_schema_ != nullptr) {
+    graph_feature_parser_ = std::make_unique<GraphFeatureParser>(ShardColumn(data_schema_));
+  } else {
+    MS_LOG(INFO) << "data_schema is no used, as input data is array for creating graph.";
+  }
   return Status::OK();
 }
 #endif

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,16 +26,17 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-GraphDataServer::GraphDataServer(const std::string &dataset_file, int32_t num_workers, const std::string &hostname,
-                                 int32_t port, int32_t client_num, bool auto_shutdown)
-    : dataset_file_(dataset_file),
+GraphDataServer::GraphDataServer(const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                                 const std::string &hostname, int32_t port, int32_t client_num, bool auto_shutdown)
+    : data_format_(data_format),
+      dataset_file_(dataset_file),
       num_workers_(num_workers),
       client_num_(client_num),
       max_connected_client_num_(0),
       auto_shutdown_(auto_shutdown),
       state_(kGdsUninit) {
   tg_ = std::make_unique<TaskGroup>();
-  graph_data_impl_ = std::make_unique<GraphDataImpl>(dataset_file, num_workers, true);
+  graph_data_impl_ = std::make_unique<GraphDataImpl>(data_format, dataset_file, num_workers, true);
 #if !defined(_WIN32) && !defined(_WIN64)
   service_impl_ = std::make_unique<GraphDataServiceImpl>(this, graph_data_impl_.get());
   async_server_ = std::make_unique<GraphDataGrpcServer>(hostname, port, service_impl_.get());
@@ -61,6 +62,31 @@ Status GraphDataServer::Init() {
 #endif
 }
 
+Status GraphDataServer::Init(int32_t num_nodes, const std::shared_ptr<Tensor> &edge,
+                             const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &node_feat,
+                             const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &edge_feat,
+                             const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &graph_feat,
+                             const std::shared_ptr<Tensor> &node_type, const std::shared_ptr<Tensor> &edge_type) {
+#if defined(_WIN32) || defined(_WIN64)
+  RETURN_STATUS_UNEXPECTED("Graph data server is not supported in Windows OS");
+#else
+  set_state(kGdsInitializing);
+  RETURN_IF_NOT_OK(async_server_->Run());
+  RETURN_IF_NOT_OK(tg_->CreateAsyncTask(
+    "init graph data impl", std::bind(&GraphDataServer::InitNumpyGraphDataImpl, this, num_nodes, edge, node_feat,
+                                      edge_feat, graph_feat, node_type, edge_type)));
+  for (int32_t i = 0; i < num_workers_; ++i) {
+    RETURN_IF_NOT_OK(
+      tg_->CreateAsyncTask("start async rpc service", std::bind(&GraphDataServer::StartAsyncRpcService, this)));
+  }
+  if (auto_shutdown_) {
+    RETURN_IF_NOT_OK(
+      tg_->CreateAsyncTask("judge auto shutdown server", std::bind(&GraphDataServer::JudgeAutoShutdownServer, this)));
+  }
+  return Status::OK();
+#endif
+}
+
 Status GraphDataServer::InitGraphDataImpl() {
   TaskManager::FindMe()->Post();
   Status s = graph_data_impl_->Init();
@@ -73,6 +99,21 @@ Status GraphDataServer::InitGraphDataImpl() {
 }
 
 #if !defined(_WIN32) && !defined(_WIN64)
+Status GraphDataServer::InitNumpyGraphDataImpl(int32_t num_nodes, std::shared_ptr<Tensor> edge,
+                                               std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> node_feat,
+                                               std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> edge_feat,
+                                               std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> graph_feat,
+                                               std::shared_ptr<Tensor> node_type, std::shared_ptr<Tensor> edge_type) {
+  TaskManager::FindMe()->Post();
+  Status s = graph_data_impl_->Init(num_nodes, edge, node_feat, edge_feat, graph_feat, node_type, edge_type);
+  if (s.IsOk()) {
+    set_state(kGdsRunning);
+  } else {
+    (void)Stop();
+  }
+  return s;
+}
+
 Status GraphDataServer::StartAsyncRpcService() {
   TaskManager::FindMe()->Post();
   RETURN_IF_NOT_OK(async_server_->HandleRequest());

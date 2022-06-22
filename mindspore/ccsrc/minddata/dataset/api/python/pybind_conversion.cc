@@ -318,5 +318,41 @@ py::list typesToListOfType(std::vector<DataType> types) {
   }
   return type_list;
 }
+
+Status toIntMapTensor(py::dict value, std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *feature) {
+  RETURN_UNEXPECTED_IF_NULL(feature);
+  for (const auto &p : value) {
+    // do some judge, as whether it is none
+    std::shared_ptr<Tensor> feat_tensor = nullptr;
+    RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::reinterpret_borrow<py::array>(p.second), &feat_tensor));
+    (void)feature->insert({toInt(p.first), feat_tensor});
+  }
+  return Status::OK();
+}
+
+Status convertNumpyData(const py::array &edges, const py::dict &node_feat, const py::dict &edge_feat,
+                        const py::dict &graph_feat, const py::array &node_type, const py::array &edge_type,
+                        std::shared_ptr<Tensor> *edge_tensor,
+                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *node_feat_map,
+                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *edge_feat_map,
+                        std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> *graph_feat_map,
+                        std::shared_ptr<Tensor> *node_type_tensor, std::shared_ptr<Tensor> *edge_type_tensor) {
+  RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(edges, edge_tensor));
+  if (!node_feat.empty()) {
+    RETURN_IF_NOT_OK(toIntMapTensor(node_feat, node_feat_map));
+  }
+
+  if (!edge_feat.empty()) {
+    RETURN_IF_NOT_OK(toIntMapTensor(edge_feat, edge_feat_map));
+  }
+
+  if (!graph_feat.empty()) {
+    RETURN_IF_NOT_OK(toIntMapTensor(graph_feat, graph_feat_map));
+  }
+
+  RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(node_type, node_type_tensor));
+  RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(edge_type, edge_type_tensor));
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

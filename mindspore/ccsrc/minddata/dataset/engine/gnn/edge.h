@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,10 @@ class Edge {
   // @param EdgeIdType id - edge id
   // @param EdgeType type - edge type
   // @param WeightType weight - edge weight
-  // @param std::shared_ptr<Node> src_node - source node
-  // @param std::shared_ptr<Node> dst_node - destination node
-  Edge(EdgeIdType id, EdgeType type, WeightType weight, const std::shared_ptr<Node> &src_node,
-       const std::shared_ptr<Node> &dst_node)
-      : id_(id), type_(type), weight_(weight), src_node_(src_node), dst_node_(dst_node) {}
+  // @param NodeIdType src_id - source node id
+  // @param NodeIdType dst_id - destination node id
+  Edge(EdgeIdType id, EdgeType type, WeightType weight, NodeIdType src_id, NodeIdType dst_id)
+      : id_(id), type_(type), weight_(weight), src_id_(src_id), dst_id_(dst_id) {}
 
   virtual ~Edge() = default;
 
@@ -59,18 +58,20 @@ class Edge {
   virtual Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) = 0;
 
   // Get nodes on the edge
-  // @param std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> *out_node - Source and destination nodes returned
-  Status GetNode(std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> *out_node) {
-    RETURN_UNEXPECTED_IF_NULL(out_node);
-    *out_node = std::make_pair(src_node_, dst_node_);
+  // @param NodeIdType *src_id - Source node id returned
+  // @param NodeIdType *dst_id - Destination node id returned
+  Status GetNode(NodeIdType *src_id, NodeIdType *dst_id) {
+    *src_id = src_id_;
+    *dst_id = dst_id_;
     return Status::OK();
   }
 
   // Set node to edge
-  // @param const std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> &in_node -
-  Status SetNode(const std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> &in_node) {
-    src_node_ = in_node.first;
-    dst_node_ = in_node.second;
+  // @param NodeIdType src_id - Source node id
+  // @param NodeIdType dst_id - Destination node id
+  Status SetNode(NodeIdType src_id, NodeIdType dst_id) {
+    src_id_ = src_id;
+    dst_id_ = dst_id;
     return Status::OK();
   }
 
@@ -83,8 +84,8 @@ class Edge {
   EdgeIdType id_;
   EdgeType type_;
   WeightType weight_;
-  std::shared_ptr<Node> src_node_;
-  std::shared_ptr<Node> dst_node_;
+  NodeIdType src_id_;
+  NodeIdType dst_id_;
 };
 }  // namespace gnn
 }  // namespace dataset
