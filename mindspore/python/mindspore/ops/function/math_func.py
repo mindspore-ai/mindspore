@@ -3437,6 +3437,268 @@ def logsumexp(x, axis, keep_dims=False):
     return x_logsumexp + x_max
 
 
+def reduce_min(x, axis, keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
+        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> output = ops.reduce_min(x, 1, keep_dims=True)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 5, 6)
+        >>> # case 1: Reduces a dimension by the minimum value of all elements in the dimension.
+        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+        >>> output = ops.reduce_min(x)
+        >>> print(output)
+        [[[1.]]]
+        >>> print(output.shape)
+        (1, 1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = opops.reduce_min(x, 0)
+        >>> print(output)
+        [[[1. 1. 1. 1. 1. 1.]
+          [2. 2. 2. 2. 2. 2.]
+          [3. 3. 3. 3. 3. 3.]]]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = ops.reduce_min(x, 1)
+        >>> print(output)
+        [[[1. 1. 1. 1. 1. 1.]]
+         [[4. 4. 4. 4. 4. 4.]]
+         [[7. 7. 7. 7. 7. 7.]]]
+        >>> # case 4: Reduces a dimension along axis 2.
+        >>> output = ops.reduce_min(x, 2)
+        >>> print(output)
+        [[[1.]
+          [2.]
+          [3.]]
+         [[4.]
+          [5.]
+          [6.]]
+         [[7.]
+          [8.]
+          [9.]]]
+    """
+    return P.ReduceMin(keep_dims)(x, axis)
+
+
+def reduce_max(x, axis, keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
+        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> output = ops.reduce_max(x, 1, keep_dims=True)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 5, 6)
+        >>> # case 1: Reduces a dimension by the maximum value of all elements in the dimension.
+        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+        >>> output = ops.reduce_max(x)
+        >>> print(output)
+        [[[9.]]]
+        >>> print(output.shape)
+        (1, 1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = ops.reduce_max(x, 0)
+        >>> print(output)
+        [[[7. 7. 7. 7. 7. 7.]
+          [8. 8. 8. 8. 8. 8.]
+          [9. 9. 9. 9. 9. 9.]]]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = ops.reduce_max(x, 1)
+        >>> print(output)
+        [[[3. 3. 3. 3. 3. 3.]]
+         [[6. 6. 6. 6. 6. 6.]]
+         [[9. 9. 9. 9. 9. 9.]]]
+        >>> # case 4: Reduces a dimension along axis 2.
+        >>> output = ops.reduce_max(x, 2)
+        >>> print(output)
+        [[[1.]
+          [2.]
+          [3.]]
+         [[4.]
+          [5.]
+          [6.]]
+         [[7.]
+          [8.]
+          [9.]]]
+    """
+    return P.ReduceMax(keep_dims)(x, axis)
+
+
+def reduce_mean(x, axis, keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can reduce
+    a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
+        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> output = ops.reduce_mean(x, 1, keep_dims=True)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 5, 6)
+        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> x = Tensor(np.array([[[2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2]],
+        ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
+        ... mindspore.float32)
+        >>> output = ops.reduce_mean(x)
+        >>> print(output)
+        [[[5.]]]
+        >>> print(output.shape)
+        (1, 1, 1)
+        >>> # case 2: Reduces a dimension along the axis 0
+        >>> output = ops.reduce_mean(x, 0)
+        >>> print(output)
+        [[[4. 4. 4. 4. 4. 4.]
+          [5. 5. 5. 5. 5. 5.]
+          [6. 6. 6. 6. 6. 6.]]]
+        >>> # case 3: Reduces a dimension along the axis 1
+        >>> output = ops.reduce_mean(x, 1)
+        >>> print(output)
+        [[[2. 2. 2. 2. 2. 2.]]
+         [[5. 5. 5. 5. 5. 5.]]
+         [[8. 8. 8. 8. 8. 8.]]]
+        >>> # case 4: Reduces a dimension along the axis 2
+        >>> output = ops.reduce_mean(x, 2)
+        >>> print(output)
+        [[[ 2.]
+          [ 2.]
+          [ 2.]]
+         [[ 4.]
+          [ 5.]
+          [ 6.]]
+         [[ 6.]
+          [ 8.]
+          [10.]]]
+    """
+
+    return P.ReduceMean(keep_dims)(x, axis)
+
+
+def reduce_prod(x, axis, keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
+        x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> output = ops.reduce_prod(x, 1, keep_dims=True)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 5, 6)
+        >>> # case 1: Reduces a dimension by multiplying all elements in the dimension.
+        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
+        >>> output = ops.reduce_prod(x)
+        >>> print(output)
+        [[[2.2833798e+33]]]
+        >>> print(output.shape)
+        (1, 1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = ops.reduce_prod(x, 0)
+        >>> print(output)
+        [[[ 28.  28.  28.  28.  28.  28.]
+          [ 80.  80.  80.  80.  80.  80.]
+          [162. 162. 162. 162. 162. 162.]]]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = ops.reduce_prod(x, 1)
+        >>> print(output)
+        [[[  6.   6.   6.   6.   6.   6.]]
+         [[120. 120. 120. 120. 120. 120.]]
+         [[504. 504. 504. 504. 504. 504.]]]
+        >>> # case 4: Reduces a dimension along axis 2.
+        >>> output = ops.reduce_prod(x, 2)
+        >>> print(output)
+        [[[1.00000e+00]
+          [6.40000e+01]
+          [7.29000e+02]]
+         [[4.09600e+03]
+          [1.56250e+04]
+          [4.66560e+04]]
+         [[1.17649e+05]
+          [2.62144e+05]
+          [5.31441e+05]]]
+    """
+    return P.ReduceProd(keep_dims)(x, axis)
+
+
 def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
     r"""
     Returns the matrix norm or vector norm of a given tensor.
@@ -4031,6 +4293,10 @@ __all__ = [
     'baddbmm',
     'cummin',
     'cummax',
+    'reduce_min',
+    'reduce_max',
+    'reduce_mean',
+    'reduce_prod',
     'sparse_segment_mean',
     'log2'
 ]

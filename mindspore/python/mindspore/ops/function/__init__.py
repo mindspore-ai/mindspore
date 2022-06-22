@@ -221,6 +221,10 @@ from .math_func import (
     baddbmm,
     cummin,
     cummax,
+    reduce_min,
+    reduce_max,
+    reduce_mean,
+    reduce_prod,
     sparse_segment_mean,
     log2,
 )
