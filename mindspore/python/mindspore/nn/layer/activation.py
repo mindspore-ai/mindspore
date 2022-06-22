@@ -30,6 +30,7 @@ __all__ = ['Softmin',
            'LogSoftmax',
            'ReLU',
            'ReLU6',
+           'RReLU',
            'SiLU',
            'Tanh',
            'Hardtanh',
@@ -452,6 +453,74 @@ class LeakyReLU(Cell):
     def construct(self, x):
         alpha_array = P.Cast()(F.scalar_to_array(self.alpha), P.DType()(x))
         out = self.select_op(alpha_array * x, x)
+        return out
+
+
+class RReLU(Cell):
+    r"""
+    Applies the RReLU function elementally, as described in the paper: https://arxiv.org/pdf/1505.00853.pdf
+
+    The activation function is defined as:
+
+    .. math::
+            \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
+            {\alpha_{ji}} * x, &\text{otherwise.}\end{cases}
+
+    where :math:`\alpha_{ji}` ~ U(l, u), :math: `l \le u`.
+
+    Args:
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 0.125.
+        upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
+
+    Inputs:
+        - **x** (Tensor) - The input of RReLU is a Tensor of any dimension.
+
+    Outputs:
+        Tensor, after RReLU, has the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If `lower` is not a float or an int.
+        TypeError: If `upper` is not a float or an int.
+        ValueError: If `lower` is greater than upper.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.array([[-1.0, 4.0], [2.0, 0]]), mindspore.float32)
+        >>> r_relu = nn.LeakyReLU()
+        >>> output = r_relu(x)
+        >>> print(output)
+        [[-0.31465699  4.        ]
+         [ 2.          0.        ]]
+    """
+
+    def __init__(self, lower=0.125, upper=float(1. / 3)):
+        super(RReLU, self).__init__()
+        validator.check_value_type('upper', upper, [float, int], self.cls_name)
+        validator.check_value_type('lower', lower, [float, int], self.cls_name)
+        if lower > upper:
+            raise ValueError(f"For {self.cls_name}, the value of 'upper' must be greater than 'lower', "
+                             f"but got upper: {upper}, lower: {lower}. ")
+
+        self.lower = lower
+        self.upper = upper
+        self.sign = P.Sign()
+
+    def construct(self, x):
+        size = x.shape
+        sign_matrix = self.sign(x)
+        negative_filter = sign_matrix.clip(None, 0)
+        positive_filter = sign_matrix.clip(0, None)
+        mask = Tensor(np.random.uniform(self.lower, self.upper, size=size)).astype(np.float32)
+        negative_mask = negative_filter * mask * -1
+        negative_part = negative_mask * x
+        positive_part = positive_filter * x
+        out = negative_part + positive_part
         return out
 
 
@@ -1221,6 +1290,7 @@ _activation = {
     'logsoftmax': LogSoftmax,
     'relu': ReLU,
     'relu6': ReLU6,
+    'rrelu': RReLU,
     'silu': SiLU,
     'tanh': Tanh,
     'hardtanh': Hardtanh,

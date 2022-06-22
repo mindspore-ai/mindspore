@@ -14,6 +14,7 @@
 # ============================================================================
 """ test Activations """
 import numpy as np
+import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -132,6 +133,42 @@ def test_compile_silu():
     net = NetSiLU()
     input_data = Tensor(np.array([[1.2, 2.1], [2.2, 3.2]], dtype=np.float32))
     _cell_graph_executor.compile(net, input_data)
+
+
+class NetRReLU(nn.Cell):
+    """RReLU"""
+    def __init__(self, lower, upper):
+        super(NetRReLU, self).__init__()
+        self.rrelu = nn.RReLU(lower, upper)
+
+    def construct(self, x):
+        return self.rrelu(x)
+
+
+def test_compile_rrelu():
+    """
+    Feature: Test RReLU.
+    Description: Test the functionality of RReLU.
+    Expectation: Success.
+    """
+    net = NetRReLU(0.1, 0.5)
+    input_data = Tensor(np.array([[-1.2, 2.1], [-2.2, 3.2]], dtype=np.float32))
+    _cell_graph_executor.compile(net, input_data)
+
+
+def test_invalid_inputs_rrelu():
+    """
+    Feature: Test RReLU.
+    Description: Test the functionality of RReLU.
+    Expectation: Success.
+    """
+    # case 1: lower/upper is not int or float
+    with pytest.raises(TypeError):
+        NetRReLU('-1', '-1')
+
+    # case 2: lower > upper
+    with pytest.raises(ValueError):
+        NetRReLU(lower=0.9, upper=0.1)
 
 
 class Net_gelu(nn.Cell):
