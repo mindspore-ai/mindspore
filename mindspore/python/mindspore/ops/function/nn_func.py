@@ -17,8 +17,10 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
+from mindspore.ops.operations import image_ops as IMG
 from ...common.tensor import Tensor
 from .._primitive_cache import _get_cache_prim
+from ..._checkparam import Rel, Validator
 
 slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
@@ -423,6 +425,97 @@ def hardswish(x):
         [-0.3333  -0.3333  0  1.666  0.6665]
     """
     return hardswish_(x)
+
+
+def interpolate_output_shape(shape, scales, sizes, prim_name=None):
+    """Check input and calculate output shape"""
+    Validator.check_int(len(shape), 3, Rel.EQ, "input dims", prim_name)
+    msg_prefix = f"For '{prim_name}', the" if prim_name else "The"
+    if sizes is None and scales is None:
+        raise ValueError(f"{msg_prefix} 'sizes' and 'scale' both none.")
+    if sizes is not None and scales is not None:
+        raise ValueError(f"{msg_prefix} 'sizes' and 'scale' both not none.")
+    if sizes is not None:
+        if not isinstance(sizes, tuple):
+            raise ValueError(
+                f"{msg_prefix} 'sizes' must be tuple or None, but got {type(sizes).__name__}.")
+
+        Validator.check_int(len(sizes), len(shape)-2, Rel.EQ, "sizes", prim_name)
+        return Tensor(sizes)
+
+    if not isinstance(scales, tuple):
+        raise ValueError(
+            f"{msg_prefix} 'scales' must be tuple or None, but got {type(scales).__name__}.")
+
+    scales_dims = len(scales)
+    Validator.check_int(scales_dims, len(shape), Rel.EQ, "scales dims", "interpolate")
+    Validator.check_float(scales[0], 1.0, Rel.EQ, "scales[0]", "interpolate")
+    Validator.check_float(scales[1], 1.0, Rel.EQ, "scales[1]", "interpolate")
+    ret = ()
+    for i in range(2, len(shape)):
+        ret = ret + (int(scales[i] * shape[i]),)
+    return Tensor(ret)
+
+
+def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="linear"):
+    """
+    Using the interpolate method specified by 'mode' resize the input tensor 'x'.
+
+    .. warning::
+        This is an experimental prototype that is subject to change.
+        The 'roi' is reserved interface for 'crop_and_resize' coordinate transformation mode, which is not support now.
+        The 'linear' mode is the only support mode for now.
+
+    Args:
+        x (Tensor): a 3-D, 4-D or 5-D tensor which to resize. Must be one of the following types: uint8, int8, int16,
+            int32, int64, float16, float, double.
+        roi (tuple[float], optional): a tuple of float. Only takes effect when attr coordinate_transformation_mode is
+            'crop_and_resize'.
+        scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension. Only one of 'scales'
+            and 'sizes' can be specified.
+        sizes (tuple[int], optional): a tuple of int, describes the shape of the output tensor. Only one of 'scales' and
+        'sizes' can be specified.  If 'size' is specified, then set 'scales' to 'None' in this operator's input list.
+        coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
+            in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+        mode (string): Default is 'linear'. The method used to interpolate.
+
+    Returns:
+        Resized tensor, with data type float32.
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Raises:
+        TypeError: If dtype of `x` is not in the support list.
+        TypeError: If `roi` is neither a 1-D float tensor nor a float tuple.
+        TypeError: If `scales` is neither a 1-D float tensor nor a float tuple.
+        TypeError: If `size` is neither a 1-D int64_t tensor nor a int64_t tuple.
+        TypeError: If `coordinate_transformation_mode` is not a string.
+        TypeError: If `coordinate_transformation_mode` is not in the support list.
+        TypeError: If `mode` is not a string.
+        TypeError: If `mode` is not in the support list.
+
+    Examples:
+        >>> x = Tensor(np.array([[[1, 2, 3],
+                                  [4, 5, 6]]]), mindspore.float32)
+        >>> output = ops.interpolate(x, None, None, (6,), "align_corners")
+        >>> print(output)
+        [[[1. 1.4 1.8 2.2 2.6 3.]
+          [4. 4.4 4.8 5.2 5.6 6.]]]
+    """
+
+    input_shape = x.shape
+    output_size = interpolate_output_shape(input_shape, scales, sizes)
+
+    input_dims = len(input_shape)
+    if input_dims == 3 and mode == "linear" and (coordinate_transformation_mode is None or
+                                                 coordinate_transformation_mode == "asymmetric"):
+        return IMG.ResizeLinear1D(coordinate_transformation_mode="asymmetric")(x, output_size)
+    if input_dims == 3 and mode == "linear" and (coordinate_transformation_mode in ("align_corners", "half_pixel")):
+        return IMG.ResizeLinear1D(coordinate_transformation_mode=coordinate_transformation_mode)(x, output_size)
+
+    raise NotImplementedError(
+        "Input Error: {}D input Tensors with {} mode not support now".format(input_dims, mode))
 
 
 def softsign(x):
@@ -1314,6 +1407,7 @@ __all__ = [
     'hardshrink',
     'soft_shrink',
     'intopk',
+    'interpolate',
     'log_softmax',
     'mish',
     'lrn',

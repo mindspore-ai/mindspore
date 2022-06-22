@@ -23,8 +23,9 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim
 
 
 @vmap_rules_getters.register(IMG.ResizeBilinearV2)
-def get_resize_bilinear_v2_rule(prim, axis_size):
-    """VmapRule for `ResizeBilinearV2` operation."""
+@vmap_rules_getters.register(IMG.ResizeLinear1D)
+def get_resize_dynamic_input_rule(prim, axis_size):
+    """VmapRule for `Resize` operation."""
     prim_name = prim.name
 
     def vmap_rule(x_bdim, size_bdim):
@@ -40,20 +41,23 @@ def get_resize_bilinear_v2_rule(prim, axis_size):
 
         x = _bdim_at_front(x, x_dim, axis_size)
         x_shape = F.shape(x)
-        # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w)
+        # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w) for 4-D input
+        # (b, n, c, i_w) -> (b*n, c, i_w) for 3-D input
         x = F.reshape(x, (-1,) + x_shape[2:])
         out = prim(x, size)
-        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w)
         out_shape = F.shape(out)
-        out = F.reshape(out, x_shape[:3] + out_shape[-2:])
+        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
+        # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
+        out = F.reshape(out, x_shape[:2] + out_shape[1:])
         return (out, 0)
 
     return vmap_rule
 
 
 @vmap_rules_getters.register(G.ResizeBilinearGrad)
-def get_resize_bilinear_grad_rule(prim, axis_size):
-    """VmapRule for `ResizeBilinearGrad` operation."""
+@vmap_rules_getters.register(G.ResizeLinear1DGrad)
+def get_resize_grad_dynamic_rule(prim, axis_size):
+    """VmapRule for `ResizeGrad` operation."""
 
     def vmap_rule(grad_bdim, img_bdim):
         is_all_none, result = vmap_general_preprocess(grad_bdim, img_bdim)
@@ -67,11 +71,13 @@ def get_resize_bilinear_grad_rule(prim, axis_size):
         grad_shape = F.shape(grad)
         img = _bdim_at_front(img, img_dim, axis_size)
         img_shape = F.shape(img)
-        # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w)
+        # (b, n, c, i_h, i_w) -> (b*n, c, i_h, i_w) for 4-D input
+        # (b, n, c, i_w) -> (b*n, c, i_w) for 3-D input
         grad = F.reshape(grad, (-1,) + grad_shape[2:])
         img = F.reshape(img, (-1,) + img_shape[2:])
         out = prim(grad, img)
-        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w)
+        # (b*n, c, o_h, o_w) -> (b, n, c, o_h, o_w) for 4-D input
+        # (b*n, c, o_w) -> (b, n, c, o_w) for 3-D input
         out = F.reshape(out, img_shape)
         return (out, 0)
 
