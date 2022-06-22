@@ -77,6 +77,10 @@ def test_net(equal_nan):
     b = rand_int(4, 5)
     assert compare_with_numpy(a, b, equal_nan=equal_nan)
 
+    a = np.array(1.0).astype("float32")
+    b = np.array(1.0 + 1e-8).astype("float32")
+    assert compare_with_numpy(a, b, equal_nan=equal_nan)
+
 
 class VmapNet(nn.Cell):
     def __init__(self, rtol, atol, equal_nan):
