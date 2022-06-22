@@ -256,7 +256,7 @@ public class LiteSession {
     public boolean export(String modelFileName, int modelType, int quantizationType) {
         File dstFile = new File(modelFileName);
         // the file name must with postfix .ms, so we add tmp_ as prefix
-        String tmpFileName = dstFile.getParent() + "tmp_" + dstFile.getName();
+        String tmpFileName = dstFile.getParent() + "/tmp_" + dstFile.getName();
         boolean ret = this.export(this.sessionPtr, tmpFileName, modelType, quantizationType);
         if (ret) {
             File tmpFile = new File(tmpFileName);
