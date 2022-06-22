@@ -22,6 +22,7 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kResizeBilinearInputsNum = 1;
+constexpr size_t kResizeBilinearV2InputsNum = 2;
 constexpr size_t kResizeBilinearOutputsNum = 1;
 constexpr size_t kResizeBilinearInputsShapeSize = 4;
 constexpr size_t kResizeBilinearAttrSize = 2;
@@ -31,21 +32,21 @@ void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  size_ = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
+  output_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   if (shape_.size() != kResizeBilinearInputsShapeSize) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'x' must be " << kResizeBilinearInputsShapeSize
                       << ", but got " << shape_.size();
   }
-  if (size_.size() != kResizeBilinearAttrSize) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'size' must have " << kResizeBilinearAttrSize
-                      << " elements, but got " << size_.size();
+  if (output_shape_.size() != kResizeBilinearInputsShapeSize) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of 'output' must be "
+                      << kResizeBilinearInputsShapeSize << ", but got " << output_shape_.size();
   }
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
-  size_t out_height = LongToSize(size_[0]);
-  size_t out_width = LongToSize(size_[1]);
+  size_t out_height = output_shape_[2];
+  size_t out_width = output_shape_[3];
   height_scale = Scaling(in_height, out_height, align_corners_);
   width_scale = Scaling(in_width, out_width, align_corners_);
 }
@@ -53,7 +54,10 @@ void ResizeBilinearCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool ResizeBilinearCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeBilinearInputsNum, kernel_name_);
+  if (inputs.size() != kResizeBilinearInputsNum && inputs.size() != kResizeBilinearV2InputsNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be" << kResizeBilinearInputsNum
+                      << " or " << kResizeBilinearV2InputsNum << ", but got " << inputs.size();
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeBilinearOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeFloat16) {
     return LaunchKernel<float16, float16>(inputs, outputs);
@@ -105,8 +109,8 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   size_t channel = shape_[1];
   size_t in_height = shape_[2];
   size_t in_width = shape_[3];
-  size_t out_height = LongToSize(size_[0]);
-  size_t out_width = LongToSize(size_[1]);
+  size_t out_height = output_shape_[2];
+  size_t out_width = output_shape_[3];
   size_t out_hw_size = out_height * out_width;
   size_t in_hw_size = in_height * in_width;
   size_t bhwc_size = in_hw_size * channel * batch_size;
@@ -156,5 +160,6 @@ bool ResizeBilinearCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinear, ResizeBilinearCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ResizeBilinearV2, ResizeBilinearCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

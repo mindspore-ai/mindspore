@@ -179,8 +179,8 @@ MIND_API_OPERATOR_IMPL(ResizeBilinearV2, BaseOperator);
 
 AbstractBasePtr ResizeBilinearV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
-  auto infer_type = ResizeBilinearV2InferType(primitive, input_args);
   auto infer_shape = ResizeBilinearV2InferShape(primitive, input_args);
+  auto infer_type = ResizeBilinearV2InferType(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 

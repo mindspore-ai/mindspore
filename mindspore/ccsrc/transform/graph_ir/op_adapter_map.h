@@ -76,6 +76,7 @@ constexpr const char kNameMaxPoolGradWithArgmax[] = "MaxPoolGradWithArgmax";
 constexpr const char kNameApplyMomentum[] = "ApplyMomentum";
 constexpr const char kNameDropoutDoMask[] = "DropoutDoMask";
 constexpr const char kNameResizeBilinear[] = "ResizeBilinear";
+constexpr const char kNameResizeBilinearV2[] = "ResizeBilinearV2";
 constexpr const char kNameResizeBilinearGrad[] = "ResizeBilinearGrad";
 constexpr const char kNameZerosLike[] = "ZerosLike";
 constexpr const char kNameOnesLike[] = "OnesLike";
