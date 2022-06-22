@@ -34,22 +34,22 @@ TypePtr LambInferType(const PrimitivePtr &primitive, const std::vector<AbstractB
   auto epsilon_type = input_args[kInputIndex6]->BuildType();
   auto decay_type = input_args[kInputIndex7]->BuildType();
   auto global_step_type = input_args[kInputIndex8]->BuildType();
-  auto grad_type = input_args[kInputIndex9]->BuildType();
+  auto gradient_type = input_args[kInputIndex9]->BuildType();
 
   std::map<std::string, TypePtr> type_dict;
-  type_dict.emplace("var", var_type);
-  type_dict.emplace("m", m_type);
-  type_dict.emplace("v", v_type);
-  type_dict.emplace("grad", grad_type);
+  (void)type_dict.emplace("var", var_type);
+  (void)type_dict.emplace("m", m_type);
+  (void)type_dict.emplace("v", v_type);
+  (void)type_dict.emplace("grad", gradient_type);
   std::set<TypePtr> num_type = {kInt8,   kInt16,   kInt32,   kInt64,   kUInt8,     kUInt16,    kUInt32,
                                 kUInt64, kFloat16, kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, num_type, prim_name);
   std::map<std::string, TypePtr> type_dict1;
-  type_dict1.emplace("beta1", beta1_type);
-  type_dict1.emplace("beta2", beta2_type);
-  type_dict1.emplace("epsilon", epsilon_type);
-  type_dict1.emplace("lr", lr_type);
-  type_dict1.emplace("decay", decay_type);
+  (void)type_dict1.emplace("beta1", beta1_type);
+  (void)type_dict1.emplace("beta2", beta2_type);
+  (void)type_dict1.emplace("epsilon", epsilon_type);
+  (void)type_dict1.emplace("lr", lr_type);
+  (void)type_dict1.emplace("decay", decay_type);
   std::set<TypePtr> float_set = {kFloat32};
   (void)CheckAndConvertUtils::CheckScalarOrTensorTypesSame(type_dict1, float_set, prim_name, true);
 

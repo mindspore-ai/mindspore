@@ -123,7 +123,7 @@ AnfNodePtr CreateLambApplyOptimizerAssignNode(const FuncGraphPtr &graph, const s
     ori_inputs[kWeightDecayIndex]};
 
   if (is_exist_umonad_node) {
-    new_node_inputs.emplace_back(update_state_node);
+    (void)new_node_inputs.emplace_back(update_state_node);
   }
 
   auto new_node = NewCNode(new_node_inputs, graph);
@@ -186,7 +186,7 @@ AnfNodePtr CreateLambApplyWeightAssignNode(const FuncGraphPtr &graph, const AnfN
     NewValueNode(std::make_shared<Primitive>(prim::kLambApplyWeightAssign->name())), w_norm, g_norm, lr, update, param};
 
   if (is_exist_umonad_node) {
-    new_node_inputs.emplace_back(update_state_node);
+    (void)new_node_inputs.emplace_back(update_state_node);
   }
 
   return CreateNodeBase(graph, new_node_inputs, param);
