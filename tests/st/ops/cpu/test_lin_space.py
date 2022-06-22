@@ -77,19 +77,47 @@ def test_lin_space_net(start_np, stop_np, num_np):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('start_np, stop_np', [[[2, 3, 5], [4, 6, 8]], [[-4, 7, -2], [-10, 26, 18]]])
-@pytest.mark.parametrize('num_np', [10, 20, 36])
-@pytest.mark.parametrize('dtype', [mstype.float32, mstype.float64])
-def test_lin_space_batched(start_np, stop_np, num_np, dtype):
+def test_lin_space_vmap_1d():
     """
     Feature: ALL To ALL
     Description: test cases for LinSpace Net
     Expectation: the result match to numpy
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+
+    start_np = np.random.randn(5)
+    stop_np = np.random.randn(5)
+    num_np = 10
+
     start = Tensor(start_np, dtype=mstype.float32)
     stop = Tensor(stop_np, dtype=mstype.float32)
     net = LinSpaceNet(num_np)
-    result_ms = net(start, stop).asnumpy()
+    result_ms = ops.vmap(net, (0, 0))(start, stop).asnumpy()
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
+    assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_lin_space_vmap_2d():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
+
+    start_np = np.random.randn(5, 4)
+    stop_np = np.random.randn(4, 5)
+    num_np = 10
+
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+    net = LinSpaceNet(num_np)
+    result_ms = ops.vmap(ops.vmap(net, (0, 0)), (1, 0))(start, stop).asnumpy()
+
+    start_np = np.moveaxis(start_np, 1, 0)
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
