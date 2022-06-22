@@ -249,9 +249,8 @@ bool EmbeddingCacheScheduler::ParseBatchIdsNum(const KernelGraphPtr &graph, size
     const TypePtr &id_type = types.front();
     MS_EXCEPTION_IF_NULL(id_type);
     if (id_type->type_id() != kInt32->type_id() && id_type->type_id() != kInt->type_id()) {
-      MS_LOG(ERROR) << "Emebdding cache mode need input ids with data type[" << kInt32->ToString() << " or "
-                    << kInt->ToString() << "], but got[" << id_type->ToString() << "]";
-      return false;
+      MS_LOG(EXCEPTION) << "Embedding cache mode need input ids with data type[" << kInt32->ToString() << " or "
+                        << kInt->ToString() << "], but got[" << id_type->ToString() << "]";
     }
 
     const auto &shape = shapes[0];
