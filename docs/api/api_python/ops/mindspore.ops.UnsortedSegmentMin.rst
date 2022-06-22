@@ -5,4 +5,4 @@ mindspore.ops.UnsortedSegmentMin
 
     沿分段计算输入Tensor的最小值。
 
-    更多参考相见 :func:`mindspore.ops.unsorted_segment_min`。
+    更多参考详见 :func:`mindspore.ops.unsorted_segment_min`。

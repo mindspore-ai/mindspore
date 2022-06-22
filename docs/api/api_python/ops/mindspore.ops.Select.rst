@@ -16,7 +16,7 @@ mindspore.ops.Select
 
     **输入：**
 
-    - **condition** (Tensor[bool]) - 条件Tensor， 决定选择哪一个元素，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
+    - **condition** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
     - **x** (Tensor) - 第一个被选择的Tensor，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
     - **y** (Tensor) - 第二个被选择的Tensor，shape是 :math:`(x_1, x_2, ..., x_N, ..., x_R)`。
 

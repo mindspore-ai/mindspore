@@ -14,7 +14,7 @@ mindspore.ops.ReverseV2
 
     **输入：**
 
-    - **input_x** (Tensor) - 输入需反转的任意维度的Tensor。数据类型为数值型，不包括float64。
+    - **input_x** (Tensor) - 输入需反转的任意维度的Tensor。数据类型为数值型，不包括float64。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
 
     **输出：**
 
