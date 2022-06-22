@@ -3,12 +3,12 @@ mindspore.ops.dropout3d
 
 .. py:function:: mindspore.ops.dropout3d(x, keep_prob=0.5)
 
-    在训练期间，随机以服从伯努利分布的概率为 1- `keep_prob` 将输入Tensor的某些通道归零。（对于形状为 `NCDHW` 的 `5D` Tensor。
-    其通道特征图指的是后两维 `DHW` 形状的二维特征图）。
+    在训练期间，以服从伯努利分布的概率 1- `keep_prob` 随机将输入Tensor的某些通道归零。（对于形状为 `NCDHW` 的 `5D` Tensor。
+    其通道特征图指的是后两维 `DHW` 形状的三维特征图）。
     例如，在批处理输入中 :math:`i_th` 批， :math:`j_th` 通道的 `input[i, j]` `3D` Tensor 是一个待处理数据。
     每个通道将会独立依据伯努利分布概率1- `keep_prob` 来确定是否被清零。
 
-    `Dropout3D` 可以提高通道特征映射之间的独立性。
+    `dropout3d` 可以提高通道特征映射之间的独立性。
 
     **参数：**
 
