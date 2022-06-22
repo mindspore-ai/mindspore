@@ -706,6 +706,68 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.AdaptiveMaxPool2D)
+def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
+    """VmapRule for `AdaptiveMaxPool2D`."""
+    nchw_index = 4
+    chw_reverse_index = -3
+    hw_size = 2
+    return_indices = prim.return_indices
+    output_size = prim.output_size
+
+    @constexpr
+    def get_output_shape(x_ori_shape, output_size):
+        if isinstance(output_size, tuple):
+            h_out, w_out = output_size
+        else:
+            h_out = output_size
+            w_out = output_size
+
+        rank = len(x_ori_shape)
+        output_shape = x_ori_shape[:rank - hw_size]
+        if h_out is None or h_out == -1:
+            output_shape += (x_ori_shape[-2],)
+        else:
+            output_shape += (h_out,)
+
+        if w_out is None or w_out == -1:
+            output_shape += (x_ori_shape[-1],)
+        else:
+            output_shape += (w_out,)
+        return output_shape
+
+    def vmap_rule(input_x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, input_x_bdim)
+        if is_all_none:
+            return result
+
+        input_x, input_x_dim = input_x_bdim
+        x = _bdim_at_front(input_x, input_x_dim, axis_size)
+        x_ndim = F.rank(x)
+
+        if x_ndim > nchw_index:
+            # for the case of NCHW
+            x_ori_shape = F.shape(x)
+            x = F.reshape(x, (-1,) + x_ori_shape[chw_reverse_index:])
+            output_shape = get_output_shape(x_ori_shape, output_size)
+            if return_indices:
+                out, indices = prim(x)
+                out = F.reshape(out, output_shape)
+                indices = F.reshape(indices, output_shape)
+                return (out, 0), (indices, 0)
+            out = prim(x)
+            out = F.reshape(out, output_shape)
+            return (out, 0)
+        # for the case of CHW
+        if return_indices:
+            out, indices = prim(x)
+            return (out, 0), (indices, 0)
+        out = prim(x)
+        return (out, 0)
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)
