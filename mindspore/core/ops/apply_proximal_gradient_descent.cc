@@ -33,29 +33,26 @@ namespace {
 abstract::ShapePtr ApplyProximalGradientDescentInferShape(const PrimitivePtr &primitive,
                                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
   auto var_shape = input_args[kInputIndex0]->BuildShape();
   auto alpha_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  int64_t shp_len = alpha_shape.size();
-  std::string para_name = input_args[kInputIndex1]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
-  if (shp_len == 1) {
-    (void)CheckAndConvertUtils::CheckInteger(para_name, alpha_shape[kInputIndex0], kEqual, 1, primitive->name());
-  }
   auto l1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  shp_len = l1_shape.size();
-  para_name = input_args[kInputIndex2]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
-  if (shp_len == 1) {
-    (void)CheckAndConvertUtils::CheckInteger(para_name, l1_shape[kInputIndex0], kEqual, 1, primitive->name());
-  }
   auto l2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  shp_len = l2_shape.size();
-  para_name = input_args[kInputIndex3]->ToString();
-  (void)CheckAndConvertUtils::CheckInteger(para_name, SizeToLong(shp_len), kLessEqual, 1, primitive->name());
-  if (shp_len == 1) {
-    (void)CheckAndConvertUtils::CheckInteger(para_name, l2_shape[kInputIndex0], kEqual, 1, primitive->name());
-  }
   auto delta_shape = input_args[kInputIndex4]->BuildShape();
+
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("alpha_shape size", SizeToLong(alpha_shape.size()), kLessEqual, batch_rank,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l1_shape size", SizeToLong(l1_shape.size()), kLessEqual, batch_rank,
+                                           prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("l2_shape size", SizeToLong(l2_shape.size()), kLessEqual, batch_rank,
+                                           prim_name);
+
   // var and delta must have the same shape
   auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
   auto delta_shape_ptr = delta_shape->cast<abstract::ShapePtr>();
