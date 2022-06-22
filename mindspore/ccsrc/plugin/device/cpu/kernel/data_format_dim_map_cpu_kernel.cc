@@ -43,9 +43,10 @@ bool DataFormatDimMapCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   const size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
-  auto task = [this, &input, &output](size_t start, size_t end) {
+  T number_four = static_cast<T>(kNumberFour);
+  auto task = [this, &input, &output, number_four](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      output[i] = this->dim_map_[(input[i] % kNumberFour + kNumberFour) % kNumberFour];
+      output[i] = static_cast<T>(this->dim_map_[(input[i] % number_four + number_four) % number_four]);
     }
   };
   ParallelLaunchAutoSearch(task, lens, this, &parallel_search_info_);
@@ -57,6 +58,8 @@ const std::vector<dataFormatPair> &DataFormatDimMapCpuKernelMod::GetFuncList() c
   static const std::vector<std::pair<KernelAttr, DataFormatDimMapCpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &DataFormatDimMapCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &DataFormatDimMapCpuKernelMod::LaunchKernel<int64_t>},
   };
   return func_list;
 }
@@ -102,7 +105,6 @@ int DataFormatDimMapCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KRET_OK;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
-    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
   std::vector<int64_t> input_shape = inputs[0]->GetShapeVector();
@@ -110,8 +112,8 @@ int DataFormatDimMapCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto in_shape_size = input_shape.size();
   if (in_shape_size > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be less than or equal to 7, but got " << in_shape_size
-                      << ".";
+                      << "', the dimension of output should be less than or equal to max_dims 7, but got "
+                      << in_shape_size << ".";
     return KRET_RESIZE_FAILED;
   }
   auto output_shape_size = output_shape.size();

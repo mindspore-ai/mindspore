@@ -1217,12 +1217,15 @@ def get_index_fill_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(P.DataFormatDimMap)
-def get_pdist_vmap_rule(prim, axis_size):
+def get_data_format_dim_map_vmap_rule(prim, axis_size):
     """VmapRule for `DataFormatDimMap`"""
-    if isinstance(prim, str):
-        prim = Primitive(prim)
-        prim.add_prim_attr('src_format', 'NHWC')
-        prim.add_prim_attr('dst_format', 'NCHW')
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = P.DataFormatDimMap()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(x_bdim):
         is_all_none, result = vmap_general_preprocess(prim, x_bdim)
@@ -1230,7 +1233,7 @@ def get_pdist_vmap_rule(prim, axis_size):
             return result
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
-        out = prim(x)
+        out = batch_prim(x)
         return out, 0
 
     return vmap_rule
@@ -1239,6 +1242,7 @@ def get_pdist_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ExpandDims)
 def get_expand_dims_vmap_rule(prim, axis_size):
     """VmapRule for `ExpandDims`."""
+
     @constexpr
     def process_axis(axis, rank, x_dim):
         if axis < 0:

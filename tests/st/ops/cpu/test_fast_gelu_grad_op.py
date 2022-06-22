@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import time
 import numpy as np
 import pytest
 
@@ -122,11 +121,7 @@ def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
     dy_cpu = F.sub(dy_cpu, 0)
     x_cpu = F.sub(x_cpu, 0)
 
-    start_time_cpu = time.perf_counter()
     output_vmap_cpu = vmap(fast_gelu_grad_func, in_axes=(0, 0))(dy_cpu, x_cpu)
-    vmap_time = time.perf_counter() - start_time_cpu
-
-    start_time_manually = time.perf_counter()
 
     @ms_function
     def manually_batched_cpu(dys_cpu, xs_cpu):
@@ -137,7 +132,5 @@ def test_fast_gelu_grad_vmap_cpu(dtype, shape=(100, 2)):
         return F.stack(output)
 
     output_manually = manually_batched_cpu(dy_cpu, x_cpu)
-    manually_time = time.perf_counter() - start_time_manually
 
     assert np_all_close_with_loss(output_vmap_cpu.asnumpy(), output_manually.asnumpy())
-    assert vmap_time < manually_time
