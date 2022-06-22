@@ -3524,9 +3524,10 @@ class Tensor(Tensor_):
     def gather_elements(self, dim, index):
         """
         Gathers elements along an axis specified by dim.
+        Refer to :func:`mindspore.ops.gather_elements` for more detail.
 
         Args:
-            dim (int): The axis along which to index. It must be int32 or int64.
+            dim (int): The axis along which to index. It must be int32 or int64. The value range is [-x_rank, x_rank).
             index (Tensor): The indices of elements to gather. It can be one of the following data types:
                 int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
 
@@ -3535,7 +3536,9 @@ class Tensor(Tensor_):
 
         Raises:
             TypeError: If dtype of `dim` or `index` is neither int32 nor int64.
-            ValueError: If length of shape of `x` is not equal to length of shape of `index`.
+            ValueError: If length of shape of current tensor is not equal to length of shape of `index`.
+            ValueError: If the size of the dimension except `dim` is not equal between current tensor and `index`.
+            ValueError: If the value of `dim` is not in the expected range.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

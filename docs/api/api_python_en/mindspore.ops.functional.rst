@@ -316,6 +316,7 @@ Array Operation
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
+    mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.intopk
     mindspore.ops.masked_fill
