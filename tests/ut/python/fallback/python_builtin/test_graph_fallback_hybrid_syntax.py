@@ -119,6 +119,45 @@ def test_fallback_map_with_numpy_and_tensor():
     assert operator.eq(out, (2, 3, 4, 5))
 
 
+def map_fn(x, y):
+    return x + y
+
+
+def test_fallback_map_with_numpy_2():
+    """
+    Feature: JIT Fallback
+    Description: Test map in graph mode with numpy.
+    Expectation: No exception.
+    """
+
+    @ms_function
+    def foo():
+        x = np.array([1, 2, 3, 4])
+        y = np.array([1, 1, 1, 1])
+        ret = map(map_fn, x, y)
+        return tuple(ret)
+
+    out = foo()
+    assert operator.eq(out, (2, 3, 4, 5))
+
+
+def test_fallback_map_with_numpy_and_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test map in graph mode with numpy.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = np.array([1, 2, 3, 4])
+        y = Tensor([1, 1, 1, 1])
+        ret = map(map_fn, x, y)
+        return tuple(ret)
+
+    out = foo()
+    assert operator.eq(out, (2, 3, 4, 5))
+
+
 def test_fallback_filter_with_numpy_and_tensor():
     """
     Feature: JIT Fallback
@@ -129,6 +168,26 @@ def test_fallback_filter_with_numpy_and_tensor():
     def foo():
         x = np.array([1, 2, 3, 4])
         ret = filter(lambda x: x > 2, x)
+        return tuple(ret)
+
+    out = foo()
+    assert operator.eq(out, (3, 4))
+
+
+def filter_fn(x):
+    return x > 2
+
+
+def test_fallback_filter_with_numpy_and_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test filter in graph mode with numpy.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo():
+        x = np.array([1, 2, 3, 4])
+        ret = filter(filter_fn, x)
         return tuple(ret)
 
     out = foo()

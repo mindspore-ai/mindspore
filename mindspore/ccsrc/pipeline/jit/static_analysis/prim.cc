@@ -1856,6 +1856,26 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     }
   }
 
+  void AddGlobalPythonFunction(const AbstractDictionaryPtr &global_dict, py::object *global_params_dict) const {
+    const auto &global_dict_elements = global_dict->elements();
+    for (const auto &element : global_dict_elements) {
+      const auto &element_name = element.first;
+      const auto &element_abs = element.second;
+      if (element_abs->isa<abstract::FuncGraphAbstractClosure>()) {
+        const auto &element_abs_fn = element_abs->cast<abstract::FuncGraphAbstractClosurePtr>();
+        const auto &fg = element_abs_fn->func_graph();
+        MS_EXCEPTION_IF_NULL(fg);
+        auto wrapper_obj = fg->python_obj();
+        if (wrapper_obj != nullptr && wrapper_obj->isa<parse::PyObjectWrapper>()) {
+          auto fn_py_obj = wrapper_obj->cast<parse::PyObjectWrapperPtr>()->obj();
+          (*global_params_dict)[py::str(element_name)] = fn_py_obj;
+          MS_LOG(DEBUG) << "Found global python function object for " << element_name << ", add it to global dict.";
+        }
+      }
+    }
+    return;
+  }
+
   py::tuple MakeParameters(const AbstractBasePtrList &args_spec_list, const std::string &script) const {
     constexpr int params_size = 3;
     if (params_size != args_spec_list.size()) {
@@ -1875,6 +1895,9 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     py::object global_params_dict = ValueToPyData(global_dict_value);
     MS_LOG(DEBUG) << "arg_1, python global_params_dict: " << global_dict_value->ToString() << " -> "
                   << py::str(global_params_dict);
+
+    // Add global python function to global_params_dict.
+    AddGlobalPythonFunction(global_dict, &global_params_dict);
     params[0] = global_params_dict;
 
     // Make the local parameters.
