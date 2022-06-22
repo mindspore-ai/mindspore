@@ -1336,12 +1336,12 @@ bool SetMindIRGraphAction(const ResourcePtr &resource) {
 
   bool is_equal_input_args = true;
   if (!AbstractBasePtrListDeepEqual(func_args, broaded_args)) {
-    MS_LOG(WARNING) << "The input arguments is not compatible with the function graph which has been exported before."
-                    << "Please check the args is same with export.\n"
-                    << "The export input argument size: " << func_args.size() << "\n"
-                    << "The load input argument size: " << broaded_args.size() << "\n"
-                    << "Export input args info: " << abstract::ArgsToString(func_args) << "\n"
-                    << "The input args info: " << abstract::ArgsToString(broaded_args);
+    MS_LOG(INFO) << "The input arguments is not compatible with the function graph which has been exported before."
+                 << "Please check the args is same with export.\n"
+                 << "The export input argument size: " << func_args.size() << "\n"
+                 << "The load input argument size: " << broaded_args.size() << "\n"
+                 << "Export input args info: " << abstract::ArgsToString(func_args) << "\n"
+                 << "The input args info: " << abstract::ArgsToString(broaded_args);
     is_equal_input_args = false;
   }
 
