@@ -405,6 +405,7 @@ def test_func_with_yield_manifest_dataset_01():
     Description: Test PyFunc mapping on ManifestDataset
     Expectation: Error is raised as expected
     """
+
     def pass_func(_):
         for i in range(10):
             yield (np.array([i]),)
@@ -422,7 +423,7 @@ def test_func_with_yield_manifest_dataset_01():
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     except RuntimeError as e:
-        assert "can't pickle generator objects" in str(e)
+        assert " map should be numpy array or tuple of numpy array." in str(e)
 
 
 def test_func_mixed_with_ops():

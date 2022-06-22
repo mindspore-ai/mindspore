@@ -36,7 +36,8 @@ import gc
 import time
 import uuid
 import multiprocessing
-from enum import Enum, IntEnum
+from enum import Enum
+from functools import partial
 from importlib import import_module
 import sys
 import threading
@@ -63,7 +64,7 @@ from mindspore.parallel._utils import _get_device_num
 from . import samplers
 from .iterators import DictIterator, TupleIterator, DummyIterator, check_iterator_cleanup, _set_iterator_cleanup, \
     ITERATORS_LIST, _unset_iterator_cleanup
-
+from .queue import _SharedQueue, _Queue
 from .validators import check_batch, check_shuffle, check_map, check_filter, check_repeat, check_skip, check_zip, \
     check_rename, check_device_send, check_take, check_output_shape, check_project, \
     check_sync_wait, check_zip_dataset, check_add_column, check_concat, check_split, check_bucket_batch_by_length, \
@@ -2702,52 +2703,6 @@ _OP_PROCESS = dict()
 _LOCK = threading.Lock()
 
 
-# Pyfunc worker init function
-# Python multiprocessing library forbid sending lambda function through pipe.
-# This init function allow us to add all Python function to a global collection and then fork afterwards.
-def _pyfunc_worker_init(pyfunc_list, args_queue, ret_queue):
-    # Some threads in multiprocess.pool can't process sigint signal,
-    # and will occur hang problem, so ctrl+c will pass to parent process.
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    global _GLOBAL_PYFUNC_LIST
-    global _ARGS_QUEUE
-    global _RET_QUEUE
-    _GLOBAL_PYFUNC_LIST = pyfunc_list
-    _ARGS_QUEUE = args_queue
-    _RET_QUEUE = ret_queue
-
-
-# Pyfunc worker execution function
-# All exceptions will be raised to main processes
-def _pyfunc_worker_exec(index, qid, *args):
-    """
-    Internal function for call certain pyfunc in Python process.
-    """
-    # Some threads in multiprocess.pool can't process sigint signal,
-    # and will occur hang problem, so ctrl+c will pass to parent process.
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    if qid != -1:
-        # Pass arguments through the Queue instead of directly to remote process
-        args = _ARGS_QUEUE[qid].get()
-        try:
-            r = _GLOBAL_PYFUNC_LIST[index](*args)
-        except Exception:
-            return ExceptionHandler(where="in map(or batch) worker and execute python function")
-        if isinstance(r, tuple):
-            _RET_QUEUE[qid].put(r)
-        else:
-            _RET_QUEUE[qid].put((r,))
-        return [qid]
-    # not using shared memory for passing arguments, call function directly
-    result = None
-    try:
-        result = _GLOBAL_PYFUNC_LIST[index](*args)
-    except Exception:
-        result = ExceptionHandler(where="in map(or batch) worker and execute python function")
-    return result
-
-
 # PythonCallable wrapper for multiprocess pyfunc
 class _PythonCallable:
     """
@@ -2780,130 +2735,45 @@ class Pipe:
     Class to handle communication between the master process and the worker processes.
     """
 
-    class Control(IntEnum):
-        DATA = 0
-        SHM = 1
-        ACK = 2
-        TERMINATE = 3
-        ERROR = 4
-
     def __init__(self, shared_memory=False, max_rowsize=16):
-        self.parent_pipe, self.child_pipe = multiprocessing.Pipe()
         self.shared_memory = shared_memory
-
-        # change max_rowsize in MB into bytes
-        self.seg_size = max_rowsize * 1024 * 1024
-        # pipe can hold up to 65,636 bytes at a time
-        self.min_shared_mem = 10000
-        self.print_error = True
+        self.eof = multiprocessing.Event()
+        count = multiprocessing.Value('i', 0)
         if self.shared_memory:
-            try:
-                self.shm = multiprocessing.Array("b", self.seg_size)
-            except Exception:
-                raise RuntimeError(
-                    f"Error allocating {self.seg_size} bytes. This might be caused by insufficient shared memory,"
-                    f" and the recommended size is at least 5 GB.")
-
-    def prepare_data(self, data):
-        """
-        Prepare data to be sent via the pipe. If shared memory is enabled, data will be written to a shared buffer
-        and use the pipe to send the meta data.
-        Args:
-            data: tuple of input data to be sent
-        """
-        if not isinstance(data, tuple):
-            data = (data,)
-        data_list = []
-        start_bytes = 0
-        for d in data:
-            if self.shared_memory and (isinstance(d, np.ndarray) and d.size > self.min_shared_mem
-                                       and start_bytes + d.nbytes < self.seg_size):
-                # need to convert start_bytes to offset in array
-                start_offset = start_bytes
-                dest = np.ndarray(d.shape, d.dtype, buffer=self.shm.get_obj(), offset=start_offset)
-                np.copyto(dest, d)
-                # round to multiples of 8 bytes (8, 16, 24, ...)
-                num_bytes = 8 * ((d.nbytes + 7) // 8)
-                start_bytes += num_bytes
-                data_list.append((Pipe.Control.SHM, num_bytes, d.dtype, d.shape))
-            else:
-                if self.shared_memory and isinstance(d, np.ndarray) and d.size > self.min_shared_mem:
-                    # Only print out error the first time it happens
-                    if self.print_error:
-                        logger.warning(
-                            f"Using shared memory, but rowsize is larger than allocated memory {self.seg_size} bytes,"
-                            f" current rowsize {start_bytes + d.nbytes} bytes.")
-                        self.print_error = False
-                data_list.append((Pipe.Control.DATA, d))
-        return data_list
-
-    def parse_received_data(self, data):
-        """
-        Parse data received data from the pipe.
-        If shared memory is used, data will be copied from the the shared buffer.
-        Args:
-            data: tuple of data
-
-        Returns:
-            tuple of parsed data
-        """
-        row = []
-        start_bytes = 0
-        for x in data:
-            if x[0] == Pipe.Control.SHM:
-                num_bytes = x[1]
-                dtype = x[2]
-                shape = x[3]
-                start_offset = start_bytes
-                data = np.ndarray(shape, dtype, buffer=self.shm.get_obj(), offset=start_offset)
-                start_bytes += num_bytes
-                row.append(data)
-            elif x[0] == Pipe.Control.DATA:
-                row.append(x[1])
-            else:
-                raise RuntimeError(f"Invalid control signal {x[0]}")
-        return row
+            self.in_queue = _SharedQueue(1, count, max_rowsize=max_rowsize)
+            self.res_queue = _SharedQueue(1, count, max_rowsize=max_rowsize)
+        else:
+            self.in_queue = _Queue(1)
+            self.res_queue = _Queue(1)
+        self.in_queue._joincancelled = True  # pylint: disable=W0212
+        self.res_queue._joincancelled = True  # pylint: disable=W0212
 
     def master_send(self, func_index, data):
-        data_list = self.prepare_data(data)
-        self.parent_pipe.send((func_index, tuple(data_list)))
+        self.in_queue.put_nowait((func_index, tuple(data)))
 
     def master_receive(self):
-        result = self.parent_pipe.recv()
-        if isinstance(result, ExceptionHandler):
-            return result
-        row = self.parse_received_data(result)
-        return tuple(row)
+        return self.res_queue.get_until(timeout=1, exit_signal=self.eof)
 
     def master_close(self):
-        self.parent_pipe.send(Pipe.Control.TERMINATE)
-        try:
-            self.parent_pipe.recv()
-        except ConnectionResetError:
-            # Child process is terminated before sending the ack
-            pass
-        self.parent_pipe.close()
+        self.eof.set()
+        self.res_queue.cancel_join_thread()
+        self.in_queue.cancel_join_thread()
 
     def worker_send(self, data):
-        if isinstance(data, ExceptionHandler):
-            self.child_pipe.send(data)
-            return
-        data_list = self.prepare_data(data)
-        self.child_pipe.send(tuple(data_list))
+        self.res_queue.put_until(data, timeout=1, exit_signal=self.eof)
 
     def worker_receive(self):
-        result = self.child_pipe.recv()
-        if result == Pipe.Control.TERMINATE:
-            return None
+        result = self.in_queue.get_until(timeout=1, exit_signal=self.eof)
+        if result is None:
+            return result
         if len(result) != 2:
             raise RuntimeError(f"Corrupted data. Worker received {len(result)} elements, it should be 2.")
         func_index, data = result[0], result[1]
-        row = self.parse_received_data(data)
-        return func_index, tuple(row)
+        return func_index, data
 
     def worker_close(self):
-        self.child_pipe.send(Pipe.Control.ACK)
-        self.child_pipe.close()
+        self.res_queue.cancel_join_thread()
+        self.in_queue.cancel_join_thread()
 
 
 def _main_process_already_exit():
@@ -2929,11 +2799,12 @@ def _worker_loop(operations, pipe):
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    # close the parent's end of the pipe
-    pipe.parent_pipe.close()
+    def _subprocess_handle(eof, signum, frame):
+        threading.Thread(target=eof.set()).start()
 
     while not _main_process_already_exit():
         _ignore_sigint()
+        signal.signal(signal.SIGTERM, partial(_subprocess_handle, pipe.eof))
 
         result = pipe.worker_receive()
         if result is None:
@@ -2963,11 +2834,6 @@ class _MPWorker(multiprocessing.Process):
         self.pipe = Pipe(shared_memory=shared_memory, max_rowsize=max_rowsize)
         super().__init__(target=worker_target(operations), args=(self.pipe,), daemon=True)
 
-    def start(self):
-        super().start()
-        # close the child's end of the pipe
-        self.pipe.child_pipe.close()
-
     def execute(self, idx, *args):
         self.pipe.master_send(idx, args)
         res = self.pipe.master_receive()
@@ -2983,6 +2849,7 @@ class _MPWorker(multiprocessing.Process):
                 super().terminate()
                 super().join()
                 super().close()
+
         except ValueError:
             # Process has been closed already
             return

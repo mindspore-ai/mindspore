@@ -21,8 +21,8 @@ but it will pass large data through shared memory.
 import multiprocessing.queues
 import multiprocessing
 import types
+import queue
 import numpy as np
-
 from mindspore import log as logger
 from ..transforms.py_transforms_util import ExceptionHandler
 
@@ -70,6 +70,19 @@ class _SharedQueue(multiprocessing.queues.Queue):
                 + " elements."
                 + " This might be caused by insufficient shm, and the recommended shm size is at least 5 GB."
             )
+
+    def put_until(self, data, timeout=None, exit_signal=None):
+        """Put data into the queue. Block until timeout is reached or exit_signal is set."""
+        while True:
+            try:
+                self.put(data, timeout=timeout)
+                return
+            except queue.Full as e:
+                if exit_signal is None:
+                    raise e
+                if exit_signal.is_set():
+                    return
+                continue
 
     def put(self, data, timeout=None):
         if isinstance(data, ExceptionHandler):  # pylint: disable=too-many-nested-blocks
@@ -122,6 +135,18 @@ class _SharedQueue(multiprocessing.queues.Queue):
             if start_bytes > 0:
                 self.seg_pos = (self.seg_pos + 1) % self.num_seg
 
+    def get_until(self, timeout=None, exit_signal=None):
+        """Get data from the queue. Block until timeout is reached or exit_signal is set."""
+        while True:
+            try:
+                return self.get(timeout=timeout)
+            except queue.Empty as e:
+                if exit_signal is None:
+                    raise e
+                if exit_signal.is_set():
+                    return None
+                continue
+
     def get(self, timeout=None):
         result = super().get(timeout=timeout)
         if isinstance(result, ExceptionHandler):
@@ -157,3 +182,34 @@ class _SharedQueue(multiprocessing.queues.Queue):
 
         self.close()
         self.join_thread()
+
+
+class _Queue(multiprocessing.queues.Queue):
+    """Specialized multiprocessing Queue that supports interrupted operations."""
+    def __init__(self, size):
+        super().__init__(size, ctx=multiprocessing.get_context())
+
+    def put_until(self, data, timeout=None, exit_signal=None):
+        """Put data into the queue. Block until timeout is reached or exit_signal is set."""
+        while True:
+            try:
+                self.put(data, timeout=timeout)
+                return
+            except queue.Full as e:
+                if exit_signal is None:
+                    raise e
+                if exit_signal.is_set():
+                    return
+                continue
+
+    def get_until(self, timeout=None, exit_signal=None):
+        """Get data from the queue. Block until timeout is reached or exit_signal is set."""
+        while True:
+            try:
+                return self.get(timeout=timeout)
+            except queue.Empty as e:
+                if exit_signal is None:
+                    raise e
+                if exit_signal.is_set():
+                    return None
+                continue
