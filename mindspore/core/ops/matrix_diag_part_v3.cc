@@ -42,6 +42,9 @@ int64_t TrueValueCal(const std::vector<AbstractBasePtr> &input_args) {
 }
 abstract::ShapePtr MatrixDiagPartV3InferShape(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
+  if (input_args[kInputIndex0]->BuildShape()->IsDynamic()) {
+    return input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   const int64_t kNumber1 = 1;

@@ -33,6 +33,7 @@ __global__ void TensorScatterUpdateKernel(T *input, S *indices, T *update, T *ou
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -59,6 +60,7 @@ __global__ void TensorScatterMinKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -85,6 +87,7 @@ __global__ void TensorScatterMaxKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -111,6 +114,7 @@ __global__ void TensorScatterAddKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -137,6 +141,7 @@ __global__ void TensorScatterSubKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -163,6 +168,7 @@ __global__ void TensorScatterMulKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;
@@ -189,6 +195,7 @@ __global__ void TensorScatterDivKernel(T *input, S *indices, T *update, T *outpu
     for (size_t k = 0; k < indices_dim_1; k++) {
       S indices_i = indices[i * indices_dim_1 + k];
       out_bound |= indices_i >= work_shape[k];
+      out_bound |= indices_i < 0;
       write_index += indices_i * indices_stride[k];
     }
     write_index += j;

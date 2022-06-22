@@ -1,11 +1,11 @@
-mindspore.ops.scatter_nd_sub
+mindspore.ops.scatter_nd_div
 ============================
 
-.. py:function:: mindspore.ops.scatter_nd_sub(input_x, indices, updates, use_locking=False)
+.. py:function:: mindspore.ops.scatter_nd_div(input_x, indices, updates, use_locking=False)
 
-    使用给定值通过减法运算和输入索引更新Tensor值。在更新完成后输出 `input_x` ，这有利于更加方便地使用更新后的值。
+    使用给定值通过除法运算和输入索引更新 `input_x` 的值。为便于使用，函数返回 `input_x` 的复制。
 
-    `input_x` 的rank为P，而 `indices` 的rank为Q，`Q >= 2`。
+    `input_x` 的rank为P， `indices` 的rank为Q， `Q >= 2` 。
 
     `indices` 的shape为 :math:`(i_0, i_1, ..., i_{Q-2}, N)` ， `N <= P` 。
 
@@ -15,14 +15,14 @@ mindspore.ops.scatter_nd_sub
 
     **参数：**
 
-    - **input_x** (Parameter) - scatter_nd_sub的输入，任意维度的Parameter。
-    - **indices** (Tensor) - 指定减法操作的索引，数据类型为mindspore.int32或mindspore.int64。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
-    - **updates** (Tensor) - 指定与 `input_x` 相减操作的Tensor，数据类型与输入相同。shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
+    - **input_x** (Parameter) - 输入参数，任意维度的Parameter。
+    - **indices** (Tensor) - 指定除法操作的索引，数据类型为mindspore.int32或mindspore.int64。索引的rank必须至少为2，并且 `indices.shape[-1] <= len(shape)` 。
+    - **updates** (Tensor) - 指定与 `input_x` 操作的Tensor，数据类型与 `input_x` 相同，shape为 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。
     - **use_locking** (bool) - 是否启用锁保护。默认值：False。
 
     **返回：**
 
-    Tensor，shape和数据类型与输入 `input_x` 相同。
+    Tensor，更新后的 `input_x` ，shape和数据类型与 `input_x` 相同。
 
     **异常：**
 
