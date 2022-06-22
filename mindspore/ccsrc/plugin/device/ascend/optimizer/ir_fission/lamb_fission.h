@@ -25,7 +25,7 @@ class LambFission : public PatternProcessPass {
   explicit LambFission(bool multi_graph = true) : PatternProcessPass("lamb_fission", multi_graph) {}
   ~LambFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
