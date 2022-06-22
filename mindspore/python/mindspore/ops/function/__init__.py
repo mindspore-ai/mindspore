@@ -306,6 +306,7 @@ from .sparse_func import (
     row_tensor_get_indices,
     row_tensor_get_dense_shape,
     row_tensor_add,
+    sparse_add,
     sparse_concat,
 )
 from .random_func import (

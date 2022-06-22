@@ -451,6 +451,50 @@ def sparse_concat(sp_input, concat_dim):
     return COOTensor(indices, values, out_shape)
 
 
+def sparse_add(x, y, threshold):
+    """
+    sum the input SparseTensor(COO format). demo API now
+
+    Args:
+        None.
+    Inputs:
+        - **x** (COOTensor) - the SparseTensor to sum.
+        - **y** (COOTensor) - the SparseTensor to sum.
+        - **threshold** (Tensor) - the magnitude threshold that determines
+                                   if an output value/index pair pair take space.
+
+    Outputs:
+        - **output** (COOTensor) - the result of sum the input SparseTensor.
+
+    Raises:
+        ValueError: If Input COOTensor shape dim > 3. COOtensor.shape dim size must be 2 now
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> values0 = Tensor([1, 2], dtype=mstype.int32)
+        >>> shape0 = (3, 4)
+        >>> input0 = COOTensor(indics0, values0, shape0)
+        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> values1 = Tensor([3, 4], dtype=mstype.int32)
+        >>> shape1 = (3, 4)
+        >>> input1 = COOTensor(indics1, values1, shape1)
+        >>> thres = Tensor([0], dtype=mstype.int32)
+        >>> out = F.sparse_add(input0, input1, thres)
+        >>> print(out)
+    """
+    x_indices = x.indices
+    x_values = x.values
+    y_indices = y.indices
+    y_values = y.values
+    dense_shape = Tensor(x.shape)
+    add_op = SparseAdd()
+    indices, values, _ = add_op(x_indices, x_values, dense_shape, y_indices, y_values, dense_shape, threshold)
+    return COOTensor(indices, values, x.shape)
+
+
 __all__ = [
     'coalesce',
     'coo2csr',
@@ -478,6 +522,7 @@ __all__ = [
     'row_tensor_get_indices',
     'row_tensor_get_dense_shape',
     'row_tensor_add',
+    'sparse_add',
     'sparse_concat',
 ]
 

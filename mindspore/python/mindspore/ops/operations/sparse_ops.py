@@ -597,3 +597,50 @@ class SparseMatrixNNZ(Primitive):
         """Initialize SparseMatrixNNZ"""
         self.init_prim_io_names(
             inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'], outputs=['y'])
+
+
+class SparseAdd(Primitive):
+    """
+    Computes gradients for sparse add operation.
+
+    Inputs:
+        - **x1_indices** (Tensor) - represents the first input's indices in the COO sparse tensor.
+        - **x1_values** (Tensor) - represents the first input's values in the COO sparse tensor.
+        - **x1_shape** (Tensor) - represents the first input's dense shape in the COO sparse tensor.
+        - **x2_indices** (Tensor) - represents the second input's indices in the COO sparse tensor.
+        - **x2_values** (Tensor) - represents the second input's values in the COO sparse tensor.
+        - **x2_shape** (Tensor) - represents the second input's dense shape in the COO sparse tensor.
+        - **thresh** (Tensor) - represents the magnitude threshold that determines if an output
+            value/index pair take space.
+
+    Outputs:
+        - **sum_indices** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the indices of output COOTensor
+        - **sum_values** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the values of output COOTensor
+        - **sum_shape** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the shape of output COOTensor
+
+    Raises:
+        ValueError: If anf input's dim is wrong
+
+    Supported Platforms:
+        ``CPU`` ``GPU``
+
+    Examples:
+        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> values0 = Tensor([1, 2], dtype=mstype.int32)
+        >>> shape0 = Tensor([3, 4], dtype=mstype.int32)
+        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> values1 = Tensor([3, 4], dtype=mstype.int32)
+        >>> shape1 = Tensor([3, 4], dtype=mstype.int32)
+        >>> thres = Tensor([0], dtype=mstype.int32)
+        >>> parse_add = ops.SparseAdd()
+        >>> out = sparse_add(indics0, values0, shape0, indics1, values1, shape1, thres)
+        >>> print(out)
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=["x1_indices", "x1_values", "x1_shape", "x2_indices", "x2_values", "x2_shape", "thresh"],
+            outputs=["sum_indices", "sum_values", "sum_shape"])

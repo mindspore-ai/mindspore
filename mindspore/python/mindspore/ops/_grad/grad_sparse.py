@@ -18,10 +18,12 @@ from ...common import dtype as mstype
 from .. import functional as F
 from .. import operations as P
 from ..operations import _csr_ops
+from ..operations.sparse_ops import SparseAdd
+from ..operations._sparse_grad_ops import SparseAddGrad
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..composite.multitype_ops._constexpr_utils import infer_out_shape
 from .grad_base import bprops, bprop_getters
-
+from .._utils.utils import is_shape_unknown
 
 # Unused parameters are placeholders.
 
@@ -87,6 +89,61 @@ def get_bprop_sparse_tensor_dense_matmul(self):
         if is_half:
             values_grad = P.Cast()(values_grad, mstype.float16)
         return zeros_like(indices), values_grad, zeros_like(dense_shape), dense_grad
+    return bprop
+
+
+@bprop_getters.register(SparseAdd)
+def get_bprop_sparse_add(self):
+    """Generate bprop for SparseAdd"""
+    sparse_add_grad = SparseAddGrad()
+    shape_op = P.Shape()
+    dyn_shape_op = P.TensorShape()
+    reshape = P.Reshape()
+    def bprop(x1_indices, x1_values, x1_shape, x2_indices, x2_values, x2_shape, thresh, out, dout):
+        dx1, dx2 = sparse_add_grad(dout[1], x1_indices, x2_indices, out[0])
+        shp = shape_op(x1_indices)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x1_indices)
+        x1_shp = shp
+        ret0 = zeros_like(x1_shp)
+
+        shp = shape_op(x1_values)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x1_values)
+        dx1_shape = shp
+        ret1 = reshape(dx1, dx1_shape)
+
+        shp = shape_op(x1_shape)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x1_shape)
+        x1_dense_shape = shp
+        ret2 = zeros_like(x1_dense_shape)
+
+        shp = shape_op(x2_indices)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x2_indices)
+        x2_shp = shp
+        ret3 = zeros_like(x2_shp)
+
+        shp = shape_op(x2_values)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x2_values)
+        dx2_shape = shp
+        ret4 = reshape(dx2, dx2_shape)
+
+        shp = shape_op(x2_shape)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x2_shape)
+        x2_dense_shape = shp
+        ret5 = zeros_like(x2_dense_shape)
+
+        shp = shape_op(thresh)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(thresh)
+        thresh_shape = shp
+        ret6 = zeros_like(thresh_shape)
+        ret = (ret0, ret1, ret2, ret3, ret4, ret5, ret6,)
+        return ret
     return bprop
 
 
