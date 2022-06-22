@@ -34,10 +34,17 @@ std::vector<int64_t> MaxPoolGradGrad::get_kernel_size() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void MaxPoolGradGrad::set_pad_mode(const PadMode &pad_mode) {
-  int64_t swi = pad_mode;
-  (void)this->AddAttr(kPadMode, api::MakeValue(swi));
+void MaxPoolGradGrad::set_strides(const std::vector<int64_t> &strides) {
+  (void)this->AddAttr(kStrides, api::MakeValue(strides));
 }
+
+std::vector<int64_t> MaxPoolGradGrad::get_strides() const {
+  auto value_ptr = GetAttr(kStrides);
+  MS_EXCEPTION_IF_NULL(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void MaxPoolGradGrad::set_pad_mode(const PadMode &pad_mode) { (void)this->AddAttr(kPadMode, api::MakeValue(pad_mode)); }
 
 PadMode MaxPoolGradGrad::get_pad_mode() const {
   auto value_ptr = GetAttr(kPadMode);
@@ -49,22 +56,13 @@ PadMode MaxPoolGradGrad::get_pad_mode() const {
   return mode_str == "SAME" ? PadMode::SAME : PadMode::VALID;
 }
 
-void MaxPoolGradGrad::set_strides(const std::vector<int64_t> &strides) {
-  (void)this->AddAttr(kStrides, api::MakeValue(strides));
-}
-
-std::vector<int64_t> MaxPoolGradGrad::get_strides() const {
-  auto value_ptr = GetAttr(kStrides);
-  MS_EXCEPTION_IF_NULL(value_ptr);
-  return GetValue<std::vector<int64_t>>(value_ptr);
-}
-
 namespace {
 abstract::ShapePtr MaxPoolGradGradInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
   auto origin_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto origin_output_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
+  auto origin_output_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   CheckAndConvertUtils::Check("grad_shape", origin_input_shape, kEqual, grad_shape, primitive->name(), TypeError);
   return std::make_shared<abstract::Shape>(origin_output_shape);
 }

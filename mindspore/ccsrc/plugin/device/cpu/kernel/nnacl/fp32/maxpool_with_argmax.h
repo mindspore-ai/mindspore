@@ -25,6 +25,9 @@
 extern "C" {
 #endif
 int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t start, size_t end, PoolingParameter *param);
+
+int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t start, size_t end,
+                        Pooling3DParameter *param);
 #ifdef __cplusplus
 }
 #endif
