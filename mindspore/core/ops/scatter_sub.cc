@@ -45,7 +45,7 @@ abstract::ShapePtr ScatterSubInferShape(const PrimitivePtr &primitive, const std
     check_update_shape.push_back(input_x_shape[i]);
   }
   if (updates_shape != check_update_shape) {
-    MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", "
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', "
                              << "updates_shape = indices_shape + x_shape[1:], but got x_shape: "
                              << input_x_shape_ptr->ToString() << ", indices_shape: " << indices_shape_ptr->ToString()
                              << ", updates_shape: " << updates_shape_ptr->ToString() << ".";
@@ -60,11 +60,11 @@ TypePtr ScatterSubInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto indiecs_type_ptr = input_args[kInputIndex1]->BuildType();
   auto updates_type_ptr = input_args[kInputIndex2]->BuildType();
   auto prim_name = primitive->name();
-  std::set<TypePtr> type_set = {kInt32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices type", indiecs_type_ptr, type_set, prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x type", input_x_type_ptr, common_valid_types_with_complex,
+  std::set<TypePtr> type_set = {kInt32, kInt64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", indiecs_type_ptr, type_set, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type_ptr, common_valid_types_with_complex,
                                                    prim_name);
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates type", updates_type_ptr, common_valid_types_with_complex,
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates", updates_type_ptr, common_valid_types_with_complex,
                                                    prim_name);
 
   std::map<std::string, TypePtr> type_dict;
