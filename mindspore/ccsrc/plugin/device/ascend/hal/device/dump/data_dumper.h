@@ -40,15 +40,16 @@ class DataDumper {
  public:
   DataDumper(const session::KernelGraph *kernel_graph, NotNull<std::function<void *()>> model_handle)
       : model_handle_(model_handle),
-        debug_task_id_(-1),
-        debug_stream_id_(-1),
+        debug_task_id_(0U),
+        debug_stream_id_(0U),
         op_debug_buffer_addr_(nullptr),
         op_debug_dump_args_(nullptr),
         load_flag_(false),
         dev_load_mem_(nullptr),
         dev_unload_mem_(nullptr),
         graph_id_(UINT32_MAX),
-        kernel_graph_(kernel_graph) {}
+        kernel_graph_(kernel_graph),
+        is_op_debug_(false) {}
   ~DataDumper();
   void set_runtime_info(const std::map<std::string, std::shared_ptr<RuntimeInfo>> &runtime_info) {
     runtime_info_map_ = runtime_info;
@@ -88,6 +89,7 @@ class DataDumper {
   std::vector<std::string> dump_kernel_names_;
   const session::KernelGraph *kernel_graph_;
   std::map<std::string, std::shared_ptr<RuntimeInfo>> runtime_info_map_;
+  bool is_op_debug_;
 };
 }  // namespace ascend
 }  // namespace device
