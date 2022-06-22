@@ -22,7 +22,7 @@ if(TARGET_HIMIX)
         link_directories(${PROVIDERS_DIR}/nnie/third_patry/hi3559_sdk/lib)
         add_compile_definitions(BENCHMARK_CLIP_JSON)
     endif()
-elseif(TARGET_MIX210)
+elseif(TARGET_MIX210 AND (NOT MSLITE_ENABLE_ACL))
     set(CMAKE_SKIP_BUILD_RPATH on)
     set(BENCHMARK_LINK_LIB ${BENCHMARK_LINK_LIB} mindspore::json pthread
         dpico_acl_adapter stdc++)

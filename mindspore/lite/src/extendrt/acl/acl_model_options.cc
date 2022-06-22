@@ -57,12 +57,16 @@ AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
   fusion_switch_cfg_path_ = ascend_info->GetFusionSwitchConfigPath();
   device_id_ = ascend_info->GetDeviceID();
   buffer_optimize_mode_ = ascend_info->GetBufferOptimizeMode();
+#ifndef SUPPORT_SD3403_DAVINCI
   const char *soc_name = aclrtGetSocName();
   if (soc_name == nullptr) {
     MS_LOG(WARNING) << "Get soc version failed.";
     return;
   }
   soc_version_ = soc_name;
+#else
+  soc_version = "OPTG";
+#endif
 }
 
 void AclModelOptions::RenameInput(const std::vector<std::string> &input_names) {

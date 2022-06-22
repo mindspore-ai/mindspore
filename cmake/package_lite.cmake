@@ -445,7 +445,7 @@ if(PLATFORM_ARM64)
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
             elseif(TARGET_MIX210)
-                if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "SD3403")
+                if(${MSLITE_REGISTRY_DEVICE}  STREQUAL "SD3403" AND (NOT MSLITE_ENABLE_ACL))
                     install(FILES ${TOP_DIR}/mindspore/lite/build/tools/benchmark/dpico/${DPICO_ACL_ADAPTER_LIB_NAME}.so
                             DESTINATION ${PROVIDERS_LIB_DIR}/${MSLITE_REGISTRY_DEVICE}
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
