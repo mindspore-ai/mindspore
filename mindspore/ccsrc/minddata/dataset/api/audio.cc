@@ -34,6 +34,7 @@
 #include "minddata/dataset/audio/ir/kernels/dither_ir.h"
 #include "minddata/dataset/audio/ir/kernels/equalizer_biquad_ir.h"
 #include "minddata/dataset/audio/ir/kernels/fade_ir.h"
+#include "minddata/dataset/audio/ir/kernels/filtfilt_ir.h"
 #include "minddata/dataset/audio/ir/kernels/flanger_ir.h"
 #include "minddata/dataset/audio/ir/kernels/frequency_masking_ir.h"
 #include "minddata/dataset/audio/ir/kernels/gain_ir.h"
@@ -350,6 +351,22 @@ Fade::Fade(int32_t fade_in_len, int32_t fade_out_len, FadeShape fade_shape)
 
 std::shared_ptr<TensorOperation> Fade::Parse() {
   return std::make_shared<FadeOperation>(data_->fade_in_len_, data_->fade_out_len_, data_->fade_shape_);
+}
+
+// Filtfilt Transform Operation.
+struct Filtfilt::Data {
+  Data(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
+      : a_coeffs_(a_coeffs), b_coeffs_(b_coeffs), clamp_(clamp) {}
+  std::vector<float> a_coeffs_;
+  std::vector<float> b_coeffs_;
+  bool clamp_;
+};
+
+Filtfilt::Filtfilt(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp)
+    : data_(std::make_shared<Data>(a_coeffs, b_coeffs, clamp)) {}
+
+std::shared_ptr<TensorOperation> Filtfilt::Parse() {
+  return std::make_shared<FiltfiltOperation>(data_->a_coeffs_, data_->b_coeffs_, data_->clamp_);
 }
 
 // Flanger Transform Operation.

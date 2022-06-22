@@ -454,6 +454,31 @@ class MS_API Fade final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Design IIR forward and backward filter.
+class MS_API Filtfilt final : public TensorTransform {
+ public:
+  /// \param[in] a_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
+  ///     Lower delays coefficients are first, e.g. [a0, a1, a2, ...].
+  ///     Must be same size as b_coeffs (pad with 0's as necessary).
+  /// \param[in] b_coeffs Numerator coefficients of difference equation of dimension of (n_order + 1).
+  ///     Lower delays coefficients are first, e.g. [b0, b1, b2, ...].
+  ///     Must be same size as a_coeffs (pad with 0's as necessary).
+  /// \param[in] clamp If True, clamp the output signal to be in the range [-1, 1]. Default: True.
+  Filtfilt(const std::vector<float> &a_coeffs, const std::vector<float> &b_coeffs, bool clamp = true);
+
+  /// \brief Destructor.
+  ~Filtfilt() override = default;
+
+ protected:
+  /// \brief Function to convert TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Apply a flanger effect to the audio.
 class MS_API Flanger final : public TensorTransform {
  public:

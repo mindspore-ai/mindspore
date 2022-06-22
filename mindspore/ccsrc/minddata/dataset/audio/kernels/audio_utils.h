@@ -2026,6 +2026,59 @@ Status Vad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
   return Status::OK();
 }
 
+/// \brief Flip tensor in last dimension.
+/// \param input: Tensor of shape <..., time>
+/// \Returns Status code.
+template <typename T>
+Status FlipLastDim(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
+  // Create input copy
+  std::shared_ptr<Tensor> res_tensor;
+  RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), input->type(), &res_tensor));
+  int64_t step_length = input->shape()[-1];
+  auto itr = input->begin<T>();
+  auto tar_itr = res_tensor->begin<T>();
+
+  // Flip
+  while (itr != input->end<T>()) {
+    auto axis_begin = itr;
+    auto axis_end = itr + static_cast<ptrdiff_t>(step_length);
+    itr = axis_end;
+
+    // Reversed copy input value T to res_tensor cache
+    while (axis_begin != axis_end) {
+      axis_end--;
+      *tar_itr = *axis_end;
+      tar_itr++;
+    }
+  }
+  *output = res_tensor;
+  return Status::OK();
+}
+
+/// \brief Perform an IIR filter forward and backward to a waveform.
+/// \param input/output: Tensor of shape <..., time>
+/// \param a_coeffs: denominator coefficients of difference equation of dimension of (n_order + 1).
+/// \param b_coeffs: numerator coefficients of difference equation of dimension of (n_order + 1).
+/// \param clamp: If True, clamp the output signal to be in the range [-1, 1]. Default: True.
+/// \return Status code
+template <typename T>
+Status Filtfilt(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<T> a_coeffs,
+                std::vector<T> b_coeffs, bool clamp) {
+  std::shared_ptr<Tensor> forward;
+  std::shared_ptr<Tensor> reversed_forward;
+  std::shared_ptr<Tensor> backward;
+  std::shared_ptr<Tensor> reversed_backward;
+
+  RETURN_IF_NOT_OK(LFilter(input, &forward, a_coeffs, b_coeffs, false));
+  RETURN_IF_NOT_OK(FlipLastDim<T>(forward, &reversed_forward));
+  RETURN_IF_NOT_OK(LFilter(reversed_forward, &backward, a_coeffs, b_coeffs, clamp));
+  RETURN_IF_NOT_OK(FlipLastDim<T>(backward, &reversed_backward));
+
+  *output = reversed_backward;
+
+  return Status::OK();
+}
+
 /// \brief Resample a signal from one frequency to another. A resampling method can be given.
 /// \param[in] input Input tensor.
 /// \param[out] output Output tensor.

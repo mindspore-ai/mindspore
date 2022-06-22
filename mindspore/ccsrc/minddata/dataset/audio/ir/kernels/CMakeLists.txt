@@ -20,6 +20,7 @@ add_library(audio-ir-kernels OBJECT
         dither_ir.cc
         equalizer_biquad_ir.cc
         fade_ir.cc
+        filtfilt_ir.cc
         flanger_ir.cc
         frequency_masking_ir.cc
         gain_ir.cc

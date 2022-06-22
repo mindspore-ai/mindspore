@@ -1965,6 +1965,74 @@ TEST_F(MindDataTestPipeline, TestFadeWithInvalidArg) {
   EXPECT_EQ(iter_02, nullptr);
 }
 
+/// Feature: Filtfilt
+/// Description: Test Filtfilt pipeline usage
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestFiltfiltpipeline) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFiltfiltpipeline.";
+  // Original waveform
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 200}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  ds = ds->SetNumWorkers(4);
+  EXPECT_NE(ds, nullptr);
+
+  std::vector<float> a_coeffs = {0.1, 0.2, 0.3};
+  std::vector<float> b_coeffs = {0.1, 0.2, 0.3};
+  auto filtfiltop = audio::Filtfilt(a_coeffs, b_coeffs);
+
+  ds = ds->Map({filtfiltop});
+  EXPECT_NE(ds, nullptr);
+
+  // Filtered waveform by filtfilt
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(ds, nullptr);
+
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  std::vector<int64_t> expected = {2, 200};
+
+  int i = 0;
+  while (row.size() != 0) {
+    auto col = row["inputData"];
+    ASSERT_EQ(col.Shape(), expected);
+    ASSERT_EQ(col.Shape().size(), 2);
+    ASSERT_EQ(col.DataType(), mindspore::DataType::kNumberTypeFloat32);
+    ASSERT_OK(iter->GetNextRow(&row));
+    i++;
+  }
+  EXPECT_EQ(i, 50);
+
+  iter->Stop();
+}
+
+/// Feature: Filtfilt
+/// Description: Test Filtfilt invalid Args
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestFiltfiltWrongArgs) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestFiltfiltWrongArgs.";
+  std::shared_ptr<SchemaObj> schema = Schema();
+  // Original waveform
+  ASSERT_OK(schema->add_column("inputData", mindspore::DataType::kNumberTypeFloat32, {2, 2}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  std::shared_ptr<Dataset> ds01;
+  EXPECT_NE(ds, nullptr);
+
+  // Check sample_rate
+  MS_LOG(INFO) << "a_coeffs size not equal to b_coeffs";
+  std::vector<float> a_coeffs = {0.1, 0.2, 0.3};
+  std::vector<float> b_coeffs = {0.1, 0.2};
+  auto FiltfiltOp = audio::Filtfilt(a_coeffs, b_coeffs);
+  ds01 = ds->Map({FiltfiltOp});
+  EXPECT_NE(ds01, nullptr);
+
+  std::shared_ptr<Iterator> iter01 = ds01->CreateIterator();
+  EXPECT_EQ(iter01, nullptr);
+}
+
 /// Feature: Magphase op
 /// Description: Test Magphase op basic usage
 /// Expectation: Output is equal to the expected output
