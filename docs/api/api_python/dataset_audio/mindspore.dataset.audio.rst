@@ -7,7 +7,7 @@ API样例中常用的导入模块如下：
 .. code-block::
 
     import mindspore.dataset as ds
-    import mindspore.dataset.audio.transforms as audio
+    import mindspore.dataset.audio as audio
 
 常用数据处理术语说明如下：
 
