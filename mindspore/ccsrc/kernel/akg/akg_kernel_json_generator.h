@@ -63,34 +63,38 @@ constexpr auto kJsonKeyRecomputeOps = "recompute_ops";
 constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchAtomicOp = "stitch_atomic_op";
+constexpr auto kJsonKeyVersion = "version";
+constexpr auto kJsonKeyTargetInfo = "target_info";
 constexpr auto kJsonKeyComputeCapability = "compute_capability";
-constexpr auto kJsonKeyTargetOption = "target_option";
-
-// target related compile options
-constexpr auto kCPUTargetOption = "-mcpu=core-avx2 -mattr=avx2";
+constexpr auto kJsonKeySmCount = "sm_count";
+constexpr auto kJsonKeySystem = "system";
+constexpr auto kJsonKeyArch = "arch";
+constexpr auto kJsonKeyFeature = "feature";
 
 // dump option
 struct DumpOption {
   bool is_before_select_kernel = false;
   bool save_ptr_address = false;
   bool extract_opinfo_from_anfnode = false;
-  bool get_compute_capability = false;
+  bool get_target_info = false;
 };
 
-class ComputeCapability {
+class TargetInfoSetter {
  public:
-  static const std::string &Get() {
-    static std::unique_ptr<ComputeCapability> instance = nullptr;
+  static void Set(nlohmann::json *kernel_info) {
+    static std::unique_ptr<TargetInfoSetter> instance = nullptr;
     if (instance == nullptr) {
-      instance = std::make_unique<ComputeCapability>();
-      instance->GetComputeCapability();
+      instance = std::make_unique<TargetInfoSetter>();
+      instance->GetTargetInfo();
     }
-    return instance->compute_capability_;
+    instance->SetTargetInfo(kernel_info);
   }
 
  private:
-  void GetComputeCapability();
-  std::string compute_capability_;
+  void GetTargetInfo();
+  void SetTargetInfo(nlohmann::json *kernel_info) const;
+  nlohmann::json target_info_;
+  bool has_info_{false};
 };
 
 class AkgKernelJsonGenerator {
@@ -150,6 +154,7 @@ class AkgKernelJsonGenerator {
   bool GetInputTensorValue(const AnfNodePtr &anf_node, size_t input_idx, nlohmann::json *node_json) const;
   size_t GetTensorSize(const nlohmann::json &node_json) const;
   std::string GetProcessorByTarget() const;
+  void GenKernelName(const FuncGraphPtr &fg, size_t hash_id, nlohmann::json *kernel_json);
 
   DumpOption dump_option_;
   std::string kernel_name_;

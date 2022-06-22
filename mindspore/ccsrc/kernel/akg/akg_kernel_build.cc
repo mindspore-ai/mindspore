@@ -603,7 +603,7 @@ bool AkgKernelBuilder::AkgKernelParallelBuild(const std::vector<AnfNodePtr> &anf
       continue;
     }
     graphkernel::DumpOption option;
-    option.get_compute_capability = true;
+    option.get_target_info = true;
     AkgKernelJsonGenerator akg_kernel_json_generator(option);
     auto cnode = anf_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
