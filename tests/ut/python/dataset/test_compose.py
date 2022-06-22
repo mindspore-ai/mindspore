@@ -67,7 +67,7 @@ def test_compose():
     # Test exceptions.
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1, transforms.TypeCast(mstype.int32)])
-    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(
+    assert "op_list[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
         error_info.value)
 
     # Test empty op list
@@ -96,7 +96,7 @@ def test_compose():
     # Test a non callable function
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1])
-    assert "op_list[0] is neither a c_transform op (TensorOperation) nor a callable pyfunc." in str(
+    assert "op_list[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
         error_info.value)
 
     # Test empty Python implementation list

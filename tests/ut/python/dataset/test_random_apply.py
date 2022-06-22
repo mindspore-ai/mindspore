@@ -56,12 +56,18 @@ def test_random_apply_c():
     assert test_config([[0, 1, 2]], [
         data_trans.Compose([data_trans.Duplicate(), data_trans.Concatenate(), data_trans.Slice([0, 1, 2])])]) == \
            [[0, 1, 2]]
+    assert test_config([[0, 1, 2]], [
+        data_trans.Compose(
+            [data_trans.Duplicate(), data_trans.Concatenate(), lambda x: x, data_trans.Slice([0, 1, 2])])]) == \
+           [[0, 1, 2]]
     # test exception
     assert "is not of type [<class 'list'>]" in test_config([1, 0], data_trans.TypeCast(mstype.int32))
     assert "Input prob is not within the required interval" in test_config([0, 1], [data_trans.Slice([0, 1])], 1.1)
     assert "is not of type [<class 'float'>, <class 'int'>]" in test_config([1, 0], [data_trans.TypeCast(mstype.int32)],
                                                                             None)
     assert "op_list with value None is not of type [<class 'list'>]" in test_config([1, 0], None)
+    assert "is neither a transforms op (TensorOperation) nor a callable pyfunc" in \
+           test_config([[0, 1, 2]], [data_trans.Duplicate(), data_trans.Concatenate(), "zyx"])
 
     # Restore configuration
     ds.config.set_seed(original_seed)
