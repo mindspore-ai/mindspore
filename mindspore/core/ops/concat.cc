@@ -56,11 +56,12 @@ abstract::ShapePtr ConcatInferShape(const PrimitivePtr &primitive, const std::ve
                                              SizeToLong(element0_shape.size()), prim_name);
     for (size_t j = 0; j < element0_rank; ++j) {
       if (j != axis && elementi_shape[j] != element0_shape[j]) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name << "', element " << i
-                          << " shape in input can not concat with first element. To perform concat in the axis 0 "
-                             "direction, except for the 0th axis, all other axes must have the same shape. But got "
-                          << "element" << i << "_shape[" << j << "]: " << elementi_shape[j] << ", element0_shape[" << j
-                          << "]: " << element0_shape[j] << ".";
+        MS_EXCEPTION(ValueError)
+          << "For '" << prim_name << "', element " << i
+          << " shape in input can not concat with first element. To perform concat in the axis 0 "
+             "direction, except for the 0th axis, all other axes must have the same shape. But got "
+          << "element" << i << "_shape[" << j << "]: " << elementi_shape[j] << ", element0_shape[" << j
+          << "]: " << element0_shape[j] << ".";
       }
     }
     all_shp = all_shp == -1 || elementi_shape[axis] == -1 ? -1 : all_shp + elementi_shape[axis];
@@ -129,6 +130,6 @@ AbstractBasePtr ConcatInfer(const abstract::AnalysisEnginePtr &, const Primitive
   auto infer_shape = ConcatInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameConcat, Concat);
+REGISTER_PRIMITIVE_EVAL_IMPL(Concat, prim::kPrimConcat, ConcatInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
