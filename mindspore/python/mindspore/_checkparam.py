@@ -672,12 +672,13 @@ class Validator:
         all_types = mstype.__dtype__ + ["int", "float", "bool"]
         if isinstance(dtype, str):
             if dtype.lower() not in all_types:
-                raise ValueError(f"For Tensor.astype, the input type must be one of {all_types}, but got '{dtype}'.")
+                raise TypeError(f"For Tensor.astype, the input type must be one of {all_types}, but got '{dtype}'.")
             dtype = mstype.pytype_to_dtype(np.dtype(dtype.lower()))
         elif isinstance(dtype, type):
             dtype = mstype.pytype_to_dtype(dtype)
         elif not dtype in mstype.number_type + (mstype.bool_,):
-            raise ValueError(f"For Tensor.astype, the input type must be one of {all_types}, but got '{dtype}'.")
+            raise TypeError(f"For Tensor.astype, the input type must be one of {mstype.number_type + (mstype.bool_,)},"
+                            f" but got '{dtype}'.")
         return dtype
 
     @staticmethod
