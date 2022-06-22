@@ -346,6 +346,7 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   std::vector<uint32_t> GetAllReduceSplitIndex();
   virtual std::string GetCommWorldGroup() { return std::string(); }
   void DumpGraphs(const std::vector<KernelGraphPtr> &graphs);
+  void GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index);
 #ifdef WITH_BACKEND
   void CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) const;
   void GetBatchElements(const AnfNodePtr &kernel_node) const;

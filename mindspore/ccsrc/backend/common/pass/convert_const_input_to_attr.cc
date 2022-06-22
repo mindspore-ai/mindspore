@@ -50,6 +50,9 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
       return nullptr;
     }
   }
+  if ((common::AnfAlgo::GetCNodeName(cnode) == kStridedSliceGradOpName) && (device == kAscendDevice)) {
+    return nullptr;
+  }
   if (common::AnfAlgo::IsDynamicShape(cnode)) {
     if (device == kGPUDevice) {
       if (DynamicShapeConstInputToAttrGPU.find(common::AnfAlgo::GetCNodeName(cnode)) ==
@@ -71,19 +74,8 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
       }
     }
   }
-  if (device == kAscendDevice &&
-      NeedConvertToValueNodeSet.find(common::AnfAlgo::GetCNodeName(cnode)) != NeedConvertToValueNodeSet.end() &&
-      !common::AnfAlgo::HasNodeAttr(kAttrNeedConvertToValueNode, cnode)) {
-    auto input_attrs = reg.GetConstInputAttrInfo();
-    std::vector<size_t> need_convert_to_constant;
-    std::transform(input_attrs.begin(), input_attrs.end(), std::back_inserter(need_convert_to_constant),
-                   [](size_t i) { return i + 1; });
-    common::AnfAlgo::SetNodeAttr(kAttrNeedConvertToValueNode, MakeValue(need_convert_to_constant), cnode);
-    return nullptr;
-  }
 
   ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
-
   return node;
 }
 }  // namespace opt
