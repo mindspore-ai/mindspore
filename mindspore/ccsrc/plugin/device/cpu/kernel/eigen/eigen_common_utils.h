@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGEN_COMMON_UTILS_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGEN_COMMON_UTILS_H_
-#include <algorithm>
-#include <functional>
-#include <vector>
-#include "Eigen/Core"
 #include "Eigen/Dense"
-#include "unsupported/Eigen/CXX11/Tensor"
-
-#ifdef _WIN32
-#undef ERROR
-#endif
-
+#include "Eigen/Core"
 namespace mindspore {
 namespace kernel {
 using Eigen::ColMajor;
@@ -44,115 +35,6 @@ template <typename T>
 using MatrixSquare = Eigen::Matrix<T, Dynamic, Dynamic, RowMajor>;
 template <typename T>
 using ComplexMatrixSquare = Eigen::Matrix<std::complex<T>, Dynamic, Dynamic, RowMajor>;
-
-template <typename T, int NDIMS = kDim1, typename IndexType = Eigen::DenseIndex>
-struct TTypes {
-  // Rank-<NDIMS> tensor of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, NDIMS, Eigen::RowMajor, IndexType>, Eigen::Aligned> Tensor;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, NDIMS, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstTensor;
-
-  // Rank-1 tensor (vector) of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> Flat;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstFlat;
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> Vec;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim1, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstVec;
-
-  // Rank-2 tensor (matrix) of scalar type T.
-  typedef Eigen::TensorMap<Eigen::Tensor<T, kDim2, Eigen::RowMajor, IndexType>, Eigen::Aligned> Matrix;
-  typedef Eigen::TensorMap<Eigen::Tensor<const T, kDim2, Eigen::RowMajor, IndexType>, Eigen::Aligned> ConstMatrix;
-};
-
-class EigenTensor {
- public:
-  EigenTensor() = delete;
-  EigenTensor(ShapeVector &shape, void *data_ptr) : tensor_shape(shape), tensor_data_ptr(data_ptr) {}
-  ~EigenTensor() = default;
-
-  /*
-   * Eigen vec
-   * @return Eigen vec
-   */
-  template <typename T>
-  typename TTypes<T>::Vec vec() {
-    return tensor<T, 1>();
-  }
-
-  /*
-   * Eigen matrix
-   * @return Eigen matrix
-   */
-  template <typename T>
-  typename TTypes<T>::Matrix matrix() {
-    return tensor<T, kDim2>();
-  }
-
-  /*
-   * Eigen ConstMatrix
-   * @return Eigen ConstMatrix
-   */
-  template <typename T>
-  typename TTypes<T>::ConstMatrix matrix() const {
-    return tensor<T, kDim2>();
-  }
-
-  /*
-   * Eigen tensor
-   * @return Eigen tensor
-   */
-  template <typename T, size_t NDIMS>
-  typename TTypes<T, NDIMS>::Tensor tensor() {
-    return typename TTypes<T, NDIMS>::Tensor(reinterpret_cast<T *>(tensor_data_ptr), AsEigenDSizes<NDIMS>());
-  }
-
-  /*
-   * Eigen ConstTensor
-   * @return Eigen ConstTensor
-   */
-  template <typename T, size_t NDIMS>
-  typename TTypes<T, NDIMS>::ConstTensor tensor() const {
-    return typename TTypes<T, NDIMS>::ConstTensor(reinterpret_cast<const T *>(tensor_data_ptr), AsEigenDSizes<NDIMS>());
-  }
-
-  /*
-   * Eigen Flat
-   * @return Eigen Flat
-   */
-  template <typename T>
-  typename TTypes<T>::Flat flat() {
-    return typename TTypes<T>::Flat(
-      reinterpret_cast<T *>(tensor_data_ptr),
-      {std::accumulate(tensor_shape.begin(), tensor_shape.end(), 1, std::multiplies<int64_t>())});
-  }
-
-  /*
-   * which case we pad the rest of the sizes with 1.
-   * @return Eigen::DSizes: pad the rest of the sizes with 1
-   */
-  template <int NDIMS, typename IndexType>
-  Eigen::DSizes<IndexType, NDIMS> AsEigenDSizesWithPadding() const {
-    Eigen::DSizes<IndexType, NDIMS> dsizes;
-    for (size_t d = 0; d < tensor_shape.size(); d++) {
-      dsizes[d] = static_cast<IndexType>(tensor_shape[d]);
-    }
-    for (size_t d = tensor_shape.size(); d < NDIMS; d++) {
-      dsizes[d] = 1;
-    }
-    return dsizes;
-  }
-
-  /*
-   * Fill `*dsizes` from `*this`
-   * @return Eigen::DSizes: pad the rest of the sizes with 1
-   */
-  template <int NDIMS, typename IndexType = Eigen::DenseIndex>
-  Eigen::DSizes<IndexType, NDIMS> AsEigenDSizes() const {
-    return AsEigenDSizesWithPadding<NDIMS, IndexType>();
-  }
-
- private:
-  ShapeVector tensor_shape;
-  void *tensor_data_ptr;
-};
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_EIGEN_EIGEN_COMMON_UTILS_H_
