@@ -5979,7 +5979,7 @@ class Zeta(Primitive):
         ValueError: If shape of `x` is not same as the `q`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Example:
         >>> x = Tensor(np.array([10.]), mindspore.float32)
