@@ -2,9 +2,9 @@ mindspore.communication
 ========================
 集合通信接口。
 
-注意，集合通信接口需要预先设置环境变量。对于Ascend，用户需要配置rank_table，设置rank_id和device_id，相关教程可参考： 
+注意，集合通信接口需要预先设置环境变量。对于Ascend，用户需要配置rank_table，设置rank_id和device_id，相关教程可参考：
 `Ascend指导文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_ascend.html>`_。
-对于GPU，用户需要预先配置host_file以及mpi，相关教程参考： 
+对于GPU，用户需要预先配置host_file以及mpi，相关教程参考：
 `GPU指导文档 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html>`_。
 
 目前尚不支持CPU。
@@ -36,7 +36,8 @@ mindspore.communication
 
     释放分布式资源，例如 `HCCL` 或 `NCCL` 服务。
 
-    .. note:: `release` 方法应该在 `init` 方法之后使用。
+    .. note::
+        `release` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **异常：**
 
@@ -46,7 +47,8 @@ mindspore.communication
 
     在指定通信组中获取当前的设备序号。
 
-    .. note::`get_rank` 方法应该在 `init` 方法之后使用。
+    .. note::
+        `get_rank` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **参数：**
 
@@ -89,7 +91,7 @@ mindspore.communication
     .. note::
         - GPU 版本的MindSpore不支持此方法；
         - 参数 `group` 不能是 `hccl_world_group`；
-        - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。
+        - `get_world_rank_from_group_rank` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **参数：**
 
@@ -157,7 +159,7 @@ mindspore.communication
 
     .. note::
         - GPU 版本的MindSpore不支持此方法；
-        - `get_local_rank` 方法应该在 `init` 方法之后使用。
+        - `get_local_rank` 方法应该在 `init` 方法之后使用。在运行以下示例之前，用户需要预设通信环境变量，请查看mindspore.communication的文档注释。
 
     **参数：**
 
@@ -213,11 +215,11 @@ mindspore.communication
     - **TypeError** – 在参数 `group` 不是字符串时抛出。
     - **ValueError** – 在参数 `group` 是 `hccl_world_group` 或后台不可用时抛出。
     - **RuntimeError** – 在 `HCCL` 或 `NCCL` 服务不可用时抛出。
-    
+
 .. py:data:: mindspore.communication.HCCL_WORLD_COMM_GROUP
 
     "hccl_world_group"字符串，指的是由HCCL创建的默认通信组。
-    
+
 .. py:data:: mindspore.communication.NCCL_WORLD_COMM_GROUP
 
     "nccl_world_group"字符串，指的是由NCCL创建的默认通信组。

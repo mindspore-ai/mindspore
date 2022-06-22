@@ -168,6 +168,9 @@ def release():
     Raises:
         RuntimeError: If failed to release distributed resource.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> from mindspore.communication import init, release
         >>> init()
