@@ -27,14 +27,14 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameKLDivLoss = "KLDivLoss";
 /// \brief Returns the singular value decompositions of one or more matrices.
-/// Refer to Python API @ref mindspore.ops.svd for more details.
+/// Refer to Python API @ref mindspore.ops.KLDivLoss for more details.
 class MIND_API KLDivLoss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(KLDivLoss);
   /// \brief Constructor.
   KLDivLoss() : BaseOperator(kNameKLDivLoss) { InitIOName({"x", "target"}, {"y"}); }
   explicit KLDivLoss(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "target"}, {"y"}); }
-  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.KLDiv for the inputs.
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.KLDivLoss for the inputs.
   void Init(const std::string &reduction = kMean);
   /// \brief Set reduction.
   void set_reduction(const std::string &reduction);
