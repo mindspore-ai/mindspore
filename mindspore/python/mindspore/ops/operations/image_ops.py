@@ -581,6 +581,44 @@ class CropAndResizeGradBoxes(Primitive):
         self.method = method
 
 
+class RGBToHSV(Primitive):
+    """
+    Convert one or more images from RGB to HSV.
+    Outputs a tensor of the same shape as the images tensor, containing the HSV value of the pixels.
+    The output is only well defined if the value in images are in [0,1].
+
+    Note:
+        Last dimension of input images must be size 3.
+
+    Inputs:
+        **images** (Tensor) - Must be one of the following types: float16, float32, float64. 1-D or higher rank.
+        RGB data to convert. Last dimension must be size 3.
+
+    Outputs:
+        A Tensor, has the same type and shape as input `images`.
+
+    Raises:
+        TypeError: If `images` is not tensor or its dtype is not float or double.
+        ValueError: If the size of shape of `images` is less than 1.
+        ValueError: If the last value of shape of `images` is not 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> images =  np.array([0.25, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
+        >>> rgb_to_hsv = ops.RGBToHSV()
+        >>> output = rgb_to_hsv(Tensor(images))
+        >>> print(output)
+        [[[[0.5, 0.5, 0.5]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize RGBToHSV"""
+        self.init_prim_io_names(inputs=['images'], outputs=['y'])
+
+
 class ResizeLinear1D(Primitive):
     r"""
     Using the linear interpolate method resize the input tensor 'x'.
