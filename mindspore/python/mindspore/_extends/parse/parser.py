@@ -82,8 +82,9 @@ AST_SUB_TYPE_UNKNOWN = 0xFF            # unknown
 SYNTAX_SUPPORTED = 0                   # Supported syntax
 SYNTAX_UNSUPPORTED_INTERNAL_TYPE = 1   # Unsupported internal type
 SYNTAX_UNSUPPORTED_EXTERNAL_TYPE = 2   # Unsupported external type
-SYNTAX_UNSUPPORTED_SPECIAL_TYPE = 3    # Unsupported special type
+SYNTAX_HYBRID_TYPE = 3                 # Hybrid type
 SYNTAX_UNSUPPORTED_NAMESPACE = 4       # Unsupported namespace
+
 
 # Process expr statement white list
 # Add as needed, eg: "clear", "extend", "insert", "remove", "reverse"
@@ -101,8 +102,8 @@ _unsupported_internal_type = (
     Tensor,
 )
 
-_unsupported_special_type = (
-    print,
+_hybrid_type = (
+    print, len, enumerate, zip, map, filter,
 )
 
 
@@ -735,14 +736,6 @@ class Parser:
         self.col_offset = 0
 
     @staticmethod
-    def is_unsupported_special_type(value):
-        """To check if not supported special type, such as print"""
-        if value in _unsupported_special_type:
-            logger.debug(f"Found unsupported special type: '{value}'.")
-            return True
-        return False
-
-    @staticmethod
     def is_unsupported_namespace(value):
         """To check if not supported for namespace"""
         unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
@@ -764,6 +757,17 @@ class Parser:
                 logger.debug(f"Found unsupported internal type: '{value}'.")
                 return True
         return False
+
+
+    @staticmethod
+    def is_hybrid_type(value):
+        """To check if hybrid type, such as print"""
+        for item in _hybrid_type:
+            if value == item:
+                logger.debug(f"Found hybrid type: '{value}'.")
+                return True
+        return False
+
 
     def parse(self):
         """Parse the function or method."""
@@ -842,10 +846,10 @@ class Parser:
                 support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_INTERNAL_TYPE
             elif self.is_unsupported_python_builtin_type(value):
                 support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_EXTERNAL_TYPE
-            elif self.is_unsupported_special_type(value):
-                support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_SPECIAL_TYPE
             elif self.is_unsupported_namespace(value) or is_third_party_module(value):
                 support_info = self.global_namespace, var, value, SYNTAX_UNSUPPORTED_NAMESPACE
+            elif self.is_hybrid_type(value):
+                support_info = self.global_namespace, var, value, SYNTAX_HYBRID_TYPE
             else:
                 support_info = self.global_namespace, var, value, SYNTAX_SUPPORTED
             return support_info

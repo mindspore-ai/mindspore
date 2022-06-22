@@ -283,3 +283,24 @@ def test_fallback_tuple_with_mindspore_function():
         return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
 
     assert foo()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_fallback_tensor_compare_with_variable():
+    """
+    Feature: Fallback feature
+    Description: Test ms.Tensor() in graph mode.
+    Expectation: No exception.
+    """
+    @ms_function
+    def foo(x):
+        while x > Tensor([0]):
+            x = x - abs(Tensor([-1]))
+        return x
+
+    res = foo(Tensor([6]))
+    assert res == 0

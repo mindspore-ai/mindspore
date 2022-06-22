@@ -98,6 +98,17 @@ class LoopContext {
   std::stack<Loop> *loops_;
 };
 
+struct ArgsContext {
+  bool need_unpack = false;
+  bool has_interpret_without_internal = false;
+  bool has_interpret_internal = false;
+
+  std::vector<AnfNodePtr> packed_arguments;
+  std::vector<AnfNodePtr> group_arguments;
+  ArgsContext() {}
+  ~ArgsContext() = default;
+};
+
 // Parser to parse python function
 class Parser {
  public:
@@ -283,15 +294,11 @@ class Parser {
 
   FunctionBlockPtr GenerateBlock(const TraceInfoPtr &trace_info);
 
-  bool ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node,
-                           std::vector<AnfNodePtr> *packed_arguments);
+  void ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node, ArgsContext *args_context);
 
-  bool ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, bool *need_fallback,
-                       std::vector<AnfNodePtr> *packed_arguments, std::vector<AnfNodePtr> *group_arguments);
-
+  void ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, ArgsContext *args_context);
   AnfNodePtr GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_anf_node,
-                                    const std::vector<AnfNodePtr> &packed_arguments,
-                                    const std::vector<AnfNodePtr> &group_arguments, bool need_unpack) const;
+                                    const ArgsContext &args_context) const;
   ScopePtr GetScopeForParseFunction();
   // Check the value is subscript is reference type
   bool IsSubscriptReferenceType(const py::object &obj);
