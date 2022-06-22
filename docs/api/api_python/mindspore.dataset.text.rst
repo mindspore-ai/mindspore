@@ -20,7 +20,7 @@ mindspore.dataset.text
 - TextTensorOperation，所有文本数据处理操作的基类，派生自TensorOperation。
 
 变换
----
+-----
 
 .. mscnnoteautosummary::
     :toctree: dataset_text
@@ -50,7 +50,7 @@ mindspore.dataset.text
 
 
 工具
----
+-----
 
 .. mscnnoteautosummary::
     :toctree: dataset_text
