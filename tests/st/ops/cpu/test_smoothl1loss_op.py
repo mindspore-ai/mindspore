@@ -37,13 +37,11 @@ def verify_forward(reduction, loss, expect):
     if reduction == 'none':
         np.testing.assert_array_almost_equal(loss, expect)
     elif reduction == "sum":
-        loss_sum = np.sum(loss)
         expect_sum = np.sum(expect)
-        np.testing.assert_array_almost_equal(loss_sum, expect_sum, decimal=5)
+        np.testing.assert_array_almost_equal(loss, expect_sum, decimal=5)
     elif reduction == "mean":
-        loss_mean = np.mean(loss)
         expect_mean = np.mean(expect)
-        np.testing.assert_array_almost_equal(loss_mean, expect_mean)
+        np.testing.assert_array_almost_equal(loss, expect_mean)
 
 
 @pytest.mark.level0

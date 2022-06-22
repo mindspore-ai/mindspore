@@ -6946,7 +6946,7 @@ class TensorScatterElements(Primitive):
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more detail.
 
     Supported Platforms:
-        ``CPU`` ``GPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> op = ops.TensorScatterElements(0, "none")

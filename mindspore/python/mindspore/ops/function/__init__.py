@@ -243,6 +243,7 @@ from .nn_func import (
     hardshrink,
     soft_shrink,
     intopk,
+    interpolate,
     log_softmax,
     lrn,
     mish,
