@@ -25,6 +25,7 @@
 #include "src/tensor.h"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
+#include "src/common/utils.h"
 
 namespace mindspore::opt {
 namespace {
@@ -56,7 +57,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     if (clip_c->GetAttr(ops::kMin) != nullptr) {
       min = clip_c->get_min();
     }
-    if ((min == -FLT_MAX) && (max == FLT_MAX)) {
+    if ((lite::FloatCompare(min, -FLT_MAX)) && (lite::FloatCompare(max, FLT_MAX))) {
       if (clip_cnode->size() > kClipMinIndex) {
         auto min_tensor_info = GetTensorInfo(clip_cnode->input(kClipMinIndex));
         MS_CHECK_TRUE_MSG(min_tensor_info != nullptr, false, "min_tensor_info is nullptr");
@@ -87,7 +88,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     if (min == 0 && max == kValueThreshold6) {
       primitive_c->set_activation_type(mindspore::RELU6);
     }
-    if (min == 0 && max == FLT_MAX) {
+    if (lite::FloatCompare(min) && lite::FloatCompare(max, FLT_MAX)) {
       primitive_c->set_activation_type(mindspore::RELU);
     }
     auto primitive = primitive_c->GetPrim();

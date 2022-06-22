@@ -77,6 +77,10 @@ int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector
     MS_LOG(ERROR) << "tensorlist shape:" << this->shape().size() << " must be one-dimensional";
     return RET_ERROR;
   }
+  if (tensor_shape.empty()) {
+    MS_LOG(INFO) << "tensor_shape is empty, no need malloc tensor list data";
+    return RET_OK;
+  }
   if (static_cast<size_t>(this->ElementsNum()) != tensor_shape.size()) {
     MS_LOG(ERROR) << "tensorlist ElementsNum():" << this->ElementsNum()
                   << " must be equal to param2:tensor_shape.size():" << tensor_shape.size();
