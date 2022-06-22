@@ -237,6 +237,41 @@ def get_concat_vmap_rule(prim, axis_size):
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
 
+    @constexpr
+    def get_batch_shape(x_shape, x_dim, target_shape, axis_size):
+        if x_dim == 0:
+            return (axis_size,) + target_shape, 0, False
+
+        if x_dim in (len(x_shape) - 1, -1):
+            return target_shape + (axis_size,), len(target_shape), False
+
+        neg_index = -1
+        dim_prod = 1
+        for i, shp_i in enumerate(target_shape):
+            if shp_i == -1:
+                if neg_index != -1:
+                    raise ValueError(f'The shape can only has one -1 at most, but {target_shape}.')
+                neg_index = i
+            else:
+                dim_prod *= shp_i
+        arr_prod = np.prod(x_shape)
+        target_shape_list = list(target_shape)
+        if neg_index != -1:
+            neg_index_size = int(arr_prod / (dim_prod * axis_size))
+            target_shape_list[neg_index] = neg_index_size
+
+        arr_prod_before_dim = np.prod(x_shape[:x_dim])
+
+        dim_prod = 1
+        for i, shp_i in enumerate(target_shape_list, start=1):
+            dim_prod *= shp_i
+            if dim_prod == arr_prod_before_dim:
+                return tuple(target_shape_list[:i]) + (axis_size,) + tuple(target_shape_list[i:]), i, False
+            if dim_prod > arr_prod_before_dim:
+                return 0, 0, True
+
+        return 0, 0, True
+
     def vmap_rule(operand_bdim, shape_bdim):
         is_all_none, result = vmap_general_preprocess(prim, operand_bdim, shape_bdim)
         if is_all_none:
@@ -247,12 +282,17 @@ def get_reshape_vmap_rule(prim, axis_size):
         if shape_dim is not None:
             _raise_value_error("The source axis of shape in `Reshape` must be None, but got {}.".format(shape_dim))
 
-        x = mnp.moveaxis(x, dim, 0)
-        axis_size = F.shape(x)[0]
-        batch_shape = (axis_size,) + shape
+        x_shape = F.shape(x)
+        batch_shape, out_axis, need_moveaxis = get_batch_shape(x_shape, dim, shape, axis_size)
+        if need_moveaxis:
+            # for such case: `x_shape` is (2, 3, 4, 5, 6), `x_dim` is 3, and `shape` is (-1,)
+            x = mnp.moveaxis(x, dim, 0)
+            batch_shape = (axis_size,) + shape
+            out = prim(x, batch_shape)
+            return (out, 0)
 
         out = prim(x, batch_shape)
-        return (out, 0)
+        return (out, out_axis)
 
     return vmap_rule
 
