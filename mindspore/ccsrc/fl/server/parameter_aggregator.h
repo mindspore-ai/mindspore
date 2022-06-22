@@ -100,7 +100,7 @@ class ParameterAggregator {
   // Initializing aggregation/optimizer kenerls based on the cnode. The reason of this is described in the file
   // kernel/kernel_factory.h.
   bool InitAggregationKernels(const CNodePtr &cnode);
-  bool InitOptimizerKernels(const CNodePtr &cnode);
+  bool InitOptimizerKernels(const CNodePtr &cnode) const;
 
   // Assign memory for server kernel K(AggregationKernelMod/OptimizerKernelMod).
   // The memory assigned can be accessed by MemoryRegister. The memory could be weights, gradients, learning_rate,
@@ -117,7 +117,7 @@ class ParameterAggregator {
 
   // The selection of the aggregation algorithm depends on multiple factors. For example, server mode, user
   // configuration, etc.
-  std::vector<std::string> SelectAggregationAlgorithm(const CNodePtr &cnode);
+  std::vector<std::string> SelectAggregationAlgorithm(const CNodePtr &cnode) const;
 
   // Judge whether the parameter needs to be aggregated.
   bool JudgeRequiredAggr(const CNodePtr &cnode);

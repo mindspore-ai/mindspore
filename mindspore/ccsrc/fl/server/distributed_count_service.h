@@ -50,7 +50,7 @@ typedef struct {
 class DistributedCountService {
  public:
   static DistributedCountService &GetInstance() {
-    static DistributedCountService instance;
+    static DistributedCountService instance{};
     return instance;
   }
 

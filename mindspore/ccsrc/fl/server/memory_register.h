@@ -36,7 +36,7 @@ class MemoryRegister {
  public:
   MemoryRegister() = default;
   ~MemoryRegister() = default;
-
+  std::map<std::string, AddressPtr> addresses_;
   std::map<std::string, AddressPtr> &addresses() { return addresses_; }
   void RegisterAddressPtr(const std::string &name, const AddressPtr &address);
 
@@ -91,7 +91,6 @@ class MemoryRegister {
   }
 
  private:
-  std::map<std::string, AddressPtr> addresses_;
   std::vector<std::unique_ptr<float[]>> float_arrays_;
   std::vector<std::unique_ptr<int[]>> int32_arrays_;
   std::vector<std::unique_ptr<size_t[]>> uint64_arrays_;
@@ -103,7 +102,7 @@ class MemoryRegister {
   void StoreCharArray(std::unique_ptr<char[]> *array);
 
   template <typename T, typename S>
-  std::unique_ptr<T[]> CastUniquePtr(std::unique_ptr<S[]> *array) {
+  std::unique_ptr<T[]> CastUniquePtr(std::unique_ptr<S[]> *array) const {
     return std::unique_ptr<T[]>{reinterpret_cast<T *>(array->release())};
   }
 
@@ -112,7 +111,7 @@ class MemoryRegister {
   void StoreFloat32(std::unique_ptr<float> *array);
 
   template <typename T, typename S>
-  std::unique_ptr<T> CastUniqueParamPtr(std::unique_ptr<S> *param) {
+  std::unique_ptr<T> CastUniqueParamPtr(std::unique_ptr<S> *param) const {
     return std::unique_ptr<T>{reinterpret_cast<T *>(param->release())};
   }
 };

@@ -45,21 +45,24 @@ struct CompressWeight {
 
 class CompressExecutor {
  public:
+  CompressExecutor() = default;
+  ~CompressExecutor() = default;
+
   static CompressExecutor &GetInstance() {
-    static CompressExecutor instance;
+    static CompressExecutor instance{};
     return instance;
   }
 
-  bool EnableCompressWeight(const schema::CompressType compressType);
+  bool EnableCompressWeight(const schema::CompressType compressType) const;
 
   bool construct_compress_weight(std::map<std::string, CompressWeight> *compressWeights,
                                  std::map<std::string, std::vector<float>> feature_maps,
-                                 const schema::CompressType compressType);
+                                 const schema::CompressType compressType) const;
 
   bool quant_min_max(std::map<std::string, CompressWeight> *compressWeights,
-                     std::map<std::string, std::vector<float>> feature_maps, size_t num_bits);
+                     std::map<std::string, std::vector<float>> feature_maps, size_t num_bits) const;
 
-  schema::CompressType GetCompressType(const flatbuffers::Vector<int8_t> *download_compress_types);
+  schema::CompressType GetCompressType(const flatbuffers::Vector<int8_t> *download_compress_types) const;
 };
 }  // namespace compression
 }  // namespace fl

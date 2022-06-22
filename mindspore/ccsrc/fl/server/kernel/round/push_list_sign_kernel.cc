@@ -26,7 +26,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-void PushListSignKernel::InitKernel(size_t) {
+void PushListSignKernel::InitKernel(size_t required_cnt) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
@@ -140,7 +140,7 @@ bool PushListSignKernel::LaunchForPushListSign(const schema::SendClientListSign 
   return true;
 }
 
-sigVerifyResult PushListSignKernel::VerifySignature(const schema::SendClientListSign *client_list_sign_req) {
+sigVerifyResult PushListSignKernel::VerifySignature(const schema::SendClientListSign *client_list_sign_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req, sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->fl_id(), sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(client_list_sign_req->timestamp(), sigVerifyResult::FAILED);
@@ -258,7 +258,7 @@ bool PushListSignKernel::Reset() {
 
 void PushListSignKernel::BuildPushListSignKernelRsp(const std::shared_ptr<server::FBBuilder> &fbb,
                                                     const schema::ResponseCode retcode, const string &reason,
-                                                    const string &next_req_time, const size_t iteration) {
+                                                    const string &next_req_time, const size_t iteration) const {
   auto rsp_reason = fbb->CreateString(reason);
   auto rsp_next_req_time = fbb->CreateString(next_req_time);
   schema::ResponseClientListSignBuilder rsp_builder(*(fbb.get()));

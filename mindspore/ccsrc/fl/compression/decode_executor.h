@@ -47,12 +47,12 @@ struct CompressFeatureMap {
 class DecodeExecutor {
  public:
   static DecodeExecutor &GetInstance() {
-    static DecodeExecutor instance;
+    static DecodeExecutor instance{};
     return instance;
   }
 
   // construct mask array for random sparse
-  std::vector<int> ConstructMaskArray(int seed, float upload_sparse_rate, size_t param_num);
+  std::vector<int> ConstructMaskArray(int seed, float upload_sparse_rate, size_t param_num) const;
 
   // decode min_max quantization and random sparse and parameter difference
   bool DeQuantSparseDiff(std::map<std::string, std::vector<float>> *weight_map,
@@ -65,7 +65,11 @@ class DecodeExecutor {
               const std::vector<CompressFeatureMap> &compress_feature_maps, schema::CompressType upload_compress_type,
               float upload_sparse_rate, int seed, const std::vector<std::string> &name_vec, size_t data_size);
 
-  schema::CompressType GetCompressType(schema::CompressType upload_compress_type);
+  schema::CompressType GetCompressType(schema::CompressType upload_compress_type) const;
+
+ private:
+  DecodeExecutor() = default;
+  ~DecodeExecutor() = default;
 };
 }  // namespace compression
 }  // namespace fl

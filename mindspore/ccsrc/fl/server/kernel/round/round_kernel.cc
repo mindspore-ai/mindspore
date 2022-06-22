@@ -34,16 +34,16 @@ RoundKernel::RoundKernel() : name_(""), current_count_(0), running_(true) {}
 
 RoundKernel::~RoundKernel() { running_ = false; }
 
-void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
-
-void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
-
 void RoundKernel::StopTimer() const {
   if (stop_timer_cb_) {
     stop_timer_cb_();
   }
   return;
 }
+
+void RoundKernel::OnFirstCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
+
+void RoundKernel::OnLastCountEvent(const std::shared_ptr<ps::core::MessageHandler> &) { return; }
 
 void RoundKernel::FinishIteration(bool is_last_iter_valid, const std::string &in_reason) const {
   std::string reason = in_reason;

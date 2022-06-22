@@ -47,7 +47,7 @@ class GetModelKernel : public RoundKernel {
                         const std::string &reason, const size_t iter,
                         const std::map<std::string, AddressPtr> &feature_maps, const std::string &timestamp,
                         const schema::CompressType &compressType = schema::CompressType_NO_COMPRESS,
-                        const std::map<std::string, AddressPtr> &compress_feature_maps = {});
+                        const std::map<std::string, AddressPtr> &compress_feature_maps = {}) const;
 
   // The executor is for getting model for getModel request.
   Executor *executor_;

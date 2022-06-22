@@ -31,13 +31,13 @@ using AggregationKernelCreator = std::function<std::shared_ptr<AggregationKernel
 class AggregationKernelFactory : public KernelFactory<std::shared_ptr<AggregationKernelMod>, AggregationKernelCreator> {
  public:
   static AggregationKernelFactory &GetInstance() {
-    static AggregationKernelFactory instance;
+    static AggregationKernelFactory instance{};
     return instance;
   }
 
  private:
   AggregationKernelFactory() = default;
-  ~AggregationKernelFactory() override = default;
+  ~AggregationKernelFactory() = default;
   AggregationKernelFactory(const AggregationKernelFactory &) = delete;
   AggregationKernelFactory &operator=(const AggregationKernelFactory &) = delete;
 

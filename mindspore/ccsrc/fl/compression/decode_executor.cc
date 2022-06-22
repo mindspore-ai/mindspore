@@ -19,11 +19,11 @@
 namespace mindspore {
 namespace fl {
 namespace compression {
-std::vector<int> DecodeExecutor::ConstructMaskArray(int seed, float upload_sparse_rate, size_t param_num) {
-  static int multiplier = 2147483647;
-  static double increment = 4294967294.0;
-  static int modulo = 48271;
-  static double carry = 0.5;
+std::vector<int> DecodeExecutor::ConstructMaskArray(int seed, float upload_sparse_rate, size_t param_num) const {
+  static const int multiplier = 2147483647;
+  static const double increment = 4294967294.0;
+  static const int modulo = 48271;
+  static const double carry = 0.5;
   size_t retain_num = size_t(static_cast<float>(param_num) * upload_sparse_rate);
   if (retain_num == 0) {
     MS_LOG(WARNING) << "The retain_num is 0, and upload_sparse_rate is too small.";
@@ -63,7 +63,7 @@ bool DecodeExecutor::DeQuantSparseDiff(std::map<std::string, std::vector<float>>
   // get shape vector and number of upload parameters
   for (const auto &name : name_vec) {
     size_t shape = feature_maps[name]->size / sizeof(float);
-    shape_vec.emplace_back(shape);
+    (void)shape_vec.emplace_back(shape);
     param_num += shape;
   }
   MS_LOG(DEBUG) << "Compression get last weights success!";
@@ -78,7 +78,7 @@ bool DecodeExecutor::DeQuantSparseDiff(std::map<std::string, std::vector<float>>
     float scale_val = static_cast<float>(max_val - min_val) / temp1 + 1e-10f;
     size_t size = compress_feature_map.compress_data.size();
     for (size_t i = 0; i < size; ++i) {
-      de_min_max_feature_map.emplace_back(
+      (void)de_min_max_feature_map.emplace_back(
         (static_cast<float>(compress_feature_map.compress_data[i]) + temp2) * scale_val + min_val);
     }
   }
@@ -107,7 +107,7 @@ bool DecodeExecutor::DeQuantSparseDiff(std::map<std::string, std::vector<float>>
       }
       index += 1;
     }
-    decompress_feature_maps.emplace_back(feature_map);
+    (void)decompress_feature_maps.emplace_back(feature_map);
   }
   MS_LOG(DEBUG) << "Compression sparse decode success!";
 
@@ -137,7 +137,7 @@ bool DecodeExecutor::Decode(std::map<std::string, std::vector<float>> *weight_ma
   return false;
 }
 
-schema::CompressType DecodeExecutor::GetCompressType(schema::CompressType upload_compress_type) {
+schema::CompressType DecodeExecutor::GetCompressType(schema::CompressType upload_compress_type) const {
   if (upload_compress_type == schema::CompressType_DIFF_SPARSE_QUANT) {
     MS_LOG(DEBUG) << "This upload compress type is DIFF_SPARSE_QUANT.";
     return schema::CompressType_DIFF_SPARSE_QUANT;

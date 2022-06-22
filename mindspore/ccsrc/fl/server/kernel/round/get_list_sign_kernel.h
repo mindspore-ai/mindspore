@@ -35,7 +35,7 @@ enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
 class GetListSignKernel : public RoundKernel {
  public:
-  GetListSignKernel() = default;
+  GetListSignKernel() : cipher_init_(nullptr), executor_(nullptr), iteration_time_window_(0) {}
   ~GetListSignKernel() override = default;
   void InitKernel(size_t required_cnt) override;
   bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
@@ -48,7 +48,7 @@ class GetListSignKernel : public RoundKernel {
   armour::CipherInit *cipher_init_;
   Executor *executor_;
   size_t iteration_time_window_;
-  sigVerifyResult VerifySignature(const schema::RequestAllClientListSign *client_list_sign_req);
+  sigVerifyResult VerifySignature(const schema::RequestAllClientListSign *client_list_sign_req) const;
   bool GetListSign(const size_t cur_iterator, const std::string &next_req_time,
                    const schema::RequestAllClientListSign *client_list_sign_req,
                    const std::shared_ptr<fl::server::FBBuilder> &fbb);

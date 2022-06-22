@@ -33,7 +33,7 @@ namespace armour {
 class CipherInit {
  public:
   static CipherInit &GetInstance() {
-    static CipherInit instance;
+    static CipherInit instance{};
     return instance;
   }
 
@@ -63,6 +63,8 @@ class CipherInit {
   CipherMetaStorage cipher_meta_storage_;
 
  private:
+  CipherInit() = default;
+  ~CipherInit() = default;
   size_t client_list_threshold;    // the minimum number of clients to get update
                                    // model client list.
   size_t get_key_threshold;        // the minimum number of clients to get public keys.

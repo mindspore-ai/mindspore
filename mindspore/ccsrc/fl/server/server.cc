@@ -50,7 +50,7 @@ void SignalHandler(int signal) {
 }
 
 Server &Server::GetInstance() {
-  static Server instance;
+  static Server instance{};
   return instance;
 }
 
@@ -61,7 +61,6 @@ void Server::Initialize(bool use_tcp, bool use_http, uint16_t http_port, const s
 
   if (rounds_config.empty()) {
     MS_LOG(EXCEPTION) << "Rounds are empty.";
-    return;
   }
   rounds_config_ = rounds_config;
   cipher_config_ = cipher_config;
@@ -119,7 +118,6 @@ void Server::InitPkiCertificate() {
                                                                      equip_crl_path_, replay_attack_time_diff_);
     if (!ret) {
       MS_LOG(EXCEPTION) << "init root cert and crl failed.";
-      return;
     }
     return;
   }
@@ -160,11 +158,9 @@ void Server::InitCluster() {
   MS_EXCEPTION_IF_NULL(task_executor_);
   if (!InitCommunicatorWithServer()) {
     MS_LOG(EXCEPTION) << "Initializing cross-server communicator failed.";
-    return;
   }
   if (!InitCommunicatorWithWorker()) {
     MS_LOG(EXCEPTION) << "Initializing worker-server communicator failed.";
-    return;
   }
   return;
 }
@@ -191,7 +187,6 @@ bool Server::InitCommunicatorWithWorker() {
   MS_EXCEPTION_IF_NULL(task_executor_);
   if (!use_tcp_ && !use_http_) {
     MS_LOG(EXCEPTION) << "At least one type of protocol should be set.";
-    return false;
   }
   if (use_tcp_) {
     MS_EXCEPTION_IF_NULL(communicator_with_server_);
@@ -308,9 +303,8 @@ void Server::InitCipher() {
   param.sign_dim_out = sign_dim_out;
 
   BIGNUM *prim = BN_new();
-  if (prim == NULL) {
+  if (prim == nullptr) {
     MS_LOG(EXCEPTION) << "new bn failed.";
-    ret = -1;
   } else {
     ret = mindspore::armour::GetPrime(prim);
   }
@@ -352,7 +346,6 @@ void Server::RegisterCommCallbacks() {
 
   if (!server_node_->InitFollowerScaler()) {
     MS_LOG(EXCEPTION) << "Initializing follower elastic scaler failed.";
-    return;
   }
   // Set scaling barriers before scaling.
   server_node_->RegisterFollowerScalerBarrierBeforeScaleOut("ServerPipeline",
@@ -417,7 +410,6 @@ void Server::RegisterMessageCallback(const std::shared_ptr<ps::core::TcpCommunic
 void Server::InitExecutor() {
   if (executor_threshold_ == 0) {
     MS_LOG(EXCEPTION) << "The executor's threshold should greater than 0.";
-    return;
   }
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -436,7 +428,6 @@ void Server::RegisterRoundKernel() {
   auto &rounds = iteration_->rounds();
   if (rounds.empty()) {
     MS_LOG(EXCEPTION) << "Server has no round registered.";
-    return;
   }
 
   for (auto &round : rounds) {
@@ -445,7 +436,6 @@ void Server::RegisterRoundKernel() {
     std::shared_ptr<kernel::RoundKernel> round_kernel = kernel::RoundKernelFactory::GetInstance().Create(name);
     if (round_kernel == nullptr) {
       MS_LOG(EXCEPTION) << "Round kernel for round " << name << " is not registered.";
-      return;
     }
 
     // For some round kernels, the threshold count should be set.
@@ -475,7 +465,6 @@ void Server::InitMetrics() {
 void Server::StartCommunicator() {
   if (communicators_with_worker_.empty()) {
     MS_LOG(EXCEPTION) << "Communicators for communication with worker is empty.";
-    return;
   }
 
   MS_LOG(INFO) << "Start communicator with worker.";
@@ -520,7 +509,6 @@ void Server::Recover() {
     MS_LOG(INFO) << "Synchronize with leader server after recovery.";
     if (!server_recovery_->SyncAfterRecovery(tcp_comm, server_node_->rank_id())) {
       MS_LOG(EXCEPTION) << "Failed to reach consistency of the cluster after recovery.";
-      return;
     }
     if (server_node_->rank_id() == kLeaderServerRank) {
       MS_EXCEPTION_IF_NULL(iteration_);

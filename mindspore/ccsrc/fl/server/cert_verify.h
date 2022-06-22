@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FL_SERVER_CERT_VERIFY_H
 #define MINDSPORE_CCSRC_FL_SERVER_CERT_VERIFY_H
 
-#include <assert.h>
 #ifndef _WIN32
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -37,13 +36,13 @@ namespace ps {
 namespace server {
 class CertVerify {
  public:
+  CertVerify() = default;
+  ~CertVerify() = default;
+
   static CertVerify &GetInstance() {
-    static CertVerify instance;
+    static CertVerify instance{};
     return instance;
   }
-
-  CertVerify() {}
-  ~CertVerify() = default;
 
   bool verifyCertAndSign(const std::string &flID, const std::string &timeStamp, const unsigned char *signData,
                          const std::string &keyAttestation, const std::string &equipCert,
@@ -51,7 +50,7 @@ class CertVerify {
                          const std::string &rootSecondCAPath, const std::string &equipCrlPath);
 
   static bool initRootCertAndCRL(const std::string rootFirstCaFilePath, const std::string rootSecondCaFilePath,
-                                 const std::string equipCrlPath, uint64_t replay_attack_time_diff_);
+                                 const std::string equipCrlPath, uint64_t replay_attack_time_diff);
 
   // verify valid of sign data
   bool verifyRSAKey(const std::string &keyAttestation, const uint8_t *srcData, const uint8_t *signData, int srcDataLen);
@@ -61,9 +60,8 @@ class CertVerify {
   // verify valid of time stamp of request
   bool verifyTimeStamp(const std::string &flID, const std::string &timeStamp) const;
 
-#ifndef _WIN32
-
  private:
+#ifndef _WIN32
   // read certificate from file path
   static X509 *readCertFromFile(const std::string &certPath);
 
@@ -71,7 +69,7 @@ class CertVerify {
   static X509_CRL *readCrlFromFile(const std::string &crlPath);
 
   // read certificate from pem string
-  X509 *readCertFromPerm(std::string cert);
+  X509 *readCertFromPerm(std::string cert) const;
 
   // verify valid of certificate time
   bool verifyCertTime(const X509 *cert) const;
@@ -92,7 +90,7 @@ class CertVerify {
 
   void sha256Hash(const std::string &src, uint8_t *hash, const int len) const;
 
-  std::string toHexString(const unsigned char *data, const int len);
+  std::string toHexString(const unsigned char *data, const int len) const;
 
   bool verifyCertCommonName(const X509 *caCert, const X509 *subCert) const;
 

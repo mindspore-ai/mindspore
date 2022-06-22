@@ -35,7 +35,7 @@ enum sigVerifyResult { FAILED, TIMEOUT, PASSED };
 
 class ShareSecretsKernel : public RoundKernel {
  public:
-  ShareSecretsKernel() = default;
+  ShareSecretsKernel() : executor_(nullptr), iteration_time_window_(0), cipher_share_(nullptr) {}
   ~ShareSecretsKernel() override = default;
   void InitKernel(size_t required_cnt) override;
   bool Launch(const uint8_t *req_data, size_t len, const std::shared_ptr<ps::core::MessageHandler> &message) override;
@@ -45,7 +45,7 @@ class ShareSecretsKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_;
   armour::CipherShares *cipher_share_;
-  sigVerifyResult VerifySignature(const schema::RequestShareSecrets *share_secrets_req);
+  sigVerifyResult VerifySignature(const schema::RequestShareSecrets *share_secrets_req) const;
   bool CountForShareSecrets(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestShareSecrets *share_secrets_req,
                             const size_t iter_num);
 };

@@ -852,7 +852,7 @@ bool Iteration::SummarizeIteration() {
   return true;
 }
 
-bool Iteration::UpdateHyperParams(const nlohmann::json &json) {
+bool Iteration::UpdateHyperParams(const nlohmann::json &json) const {
   for (const auto &item : json.items()) {
     std::string key = item.key();
     if (key == "start_fl_job_threshold") {

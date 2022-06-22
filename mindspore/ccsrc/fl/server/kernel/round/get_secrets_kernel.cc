@@ -26,7 +26,7 @@ namespace mindspore {
 namespace fl {
 namespace server {
 namespace kernel {
-void GetSecretsKernel::InitKernel(size_t) {
+void GetSecretsKernel::InitKernel(size_t required_cnt) {
   if (LocalMetaStore::GetInstance().has_value(kCtxTotalTimeoutDuration)) {
     iteration_time_window_ = LocalMetaStore::GetInstance().value<size_t>(kCtxTotalTimeoutDuration);
   }
@@ -48,7 +48,7 @@ bool GetSecretsKernel::CountForGetSecrets(const std::shared_ptr<FBBuilder> &fbb,
   return true;
 }
 
-sigVerifyResult GetSecretsKernel::VerifySignature(const schema::GetShareSecrets *get_secrets_req) {
+sigVerifyResult GetSecretsKernel::VerifySignature(const schema::GetShareSecrets *get_secrets_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(get_secrets_req, sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(get_secrets_req->fl_id(), sigVerifyResult::FAILED);
   MS_ERROR_IF_NULL_W_RET_VAL(get_secrets_req->timestamp(), sigVerifyResult::FAILED);

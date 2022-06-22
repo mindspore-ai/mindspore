@@ -68,10 +68,10 @@ class UpdateModelKernel : public RoundKernel {
                                           const schema::RequestUpdateModel *update_model_req);
   ResultCode UpdateModel(const schema::RequestUpdateModel *update_model_req, const std::shared_ptr<FBBuilder> &fbb,
                          const DeviceMeta &device_meta);
-  std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req);
+  std::map<std::string, UploadData> ParseFeatureMap(const schema::RequestUpdateModel *update_model_req) const;
 
-  void RunAggregation();
-  ResultCode CountForAggregation(const std::string &req_fl_id);
+  void RunAggregation() const;
+  ResultCode CountForAggregation(const std::string &req_fl_id) const;
   std::map<std::string, UploadData> ParseSignDSFeatureMap(const schema::RequestUpdateModel *update_model_req,
                                                           size_t data_size,
                                                           std::map<std::string, std::vector<float>> *weight_map);
@@ -80,15 +80,15 @@ class UpdateModelKernel : public RoundKernel {
     std::map<std::string, std::vector<float>> *weight_map);
   bool VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
                               const schema::RequestUpdateModel *update_model_req);
-  bool VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req);
+  bool VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req) const;
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,
                                  const schema::RequestUpdateModel *update_model_req);
-  sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req);
+  sigVerifyResult VerifySignature(const schema::RequestUpdateModel *update_model_req) const;
   void BuildUpdateModelRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
-                           const std::string &reason, const std::string &next_req_time);
+                           const std::string &reason, const std::string &next_req_time) const;
   ResultCode VerifyUpdateModel(const schema::RequestUpdateModel *update_model_req,
                                const std::shared_ptr<FBBuilder> &fbb, DeviceMeta *device_meta);
-  bool VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req);
+  bool VerifyUpdateModelRequest(const schema::RequestUpdateModel *update_model_req) const;
 
   // Record complete update model number according to participation_time_level
   void RecordCompletePeriod(const DeviceMeta &device_meta);
@@ -105,10 +105,10 @@ class UpdateModelKernel : public RoundKernel {
   // Decode functions of compression.
   std::map<std::string, UploadData> DecodeFeatureMap(std::map<std::string, std::vector<float>> *weight_map,
                                                      const schema::RequestUpdateModel *update_model_req,
-                                                     schema::CompressType upload_compress_type, size_t data_size);
+                                                     schema::CompressType upload_compress_type, size_t data_size) const;
 
   // Check upload mode
-  bool IsCompress(const schema::RequestUpdateModel *update_model_req);
+  bool IsCompress(const schema::RequestUpdateModel *update_model_req) const;
 
   // From StartFlJob to UpdateModel complete time and number
   std::vector<std::pair<uint64_t, uint32_t>> participation_time_and_num_{};

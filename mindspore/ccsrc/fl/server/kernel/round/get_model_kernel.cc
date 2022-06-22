@@ -35,7 +35,6 @@ void GetModelKernel::InitKernel(size_t) {
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
   }
 }
 
@@ -156,7 +155,7 @@ void GetModelKernel::GetModel(const schema::RequestGetModel *get_model_req,
       return;
     }
   }
-  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::GetInstance().RelModelResponseCache);
+  SendResponseMsgInference(message, cache->data(), cache->size(), ModelStore::RelModelResponseCache);
   MS_LOG(DEBUG) << "GetModel last iteration is valid or not: " << Iteration::GetInstance().is_last_iteration_valid()
                 << ", next request time is " << next_req_time << ", current iteration is " << current_iter;
   return;
@@ -166,7 +165,7 @@ void GetModelKernel::BuildGetModelRsp(const std::shared_ptr<FBBuilder> &fbb, con
                                       const std::string &reason, const size_t iter,
                                       const std::map<std::string, AddressPtr> &feature_maps,
                                       const std::string &timestamp, const schema::CompressType &compressType,
-                                      const std::map<std::string, AddressPtr> &compress_feature_maps) {
+                                      const std::map<std::string, AddressPtr> &compress_feature_maps) const {
   if (fbb == nullptr) {
     MS_LOG(ERROR) << "Input fbb is nullptr.";
     return;

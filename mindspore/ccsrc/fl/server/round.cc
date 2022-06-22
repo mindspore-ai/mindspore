@@ -236,7 +236,7 @@ bool Round::IsServerAvailable(std::string *reason) {
 
 void Round::KernelSummarize() {
   MS_ERROR_IF_NULL_WO_RET_VAL(kernel_);
-  (void)kernel_->Summarize();
+  kernel_->Summarize();
 }
 
 size_t Round::kernel_total_client_num() const { return kernel_->total_client_num(); }
@@ -258,7 +258,6 @@ std::vector<std::pair<uint64_t, uint32_t>> Round::GetUpdateModelCompleteInfo() c
     return update_model_model_ptr->GetCompletePeriodRecord();
   } else {
     MS_LOG(EXCEPTION) << "The kernel is not updateModel";
-    return {};
   }
 }
 

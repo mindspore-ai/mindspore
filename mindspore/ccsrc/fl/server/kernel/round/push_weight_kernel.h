@@ -42,9 +42,9 @@ class PushWeightKernel : public RoundKernel {
 
  private:
   ResultCode PushWeight(const std::shared_ptr<FBBuilder> &fbb, const schema::RequestPushWeight *push_weight_req);
-  std::map<std::string, Address> ParseFeatureMap(const schema::RequestPushWeight *push_weight_req);
+  std::map<std::string, Address> ParseFeatureMap(const schema::RequestPushWeight *push_weight_req) const;
   void BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
-                          const std::string &reason, size_t iteration);
+                          const std::string &reason, size_t iteration) const;
 
   Executor *executor_;
   uint32_t local_rank_;

@@ -48,7 +48,7 @@ class ReconstructSecretsKernel : public RoundKernel {
   Executor *executor_;
   size_t iteration_time_window_{0};
   armour::CipherReconStruct cipher_reconstruct_;
-  sigVerifyResult VerifySignature(const schema::SendReconstructSecret *reconstruct_secret_req);
+  sigVerifyResult VerifySignature(const schema::SendReconstructSecret *reconstruct_secret_req) const;
 };
 }  // namespace kernel
 }  // namespace server

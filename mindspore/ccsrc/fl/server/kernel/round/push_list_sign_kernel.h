@@ -44,13 +44,13 @@ class PushListSignKernel : public RoundKernel {
                              const std::shared_ptr<ps::core::MessageHandler> &message);
   bool Reset() override;
   void BuildPushListSignKernelRsp(const std::shared_ptr<server::FBBuilder> &fbb, const schema::ResponseCode retcode,
-                                  const string &reason, const string &next_req_time, const size_t iteration);
+                                  const string &reason, const string &next_req_time, const size_t iteration) const;
 
  private:
   armour::CipherInit *cipher_init_;
   Executor *executor_;
   size_t iteration_time_window_;
-  sigVerifyResult VerifySignature(const schema::SendClientListSign *client_list_sign_req);
+  sigVerifyResult VerifySignature(const schema::SendClientListSign *client_list_sign_req) const;
   bool PushListSign(const size_t cur_iterator, const std::string &next_req_time,
                     const schema::SendClientListSign *client_list_sign_req,
                     const std::shared_ptr<fl::server::FBBuilder> &fbb,

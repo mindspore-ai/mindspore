@@ -38,7 +38,7 @@ namespace server {
 class Executor {
  public:
   static Executor &GetInstance() {
-    static Executor instance;
+    static Executor instance{};
     return instance;
   }
 
@@ -96,7 +96,7 @@ class Executor {
   Executor &operator=(const Executor &) = delete;
 
   // Returns the trainable parameter name parsed from this cnode.
-  std::string GetTrainableParamName(const CNodePtr &cnode);
+  std::string GetTrainableParamName(const CNodePtr &cnode) const;
 
   // Server's graph is basically the same as Worker's graph, so we can get all information from func_graph for later
   // computations. Including forward and backward propagation, aggregation, optimizing, etc.

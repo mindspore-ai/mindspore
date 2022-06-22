@@ -25,7 +25,6 @@ void PushWeightKernel::InitKernel(size_t) {
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
     MS_LOG(EXCEPTION) << "Executor must be initialized in server pipeline.";
-    return;
   }
   local_rank_ = DistributedCountService::GetInstance().local_rank();
 }
@@ -120,7 +119,8 @@ ResultCode PushWeightKernel::PushWeight(const std::shared_ptr<FBBuilder> &fbb,
   return ResultCode::kSuccess;
 }
 
-std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::RequestPushWeight *push_weight_req) {
+std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(
+  const schema::RequestPushWeight *push_weight_req) const {
   MS_ERROR_IF_NULL_W_RET_VAL(push_weight_req, {});
   std::map<std::string, Address> upload_feature_map;
   auto fbs_feature_map = push_weight_req->feature_map();
@@ -135,7 +135,7 @@ std::map<std::string, Address> PushWeightKernel::ParseFeatureMap(const schema::R
 }
 
 void PushWeightKernel::BuildPushWeightRsp(const std::shared_ptr<FBBuilder> &fbb, const schema::ResponseCode retcode,
-                                          const std::string &reason, size_t iteration) {
+                                          const std::string &reason, size_t iteration) const {
   if (fbb == nullptr) {
     MS_LOG(ERROR) << "Input fbb is nullptr.";
     return;
