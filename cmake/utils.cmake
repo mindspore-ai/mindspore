@@ -114,6 +114,7 @@ function(__find_pkg_then_add_target pkg_name pkg_exe lib_path)
     message("_FIND:${${pkg_name}_BASE_DIR}")
 
     if(pkg_exe)
+        unset(${pkg_exe}_EXE CACHE)
         find_program(${pkg_exe}_EXE ${pkg_exe} PATHS ${${pkg_name}_BASE_DIR}/bin NO_DEFAULT_PATH)
         if(NOT ${pkg_exe}_EXE)
             return()
@@ -206,7 +207,6 @@ endfunction()
 set(MS_FIND_NO_DEFAULT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
                             NO_CMAKE_BUILDS_PATH NO_CMAKE_PACKAGE_REGISTRY NO_CMAKE_SYSTEM_PATH
                             NO_CMAKE_SYSTEM_PACKAGE_REGISTRY)
-set(MS_FIND_NO_DEFAULT_PATH ${MS_FIND_NO_DEFAULT_PATH} PARENT_SCOPE)
 function(mindspore_add_pkg pkg_name)
 
     set(options)
@@ -239,6 +239,9 @@ function(mindspore_add_pkg pkg_name)
             "${CMAKE_CXX_COMPILER_VERSION}-${CMAKE_C_COMPILER_VERSION}
             ${ARGN} - ${${pkg_name}_USE_STATIC_LIBS}- ${${pkg_name}_PATCHES_HASH}
             ${${pkg_name}_CXXFLAGS}--${${pkg_name}_CFLAGS}--${${pkg_name}_LDFLAGS}")
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+        set(${pkg_name}_CONFIG_TXT "${${pkg_name}_CONFIG_TXT}--${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    endif()
     string(REPLACE ";" "-" ${pkg_name}_CONFIG_TXT ${${pkg_name}_CONFIG_TXT})
     string(MD5 ${pkg_name}_CONFIG_HASH ${${pkg_name}_CONFIG_TXT})
 
@@ -268,7 +271,7 @@ function(mindspore_add_pkg pkg_name)
             return()
         endif()
     elseif(NOT PKG_HEAD_ONLY)
-        find_package(${__FIND_PKG_NAME} ${PKG_VER} ${MS_FIND_NO_DEFAULT_PATH})
+        find_package(${__FIND_PKG_NAME} ${PKG_VER} PATHS ${${pkg_name}_BASE_DIR} ${MS_FIND_NO_DEFAULT_PATH})
         if(${__FIND_PKG_NAME}_FOUND)
             set(${pkg_name}_INC ${${pkg_name}_BASE_DIR}/include PARENT_SCOPE)
             message("Found pkg: ${__FIND_PKG_NAME}")
