@@ -958,9 +958,14 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   auto inputs = GetRunGraphInputs(graph_compiler_info, args);
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   auto graphs = graph_compiler_info.graphs_;
+  auto device_contexts = graph_compiler_info.device_contexts_;
   if (graphs.size() > inputs.size()) {
     MS_LOG(EXCEPTION) << "The actor_set " << actor_info << " graphs size " << graphs.size()
                       << " should less than or equal to inputs size " << inputs.size();
+  }
+  if (device_contexts.size() != graphs.size()) {
+    MS_LOG(EXCEPTION) << "Graphs size " << graphs.size() << " is not equal to device_contexts size "
+                      << device_contexts.size();
   }
 
   auto actor_set = runtime::GraphScheduler::GetInstance().Fetch(actor_info);
@@ -978,11 +983,12 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
         // Need to get tensor after ParseControlNodes.
         pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs.at(i));
       }
-      graph_compiler_->CompileGraphImpl(graph, graph_compiler_info.device_contexts_.at(i));
+      graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
       pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
       graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
       // Clear front outputs after the outputs is cached.
       graph->set_front_outputs({});
+      AnfAlgo::UpdateGraphValidRefPair(graph);
     }
 
     ParseControlNodes(graph_compiler_info);
@@ -998,8 +1004,10 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     }
   }
 
-  for (auto &graph : graphs) {
-    pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graph);
+  if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
+    for (size_t i = 0; i < graphs.size(); ++i) {
+      pynative::GraphAdapter::UpdateForwardOutputInBpropGraph(graphs[i], device_contexts[i]);
+    }
   }
 
   std::vector<std::vector<tensor::TensorPtr>> input_tensors = GetRunGraphInputs(graph_compiler_info, args);
@@ -1422,13 +1430,6 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
 
   auto device_context = task_context->device_context();
   graph_compiler_->BuildSingleOpGraphs(graphs, device_context);
-
-  for (const auto &graph_compiler_info : graph_compiler_infos) {
-    MS_EXCEPTION_IF_NULL(graph_compiler_info);
-    auto actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);
-    graph_compiler_info->input_tensors_.clear();
-    runtime::GraphScheduler::GetInstance().Schedule(actor_set);
-  }
 }
 
 void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {

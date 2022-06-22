@@ -24,6 +24,8 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
+#include "runtime/device/ms_device_shape_transfer.h"
+#include "runtime/graph_scheduler/actor/actor_common.h"
 
 namespace mindspore::pynative {
 namespace {
@@ -83,6 +85,80 @@ HashMap<ValueNodePtr, size_t> GetGraphValueNodeRefCounts(const KernelGraphPtr &g
   }
 
   return value_node_ref_counts;
+}
+
+device::DeviceAddressPtr CreateValueNodeAddress(const ValueNodePtr &value_node,
+                                                const device::DeviceContext *device_context) {
+  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, 0);
+  TypeId data_type = AnfAlgo::GetOutputDeviceDataType(value_node, 0);
+  if (data_type == kTypeUnknown) {
+    data_type = common::AnfAlgo::GetOutputInferDataType(value_node, 0);
+  }
+  auto output_format = AnfAlgo::GetOutputFormat(value_node, 0);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  return device_context->device_res_manager_->CreateDeviceAddress(nullptr, tensor_size, output_format, data_type,
+                                                                  trans::GetRuntimePaddingShape(value_node, 0));
+}
+
+bool CopyTensorData(const tensor::TensorPtr &tensor, const device::DeviceAddressPtr &device_address,
+                    const AnfNodePtr &node, const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(device_address);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  device::DynamicMemAllocatorDebugInfo::SetDebugInfo(node->fullname_with_scope(), device::AllocatorType::kConstantValue,
+                                                     0);
+  if ((device_address->GetPtr() == nullptr) &&
+      (!device_context->device_res_manager_->AllocateMemory(device_address.get()))) {
+    MS_LOG(ERROR) << "Allocate memory failed, allocate size " << device_address->GetSize();
+    return false;
+  }
+
+  // Copy data from host tensor to device.
+  auto host_tensor_size = LongToSize(tensor->data().nbytes());
+  auto host_tensor_type = tensor->data_type();
+  if (!device_address->SyncHostToDevice(trans::GetRuntimePaddingShape(node, 0), host_tensor_size, host_tensor_type,
+                                        tensor->data_c(), tensor->device_info().host_format_)) {
+    std::string error_info = "SyncHostToDevice failed, node name: " + node->fullname_with_scope() +
+                             ", tensor size: " + std::to_string(host_tensor_size) +
+                             ", tensor type: " + std::to_string(static_cast<int>(host_tensor_type)) +
+                             ", device address size: " + std::to_string(device_address->GetSize());
+    MS_LOG(ERROR) << error_info;
+    return false;
+  }
+  return true;
+}
+
+device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &tensor, const ValueNodePtr &value_node,
+                                                       const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(tensor);
+  MS_EXCEPTION_IF_NULL(value_node);
+  MS_EXCEPTION_IF_NULL(device_context);
+  auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+  if (device_address == nullptr) {
+    MS_LOG(INFO) << "Forward output " << tensor->ToString() << " device address is null";
+    device_address = CreateValueNodeAddress(value_node, device_context);
+    if (!CopyTensorData(tensor, device_address, value_node, device_context)) {
+      MS_LOG(EXCEPTION) << "Sync tensor data failed";
+    }
+  }
+  MS_EXCEPTION_IF_NULL(device_address);
+  if (device_address->GetDeviceType() != device_context->GetDeviceType()) {
+    auto new_device_address = CreateValueNodeAddress(value_node, device_context);
+    MS_EXCEPTION_IF_NULL(new_device_address);
+    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+    if (!device_context->device_res_manager_->AllocateMemory(new_device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed, allocate size " << new_device_address->GetSize();
+    }
+    if (!runtime::Copy(new_device_address.get(), device_address.get())) {
+      MS_LOG(EXCEPTION) << "Copy data from " << device_address->GetDeviceType() << " to "
+                        << new_device_address->GetDeviceType() << " failed ";
+    }
+    return new_device_address;
+  }
+  return device_address;
 }
 }  // namespace
 
@@ -151,7 +227,8 @@ void GraphAdapter::GenerateRefCountForBpropValueNode(const KernelGraphPtr &graph
   graph->set_attr(kAttrValueNodeForwardOuputFlags, MakeValue(value_node_forward_output_flags));
 }
 
-void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph) {
+void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
+                                                   const device::DeviceContext *device_context) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(DEBUG) << "Update start";
   auto value_node_ref_counts = GetValue<std::vector<size_t>>(graph->get_attr(kAttrBpropValueNodeRefCount));
@@ -175,18 +252,15 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph) 
     size_t value_node_ref_count = value_node_ref_counts[value_node_index++];
     auto tensor = GetTensorFromValueNode(value_node);
     MS_EXCEPTION_IF_NULL(tensor);
-    auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-    if (device_address == nullptr) {
-      MS_LOG(WARNING) << "Forward output " << tensor->ToString() << " device address is null";
-      continue;
-    }
 
+    auto device_address = HandleAddressForHeterogeneous(tensor, value_node, device_context);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
     if (device_address->GetDeviceType() != device::DeviceType::kCPU) {
       address_ref_count[device_address] += value_node_ref_count;
       device_address->AddHeldByNode(front_node->cast<ValueNodePtr>());
     }
+    runtime::DeviceTensorStore::GetInstance().Remove(front_node.get());
     runtime::DeviceTensorStore::GetInstance().Insert(front_node.get(), device_address);
   }
 
