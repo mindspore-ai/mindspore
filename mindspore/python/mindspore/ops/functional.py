@@ -69,7 +69,6 @@ tensor_scatter_update = P.TensorScatterUpdate()
 tensor_scatter_max = P.TensorScatterMax()
 scatter_nd_update = P.ScatterNdUpdate()
 stack = P.Stack()
-mish = P.Mish()
 
 
 def csr_mul(x, y):

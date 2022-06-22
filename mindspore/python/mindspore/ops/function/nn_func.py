@@ -23,6 +23,7 @@ slice_ = P.Slice()
 fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
+mish_ = NN.Mish()
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -1059,6 +1060,42 @@ def lrn(x, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CH
     return lrn_op(x)
 
 
+def mish(x):
+    r"""
+    Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
+
+    The function is shown as follows:
+
+    .. math::
+
+        \text{output} = x * \tanh(\log(1 + \exp(\text{x})))
+
+    See more details in `A Self Regularized Non-Monotonic Neural Activation Function
+    <https://arxiv.org/abs/1908.08681>`_.
+
+    Args:
+        x (Tensor): Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
+            additional dimensions, with float16 or float32 data type.
+
+    Returns:
+        Tensor, with the same type and shape as the `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.mish(input_x)
+        >>> print(output)
+        [[-0.3034014  3.9974129 -0.00026832]
+         [ 1.9439590  -0.0033576 9.0000000]]
+    """
+    return mish_(x)
+
+
 def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zeros', align_corners=False):
     """
     Given an `input_x` and a flow-field `grid`, computes the `output` using `input_x` values and pixel locations from
@@ -1148,6 +1185,7 @@ __all__ = [
     'soft_shrink',
     'intopk',
     'log_softmax',
+    'mish',
     'lrn',
     'hardswish',
     'softsign',

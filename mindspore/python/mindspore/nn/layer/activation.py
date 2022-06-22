@@ -22,6 +22,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops.operations import nn_ops as NN_OPS
 from mindspore.ops.primitive import constexpr
 from ..cell import Cell
 
@@ -48,7 +49,8 @@ __all__ = ['Softmin',
            'SoftShrink',
            'HShrink',
            'CELU',
-           'Threshold'
+           'Threshold',
+           'Mish'
            ]
 
 
@@ -1284,6 +1286,36 @@ class Threshold(Cell):
         return self.select(cond, input_x, value)
 
 
+class Mish(Cell):
+    r"""
+    Computes MISH(A Self Regularized Non-Monotonic Neural Activation Function) of input tensors element-wise.
+
+    Refer to :func:`mindspore.ops.mish` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Examples:
+        >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> mish = ops.Mish()
+        >>> output = mish(x)
+        >>> print(output)
+        [[-0.3034014  3.9974129 -0.00026832]
+         [ 1.9439590  -0.0033576 9.0000000]]
+    """
+
+    def __init__(self):
+        """Initialize Mish."""
+        super().__init__("Mish")
+        self.mish = NN_OPS.Mish()
+
+    def construct(self, input_x):
+        return self.mish(input_x)
+
+
 _activation = {
     'softmin': Softmin,
     'softmax': Softmax,
@@ -1306,7 +1338,8 @@ _activation = {
     'logsigmoid': LogSigmoid,
     'softshrink': SoftShrink,
     'hshrink': HShrink,
-    'threshold': Threshold
+    'threshold': Threshold,
+    'mish': Mish
 }
 
 

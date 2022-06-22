@@ -243,6 +243,7 @@ from .nn_func import (
     intopk,
     log_softmax,
     lrn,
+    mish,
     hardswish,
     softsign,
     pdist,
