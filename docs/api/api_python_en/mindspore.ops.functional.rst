@@ -350,6 +350,7 @@ Array Operation
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
+    mindspore.ops.gumbel_softmax
 
 .. list-table::
    :widths: 50 50
