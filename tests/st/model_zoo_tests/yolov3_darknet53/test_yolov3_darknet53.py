@@ -212,7 +212,7 @@ def test_yolov3_darknet53():
     print('==========test case passed===========')
 
 
-@pytest.mark.level2
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single
@@ -229,8 +229,8 @@ def test_yolov3_darknet_8p():
     new_list = ["--lr_scheduler=cosine_annealing --training_shape=416 --log_interval=10"]
     utils.exec_sed_command(old_list, new_list,
                            os.path.join(cur_model_path, "scripts/run_distribute_train.sh"))
-    old_list = ["max_epoch=config.max_epoch", "save_graphs=False, device_id=devid"]
-    new_list = ["max_epoch=1", "device_id=devid"]
+    old_list = ["range(config.max_epoch)", "save_graphs=False, device_id=device_id"]
+    new_list = ["range(1)", "device_id=device_id"]
     utils.exec_sed_command(old_list, new_list, train_file)
     old_list = ["sampler=distributed_sampler"]
     new_list = ["sampler=distributed_sampler, num_samples=100*batch_size"]
@@ -242,8 +242,8 @@ def test_yolov3_darknet_8p():
     ret = utils.process_check(120, cmd)
     assert ret
     train_log_file = os.path.join(cur_path, "yolov3_darknet53/scripts/train_parallel0/log.txt")
-    pattern1 = r", *([\d\.]+) imgs/sec"
-    pattern2 = r"loss:*([\d\.]+),"
+    pattern1 = r"fps:([\d\.]+) imgs/sec"
+    pattern2 = r"loss:([\d\.]+),"
     fps_list = utils.parse_log_file(pattern1, train_log_file)[1:]
     assert sum(fps_list) / len(fps_list) > 370
     loss_list = utils.parse_log_file(pattern2, train_log_file)
