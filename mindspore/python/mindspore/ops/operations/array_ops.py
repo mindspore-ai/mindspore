@@ -2515,34 +2515,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
     r"""
     Computes the minimum of a tensor along segments.
 
-    The following figure shows the calculation process of UnsortedSegmentMin:
-
-    .. image:: UnsortedSegmentMin.png
-
-    .. math::
-
-        \text { output }_i=\text{min}_{j \ldots} \text { data }[j \ldots]
-
-    where :math:`min` over tuples :math:`j...` such that :math:`segment_ids[j...] == i`.
-
-    Note:
-        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
-        the maximum value of the input_x's type.
-        The `segment_ids` must be non-negative tensor.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          The data type must be float16, float32 or int32.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
-          The data type must be int32.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
-
-    Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
+    Refer to :func:`mindspore.ops.unsorted_segment_min` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2589,33 +2562,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
     r"""
     Computes the maximum along segments of a tensor.
 
-    The following figure shows the calculation process of UnsortedSegmentMax:
-
-    .. image:: UnsortedSegmentMax.png
-
-    .. math::
-
-        \text { output }_i=\text{max}_{j \ldots} \text { data }[j \ldots]
-
-    where :math:`max` over tuples :math:`j...` such that :math:`segment\_ids[j...] == i`.
-
-    Note:
-        If the segment_id i is absent in the segment_ids, then output[i] will be filled with
-        the minimum value of the input_x's type.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          The data type must be float16, float32 or int32.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
-          The data type must be int32.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
-
-    Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
+    Refer to :func:`mindspore.ops.unsorted_segment_max` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -2723,24 +2670,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
     """
     Computes the product of a tensor along segments.
 
-    The following figure shows the calculation process of UnsortedSegmentProd:
-
-    .. image:: UnsortedSegmentProd.png
-
-    Inputs:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          With float16, float32 or int32 data type.
-        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be non-negative tensor.
-          Data type must be int32.
-        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`,
-          must be greater than 0.
-
-    Outputs:
-        Tensor, set the number of `num_segments` as `N`, the shape is :math:`(N, x_2, ..., x_R)`.
-
-    Raises:
-        TypeError: If `num_segments` is not an int.
-        ValueError: If length of shape of `segment_ids` is not equal to 1.
+    Refer to :func:`mindspore.ops.unsorted_segment_prod` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
