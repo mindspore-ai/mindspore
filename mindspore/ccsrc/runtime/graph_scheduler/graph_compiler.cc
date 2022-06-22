@@ -458,6 +458,10 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
   MS_EXCEPTION_IF_NULL(graph);
   std::set<CNodePtr> invalid_nopnodes;
 
+  // In the implementation of some cpu operators, shape information is obtained through the input of the kernel
+  // in launchkernel stage. The nopnode input of these operators cannot be eliminated.
+  const std::set<std::string> kCPUOpNoEliminateList = {kConcatOpName};
+
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // If target is not cpu, the total cnode in graph can skip.
@@ -468,7 +472,8 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
 
     // kernel not support multi-thread execute will be inited in launch kernel, so its input cannot be eliminated.
     if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(cnode)) !=
-        kOpNotSupportMultiThreadExecList.end()) {
+          kOpNotSupportMultiThreadExecList.end() ||
+        (kCPUOpNoEliminateList.find(common::AnfAlgo::GetCNodeName(cnode)) != kCPUOpNoEliminateList.end())) {
       const auto &inputs = cnode->inputs();
       for (const auto &input : inputs) {
         MS_EXCEPTION_IF_NULL(input);
