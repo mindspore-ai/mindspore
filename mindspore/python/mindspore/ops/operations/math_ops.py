@@ -554,6 +554,8 @@ class _Reduce(PrimitiveWithInfer):
                 'ReduceSum': np.sum,
                 'ReduceMax': np.max,
                 'ReduceMin': np.min,
+                'ReduceProd': np.prod,
+                'ReduceMean': np.mean,
             }
             np_reduce_func = prim_map.get(self.name, None)
 

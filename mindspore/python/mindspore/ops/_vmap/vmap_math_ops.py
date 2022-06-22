@@ -404,6 +404,8 @@ def _get_reduce_out_dim(keep_dims, x_dim, x_ndim, batch_axis):
 @vmap_rules_getters.register(P.ReduceSum)
 @vmap_rules_getters.register(P.ReduceMax)
 @vmap_rules_getters.register(P.ReduceMin)
+@vmap_rules_getters.register(P.ReduceMean)
+@vmap_rules_getters.register(P.ReduceProd)
 def get_reducer_vmap_rule(prim, axis_size):
     """VmapRule for reduce operations, such as `ReduceSum`."""
     keep_dims = prim.keep_dims
