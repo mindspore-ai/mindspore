@@ -20,6 +20,8 @@
 #include <limits>
 #include <vector>
 
+#include "minddata/dataset/kernels/image/image_utils.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -56,6 +58,10 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
                         "but got " +
                           std::to_string(image_and_bbox[1]->shape().Size()) + " dimension.");
   }
+  if (image_and_bbox[0]->shape().Size() < kMinImageRank) {
+    RETURN_STATUS_UNEXPECTED("Invalid data, input image hasn't been decoded, you may need to perform Decode first.");
+  }
+
   int64_t num_of_features = image_and_bbox[1]->shape()[1];
   if (num_of_features < kNumOfCols) {
     RETURN_STATUS_ERROR(

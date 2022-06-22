@@ -806,6 +806,19 @@ def check_cutout(method):
     return new_method
 
 
+def check_decode(method):
+    """Wrapper method to check the parameters of decode operation."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [to_pil], _ = parse_user_args(method, *args, **kwargs)
+        type_check(to_pil, (bool,), "to_pil")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_linear_transform(method):
     """Wrapper method to check the parameters of linear transform."""
 

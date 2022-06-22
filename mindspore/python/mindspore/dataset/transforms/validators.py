@@ -230,11 +230,11 @@ def check_random_transform_ops(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         arg_list, _ = parse_user_args(method, *args, **kwargs)
-        type_check(arg_list[0], (list,), "op_list")
+        type_check(arg_list[0], (list,), "transforms list")
         if not arg_list[0]:
-            raise ValueError("op_list can not be empty.")
+            raise ValueError("transforms list can not be empty.")
         for ind, op in enumerate(arg_list[0]):
-            check_tensor_op(op, "op_list[{0}]".format(ind))
+            check_tensor_op(op, "transforms[{0}]".format(ind))
             check_transform_op_type(ind, op)
         if len(arg_list) == 2:  # random apply takes an additional arg
             type_check(arg_list[1], (float, int), "prob")

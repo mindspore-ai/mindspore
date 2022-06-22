@@ -17,6 +17,7 @@ Testing Decode op in DE
 """
 import cv2
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -51,6 +52,48 @@ def test_decode_op():
         assert actual.shape == expected.shape
         mse = diff_mse(actual, expected)
         assert mse == 0
+
+
+def test_decode_op_support_format():
+    """
+    Feature: Decode Op
+    Description: Test support format of decode op
+    Expectation: decode image successfully
+    """
+    c_decode = vision.Decode(to_pil=False)
+    p_decode = vision.Decode(to_pil=True)
+
+    # jpeg: Opencv[√] Pillow[√]
+    jpg_image = np.fromfile("../data/dataset/testFormats/apple.jpg", np.uint8)
+    c_decode(jpg_image)
+    p_decode(jpg_image)
+
+    # bmp: Opencv[√] Pillow[√]
+    bmp_image = np.fromfile("../data/dataset/testFormats/apple.bmp", np.uint8)
+    c_decode(bmp_image)
+    p_decode(bmp_image)
+
+    # png: Opencv[√] Pillow[√]
+    png_image = np.fromfile("../data/dataset/testFormats/apple.png", np.uint8)
+    c_decode(png_image)
+    p_decode(png_image)
+
+    # tiff: Opencv[√] Pillow[√]
+    tiff_image = np.fromfile("../data/dataset/testFormats/apple.tiff", np.uint8)
+    c_decode(tiff_image)
+    p_decode(tiff_image)
+
+    # gif: Opencv[×] Pillow[√]
+    gif_image = np.fromfile("../data/dataset/testFormats/apple.gif", np.uint8)
+    with pytest.raises(RuntimeError):
+        c_decode(gif_image)
+    p_decode(gif_image)
+
+    # webp: Opencv[×] Pillow[√]
+    webp_image = np.fromfile("../data/dataset/testFormats/apple.webp", np.uint8)
+    with pytest.raises(RuntimeError):
+        c_decode(webp_image)
+    p_decode(webp_image)
 
 
 class ImageDataset:
@@ -96,4 +139,5 @@ def test_read_image_decode_op():
 
 if __name__ == "__main__":
     test_decode_op()
+    test_decode_op_support_format()
     test_read_image_decode_op()

@@ -67,13 +67,13 @@ def test_compose():
     # Test exceptions.
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1, transforms.TypeCast(mstype.int32)])
-    assert "op_list[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
+    assert "transforms[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
         error_info.value)
 
     # Test empty op list
     with pytest.raises(ValueError) as error_info:
         test_config([1, 0], transforms.Compose([]))
-    assert "op_list can not be empty." in str(error_info.value)
+    assert "transforms list can not be empty." in str(error_info.value)
 
     # Test Python compose op
     assert test_config([1, 0], transforms.Compose(
@@ -96,13 +96,13 @@ def test_compose():
     # Test a non callable function
     with pytest.raises(TypeError) as error_info:
         transforms.Compose([1])
-    assert "op_list[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
+    assert "transforms[0] is neither a transforms op (TensorOperation) nor a callable pyfunc." in str(
         error_info.value)
 
     # Test empty Python implementation list
     with pytest.raises(ValueError) as error_info:
         test_config([1, 0], transforms.Compose([]))
-    assert "op_list can not be empty." in str(error_info.value)
+    assert "transforms list can not be empty." in str(error_info.value)
 
     # Pass in extra brackets
     with pytest.raises(RuntimeError) as error_info:

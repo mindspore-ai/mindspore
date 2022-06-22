@@ -65,7 +65,7 @@ def test_random_apply_c():
     assert "Input prob is not within the required interval" in test_config([0, 1], [data_trans.Slice([0, 1])], 1.1)
     assert "is not of type [<class 'float'>, <class 'int'>]" in test_config([1, 0], [data_trans.TypeCast(mstype.int32)],
                                                                             None)
-    assert "op_list with value None is not of type [<class 'list'>]" in test_config([1, 0], None)
+    assert "transforms list with value None is not of type [<class 'list'>]" in test_config([1, 0], None)
     assert "is neither a transforms op (TensorOperation) nor a callable pyfunc" in \
            test_config([[0, 1, 2]], [data_trans.Duplicate(), data_trans.Concatenate(), "zyx"])
 
