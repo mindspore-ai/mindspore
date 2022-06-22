@@ -359,10 +359,22 @@ void ParallelLaunch(const std::vector<common::Task> &tasks, Content content, Thr
 
 void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
                               ParallelSearchInfo *parallel_search_info, ThreadPool *pool) {
-  const size_t MAX_POW = 6;
+  if (parallel_search_info->kernel_thread_num_set == false) {
+    auto thread_pool = pool == nullptr ? GetActorMgrInnerThreadPool() : pool;
+    float kernel_thread_float_num = static_cast<float>(thread_pool->GetKernelThreadNum());
+    if (kernel_thread_float_num == 0) {
+      MS_LOG(EXCEPTION) << "Actor inner pool has been init, but kernel thread is 0!";
+    }
+    size_t max_pow_current = parallel_search_info->max_pow - 1;
+    while (std::pow(2.0f, max_pow_current) <= kernel_thread_float_num) {
+      max_pow_current++;
+    }
+    parallel_search_info->max_pow = max_pow_current + 1;
+    parallel_search_info->kernel_thread_num_set = true;
+  }
   const size_t AVG_COUNT = 5;
   size_t current_pow = parallel_search_info->search_count / AVG_COUNT;
-  if (current_pow < MAX_POW) {
+  if (current_pow < parallel_search_info->max_pow) {
     if (parallel_search_info->search_count % AVG_COUNT == 0) {
       parallel_search_info->tmp_sum_cost_time = 0;
     }
@@ -379,7 +391,7 @@ void ParallelLaunchAutoSearch(const CTask &task, size_t count, Content content,
         parallel_search_info->best_block_size = block_size;
         parallel_search_info->best_pow = current_pow;
       } else if (current_pow - parallel_search_info->best_pow >= 2) {
-        parallel_search_info->search_count = AVG_COUNT * MAX_POW;
+        parallel_search_info->search_count = AVG_COUNT * parallel_search_info->max_pow;
       }
     }
   } else {

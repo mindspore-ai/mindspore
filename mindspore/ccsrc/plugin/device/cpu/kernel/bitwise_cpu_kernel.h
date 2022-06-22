@@ -32,6 +32,9 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kBitwiseInitThreadNum = 50;
+constexpr float kBitwiseInitBlockSize = 100000;
+const size_t kBitwiseBigShapeNum = 5000000;
 class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<BitwiseCpuKernelMod> {
  public:
   BitwiseCpuKernelMod() = default;
@@ -64,9 +67,19 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   template <typename T>
   void InitFunc();
 
-  using DistFunc = std::function<void(const void *input1, const void *input2, void *output, size_t input1_index,
-                                      size_t input2_index, size_t output_index)>;
-  DistFunc dist_func_;
+  using BitwiseParallelFunc = std::function<void(BitwiseCpuKernelMod *, const CTask &task)>;
+  BitwiseParallelFunc bitwise_parallel_func_;
+
+  using BitwiseLaunchFunc = std::function<bool(BitwiseCpuKernelMod *, const std::vector<kernel::AddressPtr> &inputs,
+                                               const std::vector<kernel::AddressPtr> &outputs)>;
+  BitwiseLaunchFunc bitwise_launch_func_;
+  void BitwiseParallelSearch(const CTask &task);
+  void BitwiseParallelMaxThread(const CTask &task);
+
+  template <typename T, typename BitwiseFunT>
+  bool LaunchBroadcast(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  template <typename T, typename BitwiseFunT>
+  bool LaunchNoBroadcast(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
   std::string kernel_type_{"Unknown"};
   std::string kernel_name_;
@@ -77,6 +90,9 @@ class BitwiseCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<
   ShapeVector output_shape_;
   size_t output_size_ = 1;
   const size_t max_dims_{7};
+  bool broadcast_ = false;
+  size_t thread_num_{kBitwiseInitThreadNum};
+  float block_size_{kBitwiseInitBlockSize};
 };
 }  // namespace kernel
 }  // namespace mindspore
