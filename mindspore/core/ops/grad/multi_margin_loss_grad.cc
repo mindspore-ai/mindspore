@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,14 @@
  */
 
 #include "ops/grad/multi_margin_loss_grad.h"
-#include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t kone = 1;
-const size_t ktwo = 2;
-const size_t kfour = 4;
-
 TypePtr MultiMarginLossGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex2]->BuildType(), {kInt64},
                                                    prim->name());
@@ -32,7 +30,7 @@ TypePtr MultiMarginLossGradInferType(const PrimitivePtr &prim, const std::vector
   std::map<std::string, TypePtr> types;
   (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
   (void)types.emplace("x", input_args[kInputIndex1]->BuildType());
-  if (input_args.size() == kfour && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
+  if (input_args.size() == kDim4 && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
     auto tensor_type = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
@@ -50,7 +48,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
   auto prim_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  if (x_shape.size() != ktwo || target_shape.size() != kone) {
+  if (x_shape.size() != kDim2 || target_shape.size() != kDim1) {
     MS_EXCEPTION(ValueError) << "For MultiMarginLossGrad, the rank of input x should be 2, and "
                                 "the rank of target should be 1,"
                              << " while rank of x is " << x_shape.size() << ", rank of target is "
@@ -61,7 +59,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
                              << " while x_shape[0] is " << x_shape[kInputIndex0] << ", target_shape[0] is "
                              << target_shape[kInputIndex0];
   }
-  if (input_args.size() == kfour && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
+  if (input_args.size() == kDim4 && input_args[kInputIndex3]->BuildType()->isa<TensorType>()) {
     auto tensor_type = input_args[kInputIndex3]->BuildType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
@@ -69,7 +67,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
     if (element->type_id() != kMetaTypeNone) {
       auto weight_shape =
         CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-      if (weight_shape.size() != kone) {
+      if (weight_shape.size() != kDim1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << " the rank of weight should be 1,"
                                  << " but get " << weight_shape.size();
       }
@@ -84,6 +82,7 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MultiMarginLossGrad, BaseOperator);
 AbstractBasePtr MultiMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kInputNumWithWeight = 4;
@@ -96,7 +95,7 @@ AbstractBasePtr MultiMarginLossGradInfer(const abstract::AnalysisEnginePtr &, co
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
-  if (input_args.size() == kfour) {
+  if (input_args.size() == kInputNumWithWeight) {
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex3]);
   }
   auto types = MultiMarginLossGradInferType(primitive, input_args);

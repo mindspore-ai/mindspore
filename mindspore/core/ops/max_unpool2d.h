@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxUnpool2D = "MaxUnpool2D";
-class MS_CORE_API MaxUnpool2D : public PrimitiveC {
+class MIND_API MaxUnpool2D : public BaseOperator {
  public:
-  MaxUnpool2D() : PrimitiveC(kNameMaxUnpool2D) { InitIOName({"x", "argmax"}, {"y"}); }
-  ~MaxUnpool2D() = default;
-  MS_DECLARE_PARENT(MaxUnpool2D, PrimitiveC);
+  MIND_API_BASE_MEMBER(MaxUnpool2D);
+  MaxUnpool2D() : BaseOperator(kNameMaxUnpool2D) { InitIOName({"x", "argmax"}, {"y"}); }
 };
 
-AbstractBasePtr MaxUnpool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaxUnpool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxUnpool2DPtr = std::shared_ptr<MaxUnpool2D>;
 }  // namespace ops
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,17 @@
 #include <set>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr int64_t k5DInputDims = 5;
-
-abstract::ShapePtr InferShapeCompute(const std::string &data_format, const ShapeVector &in_shape,
-                                     const std::vector<int64_t> &ksize, const std::vector<int64_t> &strides,
-                                     const std::vector<int64_t> &pads, const std::vector<int64_t> &attr_output_shape,
-                                     const std::string &op_name) {
+abstract::ShapePtr MaxUnpool3DInferShapeCompute(const std::string &data_format, const ShapeVector &in_shape,
+                                                const std::vector<int64_t> &ksize, const std::vector<int64_t> &strides,
+                                                const std::vector<int64_t> &pads,
+                                                const std::vector<int64_t> &attr_output_shape,
+                                                const std::string &op_name) {
   if (data_format == "NCDHW") {
     int64_t out_d = static_cast<int64_t>((in_shape[kInputIndex2] - 1) * strides[kInputIndex2] - 2 * pads[kInputIndex2] +
                                          ksize[kInputIndex2]);
@@ -42,7 +42,7 @@ abstract::ShapePtr InferShapeCompute(const std::string &data_format, const Shape
     if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
       MS_LOG(EXCEPTION) << "MaxUnpool3D: Output size is not valid.";
     }
-    if (attr_output_shape.size() == k5DInputDims) {
+    if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
       (void)CheckAndConvertUtils::CheckInteger("output_shape[1]", attr_output_shape[kInputIndex1], kEqual,
@@ -79,7 +79,7 @@ abstract::ShapePtr InferShapeCompute(const std::string &data_format, const Shape
     if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
       MS_LOG(EXCEPTION) << "MaxUnpool3D: Output size is not valid.";
     }
-    if (attr_output_shape.size() == k5DInputDims) {
+    if (attr_output_shape.size() == kDim5) {
       (void)CheckAndConvertUtils::CheckInteger("output_shape[0]", attr_output_shape[kInputIndex0], kEqual,
                                                in_shape[kInputIndex0], op_name);
       (void)CheckAndConvertUtils::CheckInteger("output_shape[4]", attr_output_shape[kInputIndex4], kEqual,
@@ -108,7 +108,8 @@ abstract::ShapePtr InferShapeCompute(const std::string &data_format, const Shape
   }
 }
 
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MaxUnpool3DInferShape(const PrimitivePtr &primitive,
+                                         const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
@@ -117,26 +118,25 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto data_format = GetValue<std::string>(primitive->GetAttr("format"));
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, k5DInputDims,
-                                           op_name);
-  CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, "argmax_shape", argmax_shape, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, kDim5, op_name);
+  CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
   auto ksize = GetValue<std::vector<int64_t>>(primitive->GetAttr("ksize"));
   auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr("strides"));
   auto pads = GetValue<std::vector<int64_t>>(primitive->GetAttr("pads"));
   auto attr_output_shape = GetValue<std::vector<int64_t>>(primitive->GetAttr("output_shape"));
-  (void)CheckAndConvertUtils::CheckInteger("ksize_rank", SizeToLong(ksize.size()), kEqual, k5DInputDims, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, k5DInputDims, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, k5DInputDims, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("ksize_rank", SizeToLong(ksize.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("strides_rank", SizeToLong(strides.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("pads_rank", SizeToLong(pads.size()), kEqual, kDim5, op_name);
 
-  if (attr_output_shape.size() != k5DInputDims && attr_output_shape.size() != 0) {
+  if (attr_output_shape.size() != kDim5 && attr_output_shape.size() != kDim0) {
     MS_EXCEPTION(ValueError) << "MaxUnpool3D: Output_shape size must be 0 or 5.";
   }
 
-  return InferShapeCompute(data_format, in_shape, ksize, strides, pads, attr_output_shape, op_name);
+  return MaxUnpool3DInferShapeCompute(data_format, in_shape, ksize, strides, pads, attr_output_shape, op_name);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr MaxUnpool3DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -149,13 +149,14 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MaxUnpool3D, BaseOperator);
 AbstractBasePtr MaxUnpool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-  auto infer_type = InferType(primitive, input_args);
-  auto infer_shape = InferShape(primitive, input_args);
+  auto infer_type = MaxUnpool3DInferType(primitive, input_args);
+  auto infer_shape = MaxUnpool3DInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(MaxUnpool3D, prim::kPrimMaxUnpool3D, MaxUnpool3DInfer, nullptr, true);

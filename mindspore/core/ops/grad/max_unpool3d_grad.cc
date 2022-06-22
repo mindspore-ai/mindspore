@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,13 @@
 
 #include "ops/grad/max_unpool3d_grad.h"
 #include <set>
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
+
 namespace mindspore {
 namespace ops {
-constexpr int64_t k5DInputDims = 5;
-
 namespace {
 abstract::ShapePtr MaxUnpool3DGradInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
@@ -35,11 +38,10 @@ abstract::ShapePtr MaxUnpool3DGradInferShape(const PrimitivePtr &primitive,
   auto grads_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShapeTrack())[kShape];
   auto argmax_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, k5DInputDims, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("grads_rank", SizeToLong(grads_shape.size()), kEqual, k5DInputDims, op_name);
-  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, k5DInputDims,
-                                           op_name);
-  CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, "argmax_shape", argmax_shape, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("grads_rank", SizeToLong(grads_shape.size()), kEqual, kDim5, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("argmax_rank", SizeToLong(argmax_shape.size()), kEqual, kDim5, op_name);
+  CheckAndConvertUtils::Check("x_shape", in_shape, kEqual, argmax_shape, op_name, ValueError);
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(x1_shape);
 }
@@ -60,6 +62,7 @@ TypePtr MaxUnpool3DGradInferType(const PrimitivePtr &primitive, const std::vecto
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MaxUnpool3DGrad, BaseOperator);
 AbstractBasePtr MaxUnpool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

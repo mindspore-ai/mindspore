@@ -30,12 +30,12 @@ constexpr auto kNameMvlgamma = "Mvlgamma";
 class MIND_API Mvlgamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mvlgamma);
- /// \brief Constructor.
+  /// \brief Constructor.
   Mvlgamma() : BaseOperator(kNameMvlgamma) { InitIOName({"x"}, {"y"}); }
 };
 
 abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const std::vector<abstract::AbstractBasePtr> &input_args);
+                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMvlgammaPtr = std::shared_ptr<Mvlgamma>;
 }  // namespace ops
 }  // namespace mindspore

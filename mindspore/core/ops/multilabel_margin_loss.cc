@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 #include "ops/multilabel_margin_loss.h"
 #include "ops/op_utils.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,7 +38,7 @@ abstract::TupleShapePtr MultilabelMarginLossInferShape(const PrimitivePtr &primi
     MS_EXCEPTION(ValueError) << "For " << op_name << ", x_shape and target_shape should be the same, "
                              << "while x_shape is : " << x << ", target_shape is : " << target << ".";
   }
-  int64_t batch = x[0];
+  int64_t batch = x[kInputIndex0];
   ShapeVector out_shape0 = {batch};
   ShapeVector out_shape1 = target;
   int64_t reduction;
@@ -66,6 +67,7 @@ TuplePtr MultilabelMarginLossInferType(const PrimitivePtr &primitive, const std:
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MultilabelMarginLoss, BaseOperator);
 AbstractBasePtr MultilabelMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

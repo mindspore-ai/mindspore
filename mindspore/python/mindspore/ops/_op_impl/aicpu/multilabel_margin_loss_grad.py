@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ multilabel_margin_loss_grad_op_info = AiCPURegOp("MultilabelMarginLossGrad") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.I32_Default, DataType.I32_Default,
                   DataType.F32_Default) \
     .get_op_info()
+
 
 @op_info_register(multilabel_margin_loss_grad_op_info)
 def _multilabel_margin_loss_grad_aicpu():

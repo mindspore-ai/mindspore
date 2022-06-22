@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,24 +21,23 @@
 #include <vector>
 #include <set>
 #include <string>
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTripletMarginLoss = "TripletMarginLoss";
-class TripletMarginLoss : public PrimitiveC {
+class MIND_API TripletMarginLoss : public BaseOperator {
  public:
-  TripletMarginLoss() : PrimitiveC(kNameTripletMarginLoss) {
+  MIND_API_BASE_MEMBER(TripletMarginLoss);
+  TripletMarginLoss() : BaseOperator(kNameTripletMarginLoss) {
     InitIOName({"x", "positive", "negative", "margin"}, {"y"});
   }
-  ~TripletMarginLoss() = default;
-  MS_DECLARE_PARENT(TripletMarginLoss, PrimitiveC);
 };
 
-AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTripletMarginLossPtr = std::shared_ptr<TripletMarginLoss>;
 }  // namespace ops
 }  // namespace mindspore

@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 class MvlgammaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MvlgammaCpuKernelMod() = default;
@@ -51,8 +50,6 @@ class MvlgammaCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MVLGAMMA_CPU_KERNEL_H_

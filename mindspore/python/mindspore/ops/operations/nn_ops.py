@@ -29,7 +29,8 @@ from ...common._decorator import deprecated
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 
 
-def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False, ret_four=False):
+def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False,
+                                 ret_four=False, strict_positive=True):
     """
     Checks whether an argument is a positive int or tuple with 2 or 4(when allow_four is True) positive int elements.
     """
@@ -54,8 +55,11 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     ret_value = _get_return_value()
     for item in ret_value:
-        if isinstance(item, int) and not isinstance(item, bool) and item > 0:
-            continue
+        if isinstance(item, int) and not isinstance(item, bool):
+            if item > 0:
+                continue
+            if not strict_positive and item == 0:
+                continue
         _raise_message()
     return ret_value
 
@@ -2117,7 +2121,7 @@ class MaxUnpool2D(Primitive):
         if strides in (0, (0, 0)):
             strides = ksize
         self.strides = _check_positive_int_or_tuple('strides', strides, self.name, ret_four=True)
-        self.pads = _check_positive_int_or_tuple('pads', pads, self.name, ret_four=True, greater_zero=False)
+        self.pads = _check_positive_int_or_tuple('pads', pads, self.name, ret_four=True, strict_positive=False)
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
 
         if data_format == "NHWC":

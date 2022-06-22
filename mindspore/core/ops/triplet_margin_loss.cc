@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 #include "ops/triplet_margin_loss.h"
 #include <algorithm>
 #include "ops/op_utils.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr size_t kInputSize = 4;
 abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
                                                const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = primitive->name();
@@ -30,21 +30,19 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   auto positive = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto negative = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
   auto margin = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex3]->BuildShape())[kShape];
-  const int64_t keight = 8;
-  if (x.size() >= keight || positive.size() >= keight || negative.size() >= keight) {
+  if (x.size() >= kDim8 || positive.size() >= kDim8 || negative.size() >= kDim8) {
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", dimensions of input x positive and negative must be smaller than 8, x_dim: "
                              << x.size() << ", positive_dim: " << positive.size()
                              << ", negative_dim: " << negative.size() << ".";
   }
-  const int64_t kone = 1;
-  if (x.size() <= kone && positive.size() <= kone && negative.size() <= kone) {
+  if (x.size() <= kDim1 && positive.size() <= kDim1 && negative.size() <= kDim1) {
     MS_EXCEPTION(ValueError)
       << "For " << op_name
       << ", dimensions of input x, positive and negative cannot be less than 1 at the same time, x_dim: " << x.size()
       << ", positive_dim: " << positive.size() << ", negative_dim: " << negative.size() << ".";
   }
-  if (margin.size() != 0) {
+  if (margin.size() != kDim0) {
     MS_EXCEPTION(ValueError) << "For " << op_name
                              << ", the dimension of input margin must be 0, margin_dim: " << margin.size() << ".";
   }
@@ -61,8 +59,8 @@ abstract::ShapePtr TripletMarginLossInferShape(const PrimitivePtr &primitive,
   ShapeVector out_shape;
   for (size_t i = 0; i < dims; i++) {
     out_shape.push_back((int64_t)std::max(std::max(x[i], positive[i]), negative[i]));
-    if ((x[i] != out_shape[i] && x[i] != kone) || (positive[i] != out_shape[i] && positive[i] != kone) ||
-        (negative[i] != out_shape[i] && negative[i] != kone)) {
+    if ((x[i] != out_shape[i] && x[i] != kDim1) || (positive[i] != out_shape[i] && positive[i] != kDim1) ||
+        (negative[i] != out_shape[i] && negative[i] != kDim1)) {
       MS_EXCEPTION(ValueError) << "For " << op_name << ", inputs' shape can't broadcast.";
     }
   }
@@ -98,6 +96,7 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(TripletMarginLoss, BaseOperator);
 AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

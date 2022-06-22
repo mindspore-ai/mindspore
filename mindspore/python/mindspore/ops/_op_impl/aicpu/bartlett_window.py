@@ -29,6 +29,7 @@ bartlett_window_op_info = AiCPURegOp("BartlettWindow") \
     .dtype_format(DataType.I64_Default, DataType.F64_Default) \
     .get_op_info()
 
+
 @op_info_register(bartlett_window_op_info)
 def _bartlett_window_aicpu():
     """BartlettWindow AiCPU register"""

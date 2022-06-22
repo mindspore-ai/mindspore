@@ -30,6 +30,7 @@ multi_margin_loss_op_info = AiCPURegOp("MultiMarginLoss") \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
+
 @op_info_register(multi_margin_loss_op_info)
 def _multi_margin_loss_aicpu():
     """MultiMarginLoss aicpu register"""

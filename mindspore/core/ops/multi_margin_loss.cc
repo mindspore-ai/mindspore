@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,20 @@
  */
 
 #include "ops/multi_margin_loss.h"
-#include "abstract/primitive_infer_map.h"
 #include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
-const size_t kone = 1;
-const size_t ktwo = 2;
-const size_t kthree = 3;
-
 TypePtr MultiMarginLossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[1]->BuildType(), {kInt64}, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("target", input_args[kInputIndex1]->BuildType(), {kInt64},
+                                                   prim->name());
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("x", input_args[0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex0]->BuildType());
   if (input_args.size() == kInputIndex3 && input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
     auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
@@ -51,7 +50,7 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto target_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
-  if (x_shape.size() != ktwo || target_shape.size() != kone) {
+  if (x_shape.size() != kDim2 || target_shape.size() != kDim1) {
     MS_EXCEPTION(ValueError) << "For MultiMarginLoss, the rank of input "
                                 "x and target should be 2 and 1,"
                              << " while rank of x is " << x_shape.size() << ", rank of target is  "
@@ -62,14 +61,15 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
                              << " while x_shape[0] is " << x_shape[kInputIndex0] << ", target_shape[0] is "
                              << target_shape[kInputIndex0];
   }
-  if (input_args.size() == kthree && input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
+  if (input_args.size() == kDim3 && input_args[kInputIndex2]->BuildType()->isa<TensorType>()) {
     auto tensor_type = input_args[kInputIndex2]->BuildType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);
     auto element = tensor_type->element();
     MS_EXCEPTION_IF_NULL(element);
     if (element->type_id() != kMetaTypeNone) {
-      auto weight_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-      if (weight_shape.size() != kone) {
+      auto weight_shape =
+        CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
+      if (weight_shape.size() != kDim1) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << " the rank of weight should be 1,"
                                  << " but get " << weight_shape.size();
       }
@@ -90,16 +90,17 @@ abstract::ShapePtr MultiMarginLossInferShape(const PrimitivePtr &primitive,
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MultiMarginLoss, BaseOperator);
 AbstractBasePtr MultiMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-  if (input_args.size() == kthree) {
+  if (input_args.size() == kDim3) {
     MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
   }
   (void)CheckAndConvertUtils::CheckInRange("multi_margin_loss_input_nums", input_args.size(), kIncludeBoth,
-                                           {ktwo, kthree}, primitive->name());
+                                           {kDim2, kDim3}, primitive->name());
   auto types = MultiMarginLossInferType(primitive, input_args);
   auto shapes = MultiMarginLossInferShape(primitive, input_args);
   return abstract::MakeAbstract(shapes, types);

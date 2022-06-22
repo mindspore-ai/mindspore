@@ -28,14 +28,14 @@ namespace ops {
 namespace {
 abstract::ShapePtr MvlgammaInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto in_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShapeTrack())[kShape];
   return std::make_shared<abstract::Shape>(in_shape);
 }
 
 TypePtr MvlgammaInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto input_type = input_args[0]->BuildType();
+  auto input_type = input_args[kInputIndex0]->BuildType();
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeValid("x", input_type, valid_types, prim->name());
 }

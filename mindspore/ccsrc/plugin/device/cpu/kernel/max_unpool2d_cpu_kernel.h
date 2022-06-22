@@ -19,117 +19,43 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include <utility>
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename DATA_T, typename INDICES_T>
-class MaxUnpool2DCPUKernel : public CPUKernel {
+class MaxUnpool2DCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  MaxUnpool2DCPUKernel() = default;
-  ~MaxUnpool2DCPUKernel() override = default;
+  MaxUnpool2DCpuKernelMod() = default;
+  ~MaxUnpool2DCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, outputs);
+  };
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
+  template <typename DATA_T, typename INDICES_T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using MaxUnpool2DFunc = std::function<bool(MaxUnpool2DCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MaxUnpool2DFunc>> func_list_;
+  MaxUnpool2DFunc kernel_func_;
+
+  template <typename DATA_T>
   void OutPutInitKernel(DATA_T *rawOutput, size_t length);
   CNodeWeakPtr node_wpt_;
-  std::vector<size_t> input_shape_;
-  std::vector<size_t> indices_shape_;
-  std::vector<size_t> output_shape_;
+  ShapeVector input_shape_;
+  ShapeVector indices_shape_;
+  ShapeVector output_shape_;
   std::string data_format_;
 };
-
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
-  MaxUnpool2DCPUKernel, uint8_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
-  MaxUnpool2DCPUKernel, uint8_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
-  MaxUnpool2DCPUKernel, uint16_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
-  MaxUnpool2DCPUKernel, uint16_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt32),
-  MaxUnpool2DCPUKernel, uint32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt32),
-  MaxUnpool2DCPUKernel, uint32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt64),
-  MaxUnpool2DCPUKernel, uint64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt64),
-  MaxUnpool2DCPUKernel, uint64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
-  MaxUnpool2DCPUKernel, int8_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
-  MaxUnpool2DCPUKernel, int8_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
-  MaxUnpool2DCPUKernel, int16_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
-  MaxUnpool2DCPUKernel, int16_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MaxUnpool2DCPUKernel, int32_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-  MaxUnpool2DCPUKernel, int32_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-  MaxUnpool2DCPUKernel, int64_t, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  MaxUnpool2DCPUKernel, int64_t, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  MaxUnpool2DCPUKernel, float16, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  MaxUnpool2DCPUKernel, float16, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  MaxUnpool2DCPUKernel, float, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  MaxUnpool2DCPUKernel, float, int64_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-  MaxUnpool2DCPUKernel, double, int32_t);
-MS_REG_CPU_KERNEL_T_S(
-  MaxUnpool2D,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  MaxUnpool2DCPUKernel, double, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 

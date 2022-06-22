@@ -27,19 +27,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr MvlgammaGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr MvlgammaGradInferShape(const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   return std::make_shared<abstract::Shape>(y_grad_shape);
 }
 
 TypePtr MvlgammaGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[0]->BuildType());
-  (void)types.emplace("x", input_args[1]->BuildType());
+  (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
+  (void)types.emplace("x", input_args[kInputIndex1]->BuildType());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }

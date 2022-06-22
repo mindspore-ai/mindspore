@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,16 @@ from .._grad.grad_base import bprop_getters
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
+from ..operations.nn_ops import MaxUnpool2D
+from ..operations.nn_ops import MaxUnpool3D
 from ..operations.nn_ops import FractionalMaxPool
 from ..operations._grad_ops import FractionalMaxPoolGrad
 from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from ..operations.nn_ops import FractionalAvgPool
 from ..operations._grad_ops import FractionalAvgPoolGrad
+from ..operations.nn_ops import MultiMarginLoss
+from ..operations.nn_ops import MultilabelMarginLoss
 from ..operations.nn_ops import NthElement
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
@@ -92,7 +96,7 @@ def get_bprop_hshrink(self):
     return bprop
 
 
-@bprop_getters.register(P.MultilabelMarginLoss)
+@bprop_getters.register(MultilabelMarginLoss)
 def get_bprop_multilabel_margin_loss(self):
     """Grad definition for `MultilabelMarginLoss` operation."""
     input_grad = G.MultilabelMarginLossGrad(reduction=self.reduction)
@@ -120,7 +124,7 @@ def get_bprop_celu(self):
     return bprop
 
 
-@bprop_getters.register(P.MultiMarginLoss)
+@bprop_getters.register(MultiMarginLoss)
 def get_bprop_multi_margin_loss(self):
     """Grad definition for `MultiMarginLoss` operation."""
     input_grad = G.MultiMarginLossGrad(p=self.p, margin=self.margin, reduction=self.reduction)
@@ -155,7 +159,7 @@ def get_bprop_relu(self):
     return bprop
 
 
-@bprop_getters.register(P.MaxUnpool2D)
+@bprop_getters.register(MaxUnpool2D)
 def get_bprop_maxunpool2d(self):
     """Grad definition for `MaxUnpool2D` operation."""
     maxunpool2d_grad = G.MaxUnpool2DGrad(
@@ -173,7 +177,7 @@ def get_bprop_maxunpool2d(self):
     return bprop
 
 
-@bprop_getters.register(P.MaxUnpool3D)
+@bprop_getters.register(MaxUnpool3D)
 def get_bprop_maxunpool3d(self):
     """Grad definition for `MaxUnpool3D` operation."""
     maxunpool3d_grad = G.MaxUnpool3DGrad(
@@ -187,6 +191,8 @@ def get_bprop_maxunpool3d(self):
         dx = maxunpool3d_grad(x, dout, argmax)
         dargmax = zeros_like(argmax)
         return (dx, dargmax)
+
+    return bprop
 
 
 @bprop_getters.register(NthElement)

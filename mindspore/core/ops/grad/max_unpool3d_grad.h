@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,20 @@
 #include <vector>
 #include <memory>
 
-#include "ops/primitive_c.h"
-#include "ops/op_utils.h"
-#include "abstract/abstract_value.h"
-#include "utils/check_convert_utils.h"
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxUnpool3DGrad = "MaxUnpool3DGrad";
-class MS_CORE_API MaxUnpool3DGrad : public PrimitiveC {
+class MIND_API MaxUnpool3DGrad : public BaseOperator {
  public:
-  MaxUnpool3DGrad() : PrimitiveC(kNameMaxUnpool3DGrad) { InitIOName({"x", "grads", "argmax"}, {"y"}); }
-  ~MaxUnpool3DGrad() = default;
-  MS_DECLARE_PARENT(MaxUnpool3DGrad, PrimitiveC);
+  MIND_API_BASE_MEMBER(MaxUnpool3DGrad);
+  MaxUnpool3DGrad() : BaseOperator(kNameMaxUnpool3DGrad) { InitIOName({"x", "grads", "argmax"}, {"y"}); }
 };
 
-AbstractBasePtr MaxUnpool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MaxUnpool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxUnpool3DGradPtr = std::shared_ptr<MaxUnpool3DGrad>;
 }  // namespace ops
 }  // namespace mindspore

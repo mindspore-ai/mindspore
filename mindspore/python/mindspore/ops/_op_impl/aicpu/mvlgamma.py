@@ -25,6 +25,7 @@ mvlgamma_op_info = AiCPURegOp("Mvlgamma") \
     .dtype_format(DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
+
 @op_info_register(mvlgamma_op_info)
 def _mvlgamma_aicpu():
     """Mvlgamma AiCPU register"""

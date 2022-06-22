@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/cpu/multi_margin_loss_grad_cpu_kernel.h"
-#include "runtime/device/cpu/cpu_device_address.h"
+#include "plugin/device/cpu/kernel/multi_margin_loss_grad_cpu_kernel.h"
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -23,25 +23,32 @@ namespace {
 constexpr size_t kMultiMarginLossGradInputNumWithWeight = 4;
 constexpr size_t kMultiMarginLossGradInputNumWithoutWeight = 3;
 constexpr size_t kMultiMarginLossGradOutputsNum = 1;
+const size_t kZero = 0;
+const size_t kOne = 1;
+const size_t kTwo = 2;
+const size_t kThree = 3;
 constexpr char kKernelName[] = "MultiMarginLossGrad";
 }  // namespace
 
-void MultiMarginLossGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MultiMarginLossGradCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
-  std::vector<size_t> x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  batch_size = x_shape[0];
-  dims = x_shape[1];
-  reduction = AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
-  p = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
-  margin = AnfAlgo::GetNodeAttr<float>(kernel_node, "margin");
-  y_grad_dims = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0).size();
-  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
-  input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  ShapeVector x_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kOne);
+  if (IsDynamic({x_shape})) {
+    return;
+  }
+  batch_size = LongToSize(x_shape[kZero]);
+  dims = LongToSize(x_shape[kOne]);
+  reduction = common::AnfAlgo::GetNodeAttr<string>(kernel_node, REDUCTION);
+  p = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "p");
+  margin = common::AnfAlgo::GetNodeAttr<float>(kernel_node, "margin");
+  y_grad_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kZero).size();
+  dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kZero);
+  input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
 }
 
-bool MultiMarginLossGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                          const std::vector<kernel::AddressPtr> &,
-                                          const std::vector<kernel::AddressPtr> &outputs) {
+bool MultiMarginLossGradCPUKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<kernel::AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
   if (dtype_ == kNumberTypeFloat16) {
     LaunchKernelFP16<float16>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
@@ -55,11 +62,11 @@ bool MultiMarginLossGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> 
 }
 
 template <typename T>
-void MultiMarginLossGradCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                const std::vector<kernel::AddressPtr> &outputs) {
-  auto y_grad_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto target_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
+void MultiMarginLossGradCPUKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                   const std::vector<kernel::AddressPtr> &outputs) {
+  auto y_grad_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
+  auto x_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
+  auto target_addr = reinterpret_cast<int64_t *>(inputs[kTwo]->addr);
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -68,12 +75,9 @@ void MultiMarginLossGradCPUKernel::LaunchKernel(const std::vector<kernel::Addres
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 4);
   if (weight_defined_) {
-    weight_addr = reinterpret_cast<T *>(inputs[3]->addr);
+    weight_addr = reinterpret_cast<T *>(inputs[kThree]->addr);
   }
-  auto x_grad_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  T weights;
-  weights = reduction == MEAN ? (static_cast<T>(1) / (static_cast<T>(dims) * static_cast<T>(batch_size)))
-                              : (static_cast<T>(1) / static_cast<T>(dims));
+  auto x_grad_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
   auto task = [&](size_t start, size_t end) {
     start *= dims;
     end *= dims;
@@ -91,6 +95,8 @@ void MultiMarginLossGradCPUKernel::LaunchKernel(const std::vector<kernel::Addres
           continue;
         }
         if (calc_data[d] > static_cast<T>(0)) {
+          auto weights = reduction == MEAN ? (static_cast<T>(1) / (static_cast<T>(dims) * static_cast<T>(batch_size)))
+                                           : (static_cast<T>(1) / static_cast<T>(dims));
           calc_data[d] = (p == 1) ? weights : static_cast<T>(2) * weights * calc_data[d];
           if (weight_defined_) {
             calc_data[d] *= static_cast<T>(weight_addr[target_idx]);
@@ -122,11 +128,11 @@ void MultiMarginLossGradCPUKernel::LaunchKernel(const std::vector<kernel::Addres
 }
 
 template <typename T>
-void MultiMarginLossGradCPUKernel::LaunchKernelFP16(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &outputs) {
-  auto y_grad_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto x_addr = reinterpret_cast<T *>(inputs[1]->addr);
-  auto target_addr = reinterpret_cast<int64_t *>(inputs[2]->addr);
+void MultiMarginLossGradCPUKernelMod::LaunchKernelFP16(const std::vector<kernel::AddressPtr> &inputs,
+                                                       const std::vector<kernel::AddressPtr> &outputs) {
+  auto y_grad_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
+  auto x_addr = reinterpret_cast<T *>(inputs[kOne]->addr);
+  auto target_addr = reinterpret_cast<int64_t *>(inputs[kTwo]->addr);
   for (size_t i = 0; i < batch_size; i++) {
     if (target_addr[i] < 0 || target_addr[i] >= SizeToLong(dims)) {
       MS_EXCEPTION(ValueError) << "Target out of range.";
@@ -135,12 +141,9 @@ void MultiMarginLossGradCPUKernel::LaunchKernelFP16(const std::vector<kernel::Ad
   T *weight_addr = nullptr;
   bool weight_defined_ = (input_num == 4);
   if (weight_defined_) {
-    weight_addr = reinterpret_cast<T *>(inputs[3]->addr);
+    weight_addr = reinterpret_cast<T *>(inputs[kThree]->addr);
   }
-  auto x_grad_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  float weights;
-  weights = reduction == MEAN ? (static_cast<float>(1) / (static_cast<float>(dims) * static_cast<float>(batch_size)))
-                              : (static_cast<float>(1) / static_cast<float>(dims));
+  auto x_grad_addr = reinterpret_cast<T *>(outputs[kZero]->addr);
   auto task = [&](size_t start, size_t end) {
     start *= dims;
     end *= dims;
@@ -158,6 +161,9 @@ void MultiMarginLossGradCPUKernel::LaunchKernelFP16(const std::vector<kernel::Ad
           continue;
         }
         if (calc_data[d] > static_cast<float>(0)) {
+          auto weights = reduction == MEAN
+                           ? (static_cast<float>(1) / (static_cast<float>(dims) * static_cast<float>(batch_size)))
+                           : (static_cast<float>(1) / static_cast<float>(dims));
           calc_data[d] = (p == 1) ? weights : static_cast<float>(2) * weights * calc_data[d];
           if (weight_defined_) {
             calc_data[d] *= static_cast<float>(weight_addr[target_idx]);
@@ -189,13 +195,15 @@ void MultiMarginLossGradCPUKernel::LaunchKernelFP16(const std::vector<kernel::Ad
   }
 }
 
-void MultiMarginLossGradCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+void MultiMarginLossGradCPUKernelMod::CheckParam(const CNodePtr &kernel_node) {
+  size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != kMultiMarginLossGradInputNumWithoutWeight && input_num != kMultiMarginLossGradInputNumWithWeight) {
     MS_LOG(EXCEPTION) << "Invalid input numbers, expect input number 3 or 4, but actual input number " << input_num;
   }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
   CHECK_KERNEL_OUTPUTS_NUM(output_num, kMultiMarginLossGradOutputsNum, kKernelName);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MultiMarginLossGrad, MultiMarginLossGradCPUKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

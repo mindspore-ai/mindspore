@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 class MvlgammaGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   MvlgammaGradCpuKernelMod() = default;
@@ -54,8 +53,6 @@ class MvlgammaGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  protected:
   std::vector<KernelAttr> GetOpSupport() override;
 };
-
 }  // namespace kernel
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MVLGAMMA_GRAD_CPU_KERNEL_H_

@@ -152,6 +152,5 @@ std::vector<KernelAttr> MvlgammaGradCpuKernelMod::GetOpSupport() {
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MvlgammaGrad, MvlgammaGradCpuKernelMod);
-
 }  // namespace kernel
 }  // namespace mindspore

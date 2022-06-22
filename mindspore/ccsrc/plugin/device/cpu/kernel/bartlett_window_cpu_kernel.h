@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,46 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BARTLETT_WINDOW_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BARTLETT_WINDOW_CPU_KERNEL_H_
 #include <vector>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include <utility>
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class BartlettWindowCpuKernelMod : public NativeCpuKernelMod {
+class BartlettWindowCpuKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
   BartlettWindowCpuKernelMod() = default;
   ~BartlettWindowCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  // template <typename T, typename S>
-  // void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  template <typename T, typename T2>
+  bool BartlettWindowKernelFunc(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> &workspace,
+                                const std::vector<kernel::AddressPtr> &outputs);
   bool periodic_{true};
-  TypeId output_dtype{kNumberTypeFloat32};
   TypeId input_dtype{kTypeUnknown};
-  std::vector<size_t> input_shape;
+  using BartlettWindowFunc =
+    std::function<bool(BartlettWindowCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, BartlettWindowFunc>> func_list_;
+  BartlettWindowFunc kernel_func_;
+  ShapeVector input_shape;
+  CNodePtr node_wpt_;
 };
-
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-                      BartlettWindowCpuKernelMod, int32_t, float);
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-                      BartlettWindowCpuKernelMod, int32_t, float16);
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-                      BartlettWindowCpuKernelMod, int32_t, double);
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-                      BartlettWindowCpuKernelMod, int64_t, float);
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-                      BartlettWindowCpuKernelMod, int64_t, float16);
-MS_REG_CPU_KERNEL_T_S(BartlettWindow, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-                      BartlettWindowCpuKernelMod, int64_t, double);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_BARTLETT_WINDOW_CPU_KERNEL_H_

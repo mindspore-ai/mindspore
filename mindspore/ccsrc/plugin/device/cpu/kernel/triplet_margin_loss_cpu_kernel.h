@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,21 +25,99 @@
 #include <map>
 #include <complex>
 #include <iostream>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class TripletMarginLossCPUKernel : public CPUKernel {
+class TripletMarginLossCPUKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  TripletMarginLossCPUKernel() = default;
-  ~TripletMarginLossCPUKernel() override = default;
+  TripletMarginLossCPUKernelMod() = default;
+  ~TripletMarginLossCPUKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kNumberTypeInt8)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kNumberTypeInt16)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeInt32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kNumberTypeUInt8)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kNumberTypeUInt16)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kNumberTypeUInt32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kNumberTypeUInt64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kNumberTypeComplex64)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                   KernelAttr()
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kNumberTypeComplex128)
+                                                     .AddInputAttr(kNumberTypeFloat32)
+                                                     .AddOutputAttr(kNumberTypeFloat32)};
+    return support_list;
+  }
+
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
@@ -96,7 +174,6 @@ class TripletMarginLossCPUKernel : public CPUKernel {
                         std::vector<T> &calculate_swap, size_t j, size_t k, float &calc_swap_sum,
                         const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
 
- private:
   void CheckParam(const CNodePtr &kernel_node);
   int64_t p = 2;
   bool swap = false;
@@ -109,13 +186,13 @@ class TripletMarginLossCPUKernel : public CPUKernel {
   TypeId dtype_1{kTypeUnknown};
   TypeId dtype_2{kTypeUnknown};
   TypeId dtype_3{kTypeUnknown};
-  std::vector<size_t> x_shape;
-  std::vector<size_t> positive_shape;
-  std::vector<size_t> negative_shape;
-  std::vector<size_t> broadcast_shape;
-  std::vector<size_t> x_reshape_vector;
-  std::vector<size_t> positive_reshape_vector;
-  std::vector<size_t> negative_reshape_vector;
+  ShapeVector x_shape;
+  ShapeVector positive_shape;
+  ShapeVector negative_shape;
+  ShapeVector broadcast_shape;
+  ShapeVector x_reshape_vector;
+  ShapeVector positive_reshape_vector;
+  ShapeVector negative_reshape_vector;
   size_t numelements = 1;
   size_t data_num = 1;
   size_t data_num_each_batch = 1;
@@ -124,114 +201,6 @@ class TripletMarginLossCPUKernel : public CPUKernel {
   size_t once_compute_size = 1;
   bool broadcast = false;
 };
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt8)
-                    .AddInputAttr(kNumberTypeInt8)
-                    .AddInputAttr(kNumberTypeInt8)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt16)
-                    .AddInputAttr(kNumberTypeInt16)
-                    .AddInputAttr(kNumberTypeInt16)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt8)
-                    .AddInputAttr(kNumberTypeUInt8)
-                    .AddInputAttr(kNumberTypeUInt8)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt16)
-                    .AddInputAttr(kNumberTypeUInt16)
-                    .AddInputAttr(kNumberTypeUInt16)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeUInt32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeUInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddInputAttr(kNumberTypeComplex64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(TripletMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddInputAttr(kNumberTypeComplex128)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  TripletMarginLossCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRIPLET_MARGIN_LOSS_CPU_KERNEL_H_

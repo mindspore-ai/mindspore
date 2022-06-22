@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 
 #include "ops/grad/multilabel_margin_loss_grad.h"
 #include "ops/op_utils.h"
-#include "utils/tensor_construct_utils.h"
-#include "abstract/primitive_infer_map.h"
+#include "utils/check_convert_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindapi/src/helper.h"
 
 namespace mindspore {
 namespace ops {
@@ -27,9 +28,7 @@ abstract::ShapePtr MultilabelMarginLossGradInferShape(const PrimitivePtr &primit
   auto op_name = primitive->name();
   auto x = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto target = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  const size_t kone = 1;
-  const size_t ktwo = 2;
-  if ((x.size() != kone && x.size() != ktwo) || (target.size() != kone && target.size() != ktwo)) {
+  if ((x.size() != kDim1 && x.size() != kDim2) || (target.size() != kDim1 && target.size() != kDim2)) {
     MS_EXCEPTION(ValueError) << "For " << op_name << ", the rank of input x and target should be 1 or 2, "
                              << "while rank of x is : " << x.size() << ", rank of target is : " << target.size() << ".";
   }
@@ -57,6 +56,7 @@ TypePtr MultilabelMarginLossGradInferType(const PrimitivePtr &primitive,
 }
 }  // namespace
 
+MIND_API_OPERATOR_IMPL(MultilabelMarginLossGrad, BaseOperator);
 AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

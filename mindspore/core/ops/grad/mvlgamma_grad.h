@@ -32,7 +32,7 @@ class MIND_API MvlgammaGrad : public BaseOperator {
 };
 
 abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMvlgammaGradPtr = std::shared_ptr<MvlgammaGrad>;
 }  // namespace ops
 }  // namespace mindspore

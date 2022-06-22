@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,29 +20,52 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "backend/kernel_compiler/cpu/cpu_kernel.h"
-#include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class MultiMarginLossCPUKernel : public CPUKernel {
+class MultiMarginLossCPUKernelMod : public DeprecatedNativeCpuKernelMod {
  public:
-  MultiMarginLossCPUKernel() = default;
+  MultiMarginLossCPUKernelMod() = default;
 
-  ~MultiMarginLossCPUKernel() override = default;
+  ~MultiMarginLossCPUKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat16)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeFloat16)
+        .AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64)};
+    return support_list;
+  }
+
+ private:
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
-
   template <typename T>
   void LaunchKernelFP16(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
- private:
   void CheckParam(const CNodePtr &kernel_node);
   size_t batch_size = 2;
   size_t dims = 1;
@@ -52,45 +75,6 @@ class MultiMarginLossCPUKernel : public CPUKernel {
   size_t input_num = 1;
   TypeId dtype_{kTypeUnknown};
 };
-
-MS_REG_CPU_KERNEL(MultiMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat16)
-                    .AddOutputAttr(kNumberTypeFloat16),
-                  MultiMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(MultiMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat32)
-                    .AddOutputAttr(kNumberTypeFloat32),
-                  MultiMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(MultiMarginLoss,
-                  KernelAttr()
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddInputAttr(kNumberTypeInt64)
-                    .AddInputAttr(kNumberTypeFloat64)
-                    .AddOutputAttr(kNumberTypeFloat64),
-                  MultiMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MultiMarginLoss,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-  MultiMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MultiMarginLoss,
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-  MultiMarginLossCPUKernel);
-
-MS_REG_CPU_KERNEL(
-  MultiMarginLoss,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-  MultiMarginLossCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_MULTI_MARGIN_LOSS_CPU_KERNEL_H_

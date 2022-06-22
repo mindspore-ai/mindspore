@@ -50,6 +50,7 @@ max_unpool3d_op_info = AiCPURegOp("MaxUnpool3D") \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
     .get_op_info()
 
+
 @op_info_register(max_unpool3d_op_info)
 def _max_unpool3d_aicpu():
     """MaxUnpool3D aicpu register"""

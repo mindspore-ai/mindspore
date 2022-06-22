@@ -34,6 +34,7 @@ multi_margin_loss_grad_op_info = AiCPURegOp("MultiMarginLossGrad") \
                   DataType.F64_Default) \
     .get_op_info()
 
+
 @op_info_register(multi_margin_loss_grad_op_info)
 def _multi_margin_loss_grad_aicpu():
     """MultiMarginLossGrad aicpu register"""

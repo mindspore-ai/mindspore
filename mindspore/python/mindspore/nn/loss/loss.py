@@ -19,6 +19,9 @@ from mindspore import log
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from mindspore.ops.operations.nn_ops import MultiMarginLoss as MultiMarginLossOp
+from mindspore.ops.operations.nn_ops import MultilabelMarginLoss as MultilabelMarginLossOp
+from mindspore.ops.operations.nn_ops import TripletMarginLoss as TripletMarginLossOp
 from mindspore.ops import functional as F
 from mindspore import nn
 from mindspore.ops.primitive import constexpr
@@ -1127,7 +1130,7 @@ class MultiMarginLoss(LossBase):
     def __init__(self, p=1, margin=1.0, reduction='mean'):
         """Initialize MultiMarginLoss."""
         super(MultiMarginLoss, self).__init__()
-        self.multi_margin_loss = P.MultiMarginLoss(p=p, margin=margin, reduction=reduction)
+        self.multi_margin_loss = MultiMarginLossOp(p=p, margin=margin, reduction=reduction)
         self.ones = P.Ones()
 
     def construct(self, x, target, weight=None):
@@ -1369,7 +1372,7 @@ class MultilabelMarginLoss(LossBase):
 
     def __init__(self, reduction='mean'):
         super(MultilabelMarginLoss, self).__init__()
-        self.multilabel_margin_loss = P.MultilabelMarginLoss(reduction=reduction)
+        self.multilabel_margin_loss = MultilabelMarginLossOp(reduction=reduction)
 
     def construct(self, x, target):
         return self.multilabel_margin_loss(x, target)
@@ -1495,74 +1498,6 @@ def _check_input_dtype(labels_dtype, cls_name):
     """Internal function, used to check whether the data type of labels meets the requirements."""
     validator.check_type_name("labels", labels_dtype,
                               [mstype.int32, mstype.int64, mstype.float16, mstype.float32], cls_name)
-
-
-class MultilabelMarginLoss(LossBase):
-    r"""
-    MultilabelMarginLoss operation.
-
-    Creates a criterion that optimizes a multi-class multi-classification
-    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
-    and output :math:`y` (which is a 2D `Tensor` of target class indices).
-    For each sample in the mini-batch:
-
-    .. math::
-        \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
-
-    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
-    :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
-    :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
-    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
-
-    :math:`y` and :math:`x` must have the same size.
-
-    The criterion only considers a contiguous block of non-negative targets that
-    starts at the front.
-
-    This allows for different samples to have variable amounts of target classes.
-
-    Args:
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
-
-    Inputs:
-        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
-          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
-        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
-          label targets padded by -1.
-
-    Outputs:
-        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
-          is :math:`(N)`. Otherwise, a scalar value will be returned.
-        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
-          data type must be int32.
-
-    Raises:
-        TypeError: If `x` or `target` is not a Tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-        TypeError: If dtype of `target` is not int32.
-        ValueError: If length of shape of `x` is neither 1 nor 2.
-        ValueError: If shape of `x` is not the same as `target`.
-        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
-
-    Supported Platforms:
-        ``Ascend``
-
-    Examples:
-       >>> loss = nn.MultilabelMarginLoss()
-       >>> x = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
-       >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
-       >>> output = loss(x, target)
-       >>> print(output)
-       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
-       [[1, 1, 1, 1], [0, 0, 1, 1]]))
-    """
-
-    def __init__(self, reduction='mean'):
-        super(MultilabelMarginLoss, self).__init__()
-        self.multilabel_margin_loss = P.MultilabelMarginLoss(reduction=reduction)
-
-    def construct(self, x, target):
-        return self.multilabel_margin_loss(x, target)
 
 
 class FocalLoss(LossBase):
@@ -1867,7 +1802,7 @@ class TripletMarginLoss(LossBase):
 
     def __init__(self, p=2, swap=False, eps=1e-6, reduction='mean'):
         super(TripletMarginLoss, self).__init__()
-        self.triplet_margin_loss = P.TripletMarginLoss(p=p, swap=swap, eps=eps, reduction=reduction)
+        self.triplet_margin_loss = TripletMarginLossOp(p=p, swap=swap, eps=eps, reduction=reduction)
 
     def construct(self, x, positive, negative, margin):
         return self.triplet_margin_loss(x, positive, negative, margin)

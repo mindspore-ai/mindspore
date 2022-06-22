@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,24 @@
 #include <set>
 #include <string>
 #include <vector>
-#include "abstract/abstract_value.h"
-#include "ops/primitive_c.h"
-#include "utils/check_convert_utils.h"
+
+#include "ops/base_operator.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMultilabelMarginLossGrad = "MultilabelMarginLossGrad";
-class MS_CORE_API MultilabelMarginLossGrad : public PrimitiveC {
+class MIND_API MultilabelMarginLossGrad : public BaseOperator {
  public:
-  MultilabelMarginLossGrad() : PrimitiveC(kNameMultilabelMarginLossGrad) {
+  MIND_API_BASE_MEMBER(MultilabelMarginLossGrad);
+  MultilabelMarginLossGrad() : BaseOperator(kNameMultilabelMarginLossGrad) {
     InitIOName({"y_grad", "x", "target", "is_target"}, {"x_grad"});
   }
-  ~MultilabelMarginLossGrad() = default;
-  MS_DECLARE_PARENT(MultilabelMarginLossGrad, PrimitiveC);
 };
 
-AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args);
+abstract::AbstractBasePtr MultilabelMarginLossGradInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMultilabelMarginLossGradPtr = std::shared_ptr<MultilabelMarginLossGrad>;
 }  // namespace ops
 }  // namespace mindspore

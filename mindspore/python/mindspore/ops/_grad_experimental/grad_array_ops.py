@@ -40,7 +40,6 @@ from ..operations.array_ops import Expand
 from ..operations.array_ops import SegmentMean
 from .. import functional as F
 from .. import operations as P
-from ..operations import _grad_ops as G
 from .._utils.utils import is_shape_unknown
 from ..operations import _grad_ops as G
 
