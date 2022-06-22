@@ -354,6 +354,7 @@ class RunnerConfig:
     Args:
         context (Context): Define the context used to store options during execution.
         workers_num (int): the num of workers.
+        config_info (dict): {key:{key:value}}, Nested map for passing model weight paths.
 
     Raises:
         TypeError: type of input parameters are invalid.
@@ -363,12 +364,15 @@ class RunnerConfig:
         >>> import mindspore_lite as mslite
         >>> context = mslite.Context()
         >>> context.append_device_info(mslite.CPUDeviceInfo())
-        >>> runner_config = mslite.RunnerConfig(context=context, workers_num=4)
+        >>> config_info = {"weight": {"weight_path": "path of model weight"}}
+        >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info)
         >>> print(runner_config)
-        workers num: 4, context: 0, .
+        workers num: 4,
+        context: 0,
+        config info: weight: weight_path: path of model weight
     """
 
-    def __init__(self, context=None, workers_num=None):
+    def __init__(self, context=None, workers_num=None, config_info=None):
         if context is not None:
             check_isinstance("context", context, Context)
         if workers_num is not None:
@@ -380,9 +384,13 @@ class RunnerConfig:
             self._runner_config.set_context(context._context)
         if workers_num is not None:
             self._runner_config.set_workers_num(workers_num)
+        if config_info is not None:
+            for k, v in config_info.items():
+                self._runner_config.set_config_info(k, v)
 
     def __str__(self):
-        res = f"workers num: {self._runner_config.get_workers_num()}, " \
+        res = f"workers num: {self._runner_config.get_workers_num()}, \n" \
+              f"config info: {self._runner_config.get_config_info_string()}, \n" \
               f"context: {self._runner_config.get_context_info()}."
         return res
 

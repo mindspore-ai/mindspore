@@ -81,16 +81,31 @@ void ModelPyBind(const py::module &m) {
 #ifdef PARALLEL_INFERENCE
   py::class_<RunnerConfig, std::shared_ptr<RunnerConfig>>(m, "RunnerConfigBind")
     .def(py::init<>())
+    .def("set_config_info", &RunnerConfig::SetConfigInfo)
+    .def("get_config_info", &RunnerConfig::GetConfigInfo)
     .def("set_workers_num", &RunnerConfig::SetWorkersNum)
     .def("get_workers_num", &RunnerConfig::GetWorkersNum)
     .def("set_context", &RunnerConfig::SetContext)
     .def("get_context", &RunnerConfig::GetContext)
-    .def("get_context_info", [](RunnerConfig &runner_config) {
-      std::string result = "thread num: ";
-      const auto &context = runner_config.GetContext();
-      result += std::to_string(context->GetThreadNum());
-      result += ", bind mode: ";
-      result += std::to_string(context->GetThreadAffinityMode());
+    .def("get_context_info",
+         [](RunnerConfig &runner_config) {
+           std::string result = "thread num: ";
+           const auto &context = runner_config.GetContext();
+           result += std::to_string(context->GetThreadNum());
+           result += ", bind mode: ";
+           result += std::to_string(context->GetThreadAffinityMode());
+           return result;
+         })
+    .def("get_config_info_string", [](RunnerConfig &runner_config) {
+      std::string result = "";
+      const auto &config_info = runner_config.GetConfigInfo();
+      for (auto &section : config_info) {
+        result += section.first + ": ";
+        for (auto &config : section.second) {
+          auto temp = config.first + " " + config.second + "\n";
+          result += temp;
+        }
+      }
       return result;
     });
 
