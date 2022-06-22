@@ -272,7 +272,7 @@ class _MindsporeFunctionExecutor:
         # Add key with obj
         if self.obj is not None:
             if self.obj.__module__ != self.fn.__module__:
-                logger.error(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
+                logger.info(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
             self.obj.__parse_method__ = method_name
             generate_name = generate_name + '.' + str(self.obj.create_time) + '.' + str(id(self.obj))
         else:
