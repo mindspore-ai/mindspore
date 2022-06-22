@@ -4143,7 +4143,7 @@ class PadV3(Primitive):
         self.paddings_contiguous = paddings_contiguous
 
 
-class MirrorPad(PrimitiveWithInfer):
+class MirrorPad(Primitive):
     """
     Pads the input tensor according to the paddings and mode.
 
@@ -4218,35 +4218,6 @@ class MirrorPad(PrimitiveWithInfer):
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
         self.set_const_input_indexes([1])
-
-    def __infer__(self, input_x, paddings):
-        validator.check_subclass("input_x", input_x['dtype'], mstype.tensor, self.name)
-        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor, self.name)
-        x_shape = list(input_x['shape'])
-        if paddings['value'] is None:
-            raise ValueError(f"For '{self.name}', paddings must be a Tensor with type of int64, "
-                             f"but got {paddings['value']}.")
-        paddings_value = paddings['value'].asnumpy()
-        paddings_size = paddings_value.size
-        validator.check_int(paddings_size, len(x_shape) * 2, Rel.EQ, 'paddings.shape', self.name)
-        if not np.all(paddings_value >= 0):
-            raise ValueError(f"For '{self.name}', all elements of 'paddings' must be >= 0.")
-        adjust = 0
-        if self.mode == 'SYMMETRIC':
-            adjust = 1
-        for i in range(0, int(paddings_size / 2)):
-            if (paddings_value[i, 0] >= x_shape[i] + adjust) or (paddings_value[i, 1] >= x_shape[i] + adjust):
-                msg = "x_shape[D] + 1" if adjust == 1 else "x_shape[D]"
-                paddings_info_value = paddings['value']
-                raise ValueError(f"For '{self.name}', both paddings[D, 0] and paddings[D, 1] must be less than {msg}, "
-                                 f"but got paddings[{i}, 0]: {paddings_info_value[i, 0]}, "
-                                 f"paddings[{i}, 1]: {paddings_info_value[i, 1]}, x_shape[{i}]: {x_shape[i]}.")
-        y_shape = ()
-        for i in range(0, int(paddings_size / 2)):
-            y_shape += ((x_shape[i] + paddings_value[i, 0] + paddings_value[i, 1]),)
-        return {'shape': y_shape,
-                'dtype': input_x['dtype'],
-                'value': None}
 
 
 class ComputeAccidentalHits(PrimitiveWithCheck):
