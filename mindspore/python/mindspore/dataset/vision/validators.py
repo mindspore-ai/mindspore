@@ -1108,8 +1108,7 @@ def check_convert_color(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [convert_mode], _ = parse_user_args(method, *args, **kwargs)
-        if convert_mode is not None:
-            type_check(convert_mode, (ConvertMode,), "convert_mode")
+        type_check(convert_mode, (ConvertMode,), "convert_mode")
         return method(self, *args, **kwargs)
 
     return new_method

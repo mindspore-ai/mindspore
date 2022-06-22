@@ -155,6 +155,92 @@ JiebaTokenizerOperation::JiebaTokenizerOperation(const std::string &hmm_path, co
                                                  const JiebaMode &mode, bool with_offsets)
     : hmm_path_(hmm_path), mp_path_(mp_path), mode_(mode), with_offsets_(with_offsets) {}
 
+bool MakeNodeInfo(cppjieba::DictUnit &node_info, const std::string &word, double weight, const std::string &tag) {
+  if (!cppjieba::DecodeRunesInString(word, node_info.word)) {
+    return false;
+  }
+  node_info.weight = weight;
+  node_info.tag = tag;
+  return true;
+}
+
+double CalcFreqSum(const std::vector<cppjieba::DictUnit> &node_infos) {
+  double sum = 0.0;
+  for (size_t i = 0; i < node_infos.size(); i++) {
+    sum += node_infos[i].weight;
+  }
+  return sum;
+}
+
+Status ValidateMPPPath(const std::string &dict_path) {
+  double freq_sum = 0.0;
+  std::vector<cppjieba::DictUnit> static_node_infos;
+  std::ifstream ifs(dict_path.c_str());
+  CHECK_FAIL_RETURN_UNEXPECTED(ifs.is_open(), "JiebaTokenizer: Failed to open file: " + dict_path);
+  std::string line;
+  std::vector<std::string> buf;
+
+  cppjieba::DictUnit node_info;
+  for (size_t lineno = 0; std::getline(ifs, line); lineno++) {
+    cppjieba::Split(line, buf, " ");
+    CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == cppjieba::DICT_COLUMN_NUM,
+                                 "JiebaTokenizer: Split result illegal, line: " + line);
+    CHECK_FAIL_RETURN_UNEXPECTED(MakeNodeInfo(node_info, buf[0], std::atof(buf[1].c_str()), buf[2]),
+                                 "JiebaTokenizer: Failed to make node info.");
+    static_node_infos.push_back(node_info);
+  }
+  freq_sum = CalcFreqSum(static_node_infos);
+  if (freq_sum <= 0) {
+    RETURN_STATUS_UNEXPECTED("JiebaTokenizer: MPSegment algorithm file format is incorrect.");
+  }
+  ifs.close();
+  return Status::OK();
+}
+
+bool GetLine(std::ifstream &ifs, std::string *line) {
+  while (std::getline(ifs, *line)) {
+    cppjieba::Trim(*line);
+    if (line->empty()) {
+      continue;
+    }
+    if (cppjieba::StartsWith(*line, "#")) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
+
+Status ValidateHMMPath(const std::string &dict_path) {
+  std::ifstream ifs(dict_path.c_str());
+  CHECK_FAIL_RETURN_UNEXPECTED(ifs.is_open(), "JiebaTokenizer: Failed to open file: " + dict_path);
+  std::string line;
+  std::vector<std::string> buf;
+
+  // Load startProb
+  CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line),
+                               "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+                               "content fails to be obtained when startProb is loaded.");
+  cppjieba::Split(line, buf, " ");
+  CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == kStatusSum,
+                               "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+                               "content fails to be obtained when startProb is loaded.");
+
+  // Load transProb
+  for (size_t i = 0; i < kStatusSum; i++) {
+    CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line),
+                                 "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+                                 "content fails to be obtained when transProb is loaded.");
+    cppjieba::Split(line, buf, " ");
+    CHECK_FAIL_RETURN_UNEXPECTED(buf.size() == kStatusSum,
+                                 "JiebaTokenizer: The file format of the MPSegment algorithm is incorrect, and the "
+                                 "content fails to be obtained when transProb is loaded.");
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(GetLine(ifs, &line), "JiebaTokenizer: HMMSegment algorithm file format is incorrect.");
+  ifs.close();
+  return Status::OK();
+}
+
 Status JiebaTokenizerOperation::ValidateParams() {
   if (hmm_path_.empty()) {
     std::string err_msg = "JiebaTokenizer: The dict of HMMSegment in cppjieba is not provided.";
@@ -173,6 +259,8 @@ Status JiebaTokenizerOperation::ValidateParams() {
 
   RETURN_IF_NOT_OK(ValidateTokenizerDirParam("JiebaTokenizer", hmm_path_));
   RETURN_IF_NOT_OK(ValidateTokenizerDirParam("JiebaTokenizer", mp_path_));
+  RETURN_IF_NOT_OK(ValidateHMMPath(hmm_path_));
+  RETURN_IF_NOT_OK(ValidateMPPPath(mp_path_));
   return Status::OK();
 }
 
