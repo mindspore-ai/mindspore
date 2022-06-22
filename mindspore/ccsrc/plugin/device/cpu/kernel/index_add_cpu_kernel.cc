@@ -124,18 +124,16 @@ void IndexAddCpuKernelMod::CheckParams() {
 template <typename T>
 bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+                                        const std::vector<kernel::AddressPtr> &) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kIndexAddInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kIndexAddOutputsNum, kernel_name_);
   auto *x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto *indices = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
   auto *y = reinterpret_cast<T *>(inputs[kIndex2]->addr);
-  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   CheckParams();
   size_t x_axis_inner_size = x_axis_size_ * inner_size_;
   size_t y_axis_inner_size = y_axis_size_ * inner_size_;
 
-  auto task1 = [&](const size_t start, const size_t end) {
+  auto task = [&](const size_t start, const size_t end) {
     for (size_t i = start; i < end; ++i) {
       // calc idx_y in y.shape[axis]
       const size_t y_axis_idx = (i / inner_size_) % y_axis_size_;
@@ -150,16 +148,8 @@ bool IndexAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &i
       }
     }
   };
-  ParallelLaunchAutoSearch(task1, y_nums_, this, &parallel_search_info_);
-
-  auto task2 = [&](size_t start, size_t end) {
-    size_t length = (end - start) * sizeof(T);
-    auto ret = memcpy_s(output + start, length, x + start, length);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memcpy_s error. Error no: " << ret;
-    }
-  };
-  ParallelLaunchAutoSearch(task2, x_nums_, this, &parallel_search_info_);
+  const float block_size = 1024;
+  ParallelLaunch(task, y_nums_, block_size, this);
 
   return true;
 }
@@ -171,43 +161,50 @@ const std::vector<std::pair<KernelAttr, IndexAddCpuKernelMod::KernelRunFunc>> &I
        .AddInputAttr(kNumberTypeFloat64)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeFloat64)
-       .AddOutputAttr(kNumberTypeFloat64),
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<double>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeFloat32)
-       .AddOutputAttr(kNumberTypeFloat32),
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<float>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat16)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
+       .AddOutputAttr(kNumberTypeFloat16)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
+       .AddOutputAttr(kNumberTypeInt32)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<int32_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt16)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt16)
-       .AddOutputAttr(kNumberTypeInt16),
+       .AddOutputAttr(kNumberTypeInt16)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<int16_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeInt8)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeInt8)
-       .AddOutputAttr(kNumberTypeInt8),
+       .AddOutputAttr(kNumberTypeInt8)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<int8_t>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeUInt8)
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeUInt8)
-       .AddOutputAttr(kNumberTypeUInt8),
+       .AddOutputAttr(kNumberTypeUInt8)
+       .AddOutInRef(0, 0),
      &IndexAddCpuKernelMod::LaunchKernel<uint8_t>},
   };
   return func_list;
