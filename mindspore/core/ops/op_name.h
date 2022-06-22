@@ -163,6 +163,7 @@ constexpr auto kPadList = "pad_list";
 constexpr auto kPadMode = "pad_mode";
 constexpr auto kPads = "pads";
 constexpr auto kPadSize = "pad_size";
+constexpr auto kPeriodic = "periodic";
 constexpr auto kPooledH = "pooled_h";
 constexpr auto kPooledW = "pooled_w";
 constexpr auto kPoolMode = "pool_mode";

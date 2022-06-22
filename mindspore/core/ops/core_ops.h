@@ -253,6 +253,7 @@ constexpr auto kSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 constexpr auto kAssign = "Assign";
 constexpr auto kAssignAdd = "AssignAdd";
 constexpr auto kAssignSub = "AssignSub";
+constexpr auto kBartlettWindow = "BartlettWindow";
 constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
@@ -984,6 +985,7 @@ GVAR_DEF(PrimitivePtr, kPrimGpuConvertToDynamicShape, std::make_shared<Primitive
 GVAR_DEF(PrimitivePtr, kPrimErrorOnDynamicShapeInput, std::make_shared<Primitive>("ErrorOnDynamicShapeInput"));
 
 // Other miscellaneous
+GVAR_DEF(PrimitivePtr, kPrimBartlettWindow, std::make_shared<Primitive>(kBartlettWindow));
 GVAR_DEF(PrimitivePtr, kPrimDepend, std::make_shared<Primitive>("Depend", kSideEffectPropagate));
 GVAR_DEF(PrimitivePtr, kPrimIOU, std::make_shared<Primitive>("IOU"));
 GVAR_DEF(PrimitivePtr, kPrimReformat, std::make_shared<Primitive>("Reformat"));
