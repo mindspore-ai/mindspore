@@ -1076,7 +1076,7 @@ class GroupNorm(Cell):
 
     Args:
         num_groups (int): The number of groups to be divided along the channel dimension.
-        num_channels (int): The number of channels per group.
+        num_channels (int): The number of input channels.
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         affine (bool): A bool value, this layer will have learnable affine parameters when set to true. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
