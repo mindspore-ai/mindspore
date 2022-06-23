@@ -470,6 +470,9 @@ void BroadcastIterator::BroadcastShape() {
 }
 
 void BroadcastIterator::InitStrides() {
+  if (output_dimension_ <= 0) {
+    return;
+  }
   input_strides_a_[output_dimension_ - 1] = 1;
   input_strides_b_[output_dimension_ - 1] = 1;
   for (int i = output_dimension_ - 2; i >= 0; --i) {
