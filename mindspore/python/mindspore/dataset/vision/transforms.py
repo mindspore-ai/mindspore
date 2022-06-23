@@ -53,6 +53,7 @@ Examples:
 import numbers
 import random
 import numpy as np
+from PIL import Image
 
 import mindspore._c_dataengine as cde
 from mindspore._c_expression import typing
@@ -74,7 +75,24 @@ from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
 
 
-class AdjustGamma(TensorOperation, PyTensorOperation):
+class ImageTensorOperation(TensorOperation):
+    """
+    Base class of Image Tensor Ops
+    """
+
+    def __call__(self, *input_tensor_list):
+        for tensor in input_tensor_list:
+            if not isinstance(tensor, (np.ndarray, Image.Image)):
+                raise TypeError(
+                    "Input should be NumPy or PIL image, got {}.".format(type(tensor)))
+        return super().__call__(*input_tensor_list)
+
+    def parse(self):
+        # Note: subclasses must implement `def parse(self)` so do not make ImageTensorOperation's parse a staticmethod.
+        raise NotImplementedError("ImageTensorOperation has to implement parse() method.")
+
+
+class AdjustGamma(ImageTensorOperation, PyTensorOperation):
     r"""
     Apply gamma correction on input image. Input image is expected to be in [..., H, W, C] or [H, W] format.
 
@@ -130,7 +148,7 @@ class AdjustGamma(TensorOperation, PyTensorOperation):
         return util.adjust_gamma(img, self.gamma, self.gain)
 
 
-class AutoAugment(TensorOperation):
+class AutoAugment(ImageTensorOperation):
     """
     Apply AutoAugment data augmentation method based on
     `AutoAugment: Learning Augmentation Strategies from Data <https://arxiv.org/pdf/1805.09501.pdf>`_.
@@ -198,7 +216,7 @@ class AutoAugment(TensorOperation):
                                         self.fill_value)
 
 
-class AutoContrast(TensorOperation, PyTensorOperation):
+class AutoContrast(ImageTensorOperation, PyTensorOperation):
     """
     Apply automatic contrast on input image. This operator calculates histogram of image, reassign cutoff percent
     of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
@@ -252,12 +270,12 @@ class AutoContrast(TensorOperation, PyTensorOperation):
         return util.auto_contrast(img, self.cutoff, self.ignore)
 
 
-class BoundingBoxAugment(TensorOperation):
+class BoundingBoxAugment(ImageTensorOperation):
     """
     Apply a given image processing operation on a random selection of bounding box regions of a given image.
 
     Args:
-        transform (TensorOperation): C++ transformation operation to be applied on random selection
+        transform (TensorOperation): Transformation operation to be applied on random selection
             of bounding box regions of a given image.
         ratio (float, optional): Ratio of bounding boxes to apply augmentation on.
             Range: [0, 1] (default=0.3).
@@ -296,7 +314,7 @@ class BoundingBoxAugment(TensorOperation):
         return cde.BoundingBoxAugmentOperation(transform, self.ratio)
 
 
-class CenterCrop(TensorOperation, PyTensorOperation):
+class CenterCrop(ImageTensorOperation, PyTensorOperation):
     """
     Crop the input image at the center to the given size. If input image size is smaller than output size,
     input image will be padded with 0 before cropping.
@@ -350,7 +368,7 @@ class CenterCrop(TensorOperation, PyTensorOperation):
         return util.center_crop(img, self.size)
 
 
-class ConvertColor(TensorOperation):
+class ConvertColor(ImageTensorOperation):
     """
     Change the color space of the image.
 
@@ -426,7 +444,7 @@ class ConvertColor(TensorOperation):
         return cde.ConvertColorOperation(ConvertMode.to_c_type(self.convert_mode))
 
 
-class Crop(TensorOperation):
+class Crop(ImageTensorOperation):
     """
     Crop the input image at a specific location.
 
@@ -469,7 +487,7 @@ class Crop(TensorOperation):
         return cde.CropOperation(self.coordinates, self.size)
 
 
-class CutMixBatch(TensorOperation):
+class CutMixBatch(ImageTensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
     Note that you need to make labels into one-hot format and batched before calling this operator.
@@ -514,7 +532,7 @@ class CutMixBatch(TensorOperation):
         return cde.CutMixBatchOperation(ImageBatchFormat.to_c_type(self.image_batch_format), self.alpha, self.prob)
 
 
-class CutOut(TensorOperation):
+class CutOut(ImageTensorOperation):
     """
     Randomly cut (mask) out a given number of square patches from the input image array.
 
@@ -553,7 +571,7 @@ class CutOut(TensorOperation):
         return cde.CutOutOperation(self.length, self.num_patches, self.is_hwc)
 
 
-class Decode(TensorOperation, PyTensorOperation):
+class Decode(ImageTensorOperation, PyTensorOperation):
     """
     Decode the input image in RGB mode.
     Supported image formats: JPEG, BMP, PNG, TIFF, GIF(need `to_pil=True`), WEBP(need `to_pil=True`).
@@ -617,7 +635,7 @@ class Decode(TensorOperation, PyTensorOperation):
         return cde.DecodeOperation(True)
 
 
-class Equalize(TensorOperation, PyTensorOperation):
+class Equalize(ImageTensorOperation, PyTensorOperation):
     """
     Apply histogram equalization on input image.
 
@@ -703,7 +721,7 @@ class FiveCrop(PyTensorOperation):
         return util.five_crop(img, self.size)
 
 
-class GaussianBlur(TensorOperation):
+class GaussianBlur(ImageTensorOperation):
     """
     Blur input image with the specified Gaussian kernel.
 
@@ -795,7 +813,7 @@ class Grayscale(PyTensorOperation):
         return util.grayscale(img, num_output_channels=self.num_output_channels)
 
 
-class HorizontalFlip(TensorOperation):
+class HorizontalFlip(ImageTensorOperation):
     """
     Flip the input image horizontally.
 
@@ -865,7 +883,7 @@ class HsvToRgb(PyTensorOperation):
         return util.hsv_to_rgbs(hsv_imgs, self.is_hwc)
 
 
-class HWC2CHW(TensorOperation):
+class HWC2CHW(ImageTensorOperation):
     """
     Transpose the input image from shape (H, W, C) to (C, H, W).
     If the input image is of shape <H, W>, it will remain unchanged.
@@ -897,7 +915,7 @@ class HWC2CHW(TensorOperation):
         return cde.HwcToChwOperation()
 
 
-class Invert(TensorOperation, PyTensorOperation):
+class Invert(ImageTensorOperation, PyTensorOperation):
     """
     Apply invert on input image in RGB mode. This operator will reassign every pixel to (255 - pixel).
 
@@ -1063,7 +1081,7 @@ class MixUp(PyTensorOperation):
         return util.mix_up_muti(self, self.batch_size, image, label, self.alpha)
 
 
-class MixUpBatch(TensorOperation):
+class MixUpBatch(ImageTensorOperation):
     """
     Apply MixUp transformation on input batch of images and labels. Each image is
     multiplied by a random weight (lambda) and then added to a randomly selected image from the batch
@@ -1105,7 +1123,7 @@ class MixUpBatch(TensorOperation):
         return cde.MixUpBatchOperation(self.alpha)
 
 
-class Normalize(TensorOperation):
+class Normalize(ImageTensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation. This operator will normalize
     the input image with: output[channel] = (input[channel] - mean[channel]) / std[channel], where channel >= 1.
@@ -1148,7 +1166,7 @@ class Normalize(TensorOperation):
         return cde.NormalizeOperation(self.mean, self.std, self.is_hwc)
 
 
-class NormalizePad(TensorOperation):
+class NormalizePad(ImageTensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation then pad an extra channel with value zero.
 
@@ -1195,7 +1213,7 @@ class NormalizePad(TensorOperation):
         return cde.NormalizePadOperation(self.mean, self.std, self.dtype, self.is_hwc)
 
 
-class Pad(TensorOperation, PyTensorOperation):
+class Pad(ImageTensorOperation, PyTensorOperation):
     """
     Pad the image according to padding parameters.
 
@@ -1274,7 +1292,7 @@ class Pad(TensorOperation, PyTensorOperation):
         return util.pad(img, self.padding, self.fill_value, self.pil_padding_mode)
 
 
-class PadToSize(TensorOperation):
+class PadToSize(ImageTensorOperation):
     """
     Pad the image to a fixed size.
 
@@ -1333,7 +1351,7 @@ class PadToSize(TensorOperation):
         return cde.PadToSizeOperation(self.size, self.offset, self.fill_value, self.padding_mode)
 
 
-class RandomAdjustSharpness(TensorOperation):
+class RandomAdjustSharpness(ImageTensorOperation):
     """
     Randomly adjust the sharpness of the input image with a given probability.
 
@@ -1371,7 +1389,7 @@ class RandomAdjustSharpness(TensorOperation):
         return cde.RandomAdjustSharpnessOperation(self.degree, self.prob)
 
 
-class RandomAffine(TensorOperation, PyTensorOperation):
+class RandomAffine(ImageTensorOperation, PyTensorOperation):
     """
     Apply Random affine transformation to the input image.
 
@@ -1516,7 +1534,7 @@ class RandomAffine(TensorOperation, PyTensorOperation):
                                   self.fill_value)
 
 
-class RandomAutoContrast(TensorOperation):
+class RandomAutoContrast(ImageTensorOperation):
     """
     Automatically adjust the contrast of the image with a given probability.
 
@@ -1562,7 +1580,7 @@ class RandomAutoContrast(TensorOperation):
         return cde.RandomAutoContrastOperation(self.cutoff, self.ignore, self.prob)
 
 
-class RandomColor(TensorOperation, PyTensorOperation):
+class RandomColor(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the color of the input image by a fixed or random degree.
     This operation works only with 3-channel color images.
@@ -1608,7 +1626,7 @@ class RandomColor(TensorOperation, PyTensorOperation):
         return util.random_color(img, self.degrees)
 
 
-class RandomColorAdjust(TensorOperation, PyTensorOperation):
+class RandomColorAdjust(ImageTensorOperation, PyTensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
@@ -1692,7 +1710,7 @@ class RandomColorAdjust(TensorOperation, PyTensorOperation):
         return (value[0], value[1])
 
 
-class RandomCrop(TensorOperation, PyTensorOperation):
+class RandomCrop(ImageTensorOperation, PyTensorOperation):
     """
     Crop the input image at a random location. If input image size is smaller than output size,
     input image will be padded before cropping.
@@ -1797,7 +1815,7 @@ class RandomCrop(TensorOperation, PyTensorOperation):
                                 self.fill_value, self.pil_padding_mode)
 
 
-class RandomCropDecodeResize(TensorOperation):
+class RandomCropDecodeResize(ImageTensorOperation):
     """
     A combination of `Crop`, `Decode` and `Resize`. It will get better performance for JPEG images. This operator
     will crop the input image at a random location, decode the cropped image in RGB mode, and resize the decoded image.
@@ -1881,7 +1899,7 @@ class RandomCropDecodeResize(TensorOperation):
                                                    self.max_attempts)
 
 
-class RandomCropWithBBox(TensorOperation):
+class RandomCropWithBBox(ImageTensorOperation):
     """
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
@@ -1970,7 +1988,7 @@ class RandomCropWithBBox(TensorOperation):
                                                border_type)
 
 
-class RandomEqualize(TensorOperation):
+class RandomEqualize(ImageTensorOperation):
     """
     Apply histogram equalization on the input image with a given probability.
 
@@ -2133,7 +2151,7 @@ class RandomGrayscale(PyTensorOperation):
         return img
 
 
-class RandomHorizontalFlip(TensorOperation, PyTensorOperation):
+class RandomHorizontalFlip(ImageTensorOperation, PyTensorOperation):
     """
     Randomly flip the input image horizontally with a given probability.
 
@@ -2175,7 +2193,7 @@ class RandomHorizontalFlip(TensorOperation, PyTensorOperation):
         return util.random_horizontal_flip(img, self.prob)
 
 
-class RandomHorizontalFlipWithBBox(TensorOperation):
+class RandomHorizontalFlipWithBBox(ImageTensorOperation):
     """
     Flip the input image horizontally randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -2206,7 +2224,7 @@ class RandomHorizontalFlipWithBBox(TensorOperation):
         return cde.RandomHorizontalFlipWithBBoxOperation(self.prob)
 
 
-class RandomInvert(TensorOperation):
+class RandomInvert(ImageTensorOperation):
     """
     Randomly invert the colors of image with a given probability.
 
@@ -2237,7 +2255,7 @@ class RandomInvert(TensorOperation):
         return cde.RandomInvertOperation(self.prob)
 
 
-class RandomLighting(TensorOperation, PyTensorOperation):
+class RandomLighting(ImageTensorOperation, PyTensorOperation):
     """
     Add AlexNet-style PCA-based noise to an image. The eigenvalue and eigenvectors for Alexnet's PCA noise is
     calculated from the imagenet dataset.
@@ -2343,7 +2361,7 @@ class RandomPerspective(PyTensorOperation):
         return img
 
 
-class RandomPosterize(TensorOperation):
+class RandomPosterize(ImageTensorOperation):
     """
     Reduce the number of bits for each color channel to posterize the input image randomly with a given probability.
 
@@ -2381,7 +2399,7 @@ class RandomPosterize(TensorOperation):
         return cde.RandomPosterizeOperation(bits)
 
 
-class RandomResizedCrop(TensorOperation, PyTensorOperation):
+class RandomResizedCrop(ImageTensorOperation, PyTensorOperation):
     """
     This operator will crop the input image randomly, and resize the cropped image using a selected interpolation mode.
 
@@ -2482,7 +2500,7 @@ class RandomResizedCrop(TensorOperation, PyTensorOperation):
                                        self.py_interpolation, self.max_attempts)
 
 
-class RandomResizedCropWithBBox(TensorOperation):
+class RandomResizedCropWithBBox(ImageTensorOperation):
     """
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
@@ -2548,7 +2566,7 @@ class RandomResizedCropWithBBox(TensorOperation):
                                                       Inter.to_c_type(self.interpolation), self.max_attempts)
 
 
-class RandomResize(TensorOperation):
+class RandomResize(ImageTensorOperation):
     """
     Resize the input image using a randomly selected interpolation mode.
 
@@ -2590,7 +2608,7 @@ class RandomResize(TensorOperation):
         return cde.RandomResizeOperation(size)
 
 
-class RandomResizeWithBBox(TensorOperation):
+class RandomResizeWithBBox(ImageTensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
     bounding boxes accordingly.
@@ -2633,7 +2651,7 @@ class RandomResizeWithBBox(TensorOperation):
         return cde.RandomResizeWithBBoxOperation(size)
 
 
-class RandomRotation(TensorOperation, PyTensorOperation):
+class RandomRotation(ImageTensorOperation, PyTensorOperation):
     """
     Rotate the input image randomly within a specified range of degrees.
 
@@ -2740,7 +2758,7 @@ class RandomRotation(TensorOperation, PyTensorOperation):
         return util.random_rotation(img, self.degrees, self.py_resample, self.expand, self.py_center, self.fill_value)
 
 
-class RandomSelectSubpolicy(TensorOperation):
+class RandomSelectSubpolicy(ImageTensorOperation):
     """
     Choose a random sub-policy from a policy list to be applied on the input image.
 
@@ -2786,7 +2804,7 @@ class RandomSelectSubpolicy(TensorOperation):
         return cde.RandomSelectSubpolicyOperation(policy)
 
 
-class RandomSharpness(TensorOperation, PyTensorOperation):
+class RandomSharpness(ImageTensorOperation, PyTensorOperation):
     """
     Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
@@ -2832,7 +2850,7 @@ class RandomSharpness(TensorOperation, PyTensorOperation):
         return util.random_sharpness(img, self.degrees)
 
 
-class RandomSolarize(TensorOperation):
+class RandomSolarize(ImageTensorOperation):
     """
     Randomly selects a subrange within the specified threshold range and sets the pixel value within
     the subrange to (255 - pixel).
@@ -2866,7 +2884,7 @@ class RandomSolarize(TensorOperation):
         return cde.RandomSolarizeOperation(self.threshold)
 
 
-class RandomVerticalFlip(TensorOperation, PyTensorOperation):
+class RandomVerticalFlip(ImageTensorOperation, PyTensorOperation):
     """
     Randomly flip the input image vertically with a given probability.
 
@@ -2908,7 +2926,7 @@ class RandomVerticalFlip(TensorOperation, PyTensorOperation):
         return util.random_vertical_flip(img, self.prob)
 
 
-class RandomVerticalFlipWithBBox(TensorOperation):
+class RandomVerticalFlipWithBBox(ImageTensorOperation):
     """
     Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -2939,7 +2957,7 @@ class RandomVerticalFlipWithBBox(TensorOperation):
         return cde.RandomVerticalFlipWithBBoxOperation(self.prob)
 
 
-class Rescale(TensorOperation):
+class Rescale(ImageTensorOperation):
     """
     Rescale the input image with the given rescale and shift. This operator will rescale the input image
     with: output = image * rescale + shift.
@@ -2975,7 +2993,7 @@ class Rescale(TensorOperation):
         return cde.RescaleOperation(self.rescale, self.shift)
 
 
-class Resize(TensorOperation, PyTensorOperation):
+class Resize(ImageTensorOperation, PyTensorOperation):
     """
     Resize the input image to the given size with a given interpolation mode.
 
@@ -3053,7 +3071,7 @@ class Resize(TensorOperation, PyTensorOperation):
         return util.resize(img, self.py_size, self.py_interpolation)
 
 
-class ResizeWithBBox(TensorOperation):
+class ResizeWithBBox(ImageTensorOperation):
     """
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
@@ -3149,7 +3167,7 @@ class RgbToHsv(PyTensorOperation):
         return util.rgb_to_hsvs(rgb_imgs, self.is_hwc)
 
 
-class Rotate(TensorOperation):
+class Rotate(ImageTensorOperation):
     """
     Rotate the input image by specified degrees.
 
@@ -3217,7 +3235,7 @@ class Rotate(TensorOperation):
                                    self.fill_value)
 
 
-class SlicePatches(TensorOperation):
+class SlicePatches(ImageTensorOperation):
     """
     Slice Tensor to multiple patches in horizontal and vertical directions.
 
@@ -3411,7 +3429,7 @@ class ToPIL(PyTensorOperation):
         return util.to_pil(img)
 
 
-class ToTensor(TensorOperation):
+class ToTensor(ImageTensorOperation):
     """
     Convert the input PIL Image or numpy.ndarray to numpy.ndarray of the desired dtype, rescale the pixel value
     range from [0, 255] to [0.0, 1.0] and change the shape from (H, W, C) to (C, H, W).
@@ -3546,7 +3564,7 @@ class UniformAugment(CompoundOperation):
         return util.uniform_augment(img, self.transforms.copy(), self.num_ops)
 
 
-class VerticalFlip(TensorOperation):
+class VerticalFlip(ImageTensorOperation):
     """
     Flip the input image vertically.
 

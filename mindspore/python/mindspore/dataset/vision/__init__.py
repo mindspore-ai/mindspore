@@ -34,6 +34,7 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
 Descriptions of common data processing terms are as follows:
 
 - TensorOperation, the base class of all data processing operations implemented in C++.
+- ImageTensorOperation, the base class of all image processing operations. It is a derived class of TensorOperation.
 - PyTensorOperation, the base class of all data processing operations implemented in Python.
 """
 from . import c_transforms

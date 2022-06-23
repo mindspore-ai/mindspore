@@ -20,6 +20,7 @@ from PIL import Image
 import mindspore.dataset.transforms as data_trans
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
+from mindspore import Tensor
 
 
 def test_eager_decode_c():
@@ -395,13 +396,201 @@ def test_eager_exceptions_pad():
     """
     Feature: Pad
     Description: Test Pad with invalid input of string
-    Expectation: Raise RuntimeError
+    Expectation: Raise TypeError
     """
     try:
         img = "../data/dataset/apple.jpg"
         _ = vision.Pad(padding=4)(img)
-    except RuntimeError as e:
-        assert "load image failed" in str(e)
+    except TypeError as e:
+        assert "Input should be NumPy or PIL image, got <class 'str'>." in str(e)
+
+
+def test_eager_invalid_image_randomadjustsharpness():
+    """
+    Feature: RandomAdjustSharpness op
+    Description: Exception eager support test for RandomAdjustSharpness op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomAdjustSharpness(degree=0.5, prob=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.rand(128, 128, 3)
+
+    test_config((10,), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config(10, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+    test_config(Tensor(my_input), TypeError,
+                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
+
+
+def test_eager_invalid_image_hwc2chw():
+    """
+    Feature: HWC2CHW op
+    Description: Exception eager support test for HWC2CHW op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.HWC2CHW()(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+    test_config(Tensor(my_input), TypeError,
+                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
+
+
+def test_eager_invalid_image_invert():
+    """
+    Feature: Invert op
+    Description: Exception eager support test for Invert op with invalid image type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.Invert()(my_input)
+        assert error_msg in str(error_info.value)
+
+    test_config((10,), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config(10, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+
+
+def test_eager_invalid_image_pad():
+    """
+    Feature: Pad op
+    Description: Exception eager support test for Pad op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.Pad(padding=10)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+    test_config(Tensor(my_input), TypeError,
+                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
+
+
+def test_eager_invalid_image_randomcrop():
+    """
+    Feature: RandomCrop op
+    Description: Exception eager support test for RandomCrop op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomCrop(size=200)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randint(0, 255, (987, 654, 3)).astype(np.uint8).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+
+
+def test_eager_invalid_image_randomhorizontalflip():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Exception eager support test for RandomHorizontalFlip op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomHorizontalFlip(prob=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    img = cv2.imread("../data/dataset/apple.jpg")
+    my_input = img.tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+
+
+def test_eager_invalid_image_randomsolarize():
+    """
+    Feature: RandomSolarize op
+    Description: Exception eager support test for RandomSolarize op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomSolarize(threshold=(0, 120))(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randint(0, 255, (500, 600, 3)).astype(np.uint8).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+
+
+def test_eager_invalid_image_cutout():
+    """
+    Feature: CutOut op
+    Description: Exception eager support test for CutOut op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.CutOut(length=120, num_patches=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(60, 50)
+    test_config(my_input, RuntimeError, "Unexpected error. CutOut: shape is invalid.")
+
+    test_config(1, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+    test_config(1.0, TypeError, "Input should be NumPy or PIL image, got <class 'float'>.")
+    test_config((10, 20), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config([10, 20, 30], TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+
+
+def test_eager_invalid_image_randomcolor():
+    """
+    Feature: RandomColor op
+    Description: Exception eager support test for RandomColor op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomColor(degrees=(0.2, 0.3))(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(1280, 1280, 3)
+
+    test_config(None, TypeError, "Input should be NumPy or PIL image, got <class 'NoneType'>.")
+    test_config(1, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+    test_config(1.0, TypeError, "Input should be NumPy or PIL image, got <class 'float'>.")
+    test_config((10, 20), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config([10, 20, 30], TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+    test_config(Tensor(my_input), TypeError,
+                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
+
+
+def test_eager_invalid_image_randomsharpness():
+    """
+    Feature: RandomSharpness op
+    Description: Exception eager support test for RandomSharpness op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = vision.RandomSharpness(degrees=(0.2, 0.3))(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(1280, 1280, 3)
+
+    test_config(None, TypeError, "Input should be NumPy or PIL image, got <class 'NoneType'>.")
+    test_config(1, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+    test_config(1.0, TypeError, "Input should be NumPy or PIL image, got <class 'float'>.")
+    test_config((10, 20), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config([10, 20, 30], TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+    test_config(Tensor(my_input), TypeError,
+                "Input should be NumPy or PIL image, got <class 'mindspore.common.tensor.Tensor'>.")
 
 
 if __name__ == '__main__':
@@ -424,3 +613,13 @@ if __name__ == '__main__':
     test_eager_exceptions_resize()
     test_eager_exceptions_normalize()
     test_eager_exceptions_pad()
+    test_eager_invalid_image_randomadjustsharpness()
+    test_eager_invalid_image_hwc2chw()
+    test_eager_invalid_image_invert()
+    test_eager_invalid_image_pad()
+    test_eager_invalid_image_randomcrop()
+    test_eager_invalid_image_randomhorizontalflip()
+    test_eager_invalid_image_randomsolarize()
+    test_eager_invalid_image_cutout()
+    test_eager_invalid_image_randomcolor()
+    test_eager_invalid_image_randomsharpness()
