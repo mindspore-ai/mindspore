@@ -322,7 +322,8 @@ class GradExecutor {
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(const py::object *ret, const py::object &cell, const py::args &args);
   void EndGraphInner(const py::object *ret, const py::object &cell, const py::object &out, const py::args &args);
-  ValuePtr GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node);
+  void SetForwardLastNodeInfo(const py::object &out) const;
+  ValuePtr GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node) const;
   void UpdateSensValueForDynamicShapeOutput(const py::object &out) const;
   void DoGradForCustomBprop(const py::object &cell, const py::object &out, const py::args &args);
   std::string GetAlreadyRunCellId(const std::string &cell_id);
