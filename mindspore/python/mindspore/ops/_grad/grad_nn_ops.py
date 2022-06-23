@@ -891,7 +891,7 @@ def get_bprop_top_kv2(self):
 @bprop_getters.register(P.SmoothL1Loss)
 def get_bprop_smooth_l1_loss(self):
     """Grad definition for `SmoothL1Loss` operation."""
-    grad = G.SmoothL1LossGrad(self.beta)
+    grad = G.SmoothL1LossGrad(self.beta, self.reduction)
 
     def bprop(prediction, target, out, dout):
         dx = grad(prediction, target, dout)

@@ -27,12 +27,24 @@
 namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(SmoothL1Loss, BaseOperator);
-void SmoothL1Loss::Init(const float beta) { this->set_beta(beta); }
+void SmoothL1Loss::Init(const float beta, const std::string reduction) {
+  this->set_beta(beta);
+  this->set_reduction(reduction);
+}
 void SmoothL1Loss::set_beta(const float beta) { (void)this->AddAttr(kBeta, api::MakeValue(beta)); }
 
 float SmoothL1Loss::get_beta() const {
   auto value_ptr = this->GetAttr(kBeta);
   return GetValue<float>(value_ptr);
+}
+
+void SmoothL1Loss::set_reduction(const std::string reduction) {
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+
+std::string SmoothL1Loss::get_reduction() const {
+  auto value_ptr = this->GetAttr(kReduction);
+  return GetValue<std::string>(value_ptr);
 }
 
 namespace {
@@ -49,7 +61,13 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(x);
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
+  if (reduction == "none") {
+    return shape_element;
+  } else {
+    ShapeVector shape_out{1};
+    return std::make_shared<abstract::Shape>(shape_out);
+  }
 }
 
 TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

@@ -2033,8 +2033,9 @@ class SmoothL1LossGrad(Primitive):
     """Computes gradient for prediction on SmoothL1Loss."""
 
     @prim_attr_register
-    def __init__(self, beta=1.0):
-        pass
+    def __init__(self, beta=1.0, reduction='none'):
+        self.reduction = validator.check_string(
+            reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
 class SoftMarginLossGrad(Primitive):

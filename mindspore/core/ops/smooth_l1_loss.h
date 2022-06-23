@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_H_
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -33,13 +34,19 @@ class MIND_API SmoothL1Loss : public BaseOperator {
   /// \brief Constructor.
   SmoothL1Loss() : BaseOperator(kNameSmoothL1Loss) { InitIOName({"prediction", "target"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.SmoothL1Loss for the inputs.
-  void Init(const float beta);
+  void Init(const float beta, const std::string reduction = "none");
   /// \brief Set beta.
   void set_beta(const float beta);
   /// \brief Get beta.
   ///
   /// \return beta.
   float get_beta() const;
+  /// \brief Set reduction.
+  void set_reduction(const std::string reduction);
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
+  std::string get_reduction() const;
 };
 abstract::AbstractBasePtr SmoothL1LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<abstract::AbstractBasePtr> &input_args);

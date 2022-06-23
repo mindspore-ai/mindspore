@@ -18,6 +18,7 @@
 #define MINDSPORE_CORE_OPS_SMOOTH_L1_LOSS_GRAD_H_
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
@@ -30,9 +31,11 @@ class MIND_API SmoothL1LossGrad : public BaseOperator {
   MIND_API_BASE_MEMBER(SmoothL1LossGrad);
   SmoothL1LossGrad() : BaseOperator(kNameSmoothL1LossGrad) {}
   void Init();
-  void Init(const float beta);
+  void Init(const float beta, const std::string reduction = "none");
   void set_beta(const float beta);
   float get_beta() const;
+  void set_reduction(const std::string reduction);
+  std::string get_reduction() const;
 };
 abstract::AbstractBasePtr SmoothL1LossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
