@@ -61,6 +61,7 @@ public class ModelTest {
         Graph g = new Graph();
         assertTrue(g.load("../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_train.ms"));
         MSContext context = new MSContext();
+        context.init(1, 0);
         TrainCfg cfg = new TrainCfg();
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(g, context, cfg);
@@ -74,7 +75,7 @@ public class ModelTest {
         Graph g = new Graph();
         assertTrue(g.load(modelFile));
         MSContext context = new MSContext();
-        context.init();
+        context.init(1,0);
         context.addDeviceInfo(DeviceType.DT_CPU, false, 0);
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(g, context, null);
@@ -119,6 +120,7 @@ public class ModelTest {
     public void testBuildByFileFailed() {
         String modelFile = "../test/ut/src/runtime/kernel/arm/test_data/nets/lenet_tod_infer.ms";
         MSContext context = new MSContext();
+        context.init(1, 0);
         Model liteModel = new Model();
         boolean isSuccess = liteModel.build(modelFile, 0, context);
         assertFalse(isSuccess);
