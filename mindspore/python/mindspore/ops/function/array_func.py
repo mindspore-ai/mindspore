@@ -1186,6 +1186,8 @@ def scatter_max(input_x, indices, updates):
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -1233,9 +1235,11 @@ def scatter_min(input_x, indices, updates):
 
     Raises:
         TypeError: If `indices` is not an int32 or an int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
-        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1290,6 +1294,8 @@ def scatter_div(input_x, indices, updates):
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
