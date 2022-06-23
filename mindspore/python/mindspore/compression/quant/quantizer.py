@@ -17,6 +17,7 @@ Note:
     Base Class of Quantizer. This is interface that is subject to change or deletion.
 """
 
+from __future__ import absolute_import
 from abc import ABC, abstractmethod
 from enum import Enum
 

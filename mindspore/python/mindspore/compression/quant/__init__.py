@@ -19,6 +19,7 @@ and quantization utils.
 Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
+from __future__ import absolute_import
 from .quantizer import OptimizeOption
 from .qat import QuantizationAwareTraining, create_quant_config
 from .quant_utils import load_nonquant_param_into_quant_net, query_quant_layers
