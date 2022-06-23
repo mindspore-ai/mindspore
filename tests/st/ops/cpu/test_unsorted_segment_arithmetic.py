@@ -45,14 +45,14 @@ def init_result(func, shape, dtype):
     if func == 'sum':
         result = np.zeros(shape, dtype)
     if func == 'min':
-        if dtype == np.int32:
+        if dtype in [np.int32, np.uint8, np.int16, np.int8, np.int64, np.uint16, np.uint32, np.uint64]:
             result = result * np.iinfo(dtype).max
-        if dtype == np.float32:
+        if dtype in [np.float32, np.float64]:
             result = result * np.finfo(dtype).max
     if func == 'max':
-        if dtype == np.int32:
+        if dtype in [np.int32, np.uint8, np.int16, np.int8, np.int64, np.uint16, np.uint32, np.uint64]:
             result = result * np.iinfo(dtype).min
-        if dtype == np.float32:
+        if dtype in [np.float32, np.float64]:
             result = result * np.finfo(dtype).min
     return result
 
@@ -105,7 +105,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['sum', 'min', 'max'])
+@pytest.mark.parametrize('func', ['min', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
@@ -123,7 +123,6 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
     graph_output = net(x, segment_ids)
     expected = unsorted_segment_arith_expected(func, x, segment_ids, num_segments)
     np.testing.assert_array_almost_equal(graph_output.asnumpy(), expected)
-
 
 
 @pytest.mark.level0
