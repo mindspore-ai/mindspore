@@ -1157,7 +1157,7 @@ bool AbstractNode::InitClientToScheduler() {
         MS_EXCEPTION_IF_NULL(meta);
         MS_EXCEPTION_IF_NULL(data);
         if (handlers_.count(meta->cmd()) == 0) {
-          MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+          MS_LOG(WARNING) << "The cmd:" << meta->cmd() << " is not supported!";
         }
         if (handlers_[meta->cmd()] != nullptr) {
           const auto &handler_ptr = handlers_[meta->cmd()];
@@ -1225,7 +1225,7 @@ const std::shared_ptr<TcpClient> &AbstractNode::GetOrCreateTcpClient(const uint3
           MS_LOG(DEBUG) << "The Node id:" << node_info_.node_id_ << " receive a send_event command message response!";
           break;
         default:
-          MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+          MS_LOG(WARNING) << "The cmd:" << meta->cmd() << " is not supported!";
       }
       NotifyMessageArrival(meta);
     });
@@ -1495,7 +1495,7 @@ void AbstractNode::CreateTcpServer() {
     MS_EXCEPTION_IF_NULL(conn);
     MS_EXCEPTION_IF_NULL(data);
     if (server_handler_.count(meta->cmd()) == 0) {
-      MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+      MS_LOG(WARNING) << "The cmd:" << meta->cmd() << " is not supported!";
     }
 
     if (meta->cmd() == NodeCommand::COLLECTIVE_SEND_DATA) {
