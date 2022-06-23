@@ -59,10 +59,6 @@ class UnsortedSegmentProdGpuKernelMod : public NativeGpuKernelMod,
                     const std::vector<AddressPtr> &outputs);
 
  private:
-  void ResetResource();
-  void InitSizeLists();
-
- private:
   size_t input_dim0_ = 1;
   size_t input_dim1_ = 1;
   size_t output_dim0_ = 1;
