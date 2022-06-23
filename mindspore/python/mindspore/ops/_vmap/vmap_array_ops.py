@@ -268,7 +268,8 @@ def get_flatten_vmap_rule(prim, axis_size):
 
         x, x_dim = x_bdim
         x = _bdim_at_front(x, x_dim, axis_size)
-        output = prim(x)
+        x_shape = F.shape(x)
+        output = F.reshape(x, x_shape[0:2] + (-1,))
         return (output, 0)
 
     return vmap_rule
