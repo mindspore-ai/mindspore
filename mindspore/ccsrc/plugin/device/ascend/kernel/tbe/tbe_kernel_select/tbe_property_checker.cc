@@ -35,11 +35,13 @@ constexpr char kAttrStrides[] = "strides";
 constexpr char kAttrShrinkAxisMask[] = "shrink_axis_mask";
 
 bool CheckValueType(const AnfNodePtr &input_node, size_t inputs_num) {
+  MS_EXCEPTION_IF_NULL(input_node);
   auto value_node = input_node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(value_node);
   auto value = value_node->value();
   if (!value->isa<tensor::Tensor>()) {
-    MS_EXCEPTION(ValueError) << "The strides of StridedSliceGrad must be a constant." << inputs_num;
+    MS_EXCEPTION(ValueError) << "The strides of StridedSliceGrad must be a constant. Total inputs of cnode is  "
+                             << inputs_num;
   }
   auto tensor = value->cast<tensor::TensorPtr>();
   TypePtr data_type = tensor->Dtype();
