@@ -137,6 +137,7 @@ from .fused_sparse_ftrl import _fused_sparse_ftrl_aicpu
 from .fused_sparse_proximal_adagrad import _fused_sparse_proximal_adagrad_aicpu
 from .meshgrid import _meshgrid_aicpu
 from .hypot import _hypot_aicpu
+from .heaviside import _heaviside_aicpu
 from .div import _div_aicpu
 from .xdivy import _xdivy_aicpu
 from .xlogy import _xlogy_aicpu

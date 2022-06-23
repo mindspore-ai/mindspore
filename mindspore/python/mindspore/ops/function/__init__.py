@@ -156,6 +156,7 @@ from .math_func import (
     isnan,
     isclose,
     hypot,
+    heaviside,
     same_type_shape,
     gcd,
     log,
