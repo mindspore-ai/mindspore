@@ -282,3 +282,4 @@ from .split import _split_aicpu
 from .sparse_apply_proximal_gradient_descent import _sparse_apply_proximal_gradient_descent_aicpu
 from .sparse_apply_momentum import _sparse_apply_momentum_aicpu
 from .linear_sum_assignment import _linear_sum_assignment_aicpu
+from .orgqr import _orgqr_aicpu

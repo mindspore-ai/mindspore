@@ -42,6 +42,7 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import ComplexAbs
+from mindspore.ops.operations.math_ops import Orgqr
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations import nn_ops as nps
@@ -1425,6 +1426,14 @@ test_case_math_ops = [
         'block': P.Minimum(),
         'desc_inputs': [[2, 3, 3, 5], [2, 3, 3, 5]],
         'desc_bprop': [[2, 3, 3, 5]]}),
+    ('Orgqr', {
+        'block': Orgqr(),
+        'desc_inputs': [Tensor(np.array([[-114.6, 10.9, 1.1],
+                                         [-0.304, 38.07, 69.38],
+                                         [-0.45, -0.17, 62.0]]).astype(np.float32)),
+                        Tensor(np.array([1.55, 1.94, 0.0]).astype(np.float32))
+                        ],
+        'skip': ['backward']}),
     ('Pow_0', {
         'block': P.Pow(),
         'desc_const': [2.0],
