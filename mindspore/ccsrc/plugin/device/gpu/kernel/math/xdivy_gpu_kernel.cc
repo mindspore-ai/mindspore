@@ -18,6 +18,9 @@
 
 namespace mindspore {
 namespace kernel {
+static constexpr size_t INPUT_NUM = 2;
+static constexpr size_t OUTPUT_NUM = 1;
+static constexpr int MAX_DIMS = 7;
 bool XdivyGpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   if (kernel_func_ == nullptr) {
