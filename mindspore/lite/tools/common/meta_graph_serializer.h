@@ -26,6 +26,10 @@
 namespace mindspore::lite {
 class MetaGraphSerializer {
  public:
+  // get metagraph packed buffer
+  static uint8_t *GetMetaGraphPackedBuff(flatbuffers::FlatBufferBuilder *builder, const schema::MetaGraphT &graph,
+                                         size_t *data_size);
+
   // save serialized fb model
   static int Save(const schema::MetaGraphT &graph, const std::string &output_path, const Byte *key = {},
                   const size_t key_len = 0, const std::string &enc_mode = "");

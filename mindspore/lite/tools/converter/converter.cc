@@ -57,6 +57,7 @@ constexpr size_t kMaxNum1024 = 1024;
 constexpr size_t kPluginPathMaxNum = 10;
 constexpr int kPathLengthUpperLimit = 1024;
 constexpr size_t kEncMaxLen = 16;
+constexpr size_t kFlatbuffersBuilderInitSize = 1024;
 
 FuncGraphPtr ConvertGraph(const api::FuncGraphPtr &func_graph) {
   auto impl = func_graph->impl();
@@ -520,7 +521,7 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
   return res;
 }
 
-int RunConverter(const std::shared_ptr<ConverterPara> &param) {
+int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::common_log_init();
 
   ConverterImpl converter_impl;
@@ -579,7 +580,12 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param) {
         return RET_INPUT_PARAM_INVALID;
       }
     }
-    status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
+    if (not_save) {
+      flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
+      *model_data = static_cast<void *>(MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, data_size));
+    } else {
+      status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
+    }
     if (memset_s(encKey, kEncMaxLen, 0, kEncMaxLen) != EOK) {
       MS_LOG(ERROR) << "memset failed.";
       delete meta_graph;
