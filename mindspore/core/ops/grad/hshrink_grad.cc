@@ -36,6 +36,7 @@ float HShrinkGrad::get_lambd() const {
   return GetValue<float>(value_ptr);
 }
 
+namespace {
 abstract::ShapePtr HShrinkGradInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -64,6 +65,7 @@ TypePtr HShrinkGradInferType(const PrimitivePtr &prim, const std::vector<Abstrac
   (void)types.emplace("features", input_args[1]->BuildType());
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
+}  // namespace
 
 AbstractBasePtr HShrinkGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {

@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "mindspore/core/ops/hshrink.h"
 #include "plugin/factory/ms_factory.h"
+#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
@@ -75,7 +76,15 @@ bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
   auto *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  auto task = [input, output, this](size_t start, size_t end) { HShrink(input, (end - start), output, this->lambd_); };
+  auto task = [input, output, this](size_t start, size_t end) {
+    auto input_tmp = input + start;
+    auto output_tmp = output + start;
+
+    auto ret = HShrink(input_tmp, (end - start), output_tmp, this->lambd_);
+    if (ret != static_cast<int>(NNACL_OK)) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
+    }
+  };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
   return true;
 }
