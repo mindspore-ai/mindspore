@@ -529,7 +529,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         padding (tuple[int]): A tuple of 4 integers. The number of pixels to add to each (top, bottom, left,
             right) side of the input.
         bias (Tensor, Optional): An 1D tensor of additive biases to the filter outputs.
-            The shape is :math:`(out\_channels)`. Defaults to None.
+            The shape is :math:`(C_{out})`. Defaults to None.
         dilations (tuple[int], Optional): A tuple of 4 integers. The dilation factor for each dimension of input. The
             dimension order is interpreted according to the data format of `x`. The N and C dimensions must be set
             to 1. Defaults to (1, 1, 1, 1).
@@ -547,9 +547,9 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         .. math::
             \begin{array}{ll} \\
                 H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times
-                \text{dilations[3]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
+                \text{dilations[2]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
                 W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (W_{f} - 1) \times
-                \text{dilations[4]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
+                \text{dilations[3]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
             \end{array}
 
     Supported Platforms:

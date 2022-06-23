@@ -25,7 +25,7 @@ mindspore.ops.deformable_conv2d
     - **kernel_size** (tuple[int]) - 一个包含两个整数的元组，表示卷积核的大小。
     - **strides** (tuple[int]) - 一个包含四个整数的元组，表示对于输入的每个维度的滑动窗口步长。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。
     - **padding** (tuple[int]) - 一个包含四个整数的元组，表示沿（上，下，左，右）四个方向往输入填充的像素点个数。
-    - **bias** (Tensor, 可选) - 一个一维Tensor，表示加到卷积输出的偏置参数。shape为 :math:`(out\_channels)` 。默认值为None。
+    - **bias** (Tensor, 可选) - 一个一维Tensor，表示加到卷积输出的偏置参数。shape为 :math:`(C_{out})` 。默认值为None。
     - **dilations** (tuple[int], 可选) - 一个包含四个整数的元组，表示对于输入的每个维度的膨胀系数。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。默认值为(1, 1, 1, 1)。
     - **groups** (int, 可选) - 一个int32类型的整数，表示从输入通道到输出通道的阻塞连接数。输入通道数和输出通道数必须都能被 `groups` 整除。默认值为1。
     - **deformable_groups** (int, 可选) - 一个int32类型的整数，表示可变形卷积组数。输入通道数必须能被 `deformable_groups` 整除。默认值为1。
@@ -38,9 +38,9 @@ mindspore.ops.deformable_conv2d
     .. math::
         \begin{array}{ll} \\
             H_{out} = \left \lfloor{\frac{H_{in} + padding[0] + padding[1] - (H_{f} - 1) \times
-            \text{dilations[3]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
+            \text{dilations[2]} - 1 }{\text{stride[0]}} + 1} \right \rfloor \\
             W_{out} = \left \lfloor{\frac{W_{in} + padding[2] + padding[3] - (W_{f} - 1) \times
-            \text{dilations[4]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
+            \text{dilations[3]} - 1 }{\text{stride[1]}} + 1} \right \rfloor \\
         \end{array}
 
     **异常：**
