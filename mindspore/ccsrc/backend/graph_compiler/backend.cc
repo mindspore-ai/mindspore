@@ -984,7 +984,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
         MS_LOG(INFO) << "Replace parameter format";
         // The input tensors of heterogeneous graphs or control flow graphs are null.
         // Need to get tensor after ParseControlNodes.
-        pynative::GraphAdapter::ReplaceBpropGraphParameter(graph, inputs.at(i));
+        pynative::GraphAdapter::ReplaceGraphParameterProperties(graph, inputs.at(i), device_contexts[i]);
       }
       graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
       pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
