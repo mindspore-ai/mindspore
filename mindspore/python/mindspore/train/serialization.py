@@ -394,9 +394,12 @@ def load(file_name, **kwargs):
 
         kwargs (dict): Configuration options dictionary.
 
-            - dec_key (bytes): Byte type key used for decryption. The valid length is 16, 24, or 32.
+            - dec_key (bytes): Byte-type key used for decryption. The valid length is 16, 24, or 32.
             - dec_mode (Union[str, function]): Specifies the decryption mode, to take effect when dec_key is set.
-              Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
+
+              - Option: 'AES-GCM', 'AES-CBC' or customized decryption. Default: 'AES-GCM'.
+              - For details of using the customized decryption, please check the `tutorial
+                <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
     Returns:
         GraphCell, a compiled graph that can executed by `GraphCell`.
 
@@ -871,10 +874,14 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
               Default: 127.5.
             - std_dev (float): The variance of input data after preprocessing,
               used for quantizing the first layer of the network. Default: 127.5.
-            - enc_key (byte): Byte type key used for encryption. The valid length is 16, 24, or 32.
+            - enc_key (byte): Byte-type key used for encryption. The valid length is 16, 24, or 32.
             - enc_mode (Union[str, function]): Specifies the encryption mode, to take effect when enc_key is set.
-              For 'AIR' and 'ONNX' models, only Customized encryption is supported. For 'MINDIR', all options are
-              supported. Option: 'AES-GCM', 'AES-CBC' or Customized encryption by user. Default: 'AES-GCM'.
+
+              - For 'AIR' and 'ONNX' models, only customized encryption is supported.
+              - For 'MINDIR', all options are supported. Option: 'AES-GCM', 'AES-CBC' or Customized encryption.
+                Default: 'AES-GCM'.
+              - For details of using the customized encryption, please check the `tutorial
+                <https://mindspore.cn/mindarmour/docs/en/master/model_encrypt_protection.html>`_.
 
     Examples:
         >>> import mindspore as ms
