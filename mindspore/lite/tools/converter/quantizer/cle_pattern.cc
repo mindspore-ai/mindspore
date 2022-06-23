@@ -35,7 +35,8 @@ std::unordered_map<std::string, VectorRef> CLEPattern::DefinePatterns() const {
 
 bool IsLinearActivation(const api::SharedPtr<ops::Conv2DFusion> &conv2d) {
   std::set<ActivationType> liner_activations = {RELU, NO_ACTIVATION};
-  if (liner_activations.find(conv2d->get_activation_type()) != liner_activations.end()) {
+  auto value_ptr = conv2d->GetAttr(ops::kActivation);
+  if (value_ptr == nullptr || liner_activations.find(conv2d->get_activation_type()) != liner_activations.end()) {
     return true;
   }
   return false;
