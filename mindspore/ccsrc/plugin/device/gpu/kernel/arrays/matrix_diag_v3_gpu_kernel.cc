@@ -29,7 +29,6 @@ namespace kernel {
 namespace {
 constexpr int kMatrixDiagV3InputsNum = 5;
 constexpr int kMatrixDiagV3OutputsNum = 1;
-constexpr int kMatrixDiagV3MinOutputShape = 2;
 }  // namespace
 
 bool MatrixDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -54,64 +53,60 @@ bool MatrixDiagV3GpuKernelMod::Init(const BaseOperatorPtr &base_operator, const 
 int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                      const std::vector<KernelTensorPtr> &outputs,
                                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != KRET_OK) {
+  if (auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
   x_size_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{});
-  if (x_size_ == 0) {
-    return ret;
+  if (x_shape.size() < kDim1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, some undefined behaviors happened.";
+    return KRET_RESIZE_FAILED;
   }
-
   max_diag_len_ = x_shape.back();
   auto k_shape = inputs.at(kIndex1)->GetShapeVector();
-  k_size_ = std::accumulate(k_shape.begin(), k_shape.end(), 1, std::multiplies{});
+  k_size_ = std::accumulate(k_shape.begin(), k_shape.end(), int64_t(1), std::multiplies{});
   y_shape_ = outputs.at(kIndex0)->GetShapeVector();
-  y_size_ = std::accumulate(y_shape_.begin(), y_shape_.end(), 1, std::multiplies{});
-  if (y_shape_.size() < kMatrixDiagV3MinOutputShape) {
+  y_size_ = std::accumulate(y_shape_.begin(), y_shape_.end(), int64_t(1), std::multiplies{});
+  if (y_shape_.size() < kDim2) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, some undefined behaviors happened.";
     return KRET_RESIZE_FAILED;
   }
   num_cols_ = y_shape_.at(y_shape_.size() - kIndex1);
   num_rows_ = y_shape_.at(y_shape_.size() - kIndex2);
-  return ret;
+  return KRET_OK;
 }
 
 template <typename DataType>
 bool MatrixDiagV3GpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &workspace,
                                             const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (x_size_ == 0) {
+  if (x_size_ == 0 || y_size_ == 0) {
     return true;
-  }
-  if (!IsValidShape(y_shape_)) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'y' is invalid, since all the inputs are not ready.";
-    return false;
   }
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto x_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
   auto k_ptr = GetDeviceAddress<kIntType>(inputs, kIndex1);
   auto padding_value_ptr = GetDeviceAddress<DataType>(inputs, kIndex4);
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
-  bool is_nullptr = (x_ptr == nullptr) || (k_ptr == nullptr) || (padding_value_ptr == nullptr) || (y_ptr == nullptr);
-  if (is_nullptr) {
+  auto any = [](auto &&... args) -> bool { return ((args == nullptr) || ...); };
+  if (any(cuda_stream, x_ptr, k_ptr, padding_value_ptr, y_ptr)) {
     return false;
   }
   // Get 'k' and store as [lower_diag_index, upper_diag_index].
   kIntType k_stand;
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr, sizeof(kIntType), cudaMemcpyDeviceToHost),
-                                     "cudaMemcpy input 'k' to host failed.");
+                                     "In MatrixDiagV3 kernel, cudaMemcpy input 'k' to host failed.");
   int64_t upper_diag_index, lower_diag_index = IntToLong(k_stand);
   if (k_size_ == 1) {
     upper_diag_index = lower_diag_index;
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&k_stand, k_ptr + 1, sizeof(kIntType), cudaMemcpyDeviceToHost),
-                                       "cudaMemcpy input 'k' to host failed.");
+                                       "In MatrixDiagV3 kernel, cudaMemcpy input 'k' to host failed.");
     upper_diag_index = IntToLong(k_stand);
   }
 
   MatrixDiagV3(x_ptr, padding_value_ptr, y_ptr, y_size_, num_rows_, num_cols_, lower_diag_index, upper_diag_index,
-               max_diag_len_, left_align_super_diag_, left_align_sub_diag_, cuda_stream);
+               max_diag_len_, left_align_super_diag_, left_align_sub_diag_, device_id_, cuda_stream);
   return true;
 }
 
