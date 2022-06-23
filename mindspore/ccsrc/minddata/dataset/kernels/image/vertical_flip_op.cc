@@ -22,6 +22,10 @@ namespace mindspore {
 namespace dataset {
 Status VerticalFlipOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
+
+  RETURN_IF_NOT_OK(ValidateImageDtype("VerticalFlip", input->type()));
+  RETURN_IF_NOT_OK(ValidateImageRank("VerticalFlip", input->Rank()));
+
   return VerticalFlip(input, output);
 }
 }  // namespace dataset

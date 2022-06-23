@@ -299,14 +299,12 @@ def check_size_scale_ration_max_attempts_paras(size, scale, ratio, max_attempts)
         type_check(ratio, (tuple, list), "ratio")
         if len(ratio) != 2:
             raise TypeError("ratio should be a list/tuple of length 2.")
-        type_check_list(ratio, (float, int), "ratio")
+        check_pos_float32(ratio[0], "ratio[0]")
+        check_pos_float32(ratio[1], "ratio[1]")
         if ratio[0] > ratio[1]:
             raise ValueError("ratio should be in (min,max) format. Got (max,min).")
-        check_range(ratio, [0, FLOAT_MAX_INTEGER])
-        check_positive(ratio[0], "ratio[0]")
-        check_positive(ratio[1], "ratio[1]")
     if max_attempts is not None:
-        check_value(max_attempts, (1, FLOAT_MAX_INTEGER))
+        check_pos_int32(max_attempts, "max_attempts")
 
 
 def check_random_adjust_sharpness(method):

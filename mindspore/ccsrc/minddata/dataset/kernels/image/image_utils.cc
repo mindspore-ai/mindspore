@@ -166,30 +166,20 @@ bool CheckTensorShape(const std::shared_ptr<Tensor> &tensor, const int &channel)
 
 Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int flip_code) {
   std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
-
-  if (input_cv->Rank() == 1 || input_cv->mat().dims > 2) {
-    std::string err_msg =
-      "Flip: shape of input is not <H,W,C> or <H,W>, but got rank:" + std::to_string(input_cv->Rank());
-    if (input_cv->Rank() == 1) {
-      err_msg = err_msg + ", may need to do Decode first.";
-    }
-    RETURN_STATUS_UNEXPECTED(err_msg);
+  if (!input_cv->mat().data) {
+    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Flip: load image failed.");
   }
 
   std::shared_ptr<CVTensor> output_cv;
   RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
 
-  if (input_cv->mat().data) {
-    try {
-      cv::flip(input_cv->mat(), output_cv->mat(), flip_code);
-      *output = std::static_pointer_cast<Tensor>(output_cv);
-      return Status::OK();
-    } catch (const cv::Exception &e) {
-      RETURN_STATUS_UNEXPECTED("Flip: " + std::string(e.what()));
-    }
-  } else {
-    RETURN_STATUS_UNEXPECTED("[Internal ERROR] Flip: allocate memory failed.");
+  try {
+    cv::flip(input_cv->mat(), output_cv->mat(), flip_code);
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Flip: " + std::string(e.what()));
   }
+  return Status::OK();
 }
 
 Status HorizontalFlip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {

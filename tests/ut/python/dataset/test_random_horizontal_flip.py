@@ -16,10 +16,12 @@
 Testing the random horizontal flip op in DE
 """
 import numpy as np
+import pytest
+
+from mindspore import log as logger
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as ops
 import mindspore.dataset.vision as vision
-from mindspore import log as logger
 from util import save_and_check_md5, visualize_list, visualize_image, diff_mse, \
     config_get_set_seed, config_get_set_num_parallel_workers
 
@@ -261,6 +263,26 @@ def test_random_horizontal_op_1():
         num_iter += 1
 
 
+def test_random_horizontal_flip_invalid_data():
+    """
+    Feature: RandomHorizontalFlip
+    Description: Test RandomHorizontalFlip with invalid data
+    Expectation: Error is raised as expected
+    """
+
+    invalid_type_img = np.random.random((32, 32, 3)).astype(np.str_)
+    invalid_shape_img = np.random.random(32).astype(np.float32)
+    random_horizontal_flip = vision.RandomHorizontalFlip(0.1)
+
+    with pytest.raises(RuntimeError) as error_info:
+        random_horizontal_flip(invalid_type_img)
+    assert "Currently unsupported data type: [uint32, int64, uint64, string]" in str(error_info.value)
+
+    with pytest.raises(RuntimeError) as error_info:
+        random_horizontal_flip(invalid_shape_img)
+    assert "input tensor is not in shape of <H,W> or <H,W,C>" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_random_horizontal_op(plot=True)
     test_random_horizontal_valid_prob_c()
@@ -269,3 +291,4 @@ if __name__ == "__main__":
     test_random_horizontal_invalid_prob_py()
     test_random_horizontal_comp(plot=True)
     test_random_horizontal_op_1()
+    test_random_horizontal_flip_invalid_data()
