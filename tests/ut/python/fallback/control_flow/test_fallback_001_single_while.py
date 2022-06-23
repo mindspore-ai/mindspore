@@ -15,7 +15,6 @@
 """ test graph fallback control flow."""
 import numpy as np
 from mindspore import Tensor, ms_function, context
-from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -35,42 +34,6 @@ def test_single_while_4():
 
     res = control_flow_while()
     assert res == 4
-
-
-def test_single_while_two_cond_3():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while():
-        x = np.array([1, 2, 3, 4, 5])
-        y = Tensor(1)
-        while sum(x) > 0 and y >= 0:
-            x -= 3
-        return Tensor(sum(x))
-    res = control_flow_while()
-    assert res == 0
-
-
-def test_single_while_builtin_function_abs_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while():
-        x = Tensor(-11, mstype.float32)
-        y = Tensor(0)
-        while abs(x) > Tensor(2):
-            x += Tensor(4)
-            y += Tensor(1)
-        return x, y
-    res_x, res_y = control_flow_while()
-    assert res_x == 1
-    assert res_y == 3
 
 
 def test_single_while_builtin_function_abs_numpy():
@@ -108,25 +71,6 @@ def test_single_while_builtin_function_abs():
         return Tensor(x), Tensor(y)
     res_x, res_y = control_flow_while()
     assert res_x == 1
-    assert res_y == 3
-
-
-def test_single_while_builtin_function_max_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_while():
-        x = Tensor(3)
-        y = Tensor(5)
-        while max(x, y) > 3:
-            x -= Tensor(4)
-            y -= Tensor(1)
-        return x, y
-    res_x, res_y = control_flow_while()
-    assert res_x == -5
     assert res_y == 3
 
 

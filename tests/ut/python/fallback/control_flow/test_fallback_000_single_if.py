@@ -153,39 +153,6 @@ def test_single_if_else_2():
     assert np.all(res.asnumpy() == np.array([1, 0, 1, 0, 1]))
 
 
-def test_single_if_builtin_function_abs():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if():
-        x = Tensor(-11, mstype.float32)
-        if abs(x) > Tensor(np.array(2)):
-            return x - Tensor(np.array(2))
-        return x * 2
-    res = control_flow_if()
-    assert res == -13
-
-
-def test_single_if_builtin_function_abs_min():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if():
-        x = Tensor(-11, mstype.float32)
-        y = Tensor(12, mstype.float32)
-        if abs(x) > Tensor(np.array(2)) and min(x, y) == x + y:
-            return x - Tensor(np.array(2))
-        return x * 2
-    res = control_flow_if()
-    assert res == -22
-
-
 def test_single_if_builtin_function_sum():
     """
     Feature: JIT Fallback

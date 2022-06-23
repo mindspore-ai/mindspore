@@ -82,3 +82,36 @@ def test_while_after_if_in_while_numpy_2():
     res_x, res_y = control_flow_while_after_if_in_while()
     assert res_x == 1
     assert res_y == 1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_while_after_if_in_while_tensor_2():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while_after_if_in_while():
+        x = Tensor([1])
+        y = Tensor([2])
+        z = x + y
+        while x >= y:
+            if x * y < z:
+                x = y + z
+            elif x < y:
+                x = y - 1
+            else:
+                x = y - z
+        while y > x:
+            y -= x
+            z = z + y
+        return x, y, z
+    res_x, res_y, res_z = control_flow_while_after_if_in_while()
+    assert res_x == 1
+    assert res_y == 1
+    assert res_z == 4

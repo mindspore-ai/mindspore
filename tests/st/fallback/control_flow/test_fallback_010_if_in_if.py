@@ -107,3 +107,26 @@ def test_if_in_if_multi_conds_2():
         return m
     res = control_flow_if_in_if()
     assert res == 20
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_if_in_if_4():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if_in_if():
+        x = np.array([1, 2, 3, 4, 5])
+        y = x % 2
+        z = Tensor(y)
+        if (x >= y).all():
+            if sum(z) > Tensor(2):
+                z = Tensor(x) + 1
+        return z
+    res = control_flow_if_in_if()
+    assert np.all(res.asnumpy() == np.array([2, 3, 4, 5, 6]))

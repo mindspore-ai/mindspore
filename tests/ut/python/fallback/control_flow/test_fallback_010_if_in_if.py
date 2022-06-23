@@ -76,25 +76,6 @@ def test_if_in_if_3():
     assert res == -5
 
 
-def test_if_in_if_4():
-    """
-    Feature: JIT Fallback
-    Description: Test fallback with control flow.
-    Expectation: No exception.
-    """
-    @ms_function
-    def control_flow_if_in_if():
-        x = np.array([1, 2, 3, 4, 5])
-        y = x % 2
-        z = Tensor(y)
-        if (x >= y).all():
-            if sum(z) > Tensor(2):
-                z = Tensor(x) + 1
-        return z
-    res = control_flow_if_in_if()
-    assert np.all(res.asnumpy() == np.array([2, 3, 4, 5, 6]))
-
-
 def test_if_else_in_if_else_1():
     """
     Feature: JIT Fallback

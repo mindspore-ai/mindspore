@@ -14,8 +14,9 @@
 # ============================================================================
 """ test graph fallback control flow."""
 import pytest
-from mindspore import Tensor, ms_function, context
 import numpy as np
+from mindspore import Tensor, ms_function, context
+from mindspore import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -63,3 +64,44 @@ def test_single_if_two_cond():
         return x * 2
     res = control_flow_if()
     assert res == 1
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_if_builtin_function_abs():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if():
+        x = Tensor(-11, mstype.float32)
+        if abs(x) > Tensor(np.array(2)):
+            return x - Tensor(np.array(2))
+        return x * 2
+    res = control_flow_if()
+    assert res == -13
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_if_builtin_function_abs_min():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_if():
+        x = Tensor(-11, mstype.float32)
+        y = Tensor(12, mstype.float32)
+        if abs(x) > Tensor(np.array(2)) and min(x, y) == x + y:
+            return x - Tensor(np.array(2))
+        return x * 2
+    res = control_flow_if()
+    assert res == -22

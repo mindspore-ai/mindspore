@@ -304,3 +304,33 @@ def test_fallback_tensor_compare_with_variable():
 
     res = foo(Tensor([6]))
     assert res == 0
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_np_tensor_add():
+    """
+    Feature: Fallback feature
+    Description: support Tensor add.
+    Expectation: No exception.
+    """
+    @ms_function
+    def np_tensor_add():
+        a = Tensor(np.array(4))
+        b = Tensor(np.array(5))
+        tensor_list = [a, b]
+        for tensor in tensor_list:
+            print(tensor)
+        x = 6
+        np_x = np.array(x)
+        c = Tensor(np_x)
+        d = tensor_list[-1] + c
+        tensor_list.append(d)
+        return tensor_list
+
+    tensor_list = np_tensor_add()
+    print("tensor_list:", tensor_list)
+    assert tensor_list[-1] == 11

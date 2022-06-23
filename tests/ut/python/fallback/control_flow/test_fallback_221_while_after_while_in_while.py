@@ -19,7 +19,7 @@ from mindspore import Tensor, ms_function, context
 context.set_context(mode=context.GRAPH_MODE)
 
 
-def test_while_after_while_in_while_tensor():
+def test_while_after_while_in_while_numpy_1():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -27,9 +27,9 @@ def test_while_after_while_in_while_tensor():
     """
     @ms_function
     def control_flow_while_after_while_in_while():
-        x = Tensor([-1])
-        y = Tensor([-2])
-        z = Tensor([0])
+        x = np.array([-1])
+        y = np.array([-2])
+        z = np.array([0])
         while z < abs(x + y):
             z = abs(x + y + 2)
             y -= 1
@@ -38,12 +38,12 @@ def test_while_after_while_in_while_tensor():
         while y > x:
             y -= x
             z = z + y
-        return x, y, z
+        return Tensor(x), Tensor(y), Tensor(z)
     res = control_flow_while_after_while_in_while()
     assert res == (2, -3, 1)
 
 
-def test_while_after_while_in_while_tensor_2():
+def test_while_after_while_in_while_numpy_2():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.
@@ -51,9 +51,9 @@ def test_while_after_while_in_while_tensor_2():
     """
     @ms_function
     def control_flow_while_after_while_in_while():
-        x = Tensor([-1])
-        y = Tensor([-2])
-        z = Tensor([0])
+        x = np.array([-1])
+        y = np.array([-2])
+        z = np.array([0])
         while abs(z) < abs(x + y):
             z = x + y + 2
             while x * y > z:
@@ -63,12 +63,12 @@ def test_while_after_while_in_while_tensor_2():
         while y >= x:
             y -= x
         z = z + y
-        return x, y, z
+        return Tensor(x), Tensor(y), Tensor(z)
     res = control_flow_while_after_while_in_while()
     assert res == (2, -1, -3)
 
 
-def test_while_after_while_in_while_numpy_2():
+def test_while_after_while_in_while_numpy_3():
     """
     Feature: JIT Fallback
     Description: Test fallback with control flow.

@@ -370,7 +370,7 @@ def test_print_list():
         assert res == 0
         time.sleep(0.1)
 
-    patterns = {"list_x:\n(1, 2, 3, 4, 5)\n"}
+    patterns = {"list_x:\nTensor(shape=[5], dtype=Int64, value=[1 2 3 4 5])\n"}
     check_output(cap.output, patterns)
 
 
@@ -393,7 +393,7 @@ def test_print_tuple():
         assert res == 0
         time.sleep(0.1)
 
-    patterns = {"tuple_x:\n( 6,  7,  8,  9, 10)\n"}
+    patterns = {"tuple_x:\nTensor(shape=[5], dtype=Int64, value=[ 6,  7,  8,  9, 10])\n"}
     check_output(cap.output, patterns)
 
 

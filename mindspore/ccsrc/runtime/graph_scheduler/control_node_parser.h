@@ -177,6 +177,7 @@ class ControlNodeParser {
   // them separately during initialization.
   // The interface is initialized by finding the backend node in the kernel graph that the front node finally sends to.
   void FetchFrontValueNode(const std::vector<AnfNodePtr> &control_nodes, const DeviceContext *const default_context);
+  void CreateDeviceTensors(const std::vector<AnfNodePtr> &control_nodes, const DeviceContext *const default_context);
   // Create branch id for all call node in the control flow.
   void CreateBranchIDForCallNode(const std::vector<AnfNodePtr> &control_nodes);
 

@@ -71,28 +71,12 @@ AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
   ValuePtr v = cond->GetValueTrack();
   MS_EXCEPTION_IF_NULL(v);
   // If the value of condition is AnyValue, keeps both true and false branch.
-  if (v->isa<AnyValue>()) {
+  if (v->isa<AnyValue>() || cond->isa<AbstractTensor>()) {
     MS_EXCEPTION_IF_NULL(tb);
     // Need record two func_graph
     SetVariableFlag(tb);
     SetVariableFlag(fb);
     return tb->Join(fb);
-  }
-
-  if (cond->isa<AbstractTensor>()) {
-    // Check the value of tensor
-    auto cond_tensor = cond->cast<AbstractTensorPtr>();
-    TypePtr tensor_dtype = cond_tensor->element()->BuildType();
-    auto build_value = cond_tensor->BuildValue();
-    MS_EXCEPTION_IF_NULL(build_value);
-    auto value = build_value->cast<tensor::TensorPtr>();
-    if (value != nullptr) {
-      if (!tensor_dtype->isa<Bool>()) {
-        MS_LOG(EXCEPTION) << "Not support this condition value: " << cond->GetValueTrack()->ToString();
-      }
-      auto *bool_value = static_cast<bool *>(value->data_c());
-      return (*bool_value) ? tb : fb;
-    }
   }
 
   if (v->isa<Scalar>()) {

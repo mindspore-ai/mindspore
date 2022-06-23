@@ -44,14 +44,6 @@ class SwitchSimplify : public OptimizerCaller {
       bool cond_value;
       if (value_ptr->isa<BoolImm>()) {
         cond_value = GetValue<bool>(value_ptr);
-      } else if (value_ptr->isa<tensor::Tensor>()) {
-        auto tensor = GetValue<tensor::TensorPtr>(value_ptr);
-        if (tensor == nullptr || tensor->isa<AnyValue>() || !tensor->Dtype()->isa<Bool>()) {
-          MS_LOG(EXCEPTION) << "The condition of branch must be a bool tensor value, not support this condition value: "
-                            << value_ptr->ToString();
-        }
-        auto *bool_value = static_cast<bool *>(tensor->data_c());
-        cond_value = *bool_value;
       } else if (use_fallback && value_ptr->isa<parse::InterpretedObject>()) {
         // {prim::kPrimSwitch, InterpretObject: 'True', X, Y}
         // {prim::kPrimSwitch, InterpretObject: 'False', X, Y}
@@ -83,7 +75,7 @@ class SwitchSimplify : public OptimizerCaller {
         MS_EXCEPTION_IF_NULL(value);
         is_interpret_object = value->isa<parse::InterpretedObject>();
       }
-      return IsValueNode<BoolImm>(node) || IsValueNode<tensor::Tensor>(node) || is_interpret_object;
+      return IsValueNode<BoolImm>(node) || is_interpret_object;
     };
     MATCH_REPLACE_LAMBDA_IF(node, PPrimitive(prim::kPrimSwitch, cond, true_br, false_br), SwitchSimplLambda,
                             cond.CheckFunc(IsDeterminateCondition, node));

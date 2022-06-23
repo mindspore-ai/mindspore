@@ -181,3 +181,24 @@ def test_single_while_numpy():
         return Tensor(x)
     res = control_flow_while()
     assert (res.asnumpy() == [1, 1, 3, 4, 5]).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_while_two_cond_3():
+    """
+    Feature: JIT Fallback
+    Description: Test fallback with control flow.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while():
+        x = np.array([1, 2, 3, 4, 5])
+        y = Tensor(1)
+        while sum(x) > 0 and y >= 0:
+            x -= 3
+        return Tensor(sum(x))
+    res = control_flow_while()
+    assert res == 0

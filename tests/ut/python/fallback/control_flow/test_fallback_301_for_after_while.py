@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ test graph fallback control flow."""
+import numpy as np
 from mindspore import Tensor, ms_function, context
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -27,15 +28,15 @@ def test_for_after_while_4():
 
     @ms_function
     def func():
-        x = Tensor([1])
-        y = Tensor([2])
-        while max(x, y) == Tensor([1]):
+        x = np.array([1])
+        y = np.array([2])
+        while max(x, y) == 1:
             x = x + min(x, y)
 
-        z = (Tensor(1), Tensor(2), Tensor(3))
+        z = (1, 2, 3)
         for i in zip(z):
             x = x * i
-        return x
+        return Tensor(x)
 
     res = func()
     assert res == 6

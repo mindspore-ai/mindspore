@@ -79,7 +79,11 @@ def test_while_in_for_zip():
     assert res == 18
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_in_for_numpy():
     """
     Feature: JIT Fallback
@@ -95,12 +99,12 @@ def test_while_in_for_numpy():
         for _ in range(3):
             x = x + y
             while z < Tensor([10]).astype("int32"):
-                x = x + 1
                 z = z + Tensor(1).astype("int32")
-        return Tensor(x)
+        return Tensor(x), z
 
-    res = control_flow_for()
-    assert (res.asnumpy() == [31, 39, 47]).all()
+    res1, res2 = control_flow_for()
+    assert (res1.asnumpy() == [1, 9, 17]).all()
+    assert res2 == 10
 
 
 @pytest.mark.skip(reason='Not support graph fallback feature yet')
