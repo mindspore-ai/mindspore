@@ -80,6 +80,7 @@
 #include "minddata/dataset/kernels/ir/vision/solarize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
+#include "minddata/dataset/kernels/ir/vision/trivial_augment_wide_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -1191,6 +1192,24 @@ ToTensor::ToTensor(std::string output_type) : data_(std::make_shared<Data>(outpu
 ToTensor::ToTensor(DataType::Type output_type) : data_(std::make_shared<Data>(output_type)) {}
 
 std::shared_ptr<TensorOperation> ToTensor::Parse() { return std::make_shared<ToTensorOperation>(data_->output_type_); }
+
+// TrivialAugmentWide Transform Operation.
+struct TrivialAugmentWide::Data {
+  Data(int32_t num_magnitude_bins, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value)
+      : num_magnitude_bins_(num_magnitude_bins), interpolation_(interpolation), fill_value_(fill_value) {}
+  int32_t num_magnitude_bins_;
+  InterpolationMode interpolation_;
+  std::vector<uint8_t> fill_value_;
+};
+
+TrivialAugmentWide::TrivialAugmentWide(int32_t num_magnitude_bins, InterpolationMode interpolation,
+                                       const std::vector<uint8_t> &fill_value)
+    : data_(std::make_shared<Data>(num_magnitude_bins, interpolation, fill_value)) {}
+
+std::shared_ptr<TensorOperation> TrivialAugmentWide::Parse() {
+  return std::make_shared<TrivialAugmentWideOperation>(data_->num_magnitude_bins_, data_->interpolation_,
+                                                       data_->fill_value_);
+}
 
 // UniformAug Transform Operation.
 struct UniformAugment::Data {

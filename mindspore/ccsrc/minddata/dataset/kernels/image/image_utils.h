@@ -453,6 +453,30 @@ Status ComputePatchSize(const std::shared_ptr<CVTensor> &input_cv,
 /// \param[out] output The output image
 /// \return Status code
 Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type);
+
+/// \brief Generate a vector that contains n numbers between start and end with evenly interval.
+/// \param[in] start Start number.
+/// \param[in] end End number.
+/// \param[in] n Count of numbers.
+/// \param[in] scale Zoom scale.
+/// \param[in] offset Bias.
+/// \param[in] round Round input to the nearest integer.
+std::vector<float> Linspace(float start, float end, int32_t n, float scale = 1.0, float offset = 0, bool round = false);
+
+/// \brief Round input to the nearest integer. Note that this function implements the "round half to even" to break
+///     ties when a number is equidistant from two integers.
+/// \param[in] value Input value.
+float Round(float value);
+
+/// \brief Perform the selected augment.
+/// \param[in] input The input tensor.
+/// \param[in] output The output tensor.
+/// \param[in] op_name The selected op.
+/// \param[in] magnitude The magnitude value.
+/// \param[in] interpolation Possible options for interpolation method.
+/// \param[in] fill_value Values used to fill.
+Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
+                    float magnitude, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value);
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_IMAGE_UTILS_H_

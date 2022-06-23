@@ -26,8 +26,14 @@
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/include/dataset/constants.h"
+#include "minddata/dataset/kernels/image/affine_op.h"
+#include "minddata/dataset/kernels/image/auto_contrast_op.h"
+#include "minddata/dataset/kernels/image/invert_op.h"
 #include "minddata/dataset/kernels/image/math_utils.h"
+#include "minddata/dataset/kernels/image/posterize_op.h"
 #include "minddata/dataset/kernels/image/resize_cubic_op.h"
+#include "minddata/dataset/kernels/image/sharpness_op.h"
+#include "minddata/dataset/kernels/image/solarize_op.h"
 #include "minddata/dataset/kernels/data/data_utils.h"
 
 const int32_t MAX_INT_PRECISION = 16777216;  // float int precision is 16777216
@@ -2054,6 +2060,87 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
   } catch (const cv::Exception &e) {
     RETURN_STATUS_UNEXPECTED("ToTensor: " + std::string(e.what()));
   }
+}
+
+// round half to even
+float Round(float value) {
+  const float kHalf = 0.5;
+  const int32_t kEven = 2;
+  float rnd = round(value);
+  float rnd_l = floor(value);
+  float rnd_h = ceil(value);
+  if (value - rnd_l == kHalf) {
+    if (fmod(rnd, kEven) == 0) {
+      return rnd;
+    } else if (value > 0) {
+      return rnd_l;
+    } else {
+      return rnd_h;
+    }
+  }
+  return rnd;
+}
+
+std::vector<float> Linspace(float start, float end, int n, float scale, float offset, bool round) {
+  std::vector<float> linear(n);
+  float step = (n == 1) ? 0 : ((end - start) / (n - 1));
+  for (auto i = 0; i < linear.size(); ++i) {
+    linear[i] = (start + i * step) * scale + offset;
+    if (round) {
+      linear[i] = Round(linear[i]);
+    }
+  }
+  return linear;
+}
+
+Status ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::string &op_name,
+                    float magnitude, InterpolationMode interpolation, const std::vector<uint8_t> &fill_value) {
+  if (op_name == "ShearX") {
+    float_t shear = magnitude * 180 / CV_PI;
+    AffineOp affine(0.0, {0, 0}, 1.0, {shear, 0.0}, interpolation, fill_value);
+    RETURN_IF_NOT_OK(affine.Compute(input, output));
+  } else if (op_name == "ShearY") {
+    float_t shear = magnitude * 180 / CV_PI;
+    AffineOp affine(0.0, {0, 0}, 1.0, {0.0, shear}, interpolation, fill_value);
+    RETURN_IF_NOT_OK(affine.Compute(input, output));
+  } else if (op_name == "TranslateX") {
+    float_t translate = static_cast<int>(magnitude);
+    AffineOp affine(0.0, {translate, 0}, 1.0, {0.0, 0.0}, interpolation, fill_value);
+    RETURN_IF_NOT_OK(affine.Compute(input, output));
+  } else if (op_name == "TranslateY") {
+    float_t translate = static_cast<int>(magnitude);
+    AffineOp affine(0.0, {0, translate}, 1.0, {0.0, 0.0}, interpolation, fill_value);
+    RETURN_IF_NOT_OK(affine.Compute(input, output));
+  } else if (op_name == "Rotate") {
+    RETURN_IF_NOT_OK(Rotate(input, output, {}, magnitude, interpolation, false, fill_value[kRIndex],
+                            fill_value[kBIndex], fill_value[kGIndex]));
+  } else if (op_name == "Brightness") {
+    RETURN_IF_NOT_OK(AdjustBrightness(input, output, 1 + magnitude));
+  } else if (op_name == "Color") {
+    RETURN_IF_NOT_OK(AdjustSaturation(input, output, 1 + magnitude));
+  } else if (op_name == "Contrast") {
+    RETURN_IF_NOT_OK(AdjustContrast(input, output, 1 + magnitude));
+  } else if (op_name == "Sharpness") {
+    SharpnessOp sharpness(1 + magnitude);
+    RETURN_IF_NOT_OK(sharpness.Compute(input, output));
+  } else if (op_name == "Posterize") {
+    PosterizeOp posterize(static_cast<int>(magnitude));
+    RETURN_IF_NOT_OK(posterize.Compute(input, output));
+  } else if (op_name == "Solarize") {
+    RETURN_IF_NOT_OK(Solarize(input, output, {magnitude, magnitude}));
+  } else if (op_name == "AutoContrast") {
+    RETURN_IF_NOT_OK(AutoContrast(input, output, 0.0, {}));
+  } else if (op_name == "Equalize") {
+    RETURN_IF_NOT_OK(Equalize(input, output));
+  } else if (op_name == "Identity") {
+    *output = std::static_pointer_cast<Tensor>(input);
+  } else if (op_name == "Invert") {
+    InvertOp invert;
+    RETURN_IF_NOT_OK(invert.Compute(input, output));
+  } else {
+    RETURN_STATUS_UNEXPECTED("ApplyAugment: the provided operator " + op_name + " is not supported.");
+  }
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

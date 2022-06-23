@@ -115,7 +115,7 @@ Status AutoAugmentOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_
       if (sign && (*signs)[i] == 0) {
         magnitude *= -1.0;
       }
-      RETURN_IF_NOT_OK(ApplyAugment(img, &img, op_name, magnitude));
+      RETURN_IF_NOT_OK(ApplyAugment(img, &img, op_name, magnitude, interpolation_, fill_value_));
     }
   }
   *output = img;
@@ -139,37 +139,6 @@ void AutoAugmentOp::GetParams(int transform_num, int *transform_id, std::vector<
   (*signs)[1] = sign_dist(rnd_);
 }
 
-// round half to even
-float Round(float value) {
-  const float kHalf = 0.5;
-  const int32_t kEven = 2;
-  float rnd = round(value);
-  float rnd_l = floor(value);
-  float rnd_h = ceil(value);
-  if (value - rnd_l == kHalf) {
-    if (fmod(rnd, kEven) == 0) {
-      return rnd;
-    } else if (value > 0) {
-      return rnd_l;
-    } else {
-      return rnd_h;
-    }
-  }
-  return rnd;
-}
-
-std::vector<float> Linspace(float start, float end, int n, float scale = 1.0, float offset = 0, bool round = false) {
-  std::vector<float> linear(n);
-  float step = (n == 1) ? 0 : ((end - start) / (n - 1));
-  for (auto i = 0; i < linear.size(); ++i) {
-    linear[i] = (start + i * step) * scale + offset;
-    if (round) {
-      linear[i] = Round(linear[i]);
-    }
-  }
-  return linear;
-}
-
 Space AutoAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &image_size) {
   Space space = {{"ShearX", {Linspace(0.0, 0.3, num_bins), true}},
                  {"ShearY", {Linspace(0.0, 0.3, num_bins), true}},
@@ -186,52 +155,6 @@ Space AutoAugmentOp::GetSpace(int32_t num_bins, const std::vector<dsize_t> &imag
                  {"Equalize", {{0}, false}},
                  {"Invert", {{0}, false}}};
   return space;
-}
-
-Status AutoAugmentOp::ApplyAugment(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                                   const std::string &op_name, float magnitude) {
-  if (op_name == "ShearX") {
-    float_t shear = magnitude * 180 / CV_PI;
-    AffineOp affine(0.0, {0, 0}, 1.0, {shear, 0.0}, interpolation_, fill_value_);
-    RETURN_IF_NOT_OK(affine.Compute(input, output));
-  } else if (op_name == "ShearY") {
-    float_t shear = magnitude * 180 / CV_PI;
-    AffineOp affine(0.0, {0, 0}, 1.0, {0.0, shear}, interpolation_, fill_value_);
-    RETURN_IF_NOT_OK(affine.Compute(input, output));
-  } else if (op_name == "TranslateX") {
-    float_t translate = static_cast<int>(magnitude);
-    AffineOp affine(0.0, {translate, 0}, 1.0, {0.0, 0.0}, interpolation_, fill_value_);
-    RETURN_IF_NOT_OK(affine.Compute(input, output));
-  } else if (op_name == "TranslateY") {
-    float_t translate = static_cast<int>(magnitude);
-    AffineOp affine(0.0, {0, translate}, 1.0, {0.0, 0.0}, interpolation_, fill_value_);
-    RETURN_IF_NOT_OK(affine.Compute(input, output));
-  } else if (op_name == "Rotate") {
-    RETURN_IF_NOT_OK(Rotate(input, output, {}, magnitude, interpolation_, false, fill_value_[kRIndex],
-                            fill_value_[kGIndex], fill_value_[kBIndex]));
-  } else if (op_name == "Brightness") {
-    RETURN_IF_NOT_OK(AdjustBrightness(input, output, 1 + magnitude));
-  } else if (op_name == "Color") {
-    RETURN_IF_NOT_OK(AdjustSaturation(input, output, 1 + magnitude));
-  } else if (op_name == "Contrast") {
-    RETURN_IF_NOT_OK(AdjustContrast(input, output, 1 + magnitude));
-  } else if (op_name == "Sharpness") {
-    SharpnessOp sharpness(1 + magnitude);
-    RETURN_IF_NOT_OK(sharpness.Compute(input, output));
-  } else if (op_name == "Posterize") {
-    PosterizeOp posterize(static_cast<int>(magnitude));
-    RETURN_IF_NOT_OK(posterize.Compute(input, output));
-  } else if (op_name == "Solarize") {
-    RETURN_IF_NOT_OK(Solarize(input, output, {magnitude, magnitude}));
-  } else if (op_name == "AutoContrast") {
-    RETURN_IF_NOT_OK(AutoContrast(input, output, 0.0, {}));
-  } else if (op_name == "Equalize") {
-    RETURN_IF_NOT_OK(Equalize(input, output));
-  } else {
-    InvertOp invert;
-    RETURN_IF_NOT_OK(invert.Compute(input, output));
-  }
-  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

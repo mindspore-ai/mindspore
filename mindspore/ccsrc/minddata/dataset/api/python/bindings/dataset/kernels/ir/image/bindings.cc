@@ -74,6 +74,7 @@
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/solarize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
+#include "minddata/dataset/kernels/ir/vision/trivial_augment_wide_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 
@@ -744,6 +745,19 @@ PYBIND_REGISTER(ToTensorOperation, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(totensor->ValidateParams());
                         return totensor;
                       }));
+                }));
+
+PYBIND_REGISTER(TrivialAugmentWideOperation, 1, ([](const py::module *m) {
+                  (void)py::class_<vision::TrivialAugmentWideOperation, TensorOperation,
+                                   std::shared_ptr<vision::TrivialAugmentWideOperation>>(*m,
+                                                                                         "TrivialAugmentWideOperation")
+                    .def(py::init([](int32_t num_magnitude_bins, InterpolationMode interpolation,
+                                     const std::vector<uint8_t> &fill_value) {
+                      auto auto_augment = std::make_shared<vision::TrivialAugmentWideOperation>(
+                        num_magnitude_bins, interpolation, fill_value);
+                      THROW_IF_ERROR(auto_augment->ValidateParams());
+                      return auto_augment;
+                    }));
                 }));
 
 PYBIND_REGISTER(
