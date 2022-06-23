@@ -1108,8 +1108,8 @@ int TrainSession::FindExportKernels(std::vector<kernel::LiteKernel *> *export_ke
                                     const std::vector<std::string> &export_output_tensor_names,
                                     const std::vector<kernel::LiteKernel *> &inference_kernels) {
   std::vector<std::string> all_kernel_name = {};
-  std::transform(inference_kernels.begin(), inference_kernels.end(), std::back_inserter(all_kernel_name),
-                 [](kernel::LiteKernel *kernel) { return kernel->name(); });
+  (void)std::transform(inference_kernels.begin(), inference_kernels.end(), std::back_inserter(all_kernel_name),
+                       [](kernel::LiteKernel *kernel) { return kernel->name(); });
   std::queue<std::string> need_kernel_names;
   // Find the kernel name according to the tensor name
   for (auto &kernel : inference_kernels) {
@@ -1177,9 +1177,18 @@ int TrainSession::Export(const std::string &file_name, ModelType model_type, Qua
     }
     status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type);
   } else {
-    status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
-                               (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
-                               model_.get(), quant_type);
+    auto all_nodes = model_->all_nodes_;
+    if ((quant_type == QT_NONE) && (model_type == MT_TRAIN) &&
+        std::all_of(all_nodes.begin(), all_nodes.end(),
+                    [](const Model::Node *n) { return n->quant_type_ == schema::QuantType::QuantType_QUANT_NONE; })) {
+      status = texport.SaveModel(model_.get(), file_name);
+      if (orig_train_state) Train();
+      return status;
+    } else {
+      status = texport.ExportNet((model_type == MT_TRAIN) ? train_kernels_ : inference_kernels_, tensors_,
+                                 (model_type == MT_TRAIN) ? train_output_tensor_names_ : eval_output_tensor_names_,
+                                 model_.get(), quant_type);
+    }
   }
 
   if (status != RET_OK) {

@@ -55,6 +55,7 @@ class TrainExport {
   int AddTransformNode();
   int TrainModelFusion();
   int TrainModelDrop();
+  int SaveModel(lite::Model *model, const std::string &file_name);
 
  protected:
   virtual std::vector<uint8_t> CreateData(const mindspore::lite::Tensor *tensor);

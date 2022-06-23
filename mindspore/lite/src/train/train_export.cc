@@ -550,6 +550,20 @@ int TrainExport::ExportInit(const std::string model_name, std::string version) {
   return RET_OK;
 }
 
+int TrainExport::SaveModel(lite::Model *model, const std::string &file_name) {
+  std::string filename = file_name;
+  if (filename.substr(filename.find_last_of(".") + 1) != "ms") {
+    filename = filename + ".ms";
+  }
+#ifndef _MSC_VER
+  if (access(filename.c_str(), F_OK) == 0) {
+    chmod(filename.c_str(), S_IWUSR);
+  }
+#endif
+  int status = mindspore::lite::Model::Export(model, filename.c_str());
+  return status;
+}
+
 int TrainExport::SaveToFile() { return Storage::Save(*meta_graph_, file_name_); }
 
 bool TrainExport::IsInputTensor(const schema::TensorT &t) {
