@@ -59,7 +59,7 @@ class TensorOperation:
         for tensor in input_tensor_list:
             try:
                 tensor_row.append(cde.Tensor(np.asarray(tensor)))
-            except RuntimeError:
+            except (RuntimeError, TypeError):
                 raise TypeError("Invalid user input. Got {}: {}, cannot be converted into tensor." \
                                 .format(type(tensor), tensor))
         if not hasattr(self, 'callable_op_') or self.callable_op_ is None:

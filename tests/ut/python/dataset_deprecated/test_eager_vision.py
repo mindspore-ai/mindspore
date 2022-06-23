@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""Test Eager Support for Vision ops in Dataset"""
 import cv2
 import numpy as np
 import pytest
 from PIL import Image
+import mindspore.dataset.transforms.py_transforms as PT
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.vision.py_transforms as PY
 from mindspore import log as logger
@@ -63,7 +65,7 @@ def test_eager_decode_py():
     assert img2.size == (4032, 2268)
 
 
-def test_eager_resize():
+def test_eager_resize_c():
     """
     Feature: Resize op
     Description: Test eager support for Resize C++ op
@@ -72,10 +74,25 @@ def test_eager_resize():
     img = cv2.imread("../data/dataset/apple.jpg")
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    img = C.Resize(size=(32, 32))(img)
+    img = C.Resize(size=(64, 32))(img)
     logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
 
-    assert img.shape == (32, 32, 3)
+    assert img.shape == (64, 32, 3)
+
+
+def test_eager_resize_py():
+    """
+    Feature: Resize op
+    Description: Test eager support for Resize Python op
+    Expectation: Output image info from op is correct
+    """
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    img = PY.Resize(size=(96, 64))(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    assert img.size == (64, 96)
 
 
 def test_eager_rescale():
@@ -133,6 +150,66 @@ def test_eager_normalize_py():
     pixel_normalized = img[0][0][0]
 
     assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
+
+
+def test_eager_resize_totensor_normalize_py():
+    """
+    Feature: Eager Support
+    Description: Test eager support for this sequence of Python ops: Resize, ToTensor and Normalize
+    Expectation: Output image info from op is correct
+    """
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    img = PY.Resize(size=(96, 64))(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    assert img.size == (64, 96)
+
+    pixel = img.getpixel((0, 0))[0]
+
+    img = PY.ToTensor()(img)
+
+    mean_vec = [.100, .100, .100]
+    std_vec = [.2, .2, .2]
+    img = PY.Normalize(mean=mean_vec, std=std_vec)(img)
+    pixel_normalized = img[0][0][0]
+
+    assert img.size == 64 * 96 * 3
+
+    assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized, 0.0001)
+
+
+def test_eager_compose_py():
+    """
+    Feature: Eager Support
+    Description: Test eager support for this sequence of Python ops: Resize, Compose with ToTensor and Normalize
+    Expectation: Output image info from op is correct
+    """
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    img = PY.Resize(size=(96, 64))(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.size))
+
+    assert img.size == (64, 96)
+
+    mean_vec = [.100, .100, .100]
+    std_vec = [.2, .2, .2]
+
+    transform = PT.Compose([
+        PY.ToTensor(),
+        PY.Normalize(mean=mean_vec, std=std_vec)])
+
+    # Convert to NumPy array
+    img = np.array(img)
+    output_size = 64 * 96 * 3
+    assert img.size == output_size
+
+    # Use Compose to apply transformation with ToTensor and Normalize
+    # Note: Output of Compose is a tuple
+    img = transform(img)
+    assert isinstance(img, tuple)
 
 
 def test_eager_hwc2chw():
@@ -323,10 +400,13 @@ def test_eager_exceptions_pad():
 if __name__ == '__main__':
     test_eager_decode_c()
     test_eager_decode_py()
-    test_eager_resize()
+    test_eager_resize_c()
+    test_eager_resize_py()
     test_eager_rescale()
     test_eager_normalize_c()
     test_eager_normalize_py()
+    test_eager_resize_totensor_normalize_py()
+    test_eager_compose_py()
     test_eager_hwc2chw()
     test_eager_pad_c()
     test_eager_pad_py()
