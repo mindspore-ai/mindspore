@@ -16,6 +16,7 @@
 """Defines parameter operators with functional form."""
 
 from mindspore.ops import operations as P
+from .._primitive_cache import _get_cache_prim
 
 
 assign_ = P.Assign()
@@ -191,7 +192,8 @@ def index_add(x, indices, y, axis, use_lock=True, check_index_bound=True):
          [ 5.   5.   7.5]
          [ 9.   8.  11.5]]
     """
-    return P.IndexAdd(axis, use_lock, check_index_bound)(x, indices, y)
+    _index_add = _get_cache_prim(P.IndexAdd)(axis, use_lock, check_index_bound)
+    return _index_add(x, indices, y)
 
 
 __all__ = [

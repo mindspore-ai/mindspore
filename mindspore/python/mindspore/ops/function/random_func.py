@@ -16,6 +16,7 @@
 """Defines parameter operators with functional form."""
 
 from mindspore.ops import operations as P
+from .._primitive_cache import _get_cache_prim
 
 
 def standard_laplace(shape, seed=0, seed2=0):
@@ -50,9 +51,10 @@ def standard_laplace(shape, seed=0, seed2=0):
         >>> print(result)
         (4, 4)
     """
-    standard_laplace_op = P.StandardLaplace(seed=seed, seed2=seed2)
+    standard_laplace_op = _get_cache_prim(P.StandardLaplace)(seed=seed, seed2=seed2)
     output = standard_laplace_op(shape)
     return output
+
 
 __all__ = [
     'standard_laplace'
