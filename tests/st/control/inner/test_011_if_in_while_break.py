@@ -140,3 +140,183 @@ def test_backward_replace_break():
     graph_grads = backward_net(x, y)
 
     assert graph_grads == Tensor(np.array(21), mstype.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_forward_if_elif_elif_else_break():
+    """
+    Feature: Parallel if transformation with break
+    Description: break in else branch should stop the parallel if transformation of all outer if.
+    Expectation: assertion success
+    """
+    class MyNet(nn.Cell):
+        def __init__(self, max_cycles):
+            super().__init__()
+            self.max_cycles = max_cycles
+            self.i = Tensor(np.array(0), mstype.int32)
+            self.zero = Tensor(np.array(0), mstype.int32)
+            self.seg1 = Tensor(np.array(10), mstype.int32)
+            self.seg2 = Tensor(np.array(20), mstype.int32)
+            self.seg3 = Tensor(np.array(30), mstype.int32)
+            self.step = Tensor(np.array(10), mstype.int32)
+
+        def construct(self):
+            i = self.i
+            out = self.zero
+            while i < self.max_cycles:
+                if out < self.seg1:
+                    out += self.step
+                elif out < self.seg2:
+                    out += self.step
+                elif out < self.seg3:
+                    out += self.step
+                else:
+                    out += self.step
+                    break
+                i = i + 1
+            return out + out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    forward_net = MyNet(max_cycles=4)
+    graph_mode_out = forward_net()
+
+    assert graph_mode_out == Tensor(np.array(80), mstype.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_forward_if_elif_elif_break_else():
+    """
+    Feature: Parallel if transformation with break
+    Description: break in elif branch should stop the parallel if transformation of all outer if.
+    Expectation: assertion success
+    """
+    class MyNet(nn.Cell):
+        def __init__(self, max_cycles):
+            super().__init__()
+            self.max_cycles = max_cycles
+            self.i = Tensor(np.array(0), mstype.int32)
+            self.zero = Tensor(np.array(0), mstype.int32)
+            self.seg1 = Tensor(np.array(10), mstype.int32)
+            self.seg2 = Tensor(np.array(20), mstype.int32)
+            self.seg3 = Tensor(np.array(30), mstype.int32)
+            self.step = Tensor(np.array(10), mstype.int32)
+
+        def construct(self):
+            i = self.i
+            out = self.zero
+            while i < self.max_cycles:
+                if out < self.seg1:
+                    out += self.step
+                elif out < self.seg2:
+                    out += self.step
+                elif out > self.seg3:
+                    out += self.step
+                    break
+                else:
+                    out += self.step
+                i = i + 1
+            return out + out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    forward_net = MyNet(max_cycles=5)
+    graph_mode_out = forward_net()
+
+    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_forward_if_elif_elif_else_continue():
+    """
+    Feature: Parallel if transformation with continue
+    Description: continue in else branch should stop the parallel if transformation of all outer if.
+    Expectation: assertion success
+    """
+    class MyNet(nn.Cell):
+        def __init__(self, max_cycles):
+            super().__init__()
+            self.max_cycles = max_cycles
+            self.i = Tensor(np.array(0), mstype.int32)
+            self.zero = Tensor(np.array(0), mstype.int32)
+            self.seg1 = Tensor(np.array(10), mstype.int32)
+            self.seg2 = Tensor(np.array(20), mstype.int32)
+            self.seg3 = Tensor(np.array(30), mstype.int32)
+            self.step = Tensor(np.array(10), mstype.int32)
+
+        def construct(self):
+            i = self.i
+            out = self.zero
+            while i < self.max_cycles:
+                if out < self.seg1:
+                    out += self.step
+                elif out < self.seg2:
+                    out += self.step
+                elif out >= self.seg3:
+                    out += self.step
+                else:
+                    out += self.step
+                    continue
+                i = i + 1
+            return out + out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    forward_net = MyNet(max_cycles=4)
+    graph_mode_out = forward_net()
+
+    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_forward_if_elif_elif_continue_else():
+    """
+    Feature: Parallel if transformation with continue
+    Description: continue in elif branch should stop the parallel if transformation of all outer if.
+    Expectation: assertion success
+    """
+    class MyNet(nn.Cell):
+        def __init__(self, max_cycles):
+            super().__init__()
+            self.max_cycles = max_cycles
+            self.i = Tensor(np.array(0), mstype.int32)
+            self.zero = Tensor(np.array(0), mstype.int32)
+            self.seg1 = Tensor(np.array(10), mstype.int32)
+            self.seg2 = Tensor(np.array(20), mstype.int32)
+            self.seg3 = Tensor(np.array(30), mstype.int32)
+            self.step = Tensor(np.array(10), mstype.int32)
+
+        def construct(self):
+            i = self.i
+            out = self.zero
+            while i < self.max_cycles:
+                if out < self.seg1:
+                    out += self.step
+                elif out < self.seg2:
+                    out += self.step
+                elif out < self.seg3:
+                    out += self.step
+                    continue
+                else:
+                    out += self.step
+                i = i + 1
+            return out + out
+
+    context.set_context(mode=context.GRAPH_MODE)
+    forward_net = MyNet(max_cycles=4)
+    graph_mode_out = forward_net()
+
+    assert graph_mode_out == Tensor(np.array(100), mstype.int32)
