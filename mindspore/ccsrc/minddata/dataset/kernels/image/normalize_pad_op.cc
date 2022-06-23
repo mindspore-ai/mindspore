@@ -22,21 +22,9 @@
 
 namespace mindspore {
 namespace dataset {
-NormalizePadOp::NormalizePadOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b,
-                               std::string dtype, bool is_hwc) {
-  Status s = Tensor::CreateFromVector<float>({mean_r, mean_g, mean_b}, &mean_);
-  if (s.IsError()) {
-    MS_LOG(ERROR) << "NormalizePad: invalid mean value, got: (" + std::to_string(mean_r) + std::to_string(mean_g) +
-                       std::to_string(mean_b) + ").";
-  }
-  s = Tensor::CreateFromVector<float>({std_r, std_g, std_b}, &std_);
-  if (s.IsError()) {
-    MS_LOG(ERROR) << "NormalizePad: invalid std value, got: (" + std::to_string(std_r) + std::to_string(std_g) +
-                       std::to_string(std_b) + ").";
-  }
-  dtype_ = dtype;
-  is_hwc_ = is_hwc;
-}
+NormalizePadOp::NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, std::string dtype,
+                               bool is_hwc)
+    : mean_(mean), std_(std), dtype_(dtype), is_hwc_(is_hwc) {}
 
 Status NormalizePadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
@@ -45,7 +33,16 @@ Status NormalizePadOp::Compute(const std::shared_ptr<Tensor> &input, std::shared
 }
 
 void NormalizePadOp::Print(std::ostream &out) const {
-  out << "NormalizeOp, mean: " << *(mean_.get()) << std::endl << "std: " << *(std_.get()) << std::endl;
+  out << "NormalizePadOp, mean: ";
+  for (const auto &m : mean_) {
+    out << m << ", ";
+  }
+  out << "}" << std::endl << "std: ";
+  for (const auto &s : std_) {
+    out << s << ", ";
+  }
+  out << "}" << std::endl << "is_hwc: " << is_hwc_;
+  out << "}" << std::endl;
 }
 }  // namespace dataset
 }  // namespace mindspore

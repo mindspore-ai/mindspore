@@ -16,6 +16,7 @@
 Testing CutOut op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
@@ -288,6 +289,19 @@ def test_cutout_4channel_hwc():
     op(image)
 
 
+def test_cut_out_validation():
+    """
+    Feature: CutOut op
+    Description: Test CutOut Op with patch length greater than image dimensions
+    Expectation: Raises an exception
+    """
+    image = np.random.randn(3, 1024, 856).astype(np.uint8)
+    op = vision.CutOut(length=1500, num_patches=3, is_hwc=False)
+    with pytest.raises(RuntimeError) as errinfo:
+        op(image)
+    assert 'box size is too large for image erase' in str(errinfo.value)
+
+
 if __name__ == "__main__":
     test_cut_out_op(plot=True)
     test_cut_out_op_multicut(plot=True)
@@ -296,3 +310,4 @@ if __name__ == "__main__":
     test_cut_out_comp_chw()
     test_cutout_4channel_chw()
     test_cutout_4channel_hwc()
+    test_cut_out_validation()

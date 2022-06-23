@@ -989,25 +989,8 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   return Status::OK();
 }
 
-Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype,
-                    bool is_hwc) {
-  mean->Squeeze();
-  std->Squeeze();
-  std::vector<float> mean_v;
-  std::vector<float> std_v;
-  for (int j = 0; j < kDefaultImageChannel; j++) {
-    float mean_c, std_c;
-    RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {j}));
-    RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {j}));
-    if (std_c <= 0.0) {
-      RETURN_STATUS_UNEXPECTED("NormalizePad: std vector element must be greater than 0.0, got: " +
-                               std::to_string(std_c));
-    }
-    mean_v.push_back(mean_c);
-    std_v.push_back(std_c);
-  }
-
+Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
+                    std::vector<float> std, const std::string &dtype, bool is_hwc) {
   int64_t channel_index = kChannelIndexCHW;
   if (is_hwc) {
     channel_index = kChannelIndexHWC;
@@ -1016,6 +999,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   if (input->Rank() == kDefaultImageRank) {
     channels = input->shape()[channel_index];
   }
+
   if (is_hwc) {
     TensorShape new_shape = TensorShape({input->shape()[0], input->shape()[1], channels + 1});
     Tensor::CreateEmpty(new_shape, DataType(dtype), output);
@@ -1027,21 +1011,21 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
 
   // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
-  if (mean_v.size() == 1 && (*output)->shape()[channel_index] != 1) {
-    for (int64_t i = 0; i < (*output)->shape()[channel_index] - 1; i++) {
-      mean_v.push_back(mean_v[0]);
-      std_v.push_back(std_v[0]);
+  if (mean.size() == 1 && channels > 1) {
+    while (mean.size() < channels) {
+      mean.push_back(mean[0]);
+      std.push_back(std[0]);
     }
   }
-  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == mean_v.size() + 1,
+  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == mean.size() + 1,
                                "NormalizePad: number of channels does not match the size of mean and std vectors, got "
                                "channels: " +
                                  std::to_string((*output)->shape()[channel_index]) +
-                                 ", size of mean: " + std::to_string(mean_v.size()));
+                                 ", size of mean: " + std::to_string(mean.size()));
   if (dtype == "float16") {
-    RETURN_IF_NOT_OK(Normalize_caller<float16>(input, output, mean_v, std_v, is_hwc, true));
+    RETURN_IF_NOT_OK(Normalize_caller<float16>(input, output, mean, std, is_hwc, true));
   } else {
-    RETURN_IF_NOT_OK(Normalize_caller<float>(input, output, mean_v, std_v, is_hwc, true));
+    RETURN_IF_NOT_OK(Normalize_caller<float>(input, output, mean, std, is_hwc, true));
   }
   if (input->Rank() == kMinImageRank) {
     (*output)->Squeeze();
