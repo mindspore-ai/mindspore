@@ -25,8 +25,6 @@
 #include <utility>
 #include <vector>
 
-#include "ir/dtype/type_id.h"
-
 namespace mindspore {
 namespace kernel {
 template <class C>
@@ -49,15 +47,15 @@ class Factory {
     (void)kernel_mod_creators_.emplace(name, creator);
   }
 
-  std::shared_ptr<C> Create(const std::string &name) {
-    auto iter = kernel_mod_creators_.find(name);
-    if (iter != kernel_mod_creators_.end()) {
+  std::shared_ptr<C> Create(const std::string &name) const {
+    typename std::map<std::string, CreatorFunc>::const_iterator iter = kernel_mod_creators_.find(name);
+    if (iter != kernel_mod_creators_.cend()) {
       return (iter->second)();
     }
     return nullptr;
   }
 
-  bool IsRegistered(const std::string &name) {
+  bool IsRegistered(const std::string &name) const {
     if (kernel_mod_creators_.find(name) != kernel_mod_creators_.end()) {
       return true;
     }
