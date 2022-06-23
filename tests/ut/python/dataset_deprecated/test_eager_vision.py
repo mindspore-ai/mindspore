@@ -397,6 +397,172 @@ def test_eager_exceptions_pad():
         assert "img should be PIL image" in str(e)
 
 
+def test_eager_invalid_image_randomadjustsharpness_c():
+    """
+    Feature: RandomAdjustSharpness op
+    Description: Exception eager support test for invalid image type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.RandomAdjustSharpness(degree=0.5, prob=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    test_config((10,), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>")
+    test_config(10, TypeError, "Input should be NumPy or PIL image, got <class 'int'>")
+
+
+def test_eager_invalid_image_hwc2chw_c():
+    """
+    Feature: HWC2CHW op
+    Description: Exception eager support test for HWC2CHW C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.HWC2CHW()(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>")
+
+
+def test_eager_invalid_image_hwc2chw_py():
+    """
+    Feature: HWC2CHW op
+    Description: Exception eager support test for HWC2CHW Python op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = PY.HWC2CHW()(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
+    test_config(my_input, TypeError, "img should be NumPy array. Got <class 'list'>")
+
+
+def test_eager_invalid_image_invert_c():
+    """
+    Feature: Invert op
+    Description: Exception eager support test for Invert C++ op with invalid image type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.Invert()(my_input)
+        assert error_msg in str(error_info.value)
+
+    test_config((10,), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>")
+    test_config(10, TypeError, "Input should be NumPy or PIL image, got <class 'int'>")
+
+
+def test_eager_invalid_image_pad_c():
+    """
+    Feature: Pad op
+    Description: Exception eager support test for Pad C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.Pad(padding=10)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(64, 32, 3).astype(np.int32).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>")
+
+
+def test_eager_invalid_image_randomcrop_c():
+    """
+    Feature: RandomCrop op
+    Description: Exception eager support test for RandomCrop C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.RandomCrop(size=200)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randint(0, 255, (987, 654, 3)).astype(np.uint8).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>")
+
+
+def test_eager_invalid_image_randomcrop_py():
+    """
+    Feature: RandomCrop op
+    Description: Exception eager support test for RandomCrop Python op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = PY.RandomCrop(size=200)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randint(0, 255, (987, 654, 3)).astype(np.uint8).tolist()
+    test_config(my_input, TypeError, "img should be PIL image. Got <class 'list'>")
+
+
+def test_eager_invalid_image_randomhorizontalflip_c():
+    """
+    Feature: RandomHorizontalFlip op
+    Description: Exception eager support test for RandomHorizontalFlip C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.RandomHorizontalFlip(prob=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    img = cv2.imread("../data/dataset/apple.jpg")
+    my_input = img.tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>")
+
+
+def test_eager_invalid_image_randomsolarize_c():
+    """
+    Feature: RandomSolarize op
+    Description: Exception eager support test for RandomSolarize C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.RandomSolarize(threshold=(0, 120))(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randint(0, 255, (500, 600, 3)).astype(np.uint8).tolist()
+    test_config(my_input, TypeError, "Input should be NumPy or PIL image, got <class 'list'>")
+
+
+def test_eager_invalid_image_cutout_c():
+    """
+    Feature: CutOut op
+    Description: Exception eager support test for CutOut C++ op with invalid image input type
+    Expectation: Error input image is detected
+    """
+
+    def test_config(my_input, error_type, error_msg):
+        with pytest.raises(error_type) as error_info:
+            _ = C.CutOut(length=120, num_patches=1)(my_input)
+        assert error_msg in str(error_info.value)
+
+    my_input = np.random.randn(60, 50)
+    test_config(my_input, RuntimeError, "Unexpected error. CutOut: shape is invalid.")
+
+    test_config(1, TypeError, "Input should be NumPy or PIL image, got <class 'int'>.")
+    test_config(1.0, TypeError, "Input should be NumPy or PIL image, got <class 'float'>.")
+    test_config((10, 20), TypeError, "Input should be NumPy or PIL image, got <class 'tuple'>.")
+    test_config([10, 20, 30], TypeError, "Input should be NumPy or PIL image, got <class 'list'>.")
+
+
 if __name__ == '__main__':
     test_eager_decode_c()
     test_eager_decode_py()
@@ -416,3 +582,13 @@ if __name__ == '__main__':
     test_eager_exceptions()
     test_eager_exceptions_normalize()
     test_eager_exceptions_pad()
+    test_eager_invalid_image_randomadjustsharpness_c()
+    test_eager_invalid_image_hwc2chw_c()
+    test_eager_invalid_image_hwc2chw_py()
+    test_eager_invalid_image_invert_c()
+    test_eager_invalid_image_pad_c()
+    test_eager_invalid_image_randomcrop_c()
+    test_eager_invalid_image_randomcrop_py()
+    test_eager_invalid_image_randomhorizontalflip_c()
+    test_eager_invalid_image_randomsolarize_c()
+    test_eager_invalid_image_cutout_c()
