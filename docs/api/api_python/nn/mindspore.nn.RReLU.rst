@@ -17,8 +17,8 @@ mindspore.nn.RReLU
 
    **参数：**
 
-   **lower** (`Union[int, float]`) - x<0时激活函数的斜率的下界，默认值：0.125。
-   **upper** (`Union[int, float]`) - x<0时激活函数的斜率的上界，默认值：1/3。
+   - **lower** (`Union[int, float]`) - x<0时激活函数的斜率的下界，默认值：0.125。
+   - **upper** (`Union[int, float]`) - x<0时激活函数的斜率的上界，默认值：1/3。
 
    **输入：**
 
