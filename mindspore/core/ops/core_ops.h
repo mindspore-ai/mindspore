@@ -198,6 +198,7 @@ constexpr auto kDropout3D = "Dropout3D";
 constexpr auto kPadding = "Padding";
 constexpr auto kConv2DTranspose = "Conv2DTranspose";
 constexpr auto kSparseApplyAdadelta = "SparseApplyAdadelta";
+constexpr auto kSparseApplyCenteredRMSProp = "SparseApplyCenteredRMSProp";
 constexpr auto kRoll = "Roll";
 constexpr auto kTanh = "Tanh";
 constexpr auto kMish = "Mish";
@@ -670,6 +671,7 @@ GVAR_DEF(PrimitivePtr, kLambApplyOptimizerAssign, std::make_shared<Primitive>("L
 GVAR_DEF(PrimitivePtr, kLambApplyWeightAssign, std::make_shared<Primitive>("LambApplyWeightAssign"));
 GVAR_DEF(PrimitivePtr, kSoftmaxGradExt, std::make_shared<Primitive>("SoftmaxGradExt"));
 GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdadelta, std::make_shared<Primitive>(kSparseApplyAdadelta));
+GVAR_DEF(PrimitivePtr, kPrimSparseApplyCenteredRMSProp, std::make_shared<Primitive>(kSparseApplyCenteredRMSProp));
 GVAR_DEF(PrimitivePtr, kSquareSumV1, std::make_shared<Primitive>("SquareSumV1"));
 GVAR_DEF(PrimitivePtr, kFusedMulAdd, std::make_shared<Primitive>("FusedMulAdd"));
 GVAR_DEF(PrimitivePtr, kPrimSoftShrink, std::make_shared<Primitive>("SoftShrink"));
