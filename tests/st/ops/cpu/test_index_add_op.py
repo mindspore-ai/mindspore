@@ -291,7 +291,7 @@ def test_index_add_function():
     Expectation: the result match with numpy result
     """
     context.set_context(device_target="CPU")
-    x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="name_x")
+    x = Parameter(Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32), name="x")
     indices = Tensor(np.array([0, 2]), mindspore.int32)
     y = Tensor(np.array([[0.5, 1.0], [1.0, 1.5], [2.0, 2.5]]), mindspore.float32)
     output = ops.index_add(x, indices, y, 1)
