@@ -577,6 +577,7 @@ from .extract_volume_patches import _extract_volume_patches_tbe
 from .round_ds import _round_ds_tbe
 from .is_close import _is_close_tbe
 from .apply_adam_with_amsgrad import _apply_adam_with_amsgrad_tbe
+from .apply_adam_with_amsgrad_ds import _apply_adam_with_amsgrad_ds_tbe
 from .expm1_ds import _expm1_ds_tbe
 from .deformable_offsets import _deformable_offsets_tbe
 from .deformable_offsets_grad import _deformable_offsets_grad_tbe

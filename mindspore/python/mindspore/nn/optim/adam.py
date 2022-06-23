@@ -181,11 +181,19 @@ def _run_opt_with_one_number_dist(opt, sparse_opt, push, pull, use_locking, use_
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "RowTensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov, target, beta1_power,
-                         beta2_power, beta1, beta2, eps, lr, gradient, param, m, v, ps_parameter, cache_enable):
+@_adam_opt.register("Function", "Function", "Function", "Function",
+                    "Bool", "Bool", "Bool", "Bool",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "RowTensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _run_opt_with_sparse(opt, sparse_opt, push, pull,
+                         use_locking, use_nesterov, use_amsgrad, target,
+                         beta1_power, beta2_power, beta1, beta2, eps, lr,
+                         gradient, param, m, v, vhat, ps_parameter, cache_enable):
     """Apply sparse adam optimizer to the weight parameter when the gradient is sparse."""
+    if use_amsgrad:
+        raise Exception("""Adam with amsgrad is currently not supported when the gradients are sparse!
+                        Please set use_amsgrad=False for sparse gradients.""")
+
     success = True
     indices = gradient.indices
     values = gradient.values
@@ -242,20 +250,31 @@ def _run_opt_with_sparse(opt, sparse_opt, push, pull, use_locking, use_nesterov,
     return success
 
 
-@_adam_opt.register("Function", "Function", "Function", "Function", "Bool", "Bool", "Bool", "Tensor", "Tensor",
-                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
-def _run_opt_with_one_number(opt, sparse_opt, push, pull, use_locking, use_nesterov, target,
-                             beta1_power, beta2_power, beta1, beta2, eps, lr, gradient, param,
-                             moment1, moment2, ps_parameter, cache_enable):
+@_adam_opt.register("Function", "Function", "Function", "Function",
+                    "Bool", "Bool", "Bool", "Bool",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
+                    "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Bool", "Bool")
+def _run_opt_with_one_number(opt, sparse_opt, push, pull,
+                             use_locking, use_nesterov, use_amsgrad, target,
+                             beta1_power, beta2_power, beta1, beta2, eps, lr,
+                             gradient, param, moment1, moment2, vhat, ps_parameter, cache_enable):
     """Apply adam optimizer to the weight parameter using Tensor."""
     success = True
     if ps_parameter and not cache_enable:
         op_shape = P.Shape()
-        success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
-                                              (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
+        if use_amsgrad:
+            success = F.depend(success, pull(push((beta1_power, beta2_power, lr, gradient),
+                                                  (op_shape(param), op_shape(moment1), op_shape(moment2),
+                                                   op_shape(vhat))), param))
+        else:
+            success = F.depend(success, pull(push((beta1_power, beta2_power, lr, beta1, beta2, eps, gradient),
+                                                  (op_shape(param), op_shape(moment1), op_shape(moment2))), param))
     else:
-        success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
-                                        eps, gradient))
+        if use_amsgrad:
+            success = F.depend(success, opt(param, moment1, moment2, vhat, beta1_power, beta2_power, lr, gradient))
+        else:
+            success = F.depend(success, opt(param, moment1, moment2, beta1_power, beta2_power, lr, beta1, beta2,
+                                            eps, gradient))
     return success
 
 
@@ -406,6 +425,9 @@ class Adam(Optimizer):
         use_nesterov (bool): Whether to use Nesterov Accelerated Gradient (NAG) algorithm to update the gradients.
             If true, update the gradients using NAG.
             If false, update the gradients without using NAG. Default: False.
+        use_amsgrad (bool): Whether to use Amsgrad algorithm to update the gradients.
+            If true, update the gradients using Amsgrad.
+            If false, update the gradients without using Amsgrad. Default: False.
 
         weight_decay (Union[float, int, Cell]): Weight decay (L2 penalty). Default: 0.0.
 
@@ -433,7 +455,7 @@ class Adam(Optimizer):
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
-        TypeError: If `use_locking` or `use_nesterov` is not a bool.
+        TypeError: If `use_locking` or `use_nesterov` or `use_amsgrad` is not a bool.
         ValueError: If `loss_scale` or `eps` is less than or equal to 0.
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.
@@ -468,11 +490,12 @@ class Adam(Optimizer):
 
     @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
-                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
+                 use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False):
         super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)
+        validator.check_value_type("use_amsgrad", use_amsgrad, [bool], self.cls_name)
 
         self.beta1 = Tensor(beta1, mstype.float32)
         self.beta2 = Tensor(beta2, mstype.float32)
@@ -481,16 +504,24 @@ class Adam(Optimizer):
         self.eps = Tensor(eps, mstype.float32)
         self.use_nesterov = use_nesterov
         self.use_locking = use_locking
+        self.use_amsgrad = use_amsgrad
         self.moment1 = self._parameters.clone(prefix="moment1", init='zeros')
         self.moment2 = self._parameters.clone(prefix="moment2", init='zeros')
+        self.vhat = self._parameters.clone(prefix="vhat", init=-100000)
 
         self._is_device = True
-        self.opt = P.Adam(use_locking, use_nesterov)
+        if use_amsgrad:
+            self.opt = P.ApplyAdamWithAmsgrad(beta1, beta2, eps, use_locking)
+        else:
+            self.opt = P.Adam(use_locking, use_nesterov)
         self.sparse_opt = P.FusedSparseAdam(use_locking, use_nesterov)
         self.sparse_opt.add_prim_attr("primitive_target", "CPU")
         self._ps_pull = P.Pull()
-        self._ps_push = P.Push("Adam", [0, 1, 2])
-        self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
+        if use_amsgrad:
+            self._ps_push = P.Push("ApplyAdamWithAmsgrad", [0, 1, 2, 3])
+        else:
+            self._ps_push = P.Push("Adam", [0, 1, 2])
+            self._ps_push.add_prim_attr("use_nesterov", use_nesterov)
 
         self._init_distributed_opts(use_locking, use_nesterov)
 
@@ -499,6 +530,7 @@ class Adam(Optimizer):
         params = self._parameters
         moment1 = self.moment1
         moment2 = self.moment2
+        vhat = self.vhat
         gradients = self.flatten_gradients(gradients)
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
@@ -511,6 +543,9 @@ class Adam(Optimizer):
         beta2_power = self.beta2_power * self.beta2
         self.beta2_power = beta2_power
         if self.use_dist_optimizer:
+            if self.use_amsgrad:
+                raise Exception("""Adam with amsgrad is currently not supporting distributed training!
+                                Please set use_amsgrad=False for distributed training.""")
             if self.is_group_lr:
                 success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
                                               self.use_locking, self.use_nesterov, self._is_device,
@@ -528,14 +563,15 @@ class Adam(Optimizer):
         else:
             if self.is_group_lr:
                 success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                              self.use_locking, self.use_nesterov, self._is_device,
+                                              self.use_locking, self.use_nesterov, self.use_amsgrad, self._is_device,
                                               beta1_power, beta2_power, self.beta1, self.beta2, self.eps),
-                                    lr, gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
+                                    lr, gradients, params, moment1, moment2, vhat,
+                                    self.ps_parameters, self.cache_enable)
             else:
                 success = self.map_(F.partial(_adam_opt, self.opt, self.sparse_opt, self._ps_push, self._ps_pull,
-                                              self.use_locking, self.use_nesterov, self._is_device,
+                                              self.use_locking, self.use_nesterov, self.use_amsgrad, self._is_device,
                                               beta1_power, beta2_power, self.beta1, self.beta2, self.eps, lr),
-                                    gradients, params, moment1, moment2, self.ps_parameters, self.cache_enable)
+                                    gradients, params, moment1, moment2, vhat, self.ps_parameters, self.cache_enable)
 
         return success
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <string>
 #include <set>
 #include <map>
+#include <utility>
 
 #include "ops/op_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -40,17 +41,29 @@ abstract::TupleShapePtr ApplyAdamWithAmsgradInferShape(const PrimitivePtr &primi
   auto m_shape = input_args[1]->BuildShape();
   auto v_shape = input_args[2]->BuildShape();
   auto vhat_shape = input_args[3]->BuildShape();
-  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->GetShapeTrack())[kShape];
-  auto beta1_power_shape_rank = SizeToLong(beta1_power_shape.size());
-  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->GetShapeTrack())[kShape];
-  auto beta2_power_shape_rank = SizeToLong(beta2_power_shape.size());
-  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->GetShapeTrack())[kShape];
-  auto lr_shape_rank = SizeToLong(lr_shape.size());
+  auto beta1_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[4]->BuildShape())[kShape];
+  auto beta2_power_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[5]->BuildShape())[kShape];
+  auto lr_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[6]->BuildShape())[kShape];
   auto grad_shape = input_args[7]->BuildShape();
-  // beta1_power, beta2_power, lr must be scalar
-  (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape rank", beta1_power_shape_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("beta2_power_shape rank", beta2_power_shape_rank, kEqual, 0, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("lr_shape rank", lr_shape_rank, kEqual, 0, prim_name);
+
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape size", beta1_power_shape.size(), kGreaterEqual,
+                                           batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("beta2_power_shape size", beta2_power_shape.size(), kGreaterEqual,
+                                           batch_rank, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("lr_shape size", lr_shape.size(), kGreaterEqual, batch_rank, prim_name);
+
+  if (var_shape->IsDynamic() || m_shape->IsDynamic() || v_shape->IsDynamic() || vhat_shape->IsDynamic() ||
+      grad_shape->IsDynamic()) {
+    return std::make_shared<abstract::TupleShape>(
+      std::vector<abstract::BaseShapePtr>{var_shape, m_shape, v_shape, vhat_shape});
+  }
+
   // shape of var, m, v, vhat must be the same
   std::map<std::string, abstract::BaseShapePtr> same_shape_args_map;
   (void)same_shape_args_map.insert(std::make_pair("m", m_shape));
@@ -98,12 +111,42 @@ TuplePtr ApplyAdamWithAmsgradInferType(const PrimitivePtr &prim, const std::vect
 }
 }  // namespace
 
+void ApplyAdamWithAmsgrad::set_beta1(const float beta1) { (void)this->AddAttr(kBeta1, api::MakeValue(beta1)); }
+
+void ApplyAdamWithAmsgrad::set_beta2(const float beta2) { (void)this->AddAttr(kBeta2, api::MakeValue(beta2)); }
+
+void ApplyAdamWithAmsgrad::set_epsilon(const float epsilon) { (void)this->AddAttr(kEpsilon, api::MakeValue(epsilon)); }
+
+void ApplyAdamWithAmsgrad::set_use_locking(const bool use_locking) {
+  (void)this->AddAttr(kUseLocking, api::MakeValue(use_locking));
+}
+
+float ApplyAdamWithAmsgrad::get_beta1() const {
+  auto value_ptr = this->GetAttr(kBeta1);
+  return GetValue<float>(value_ptr);
+}
+
+float ApplyAdamWithAmsgrad::get_beta2() const {
+  auto value_ptr = this->GetAttr(kBeta2);
+  return GetValue<float>(value_ptr);
+}
+
+float ApplyAdamWithAmsgrad::get_epsilon() const {
+  auto value_ptr = this->GetAttr(kEpsilon);
+  return GetValue<float>(value_ptr);
+}
+
+bool ApplyAdamWithAmsgrad::get_use_locking() const {
+  auto value_ptr = this->GetAttr(kUseLocking);
+  return GetValue<bool>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(ApplyAdamWithAmsgrad, BaseOperator);
 AbstractBasePtr ApplyAdamWithAmsgradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 8;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
   auto infer_type = ApplyAdamWithAmsgradInferType(primitive, input_args);
   auto infer_shape = ApplyAdamWithAmsgradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
