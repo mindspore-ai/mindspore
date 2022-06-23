@@ -1,0 +1,42 @@
+---
+ third_party/proto/caffe/caffe.proto | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/third_party/proto/caffe/caffe.proto b/third_party/proto/caffe/caffe.proto
+index 163734ba6c..1a2287b8a2 100755
+--- a/third_party/proto/caffe/caffe.proto
++++ b/third_party/proto/caffe/caffe.proto
+@@ -13,6 +13,9 @@ message BlobProto {
+   repeated float diff = 6 [packed = true];
+   repeated double double_data = 8 [packed = true];
+   repeated double double_diff = 9 [packed = true];
++  optional bytes int8_data = 10;
++  repeated int32 int32_data = 11 [packed = true];
++  repeated uint64 uint64_data = 12 [packed = true];
+ 
+   // 4D dimensions -- deprecated.  Use "shape" instead.
+   optional int32 num = 1 [default = 0];
+@@ -306,6 +309,12 @@ message ParamSpec {
+   optional float decay_mult = 4 [default = 1.0];
+ }
+ 
++// Quant message
++message QuantParameter {
++  optional float scale = 2;
++  optional bytes offset = 3;
++}
++
+ // NOTE
+ // Update the next available ID when you add a new LayerParameter field.
+ //
+@@ -424,6 +433,7 @@ message LayerParameter {
+   optional InterpParameter interp_param = 158;
+   optional ShuffleChannelParameter shuffle_channel_param = 159;
+   optional UpsampleParameter upsample_param = 160;
++  optional QuantParameter quant_param = 208;
+ }
+ 
+ // Message that stores parameters used to apply transformation
+-- 
+2.25.1
+

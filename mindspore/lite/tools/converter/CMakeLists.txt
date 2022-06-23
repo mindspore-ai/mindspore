@@ -270,9 +270,21 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
 endif()
 
 file(GLOB PROTO_FILE ""
-        ${TOP_DIR}/third_party/proto/caffe/caffe.proto
         ${TOP_DIR}/third_party/proto/tensorflow/*.proto
         ${TOP_DIR}/third_party/proto/onnx/onnx.proto)
+file(GLOB CAFFE_PROTO_FILE "" ${TOP_DIR}/third_party/proto/caffe/caffe.proto)
+if(MSLITE_ENABLE_ACL AND MSLITE_ENABLE_ACL_QUANT_PARAM)
+    set(PROTO_PATCH_FILE ${TOP_DIR}/third_party/patch/caffe/caffe_proto_acl_quant_param.patch001)
+    message("patching caffe.proto < ${PROTO_PATCH_FILE}")
+    execute_process(COMMAND ${Patch_EXECUTABLE} -Np1 -i ${PROTO_PATCH_FILE} -d ${TOP_DIR}
+            -o ${TOP_DIR}/mindspore/lite/build/caffe.proto
+            RESULT_VARIABLE Result)
+    if(NOT Result EQUAL "0")
+        message(FATAL_ERROR "Failed patch: ${_LF_PATCH_FILE}")
+    endif()
+    file(GLOB CAFFE_PROTO_FILE "" ${TOP_DIR}/mindspore/lite/build/caffe.proto)
+endif()
+set(PROTO_FILE ${PROTO_FILE} ${CAFFE_PROTO_FILE})
 
 ms_protobuf_generate(PROTO_SRCS PROTO_HDRS ${PROTO_FILE})
 
