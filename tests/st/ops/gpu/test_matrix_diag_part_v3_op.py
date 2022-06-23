@@ -209,3 +209,40 @@ def test_matrix_diag_part_v3_vmap():
                         [9, 3, 4],
                         [4, 3, 8]]], np.float32)
     np.testing.assert_allclose(result, expect)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+def test_matrix_diag_part_v3_dynamic_shape():
+    """
+    Feature: MatrixDiagPartV3 operator.
+    Description: Compatible with np.diag.
+    Expectation: The result matches numpy.
+    """
+    context.set_context(device_target="GPU", mode=context.GRAPH_MODE)
+    align = "LEFT_RIGHT"
+    input_x = Tensor(np.array([[[1, 2, 3, 4],
+                                [5, 6, 7, 8],
+                                [9, 8, 7, 6]],
+                               [[5, 4, 3, 2],
+                                [1, 2, 3, 4],
+                                [5, 6, 7, 8]]]), mstype.float32)
+
+    k = Tensor((-1, 2), mstype.int32)
+    padding_value = Tensor(0, mstype.float32)
+
+    dynamic_net = MatrixDiagPartV3Net(align=align)
+    place_holder = Tensor(shape=[2, 3, None], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder, k, padding_value)
+
+    result = dynamic_net(input_x, k, padding_value).asnumpy()
+    expect = np.array([[[3, 8, 0],
+                        [2, 7, 6],
+                        [1, 6, 7],
+                        [0, 5, 8]],
+                       [[3, 4, 0],
+                        [4, 3, 8],
+                        [5, 2, 7],
+                        [0, 1, 6]]], np.float32)
+    np.testing.assert_allclose(result, expect)

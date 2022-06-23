@@ -20,6 +20,27 @@ import pytest
 from mindspore import Tensor, ops, nn, context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore import dtype as mstype
+
+
+class LogSoftmax(nn.Cell):
+    def __init__(self, axis=-1):
+        super(LogSoftmax, self).__init__()
+        self.log_softmax = P.LogSoftmax(axis)
+
+    def construct(self, x):
+        return self.log_softmax(x)
+
+
+class Grad(nn.Cell):
+    def __init__(self, network):
+        super(Grad, self).__init__()
+        self.grad = C.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, input_data, sens):
+        gout = self.grad(self.network)(input_data, sens)
+        return gout
 
 
 @pytest.mark.level0
@@ -70,24 +91,29 @@ def test_logsoftmax_vmap(axis, dtype, error):
     assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
 
 
-class LogSoftmax(nn.Cell):
-    def __init__(self, axis=-1):
-        super(LogSoftmax, self).__init__()
-        self.log_softmax = P.LogSoftmax(axis)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logsoftmax_dynamic_shape():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LogSoftmax
+    Expectation: the result match to scipy
+    """
+    axis = -1
+    dtype, error = np.float32, 1.0e-5
 
-    def construct(self, x):
-        return self.log_softmax(x)
+    np.random.seed(0)
+    x = np.random.random((3, 5, 7, 4)).astype(dtype)
+    expect = scipy.special.log_softmax(x, axis).astype(dtype)
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
+    dynamic_net = LogSoftmax(axis)
+    place_holder = Tensor(shape=[3, 5, None, 4], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder)
 
-class Grad(nn.Cell):
-    def __init__(self, network):
-        super(Grad, self).__init__()
-        self.grad = C.GradOperation(get_all=True, sens_param=True)
-        self.network = network
-
-    def construct(self, input_data, sens):
-        gout = self.grad(self.network)(input_data, sens)
-        return gout
+    output = dynamic_net(Tensor(x))
+    assert np.allclose(output.asnumpy(), expect, atol=error, rtol=error)
 
 
 @pytest.mark.level0

@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, nn, context, ms_function
+from mindspore import dtype as mstype
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
 
@@ -150,6 +151,42 @@ def test_instancenorm_3d(shape, data_type):
     assert np.allclose(result.asnumpy(), expected.asnumpy())
 
     instance_backward_net = Grad(instance_op)
+    expected_backward_net = Grad(expected_net)
+
+    result = instance_backward_net(Tensor(x_np), Tensor(grad))
+    expected = expected_backward_net(Tensor(x_np), Tensor(grad))
+    assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_instancenorm_2d_dynamic_shape():
+    """
+    Feature: InstanceNorm 2D operator with dynamic shape.
+    Description: Compatible with instance_norm_np.
+    Expectation: The result matches numpy implementation.
+    """
+    shape = (8, 4, 3, 4)
+    data_type = np.float32
+
+    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    x_np = Tensor(np.random.randn(*shape).astype(data_type))
+    grad = Tensor(np.random.randn(*shape).astype(data_type))
+
+    dynamic_instance_op = nn.InstanceNorm2d(shape[1], gamma_init=0.5, beta_init=0.5)
+    expected_net = Expected2d(shape[0] * shape[1], gamma_init=0.5, beta_init=0.5)
+
+    place_holder = Tensor(shape=[8, 4, None, 4], dtype=mstype.float32)
+    dynamic_instance_op.set_inputs(place_holder)
+
+    result = dynamic_instance_op(Tensor(x_np))
+    expected = expected_net(Tensor(x_np))
+    assert np.allclose(result.asnumpy(), expected.asnumpy())
+
+    instance_backward_net = Grad(dynamic_instance_op)
     expected_backward_net = Grad(expected_net)
 
     result = instance_backward_net(Tensor(x_np), Tensor(grad))
