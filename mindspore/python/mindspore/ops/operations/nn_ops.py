@@ -8824,6 +8824,116 @@ class SparseApplyRMSProp(Primitive):
         self.rho = validator.check_float_range(rho, 0.0, 1.0, Rel.INC_BOTH, "rho", self.name)
 
 
+class SparseApplyCenteredRMSProp(Primitive):
+    r"""
+    Update `var` according to the centered RMSProp algorithm.
+
+    .. math::
+        \begin{array}{l}
+            \text { mean_square }=\text { decay } * \text { mean_square }+(1-\text { decay }) *
+            \text { gradient }^{2} \\
+            \text { mean_grad }=\text { decay } * \text { mean_grad }+(1-\text { decay }) *
+            \text { gradient } \\
+            \text { Delta }=l r * \frac{\text { gradient }}{\sqrt{\text { mean_square }+
+            \text { epsilon-mean_grad }^{2}}} \\
+            \text { ms }<-\text { rho } * \text { ms }_{t-1}+(1-\text { rho }) * \text { grad } * \text { grad } \\
+            \text { mom }<-\text { momentum } * \text { mom }_{t-1}+\operatorname{lr} *
+            \frac{\text { grad }}{\sqrt{\text { ms+epsilon }}} \\
+            \text { var }<-\text { var }-\text { mom }
+        \end{array}
+
+    .. warning::
+        In dense implementation of this algorithm, `mean_gradient`, `mean_square`, and `moment` will update
+        even if the `grad` is zero. But in this sparse implementation, `mean_gradient`, `mean_square`, and `moment`
+        will not update in iterations during which the `grad` is zero.
+
+    Args:
+        use_locking (bool): If `True`, updating of the `var`, `mg`, `ms`, and `mom` tensors will be protected by a lock.
+                            Otherwise the behavior is undefined, but may exhibit less contention. Default: False.
+
+    Inputs:
+        - **var** (Parameter) - Variable tensor to be updated. The data type must be int8, int16, int32, int64,
+          uint8, uint16, uint32, uint64, float16, float32 or float64.
+          The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        - **mg** (Parameter) - Mean gradients. Must have the same shape and dtype as `var`.
+        - **ms** (Parameter) - Mean square gradients. Must have the same shape and dtype as `var`.
+        - **mom** (Parameter) - Delta of `var`. Must have the same shape and dtype as `var`.
+        - **lr** (Union[Number, Tensor]) - Learning rate. Must be a float number or a scalar tensor.
+          Must have the same type as `var`.
+        - **rho** (Union[Number, Tensor]) - Decay rate. Must be a float number or a scalar tensor.
+          Must have the same type as `var`.
+        - **momentum** (Union[Number, Tensor]) - Momentum. Must be a float number or a scalar tensor.
+          Must have the same type as `var`.
+        - **epsilon** (Union[Number, Tensor]) - Ridge term. Must be a float number or a scalar tensor.
+          Must have the same type as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **indices** (Tensor) - Gradient indices. Must be one of the following types: int32, int64.
+          and indices.shape[0] = grad.shape[0].
+
+    Outputs:
+        - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
+
+    Raises:
+        TypeError: If `use_locking` is not a bool.
+        TypeError: If `var`, `mg`, `ms`, `mom`, `grad`, `indices` is not a Tensor.
+        TypeError: If `lr`, `rho`, `momentum` or `epsilon` is neither a Number nor a Tensor.
+        TypeError: If dtype of `var`, `mg`, `ms`, `mom`, `lr`, `rho`, `momentum`, `epsilon` or `grad`
+                   is neither float16 nor float32.
+        TypeError: If dtype of `mg`, `ms`, `mom`, `grad` is not same as `var`.
+        TypeError: If dtype of `indices` is not int32 or int64.
+        ValueError: If shape of `mg`, `ms` or `mom` is not same as `var`.
+        ValueError: If the rank of `indices` is not equal to 1.
+        ValueError: If dimension of `grad` is not equal or greater than 1.
+        ValueError: If shape of `indices` is not same as shape of first dimension of `grad`.
+        ValueError: If shape of `grad` is not same as shape of `var` except first dimension.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> import mindspore.common.dtype as mstype
+        >>> import mindspore.ops.operations.nn_ops as nn_ops
+        >>> var = Tensor(np.array([[0.6, 0.4], [0.1, 0.5]]).astype(np.float32))
+        >>> mg = Tensor(np.array([[0.1, 0.3], [0.1, 0.5]]).astype(np.float32))
+        >>> ms = Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32))
+        >>> mom = Tensor(np.array([[0.2, 0.1], [0.1, 0.2]]).astype(np.float32))
+        >>> lr = Tensor(0.001, mstype.float32)
+        >>> rho = Tensor(1e-10, mstype.float32)
+        >>> momentum = Tensor(0.001, mstype.float32)
+        >>> epsilon = Tensor(0.01, mstype.float32)
+        >>> grad = Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
+        >>> sparse_apply_centered_rms_prop = nn_ops.SparseApplyCenteredRMSProp()
+        >>> output = sparse_apply_centered_rms_prop(var, mg, ms, mom, lr, rho, momentum, epsilon, grad, indices)
+        >>> print(output)
+        [[0.5968 0.3959]
+         [0.0989 0.4978]]
+    """
+
+    __mindspore_signature__ = (
+        sig.make_sig('var', dtype=sig.sig_dtype.T),
+        sig.make_sig('mg', dtype=sig.sig_dtype.T),
+        sig.make_sig('ms', dtype=sig.sig_dtype.T),
+        sig.make_sig('mom', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T),
+        sig.make_sig('rho', dtype=sig.sig_dtype.T),
+        sig.make_sig('momentum', dtype=sig.sig_dtype.T),
+        sig.make_sig('epsilon', dtype=sig.sig_dtype.T),
+        sig.make_sig('grad', dtype=sig.sig_dtype.T),
+        sig.make_sig('indices', dtype=sig.sig_dtype.T1)
+    )
+
+    @prim_attr_register
+    def __init__(self, use_locking=False):
+        """Initialize SparseApplyCenteredRMSProp."""
+        self.init_prim_io_names(inputs=['var', 'mg', 'ms', 'mom', 'lr', 'rho', 'momentum',
+                                        'epsilon', 'grad', 'indices'],
+                                outputs=['var'])
+        validator.check_value_type("use_locking", use_locking, [bool], self.name)
+
+
 class ApplyKerasMomentum(Primitive):
     r"""
     Update `var` according to the momentum scheme.
