@@ -40,6 +40,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/renorm_split.h"
 #include "plugin/device/ascend/optimizer/ir_fission/tensor_scatter_fission.h"
 #include "backend/common/pass/communication_op_fusion.h"
+#include "backend/common/pass/dropout_gen_mask_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/clip_by_norm_no_div_square_sum_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_update_with_lr_rule_fusion.h"
@@ -512,6 +513,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
   other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
+  other_pm->AddPass(std::make_shared<DropoutGenMaskFusion>());
   other_pm->AddPass(std::make_shared<InsertTensorMoveForCascade>());
   other_pm->AddPass(std::make_shared<GradientsAllReduceDependLastSend>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());

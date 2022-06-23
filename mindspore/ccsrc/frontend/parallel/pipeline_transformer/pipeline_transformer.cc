@@ -196,6 +196,31 @@ void PipelineTransformer::CreateForwardGroup() {
   group_.push_back(g_back.name());
 }
 
+void PipelineTransformer::LabelGenMaskFusion() {
+  auto fgs = manager_->func_graphs();
+  int64_t fusion_id = 0;
+  for (auto &fg : fgs) {
+    if (fg == root_ || fg == main_graph_) {
+      continue;
+    }
+    auto stage = fg->stage();
+    if (stage != -1 && stage != stage_) {
+      continue;
+    }
+    auto nodes = fg->nodes();
+    for (auto &node : nodes) {
+      if (!IsPrimitiveCNode(node, prim::kPrimDropoutGenMask) && !IsPrimitiveCNode(node, prim::kPrimDropoutDoMaskV3) &&
+          !IsPrimitiveCNode(node, prim::kPrimDropout)) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->AddPrimalAttr(kAttrFusion, MakeValue(fusion_id));
+      fusion_id += 1;
+    }
+  }
+}
+
 void PipelineTransformer::Coloring() {
   auto need_coloring = true;
   std::set<int64_t> stage_set;
@@ -244,7 +269,8 @@ void PipelineTransformer::BroadCastColoring() {
     auto node_users = manager_->node_users();
     for (auto &node : all_nodes) {
       auto stage_info = node->user_data<NodeStageInfo>();
-      if (!node->isa<CNode>() || stage_info == nullptr || stage_info->stage() == -1) {
+      if (!node->isa<CNode>() || stage_info == nullptr || stage_info->stage() == -1 ||
+          IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
         continue;
       }
       auto stage = stage_info->stage();
