@@ -177,9 +177,9 @@ build_python_wheel_package() {
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
     cp src/*.so package/mindspore_lite/lib/
-    local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
+    local pkg_name=mindspore_lite-${VERSION_STR}-linux-$1
     if [[ "$1" == "x86_64" ]]; then
-      local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
+      local pkg_name=mindspore_lite-${VERSION_STR}-linux-x64
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog/*.so* package/mindspore_lite/lib/
@@ -212,7 +212,7 @@ build_python_wheel_package() {
     if [[ "${minor_version}" == "7" ]]; then
       py_tags="cp37-cp37m"
     fi
-    local whl_name=mindspore-lite-${VERSION_STR}-${py_tags}-linux_$1.whl
+    local whl_name=mindspore_lite-${VERSION_STR}-${py_tags}-linux_$1.whl
     cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}
     cd ${BASEPATH}/output/
     sha256sum ${whl_name} > ${whl_name}.sha256
