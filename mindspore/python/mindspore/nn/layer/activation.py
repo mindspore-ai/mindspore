@@ -32,6 +32,7 @@ __all__ = ['Softmin',
            'ReLU',
            'ReLU6',
            'RReLU',
+           'SeLU',
            'SiLU',
            'Tanh',
            'Hardtanh',
@@ -524,6 +525,36 @@ class RReLU(Cell):
         positive_part = positive_filter * x
         out = negative_part + positive_part
         return out
+
+
+class SeLU(Cell):
+    r"""
+    Activation function SeLU (Scaled exponential Linear Unit).
+
+    Refer to :func:`mindspore.ops.selu` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> selu = nn.SeLU()
+        >>> output = selu(input_x)
+        >>> print(output)
+        [[-1.1113307 4.202804 -1.7575096]
+        [ 2.101402 -1.7462534 9.456309 ]]
+    """
+
+    def __init__(self):
+        """Initialize SeLU"""
+        super(SeLU).__init__()
+        self.selu = P.Selu()
+
+    def construct(self, input_x):
+        return self.selu(input_x)
 
 
 class SiLU(Cell):

@@ -247,6 +247,7 @@ from .nn_func import (
     mish,
     hardswish,
     softsign,
+    selu,
     pdist,
     pad,
     nll_loss,

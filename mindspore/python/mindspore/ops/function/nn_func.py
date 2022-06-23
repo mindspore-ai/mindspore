@@ -24,6 +24,7 @@ fast_gelu_ = P.FastGeLU()
 softsign_ = P.Softsign()
 hardswish_ = P.HSwish()
 mish_ = NN.Mish()
+selu_ = NN.SeLU()
 
 
 def adaptive_avg_pool2d(input_x, output_size):
@@ -492,6 +493,47 @@ def soft_shrink(x, lambd=0.5):
     """
     soft_shrink_op = P.SoftShrink(lambd)
     return soft_shrink_op(x)
+
+
+def selu(input_x):
+    r"""
+    Activation function SeLU (Scaled exponential Linear Unit).
+
+    The activation function is defined as:
+
+    .. math::
+        E_{i} =
+        scale *
+        \begin{cases}
+        x_{i}, &\text{if } x_{i} \geq 0; \cr
+        \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
+        \end{cases}
+
+    where :math:`alpha` and :math:`scale` are pre-defined constants(:math:`alpha=1.67326324`
+    and :math:`scale=1.05070098`).
+
+    See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
+
+    Args:
+        input_x (Tensor): Tensor of any dimension, the data type is float16 or float32.
+
+    Returns:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If dtype of `input_x` is neither float16 nor float32.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> output = ops.selu(input_x)
+        >>> print(output)
+        [[-1.1113307 4.202804 -1.7575096]
+        [ 2.101402 -1.7462534 9.456309 ]]
+    """
+    return selu_(input_x)
 
 
 def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=None, dilations=(1, 1, 1, 1), groups=1,
@@ -1258,6 +1300,7 @@ __all__ = [
     'lrn',
     'hardswish',
     'softsign',
+    'selu',
     'pdist',
     'pad',
     'cross_entropy',
