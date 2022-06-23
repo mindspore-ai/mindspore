@@ -20,7 +20,6 @@
 #include <utility>
 #include <algorithm>
 #include <memory>
-#include "utils/hash_map.h"
 #include "frontend/parallel/pipeline_transformer/pipeline_transformer.h"
 #include "frontend/parallel/auto_parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -41,7 +40,6 @@
 
 namespace mindspore {
 namespace parallel {
-mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map;
 // map<rank, tag>
 mindspore::HashMap<int64_t, int64_t> send_tag_map;
 mindspore::HashMap<int64_t, int64_t> recv_tag_map;
@@ -450,7 +448,7 @@ std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
   std::vector<AnfNodePtr> make_tuple_input = {NewValueNode(prim::kPrimMakeTuple)};
   std::vector<AnfNodePtr> recvs = {};
   for (auto &parameter : parameters) {
-    auto parameter_stage = parameter_color_map[parameter];
+    auto parameter_stage = parameter_color_map_[parameter];
     if (parameter_stage.size() <= 1) {
       continue;
     }
@@ -514,7 +512,7 @@ void PipelineTransformer::ParameterColoring() {
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
     if (!param_info) {
-      parameter_color_map[parameter] = parameter_stage;
+      parameter_color_map_[parameter] = parameter_stage;
       continue;
     }
     MS_EXCEPTION_IF_NULL(param_info);
@@ -522,7 +520,7 @@ void PipelineTransformer::ParameterColoring() {
     if (*parameter_stage.begin() == stage_ && !virtual_param_ && requires_grad) {
       virtual_param_ = parameter;
     }
-    parameter_color_map[parameter] = parameter_stage;
+    parameter_color_map_[parameter] = parameter_stage;
   }
 }
 
@@ -777,7 +775,7 @@ AnfNodePtr PipelineTransformer::HandleParameterGraph(const AnfNodePtr &node, con
       manager_->SetEdge(use_node, SizeToInt(pos), recv);
       return nullptr;
     }
-    parameter_color_map[argument].insert(user_stage);
+    parameter_color_map_[argument].insert(user_stage);
     return InsertReceive(main_graph_, argument, use_node, SizeToInt(pos), user_stage, stage, micro, parameter);
   }
   // insert send
@@ -1008,7 +1006,7 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
   }
   std::set<int64_t> stage_set;
   if (!ParameterIsCloned(parameter)) {
-    stage_set = parameter_color_map.at(parameter);
+    stage_set = parameter_color_map_.at(parameter);
   } else {
     auto parameters = root_->parameters();
     auto param_name = param_ptr->name();
@@ -1020,7 +1018,7 @@ bool PipelineTransformer::IsRedundancyParameter(const AnfNodePtr &parameter) {
       if (param_name.find(non_cloned_param->name()) == std::string::npos) {
         continue;
       }
-      stage_set = parameter_color_map.at(param);
+      stage_set = parameter_color_map_.at(param);
     }
   }
   if (stage_set.empty()) {
