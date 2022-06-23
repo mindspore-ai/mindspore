@@ -30,6 +30,8 @@ from mindspore.context import ParallelMode
 from tests.dataset_mock import MindData
 from tests.ut.python.ops.test_math_ops import VirtualLoss
 
+from parallel.utils.utils import BasicValidator
+
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -197,6 +199,21 @@ class SemiAutoOneHotNet(Cell):
         return loss
 
 
+class OneHotWithMulNet(Cell):
+    def __init__(self, onehot_strategy, mul_strategy):
+        super(OneHotWithMulNet, self).__init__()
+        self.onehot = P.OneHot().shard(onehot_strategy)
+        self.mul = P.Mul().shard(mul_strategy)
+        self.depth = Tensor(120, mstype.int64)
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0.0, mstype.float32)
+
+    def construct(self, x, label):
+        output = self.onehot(x, F.shape(label)[-1], self.on_value, self.off_value)
+        output2 = self.mul(output, 0.1)
+        return output2
+
+
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
         super(Dataset, self).__init__(size=length)
@@ -314,3 +331,24 @@ def test_semi_one_hot_net_model():
     opt = Momentum(net.trainable_params(), learning_rate, momentum)
     model = Model(net, optimizer=opt)
     model.train(epoch_size, dataset, dataset_sink_mode=False)
+
+
+class TestOneHotNet(BasicValidator):
+    def test_onehot_no_redistribution(self):
+        """
+        Feature: TestOneHot with one redistribution
+        Description: TestOneHot with no redistribution
+        Expectation: When there are many redistribution operators.
+        """
+        batch_size = 16
+        context.set_auto_parallel_context(device_num=device_num, global_rank=0, full_batch=True)
+        context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+        input_ = Tensor(np.ones([batch_size]).astype(np.int32))
+        label = Tensor(np.ones([batch_size]), dtype=ms.int32)
+
+        net = GradWrap(NetWithLoss(OneHotWithMulNet(onehot_strategy=((1, 4), (), ()), mul_strategy=((1, 4), ()))))
+        net.set_auto_parallel()
+
+        net.set_train()
+        _cell_graph_executor.compile(net, input_, label)
+        self.validate_pattern_from_ir("= _reditribution", target_count=0, file_name="step_parallel_end")
