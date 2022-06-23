@@ -62,6 +62,7 @@ from mindspore.ops.operations.array_ops import MatrixDiagPartV3
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3
 from mindspore.ops.operations.array_ops import ScatterNdMax
 from mindspore.ops.operations.math_ops import AddV2
+from mindspore.ops.operations.math_ops import Betainc
 from mindspore.ops.operations.math_ops import Hypot
 from mindspore.ops.operations.math_ops import Lcm
 from mindspore.ops.operations.math_ops import DivNoNan
@@ -1255,6 +1256,12 @@ class SparseApplyAdagradDANet(nn.Cell):
 
 
 test_case_math_ops = [
+    ('Betainc', {
+        'block': Betainc(),
+        'desc_inputs': [Tensor([1, 1, 1, 1], mstype.float32),
+                        Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32),
+                        Tensor([0.5, 0.5, 0.5, 0.5], mstype.float32)],
+        'desc_bprop': [Tensor([1, 1, 1, 1], mstype.float32)]}),
     ('Cross', {
         'block': P.Cross(dim=1),
         'desc_inputs': [Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.int8),

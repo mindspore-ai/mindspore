@@ -1495,6 +1495,56 @@ class BatchMatMul(MatMul):
                              f"be greater than or equal to 2, but got 'x' size: {len(x)}, 'y' size: {len(y)}.")
 
 
+class Betainc(Primitive):
+    r"""
+    Computes the regularized incomplete beta integral
+    :math:`I_{x}(a, b)`.
+
+    The regularized incomplete beta integral is defined as:
+
+    .. math::
+
+        I_{x}(a, b)=\frac{B(x ; a, b)}{B(a, b)}
+
+    where
+
+    .. math::
+
+        B(x ; a, b)=\int_{0}^{x} t^{a-1}(1-t)^{b-1} d t
+
+    is the incomplete beta function and B(a, b) is the complete beta function
+
+    Inputs:
+        - **a** (Tensor) - A Tensor of types: float32, float64.
+        - **b** (Tensor) - A Tensor, must have the same dtype and shape as a.
+        - **x** (Tensor) - A Tensor, must have the same dtype and shape as a.
+
+    Outputs:
+        A Tensor, has the same dtype and shape as a.
+
+    Raises:
+        TypeError: If dtype of `a` is not float32 nor float64.
+        TypeError: If either dtype of `b` and `x` is not the same as the `a`.
+        ValueError: If either shape of `b` and `x` is not the same as the `a`.
+
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Example:
+        >>> a = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> b = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> x = Tensor(np.array([1, 1,1 ]), mindspore.float32)
+        >>> betainc = P.Betainc()
+        >>> print(betainc(a, b, x))
+        [1. 1. 1.]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Betainc"""
+
+
 class CumSum(PrimitiveWithInfer):
     """
     Computes the cumulative sum of input tensor along axis.

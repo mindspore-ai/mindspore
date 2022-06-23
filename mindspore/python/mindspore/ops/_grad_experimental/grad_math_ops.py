@@ -19,6 +19,7 @@ from mindspore.common import dtype as mstype
 from mindspore import nn
 import mindspore.numpy as mnp
 import numpy as np
+from ...nn import LGamma
 from .. import functional as F
 from .. import operations as P
 from ..operations.math_ops import Trace, Bernoulli, Renorm
@@ -34,6 +35,7 @@ from ..primitive import constexpr
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import MatrixSolve
+from ..operations.math_ops import Betainc
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
 
@@ -405,6 +407,28 @@ def get_bprop_log_matrix_determinant(self):
         dx = multipliers * x_adj_inv
         return (dx,)
 
+    return bprop
+
+
+@bprop_getters.register(Betainc)
+def get_bprop_betainc(self):
+    """Grad definition for 'Betainc' operation"""
+    lgamma = LGamma()
+    exp = P.Exp()
+    log1p = P.Log1p()
+    xlogy = P.Xlogy()
+    reduce_sum = P.ReduceSum()
+
+    def bprop(input_a, input_b, input_x, out, dout):
+        sa = F.shape(input_a)
+        sx = F.shape(input_x)
+        _, rx = F.broadcast_gradient_args(sa, sx)
+
+        log_beta = (lgamma(input_a) + lgamma(input_b) - lgamma(input_a + input_b))
+        partial_x = exp((input_b - 1) * log1p(-input_x) + xlogy(input_a - 1, input_x) - log_beta)
+        if rx != ():
+            return (zeros_like(input_a), zeros_like(input_b), F.reshape(reduce_sum(partial_x * dout, rx), sx))
+        return (zeros_like(input_a), zeros_like(input_b), F.reshape(partial_x * dout, sx))
     return bprop
 
 
