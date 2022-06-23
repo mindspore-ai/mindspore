@@ -43,17 +43,6 @@ abstract::ShapePtr FractionalMaxPoolGradInferShape(const PrimitivePtr &primitive
   CheckAndConvertUtils::CheckInteger("orig_input_rank", SizeToLong(in_shape.size()), kEqual, x_rank, op_name);
   CheckAndConvertUtils::CheckInteger("orig_output_rank", SizeToLong(out_shape.size()), kEqual, x_rank, op_name);
   CheckAndConvertUtils::CheckInteger("backprop_rank", SizeToLong(backprop_shape.size()), kEqual, x_rank, op_name);
-  bool shape_error = false;
-  for (int i = 0; i < x_rank; i++) {
-    if (out_shape[i] != backprop_shape[i]) {
-      shape_error = true;
-      break;
-    }
-  }
-  if (shape_error) {
-    MS_EXCEPTION(ValueError) << "For '" << op_name
-                             << "', the shape of 'out_backprop' does not consistent with the shape of 'orig_output'.";
-  }
   auto infer_shape = std::make_shared<abstract::Shape>(in_shape);
   return infer_shape;
 }
@@ -91,6 +80,12 @@ AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &, 
   auto infer_shape = FractionalMaxPoolGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+
+bool FractionalMaxPoolGrad::get_overlapping() const {
+  auto value_ptr = GetAttr("overlapping");
+  return GetValue<bool>(value_ptr);
+}
+
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPoolGrad, prim::kPrimFractionalMaxPoolGrad, FractionalMaxPoolGradInfer,
                              nullptr, true);
 }  // namespace ops

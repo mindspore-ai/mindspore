@@ -34,6 +34,10 @@ class MIND_API FractionalAvgPoolGrad : public BaseOperator {
   FractionalAvgPoolGrad() : BaseOperator(kNameFractionalAvgPoolGrad) {
     InitIOName({"orig_input_tensor_shape", "out_backprop", "row_pooling_sequence", "col_pooling_sequence"}, {"y"});
   }
+  bool get_overlapping() const;
+  /// \brief Method to get overlapping attributes.
+  ///
+  /// \return overlapping attributes.
 };
 abstract::AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                      const std::vector<abstract::AbstractBasePtr> &input_args);

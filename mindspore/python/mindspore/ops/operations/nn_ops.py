@@ -9152,10 +9152,9 @@ class FractionalMaxPool(Primitive):
         ValueError: If element of `x` equals 0 or is less than 0.
         ValueError: If `pooling_ratio` is a list whose length is not equal to 4.
         ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
-        ValueError: If `seed` or `seed2` not equal to 0 when `deterministic` is false.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
@@ -9330,10 +9329,9 @@ class FractionalAvgPool(Primitive):
         ValueError: If element of `x` equals 0 or is less than 0.
         ValueError: If `pooling_ratio` is a list whose length is not equal to 4.
         ValueError: If the first and last element of `pooling_ratio` is not equal to 1.0.
-        ValueError: If seed or seed2 not equals to 0 when deterministic is false.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = np.array([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).reshape([1,4,4,1]).astype(np.int64)
