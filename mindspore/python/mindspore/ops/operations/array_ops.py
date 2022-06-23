@@ -4306,6 +4306,8 @@ class ScatterMax(_ScatterOpDynamic):
         ValueError: If the shape of `updates` is not equal to `indices.shape + x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
@@ -4361,6 +4363,8 @@ class ScatterMin(_ScatterOpDynamic):
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4816,6 +4820,8 @@ class ScatterDiv(_ScatterOpDynamic):
         ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
+        RuntimeError: On the Ascend platform, the input data dimension of `input_x` , `indices`
+                      and `updates` is greater than 8 dimensions.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
