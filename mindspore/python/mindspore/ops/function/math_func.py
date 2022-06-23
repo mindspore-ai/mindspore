@@ -25,6 +25,8 @@ from mindspore.ops.primitive import constexpr
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.operations._inner_ops import Cummin
+from mindspore.ops.operations.math_ops import STFT
+from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from ..operations.math_ops import (
     Bernoulli,
@@ -3915,6 +3917,79 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
     return ret
 
 
+def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
+         pad_mode="REFLECT", normalized=False, onesided=None, return_complex=None):
+    r"""
+    STFTs can be used as a way of quantifying the change
+    of a nonstationary signal’s frequency and phase content over time.
+
+    Args:
+        x (Tensor): Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
+        n_fft (int): The size of Fourier transform.
+        hop_length (int, optional): The distance between neighboring sliding window
+            frames. Default: ``None`` (treated as equal to ``floor(n_fft / 4)``).
+        win_length (int, optional): the size of window frame and STFT filter.
+            Default: ``None``  (treated as equal to :attr:`n_fft`).
+        window (Tensor, optional): the optional window function.
+            Default: ``None`` (treated as window of all :math:`1` s).
+        center (bool, optional): whether to pad :attr:`input` on both sides.
+            Default: ``True``.
+        pad_mode (string, optional): controls the padding method used when
+            :attr:`center` is ``True``. Default: ``"REFLECT"``.
+        normalized (bool, optional): controls whether to return the normalized STFT results
+             Default: ``False``.
+        onesided (bool, optional): controls whether to return half of results to
+            avoid redundancy for real inputs.
+            Default: ``True`` for real :attr:`input` and :attr:`window`, ``False`` otherwise.
+        return_complex (bool, optional): whether to return a complex tensor, or
+            a real tensor with an extra last dimension for the real and
+            imaginary components.
+            Default: ``True`` for complex :attr:`input` or :attr:`window`, ``False`` otherwise.
+
+    Returns:
+        Tensor.
+
+        - **output** (Tensor) - A tensor containing the STFT result with shape described above.
+
+    Raises:
+        TypeError: If the x is not a tensor.
+        ValueError: If x arguments have values not specified above.
+
+    Examples:
+        >>> x = Tensor(np.random.rand(2,7192), mindspore.float32)
+        >>> output = ops.stft(n_fft=64, x=x)
+        >>> print(output.shape)
+        (2, 33, 450, 2)
+    """
+    if hop_length is None:
+        hop_length = int(np.floor(n_fft / 4))
+    if win_length is None:
+        win_length = int(np.floor(n_fft))
+    if window is None:
+        window = P.Ones()((win_length,), mstype.float32)
+
+    def _is_complex(x):
+        dtype = P.DType()
+        return dtype(x) in [mstype.complex64, mstype.complex128]
+    if onesided is None:
+        onesided = (not _is_complex(x)) and (not _is_complex(window))
+    if return_complex is None:
+        return_complex = _is_complex(x) or _is_complex(window)
+    if center:
+        signal_dim = len(x.shape)
+        pad = n_fft // 2
+        if signal_dim == 1:
+            x = layer.Pad(((pad, pad)), pad_mode)(x)
+        elif signal_dim == 2:
+            x = layer.Pad(((0, 0), (pad, pad)), pad_mode)(x)
+        else:
+            raise ValueError(
+                f"Expected a 1-D tensor or a 2-D tensor, but got {signal_dim}")
+    stft_ = STFT(n_fft, hop_length, win_length,
+                 normalized, onesided, return_complex)
+    return stft_(x, window)
+
+
 def _check_same_type(dtype1, dtype2):
     return dtype1 == dtype2
 
@@ -4348,6 +4423,7 @@ __all__ = [
     'bessel_k1e',
     'exp2',
     'deg2rad',
+    'stft',
     'rad2deg',
     'truncate_div',
     'truncate_mod',

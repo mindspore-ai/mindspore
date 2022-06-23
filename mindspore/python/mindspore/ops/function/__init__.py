@@ -212,6 +212,7 @@ from .math_func import (
     bessel_i1e,
     bessel_k1,
     bessel_k1e,
+    stft,
     exp2,
     deg2rad,
     isreal,
