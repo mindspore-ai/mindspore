@@ -483,6 +483,7 @@ class Optimizer(Cell):
             validator.check_non_negative_float(learning_rate, "learning rate", self.cls_name)
             return learning_rate
         if isinstance(learning_rate, Tensor) and learning_rate.ndim == 0:
+            learning_rate = Tensor(learning_rate.asnumpy(), dtype=mstype.float32)
             return learning_rate
 
         self.dynamic_lr = True
@@ -497,6 +498,7 @@ class Optimizer(Cell):
                                "please make sure that the number "
                                "of elements in the tensor is greater than 1, "
                                "but got {}.".format(learning_rate.size))
+            learning_rate = Tensor(learning_rate.asnumpy(), dtype=mstype.float32)
             return learning_rate
         if isinstance(learning_rate, LearningRateSchedule):
             return learning_rate
