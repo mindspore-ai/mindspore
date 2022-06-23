@@ -54,7 +54,8 @@ fi
 declare -A minimum_driver_version_map=()
 minimum_driver_version_map["10.1"]="418.39"
 minimum_driver_version_map["11.1"]="450.80.02"
-driver_version=$(modinfo nvidia | grep ^version | awk '{printf $2}')
+# driver_version=$(modinfo nvidia | grep ^version | awk '{printf $2}')
+driver_version=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader --id=0)
 if [[ $driver_version < ${minimum_driver_version_map[$CUDA_VERSION]} ]]; then
     echo "CUDA $CUDA_VERSION minimum required driver version is ${minimum_driver_version_map[$CUDA_VERSION]}, \
         but current nvidia driver version is $driver_version, please upgrade your driver manually."
