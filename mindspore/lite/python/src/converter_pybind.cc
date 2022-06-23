@@ -34,6 +34,8 @@ void ConverterPyBind(const py::module &m) {
     .def(py::init<converter::FmkType, const std::string &, const std::string &, const std::string &>())
     .def("set_config_file", &Converter::SetConfigFile)
     .def("get_config_file", &Converter::GetConfigFile)
+    .def("set_config_info", &Converter::SetConfigInfo)
+    .def("get_config_info", &Converter::GetConfigInfo)
     .def("set_weight_fp16", &Converter::SetWeightFp16)
     .def("get_weight_fp16", &Converter::GetWeightFp16)
     .def("set_input_shape", &Converter::SetInputShape)
