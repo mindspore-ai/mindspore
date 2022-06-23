@@ -263,12 +263,13 @@ class RandomColorAdjust(nn.Cell):
         self.shape = P.Shape()
         self.reshape = P.Reshape()
         self.unstack = P.Unstack(axis=-1)
+        self.unstack_dim_1 = P.Unstack(axis=1)
         self.expand_dims = P.ExpandDims()
         self.mul = P.Mul()
 
         self.mean = P.ReduceMean()
-        self.argmaxvalue = P.ArgMaxWithValue(axis=3, keep_dims=False)
-        self.argminvalue = P.ArgMinWithValue(axis=3, keep_dims=False)
+        self.argmaxvalue = P.ArgMaxWithValue(axis=1, keep_dims=False)
+        self.argminvalue = P.ArgMinWithValue(axis=1, keep_dims=False)
         self.stack = P.Stack(axis=0)
         self.epsilon = Tensor(np.finfo(np.float32).eps, mstype.float32)
         self.squeeze = P.Squeeze(axis=0)
@@ -296,9 +297,9 @@ class RandomColorAdjust(nn.Cell):
         cont_rand_factor = self.generate_rand_batch(self.cont_min, self.cont_max, self.check_rand_cont, x_shape)
         sat_rand_factor = self.generate_rand_batch(self.sa_min, self.sa_max, self.check_rand_sa, x_shape)
 
-        r, g, b = self.unstack(x)
+        r_, g_, b_ = self.unstack(x)
 
-        x_gray = 0.2989 * r + 0.587 * g + 0.114 * b
+        x_gray = 0.2989 * r_ + 0.587 * g_ + 0.114 * b_
         x_gray_mean = self.expand_dims(self.mean(x_gray, (1, 2)) + 0.5, -1)
         x_gray_mean = self.reshape(C.repeat_elements(x_gray_mean, rep=(h*w*c)), (bs, h, w, c))
         x_gray = C.repeat_elements(self.expand_dims(x_gray, -1), rep=c, axis=-1)
@@ -317,16 +318,18 @@ class RandomColorAdjust(nn.Cell):
 
         # Apply Hue Transform
         # Convert tensor from rgb to hsv
-        r, g, b = self.unstack(x)
-        max_c, max_v = self.argmaxvalue(x)
-        _, min_v = self.argminvalue(x)
-        hsv_denum = max_v - min_v + self.epsilon
-        h1 = self.fmod(((b - g) * 60 / hsv_denum), 360)
-        h2 = (g - r) * 60 / hsv_denum + 120
-        h3 = (r - g) * 60 / hsv_denum + 240
-        hue = self.squeeze(self.gatherd(self.stack((h1, h2, h3)), 0, self.expand_dims(max_c, 0)))
-        s = self.cast((max_v > 0), mstype.float32) * (1 - min_v / (max_v + self.epsilon))
-        v = self.cast(max_v, mstype.float32)
+        x_swap = self.transpose(x, (0, 3, 1, 2)) / 255.0
+        r, g, b = self.unstack_dim_1(x_swap)
+        _, max_rgb = self.argmaxvalue(x_swap)
+        argmin_rgb, min_rgb = self.argminvalue(x_swap)
+
+        max_min = max_rgb - min_rgb + self.epsilon
+        h1 = (g - r) * 60 / max_min + 60
+        h2 = (b - g) * 60 / max_min + 180
+        h3 = (r - b) * 60 / max_min + 300
+        hue = self.squeeze(self.gatherd(self.stack((h2, h3, h1)), 0, self.expand_dims(argmin_rgb, 0)))
+        s = max_min / (max_rgb + self.epsilon)
+        v = max_rgb
 
         # Adjust hue
         hue_rand_factor = Tensor(np.random.uniform(size=(bs, 1)), dtype=mstype.float32)
@@ -338,22 +341,27 @@ class RandomColorAdjust(nn.Cell):
 
         # Convert tensor from hsv to rgb
         h_ = (hue - self.floor(hue / 360.0) * 360.0) / 60.0
-        c = self.mul(s, v)
-        x_ = self.mul(c, (1 - self.abs(self.fmod(h_, 2) - 1)))
-        zero_tensor = self.zeros_like(c)
-        y = self.stack((self.stack_axis_1((c, x_, zero_tensor)), self.stack_axis_1((x_, c, zero_tensor)),
-                        self.stack_axis_1((zero_tensor, c, x_)), self.stack_axis_1((zero_tensor, x_, c)),
-                        self.stack_axis_1((x_, zero_tensor, c)), self.stack_axis_1((c, zero_tensor, x_)),
-                        ))
-        index = self.expand_dims(self.floor(h_), 1)
-        index = self.expand_dims(C.repeat_elements(index, 3, 1), 0)
-        index = self.cast(index, mstype.int32)
-        x = self.squeeze(self.gatherd(y, 0, index))
-        x = x + self.reshape(C.repeat_elements((v - c), rep=(3)), self.shape(x))
-        x = self.transpose(x, (0, 2, 3, 1)) * 255.0
-        x = C.clip_by_value(x, 0.0, 255.0)
+        c = s * v
+        x_ = c * (1 - self.abs(self.fmod(h_, 2) - 1))
 
-        return x
+        zero_tensor = self.zeros_like(c)
+        y = self.stack((self.stack_axis_1((c, x_, zero_tensor)),
+                        self.stack_axis_1((x_, c, zero_tensor)),
+                        self.stack_axis_1((zero_tensor, c, x_)),
+                        self.stack_axis_1((zero_tensor, x_, c)),
+                        self.stack_axis_1((x_, zero_tensor, c)),
+                        self.stack_axis_1((c, zero_tensor, x_)),
+                        ))
+
+        index = self.expand_dims(self.floor(h_), 1)
+        index = self.cast(self.expand_dims(C.repeat_elements(index, 3, 1), 0), mstype.int32)
+        x_rgb = self.squeeze(self.gatherd(y, 0, index))
+        x_rgb = x_rgb + C.repeat_elements(self.expand_dims((v - c), 1), 3, 1)
+
+        x_rgb = self.transpose(x, (0, 2, 3, 1)) * 255.0
+        x_rgb = C.clip_by_value(x, 0.0, 255.0)
+
+        return x_rgb
 
 
 class RandomSharpness(nn.Cell):
