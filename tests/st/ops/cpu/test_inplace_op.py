@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 
 from mindspore import context, Tensor, ops
+from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 import mindspore.nn as nn
@@ -239,4 +240,39 @@ def test_vmap_inplace_sub(shape, indice_len, dtype):
     expected = np.zeros(shape=shape)
     for i in range(shape[0]):
         expected[i] = inplace_op_np('sub', x[i], v, indices)
+    np.allclose(result.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('op', ['add', 'sub'])
+def test_inplace_op_dynamic_shape(op):
+    """
+    Feature: test test_inplace_op_dynamic_shape dynamic_shape feature.
+    Description: test padding test_inplace_op_dynamic_shape feature.
+    Expectation: Success.
+    """
+    shape, indice_len = (10, 4, 3, 2), 4
+    dtype = np.float32
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    np.random.seed(0)
+
+    x = np.random.random(shape).astype(dtype)
+    v = np.random.random((indice_len,) + shape[1:]).astype(dtype)
+    indices = np.random.choice(list(range(shape[0])), indice_len, replace=False)
+    indices = tuple((int(i) for i in indices))
+
+    if op == 'add':
+        dynamic_net = InplaceAdd(indices)
+    else:
+        dynamic_net = InplaceSub(indices)
+
+    place_holder_x = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
+    place_holder_v = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder_x, place_holder_v)
+
+    result = dynamic_net(Tensor(x), Tensor(v))
+    expected = inplace_op_np(op, x, v, indices)
     np.allclose(result.asnumpy(), expected)
