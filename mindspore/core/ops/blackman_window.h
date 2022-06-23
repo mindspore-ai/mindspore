@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,22 +20,23 @@
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
 
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBlackmanWindow = "BlackmanWindow";
-
 class MIND_API BlackmanWindow : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BlackmanWindow);
   BlackmanWindow() : BaseOperator(kNameBlackmanWindow) { InitIOName({"window_length"}, {"y"}); }
+  /// \brief Init.
+  void Init(const bool periodic = true);
+  /// \brief Set periodic.
+  void set_periodic(const bool periodic);
+  bool get_periodic() const;
 };
 
 abstract::AbstractBasePtr BlackmanWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<AbstractBasePtr> &input_args);
-using PrimBlackmanWindowPtr = std::shared_ptr<BlackmanWindow>;
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
