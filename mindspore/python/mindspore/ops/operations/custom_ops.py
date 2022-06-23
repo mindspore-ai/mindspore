@@ -18,7 +18,9 @@ import json
 import os
 import re
 import ast
+import fcntl
 import hashlib
+import stat
 import inspect
 import importlib
 import subprocess
@@ -35,15 +37,12 @@ from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
 
 
-def _compile_aot(file):
+def _get_cache_path():
     """
-    Automatically compile the source file for custom aot
-
-    Args:
-        file (str): the path to the source file
+    Automatically get the path to kernel_meta
 
     Returns:
-        str: the path to the compiled library
+        str, the path to the dir of kernel_meta.
     """
     cache_path = os.getenv('MS_COMPILER_CACHE_PATH')
     if cache_path is None:
@@ -53,6 +52,21 @@ def _compile_aot(file):
 
     if not os.path.exists(cache_path):
         os.makedirs(cache_path)
+
+    return cache_path
+
+
+def _compile_aot(file):
+    """
+    Automatically compile the source file for custom aot
+
+    Args:
+        file (str): The path to the source file.
+
+    Returns:
+        str, the path to the compiled library.
+    """
+    cache_path = _get_cache_path()
 
     search_res = importlib.util.find_spec("mindspore")
     if search_res is None:
@@ -539,14 +553,25 @@ class Custom(ops.PrimitiveWithInfer):
                 self.func = self.func.__dict__["__wrapped__"]
             # func name
             self.func_name = self.func.__name__
-            # path of func
-            self.imply_path = os.path.realpath(inspect.getfile(self.func))
+
             # source code of func, not include the decorator before def
             self.func_source_str = inspect.getsource(self.func)
             index = self.func_source_str.find("def ")
             if index != -1:
                 self.func_source_str = self.func_source_str[index:]
 
+            op_imply_path = os.path.realpath(_get_cache_path() + self.func_name + ".py")
+            if os.path.exists(op_imply_path):
+                os.remove(op_imply_path)
+            with open(op_imply_path, 'at') as file:
+                fcntl.flock(file.fileno(), fcntl.LOCK_EX)
+                file.seek(0, 2)
+                if file.tell() == 0:
+                    file.write(self.func_source_str)
+            os.chmod(op_imply_path, stat.S_IRUSR | stat.S_IWUSR)
+
+            # path of func
+            self.imply_path = op_imply_path
             if self._is_ms_kernel:
                 # static check for the Hybrid DSL in hybrid
                 root = ast.parse(self.func_source_str)
@@ -592,12 +617,12 @@ class Custom(ops.PrimitiveWithInfer):
                 for i in reg_info["dtype_format"]:
                     new_dtype_format.append(i + (DataType.I32_Default,))
                 reg_info["dtype_format"] = new_dtype_format
-            if isinstance(reg_info["outputs"], list):
-                for i, item in enumerate(reg_info["outputs"]):
-                    output_name_list = []
-                    if isinstance(item, dict) and item.get("name") is not None:
-                        output_name_list.append(reg_info["outputs"][i]["name"])
-                    self.add_prim_attr("output_names", output_name_list)
+
+            for i, item in enumerate(reg_info.get("outputs", [])):
+                output_name_list = []
+                if isinstance(item, dict) and item.get("name"):
+                    output_name_list.append(item.get("name"))
+                self.add_prim_attr("output_names", output_name_list)
 
             if isinstance(reg_info.get("op_name"), str):
                 self.add_prim_attr("reg_op_name", reg_info.get("op_name"))
