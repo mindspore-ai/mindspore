@@ -179,26 +179,31 @@ bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressP
   auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
   auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
 
-  for (int64_t b = 0; b < batch_size_; b++) {
-    size_t i = 0;
-    MS_SIMD_RUN_NO_SCALAR(ApplyProximalAdagradCalc, input_elements_, var, accum, lr[b], l1[b], l2[b], grad);
+  auto task = [this, &var, &accum, &lr, &l1, &l2, &grad](size_t start, size_t end) {
+    for (int64_t b = 0; b < batch_size_; b++) {
+      size_t i = 0;
+      MS_SIMD_RUN_NO_SCALAR(ApplyProximalAdagradCalc, input_elements_, var, accum, lr[b], l1[b], l2[b], grad);
 
-    for (; i < input_elements_; ++i) {
-      accum[i] += grad[i] * grad[i];
-      auto learning_rate = lr[b] / std::sqrt(accum[i]);
-      auto prox_v = var[i];
-      prox_v -= grad[i] * learning_rate;
+      for (; i < input_elements_; ++i) {
+        accum[i] += grad[i] * grad[i];
+        auto learning_rate = lr[b] / std::sqrt(accum[i]);
+        auto prox_v = var[i];
+        prox_v -= grad[i] * learning_rate;
 
-      if (l1[b] > 0) {
-        var[i] = sinf(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1[b], 0.0) / (1 + l2[b] * learning_rate);
-      } else {
-        var[i] = prox_v / (1 + l2[b] * learning_rate);
+        if (l1[b] > 0) {
+          var[i] =
+            sinf(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1[b], 0.0) / (1 + l2[b] * learning_rate);
+        } else {
+          var[i] = prox_v / (1 + l2[b] * learning_rate);
+        }
       }
+      var = var + input_elements_;
+      accum = accum + input_elements_;
+      grad = grad + input_elements_;
     }
-    var = var + input_elements_;
-    accum = accum + input_elements_;
-    grad = grad + input_elements_;
-  }
+  };
+  ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
+
   return true;
 }
 
