@@ -22,28 +22,76 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
-namespace {
+void AvgPool3DGrad::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &strides,
+                         const PadMode &pad_mode, const std::vector<int64_t> &pad_list, bool ceil_mode,
+                         bool count_include_pad, int64_t divisor_override, const Format &format) {
+  set_kernel_size(kernel_size);
+  set_strides(strides);
+  set_pad_mode(pad_mode);
+  set_pad_list(pad_list);
+  set_ceil_mode(ceil_mode);
+  set_count_include_pad(count_include_pad);
+  set_divisor_override(divisor_override);
+  set_format(format);
+}
+
+void AvgPool3DGrad::set_pad_list(const std::vector<int64_t> &pad_list) {
+  const int64_t pad_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger(kPadList, SizeToLong(pad_list.size()), kEqual, pad_size, name());
+  (void)AddAttr(kPadList, api::MakeValue(pad_list));
+}
+
+void AvgPool3DGrad::set_ceil_mode(bool ceil_mode) { (void)AddAttr(kCeilMode, api::MakeValue(ceil_mode)); }
+
+void AvgPool3DGrad::set_count_include_pad(bool count_include_pad) {
+  (void)AddAttr(kCountIncludePad, api::MakeValue(count_include_pad));
+}
+
+void AvgPool3DGrad::set_divisor_override(int64_t divisor_override) {
+  (void)AddAttr(kDivisorOverride, api::MakeValue(divisor_override));
+}
+
+std::vector<int64_t> AvgPool3DGrad::get_pad_list() const {
+  auto value_ptr = GetAttr(kPadList);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+bool AvgPool3DGrad::get_ceil_mode() const { return GetValue<bool>(GetAttr(kCeilMode)); }
+
+bool AvgPool3DGrad::get_count_include_pad() const { return GetValue<bool>(GetAttr(kCountIncludePad)); }
+
+int64_t AvgPool3DGrad::get_divisor_override() const { return GetValue<int64_t>(GetAttr(kDivisorOverride)); }
+
 abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
+  size_t grad_index = input_args.size() - 1;
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[grad_index]->GetShapeTrack())[kShape];
   constexpr int64_t k5DInputDims = 5;
   (void)CheckAndConvertUtils::CheckInteger("grad_rank", SizeToLong(grad_shape.size()), kEqual, k5DInputDims, op_name);
   std::vector<int64_t> origin_input_size;
-  if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
-    origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
+  if (SizeToLong(input_args.size()) == input_num) {
+    auto shape_attr = primitive->GetAttr("origin_input_shape");
+    MS_EXCEPTION_IF_NULL(shape_attr);
+    origin_input_size = GetValue<ShapeVector>(shape_attr);
   } else {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple, but got: "
-                      << input_args[0]->BuildShape()->ToString() << ".";
+    if (input_args[0]->isa<abstract::AbstractTuple>()) {  // origin_size is tuple
+      origin_input_size = GetValue<std::vector<int64_t>>(input_args[0]->BuildValue());
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << op_name << "', the first input data size must be a tuple, but got: "
+                        << input_args[0]->BuildShape()->ToString() << ".";
+    }
   }
   return std::make_shared<abstract::Shape>(origin_input_size);
 }
@@ -51,18 +99,25 @@ abstract::ShapePtr AvgPool3DGradInferShape(const PrimitivePtr &primitive,
 TypePtr AvgPool3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kEqual, input_num, op_name);
+  const int64_t input_num = 1;
+  (void)CheckAndConvertUtils::CheckInteger("input size", SizeToLong(input_args.size()), kGreaterEqual, input_num,
+                                           op_name);
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto grad_dtype = input_args[1]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  size_t grad_index = input_args.size() - 1;
+  auto grad_dtype = input_args[grad_index]->BuildType();
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  if (is_gpu) {
+    valid_types = {kFloat16, kFloat32, kFloat64};
+  }
   return CheckAndConvertUtils::CheckTensorTypeValid("grad", grad_dtype, valid_types, op_name);
 }
-}  // namespace
 
-MIND_API_OPERATOR_IMPL(AvgPool3DGrad, BaseOperator);
+MIND_API_OPERATOR_IMPL(AvgPool3DGrad, PoolGrad);
 AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const std::vector<AbstractBasePtr> &input_args) {
   auto res = std::make_shared<abstract::AbstractTensor>(AvgPool3DGradInferType(primitive, input_args),

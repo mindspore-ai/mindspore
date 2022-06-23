@@ -130,6 +130,34 @@ def get_avg_pool_grad_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(G.AvgPool3DGrad)
+def get_avg_pool3d_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `AvgPool3DGrad`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(shape_bdim, dy_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, shape_bdim, dy_bdim)
+        if is_all_none:
+            return result
+
+        shape, shape_dim = shape_bdim
+        dy, dy_dim = dy_bdim
+        if shape_dim is not None:
+            _raise_value_error("The source axis of 'origin_input_shape' in 'AvgPool3DGrad' must be None, "
+                               "but got {}.".format(shape_dim))
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        dy_shape = F.shape(dy)
+        dy = F.reshape(dy, (-1,) + dy_shape[cdhw_reverse_index:])
+        input_shape = (F.shape(dy)[0],) + shape[cdhw_reverse_index:]
+        out = prim(input_shape, dy)
+        out_shape = F.shape(out)
+        return_shape = dy_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, return_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(G.CdistGrad)
 def get_cdist_grad_vmap_rule(prim, axis_size):
     """VmapRule for `cdist grad` operation."""

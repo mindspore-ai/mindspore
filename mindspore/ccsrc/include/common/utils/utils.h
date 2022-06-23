@@ -867,7 +867,7 @@ const std::set<std::string> DynamicShapeConstInputToAttrCPU = {
 const std::set<std::string> DynamicShapeConstInputToAttrGPU = {
   kCastOpName,      kExpandDimsOpName, kReshapeOpName,    kEmbeddingLookupOpName, kTransposeOpName,
   kReduceSumOpName, kReduceMinOpName,  kReduceMeanOpName, kReduceMaxOpName,       kReduceAllOpName,
-  kReduceAnyOpName, kConcatOpName,     kScatterNdOpName};
+  kReduceAnyOpName, kConcatOpName,     kScatterNdOpName,  kGatherV2OpName,        kAvgPool3DGradOpName};
 
 // The map between kernel's output and input ref relationship.
 // Key is the output index while the value is input index which will be used as the reference of output.

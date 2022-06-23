@@ -30,6 +30,8 @@ MS_REG_GPU_KERNEL_ONE(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).A
                       PoolingFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(MaxPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       PoolingFwdGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                      PoolingFwdGpuKernelMod, double)
 MS_REG_GPU_KERNEL_ONE(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                       PoolingFwdGpuKernelMod, float)
 MS_REG_GPU_KERNEL_ONE(AvgPool3D, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),

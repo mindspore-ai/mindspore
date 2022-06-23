@@ -30,6 +30,8 @@ namespace {
 abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
+  const int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   abstract::AbstractTensorPtr indices =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 1);
   abstract::AbstractTensorPtr params =
@@ -42,7 +44,11 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
     std::any_of(params->shape()->shape().begin(), params->shape()->shape().end(), [](int64_t s) { return s < 0; });
   int64_t axis_val = 0;
   // 3rd input is a Tensor when Gather is a dynamic shape operator
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
+  if (SizeToLong(input_args.size()) == input_num) {
+    auto axis_attr = primitive->GetAttr("axis");
+    MS_EXCEPTION_IF_NULL(axis_attr);
+    axis_val = GetValue<int64_t>(axis_attr);
+  } else if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
     auto axis = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(axis);
     auto axis_value_ptr = axis->BuildValue();
@@ -94,15 +100,17 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
 TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const std::string &op_name = primitive->name();
-  constexpr size_t input_num = 3;
-  abstract::CheckArgsSize(op_name, input_args, input_num);
+  constexpr int64_t input_num = 2;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, op_name);
   std::set<TypePtr> valid_params_types = {kTensorType};
   (void)CheckAndConvertUtils::CheckSubClass("params", input_args[kInputIndex0]->BuildType(), valid_params_types,
                                             op_name);
   std::set<TypePtr> int_types = {kInt8, kInt16, kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("indices", input_args[kInputIndex1]->BuildType(), int_types,
                                                    op_name);
-  (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->BuildType(), int_types, op_name);
+  if (SizeToLong(input_args.size()) > input_num) {
+    (void)CheckAndConvertUtils::CheckTypeValid("axis", input_args[kInputIndex2]->BuildType(), int_types, op_name);
+  }
 
   abstract::AbstractTensorPtr params =
     CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(op_name, input_args, 0);
@@ -113,7 +121,7 @@ TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<Abstrac
 AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t kInputsNum = 3;
+  const int64_t kInputsNum = 2;
   CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, kInputsNum, primitive->name());
   auto infer_type = GatherInferType(primitive, input_args);
   auto infer_shape = GatherInferShape(primitive, input_args);
