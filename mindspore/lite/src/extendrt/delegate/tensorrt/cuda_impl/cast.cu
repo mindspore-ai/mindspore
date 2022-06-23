@@ -42,6 +42,7 @@ template void Cast(const int input_size, const int8_t *input_addr, float *output
 template void Cast(const int input_size, const int32_t *input_addr, int8_t *output_addr, cudaStream_t stream);
 template void Cast(const int input_size, const int32_t *input_addr, int32_t *output_addr, cudaStream_t stream);
 template void Cast(const int input_size, const int32_t *input_addr, float *output_addr, cudaStream_t stream);
+template void Cast(const int input_size, const int32_t *input_addr, bool *output_addr, cudaStream_t stream);
 
 template void Cast(const int input_size, const float *input_addr, int8_t *output_addr, cudaStream_t stream);
 template void Cast(const int input_size, const float *input_addr, int32_t *output_addr, cudaStream_t stream);

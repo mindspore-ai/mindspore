@@ -14,9 +14,25 @@
  * limitations under the License.
  */
 
+#include <cstring>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_plugin.h"
 
 namespace mindspore::lite {
+void SerializeValue(void **buffer, const void *value, size_t cpy_size) {
+  memcpy(*buffer, value, cpy_size);
+  *buffer = static_cast<char *>(*buffer) + cpy_size;
+}
+
+void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size) {
+  if (cpy_size > *buffer_size) {
+    MS_LOG(ERROR) << "invalid desirialize size, buffer size: " << *buffer_size << ", value size: " << cpy_size;
+    return;
+  }
+  memcpy(value, *buffer, cpy_size);
+  *buffer = static_cast<const char *>(*buffer) + cpy_size;
+  *buffer_size -= cpy_size;
+}
+
 nvinfer1::DimsExprs TensorRTPlugin::getOutputDimensions(int outputIndex, const nvinfer1::DimsExprs *inputs,
                                                         int nbInputs, nvinfer1::IExprBuilder &exprBuilder) noexcept {
   return inputs[0];

@@ -55,6 +55,8 @@ class TensorRTRuntime {
 
   void SetBatchSize(int batch_size) { batch_size_ = batch_size; }
 
+  void SetCudaStream(cudaStream_t stream) { allocator_->SetCudaStream(stream); }
+
   RuntimePrecisionMode GetRuntimePrecisionMode() { return runtime_percision_mode_; }
 
   void SetRuntimePrecisionMode(RuntimePrecisionMode runtime_percision_mode) {

@@ -16,6 +16,7 @@
 
 #include "src/extendrt/delegate/tensorrt/op/normalize_tensorrt.h"
 #include <memory>
+#include <numeric>
 #include "src/extendrt/delegate/tensorrt/op/normalize_opt_plugin.h"
 
 namespace mindspore::lite {
@@ -160,6 +161,13 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
 bool NormalizeTensorRT::RunOptPlugin() {
   if (out_tensors_.size() == 1 && in_tensors_.size() == INPUT_SIZE3 && axis_ == in_tensors_[0].Shape().size() - 1 &&
       in_tensors_[0].Shape()[axis_] < GET_THREADS) {
+    // insufficient shared memory
+    int dim_sum = std::accumulate(in_tensors_[0].Shape().begin(), in_tensors_[0].Shape().begin() + axis_, 1,
+                                  std::multiplies<int>());
+    const int kSharedMemoryThreshold = 2048;
+    if (dim_sum > kSharedMemoryThreshold) {
+      return false;
+    }
     MS_LOG(INFO) << op_name_ << " use opt plugin";
     return true;
   }

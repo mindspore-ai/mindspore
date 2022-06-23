@@ -139,6 +139,7 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   } else {
     MS_LOG(INFO) << "inputs no quant params or platform not support int8.";
   }
+  runtime_->SetCudaStream(stream);
   config_->setProfileStream(stream);
   stream_ = stream;
   MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
@@ -235,19 +236,23 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
   return input_dims;
 }
 
+int TensorRTSubGraph::ParseInputsProfile() {
+  MS_LOG(INFO) << "using serialied engine.";
+  for (auto in_tensor : inputs_) {
+    auto dim = ParseInputDimsProfile(in_tensor);
+    if (dim.nbDims <= 0) {
+      MS_LOG(ERROR) << "input dims is invalid.";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int TensorRTSubGraph::BuildTensorRTGraph() {
   MS_ASSERT(!all_ops_.empty());
   int ret;
   if (engine_ != nullptr) {
-    MS_LOG(INFO) << "using serialied engine.";
-    for (auto in_tensor : inputs_) {
-      auto dim = ParseInputDimsProfile(in_tensor);
-      if (dim.nbDims <= 0) {
-        MS_LOG(ERROR) << "input dims is invalid.";
-        return RET_ERROR;
-      }
-    }
-    return RET_OK;
+    return ParseInputsProfile();
   }
   // build engine online
   for (auto cur_op : all_ops_) {
@@ -260,6 +265,12 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           MS_LOG(ERROR) << "SetTensorRTNetworkInput failed for " << in_tensor.Name();
           return RET_ERROR;
         }
+#if TRT_VERSION_GE(7, 2)
+        // avoid bool input tensor
+        if (trt_tensor->getType() == nvinfer1::DataType::kBOOL) {
+          trt_tensor = TRTTensorCast(ctx_, trt_tensor, nvinfer1::DataType::kINT32, in_tensor.Name() + "_cast_int32");
+        }
+#endif
         cur_op->AddInnerInTensors(ITensorHelper{trt_tensor, in_tensor.format(), true});
         continue;
       }

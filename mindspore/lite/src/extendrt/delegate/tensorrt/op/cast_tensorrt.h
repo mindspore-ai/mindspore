@@ -22,7 +22,6 @@
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
-constexpr char *CAST_PLUGIN_NAME{"CastPluginCreater"};
 class CastTensorRT : public TensorRTOp {
  public:
   CastTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -39,49 +38,6 @@ class CastTensorRT : public TensorRTOp {
 
  private:
   // CastTensorRT
-};
-
-class CastPlugin : public TensorRTPlugin {
- public:
-  CastPlugin(const std::string name, nvinfer1::DataType origin_datatype, nvinfer1::DataType dest_datatype,
-             uint32_t device_id)
-      : TensorRTPlugin(name, std::string(CAST_PLUGIN_NAME), device_id),
-        origin_datatype_(origin_datatype),
-        dest_datatype_(dest_datatype) {}
-
-  CastPlugin(const char *name, const nvinfer1::PluginFieldCollection *fc)
-      : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
-    const nvinfer1::PluginField *fields = fc->fields;
-    origin_datatype_ = static_cast<const nvinfer1::DataType *>(fields[0].data)[0];
-    dest_datatype_ = static_cast<const nvinfer1::DataType *>(fields[1].data)[0];
-  }
-
-  CastPlugin(const char *name, const void *serialData, size_t serialLength)
-      : TensorRTPlugin(std::string(name), std::string(CAST_PLUGIN_NAME)) {
-    DeserializeValue(&serialData, &serialLength, &origin_datatype_, sizeof(nvinfer1::DataType));
-    DeserializeValue(&serialData, &serialLength, &dest_datatype_, sizeof(nvinfer1::DataType));
-  }
-
-  CastPlugin() = delete;
-
-  nvinfer1::IPluginV2DynamicExt *clone() const noexcept override;
-
-  int enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
-              const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) noexcept override;
-
-  nvinfer1::DataType getOutputDataType(int index, const nvinfer1::DataType *inputTypes, int nbInputs) const
-    noexcept override;
-
-  size_t getSerializationSize() const noexcept override;
-  void serialize(void *buffer) const noexcept override;
-
- private:
-  nvinfer1::DataType origin_datatype_;
-  nvinfer1::DataType dest_datatype_;
-};
-class CastPluginCreater : public TensorRTPluginCreater<CastPlugin> {
- public:
-  CastPluginCreater() : TensorRTPluginCreater(std::string(CAST_PLUGIN_NAME)) {}
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_OP_CAST_TENSORRT_H_

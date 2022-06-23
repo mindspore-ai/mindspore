@@ -40,6 +40,8 @@
 namespace mindspore::lite {
 #define TRT_VERSION_GE(major, minor) \
   (NV_TENSORRT_MAJOR > major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR >= minor))
+#define TRT_VERSION_LS(major, minor) \
+  (NV_TENSORRT_MAJOR < major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR < minor))
 struct ITensorHelper {
   nvinfer1::ITensor *trt_tensor_{nullptr};
   mindspore::Format format_{Format::NHWC};
@@ -97,6 +99,9 @@ nvinfer1::Weights TransposeWeight2D(const mindspore::MSTensor &ms_tensor, void *
 
 nvinfer1::Weights ConvertWeight(const mindspore::MSTensor &ms_tensor);
 
+nvinfer1::ITensor *TRTTensorCast(TensorRTContext *ctx, nvinfer1::ITensor *tensor, nvinfer1::DataType data_type,
+                                 const std::string &name);
+
 int SetCudaDevice(std::shared_ptr<GPUDeviceInfo> device_info_);
 
 int SetCudaDevice(int device_id);
@@ -126,10 +131,6 @@ int GetDimsVolume(const std::vector<int64_t> &shape);
 std::experimental::optional<nvinfer1::Dims> SqueezeDims(const nvinfer1::Dims &in_dims, int pos);
 
 std::experimental::optional<nvinfer1::Dims> UnsqueezeDims(const nvinfer1::Dims &in_dims, int pos, int val);
-
-void SerializeValue(void **buffer, const void *value, size_t cpy_size);
-
-void DeserializeValue(void const **buffer, size_t *buffer_size, void *value, size_t cpy_size);
 
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const std::vector<int64_t> &shape);
 
