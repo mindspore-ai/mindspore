@@ -14,7 +14,7 @@
 # ============================================================================
 
 """Vmap operations."""
-from ..._c_expression import VmapGeneralPreprocess_
+from ..._c_expression import VmapGeneralPreprocess_, VmapGeneralRulePyAdapter_
 
 
 class _VmapGeneralPreprocess(VmapGeneralPreprocess_):
@@ -25,3 +25,12 @@ class _VmapGeneralPreprocess(VmapGeneralPreprocess_):
     """
     def __init__(self):
         VmapGeneralPreprocess_.__init__(self, "VmapGeneralPreprocess")
+
+
+class _VmapGeneralRule(VmapGeneralRulePyAdapter_):
+    """
+    General rule python adapter is a adapter for general rule in c++. Some operators can
+    implement loop-stack method in their vmaprule by calling this adapter.
+    """
+    def __init__(self, prim, axis_size):
+        VmapGeneralRulePyAdapter_.__init__(self, 'vmapgeneralrule', prim, axis_size)

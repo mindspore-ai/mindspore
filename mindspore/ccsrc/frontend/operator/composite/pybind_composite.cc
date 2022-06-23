@@ -46,6 +46,12 @@ REGISTER_PYBIND_WITH_PARENT_NAME(
     (void)py::class_<VmapOperation, MetaFuncGraph, std::shared_ptr<VmapOperation>>(*m, "VmapOperation_")
       .def(py::init<const std::string &>(), py::arg("fn"));
 
+    // Reg VmapGeneralRulePyAdapter
+    (void)py::class_<VmapGeneralRulePyAdapter, MetaFuncGraph, std::shared_ptr<VmapGeneralRulePyAdapter>>(
+      *m, "VmapGeneralRulePyAdapter_")
+      .def(py::init<const std::string &, const PrimitivePyAdapterPtr &, int64_t>(), py::arg("fn"), py::arg("prim"),
+           py::arg("axis_size"));
+
     // Reg TaylorOperation
     (void)py::class_<TaylorOperation, MetaFuncGraph, std::shared_ptr<TaylorOperation>>(*m, "TaylorOperation_")
       .def(py::init<const std::string &>(), py::arg("fn"));
