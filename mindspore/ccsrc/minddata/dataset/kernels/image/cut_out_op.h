@@ -33,22 +33,17 @@ class CutOutOp : public TensorOp {
  public:
   // Default values, also used by python_bindings.cc
   static const bool kDefRandomColor;
-  static const uint8_t kDefFillR;
-  static const uint8_t kDefFillG;
-  static const uint8_t kDefFillB;
 
   // Constructor for CutOutOp
   // @param box_height box height
   // @param box_width box_width
   // @param num_patches how many patches to erase from image
   // @param random_color boolean value to indicate fill patch with random color
-  // @param fill_r R value for the color to fill patch with
-  // @param fill_g G value for the color to fill patch with
-  // @param fill_b B value for the color to fill patch with
+  // @param fill_colors value for the color to fill patch with
   // @param is_hwc Check if input is HWC/CHW format
   // @note maybe using unsigned long int isn't the best here according to our coding rules
   CutOutOp(int32_t box_height, int32_t box_width, int32_t num_patches, bool random_color = kDefRandomColor,
-           uint8_t fill_r = kDefFillR, uint8_t fill_g = kDefFillG, uint8_t fill_b = kDefFillB, bool is_hwc = true);
+           std::vector<uint8_t> fill_colors = {}, bool is_hwc = true);
 
   ~CutOutOp() override = default;
 
@@ -70,9 +65,7 @@ class CutOutOp : public TensorOp {
   int32_t box_width_;
   int32_t num_patches_;
   bool random_color_;
-  uint8_t fill_r_;
-  uint8_t fill_g_;
-  uint8_t fill_b_;
+  std::vector<uint8_t> fill_colors_;
   bool is_hwc_;
 };
 }  // namespace dataset

@@ -1369,16 +1369,14 @@ Status ValidateCutOutImage(const std::shared_ptr<Tensor> &input, bool is_hwc, in
   uint32_t height_index = is_hwc ? 0 : 1;
   uint32_t width_index = is_hwc ? 1 : 2;
   std::string right_shape = is_hwc ? "<H,W,C>" : "<C,H,W>";
-  uint64_t num_channels = input->shape()[channel_index];
   int64_t image_h = input->shape()[height_index];
   int64_t image_w = input->shape()[width_index];
 
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() > channel_index, "CutOut: shape is invalid.");
 
-  if (input->Rank() != kDefaultImageRank || num_channels > kDefaultImageChannel) {
+  if (input->Rank() != kDefaultImageRank) {
     RETURN_STATUS_UNEXPECTED("CutOut: image shape is not " + right_shape +
-                             " or channel is larger than 3, but got rank: " + std::to_string(input->Rank()) +
-                             ", and channel: " + std::to_string(num_channels));
+                             ", but got rank: " + std::to_string(input->Rank()));
   }
 
   if (box_height > image_h || box_width > image_w) {
@@ -1391,8 +1389,8 @@ Status ValidateCutOutImage(const std::shared_ptr<Tensor> &input, bool is_hwc, in
 }
 
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
-             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd, uint8_t fill_r,
-             uint8_t fill_g, uint8_t fill_b, bool is_hwc) {
+             int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
+             std::vector<uint8_t> fill_colors, bool is_hwc) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     RETURN_IF_NOT_OK(ValidateCutOutImage(input_cv, is_hwc, box_height, box_width));
@@ -1408,6 +1406,13 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     std::uniform_int_distribution<int> width_distribution_bound(0, image_w - box_width);
     std::uniform_int_distribution<int> height_distribution_unbound(0, image_h + box_height);
     std::uniform_int_distribution<int> width_distribution_unbound(0, image_w + box_width);
+
+    if (fill_colors.empty()) {
+      fill_colors = std::vector<uint8_t>(num_channels, 0);
+    }
+    CHECK_FAIL_RETURN_UNEXPECTED(fill_colors.size() == num_channels,
+                                 "Number of fill colors (" + std::to_string(fill_colors.size()) +
+                                   ") does not match the number of channels (" + std::to_string(num_channels) + ").");
     // core logic
     // update values based on random erasing or cutout
     for (int32_t i = 0; i < num_patches; i++) {
@@ -1426,28 +1431,18 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
 
       for (int x = h_start; x < max_height; x++) {
         for (int y = w_start; y < max_width; y++) {
-          uint8_t fill_value_r = fill_r;
-          uint8_t fill_value_g = fill_g;
-          uint8_t fill_value_b = fill_b;
-          if (random_color) {
-            // fill each box with a random value
-            fill_value_r = static_cast<int32_t>(normal_distribution(*rnd));
-            fill_value_g = static_cast<int32_t>(normal_distribution(*rnd));
-            fill_value_b = static_cast<int32_t>(normal_distribution(*rnd));
-          }
-
-          if (num_channels == 1) {
-            input_cv->SetItemAt<uint8_t>({x, y}, fill_value_r);
-          } else {
-            std::vector<dsize_t> index_r =
-              is_hwc ? std::vector<dsize_t>{x, y, kRIndex} : std::vector<dsize_t>{kRIndex, x, y};
-            std::vector<dsize_t> index_g =
-              is_hwc ? std::vector<dsize_t>{x, y, kGIndex} : std::vector<dsize_t>{kGIndex, x, y};
-            std::vector<dsize_t> index_b =
-              is_hwc ? std::vector<dsize_t>{x, y, kBIndex} : std::vector<dsize_t>{kBIndex, x, y};
-            input_cv->SetItemAt<uint8_t>(index_r, fill_value_r);
-            input_cv->SetItemAt<uint8_t>(index_g, fill_value_g);
-            input_cv->SetItemAt<uint8_t>(index_b, fill_value_b);
+          for (int c = 0; c < num_channels; c++) {
+            uint8_t fill_value = fill_colors[c];
+            if (random_color) {
+              // fill each box with a random value
+              fill_value = static_cast<int32_t>(normal_distribution(*rnd));
+            }
+            if (num_channels == 1) {
+              input_cv->SetItemAt<uint8_t>({x, y}, fill_value);
+            } else {
+              std::vector<dsize_t> index = is_hwc ? std::vector<dsize_t>{x, y, c} : std::vector<dsize_t>{c, x, y};
+              input_cv->SetItemAt<uint8_t>(index, fill_value);
+            }
           }
         }
       }
