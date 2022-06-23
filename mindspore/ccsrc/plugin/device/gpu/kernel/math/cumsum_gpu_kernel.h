@@ -47,7 +47,7 @@ class CumSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     T *ws_addr = GetDeviceAddress<T>(workspace, 0);
     CumSum(input_addr, output_addr, ws_addr, dims_[0], dims_[1], dims_[2], stride_, stride2_, exclusive_, reverse_,
-           reinterpret_cast<cudaStream_t>(stream_ptr));
+           device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
