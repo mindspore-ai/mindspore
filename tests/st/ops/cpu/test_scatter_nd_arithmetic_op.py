@@ -276,7 +276,7 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
 def test_scatter_func_indices_vmap(func):
     """
     Feature: test ScatterNd* vmap.
@@ -303,7 +303,7 @@ def test_scatter_func_indices_vmap(func):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('func', ['add', 'sub', 'div'])
+@pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
 def test_scatter_func_update_vmap(func):
     """
     Feature: test ScatterNd* vmap.

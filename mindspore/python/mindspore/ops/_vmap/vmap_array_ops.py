@@ -382,6 +382,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ScatterNdSub)
 @vmap_rules_getters.register(P.ScatterNdMin)
 @vmap_rules_getters.register(P.ScatterNdMax)
+@vmap_rules_getters.register(P.array_ops.ScatterNdMul)
 @vmap_rules_getters.register(P.ScatterNdDiv)
 @vmap_rules_getters.register(P.ScatterNdUpdate)
 @vmap_rules_getters.register(P.ScatterUpdate)
@@ -401,6 +402,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
         "ScatterNdSub": P.ScatterNdSub,
         "ScatterNdMin": P.ScatterNdMin,
         "ScatterNdMax": P.ScatterNdMax,
+        "ScatterNdMul": P.array_ops.ScatterNdMul,
         "ScatterNdDiv": P.ScatterNdDiv,
         "ScatterNdUpdate": P.ScatterNdUpdate,
         "ScatterUpdate": P.ScatterNdUpdate
@@ -659,6 +661,45 @@ def get_range_vmap_rule(prim, axis_size):
             _raise_value_error("For operator Range, all axis for inputs should be None, but got start_dim: {},"
                                " limit_dim: {} and delta_dim: {}.".format(start_dim, limit_dim, delta_dim))
         return result
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.array_ops.MatrixDiagV3)
+def get_matrix_diag_v3_vmap_rule(prim, axis_size):
+    """VmapRule for `MatrixDiagV3` operation."""
+    if isinstance(prim, str):
+        prim_name = prim
+        prim = P.array_ops.MatrixDiagV3()
+    else:
+        prim_name = prim.name
+
+    def vmap_rule(x_bdim, k_bdim, num_rows_bdim, num_cols_bdim, padding_value_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, k_bdim, num_rows_bdim, num_cols_bdim,
+                                                      padding_value_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        k, k_dim = k_bdim
+        num_rows, num_rows_dim = num_rows_bdim
+        num_cols, num_cols_dim = num_cols_bdim
+        padding_value, padding_value_dim = padding_value_bdim
+        if k_dim is not None:
+            _raise_value_error("The source axis of `k` in {} must be None, but got {}.".format(prim_name, k_dim))
+        if num_rows_dim is not None:
+            _raise_value_error(
+                "The source axis of `num_rows` in {} must be None, but got {}.".format(prim_name, num_rows_dim))
+        if num_cols_dim is not None:
+            _raise_value_error(
+                "The source axis of `num_cols` in {} must be None, but got {}.".format(prim_name, num_cols_dim))
+        if padding_value_dim is not None:
+            _raise_value_error("The source axis of `padding_value` in {} must be None, "
+                               "but got {}.".format(prim_name, padding_value_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        out = prim(x, k, num_rows, num_cols, padding_value)
+        return out, 0
 
     return vmap_rule
 
@@ -1239,6 +1280,7 @@ def get_pdist_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(P.ExpandDims)
 def get_expand_dims_vmap_rule(prim, axis_size):
     """VmapRule for `ExpandDims`."""
+
     @constexpr
     def process_axis(axis, rank, x_dim):
         if axis < 0:

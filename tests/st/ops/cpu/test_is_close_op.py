@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 
 class Net(nn.Cell):
@@ -75,3 +76,33 @@ def test_net(equal_nan):
     a = rand_int(2, 3, 4, 5)
     b = rand_int(4, 5)
     assert compare_with_numpy(a, b, equal_nan=equal_nan)
+
+
+class VmapNet(nn.Cell):
+    def __init__(self, rtol, atol, equal_nan):
+        super(VmapNet, self).__init__()
+        self.net = Net(rtol=rtol, atol=atol, equal_nan=equal_nan)
+        self.ops = vmap(self.net, in_axes=(0, 0), out_axes=0)
+
+    def construct(self, a, b):
+        return self.ops(a, b)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_net():
+    """
+    Feature: Support vmap for IsClose operator.
+    Description:  test cases of vmap for IsClose operator.
+    Expectation: the result match numpy isclose.
+    """
+
+    a = rand_int(2, 3, 4, 5)
+    b = rand_int(2, 4, 5)
+    rtol = 1e-05
+    atol = 1e-08
+    equal_nan = False
+    np_result = np.isclose(a, b.reshape((2, 1, 4, 5)), rtol, atol, equal_nan)
+    ms_result = VmapNet(rtol=rtol, atol=atol, equal_nan=equal_nan)(Tensor(a), Tensor(b))
+    return np.array_equal(ms_result, np_result)
