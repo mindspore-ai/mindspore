@@ -50,7 +50,7 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const std::vector<AbstractBas
 
 TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto dtype = input_args[kInputIndex1]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("updates", dtype, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckSubClass("updates", dtype, {kTensorType}, prim->name());
   return dtype;
 }
 
