@@ -40,39 +40,37 @@ template <typename T>
 __global__ void AdaptiveMaxPool2DKernel(const size_t size, const size_t input_height, const size_t input_width,
                                         const size_t output_height, const size_t output_width, T *input_data,
                                         T *output_data, int64_t *indices_data) {
-  for (size_t c = blockIdx.x * blockDim.x + threadIdx.x; c < size; c += gridDim.x * blockDim.x) {
-    T *input_ptr = input_data + c * input_height * input_width;
-    T *output_ptr = output_data + c * output_height * output_width;
-    int64_t *indices_ptr = indices_data + c * output_height * output_width;
+  T *input_ptr = input_data + blockIdx.x * input_height * input_width;
+  T *output_ptr = output_data + blockIdx.x * output_height * output_width;
+  int64_t *indices_ptr = indices_data + blockIdx.x * output_height * output_width;
 
-    for (size_t oh = 0; oh < output_height; oh++) {
-      size_t ih0 = start_index(oh, output_height, input_height);
-      size_t ih1 = end_index(oh, output_height, input_height);
+  for (size_t oh = blockDim.y * blockIdx.y + threadIdx.y; oh < output_height; oh += blockDim.y * gridDim.y) {
+    size_t ih0 = start_index(oh, output_height, input_height);
+    size_t ih1 = end_index(oh, output_height, input_height);
 
-      for (size_t ow = 0; ow < output_width; ow++) {
-        size_t iw0 = start_index(ow, output_width, input_width);
-        size_t iw1 = end_index(ow, output_width, input_width);
+    for (size_t ow = threadIdx.x; ow < output_width; ow += blockDim.x) {
+      size_t iw0 = start_index(ow, output_width, input_width);
+      size_t iw1 = end_index(ow, output_width, input_width);
 
-        // compute local max.
-        T max = input_ptr[ih0 * input_width + iw0];
-        int64_t indice = ih0 * input_width + iw0;
-        for (size_t ih = ih0; ih < ih1; ih++) {
-          for (size_t iw = iw0; iw < iw1; iw++) {
-            T val = input_ptr[ih * input_width + iw];
-            bool is_nan = false;
-            IsNan(&val, &is_nan);
-            if ((val > max) || is_nan) {
-              max = val;
-              if (indices_data != nullptr) {
-                indice = ih * input_width + iw;
-              }
-            }
+      T *sub_input_ptr = input_ptr + ih0 * input_width + iw0;
+      int64_t indice = ih0 * input_width + iw0;
+      T max = sub_input_ptr[0];
+
+      for (size_t ih = 0; ih < ih1 - ih0; ih++) {
+        for (size_t iw = 0; iw < iw1 - iw0; iw++) {
+          T val = sub_input_ptr[iw];
+          bool is_nan = false;
+          IsNan(&val, &is_nan);
+          if ((val > max) || is_nan) {
+            max = val;
+            indice = (ih + ih0) * input_width + iw + iw0;
           }
         }
-        output_ptr[oh * output_width + ow] = max;
-        if (indices_data != nullptr) {
-          indices_ptr[oh * output_width + ow] = indice;
-        }
+        sub_input_ptr += input_width;
+      }
+      output_ptr[oh * output_width + ow] = max;
+      if (indices_data != nullptr) {
+        indices_ptr[oh * output_width + ow] = indice;
       }
     }
   }
@@ -82,8 +80,11 @@ template <typename T>
 void ApplyAdaptiveMaxPool2D(const size_t size, const size_t input_height, const size_t input_width,
                             const size_t output_height, const size_t output_width, T *input_data, T *output_data,
                             int64_t *indices_data, cudaStream_t cuda_stream) {
-  AdaptiveMaxPool2DKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    size, input_height, input_width, output_height, output_width, input_data, output_data, indices_data);
+  int blocksH = size > 16 ? 1 : (16L / size);
+  dim3 blocks(size, blocksH);
+  dim3 threads(32, 8);
+  AdaptiveMaxPool2DKernel<<<blocks, threads, 0, cuda_stream>>>(size, input_height, input_width, output_height,
+                                                               output_width, input_data, output_data, indices_data);
 }
 
 template CUDA_LIB_EXPORT void ApplyAdaptiveMaxPool2D<float>(const size_t size, const size_t input_height,
