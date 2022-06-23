@@ -175,6 +175,7 @@ AnfNodePtr BuildOnesLikeValue(const FuncGraphPtr &tape, const ValuePtr &out, con
   // Build ones_like(out) as dout, shape is same with out.sens_value its id hold by pynative execute, which can be
   // replace forward, but out is not.
   if (ValueHasDynamicShape(out)) {
+    MS_EXCEPTION_IF_NULL(sens_value);
     auto value_node = NewValueNode(sens_value);
     auto value_node_abs = sens_value->ToAbstract()->Broaden();
     MS_LOG(DEBUG) << "Sens value abstract " << value_node_abs->ToString();

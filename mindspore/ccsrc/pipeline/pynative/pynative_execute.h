@@ -284,6 +284,7 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
+  void ChangeTopCellInfo(const TopCellInfoPtr &top_cell, const std::vector<ShapeVector> &new_args_shape);
   TopCellInfoPtr ChangeTopCellToDynamicShapeByAuto(const TopCellInfoPtr &top_cell,
                                                    const std::vector<ShapeVector> &new_args_shape,
                                                    const py::object &cell, const py::args &args);
