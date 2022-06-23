@@ -234,7 +234,7 @@ def dropout2d(x, keep_prob=0.5):
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability 1-`keep_prob`.
 
-    `Dropout2D` can improve the independence between channel feature maps.
+    `dropout2d` can improve the independence between channel feature maps.
 
     Args:
         x (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
@@ -280,7 +280,7 @@ def dropout3d(x, keep_prob=0.5):
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability 1-`keep_prob`.
 
-    `Dropout3D` can improve the independence between channel feature maps.
+    `dropout3d` can improve the independence between channel feature maps.
 
     Args:
         x (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
