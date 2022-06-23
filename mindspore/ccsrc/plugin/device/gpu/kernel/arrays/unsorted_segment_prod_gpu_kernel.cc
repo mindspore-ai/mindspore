@@ -28,22 +28,6 @@ using KernelRunFunc = UnsortedSegmentProdGpuKernelMod::KernelRunFunc;
   KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddInputAttr(DT).AddOutputAttr(T_DT), \
     &UnsortedSegmentProdGpuKernelMod::LaunchKernel<T, S>
 
-void UnsortedSegmentProdGpuKernelMod::ResetResource() {
-  input_dim0_ = 1;
-  input_dim1_ = 1;
-  output_dim0_ = 1;
-  output_dim1_ = 1;
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
-void UnsortedSegmentProdGpuKernelMod::InitSizeLists() {
-  input_size_list_.push_back(batch_size_ * input_dim0_ * input_dim1_ * data_unit_size_);
-  input_size_list_.push_back(batch_size_ * input_dim0_ * ids_unit_size_);
-  output_size_list_.push_back(batch_size_ * output_dim0_ * output_dim1_ * data_unit_size_);
-}
-
 bool UnsortedSegmentProdGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                            const std::vector<KernelTensorPtr> &inputs,
                                            const std::vector<KernelTensorPtr> &outputs) {
@@ -73,8 +57,6 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
     return ret;
   }
 
-  ResetResource();
-
   auto input_shapes = inputs[kIndex0]->GetDeviceShapeAdaptively();
   auto ids_shapes = inputs[kIndex1]->GetDeviceShapeAdaptively();
   auto output_shapes = outputs[kIndex0]->GetDeviceShapeAdaptively();
@@ -97,6 +79,8 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
 
   auto axis = ids_shapes.size();
+  input_dim0_ = 1;
+  input_dim1_ = 1;
   for (size_t i = batch_rank_; i < input_shapes.size(); i++) {
     if (i < axis) {
       input_dim0_ *= input_shapes[i];
@@ -106,11 +90,11 @@ int UnsortedSegmentProdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
 
   output_dim0_ = output_shapes[batch_rank_];
+  output_dim1_ = 1;
   for (size_t j = batch_rank_ + 1; j < output_shapes.size(); j++) {
     output_dim1_ *= output_shapes[j];
   }
 
-  InitSizeLists();
   return KRET_OK;
 }
 
