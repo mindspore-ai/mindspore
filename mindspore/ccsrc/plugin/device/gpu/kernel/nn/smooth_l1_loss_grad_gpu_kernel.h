@@ -14,64 +14,61 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <map>
+#include <string>
+#include <utility>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/smooth_l1_loss_impl.cuh"
 namespace mindspore {
 namespace kernel {
-template <typename T>
-class SmoothL1LossGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+constexpr auto kUnKnown = "UnKnown";
+constexpr auto kSmoothL1LossGrad = "SmoothL1LossGrad";
+class SmoothL1LossGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  SmoothL1LossGradGpuKernelMod() : input_size_(1), beta_(1.0) {}
+  SmoothL1LossGradGpuKernelMod() {}
   ~SmoothL1LossGradGpuKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *prediction = GetDeviceAddress<T>(inputs, 0);
-    T *target = GetDeviceAddress<T>(inputs, 1);
-    T *dloss = GetDeviceAddress<T>(inputs, 2);
-    T *dx = GetDeviceAddress<T>(outputs, 0);
-
-    SmoothL1LossGrad(input_size_, beta_, prediction, target, dloss, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    kernel_node_ = kernel_node;
-    is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "logits");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-    input_size_ *= SizeOf(input_shape);
-
-    beta_ = GetAttr<float>(kernel_node, "beta");
-    InitSizeLists();
-    return true;
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    input_size_list_.push_back(input_size_ * sizeof(T));
-    output_size_list_.push_back(input_size_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+
+  using SmoothL1LossGradFunc =
+    std::function<bool(SmoothL1LossGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
 
  private:
-  size_t input_size_;
-  float beta_;
-  bool is_null_input_;
+  std::string kernel_name_{};
+  BaseOperatorPtr kernel_ptr_{nullptr};
+  SmoothL1LossGradFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, SmoothL1LossGradFunc>> func_list_;
+
+  float beta_{1.0};
+  TypeId dtype_{kTypeUnknown};
+  int64_t tensor_size_{1};
+  SmoothL1LossReductionMode reduction_{SmoothL1LossReductionMode::NONE};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_NN_SMOOTH_L1_LOSS_GRAD_GPU_KERNEL_H_
