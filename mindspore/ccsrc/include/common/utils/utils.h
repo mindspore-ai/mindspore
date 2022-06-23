@@ -586,7 +586,6 @@ constexpr auto kAttrRecvSrcRoles = "recv_src_roles";
 constexpr auto kAttrInterProcessEdgeNames = "inter_process_edge_names";
 constexpr auto kAttrInterProcessEdgeLabel = "inter_process_edge_label";
 constexpr auto kAttrIsMuxRpcKernel = "is_mux_rpc_kernel";
-constexpr auto kAttrForwardOpOutputId = "forward_op_output_id";
 constexpr auto kAttrGroupRankIds = "group_rank_ids";
 constexpr auto kAttrReuseCommunication = "reuse_communication_node";
 constexpr auto kAttrPrecisionFlag = "precision_flag";

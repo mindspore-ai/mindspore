@@ -349,7 +349,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
                       << " addr:" << device_address;
         AnfAlgo::SetWorkspaceAddr(device_address, i, kernel.get());  // set to kernel_info
         MS_EXCEPTION_IF_NULL(device_address);
-        add_workspaces.emplace_back(device_address);
+        (void)add_workspaces.emplace_back(device_address);
       }
     }
   }
@@ -369,7 +369,7 @@ kernel::AddressPtrList CreateKernelWorkspaceAddress(const std::shared_ptr<OpRunt
         !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
       MS_LOG(EXCEPTION) << "Allocate workspace memory failed";
     }
-    workspaces.emplace_back(
+    (void)workspaces.emplace_back(
       std::make_shared<kernel::Address>(device_address->GetMutablePtr(), device_address->GetSize()));
     MS_LOG(DEBUG) << "workspace[" << i << "]:" << workspaces.back()->addr << " size:" << workspaces.back()->size;
   }
@@ -441,7 +441,7 @@ void UpdateDynamicShape(const CNodePtr &kernel) {
     kernel::SetArgsToCNode(kernel, update);
   }
   if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-      kernel::KRET_RESIZE_FAILED) {
+      static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
     MS_LOG(EXCEPTION) << "Node " << kernel->fullname_with_scope() << " Resize failed.";
   }
 }

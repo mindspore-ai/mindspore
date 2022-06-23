@@ -1487,11 +1487,6 @@ void SessionBasic::GetForwardOpOutputRefCount(const KernelGraph *graph, const st
   if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice) {
     return;
   }
-  if (!common::AnfAlgo::HasNodeAttr(kAttrForwardOpOutputId, graph->get_return())) {
-    MS_LOG(INFO) << "Graph " << graph->ToString() << " has no forward op output id attr, skip.";
-    return;
-  }
-
   MS_EXCEPTION_IF_NULL(forward_op_output_tensor_id);
   for (const auto &kernel : graph->execution_order()) {
     const auto input_tensor_num = common::AnfAlgo::GetInputTensorNum(kernel);
