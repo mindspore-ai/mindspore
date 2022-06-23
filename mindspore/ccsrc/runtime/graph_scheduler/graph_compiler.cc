@@ -288,6 +288,32 @@ void UpdateDeviceAddressForInplaceNode(const KernelGraphPtr &graph) {
   }
 }
 
+void UpdateDeviceAddress(const session::AnfWithOutIndex &cur_pair, const session::AnfWithOutIndex &origin_pair) {
+  MS_EXCEPTION_IF_NULL(cur_pair.first);
+  MS_EXCEPTION_IF_NULL(origin_pair.first);
+
+  auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second, false);
+  MS_EXCEPTION_IF_NULL(origin_node_output_addr);
+  auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(cur_pair.first, cur_pair.second, false);
+  MS_EXCEPTION_IF_NULL(cur_node_output_addr);
+
+  if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
+    MS_LOG(INFO) << "Update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
+                 << ", index is " << origin_pair.second << ", cur kernel is " << cur_pair.first->fullname_with_scope()
+                 << ", index is " << cur_pair.second;
+    AnfAlgo::SetOutputAddr(origin_node_output_addr, cur_pair.second, cur_pair.first.get());
+    // Update the reference count of device address.
+    cur_node_output_addr->DecreaseOriginalRefCount();
+    cur_node_output_addr->ResetRefCount();
+    origin_node_output_addr->IncreaseOriginalRefCount();
+    origin_node_output_addr->ResetRefCount();
+  } else {
+    MS_LOG(INFO) << "No need update device address: ref origin kernel is " << origin_pair.first->fullname_with_scope()
+                 << ", index is " << origin_pair.second << ", cur kernel is " << cur_pair.first->fullname_with_scope()
+                 << ", index is " << cur_pair.second;
+  }
+}
+
 void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto &kernels = graph->execution_order();
@@ -302,21 +328,7 @@ void UpdateDeviceAddressForRefNode(const KernelGraphPtr &graph) {
       session::AnfWithOutIndex out_pair(kernel, i);
       if (graph->IsInRefOutputMap(out_pair)) {
         auto origin_pair = graph->GetRefCorrespondOutput(out_pair);
-        MS_EXCEPTION_IF_NULL(origin_pair.first);
-        auto origin_node_output_addr = AnfAlgo::GetMutableOutputAddr(origin_pair.first, origin_pair.second, false);
-        MS_EXCEPTION_IF_NULL(origin_node_output_addr);
-        auto cur_node_output_addr = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
-        if (origin_node_output_addr.get() != cur_node_output_addr.get()) {
-          MS_LOG(DEBUG) << "REF address is not same, ref node output need address update";
-          MS_LOG(DEBUG) << "REF origin op is " << origin_pair.first->DebugString() << ", output index is "
-                        << origin_pair.second << ", cur op is " << kernel->DebugString() << ", out index is " << i;
-          AnfAlgo::SetOutputAddr(origin_node_output_addr, i, kernel.get());
-          // Update the reference count of device address.
-          cur_node_output_addr->DecreaseOriginalRefCount();
-          cur_node_output_addr->ResetRefCount();
-          origin_node_output_addr->IncreaseOriginalRefCount();
-          origin_node_output_addr->ResetRefCount();
-        }
+        UpdateDeviceAddress(out_pair, origin_pair);
       }
     }
   }
@@ -370,17 +382,10 @@ GraphCompilerInfo::~GraphCompilerInfo() {
 }
 
 namespace {
-bool IsNopNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  static mindspore::HashSet<std::string> nop_node_primitives = {
-    prim::kPrimReshape->name(), kExpandDimsOpName,  prim::kPrimSqueeze->name(),
-    prim::kPrimFlatten->name(), kFlattenGradOpName, prim::kPrimReformat->name()};
-  return nop_node_primitives.find(common::AnfAlgo::GetCNodeName(node)) != nop_node_primitives.end();
-}
 // Fetch the real input of the nop node recursively.
 AnfNodePtr FetchRealNodeByNopNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  if ((!node->isa<CNode>()) || (!IsNopNode(node))) {
+  if ((!node->isa<CNode>()) || (!common::AnfAlgo::IsNopNode(node))) {
     return node;
   }
 
@@ -479,7 +484,7 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
         MS_EXCEPTION_IF_NULL(input);
         const auto &input_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0);
         if ((input_with_index.first != nullptr) && (input_with_index.first->isa<CNode>()) &&
-            IsNopNode(input_with_index.first)) {
+            common::AnfAlgo::IsNopNode(input_with_index.first)) {
           // Collect all of the nopnode inputs.
           invalid_nopnodes.emplace(input->cast<CNodePtr>());
           MS_LOG(INFO) << "Add invalid nopnode:" << input->DebugString()
@@ -491,13 +496,14 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
   return invalid_nopnodes;
 }
 
-void EliminateNopNode(KernelGraph *graph) {
+void OptimizeNopNode(KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
   std::vector<CNodePtr> new_execution_order;
-  std::set<AnfNodePtr> nop_nodes;
+  std::vector<CNodePtr> nop_nodes_need_set_ref;
+  std::set<AnfNodePtr> nop_nodes_need_eliminated;
 
   // Skip the graph mode or dynamic shape.
-  if (graph->is_graph_run_mode() || graph->is_dynamic_shape()) {
+  if (graph->is_graph_run_mode()) {
     return;
   }
 
@@ -509,21 +515,42 @@ void EliminateNopNode(KernelGraph *graph) {
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
-    // Nopnode as graph output or has side effect cannot be eliminated.
-    if (!IsNopNode(cnode) ||
-        (std::find(graph_outputs.begin(), graph_outputs.end(), KernelWithIndex(cnode, 0)) != graph_outputs.end()) ||
-        HasMonadInput(cnode) || (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
-      new_execution_order.emplace_back(cnode);
+    if ((!common::AnfAlgo::IsNopNode(cnode)) ||
+        (std::find(graph_outputs.begin(), graph_outputs.end(), KernelWithIndex(cnode, 0)) != graph_outputs.end())) {
+      (void)new_execution_order.emplace_back(cnode);
       continue;
     }
+    // The nopnode which satisfies the following conditions cannot be eliminated and set to ref node:
+    // 1.dynamic shape 2.side effect 3. must not be eliminated.
+    if (graph->is_dynamic_shape() || HasMonadInput(cnode) || (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
+      (void)new_execution_order.emplace_back(cnode);
+      (void)nop_nodes_need_set_ref.emplace_back(cnode);
+    } else {
+      MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
+      nop_nodes_need_eliminated.emplace(cnode);
+    }
+  }
 
-    MS_LOG(DEBUG) << "Eliminate node:" << cnode->DebugString();
-    nop_nodes.emplace(cnode);
+  // Add the ref node pairs.
+  for (auto &ref_node : nop_nodes_need_set_ref) {
+    MS_EXCEPTION_IF_NULL(ref_node);
+    auto input_node = common::AnfAlgo::GetInputNode(ref_node, 0);
+    MS_EXCEPTION_IF_NULL(input_node);
+    auto origin_pair = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+    MS_EXCEPTION_IF_NULL(origin_pair.first);
+    // The device address of parameter as input may be not the running used in the heterogeneous or control flow
+    // scenarios, and not set the ref node.
+    if (origin_pair.first->isa<Parameter>()) {
+      continue;
+    }
+    MS_LOG(INFO) << "The reference relation of nopnode " << ref_node->fullname_with_scope() << ", index: " << 0
+                 << " to input " << origin_pair.first->fullname_with_scope() << ", index: " << origin_pair.second;
+    graph->AddRefCorrespondPairs(std::make_pair(ref_node, 0), origin_pair);
   }
 
   std::set<CNode *> checked_nodes;
   MS_EXCEPTION_IF_NULL(graph->return_node());
-  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes, &checked_nodes);
+  EliminateNodesFromGraph(graph->return_node().get(), nop_nodes_need_eliminated, &checked_nodes);
   graph->set_execution_order(new_execution_order);
 }
 }  // namespace
@@ -569,7 +596,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     graph->set_run_mode(run_mode);
   }
 
-  GraphId graph_id;
+  GraphId graph_id = 0;
   if (run_in_pynative) {
     MS_EXCEPTION_IF_NULL(session_);
     // Graph kernel does not support pynative mode now, print a warning here.
@@ -687,6 +714,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(session_);
 
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -735,8 +763,10 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
   EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
 #endif
+
+  // Optimize the nop node.
   if (!run_in_pynative) {
-    EliminateNopNode(graph.get());
+    OptimizeNopNode(graph.get());
 #ifdef ENABLE_DUMP_IR
     if (save_graphs) {
       DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString(), graph);
@@ -757,9 +787,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Create device address for all anf nodes of graph.
   CreateDeviceAddress(graph, device_context, false);
 
-  graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
-
-  MS_EXCEPTION_IF_NULL(session_);
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
@@ -825,7 +852,6 @@ GraphId GraphCompiler::CompileGraph(const session::OpRunInfo &op_run_info, bool 
   // Create device address for all anf nodes of graph.
   CreateDeviceAddressWithoutWorkspace(graph, device_context, op_run_info.is_gradient_out);
 
-  graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
   run_op_graphs_[op_run_info.graph_info] = graph;
 
   auto output_nodes = graph->outputs();

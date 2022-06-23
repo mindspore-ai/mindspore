@@ -418,8 +418,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // set flag to indicate whether has multi-call.
   void set_subgraph_multi_call(bool flag) { has_subgraph_multicall_ = flag; }
 
-  bool is_all_nop_node() const { return is_all_nop_node_; }
-  void set_is_all_nop_node(bool is_all_nop_node) { is_all_nop_node_ = is_all_nop_node; }
   std::map<AnfWithOutIndex, AnfWithOutIndex> graph_output_map() { return graph_output_to_front_node_map_; }
   std::map<AnfWithOutIndex, AnfWithOutIndex> front_node_to_graph_output_map() {
     return front_node_to_graph_output_map_;
@@ -566,9 +564,6 @@ class BACKEND_EXPORT KernelGraph : public FuncGraph {
   // Number of labels. This is also the 'batch_num' for DavinciModel,
   // It should be 1 if no labels used for control flow.
   uint32_t label_num_ = 1;
-
-  // If all the nodes of graph is the nop node.
-  bool is_all_nop_node_{false};
 
   // Indicate whether the kernels in the graphs acquire Python GIL.
   bool is_need_gil_{false};

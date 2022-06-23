@@ -49,7 +49,6 @@ using kernel::KernelBuildInfoPtr;
 using kernel::KernelMod;
 using kernel::KernelModPtr;
 namespace {
-constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
 
@@ -497,11 +496,7 @@ const DeviceAddress *AnfRuntimeAlgorithm::GetOutputAddr(const AnfNodePtr &node, 
   if (common::AnfAlgo::IsNopNode(node) && (skip_nop_node || common::AnfAlgo::IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->size() == kNopNodeInputSize) {
-      return AnfRuntimeAlgorithm::GetPrevNodeOutputAddr(cnode, 0);
-    } else {
-      MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node." << trace::DumpSourceLines(node);
-    }
+    return AnfRuntimeAlgorithm::GetPrevNodeOutputAddr(cnode, 0);
   }
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -519,11 +514,7 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
   if (common::AnfAlgo::IsNopNode(node) && (skip_nop_node || common::AnfAlgo::IsNeedSkipNopOpAddr(node))) {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
-    if (cnode->inputs().size() == kNopNodeInputSize) {
-      return AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(cnode, 0);
-    } else {
-      MS_LOG(EXCEPTION) << node->DebugString() << "Invalid nop node." << trace::DumpSourceLines(node);
-    }
+    return AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(cnode, 0);
   }
   // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());

@@ -208,7 +208,8 @@ void DumpKernelActor(const KernelActor *actor, std::ofstream &ofs) {
   ofs << "\t\tkernel_name:" << kernel->fullname_with_scope()
       << "\tinputs_num:" << common::AnfAlgo::GetInputTensorNum(kernel)
       << "\toutputs_num:" << common::AnfAlgo::GetOutputTensorNum(kernel)
-      << "\tis_dynamic_shape:" << actor->is_dynamic_shape() << "\n";
+      << "\tis_dynamic_shape:" << actor->is_dynamic_shape() << "\tis_launch_skipped:" << actor->is_launch_skipped()
+      << "\n";
   for (size_t i = 0; i < common::AnfAlgo::GetOutputTensorNum(kernel); ++i) {
     const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(kernel, i, false);
     MS_EXCEPTION_IF_NULL(device_tensor);

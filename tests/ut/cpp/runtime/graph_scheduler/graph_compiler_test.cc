@@ -90,6 +90,7 @@ public:
          kernel_info->set_select_kernel_build_info(builder->Build());
        }
      }
+     AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, 0), 0, node.get());
      auto kernel_mod_ptr = std::make_shared<TestKernelMod>();
      kernel_mod_ptr->SetInputSizeList({4});
      kernel_mod_ptr->SetOutputSizeList({4});
