@@ -37,6 +37,7 @@ from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
+from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
@@ -2083,6 +2084,11 @@ test_case_math_ops = [
         'block': P.MatrixInverse(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))]}),
+    ('MatrixSolve', {
+        'block': MatrixSolve(),
+        'desc_inputs': [Tensor(np.array([[[1., 4.], [2., 7.]], [[1., 4.], [2., 7.]]]).astype(np.float32)),
+                        Tensor(np.array([[[1.], [3.]], [[1.], [3.]]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[[1.], [1.]], [[1.], [1.]]]).astype(np.float32))]}),
     ('MatrixDeterminant', {
         'block': P.MatrixDeterminant(),
         'desc_inputs': [Tensor(np.array([[[-1, -2], [-3, -4]], [[5, 6], [7, 8]]]).astype(np.float32))],
