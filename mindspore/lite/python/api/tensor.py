@@ -153,13 +153,13 @@ format_cxx_py_map = {
 
 class Tensor:
     """
-    The MSTensor class defines a tensor in MindSpore.
+    The Tensor class defines a tensor in MindSporeLite.
 
     Args:
-        None
+        tensor(Tensor): The data to be stored in a new tensor. It can be another Tensor. Default: None.
 
     Raises:
-        TypeError: type of input parameters are invalid.
+        TypeError: `tensor` is not a Tensor or None.
 
     Examples:
         >>> import mindspore_lite as mslite
@@ -187,7 +187,7 @@ class Tensor:
             tensor_name (str): The name of the tensor.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `tensor_name` is not a str.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -223,7 +223,7 @@ class Tensor:
             data_type (DataType): The data type of the Tensor.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `data_type` is not a DataType.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -259,7 +259,8 @@ class Tensor:
             shape (list[int]): The shape of the tensor.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `shape` is not a list.
+            TypeError: `shape` is a list, but the elements is not int.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -298,7 +299,7 @@ class Tensor:
             tensor_format (Format): The format of the tensor.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `tensor_format` is not a Format.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -344,7 +345,8 @@ class Tensor:
 
     def get_data_size(self):
         """
-        Get the data size of the tensor. data_size = element_num * data_type
+        Get the data size of the tensor, i.e.,
+        :math:`data_size = element_num * data_type`.
 
         Returns:
             int, the data size of the tensor data.
@@ -365,10 +367,12 @@ class Tensor:
         Set the data for the tensor from the numpy object.
 
         Args:
-            numpy_obj(numpy.ndarray): The name of the tensor.
+            numpy_obj(numpy.ndarray): the numpy object.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `numpy_obj` is not a numpy.ndarray.
+            RuntimeError: The data type of `numpy_obj` is not equivalent to the data type of the tensor.
+            RuntimeError: The data size of `numpy_obj` is not equal to the data size of the tensor.
 
         Examples:
             >>> # data is from file

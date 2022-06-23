@@ -156,7 +156,7 @@ Tensor
 
   MindSpore Lite's ``tensor`` type. For example: Format.NCHW.
 
-  For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_.
+  For details, see `tensor <https://gitee.com/mindspore/mindspore/blob/master/mindspore/lite/python/api/tensor.py>`_.
   Run the following command to import the package:
 
   .. code-block::

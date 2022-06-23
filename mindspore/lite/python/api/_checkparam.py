@@ -42,7 +42,7 @@ def check_list_of_element(arg_name, arg_value, ele_classes, enable_none=True):
 
 
 def check_input_shape(input_shape_name, input_shape, enable_none=True):
-    """Check input_shape's type is dict{int:list[int]} or dict{string:list[int]}"""
+    """Check input_shape's type is dict{int:list[int]} or dict{str:list[int]}"""
     if enable_none:
         if input_shape is None:
             return input_shape

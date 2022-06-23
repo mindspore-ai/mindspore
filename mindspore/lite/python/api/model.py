@@ -38,8 +38,6 @@ class Model:
     """
     The Model class is used to define a MindSpore model, facilitating computational graph management.
 
-    Args:
-
     Examples:
         >>> import mindspore_lite as mslite
         >>> model = mslite.Model()
@@ -60,14 +58,21 @@ class Model:
         Load and build a model from file.
 
         Args:
-            model_path (str): Define the model path.
-            model_type (ModelType): Define The type of model file.
-                Options: ModelType::MINDIR, ModelType::MINDIR_LITE.
+            model_path (str): Define the model path, include model file.
+            model_type (ModelType): Define The type of model file. Options: ModelType::MINDIR | ModelType::MINDIR_LITE.
+
+                - ModelType::MINDIR: An intermediate representation of the MindSpore model.
+                      The recommended model file suffix is ".mindir".
+                - ModelType::MINDIR_LITE: An intermediate representation of the MindSpore Lite model.
+                      The recommended model file suffix is ".ms".
+
             context (Context): Define the context used to store options during execution.
 
         Raises:
-            TypeError: type of input parameters are invalid.
-            RuntimeError: build model failed.
+            TypeError: `model_path` is not a str.
+            TypeError: `model_type` is not a ModelType.
+            TypeError: `context` is not a Context.
+            RuntimeError: `model_path` does not exist.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -81,10 +86,8 @@ class Model:
         check_isinstance("model_path", model_path, str)
         check_isinstance("model_type", model_type, ModelType)
         check_isinstance("context", context, Context)
-        if model_path != "":
-            if not os.path.exists(model_path):
-                raise RuntimeError(f"build_from_file failed, model_path does not exist!")
-
+        if not os.path.exists(model_path):
+            raise RuntimeError(f"build_from_file failed, model_path does not exist!")
         self.model_path_ = model_path
         model_type_ = _c_lite_wrapper.ModelType.kMindIR_Lite
         if model_type is ModelType.MINDIR:
@@ -99,11 +102,16 @@ class Model:
 
         Args:
             inputs (list[Tensor]): A list that includes all input tensors in order.
-            dims (list[list[int]]): Defines the new shapes of inputs, should be consistent with inputs.
+            dims (list[list[int]]): A list that includes the new shapes of inputs, should be consistent with inputs.
 
         Raises:
-            TypeError: type of input parameters are invalid.
-            RuntimeError: resize model failed.
+            TypeError: `inputs` is not a list.
+            TypeError: `inputs` is a list, but the elements are not Tensor.
+            TypeError: `dims` is not a list.
+            TypeError: `dims` is a list, but the elements are not list.
+            TypeError: `dims` is a list, the elements are list, but the element's elements are not int.
+            ValueError: The size of `inputs` is not equal to the size of `dims` .
+            ValueError: The size of the elements of `inputs` is not equal to the size of the elements of `dims` .
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -156,7 +164,10 @@ class Model:
             outputs (list[Tensor]): The model outputs are filled in the container in sequence.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `inputs` is not a list.
+            TypeError: `inputs` is a list, but the elements are not Tensor.
+            TypeError: `outputs` is not a list.
+            TypeError: `outputs` is a list, but the elements are not Tensor.
             RuntimeError: predict model failed.
 
         Examples:
@@ -295,7 +306,8 @@ class Model:
             Tensor, the input tensor of the tensor name.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `tensor_name` is not a str.
+            RuntimeError: get input by tensor name failed.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -325,7 +337,8 @@ class Model:
             Tensor, the output tensor of the tensor name.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `tensor_name` is not a str.
+            RuntimeError: get output by tensor name failed.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -352,12 +365,20 @@ class RunnerConfig:
     The client sends inference tasks and receives inference results through server.
 
     Args:
-        context (Context): Define the context used to store options during execution.
-        workers_num (int): the num of workers.
-        config_info (dict): {key:{key:value}}, Nested map for passing model weight paths.
+        context (Context, optional): Define the context used to store options during execution. Default: None.
+        workers_num (int, optional): the num of workers. Default: None.
+        config_info (dict{str:dict[str:str]}, optional): Nested map for passing model weight paths. Default: None.
 
     Raises:
-        TypeError: type of input parameters are invalid.
+        TypeError: `context` is not a Context or None.
+        TypeError: `workers_num` is not an int or None.
+        TypeError: `config_info` is not a dict or None.
+        TypeError: `config_info` is a dict, but the key is not str.
+        TypeError: `config_info` is a dict, the key is str, but the value is not dict.
+        TypeError: `config_info` is a dict, the key is str, the value is dict, but the key of value is not str.
+        TypeError: `config_info` is a dict, the key is str, the value is dict, the key of the value is str, but
+            the value of the value is not str.
+        ValueError: `workers_num` is an int, but it is less than 0.
 
     Examples:
         >>> # only for serving inference
@@ -367,9 +388,9 @@ class RunnerConfig:
         >>> config_info = {"weight": {"weight_path": "path of model weight"}}
         >>> runner_config = mslite.RunnerConfig(context=context, workers_num=0, config_info=config_info)
         >>> print(runner_config)
-        workers num: 4,
+        workers num: 0,
         context: 0,
-        config info: weight: weight_path: path of model weight
+        config info: weight: weight_path: path of model weight.
     """
 
     def __init__(self, context=None, workers_num=None, config_info=None):
@@ -379,6 +400,14 @@ class RunnerConfig:
             check_isinstance("workers_num", workers_num, int)
             if workers_num < 0:
                 raise ValueError(f"RunnerConfig's init failed! workers_num must be positive.")
+        if config_info is not None:
+            check_isinstance("config_info", config_info, dict)
+            for k, v in config_info.items():
+                check_isinstance("config_info_key", k, str)
+                check_isinstance("config_info_value", v, dict)
+                for v_k, v_v in v.items():
+                    check_isinstance("config_info_value_key", v_k, str)
+                    check_isinstance("config_info_value_value", v_v, str)
         self._runner_config = _c_lite_wrapper.RunnerConfigBind()
         if context is not None:
             self._runner_config.set_context(context._context)
@@ -398,9 +427,6 @@ class RunnerConfig:
 class ModelParallelRunner:
     """
     The ModelParallelRunner class is used to define a MindSpore ModelParallelRunner, facilitating Model management.
-
-    Args:
-        None
 
     Examples:
         >>> # only for serving inference
@@ -424,10 +450,13 @@ class ModelParallelRunner:
         Args:
             model_path (str): Define the model path.
             runner_config (RunnerConfig, optional): Define the config used to store options during model pool init.
+                Default: None.
 
         Raises:
-            TypeError: type of input parameters are invalid.
-            RuntimeError: init ModelParallelRunner failed.
+            TypeError: `model_path` is not a str.
+            TypeError: `runner_config` is not a RunnerConfig or None.
+            RuntimeError: `model_path` does not exist.
+            RuntimeError: ModelParallelRunner's init failed.
 
         Examples:
             >>> import mindspore_lite as mslite
@@ -440,9 +469,8 @@ class ModelParallelRunner:
             model_path: mobilenetv2.ms.
         """
         check_isinstance("model_path", model_path, str)
-        if model_path != "":
-            if not os.path.exists(model_path):
-                raise RuntimeError(f"ModelParallelRunner's init failed, model_path does not exist!")
+        if not os.path.exists(model_path):
+            raise RuntimeError(f"ModelParallelRunner's init failed, model_path does not exist!")
         self.model_path_ = model_path
         if runner_config is not None:
             check_isinstance("runner_config", runner_config, RunnerConfig)
@@ -461,7 +489,10 @@ class ModelParallelRunner:
             outputs (list[Tensor]): The model outputs are filled in the container in sequence.
 
         Raises:
-            TypeError: type of input parameters are invalid.
+            TypeError: `inputs` is not a list.
+            TypeError: `inputs` is a list, but the elements are not Tensor.
+            TypeError: `outputs` is not a list.
+            TypeError: `outputs` is a list, but the elements are not Tensor.
             RuntimeError: predict model failed.
 
         Examples:

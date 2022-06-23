@@ -91,124 +91,6 @@ def test_ascend_device_info_03():
     assert "device_id: 1" in str(device_info)
 
 
-def test_ascend_device_info_04():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(input_format=1)
-    assert "input_format must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_05():
-    device_info = mslite.AscendDeviceInfo(input_format="NCHW")
-    assert "input_format: NCHW" in str(device_info)
-
-
-def test_ascend_device_info_06():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(input_shape="{1: [1, 112, 112, 3]}")
-    assert "input_shape must be dict" in str(raise_info.value)
-
-
-def test_ascend_device_info_07():
-    device_info = mslite.AscendDeviceInfo(input_shape={})
-    assert "input_shape: {}" in str(device_info)
-
-
-def test_ascend_device_info_08():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(input_shape={1: "[1, 112, 112, 3]"})
-    assert "input_shape value must be list" in str(raise_info.value)
-
-
-def test_ascend_device_info_09():
-    device_info = mslite.AscendDeviceInfo(input_shape={1: []})
-    assert "input_shape: {1: []}" in str(device_info)
-
-
-def test_ascend_device_info_10():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(input_shape={1: [1, "112", 112, 3]})
-    assert "input_shape value's element must be int" in str(raise_info.value)
-
-
-def test_ascend_device_info_11():
-    device_info = mslite.AscendDeviceInfo(input_shape={1: [1, 2, 3, 4], 2: [4, 3, 2, 1]})
-    assert "input_shape: {1: [1, 2, 3, 4], 2: [4, 3, 2, 1]}" in str(device_info)
-
-
-def test_ascend_device_info_12():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(precision_mode=1)
-    assert "precision_mode must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_13():
-    device_info = mslite.AscendDeviceInfo(precision_mode="allow_fp32_to_fp16")
-    assert "precision_mode: allow_fp32_to_fp16" in str(device_info)
-
-
-def test_ascend_device_info_14():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(op_select_impl_mode=1)
-    assert "op_select_impl_mode must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_15():
-    device_info = mslite.AscendDeviceInfo(op_select_impl_mode="high_precision")
-    assert "op_select_impl_mode: high_precision" in str(device_info)
-
-
-def test_ascend_device_info_16():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(dynamic_batch_size=1)
-    assert "dynamic_batch_size must be list" in str(raise_info.value)
-
-
-def test_ascend_device_info_17():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(dynamic_batch_size=["2", "4"])
-    assert "dynamic_batch_size element must be int" in str(raise_info.value)
-
-
-def test_ascend_device_info_18():
-    device_info = mslite.AscendDeviceInfo(dynamic_batch_size=[2, 4])
-    assert "dynamic_batch_size: 2,4" in str(device_info)
-
-
-def test_ascend_device_info_19():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(dynamic_image_size=1)
-    assert "dynamic_image_size must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_20():
-    device_info = mslite.AscendDeviceInfo(dynamic_image_size="66,88;32,64")
-    assert "dynamic_image_size: 66,88;32,64" in str(device_info)
-
-
-def test_ascend_device_info_21():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(fusion_switch_config_path=1)
-    assert "fusion_switch_config_path must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_22():
-    with pytest.raises(RuntimeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(fusion_switch_config_path="fusion_switch.cfg")
-    assert "fusion_switch_config_path does not exist" in str(raise_info.value)
-
-
-def test_ascend_device_info_23():
-    with pytest.raises(TypeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(insert_op_cfg_path=1)
-    assert "insert_op_cfg_path must be str" in str(raise_info.value)
-
-
-def test_ascend_device_info_24():
-    with pytest.raises(RuntimeError) as raise_info:
-        device_info = mslite.AscendDeviceInfo(insert_op_cfg_path="insert_op.cfg")
-    assert "insert_op_cfg_path does not exist" in str(raise_info.value)
-
-
 # ============================ Context ============================
 def test_context_01():
     context = mslite.Context()
@@ -280,7 +162,7 @@ def test_context_13():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context()
         context.append_device_info("CPUDeviceInfo")
-    assert "device_info must be CPUDeviceInfo, GPUDeviceInfo or AscendDeviceInfo" in str(raise_info.value)
+    assert "device_info must be DeviceInfo" in str(raise_info.value)
 
 
 def test_context_14():
