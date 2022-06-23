@@ -166,7 +166,8 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
 
   bool success = false;
   const size_t interval = 3;
-  while (!success) {
+  size_t retry = 20;
+  while (!success && --retry > 0) {
     auto unique_id = cgn_->GetMetadata(group_info_key);
     if (unique_id.length() > 0) {
       auto ret = memcpy_s(root_info, root_info_size, unique_id.data(), unique_id.length());
@@ -179,6 +180,9 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
       MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name << " from the meta server node...";
       sleep(interval);
     }
+  }
+  if (!success) {
+    MS_LOG(EXCEPTION) << "Failed to fetch the unique id of the collective lib from the meta server node.";
   }
   return true;
 }

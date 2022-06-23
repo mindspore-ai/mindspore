@@ -79,8 +79,10 @@ bool CollectiveNode::SynchronizeAddresses() {
     auto address = node_info_.ip_ + ":" + std::to_string(node_info_.port_);
 
     const size_t interval = 3;
+    const size_t max_retry = 20;
+    size_t retry = max_retry;
     bool success = false;
-    while (!success) {
+    while (!success && --retry > 0) {
       success = cgn_->PutMetadata(rank_id, address);
       if (!success) {
         MS_LOG(WARNING) << "Retry to register the address of rank " << rank_id << "...";
@@ -91,13 +93,18 @@ bool CollectiveNode::SynchronizeAddresses() {
       MsException::Instance().CheckException();
     }
 
+    if (!success) {
+      MS_LOG(EXCEPTION) << "Failed to register the address of this mccl collective node(rank id: " << rank_id << ").";
+    }
+
     // Get the addresses of other nodes.
     nodes_address_.clear();
     auto node_num = ClusterContext::instance()->node_num(cgn_->role());
     for (size_t i = 0; i < node_num; ++i) {
       success = false;
-      while (!success) {
-        auto other_rank_id = kRankIdPrefix + cgn_->role() + "_" + std::to_string(i);
+      retry = max_retry;
+      auto other_rank_id = kRankIdPrefix + cgn_->role() + "_" + std::to_string(i);
+      while (!success && --retry > 0) {
         auto other_address = cgn_->GetMetadata(other_rank_id);
         if (other_address != "") {
           auto ip = other_address.substr(0, other_address.find(":"));
@@ -106,10 +113,15 @@ bool CollectiveNode::SynchronizeAddresses() {
           nodes_address_[std::make_pair(NodeRole::WORKER, i)] = std::make_pair(ip, port);
           success = true;
         } else {
-          MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered";
+          MS_LOG(INFO) << "Waiting for the address of rank " << other_rank_id << " to be registered, retry " << retry
+                       << " times.";
           sleep(interval);
         }
         MsException::Instance().CheckException();
+      }
+      if (!success) {
+        MS_LOG(EXCEPTION) << "Failed to fetch the address of the rank " << other_rank_id
+                          << " for mccl collective nodes.";
       }
     }
   }

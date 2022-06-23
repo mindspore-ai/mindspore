@@ -196,13 +196,12 @@ bool ComputeGraphNode::Heartbeat() {
       if (response == nullptr) {
         MS_LOG(ERROR)
           << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
-        while (!Reconnect()) {
+        if (!Reconnect()) {
           if (!recovery::IsEnableRecovery() && topo_state_ != TopoState::kInitializing) {
             MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
           } else {
             MS_LOG(ERROR) << "Failed to connect to the meta server.";
           }
-          continue;
         }
       } else {
         auto &body = response->body;
