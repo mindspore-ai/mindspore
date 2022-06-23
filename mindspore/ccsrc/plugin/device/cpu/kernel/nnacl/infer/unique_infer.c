@@ -19,23 +19,23 @@
 
 int UniqueInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                      OpParameter *parameter) {
-  int check_ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2);
-  if (check_ret != NNACL_OK) {
-    return check_ret;
+  int ret = CheckAugmentNullSize(inputs, inputs_size, outputs, outputs_size, parameter, 1, 2);
+  if (ret != NNACL_OK) {
+    return ret;
   }
 
-  const TensorC *input = inputs[0];
+  const TensorC *input0 = inputs[0];
   TensorC *output0 = outputs[0];
   TensorC *output1 = outputs[1];
 
-  SetDataTypeFormat(output0, input);
+  SetDataTypeFormat(output0, input0);
   output1->data_type_ = kNumberTypeInt32;
-  output1->format_ = input->format_;
+  output1->format_ = input0->format_;
   if (!InferFlag(inputs, inputs_size)) {
     return NNACL_INFER_INVALID;
   }
-  SetShapeTensor(output0, input);
-  SetShapeTensor(output1, input);
+  SetShapeTensor(output0, input0);
+  SetShapeTensor(output1, input0);
   return NNACL_OK;
 }
 
