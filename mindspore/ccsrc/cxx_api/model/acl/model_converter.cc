@@ -17,13 +17,27 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
 #include "include/transform/graph_ir/utils.h"
-#include "mindspore/core/utils/ms_context.h"
-#include "include/api/serialization.h"
-#include "graph/model.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
+#include "graph/model.h"
+#include "acl/acl_rt.h"
 
 namespace mindspore {
 namespace {
+// todo: acl doesn't support to clear current context
+void ClearCurrentRtCtx() {
+  aclrtContext tmp_ctx = nullptr;
+  auto ret = aclrtCreateContext(&tmp_ctx, 0);
+  if (ret != ACL_RT_SUCCESS) {
+    MS_LOG(WARNING) << "Call aclrtCreateContext failed, ret = " << ret;
+    return;
+  }
+  ret = aclrtDestroyContext(tmp_ctx);
+  if (ret != ACL_RT_SUCCESS) {
+    MS_LOG(WARNING) << "Call aclrtDestroyContext failed, ret = " << ret;
+    return;
+  }
+}
+
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   transform::TensorOrderMap res;
   for (auto &anf_node : anf_graph->parameters()) {
@@ -222,6 +236,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     }
     return kSuccess;
   };
+  ClearCurrentRtCtx();
   auto status = multi_process.MainProcess(parent_process, child_process);
   if (status != kSuccess) {
     MS_LOG_ERROR << "Convert MindIR model to OM model failed";
