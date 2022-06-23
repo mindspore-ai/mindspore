@@ -22,6 +22,7 @@
 
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace ops {
@@ -33,6 +34,15 @@ class MIND_API ReduceStd : public BaseOperator {
   MIND_API_BASE_MEMBER(ReduceStd);
   /// \brief Constructor.
   ReduceStd() : BaseOperator(kNameReduceStd) { InitIOName({"input_x"}, {"output_std", "output_mean"}); }
+
+  void Init(bool unbiased);
+  void Init(const int64_t axis);
+  void Init(const std::vector<int64_t> &axis);
+
+  bool get_unbiased() const;
+  void set_unbiased(bool unbiased);
+  std::vector<int64_t> get_axis() const;
+  void set_axis(const std::vector<int64_t> &axis);
 };
 
 abstract::AbstractBasePtr ReduceStdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

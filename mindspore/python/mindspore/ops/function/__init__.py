@@ -164,6 +164,7 @@ from .math_func import (
     maximum,
     logaddexp,
     logaddexp2,
+    std,
     ldexp,
     mv,
     inplace_add,

@@ -26,6 +26,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.operations._inner_ops import Cummin
 from mindspore.ops.operations.math_ops import STFT
+from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from ..operations.math_ops import (
@@ -2875,6 +2876,49 @@ def logaddexp2(x1, x2):
     return log_op(add_exp) / log_op(tensor_2)
 
 
+def std(input_x, axis=(), unbiased=True, keep_dims=False):
+    """
+    Returns the standard-deviation and mean of each row of the input tensor in the dimension `axis`.
+    If `axis` is a list of dimensions, reduce over all of them.
+
+    Args:
+        input_x (Tensor): Input tensor.
+        axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
+                                                  Only constant value is allowed.
+                                                  Must be in the range [-rank(`input_x`), rank(`input_x`)).
+        unbiased (bool):  Whether to use Bessel’s correction.
+                          If true, will use the Bessel correction unbiased estimation.
+                          If false, will through the biased estimation to calculate the standard deviation.
+        keep_dims (bool): Whether the output tensor has dim retained or not.
+                          If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions.
+
+    Returns:
+        A tuple (output_std, output_mean) containing the standard deviation and mean.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        ValueError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
+        >>> output = F.std(input_x, 1, True, False)
+        >>> output_std, output_mean = output[0], output[1]
+        >>> print(output_std)
+        [1.        2.5166116]
+        >>> print(output_mean)
+        [2.        1.3333334]
+    """
+    reduce_std_op = ReduceStd(axis=axis, unbiased=unbiased, keep_dims=keep_dims)
+    output = reduce_std_op(input_x)
+    return output
+
+
 def outer(x1, x2):
     """
     Return outer product of `x1` and `x2`. If `x1` is a vector of size n and `x2` is a vector of size m,
@@ -4376,6 +4420,7 @@ __all__ = [
     'matrix_determinant',
     'linspace',
     'matrix_solve',
+    'std',
     'same_type_shape',
     'maximum',
     'minimum',

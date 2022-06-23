@@ -108,6 +108,7 @@ constexpr auto kIsTraining = "is_training";
 constexpr auto kKeepDims = "keep_dims";
 constexpr auto kKeepProb = "keep_prob";
 constexpr auto kPadDimSize = "pad_dim_size";
+constexpr auto kUnbiased = "unbiased";
 constexpr auto kKernelSize = "kernel_size";
 constexpr auto kKSize = "ksize";
 constexpr auto kLimit = "limit";
