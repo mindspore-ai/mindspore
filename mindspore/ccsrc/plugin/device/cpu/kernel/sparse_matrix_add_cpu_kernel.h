@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SparseMatirxAddCpuKernelMod> {
+class SparseMatrixAddCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<SparseMatrixAddCpuKernelMod> {
  public:
-  SparseMatirxAddCpuKernelMod() = default;
-  ~SparseMatirxAddCpuKernelMod() override = default;
+  SparseMatrixAddCpuKernelMod() = default;
+  ~SparseMatrixAddCpuKernelMod() override = default;
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
@@ -53,7 +53,6 @@ class SparseMatirxAddCpuKernelMod : public NativeCpuKernelMod, public MatchKerne
                     const std::vector<kernel::AddressPtr> &outputs);
 
   size_t row_ = 0;
-  size_t dense_size_ = 0;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};
 };
