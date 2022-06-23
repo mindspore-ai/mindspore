@@ -23,9 +23,11 @@ aware training, MindSpore provides conversion functions to convert the trained m
 Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
+from __future__ import absolute_import
 import re
 import numpy as np
 import mindspore.context as context
+from mindspore import log as logger
 from ... import nn, ops
 from ..._checkparam import Validator, Rel
 from ...nn.layer import quant
@@ -311,6 +313,9 @@ class QuantizationAwareTraining(Quantizer):
         Raises:
             KeyError: If the `device_target` set in context is not in `support_device`.
         """
+
+        logger.warning("The compression module is deprecated and may not be supported in later version, please use "
+                       "MindSpore Golden Stick(https://gitee.com/mindspore/golden-stick) instead.")
         support_device = ["Ascend", "GPU"]
         if context.get_context('device_target') not in support_device:
             raise KeyError("Unsupported {} device target.".format(context.get_context('device_target')))
@@ -383,6 +388,8 @@ class QuantizationAwareTraining(Quantizer):
         """
         min_init = -6
         max_init = 6
+        if self.eps == 0:
+            raise ValueError("`epsilon` is zero may lead to divide zero error")
         if OptimizeOption.LEARNED_SCALE in self.optimize_option:
             subcell_weight_para = subcell.conv.weight.data.asnumpy()
             if subcell.has_bn:
@@ -486,6 +493,8 @@ class QuantizationAwareTraining(Quantizer):
         """
         min_init = -6
         max_init = 6
+        if self.eps == 0:
+            raise ValueError("`epsilon` is zero may lead to divide zero error")
         if OptimizeOption.LEARNED_SCALE in self.optimize_option:
             subcell_weight_para = subcell.dense.weight.data.asnumpy()
             if subcell.has_bn:
@@ -594,6 +603,8 @@ class QuantizationAwareTraining(Quantizer):
             QuantDtype.INT7.num_bits: QuantDtype.INT7,
             QuantDtype.INT8.num_bits: QuantDtype.INT8
         }
+        if self.eps == 0:
+            raise ValueError("`epsilon` is zero may lead to divide zero error")
         for i, cell_and_name in enumerate(network.cells_and_names()):
             cell = cell_and_name[1]
             if i not in quantizable_idx:
