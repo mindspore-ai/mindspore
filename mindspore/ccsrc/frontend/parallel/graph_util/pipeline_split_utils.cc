@@ -318,8 +318,8 @@ void AddVirtualAssignAdd(const FuncGraphPtr &root) {
 
 bool SliceSort(const CNodePtr &cnode1, const CNodePtr &cnode2) {
   if (IsPrimitiveCNode(cnode1, prim::kPrimStridedSlice) && IsPrimitiveCNode(cnode2, prim::kPrimStridedSlice)) {
-    auto slice_index1 = cnode1->GetPrimalAttr(SLICE_INDEX);
-    auto slice_index2 = cnode2->GetPrimalAttr(SLICE_INDEX);
+    auto slice_index1 = GetValue<int64_t>(cnode1->GetPrimalAttr(SLICE_INDEX));
+    auto slice_index2 = GetValue<int64_t>(cnode2->GetPrimalAttr(SLICE_INDEX));
     return slice_index1 < slice_index2;
   }
   if (IsPrimitiveCNode(cnode1, prim::kPrimStridedSlice)) {
@@ -680,7 +680,8 @@ void GetBorderNode(std::vector<AnfNodePtr> *forward_start, std::vector<AnfNodePt
                    std::vector<AnfNodePtr> *allreduce_params, const FuncGraphPtr &root) {
   std::list<ValuePtr> name_list = {};
   int64_t slice_index = 0;
-  for (auto &node : root->nodes()) {
+  auto all_nodes = DeepScopedGraphSearch(root->get_return());
+  for (auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
       continue;
     }

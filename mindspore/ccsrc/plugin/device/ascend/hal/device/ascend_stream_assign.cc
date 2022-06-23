@@ -277,6 +277,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   GetMaxStreamTaskNum();
   ReorderIndependentOrders(graph_ptr);
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  static const auto gen_mask_not_fusion = (common::GetEnv("GENMASK_NOT_FUSION") == "1");
   if (parallel_mode != parallel::kSemiAutoParallel && parallel_mode != parallel::kAutoParallel) {
     TrailingTimeOptimizationByReorder(graph_ptr);
   }
@@ -285,7 +286,9 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
   InsertStreamActive(graph_ptr);
   InsertEventForHcomParallel(graph_ptr);
   InsertEventForIndependentParallel(graph_ptr);
-  InsertEventForMicroBatchIndependent(graph_ptr);
+  if (gen_mask_not_fusion) {
+    InsertEventForMicroBatchIndependent(graph_ptr);
+  }
   GetIndependentMaxTarget(graph_ptr);
   InsertCtrlForIndependentParallel(graph_ptr);
   AdjustAtomicAddrCleanOrder(graph_ptr);

@@ -590,6 +590,7 @@ bool PipelineSplit(const ResourcePtr &res) {
                   << global_rank;
   }
   auto stage = InferStage(global_rank, stage_num, device_num);
+  static const auto gen_mask_not_fusion = (common::GetEnv("GENMASK_NOT_FUSION") == "1");
   auto per_stage_rank_num = device_num / stage_num;
   if (parallel::ParallelInit() != parallel::SUCCESS) {
     MS_LOG(EXCEPTION) << "parallel init failed.";
@@ -601,6 +602,9 @@ bool PipelineSplit(const ResourcePtr &res) {
   transformer->MainGraph();
   // step2: Do color broadcast
   transformer->BroadCastColoring();
+  if (!gen_mask_not_fusion) {
+    transformer->LabelGenMaskFusion();
+  }
   transformer->LabelMicroBatch();
   // step3: Handle shared parameters
   transformer->ParameterColoring();
