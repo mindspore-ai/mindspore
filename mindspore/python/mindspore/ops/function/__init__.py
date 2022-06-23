@@ -259,6 +259,7 @@ from .linalg_func import (
 from .sparse_func import (
     dense_to_sparse_coo,
     dense_to_sparse_csr,
+    csr_to_coo,
 )
 from .random_func import (
     standard_laplace,

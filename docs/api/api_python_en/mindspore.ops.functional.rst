@@ -404,6 +404,7 @@ Sparse Operation
 
     mindspore.ops.dense_to_sparse_coo
     mindspore.ops.dense_to_sparse_csr
+    mindspore.ops.csr_to_coo
 
 Parameter Operation Oprators
 ----------------------------

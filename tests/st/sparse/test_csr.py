@@ -559,7 +559,7 @@ def test_dtype_csr_tensor():
 def test_bprop():
     """
     Feature: Test back-propagation with CSR-related Ops.
-    Description: Test CSRReduceSum, CSRMul, CSRDiv, CSRMV, CSRTensor.to_coo(), CSRTensor.to_dense().
+    Description: Test CSRReduceSum, CSRMul, CSRDiv, CSRMV.
     Expectation: Success.
     """
     if get_platform() != "linux":
