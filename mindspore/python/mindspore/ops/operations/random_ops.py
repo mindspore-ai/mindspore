@@ -98,13 +98,13 @@ class TruncatedNormal(Primitive):
     Raises:
         TypeError: If `shape` is not a Tensor.
         TypeError: If `dtype` and input tensor type are not allowed.
+        TypeError: If `Seed` is not an integer.
         ValueError: If `shape` elements are not positive.
-        ValueError: If `shape` has less than 2 elements.
         ValueError: If `shape` is not a 1-D tensor.
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 2]), mstype.int32)

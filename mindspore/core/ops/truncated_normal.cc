@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   }
   MS_EXCEPTION_IF_NULL(primitive);
   const uint32_t kInpuDims = 1;
-  const uint32_t kInpuSizes = 2;
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
   int64_t max_length = GetValue<int64_t>(max_length_ptr);
@@ -55,8 +54,10 @@ abstract::ShapePtr TruncatedNormalInferShape(const PrimitivePtr &primitive,
   if (shape_v.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
-  if (shape_v[0] < kInpuSizes) {
-    MS_EXCEPTION(ValueError) << "The input tensor elements must >= 2.";
+  auto shape_input_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_input = shape_input_map[kShape];
+  if (shape_input[0] == 0) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', input can not be an empty tensor.";
   }
   if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
     std::vector<int64_t> out_shape;
@@ -118,7 +119,25 @@ TypePtr TruncatedNormalInferType(const PrimitivePtr &prim, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(TruncatedNormal, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(TruncatedNormal, BaseOperator);
+
+void TruncatedNormal::Init(const int64_t seed, const int64_t seed2) {
+  this->set_seed(seed);
+  this->set_seed2(seed2);
+}
+
+int64_t TruncatedNormal::get_seed() const {
+  auto value_ptr = this->GetAttr(kSeed);
+  return GetValue<int64_t>(value_ptr);
+}
+void TruncatedNormal::set_seed(const int64_t seed) { (void)this->AddAttr(kSeed, api::MakeValue(seed)); }
+
+int64_t TruncatedNormal::get_seed2() const {
+  auto value_ptr = this->GetAttr(kSeed2);
+  return GetValue<int64_t>(value_ptr);
+}
+void TruncatedNormal::set_seed2(const int64_t seed2) { (void)this->AddAttr(kSeed2, api::MakeValue(seed2)); }
+
 AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

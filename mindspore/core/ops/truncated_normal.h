@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,28 @@ namespace mindspore {
 namespace ops {
 constexpr auto kTruncatedNormal = "TruncatedNormal";
 class MIND_API TruncatedNormal : public BaseOperator {
+  /// \brief Generates random numbers according to the truncatednormal random number distribution.
+  /// Refer to Python API @ref mindspore.ops.Truncatednormal for more details.
  public:
   MIND_API_BASE_MEMBER(TruncatedNormal);
+  /// \brief Constructor.
   TruncatedNormal() : BaseOperator(kTruncatedNormal) { InitIOName({"shape"}, {"output"}); }
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Truncatednormal for the inputs.
+  void Init(const int64_t seed = 0, const int64_t seed2 = 0);
+
+  /// \brief Set seed. Defaults to 0.
+  void set_seed(const int64_t seed);
+  /// \brief Get seed.
+  ///
+  /// \return seed.
+  int64_t get_seed() const;
+
+  /// \brief Set seed2. Defaults to 0.
+  void set_seed2(const int64_t seed2);
+  /// \brief Get seed2.
+  ///
+  /// \return seed2.
+  int64_t get_seed2() const;
 };
 
 abstract::AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

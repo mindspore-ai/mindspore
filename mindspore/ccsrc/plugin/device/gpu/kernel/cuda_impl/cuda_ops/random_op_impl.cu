@@ -50,6 +50,20 @@ __global__ void UniformRealKernel(int seed, curandState *globalState, T *output,
   return;
 }
 
+template<typename S>
+__global__ void TruncatedNormalKernel(int seed, curandState *globalState, S *output, size_t count) {
+  for (int64_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    S random_data;
+    curand_init(seed, i, 0, &globalState[i]);
+    random_data = (S)curand_normal(&globalState[i]);
+    do {
+      random_data = (S)curand_normal(&globalState[i]);
+    }while(random_data < -(S)0.2 || random_data > (S)0.2);
+    output[i] = random_data;
+  }
+  return;
+}
+
 template <typename T>
 void StandardNormal(int seed, int seed2, curandState *globalState, T *output, size_t count, cudaStream_t cuda_stream) {
   int RNG_seed = 0;
@@ -100,6 +114,21 @@ void UniformReal(int seed, int seed2, curandState *globalState, T *output, size_
   return;
 }
 
+template<typename S>
+void TruncatedNormal(int seed, int seed2, curandState *globalState, S *output, size_t count, cudaStream_t cuda_stream) {
+  int RNG_seed = 0;
+  std::random_device rd;
+  if (seed2 != 0) {
+    RNG_seed = seed2;
+  } else if (seed != 0) {
+    RNG_seed = seed;
+  } else {
+    RNG_seed = static_cast<int>(rd());
+  }
+  TruncatedNormalKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(RNG_seed, globalState, output, count);
+  return;
+}
+
 template CUDA_LIB_EXPORT void StandardNormal<float>(int seed, int seed2, curandState *globalState,
                                                     float *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void StandardNormal<int>(int seed, int seed2, curandState *globalState,
@@ -114,3 +143,9 @@ template CUDA_LIB_EXPORT void UniformReal<float>(int seed, int seed2, curandStat
                                                  float *output, size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void UniformReal<int>(int seed, int seed2, curandState *globalState,
                                                int *output, size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TruncatedNormal<half>(int seed, int seed2,  curandState *globalState,
+                                                    half *output, size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TruncatedNormal<float>(int seed, int seed2,  curandState *globalState,
+                                                     float *output, size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void TruncatedNormal<double>(int seed, int seed2,  curandState *globalState,
+                                                      double *output, size_t count, cudaStream_t cuda_stream);
