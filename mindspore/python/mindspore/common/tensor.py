@@ -1828,7 +1828,7 @@ class Tensor(Tensor_):
             Int32
         """
         self._init_check()
-        dtype = validator.check_astype_dtype(dtype)
+        dtype = _check_astype_and_convert(dtype)
         if not copy and dtype == self.dtype:
             return self
         return tensor_operator_registry.get('cast')(self, dtype)
@@ -4789,5 +4789,21 @@ def _check_tensor_dynamic_shape(dtype=None, shape=None, init=None):
         raise ValueError("If setting dynamic shape, dtype must not be None, init must be None")
     return shape
 
+
+def _check_astype_and_convert(dtype):
+    """Check whether dtype is a valid input, and convert to mstype"""
+    all_types = mstype.__dtype__ + ["int", "float", "bool"]
+    if isinstance(dtype, str):
+        if dtype.lower() not in all_types:
+            raise TypeError(f"For Tensor.astype, the string input type must be one of {all_types}, "
+                            f"but got '{dtype}'.")
+        dtype = mstype.pytype_to_dtype(np.dtype(dtype.lower()))
+    elif isinstance(dtype, type):
+        dtype = mstype.pytype_to_dtype(dtype)
+    elif not dtype in mstype.number_type + (mstype.bool_,):
+        raise TypeError(
+            f"For Tensor.astype, the input type must be one of {list(mstype.number_type + (mstype.bool_,) + np_types)},"
+            f" but got '{dtype}'.")
+    return dtype
 
 tensor_operator_registry.register('vm_compare', _vm_compare)
