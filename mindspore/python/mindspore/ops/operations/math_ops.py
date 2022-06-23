@@ -2420,6 +2420,56 @@ class Expm1(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
+class Histogram(Primitive):
+    """
+    Computes the histogram of a tensor.
+
+    The elements are sorted into equal width bins between `min` and `max`.
+    If `min` and `max` are both zero, the minimum and maximum values of the data are used.
+
+    Elements lower than min and higher than max are ignored.
+
+    Args:
+        bins (int) : Number of histogram bins, optional. Default 100. If specified, must be positive.
+        min (float): An optional float of the lower end of the range (inclusive). Default value is 0.0.
+        max (float): An optional float of the upper end of the range (inclusive). Default value is 0.0.
+
+    Inputs:
+        - **x** (Tensor) - the input tensor, type support list [float16, float32, int32]
+
+    Outputs:
+        Tensor, 1-D Tensor with type int32.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` datetype not in support list.
+        TypeError: If attr `min` or `max` is not float.
+        TypeError: If attr `bins` is not int.
+        ValueError: If attr value `min` > `max`.
+        ValueError: If attr `bins` <= 0.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([1., 2, 1])
+        >>> op = ops.Histogram(bins=4, min=0.0, max=3.0)
+        >>> y = op(x)
+        >>> print(y)
+        [0 2 1 0]
+    """
+
+    @prim_attr_register
+    def __init__(self, bins=100, min=0.0, max=0.0): # pylint: disable=W0622
+        """Initialize Histogram."""
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
+        validator.check_value_type("bins", bins, [int], self.name)
+        validator.check_value_type("min", min, [float], self.name)
+        validator.check_value_type("max", max, [float], self.name)
+        validator.check_positive_int(bins, 'bins', self.name)
+        validator.check('min', min, 'max', max, Rel.LE, self.name)
+
+
 class HistogramFixedWidth(PrimitiveWithInfer):
     """
     Returns a rank 1 histogram counting the number of entries in values that fall into every bin. The bins are equal

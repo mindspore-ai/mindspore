@@ -59,6 +59,7 @@ constexpr auto kStackDestroy = "StackDestroy";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kGather = "Gather";
+constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
@@ -112,6 +113,7 @@ const std::set<std::string> kDynamicInputOps{
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
   kIdentityN};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
+  {kHistogram, "HistogramD"},
   {kMaxPoolV1, "MaxPool"},
   {kMaxPoolGradV1, "MaxPoolGrad"},
   {kNameRangeV2, "Range"},

@@ -53,6 +53,7 @@ from .logical_xor import _logical_xor_aicpu
 from .log1p import _log1p_aicpu
 from .asin import _asin_aicpu
 from .asin_grad import _asin_grad_aicpu
+from .histogram import _histogram_aicpu
 from .is_finite import _is_finite_aicpu
 from .is_inf import _is_inf_aicpu
 from .is_nan import _is_nan_aicpu
