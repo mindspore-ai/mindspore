@@ -75,12 +75,12 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_input =
       TRTTensorCast(ctx, tensorrt_in_tensors_[0].trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
   }
-
+  auto runtime_precision_mode = runtime_->GetRuntimePrecisionMode();
   auto activation_layer =
     ActivationTensorRT::AddActivation(ctx, activation_op->activation_type(), alpha,
                                       std::isfinite(activation_op->min_val()) ? activation_op->min_val() : FLT_MIN,
                                       std::isfinite(activation_op->max_val()) ? activation_op->max_val() : FLT_MAX,
-                                      activation_input, device_id_, quant_type_);
+                                      activation_input, device_id_, quant_type_, runtime_precision_mode);
   if (activation_layer == nullptr) {
     MS_LOG(ERROR) << "add activation op failed for TensorRT.";
     return RET_ERROR;
@@ -102,10 +102,12 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
 nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema::ActivationType activation_type,
                                                     float alpha, float min_value, float max_value,
                                                     nvinfer1::ITensor *trt_in_tensor, uint32_t device_id,
-                                                    schema::QuantType quant_type) {
+                                                    schema::QuantType quant_type,
+                                                    RuntimePrecisionMode runtime_precision_mode) {
   bool has_custom_plugin = HasCustomActivationPlugin(activation_type);
   // sigmoid precision is wrong for trt
-  if (quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
+  if (runtime_precision_mode == RuntimePrecisionMode::RuntimePrecisionMode_FP32 &&
+      quant_type == schema::QuantType_QUANT_NONE && has_custom_plugin) {
     std::string layer_name = std::string(trt_in_tensor->getName()) + "_activation";
     auto plugin = std::make_shared<ActivationOptPlugin>(layer_name.c_str(), activation_type, device_id);
     MS_LOG(INFO) << "using opt plugin for " << layer_name;
@@ -137,6 +139,18 @@ nvinfer1::ILayer *ActivationTensorRT::AddActivation(TensorRTContext *ctx, schema
     activation_layer->setAlpha(min_value);
     activation_layer->setBeta(max_value);
     return activation_layer;
+  }
+
+  if (activation_type == schema::ActivationType_SWISH) {
+    auto sigmoid_tensor = activation_layer->getOutput(0);
+    nvinfer1::ElementWiseOperation element_wise_op_ = nvinfer1::ElementWiseOperation::kPROD;
+    nvinfer1::IElementWiseLayer *swish_layer =
+      ctx->network()->addElementWise(*sigmoid_tensor, *trt_in_tensor, element_wise_op_);
+    if (swish_layer == nullptr) {
+      MS_LOG(ERROR) << "add activation op failed for TensorRT.";
+      return nullptr;
+    }
+    return swish_layer;
   }
 
   if (action_param.has_alpha) {
