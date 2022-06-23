@@ -198,6 +198,7 @@ tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &o
     {"Abs", [](const std::vector<TM> &n) { return n[0] <= TM(0) ? (TM(0) - n[0]) : n[0]; }},
     {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
     {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
+    {"Reshape", [](const std::vector<TM> &n) { return n[0]; }},
   };
   if (func_map.find(op) == func_map.end()) {
     return nullptr;
