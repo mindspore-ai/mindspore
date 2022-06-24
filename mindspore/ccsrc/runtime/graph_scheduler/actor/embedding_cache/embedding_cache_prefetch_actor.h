@@ -236,6 +236,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // the remote side.
   void WaitInitParametersOnRemote();
 
+  // Set current error information before finalizing actor.
+  void SetErrorInfo(const std::string &error_info);
+
   // Record sender and receiver pairs for different cache operation, server and parameter key.
   // key: cache operation(such as LookupEmbeddingCache and UpdateEmbeddingCache)
   // value: sender and receiver pairs for this kind of cache operation.
@@ -329,6 +332,9 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // Whether local host cache prefetching process needs to wait the computed graph finish current step when there is not
   // enough free memory space in the cache.
   bool host_cache_need_wait_graph_{false};
+
+  // Record latest error information user related.
+  std::string error_info_;
 };
 
 // RpcOperator is used to do rpc with other processes in distributed execution.
