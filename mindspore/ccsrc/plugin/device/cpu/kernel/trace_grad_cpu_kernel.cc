@@ -21,19 +21,20 @@ namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kInputNum = 2;
-constexpr size_t kInputShapeDim = 2;
 constexpr size_t kOutputNum = 1;
 }  // namespace
 
 void TraceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
-  if (input_shape_.size() != kInputShapeDim) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input tensor's dimension should be " << kInputShapeDim
-                      << ", but got " << input_shape_.size();
+  const std::vector<int64_t> x_shape_ = {2};
+  if (input_shape_ != x_shape_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape of input[x_shape] should be " << Vector2Str(x_shape_)
+                      << ", but got " << Vector2Str(input_shape_) << ".";
   }
-  values_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
 }
 
 bool TraceGradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -87,10 +88,12 @@ void TraceGradCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   auto grad = reinterpret_cast<T *>(inputs[0]->addr);
   auto shape = reinterpret_cast<int64_t *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   size_t min_size = std::min(shape[0], shape[1]);
   for (size_t i = 0; i < min_size; ++i) {
     *(output_addr + i * shape[1] + i) = *grad;
   }
 }
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TraceGrad, TraceGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

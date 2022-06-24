@@ -76,7 +76,6 @@ bool TraceCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
       break;
     default:
       MS_LOG(EXCEPTION) << "Unsupported input data type.";
-      return false;
   }
   return true;
 }
@@ -86,6 +85,7 @@ void TraceCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   size_t min_size = std::min(input_shape_[0], input_shape_[1]);
+  (void)memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   for (size_t i = 0; i < min_size; ++i) {
     *output_addr += *(input_addr + i * input_shape_[1] + i);
   }
