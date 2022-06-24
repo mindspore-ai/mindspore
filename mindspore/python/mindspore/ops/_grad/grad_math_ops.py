@@ -210,13 +210,16 @@ def _min_or_max_grad(x, axis, out, dout):
 def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
     """ArgMinWiwhValue and ArgMaxWithValue grad."""
     expand = P.ExpandDims()
+    squeeze = P.Squeeze()
     x_shape = F.shape(x)
     x_dim = len(x_shape)
     x_axis = axis
     if x_axis < 0:
         x_axis = axis + x_dim
     onehot_axis = x_axis
-    depth = x_shape[x_axis]
+    depth = 1
+    if x_shape:
+        depth = x_shape[axis]
     if keep_dims:
         dout_expand = dout[1]
         out = op(x)
@@ -229,6 +232,8 @@ def _argmin_or_argmax_grad(x, axis, keep_dims, op, out, dout):
     on_value = F.cast(F.scalar_to_array(1.0), type_x)
     off_value = F.cast(F.scalar_to_array(0.0), type_x)
     dx = dout_expand * onehot(out[0], depth, on_value, off_value)
+    if not x_shape:
+        dx = squeeze(dx)
     return dx
 
 

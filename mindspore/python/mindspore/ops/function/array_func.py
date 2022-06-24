@@ -26,6 +26,7 @@ from ..operations.array_ops import (
     MatrixDiagPartV3,
     Fills,
     Col2Im,
+    ArgMaxWithValue,
     ScatterNdMax,
     ScatterNdMul,
     IndexFill,
@@ -3476,6 +3477,7 @@ def max(input_x, axis=0, keep_dims=False):
         - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
+        TypeError: If data type `input_x` is not float16, float32 or float64.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -3491,7 +3493,7 @@ def max(input_x, axis=0, keep_dims=False):
         >>> print(index, output)
         [3] [0.7]
     """
-    argmax_with_value_op = P.ArgMaxWithValue(axis, keep_dims)
+    argmax_with_value_op = ArgMaxWithValue(axis, keep_dims)
     return argmax_with_value_op(input_x)
 
 
