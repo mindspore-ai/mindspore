@@ -82,7 +82,7 @@ std::vector<AreaWithRelation> Area::users_with_relation() const {
 int64_t Area::compute_size() const {
   auto op = dom();
   MS_EXCEPTION_IF_NULL(op);
-  return op->tensor_size();
+  return SizeToLong(op->tensor_size());
 }
 
 std::string Area::ToString() const {

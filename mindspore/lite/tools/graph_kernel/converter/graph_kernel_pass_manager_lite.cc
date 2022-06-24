@@ -202,7 +202,7 @@ void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo
   }
 
   if (IsValueNode<Primitive>(op)) {
-    PrimitivePtr primitive = GetValueNode<PrimitivePtr>(op);
+    auto primitive = GetValueNode<PrimitivePtr>(op);
     if (!primitive->instance_name().empty()) {
       gsub->dumpbuf << " {";
       gsub->dumpbuf << "instance name"
@@ -223,11 +223,11 @@ void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
   if (op == nullptr || gsub == nullptr) {
     return;
   }
-  if (op->attrs().empty()) {
+  auto &attrs = op->attrs();
+  if (attrs.empty()) {
     return;
   }
 
-  auto attrs = op->attrs();
   gsub->dumpbuf << " cnode_attrs: {";
   DumpAttrs(attrs, gsub);
   gsub->dumpbuf << "}";
@@ -336,11 +336,11 @@ void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePt
       gsub->local_var = 0;
       (*sub_graphs)[sub_graph] = gsub;
     }
-    std::vector<AnfNodePtr> parameters = sub_graph->parameters();
-    for (size_t idx = 0; idx < parameters.size(); idx++) {
-      MS_EXCEPTION_IF_NULL(parameters[idx]);
-      if ((*para_map).count(parameters[idx]) == 0) {
-        (*para_map)[parameters[idx]] = total_para++;
+    auto &param = sub_graph->parameters();
+    for (size_t idx = 0; idx < param.size(); idx++) {
+      MS_EXCEPTION_IF_NULL(param[idx]);
+      if ((*para_map).count(param[idx]) == 0) {
+        (*para_map)[param[idx]] = total_para++;
       }
     }
     if (!nd->isa<Parameter>()) {
@@ -419,7 +419,7 @@ std::optional<std::string> CreatePrefixPath(const std::string &input_path) {
   } else {
     auto pwd_path = FileUtils::GetRealPath("./");
     if (!pwd_path.has_value()) {
-      MS_LOG(ERROR) << "Cannot get pwd path";
+      MS_LOG(ERROR) << "Can not get pwd path";
       return std::nullopt;
     }
     prefix_path_str = pwd_path.value();
