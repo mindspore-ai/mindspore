@@ -290,18 +290,25 @@ void Cloner::GenParameters(const FuncGraphPtr &func_graph) {
     }
     auto free_var_node = utils::cast<AnfNodePtr>(free_var);
     // Don't lift weight parameter to top func_graph.
-    if (func_graph == lift_top_func_graph && free_var_node->isa<Parameter>()) {
+    if (IsLiftTopFuncGraph(func_graph) && free_var_node->isa<Parameter>()) {
       auto free_var_param = free_var_node->cast<ParameterPtr>();
       if (free_var_param->has_default()) {
-        MS_LOG(DEBUG) << "Bypass weight param: " << free_var_param->ToString()
+        MS_LOG(DEBUG) << "Bypass weight param: " << free_var_param->DebugString()
                       << " for top_func_graph: " << lift_top_func_graph->ToString();
         continue;
       }
     }
+    auto &repl_node = repl_map_node_[func_graph];
+    if (repl_node.find(free_var_node) != repl_node.end()) {
+      MS_LOG(DEBUG) << "Param exists: " << free_var_node->DebugString()
+                    << " for func_graph: " << func_graph->ToString();
+      continue;
+    }
+
     MS_LOG(DEBUG) << "Gen param: " << free_var_node->ToString() << " for func_graph: " << func_graph->ToString();
-    auto &fg_params = repl_func_graph_params_[func_graph];
     auto fv_parameter = AddParameter(func_graph, utils::cast<AnfNodePtr>(free_var));
     fv_parameter->set_user_data<bool>("lifted_from_fv", std::make_shared<bool>(true));
+    auto &fg_params = repl_func_graph_params_[func_graph];
     (void)fg_params.emplace_back(fv_parameter);
   }
 }
@@ -350,8 +357,6 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     }
   }
   AnfNodePtr new_param = nullptr;
-  const CloneInfo &item = todo_.back();
-  auto &lift_top_func_graph = item.origin;
   for (auto &param : params) {
     auto old_param = repl_node_[param];
     if (old_param->isa<CNode>() && old_param->func_graph() == func_graph) {
@@ -362,15 +367,22 @@ void Cloner::AddParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList 
     }
     if (old_params.find(old_param) != old_params.end()) {
       new_param = repl_map_node_[func_graph][old_param];
+      if (new_param == nullptr) {
+        MS_LOG(EXCEPTION) << "map_node, func_graph: " << func_graph->ToString()
+                          << ", old_param: " << old_param->DebugString() << " cannot found";
+      }
       input_params->push_back(new_param);
       continue;
     }
-    if (lift_top_func_graph == func_graph) {
+    if (IsLiftTopFuncGraph(func_graph)) {
       // Don't lift parameter from used_graphs to my parameter if I am the top;
       repl_node_[old_param] = old_param;
+      repl_map_node_[func_graph][old_param] = old_param;
+      MS_EXCEPTION_IF_NULL(old_param->func_graph());
+      repl_map_node_[old_param->func_graph()][old_param] = old_param;
       input_params->push_back(old_param);
-      MS_LOG(DEBUG) << "Bypass param: " << old_param->ToString()
-                    << " for top_func_graph: " << lift_top_func_graph->ToString();
+      MS_LOG(DEBUG) << "Bypass param: " << old_param->DebugString()
+                    << " for top_func_graph: " << func_graph->ToString();
       continue;
     }
     new_param = AddParameter(func_graph, old_param, false);
@@ -427,6 +439,15 @@ AnfNodePtr BuildPrimitiveValueNode(const PrimitivePtr &primitive) {
   return new_node;
 }
 }  // namespace
+
+bool Cloner::IsLiftTopFuncGraph(const FuncGraphPtr &func_graph) {
+  const auto &iter = std::find_if(todo_.begin(), todo_.end(),
+                                  [func_graph](const CloneInfo &item) -> bool { return item.origin == func_graph; });
+  if (iter == todo_.end()) {
+    return false;
+  }
+  return true;
+}
 
 void Cloner::AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                        const AnfNodePtrList &params) {
@@ -566,16 +587,34 @@ void Cloner::Lift(const std::vector<FuncGraphPtr> &sorted) {
   }
 }
 
-void Cloner::LiftParameters(const FuncGraphPtr &lift_top_func_graph) {
+void Cloner::SetEdgesBfs(const FuncGraphPtr &root_fg, FuncGraphTransaction *tx) {
+  MS_EXCEPTION_IF_NULL(root_fg);
+  const auto &func_graphs = BroadFirstSearchGraphUsed(root_fg);
+  for (auto &func_graph : func_graphs) {
+    SetEdges(func_graph, tx);
+  }
+}
+
+void Cloner::LiftParameters(const FuncGraphVector &todo_func_graphs) {
   MS_EXCEPTION_IF_NULL(manager_);
   auto tx = manager_->Transact();
-  const auto &func_graphs = BroadFirstSearchGraphUsed(lift_top_func_graph);
-  for (auto &func_graph : func_graphs) {
-    GenParameters(func_graph);
+  for (const auto &todo_func_graph : todo_func_graphs) {
+    const auto &func_graphs = BroadFirstSearchGraphUsed(todo_func_graph);
+    for (auto &func_graph : func_graphs) {
+      GenParameters(func_graph);
+    }
+    Lift(func_graphs);
   }
-  Lift(func_graphs);
-  for (auto &func_graph : func_graphs) {
-    SetEdges(func_graph, &tx);
+  const auto &roots = manager_->roots();
+  // Roots in manager is noot set in Pynative mode.
+  if (roots.empty()) {
+    for (const auto &todo_func_graph : todo_func_graphs) {
+      SetEdgesBfs(todo_func_graph, &tx);
+    }
+  } else {
+    for (const auto &root_func_graph : roots) {
+      SetEdgesBfs(root_func_graph, &tx);
+    }
   }
   tx.Commit();
 }
@@ -638,20 +677,19 @@ void Cloner::Run() {
     return;
   }
 
+  FuncGraphVector func_graphs;
+  (void)std::transform(todo_.begin(), todo_.end(), std::back_inserter(func_graphs),
+                       [](const CloneInfo &item) -> FuncGraphPtr { return item.origin; });
   if (type_ < kLifting) {
     // Basic and Inline Clone
-    FuncGraphVector func_graphs;
-    (void)std::transform(todo_.begin(), todo_.end(), std::back_inserter(func_graphs),
-                         [](const CloneInfo &item) -> FuncGraphPtr { return item.origin; });
     manager_ = Manage(func_graphs, false);
     CloneNodes();
     LinkEdges();
     SetDefaults();
   } else {
     // Lifting Clone
-    CloneInfo &item = todo_.back();
-    manager_ = Manage(item.origin);
-    LiftParameters(item.origin);
+    manager_ = Manage(func_graphs);
+    LiftParameters(func_graphs);
   }
 }
 
@@ -788,6 +826,25 @@ FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph) {
   Cloner cloner({}, false);
   cloner.AddClone(func_graph, nullptr, {}, kLifting);
   return cloner[func_graph];
+}
+
+FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs) {
+  Cloner cloner({}, false);
+  for (const auto &func_graph : func_graphs) {
+    cloner.AddClone(func_graph, nullptr, {}, kLifting);
+  }
+  cloner.Run();
+
+  FuncGraphVector lifted_func_graphs;
+  const auto &repl_func_graphs = cloner.cloned_func_graphs();
+  for (const auto &func_graph : func_graphs) {
+    auto iter = repl_func_graphs.find(func_graph);
+    auto ret = ((iter == repl_func_graphs.end()) ? func_graph : iter->second);
+    ret->set_python_obj(func_graph->python_obj());
+    lifted_func_graphs.push_back(ret);
+  }
+
+  return lifted_func_graphs;
 }
 
 ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation) {

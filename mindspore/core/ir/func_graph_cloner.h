@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,10 +111,12 @@ class MS_CORE_API Cloner {
   void AddInputs(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph, const AnfNodePtrList &params);
   void OrderParameters(const FuncGraphPtr &func_graph, const AnfNodePtrList &inputs, size_t arg_start_index);
   void SetEdges(const FuncGraphPtr &func_graph, FuncGraphTransaction *tx);
+  void SetEdgesBfs(const FuncGraphPtr &root_fg, FuncGraphTransaction *tx);
   void LiftParameters(const FuncGraphPtr &func_graph_user, const FuncGraphPtr &func_graph,
                       const AnfNodePtrList &params);
   void Lift(const std::vector<FuncGraphPtr> &sorted);
-  void LiftParameters(const FuncGraphPtr &lift_top_func_graph);
+  void LiftParameters(const FuncGraphVector &func_graphs);
+  bool IsLiftTopFuncGraph(const FuncGraphPtr &func_graph);
 
   bool clone_all_valuenodes_;
   bool clone_all_child_graphs_;
@@ -139,6 +141,7 @@ MS_CORE_API AnfNodePtr InlineClone(const FuncGraphPtr &func_graph, const FuncGra
                                    const AnfNodePtrList &func_graph_args, const ScopePtr &scope = nullptr);
 
 MS_CORE_API FuncGraphPtr LiftingClone(const FuncGraphPtr &func_graph);
+MS_CORE_API FuncGraphVector LiftingCloneMulti(const FuncGraphVector &func_graphs);
 
 MS_CORE_API ClonerPtr SpecializerClone(const FuncGraphPtr &func_graph, const TraceInfoPtr &relation);
 
