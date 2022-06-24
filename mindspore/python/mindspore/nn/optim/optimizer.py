@@ -689,10 +689,10 @@ class Optimizer(Cell):
             if self.is_group_lr:
                 lr = ()
                 for learning_rate in self.learning_rate:
-                    current_dynamic_lr = learning_rate(self.global_step)
+                    current_dynamic_lr = learning_rate(self.global_step).reshape(())
                     lr += (current_dynamic_lr,)
             else:
-                lr = self.learning_rate(self.global_step)
+                lr = self.learning_rate(self.global_step).reshape(())
         if self.is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         return lr
@@ -962,5 +962,4 @@ class _WrappedWeightDecay(Cell):
         self.loss_scale = Tensor(loss_scale, mstype.float32)
 
     def construct(self, global_step):
-        global_step = P.Reshape()(global_step, (()))
         return self.weight_decay(global_step) * self.loss_scale
