@@ -290,6 +290,10 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
 }
 
 void DataDumper::SetOpDebugMappingInfo(const NotNull<aicpu::dump::OpMappingInfo *> dump_info) const {
+  if (!is_op_debug_) {
+    MS_LOG(INFO) << "[DataDump] Not op debug mode, no need to set OpDebugMappingInfo.";
+    return;
+  }
   MS_LOG(INFO) << "[DataDump] Add op debug info to OpMappingInfo, task id = " << debug_task_id_
                << ", stream id = " << debug_stream_id_;
   aicpu::dump::Task task;
@@ -333,6 +337,7 @@ void DataDumper::OpDebugRegister() {
     return;
   }
 
+  is_op_debug_ = true;
   int64_t value = 0;
   rtError_t rt_ret = rtGetRtCapability(FEATURE_TYPE_MEMORY, MEMORY_INFO_TS_LIMITED, &value);
   if (rt_ret != RT_ERROR_NONE) {

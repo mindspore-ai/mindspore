@@ -14,6 +14,7 @@
 # ============================================================================
 import os
 import sys
+import json
 import tempfile
 import time
 import shutil
@@ -205,7 +206,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -345,12 +346,20 @@ def run_overflow_dump():
         overflow_stream_id = overflow_file_name[1][overflow_third_dot_pos+1:overflow_fourth_dot_pos]
         assert output_task_id == overflow_task_id
         assert output_stream_id == overflow_stream_id
+        # Convert the overflow file into json format
+        convert_tool = '/usr/local/Ascend/latest/tools/operator_cmp/compare/msaccucmp.py'
+        convert_to_json_cmd = 'python {0} convert -d {1} -out {2}'.format(convert_tool, overflow_path, exe_graph_path)
+        _ = os.system(convert_to_json_cmd)
+        overflow_json_path = overflow_path + '.output.0.json'
+        for _ in range(3):
+            if not os.path.exists(overflow_json_path):
+                time.sleep(2)
         # check if overflow dump file contains same task and stream id as file name
-        with open(overflow_path, 'rb') as f:
-            f.seek(321, 0)
-            raw_data = f.read()
-            task_id_infile = int.from_bytes(raw_data[24:25], 'little')
-            stream_id_infile = int.from_bytes(raw_data[16:17], 'little')
+        with open(overflow_json_path) as f:
+            file_content = json.load(f)
+            ai_core = file_content["AI Core"]
+            task_id_infile = ai_core["task_id"]
+            stream_id_infile = ai_core["stream_id"]
             assert output_task_id == str(task_id_infile)
             assert output_stream_id == str(stream_id_infile)
         del os.environ['MINDSPORE_DUMP_CONFIG']
@@ -376,7 +385,7 @@ def run_not_overflow_dump():
         assert not os.path.exists(exe_graph_path)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -415,13 +424,13 @@ def check_statistic_dump(dump_file_path):
         num_tensors = len(stats)
         assert num_tensors == 3
         for tensor in stats:
-            if (tensor['IO'] == 'input' and tensor['Slot'] == 0):
+            if tensor['IO'] == 'input' and tensor['Slot'] == 0:
                 assert tensor['Min Value'] == '1'
                 assert tensor['Max Value'] == '6'
-            elif (tensor['IO'] == 'input' and tensor['Slot'] == 1):
+            elif tensor['IO'] == 'input' and tensor['Slot'] == 1:
                 assert tensor['Min Value'] == '7'
                 assert tensor['Max Value'] == '12'
-            elif (tensor['IO'] == 'output' and tensor['Slot'] == 0):
+            elif tensor['IO'] == 'output' and tensor['Slot'] == 0:
                 assert tensor['Min Value'] == '8'
                 assert tensor['Max Value'] == '18'
 
@@ -548,7 +557,7 @@ def test_stat_dump_nulls():
             assert output['Avg Value'] == 'null'
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -581,7 +590,7 @@ def test_ascend_statistic_dump_kernel_by_kernel():
     del os.environ['GRAPH_OP_RUN']
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -596,7 +605,7 @@ def test_ascend_tensor_dump():
     run_saved_data_dump_test('test_async_dump', 'tensor')
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -642,7 +651,7 @@ class ConstantNet(nn.Cell):
         return self.relu(construct_tensor(ops.shape(x_)))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
