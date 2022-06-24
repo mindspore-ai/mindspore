@@ -429,6 +429,10 @@ build_lite() {
           mkdir -p ${BASEPATH}/output
           cp -r ${BASEPATH}/mindspore/lite/build/src/Release-*/mindspore-lite.framework ${BASEPATH}/output/mindspore-lite.framework
           cd ${BASEPATH}/output
+          local protobuf_arm_lib=${BASEPATH}/mindspore/lite/build/_deps/protobuf_arm-src/_build/libprotobuf-lite.a
+          if [ -e "$protobuf_arm_lib" ]; then
+            cp $protobuf_arm_lib ${BASEPATH}/output/mindspore-lite.framework/
+          fi
           tar -zcvf ${pkg_name}.tar.gz mindspore-lite.framework/
           sha256sum ${pkg_name}.tar.gz > ${pkg_name}.tar.gz.sha256
           rm -r mindspore-lite.framework

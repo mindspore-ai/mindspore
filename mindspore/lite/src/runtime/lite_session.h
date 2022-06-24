@@ -150,6 +150,7 @@ class LiteSession {
   int ContextInit(InnerContext *context);
   int CreateTensorRTDelegate();
   int CreateNPUDelegate();
+  int CreateCoreMLDelegate();
   int DelegateInit();
   int InitGPURuntime();
 

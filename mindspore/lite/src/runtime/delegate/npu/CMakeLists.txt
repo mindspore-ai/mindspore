@@ -4,6 +4,7 @@ file(GLOB_RECURSE NPU_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/pass/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../delegate_utils.cc
         )
 add_library(hiai SHARED IMPORTED)
 set_target_properties(hiai PROPERTIES IMPORTED_LOCATION

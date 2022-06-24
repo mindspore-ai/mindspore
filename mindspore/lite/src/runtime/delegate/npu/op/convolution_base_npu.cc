@@ -17,6 +17,7 @@
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 #include "src/runtime/delegate/npu/transpose_kernel.h"
+#include "src/runtime/delegate/delegate_utils.h"
 #include "nnacl/int8/pack_int8.h"
 
 namespace mindspore {
@@ -72,7 +73,8 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
     // weight fp16->fp32
     Float16ToFloat32(reinterpret_cast<const float16_t *>(origin_weight), reinterpret_cast<float *>(fp32_weight_),
                      inputs[1].ElementNum());
-    PackNHWCToNCHWFp32(fp32_weight_, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W], w_shape[NHWC_C]);
+    lite::PackNHWCToNCHWFp32(fp32_weight_, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W],
+                             w_shape[NHWC_C]);
 #else
     MS_LOG(ERROR) << "This platform does not support fp16.";
     FreeTmpWeight();
@@ -84,8 +86,8 @@ int ConvolutionBaseNPUOp::InitWeightConst(const std::vector<mindspore::MSTensor>
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
-    PackNHWCToNCHWFp32(origin_weight, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W],
-                       w_shape[NHWC_C]);
+    lite::PackNHWCToNCHWFp32(origin_weight, nchw_weight_, w_shape[NHWC_N], w_shape[NHWC_H] * w_shape[NHWC_W],
+                             w_shape[NHWC_C]);
   } else if (inputs[1].DataType() == DataType::kNumberTypeInt8) {
     nchw_weight_ = malloc(inputs[1].ElementNum() * sizeof(int8_t));
     if (nchw_weight_ == nullptr) {

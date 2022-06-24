@@ -446,6 +446,10 @@ if(APPLE)
             ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
             ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
             )
+    if(MSLITE_ENABLE_COREML)
+        add_subdirectory(runtime/delegate/coreml)
+        target_link_libraries(mindspore-lite_static coreml_proto_mid coreml_kernel_mid)
+    endif()
     add_dependencies(mindspore-lite_static fbs_inner_src)
 else()
     add_library(mindspore-lite_static STATIC $<TARGET_OBJECTS:lite_src_mid>)
