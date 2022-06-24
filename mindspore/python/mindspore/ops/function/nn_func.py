@@ -606,14 +606,14 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
         ValueError: The N or C dimensions of 'strides' or `dilations` is not set to 1.
         ValueError: If `modulated` is not set to True.
 
-    .. note::
+    Note:
         - This is an experimental interface that is subject to change or deletion.
         - For Ascend platform, the following cases are not supported:
-            - :math:`C_{in}` cannot be divisible by 8, e.g. `x` is :math:`(N, 2, H_{in}, W_{in})`
-            - `deformable_groups` is 1, e.g. `deformable_groups` is 2
-            - `offsets` value is float which does not contain a decimal part, e.g. `offsets` is assigned with
+          - :math:`C_{in}` cannot be divisible by 8, e.g. `x` is :math:`(N, 2, H_{in}, W_{in})`
+          - `deformable_groups` is 1, e.g. `deformable_groups` is 2
+          - `offsets` value is float which does not contain a decimal part, e.g. `offsets` is assigned with
             "numpy.ones()"
-            - `kernel_size` is less than 2, e.g. `kernel_size` is (1, 1)
+          - `kernel_size` is less than 2, e.g. `kernel_size` is (1, 1)
 
     Examples:
         >>> x = Tensor(np.ones((4, 3, 10, 10)), mstype.float32)
