@@ -167,7 +167,7 @@ def test_ascend_lenet1():
     assert loss_output.asnumpy() < 0.004
     assert loss_output.asnumpy() > 0.003
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
