@@ -216,7 +216,7 @@ build_python_wheel_package() {
     if [[ "${minor_version}" == "7" ]]; then
       py_tags="cp37-cp37m"
     fi
-    local whl_name=mindspore-lite-${VERSION_STR}-${py_tags}-linux_$1.whl
+    local whl_name=mindspore_lite-${VERSION_STR}-${py_tags}-linux_$1.whl
     cp dist/mindspore_lite-*.whl ${BASEPATH}/output/${whl_name}
     cd ${BASEPATH}/output/
     sha256sum ${whl_name} > ${whl_name}.sha256
