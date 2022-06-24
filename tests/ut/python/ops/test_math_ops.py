@@ -548,6 +548,17 @@ class KronFunc(nn.Cell):
         return self.kron(x, y)
 
 
+class Rot90Func(nn.Cell):
+    def __init__(self):
+        super(Rot90Func, self).__init__()
+        self.rot90 = ops.rot90
+        self.k = 0
+        self.dims = (0, 1)
+
+    def construct(self, x):
+        return self.rot90(x, self.k, self.dims)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -683,6 +694,10 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[0, 1, 2], [3, 4, 5]]).astype(np.float32)),
                         Tensor(np.array([[-1, -2, -3], [-4, -6, -8]]).astype(np.float32))],
         'skip': ['backward']}),
+    ('Rot90', {
+        'block': Rot90Func(),
+        'desc_inputs': [Tensor(np.array([[0, 1], [2, 3]]).astype(np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -817,6 +832,14 @@ raise_set = [
         'block': (KronFunc(), {'exception': RuntimeError}),
         'desc_inputs': [Tensor(np.random.randn(2, 2, 3, 2, 3), dtype=mstype.float16),
                         Tensor(np.random.randn(3, 2), dtype=mstype.float16)],
+        'skip': ['backward']}),
+    ('Rot90_1_Error', {
+        'block': (Rot90Func(), {'exception': TypeError}),
+        'desc_inputs': [[-5, -3, -1, 1, 3, 5]],
+        'skip': ['backward']}),
+    ('Rot90_2_Error', {
+        'block': (Rot90Func(), {'exception': ValueError}),
+        'desc_inputs': [Tensor(np.array([0]), dtype=mstype.float16)],
         'skip': ['backward']}),
 ]
 

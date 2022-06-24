@@ -246,7 +246,8 @@ from .math_func import (
     log10,
     approximate_equal,
     frac,
-    kron
+    kron,
+    rot90
 )
 from .nn_func import (
     adaptive_avg_pool2d,
