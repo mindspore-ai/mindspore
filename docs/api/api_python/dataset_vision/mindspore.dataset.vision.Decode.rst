@@ -7,7 +7,7 @@ mindspore.dataset.vision.Decode
 
     **参数：**
 
-    - **to_pil**  (bool，可选) - 是否将图像解码为PIL数据类型。若为True，图像将被解码为PIL数据类型，否则解码为NumPy数据类型。默认值：False。
+    - **to_pil** (bool，可选) - 是否将图像解码为PIL数据类型。若为True，图像将被解码为PIL数据类型，否则解码为NumPy数据类型。默认值：False。
 
     **异常：**
 
