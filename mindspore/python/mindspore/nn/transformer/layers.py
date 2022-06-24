@@ -32,6 +32,8 @@ from mindspore.nn.layer.activation import get_activation
 from mindspore.ops import functional as F
 from mindspore._checkparam import Validator
 from mindspore.ops.primitive import constexpr
+from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
+from mindspore.context import ParallelMode
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
 __all__ = [
@@ -362,6 +364,7 @@ class _Linear(Cell):
             used and the first dimension in BatchMatMul indicate expert_num. Default: 1.
         outer_batch (int): The replication number of experts. The replication is effective only when MoE is applied.
             Default: 1.
+        expert_group_size (int): The number of tokens in each data parallel group. Default: None.
         compute_dtype (dtype.Number): The computation type. Default: mstype.float16
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal
@@ -405,6 +408,7 @@ class _Linear(Cell):
                  transpose_b=True,
                  expert_num=1,
                  outer_batch=1,
+                 expert_group_size=None,
                  param_init_type=mstype.float32,
                  compute_dtype=mstype.float16):
         super(_Linear, self).__init__()
@@ -416,6 +420,7 @@ class _Linear(Cell):
         weight_shape = [out_channels, in_channels] if transpose_b else [in_channels, out_channels]
         self.expert_num = expert_num
         self.outer_batch = outer_batch
+        self.expert_group_size = expert_group_size
         if self.expert_num > 1:
             self.expert_flag = True
             self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape, param_init_type),
@@ -425,12 +430,26 @@ class _Linear(Cell):
             self.expert_flag = False
             self.weight = Parameter(initializer(weight_init, weight_shape, param_init_type), name="weight")
             self.matmul = P.MatMul(transpose_b=transpose_b)
+        self.use_expert_group_size = _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) \
+                                     and not _is_sharding_propagation() and self.expert_flag is True
+        if self.use_expert_group_size is True and self.expert_group_size is None:
+            raise ValueError("'expert_group_size' should be configured as an integer in MoEConfig.")
         self.bias = None
         self.has_bias = has_bias
         if self.has_bias:
             if isinstance(bias_init, Tensor) and (bias_init.ndim != 1 or bias_init.shape[0] != out_channels):
                 raise ValueError("The shape of parameter 'bias_init' is error, please check shape of 'bias_init'.")
-            self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
+            if self.expert_flag:
+                if self.use_expert_group_size is True:
+                    self.bias = Parameter(initializer(bias_init,
+                                                      [1, self.expert_num, self.expert_group_size, out_channels],
+                                                      param_init_type), name="bias")
+                else:
+                    self.bias = Parameter(initializer(bias_init,
+                                                      [self.outer_batch, self.expert_num, 1, out_channels],
+                                                      param_init_type), name="bias")
+            else:
+                self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
             self.bias.parallel_optimizer = False
             self.bias_add = P.Add()
         self.act_name = activation
@@ -443,7 +462,10 @@ class _Linear(Cell):
         out_shape = P.Shape()(x)[:-1] + (self.out_channels,)
         x = P.Reshape()(x, (-1, self.in_channels))
         if self.expert_flag:
-            x = P.Reshape()(x, (self.outer_batch, self.expert_num, -1, self.in_channels))
+            if self.use_expert_group_size is True:
+                x = P.Reshape()(x, (-1, self.expert_num, self.expert_group_size, self.in_channels))
+            else:
+                x = P.Reshape()(x, (self.outer_batch, self.expert_num, -1, self.in_channels))
         ori_dtype = F.dtype(x)
         weight = self.cast(self.weight, self.dtype)
         x = self.cast(x, self.dtype)
