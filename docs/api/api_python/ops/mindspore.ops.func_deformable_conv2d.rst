@@ -54,6 +54,6 @@ mindspore.ops.deformable_conv2d
     .. note::
         - 这是一个实验性质的接口，将来有可能被修改或删除。
         - 在Ascend平台上，目前需满足如下条件：
-        	- :math:`C_{in}` 能被8整除。
-        	- `deformable_groups` 为1且 `offsets` 的数据是浮点数类型（即需要包含小数部分）。
-        	- `kernel_size` 需大于1。
+          - :math:`C_{in}` 能被8整除。
+          - `deformable_groups` 为1且 `offsets` 的数据是浮点数类型（即需要包含小数部分）。
+          - `kernel_size` 需大于1。
