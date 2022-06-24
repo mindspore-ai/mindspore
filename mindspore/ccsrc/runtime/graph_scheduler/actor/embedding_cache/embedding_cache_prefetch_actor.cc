@@ -407,7 +407,9 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
 
 void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_name) {
   if (!running_) {
-    MS_LOG(EXCEPTION) << "PS embedding cache data processing thread isn't running.";
+    std::string error_info =
+      !error_info_.empty() ? error_info_ : "Embedding cache prefetch actor is finalized abnormally.";
+    MS_LOG(EXCEPTION) << error_info;
   }
   if (graph_step_ >= UINT64_MAX) {
     MS_LOG(EXCEPTION) << "The graph step(" << graph_step_ << ") will exceed the maximum value of uint64_t.";
@@ -417,7 +419,9 @@ void EmbeddingCachePrefetchActor::IncreaseGraphStep(const std::string &channel_n
     std::unique_lock<std::mutex> locker(data_mutex_);
     data_parser_.wait(locker, [this] { return ((finish_init_parameters_on_remote_ == true) || (running_ == false)); });
     if (!running_) {
-      MS_LOG(EXCEPTION) << "PS embedding cache data processing thread isn't running.";
+      std::string error_info =
+        !error_info_.empty() ? error_info_ : "Embedding cache prefetch actor is finalized abnormally.";
+      MS_LOG(EXCEPTION) << error_info;
     }
     MS_LOG(INFO) << "Graph running waiting embedding table init end.";
   }
@@ -449,6 +453,9 @@ void EmbeddingCachePrefetchActor::Run() {
   while (running_) {
     if (!PrefetchCache()) {
       running_ = false;
+      // If prefetch cache failed, need to finalize data prefetch thread which is executing
+      // PsDataPrefetch::PrefetchData(), so as to the minddata can release resource normally.
+      PsDataPrefetch::GetInstance().NotifyFinalize();
     }
   }
   MS_LOG(INFO) << "End prefetching cache.";
@@ -792,8 +799,11 @@ bool EmbeddingCachePrefetchActor::WaitGraphRun() {
   const int64_t longest_time_to_wait = 120;
   if (!data_parser_.wait_for(locker, std::chrono::seconds(longest_time_to_wait),
                              [this] { return graph_step_ > graph_running_step_; })) {
-    MS_LOG(ERROR) << "Data parse timeout, suggest to enlarge the vocab cache size(graph step:" << graph_step_
-                  << ", graph running step:" << graph_running_step_ << ").";
+    std::string err_info = "Prefetch embedding cache timeout, please enlarge the vocab cache size(graph step:" +
+                           std::to_string(graph_step_) + ", graph running step:" + std::to_string(graph_running_step_) +
+                           ").";
+    SetErrorInfo(err_info);
+    MS_LOG(ERROR) << err_info;
     return false;
   }
   set_current_graph_step();
@@ -1506,6 +1516,12 @@ void EmbeddingCachePrefetchActor::WaitInitParametersOnRemote() {
   // Note: wait to finish embedding lookup from remote.
   finish_init_parameters_on_remote_ = true;
   data_parser_.notify_one();
+}
+
+void EmbeddingCachePrefetchActor::SetErrorInfo(const std::string &error_info) {
+  static std::mutex mtx;
+  std::lock_guard<std::mutex> lock(mtx);
+  error_info_ = error_info;
 }
 
 void EmbeddingCachePrefetchActor::BuildRpcOperators() {

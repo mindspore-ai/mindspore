@@ -359,8 +359,14 @@ void DataPrepareActor::SetInitTensorsIfNeeded(const std::vector<std::vector<Tens
 void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                    OpContext<DeviceTensor> *const context, GraphExecutionStrategy real_strategy) {
   MS_EXCEPTION_IF_NULL(context);
-  // Preprocess before prepare data for data prepare actor.
-  PreprocessBeforePrepareData();
+  try {
+    // Preprocess before prepare data for data prepare actor.
+    PreprocessBeforePrepareData();
+  } catch (const std::exception &e) {
+    MsException::Instance().SetException();
+    std::string error_info = e.what();
+    SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
+  }
 
   MS_LOG(DEBUG) << "Data prepare actor(" << GetAID().Name() << ") prepares data.";
   real_strategy_ = real_strategy;

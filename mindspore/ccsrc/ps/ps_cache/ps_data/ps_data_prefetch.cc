@@ -144,6 +144,12 @@ size_t PsDataPrefetch::data_size(const std::string &channel_name) const {
 }
 
 void PsDataPrefetch::NotifyFinalize() {
+  static std::mutex mtx;
+  std::lock_guard<std::mutex> lock(mtx);
+  if (!need_wait_) {
+    return;
+  }
+
   need_wait_ = false;
   WakeAllChannel();
   data_prefetch_.notify_one();
