@@ -94,7 +94,7 @@ std::string DebugInfoManager::ParseInOutTensorToString(InOutFlag in_out_flag) {
   return "ERROR";
 }
 
-std::string DebugInfoManager::ParseDataTypeFlagToString(DataTypeFlag data_type_flag) {
+std::string DebugInfoManager::ParseDataTypeFlagToString(DataTypeFlag data_type_flag) const {
   switch (data_type_flag) {
     case ORIGIN:
       return "Origin";
@@ -363,7 +363,7 @@ int DebugInfoManager::AddComparedInfo(const mindspore::MSCallBackParam &call_bac
 }
 
 std::map<std::string, mindspore::schema::Tensor *> DebugInfoManager::ParseInputTensors(
-  const mindspore::lite::LiteModel &model) {
+  const mindspore::lite::LiteModel &model) const {
   std::map<std::string, mindspore::schema::Tensor *> maps;
   for (auto &node : model.graph_.all_nodes_) {
     for (auto &index : node->input_indices_) {

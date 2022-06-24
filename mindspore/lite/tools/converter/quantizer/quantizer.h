@@ -16,11 +16,9 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_H_
-#include <unordered_map>
 #include <utility>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "base/base.h"

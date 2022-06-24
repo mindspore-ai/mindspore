@@ -303,7 +303,7 @@ int FullQuantQuantizer::QuantNode(const FuncGraphPtr &func_graph) {
   auto outputs_diverg_info = calibrator_->GetOutputDivergInfo();
 
   auto cnodes = func_graph->GetOrderedCnodes();
-  for (auto &cnode : cnodes) {
+  for (const auto &cnode : cnodes) {
     auto op_name = cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
     if (primitive == nullptr) {
