@@ -112,15 +112,14 @@ class ConcatV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     workspace_size_list_.push_back(sizeof(int) * input_num_);
 
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-    output_size_ = 1;
+    output_size_ = SizeOf(output_shape);
     for (int i = 0; i < SizeToInt(output_shape.size()); i++) {
-      output_size_ *= output_shape[i];
       if (i > axis_) {
-        all_size_before_axis_ *= output_shape[i];
-        all_size_axis_ *= output_shape[i];
+        all_size_before_axis_ *= LongToInt(output_shape[i]);
+        all_size_axis_ *= LongToInt(output_shape[i]);
       }
       if (i == axis_) {
-        all_size_before_axis_ *= output_shape[i];
+        all_size_before_axis_ *= LongToInt(output_shape[i]);
       }
     }
     output_size_list_.push_back(output_size_ * sizeof(T));
@@ -153,7 +152,7 @@ class ConcatV2FwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
   int axis_;
   int input_num_;
-  int output_size_;
+  size_t output_size_;
   int all_size_before_axis_;
   int all_size_axis_;
   std::string kernel_name_;
