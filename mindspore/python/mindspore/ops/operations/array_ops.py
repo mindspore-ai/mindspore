@@ -954,6 +954,50 @@ class Transpose(Primitive):
         self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
 
 
+class ConjugateTranspose(Primitive):
+    """
+    Permutes the dimensions of the input tensor according to input permutation.
+
+    The type and rank of the output y is the same as the input x. And the shape and value of the input x
+    and the output y satisfy:
+    y.shape[i] == x.shape[perm[i]] for i in [0, 1, ..., rank(x) - 1]
+    y[i,j,k,...,s,t,u] == conj(x[perm[i], perm[j], perm[k],...,perm[s], perm[t], perm[u]])
+
+    Inputs:
+        - x (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - perm (tuple[int]) - The permutation to be converted. The elements in `perm` are composed of
+          the indexes of each dimension of `x`. The length of `perm` and the shape of `x` must be
+          the same. Only constant value is allowed. Must be in the range [0, rank(x)).
+
+    Outputs:
+        Tensor, the type of output tensor is the same as `x` and the shape of output tensor is decided by the
+        shape of `x` and the value of `Conj(perm)`.
+
+    Raises:
+        TypeError: If `perm` is not a tuple.
+        ValueError: If length of shape of `x` is not equal to length of shape of `perm`.
+        ValueError: If the same element exists in `perm`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.array_ops import ConjugateTranspose
+        >>> x = Tensor(np.array([[1 + 1j,2 + 2j], [3 + 3j, 4 + 4j]]), mindspore.complex64)
+        >>> perm = (1, 0)
+        >>> conjugate_transpose = ConjugateTranspose()
+        >>> output = conjugate_transpose(x, perm)
+        >>> print(output)
+            [[1.-1.j 3.-3.j]
+            [2.-2.j 4.-4.j]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ConjugateTranspose"""
+        self.init_prim_io_names(inputs=['x', 'perm'], outputs=['output'])
+
+
 class Unique(Primitive):
     """
     Returns the unique elements of input tensor and also return a tensor containing the index of each value of input

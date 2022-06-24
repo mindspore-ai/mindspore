@@ -156,6 +156,7 @@ constexpr auto kMatrixSetDiagV3 = "MatrixSetDiagV3";
 constexpr auto kMatrixBandPart = "MatrixBandPart";
 constexpr auto kDynamicBroadcastGradientArgs = "DynamicBroadcastGradientArgs";
 constexpr auto kTranspose = "Transpose";
+constexpr auto kConjugateTranspose = "ConjugateTranspose";
 constexpr auto kSplitV = "SplitV";
 constexpr auto kListDiff = "ListDiff";
 constexpr auto kDynamicBroadcastTo = "DynamicBroadcastTo";
@@ -344,6 +345,7 @@ GVAR_DEF(PrimitivePtr, kPrimFlattenConcat, std::make_shared<Primitive>(kFlattenC
 GVAR_DEF(PrimitivePtr, kPrimSqueeze, std::make_shared<Primitive>("Squeeze"));
 GVAR_DEF(PrimitivePtr, kPrimUnsqueeze, std::make_shared<Primitive>("Unsqueeze"));
 GVAR_DEF(PrimitivePtr, kPrimTranspose, std::make_shared<Primitive>(kTranspose));
+GVAR_DEF(PrimitivePtr, kPrimConjugateTranspose, std::make_shared<Primitive>(kConjugateTranspose));
 GVAR_DEF(PrimitivePtr, kPrimTransposeNOD, std::make_shared<Primitive>("TransposeNOD"));
 GVAR_DEF(PrimitivePtr, kPrimGatherV2, std::make_shared<Primitive>("GatherV2"));
 GVAR_DEF(PrimitivePtr, kPrimGatherD, std::make_shared<Primitive>("GatherD"));

@@ -192,6 +192,7 @@ from .mul_no_nan import _mul_no_nan_aicpu
 from .adjust_contrastv2 import _adjust_contrastv2_aicpu
 from .priority_replay_buffer import _prb_create_op_cpu
 from .priority_replay_buffer import _prb_push_op_cpu
+from .conjugate_transpose import _conjugate_transpose_aicpu
 from .priority_replay_buffer import _prb_sample_op_cpu
 from .priority_replay_buffer import _prb_update_op_cpu
 from .equal import _equal_aicpu

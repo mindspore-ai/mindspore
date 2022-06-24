@@ -34,6 +34,7 @@ from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, BesselK1, BesselK0e, \
                                               BesselK1e, BesselY0, BesselY1, Bucketize
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
@@ -3000,6 +3001,11 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([[1, 2, 3], [4, 5, 6]]).astype(np.float32)),
                         Tensor(np.array([5, 2, 3]).astype(np.int32))],
         'skip': ['backward']}),
+    ('ConjugateTranspose', {
+        'block': ConjugateTranspose(),
+        'desc_inputs': [Tensor(np.array([[1], [1]]).astype(np.float32)),
+                        (0, 1)],
+        'desc_bprop': [Tensor(np.array([[1], [1]]).astype(np.float32))]}),
     ('ExpandDims', {
         'block': P.ExpandDims(),
         'desc_const': [0],
