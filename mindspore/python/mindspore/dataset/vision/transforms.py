@@ -43,7 +43,7 @@ Examples:
     ...                    vision.RandomRotation((0, 15)),
     ...                    vision.Normalize((100, 115.0, 121.0), (71.0, 68.0, 70.0)),
     ...                    vision.HWC2CHW()]
-    >>> onehot_op = data_transforms.OneHot(num_classes=10)
+    >>> onehot_op = transforms.OneHot(num_classes=10)
     >>> # apply the transformation to the dataset through data1.map()
     >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
     ...                                                 input_columns="image")
@@ -61,13 +61,14 @@ from .py_transforms_util import is_pil
 from .utils import AutoAugmentPolicy, Border, ConvertMode, ImageBatchFormat, Inter, SliceMode, parse_padding
 from .validators import check_adjust_gamma, check_alpha, check_auto_augment, check_auto_contrast, \
     check_bounding_box_augment_cpp, check_center_crop, check_convert_color, check_crop, check_cut_mix_batch_c, \
-    check_cutout_new, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, check_mix_up, \
-    check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, check_pad_to_size, \
-    check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, check_random_affine, \
-    check_random_auto_contrast, check_random_color_adjust, check_random_crop, check_random_erasing, \
-    check_random_perspective, check_random_resize_crop, check_random_rotation, check_random_select_subpolicy_op, \
-    check_random_solarize, check_range, check_rescale, check_resize, check_resize_interpolation, check_rgb_to_hsv, \
-    check_rotate, check_slice_patches, check_ten_crop, check_uniform_augment_cpp, check_to_tensor, FLOAT_MAX_INTEGER
+    check_cutout_new, check_decode, check_five_crop, check_gaussian_blur, check_hsv_to_rgb, check_linear_transform, \
+    check_mix_up, check_mix_up_batch_c, check_normalize, check_normalizepad, check_num_channels, check_pad, \
+    check_pad_to_size, check_positive_degrees, check_posterize, check_prob, check_random_adjust_sharpness, \
+    check_random_affine, check_random_auto_contrast, check_random_color_adjust, check_random_crop, \
+    check_random_erasing, check_random_perspective, check_random_resize_crop, check_random_rotation, \
+    check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
+    check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_ten_crop, \
+    check_uniform_augment_cpp, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -492,7 +493,7 @@ class CutMixBatch(TensorOperation):
 
     Examples:
         >>> from mindspore.dataset.vision import ImageBatchFormat
-        >>> onehot_op = data_transforms.OneHot(num_classes=10)
+        >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
         >>> cutmix_batch_op = vision.CutMixBatch(ImageBatchFormat.NHWC, 1.0, 0.5)
@@ -555,6 +556,7 @@ class CutOut(TensorOperation):
 class Decode(TensorOperation, PyTensorOperation):
     """
     Decode the input image in RGB mode.
+    Supported image formats: JPEG, BMP, PNG, TIFF, GIF(need `to_pil=True`), WEBP(need `to_pil=True`).
 
     Args:
         to_pil (bool, optional): decode to PIL Image (default=False).
@@ -568,11 +570,18 @@ class Decode(TensorOperation, PyTensorOperation):
         ``CPU``
 
     Examples:
+        >>> # Eager usage
+        >>> import numpy as np
+        >>> raw_image = np.fromfile("/path/to/image/file", np.uint8)
+        >>> decoded_image = vision.Decode()(raw_image)
+        >>>
+        >>> # Pipeline usage
         >>> transforms_list = [vision.Decode(), vision.RandomHorizontalFlip()]
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
 
+    @check_decode
     def __init__(self, to_pil=False):
         super().__init__()
         self.to_pil = to_pil
@@ -1077,7 +1086,7 @@ class MixUpBatch(TensorOperation):
         ``CPU``
 
     Examples:
-        >>> onehot_op = data_transforms.OneHot(num_classes=10)
+        >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> image_folder_dataset= image_folder_dataset.map(operations=onehot_op,
         ...                                                input_columns=["label"])
         >>> mixup_batch_op = vision.MixUpBatch(alpha=0.9)

@@ -220,15 +220,14 @@ class Compose(CompoundOperation):
         ``CPU``
 
     Examples:
-        >>> compose = data_transforms.Compose([vision.Decode(), vision.RandomCrop(512)])
+        >>> compose = transforms.Compose([vision.Decode(), vision.RandomCrop(512)])
         >>> image_folder_dataset = image_folder_dataset.map(operations=compose)
         >>> image_folder_dataset_dir = "/path/to/image_folder_dataset_directory"
         >>>
         >>> # create a dataset that reads all files in dataset_dir with 8 threads
         >>> image_folder_dataset = ds.ImageFolderDataset(image_folder_dataset_dir, num_parallel_workers=8)
         >>> # create a list of transformations to be applied to the image data
-        >>> transform = mindspore.dataset.transforms.transforms.Compose(
-        ...                               [vision.Decode(to_pil=True),
+        >>> transform = transforms.Compose([vision.Decode(to_pil=True),
         ...                                vision.RandomHorizontalFlip(0.5),
         ...                                vision.ToTensor(),
         ...                                vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
@@ -251,8 +250,8 @@ class Compose(CompoundOperation):
         >>> # An example of combined operations
         >>> arr = [0, 1]
         >>> dataset = ds.NumpySlicesDataset(arr, column_names=["cols"], shuffle=False)
-        >>> transformed_list = [data_transforms.OneHot(2),
-        ...                     data_transforms.Mask(data_transforms.Relational.EQ, 1)]
+        >>> transformed_list = [transforms.OneHot(2),
+        ...                     transforms.Mask(transforms.Relational.EQ, 1)]
         >>> dataset = dataset.map(operations=transformed_list, input_columns=["cols"])
         >>>
         >>> # Here is an example of mixing vision ops
@@ -344,7 +343,7 @@ class Compose(CompoundOperation):
 
 class Concatenate(TensorOperation):
     """
-    Tensor operation that concatenates all columns into a single tensor.
+    Tensor operation that concatenates all columns into a single tensor, only 1D tenspr is supported.
 
     Args:
         axis (int, optional): Concatenate the tensors along given axis (Default=0).
@@ -365,7 +364,7 @@ class Concatenate(TensorOperation):
         >>> # concatenate string
         >>> prepend_tensor = np.array(["dw", "df"], dtype='S')
         >>> append_tensor = np.array(["dwsdf", "df"], dtype='S')
-        >>> concatenate_op = data_transforms.Concatenate(0, prepend_tensor, append_tensor)
+        >>> concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
         >>> data = [["This","is","a","string"]]
         >>> dataset = ds.NumpySlicesDataset(data)
         >>> dataset = dataset.map(operations=concatenate_op)
@@ -401,7 +400,7 @@ class Duplicate(TensorOperation):
         >>> # +---------+
         >>> data = [[1,2,3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=data_transforms.Duplicate(),
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Duplicate(),
         ...                                                 input_columns=["x"],
         ...                                                 output_columns=["x", "y"],
         ...                                                 column_order=["x", "y"])
@@ -444,7 +443,7 @@ class Fill(TensorOperation):
         ...         yield (np.array([i]),)
         >>> generator_dataset = ds.GeneratorDataset(generator_1d, column_names="col1")
         >>> # [[0], [1], [2], [3], [4]]
-        >>> fill_op = data_transforms.Fill(3)
+        >>> fill_op = transforms.Fill(3)
         >>> generator_dataset = generator_dataset.map(operations=fill_op)
         >>> # [[3], [3], [3], [3], [3]]
     """
@@ -487,7 +486,7 @@ class Mask(TensorOperation):
         >>> # +---------+
         >>> data = [[1, 2, 3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=data_transforms.Mask(Relational.EQ, 2))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Mask(Relational.EQ, 2))
         >>> # Data after
         >>> # |       col         |
         >>> # +--------------------+
@@ -529,7 +528,7 @@ class OneHot(TensorOperation):
 
     Examples:
         >>> # Assume that dataset has 10 classes, thus the label ranges from 0 to 9
-        >>> onehot_op = data_transforms.OneHot(num_classes=10)
+        >>> onehot_op = transforms.OneHot(num_classes=10)
         >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
     """
 
@@ -571,7 +570,7 @@ class PadEnd(TensorOperation):
         >>> # +---------|
         >>> data = [[1, 2, 3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=data_transforms.PadEnd(pad_shape=[4],
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.PadEnd(pad_shape=[4],
         ...                                                                                pad_value=10))
         >>> # Data after
         >>> # |    col     |
@@ -609,7 +608,7 @@ class Plugin(TensorOperation):
         ``CPU``
 
     Examples:
-        >>> plugin = data_transforms.Plugin("pluginlib.so", "PluginDecode")
+        >>> plugin = transforms.Plugin("pluginlib.so", "PluginDecode")
         >>> image_folder_dataset = image_folder_dataset.map(operations=plugin)
     """
 
@@ -645,17 +644,14 @@ class RandomApply(CompoundOperation):
         ``CPU``
 
     Examples:
-        >>> rand_apply = data_transforms.RandomApply([vision.RandomCrop(512)])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=rand_apply)
-        >>>
         >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
+        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> transforms = Compose([vision.Decode(to_pil=True),
-        ...                       data_transforms.RandomApply(transforms_list, prob=0.6),
-        ...                       vision.ToTensor()])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
+        >>> composed_transform = Compose([vision.Decode(to_pil=True),
+        ...                               transforms.RandomApply(transforms_list, prob=0.6),
+        ...                               vision.ToTensor()])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
     """
 
     @check_random_transform_ops
@@ -697,17 +693,14 @@ class RandomChoice(CompoundOperation):
         ``CPU``
 
     Examples:
-        >>> rand_choice = data_transforms.RandomChoice([vision.CenterCrop(50), vision.RandomCrop(512)])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=rand_choice)
-        >>>
         >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
+        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> transforms = Compose([vision.Decode(to_pil=True),
-        ...                       data_transforms.RandomChoice(transforms_list),
-        ...                       vision.ToTensor()])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
+        >>> composed_transform = Compose([vision.Decode(),
+        ...                               transforms.RandomChoice(transforms_list),
+        ...                               vision.ToTensor()])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
 
     """
 
@@ -735,7 +728,7 @@ class RandomChoice(CompoundOperation):
 
 class RandomOrder(PyTensorOperation):
     """
-    Perform a series of transforms to the input PIL image in a random order.
+    Perform a series of transforms to the input image in a random order.
 
     Args:
         transforms (list): List of the transformations to apply.
@@ -752,14 +745,15 @@ class RandomOrder(PyTensorOperation):
     Examples:
         >>> from mindspore.dataset.transforms import Compose
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
-        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), is_hwc=False),
+        ...                    vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262)),
         ...                    vision.RandomErasing()]
-        >>> transforms = Compose([vision.Decode(to_pil=True),
-        ...                       data_transforms.RandomOrder(transforms_list),
-        ...                       vision.ToTensor()])
-        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms, input_columns=["image"])
+        >>> composed_transform = Compose([vision.Decode(to_pil=False),
+        ...                               transforms.RandomOrder(transforms_list),
+        ...                               vision.ToTensor()])
+        >>> image_folder_dataset = image_folder_dataset.map(operations=composed_transform, input_columns=["image"])
     """
 
+    @check_random_transform_ops
     def __init__(self, transforms):
         super().__init__()
         self.transforms = transforms
@@ -868,7 +862,7 @@ class Slice(TensorOperation):
         >>> data = [[1, 2, 3]]
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
         >>> # slice indices 1 and 2 only
-        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=data_transforms.Slice(slice(1,3)))
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms.Slice(slice(1,3)))
         >>> # Data after
         >>> # |   col   |
         >>> # +---------+
@@ -915,7 +909,7 @@ class TypeCast(TensorOperation):
         ...         yield (np.array([i]),)
         >>>
         >>> dataset = ds.GeneratorDataset(generator_1d, column_names='col')
-        >>> type_cast_op = data_transforms.TypeCast(mstype.int32)
+        >>> type_cast_op = transforms.TypeCast(mstype.int32)
         >>> dataset = dataset.map(operations=type_cast_op)
     """
 
@@ -961,7 +955,7 @@ class Unique(TensorOperation):
         >>> # +--------------------+
         >>> data = [[[0,1,2], [1,2,3]]]
         >>> dataset = ds.NumpySlicesDataset(data, ["x"])
-        >>> dataset = dataset.map(operations=data_transforms.Unique(),
+        >>> dataset = dataset.map(operations=transforms.Unique(),
         ...                       input_columns=["x"],
         ...                       output_columns=["x", "y", "z"],
         ...                       column_order=["x", "y", "z"])
