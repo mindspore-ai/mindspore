@@ -41,7 +41,7 @@ bool IsLinearActivation(const api::SharedPtr<ops::Conv2DFusion> &conv2d) {
   return false;
 }
 
-bool IsCommonConvNode(const BaseRef &n) {
+bool IsConvNode(const BaseRef &n, ConvNode node) {
   if (utils::isa<AnfNodePtr>(n)) {
     auto anf_node = utils::cast<AnfNodePtr>(n);
     if (!opt::CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion)) {
@@ -57,32 +57,24 @@ bool IsCommonConvNode(const BaseRef &n) {
     if (conv == nullptr) {
       return false;
     }
-    return conv->get_group() == 1;
+
+    if (node == COMMON_CONV) {
+      return conv->get_group() == 1;
+    } else if (node == DEPTHWISE_CONV) {
+      bool ret = IsLinearActivation(conv) && conv->GetAttr(ops::kIsDepthWise) != nullptr &&
+                 GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
+      return ret;
+    } else {
+      MS_LOG(ERROR) << "Not supported conv node type.";
+      return false;
+    }
   }
   return false;
 }
 
-bool IsDepthWiseConvNode(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    auto anf_node = utils::cast<AnfNodePtr>(n);
-    if (!opt::CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion)) {
-      return false;
-    }
-    api::SharedPtr<ops::Conv2DFusion> conv = nullptr;
-    if (utils::isa<CNodePtr>(anf_node)) {
-      auto c_node = anf_node->cast<CNodePtr>();
-      conv = ops::GetOperator<ops::Conv2DFusion>(c_node->input(0));
-    } else if (utils::isa<ValueNodePtr>(anf_node)) {
-      conv = ops::GetOperator<ops::Conv2DFusion>(anf_node);
-    }
-    if (conv == nullptr || !IsLinearActivation(conv)) {
-      return false;
-    }
-    auto ret = conv->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
-    return ret;
-  }
-  return false;
-}
+bool IsCommonConvNode(const BaseRef &n) { return IsConvNode(n, COMMON_CONV); }
+
+bool IsDepthWiseConvNode(const BaseRef &n) { return IsConvNode(n, DEPTHWISE_CONV); }
 
 VectorRef CLEPattern::DefineConvWithConvPattern() const {
   auto is_conv1 = std::make_shared<CondVar>(IsCommonConvNode);

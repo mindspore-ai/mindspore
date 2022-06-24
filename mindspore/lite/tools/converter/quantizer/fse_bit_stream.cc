@@ -58,7 +58,7 @@ void FSEBitStream::Empty() {
 
 int64_t FSEBitStream::Pop(uint8_t bit_count) {
   MS_ASSERT(curr_bit_count_ <= kCurrentBitCount);
-  int64_t right = curr_chunk_ >> (kCurrentBitCount - curr_bit_count_);
+  int64_t right = curr_chunk_ >> static_cast<size_t>(kCurrentBitCount - curr_bit_count_);
   int64_t res = right & ((1 << bit_count) - 1);
   curr_bit_count_ -= static_cast<int8_t>(bit_count);
   if (curr_bit_count_ > 0) {

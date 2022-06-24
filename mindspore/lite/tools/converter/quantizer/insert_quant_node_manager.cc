@@ -118,7 +118,7 @@ int InsertQuantNodeManager::InsertCastNode(const FuncGraphPtr &graph, const CNod
   return RET_OK;
 }
 
-int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) {
+int InsertQuantNodeManager::CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const {
   bool is_graph_input = IsGraphInput(input_node);
   if (!input_node->isa<mindspore::CNode>() && !is_graph_input) {
     return RET_NO_CHANGE;
