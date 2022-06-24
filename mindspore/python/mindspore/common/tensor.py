@@ -822,8 +822,8 @@ class Tensor(Tensor_):
             >>> updates = Tensor(np.array([1.0, 2.0]).astype('float32'))
             >>> output = input_x.scatter_div(indices, updates)
             >>> print(output)
-            [[-0.05, 0.3, 3.6  ]
-             [ 0.4,  0.5, -3.2 ]]
+            [[-0.05  0.3  3.6  ]
+             [ 0.4   0.5  -3.2 ]]
         """
         self._init_check()
         return tensor_operator_registry.get('tensor_scatter_div')(self, indices, updates)

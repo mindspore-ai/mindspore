@@ -6793,8 +6793,8 @@ class TensorScatterDiv(_TensorScatterOp):
         >>> #      second_input_x = input_x[0][0] * updates[1] = [[-0.05, 0.3, 3.6], [0.4, 0.5, -3.2]]
         >>> output = op(input_x, indices, updates)
         >>> print(output)
-        [[-0.05, 0.3, 3.6  ]
-         [ 0.4,  0.5, -3.2 ]]
+        [[-0.05  0.3  3.6  ]
+         [ 0.4   0.5  -3.2 ]]
     """
 
     @prim_attr_register

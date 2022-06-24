@@ -2805,6 +2805,7 @@ def unsorted_segment_min(x, segment_ids, num_segments):
         - The `segment_ids` must be non-negative tensor.
 
     Args:
+        x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
                               the value must be non-negative tensor. The data type must be int32.
         num_segments (int): The value specifies the number of distinct `segment_ids`.
@@ -2853,6 +2854,7 @@ def unsorted_segment_max(x, segment_ids, num_segments):
         - The `segment_ids` must be non-negative tensor.
 
     Args:
+        x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`. With float16, float32 or int32 data type.
         segment_ids (Tensor): A `1-D` tensor whose shape is :math:`(x_1)`,
                               the value must be non-negative tensor. The data type must be int32.
         num_segments (int): The value specifies the number of distinct `segment_ids`.
@@ -3146,8 +3148,8 @@ def tensor_scatter_div(input_x, indices, updates):
         >>> updates = Tensor(np.array([1.0, 2.0]), mindspore.float32)
         >>> output = ops.tensor_scatter_div(input_x, indices, updates)
         >>> print(output)
-        [[-0.05, 0.3, 3.6  ]
-         [ 0.4,  0.5, -3.2 ]]
+        [[-0.05  0.3  3.6  ]
+         [ 0.4   0.5  -3.2 ]]
     """
     return tensor_scatter_div_(input_x, indices, updates)
 
