@@ -177,9 +177,9 @@ build_python_wheel_package() {
     mkdir -pv package/mindspore_lite/lib/
     cp ../python/api/* package/mindspore_lite/
     cp src/*.so package/mindspore_lite/lib/
-    local pkg_name=mindspore_lite-${VERSION_STR}-linux-$1
+    local pkg_name=mindspore-lite-${VERSION_STR}-linux-$1
     if [[ "$1" == "x86_64" ]]; then
-      local pkg_name=mindspore_lite-${VERSION_STR}-linux-x64
+      local pkg_name=mindspore-lite-${VERSION_STR}-linux-x64
     fi
     if [ -d "${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog" ]; then
       cp ${INSTALL_PREFIX}/${pkg_name}/runtime/third_party/glog/*.so* package/mindspore_lite/lib/
