@@ -1129,7 +1129,7 @@ def test_ctrl_if_by_while_and_while_in_first_if():
     net(input_me_a)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

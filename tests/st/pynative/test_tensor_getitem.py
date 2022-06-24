@@ -1185,7 +1185,7 @@ def test_tensor_assign_bool_index_exception():
         net4(Ta, u_scalar)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
