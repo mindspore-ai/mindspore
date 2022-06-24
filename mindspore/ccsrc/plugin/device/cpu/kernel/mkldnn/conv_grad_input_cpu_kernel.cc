@@ -54,7 +54,7 @@ void ConvGradInputCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (AnfAlgo::IsShapesDynamic({src_shape, weight_shape, dst_shape})) {
     return;
   }
-  dnnl::memory::dims kernel_size(weight_shape.begin(), weight_shape.end());
+  dnnl::memory::dims kernel_size(weight_shape.begin() + NC_LEN, weight_shape.end());
   const size_t group = LongToSize(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, GROUP));
   if (group > 1) {
     if (src_shape[1] % group != 0) {
