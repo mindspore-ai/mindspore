@@ -35,7 +35,7 @@ __device__ __forceinline__ unsigned int warp_ballot(int predicate) {
 
 template <typename T>
 static __device__ __host__ T round_up(T a, T b) {
-  return (a / b) * b;
+  return ((a + b - 1) / b) * b;
 }
 
 template <typename T>

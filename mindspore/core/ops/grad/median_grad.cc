@@ -27,6 +27,37 @@
 
 namespace mindspore {
 namespace ops {
+void MedianGrad::Init(const bool global_median, const int64_t axis, const bool keep_dims) {
+  this->set_global_median(global_median);
+  this->set_axis(axis);
+  this->set_keep_dims(keep_dims);
+}
+
+void MedianGrad::set_global_median(const bool global_median) {
+  (void)this->AddAttr(kGlobalMedian, api::MakeValue(global_median));
+}
+
+void MedianGrad::set_keep_dims(const bool keep_dims) { (void)this->AddAttr(kKeepDims, api::MakeValue(keep_dims)); }
+
+void MedianGrad::set_axis(const int64_t &axis) {
+  int64_t f = axis;
+  (void)this->AddAttr(kAxis, api::MakeValue(f));
+}
+
+bool MedianGrad::get_global_median() const {
+  auto value_ptr = GetAttr(kGlobalMedian);
+  return GetValue<bool>(value_ptr);
+}
+
+bool MedianGrad::get_keep_dims() const {
+  auto value_ptr = GetAttr(kKeepDims);
+  return GetValue<bool>(value_ptr);
+}
+
+int64_t MedianGrad::get_axis() const {
+  auto value_ptr = GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
 namespace {
 abstract::ShapePtr MedianGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
