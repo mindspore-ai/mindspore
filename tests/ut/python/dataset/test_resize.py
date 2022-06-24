@@ -25,7 +25,6 @@ from util import visualize_list, save_and_check_md5, \
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
-
 GENERATE_GOLDEN = False
 
 
@@ -48,7 +47,6 @@ def test_resize_op(plot=False):
 
         # apply map operations on images
         data1 = data1.map(operations=decode_op, input_columns=["image"])
-
         data2 = data1.map(operations=resize_op, input_columns=["image"])
         image_original = []
         image_resized = []
@@ -61,8 +59,8 @@ def test_resize_op(plot=False):
         if plot:
             visualize_list(image_original, image_resized)
 
-    test_resize_op_parameters("Test single int for size", 10, plot=False)
-    test_resize_op_parameters("Test tuple for size", (10, 15), plot=False)
+    test_resize_op_parameters("Test single int for size", 10, plot=plot)
+    test_resize_op_parameters("Test tuple for size", (10, 15), plot=plot)
 
 def test_resize_op_ANTIALIAS():
     """
@@ -85,46 +83,61 @@ def test_resize_op_ANTIALIAS():
         num_iter += 1
     logger.info("use Resize by Inter.ANTIALIAS process {} images.".format(num_iter))
 
-def test_resize_md5(plot=False):
-    """
-    Feature: Resize op
-    Description: Test Resize op using md5 check
-    Expectation: Passes the md5 check test
-    """
-    def test_resize_md5_parameters(test_name, size, filename, seed, plot):
-        """
-        Test Resize with md5 check
-        """
-        logger.info("Test Resize with md5 check: {0}".format(test_name))
-        original_seed = config_get_set_seed(seed)
-        original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
-        # Generate dataset
-        data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
-        decode_op = vision.Decode()
-        resize_op = vision.Resize(size)
-        data1 = data1.map(operations=decode_op, input_columns=["image"])
-        data2 = data1.map(operations=resize_op, input_columns=["image"])
+def run_test_resize_md5(test_name, size, filename, seed, expected_size, to_pil=True, plot=False):
+    """
+    Run Resize with md5 check for python and C op versions
+    """
+    logger.info("Test Resize with md5 check: {0}".format(test_name))
+    original_seed = config_get_set_seed(seed)
+    original_num_parallel_workers = config_get_set_num_parallel_workers(1)
+    # Generate dataset
+    dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
+    compose_ops = ds.transforms.Compose([vision.Decode(to_pil=to_pil), vision.Resize(size)])
+    transformed_data = dataset.map(operations=compose_ops, input_columns=["image"])
+    # Compare with expected md5 from images
+    save_and_check_md5(transformed_data, filename, generate_golden=GENERATE_GOLDEN)
+    for item in transformed_data.create_dict_iterator(num_epochs=1, output_numpy=True):
+        resized_image = item["image"]
+        assert resized_image.shape == expected_size
+    if plot:
         image_original = []
         image_resized = []
-        # Compare with expected md5 from images
-        save_and_check_md5(data1, filename, generate_golden=GENERATE_GOLDEN)
-
-        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        original_data = dataset.map(operations=vision.Decode(), input_columns=["image"])
+        for item1, item2 in zip(original_data.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                transformed_data.create_dict_iterator(num_epochs=1, output_numpy=True)):
             image_1 = item1["image"]
             image_2 = item2["image"]
             image_original.append(image_1)
             image_resized.append(image_2)
-        if plot:
-            visualize_list(image_original, image_resized)
+        visualize_list(image_original, image_resized)
+    # Restore configuration
+    ds.config.set_seed(original_seed)
+    ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
-        # Restore configuration
-        ds.config.set_seed(original_seed)
-        ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
-    test_resize_md5_parameters("Test single int for size", 5, "resize_01_result.npz", 5, plot)
-    test_resize_md5_parameters("Test tuple for size", (5, 7), "resize_02_result.npz", 7, plot)
+def test_resize_md5_c(plot=False):
+    """
+    Feature: Resize op C version
+    Description: Test C Resize op using md5 check
+    Expectation: Passes the md5 check test
+    """
+    run_test_resize_md5("Test single int for size", 5, "resize_01_result_c.npz",
+                        5, (5, 8, 3), to_pil=False, plot=plot)
+    run_test_resize_md5("Test tuple for size", (5, 7), "resize_02_result_c.npz",
+                        7, (5, 7, 3), to_pil=False, plot=plot)
+
+
+def test_resize_md5_py(plot=False):
+    """
+    Feature: Resize op py version
+    Description: Test python Resize op using md5 check
+    Expectation: Passes the md5 check test
+    """
+    run_test_resize_md5("Test single int for size", 5, "resize_01_result_py.npz",
+                        5, (5, 8, 3), to_pil=True, plot=plot)
+    run_test_resize_md5("Test tuple for size", (5, 7), "resize_02_result_py.npz",
+                        7, (5, 7, 3), to_pil=True, plot=plot)
 
 
 def test_resize_op_invalid_input():
@@ -151,5 +164,6 @@ def test_resize_op_invalid_input():
 if __name__ == "__main__":
     test_resize_op(plot=True)
     test_resize_op_ANTIALIAS()
-    test_resize_md5(plot=True)
+    test_resize_md5_c(plot=False)
+    test_resize_md5_py(plot=False)
     test_resize_op_invalid_input()
