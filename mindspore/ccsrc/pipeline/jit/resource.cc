@@ -260,6 +260,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_csr", std::string("to_csr")},                                  // dense_to_sparse_csr()
        {"col2im", std::string("col2im")},                                  // P.Col2Im
        {"split", std::string("split")},                                    // P.Split()
+       {"random_categorical", std::string("random_categorical")},          // P.RandomCategorical
      }},
     {kObjectTypeRowTensorType,
      {

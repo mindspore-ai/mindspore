@@ -3495,6 +3495,45 @@ class Tensor(Tensor_):
         validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
 
+    def random_categorical(self, num_sample=None, seed=0, dtype=mstype.int64):
+        r"""
+        Generates random samples from a given categorical distribution tensor.
+
+        Args:
+            dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
+                mindspore.int32 and mindspore.int64. Default: mindspore.int64.
+
+        Inputs:
+            - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
+            - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
+            - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
+
+        Outputs:
+            - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+
+        Raises:
+            TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
+            TypeError: If `logits` is not a Tensor.
+            TypeError: If neither `num_sample` nor `seed` is an int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.random.random((10, 5)).astype(np.float32))
+            >>> output = x.random_categorical(x, 8)
+            >>> result = output.shape
+            >>> print(result)
+            (10, 8)
+        """
+        self._init_check()
+        validator.check_is_int(num_sample, 'num_sample')
+        validator.check_is_int(seed, 'seed')
+        return tensor_operator_registry.get('random_categorical')(self, num_sample, seed, dtype)
+
     def masked_select(self, mask):
         """
         Returns a new 1-D Tensor which indexes the self tensor according to the boolean `mask`.
@@ -4698,7 +4737,7 @@ class CSRTensor(CSRTensor_):
         """
         validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
         return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, \
-            self.shape, dense_matrix)
+                                                        self.shape, dense_matrix)
 
     def sum(self, axis):
         """

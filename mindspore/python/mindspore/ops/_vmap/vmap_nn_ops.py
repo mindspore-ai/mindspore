@@ -525,6 +525,37 @@ def get_log_softmax_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.RandomCategorical)
+def get_random_categorical_vmap_rule(prim, axis_size):
+    """VmapRule for `RandomCategorical` operation."""
+
+    default_dim = 2
+
+    def vmap_rule(logits_bdim, num_sample_bdim, seed_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, logits_bdim, num_sample_bdim, seed_bdim)
+        if is_all_none:
+            return result
+        logits, logits_dim = logits_bdim
+        num_sample, num_sample_dim = num_sample_bdim
+        seed, seed_dim = seed_bdim
+        if num_sample_dim is not None or seed_dim is not None:
+            raise RuntimeError("For RandomCategorical vmap, num_sample and seed should be None.")
+        # Move axis to first dim
+        logits = _bdim_at_front(logits, logits_dim, axis_size)
+        x_ndim = F.rank(logits)
+        if x_ndim > default_dim:
+            x_ori_shape = F.shape(logits)
+            logits = F.reshape(logits, (-1, x_ori_shape[-1]))
+            dx = prim(logits, num_sample, seed)
+            new_output_shape = (x_ori_shape[0], x_ori_shape[1], num_sample)
+            dx = F.reshape(dx, new_output_shape)
+        else:
+            dx = prim(logits, num_sample, seed)
+        return dx, 0
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(NN.LRN)
 def get_lrn_vmap_rule(prim, axis_size):
     """VmapRule for `LRN` operation."""

@@ -302,6 +302,7 @@ constexpr auto kHalfPixelCenters = "half_pixel_centers";
 constexpr auto kConstant = "constant";
 constexpr auto kReflect = "reflect";
 constexpr auto kEdge = "edge";
+constexpr auto kNumSample = "num_samples";
 
 enum Index : size_t {
   kInputIndex0 = 0,

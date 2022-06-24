@@ -580,7 +580,6 @@ def index_fill(x, dim, index, value):
     return F.index_fill(x, dim, index, value)
 
 
-
 def copy(x):
     """
     Returns a copy of the tensor.
@@ -1912,6 +1911,16 @@ def csr_to_dense(x):
     """convert csr to dense."""
     coo_tensor = x.to_coo()
     return coo_tensor.to_dense()
+
+
+def random_categorical_(x, num_sample, seed=0, dtype=mstype.int64):
+    r"""
+    Generates random samples from a given categorical distribution tensor.
+    Refer to :func:`mindspore.ops.random_categorical` for more detail.
+    """
+    validator.check_is_int(num_sample, 'num_sample')
+    validator.check_is_int(seed, 'seed')
+    return F.random_categorical(x, num_sample, seed, dtype)
 
 
 @constexpr
