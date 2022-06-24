@@ -83,6 +83,7 @@ constexpr auto kAcosh = "Acosh";
 constexpr auto kAcoshGrad = "AcoshGrad";
 constexpr auto kBiasAddGrad = "BiasAddGrad";
 constexpr auto kMatrixInverse = "MatrixInverse";
+constexpr auto kMatrixSolve = "MatrixSolve";
 constexpr auto kMatrixDeterminant = "MatrixDeterminant";
 constexpr auto kLogMatrixDeterminant = "LogMatrixDeterminant";
 constexpr auto kCos = "Cos";

@@ -33,6 +33,7 @@ from ..operations.math_ops import Igamma, Igammac
 from ..primitive import constexpr
 from ..operations.math_ops import Hypot
 from ..operations.math_ops import ReduceStd
+from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
 
@@ -331,6 +332,46 @@ def get_bprop_matrix_inverse(self):
         dx = matmul_x1(out, dx)
         dx = neg(dx)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(MatrixSolve)
+def get_bprop_matrix_solve(self):
+    """Generate bprop for MatrixSolve"""
+    adjoint = self.adjoint
+    adjoint_a = not adjoint
+    solve_op = MatrixSolve(adjoint_a)
+    batchmatmul = P.BatchMatMul(transpose_b=True)
+    matmul = P.MatMul(transpose_b=True)
+    neg = P.Neg()
+    cast = P.Cast()
+    rank = P.Rank()
+
+    def bprop(input_a, input_b, out, dout):
+        out_type = F.dtype(out)
+        if out_type == mstype.float64:
+            out = cast(out, mstype.float32)
+        grad_b = solve_op(input_a, dout)
+        grad_b_type = F.dtype(grad_b)
+        if grad_b_type == mstype.float64:
+            grad_b = cast(grad_b, mstype.float32)
+        matrix_rank = rank(input_a)
+        if adjoint:
+            if matrix_rank > 2:
+                grad_a = batchmatmul(out, grad_b)
+                grad_a = neg(grad_a)
+            else:
+                grad_a = matmul(out, grad_b)
+                grad_a = neg(grad_a)
+        else:
+            if matrix_rank > 2:
+                grad_a = batchmatmul(grad_b, out)
+                grad_a = neg(grad_a)
+            else:
+                grad_a = matmul(grad_b, out)
+                grad_a = neg(grad_a)
+        return grad_a, grad_b
 
     return bprop
 
