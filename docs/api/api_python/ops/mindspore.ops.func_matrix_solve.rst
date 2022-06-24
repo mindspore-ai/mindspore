@@ -4,7 +4,7 @@ mindspore.ops.matrix_solve
 .. py:function:: mindspore.ops.matrix_solve(matrix, rhs, adjoint=False)
 
     求解线性方程组。
-+
+
     **参数：**
 
     - **matrix** (Tensor) - 输入Tensor， shape 为 :math:`[..., M, M]`。
