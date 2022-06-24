@@ -46,6 +46,8 @@ def test_lin_space(start_np, stop_np, num_np):
     Expectation: the result match to numpy
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
+
     start = Tensor(start_np, dtype=mstype.float32)
     stop = Tensor(stop_np, dtype=mstype.float32)
     num = num_np
@@ -66,6 +68,8 @@ def test_lin_space_net(start_np, stop_np, num_np):
     Expectation: the result match to numpy
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
+
     start = Tensor(start_np, dtype=mstype.float32)
     stop = Tensor(stop_np, dtype=mstype.float32)
     net = LinSpaceNet(num_np)
@@ -84,6 +88,7 @@ def test_lin_space_vmap_1d():
     Expectation: the result match to numpy
     """
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
 
     start_np = np.random.randn(5)
     stop_np = np.random.randn(5)
