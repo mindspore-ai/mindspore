@@ -883,3 +883,35 @@ def get_bprop_cholesky_solve(self):
         return dx1, dx2
 
     return bprop
+
+
+@bprop_getters.register(P.NextAfter)
+def get_bprop_nextafter(self):
+    """Grad definition for 'NextAfter' operation"""
+    shape = P.Shape()
+    ones = P.Ones()
+    zeros = P.Zeros()
+    dtype = P.DType()
+    reshape = P.Reshape()
+    cast = P.Cast()
+
+    def bprop(x1, x2, out, dout):
+        dout_type = dtype(dout)
+        x1_type = dtype(x1)
+        x2_type = dtype(x2)
+        if x1_type == mstype.float64:
+            x1 = cast(x1, mstype.float32)
+        if x2_type == mstype.float64:
+            x2 = cast(x2, mstype.float32)
+        if dout_type == mstype.float64:
+            dout = cast(dout, mstype.float32)
+
+        s_x1 = shape(x1)
+        s_x2 = shape(x2)
+        partial_x1 = ones(s_x1, dtype(x1))
+        partial_x2 = zeros(s_x2, dtype(x2))
+        dx1 = reshape(partial_x1 * dout, s_x1)
+        dx2 = reshape(partial_x2 * dout, s_x2)
+        return cast(dx1, dtype(dout)), cast(dx2, dtype(dout))
+
+    return bprop

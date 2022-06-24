@@ -6517,3 +6517,47 @@ class FFTWithSize(Primitive):
         validator.check_value_type('norm', norm, [str], self.name)
         validator.check_value_type('onesided', onesided, [bool], self.name)
         validator.check_value_type('signal_sizes', signal_sizes, [tuple, list], self.name)
+
+
+class NextAfter(Primitive):
+    """
+    Returns the next representable value after the given first number in the direction of given second number.
+
+    .. math::
+
+        out_{i} =  nextafter{x1_{i}, x2_{i}}
+
+    Inputs:
+        - **x1** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+
+        - **x2** (Tensor) - The shape of tensor is
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+          Must be one of the following types: float32, float64.
+
+    Outputs:
+        Tensor, has the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If neither `x1` nor `x2` is a Tensor.
+        TypeError: If the dtype of input is not one of: float32, float64.
+        TypeError: If the dtypes of two inputs are not same.
+        ValueError: If `x1`'s shape is not the same as `x2`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> nextafter = ops.NextAfter()
+        >>> x1 = Tensor(np.asarray([0.0]), mindspore.float32)
+        >>> x2 = Tensor(np.asarray([0.1]), mindspore.float32)
+        >>> output = nextafter(x1, x2)
+        >>> print(output)
+        [1.e-45]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize NextAfter"""
+        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['output'])
