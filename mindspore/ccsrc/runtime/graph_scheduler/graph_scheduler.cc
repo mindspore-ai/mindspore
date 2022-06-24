@@ -664,6 +664,13 @@ void GraphScheduler::SetActorExecutionStrategy(ActorSet *const actor_set, GraphE
       (actor_set->kernel_actors_.size() > ActorDispatcher::kSingleThreadExecutionActorMaxNum)) {
     return;
   }
+#ifdef ENABLE_RPC_ACTOR
+  // If there're rpc actors, do not use single thread execution because the callbacks of recv actors are
+  // multi-thread.
+  if (HaveRpcActors(actor_set)) {
+    return;
+  }
+#endif
 
   if ((actor_set->is_multi_thread_execution_) &&
       (actor_set->execution_count_ >= ActorDispatcher::kMultiThreadExecutionCountBegin) &&
@@ -2348,5 +2355,16 @@ void GraphScheduler::BindNumaNode() {
   MS_LOG(INFO) << "Numa bind memory and cpu successful.";
 #endif
 }
+
+#ifdef ENABLE_RPC_ACTOR
+bool GraphScheduler::HaveRpcActors(ActorSet *const actor_set) const {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &rpc_actor_set = actor_set->rpc_actors_;
+  if (rpc_actor_set != nullptr && (!rpc_actor_set->send_actors_.empty() || !rpc_actor_set->recv_actors_.empty())) {
+    return true;
+  }
+  return false;
+}
+#endif
 }  // namespace runtime
 }  // namespace mindspore

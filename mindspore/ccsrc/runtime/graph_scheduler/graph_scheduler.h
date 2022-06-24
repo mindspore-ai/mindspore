@@ -206,6 +206,9 @@ class BACKEND_EXPORT GraphScheduler {
   ControlNodeScheduler control_node_scheduler_;
 
 #ifdef ENABLE_RPC_ACTOR
+  // Return whether the actor set has rpc actors.
+  bool HaveRpcActors(ActorSet *const actor_set) const;
+
   // Used to build and link for rpc actors.
   std::unique_ptr<RpcNodeScheduler> rpc_node_scheduler_{nullptr};
 #endif
