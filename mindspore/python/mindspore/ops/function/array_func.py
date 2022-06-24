@@ -3443,6 +3443,58 @@ def split(input_x, axis=0, output_num=1):
     return split_(input_x)
 
 
+def max(input_x, axis=0, keep_dims=False):
+    """
+    Calculates the maximum value with the corresponding index.
+
+    Calculates the maximum value along with the given axis for the input tensor. It returns the maximum values and
+    indices.
+
+    Note:
+        In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+
+    .. warning::
+        - If there are multiple maximum values, the index of the first maximum value is used.
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+    Also see: class: `mindspore.ops.ArgMaxWithValue`.
+
+    Args:
+        input_x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+          :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
+        axis (int): The dimension to reduce. Default: 0.
+        keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
+                          the output will reduce dimension if false. Default: False.
+
+    Returns:
+        tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
+        tensor.
+
+        - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
+          output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+          :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+        - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `axis` is not an int.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> index, output = ops.max(input_x)
+        >>> print(index, output)
+        3 0.7
+        >>> index, output = ops.max(input_x, keep_dims=True)
+        >>> print(index, output)
+        [3] [0.7]
+    """
+    argmax_with_value_op = P.ArgMaxWithValue(axis, keep_dims)
+    return argmax_with_value_op(input_x)
+
+
 __all__ = [
     'unique',
     'unique_consecutive',
@@ -3515,5 +3567,6 @@ __all__ = [
     'col2im',
     'split',
     "index_fill",
+    'max',
 ]
 __all__.sort()

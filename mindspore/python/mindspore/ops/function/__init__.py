@@ -98,6 +98,7 @@ from .array_func import (
     col2im,
     split,
     index_fill,
+    max,
 )
 from .parameter_func import (
     assign,

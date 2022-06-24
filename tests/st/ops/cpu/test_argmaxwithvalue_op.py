@@ -20,19 +20,17 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class NetArgmaxWithValue(nn.Cell):
     def __init__(self):
         super(NetArgmaxWithValue, self).__init__()
-        axis1 = 0
-        axis2 = -1
-        self.argmax1 = P.ArgMaxWithValue(axis1)
-        self.argmax2 = P.ArgMaxWithValue(axis2)
-        self.argmax3 = P.ArgMaxWithValue()
+        axis = 0
+        self.argmax1 = P.ArgMaxWithValue(axis)
 
     def construct(self, x):
-        return (self.argmax1(x), self.argmax2(x), self.argmax3(x))
+        return (self.argmax1(x), F.max(x, axis=-1), F.max(x))
 
 
 class NetArgmaxWithValueBig(nn.Cell):

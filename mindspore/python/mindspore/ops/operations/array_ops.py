@@ -2168,6 +2168,8 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         - If there are multiple maximum values, the index of the first maximum value is used.
         - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
 
+    Also see: func: `mindspore.ops.max`.
+
     Args:
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
