@@ -221,7 +221,7 @@ def test_random_auto_contrast_four_dim():
 
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "image shape is not <H,W,C>" in str(e)
+        assert "image shape is not <H,W,C> or <H,W>" in str(e)
 
 
 def test_random_auto_contrast_invalid_input():
@@ -230,7 +230,7 @@ def test_random_auto_contrast_invalid_input():
     Description: Test with images in uint32 type
     Expectation: Raise errors as expected
     """
-    logger.info("test_random_invert_invalid_input")
+    logger.info("test_random_auto_contrast_invalid_input")
 
     c_op = vision.RandomAutoContrast()
 
