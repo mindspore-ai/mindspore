@@ -34,6 +34,7 @@ __all__ = ['Softmin',
            'RReLU',
            'SiLU',
            'Tanh',
+           'Tanhshrink',
            'Hardtanh',
            'GELU',
            'FastGelu',
@@ -613,6 +614,54 @@ class Tanh(Cell):
 
     def construct(self, x):
         return self.tanh(x)
+
+
+class Tanhshrink(Cell):
+    r"""
+    Tanhshrink activation function.
+
+    The tanhshrink function is evaluated by element and returns a new tensor.
+
+    Tanh function is defined as:
+
+    .. math::
+        tanhshrink(x_i) =x_i- \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)}
+        = x_i-\frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
+
+    where :math:`x_i` is an element of the input Tensor.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
+
+    Outputs:
+        Tensor, with the same type and shape as the `x`.
+
+    Raises:
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> import numpy as np
+        >>> x = Tensor(np.array([1, 2, 3, 2, 1]), ms.float16)
+        >>> tanhshrink = nn.Tanhshrink()
+        >>> output = tanhshrink(x)
+        >>> print(output)
+        [0.2383 1.036  2.004  1.036  0.2383]
+    """
+
+    def __init__(self):
+        """Initialize Tanhshrink."""
+        super(Tanhshrink, self).__init__()
+        self.tanh = P.Tanh()
+
+    def construct(self, x):
+        _dtype_check(x.dtype, self.cls_name)
+        return x - self.tanh(x)
 
 
 @constexpr
@@ -1325,6 +1374,7 @@ _activation = {
     'rrelu': RReLU,
     'silu': SiLU,
     'tanh': Tanh,
+    'tanhshrink': Tanhshrink,
     'hardtanh': Hardtanh,
     'gelu': GELU,
     'fast_gelu': FastGelu,
