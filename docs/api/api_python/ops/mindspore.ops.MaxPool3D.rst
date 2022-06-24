@@ -40,6 +40,6 @@ mindspore.ops.MaxPool3D
     - **TypeError** - `pad_mode` 或 `data_format` 不是str。
     - **ValueError** - `kernel_size` 或 `strides` 不是正数。
     - **ValueError** - `pad_mode` 不是'same'，'valid'，或'pad'。
-    - **ValueError** - `pad_mode` 取值为'same'或'valid'，'ceil_mode'取值不是None。
+    - **ValueError** - `pad_mode` 取值为'same'或'valid'， `ceil_mode` 取值不是None。
     - **ValueError** - `kernel_size` 或 `strides` 是长度不等于3的元组。
     - **ValueError** - `data_format` 不是'NCDHW'。
