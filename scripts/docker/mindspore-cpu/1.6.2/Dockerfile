@@ -71,8 +71,6 @@ RUN mkdir -pv /root/.pip \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
 
-# Install MindSpore cpu whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.6.2/MindSpore/cpu/x86_64/mindspore-1.6.2-cp37-cp37m-linux_x86_64.whl
-
-# Install MindInsight cpu whl package
-RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.6.2/MindInsight/any/mindinsight-1.6.2-py3-none-any.whl
+# Install MindSpore and MindInsight cpu whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.6.2/MindSpore/cpu/x86_64/mindspore-1.6.2-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.6.1/MindInsight/any/mindinsight-1.6.1-py3-none-any.whl
