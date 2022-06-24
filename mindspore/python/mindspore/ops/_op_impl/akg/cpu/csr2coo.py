@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """CSR2COO op"""
-from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgCpuRegOp, DataType
 
-csr2coo_op_info = AkgGpuRegOp("CSR2COO") \
+csr2coo_op_info = AkgCpuRegOp("CSR2COO") \
     .fusion_type("OPAQUE") \
     .input(0, "indptr") \
     .output(0, "output") \

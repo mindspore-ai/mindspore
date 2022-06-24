@@ -53,16 +53,16 @@ void CallSplitIndices3D(const S *indices, S *batch_indices, S *row_indices, S *c
 
 template <typename S>
 __global__ void NNZPerBatch(const S *batch_indices, S *nnz_per_batch, int size) {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx >= size) return;
-  MsAtomicAdd(&nnz_per_batch[batch_indices[idx] + 1], 1);
+  for (size_t idx = blockIdx.x * blockDim.x + threadIdx.x; idx < size; idx += blockDim.x * gridDim.x) {
+    MsAtomicAdd(&nnz_per_batch[batch_indices[idx] + 1], 1);
+  }
 }
 
 template <typename S>
-void CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int size, cudaStream_t cuda_stream) {
-  NNZPerBatch<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(batch_indices, nnz_per_batch, size);
+void CallNNZPerBatch(const S *batch_indices, S *nnz_per_batch, int nnz, int batch_ptr_size, cudaStream_t cuda_stream) {
+  NNZPerBatch<<<GET_BLOCKS(nnz), GET_THREADS, 0, cuda_stream>>>(batch_indices, nnz_per_batch, nnz);
   thrust::device_ptr<S> batch_ptr(nnz_per_batch);
-  thrust::inclusive_scan(thrust::cuda::par.on(cuda_stream), batch_ptr, batch_ptr + size, batch_ptr);
+  thrust::inclusive_scan(thrust::cuda::par.on(cuda_stream), batch_ptr, batch_ptr + batch_ptr_size, batch_ptr);
   return;
 }
 
@@ -70,5 +70,5 @@ template CUDA_LIB_EXPORT void CallSplitIndices2D<int>(const int *indices, int *r
                                                       cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void CallSplitIndices3D<int>(const int *indices, int *batch_indices, int *row_indices,
                                                       int *col_indices, int size, cudaStream_t cuda_stream);
-template CUDA_LIB_EXPORT void CallNNZPerBatch<int>(const int *batch_indices, int *nnz_per_batch, int size,
-                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void CallNNZPerBatch<int>(const int *batch_indices, int *nnz_per_batch, int nnz,
+                                                   int batch_ptr_size, cudaStream_t cuda_stream);
