@@ -66,6 +66,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimCSRGather->name(), {3});
   Register(prim::kPrimCSR2COO->name(), {1});
   Register(prim::kPrimCOO2CSR->name(), {1});
+  Register(prim::kPrimInplaceUpdateV2->name(), {1});
   Register(kSparseGatherV2OpName, {2});
   Register(kUnsortedSegmentProdOpName, {2});
   Register(kSimpleMeanGradOpName, {1});

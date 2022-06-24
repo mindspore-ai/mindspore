@@ -507,6 +507,7 @@ from .data_format_dim_map_ds import _data_format_dim_map_ds_tbe
 from .histogram_fixed_width import _histogram_fixed_width_tbe
 from .tensor_scatter_update import _tensor_scatter_update_tbe
 from .inplace_update import _inplace_update_tbe
+from .inplace_update_ds import _inplace_update_v2_ds_tbe
 from .split_v import _split_v_tbe
 from .in_top_k import _in_top_k_tbe
 from .lin_space import _lin_space_tbe

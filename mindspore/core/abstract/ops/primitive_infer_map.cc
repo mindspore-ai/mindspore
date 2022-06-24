@@ -146,6 +146,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {prim::kPrimReduceSum->name(), ShapeSet{1}},
                                          {prim::kPrimArgminV2->name(), ShapeSet{1}},
                                          {kAffineGrid, ShapeSet{1}},
+                                         {prim::kPrimInplaceUpdateV2->name(), ShapeSet{1}},
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
                                          {kTransposeNOD, ShapeSet{1}},
