@@ -353,6 +353,8 @@ class FeedForward(Cell):
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
             expert_num: (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
+            expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
+                effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
             param_init_type: (dtype.Number): The parameter initialization type. Should be mstype.float32 or
                 mstype.float16. Default: mstype.float32.
             parallel_config (OpParallelConfig, MoEParallelConfig): The config of parallel setting, see
@@ -402,6 +404,7 @@ class FeedForward(Cell):
                  dropout_rate,
                  hidden_act='gelu',
                  expert_num=1,
+                 expert_group_size=None,
                  param_init_type=mstype.float32,
                  parallel_config=default_dpmp_config):
         super(FeedForward, self).__init__()
@@ -434,6 +437,7 @@ class FeedForward(Cell):
                                    activation=hidden_act,
                                    transpose_b=False,
                                    expert_num=expert_num,
+                                   expert_group_size=expert_group_size,
                                    outer_batch=dp,
                                    param_init_type=param_init_type)
 
@@ -442,6 +446,7 @@ class FeedForward(Cell):
                                       out_channels=input_size,
                                       transpose_b=False,
                                       expert_num=expert_num,
+                                      expert_group_size=expert_group_size,
                                       outer_batch=dp,
                                       param_init_type=param_init_type)
             if expert_num > 1:
@@ -487,7 +492,7 @@ class FeedForward(Cell):
 
             if expert_num > 1:
                 self.mapping.shard(strategy_matmul=((dp, ep, 1, 1), (ep, 1, mp)),
-                                   strategy_bias=((dp, ep, 1, mp), (mp,)),
+                                   strategy_bias=((dp, ep, 1, mp), (dp, ep, 1, mp)),
                                    strategy_activation=((dp, ep, 1, mp),))
             else:
                 self.mapping.shard(strategy_matmul=((dp, 1), (1, mp)),
@@ -502,7 +507,7 @@ class FeedForward(Cell):
                                       param_init_type=param_init_type)
             if expert_num > 1:
                 self.projection.shard(strategy_matmul=((dp, ep, 1, mp), (ep, mp, 1)),
-                                      strategy_bias=((dp, ep, 1, 1), (1,)))
+                                      strategy_bias=((dp, ep, 1, 1), (dp, ep, 1, 1)))
             else:
                 self.projection.shard(strategy_matmul=((dp, mp), (mp, 1)),
                                       strategy_bias=((dp, 1), (1,)))
