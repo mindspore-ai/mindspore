@@ -68,8 +68,8 @@ class MS_API Model {
   /// \param[in] model_context Define the context used to store options during execution.
   ///
   /// \return Status.
-  Status Build(const std::string &model_path, ModelType model_type,
-               const std::shared_ptr<Context> &model_context = nullptr);
+  inline Status Build(const std::string &model_path, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context = nullptr);
 
   /// \brief Build a model from model buffer so that it can run on a device. Only valid for Lite.
   ///
@@ -98,8 +98,9 @@ class MS_API Model {
   /// \param[in] cropto_lib_path Define the openssl library path.
   ///
   /// \return Status.
-  Status Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
-               const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path);
+  inline Status Build(const std::string &model_path, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                      const std::string &cropto_lib_path);
 
   /// \brief Builds a model
   ///
@@ -403,14 +404,13 @@ Status Model::UpdateConfig(const std::string &section, const std::pair<std::stri
   return UpdateConfig(StringToChar(section), config_pair);
 }
 
-inline Status Model::Build(const std::string &model_path, ModelType model_type,
-                           const std::shared_ptr<Context> &model_context, const Key &dec_key,
-                           const std::string &dec_mode, const std::string &cropto_lib_path) {
+Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
+                    const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path) {
   return Build(StringToChar(model_path), model_type, model_context, dec_key, dec_mode, StringToChar(cropto_lib_path));
 }
 
-inline Status Model::Build(const std::string &model_path, ModelType model_type,
-                           const std::shared_ptr<Context> &model_context) {
+Status Model::Build(const std::string &model_path, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context) {
   return Build(StringToChar(model_path), model_type, model_context);
 }
 }  // namespace mindspore
