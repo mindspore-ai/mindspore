@@ -10,10 +10,10 @@ mindspore.nn.DistributedGradReducer
     **参数：**
 
     - **parameters** (list) - 需要更新的参数。
-    - **mean** (bool) - 当mean为True时，对AllReduce之后的梯度求均值。默认值：False。
+    - **mean** (bool) - 当mean为True时，对AllReduce之后的梯度求均值。默认值：True。
     - **degree** (int) - 平均系数，通常等于设备编号。默认值：None。
     - **fusion_type** (int) - AllReduce算子的融合类型。默认值：1。
-    - **group** (str) - AllReduce算子的通信域，若需要自定义通信域，需要调用create_group接口。默认值：GlobalComm.WORLD_COMM_GROUP。
+    - **group** (str) - AllReduce算子的通信域，若需要自定义通信域，需要调用create_group接口。默认值：WORLD_COMM_GROUP。
 
     **异常：**
 
