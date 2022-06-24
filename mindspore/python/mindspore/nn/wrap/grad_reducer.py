@@ -299,7 +299,7 @@ class DistributedGradReducer(Cell):
         degree (int): The mean coefficient. Usually it equals to device number. Default: None.
         fusion_type (int): The type of all reduce fusion. Default: 1.
         group (str): The communication group to work on. Normally, the group should be created by create_group,
-                     otherwise, using the default group. Default: WORLD_COMM_GROUP.
+                     otherwise, using the default group. Default: GlobalComm.WORLD_COMM_GROUP.
 
     Raises:
         ValueError: If degree is not an int or less than 0.
