@@ -2720,9 +2720,11 @@ class _PythonCallable:
     def __call__(self, *args):
         if self.pool.is_running() and check_iterator_cleanup() is False:
             try:
-                return self.pool.execute(self.idx, *args)
+                res = self.pool.execute(self.idx, *args)
+                if res is not None:
+                    return res
             except multiprocessing.TimeoutError:
-                return self.py_callable(*args)
+                pass
         # Invoke original Python callable in master process in case the pool is gone.
         return self.py_callable(*args)
 
