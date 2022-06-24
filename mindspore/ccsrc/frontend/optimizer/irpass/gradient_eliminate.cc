@@ -44,22 +44,15 @@ bool IsSideEffectOp(const AnfNodePtr &node) {
   return effect_info.memory || effect_info.io;
 }
 
-AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const OptimizerPtr &optimizer) {
-  AnfNodePtr expanded_node = nullptr;
-  if (IsValueNode<FuncGraph>(vnode)) {
-    ScopeGuard scope_guard(vnode->scope());
-    auto func_graph = GetValueNode<FuncGraphPtr>(vnode);
-    MS_EXCEPTION_IF_NULL(func_graph);
-    MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " will expandJ now";
-    auto newfg = ad::Grad(func_graph, optimizer);
-    expanded_node = NewValueNode(newfg);
-  } else if (IsValueNode<Primitive>(vnode)) {
-    expanded_node = ExpandJPrimitive(vnode, optimizer->resource());
-  } else {
-    return nullptr;
-  }
-  optimizer->set_is_first_order_j(false);
-  return expanded_node;
+AnfNodePtrList ExpandMultiJ(const FuncGraphVector &func_graphs, const OptimizerPtr &optimizer) {
+  AnfNodePtrList expanded_nodes;
+  auto new_func_graphs = ad::GradMultiFuncGraph(func_graphs, optimizer);
+  (void)std::transform(new_func_graphs.cbegin(), new_func_graphs.cend(), std::back_inserter(expanded_nodes),
+                       [](const FuncGraphPtr &new_func_graph) {
+                         MS_EXCEPTION_IF_NULL(new_func_graph);
+                         return NewValueNode(new_func_graph);
+                       });
+  return expanded_nodes;
 }
 }  // namespace internal
 
@@ -74,15 +67,37 @@ bool ExpandJPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr 
   // Expand j nodes that don't have embed j nodes.
   bool change = false;
   auto manager = optimizer->manager();
-  for (auto &j_node : prim_nodes_) {
-    auto expanded_j = internal::ExpandJ(j_node->input(1)->cast<ValueNodePtr>(), optimizer);
-    manager->Replace(j_node, expanded_j);
-    if (j_node->func_graph()->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
-      MS_LOG(DEBUG) << j_node->func_graph()->ToString() << " has FUNC_GRAPH_FLAG_K_GRAPH flag.";
-      j_node->func_graph()->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, false);
+  FuncGraphVector func_graphs;
+  HashMap<AnfNodePtr, size_t> j_node_to_index_map;
+  size_t index = 0;
+  auto set_k_graph_flag = [](const FuncGraphPtr &func_graph) {
+    if (func_graph->has_flag(FUNC_GRAPH_FLAG_K_GRAPH)) {
+      MS_LOG(DEBUG) << func_graph->ToString() << " has FUNC_GRAPH_FLAG_K_GRAPH flag.";
+      func_graph->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, false);
     }
+  };
+  for (auto &j_node : prim_nodes_) {
+    const auto &j_node_inp1 = j_node->input(1);
+    if (IsValueNode<FuncGraph>(j_node_inp1)) {
+      auto func_graph = GetValueNode<FuncGraphPtr>(j_node_inp1);
+      func_graphs.push_back(func_graph);
+      MS_LOG(DEBUG) << "FuncGraph: " << func_graph->ToString() << " will expandJ now";
+      j_node_to_index_map[j_node] = index++;
+    } else if (IsValueNode<Primitive>(j_node_inp1)) {
+      auto expanded_j = internal::ExpandJPrimitive(j_node_inp1->cast<ValueNodePtr>(), optimizer->resource());
+      manager->Replace(j_node, expanded_j);
+      set_k_graph_flag(j_node->func_graph());
+      change = true;
+    }
+  }
+  auto grad_func_graphs = internal::ExpandMultiJ(func_graphs, optimizer);
+  for (const auto &j_node_index_iter : j_node_to_index_map) {
+    const auto &j_node = j_node_index_iter.first;
+    manager->Replace(j_node, grad_func_graphs[j_node_index_iter.second]);
+    set_k_graph_flag(j_node->func_graph());
     change = true;
   }
+  optimizer->set_is_first_order_j(false);
   return change;
 }
 }  // namespace irpass

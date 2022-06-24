@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ms_function
 from mindspore.ops.functional import grad
+from mindspore.ops import composite as C
+from mindspore.common import dtype as mstype
+from mindspore import Parameter, ParameterTuple
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -40,11 +43,14 @@ class MultipleInputsMultipleOutputsNet(nn.Cell):
     def construct(self, x, y, z):
         return x**2 + y**2 + z**2, x*y*z
 
+
 def function(x, y, z):
     return x**2 + y**2 + z**2, x*y*z
 
+
 def iteration_grad_function(x, y, z):
     return x**2*y*z
+
 
 @ms_function
 def grad_warp_with_msfunction(x, y, z):
@@ -127,6 +133,7 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
     assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -148,6 +155,7 @@ def test_grad_function_with_sens_graph():
     assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -168,6 +176,7 @@ def test_grad_iteration_function_graph():
     assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
     assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -183,6 +192,7 @@ def test_grad_warp_with_msfunction_graph():
     expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
     real_grad = grad_warp_with_msfunction(x, y, z)
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -201,3 +211,157 @@ def test_grad_with_grad_position_twice_graph():
     out2 = grad(net, grad_position=(0, 1))(x, y, z)
     assert isinstance(out1, Tensor)
     assert isinstance(out2, tuple)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_if_ith_train_one_step():
+    """
+    Features: Grad with multiple funcgraph at the same J level.
+    Description: Grad a network with each output. A simplification for GAN network.
+    Expectation: Compile success.
+    """
+    class IthOutputCell(nn.Cell):
+        def __init__(self, network, output_index):
+            super().__init__()
+            self.network = network
+            self.output_index = output_index
+
+        def construct(self, x1, x2):
+            loss = self.network(x1, x2)[self.output_index]
+            return loss
+
+    class SingleIfNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.weight_x = Parameter(Tensor(2, mstype.int32), name="weightx")
+            self.weight_y = Parameter(Tensor(5, mstype.int32), name="weighty")
+
+        def construct(self, x, y):
+            if self.weight_x < self.weight_y:
+                x = x + y
+                y = y + x
+            else:
+                x = x - y
+                y = y - x
+            return x, y
+
+    class MyTrainOneStepCell(nn.Cell):
+        def __init__(self, network):
+            super().__init__()
+            self.network = network
+            self.network.set_train()
+            self.weights = ParameterTuple(network.trainable_params())
+            self.grad = C.GradOperation(get_by_list=True)
+
+            self.loss_net_g = IthOutputCell(network, output_index=0)
+            self.loss_net_d = IthOutputCell(network, output_index=0)
+            self.loss_net_g.set_grad()
+            self.loss_net_d.set_grad()
+
+        def construct(self, x, y):
+            forward = self.network(x, y)
+            weights = self.weights
+            grads_g = self.grad(self.loss_net_g, weights)(x, y)
+            grads_d = self.grad(self.loss_net_d, weights)(x, y)
+            return (forward, grads_g, grads_d)
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    if_net = SingleIfNet()
+    train_one_if_net = MyTrainOneStepCell(if_net)
+    train_one_if_net(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_net_d_net_g():
+    """
+    Features: Grad with multiple funcgraph at the same J level.
+    Description: Grad two different network. A simplification for GAN network.
+    Expectation: Compile success.
+    """
+    class NetD(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.weight_d = Parameter(Tensor(2, mstype.int32), name="weightd")
+
+        def construct(self, x, y):
+            if self.weight_d < x:
+                x = x + y
+            else:
+                x = x - y
+            return x, y
+
+    class NetG(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.weight_g = Parameter(Tensor(2, mstype.int32), name="weightg")
+
+        def construct(self, x, y):
+            if self.weight_g < x:
+                x = x - y
+            else:
+                x = x + y
+            return x, y
+
+    class Backbone(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.net_d = NetD()
+            self.net_g = NetG()
+            self.trainable_params_d = self.net_d.trainable_params()
+            self.trainable_params_g = self.net_g.trainable_params()
+
+        def construct(self, x, y):
+            m, n = self.net_d(x, y)
+            p, q = self.net_g(x, y)
+            return m + n + p + q
+
+    class LossNetD(nn.Cell):
+        def __init__(self, backbone):
+            super().__init__()
+            self.net_d = backbone.net_d
+            self.net_g = backbone.net_g
+
+        def construct(self, x, y):
+            m, n = self.net_d(x, y)
+            p, q = self.net_g(x, y)
+            return m + n + p + q
+
+    class LossNetG(nn.Cell):
+        def __init__(self, backbone):
+            super().__init__()
+            self.net_d = backbone.net_d
+            self.net_g = backbone.net_g
+
+        def construct(self, x, y):
+            m, n = self.net_d(x, y)
+            p, q = self.net_g(x, y)
+            return m + n + p + q
+
+    class MyTrainOneStepCell(nn.Cell):
+        def __init__(self, network):
+            super().__init__()
+            self.network = network
+            self.weights_d = ParameterTuple(network.net_d.trainable_params())
+            self.weights_g = ParameterTuple(network.net_g.trainable_params())
+            self.grad = C.GradOperation(get_by_list=True)
+
+            self.loss_net_d = LossNetD(network)
+            self.loss_net_g = LossNetG(network)
+            self.loss_net_g.set_grad()
+            self.loss_net_d.set_grad()
+
+        def construct(self, x, y):
+            grads_d = self.grad(self.loss_net_d, self.weights_d)(x, y)
+            grads_g = self.grad(self.loss_net_g, self.weights_g)(x, y)
+            return (grads_g, grads_d)
+
+    x = Tensor(2, mstype.int32)
+    y = Tensor(5, mstype.int32)
+    network = Backbone()
+    train_one_net = MyTrainOneStepCell(network)
+    train_one_net(x, y)
