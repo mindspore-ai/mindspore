@@ -375,19 +375,21 @@ def test_adjust_gamma_eager_image_type():
 
     # Test with OpenCV images
     img = cv2.imread("../data/dataset/apple.jpg")
-    test_config([img, img])
-    test_config((img, img))
+    test_config(img)
 
     # Test with NumPy array input
     img = np.random.randint(0, 1, (100, 100, 3)).astype(np.uint8)
-    test_config([img, img])
-    test_config((img, img))
+    test_config(img)
+
+    # Test with PIL Image
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    test_config(img)
 
 
-def test_adjust_gamma_eager_invalid_image_type_pil():
+def test_adjust_gamma_eager_invalid_image_types1():
     """
     Feature: AdjustGamma op
-    Description: Exception eager support test for PIL image and error input type
+    Description: Exception eager support test for error input type
     Expectation: Error input image is detected
     """
 
@@ -397,11 +399,15 @@ def test_adjust_gamma_eager_invalid_image_type_pil():
         assert error_msg in str(error_info.value)
 
     img = Image.open("../data/dataset/apple.jpg").convert("RGB")
-    test_config([img, img], "Invalid user input. Got <class 'list'>")
-    test_config((img, img), "Invalid user input. Got <class 'tuple'>")
+    test_config([img, img], "Input should be NumPy or PIL image, got <class 'list'>")
+    test_config((img, img), "Input should be NumPy or PIL image, got <class 'tuple'>")
+
+    img = cv2.imread("../data/dataset/apple.jpg")
+    test_config([img, img], "Input should be NumPy or PIL image, got <class 'list'>")
+    test_config((img, img), "Input should be NumPy or PIL image, got <class 'tuple'>")
 
 
-def test_adjust_gamma_eager_invalid_image_type():
+def test_adjust_gamma_eager_invalid_image_types2():
     """
     Feature: AdjustGamma op
     Description: Exception eager support test for error input type
@@ -409,13 +415,13 @@ def test_adjust_gamma_eager_invalid_image_type():
     """
 
     def test_config(my_input, error_msg):
-        with pytest.raises(RuntimeError) as error_info:
+        with pytest.raises(TypeError) as error_info:
             _ = vision.AdjustGamma(gamma=1.2, gain=1.0)(my_input)
         assert error_msg in str(error_info.value)
 
-    test_config(1, "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
-    test_config(1.0, "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
-    test_config((1.0, 2.0), "Unexpected error. AdjustGamma: input tensor is not in shape of <...,H,W,C> or <H,W>")
+    test_config(1, "Input should be NumPy or PIL image, got <class 'int'>")
+    test_config(1.0, "Input should be NumPy or PIL image, got <class 'float'>")
+    test_config((1.0, 2.0), "Input should be NumPy or PIL image, got <class 'tuple'>")
 
 
 if __name__ == "__main__":
@@ -431,5 +437,5 @@ if __name__ == "__main__":
     test_adjust_gamma_pipeline_py()
     test_adjust_gamma_pipeline_py_gray()
     test_adjust_gamma_eager_image_type()
-    test_adjust_gamma_eager_invalid_image_type_pil()
-    test_adjust_gamma_eager_invalid_image_type()
+    test_adjust_gamma_eager_invalid_image_types1()
+    test_adjust_gamma_eager_invalid_image_types2()
