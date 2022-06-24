@@ -724,6 +724,49 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyPowerSign)
+def get_apply_power_sign_rule(prim, axis_size):
+    """VmapRule for `ApplyPowerSign` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = P.ApplyPowerSign()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+    prim_name = prim.name
+
+    def vmap_rule(var_bdim, m_bdim, lr_bdim, logbase_bdim, sign_decay_bdim, beta_bdim, grad_bdim, u_monad):
+        var, var_dim = var_bdim
+        m, m_dim = m_bdim
+        lr, lr_dim = lr_bdim
+        logbase, logbase_dim = logbase_bdim
+        sign_decay, sign_decay_dim = sign_decay_bdim
+        beta, beta_dim = beta_bdim
+        grad, grad_dim = grad_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [m_bdim, lr_bdim, logbase_bdim, sign_decay_bdim, beta_bdim, grad_bdim]):
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `m/lr/logbase/sign_decay/beta/grad` is not None. The execution order of "
+                                 "operator `{}` cannot be guaranteed.".format(prim_name))
+            var, m = prim(var, m, lr, logbase, sign_decay, beta, grad, u_monad)
+            return (var, None), (m, None)
+        if var_dim != 0 or m_dim != var_dim:
+            raise ValueError("For `{}`, the source axis of `var` must be equal to `m`, and not equal to 0, "
+                             "but got the source axis of `var`: {}, `m`: {}.".format(prim_name, var_dim, m_dim))
+
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        logbase = _bdim_at_front(logbase, logbase_dim, axis_size)
+        sign_decay = _bdim_at_front(sign_decay, sign_decay_dim, axis_size)
+        beta = _bdim_at_front(beta, beta_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        var, m = batch_prim(var, m, lr, logbase, sign_decay, beta, grad, u_monad)
+        return (var, 0), (m, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.ApplyAdagradDA)
 def get_apply_adagrad_da_vmap_rule(prim, axis_size):
     """VmapRule for `ApplyAdagradDA` operation."""
