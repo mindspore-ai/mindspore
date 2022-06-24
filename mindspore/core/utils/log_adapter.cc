@@ -35,6 +35,7 @@
 namespace mindspore {
 constexpr int kNameMaxLength = 18;
 constexpr size_t kStep = 2;
+constexpr auto kSplitLine = "\n----------------------------------------------------\n";
 #if defined(__ANDROID__) || defined(ANDROID)
 constexpr const char *ANDROID_LOG_TAG = "MS_LITE";
 #endif
@@ -271,9 +272,28 @@ void PrintMessage(std::ostringstream &oss, const std::string &title, const std::
     oss << "\n";
   }
 
-  oss << "\n----------------------------------------------------\n"
-      << title << "\n----------------------------------------------------\n"
-      << content;
+  oss << kSplitLine << title << kSplitLine << content;
+}
+
+void CombineExceptionMessageWithSameTitle(std::ostringstream &oss, const std::string &title,
+                                          const std::string &content) {
+  if (title.empty() || content.empty()) {
+    return;
+  }
+  std::string message = oss.str();
+  size_t position = message.find(title + kSplitLine);
+  if (position != std::string::npos) {
+    position += title.length() + strlen(kSplitLine);
+    if (content[content.length() - 1] != '\n') {
+      (void)message.insert(position, content + "\n");
+    } else {
+      (void)message.insert(position, content);
+    }
+    oss.str("");
+    oss << message;
+  } else {
+    PrintMessage(oss, title, content);
+  }
 }
 
 void DisplayDevExceptionMessage(std::ostringstream &oss, const std::vector<std::string> &dmsg,
@@ -287,14 +307,14 @@ void DisplayDevExceptionMessage(std::ostringstream &oss, const std::vector<std::
     const std::string CPP_CALL_STACK_TITLE = "- C++ Call Stack: (For framework developers)";
     std::ostringstream cpp_call_stack_content;
     cpp_call_stack_content << location.file_ << ":" << location.line_ << " " << location.func_ << "\n";
-    PrintMessage(oss, CPP_CALL_STACK_TITLE, cpp_call_stack_content.str());
+    CombineExceptionMessageWithSameTitle(oss, CPP_CALL_STACK_TITLE, cpp_call_stack_content.str());
 
     size_t size = dmsg.size();
     if ((size != 0) && (size % kStep == 0)) {
       for (size_t i = 0; i < size; i += kStep) {
         std::ostringstream dmsg_title;
         dmsg_title << "- " << dmsg[i] << " (For framework developers)";
-        PrintMessage(oss, dmsg_title.str(), dmsg[i + 1]);
+        CombineExceptionMessageWithSameTitle(oss, dmsg_title.str(), dmsg[i + 1]);
       }
     }
   }
@@ -306,7 +326,7 @@ void DisplayUserExceptionMessage(std::ostringstream &oss, const std::vector<std:
     for (size_t i = 0; i < size; i += kStep) {
       std::ostringstream umsg_title;
       umsg_title << "- " << umsg[i];
-      PrintMessage(oss, umsg_title.str(), umsg[i + 1]);
+      CombineExceptionMessageWithSameTitle(oss, umsg_title.str(), umsg[i + 1]);
     }
   }
 }
