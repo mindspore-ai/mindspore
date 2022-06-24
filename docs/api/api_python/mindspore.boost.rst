@@ -11,13 +11,13 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **level** (str) – Boost的配置级别，默认值："O0"。
+    - **level** (str) - Boost的配置级别，默认值："O0"。
 
       - "O0"： 不变化。
       - "O1"： 启用boost模式, 性能将提升约20%, 准确率保持不变。
       - "O2"： 启用boost模式, 性能将提升约30%, 准确率下降小于3%。
 
-    - **boost_config_dict** (dict) – 用户可配置的超参字典，建议的格式如下：
+    - **boost_config_dict** (dict) - 用户可配置的超参字典，建议的格式如下：
 
       .. code-block::
 
@@ -145,7 +145,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **异常：**
 
-    - **ValueError** – Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
+    - **ValueError** - Boost的模式不在["auto", "manual", "enable_all", "disable_all"]这个列表中。
 
     .. py:method:: network_auto_process_eval(network)
 
@@ -170,7 +170,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **opt** (Cell) – 使用的优化器。
+    - **opt** (Cell) - 使用的优化器。
 
     .. py:method:: add_grad_centralization(network)
 
@@ -178,7 +178,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **network** (Cell) – 训练网络。
+        - **network** (Cell) - 训练网络。
 
     .. py:method:: build_gc_params_group(params_dict, parameters)
 
@@ -186,8 +186,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **params_dict** (dict) – 训练权重的字典。
-        - **parameters** (list) – 训练权重的列表。
+        - **params_dict** (dict) - 训练权重的字典。
+        - **parameters** (list) - 训练权重的列表。
 
     .. py:method:: build_params_dict(network)
 
@@ -195,7 +195,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **network** (Cell) – 训练网络。
+        - **network** (Cell) - 训练网络。
 
     .. py:method:: generate_new_optimizer()
 
@@ -211,8 +211,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **parameters** (list) – 训练网络的权重。
-        - **split_point** (list) – 网络梯度切分点。默认为None。
+        - **parameters** (list) - 训练网络的权重。
+        - **split_point** (list) - 网络梯度切分点。默认为None。
 
     .. py:method:: generate_group_params(parameters, origin_params)
 
@@ -220,8 +220,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **parameters** (list) – 训练网络的新权重。
-        - **origin_params** (list) –  训练网络的初始权重。
+        - **parameters** (list) - 训练网络的新权重。
+        - **origin_params** (list) -  训练网络的初始权重。
 
 .. py:class:: mindspore.boost.BoostTrainOneStepCell(network, optimizer, sens=1.0)
 
@@ -232,13 +232,13 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **network** (Cell) – 训练网络，当前网络只支持单个输出。
-    - **optimizer** (Union[Cell]) – 用于更新网络参数的优化器。
-    - **sens** (numbers.Number) – 作为反向传播输入要填充的缩放数，默认值为1.0。
+    - **network** (Cell) - 训练网络，当前网络只支持单个输出。
+    - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
+    - **sens** (numbers.Number) - 作为反向传播输入要填充的缩放数，默认值为1.0。
 
     **输入：**
 
-    - **(*inputs)** (Tuple(Tensor)) – 网络的所有输入组成的元组。
+    - **(*inputs)** (Tuple(Tensor)) - 网络的所有输入组成的元组。
 
     **输出：**
 
@@ -250,7 +250,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **异常：**
 
-    - **TypeError** – 如果 `sens` 不是一个数字。
+    - **TypeError** - 如果 `sens` 不是一个数字。
 
     .. py:method:: adasum_process(loss, grads)
 
@@ -258,8 +258,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **loss** (Tensor) – 网络训练的loss值。
-        - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
+        - **loss** (Tensor) - 网络训练的loss值。
+        - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
 
         **返回：**
 
@@ -287,10 +287,10 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **loss** (Tensor) – 网络训练的loss值。
-        - **grads** (Tuple(Tensor)) – 网络训练过程中的梯度。
-        - **sens** (Tensor) – 作为反向传播输入要填充的缩放数。
-        - **inputs** (Tuple(Tensor)) – 网络训练的输入。
+        - **loss** (Tensor) - 网络训练的loss值。
+        - **grads** (Tuple(Tensor)) - 网络训练过程中的梯度。
+        - **sens** (Tensor) - 作为反向传播输入要填充的缩放数。
+        - **inputs** (Tuple(Tensor)) - 网络训练的输入。
 
         **返回：**
 
@@ -302,7 +302,7 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **inputs** (Tuple(Tensor)) – 网络训练的输入。
+        - **inputs** (Tuple(Tensor)) - 网络训练的输入。
 
         **返回：**
 
@@ -317,8 +317,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **network** (Cell) – 训练网络，当前网络只支持单个输出。
-    - **optimizer** (Union[Cell]) – 用于更新网络参数的优化器。
+    - **network** (Cell) - 训练网络，当前网络只支持单个输出。
+    - **optimizer** (Union[Cell]) - 用于更新网络参数的优化器。
     - **scale_sense** (Union[Tensor, Cell]) - 如果此值为Cell类型，`BoostTrainOneStepWithLossScaleCell` 会调用它来更新损失缩放系数。如果此值为Tensor类型，可调用 `set_sense_scale` 来更新损失缩放系数，shape为 :math:`()` 或 :math:`(1,)` 。
 
     **输入：**
@@ -344,8 +344,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **network** (Cell) – 待训练的网络模型。
-    - **fn_flag** (bool) – 是否将网络中最后一个全连接层替换为全归一化层。默认值：False。
+    - **network** (Cell) - 待训练的网络模型。
+    - **fn_flag** (bool) - 是否将网络中最后一个全连接层替换为全归一化层。默认值：False。
 
 .. py:class:: mindspore.boost.GradientFreeze(param_groups, freeze_type, freeze_p, total_steps)
 
@@ -354,10 +354,10 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **param_groups** (Union[tuple, list]) – 梯度冻结训练的权重。
-    - **freeze_type** (int) – 梯度冻结训练的策略。
-    - **freeze_p** (float) – 梯度冻结训练的概率。
-    - **total_steps** (int) – 整个训练过程的总的步数。
+    - **param_groups** (Union[tuple, list]) - 梯度冻结训练的权重。
+    - **freeze_type** (int) - 梯度冻结训练的策略。
+    - **freeze_p** (float) - 梯度冻结训练的概率。
+    - **total_steps** (int) - 整个训练过程的总的步数。
 
     .. py:method:: freeze_generate(network, optimizer)
 
@@ -365,8 +365,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **network** (Cell) – 训练网络。
-        - **optimizer** (Union[Cell]) – 用于更新权重的优化器。
+        - **network** (Cell) - 训练网络。
+        - **optimizer** (Union[Cell]) - 用于更新权重的优化器。
 
     .. py:method:: generate_freeze_index_sequence(parameter_groups_number, freeze_strategy, freeze_p, total_steps)
 
@@ -374,10 +374,10 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **parameter_groups_number** (numbers.Number) – 梯度冻结训练的权重个数。
-        - **freeze_strategy** (int) – 梯度冻结训练的策略。
-        - **freeze_p** (float) – 梯度冻结训练的概率。
-        - **total_steps** (numbers.Number) – 整个训练过程的总的步数。
+        - **parameter_groups_number** (numbers.Number) - 梯度冻结训练的权重个数。
+        - **freeze_strategy** (int) - 梯度冻结训练的策略。
+        - **freeze_p** (float) - 梯度冻结训练的概率。
+        - **total_steps** (numbers.Number) - 整个训练过程的总的步数。
 
     .. py:method:: split_parameters_groups(net, freeze_para_groups_number)
 
@@ -385,8 +385,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
         **参数：**
 
-        - **net** (Cell) – 训练网络。
-        - **freeze_para_groups_number** (int) – 梯度冻结训练的权重个数。
+        - **net** (Cell) - 训练网络。
+        - **freeze_para_groups_number** (int) - 梯度冻结训练的权重个数。
 
 .. py:class:: mindspore.boost.FreezeOpt(opt, train_parameter_groups=None, train_strategy=None)
 
@@ -394,9 +394,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **opt** (Cell) – 非冻结优化器实例，如 *Momentum*，*SGD*。
-    - **train_parameter_groups** (Union[tuple, list]) – 梯度冻结训练的权重。
-    - **train_strategy** (Union[tuple(int), list(int), Tensor]) – 梯度冻结训练的策略。
+    - **opt** (Cell) - 非冻结优化器实例，如 *Momentum*，*SGD*。
+    - **train_parameter_groups** (Union[tuple, list]) - 梯度冻结训练的权重。
+    - **train_strategy** (Union[tuple(int), list(int), Tensor]) - 梯度冻结训练的策略。
 
 .. py:function:: mindspore.boost.freeze_cell(reducer_flag, network, optimizer, sens, grad, use_grad_accumulation, mean=None, degree=None, max_accumulation_step=1)
 
@@ -420,8 +420,8 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **max_accumulation_step** (int) – 累积梯度的步数。
-    - **optimizer** (Cell) – 网络训练使用的优化器。
+    - **max_accumulation_step** (int) - 累积梯度的步数。
+    - **optimizer** (Cell) - 网络训练使用的优化器。
 
 .. py:class:: mindspore.boost.AdaSum(rank, device_number, group_number, parameter_tuple)
 
@@ -429,16 +429,16 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     **参数：**
 
-    - **rank** (int) – 总的训练的卡数。
-    - **device_number** (int) – 单机的卡数。
-    - **group_number** (int) – 分组的数量。
-    - **parameter_tuple** (Tuple(Parameter)) – 网络训练权重组成的元组。
+    - **rank** (int) - 总的训练的卡数。
+    - **device_number** (int) - 单机的卡数。
+    - **group_number** (int) - 分组的数量。
+    - **parameter_tuple** (Tuple(Parameter)) - 网络训练权重组成的元组。
 
     **输入：**
 
-    - **delta_weights** (Tuple(Tensor)) – 梯度tuple。
-    - **parameters** (Tuple(Parameter)) – 当前权重组成的元组。
-    - **old_parameters** (Tuple(Parameter)) – 旧的权重组成的元组。
+    - **delta_weights** (Tuple(Tensor)) - 梯度tuple。
+    - **parameters** (Tuple(Parameter)) - 当前权重组成的元组。
+    - **old_parameters** (Tuple(Parameter)) - 旧的权重组成的元组。
 
     **输出：**
 

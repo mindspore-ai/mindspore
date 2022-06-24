@@ -9,7 +9,7 @@ mindspore.dataset.vision.RandomHorizontalFlip
 
     **参数：**
 
-    - **prob**  (float, 可选) - 图像被翻转的概率，必须在 [0, 1] 范围内, 默认值：0.5。
+    - **prob** (float, 可选) - 图像被翻转的概率，必须在 [0, 1] 范围内, 默认值：0.5。
 
     **异常：**
 

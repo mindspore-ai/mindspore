@@ -20,7 +20,7 @@ mindspore.dataset.vision.RandomResizedCrop
       - Inter.AREA，像素区域插值。
       - Inter.PILCUBIC，Pillow库中实现的双三次插值，输入应为3通道格式。
 
-    - **max_attempts** (int, 可选):  生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪，默认值：10。
+    - **max_attempts** (int, 可选) - 生成随机裁剪位置的最大尝试次数，超过该次数时将使用中心裁剪，默认值：10。
 
     **异常：**
 
@@ -33,4 +33,4 @@ mindspore.dataset.vision.RandomResizedCrop
     - **ValueError** - 当 `scale` 为负数。
     - **ValueError** - 当 `ratio` 为负数。
     - **ValueError** - 当 `max_attempts` 不为正数。
-    - **RuntimeError** 当输入图像的shape不为<H, W>或<H, W, C>。
+    - **RuntimeError** - 当输入图像的shape不为<H, W>或<H, W, C>。
