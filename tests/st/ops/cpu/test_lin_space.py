@@ -38,7 +38,7 @@ class LinSpaceNet(Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('start_np, stop_np', [(5, 150), (-25, 147), (-25.3, -147)])
-@pytest.mark.parametrize('num_np', [12, 10, 20])
+@pytest.mark.parametrize('num_np', [1, 12, 10, 20])
 def test_lin_space(start_np, stop_np, num_np):
     """
     Feature: ALL To ALL
@@ -124,5 +124,33 @@ def test_lin_space_vmap_2d():
     result_ms = ops.vmap(ops.vmap(net, (0, 0)), (1, 0))(start, stop).asnumpy()
 
     start_np = np.moveaxis(start_np, 1, 0)
+    result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
+    assert np.allclose(result_ms, result_np)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_lin_space_vmap_dynamic_shape():
+    """
+    Feature: ALL To ALL
+    Description: test cases for LinSpace Net
+    Expectation: the result match to numpy
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    np.random.seed(0)
+
+    start_np = np.random.randn(5)
+    stop_np = np.random.randn(5)
+    num_np = 10
+
+    start = Tensor(start_np, dtype=mstype.float32)
+    stop = Tensor(stop_np, dtype=mstype.float32)
+
+    dynamic_net = LinSpaceNet(num_np)
+    place_holder = Tensor(shape=[None], dtype=mstype.float32)
+    dynamic_net.set_inputs(place_holder, place_holder)
+
+    result_ms = ops.vmap(dynamic_net, (0, 0))(start, stop).asnumpy()
     result_np = np.linspace(start_np, stop_np, num_np, axis=-1)
     assert np.allclose(result_ms, result_np)
