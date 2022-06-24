@@ -66,6 +66,15 @@ static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap
   {"TruncateMod", BROADCAST_TYPE_TRUNCATEMOD},
 };
 
+static const std::map<std::string, BroadcastOpType> kBroadcastComplexAndRealTypeMap = {
+  {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL}, {"Sub", BROADCAST_TYPE_SUB},
+  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV},
+};
+
+static const std::map<std::string, BroadcastOpType> kBroadcastComplexOnlyTypeMap = {
+  {"Complex", BROADCAST_TYPE_COMPLEX},
+};
+
 class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
  public:
   BroadcastOpGpuKernelMod() {}
@@ -95,6 +104,9 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
+  template <typename T, typename S, typename G>
+  bool LaunchComplexKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
   using BroadCastFunc = std::function<bool(BroadcastOpGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                                            const std::vector<kernel::AddressPtr> &)>;
 
@@ -102,7 +114,9 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
 
   BroadcastOpType op_type_;
   bool need_broadcast_;
-  bool is_comp_op_;
+  bool is_compare_op_;
+  bool support_complex_{true};
+  bool support_real_{true};
   bool is_null_input_;
   std::vector<size_t> lhs_shape_;
   std::vector<size_t> rhs_shape_;
@@ -111,7 +125,9 @@ class BroadcastOpGpuKernelMod : public NativeGpuKernelMod {
   size_t output_num_{1};
   cudaStream_t cuda_stream_{nullptr};
   BroadCastFunc kernel_func_{};
-  static std::vector<std::pair<KernelAttr, BroadCastFunc>> func_list_;
+  static std::vector<std::pair<KernelAttr, BroadCastFunc>> real_list_;
+  static std::vector<std::pair<KernelAttr, BroadCastFunc>> complex_list_;
+  std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> func_list_;
 };
 }  // namespace kernel
 }  // namespace mindspore
