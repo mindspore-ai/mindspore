@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """test flatten tensors"""
+import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.common.initializer as init
@@ -247,6 +248,7 @@ def test_flatten_tensors_with_fusion_size_2():
     assert fusion_size == (20)
 
 
+@pytest.mark.skip(reason="fusion_size not fully supported yet")
 def test_cell_flatten_weights_with_fusion_size():
     """
     Feature: Flatten tensors.

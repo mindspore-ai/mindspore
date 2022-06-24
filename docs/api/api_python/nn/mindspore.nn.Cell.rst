@@ -156,6 +156,10 @@
 
         若需要在print时输出个性化的扩展信息，请在您的网络中重新实现此方法。
 
+    .. py:method:: flatten_weights()
+
+        重置权重参数（即可训练参数）使用的数据内存，让这些参数按数据类型分组使用连续内存块。
+
     .. py:method:: generate_scope()
 
         为网络中的每个Cell对象生成NameSpace。
@@ -509,7 +513,7 @@
         **参数：**
 
         - **inputs** (tuple) - Cell的输入。
-        
+
         .. note::
             这是一个实验接口，可能会被更改或者删除。
 
