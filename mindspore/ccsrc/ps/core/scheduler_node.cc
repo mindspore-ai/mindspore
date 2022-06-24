@@ -313,7 +313,7 @@ void SchedulerNode::CreateTcpServer() {
   server_->SetMessageCallback([&](const std::shared_ptr<TcpConnection> &conn, const std::shared_ptr<MessageMeta> &meta,
                                   const Protos &, const void *data, size_t size) {
     if (handlers_.count(meta->cmd()) == 0) {
-      MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
+      MS_LOG(WARNING) << "The cmd:" << meta->cmd() << " is not supported!";
     }
     const auto &handler_ptr = handlers_[meta->cmd()];
     (this->*handler_ptr)(server_, conn, meta, data, size);
@@ -725,8 +725,8 @@ void SchedulerNode::SendMetadata(const std::shared_ptr<TcpClient> &client, uint3
 
   if (!SendMessageAsync(client, message_meta, Protos::PROTOBUF, send_metadata_message.SerializeAsString().data(),
                         send_metadata_message.ByteSizeLong())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send metadata timeout!";
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -743,8 +743,8 @@ void SchedulerNode::SendFinish(const std::shared_ptr<TcpClient> &client) {
   std::string resp_data;
 
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, resp_data.data(), resp_data.size())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send finish timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send finish timeout!";
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -761,8 +761,8 @@ void SchedulerNode::SendScaleOutDone(const std::shared_ptr<TcpClient> &client) {
   std::string resp_data;
 
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, resp_data.data(), resp_data.size())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send scale_out_done timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send scale_out_done timeout!";
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
@@ -779,8 +779,8 @@ void SchedulerNode::SendScaleInDone(const std::shared_ptr<TcpClient> &client) {
   std::string resp_data;
 
   if (!SendMessageSync(client, message_meta, Protos::PROTOBUF, resp_data.data(), resp_data.size())) {
-    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
-                      << " the node id:" << node_info_.node_id_ << " send scale_in_done timeout!";
+    MS_LOG(WARNING) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                    << " the node id:" << node_info_.node_id_ << " send scale_in_done timeout!";
   }
 
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
