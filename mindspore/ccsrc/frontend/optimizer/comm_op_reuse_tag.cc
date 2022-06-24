@@ -58,6 +58,9 @@ void AddCommOpReuseTag(const FuncGraphPtr &graph) {
   if (parallel_mode != parallel::kAutoParallel && parallel_mode != parallel::kSemiAutoParallel) {
     return;
   }
+  if (!graph->has_flag(parallel::kAutoParallel) && !graph->has_flag(parallel::kSemiAutoParallel)) {
+    return;
+  }
   AnfNodePtr return_node = graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(return_node);
