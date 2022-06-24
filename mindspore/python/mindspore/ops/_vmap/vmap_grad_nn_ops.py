@@ -186,3 +186,45 @@ def get_cdist_grad_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(G.AdaptiveMaxPool2DGrad)
+def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
+    """VmapRule for `AdaptiveMaxPool2DGrad` operation."""
+    chw_reverse_index = -3
+    hw_reverse_index = -2
+
+    def vmap_rule(ygrad_bdim, x_bdim, max_index_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, ygrad_bdim, x_bdim, max_index_bdim)
+        if is_all_none:
+            return result
+
+        dy, dy_dim = ygrad_bdim
+        in_x, in_x_dim = x_bdim
+        max_idx, max_idx_dim = max_index_bdim
+
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        in_x = _bdim_at_front(in_x, in_x_dim, axis_size)
+        max_idx = _bdim_at_front(max_idx, max_idx_dim, axis_size)
+
+        # expand out dim
+        dy_shape = F.shape(dy)
+        dy_shape_tmp = (-1,) + dy_shape[chw_reverse_index:]
+        dy = F.reshape(dy, dy_shape_tmp)
+
+        in_x_shape = F.shape(in_x)
+        in_x_tmp_shape = (-1,) + in_x_shape[chw_reverse_index:]
+        in_x = F.reshape(in_x, in_x_tmp_shape)
+
+        max_idx_shape = F.shape(max_idx)
+        max_idx_tmp_shape = (-1,) + max_idx_shape[chw_reverse_index:]
+        max_idx = F.reshape(max_idx, max_idx_tmp_shape)
+
+        # cal
+        out = prim(dy, in_x, max_idx)
+        out_shape = F.shape(out)
+        real_out_shape = dy_shape[:hw_reverse_index] + out_shape[hw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return (out, 0)
+
+    return vmap_rule
