@@ -336,7 +336,6 @@ int TensorRTSubGraph::MarkOutputs() {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
-          out_op->layer()->setPrecision(ConvertDataType(out_tensor.DataType()));
           nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
           if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
               out_op->GetInnerOutTensor()[index].format_ == Format::NCHW &&
