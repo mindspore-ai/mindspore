@@ -92,6 +92,7 @@ from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
+from mindspore.ops.operations.array_ops import LeftShift
 from mindspore.ops.operations.array_ops import Expand
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
@@ -2905,6 +2906,11 @@ test_case_nn_ops = [
 ]
 
 test_case_array_ops = [
+    ('LeftShift', {
+        'block': LeftShift(),
+        'desc_inputs': [Tensor(np.array([1, 2, 3]), mstype.int32),
+                        Tensor(np.array([1, 0, -1]), mstype.int32)],
+        'skip': ['backward']}),
     ('FillDiagonal', {
         'block': FillDiagonal(fill_value=9.9),
         'desc_inputs': [[8, 8]],
