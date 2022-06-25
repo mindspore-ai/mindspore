@@ -103,9 +103,6 @@ class XdivyGpuKernelMod : public NativeGpuKernelMod {
                                        void *stream_ptr)>;
   static std::map<mindspore::TypeId, XdivyFunc> func_map_;
   XdivyFunc kernel_func_;
-  static const size_t INPUT_NUM = 2;
-  static const size_t OUTPUT_NUM = 1;
-  static const int MAX_DIMS = 7;
   size_t x_ele_num_ = 1;
   size_t y_ele_num_ = 1;
   size_t out_ele_num_ = 1;

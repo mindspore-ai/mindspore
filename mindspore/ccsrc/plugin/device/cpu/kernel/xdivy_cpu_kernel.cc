@@ -21,6 +21,8 @@
 
 namespace mindspore {
 namespace kernel {
+static constexpr size_t INPUT_NUM = 2;
+static constexpr size_t OUTPUT_NUM = 1;
 template <typename T>
 T GetDivZeroVal(const T &v) {
   auto zero = static_cast<T>(0.0);
