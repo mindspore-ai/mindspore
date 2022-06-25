@@ -20,12 +20,16 @@ int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t star
   const int channel = param->input_channel_;
   const int input_height = param->input_h_;
   const int input_width = param->input_w_;
+
   const int window_height = param->window_h_;
   const int window_width = param->window_w_;
+
   const int stride_height = param->stride_h_;
   const int stride_width = param->stride_w_;
+
   const int pad_top = param->pad_u_;
   const int pad_left = param->pad_l_;
+
   const int output_height = param->output_h_;
   NNACL_CHECK_ZERO_RETURN_ERR(output_height);
   const int output_width = param->output_w_;
@@ -37,31 +41,109 @@ int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t star
   NNACL_CHECK_ZERO_RETURN_ERR(output_hw);
 
   for (size_t pos = start; pos < end; pos++) {
-    const int posn = pos / output_chw;
-    const int posc = pos / output_hw % channel;
-    const int posh = pos / output_height % output_width;
-    const int posw = pos % output_width;
-    int hstart = posh * stride_height - pad_top;
-    int wstart = posw * stride_width - pad_left;
-    const int hend = MSMIN(hstart + window_height, input_height);
-    const int wend = MSMIN(wstart + window_width, input_width);
-    hstart = MSMAX(hstart, 0);
-    wstart = MSMAX(wstart, 0);
-    int inputStart = posn * channel * input_height * input_width;
-    int maxIdx = posc * input_height * input_width + hstart * input_width + wstart;
-    float maxData = input[inputStart + maxIdx];
-    for (int hcur = hstart; hcur < hend; ++hcur) {
-      for (int wcur = wstart; wcur < wend; ++wcur) {
-        int inputIdx = posc * input_height * input_width + hcur * input_width + wcur;
-        float inputData = input[inputStart + inputIdx];
-        if (inputData > maxData) {
-          maxIdx = inputIdx;
-          maxData = inputData;
+    const int pos_n = pos / output_chw;
+    const int pos_c = pos / output_hw % channel;
+    const int pos_h = pos / output_height % output_width;
+    const int pos_w = pos % output_width;
+
+    int h_start = pos_h * stride_height - pad_top;
+    int w_start = pos_w * stride_width - pad_left;
+    const int h_end = MSMIN(h_start + window_height, input_height);
+    const int w_end = MSMIN(w_start + window_width, input_width);
+    h_start = MSMAX(h_start, 0);
+    w_start = MSMAX(w_start, 0);
+
+    int input_start = pos_n * channel * input_height * input_width;
+    int max_idx = pos_c * input_height * input_width + h_start * input_width + w_start;
+    float max_data = input[input_start + max_idx];
+
+    for (int h_cur = h_start; h_cur < h_end; ++h_cur) {
+      for (int w_cur = w_start; w_cur < w_end; ++w_cur) {
+        int input_idx = pos_c * input_height * input_width + h_cur * input_width + w_cur;
+        float input_data = input[input_start + input_idx];
+        if (input_data > max_data) {
+          max_idx = input_idx;
+          max_data = input_data;
         }
       }
     }
-    output[pos] = maxData;
-    index[pos] = maxIdx;
+    output[pos] = max_data;
+    index[pos] = max_idx;
+  }
+  return NNACL_OK;
+}
+
+int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t start, size_t end,
+                        Pooling3DParameter *param) {
+  PoolingParameter *param_2d = (PoolingParameter *)(param);
+  const int channel = param_2d->input_channel_;
+  const int input_depth = param->input_d_;
+  const int input_height = param_2d->input_h_;
+  const int input_width = param_2d->input_w_;
+
+  const int window_depth = param->window_d_;
+  const int window_height = param_2d->window_h_;
+  const int window_width = param_2d->window_w_;
+
+  const int stride_depth = param->stride_d_;
+  const int stride_height = param_2d->stride_h_;
+  const int stride_width = param_2d->stride_w_;
+
+  const int pad_front = param->pad_f_;
+  const int pad_top = param_2d->pad_u_;
+  const int pad_left = param_2d->pad_l_;
+
+  const int output_depth = param->output_d_;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_depth);
+  const int output_height = param_2d->output_h_;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_height);
+  const int output_width = param_2d->output_w_;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_width);
+
+  const int output_cdhw = channel * output_depth * output_height * output_width;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_cdhw);
+  const int output_dhw = output_depth * output_height * output_width;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_dhw);
+  const int output_hw = output_height * output_width;
+  NNACL_CHECK_ZERO_RETURN_ERR(output_hw);
+
+  for (size_t pos = start; pos < end; pos++) {
+    const int pos_n = pos / output_cdhw;
+    const int pos_c = pos / output_dhw % channel;
+    const int pos_d = pos / output_hw % output_depth;
+    const int pos_h = pos / output_height % output_width;
+    const int pos_w = pos % output_width;
+
+    int d_start = pos_d * stride_depth - pad_front;
+    int h_start = pos_h * stride_height - pad_top;
+    int w_start = pos_w * stride_width - pad_left;
+    const int d_end = MSMIN(d_start + window_depth, input_depth);
+    const int h_end = MSMIN(h_start + window_height, input_height);
+    const int w_end = MSMIN(w_start + window_width, input_width);
+    d_start = MSMAX(d_start, 0);
+    h_start = MSMAX(h_start, 0);
+    w_start = MSMAX(w_start, 0);
+
+    int input_start = pos_n * channel * input_depth * input_height * input_width;
+    int max_idx = pos_c * input_depth * input_height * input_width + d_start * input_height * input_width +
+                  h_start * input_width + w_start;
+    float max_data = input[input_start + max_idx];
+
+    for (int d_cur = d_start; d_cur < d_end; ++d_cur) {
+      for (int h_cur = h_start; h_cur < h_end; ++h_cur) {
+        for (int w_cur = w_start; w_cur < w_end; ++w_cur) {
+          int input_idx = pos_c * input_depth * input_height * input_width + d_cur * input_height * input_width +
+                          h_cur * input_width + w_cur;
+          float input_data = input[input_start + input_idx];
+          if (input_data > max_data) {
+            max_idx = input_idx;
+            max_data = input_data;
+          }
+        }
+      }
+    }
+    output[pos] = max_data;
+    index[pos] = max_idx;
   }
   return NNACL_OK;
 }

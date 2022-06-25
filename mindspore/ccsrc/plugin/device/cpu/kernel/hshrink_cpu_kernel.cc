@@ -82,8 +82,10 @@ bool HShrinkCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 
     auto ret = HShrink(input_tmp, (end - start), output_tmp, this->lambd_);
     if (ret != static_cast<int>(NNACL_OK)) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', call NNACL HShrink function failed. Error code: " << ret;
+      return false;
     }
+    return true;
   };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
   return true;
