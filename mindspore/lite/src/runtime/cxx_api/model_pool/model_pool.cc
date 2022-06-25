@@ -248,7 +248,7 @@ Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
     MS_LOG(ERROR) << "the number of threads set in the context is less than 1.";
     return kLiteError;
   }
-  if (use_numa_bind_mode_) {
+  if (numa_available_) {
     // now only supports the same number of cores per numa node
     // do not use if there are extra cores
     auto worker_num = 0;
