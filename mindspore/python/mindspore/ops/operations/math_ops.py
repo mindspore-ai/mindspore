@@ -1581,18 +1581,6 @@ class CumSum(PrimitiveWithInfer):
         validator.check_value_type('reverse', reverse, [bool], cls_name)
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['y'])
 
-    def __infer__(self, x, axis):
-        cls_name = self.name
-        x_shp = x['shape']
-        if axis['value'] is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
-        validator.check_value_type('axis', axis['value'], [int], cls_name)
-        valid_dtypes = [mstype.uint8, mstype.int8, mstype.int32, mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensor_dtype_valid('x', x['dtype'], valid_dtypes, cls_name)
-        return {'shape': x_shp,
-                'dtype': x['dtype'],
-                'value': None}
-
 
 class AddN(Primitive):
     """
