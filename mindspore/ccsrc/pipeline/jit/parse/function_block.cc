@@ -135,7 +135,7 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
   block_queue.push(this);
   bool has_found = false;
   while (!block_queue.empty()) {
-    const auto &cur_block = block_queue.front();
+    const auto cur_block = block_queue.front();
     block_queue.pop();
     visited_block.insert(cur_block);
     auto pred_node = cur_block->ReadLocalVariable(var_name);
