@@ -17,11 +17,18 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_IMPL_CUH_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_IMPL_CUH_
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+
+constexpr size_t kDropoutTileSize = 4;
+
 template <typename T>
 CUDA_LIB_EXPORT void DropoutForward(const T *input, T *mask, T *output, float *mask_f, size_t num_count,
                                     float keep_prob, cudaStream_t cuda_stream);
 template <typename T>
 CUDA_LIB_EXPORT void DropoutBackward(const T *dy, const T *mask, T *dx, size_t num_count, float keep_prob,
                                      cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float keep_prob,
+                                         uint64_t seed, uint64_t seed_offset, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_IMPL_CUH_
