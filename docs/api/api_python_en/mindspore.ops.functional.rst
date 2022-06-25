@@ -46,9 +46,10 @@ Neural Network
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.avg_pool2d
+    mindspore.ops.deformable_conv2d
+    mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.pdist
-    mindspore.ops.deformable_conv2d
 
 Activation Functions
 ^^^^^^^^^^^^^^^^^^^^
