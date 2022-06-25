@@ -350,6 +350,15 @@ class UniqueFunc2(Cell):
         return y, idx
 
 
+class ArgMaxWithValueFunc(Cell):
+    def __init__(self):
+        super(ArgMaxWithValueFunc, self).__init__()
+        self.argmax_ = ops.function.max
+
+    def construct(self, x):
+        return self.argmax_(x, axis=0, keep_dims=False)
+
+
 class RangeNet(Cell):
     def __init__(self):
         super(RangeNet, self).__init__()
@@ -417,6 +426,9 @@ test_case_array_ops = [
     ('RangeNet', {
         'block': RangeNet(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 2]), ms.int32)]}),
+    ('ArgMaxWithValue', {
+        'block': ArgMaxWithValueFunc(),
+        'desc_inputs': [Tensor(np.array([1., 2., 4., 3.]), ms.float32)]}),
     ('FlattenConcat', {
         'block': NetForFlattenConcat(),
         'desc_inputs': [Tensor(np.array([1], np.float32)),

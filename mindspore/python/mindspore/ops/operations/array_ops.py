@@ -2154,7 +2154,7 @@ class ArgminV2(Primitive):
         return output
 
 
-class ArgMaxWithValue(PrimitiveWithInfer):
+class ArgMaxWithValue(Primitive):
     """
     Calculates the maximum value with the corresponding index.
 
@@ -2189,6 +2189,7 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
+        TypeError: If data type `input_x` is not float16, float32 and float64.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -2208,21 +2209,12 @@ class ArgMaxWithValue(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
         """Initialize ArgMaxWithValue"""
+        self.init_prim_io_names(inputs=['input_x'], outputs=['index', 'output_x'])
+        validator.check_value_type("axis", axis, [int], self.name)
+        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.axis = axis
         self.keep_dims = keep_dims
-        validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
-        validator.check_value_type('axis', axis, [int], self.name)
-
-    def infer_shape(self, x_shape):
-        axis = self.axis
-        x_rank = len(x_shape)
-        validator.check_int_range(axis, -x_rank, x_rank, Rel.INC_LEFT, "axis", self.name)
-        ouput_shape = _infer_shape_reduce(x_shape, self.axis, self.keep_dims, self.name)
-        return ouput_shape, ouput_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
-        return mstype.tensor_type(mstype.int32), x_dtype
+        self.add_prim_attr('dimension', self.axis)
 
 
 class ArgMinWithValue(PrimitiveWithInfer):

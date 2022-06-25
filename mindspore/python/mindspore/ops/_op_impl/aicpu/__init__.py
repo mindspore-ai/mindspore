@@ -153,6 +153,7 @@ from .matrix_diag_part_v3 import _matrix_diag_part_v3_aicpu
 from .matrix_set_diag_v3 import _matrix_set_diag_v3_aicpu
 from .ragged_range import _raggedrange_aicpu
 from .tan import _tan_aicpu
+from .argmax_with_value import _argmax_with_value_aicpu
 from .ctc_greedy_decoder import _ctc_greedy_decoder_aicpu
 from .reduce_prod import _reduce_prod_aicpu
 from .reduce_mean import _reduce_mean_aicpu

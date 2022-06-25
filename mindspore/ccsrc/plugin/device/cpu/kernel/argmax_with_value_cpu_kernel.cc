@@ -97,21 +97,33 @@ void ArgMaxWithValueCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   size_t shape_len = shape_.size();
   int64_t axis = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
   axis += SizeToLong(shape_len);
+  if (shape_len == 0) {
+    if (axis != -1 && axis != 0) {
+      MS_LOG(EXCEPTION) << "For ArgMaxWithValue with 0d input tensor, axis must be one of 0 or -1, but got" << axis
+                        << ".";
+    }
+    axis = 0;
+  }
   if (axis < 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'axis' must be in range [-1, " << (shape_len - 1)
-                      << "], but got " << axis;
+                      << "], but got " << axis << ".";
   }
-  axis = axis % SizeToLong(shape_len);
+  if (shape_len > 0) {
+    axis = axis % SizeToLong(shape_len);
+  }
+
   num_before_axis_ = 1;
   num_after_axis_ = 1;
-  for (size_t i = 0; i < shape_len; i++) {
-    if (SizeToLong(i) < axis) {
-      num_before_axis_ *= shape_[i];
-    } else if (SizeToLong(i) > axis) {
-      num_after_axis_ *= shape_[i];
+  if (shape_len > 0) {
+    for (size_t i = 0; i < shape_len; i++) {
+      if (SizeToLong(i) < axis) {
+        num_before_axis_ *= shape_[i];
+      } else if (SizeToLong(i) > axis) {
+        num_after_axis_ *= shape_[i];
+      }
     }
+    dim_axis_ = shape_[LongToSize(axis)];
   }
-  dim_axis_ = shape_[LongToSize(axis)];
 
   auto build_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
   if (build_info->GetInputNum() < 1) {
