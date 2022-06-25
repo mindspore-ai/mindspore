@@ -261,6 +261,7 @@ constexpr auto kEnvironCreate = "EnvironCreate";
 constexpr auto kEnvironSet = "EnvironSet";
 constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironAdd = "EnvironAdd";
+constexpr auto kPopulationCount = "PopulationCount";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 
 //
@@ -1030,6 +1031,7 @@ GVAR_DEF(PrimitivePtr, kPrimNPUAllocFloatStatus, std::make_shared<Primitive>("NP
 GVAR_DEF(PrimitivePtr, kPrimPyFunc, std::make_shared<Primitive>("PyFunc"));
 GVAR_DEF(PrimitivePtr, kPrimDynamicLossScale, std::make_shared<Primitive>("_DynamicLossScale"));
 GVAR_DEF(PrimitivePtr, kPrimScaleGrad, std::make_shared<Primitive>("ScaleGrad"));
+GVAR_DEF(PrimitivePtr, kPrimPopulationCount, std::make_shared<Primitive>("PopulationCount"));
 GVAR_DEF(PrimitivePtr, kPrimBlackmanWindow, std::make_shared<Primitive>("BlackmanWindow"));
 
 // Structures

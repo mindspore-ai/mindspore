@@ -233,6 +233,7 @@ from .math_func import (
     reduce_prod,
     sparse_segment_mean,
     log2,
+    approximate_equal,
 )
 from .nn_func import (
     adaptive_avg_pool2d,
@@ -258,6 +259,7 @@ from .nn_func import (
     smooth_l1_loss,
     cross_entropy,
     grid_sample,
+    ctc_greedy_decoder,
 )
 from .linalg_func import (
     svd,
