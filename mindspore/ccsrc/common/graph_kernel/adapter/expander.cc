@@ -36,7 +36,7 @@
 
 namespace mindspore::graphkernel {
 ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
-  auto expander =
+  ExpanderPtr expander =
     abstract
       ? std::make_shared<PyExpander>(std::static_pointer_cast<Callback>(std::make_shared<CallbackImplWithInferShape>()))
       : std::make_shared<PyExpander>(Callback::Instance());
@@ -63,16 +63,16 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
   };
   const auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
-    return WrapExpander(expander, iter->second);
+    expander = WrapExpander(expander, iter->second);
+  }
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    expander = SetDynamicShapeAttrDeco::Creator(expander);
   }
   return expander;
 }
 
 bool CanExpandFallback(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
-    return false;
-  }
-  if (common::AnfAlgo::IsDynamicShape(node) && common::GetEnv("MS_DEV_EXPANDER_FALLBACK_DYNAMIC") != "on") {
     return false;
   }
   if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") {
@@ -170,6 +170,40 @@ AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const
   }
 #endif
   return res;
+}
+
+void SetDynamicShapeAttrToCNode(const CNodePtr &cnode) {
+  auto in_dynamic = common::AnfAlgo::IsNodeInputDynamicShape(cnode);
+  auto out_dynamic = AnfUtils::IsNodeOutputDynamicShape(cnode);
+  if (in_dynamic && !common::AnfAlgo::HasNodeAttr(kAttrInputIsDynamicShape, cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), cnode);
+  }
+  if (out_dynamic && !common::AnfAlgo::HasNodeAttr(kAttrOutputIsDynamicShape, cnode)) {
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), cnode);
+  }
+}
+
+void SetDynamicShapeAttr(const FuncGraphPtr &graph) {
+  auto todos = TopoSort(graph->get_return());
+  for (const auto &node : todos) {
+    if (!node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
+      continue;
+    }
+    auto cnode = dyn_cast<CNode>(node);
+    SetDynamicShapeAttrToCNode(cnode);
+  }
+}
+
+AnfNodePtr SetDynamicShapeAttrDeco::Run(const AnfNodePtr &node) {
+  auto new_node = decorated_->Run(node);
+  if (new_node == nullptr) {
+    return nullptr;
+  }
+  auto new_cnode = dyn_cast<CNode>(new_node);
+  auto expand_fg = GetCNodeFuncGraph(new_cnode);
+  SetDynamicShapeAttr(expand_fg);
+  new_cnode->set_input(0, NewValueNode(expand_fg));
+  return new_cnode;
 }
 
 void ConvertAttrToInput(const FuncGraphPtr &graph) {
