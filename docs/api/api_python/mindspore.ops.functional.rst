@@ -77,6 +77,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
+    mindspore.ops.smooth_l1_loss
 
 数学运算算子
 ----------------
