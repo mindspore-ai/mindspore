@@ -361,7 +361,7 @@ def _promote_type_for_concatenate(tuple_of_tensors):
         return tuple_of_tensors
     tuple_of_casted_tensors = ()
     for tensor in tuple_of_tensors:
-        tuple_of_casted_tensors += (tensor.astype(final_type, copy=False),)
+        tuple_of_casted_tensors += (tensor.astype(final_type, False),)
     return tuple_of_casted_tensors
 
 
