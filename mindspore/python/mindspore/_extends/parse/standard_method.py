@@ -2352,3 +2352,27 @@ def split(input_x, axis=0, output_num=1):
     Refer to :func:`mindspore.ops.split` for more detail.
     """
     return F.split(input_x, axis, output_num)
+
+
+def xlogy(x, y):
+    r"""
+    Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Refer to :func:`mindspore.ops.xlogy` for more details.
+    """
+    return F.xlogy(x, y)
+
+
+def erf(x):
+    r"""
+    Computes the Gauss error function of `x` element-wise.
+    Refer to :func:`mindspore.ops.erf` for more detail.
+    """
+    return F.erf(x)
+
+
+def erfc(x):
+    r"""
+    Computes the complementary error function of `x` element-wise.
+    Refer to :func:`mindspore.ops.erfc` for more details.
+    """
+    return F.erfc(x)

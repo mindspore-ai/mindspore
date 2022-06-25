@@ -4147,6 +4147,99 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('split')(axis, output_num)(self)
 
 
+    def xlogy(self, y):
+        r"""
+        Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+        Returns zero when self tensor is zero. The data type of the self tensor should be
+        `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+        `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        To make it clear, the following content will use `x` to represent the self tensor.
+
+        .. math::
+
+            out_i = x_{i}\ln{y_{i}}
+
+        Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        The inputs must be two tensors or one tensor and one scalar.
+        When the inputs are two tensors,
+        dtypes of them cannot be bool at the same time, and the shapes of them could be broadcast.
+        When the inputs are one tensor and one scalar,
+        the scalar could only be a constant.
+
+        Args:
+            - **y** (Union[Tensor, number.Number, bool]) - The `y` input is a number.Number or
+              a bool or a tensor whose data type is number or bool.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `y` is not a number.Number or a bool or a Tensor.
+            TypeError: If dtype of `x` and 'y' is not in [float16, float32, float64] .
+            ValueError: If `x` could not be broadcast to a tensor with shape of `y`.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
+            >>> y = Tensor(np.array([2, 2, 2]), mindspore.float32)
+            >>> print(x.xlogy(y))
+            [-3.465736   0.        2.7725887]
+        """
+        return tensor_operator_registry.get("xlogy")()(self, y)
+
+
+    def erf(self):
+        r"""
+        Computes the Gauss error function of self tensor element-wise.
+        Refer to :func:`mindspore.ops.erf` for more details.
+
+        Returns:
+            Tensor, has the same shap dtype as the self Tensor.
+
+        Raises:
+            TypeError: If dtype of self tensor is not float16 or float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``  ``CPU``
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+            >>> output = x.erf()
+            >>> print(output)
+            [-0.8427168   0.          0.8427168   0.99530876  0.99997765]
+        """
+        return tensor_operator_registry.get("erf")()(self)
+
+
+    def erfc(self):
+        r"""
+        Computes the complementary error function of self tensor element-wise.
+        Refer to :func:`mindspore.ops.erfc` for more details.
+
+        Returns:
+            Tensor, has the same shap dtype as the self tensor.
+
+        Raises:
+            TypeError: If dtype of self tensor is not float16 or float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU``  ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
+            >>> output = x.erfc()
+            >>> print(output)
+            [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
+        """
+        return tensor_operator_registry.get("erfc")()(self)
+
+
 class RowTensor(RowTensor_):
     """
     A sparse representation of a set of tensor slices at given indices.
