@@ -9014,11 +9014,8 @@ class ApplyAdamWithAmsgrad(Primitive):
     def __init__(self, beta1=0.9, beta2=0.999, epsilon=1e-8, use_locking=False):
         """Initialize ApplyAdamWithAmsgrad"""
         validator.check_value_type("beta1", beta1, [float], self.name)
-        validator.check_float_range(beta1, 0.0, 1.0, Rel.INC_NEITHER, "beta1", self.name)
         validator.check_value_type("beta2", beta2, [float], self.name)
-        validator.check_float_range(beta2, 0.0, 1.0, Rel.INC_NEITHER, "beta2", self.name)
         validator.check_value_type("epsilon", epsilon, [float], self.name)
-        validator.check_positive_float(epsilon, 'epsilon', self.name)
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
         self.add_prim_attr("side_effect_mem", True)
 

@@ -704,6 +704,9 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
         batch_rank = 1
     prim_name = prim.name
 
+    batch_prime = P.ApplyAdamWithAmsgrad()
+    batch_prime.add_prim_attr("batch_rank", batch_rank)
+
     def vmap_rule(var_bdim, m_bdim, v_bdim, vhat_bdim, beta1_power_bdim, beta2_power_bdim, lr_bdim, grad_bdim, u_monad):
         var, var_dim = var_bdim
         m, m_dim = m_bdim
@@ -728,13 +731,12 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
                        "but get `var`: {}, `m`: {}, `v`: {}, `vhat`: {}".format(prim_name, var_dim,
                                                                                 m_dim, v_dim, vhat_dim))
 
-        _update_prim_attr(prim, "batch_rank", batch_rank)
         beta1_power = _bdim_at_front(beta1_power, beta1_power_dim, axis_size)
         beta2_power = _bdim_at_front(beta2_power, beta2_power_dim, axis_size)
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         grad = _bdim_at_front(grad, grad_dim, axis_size)
 
-        out_var, out_m, out_v, out_vhat = prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
+        out_var, out_m, out_v, out_vhat = batch_prime(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
         return ((out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0))
 
     return vmap_rule
