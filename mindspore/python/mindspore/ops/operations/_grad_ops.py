@@ -163,7 +163,7 @@ class KLDivLossGrad(Primitive):
         elif device_target == "GPU":
             support_mode = ['none', 'mean', 'sum']
         elif device_target == "Ascend":
-            raise ValueError(f"'{self.name}' does not support Ascend platform currently.")
+            support_mode = ['none', 'mean', 'batchmean', 'sum']
         else:
             raise ValueError(f"'{self.name}' unknown device target: '{device_target}'")
         self.reduction = validator.check_string(reduction, support_mode, 'reduction', self.name)
