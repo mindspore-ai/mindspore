@@ -30,7 +30,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 def fast_gelu_grad_compute(x, dy):
     """FastGeluGradCompute."""
-    div_up = np.exp(-1.702 * x) + 1.702 * x * np.exp(-1.702 * x) + np.exp(1.702 * (x - np.abs(x)))
+    div_up = np.exp(-1.702 * x) + 1.702 * x * np.exp(-1.702 * x) + 1
     div_down = (np.exp(-1.702 * x) + 1) ** 2
     return dy * div_up / div_down
 

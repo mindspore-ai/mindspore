@@ -47,8 +47,7 @@ bool FastGeLUGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
       T x = input2[i];
       double double_x = static_cast<double>(x);
       T res_e = static_cast<T>(std::exp(-1.702 * double_x));
-      T res_e_two = static_cast<T>(std::exp(1.702 * (double_x - std::abs(double_x))));
-      T div_up = res_e + static_cast<T>(1.702) * x * res_e + res_e_two;
+      T div_up = res_e + static_cast<T>(1.702) * x * res_e + static_cast<T>(1);
       T div_down = (res_e + static_cast<T>(1)) * (res_e + static_cast<T>(1));
       T y_res = div_up / div_down;
       output[i] = input1[i] * y_res;
