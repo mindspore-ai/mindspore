@@ -157,7 +157,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
   auto mng = func_graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   auto todos = TopoSort(func_graph->get_return());
-  bool changed = false;
+  bool tensor_inplace_changed = false;
   for (auto &node : todos) {
     if (common::AnfAlgo::IsGraphKernel(node)) {
       auto sub_func_graph = common::AnfAlgo::GetCNodeFuncGraphPtr(node);
@@ -176,7 +176,7 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
               return CheckShapeType(cnode->input(i), node.first);
             });
           if (candidate != outs.end()) {
-            changed = true;
+            tensor_inplace_changed = true;
             InplaceAssignerInfo new_op_info;  // output info
             new_op_info.op_node = candidate->first->cast<CNodePtr>();
             new_op_info.real_output_num = common::AnfAlgo::GetOutputTensorNum(cnode);
@@ -192,10 +192,10 @@ bool TensorInplace::Run(const FuncGraphPtr &func_graph) {
       }
     }
   }
-  if (changed) {
+  if (tensor_inplace_changed) {
     mng->RemoveRoots();
     mng->KeepRoots({func_graph});
   }
-  return changed;
+  return tensor_inplace_changed;
 }
 }  // namespace mindspore::graphkernel

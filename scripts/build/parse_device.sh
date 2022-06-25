@@ -74,6 +74,7 @@ parse_device()
 
   if [[ "X$ENABLE_AKG" == "Xon" && "X$ENABLE_D" != "Xon" ]]; then
     # check llvm version for akg 
-    export USE_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
+    HAS_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
+    export USE_LLVM=$HAS_LLVM
   fi
 }
