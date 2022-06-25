@@ -33,11 +33,14 @@ abstract::ShapePtr DataFormatDimMapInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
-  auto x_shape = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  auto shape_element = x_shape->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(shape_element);
-  return shape_element;
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
+  auto x_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  if (min_shape.size() != 0 && max_shape.size() != 0) {
+    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+  }
+  return std::make_shared<abstract::Shape>(x_shape);
 }
 
 TypePtr DataFormatDimMapInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
@@ -45,7 +48,7 @@ TypePtr DataFormatDimMapInferType(const PrimitivePtr &prim, const std::vector<Ab
   auto prim_name = prim->name();
   (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kGreaterEqual, 1, prim_name);
   auto x_type = input_args[0]->BuildType();
-  const std::set<TypePtr> valid_types = {kInt32};
+  const std::set<TypePtr> valid_types = {kInt32, kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input type", x_type, valid_types, prim_name);
   return x_type;
 }

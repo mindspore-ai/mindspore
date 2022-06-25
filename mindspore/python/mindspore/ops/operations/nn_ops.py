@@ -2789,7 +2789,7 @@ class DataFormatDimMap(Primitive):
         TypeError: If `input_x` is not a Tensor whose dtype is not int32.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor([0, 1, 2, 3], mindspore.int32)

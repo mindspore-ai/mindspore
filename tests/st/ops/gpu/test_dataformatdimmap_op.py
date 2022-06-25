@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import time
 import numpy as np
 import pytest
 
@@ -34,30 +33,32 @@ def np_all_close_with_loss(out, expect):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_data_formata_dim_map_gpu():
+@pytest.mark.parametrize("data_type", [np.int32, np.int64])
+def test_data_formata_dim_map_gpu(data_type):
     """
     Feature: DataFormatDimMapNet gpu kernel.
     Description: test the rightness of DataFormatDimMapNet gpu kernel.
     Expectation: Success.
     """
-    x_np_1_gpu = np.array([-4, -3, -2, -1, 0, 1, 2, 3]).astype(np.int32)
+    x_np_1_gpu = np.array([-4, -3, -2, -1, 0, 1, 2, 3]).astype(data_type)
     output_1_gpu = P.DataFormatDimMap()(Tensor(x_np_1_gpu))
-    output_1_expect_gpu = np.array([0, 3, 1, 2, 0, 3, 1, 2]).astype(np.int32)
+    output_1_expect_gpu = np.array([0, 3, 1, 2, 0, 3, 1, 2]).astype(data_type)
     assert np.allclose(output_1_gpu.asnumpy(), output_1_expect_gpu)
 
     output_2_gpu = P.DataFormatDimMap(src_format="NHWC", dst_format="NHWC")(Tensor(x_np_1_gpu))
-    output_2_expect_gpu = np.array([0, 1, 2, 3, 0, 1, 2, 3]).astype(np.int32)
+    output_2_expect_gpu = np.array([0, 1, 2, 3, 0, 1, 2, 3]).astype(data_type)
     assert np.allclose(output_2_gpu.asnumpy(), output_2_expect_gpu)
 
     output_3_gpu = P.DataFormatDimMap(src_format="NCHW", dst_format="NHWC")(Tensor(x_np_1_gpu))
-    output_3_expect_gpu = np.array([0, 2, 3, 1, 0, 2, 3, 1]).astype(np.int32)
+    output_3_expect_gpu = np.array([0, 2, 3, 1, 0, 2, 3, 1]).astype(data_type)
     assert np.allclose(output_3_gpu.asnumpy(), output_3_expect_gpu)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_data_formata_dim_map_vmap_gpu():
+@pytest.mark.parametrize("data_type", [np.int32, np.int64])
+def test_data_formata_dim_map_vmap_gpu(data_type):
     """
     Feature: DataFormatDimMapNet gpu kernel
     Description: test the rightness of DataFormatDimMapNet gpu kernel vmap feature.
@@ -70,16 +71,12 @@ def test_data_formata_dim_map_vmap_gpu():
         """data_formata_dim_map_fun_gpu"""
         return P.DataFormatDimMap()(x)
 
-    x_np_gpu = np.random.randint(low=-4, high=4, size=(100, 100)).astype(np.int32)
+    x_np_gpu = np.random.randint(low=-4, high=4, size=(100, 100)).astype(data_type)
     x_gpu = Tensor(x_np_gpu)
     x_gpu = F.sub(x_gpu, 0)
 
-    start_time = time.perf_counter()
     output_vmap_gpu = vmap(data_formata_dim_map_fun_gpu, in_axes=(0,))(x_gpu)
     _pynative_executor.sync()
-    vmap_time = time.perf_counter() - start_time
-
-    start_time_manually = time.perf_counter()
 
     @ms_function
     def manually_batched_gpu(xs):
@@ -91,7 +88,5 @@ def test_data_formata_dim_map_vmap_gpu():
 
     output_manually_gpu = manually_batched_gpu(x_gpu)
     _pynative_executor.sync()
-    manually_time = time.perf_counter() - start_time_manually
 
     assert np_all_close_with_loss(output_vmap_gpu.asnumpy(), output_manually_gpu.asnumpy())
-    assert vmap_time < manually_time

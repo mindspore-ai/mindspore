@@ -20,7 +20,7 @@
 template <typename T>
 __global__ void DataFormatDimMapKernel(size_t size, T *input_addr, T *output_addr, int32_t *dim_map) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    output_addr[pos] = dim_map[(input_addr[pos] % 4 + 4) % 4];
+    output_addr[pos] = static_cast<T>(dim_map[(input_addr[pos] % 4 + 4) % 4]);
   }
 }
 
@@ -30,4 +30,6 @@ void DataFormatDimMap(size_t size, T *input_addr, T *output_addr, int32_t *dim_m
 }
 
 template CUDA_LIB_EXPORT void DataFormatDimMap(size_t size, int32_t *input_addr, int32_t *output_addr, int32_t *dim_map,
+                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void DataFormatDimMap(size_t size, int64_t *input_addr, int64_t *output_addr, int32_t *dim_map,
                                                cudaStream_t cuda_stream);

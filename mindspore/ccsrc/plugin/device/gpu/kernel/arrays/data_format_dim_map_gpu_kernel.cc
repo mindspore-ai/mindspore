@@ -24,9 +24,7 @@ namespace mindspore::kernel {
 constexpr auto kDataFormatDimMap = "DataFormatDimMap";
 constexpr const size_t kDataFormatDimMapInputsNum = 1;
 constexpr const size_t kDataFormatDimMapOutputsNum = 1;
-constexpr const size_t kDimMapNum = 8;
-constexpr const int32_t kLowerThre = -4;
-constexpr const int32_t kUpperThre = 3;
+constexpr const size_t kDimMapNum = 4;
 const std::vector<int32_t> kDimMapSameFormat = {0, 1, 2, 3};
 const std::vector<int32_t> kDimMapNHWC2NCHW = {0, 3, 1, 2};
 const std::vector<int32_t> kDimMapNCHW2NHWC = {0, 2, 3, 1};
@@ -59,6 +57,8 @@ const std::vector<dataFormatPair> &DataFormatDimMapGpuKernelMod::GetFuncList() c
   static const std::vector<std::pair<KernelAttr, DataFormatDimMapGpuKernelMod::KernelRunFunc>> func_list = {
     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
      &DataFormatDimMapGpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+     &DataFormatDimMapGpuKernelMod::LaunchKernel<int64_t>},
   };
   return func_list;
 }
@@ -104,7 +104,6 @@ int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::map<uint32_t, tensor::TensorPtr> &) {
   int ret = KRET_OK;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs)) != 0) {
-    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
   input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
@@ -114,8 +113,8 @@ int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto in_shape_size = input_shape_.size();
   if (in_shape_size > max_dims_) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of output should be less than or equal to 7, but got " << in_shape_size
-                      << ".";
+                      << "', the dimension of output should be less than or equal to max_dims 7, but got "
+                      << in_shape_size << ".";
     return KRET_RESIZE_FAILED;
   }
   auto output_shape_size = output_shape_.size();
