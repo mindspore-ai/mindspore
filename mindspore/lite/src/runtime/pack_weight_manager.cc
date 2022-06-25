@@ -115,6 +115,15 @@ STATUS PackWeightManager::StoreOriginTensorData(Model *model, std::vector<Tensor
   return RET_OK;
 }
 
+void *PackWeightManager::ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace) {
+#ifdef SHARING_MODEL_WEIGHT
+  *replace = true;
+  return pack_weight_->ReplaceFp16Data(origin_fp16_data, size);
+#endif
+  *replace = false;
+  return nullptr;
+}
+
 void *PackWeightManager::MallocData(size_t size) {
   if (size > MAX_MALLOC_SIZE || size == 0) {
     MS_LOG(ERROR) << "malloc size is wrong.";

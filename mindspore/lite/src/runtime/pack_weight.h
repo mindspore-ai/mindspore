@@ -34,6 +34,7 @@ struct ModelConstWeight {
   std::shared_ptr<Allocator> allocator = nullptr;
   int numa_id = -1;
   std::unordered_map<int, void *> tensors_data;
+  std::set<void *> fp16_fp32_data;
 };
 
 class PackWeight {
@@ -45,16 +46,19 @@ class PackWeight {
   STATUS StoreOriginTensorData(const char *model_buf, const void *origin_tensor_data);
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   STATUS ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index);
+  void *ReplaceFp16Data(void *origin_fp16_data, size_t size);
 
  private:
   void FreePackedWeight(ModelConstWeight *weight);
   void FreeTensorData(ModelConstWeight *weight);
+  void FreeFp16ToFp32Data(ModelConstWeight *weight);
 
   bool copy_buf_ = false;
   std::mutex mtx_weight_;
   std::unordered_map<const char *, ModelConstWeight *> buf_model_weight_;
   std::unordered_map<const char *, std::vector<int>> numa_model_buf_;
   std::unordered_map<const char *, std::vector<char *>> model_buf_map_;
+  std::unordered_map<void *, void *> fp16_fp32_data_pair_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_PACK_WEIGHT_H_
