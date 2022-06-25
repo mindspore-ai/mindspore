@@ -60,6 +60,6 @@ AbstractBasePtr Atan2Infer(const abstract::AnalysisEnginePtr &, const PrimitiveP
   auto base_shape = Atan2InferShape(primitive, input_args);
   return abstract::MakeAbstract(base_shape, base_type);
 }
-REGISTER_PRIMITIVE_C(kNameAtan2, Atan2);
+REGISTER_PRIMITIVE_EVAL_IMPL(Atan2, prim::kPrimAtan2, Atan2Infer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
