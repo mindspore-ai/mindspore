@@ -684,8 +684,9 @@ class VocabEmbedding(Cell):
             if self.vocab_size % parallel_config.model_parallel != 0:
                 raise ValueError(f"The vocab size of the embedding {self.vocab_size} must be a "
                                  f"multiple of parallel_config.model_parallel {parallel_config.model_parallel}.")
-            self.gather = P.Gather().shard(((parallel_config.model_parallel, 1), (1, 1)))
-            logger.info(f"Using {parallel_config.data_parallel} model parallel for the embedding lookup.")
+            self.gather = P.Gather().shard(((parallel_config.model_parallel, 1), (parallel_config.data_parallel, 1)))
+            logger.info(f"Using {parallel_config.data_parallel} data parallel and {parallel_config.model_parallel} "
+                        f"model parallel for the embedding lookup.")
 
     def construct(self, input_ids):
         _check_input_shape(F.shape(input_ids), "input_ids", self.cls_name, 2)
