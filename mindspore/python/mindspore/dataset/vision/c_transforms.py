@@ -2224,8 +2224,9 @@ class Resize(ImageTensorOperation):
 
     Args:
         size (Union[int, Sequence[int]]): The output size of the resized image. The size value(s) must be positive.
-            If size is an integer, a square of size (size, size) will be cropped with this value.
-            If size is a sequence of length 2, an image of size (height, width) will be cropped.
+            If size is an integer, the smaller edge of the image will be resized to this value with
+            the same image aspect ratio.
+            If size is a sequence of length 2, it should be (height, width).
         interpolation (Inter, optional): Image interpolation mode (default=Inter.LINEAR).
             It can be any of [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.PILCUBIC].
 
