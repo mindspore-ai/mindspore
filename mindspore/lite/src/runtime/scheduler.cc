@@ -89,7 +89,24 @@ int CastConstTensorData(Tensor *tensor, TypeId dst_data_type, bool support_fp16)
   auto new_tensor_data = tensor->data();
   MS_ASSERT(new_tensor_data != nullptr);
   if (dst_data_type == kNumberTypeFloat32) {
-    Float16ToFloat32_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
+    bool replace = false;
+    void *data = lite::PackWeightManager::GetInstance()->ReplaceFp16Data(origin_data, tensor->Size(), &replace);
+    if (replace) {
+      if (data == nullptr) {
+        MS_LOG(ERROR) << "replace fp16 data failed.";
+        return RET_ERROR;
+      }
+      if (tensor->allocator() == nullptr) {
+        free(new_tensor_data);
+      } else {
+        tensor->allocator()->Free(new_tensor_data);
+      }
+      tensor->set_data(data);
+      tensor->set_own_data(false);
+    } else {
+      data = new_tensor_data;
+    }
+    Float16ToFloat32_fp16_handler(origin_data, data, tensor->ElementsNum(), support_fp16);
   } else {  // dst_data_type == kNumberTypeFloat16
     Float32ToFloat16_fp16_handler(origin_data, new_tensor_data, tensor->ElementsNum(), support_fp16);
   }

@@ -93,6 +93,33 @@ STATUS PackWeight::StoreOriginTensorData(const char *model_buf, const void *orig
   return RET_OK;
 }
 
+void *PackWeight::ReplaceFp16Data(void *origin_fp16_data, size_t size) {
+  std::lock_guard<std::mutex> lock(mtx_weight_);
+  if (fp16_fp32_data_pair_.find(origin_fp16_data) != fp16_fp32_data_pair_.end()) {
+    return fp16_fp32_data_pair_[origin_fp16_data];
+  } else {
+    for (auto &item : buf_model_weight_) {
+      if (item.second->origin_and_packed_pair.find(origin_fp16_data) != item.second->origin_and_packed_pair.end()) {
+        auto &model_weight = item.second;
+        auto &origin_and_packed_pair = model_weight->origin_and_packed_pair;
+        if (origin_and_packed_pair.find(origin_fp16_data) == origin_and_packed_pair.end()) {
+          MS_LOG(ERROR) << "origin fp16 data not find.";
+          return nullptr;
+        }
+        auto allocator = model_weight->allocator;
+        void *data = allocator->Malloc(size);
+        origin_and_packed_pair.insert(std::make_pair(data, nullptr));
+        model_weight->fp16_fp32_data.insert(data);
+        origin_and_packed_pair.erase(origin_fp16_data);
+        fp16_fp32_data_pair_.insert(std::make_pair(origin_fp16_data, data));
+        return data;
+      }
+    }
+  }
+  MS_LOG(ERROR) << "ReplaceFp16Data failed.";
+  return nullptr;
+}
+
 STATUS PackWeight::ReplaceOriginTensorData(const char *model_buf, std::vector<Tensor *> *tensors, int tensor_index) {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   if (buf_model_weight_.find(model_buf) == buf_model_weight_.end()) {
@@ -177,10 +204,23 @@ void PackWeight::FreeTensorData(ModelConstWeight *weight) {
   weight->tensors_data.clear();
 }
 
+void PackWeight::FreeFp16ToFp32Data(ModelConstWeight *weight) {
+  MS_CHECK_TRUE_RET_VOID(weight != nullptr);
+  for (auto &data : weight->fp16_fp32_data) {
+    auto allocator = weight->allocator;
+    MS_CHECK_TRUE_RET_VOID(allocator != nullptr);
+    if (data != nullptr) {
+      allocator->Free(data);
+    }
+  }
+  weight->fp16_fp32_data.clear();
+}
+
 PackWeight::~PackWeight() {
   std::lock_guard<std::mutex> lock(mtx_weight_);
   for (auto &item : buf_model_weight_) {
     FreePackedWeight(item.second);
+    FreeFp16ToFp32Data(item.second);
     FreeTensorData(item.second);
   }
   // free model buf
