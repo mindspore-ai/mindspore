@@ -81,8 +81,8 @@ __global__ void FastGeluGradKernel(size_t size, T *dy_addr, T *x_addr, T *dx_add
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     T x = x_addr[pos];
     T exp_res = std::exp(-1.702 * x);
-    T div_up = exp_res + 1.702 * x * exp_res + std::exp(1.702 * (x - std::abs(x)));
-    T div_down = (exp_res + 1) * (exp_res + 1);
+    T div_up = exp_res + static_cast<T>(1.702) * x * exp_res + static_cast<T>(1);
+    T div_down = (exp_res + static_cast<T>(1)) * (exp_res + static_cast<T>(1));
     T y_res = div_up / div_down;
     dx_addr[pos] = dy_addr[pos] * y_res;
   }
@@ -93,14 +93,7 @@ __global__ void FastGeluGradKernel(size_t size, half2 *dy_addr, half2 *x_addr, h
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     half2 x = x_addr[pos];
     half2 exp_res = h2exp(half2(-1.702, -1.702) * x);
-
-    float2 float2_x = __half22float2(x);
-    float2 abs_x_res;
-    abs_x_res.x = std::abs(float2_x.x);
-    abs_x_res.y = std::abs(float2_x.y);
-    half2 half2_x_abs = __float22half2_rn(abs_x_res);
-
-    half2 div_up = exp_res + half2(1.702, 1.702) * x * exp_res + h2exp(half2(1.702, 1.702) * (x - half2_x_abs));
+    half2 div_up = exp_res + half2(1.702, 1.702) * x * exp_res + half2(1, 1);
     half2 div_down = (exp_res + half2(1, 1)) * (exp_res + half2(1, 1));
     half2 y_res = div_up / div_down;
     dx_addr[pos] = dy_addr[pos] * y_res;
@@ -112,7 +105,7 @@ __global__ void FastGeluGradKernel(size_t size, half *dy_addr, half *x_addr, hal
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     half x = x_addr[pos];
     half exp_res = hexp(half(-1.702) * x);
-    half div_up = exp_res + half(1.702) * x * exp_res + hexp(half(1.702) * (x - half(std::abs(__half2float(x)))));
+    half div_up = exp_res + half(1.702) * x * exp_res + half(1);
     half div_down = (exp_res + half(1)) * (exp_res + half(1));
     half y_res = div_up / div_down;
     dx_addr[pos] = dy_addr[pos] * y_res;
