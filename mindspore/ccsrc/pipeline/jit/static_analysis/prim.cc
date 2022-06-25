@@ -1469,6 +1469,52 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
 }
 }  // namespace
 
+EvalResultPtr MakeTupleEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                                           const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
+  std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
+    if (args_spec_list.empty()) {
+      MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
+    }
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    if (enable_eliminate_unused_element) {
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
+
+      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+    }
+  }
+  auto abs = std::make_shared<AbstractTuple>(args_spec_list, sequence_nodes);
+  auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
+  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  return res;
+}
+
+EvalResultPtr MakeListEvaluator::EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list,
+                                          const ConfigPtr &, const AnfNodeConfigPtr &out_conf) {
+  std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
+  if (out_conf != nullptr) {  // 'out_conf' maybe nullptr in PyNative mode.
+    if (args_spec_list.empty()) {
+      MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
+    }
+    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
+    if (enable_eliminate_unused_element) {
+      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
+      if (flags == nullptr) {
+        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
+      }
+
+      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
+    }
+  }
+  auto abs = std::make_shared<AbstractList>(args_spec_list, sequence_nodes);
+  auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
+  evaluator_cache_mgr_->SetValue(args_spec_list, res);
+  return res;
+}
+
 namespace {
 class EmbedEvaluator : public SymbolicPrimEvaluator {
  public:
@@ -1917,64 +1963,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                          return (!item.second->isa<abstract::AbstractFunction>());
                        });
     return std::make_shared<AbstractDictionary>(kv);
-  }
-};
-
-class MakeTupleEvaluator : public TransitionPrimEvaluator {
- public:
-  MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}
-  ~MakeTupleEvaluator() override = default;
-  MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
-                         const AnfNodeConfigPtr &out_conf) override {
-    if (args_spec_list.empty()) {
-      MS_LOG(INFO) << "For MakeTuple, the inputs should not be empty. node: " << out_conf->node()->DebugString();
-    }
-
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-    if (enable_eliminate_unused_element) {
-      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
-      if (flags == nullptr) {
-        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
-      }
-    }
-    std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
-    if (enable_eliminate_unused_element) {
-      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
-    }
-    auto abs = std::make_shared<AbstractTuple>(args_spec_list, sequence_nodes);
-    auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_spec_list, res);
-    return res;
-  }
-};
-
-class MakeListEvaluator : public TransitionPrimEvaluator {
- public:
-  MakeListEvaluator() : TransitionPrimEvaluator("MakeListEvaluator") {}
-  ~MakeListEvaluator() override = default;
-  MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
-                         const AnfNodeConfigPtr &out_conf) override {
-    if (args_spec_list.empty()) {
-      MS_LOG(INFO) << "For MakeList, the inputs should not be empty. node: " << out_conf->node()->DebugString();
-    }
-
-    static const auto enable_eliminate_unused_element = (common::GetEnv("MS_DEV_ENABLE_DDE") != "0");
-    if (enable_eliminate_unused_element) {
-      auto flags = GetSequenceNodeElementsUseFlags(out_conf->node());
-      if (flags == nullptr) {
-        SetSequenceNodeElementsUseFlags(out_conf->node(), std::make_shared<std::vector<bool>>(args_spec_list.size()));
-      }
-    }
-    std::shared_ptr<AnfNodeWeakPtrList> sequence_nodes = std::make_shared<AnfNodeWeakPtrList>();
-    if (enable_eliminate_unused_element) {
-      (void)sequence_nodes->emplace_back(AnfNodeWeakPtr(out_conf->node()));
-    }
-    auto abs = std::make_shared<AbstractList>(args_spec_list, sequence_nodes);
-    auto res = std::make_shared<EvalResult>(abs, std::make_shared<AttrValueMap>());
-    evaluator_cache_mgr_->SetValue(args_spec_list, res);
-    return res;
   }
 };
 
