@@ -1,7 +1,7 @@
 mindspore.nn.SGD
 ================
 
-.. py:class:: mindspore.nn.SGD(*args, **kwargs)
+.. py:class:: mindspore.nn.SGD(params, learning_rate=0.1, momentum=0.0, dampening=0.0, weight_decay=0.0, nesterov=False, loss_scale=1.0)
 
     随机梯度下降的实现。动量可选。
 

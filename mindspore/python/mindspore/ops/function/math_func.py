@@ -1954,7 +1954,7 @@ def linspace(start, stop, num):
     Raises:
         TypeError: If `start` or `stop` is not a Tensor.
         TypeError: If dtype of `start` or dtype of `stop` is not float32.
-        ValueError: If shape of `start` or shape of stop` is not 0-D.
+        ValueError: If shape of `start` or shape of `stop` is not 0-D.
         TypeError: If `num` is not int.
         ValueError: If `num` is not positive int number.
 

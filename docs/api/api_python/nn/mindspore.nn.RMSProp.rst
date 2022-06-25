@@ -1,7 +1,7 @@
 mindspore.nn.RMSProp
 ======================
 
-.. py:class:: mindspore.nn.RMSProp(*args, **kwargs)
+.. py:class:: mindspore.nn.RMSProp(params, learning_rate=0.1, decay=0.9, momentum=0.0, epsilon=1e-10, use_locking=False, centered=False, loss_scale=1.0, weight_decay=0.0)
 
     均方根传播（RMSProp）算法的实现。
 
