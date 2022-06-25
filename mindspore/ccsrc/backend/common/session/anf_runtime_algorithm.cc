@@ -358,12 +358,6 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShape(const AnfNodePtr &node, si
     return infer_shape;
   }
 
-  if (IsDynamic(infer_shape)) {
-    auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, output_idx);
-    if (!max_shape.empty()) {
-      infer_shape = max_shape;
-    }
-  }
   // if format is default_format or NC1KHKWHWC0,device shape = original shape
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShape(infer_shape, format, GetOutputReshapeType(node, output_idx), node);
