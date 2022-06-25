@@ -4,7 +4,7 @@ mindspore_lite
 运行环境
 --------
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: mindspore_lite
 
     mindspore_lite.Context
@@ -16,7 +16,7 @@ mindspore_lite
 转换
 --------
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: mindspore_lite
 
     mindspore_lite.FmkType
@@ -25,7 +25,7 @@ mindspore_lite
 模型
 -----
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: mindspore_lite
 
     mindspore_lite.ModelType
@@ -36,7 +36,7 @@ mindspore_lite
 张量
 ------
 
-.. autosummary::
+.. mscnautosummary::
     :toctree: mindspore_lite
 
     mindspore_lite.DataType
