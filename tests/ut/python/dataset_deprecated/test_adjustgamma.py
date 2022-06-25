@@ -16,6 +16,7 @@
 Test AdjustGamma op in Dataset
 """
 import cv2
+import numpy as np
 import pytest
 from PIL import Image
 import mindspore.dataset.vision.c_transforms as c_vision
@@ -68,6 +69,31 @@ def test_adjust_gamma_eager_invalid_image_type_py():
     test_config([(1.0, 2.0), (3.0, 4.0)], "img should be PIL image. Got <class 'list'>.")
 
 
+def test_adjust_gamma_eager_image_type():
+    """
+    Feature: AdjustGamma op
+    Description: Test AdjustGamma op eager support test for variety of image input types
+    Expectation: Receive non-None output image from op
+    """
+
+    def test_config(my_input):
+        my_output = c_vision.AdjustGamma(gamma=1.2, gain=1.0)(my_input)
+        assert my_output is not None
+
+    # Test with OpenCV images
+    img = cv2.imread("../data/dataset/apple.jpg")
+    test_config(img)
+
+    # Test with NumPy array input
+    img = np.random.randint(0, 1, (100, 100, 3)).astype(np.uint8)
+    test_config(img)
+
+    # Test with PIL Image
+    img = Image.open("../data/dataset/apple.jpg").convert("RGB")
+    test_config(img)
+
+
 if __name__ == '__main__':
     test_adjust_gamma_eager_invalid_image_type_c()
     test_adjust_gamma_eager_invalid_image_type_py()
+    test_adjust_gamma_eager_image_type()
