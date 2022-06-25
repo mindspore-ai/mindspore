@@ -3308,7 +3308,7 @@ void GradExecutor::SetTupleItemArgsToGraphInfoMap(const FuncGraphPtr &g, const p
   }
 }
 
-ValuePtr GradExecutor::GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node) {
+ValuePtr GradExecutor::GetSensValueForDynamicShapeOutput(const py::object &out, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto out_value = PyObjToValue(out);
   if (!ValueHasDynamicShape(out_value)) {
@@ -3368,6 +3368,27 @@ void GradExecutor::UpdateSensValueForDynamicShapeOutput(const py::object &out) c
   }
 }
 
+void GradExecutor::SetForwardLastNodeInfo(const py::object &out) const {
+  auto output_node = GetObjNode(out, GetId(out));
+  MS_EXCEPTION_IF_NULL(output_node);
+  if (top_cell()->dynamic_shape()) {
+    abstract::AbstractBasePtr last_node_abs = nullptr;
+    if (output_node->abstract() == nullptr) {
+      last_node_abs = PyObjToValue(out)->ToAbstract()->Broaden();
+    } else {
+      last_node_abs = output_node->abstract();
+    }
+    MS_EXCEPTION_IF_NULL(last_node_abs);
+    // Set last output abstract and will be used for sens
+    top_cell()->set_last_output_abs(last_node_abs);
+  }
+  // Set last node and sens for build adjoint
+  const auto &sens_value = GetSensValueForDynamicShapeOutput(out, output_node);
+  auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
+  MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
+  k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node, sens_value);
+}
+
 void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, const py::object &out,
                                  const py::args &args) {
   MS_EXCEPTION_IF_NULL(ret);
@@ -3376,7 +3397,6 @@ void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, 
   if (cell_stack_.empty()) {
     if (cell_id == top_cell()->cell_id()) {
       if (top_cell()->is_topest()) {
-        UpdateSensValueForDynamicShapeOutput(out);
         set_grad_flag(false);
       }
       if (GetHighOrderStackSize() < ARG_SIZE) {
@@ -3385,6 +3405,8 @@ void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, 
           set_top_cell(outer_top_cell);
         }
       }
+      // Top cell update sens
+      UpdateSensValueForDynamicShapeOutput(out);
     }
     MS_LOG(DEBUG) << "Current cell " << cell_id << " no need to run EndGraphInner again";
     return;
@@ -3412,21 +3434,7 @@ void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, 
   if (cell_stack_.empty() && is_top_cell_end) {
     MS_LOG(DEBUG) << "Cur top last cell " << cell_id;
     PopHighOrderGraphStack();
-    auto output_node = GetObjNode(out, GetId(out));
-    MS_EXCEPTION_IF_NULL(output_node);
-    abstract::AbstractBasePtr last_node_abs = nullptr;
-    if (output_node->abstract() == nullptr) {
-      last_node_abs = PyObjToValue(out)->ToAbstract()->Broaden();
-    } else {
-      last_node_abs = output_node->abstract();
-    }
-    MS_EXCEPTION_IF_NULL(last_node_abs);
-    // Set last output abstract and will be used for sens
-    top_cell()->set_last_output_abs(last_node_abs);
-    auto sens_value = GetSensValueForDynamicShapeOutput(out, output_node);
-    auto k_pynative_cell_ptr = top_cell()->k_pynative_cell_ptr();
-    MS_EXCEPTION_IF_NULL(k_pynative_cell_ptr);
-    k_pynative_cell_ptr->UpdateOutputNodeOfTopCell(output_node, sens_value);
+    SetForwardLastNodeInfo(out);
     top_cell()->ClearCellHookOp();
     cell_order_ = 0;
     set_grad_flag(false);
@@ -3435,7 +3443,7 @@ void GradExecutor::EndGraphInner(const py::object *ret, const py::object &cell, 
   if (is_top_cell_end) {
     // In high grad cases, the output of the internal graph may be a tuple, and node needs to be created in the getobj
     if (!cell_stack_.empty()) {
-      (void)GetObjNode(out, GetId(out));
+      SetForwardLastNodeInfo(out);
     }
     top_cell()->CheckSubCellHookChanged();
     CheckNeedCompileGraph();
@@ -3707,6 +3715,9 @@ void GradExecutor::CheckParamShapeAndType(const AnfNodePtr &param, const Paramet
                                           const abstract::AbstractBasePtr &input_abs,
                                           const abstract::AbstractBasePtr &param_tensor_abs,
                                           const std::string &input_shape) {
+  MS_EXCEPTION_IF_NULL(param);
+  MS_EXCEPTION_IF_NULL(param_node);
+  MS_EXCEPTION_IF_NULL(param_tensor_abs);
   auto ir_base_shape = param_tensor_abs->BuildShape();
   MS_EXCEPTION_IF_NULL(ir_base_shape);
   auto ir_shape = ir_base_shape->ToString();
@@ -3720,6 +3731,7 @@ void GradExecutor::CheckParamShapeAndType(const AnfNodePtr &param, const Paramet
       }
     }
     auto ir_dtype = param_tensor_abs->BuildType()->ToString();
+    MS_EXCEPTION_IF_NULL(input_abs);
     auto input_dtype = input_abs->BuildType()->ToString();
     if (input_dtype != ir_dtype) {
       MS_EXCEPTION(TypeError) << "The dtype should be " << ir_dtype << ", but got " << input_dtype << ", "
@@ -3799,7 +3811,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const prim::GradOperationPtr &grad, con
   bprop_graph->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   bprop_graph->debug_info()->set_name(ss.str());
   // Get the parameters items and add the value to args_spec
-  if (grad->sens_param()) {
+  if (top_cell()->dynamic_shape() && grad->sens_param()) {
     MS_EXCEPTION_IF_NULL(top_cell()->last_output_abs());
     auto shape = top_cell()->last_output_abs()->BuildShape();
     MS_EXCEPTION_IF_NULL(shape);
