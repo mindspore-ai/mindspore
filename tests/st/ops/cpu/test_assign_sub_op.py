@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 
 class AssignSub(nn.Cell):
@@ -79,4 +80,50 @@ def test_assign_sub():
     assert (output1.asnumpy() == expect1).all()
     sub = AssignSub(output1)
     output2 = sub(y2)
+    assert (output2.asnumpy() == expect2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_assign_sub_func():
+    """
+    Feature: assign sub kernel
+    Description: test the assign sub.
+    Expectation: match to expect.
+    """
+    expect1 = np.array([[[[0., 0., 0.],
+                          [0., 0., 0.],
+                          [0., 0., 0.]],
+                         [[0., 0., 0.],
+                          [0., 0., 0.],
+                          [0., 0., 0.]],
+                         [[0., 0., 0.],
+                          [0., 0., 0.],
+                          [0., 0., 0.]]]])
+    expect2 = np.array([[[[0, -1, -2.],
+                          [-3, -4, -5.],
+                          [-6, -7, -8.]],
+                         [[-9, -10, -11.],
+                          [-12, -13, -14.],
+                          [-15, -16, -17.]],
+                         [[-18, -19, -20.],
+                          [-21, -22, -23.],
+                          [-24, -25, -26.]]]])
+    x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+
+    x2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    y2 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    output1 = F.assign_sub(x1, y1)
+    assert (output1.asnumpy() == expect1).all()
+    output2 = F.assign_sub(output1, y1)
+    assert (output2.asnumpy() == expect2).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    output1 = F.assign_sub(x2, y2)
+    assert (output1.asnumpy() == expect1).all()
+    output2 = F.assign_sub(output1, y2)
     assert (output2.asnumpy() == expect2).all()
