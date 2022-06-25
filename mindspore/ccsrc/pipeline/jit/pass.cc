@@ -344,6 +344,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
       irpass.float_environ_get_switch_,
       irpass.inline_,
       irpass.updatestate_useless_node_eliminater_,
+      irpass.tuple_list_set_item_eliminator_,
       irpass.tuple_list_get_item_eliminator_,
       irpass.incorporate_getitem_set_,
       irpass.incorporate_call_,
