@@ -59,7 +59,7 @@ def _tensor_setitem(self, index, value):
         raise ValueError(f"only support numbers, Tensor, tuple, list as value,"
                          f"but got {value} with type {type(value)}.")
     if isinstance(index, list):
-        index = format_list_indices(index, self.shape[0])
+        index = format_list_indices(index, F.shape(self)[0])
     if isinstance(index, Tensor):
         return tensor_setitem_by_tensor(self, index, value)
     if isinstance(index, tuple):
