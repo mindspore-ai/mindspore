@@ -336,6 +336,14 @@ template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, co
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
                                             const short *input,                                              // NOLINT
                                             short *output, const uint32_t &device_id, cudaStream_t stream);  // NOLINT
+template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const char *input,
+                                            char *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const uint64_t *input,
+                                            uint64_t *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const uint32_t *input,
+                                            uint32_t *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1, const uint16_t *input,
+                                            uint16_t *output, const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice1DKernel(const size_t s1, const size_t l1, const size_t d1,
                                             const unsigned char *input, unsigned char *output,
                                             const uint32_t &device_id, cudaStream_t stream);
@@ -359,6 +367,18 @@ template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, co
 template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
                                             const size_t d1, const size_t d2, const short *input,            // NOLINT
                                             short *output, const uint32_t &device_id, cudaStream_t stream);  // NOLINT
+template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
+                                            const size_t d1, const size_t d2, const char *input, char *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
+                                            const size_t d1, const size_t d2, const uint64_t *input, uint64_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
+                                            const size_t d1, const size_t d2, const uint32_t *input, uint32_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
+                                            const size_t d1, const size_t d2, const uint16_t *input, uint16_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice2DKernel(const size_t s1, const size_t s2, const size_t l1, const size_t l2,
                                             const size_t d1, const size_t d2, const unsigned char *input,
                                             unsigned char *output, const uint32_t &device_id, cudaStream_t stream);
@@ -388,6 +408,22 @@ template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, co
 template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
                                             const size_t l2, const size_t l3, const size_t d1, const size_t d2,
                                             const size_t d3, const short *input, short *output,  // NOLINT
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
+                                            const size_t d3, const char *input, char *output, const uint32_t &device_id,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
+                                            const size_t d3, const uint64_t *input, uint64_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
+                                            const size_t d3, const uint32_t *input, uint32_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t d1, const size_t d2,
+                                            const size_t d3, const uint16_t *input, uint16_t *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice3DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t l1,
                                             const size_t l2, const size_t l3, const size_t d1, const size_t d2,
@@ -426,6 +462,26 @@ template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, co
                                             const size_t l1, const size_t l2, const size_t l3, const size_t l4,
                                             const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                                             const short *input, short *output, const uint32_t &device_id,  // NOLINT
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const char *input, char *output, const uint32_t &device_id,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const uint64_t *input, uint64_t *output, const uint32_t &device_id,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const uint32_t *input, uint32_t *output, const uint32_t &device_id,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t l1, const size_t l2, const size_t l3, const size_t l4,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const uint16_t *input, uint16_t *output, const uint32_t &device_id,
                                             cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice4DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t l1, const size_t l2, const size_t l3, const size_t l4,
@@ -477,6 +533,26 @@ template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, co
 template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t l1, const size_t l2, const size_t l3,
                                             const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const char *input,
+                                            char *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
+                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const uint64_t *input,
+                                            uint64_t *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
+                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const uint32_t *input,
+                                            uint32_t *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
+                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const uint16_t *input,
+                                            uint16_t *output, const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice5DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t l1, const size_t l2, const size_t l3,
+                                            const size_t l4, const size_t l5, const size_t d1, const size_t d2,
                                             const size_t d3, const size_t d4, const size_t d5,
                                             const unsigned char *input, unsigned char *output,
                                             const uint32_t &device_id, cudaStream_t stream);
@@ -522,6 +598,30 @@ template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, co
                                             const size_t d1, const size_t d2, const size_t d3, const size_t d4,
                                             const size_t d5, const size_t d6, const short *input,  // NOLINT
                                             short *output,                                         // NOLINT
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
+                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const size_t d5, const size_t d6, const char *input, char *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
+                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const size_t d5, const size_t d6, const uint64_t *input, uint64_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
+                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const size_t d5, const size_t d6, const uint32_t *input, uint32_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t l1, const size_t l2,
+                                            const size_t l3, const size_t l4, const size_t l5, const size_t l6,
+                                            const size_t d1, const size_t d2, const size_t d3, const size_t d4,
+                                            const size_t d5, const size_t d6, const uint16_t *input, uint16_t *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice6DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t s6, const size_t l1, const size_t l2,
@@ -577,6 +677,34 @@ template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, co
                                             const size_t l6, const size_t l7, const size_t d1, const size_t d2,
                                             const size_t d3, const size_t d4, const size_t d5, const size_t d6,
                                             const size_t d7, const short *input, short *output,  // NOLINT
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                            const size_t d7, const char *input, char *output, const uint32_t &device_id,
+                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                            const size_t d7, const uint64_t *input, uint64_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                            const size_t d7, const uint32_t *input, uint32_t *output,
+                                            const uint32_t &device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
+                                            const size_t s5, const size_t s6, const size_t s7, const size_t l1,
+                                            const size_t l2, const size_t l3, const size_t l4, const size_t l5,
+                                            const size_t l6, const size_t l7, const size_t d1, const size_t d2,
+                                            const size_t d3, const size_t d4, const size_t d5, const size_t d6,
+                                            const size_t d7, const uint16_t *input, uint16_t *output,
                                             const uint32_t &device_id, cudaStream_t stream);
 template CUDA_LIB_EXPORT void Slice7DKernel(const size_t s1, const size_t s2, const size_t s3, const size_t s4,
                                             const size_t s5, const size_t s6, const size_t s7, const size_t l1,

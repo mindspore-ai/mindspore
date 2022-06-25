@@ -17,9 +17,12 @@
 #include "plugin/device/gpu/kernel/arrays/matrix_band_part_gpu_kernel.h"
 #include <functional>
 #include "mindspore/core/ops/matrix_band_part.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 constexpr size_t kMaxDims = 8;
 constexpr size_t kXMinShapeSize = 2;
 
@@ -52,8 +55,8 @@ void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<size_t> &x_sha
   broadcast_lower_shape_.resize(kMaxDims, 1);
   broadcast_upper_shape_.resize(kMaxDims, 1);
   broadcast_output_shape_.resize(kMaxDims, 1);
-  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape);
-  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape);
+  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape, output_shape.size());
+  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape, output_shape.size());
 
   for (size_t i = 0; i < output_shape.size(); i++) {
     broadcast_output_shape_[i] = output_shape[i];
@@ -98,7 +101,7 @@ int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   (void)std::transform(upper_shape_temp.begin(), upper_shape_temp.end(), std::back_inserter(upper_shape), LongToSize);
   (void)std::transform(output_shape_temp.begin(), output_shape_temp.end(), std::back_inserter(output_shape),
                        LongToSize);
-  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
+  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;
@@ -187,6 +190,18 @@ bool MatrixBandPartGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
 
 std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc>>
   MatrixBandPartGpuKernelMod::func_list_ = {{KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt8)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt8),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<char, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt16)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt16),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<int16_t, int32_t>},
+                                            {KernelAttr()
                                                .AddInputAttr(kNumberTypeInt32)
                                                .AddInputAttr(kNumberTypeInt32)
                                                .AddInputAttr(kNumberTypeInt32)
@@ -198,6 +213,30 @@ std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc
                                                .AddInputAttr(kNumberTypeInt32)
                                                .AddOutputAttr(kNumberTypeInt64),
                                              &MatrixBandPartGpuKernelMod::LaunchKernel<int64_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt8)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt8),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uchar, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt16)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt16),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt32),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt64),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint64_t, int32_t>},
                                             {KernelAttr()
                                                .AddInputAttr(kNumberTypeFloat16)
                                                .AddInputAttr(kNumberTypeInt32)
@@ -217,6 +256,36 @@ std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc
                                                .AddOutputAttr(kNumberTypeFloat64),
                                              &MatrixBandPartGpuKernelMod::LaunchKernel<double, int32_t>},
                                             {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeComplex64),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<Complex<float>, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex128)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeComplex128),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<Complex<double>, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeBool)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeBool),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<bool, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt8)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt8),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<char, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt16)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt16),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<int16_t, int64_t>},
+                                            {KernelAttr()
                                                .AddInputAttr(kNumberTypeInt32)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
@@ -228,6 +297,30 @@ std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeInt64),
                                              &MatrixBandPartGpuKernelMod::LaunchKernel<int64_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt8)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt8),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uchar, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt16)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt16),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt32),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt64),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<uint64_t, int64_t>},
                                             {KernelAttr()
                                                .AddInputAttr(kNumberTypeFloat16)
                                                .AddInputAttr(kNumberTypeInt64)
@@ -245,7 +338,25 @@ std::vector<std::pair<KernelAttr, MatrixBandPartGpuKernelMod::MatrixBandPartFunc
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddInputAttr(kNumberTypeInt64)
                                                .AddOutputAttr(kNumberTypeFloat64),
-                                             &MatrixBandPartGpuKernelMod::LaunchKernel<double, int64_t>}};
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<double, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeComplex64),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<Complex<float>, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex128)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeComplex128),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<Complex<double>, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeBool)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeBool),
+                                             &MatrixBandPartGpuKernelMod::LaunchKernel<bool, int64_t>}};
 
 std::vector<KernelAttr> MatrixBandPartGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

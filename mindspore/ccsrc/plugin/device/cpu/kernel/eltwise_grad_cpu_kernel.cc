@@ -279,10 +279,14 @@ void EltWiseGradCpuTypeFunc<T>::ComplexAsinhGrad(const T *input1, const T *input
 template <typename T>
 void EltWiseGradCpuTypeFunc<T>::InvGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) const {
   for (size_t i = start; i < end; i++) {
-    double inputf = static_cast<double>(input1[i]);
-    double doutf = static_cast<double>(input2[i]);
-    double res = -1 * doutf * inputf * inputf;
-    out[i] = static_cast<T>(res);
+    if constexpr (std::is_same<T, double>::value) {
+      out[i] = -1 * input2[i] * input1[i] * input1[i];
+    } else {
+      float inputf = static_cast<float>(input1[i]);
+      float doutf = static_cast<float>(input2[i]);
+      float res = -1 * doutf * inputf * inputf;
+      out[i] = static_cast<T>(res);
+    }
   }
 }
 
@@ -602,7 +606,8 @@ int EltWiseGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  auto input_element_num =
+    std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;

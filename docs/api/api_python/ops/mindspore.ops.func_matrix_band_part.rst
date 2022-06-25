@@ -5,8 +5,6 @@ mindspore.ops.matrix_band_part
 
     将矩阵的每个中心带外的所有位置设置为0。
 
-    `x` 、 `lower` 和 `upper` 三者的shapes必须相同或能够广播。
-
     **参数：**
 
     - **x** (Tensor) - `x` 的shape为 :math:`(*, m, n)` ，其中 :math:`*` 表示任意batch维度。`x` 的数据类型必须为float16、float32、float64、int32或int64。
@@ -19,10 +17,12 @@ mindspore.ops.matrix_band_part
 
     **异常：**
 
+    - **TypeError** - `x` 不是一个Tensor。
     - **TypeError** - `x` 的数据类型不是float16、float32、float64、int32或int64。
     - **TypeError** - `lower` 不是一个数值或者Tensor。
     - **TypeError** - `upper` 不是一个数值或者Tensor。
     - **TypeError** - `lower` 的数据类型不是int32或int64。
     - **TypeError** - `upper` 的数据类型不是int32或int64。
-    - **ValueError** - `x` 的shape不是大于或等于2维。
-    - **ValueError** - `x` 、 `lower` 和 `upper` 三者的shapes不能广播。
+    - **ValueError** - `x` 的shape不等于2维。
+    - **ValueError** - `lower` 的shape不等于0维。
+    - **ValueError** - `upper` 的shape不等于0维。
