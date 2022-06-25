@@ -158,6 +158,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"xdivy", std::string("xdivy")},                                    // P.Xdivy
        {"abs", std::string("abs_")},                                       // C.abs_
        {"mean", std::string("mean")},                                      // C.mean
+       {"reduce_prod", std::string("reduce_prod")},                        // C.reduce_prod
        {"__truediv__", std::string("truediv")},                            // C.truediv
        {"__floordiv__", std::string("floordiv")},                          // C.floordiv
        {"__mod__", std::string("mod")},                                    // C.mod
