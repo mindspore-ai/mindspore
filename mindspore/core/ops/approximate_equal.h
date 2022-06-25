@@ -28,7 +28,7 @@ constexpr auto kNameApproximateEqual = "ApproximateEqual";
 class MIND_API ApproximateEqual : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApproximateEqual);
-  ApproximateEqual() : BaseOperator(kNameApproximateEqual) {}
+  ApproximateEqual() : BaseOperator(kNameApproximateEqual) { InitIOName({"x", "y"}, {"output"}); }
   void Init(const float tolerance = 1e-05);
   void set_tolerance(const float tolerance);
   float get_tolerance() const;
