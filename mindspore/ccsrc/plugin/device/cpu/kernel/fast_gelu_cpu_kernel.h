@@ -57,6 +57,7 @@ class FastGeLUCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper
 
  private:
   std::string kernel_type_{kUnknown};
+  const size_t max_dims_{7};
 };
 }  // namespace mindspore::kernel
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import time
 import numpy as np
 import pytest
 
@@ -111,16 +110,10 @@ def test_ger_vmap(dtype):
     x1 = F.sub(x1, 0)
     x2 = F.sub(x2, 0)
 
-    start_time = time.perf_counter()
     output_vmap = vmap(ger_func, in_axes=(0, 0))(x1, x2)
-    vmap_time = time.perf_counter() - start_time
-
-    start_time_manually = time.perf_counter()
     output_manually = manually_batched(x1, x2)
-    manually_time = time.perf_counter() - start_time_manually
 
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
-    assert vmap_time < manually_time
 
 
 @pytest.mark.level0
@@ -158,13 +151,7 @@ def test_ger_vmap_two(dtype):
     x1_2 = F.sub(x1_2, 0)
     x2_2 = F.sub(x2_2, 0)
 
-    start_time_2 = time.perf_counter()
     output_vmap_2 = vmap(ger_func_two, in_axes=(0, 1))(x1_2, x2_2)
-    vmap_time_2 = time.perf_counter() - start_time_2
-
-    start_time_manually_2 = time.perf_counter()
     output_manually_2 = manually_batched_two(x1_2, x2_2)
-    manually_time_2 = time.perf_counter() - start_time_manually_2
 
     assert np_all_close_with_loss(output_vmap_2.asnumpy(), output_manually_2.asnumpy())
-    assert vmap_time_2 < manually_time_2

@@ -250,7 +250,7 @@ def get_in_top_k_vmap_rule(prim, axis_size):
 @vmap_rules_getters.register(G.HShrinkGrad)
 @vmap_rules_getters.register(G.HSwishGrad)
 @vmap_rules_getters.register(G.SoftShrinkGrad)
-def get_fast_gelu_grad_vmap_rule(prim, axis_size):
+def get_common_activation_grad_vmap_rule(prim, axis_size):
     """VmapRule for common activation grad operation."""
     if isinstance(prim, str):
         prim_name = prim
@@ -628,14 +628,14 @@ def get_pad_v3_vmap_rule(prim, axis_size):
             first_shape = 1
             for i in range(diff_dim + 1):
                 first_shape *= x_shape[i]
-            input_shape = (first_shape,) + x_shape[(-input_max_dim+1):]
+            input_shape = (first_shape,) + x_shape[(-input_max_dim + 1):]
             x = F.reshape(x, input_shape)
             if mode == "constant":
                 out = prim(x, paddings, values)
             else:
                 out = prim(x, paddings)
             out_shape = F.shape(out)
-            real_out_shape = x_shape[:diff_dim+1] + out_shape[1:]
+            real_out_shape = x_shape[:diff_dim + 1] + out_shape[1:]
             out = F.reshape(out, real_out_shape)
         else:
             _raise_value_error("The dim of `input_x` in `{}` must be bigger than {}, "
