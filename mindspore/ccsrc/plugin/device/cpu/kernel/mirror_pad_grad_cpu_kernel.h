@@ -21,6 +21,9 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <utility>
+#include <complex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 namespace mindspore {
@@ -31,7 +34,6 @@ class MirrorPadGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ~MirrorPadGradCpuKernelMod() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
-  void InitInputOutputSize(const CNodePtr &kernel_node) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
@@ -42,39 +44,61 @@ class MirrorPadGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
       KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex128)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeComplex128),
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex128)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeComplex128)};
     return support_list;
   }
 
  private:
   template <typename T>
-  void InitWorkspaceSize();
+  void slice(std::vector<int64_t> extents, std::vector<int64_t> rhs_offsets, std::vector<int64_t> input_strides,
+             std::vector<T> inputs_addr, const std::vector<AddressPtr> &outputs) const;
+
+  template <typename T>
+  std::vector<std::pair<int64_t, int64_t>> extract_paddings(const T *paddings_arg) const;
 
   template <typename T1, typename T2>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs) const;
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
-  template <typename T1, typename T2>
-  void MirrorPadGrad_Width_Height(const size_t size, const T1 *interim_dy, const int64_t dx_height,
-                                  const int64_t dx_width, const int64_t dy_height, const int64_t dy_width,
-                                  const int64_t padd_dim, const T2 *paddings_arg, int64_t mode, T1 *dx) const;
+  template <typename T>
+  void paddings_type(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
-  template <typename T1, typename T2>
-  void MirrorPadGradBatchChannel(const size_t size, T1 *dy, T1 *interim_dy, const int64_t dx_batches,
-                                 const int64_t dx_channels, const int64_t dy_height, const int64_t dy_width,
-                                 const int64_t padd_dim, const T2 *paddings_arg, int64_t mode) const;
   TypeId dtype_{kTypeUnknown};
   TypeId pad_dtype_{kTypeUnknown};
-  size_t tensor_size_{1};
-  size_t shape_size_{1};
-  size_t output_size_{1};
-  size_t workspace_size_{1};
-  int mode_{0};
+  int64_t dims_{0};
   int64_t num_paddings_{0};
+  int64_t input_size_{1};
+  int64_t output_size_{1};
+  int64_t mode_{0};
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> output_shape_;
 };
