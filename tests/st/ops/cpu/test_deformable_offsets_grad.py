@@ -21,6 +21,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype
 from mindspore.ops.operations import nn_ops
+from mindspore.ops import functional as F
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -112,7 +113,7 @@ class NetDeformableOffsetsGrad(nn.Cell):
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nchw(data_type):
     """
-    Feature: DeformableOffsetsGrad gpu kernel
+    Feature: DeformableOffsetsGrad cpu kernel
     Description: test the rightness of DeformableOffsetsGrad gpu kernel
     Expectation: the output is same as expected result
     """
@@ -145,7 +146,7 @@ def test_deformable_offsets_grad_nchw(data_type):
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nhwc(data_type):
     """
-    Feature: DeformableOffsetsGrad gpu kernel
+    Feature: DeformableOffsetsGrad cpu kernel
     Description: test the rightness of DeformableOffsetsGrad gpu kernel
     Expectation: the output is same as expected result
     """
@@ -178,3 +179,39 @@ def test_deformable_offsets_grad_nhwc(data_type):
         rtol = 1e-3
     assert np.allclose(output[0].asnumpy(), expect_grad_x, rtol)
     assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap():
+    """"
+    Feature: Feature: DeformableOffsetsGrad cpu kernel
+    Description: Test case with vmap.
+    Expectation: The results are as expected.
+    """
+
+    def cal_deformable_offsets_grad(dout, x, offsets):
+        net = NetDeformableOffsetsGrad(data_format="NCHW")
+        return net(dout, x, offsets)
+
+    dout = Tensor(np.arange(2 * 1 * 2 * 3 * 3).reshape(2, 1, 2, 3, 3), dtype.float32)
+    x = Tensor(np.arange(2 * 1 * 2 * 4 * 4).reshape(2, 1, 2, 4, 4), dtype.float32)
+    offsets = Tensor(np.arange(2 * 1 * 27 * 1 * 1).reshape(2, 1, 27, 1, 1) * 0.1, dtype.float32)
+
+    vmap_deformable_offset_grad = F.vmap(cal_deformable_offsets_grad, in_axes=(0, 0, 0), out_axes=0)
+    out1 = vmap_deformable_offset_grad(dout, x, offsets)
+
+    def manually_batched(dout, x, offsets):
+        output_dx = []
+        output_d_offsets = []
+        for i in range(x.shape[0]):
+            dx, d_offsets = cal_deformable_offsets_grad(dout[i], x[i], offsets[i])
+            output_dx.append(dx)
+            output_d_offsets.append(d_offsets)
+
+        return F.stack(output_dx), F.stack(output_d_offsets)
+
+    out2 = manually_batched(dout, x, offsets)
+    assert np.allclose(out1[0].asnumpy(), out2[0].asnumpy())
+    assert np.allclose(out1[1].asnumpy(), out2[1].asnumpy())
