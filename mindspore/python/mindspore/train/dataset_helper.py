@@ -85,7 +85,7 @@ class _DataWrapper(nn.Cell):
         super(_DataWrapper, self).__init__(
             auto_prefix=False, flags=network.get_flags())
         # Also copy the flag in `network` construct
-        flags = getattr(network.__class__.construct, "_mindspore_flags", {})
+        flags = getattr(network.__class__.construct, "_func_graph_flags", {})
         self.info = (dataset_types, dataset_shapes)
         self.add_flags(**flags)
         self.get_next = P.GetNext(

@@ -253,12 +253,20 @@ void SetValueMutable(const abstract::AbstractBasePtr &abs) {
 
 void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
   std::string obj_desc;
-  if (py::isinstance<Cell>(source_obj)) {
+  if (py::hasattr(source_obj, parse::PYTHON_PARSE_METHOD)) {
     auto cell_class_name = source_obj.attr("__class__").attr("__name__");
-    obj_desc = "'" + py::cast<std::string>(cell_class_name) + ".construct'";
+    auto ms_function_name = source_obj.attr(parse::PYTHON_PARSE_METHOD);
+    obj_desc = "'" + py::cast<std::string>(cell_class_name) + "." + py::cast<std::string>(ms_function_name) + "'";
   } else {
-    auto ms_function_name = source_obj.attr("__name__");
-    obj_desc = "'" + py::cast<std::string>(ms_function_name) + "'";
+    if (py::hasattr(source_obj, "__name__")) {
+      auto ms_function_name = source_obj.attr("__name__");
+      obj_desc = "'" + py::cast<std::string>(ms_function_name) + "'";
+    } else if (py::isinstance<Cell>(source_obj)) {
+      auto cell_class_name = source_obj.attr("__class__").attr("__name__");
+      obj_desc = "'" + py::cast<std::string>(cell_class_name) + ".construct'";
+    } else {
+      MS_EXCEPTION(TypeError) << "The source object is invalid: " << py::str(source_obj);
+    }
   }
   for (size_t i = 0; i < args.size(); i++) {
     if (!CheckArgValid(args[i])) {

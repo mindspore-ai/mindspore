@@ -1761,9 +1761,9 @@ class CreateInstanceEvaluator : public TransitionPrimEvaluator {
       auto arg = args_spec_list[i + 1];
       MS_EXCEPTION_IF_NULL(arg);
       if (IsContainUndetermined(arg)) {
-        MS_EXCEPTION(TypeError) << "The " << i << "th input of method __init__ for "
+        MS_EXCEPTION(TypeError) << "The " << i << "th initializing input to create instance for "
                                 << args_spec_list[0]->BuildValue()->ToString()
-                                << " should be a scalar but got:" << arg->ToString();
+                                << " should be a constant, but got: " << arg->ToString();
       }
       // Because the Tensor's AbstractTensor can't get value from GetValueTrack.
       ValuePtr param_value = arg->BuildValue();

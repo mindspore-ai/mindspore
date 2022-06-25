@@ -2890,7 +2890,7 @@ bool ParseFunctionAst::InitParseAstInfo(const std::string &python_mod_get_parse_
 
   // Call python parse, get the parser fn
   module_ = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-  py::object parse_method = python_adapter::GetPyObjAttr(obj_, PYTHON_EXTERN_PARSE_METHOD);
+  py::object parse_method = python_adapter::GetPyObjAttr(obj_, PYTHON_PARSE_METHOD);
 
   // Get the obj type
   auto type = data_converter::GetObjType(obj_);
@@ -2909,7 +2909,7 @@ bool ParseFunctionAst::InitParseAstInfo(const std::string &python_mod_get_parse_
     function_ = obj_;
     obj_ = method_object;
   } else if (type == RESOLVE_TYPE_CLASS_INSTANCE) {
-    // obj is class instance, get the method to parse.
+    // 'obj' is class instance, get the method to parse.
     function_ = python_adapter::CallPyModFn(module_, python_mod_get_parse_method, obj_, parse_method);
     if (py::isinstance<py::none>(function_)) {
       MS_LOG(ERROR) << "Get obj method function failed.";
@@ -2923,7 +2923,7 @@ bool ParseFunctionAst::InitParseAstInfo(const std::string &python_mod_get_parse_
       return false;
     }
   } else {
-    MS_LOG(WARNING) << "Parse obj is invalid, only can parse function and obj, type = " << type;
+    MS_LOG(WARNING) << "Parse obj is invalid, only can parse function and obj, type: " << type;
     return false;
   }
 
@@ -3015,11 +3015,11 @@ bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph)
 
   SetMixedPrecisionFlag(obj, func_graph);
 
-  if (!py::hasattr(obj, PYTHON_EXTERN_MINDSPORE_FLAG)) {
+  if (!py::hasattr(obj, PYTHON_FUNC_GRAPH_FLAGS)) {
     MS_LOG(DEBUG) << "No flags";
     return true;
   }
-  py::dict flags = python_adapter::GetPyObjAttr(obj, PYTHON_EXTERN_MINDSPORE_FLAG);
+  py::dict flags = python_adapter::GetPyObjAttr(obj, PYTHON_FUNC_GRAPH_FLAGS);
   for (auto &item : flags) {
     if (!py::isinstance<py::str>(item.first)) {
       MS_LOG(ERROR) << "Type error in flags dict convert";

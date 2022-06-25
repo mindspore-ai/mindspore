@@ -268,14 +268,17 @@ class _MindsporeFunctionExecutor:
             generate_name = generate_name + ".grad"
         if is_pynative_parallel():
             generate_name = generate_name[:generate_name.rfind(str(id(self.fn)))] + str(id(self.shard_parent_obj))
-        self.fn.__parse_method__ = method_name
 
         # Add key with obj
         if self.obj is not None:
             if self.obj.__module__ != self.fn.__module__:
                 logger.info(f'`obj` module not equal to `fn` module: {self.obj.__module__}, {self.fn.__module__}')
             self.obj.__parse_method__ = method_name
-            generate_name = generate_name + '.' + str(self.obj.create_time) + '.' + str(id(self.obj))
+            if isinstance(self.obj, ms.nn.Cell):
+                generate_name = generate_name + '.' + str(self.obj.create_time)
+            else:
+                generate_name = generate_name + '.' + str(self._create_time)
+            generate_name = generate_name + '.' + str(id(self.obj))
         else:
             # Different instance of same class may use same memory(means same obj_id) at diff times.
             # To avoid unexpected phase matched, add create_time to generate_name.
@@ -298,7 +301,8 @@ class _MindsporeFunctionExecutor:
         if self.obj is None:
             is_compile = self._graph_executor.compile(self.fn, compile_args, phase, True)
         else:
-            self._graph_executor.set_weights_values(self.obj.parameters_dict())
+            if isinstance(self.obj, ms.nn.Cell):
+                self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
         if is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
@@ -570,6 +574,9 @@ def ms_class(cls):
     # Check if cls is of type class.
     if not inspect.isclass(cls):
         raise TypeError(f'Decorator ms_class can only be used for class type, but got {cls}.')
+    # Check if cls is nn.Cell.
+    if issubclass(cls, ms.nn.Cell):
+        raise TypeError(f"Decorator ms_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     logger.info(f'Found ms_class: {cls}.')
     setattr(cls, '__ms_class__', True)
     return cls
