@@ -880,6 +880,7 @@ bool KPynativeCellImpl::BackPropagate(bool by_value) {
 
 bool KPynativeCellImpl::AllReferencesStopped(const CNodePtr &curr_cnode) {
   // If all CNode use curr_cnode has stop_gradient_ flag, then curr_cnode also can set that flag.
+  MS_EXCEPTION_IF_NULL(curr_cnode);
   auto iter = anfnode_to_adjoin_.find(curr_cnode);
   if (iter == anfnode_to_adjoin_.end()) {
     MS_LOG(EXCEPTION) << "Cannot find adjoint for cnode: " << curr_cnode->DebugString();
@@ -894,6 +895,9 @@ bool KPynativeCellImpl::AllReferencesStopped(const CNodePtr &curr_cnode) {
     }
     return true;
   });
+  if (curr_cnode == last_node_) {
+    all_users_have_stopped = false;
+  }
   return all_users_have_stopped;
 }
 
