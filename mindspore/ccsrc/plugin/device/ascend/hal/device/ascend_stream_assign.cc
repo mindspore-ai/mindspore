@@ -179,6 +179,13 @@ uint32_t GetGotoLabelId(const CNodePtr &node) {
 
   return common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);
 }
+
+void AssignStreamForPynativeGraph(const KernelGraphPtr &graph) {
+  auto nodes = graph->execution_order();
+  for (auto &node : nodes) {
+    AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
+  }
+}
 }  // namespace
 
 uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
@@ -479,6 +486,10 @@ void AscendStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr>
 }
 
 void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) {
+  if (graph_ptr->has_flag(kFlagPyNativeRunInGraph)) {
+    AssignStreamForPynativeGraph(graph_ptr.get());
+    return;
+  }
   if (graph_ptr->is_dynamic_shape()) {
     MS_LOG(WARNING) << "Dynamic shape do not need to assign stream.";
     return;
