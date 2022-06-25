@@ -45,25 +45,42 @@ else()
 endif()
 
 if(BUILD_LITE)
-  set(PROTOBUF_PATCH_ROOT ${TOP_DIR}/third_party/patch/protobuf)
+    set(PROTOBUF_PATCH_ROOT ${TOP_DIR}/third_party/patch/protobuf)
 else()
-  set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
+    set(PROTOBUF_PATCH_ROOT ${CMAKE_SOURCE_DIR}/third_party/patch/protobuf)
 endif()
 
-mindspore_add_pkg(protobuf_arm
-        VER 3.13.0
-        LIBS protobuf
-        URL ${REQ_URL}
-        MD5 ${MD5}
-        CMAKE_PATH cmake/
-        CMAKE_OPTION
-        -Dprotobuf_BUILD_TESTS=OFF
-        -Dprotobuf_BUILD_SHARED_LIBS=OFF
-        -DCMAKE_BUILD_TYPE=Release
-        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
-        -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-        -Dprotobuf_WITH_ZLIB=OFF
-        PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+if(APPLE)
+    mindspore_add_pkg(protobuf_arm
+            VER 3.13.0
+            LIBS protobuf
+            URL ${REQ_URL}
+            MD5 ${MD5}
+            CMAKE_PATH cmake/
+            CMAKE_OPTION
+            -Dprotobuf_BUILD_TESTS=OFF
+            -Dprotobuf_BUILD_SHARED_LIBS=OFF
+            -DCMAKE_BUILD_TYPE=Release
+            -Dprotobuf_WITH_ZLIB=OFF
+            -DCMAKE_OSX_SYSROOT=${CMAKE_OSX_SYSROOT}
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET}
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+else()
+    mindspore_add_pkg(protobuf_arm
+            VER 3.13.0
+            LIBS protobuf
+            URL ${REQ_URL}
+            MD5 ${MD5}
+            CMAKE_PATH cmake/
+            CMAKE_OPTION
+            -Dprotobuf_BUILD_TESTS=OFF
+            -Dprotobuf_BUILD_SHARED_LIBS=OFF
+            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+            -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+            -Dprotobuf_WITH_ZLIB=OFF
+            PATCHES ${PROTOBUF_PATCH_ROOT}/CVE-2021-22570.patch)
+endif()
 
 include_directories(${protobuf_arm_INC})
 add_library(mindspore::protobuf_arm ALIAS protobuf_arm::protobuf)

@@ -367,7 +367,8 @@ npu_files=()
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/op/*.cc)
 while IFS='' read -r line; do npu_files+=("$line"); done < <(ls mindspore/lite/src/runtime/delegate/npu/pass/*.cc)
-
+npu_others_files=("mindspore/lite/src/runtime/delegate/delegate_utils.cc")
+npu_files=("${npu_files[@]}" "${npu_others_files[@]}")
 # shellcheck disable=SC2068
 for file in ${npu_files[@]}; do
   file=$(echo ${file} | awk -F '/' '{print $NF}')

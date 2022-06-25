@@ -23,6 +23,10 @@
 namespace mindspore::lite {
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input);
 
+void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel);
+
+void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
+
 template <typename T>
 std::vector<mindspore::MSTensor> GetGraphInTensors(std::vector<T *> ops, std::vector<size_t> *input_index) {
   std::vector<mindspore::MSTensor> inputs;

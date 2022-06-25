@@ -286,38 +286,10 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
   return npu_op;
 }
 
-std::vector<mindspore::MSTensor> GraphOutTensors(const std::vector<NPUOp *> &ops,
-                                                 DelegateModel<schema::Primitive> *model, KernelIter from,
-                                                 KernelIter end) {
-  auto out_tensors = lite::GetGraphOutTensors(ops);
-  std::vector<mindspore::MSTensor> all_out_tensors;
-  for (auto op : ops) {
-    for (const auto &out_tensor : op->outputs()) {
-      if (find(out_tensors.begin(), out_tensors.end(), out_tensor) == out_tensors.end()) {
-        all_out_tensors.push_back(out_tensor);
-      }
-    }
-  }
-
-  for (auto iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
-    if (iter >= from && iter <= end) {
-      continue;
-    }
-    // The input of other kernels is the output of the current subgraph kernel.
-    for (const auto &in_tensor : (*iter)->inputs()) {
-      if (find(all_out_tensors.begin(), all_out_tensors.end(), in_tensor) != all_out_tensors.end() &&
-          find(out_tensors.begin(), out_tensors.end(), in_tensor) == out_tensors.end()) {
-        out_tensors.push_back(in_tensor);
-      }
-    }
-  }
-  return out_tensors;
-}
-
 kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel<schema::Primitive> *model,
                                             KernelIter from, KernelIter end) {
   auto in_tensors = lite::GetGraphInTensors(ops, nullptr);
-  auto out_tensors = GraphOutTensors(ops, model, from, end);
+  auto out_tensors = lite::GraphOutTensors<NPUOp>(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {
     MS_LOG(DEBUG) << "New NPU Graph failed.";
@@ -326,12 +298,14 @@ kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, Del
   // 1. For every op, find pre and next ops
   auto ret = graph_kernel->FindPreNextOps();
   if (ret != RET_OK) {
+    delete graph_kernel;
     MS_LOG(DEBUG) << "NPU Graph find input and output ops for every op failed.";
     return nullptr;
   }
   // 2. Pass
   ret = pass_manager_->RunPass(graph_kernel);
   if (ret != RET_OK) {
+    delete graph_kernel;
     MS_LOG(DEBUG) << "NPU Graph run pass failed. This function mainly solves the problem that the format is "
                      "inconsistent and requires interpolation transpose operators.";
     return nullptr;
@@ -339,6 +313,7 @@ kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, Del
   // 3. NPUGraph init, create subgraph_kernel and transpose_kernel
   ret = graph_kernel->Init();
   if (ret != RET_OK) {
+    delete graph_kernel;
     MS_LOG(DEBUG) << "NPU subgraph Init failed.";
     return nullptr;
   }
