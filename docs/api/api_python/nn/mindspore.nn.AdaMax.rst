@@ -1,7 +1,7 @@
 mindspore.nn.AdaMax
 ===================
 
-.. py:class:: mindspore.nn.AdaMax(*args, **kwargs)
+.. py:class:: mindspore.nn.AdaMax(params, learning_rate=0.001, beta1=0.9, beta2=0.999, eps=1e-08, weight_decay=0.0, loss_scale=1.0)
 
     AdaMax算法是基于无穷范数的Adam的一种变体。
 

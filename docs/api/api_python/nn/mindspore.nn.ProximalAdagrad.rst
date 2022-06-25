@@ -1,7 +1,7 @@
 mindspore.nn.ProximalAdagrad
 ==============================
 
-.. py:class:: mindspore.nn.ProximalAdagrad(*args, **kwargs)
+.. py:class:: mindspore.nn.ProximalAdagrad(params, accum=0.1, learning_rate=0.001, l1=0.0, l2=0.0, use_locking=False, loss_scale=1.0, weight_decay=0.0)
 
     ProximalAdagrad算法的实现。
 

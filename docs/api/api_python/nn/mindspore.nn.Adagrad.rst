@@ -1,7 +1,7 @@
 mindspore.nn.Adagrad
 =====================
 
-.. py:class:: mindspore.nn.Adagrad(*args, **kwargs)
+.. py:class:: mindspore.nn.Adagrad(params, accum=0.1, learning_rate=0.001, update_slots=True, loss_scale=1.0, weight_decay=0.0)
 
     Adagrad算法的实现。
 

@@ -1,7 +1,7 @@
 mindspore.nn.Adam
 ==================
 
-.. py:class:: mindspore.nn.Adam(*args, **kwargs)
+.. py:class:: mindspore.nn.Adam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False)
 
     Adaptive Moment Estimation (Adam)算法的实现。
 

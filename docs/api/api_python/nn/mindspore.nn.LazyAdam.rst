@@ -1,7 +1,7 @@
 mindspore.nn.LazyAdam
 ======================
 
-.. py:class:: mindspore.nn.LazyAdam(*args, **kwargs)
+.. py:class:: mindspore.nn.LazyAdam(params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
 
     Adaptive Moment Estimation (Adam)算法的实现。请参阅论文 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_。
 

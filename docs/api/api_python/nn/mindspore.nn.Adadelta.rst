@@ -1,7 +1,7 @@
 mindspore.nn.Adadelta
 =====================
 
-.. py:class:: mindspore.nn.Adadelta(*args, **kwargs)
+.. py:class:: mindspore.nn.Adadelta(params, learning_rate=1.0, rho=0.9, epsilon=1e-6, loss_scale=1.0, weight_decay=0.0)
 
     Adadelta算法的实现。
 
