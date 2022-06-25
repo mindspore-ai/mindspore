@@ -3662,7 +3662,7 @@ class NotEqual(_LogicBinaryOp):
         return _LogicBinaryOp.do_infer_dtype(x_dtype, y_dtype, mstype.number_type + (mstype.bool_,), self.name)
 
 
-class Greater(_LogicBinaryOp):
+class Greater(PrimitiveWithCheck):
     r"""
     Compare the value of the input parameters :math:`x,y` element-wise, and the output result is a bool value.
 
@@ -3679,6 +3679,11 @@ class Greater(_LogicBinaryOp):
         >>> print(output)
         [False  True False]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
@@ -3689,7 +3694,7 @@ class Greater(_LogicBinaryOp):
         return None
 
 
-class GreaterEqual(_LogicBinaryOp):
+class GreaterEqual(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x >= y` element-wise.
 
@@ -3706,6 +3711,11 @@ class GreaterEqual(_LogicBinaryOp):
         >>> print(output)
         [True True False]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
 
     def infer_value(self, x, y):
         if x is not None and y is not None:
@@ -3778,7 +3788,7 @@ class Gcd(Primitive):
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
 
-class Less(_LogicBinaryOp):
+class Less(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x < y` element-wise.
 
@@ -3795,6 +3805,12 @@ class Less(_LogicBinaryOp):
         >>> print(output)
         [False False True]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
@@ -3804,7 +3820,7 @@ class Less(_LogicBinaryOp):
         return None
 
 
-class LessEqual(_LogicBinaryOp):
+class LessEqual(PrimitiveWithCheck):
     r"""
     Computes the boolean value of :math:`x <= y` element-wise.
 
@@ -3821,6 +3837,12 @@ class LessEqual(_LogicBinaryOp):
         >>> print(output)
         [ True False  True]
     """
+    __mindspore_signature__ = (sig.sig_dtype.T, sig.sig_dtype.T)
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
     def infer_value(self, x, y):
         if x is not None and y is not None:
             x = x.asnumpy()
