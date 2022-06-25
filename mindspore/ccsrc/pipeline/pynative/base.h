@@ -60,9 +60,6 @@ struct OpExecInfo {
   bool lazy_build = false;
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
-
-const std::set<std::string> ignore_infer_prim = {"mixed_precision_cast"};
-const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
 }  // namespace pynative
 }  // namespace mindspore
 
