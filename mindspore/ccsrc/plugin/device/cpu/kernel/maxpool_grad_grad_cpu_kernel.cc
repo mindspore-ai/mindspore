@@ -99,7 +99,9 @@ void MaxPoolGradGradCpuKernelMod::CheckInputVaild() {
 
 void MaxPoolGradGradCpuKernelMod::CalPad() {
   if (pad_mode_ == PadMode::VALID) {
-    reinterpret_cast<Pooling3DParameter *>(param_)->pad_f_ = 0;
+    if (dim_ == kMaxPool3DGradGradDim) {
+      reinterpret_cast<Pooling3DParameter *>(param_)->pad_f_ = 0;
+    }
     param_->pad_u_ = 0;
     param_->pad_l_ = 0;
     return;

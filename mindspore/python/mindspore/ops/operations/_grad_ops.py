@@ -1006,7 +1006,8 @@ class MaxPoolGradGrad(_PoolGrad):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type must be float16.
+        - **origin_input** (Tensor) - Tensor with data format "NCHW".
+          For Ascend, data type must be float16. For CPU and GPU, data type support float16 and float32.
         - **origin_output** (Tensor) - Data type same as `origin_input`.
         - **grad** (Tensor) - Data type same as `origin_input`.
 
