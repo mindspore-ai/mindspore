@@ -18,6 +18,7 @@
 #include <algorithm>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32_grad/apply_proximal_adagrad_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
 
 namespace mindspore {
@@ -29,35 +30,6 @@ constexpr size_t kLRIndex = 2;
 constexpr size_t kL1Index = 3;
 constexpr size_t kL2Index = 4;
 constexpr size_t kGradIndex = 5;
-
-// 32 bits, block_size : (512/256/128/32), block_num : (16/8/4/1)
-#define ApplyProximalAdagradCalc(block_size, block_num, input_elements, var, accum, lr, l1, l2, grad)               \
-  do {                                                                                                              \
-    MS_FLOAT_32xN(block_num) lr_vec = MS_MOVN_F32(block_size, lr);                                                  \
-    MS_FLOAT_32xN(block_num) l1_vec = MS_MOVN_F32(block_size, l1);                                                  \
-    MS_FLOAT_32xN(block_num) l2_vec = MS_MOVN_F32(block_size, l2);                                                  \
-    for (size_t block_max_size = input_elements - block_num + 1; i < block_max_size; i += block_num) {              \
-      MS_FLOAT_32xN(block_num) tmp_vec1 = MS_LD_F32(block_size, grad + i);                                          \
-      MS_FLOAT_32xN(block_num) accum_vec = MS_LD_F32(block_size, accum + i);                                        \
-      MS_FLOAT_32xN(block_num) prox_v_vec = MS_LD_F32(block_size, var + i);                                         \
-      MS_FMADD_F32(block_size, accum_vec, tmp_vec1, tmp_vec1);                                                      \
-      MS_FLOAT_32xN(block_num) learn_rate_vec = MS_DIV_F32(block_size, lr_vec, MS_SQRT_F32(block_size, accum_vec)); \
-      MS_FMSUB_F32(block_size, prox_v_vec, tmp_vec1, learn_rate_vec);                                               \
-      MS_ST_F32(block_size, accum + i, accum_vec);                                                                  \
-      tmp_vec1 = MS_MOVN_F32(block_size, 1);                                                                        \
-      MS_FMSUB_F32(block_size, tmp_vec1, l2_vec, learn_rate_vec);                                                   \
-      if (l1 > 0) {                                                                                                 \
-        learn_rate_vec = MS_MUL_F32(block_size, learn_rate_vec, l1_vec);                                            \
-        tmp_vec1 = MS_DIV_F32(block_size, MS_SIN_F32(block_size, prox_v_vec), tmp_vec1);                            \
-        learn_rate_vec = MS_MUL_F32(block_size, MS_ABS_F32(block_size, prox_v_vec), learn_rate_vec);                \
-        learn_rate_vec = MS_MAX_F32(block_size, learn_rate_vec, MS_MOVN_F32(block_size, 0.0f));                     \
-        prox_v_vec = MS_MUL_F32(block_size, learn_rate_vec, tmp_vec1);                                              \
-      } else {                                                                                                      \
-        prox_v_vec = MS_DIV_F32(block_size, prox_v_vec, tmp_vec1);                                                  \
-      }                                                                                                             \
-      MS_ST_F32(block_size, var + i, prox_v_vec);                                                                   \
-    }                                                                                                               \
-  } while (0)
 
 bool ApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
@@ -180,28 +152,20 @@ bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressP
   auto grad = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
 
   auto task = [this, &var, &accum, &lr, &l1, &l2, &grad](size_t start, size_t end) {
+    auto cur_input_elements = end - start;
     for (int64_t b = 0; b < batch_size_; b++) {
-      size_t i = 0;
-      MS_SIMD_RUN_NO_SCALAR(ApplyProximalAdagradCalc, input_elements_, var, accum, lr[b], l1[b], l2[b], grad);
+      auto var_cur = var + start;
+      auto accum_cur = accum + start;
+      auto grad_cur = grad + start;
 
-      for (; i < input_elements_; ++i) {
-        accum[i] += grad[i] * grad[i];
-        auto learning_rate = lr[b] / std::sqrt(accum[i]);
-        auto prox_v = var[i];
-        prox_v -= grad[i] * learning_rate;
+      ApplyProximalAdagradOpt(var_cur, accum_cur, lr[b], l1[b], l2[b], grad_cur, cur_input_elements);
 
-        if (l1[b] > 0) {
-          var[i] =
-            sinf(prox_v) * std::fmax(std::fabs(prox_v) - learning_rate * l1[b], 0.0) / (1 + l2[b] * learning_rate);
-        } else {
-          var[i] = prox_v / (1 + l2[b] * learning_rate);
-        }
-      }
       var = var + input_elements_;
       accum = accum + input_elements_;
       grad = grad + input_elements_;
     }
   };
+
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 
   return true;

@@ -88,6 +88,7 @@
 #define MS_CMPGTQ_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLENDQ_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLENDQ_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
+#define MS_CMPLT128_F32(src1, src2) _mm_cmplt_ps(src1, src2)
 #define MS_CMPLE128_F32(src1, src2) _mm_cmple_ps(src1, src2)
 #define MS_CMPGT128_F32(src1, src2) _mm_cmpgt_ps(src1, src2)
 #define MS_CMPGT128_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)

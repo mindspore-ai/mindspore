@@ -87,6 +87,7 @@ static inline float32x4_t vrecp(float32x4_t v) {
 #define MS_CMPGTQ_F32(src1, src2) vcgtq_f32(src1, src2)
 #define MS_CMPGTQ_EPI32(src1, src2) vcgtq_s32(src1, src2)
 #define MS_CMPLE128_F32(src1, src2) vcleq_f32(src1, src2)
+#define MS_CMPLT128_F32(src1, src2) vcltq_f32(src1, src2)
 #define MS_CMPGT128_F32(src1, src2) vcgtq_f32(src1, src2)
 #define MS_CMPGT128_EPI32(src1, src2) vcgtq_s32(src1, src2)
 // Note: Compared with X86, the vbslq_f32 parameters are the opposite with _mm_blendv_f32

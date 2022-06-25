@@ -80,6 +80,7 @@
 #define MS_CMP512_F32(src1, src2, src3) _mm512_cmp_ps_mask(src1, src2, src3)
 #define MS_CMPGT512_F32(src1, src2) _mm512_cmp_ps_mask(src1, src2, 30)
 #define MS_CMPLE512_F32(src1, src2) _mm512_cmp_ps_mask(src1, src2, 18)
+#define MS_CMPLT512_F32(src1, src2) _mm512_cmp_ps_mask(src1, src2, 17)
 #define MS_CMPGT512_EPI32(src1, src2) _mm512_cmpgt_epi32(src1, src2)
 #define MS_BLEND512_F32(src1, src2, mask) _mm512_mask_blend_ps(mask, src1, src2)
 #define MS_BLEND512_EPI32(src1, src2, mask) _mm512_mask_blend_epi32(mask, src1, src2)

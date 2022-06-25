@@ -50,12 +50,7 @@ __device__ __forceinline__ half MaxFunc(half x, half y) {
 
 template <typename T>
 __device__ __forceinline__ T SinFunc(T x) {
-  return sin(x);
-}
-
-template <>
-__device__ __forceinline__ half SinFunc(half x) {
-  return hsin(x);
+  return ((x > static_cast<T>(0.0)) - (x < static_cast<T>(0.0)));
 }
 
 template <typename T>
