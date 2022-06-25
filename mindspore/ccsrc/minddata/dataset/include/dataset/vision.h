@@ -1570,6 +1570,38 @@ class MS_API SlicePatches final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+/// \brief Invert pixels within a specified range.
+class MS_API Solarize final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] threshold A vector with two elements specifying the pixel range to invert.
+  ///     Threshold values should always be in (min, max) format.
+  ///     If min=max, it will to invert all pixels above min(max).
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto decode_op = vision::Decode();
+  ///     auto solarize_op = vision::Solarize({0, 255});
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({decode_op, solarize_op},  // operations
+  ///                            {"image"});                // input columns
+  /// \endcode
+  explicit Solarize(const std::vector<float> &threshold);
+
+  /// \brief Destructor.
+  ~Solarize() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
+};
+
 /// \brief Swap the red and blue channels of the input image.
 class MS_API SwapRedBlue final : public TensorTransform {
  public:

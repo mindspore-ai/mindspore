@@ -1892,6 +1892,7 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
 Status Solarize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                 const std::vector<float> &threshold) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "Solarize", {1, 2, 3, 4, 5, 6, 11, 12}, {2, 3}, {1, 3}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
@@ -1917,8 +1918,10 @@ Status Solarize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     // solarize desired portion
     const float max_size = 255.f;
     output_cv_tensor->mat() = cv::Scalar::all(max_size) - mask_mat_tensor->mat();
-    input_cv->mat().copyTo(output_cv_tensor->mat(), mask_mat_tensor->mat() == 0);
     input_cv->mat().copyTo(output_cv_tensor->mat(), input_cv->mat() < threshold_min);
+    if (threshold_min < threshold_max) {
+      input_cv->mat().copyTo(output_cv_tensor->mat(), input_cv->mat() > threshold_max);
+    }
 
     *output = std::static_pointer_cast<Tensor>(output_cv_tensor);
   }

@@ -70,6 +70,7 @@
 #include "minddata/dataset/kernels/ir/vision/rgb_to_bgr_ir.h"
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
+#include "minddata/dataset/kernels/ir/vision/solarize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
@@ -699,6 +700,17 @@ PYBIND_REGISTER(
         return slice_patches;
       }));
   }));
+
+PYBIND_REGISTER(SolarizeOperation, 1, ([](const py::module *m) {
+                  (void)
+                    py::class_<vision::SolarizeOperation, TensorOperation, std::shared_ptr<vision::SolarizeOperation>>(
+                      *m, "SolarizeOperation")
+                      .def(py::init([](const std::vector<float> &threshold) {
+                        auto solarize = std::make_shared<vision::SolarizeOperation>(threshold);
+                        THROW_IF_ERROR(solarize->ValidateParams());
+                        return solarize;
+                      }));
+                }));
 
 PYBIND_REGISTER(ToTensorOperation, 1, ([](const py::module *m) {
                   (void)

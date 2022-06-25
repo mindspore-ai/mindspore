@@ -22,7 +22,7 @@ from mindspore._c_dataengine import TensorOp, TensorOperation
 from mindspore._c_expression import typing
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER, \
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
-    parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
+    parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, UINT8_MIN, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
     check_pos_int32, check_tensor_op, deprecator_factory
 from mindspore.dataset.transforms.validators import check_transform_op_type
@@ -1216,3 +1216,26 @@ def deprecated_py_vision(substitute_name=None, substitute_module=None):
     """
     return deprecator_factory("1.8", "mindspore.dataset.vision.py_transforms", "mindspore.dataset.vision",
                               substitute_name, substitute_module)
+
+
+def check_solarize(method):
+    """Wrapper method to check the parameters of SolarizeOp."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+
+        [threshold], _ = parse_user_args(method, *args, **kwargs)
+        type_check(threshold, (float, int, list, tuple), "threshold")
+        if isinstance(threshold, (float, int)):
+            threshold = (threshold, threshold)
+        type_check_list(threshold, (float, int), "threshold")
+        if len(threshold) != 2:
+            raise TypeError("threshold must be a single number or sequence of two numbers.")
+        for i, value in enumerate(threshold):
+            check_value(value, (UINT8_MIN, UINT8_MAX), "threshold[{}]".format(i))
+        if threshold[1] < threshold[0]:
+            raise ValueError("threshold must be in order of (min, max).")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
