@@ -30,8 +30,8 @@ class TensorArrayStackCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   TensorArrayStackCpuKernelMod();
   ~TensorArrayStackCpuKernelMod() = default;
 
-  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override;
   void InitKernel(const CNodePtr &kernel_node) override;
 
  protected:
