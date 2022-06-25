@@ -1,7 +1,7 @@
 mindspore.nn.LARS
 ==================
 
-.. py:class:: mindspore.nn.LARS(*args, **kwargs)
+.. py:class:: mindspore.nn.LARS(optimizer, epsilon=1e-05, coefficient=0.001, use_clip=False, lars_filter=lambda x: 'LayerNorm' not in x.name and 'bias' not in x.name)
 
     LARS算法的实现。
 
