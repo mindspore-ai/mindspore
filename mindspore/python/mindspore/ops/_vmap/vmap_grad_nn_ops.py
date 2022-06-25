@@ -228,3 +228,38 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(G.DeformableOffsetsGrad)
+def get_deformable_offsets_vmap_rule(prim, axis_size):
+    """VmapRule for `DeformableOffsetsGrad` operation."""
+    chw_reverse_index = -3
+
+    def vmap_rule(dout_bdim, x_bdim, offsets_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dout_bdim, x_bdim, offsets_bdim)
+        if is_all_none:
+            return result
+
+        dout, dout_dim = dout_bdim
+        x, x_dim = x_bdim
+        offsets, offsets_dim = offsets_bdim
+
+        dout = _bdim_at_front(dout, dout_dim, axis_size)
+        dout_origin_shape = F.shape(dout)
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_origin_shape = F.shape(x)
+
+        offsets = _bdim_at_front(offsets, offsets_dim, axis_size)
+        offsets_origin_shape = F.shape(offsets)
+
+        dout = F.reshape(dout, (-1,) + dout_origin_shape[chw_reverse_index:])
+        x = F.reshape(x, (-1,) + x_origin_shape[chw_reverse_index:])
+        offsets = F.reshape(offsets, (-1,) + offsets_origin_shape[chw_reverse_index:])
+
+        dx, d_offsets = prim(dout, x, offsets)
+        dx = F.reshape(dx, x_origin_shape)
+        d_offsets = F.reshape(d_offsets, offsets_origin_shape)
+        return (dx, 0), (d_offsets, 0)
+
+    return vmap_rule
