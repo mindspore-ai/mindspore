@@ -272,13 +272,14 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
   MS_LOG(DEBUG) << "Update end";
 }
 
-bool GraphAdapter::ReplaceBpropGraphParameter(const KernelGraphPtr &graph,
-                                              const std::vector<tensor::TensorPtr> &input_tensors) {
+void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
+                                                   const std::vector<tensor::TensorPtr> &input_tensors,
+                                                   const device::DeviceContext *device_context) {
+  MS_EXCEPTION_IF_NULL(device_context);
   size_t index = 0;
-  bool changed = false;
   for (const auto &input_node : graph->input_nodes()) {
-    auto params = common::AnfAlgo::GetAllOutput(input_node);
-    for (const auto &param : params) {
+    auto parameters = common::AnfAlgo::GetAllOutput(input_node);
+    for (const auto &parameter : parameters) {
       if (index >= input_tensors.size()) {
         MS_LOG(EXCEPTION) << "Parameter size out of range. Parameter index: " << index
                           << ", input size: " << input_tensors.size();
@@ -287,29 +288,28 @@ bool GraphAdapter::ReplaceBpropGraphParameter(const KernelGraphPtr &graph,
       MS_EXCEPTION_IF_NULL(input_tensor);
       const auto &tensor_address = input_tensor->device_address();
       auto address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor_address);
-      if (address != nullptr) {
-        auto tensor_format = address->format();
-        auto param_format = AnfAlgo::GetOutputFormat(param, 0);
-        if (tensor_format != param_format) {
-          // Update parameter format
-          auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
-          MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
-          kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{address->format()});
-          kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{address->type_id()});
-          kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
-          AnfAlgo::SetOutputAddr(address, 0, param.get());
-          AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), param.get());
-
-          // Update abstract
-          auto type_of_tensor = input_tensor->Dtype();
-          auto shape_of_tensor = input_tensor->shape();
-          auto abstract = std::make_shared<abstract::AbstractTensor>(type_of_tensor, shape_of_tensor);
-          param->set_abstract(abstract);
-          changed = true;
-        }
+      if (address == nullptr || address->GetDeviceType() != device_context->GetDeviceType()) {
+        // Need to discard input tensor properties in heterogeneous scenarios.
+        // For example, the format of device_address in input_tensor is 5D format,
+        // and it's invalid for CPU graph parameter.
+        continue;
       }
+
+      auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+      MS_EXCEPTION_IF_NULL(kernel_build_info_builder);
+      kernel_build_info_builder->SetOutputsFormat(std::vector<std::string>{address->format()});
+      kernel_build_info_builder->SetOutputsDeviceType(std::vector<TypeId>{address->type_id()});
+      kernel_build_info_builder->SetOutputsReshapeType({input_tensor->padding_type()});
+      AnfAlgo::SetOutputAddr(address, 0, parameter.get());
+      AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), parameter.get());
+
+      auto abstract = parameter->abstract();
+      MS_EXCEPTION_IF_NULL(abstract);
+      // Shape contain max_shape and min_shape.
+      auto shape = abstract->BuildShape();
+      auto new_abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(address->type_id()), shape);
+      parameter->set_abstract(new_abs);
     }
   }
-  return changed;
 }
 }  // namespace mindspore::pynative
