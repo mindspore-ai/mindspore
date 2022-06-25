@@ -393,11 +393,11 @@ class ConstantPad3d(_ConstantPadNd):
                 raise ValueError(msg)
         else:
             msg = 'type of padding must be int or float, but got {}'.format(type(padding))
-            raise ValueError(msg)
+            raise TypeError(msg)
 
         if not isinstance(value, (int, float)):
             msg = 'type of value must be int or float, but got {}'.format(type(value))
-            raise ValueError(msg)
+            raise TypeError(msg)
         super(ConstantPad3d, self).__init__(padding, value)
 
 
