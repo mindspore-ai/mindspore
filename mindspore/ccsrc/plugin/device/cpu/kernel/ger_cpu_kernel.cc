@@ -107,15 +107,9 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   outdim_ = in1dim_ * in2dim_;
 
   if (input_type_1_ == kNumberTypeFloat16) {
-    // get float space float_input1, float_input2, float_output
-    workspace_size_list_.push_back(batches_ * in1dim_ * sizeof(float));
-    workspace_size_list_.push_back(batches_ * in2dim_ * sizeof(float));
-    workspace_size_list_.push_back(batches_ * outdim_ * sizeof(float));
-    if (batches_ != kNoBatchNum) {
-      launch_func_ = &GerCpuKernelMod::LaunchBatchesFp16;
-    } else {
-      launch_func_ = &GerCpuKernelMod::LaunchNoBatchesFp16;
-    }
+    InitLaunchFunc<float16>();
+  } else if (input_type_1_ == kNumberTypeFloat64) {
+    InitLaunchFunc<double>();
   } else if (input_type_1_ == kNumberTypeFloat32) {
     if (batches_ != kNoBatchNum) {
       launch_func_ = &GerCpuKernelMod::LaunchBatches;
@@ -130,15 +124,29 @@ int GerCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
   return KRET_OK;
 }
 
-bool GerCpuKernelMod::LaunchBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+template <typename T>
+void GerCpuKernelMod::InitLaunchFunc() {
+  // get float space float_input1, float_input2, float_output
+  workspace_size_list_.push_back(batches_ * in1dim_ * sizeof(float));
+  workspace_size_list_.push_back(batches_ * in2dim_ * sizeof(float));
+  workspace_size_list_.push_back(batches_ * outdim_ * sizeof(float));
+  if (batches_ != kNoBatchNum) {
+    launch_func_ = &GerCpuKernelMod::LaunchBatchesElse<T>;
+  } else {
+    launch_func_ = &GerCpuKernelMod::LaunchNoBatchesElse<T>;
+  }
+}
+
+template <typename T>
+bool GerCpuKernelMod::LaunchBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  float16 *input1 = reinterpret_cast<float16 *>(inputs[kIndex0]->addr);
-  float16 *input2 = reinterpret_cast<float16 *>(inputs[kIndex1]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
   float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
   float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
   float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
-  float16 *output = reinterpret_cast<float16 *>(outputs[kIndex0]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
 
   auto task = [this, &float_input1, &float_input2, &input1, &input2, &output, &float_output](size_t start, size_t end) {
     for (size_t i = start * this->in1dim_; i < end * this->in1dim_; ++i) {
@@ -154,27 +162,28 @@ bool GerCpuKernelMod::LaunchBatchesFp16(const std::vector<kernel::AddressPtr> &i
     }
 
     for (size_t i = start * this->outdim_; i < end * this->outdim_; ++i) {
-      output[i] = static_cast<float16>(float_output[i]);
+      output[i] = static_cast<T>(float_output[i]);
     }
   };
   ParallelLaunchAutoSearch(task, batches_, this, &parallel_search_info_);
   return true;
 }
 
-bool GerCpuKernelMod::LaunchNoBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+template <typename T>
+bool GerCpuKernelMod::LaunchNoBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &workspace,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  float16 *input1 = reinterpret_cast<float16 *>(inputs[kIndex0]->addr);
-  float16 *input2 = reinterpret_cast<float16 *>(inputs[kIndex1]->addr);
+  const auto *input1 = reinterpret_cast<T *>(inputs[kIndex0]->addr);
+  const auto *input2 = reinterpret_cast<T *>(inputs[kIndex1]->addr);
   float *float_input1 = reinterpret_cast<float *>(workspace[kIndex0]->addr);
   float *float_input2 = reinterpret_cast<float *>(workspace[kIndex1]->addr);
   float *float_output = reinterpret_cast<float *>(workspace[kIndex2]->addr);
-  float16 *output = reinterpret_cast<float16 *>(outputs[kIndex0]->addr);
+  auto *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
 
-  for (size_t i = 0; i < ((inputs[kIndex0]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[kIndex0]->size) / sizeof(T)); ++i) {
     float_input1[i] = static_cast<float>(input1[i]);
   }
-  for (size_t i = 0; i < ((inputs[kIndex1]->size) / sizeof(float16)); ++i) {
+  for (size_t i = 0; i < ((inputs[kIndex1]->size) / sizeof(T)); ++i) {
     float_input2[i] = static_cast<float>(input2[i]);
   }
 
@@ -183,7 +192,7 @@ bool GerCpuKernelMod::LaunchNoBatchesFp16(const std::vector<kernel::AddressPtr> 
               this->in2dim_, this->in2dim_, 1);
 
     for (size_t i = start * this->in2dim_; i < end * this->in2dim_; ++i) {
-      output[i] = static_cast<float16>(float_output[i]);
+      output[i] = static_cast<T>(float_output[i]);
     }
   };
   ParallelLaunchAutoSearch(task, in1dim_, this, &parallel_search_info_);
@@ -235,6 +244,8 @@ const std::vector<std::pair<KernelAttr, GerCpuKernelMod::KernelRunFunc>> &GerCpu
      &GerCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
      &GerCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+     &GerCpuKernelMod::LaunchKernel<double>},
   };
   return func_list;
 }

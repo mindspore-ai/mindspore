@@ -47,7 +47,7 @@ def np_all_close_with_loss(out, expect):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.parametrize('dtype', [np.float16, np.float32])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 @pytest.mark.parametrize('xshape', [(2,), (3,), (4,)])
 @pytest.mark.parametrize('yshape', [(2,), (3,), (4,)])
 def test_ger_float16(dtype, mode, xshape, yshape):
@@ -78,7 +78,7 @@ def test_ger_float16(dtype, mode, xshape, yshape):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.float64])
 def test_ger_vmap(dtype):
     """
     Feature: Ger cpu kernel
@@ -119,7 +119,7 @@ def test_ger_vmap(dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float16])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.float64])
 def test_ger_vmap_two(dtype):
     """
     Feature: Ger cpu kernel

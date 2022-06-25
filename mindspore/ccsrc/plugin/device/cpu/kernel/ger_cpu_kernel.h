@@ -63,10 +63,15 @@ class GerCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GerC
                                         const std::vector<kernel::AddressPtr> &outputs)>;
   LaunchFunc launch_func_;
 
-  bool LaunchBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+  template <typename T>
+  void InitLaunchFunc();
+
+  template <typename T>
+  bool LaunchBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
                          const std::vector<kernel::AddressPtr> &workspace,
                          const std::vector<kernel::AddressPtr> &outputs);
-  bool LaunchNoBatchesFp16(const std::vector<kernel::AddressPtr> &inputs,
+  template <typename T>
+  bool LaunchNoBatchesElse(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> &workspace,
                            const std::vector<kernel::AddressPtr> &outputs);
   bool LaunchBatches(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
