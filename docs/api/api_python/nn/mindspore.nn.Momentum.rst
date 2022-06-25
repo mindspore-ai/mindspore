@@ -1,7 +1,7 @@
 mindspore.nn.Momentum
 ======================
 
-.. py:class:: mindspore.nn.Momentum(*args, **kwargs)
+.. py:class:: mindspore.nn.Momentum(params, learning_rate, momentum, weight_decay=0.0, loss_scale=1.0, use_nesterov=False)
 
     Momentum算法的实现。
 

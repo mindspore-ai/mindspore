@@ -1,7 +1,7 @@
 mindspore.nn.Lamb
 ==================
 
-.. py:class:: mindspore.nn.Lamb(*args, **kwargs)
+.. py:class:: mindspore.nn.Lamb(params, learning_rate, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0)
 
     LAMB（Layer-wise Adaptive Moments optimizer for Batching training，用于批训练的分层自适应矩优化器）算法的实现。
 
