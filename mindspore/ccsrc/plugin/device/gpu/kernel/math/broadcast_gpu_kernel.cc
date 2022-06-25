@@ -20,9 +20,22 @@
 
 namespace mindspore {
 namespace kernel {
+#define MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(T0_MS_DTYPE, T1_MS_DTYPE, T0_DTYPE, T1_DTYPE)     \
+  KernelAttr().AddInputAttr(T0_MS_DTYPE).AddInputAttr(T0_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
+    &BroadcastOpGpuKernelMod::LaunchComplexKernel<T0_DTYPE, T0_DTYPE, T0_DTYPE>
+
+#define MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(T0_MS_DTYPE, T1_MS_DTYPE, T0_DTYPE, T1_DTYPE)     \
+  KernelAttr().AddInputAttr(T0_MS_DTYPE).AddInputAttr(T1_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
+    &BroadcastOpGpuKernelMod::LaunchComplexKernel<T0_DTYPE, T1_DTYPE, T0_DTYPE>
+
+#define MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(T0_MS_DTYPE, T1_MS_DTYPE, T0_DTYPE, T1_DTYPE)     \
+  KernelAttr().AddInputAttr(T1_MS_DTYPE).AddInputAttr(T0_MS_DTYPE).AddOutputAttr(T0_MS_DTYPE), \
+    &BroadcastOpGpuKernelMod::LaunchComplexKernel<T1_DTYPE, T0_DTYPE, T0_DTYPE>
+
 bool BroadcastOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
+  support_complex_ = false;
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
@@ -42,17 +55,31 @@ bool BroadcastOpGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
 }
 
 bool BroadcastOpGpuKernelMod::GetOpType() {
-  auto iter = kBroadcastCmpTypeMap.find(kernel_name_);
+  auto iter = kBroadcastComplexAndRealTypeMap.find(kernel_name_);
+  if (iter != kBroadcastComplexAndRealTypeMap.end()) {
+    op_type_ = iter->second;
+    support_complex_ = true;
+  }
+
+  iter = kBroadcastComplexOnlyTypeMap.find(kernel_name_);
+  if (iter != kBroadcastComplexOnlyTypeMap.end()) {
+    op_type_ = iter->second;
+    support_complex_ = true;
+    support_real_ = false;
+    return true;
+  }
+
+  iter = kBroadcastCmpTypeMap.find(kernel_name_);
   if (iter != kBroadcastCmpTypeMap.end()) {
     op_type_ = iter->second;
-    is_comp_op_ = true;
+    is_compare_op_ = true;
     return true;
   }
 
   iter = kBroadcastArithmetricTypeMap.find(kernel_name_);
   if (iter != kBroadcastArithmetricTypeMap.end()) {
     op_type_ = iter->second;
-    is_comp_op_ = false;
+    is_compare_op_ = false;
     return true;
   }
 
@@ -70,6 +97,11 @@ std::string BroadcastOpGpuKernelMod::GetValidKernelTypes() {
                 });
   valid_types << "; Valid Arithmetric Types: ";
   std::for_each(kBroadcastArithmetricTypeMap.cbegin(), kBroadcastArithmetricTypeMap.cend(),
+                [&valid_types](const std::map<std::string, BroadcastOpType>::value_type &p) {
+                  valid_types << p.first << std::string(", ");
+                });
+  valid_types << "; Valid Complex Types: ";
+  std::for_each(kBroadcastComplexOnlyTypeMap.cbegin(), kBroadcastComplexOnlyTypeMap.cend(),
                 [&valid_types](const std::map<std::string, BroadcastOpType>::value_type &p) {
                   valid_types << p.first << std::string(", ");
                 });
@@ -108,7 +140,7 @@ bool BroadcastOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   auto lhs = GetDeviceAddress<T>(inputs, kIndex0);
   auto rhs = GetDeviceAddress<T>(inputs, kIndex1);
 
-  if (is_comp_op_) {
+  if (is_compare_op_) {
     bool *output = GetDeviceAddress<bool>(outputs, kIndex0);
     if (need_broadcast_) {
       BroadcastCmp(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output, cuda_stream_);
@@ -126,14 +158,50 @@ bool BroadcastOpGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   return true;
 }
 
+template <typename T, typename S, typename G>
+bool BroadcastOpGpuKernelMod::LaunchComplexKernel(const std::vector<AddressPtr> &inputs,
+                                                  const std::vector<AddressPtr> &outputs) {
+  T *lhs = GetDeviceAddress<T>(inputs, kIndex0);
+  S *rhs = GetDeviceAddress<S>(inputs, kIndex1);
+
+  G *output = GetDeviceAddress<G>(outputs, kIndex0);
+  if (need_broadcast_) {
+    BroadcastComplexArith(lhs_shape_, rhs_shape_, output_shape_, op_type_, lhs, rhs, output, cuda_stream_);
+  } else {
+    ElewiseComplexArith(output_num_, op_type_, lhs, rhs, output, cuda_stream_);
+  }
+  return true;
+}
+
 std::vector<KernelAttr> BroadcastOpGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, BroadCastFunc> &pair) { return pair.first; });
+  func_list_.clear();
+  if (support_complex_) {
+    (void)std::transform(complex_list_.begin(), complex_list_.end(), std::back_inserter(support_list),
+                         [](const std::pair<KernelAttr, BroadCastFunc> &pair) { return pair.first; });
+    (void)std::transform(complex_list_.begin(), complex_list_.end(), std::back_inserter(func_list_),
+                         [](const std::pair<KernelAttr, BroadCastFunc> &pair) { return pair; });
+  }
+  if (support_real_) {
+    (void)std::transform(real_list_.begin(), real_list_.end(), std::back_inserter(support_list),
+                         [](const std::pair<KernelAttr, BroadCastFunc> &pair) { return pair.first; });
+    (void)std::transform(real_list_.begin(), real_list_.end(), std::back_inserter(func_list_),
+                         [](const std::pair<KernelAttr, BroadCastFunc> &pair) { return pair; });
+  }
   return support_list;
 }
 
-std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::func_list_ = {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::complex_list_ = {
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex64, kNumberTypeFloat32, Complex<float>, float)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
+};
+std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::real_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &BroadcastOpGpuKernelMod::LaunchKernel<bool>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
@@ -207,5 +275,6 @@ MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, RealDiv, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Sub, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, TruncateDiv, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, TruncateMod, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Complex, BroadcastOpGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
