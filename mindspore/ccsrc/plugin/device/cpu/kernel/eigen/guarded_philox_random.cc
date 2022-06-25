@@ -22,7 +22,7 @@ namespace mindspore {
 constexpr double M_PI_ = 3.14159265358979323846;
 namespace random {
 uint64 New64() {
-  std::random_device device("/dev/urandom");
+  std::random_device device;
   static std::mt19937_64 *rng = new std::mt19937_64(device());
   static mutex my_mutex;
   mutex_lock l(my_mutex);
