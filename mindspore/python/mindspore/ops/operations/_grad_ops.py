@@ -2126,7 +2126,7 @@ class TanhGrad(Primitive):
         self.init_prim_io_names(inputs=['y', 'dy'], outputs=['z'])
 
 
-class MirrorPadGrad(PrimitiveWithInfer):
+class MirrorPadGrad(Primitive):
     """Gradients of MirrorPad operation."""
 
     @prim_attr_register
@@ -2134,23 +2134,6 @@ class MirrorPadGrad(PrimitiveWithInfer):
         """Initialize MirrorPad"""
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
-
-    def __infer__(self, dout, paddings):
-        validator.check_subclass("dout", dout['dtype'], mstype.tensor, self.name)
-        validator.check_subclass("paddings", paddings['dtype'], mstype.tensor, self.name)
-        validator.check("paddings rank", len(paddings['shape']), "expected", 2, Rel.EQ, self.name)
-        validator.check("paddings dim_1", paddings['shape'][1], "expected", 2, Rel.EQ, self.name)
-
-        if paddings['value'] is None:
-            raise ValueError(f"For {self.name}, paddings must be const.")
-        paddings_value = paddings['value'].asnumpy()
-        y_shape = ()
-        dout_shape = dout['shape']
-        for i, val in enumerate(dout_shape):
-            y_shape += (val - paddings_value[i][0] - paddings_value[i][1],)
-        return {'shape': y_shape,
-                'dtype': dout['dtype'],
-                'value': None}
 
 
 class EmbeddingLookupCommGrad(PrimitiveWithInfer):

@@ -190,6 +190,7 @@ constexpr auto kLayerNorm = "LayerNorm";
 constexpr auto kLayerNormGrad = "LayerNormGrad";
 constexpr auto kPadV3 = "PadV3";
 constexpr auto kPadV3Grad = "PadV3Grad";
+constexpr auto kMirrorPadGrad = "MirrorPadGrad";
 constexpr auto kDataFormatVecPermute = "DataFormatVecPermute";
 constexpr auto kDropoutGenMask = "DropoutGenMask";
 constexpr auto kDropoutGenMaskV3 = "DropoutGenMaskV3";
@@ -723,6 +724,7 @@ GVAR_DEF(PrimitivePtr, kPrimFractionalAvgPoolGrad, std::make_shared<Primitive>("
 GVAR_DEF(PrimitivePtr, kPrimNthElement, std::make_shared<Primitive>("NthElement"));
 GVAR_DEF(PrimitivePtr, kPrimPadV3, std::make_shared<Primitive>(kPadV3));
 GVAR_DEF(PrimitivePtr, kPrimPadV3Grad, std::make_shared<Primitive>(kPadV3Grad));
+GVAR_DEF(PrimitivePtr, kPrimMirrorPadGrad, std::make_shared<Primitive>(kMirrorPadGrad));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2D, std::make_shared<Primitive>(kGridSampler2D));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler2DGrad, std::make_shared<Primitive>(kGridSampler2DGrad));
 GVAR_DEF(PrimitivePtr, kPrimGridSampler3D, std::make_shared<Primitive>(kGridSampler3D));
