@@ -43,7 +43,7 @@ class InsertQuantNodeManager {
 
   int InsertCastNode(const FuncGraphPtr &graph, const CNodePtr &cnode, size_t input_index, bool is_graph_input);
 
-  int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id);
+  int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
   int NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode);
 

@@ -112,7 +112,7 @@ class DebugInfoManager {
                          int tensor_index, QuantDebugInfo *quant_debug_info, const mindspore::lite::Tensor &tensor,
                          const quant::DebugMode &debug_mode);
 
-  std::string ParseDataTypeFlagToString(DataTypeFlag data_type_flag);
+  std::string ParseDataTypeFlagToString(DataTypeFlag data_type_flag) const;
 
   std::string ParseTensorTypeFlagToString(TensorTypeFlag tensor_type_flag);
 
@@ -122,7 +122,7 @@ class DebugInfoManager {
 
   void SaveInfo(std::ofstream &out_file, const QuantDebugInfo &info);
 
-  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::LiteModel &model);
+  std::map<std::string, mindspore::schema::Tensor *> ParseInputTensors(const mindspore::lite::LiteModel &model) const;
 
   std::map<std::string, mindspore::schema::Tensor *> ParseOutputTensorFromModel(const Model &model);
 

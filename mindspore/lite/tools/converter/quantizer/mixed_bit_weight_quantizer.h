@@ -22,7 +22,6 @@
 #include "schema/inner/model_generated.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"
-#include "include/errorcode.h"
 
 namespace mindspore::lite::quant {
 constexpr float kBinarySearchStep = 2.0;

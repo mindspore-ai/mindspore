@@ -215,9 +215,9 @@ bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_
     bits[index++] = (unique_value_cnt >> (bit_num - i - 1)) & (0x1);
   }
   // write the unique value set: each value has bit_num bit signed
-  for (auto unique_value : quant_data_set) {
+  for (auto iter = quant_data_set.cbegin(); iter != quant_data_set.cend(); ++iter) {
     for (size_t i = 0; i < bit_num; i++) {
-      bits[index++] = ((unique_value + (1 << (bit_num - 1))) >> (bit_num - i - 1)) & (0x1);
+      bits[index++] = ((*iter + (1 << (bit_num - 1))) >> (bit_num - i - 1)) & (0x1);
     }
   }
   // write the index: each index has unique_value_bit unsigned
@@ -375,8 +375,8 @@ bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
   }
   std::map<T, size_t> unique_value_index_map;
   auto index = 0;
-  for (auto value : quant_data_set) {
-    unique_value_index_map[value] = index++;
+  for (auto iter = quant_data_set.cbegin(); iter != quant_data_set.cend(); ++iter) {
+    unique_value_index_map[*iter] = index++;
   }
 
   auto unique_value_cnt = quant_data_set.size();

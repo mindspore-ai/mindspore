@@ -82,7 +82,7 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
         quant_params->at(i).scale = bias_scale_tmp;
         MS_LOG(DEBUG) << "new filter scale: " << filter_scale;
       }
-      auto quant_data = (int32_t)std::round(raw_datas[i] / bias_scale_tmp);
+      auto quant_data = static_cast<int32_t>(std::round(raw_datas[i] / bias_scale_tmp));
       quant_datas->at(i) = quant_data;
     }
     return RET_OK;
