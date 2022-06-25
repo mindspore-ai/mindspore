@@ -99,7 +99,6 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
 
   constexpr int64_t x_size = 4;
   constexpr int64_t attr_size = 2;
-  (void)CheckAndConvertUtils::CheckPositiveVector("x dimension", x_shape, op_name);
   (void)CheckAndConvertUtils::CheckInteger("x dimension", SizeToLong(x_shape.size()), kEqual, x_size, op_name);
   auto batch = x_shape[kInputIndex0];
   auto channel = x_shape[kInputIndex1];
