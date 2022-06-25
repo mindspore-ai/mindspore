@@ -56,7 +56,7 @@ int MatrixSolveCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   const auto matrix_shape = inputs.at(kIndex0)->GetShapeVector();
   const auto rhs_shape = inputs.at(kIndex1)->GetShapeVector();
-  batch_num_ = std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, 1, std::multiplies{});
+  batch_num_ = std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, int64_t(1), std::multiplies{});
   m_ = matrix_shape.back();
   k_ = rhs_shape.back();
 

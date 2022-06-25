@@ -80,7 +80,7 @@ int BroadcastOpGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator
   }
   x2_shape_ = LongVecToSizeVec(origin_x2_shape);
   sopd_grad_shape_ = LongVecToSizeVec(outputs.at(kIndex2)->GetShapeVector());
-  output_num_ = std::accumulate(sopd_grad_shape_.begin(), sopd_grad_shape_.end(), 1, std::multiplies<size_t>());
+  output_num_ = std::accumulate(sopd_grad_shape_.begin(), sopd_grad_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(x1_shape_, kernel_name_, "x1") || CHECK_SHAPE_NULL(x2_shape_, kernel_name_, "x2") ||
                    CHECK_SHAPE_NULL(sopd_grad_shape_, kernel_name_, "sopd_grad");
   if (is_null_input_) {

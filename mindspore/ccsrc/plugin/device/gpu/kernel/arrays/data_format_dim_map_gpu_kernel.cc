@@ -125,7 +125,7 @@ int DataFormatDimMapGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_RESIZE_FAILED;
   }
   // A Code Block For setting input and output shape.
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   // The number of dim map
   size_t workspace_size = kDimMapNum * sizeof(int32_t);

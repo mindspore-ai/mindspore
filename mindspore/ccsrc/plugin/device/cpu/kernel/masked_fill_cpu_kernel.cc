@@ -69,8 +69,9 @@ int MaskedFillCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
     }
   }
 
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
-  size_t rank_size = LongToSize(std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<int64_t>()));
+  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
+  size_t rank_size =
+    LongToSize(std::accumulate(value_shape.begin(), value_shape.end(), int64_t(1), std::multiplies<int64_t>()));
   inner_size_ = output_size_ / rank_size;
   return ret;
 }

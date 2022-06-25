@@ -79,7 +79,7 @@ template <typename T>
 void CopySlices(const std::vector<size_t> &update_shape, const std::vector<int64_t> &begin,
                 const std::vector<int64_t> &stride, const std::vector<size_t> &output_shape, const T *update, T *output,
                 cudaStream_t cuda_stream) {
-  size_t size = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<size_t>());
+  size_t size = std::accumulate(update_shape.begin(), update_shape.end(), size_t(1), std::multiplies<size_t>());
 
   VectorWrapper<size_t, kMaxDim> o_offset(CalculateOffset(output_shape));
   VectorWrapper<size_t, kMaxDim> u_offset(CalculateOffset(update_shape));

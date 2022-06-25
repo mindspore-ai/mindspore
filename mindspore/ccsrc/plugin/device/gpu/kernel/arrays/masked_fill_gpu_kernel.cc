@@ -165,7 +165,7 @@ int MaskedFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const s
   if (!BroadcastShape(input_shape, mask_shape, output_shape)) {
     return KRET_RESIZE_FAILED;
   }
-  size_t rank_size = std::accumulate(value_shape.begin(), value_shape.end(), 1, std::multiplies<size_t>());
+  size_t rank_size = std::accumulate(value_shape.begin(), value_shape.end(), size_t(1), std::multiplies<size_t>());
   inner_size_ = output_num_ / rank_size;
   return ret;
 }

@@ -86,7 +86,7 @@ int SmoothL1LossGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                   << ", and target_shape" << target_shape;
     return KRET_RESIZE_FAILED;
   }
-  tensor_size_ = std::accumulate(predict_shape.begin(), predict_shape.end(), 1, std::multiplies<int64_t>());
+  tensor_size_ = std::accumulate(predict_shape.begin(), predict_shape.end(), int64_t(1), std::multiplies<int64_t>());
   return KRET_OK;
 }
 

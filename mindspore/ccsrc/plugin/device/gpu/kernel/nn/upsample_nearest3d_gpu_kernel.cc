@@ -77,7 +77,8 @@ int UpsampleNearest3dGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  size_t input_elements = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  size_t input_elements =
+    std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_elements == 0);
   if (is_null_input_) {
     return KRET_OK;

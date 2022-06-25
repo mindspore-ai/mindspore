@@ -104,7 +104,7 @@ int ApplyAdagradDAGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
     batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), batch_size_, std::multiplies<int64_t>());
   }
   if (batch_size_ > 0) {
-    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
     input_elements_ = input_elements_ / batch_size_;
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_

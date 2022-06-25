@@ -104,7 +104,8 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void CheckAtrrAndShapeValid(const CNodePtr &kernel_node) {
     auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    int64_t total_update_num = std::accumulate(update_shape.begin(), update_shape.end(), 1, std::multiplies<int64_t>());
+    int64_t total_update_num =
+      std::accumulate(update_shape.begin(), update_shape.end(), int64_t(1), std::multiplies<int64_t>());
     if (begin_.size() != end_.size() || end_.size() != strides_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the size of 'begin', 'strides' and 'end' must be the same "
                         << "but got the size of 'begin': " << begin_.size()

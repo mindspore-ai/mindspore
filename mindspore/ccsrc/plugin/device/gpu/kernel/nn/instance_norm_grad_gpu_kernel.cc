@@ -74,7 +74,7 @@ int InstanceNormGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   int batch = 1;
   int channel = SizeToInt(batch_) * SizeToInt(channel_);
   int height = 1;
-  int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), 1, std::multiplies{});
+  int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), size_t(1), std::multiplies{});
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),

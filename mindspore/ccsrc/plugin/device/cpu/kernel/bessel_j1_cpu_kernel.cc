@@ -154,7 +154,7 @@ bool BesselJ1CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   input_shape_ = inputs[0]->GetShapeVector();
   output_shape_ = outputs[0]->GetShapeVector();
   input_dtype_ = inputs[0]->GetDtype();
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
 
   switch (input_dtype_) {
     case kNumberTypeFloat64:

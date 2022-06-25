@@ -102,7 +102,7 @@ int FastGeLUGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   {
     input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                        inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-    input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+    input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
     is_null_input_ = (input_elements_ == 0);
   }
   return KRET_OK;

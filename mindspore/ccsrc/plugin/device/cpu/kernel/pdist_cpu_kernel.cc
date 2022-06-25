@@ -90,7 +90,7 @@ bool PdistCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   auto input_shape = inputs[0]->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
   input_dim_ = input_shape_.size();
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   auto input_dtype_ = inputs[0]->GetDtype();
   switch (input_dtype_) {
     case kNumberTypeFloat64:

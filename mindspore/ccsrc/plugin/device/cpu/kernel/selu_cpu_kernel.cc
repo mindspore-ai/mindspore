@@ -46,7 +46,7 @@ int SeluCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   auto output_shape = outputs.at(kIndex0)->GetShapeVector();
   output_shape_.clear();
   (void)std::transform(output_shape.begin(), output_shape.end(), std::back_inserter(output_shape_), LongToSize);
-  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  output_size_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   return KRET_OK;
 }
 

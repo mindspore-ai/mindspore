@@ -81,7 +81,7 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   ResetResource();
   std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                               inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  t_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<size_t>());
+  t_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (t_elements_ == 0);
   if (is_null_input_) {
     return 0;
@@ -118,7 +118,7 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   }
 
   if (!lr_shape.empty()) {
-    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), int64_t(1), std::multiplies<int64_t>());
   }
 
   if (batch_size_ <= 0) {

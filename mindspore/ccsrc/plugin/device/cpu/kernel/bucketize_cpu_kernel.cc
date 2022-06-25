@@ -74,7 +74,7 @@ bool BucketizeCpuKernelMod::BucketizeCompute(const std::vector<AddressPtr> &inpu
                                              const std::vector<AddressPtr> &outputs) {
   auto input_data = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_data = reinterpret_cast<int32_t *>(outputs[0]->addr);
-  size_t data_num_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  size_t data_num_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   std::vector<float> boundaries_data = boundaries_;
   std::sort(boundaries_data.begin(), boundaries_data.end());
   if (data_num_ >= kParallelDataNumSameShape) {

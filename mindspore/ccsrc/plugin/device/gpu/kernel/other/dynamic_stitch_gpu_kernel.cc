@@ -47,7 +47,7 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   }
   for (size_t i = 0; i < n_; i++) {
     auto data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_ + i);
-    size_t data_size = std::accumulate(data_shape.begin(), data_shape.end(), 1, std::multiplies<size_t>());
+    size_t data_size = std::accumulate(data_shape.begin(), data_shape.end(), size_t(1), std::multiplies<size_t>());
     //  Data size
     input_size_list_.push_back(data_size * data_type_size_);
     // Index size

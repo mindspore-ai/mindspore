@@ -133,7 +133,7 @@ int ApplyAdadeltaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, cons
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
     return KRET_RESIZE_FAILED;
   }
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
   input_elements_ = input_elements_ / batch_size_;
 
   ret = CheckShapeSize(var_shape, lr_shape);

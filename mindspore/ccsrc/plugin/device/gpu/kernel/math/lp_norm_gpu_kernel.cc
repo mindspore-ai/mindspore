@@ -92,7 +92,7 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
     return KRET_OK;
   }
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input shape");
   if (is_null_input_) {
     return KRET_OK;
@@ -125,7 +125,7 @@ int LpNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
   for (int i = static_cast<int>(output_stride_.size() - 2); i >= 0; --i) {
     output_stride_[i] = output_stride_[i + 1] * output_shape_[i + 1];
   }
-  output_elements_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  output_elements_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   InitWorkSpaceSizeList();
   return KRET_OK;
 }

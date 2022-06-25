@@ -46,7 +46,7 @@ void SquareSumAllCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
 }
 

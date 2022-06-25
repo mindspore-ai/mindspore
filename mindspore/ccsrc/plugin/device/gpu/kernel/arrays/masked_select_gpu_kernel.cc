@@ -134,9 +134,9 @@ int MaskedSelectGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   }
 
   // size and broadcast type
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies{});
-  mask_size_ = std::accumulate(mask_shape_.begin(), mask_shape_.end(), 1, std::multiplies{});
-  broadcast_size_ = std::accumulate(broadcast_shape_.begin(), broadcast_shape_.end(), 1, std::multiplies{});
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies{});
+  mask_size_ = std::accumulate(mask_shape_.begin(), mask_shape_.end(), size_t(1), std::multiplies{});
+  broadcast_size_ = std::accumulate(broadcast_shape_.begin(), broadcast_shape_.end(), size_t(1), std::multiplies{});
   if (input_size_ < broadcast_size_) {
     input_broadcast_ = true;
   }

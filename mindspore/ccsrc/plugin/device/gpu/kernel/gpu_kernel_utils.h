@@ -39,7 +39,7 @@ inline void MatrixTransposeND(const T *src, const std::vector<size_t> &host_shap
   }
   const auto dims = host_shape.size();
   const auto dims_data_size = dims * sizeof(size_t);
-  const size_t src_size = std::accumulate(host_shape.begin(), host_shape.end(), 1, std::multiplies{});
+  const size_t src_size = std::accumulate(host_shape.begin(), host_shape.end(), size_t(1), std::multiplies{});
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(dev_shape, host_shape.data(), dims_data_size, cudaMemcpyHostToDevice, cuda_stream),
     "For '" + kernel_name + "', it memcpy shape failed");

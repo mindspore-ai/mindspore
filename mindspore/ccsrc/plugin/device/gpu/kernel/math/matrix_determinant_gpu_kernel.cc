@@ -68,7 +68,7 @@ int MatrixDeterminantGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   input_shape_.clear();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input shape");
   if (is_null_input_) {
     return KRET_OK;
