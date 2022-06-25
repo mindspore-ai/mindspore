@@ -213,7 +213,7 @@ std::vector<FusionActorPtr> BuildFusionActorBySeed(
   std::queue<AbstractActorPtr> current_seed_actors;
   current_seed_actors.push(seed_actor);
   while (!current_seed_actors.empty()) {
-    auto &current_seed_actor = current_seed_actors.front();
+    auto current_seed_actor = current_seed_actors.front();
     current_seed_actors.pop();
     if (SupportFusion(current_seed_actor)) {
       (void)need_fused_actors.emplace_back(current_seed_actor);
@@ -277,7 +277,7 @@ void MultiActorFusion::FuseMultiActors(ActorSet *const actor_set) {
   }
 
   while (!seed_actors.empty()) {
-    auto &seed_actor = seed_actors.front();
+    auto seed_actor = seed_actors.front();
     seed_actors.pop();
     MS_EXCEPTION_IF_NULL(seed_actor);
     auto fusion_actors = BuildFusionActorBySeed(seed_actor, &seed_actors, &need_processed_actors);
