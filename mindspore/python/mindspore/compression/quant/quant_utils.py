@@ -18,6 +18,7 @@ Quantization utils.
 Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
+from __future__ import absolute_import
 import numpy as np
 from mindspore._checkparam import Validator
 from ... import nn
@@ -46,6 +47,9 @@ def cal_quantization_params(input_min,
         scale (numpy.ndarray): quantization param.
         zero point (numpy.ndarray): quantization param.
     """
+    if quant_min == quant_max:
+        raise ValueError("quant_max is equal to quant_min which will lead to divide zero error.")
+
     input_max = np.maximum(0.0, input_max)
     input_min = np.minimum(0.0, input_min)
 
@@ -110,6 +114,8 @@ def weight2int(data, scale, zero_point, quant_min, quant_max):
         raise ValueError("`scale` and `zero_point` should have the same shape.")
     if scale.shape[0] < 0:
         raise ValueError("`scale` and `zero_point` shape should be greater than zero.")
+    if 0 in scale:
+        raise ValueError("Zero exist in `scale` which will lead to divide zero error.")
     if len(scale.shape) >= 1 and scale.shape[0] > 1:
         # for perchannel
         if scale.shape[0] == data.shape[0]:
@@ -167,6 +173,8 @@ def fold_batchnorm(weight, cell_quant):
     gamma = cell_quant.gamma.data.asnumpy()
     beta = cell_quant.beta.data.asnumpy()
     epsilon = cell_quant.eps
+    if epsilon == 0:
+        raise ValueError("`epsilon` is zero may lead to divide zero error")
     sigma = np.sqrt(variance + epsilon)
 
     if gamma.shape[0] == weight.shape[0]:
@@ -206,6 +214,8 @@ def without_fold_batchnorm(weight, cell_quant):
     gamma = cell_quant.batchnorm.gamma.data.asnumpy()
     beta = cell_quant.batchnorm.beta.data.asnumpy()
     epsilon = cell_quant.batchnorm.eps
+    if epsilon == 0:
+        raise ValueError("`epsilon` is zero may lead to divide zero error")
     sigma = np.sqrt(variance + epsilon)
 
     if gamma.shape[0] == weight.shape[0]:
@@ -245,7 +255,11 @@ def compute_kl_threshold(data, bitwidth):
     largest_bin_size = 1024
     if hist.shape[0] > largest_bin_size:
         hist, bin_edges = np.histogram(np.abs(data), range=(0, data_max), density=True)
-    hist = hist / np.sum(hist)
+    sum_ = np.sum(hist)
+    if sum_ == 0:
+        hist = 0
+    else:
+        hist = hist / sum_
     cumsum = np.cumsum(hist)
     bit_pow_range = pow(2, int(bitwidth.num_bits) - 1)
     threshold = []
@@ -272,6 +286,8 @@ def compute_kl_threshold(data, bitwidth):
         bwd_fp = forward_interp
         backward_interp = np.interp(bwd_x, bwd_xp, bwd_fp)
         cumsum_tmp[:i] = backward_interp
+        if 0 in cumsum_tmp:
+            raise ValueError("Zero exist in `cumsum_tmp` which will lead to divide zero error")
         kl_tmp = np.sum((cumsum - cumsum_tmp) * np.log2(cumsum / cumsum_tmp))  # Kullback-Leibler-J
         kl = np.concatenate((kl, [kl_tmp]))
     th_layer_out = threshold[np.argmin(kl)]

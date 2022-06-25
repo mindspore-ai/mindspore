@@ -17,10 +17,13 @@ Note:
     Export for quantization. This is interface that is subject to change or deletion.
 """
 
+from __future__ import absolute_import
+
 import copy
 
 import numpy as np
 
+from mindspore import log as logger
 from ... import nn, ops
 from ..._checkparam import Validator
 from ...common import Tensor
@@ -221,6 +224,8 @@ class ExportToQuantInferNetwork:
 
     def run(self):
         """Start to convert."""
+        logger.warning("The compression module is deprecated and may not be supported in later version, please use "
+                       "MindSpore Golden Stick(https://gitee.com/mindspore/golden-stick) instead.")
         self.network.update_cell_prefix()
         network = self.network
         if isinstance(network, _AddFakeQuantInput):
@@ -350,6 +355,10 @@ class ExportToQuantInferNetwork:
                                                              cell_core.fake_quant_weight.narrow_range)
         weight = quant_utils.weight2int(weight, scale_w, zp_w, quant_min, quant_max)
         if bias is not None:
+            if 0 in scale_a_in:
+                raise ValueError("Zero exist in `scale_a_in` which will lead to divide zero error.")
+            if 0 in scale_w:
+                raise ValueError("Zero exist in `scale_w` which will lead to divide zero error.")
             bias = Tensor(bias / scale_a_in / scale_w, mstype.int32)
 
         if isinstance(cell_core, quant.DenseQuant):

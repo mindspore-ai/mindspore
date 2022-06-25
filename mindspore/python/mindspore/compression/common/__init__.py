@@ -18,6 +18,7 @@ Common module for various compression algorithms, now only including datatype de
 Note: This is an experimental interface that is subject to change and/or deletion.
 """
 
+from __future__ import absolute_import
 from .constant import QuantDtype
 
 __all__ = ["QuantDtype"]
