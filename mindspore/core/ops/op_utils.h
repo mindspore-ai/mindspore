@@ -50,6 +50,11 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
+abstract::ShapePtr ReduceBaseInferShape(const PrimitivePtr &primitive,
+                                        const std::vector<abstract::AbstractBasePtr> &input_args,
+                                        const std::string &prim_name);
+TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args);
+
 template <typename T>
 api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
   auto prim = GetValueNode<PrimitivePtr>(node);
