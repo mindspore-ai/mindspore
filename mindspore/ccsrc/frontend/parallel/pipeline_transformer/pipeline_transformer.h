@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PIPELINE_TRANSFORMER_PIPELINE_TRANSFORMER_H_
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PIPELINE_TRANSFORMER_PIPELINE_TRANSFORMER_H_
 
+#include <set>
 #include <utility>
 #include <string>
 #include <memory>
@@ -24,6 +25,7 @@
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "base/base.h"
+#include "utils/hash_map.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
@@ -103,6 +105,7 @@ class PipelineTransformer {
   AnfNodePtr virtual_param_;
   int64_t micro_size_ = 0;
   std::vector<std::string> group_ = {};
+  mindspore::HashMap<AnfNodePtr, std::set<int64_t>> parameter_color_map_ = {};
 };
 
 class NodeStageInfo {
