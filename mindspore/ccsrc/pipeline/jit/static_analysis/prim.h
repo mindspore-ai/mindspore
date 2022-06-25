@@ -165,6 +165,24 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
   PrimitivePtr prim_;
 };
 
+class MakeTupleEvaluator : public TransitionPrimEvaluator {
+ public:
+  MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}
+  ~MakeTupleEvaluator() override = default;
+  MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+};
+
+class MakeListEvaluator : public TransitionPrimEvaluator {
+ public:
+  MakeListEvaluator() : TransitionPrimEvaluator("MakeListEvaluator") {}
+  ~MakeListEvaluator() override = default;
+  MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+                         const AnfNodeConfigPtr &out_conf) override;
+};
+
 bool IsInWhiteList(const PrimitivePtr &primitive);
 
 PrimEvaluatorMap &GetPrimEvaluatorConstructors();
