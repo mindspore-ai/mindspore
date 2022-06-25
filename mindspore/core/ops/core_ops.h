@@ -112,6 +112,7 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
 
 // Arrays
+constexpr auto kLeftShift = "LeftShift";
 constexpr auto kFillDiagonal = "FillDiagonal";
 constexpr auto kSegmentMax = "SegmentMax";
 constexpr auto kSegmentSum = "SegmentSum";
@@ -328,6 +329,7 @@ GVAR_DEF(PrimitivePtr, kPrimStackPush, std::make_shared<Primitive>("StackPush"))
 GVAR_DEF(PrimitivePtr, kPrimStackPop, std::make_shared<Primitive>("StackPop"));
 
 // Arrays
+GVAR_DEF(PrimitivePtr, kPrimLeftShift, std::make_shared<Primitive>(kLeftShift));
 GVAR_DEF(PrimitivePtr, kPrimFillDiagonal, std::make_shared<Primitive>(kFillDiagonal));
 GVAR_DEF(PrimitivePtr, kPrimIdentitys, std::make_shared<Primitive>(kIdentity));
 GVAR_DEF(PrimitivePtr, kPrimUnravelIndex, std::make_shared<Primitive>(kUnravelIndex));
