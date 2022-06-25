@@ -39,8 +39,6 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
              const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
-
- protected:
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
@@ -55,15 +53,15 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
                   const std::vector<AddressPtr> &outputs);
   // Run `l2_norm(x)` calculation
   template <typename T>
-  void L2NormLaunch(T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size);
+  void L2NormLaunch(const T *x_addr, float *l2_norm_output_addr, size_t l2_norm_output_size);
   // Run `x / l2_norm(x)` calculation
   template <typename T>
-  void DivLaunch(T *x_addr, float *l2_norm_output_addr, float *div_output_addr, size_t div_output_size);
+  void DivLaunch(const T *x_addr, const float *l2_norm_output_addr, float *div_output_addr, size_t div_output_size);
   // Run `max(x, (x / l2_norm(x)) * clip_norm)` calculation
   // The output data type is float
   template <typename T, typename S>
-  void ClipNormMulAndCmpLaunch(T *x_addr, float *div_output_addr, S *clip_norm_addr, float *output_addr,
-                               size_t output_size);
+  void ClipNormMulAndCmpLaunch(const T *x_addr, const float *div_output_addr, const S *clip_norm_addr,
+                               float *output_addr, size_t output_size);
   // Basic variables
   float epsilon_{0.000001f};
   size_t x_dim_{0};
@@ -73,7 +71,6 @@ class ClipByNormCpuKernelMod : public NativeCpuKernelMod {
   ShapeVector clip_norm_shape_;
   ShapeVector l2_norm_output_shape_;
   ShapeVector output_shape_;
-  ParallelSearchInfo parallel_search_info_;
 };
 }  // namespace kernel
 }  // namespace mindspore

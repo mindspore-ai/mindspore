@@ -74,10 +74,10 @@ class DataPrepareActor : public DebugAwareActor {
  private:
   friend class GraphScheduler;
 
-  void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor);
+  void UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const;
 
   void UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
-                                      const KernelGraphPtr &graph, const DeviceContext *device_context);
+                                      const KernelGraphPtr &graph, const DeviceContext *device_context) const;
 
   void PrepareDataForDeviceTensorStore(const std::vector<std::vector<TensorPtr>> &input_tensors,
                                        OpContext<DeviceTensor> *const context);

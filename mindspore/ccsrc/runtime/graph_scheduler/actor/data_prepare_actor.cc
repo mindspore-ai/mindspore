@@ -296,7 +296,7 @@ void DataPrepareActor::Init() {
   }
 }
 
-void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) {
+void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const TensorPtr &input_tensor) const {
   MS_EXCEPTION_IF_NULL(input_node);
   if (input_tensor == nullptr) {
     return;
@@ -319,9 +319,10 @@ void DataPrepareActor::UpdateDynamicShape(const AnfNodePtr &input_node, const Te
 
 void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_node, const TensorPtr &input_tensor,
                                                       const KernelGraphPtr &graph,
-                                                      const DeviceContext *device_context) {
+                                                      const DeviceContext *device_context) const {
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(input_tensor);
+  MS_EXCEPTION_IF_NULL(graph);
   auto tensor_data_size = input_tensor->data().nbytes();
   auto tensor_address = std::dynamic_pointer_cast<DeviceTensor>(input_tensor->device_address());
   MS_EXCEPTION_IF_NULL(input_node);

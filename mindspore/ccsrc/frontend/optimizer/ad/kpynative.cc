@@ -317,8 +317,7 @@ class KPynativeCellImpl : public KPynativeCell {
   PynativeAdjointPtr ForgeCNodeAdjoint(const CNodePtr &cnode);
   PynativeAdjointPtr ForgeGetItemAdjoint(const CNodePtr &cnode);
   PynativeAdjointPtr ForgeMakeSequenceAdjoint(const CNodePtr &cnode);
-  bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out,
-                    const FuncGraphPtr &bprop_fg,
+  bool BuildAdjoint(const CNodePtr &cnode, const ValuePtrList &op_args, const ValuePtr &out, const FuncGraphPtr &fg,
                     PynativeAdjoint::FuncGraphType fg_type = PynativeAdjoint::FuncGraphType::kBackwardPropagate);
   void BuildAdjointForInput(const CNodePtr &cnode, const ValuePtrList &op_args);
   void PropagateStopGradient();
@@ -336,7 +335,7 @@ class KPynativeCellImpl : public KPynativeCell {
   AnfNodePtr BuildKNodeForCNodeInput(const PynativeAdjointPtr &cnode_adjoint, const AnfNodePtr &input_node,
                                      size_t input_index);
   const AnfNodePtrList BuildKNodeListFromPrimalCNode(const CNodePtr &cnode, const PynativeAdjointPtr &adjoint);
-  FuncGraphPtr BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode);
+  FuncGraphPtr BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode) const;
   // Back propagate for MakeList or MakeTuple is generated from MetaFuncGraph.
   FuncGraphPtr BuildMakeSequenceBprop(const PrimitivePtr &prim, const CNodePtr &cnode);
   // Replace input or weights parameter from primal funcgraph to parameters of tape_;
@@ -922,7 +921,7 @@ void KPynativeCellImpl::PropagateStopGradient() {
   }
 }
 
-FuncGraphPtr KPynativeCellImpl::BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode) {
+FuncGraphPtr KPynativeCellImpl::BuildBPropCutFuncGraph(const PrimitivePtr &prim, const CNodePtr &cnode) const {
   auto inputs_num = cnode->size() - 1;
 
   auto func_graph = std::make_shared<FuncGraph>();
