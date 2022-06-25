@@ -98,11 +98,37 @@ ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, c
   return std::make_shared<Shape>(dims, min_dims, max_dims);
 }
 
+bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
+  return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
+    return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == -2; });
+  });
+}
+
+bool HasSpecialShape(const std::vector<ShapePtr> &shapes) {
+  for (const auto &shape : shapes) {
+    bool shape_dyn =
+      std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+    if (shape_dyn && shape->min_shape().empty() && shape->max_shape().empty()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
   MS_EXCEPTION_IF_NULL(shape1);
   MS_EXCEPTION_IF_NULL(shape2);
+  constexpr int64_t kDynamicRankShape = -2;
   if (*shape1 == *shape2) {
     return shape1;
+  }
+  ShapeVector dims;
+  bool has_dynamic_shape = false;
+  bool no_min_max_shape = false;
+  bool has_dynamic_rank = IsShapesDynamicRank({shape1->shape(), shape2->shape()});
+  if (has_dynamic_rank) {
+    dims.emplace_back(kDynamicRankShape);
+    return std::make_shared<Shape>(dims);
   }
   // lengths of two shapes are not same, join failed
   if (shape1->shape().size() != shape2->shape().size()) {
@@ -115,8 +141,6 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
     }
     return nullptr;
   }
-  ShapeVector dims;
-  bool has_dynamic_shape = false;
   dims.resize(shape1->shape().size());
   for (std::size_t i = 0; i < shape1->shape().size(); i++) {
     if (shape1->shape()[i] == shape2->shape()[i]) {
@@ -129,7 +153,8 @@ ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
       has_dynamic_shape = true;
     }
   }
-  if (!has_dynamic_shape) {
+  no_min_max_shape = HasSpecialShape({shape1, shape2});
+  if (!has_dynamic_shape || no_min_max_shape) {
     return std::make_shared<Shape>(dims);
   }
   return CalculateDynamicShape(shape1, shape2, dims);
