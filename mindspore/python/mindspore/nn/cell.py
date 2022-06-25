@@ -939,10 +939,9 @@ class Cell(Cell_):
             self._check_compile_dynamic_shape(*inputs)
             if self.saved_dynamic_shape:
                 for i in range(len(self.saved_dynamic_shape)):
-                    if self.saved_dynamic_shape[i].shape != self._dynamic_shape_inputs[i].shape \
-                            and self.saved_dynamic_shape[i].shape != self._dynamic_shape_inputs[i].shape:
-                        break
-                return
+                    if self.saved_dynamic_shape[i].shape != self._dynamic_shape_inputs[i].shape:
+                        return
+
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
                                          auto_parallel_mode=self._auto_parallel_mode)

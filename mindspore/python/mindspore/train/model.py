@@ -80,6 +80,10 @@ def _save_final_ckpt(func):
                 cur_ckpoint_file = prefix + "-" + str(self._current_epoch_num) + "_" \
                     + str(self._current_step_num) + "_breakpoint.ckpt"
                 cur_file = os.path.join(obj._directory, cur_ckpoint_file)
+                if "epoch_num" in obj._append_dict:
+                    obj._append_dict["epoch_num"] = obj._append_epoch_num + self._current_epoch_num
+                if "step_num" in self._append_dict:
+                    obj._append_dict["step_num"] = obj._append_step_num + self._current_step_num
                 save_checkpoint(self._train_network, cur_file, obj._config.integrated_save, obj._config.async_save,
                                 obj._append_dict, obj._config.enc_key, obj._config.enc_mode)
                 raise e
@@ -205,6 +209,7 @@ class Model:
         self._build_predict_network()
         self._current_epoch_num = 0
         self._current_step_num = 0
+        self.enable_recovery = False
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -715,7 +720,7 @@ class Model:
             _reset_training_dataset(cb_params.cur_step_num)
             self.need_load_ckpt = False
 
-    def  _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
+    def _reset_training_step_for_normal_process(self, cb_params, dataset_helper):
         """
         Execute recovery for normal process when there is process exit abnormally.
 
@@ -878,7 +883,7 @@ class Model:
         if isinstance(self._train_network, nn.GraphCell) and dataset_sink_mode:
             raise ValueError("Dataset sink mode is currently not supported when training with a GraphCell.")
 
-        if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:
+        if hasattr(train_dataset, '_warmup_epoch') and train_dataset._warmup_epoch != epoch:  # pylint: disable=W0212
             raise ValueError("When use Model.build to initialize model, the value of parameter 'epoch' in Model.build "
                              "should be equal to value in Model.train, but got the value of epoch in build {} and "
                              "the value of epoch in train {} separately."
