@@ -349,6 +349,10 @@ size_t AnfUtils::GetOutputTensorNum(const AnfNodePtr &node) {
     // Currently, CSRTensor only supports 2-D matrix (shape has 2 values). 5 outputs = 3 Tensors + 2 shape values.
     constexpr size_t kCSRTensorOutputNum = 5;
     res = kCSRTensorOutputNum;
+  } else if (type->isa<COOTensorType>()) {
+    // Currently, COOTensor only supports 2-D matrix (shape has 2 values). 4 outputs = 2 Tensors + 2 shape values.
+    constexpr size_t kCOOTensorOutputNum = 4;
+    res = kCOOTensorOutputNum;
   } else {
     res = 1;
   }
