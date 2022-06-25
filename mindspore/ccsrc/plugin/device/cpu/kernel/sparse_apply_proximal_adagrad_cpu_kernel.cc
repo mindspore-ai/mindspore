@@ -15,6 +15,9 @@
  */
 
 #include "plugin/device/cpu/kernel/sparse_apply_proximal_adagrad_cpu_kernel.h"
+#include <memory>
+#include <map>
+#include <utility>
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -35,6 +38,8 @@ constexpr size_t kWorkSpaceIndex0 = 0;
 constexpr size_t kWorkSpaceIndex1 = 1;
 constexpr size_t kWorkSpaceIndex2 = 2;
 constexpr size_t kWorkSpaceIndex3 = 3;
+
+using KernelRunFunc = SparseApplyProximalAdagradCpuKernelMod::KernelRunFunc;
 
 template <typename T>
 void ComputeProximalAdagrad(MultiThreadComputeParams<T> *input_params, size_t start, size_t end) {
@@ -80,88 +85,156 @@ void SparseApplyProximalAdagradCpuKernelMod::InitWorkspaceSize() {
   (void)workspace_size_list_.emplace_back(indices_size_ * sizeof(T));
 }
 
-void SparseApplyProximalAdagradCpuKernelMod::InitInputOutputSize(const CNodePtr &kernel_node) {
-  DeprecatedNativeCpuKernelMod::InitInputOutputSize(kernel_node);
+bool SparseApplyProximalAdagradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                                  const std::vector<KernelTensorPtr> &inputs,
+                                                  const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (inputs.size() != kSparseApplyProximalAdagradInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSparseApplyProximalAdagradInputsNum
+                  << ", but got " << inputs.size();
+    return false;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+void SparseApplyProximalAdagradCpuKernelMod::ResetResource() noexcept {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  indices_data_type_ = kNumberTypeInt32;
+  indices_size_ = 0;
+  var_first_dim_size_ = 0;
+  var_outer_dim_size_ = 1;
+}
+
+int SparseApplyProximalAdagradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                                   const std::vector<KernelTensorPtr> &inputs,
+                                                   const std::vector<KernelTensorPtr> &outputs,
+                                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  ShapeVector var_shape = inputs[kVarIndex]->GetShapeVector();
+  ShapeVector accum_shape = inputs[kAccIndex]->GetShapeVector();
+  ShapeVector lr_shape = inputs[kLRIndex]->GetShapeVector();
+  ShapeVector l1_shape = inputs[kL1Index]->GetShapeVector();
+  ShapeVector l2_shape = inputs[kL2Index]->GetShapeVector();
+  ShapeVector grad_shape = inputs[kGradIndex]->GetShapeVector();
+  ShapeVector indices_shape = inputs[kIndicesIndex]->GetShapeVector();
+  if (var_shape.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
+    return KRET_RESIZE_FAILED;
+  }
+  if (!IsSameShape(var_shape, accum_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'accum' must be the same as the shape of 'var', "
+                     "but got the shape of 'accum': "
+                  << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (var_shape.size() != grad_shape.size()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'grad' must be the same as the dimension of "
+                     "'var', but got the dimension of 'grad': "
+                  << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  var_first_dim_size_ = LongToSize(var_shape[0]);
+  for (size_t i = 1; i < var_shape.size(); ++i) {
+    if (var_shape[i] != grad_shape[i]) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
+                    << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
+      return KRET_RESIZE_FAILED;
+    }
+    var_outer_dim_size_ *= LongToSize(var_shape[i]);
+  }
+  if (indices_shape.size() != 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
+                  << indices_shape.size() << "-D.";
+    return KRET_RESIZE_FAILED;
+  }
+  indices_size_ = LongToSize(indices_shape[0]);
+  if (grad_shape[0] != SizeToLong(indices_size_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the first dimension value of 'grad' must be equal to "
+                     "the first dimension value of 'indices', but got the first dimension value of 'grad': "
+                  << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
+    return KRET_RESIZE_FAILED;
+  }
+  if (!lr_shape.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'lr' must be a scalar,and dimension of 'lr' must be 0,but got the dimension of 'lr': "
+                  << Vector2Str(lr_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!l1_shape.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
+                  << Vector2Str(l1_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  if (!l2_shape.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
+                  << Vector2Str(l2_shape);
+    return KRET_RESIZE_FAILED;
+  }
+  indices_data_type_ = inputs[kIndicesIndex]->GetDtype();
   if (indices_data_type_ == kNumberTypeInt32) {
     InitWorkspaceSize<int>();
   } else if (indices_data_type_ == kNumberTypeInt64) {
     InitWorkspaceSize<int64_t>();
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' must be int32 or int64, but got "
-                      << TypeIdToType(indices_data_type_)->ToString();
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dtype of 'indices' must be int32 or int64, but got "
+                  << TypeIdToType(indices_data_type_)->ToString();
+    return KRET_RESIZE_FAILED;
   }
+  return KRET_OK;
 }
 
-void SparseApplyProximalAdagradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  ShapeVector var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kVarIndex);
-  ShapeVector accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kAccIndex);
-  ShapeVector lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kLRIndex);
-  ShapeVector l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL1Index);
-  ShapeVector l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kL2Index);
-  ShapeVector grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kGradIndex);
-  ShapeVector indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kIndicesIndex);
-  if (AnfAlgo::IsShapesDynamic({var_shape, accum_shape, lr_shape, l1_shape, l2_shape, grad_shape, indices_shape})) {
-    return;
-  }
-  if (var_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
-  }
-  if (!IsSameShape(var_shape, accum_shape)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of 'accum' must be the same as the shape of 'var', "
-                         "but got the shape of 'accum': "
-                      << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
-  }
-  if (var_shape.size() != grad_shape.size()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the dimension of 'grad' must be the same as the dimension of "
-                         "'var', but got the dimension of 'grad': "
-                      << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
-  }
-  var_first_dim_size_ = LongToSize(var_shape[0]);
-  for (size_t i = 1; i < var_shape.size(); ++i) {
-    if (var_shape[i] != grad_shape[i]) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                        << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
-                        << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
-    }
-    var_outer_dim_size_ *= LongToSize(var_shape[i]);
-  }
-  if (indices_shape.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
-                      << indices_shape.size() << "-D.";
-  }
-  indices_size_ = LongToSize(indices_shape[0]);
-  if (grad_shape[0] != SizeToLong(indices_size_)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the first dimension value of 'grad' must be equal to "
-                         "the first dimension value of 'indices', but got the first dimension value of 'grad': "
-                      << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size_;
-  }
-  if (!lr_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'lr' must be a scalar,and dimension of 'lr' must be 0,but got the dimension of 'lr': "
-                      << Vector2Str(lr_shape);
-  }
-  if (!l1_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l1' must be a scalar,and dimension of 'l1' must be 0,but got the dimension of 'l1': "
-                      << Vector2Str(l1_shape);
-  }
-  if (!l2_shape.empty()) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', 'l2' must be a scalar,and dimension of 'l2' must be 0,but got the dimension of 'l2': "
-                      << Vector2Str(l2_shape);
-  }
-  indices_data_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kIndicesIndex);
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyProximalAdagradCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0),
+     &SparseApplyProximalAdagradCpuKernelMod::LaunchKernel<int>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0),
+     &SparseApplyProximalAdagradCpuKernelMod::LaunchKernel<int64_t>}};
+  return func_list;
 }
 
 template <typename T>
-void SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                          const std::vector<kernel::AddressPtr> &workspace) const {
+bool SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                          const std::vector<kernel::AddressPtr> &workspace,
+                                                          const std::vector<kernel::AddressPtr> &) const {
   auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
   auto accum = reinterpret_cast<float *>(inputs[kAccIndex]->addr);
   auto lr = reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0];
@@ -195,21 +268,6 @@ void SparseApplyProximalAdagradCpuKernelMod::LaunchKernel(const std::vector<kern
   input_params.var_first_dim_size_ = var_first_dim_size_;
   input_params.var_outer_dim_size_ = var_outer_dim_size_;
   MultiThreadCompute<T>(ComputeProximalAdagrad<T>, &input_params, unique_sparse_grad.indices_size_);
-}
-
-bool SparseApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                    const std::vector<kernel::AddressPtr> &workspace,
-                                                    const std::vector<kernel::AddressPtr> &) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyProximalAdagradInputsNum, kernel_name_);
-  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kSparseApplyProximalAdagradWorkspaceSize, kernel_name_);
-  if (indices_data_type_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, workspace);
-  } else if (indices_data_type_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, workspace);
-  } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of 'indices' must be int32 or int64, but got "
-                      << TypeIdToType(indices_data_type_)->ToString();
-  }
   return true;
 }
 

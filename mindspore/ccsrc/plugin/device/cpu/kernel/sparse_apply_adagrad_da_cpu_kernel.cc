@@ -18,6 +18,8 @@
 
 #include <algorithm>
 #include <utility>
+#include <memory>
+#include <map>
 
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
@@ -26,6 +28,8 @@ namespace kernel {
 namespace {
 constexpr size_t kSparseApplyAdagradDAInputsNum = 9;
 constexpr size_t kSparseApplyAdagradDAOutputsNum = 1;
+
+using KernelRunFunc = SparseApplyAdagradDACpuKernelMod::KernelRunFunc;
 
 #define ADD_KERNEL(t1, t2, t3, t4, t5, t6, t7, t8, t9, t10) \
   KernelAttr()                                              \
@@ -41,19 +45,59 @@ constexpr size_t kSparseApplyAdagradDAOutputsNum = 1;
     .AddOutputAttr(kNumberType##t10)
 }  // namespace
 
-void SparseApplyAdagradDACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool SparseApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator,
+                                            const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  if (inputs.size() != kSparseApplyAdagradDAInputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input size must be " << kSparseApplyAdagradDAInputsNum
+                  << ", but got " << inputs.size();
+    return false;
+  }
+  if (outputs.size() != kSparseApplyAdagradDAOutputsNum) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output size must be " << kSparseApplyAdagradDAOutputsNum
+                  << ", but got " << outputs.size();
+    return false;
+  }
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+void SparseApplyAdagradDACpuKernelMod::ResetResource() noexcept {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+  indices_data_type_ = kNumberTypeInt32;
+  indices_size_ = 0;
+  var_first_dim_size_ = 0;
+  var_outer_dim_size_ = 1;
+}
+
+int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
+                                             const std::vector<KernelTensorPtr> &inputs,
+                                             const std::vector<KernelTensorPtr> &outputs,
+                                             const std::map<uint32_t, tensor::TensorPtr> &) {
+  ResetResource();
+  int ret = KernelMod::Resize(base_operator, inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
   enum input_index : size_t { Var_no, Ga_no, Gs_no, Grad_no, Indices_no, Lr_no, L1_no, L2_no, Global_step_no };
-  ShapeVector var_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Var_no);
-  ShapeVector grad_accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Ga_no);
-  ShapeVector grad_square_accum_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Gs_no);
-  ShapeVector grad_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Grad_no);
-  ShapeVector indices_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Indices_no);
-  ShapeVector lr_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Lr_no);
-  ShapeVector l1_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, L1_no);
-  ShapeVector l2_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, L2_no);
-  ShapeVector global_step_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, Global_step_no);
+  ShapeVector var_shape = inputs[Var_no]->GetShapeVector();
+  ShapeVector grad_accum_shape = inputs[Ga_no]->GetShapeVector();
+  ShapeVector grad_square_accum_shape = inputs[Gs_no]->GetShapeVector();
+  ShapeVector grad_shape = inputs[Grad_no]->GetShapeVector();
+  ShapeVector indices_shape = inputs[Indices_no]->GetShapeVector();
+  ShapeVector lr_shape = inputs[Lr_no]->GetShapeVector();
+  ShapeVector l1_shape = inputs[L1_no]->GetShapeVector();
+  ShapeVector l2_shape = inputs[L2_no]->GetShapeVector();
+  ShapeVector global_step_shape = inputs[Global_step_no]->GetShapeVector();
   if (var_shape.empty()) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, var must be at least 1D.";
   } else {
@@ -96,17 +140,12 @@ void SparseApplyAdagradDACpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, global_step is not a scalar, got shape: "
                       << Vector2Str(global_step_shape) << ".";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, this kernel data type are not supported: " << kernel_attr << ".";
-  }
-  kernel_func_ = func_list_[index].second;
+  return KRET_OK;
 }
 
 template <typename I, typename T>
 bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                    const std::vector<kernel::AddressPtr> &,
                                                     const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseApplyAdagradDAInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseApplyAdagradDAOutputsNum, kernel_name_);
@@ -155,8 +194,8 @@ bool SparseApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<kernel::Ad
   return true;
 }
 
-std::vector<std::pair<KernelAttr, SparseApplyAdagradDACpuKernelMod::SparseApplyAdagradDAFunc>>
-  SparseApplyAdagradDACpuKernelMod::func_list_ = {
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &SparseApplyAdagradDACpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
     {ADD_KERNEL(Int8, Int8, Int8, Int8, Int32, Int8, Int8, Int8, Int64, Int8),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int32_t, int8_t>},
     {ADD_KERNEL(Int16, Int16, Int16, Int16, Int32, Int16, Int16, Int16, Int64, Int16),
@@ -201,12 +240,7 @@ std::vector<std::pair<KernelAttr, SparseApplyAdagradDACpuKernelMod::SparseApplyA
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, float>},
     {ADD_KERNEL(Float64, Float64, Float64, Float64, Int64, Float64, Float64, Float64, Int64, Float64),
      &SparseApplyAdagradDACpuKernelMod::LaunchKernel<int64_t, double>}};
-
-std::vector<KernelAttr> SparseApplyAdagradDACpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, SparseApplyAdagradDAFunc> &pair) { return pair.first; });
-  return support_list;
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseApplyAdagradDA, SparseApplyAdagradDACpuKernelMod);
