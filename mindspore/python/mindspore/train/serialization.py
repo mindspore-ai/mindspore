@@ -169,7 +169,7 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
     exist_ckpt_file_list = []
     if os.path.exists(checkpoint_dir):
         for exist_ckpt_name in os.listdir(checkpoint_dir):
-            file_prefix = os.path.join(model_name, "_iteration_")
+            file_prefix = '{model_name}{iteration}'.format(model_name=model_name, iteration="_iteration_")
             if exist_ckpt_name.startswith(file_prefix):
                 exist_ckpt_file_list.append(exist_ckpt_name)
 

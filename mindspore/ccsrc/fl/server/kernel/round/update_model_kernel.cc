@@ -72,7 +72,11 @@ bool UpdateModelKernel::VerifyUpdateModelRequest(const schema::RequestUpdateMode
     MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->compress_feature_map(), false);
   }
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->timestamp(), false);
-
+  float upload_loss = update_model_req->upload_loss();
+  if (std::isnan(upload_loss) || std::isinf(upload_loss)) {
+    MS_LOG(WARNING) << "The upload loss is nan or inf, client fl id is " << update_model_req->fl_id()->str();
+    return false;
+  }
   return true;
 }
 
@@ -233,7 +237,7 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
     MS_LOG(DEBUG) << "verify signature passed!";
   }
 
-  std::unordered_map<std::string, size_t> feature_map;
+  std::unordered_map<std::string, Feature> feature_map;
   if (ps::PSContext::instance()->upload_compress_type() != kDiffSparseQuant) {
     auto upload_feature_map = update_model_req->feature_map();
     for (uint32_t i = 0; i < upload_feature_map->size(); i++) {
@@ -245,10 +249,12 @@ ResultCode UpdateModelKernel::VerifyUpdateModel(const schema::RequestUpdateModel
         MS_LOG(WARNING) << reason;
         return ResultCode::kFail;
       }
-
+      Feature feature;
       std::string weight_full_name = item->weight_fullname()->str();
-      size_t weight_size = item->data()->size() * sizeof(float);
-      feature_map[weight_full_name] = weight_size;
+      const auto &data = item->data();
+      size_t weight_size = data->size() * sizeof(float);
+      feature.weight_size = weight_size;
+      feature_map[weight_full_name] = feature;
     }
   }
 
@@ -309,7 +315,7 @@ bool UpdateModelKernel::IsCompress(const schema::RequestUpdateModel *update_mode
   return false;
 }
 
-bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
+bool UpdateModelKernel::VerifySignDSFeatureMap(const std::unordered_map<std::string, Feature> &model,
                                                const schema::RequestUpdateModel *update_model_req) {
   auto &aggregation_feature_map_ = LocalMetaStore::GetInstance().aggregation_feature_map();
   if (model.size() > aggregation_feature_map_.size()) {

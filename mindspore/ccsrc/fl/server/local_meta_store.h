@@ -87,7 +87,7 @@ class LocalMetaStore {
 
   std::unordered_map<std::string, Feature> &aggregation_feature_map();
 
-  bool verifyAggregationFeatureMap(const std::unordered_map<std::string, size_t> &model);
+  bool verifyAggregationFeatureMap(const std::unordered_map<std::string, Feature> &model, bool verify_score = false);
 
  private:
   LocalMetaStore() : key_to_meta_({}), curr_iter_num_(0) {}
