@@ -978,20 +978,20 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     .. math::
         L =
         \begin{cases}
-            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum'.}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean`;}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum`.}
         \end{cases}
 
     Here :math:`\text{beta}` controls the point where the loss function changes from quadratic to linear.
     Its default value is 1.0. :math:`N` is the batch size.
 
     Note:
-        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean'.
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean' for now.
 
     Args:
         beta (float): A parameter used to control the point where the function will change from
             quadratic to linear. Default: 1.0.
-        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: "none".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
 
     Inputs:
         - **logits** (Tensor) - Tensor of shape :math:`(N, *)` where :math:`*` means, any number of
@@ -1000,8 +1000,8 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
           same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor, loss float tensor. When reduction is set to "none", output has same shape and dtype as the `logits`.
-        When reduction is set to "mean" or "sum", the output is 1-D tensor with one element.
+        Tensor, loss float tensor. When 'reduction' is set to 'none', output has same shape and dtype as the `logits`.
+        When reduction is set to 'mean' or 'sum', the output is 1-D tensor with one element.
 
     Raises:
         TypeError: If `beta` is not a float.

@@ -77,6 +77,7 @@ Loss Functions
 
     mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
+    mindspore.ops.smooth_l1_loss
 
 Mathematical Operators
 ----------------------
