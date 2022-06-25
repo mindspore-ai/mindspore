@@ -114,7 +114,7 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
         TypeError: If `gain` is not of type float.
         TypeError: If `gamma` is not of type float.
         ValueError: If `gamma` is less than 0.
-        RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
+        RuntimeError: If given tensor shape is not <H, W> or <..., H, W, C>.
 
     Supported Platforms:
         ``CPU``
