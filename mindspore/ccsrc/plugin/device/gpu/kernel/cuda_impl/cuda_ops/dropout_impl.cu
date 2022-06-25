@@ -18,52 +18,76 @@
 #include "dropout_impl.cuh"
 #include "include/cuda_runtime.h"
 #include "include/cuda_fp16.h"
+#include "include/curand_kernel.h"
 template <typename T>
 __global__ void DropoutForwardKernel(const T *input, T *mask, T *output, float *mask_f, size_t num_count,
                                      float keep_prob) {
-  float scale = 1.f / keep_prob;
+  T scale = (T)(1.f / keep_prob);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
-    mask_f[i] = mask_f[i] <= keep_prob;
-    output[i] = scale * input[i] * mask_f[i];
-    mask[i] = mask_f[i];
+    mask[i] = mask_f[i] <= keep_prob;
+    output[i] = scale * input[i] * (T)(mask[i]);
   }
 }
-template <>
-__global__ void DropoutForwardKernel(const half *input, half *mask, half *output, float *mask_f,
-                                     size_t num_count, float keep_prob) {
-  half scale = __float2half(1.f / keep_prob);
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
-    mask_f[i] = mask_f[i] <= keep_prob;
-    output[i] = scale * input[i] * __float2half(mask_f[i]);
-    mask[i] = __float2half(mask_f[i]);
-  }
-}
+
 template <typename T>
 void DropoutForward(const T *input, T *mask, T *output, float *mask_f, size_t num_count, float drop_prob,
                     cudaStream_t cuda_stream) {
-  DropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, mask_f,
-                                                                               num_count, drop_prob);
+  DropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, mask_f, num_count,
+                                                                               drop_prob);
 }
 template <typename T>
-__global__ void DropoutBackwardKernel(const T *dy, const T *mask, T *dx, size_t num_count,
-                                      float keep_prob) {
-  float scale = 1.f / keep_prob;
+__global__ void DropoutBackwardKernel(const T *dy, const T *mask, T *dx, size_t num_count, float keep_prob) {
+  T scale = T(1.f / keep_prob);
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
-    dx[i] = scale * dy[i] * mask[i];
+    dx[i] = scale * dy[i] * (T)(mask[i]);
   }
 }
-template <>
-__global__ void DropoutBackwardKernel(const half *dy, const half *mask, half *dx, size_t num_count,
-                                      float keep_prob) {
-  half scale = __float2half(1.f / keep_prob);
-  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_count; i += blockDim.x * gridDim.x) {
-    dx[i] = scale * dy[i] * mask[i];
-  }
-}
+
 template <typename T>
-void DropoutBackward(const T *dy, const T *mask, T *dx, size_t num_count, float drop_prob,
-                     cudaStream_t cuda_stream) {
+void DropoutBackward(const T *dy, const T *mask, T *dx, size_t num_count, float drop_prob, cudaStream_t cuda_stream) {
   DropoutBackwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(dy, mask, dx, num_count, drop_prob);
+}
+
+template <typename T>
+struct alignas(sizeof(T) * kDropoutTileSize) TArray {
+  T data[kDropoutTileSize];
+};
+
+template <typename T>
+__global__ void FusedDropoutForwardKernel(const T *input, T *mask, T *output, size_t num_count, float keep_prob,
+                                          uint64_t seed, uint64_t seed_offset) {
+  T scale = (T)(1.f / keep_prob);
+  size_t inc = blockDim.x * gridDim.x * kDropoutTileSize;
+  size_t idx = (blockIdx.x * blockDim.x + threadIdx.x) * kDropoutTileSize;
+  curandStatePhilox4_32_10_t state;
+  curand_init(seed, idx, seed_offset, &state);
+
+  for (size_t i = idx; i < num_count; i += inc) {
+    float4 rand = curand_uniform4(&state);
+    rand.x = rand.x < keep_prob;
+    rand.y = rand.y < keep_prob;
+    rand.z = rand.z < keep_prob;
+    rand.w = rand.w < keep_prob;
+    T input_tile[kDropoutTileSize];
+    T output_tile[kDropoutTileSize];
+    T mask_tile[kDropoutTileSize];
+    TArray<T> *temp = reinterpret_cast<TArray<T> *>(&input_tile);
+    *temp = *reinterpret_cast<const TArray<T> *>(&input[i]);
+    for (size_t j = 0; j < kDropoutTileSize; ++j) {
+      mask_tile[j] = (T)((&rand.x)[j]);
+      output_tile[j] = input_tile[j] * (T)(mask_tile[j]) * scale;
+    }
+    *reinterpret_cast<TArray<T> *>(&mask[i]) = *reinterpret_cast<TArray<T> *>(&mask_tile[0]);
+    *reinterpret_cast<TArray<T> *>(&output[i]) = *reinterpret_cast<TArray<T> *>(&output_tile[0]);
+    __syncthreads();
+  }
+}
+
+template <typename T>
+void FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float drop_prob, uint64_t seed,
+                         uint64_t seed_offset, cudaStream_t cuda_stream) {
+  FusedDropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, num_count,
+                                                                                    drop_prob, seed, seed_offset);
 }
 
 template CUDA_LIB_EXPORT void DropoutForward<float>(const float *input, float *mask, float *output, float *mask_f,
@@ -74,3 +98,10 @@ template CUDA_LIB_EXPORT void DropoutBackward<float>(const float *dy, const floa
                                                      float drop_prob, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void DropoutBackward<half>(const half *dy, const half *mask, half *dx, size_t num_count,
                                                     float drop_prob, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void FusedDropoutForward<float>(const float *input, float *mask, float *output,
+                                                         size_t num_count, float drop_prob, uint64_t seed,
+                                                         uint64_t seed_offset, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedDropoutForward<half>(const half *input, half *mask, half *output, size_t num_count,
+                                                        float drop_prob, uint64_t seed, uint64_t seed_offset,
+                                                        cudaStream_t cuda_stream);

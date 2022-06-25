@@ -41,6 +41,14 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
     T *mask = GetDeviceAddress<T>(outputs, 1);
+
+    if (use_fused_dropout_) {
+      FusedDropoutForward(input, mask, output, num_count_, keep_prob_, seed_, seed_offset_,
+                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      seed_offset_ += num_count_;
+      return true;
+    }
+
     float *mask_f = GetDeviceAddress<float>(workspace, 0);
 
     CHECK_CURAND_RET_WITH_EXCEPT(curandSetStream(mask_generator_, reinterpret_cast<cudaStream_t>(stream_ptr)),
@@ -81,11 +89,16 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
         }
       }
       seed_ = static_cast<uint64_t>(seed);
-      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
-                                   "Failed to create generator");
-      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
-                                   "Failed to SetPseudoRandomGeneratorSeed");
-      MS_EXCEPTION_IF_NULL(mask_generator_);
+
+      if (num_count_ % kDropoutTileSize == 0) {
+        use_fused_dropout_ = true;
+      } else {
+        CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                     "Failed to create generator");
+        CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
+                                     "Failed to SetPseudoRandomGeneratorSeed");
+        MS_EXCEPTION_IF_NULL(mask_generator_);
+      }
       states_init_ = true;
     }
 
@@ -123,6 +136,8 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   float keep_prob_;
   bool states_init_{false};
   uint64_t seed_{0};
+  uint64_t seed_offset_{0};
+  bool use_fused_dropout_{false};
   curandGenerator_t mask_generator_{nullptr};
 };
 }  // namespace kernel
