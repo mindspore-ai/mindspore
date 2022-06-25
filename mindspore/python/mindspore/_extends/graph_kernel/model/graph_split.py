@@ -384,7 +384,7 @@ class GraphSplitByPattern:
             self.unique_id = unique_id
             self.reach_tab = reach_tab
             self.checkers = []
-            if self.pattern == PrimLib.RESHAPE:
+            if self.pattern == PrimLib.RESHAPE and init_op.inputs: # reshape's input may be empty (const value)
                 self.checkers.append(ReshapeElimChecker(init_op))
             elif self.pattern == PrimLib.REDUCE:
                 self.checkers.append(ReduceOutFuseChecker(init_op))
