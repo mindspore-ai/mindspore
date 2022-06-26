@@ -57,6 +57,8 @@ class ComputeGraphNode : public NodeBase {
   // Get all the hostnames of compute graph nodes.
   std::vector<std::string> GetHostNames(const std::string &role);
 
+  void set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) override;
+
  private:
   // Send the register message to the meta server node when this node process startup.
   bool Register();
@@ -68,7 +70,7 @@ class ComputeGraphNode : public NodeBase {
   bool Heartbeat();
 
   // Call the `Reconnect` function if the input func execution failed.
-  bool ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error);
+  bool ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error, size_t retry);
 
   // Reconnect to the meta server node.
   bool Reconnect();
@@ -93,6 +95,8 @@ class ComputeGraphNode : public NodeBase {
 
   // Indicate whether the heartbeat thread is running.
   bool enable_hb_;
+
+  std::shared_ptr<std::function<void(void)>> abnormal_callback_;
 };
 }  // namespace topology
 }  // namespace cluster
