@@ -45,6 +45,7 @@
 #include "ops/stack.h"
 #include "ops/rpc_recv.h"
 #include "ops/rpc_send.h"
+#include "ops/tensor_scatter_arithmetic.h"
 
 namespace mindspore {
 namespace abstract {
@@ -375,6 +376,7 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimRpcSend, R{ops::RpcSendInfer, nullptr, true}},
     {prim::kPrimAdamApplyOne, R{InferImplAdamApplyOne, nullptr, true}},
     {prim::kPrimAdamApplyOneWithDecay, R{InferImplAdamApplyOneWithDecay, nullptr, true}},
+    {prim::kPrimTensorScatterUpdate, R{ops::TensorScatterArithmeticInfer, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }

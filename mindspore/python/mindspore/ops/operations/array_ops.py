@@ -6537,6 +6537,8 @@ class TensorScatterUpdate(_TensorScatterOp):
             input_x_value = list(input_x_value)
         if isinstance(input_x_value, (Tensor, Tensor_)):
             input_x_value = input_x_value.asnumpy()
+        if indices_value is None or updates_value is None:
+            return None
         indices = indices_value.asnumpy()
         input_x = np.array(input_x_value)
         updates = np.array(updates_value)
