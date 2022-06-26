@@ -868,29 +868,47 @@ class Cell(Cell_):
 
     def set_inputs(self, *inputs):
         """
-        Save set inputs for computation graph.
+        Save set inputs for computation graph. The number of inputs should be the same with that of the datasets. When
+        using Model for dynamic shape, please make sure that all networks and loss functions passed to the Model are
+        configured with set_inputs. The inputs can be Tensor of either dynamic or static shape.
 
         Args:
             inputs (tuple): Inputs of the Cell object.
 
         Examples:
-            >>> import numpy as np
             >>> import mindspore as ms
-            >>> from mindspore import nn, Tensor
-            >>>
-            >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
-            >>> class reluNet(nn.Cell):
+            >>> from mindspore import nn, ops, Tensor, Model
+            >>> from mindspore import dataset as ds
+            >>> import numpy as np
+
+            >>> def get_data(num, w=2.0, b=3.0):
+            ...     for _ in range(num):
+            ...     x = np.random.uniform(-10.0, 10.0)
+            ...     noise = np.random.normal(0, 1)
+            ...     y = x * w + b + noise
+            ...     yield np.array([x]).astype(np.float32), np.array([y]).astype(np.float32)
+
+            >>> def create_dataset(num_data, batch_size=16):
+            ...     dataset = ds.GeneratorDataset(list(get_data(num_data)), column_names=['data', 'label'])
+            ...     dataset = dataset.batch(batch_size)
+            ...     return dataset
+
+            >>> class NetAddN(nn.Cell):
             ...     def __init__(self):
-            ...         super(reluNet, self).__init__()
-            ...         self.relu = nn.ReLU()
-            ...     def construct(self, x):
-            ...         return self.relu(x)
-            >>>
-            >>> net = reluNet()
-            >>> input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+            ...         super(NetAddN, self).__init__()
+            ...         self.addn = ops.AddN()
+
+            ...     def construct(self, *Z):
+            ...         return self.addn(Z)
+
+            >>> ds_train = create_dataset(num_data=160)
+            >>> net = NetAddN()
+            >>> loss = nn.MAELoss()
+            >>> input_dyn = Tensor(shape=[16, None], dtype=ms.float32)
             >>> net.set_inputs(input_dyn)
-            >>> input1 = Tensor(np.random.random([3, 10]), dtype=ms.float32)
-            >>> output = net(input1)
+            >>> loss.set_inputs(None, input_dyn)
+            >>> model = Model(net, loss)
+            >>> model.train(epoch=1, train_dataset=ds_train)
 
         NOTE:
             This is an experimental interface that is subject to change or deletion.

@@ -182,7 +182,6 @@ def build_train_network(network, optimizer, loss_fn=None, level='O0', boost_leve
         ValueError: If device is CPU, property `loss_scale_manager` is not `None` or `FixedLossScaleManager`
             (with property `drop_overflow_update=False` ).
     """
-    validator.check_value_type('network', network, nn.Cell)
     validator.check_value_type('optimizer', optimizer, (nn.Optimizer, boost.FreezeOpt,
                                                         nn.AdaSumByGradWrapCell, nn.AdaSumByDeltaWeightWrapCell))
 
