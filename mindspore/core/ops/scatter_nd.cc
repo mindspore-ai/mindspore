@@ -55,32 +55,75 @@ TypePtr ScatterNdInferType(const PrimitivePtr &prim, const std::vector<AbstractB
 }
 
 abstract::BaseShapePtr ScatterNdInferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = prim->name();
   ScatterNdCheckShape(prim, input_args);
-  ShapeVector shape;
+  ShapeVector out_shape;
   if (input_args.size() > static_cast<size_t>(kScatterNdInputNum)) {
-    auto shape_value = input_args[kInputIndex2]->BuildValue();
-    if (shape_value->isa<tensor::Tensor>()) {
-      shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, prim->name());
-    } else if (shape_value->isa<ValueTuple>()) {
-      shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim->name());
-    } else {
-      return input_args[kInputIndex2]->BuildShape();
+    auto shape = input_args[kInputIndex2];
+    auto shape_value = shape->BuildValue();
+    MS_EXCEPTION_IF_NULL(shape_value);
+    if (shape->isa<abstract::AbstractTensor>()) {
+      if (shape_value->isa<tensor::Tensor>()) {
+        out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, prim_name);
+      } else if (shape_value->isa<ValueTuple>()) {
+        out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim_name);
+      } else {
+        auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kScatterNdInputNum);
+        MS_EXCEPTION_IF_NULL(shape_ptr);
+        auto shape_shape = shape_ptr->shape();
+        if (shape_shape.size() != 1) {
+          MS_LOG(EXCEPTION) << "For '" << prim_name << "', shape must be 1-D, but got " << shape_shape.size() << "-D.";
+        }
+
+        auto shape_len = LongToSize(shape_shape[0]);
+        auto abs_shape = shape->cast<abstract::AbstractTensorPtr>();
+        MS_EXCEPTION_IF_NULL(abs_shape);
+
+        auto shape_min_value = abs_shape->get_min_value();
+        auto shape_max_value = abs_shape->get_max_value();
+        if (shape_min_value == nullptr || shape_max_value == nullptr) {
+          for (size_t i = 0; i < shape_len; i++) {
+            out_shape.push_back(abstract::Shape::SHP_ANY);
+          }
+          return std::make_shared<abstract::Shape>(out_shape);
+        }
+
+        auto min_shape = GetValue<std::vector<int64_t>>(shape_min_value);
+        auto max_shape = GetValue<std::vector<int64_t>>(shape_max_value);
+        if (min_shape.size() != shape_len || max_shape.size() != shape_len) {
+          MS_LOG(EXCEPTION)
+            << "For " << prim_name
+            << ", shape's min and max value must has lengths equal to shape itself, but got min value len: "
+            << min_shape.size() << ", max value len: " << max_shape.size() << ", shape len: " << shape_len << ".";
+        }
+
+        for (size_t i = 0; i < shape_len; i++) {
+          if (min_shape[i] == max_shape[i]) {
+            out_shape.push_back(min_shape[i]);
+          } else {
+            out_shape.push_back(abstract::Shape::SHP_ANY);
+          }
+        }
+        return std::make_shared<abstract::Shape>(out_shape, min_shape, max_shape);
+      }
+    } else if (shape->isa<abstract::AbstractTuple>()) {
+      out_shape = CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim_name);
     }
   } else {
     auto shape_attr = prim->GetAttr("shape");
     MS_EXCEPTION_IF_NULL(shape_attr);
-    shape = GetValue<ShapeVector>(shape_attr);
+    out_shape = GetValue<ShapeVector>(shape_attr);
   }
-  if (std::any_of(shape.begin(), shape.end(), [](int64_t item) { return item < 1; })) {
+  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t item) { return item < 1; })) {
     std::ostringstream buffer;
     buffer << "For primitive[ScatterNd], the attribute[shape] should be a tuple with all positive item. but got (";
-    for (auto item : shape) {
+    for (auto item : out_shape) {
       buffer << item << ", ";
     }
     buffer << ").";
     MS_EXCEPTION(ValueError) << buffer.str();
   }
-  return std::make_shared<abstract::Shape>(shape);
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 AbstractBasePtr ScatterNdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
