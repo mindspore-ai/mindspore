@@ -77,6 +77,7 @@ Neural Network
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
+    mindspore.ops.ResizeLinear1D
 
 Loss Function
 ^^^^^^^^^^^^^
@@ -460,6 +461,7 @@ Array Operation
     mindspore.ops.TensorScatterMin
     mindspore.ops.TensorScatterSub
     mindspore.ops.TensorScatterUpdate
+    mindspore.ops.TensorScatterElements
     mindspore.ops.TensorShape
     mindspore.ops.Tile
     mindspore.ops.Transpose

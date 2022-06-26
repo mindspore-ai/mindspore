@@ -6947,6 +6947,11 @@ class TensorScatterElements(Primitive):
     Updates the value of the output tensor through the reduction operation.
     Refer to :func:`mindspore.ops.tensor_scatter_elements` for more detail.
 
+    .. warning::
+        The order in which updates are applied is nondeterministic, meaning that if there
+        are multiple index vectors in `indices` that correspond to the same position, the
+        value of that position in the output will be nondeterministic.
+
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``
 

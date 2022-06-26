@@ -46,6 +46,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.avg_pool2d
+    mindspore.ops.interpolate
     mindspore.ops.pad
     mindspore.ops.pdist
     mindspore.ops.deformable_conv2d
@@ -347,6 +348,7 @@ Array操作
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
+    mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unsorted_segment_min
