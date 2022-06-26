@@ -784,6 +784,8 @@ def get_bprop_gather_nd(self):
 
     def bprop(x, indices, out, dout):
         shp = shape_op(x)
+        if is_shape_unknown(shp):
+            shp = dyn_shape_op(x)
         return op(indices, dout, shp), zeros_like(indices)
 
     return bprop
