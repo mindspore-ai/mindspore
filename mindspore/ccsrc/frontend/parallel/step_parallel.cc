@@ -2840,12 +2840,12 @@ CommInfo GetCommInfo() {
 
 Status ParallelInit() {
   static bool parallel_init_flag = false;
-  if (parallel_init_flag) {
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
+  if (parallel_init_flag && split_stage_num == 1) {
     return SUCCESS;
   }
 
-  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
-  int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (split_stage_num <= 0) {
     MS_LOG(ERROR) << "The parameter 'split_stage_num' must be a positive number, but got the value : "
