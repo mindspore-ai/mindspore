@@ -23,6 +23,7 @@ from .. import functional as F
 from .. import operations as P
 from ..operations.math_ops import Trace, Bernoulli, Renorm
 from ..operations.math_ops import Real, Imag, Complex, Angle
+from ..operations.math_ops import ComplexAbs
 from ..functional import broadcast_gradient_args
 from .._grad.grad_base import bprop_getters
 from .._grad.grad_math_ops import binop_grad_common
@@ -480,6 +481,19 @@ def get_bprop_complex(self):
         dx = real_grad(dout)
         dy = imag_grad(dout)
         return (dx, dy,)
+
+    return bprop
+
+
+@bprop_getters.register(ComplexAbs)
+def get_bprop_complex_abs(self):
+    """Grad definition for `Real` operation."""
+    div_no_nan = P.DivNoNan()
+    complex_grad = Complex()
+    mul = P.Mul()
+
+    def bprop(x, out, dout):
+        return (div_no_nan(mul(complex_grad(dout, zeros_like(dout)), x), complex_grad(out, zeros_like(out))),)
 
     return bprop
 

@@ -40,6 +40,7 @@ from mindspore.ops.operations.math_ops import Trace
 from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import CholeskySolve
+from mindspore.ops.operations.math_ops import ComplexAbs
 from mindspore.ops.operations.math_ops import Real, Imag, Complex, Angle
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations import nn_ops as nps
@@ -2149,6 +2150,10 @@ test_case_math_ops = [
         'block': P.Real(),
         'desc_inputs': [[2, 2]],
         'skip': ['backward']}),
+    ('ComplexAbs', {
+        'block': ComplexAbs(),
+        'desc_inputs': [Tensor(np.array([1, 1, 1]).astype(np.complex64))],
+        'desc_bprop': [Tensor(np.array([1, 1, 1]).astype(np.float32))]}),
     ('Bucketize', {
         'block': Bucketize(boundaries=[1., 3., 5., 7., 9.]),
         'desc_inputs': [Tensor(np.array([[-1, 6, 8], [3, 6, 9]]).astype(np.float))],
