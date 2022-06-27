@@ -622,6 +622,43 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   LinkControlArrowForLoopCountActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+
+  // At the end of the link, if the exit actor of the kernel graph has no output arrow, you need to link the control
+  // arrow to the exit actor of the funcgraph.
+  LinkControlArrowForKernelGraphExitActor(actor_set, graph_compiler_info);
+}
+
+void ControlNodeScheduler::LinkControlArrowForKernelGraphExitActor(ActorSet *const actor_set,
+                                                                   const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  auto control_actor_set = actor_set->control_actors_.get();
+  MS_EXCEPTION_IF_NULL(control_actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  // Check the exit actors of kernel graphs.
+  for (const auto &group_info : parser->kernel_graph_group_infos_) {
+    MS_EXCEPTION_IF_NULL(group_info);
+    if (group_info->graphs_.empty()) {
+      continue;
+    }
+    auto from_actor = FetchActor(group_info->group_name_ + kExitActorNameSuffix);
+    MS_EXCEPTION_IF_NULL(from_actor);
+    if ((!from_actor->output_data_arrows().empty()) || (!from_actor->output_control_arrows().empty())) {
+      continue;
+    }
+
+    // If the exit actor has no output arrow, you need to link the control arrow to the exit actor of funcgraph.
+    const auto &graph = *group_info->graphs_.begin();
+    MS_EXCEPTION_IF_NULL(graph);
+    const auto &func_graph = parser->FetchFuncGraphByKernelGraph(graph.get());
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto to_actor = FetchActor(func_graph->ToString() + kExitActorNameSuffix);
+    MS_EXCEPTION_IF_NULL(to_actor);
+    MS_LOG(INFO) << "At the end of control scheduler, link control from exit actor:" << from_actor->GetAID()
+                 << " to exit actor:" << to_actor->GetAID();
+    SchedulerHelper::AddControlArrow(from_actor, to_actor);
+  }
 }
 
 void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
