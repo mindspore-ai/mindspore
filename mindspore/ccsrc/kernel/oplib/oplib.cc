@@ -371,8 +371,8 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   if (is_gpu && (imply_type == kTBE || imply_type == kAICPU)) {
-    MS_LOG(ERROR) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
-                  << ", current op num: " << op_info_.size();
+    MS_LOG(INFO) << "FindOp failed: opname: " << op_name << ", imply_type: " << ImplTypeToStr(imply_type)
+                 << ", current op num: " << op_info_.size();
     return nullptr;
   }
   std::string target_processor = is_gpu ? kCUDA : (is_cpu ? kCpu : kAiCore);
