@@ -2133,6 +2133,8 @@ class MirrorPadGrad(Primitive):
     @prim_attr_register
     def __init__(self, mode="REFLECT"):
         """Initialize MirrorPad"""
+        self.set_const_input_indexes([1])
+        self.init_prim_io_names(inputs=['dy', 'paddings'], outputs=['output'])
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
 

@@ -20,40 +20,29 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMirrorPadGrad = "MirrorPadGrad";
-constexpr auto kNameMirrorPadGradMode = "MirrorPadGradMode";
-/// \brief Pads the input tensor according to the paddings.
-/// Refer to Python API @ref mindspore.ops.MirrorPad for more details.
+/// \brief Pads the input tensor according to the paddings. Refer to Python API
+/// @ref mindspore.ops.MirrorPadGrad for more details.
 class MIND_API MirrorPadGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MirrorPadGrad);
   /// \brief Constructor.
-  MirrorPadGrad() : BaseOperator(kNameMirrorPadGrad) { InitIOName({"x", "paddings"}, {"y"}); }
-
-  explicit MirrorPadGrad(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "paddings"}, {"y"}); }
-
-  /// \brief Method to init the op's attributes.
-  ///
-  /// \param[in] pad_mode Define pad mode.
-  void Init(const std::string &pad_mode);
-
-  /// \brief Method to set mode attributes.
-  ///
-  /// \param[in] pad_mode Define mode.
-  void set_mode(const std::string &pad_mode);
-
-  /// \brief Method to get mode attributes.
-  ///
-  /// \return mode attributes.
-  std::string get_mode() const;
+  MirrorPadGrad() : BaseOperator(kNameMirrorPadGrad) { InitIOName({"dy", "paddings"}, {"output"}); }
+  explicit MirrorPadGrad(const std::string k_name) : BaseOperator(k_name) {}
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MirrorPadGrad for the inputs.
+  void Init() const {}
 };
-
-abstract::AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+AbstractBasePtr MirrorPadGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_MIRROR_PAD_GRAD_H_
+
+#endif  // MINDSPORE_CORE_OPS_MirrorPadGrad_H_

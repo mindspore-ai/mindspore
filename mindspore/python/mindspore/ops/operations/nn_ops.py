@@ -4118,11 +4118,14 @@ class MirrorPad(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
-        - **paddings** (Tensor) - The paddings tensor. The value of `paddings` is a matrix(list),
-          and its shape is (N, 2). N is the rank of input data. All elements of paddings
-          are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes to be
-          extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1] indicates how many sizes to
-          be extended behind the input tensor in the `D` th dimension.
+         - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
+          matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
+          are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
+          to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]
+          indicates how many sizes to be extended behind the input tensor in the `D` th dimension. Both
+          paddings[D, 0] and paddings[D, 1] must be no greater than input_x.dim_size(D)
+          (or input_x.dim_size(D) - 1) if mode is SYMMETRIC (if REFLECT, respectively).
+
 
     Outputs:
         Tensor, the tensor after padding.
@@ -4140,7 +4143,7 @@ class MirrorPad(Primitive):
     Raises:
         TypeError: If `input_x` or `paddings` is not a Tensor.
         TypeError: If `mode` is not a str.
-        ValueError: If paddings.size is not equal to 2 * len(input_x).
+        ValueError: If paddings.size is not equal to 2 * rank of input_x.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4179,6 +4182,7 @@ class MirrorPad(Primitive):
     @prim_attr_register
     def __init__(self, mode='REFLECT'):
         """Initialize Pad"""
+        self.init_prim_io_names(inputs=['x', 'paddings'], outputs=['y'])
         validator.check_string(mode, ['REFLECT', 'SYMMETRIC'], 'mode', self.name)
         self.mode = mode
         self.set_const_input_indexes([1])

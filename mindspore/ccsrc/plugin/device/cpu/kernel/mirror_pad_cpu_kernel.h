@@ -21,6 +21,9 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <algorithm>
+#include <utility>
+#include <complex>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -42,27 +45,58 @@ class MirrorPadCpuKernelMod : public DeprecatedNativeCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
       KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex128)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeComplex128),
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
       KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)};
+      KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt8),
+      KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt16),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+      KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt8),
+      KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeUInt16),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeComplex64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeComplex128)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeComplex128),
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool)};
     return support_list;
   }
 
  private:
+  template <typename T>
+  void paddings_type(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
+
   template <typename T1, typename T2>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 
   TypeId dtype_{kTypeUnknown};
   TypeId pad_dtype_{kTypeUnknown};
-  size_t tensor_size_{1};
-  size_t shape_size_{0};
-  size_t output_size_{1};
   int64_t mode_{0};
   int64_t num_paddings_{0};
-  ShapeVector input_shape_;
-  ShapeVector output_shape_;
+  int64_t input_elements_{1};
+  int64_t output_elements_{1};
+  int64_t dims_{0};
+  std::vector<int64_t> input_shape_;
+  std::vector<int64_t> output_shape_;
 };
 }  // namespace kernel
 }  // namespace mindspore

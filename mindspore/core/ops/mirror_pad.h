@@ -20,41 +20,29 @@
 #include <vector>
 #include <string>
 #include <memory>
+
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "abstract/abstract_value.h"
+#include "utils/check_convert_utils.h"
+
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMirrorPad = "MirrorPad";
-constexpr auto kNamePadMode = "PadMode";
-/// \brief Pads the input tensor according to the paddings.
-/// Refer to Python API @ref mindspore.ops.MirrorPad for more details.
+/// \brief Pads the input tensor according to the paddings. Refer to Python API
+/// @ref mindspore.ops.MirrorPad for more details.
 class MIND_API MirrorPad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MirrorPad);
   /// \brief Constructor.
   MirrorPad() : BaseOperator(kNameMirrorPad) { InitIOName({"x", "paddings"}, {"y"}); }
-
-  explicit MirrorPad(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "paddings"}, {"y"}); }
-
-  /// \brief Method to init the op's attributes.
-  ///
-  /// \param[in] pad_mode Define pad mode.
-  void Init(const std::string &pad_mode);
-
-  /// \brief Method to set mode attributes.
-  ///
-  /// \param[in] pad_mode Define mode.
-  void set_mode(const std::string &pad_mode);
-
-  /// \brief Method to get mode attributes.
-  ///
-  /// \return mode attributes.
-  std::string get_mode() const;
+  explicit MirrorPad(const std::string k_name) : BaseOperator(k_name) {}
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MirrorPad for the inputs.
+  void Init() const {}
 };
-
-abstract::AbstractBasePtr MirrorPadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+AbstractBasePtr MirrorPadInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_MIRROR_PAD_H_
+#endif  // MINDSPORE_CORE_OPS_MirrorPad_H_
