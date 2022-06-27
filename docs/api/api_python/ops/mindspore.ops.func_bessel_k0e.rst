@@ -3,7 +3,7 @@ mindspore.ops.bessel_k0e
 
 .. py:function:: mindspore.ops.bessel_k0e(x)
 
-    逐元素计算并返回输入Tensor的Bessel k0e函数值
+    逐元素计算并返回输入Tensor的Bessel k0e函数值。
 
     **参数：**
 
