@@ -36,6 +36,7 @@ class PackWeightManager {
   void *GetPackData(const void *tensor_data, const size_t size, bool *is_packed);
   void Free(void *tensor_data);
   bool IsCopyTensor(int op_type);
+  void *ReplaceFp16Data(void *origin_fp16_data, size_t size, bool *replace);
 
  private:
   void *MallocData(size_t size);
