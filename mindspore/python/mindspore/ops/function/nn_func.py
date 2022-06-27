@@ -530,6 +530,8 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
     .. warning::
         This is an experimental prototype that is subject to change.
         The 'roi' is reserved interface for 'crop_and_resize' coordinate transformation mode, which is not support now.
+
+    .. note:
         The 'linear' mode is the only support mode for now.
 
     Args:
@@ -553,9 +555,8 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
 
     Raises:
         TypeError: If dtype of `x` is not in the support list.
-        TypeError: If `roi` is neither a 1-D float tensor nor a float tuple.
-        TypeError: If `scales` is neither a 1-D float tensor nor a float tuple.
-        TypeError: If `size` is neither a 1-D int64_t tensor nor a int64_t tuple.
+        TypeError: If `scales` is not a float tuple.
+        TypeError: If `size` is not a int64_t tuple.
         TypeError: If `coordinate_transformation_mode` is not a string.
         TypeError: If `coordinate_transformation_mode` is not in the support list.
         TypeError: If `mode` is not a string.

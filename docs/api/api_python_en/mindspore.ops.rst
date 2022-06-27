@@ -77,6 +77,7 @@ Neural Network
     mindspore.ops.Padding
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
+    mindspore.ops.ResizeLinear1D
 
 Loss Function
 ^^^^^^^^^^^^^
