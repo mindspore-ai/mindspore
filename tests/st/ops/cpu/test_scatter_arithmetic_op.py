@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -222,6 +223,28 @@ def test_scatter_add_disordered_int32():
                          [187., 188., 189., 190.],
                          [492., 496., 500., 504.]]).astype(np.int32)
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_scatter_add_function():
+    """
+    Feature: test_scatter_add_function.
+    Description: test cases for scatter add functinal
+    Expectation: the result match numpy implementation.
+    """
+    input_x = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32)))
+    indices = Tensor(np.array([[[0, 1, 2],
+                                [2, 1, 0]],
+                               [[0, 0, 0],
+                                [2, 2, 2]]]).astype(np.int32))
+    updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int32))
+    output = F.scatter_add(input_x, indices, updates)
+    expected = np.array([[464., 468., 472., 476.],
+                         [187., 188., 189., 190.],
+                         [492., 496., 500., 504.]]).astype(np.int32)
+    np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
 class TestScatterSubNet(nn.Cell):
