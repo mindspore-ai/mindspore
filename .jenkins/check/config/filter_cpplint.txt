@@ -18,6 +18,7 @@
 "mindspore/mindspore/ccsrc/utils/convert_utils_py.cc"                                              "whitespace/indent"
 "mindspore/mindspore/core/utils/log_adapter.cc"                                                    "runtime/references"
 "mindspore/mindspore/ccsrc/runtime/hardware/device_context.h"                                                "readability/braces"
+"mindspore/mindspore/ccsrc/transform/graph_ir/convert.h"                                            "runtime/references"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

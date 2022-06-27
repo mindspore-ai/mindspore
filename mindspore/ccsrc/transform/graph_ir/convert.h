@@ -54,6 +54,7 @@ using OpAdapterPtr = std::shared_ptr<BaseOpAdapter>;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
+enum class DfsVisitFlag { kUnVisited, kVisiting, kVisited };
 class DfGraphConvertor {
  public:
   explicit DfGraphConvertor(const AnfGraphPtr &anf_graph) : anf_graph_(anf_graph) {
@@ -199,7 +200,8 @@ class DfGraphConvertor {
   bool IsControlEdgeNode(const AnfNodePtr &node);
   void AddEdgeForLoad(const AnfNodePtr &node);
   void AddEdgeToCache(const AnfNodePtr &src, const AnfNodePtr &dest);
-  void FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list, bool top);
+  void FindDestOps(const AnfNodePtr &node, const std::shared_ptr<std::vector<AnfNodePtr>> &node_list, bool top,
+                   mindspore::HashMap<AnfNodePtr, DfsVisitFlag> *flag_map);
   AnfNodePtr ParseLoadInput(const CNodePtr &cnode);
   void AutoMonadSetControlInput(const AnfNodePtr &node);
   void AutoMonadCollectInput(const AnfNodePtr &node);
