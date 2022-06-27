@@ -25,6 +25,27 @@
 namespace mindspore {
 namespace device {
 namespace cpu {
+namespace {
+bool CopySameTypeMem(void *dst_ptr, size_t dst_size, void *src_ptr, size_t src_size, TypeId type) {
+  if (src_size != dst_size) {
+    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
+                  << ", dst device size: " << dst_size;
+    return false;
+  }
+
+  auto ret = memcpy_s(dst_ptr, dst_size, src_ptr, src_size);
+  // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
+  if (ret == ERANGE) {
+    ConvertSameType(dst_ptr, src_ptr, dst_size, type);
+    return true;
+  } else if (ret != EOK) {
+    MS_LOG(ERROR) << "Failed to copy tensor!";
+    return false;
+  } else {
+    return true;
+  }
+}
+}  // namespace
 CPUDeviceAddress::~CPUDeviceAddress() { ClearDeviceMemory(); }
 
 void CPUDeviceAddress::ClearDeviceMemory() {
@@ -159,6 +180,7 @@ bool CPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   MS_EXCEPTION_IF_NULL(src_cpu_device);
   auto src_size = src_cpu_device->GetSize();
   auto src_ptr = src_cpu_device->GetMutablePtr();
+  auto src_type = src_cpu_device->type_id();
 
   // The input or output may be empty.
   if ((src_size == 0) || (size_ == 0)) {
@@ -167,23 +189,26 @@ bool CPUDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) con
   }
   MS_EXCEPTION_IF_NULL(src_ptr);
   MS_EXCEPTION_IF_NULL(ptr_);
-  if (src_size != size_) {
-    MS_LOG(ERROR) << "The src device size is not equal of the dst device size, src device size: " << src_size
-                  << ", dst device size: " << size_;
-    return false;
-  }
-
-  auto ret = memcpy_s(ptr_, size_, src_ptr, src_size);
-  // Return ERANGE when the copy size is larger than SECUREC_MEM_MAX_LEN.
-  if (ret == ERANGE) {
-    ConvertSameType(ptr_, src_ptr, size_, type_id_);
-    return true;
-  } else if (ret != EOK) {
-    MS_LOG(ERROR) << "Failed to copy tensor!";
-    return false;
+  if (src_type == type_id_) {
+    return CopySameTypeMem(ptr_, size_, src_ptr, src_size, src_type);
+  } else if (type_id_ == kNumberTypeFloat32 && src_type == kNumberTypeFloat16) {
+    HalfToFloat(ptr_, src_ptr, src_size >> 1);
+  } else if (type_id_ == kNumberTypeFloat16 && src_type == kNumberTypeFloat32) {
+    FloatToHalf(ptr_, src_ptr, src_size / sizeof(float));
+  } else if (type_id_ == kNumberTypeFloat32 && src_type == kNumberTypeFloat64) {
+    DoubleToFloat(ptr_, src_ptr, src_size / sizeof(double));
+  } else if (type_id_ == kNumberTypeFloat64 && src_type == kNumberTypeFloat32) {
+    FloatToDouble(ptr_, src_ptr, src_size / sizeof(float));
+  } else if (type_id_ == kNumberTypeInt64 && src_type == kNumberTypeInt32) {
+    IntToLong(ptr_, src_ptr, src_size / sizeof(int32_t));
+  } else if (type_id_ == kNumberTypeInt32 && src_type == kNumberTypeInt64) {
+    LongToInt(ptr_, src_ptr, src_size / sizeof(int64_t));
   } else {
-    return true;
+    MS_LOG(ERROR) << "Types not match. Device type: " << TypeIdLabel(type_id_)
+                  << ", host type: " << TypeIdLabel(src_type) << "!";
+    return false;
   }
+  return true;
 }
 }  // namespace cpu
 }  // namespace device
