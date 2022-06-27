@@ -62,10 +62,10 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   auto shape_element = x->cast<abstract::ShapePtr>();
   MS_EXCEPTION_IF_NULL(shape_element);
   std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
-  if (reduction == "none") {
+  if (reduction == kNone) {
     return shape_element;
   } else {
-    ShapeVector shape_out{1};
+    ShapeVector shape_out{};
     return std::make_shared<abstract::Shape>(shape_out);
   }
 }

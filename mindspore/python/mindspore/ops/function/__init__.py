@@ -253,6 +253,7 @@ from .nn_func import (
     pdist,
     pad,
     nll_loss,
+    smooth_l1_loss,
     cross_entropy,
     grid_sample,
 )

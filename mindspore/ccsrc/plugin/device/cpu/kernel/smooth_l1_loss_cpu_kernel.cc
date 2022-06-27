@@ -69,7 +69,11 @@ bool SmoothL1LossCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr
   T *workspace_addr = reinterpret_cast<T *>(workspace[0]->addr);
   CalElements(predict_addr, target_addr, workspace_addr);
 
-  result_addr[0] = std::accumulate(workspace_addr, workspace_addr + tensor_size_, static_cast<T>(0.0));
+  double tmp_sum{0};
+  for (int64_t i = 0; i < tensor_size_; ++i) {
+    tmp_sum += static_cast<double>(workspace_addr[i]);
+  }
+  result_addr[0] = static_cast<T>(tmp_sum);
   if (reduction_ == ReductionType::SUM) {
     return true;
   }

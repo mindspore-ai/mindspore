@@ -56,11 +56,13 @@ abstract::ShapePtr SmoothL1LossGradInferShape(const PrimitivePtr &primitive,
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, prim_name);
   auto prediction = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
   auto target = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex1);
-  auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
   abstract::CheckShapeSame(prim_name, prediction, target);
   std::string reduction = GetValue<std::string>(primitive->GetAttr(kReduction));
-  if (reduction == "none") {
+  if (reduction == kNone) {
+    auto dloss = CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex2);
     abstract::CheckShapeSame(prim_name, prediction, dloss);
+  } else {
+    (void)CheckAndConvertUtils::CheckArgs<abstract::AbstractScalar>(prim_name, input_args, kInputIndex2);
   }
   auto x = input_args[kInputIndex0]->BuildShape();
   MS_EXCEPTION_IF_NULL(x);
@@ -76,7 +78,6 @@ TypePtr SmoothL1LossGradInferType(const PrimitivePtr &prim, const std::vector<Ab
   std::map<std::string, TypePtr> args;
   (void)args.emplace("prediction", input_args[kInputIndex0]->BuildType());
   (void)args.emplace("target", input_args[kInputIndex1]->BuildType());
-  (void)args.emplace("dloss", input_args[kInputIndex2]->BuildType());
   auto dloss_type = CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
   return dloss_type;
 }
