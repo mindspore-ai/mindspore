@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,6 @@ AbstractBasePtr LessInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto type = LessInferType(primitive, input_args);
   return abstract::MakeAbstract(shape, type);
 }
-REGISTER_PRIMITIVE_C(kNameLess, Less);
+REGISTER_PRIMITIVE_EVAL_IMPL(Less, prim::kPrimLess, LessInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
