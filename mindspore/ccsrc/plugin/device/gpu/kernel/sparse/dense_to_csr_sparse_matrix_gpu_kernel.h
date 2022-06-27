@@ -104,7 +104,8 @@ class DenseToCSRSparseMatrixKernelMod : public DeprecatedNativeGpuKernelMod {
                dev_nd_indices_, reinterpret_cast<cudaStream_t>(stream_ptr));
       CallSplitIndices3D(indices_addr, dev_batch_indices_, dev_row_indices_, col_indices_addr, nnz_,
                          reinterpret_cast<cudaStream_t>(stream_ptr));
-      CallNNZPerBatch(dev_batch_indices_, batch_pointers_addr, nnz_, reinterpret_cast<cudaStream_t>(stream_ptr));
+      CallNNZPerBatch(dev_batch_indices_, batch_pointers_addr, nnz_, num_batches + 1,
+                      reinterpret_cast<cudaStream_t>(stream_ptr));
       std::vector<S> host_batch_pointers(batch_pointers_shapes_[kIndex0], 0);
       DEVICE_TO_HOST(batch_pointers_addr, host_batch_pointers.data(), sizeof(S) * (num_batches + 1))
       auto row_num = input_shapes_[kIndex1];
@@ -169,15 +170,15 @@ class DenseToCSRSparseMatrixKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(input_shapes_));
-    input_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_));
+    input_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<S>(indices_shapes_));
     workspace_size_list_.push_back(sizeof(S) * nd_strides_.size());
     workspace_size_list_.push_back(sizeof(S) * nd_indices_.size());
     workspace_size_list_.push_back(sizeof(S) * nnz_);
-    workspace_size_list_.push_back(sizeof(S) * batch_pointers_shapes_[kIndex0]);
-    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(dense_shape_shapes_));
-    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(batch_pointers_shapes_));
-    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(row_pointers_shapes_));
-    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(col_indices_shapes_));
+    workspace_size_list_.push_back(sizeof(S) * nnz_);
+    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<S>(dense_shape_shapes_));
+    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<S>(batch_pointers_shapes_));
+    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<S>(row_pointers_shapes_));
+    output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<S>(col_indices_shapes_));
     output_size_list_.push_back(common::AnfAlgo::TensorSizeInByte<T>(value_shapes_));
   }
 

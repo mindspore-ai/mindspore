@@ -13,9 +13,9 @@
 # limitations under the License.
 
 """CSRGatherop"""
-from mindspore.ops.op_info_register import op_info_register, AkgGpuRegOp, DataType
+from mindspore.ops.op_info_register import op_info_register, AkgCpuRegOp, DataType
 
-csr_gather_op_info = AkgGpuRegOp("CSRGather") \
+csr_gather_op_info = AkgCpuRegOp("CSRGather") \
     .fusion_type("OPAQUE") \
     .input(0, "indptr") \
     .input(1, "indices") \
