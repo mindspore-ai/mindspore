@@ -120,6 +120,7 @@ Nonlinear Activation Function Layer
     mindspore.nn.PReLU
     mindspore.nn.ReLU
     mindspore.nn.ReLU6
+    mindspoer.nn.RReLU
     mindspore.nn.SiLU
     mindspore.nn.Sigmoid
     mindspore.nn.Softmin
