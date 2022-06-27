@@ -536,7 +536,12 @@ void E2eDump::UpdateIterOldRTDump(const session::KernelGraph *graph) {
 void E2eDump::UpdateIterMindRTDump() {
   auto debugger = Debugger::GetInstance();
   // Dataset graph is always the first graph in the list when dataset_sink_mode is true.
-  auto graph = (debugger->GetStepGraphPtrList())[0];
+  auto graph_list = debugger->GetStepGraphPtrList();
+  if (graph_list.empty()) {
+    MS_LOG(INFO) << "The graph list is empty.";
+    return;
+  }
+  auto graph = graph_list[0];
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && graph->IsDatasetGraph()) {
@@ -556,6 +561,10 @@ void E2eDump::UpdateIterMindRTDump() {
  * each epoch and dumps all the iterations in the epoch to the graph history file.
  */
 void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(INFO) << "Dump is not supported for dynamic shape!";
+    return;
+  }
   auto &json_parser = DumpJsonParser::GetInstance();
   if (!(json_parser.async_dump_enabled() || json_parser.e2e_dump_enabled())) {
     return;
@@ -612,6 +621,9 @@ void E2eDump::DumpRunIter(const KernelGraphPtr &graph, uint32_t rank_id) {
  */
 void E2eDump::DumpData(const session::KernelGraph *graph, uint32_t rank_id, const Debugger *debugger) {
   MS_EXCEPTION_IF_NULL(graph);
+  if (graph->is_dynamic_shape()) {
+    MS_LOG(EXCEPTION) << "Dump is not supported for dynamic shape!";
+  }
   bool success = false;
   auto &dump_json_parser = DumpJsonParser::GetInstance();
   uint32_t graph_id = graph->graph_id();
@@ -716,7 +728,7 @@ dump_data_t ParseAttrsFromDumpData(const std::string &dump_path, char *data_ptr,
   (void)std::transform(tensor.original_shape().dim().begin(), tensor.original_shape().dim().end(),
                        std::back_inserter(shape_to), SizeToLong);
   // get size and sub_format
-  size_t data_size = (size_t)tensor.size();
+  size_t data_size = static_cast<size_t>(tensor.size());
   int32_t sub_format = tensor.sub_format();
   return dump_data_t{dump_path, data_ptr, data_type, device_format, shape_d, shape_to, data_size, sub_format, io, slot};
 }

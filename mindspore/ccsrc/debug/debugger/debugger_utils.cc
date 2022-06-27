@@ -98,9 +98,9 @@ void LoadInputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uint
     auto ret = device_addr->LoadMemToHost(input_tensor_name, UintToInt(exec_order), host_format, int_shapes, type, 0,
                                           true, root_graph_id, false, trans_flag);
     if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format
-                    << ", device_format:" << device_format << ".";
+      MS_LOG(WARNING) << "LoadMemToHost failed:"
+                      << ", tensor_name:" << input_tensor_name << ", host_format:" << host_format
+                      << ", device_format:" << device_format << ".";
     }
   }
 }
@@ -140,9 +140,9 @@ void LoadOutputs(const CNodePtr &cnode, const KernelLaunchInfo *launch_info, uin
     auto ret = device_addr->LoadMemToHost(tensor_name, UintToInt(exec_order), host_format, int_shapes, type, j, false,
                                           root_graph_id, false, trans_flag);
     if (!ret) {
-      MS_LOG(ERROR) << "LoadMemToHost:"
-                    << ", tensor_name:" << tensor_name << ", host_format:" << host_format
-                    << ", device_format:" << device_format << ".!";
+      MS_LOG(WARNING) << "LoadMemToHost failed:"
+                      << ", tensor_name:" << tensor_name << ", host_format:" << host_format
+                      << ", device_format:" << device_format << ".!";
     }
   }
 }
@@ -253,6 +253,29 @@ std::string CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
   }
   if (debugger->CheckDebuggerEnabled() && sink_mode) {
     error_info = "Debugger is not supported with dataset_sink_mode=True. Please set dataset_sink_mode=False";
+  }
+  return error_info;
+}
+
+/*
+ * Feature group: Dump, Online Debugger.
+ * Target device group: Ascend, GPU.
+ * Runtime category: MindRT.
+ * Description: Returns the error_info when the graph is a dynamic graph.
+ * If everything is normal the error_info string will be empty.
+ */
+std::string CheckDynamicShape(const KernelGraphPtr &graph_ptr) {
+  std::string error_info = "";
+  bool is_dynamic_shape = graph_ptr->is_dynamic_shape();
+  if (!is_dynamic_shape) {
+    return error_info;
+  }
+  auto debugger = Debugger::GetInstance();
+  if (debugger->CheckDebuggerDumpEnabled()) {
+    error_info = "e2e_dump is not supported for dynamic shape!";
+  }
+  if (debugger->CheckDebuggerEnabled()) {
+    error_info = "Debugger is not supported for dynamic shape!";
   }
   return error_info;
 }
