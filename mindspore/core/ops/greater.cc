@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,6 @@ AbstractBasePtr GreaterInfer(const abstract::AnalysisEnginePtr &, const Primitiv
   auto infer_shape = GreaterInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameGreater, Greater);
+REGISTER_PRIMITIVE_EVAL_IMPL(Greater, prim::kPrimGreater, GreaterInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
