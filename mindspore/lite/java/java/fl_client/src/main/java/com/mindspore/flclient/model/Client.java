@@ -26,8 +26,12 @@ import com.mindspore.lite.TrainSession;
 import com.mindspore.lite.config.MSConfig;
 import mindspore.schema.FeatureMap;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -239,11 +243,12 @@ public abstract class Client {
             for (Callback callBack : callbacks) {
                 callBack.epochEnd();
                 if (callBack instanceof LossCallback && i == epochs - 1) {
-                    LossCallback lossCallback = (LossCallback)callBack;
+                    LossCallback lossCallback = (LossCallback) callBack;
                     setUploadLoss(lossCallback.getUploadLoss());
                 }
             }
         }
+
         long endTime = System.currentTimeMillis();
         logger.info("total run time:" + (endTime - startTime) + "ms");
         return Status.SUCCESS;
@@ -268,11 +273,59 @@ public abstract class Client {
         return Status.SUCCESS;
     }
 
+    private void backupModelFile(String origFile) {
+        File ofile = new File(origFile);
+        // the backup file of model
+        String bakFile = ofile.getParent() + "/bak_" + ofile.getName();
+        File dfile = new File(bakFile);
+        if (dfile.exists() || !ofile.exists()) {
+            return;
+        }
+
+        try {
+            logger.info("Backup model file:" + origFile + " to :" + bakFile);
+            Files.copy(ofile.toPath(), dfile.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * restore model file from bak
+     *
+     * @param fileName
+     */
+    public void restoreModelFile(String fileName) {
+        File dfile = new File(fileName);
+        // the backup file of model
+        String bakFile = dfile.getParent() + "/bak_" + dfile.getName();
+        File bfile = new File(bakFile);
+
+        if (!bfile.exists()) {
+            logger.severe("Restore failed, backup file:" + bfile.getName() + " not exist.");
+            return;
+        }
+        if (dfile.exists()) {
+            logger.severe("Delete the origin file:" + dfile.getName());
+            dfile.delete();
+        }
+
+        try {
+            logger.info("Restore model file:" + dfile.getName() + " from :" + bfile.getName());
+            Files.copy(bfile.toPath(), dfile.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
         if (modelPath == null) {
             logger.severe("modelPath cannot be empty");
             return Optional.empty();
         }
+        // backup origin Model file
+        backupModelFile(modelPath);
+
         // only lite session support dynamic shape
         if (isDynamicInferModel) {
             Model model = new Model();

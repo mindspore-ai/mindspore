@@ -352,10 +352,15 @@ public class FLLiteClient {
             return FLClientStatus.FAILED;
         }
         tag = client.trainModel(epochs);
-        if (!Status.SUCCESS.equals(tag)) {
+        if (Float.isNaN(client.getUploadLoss()) || Float.isInfinite(client.getUploadLoss())) {
+            client.restoreModelFile(flParameter.getTrainModelPath());
+            failed("[train] train failed, train loss is:" + client.getUploadLoss(), ResponseCode.RequestError);
+        } else if (!Status.SUCCESS.equals(tag)) {
             failed("[train] unsolved error code in <client.trainModel>", ResponseCode.RequestError);
+        } else {
+            // while success save locale model
+            client.saveModel(flParameter.getTrainModelPath());
         }
-        client.saveModel(flParameter.getTrainModelPath());
         Common.freeSession();
         return status;
     }

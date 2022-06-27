@@ -28,22 +28,14 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.tls.OkHostnameVerifier;
 
 import java.io.*;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Logger;
 
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
+import javax.net.ssl.*;
 
 /**
  * Define the communication interface.
@@ -92,44 +84,22 @@ public class FLCommunication implements IFLCommunication {
     }
 
     private static OkHttpClient getOkHttpClient() {
-        X509TrustManager trustManager = new X509TrustManager() {
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
-                return new X509Certificate[]{};
-            }
-
-            @Override
-            public void checkServerTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
-            }
-
-            @Override
-            public void checkClientTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-
-            }
-        };
-        final TrustManager[] trustAllCerts = new TrustManager[]{trustManager};
         LOGGER.info("the set timeOut in OkHttpClient: " + timeOut);
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(timeOut, TimeUnit.SECONDS);
         builder.writeTimeout(timeOut, TimeUnit.SECONDS);
         builder.readTimeout(3 * timeOut, TimeUnit.SECONDS);
-        if (Common.isHttps()) {
-            if (ANDROID.equals(env)) {
-                builder.sslSocketFactory(sslSocketFactory, x509TrustManager);
-                builder.hostnameVerifier(new HostnameVerifier() {
-                    @Override
-                    public boolean verify(String arg0, SSLSession arg1) {
-                        return true;
-                    }
-                });
-            } else {
-                builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(),
-                        SSLSocketFactoryTools.getInstance().getmTrustManager());
-                builder.hostnameVerifier(SSLSocketFactoryTools.getInstance().getHostnameVerifier());
-            }
-        } else {
+        if(!Common.isHttps()){
             LOGGER.info("conducting http communication, do not need SSLSocketFactoryTools");
+            return builder.build();
+        }
+
+        // builder for https
+        if (ANDROID.equals(env)) {
+            builder.sslSocketFactory(sslSocketFactory, x509TrustManager);
+        } else {
+            builder.sslSocketFactory(SSLSocketFactoryTools.getInstance().getmSslSocketFactory(),
+                    SSLSocketFactoryTools.getInstance().getmTrustManager());
         }
         return builder.build();
     }
