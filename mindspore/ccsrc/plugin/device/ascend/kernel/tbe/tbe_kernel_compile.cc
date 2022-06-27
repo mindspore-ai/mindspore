@@ -808,7 +808,7 @@ bool TbeKernelCompileManager::TbeOpCheckSupported(const CNodePtr &node, nlohmann
   MS_EXCEPTION_IF_NULL(node);
   auto full_name = node->fullname_with_scope();
   MS_LOG(DEBUG) << "Check supported for op [" << full_name << "]";
-  auto json_creator = std::make_shared<CheckTbeJsonCreator>();
+  auto json_creator = std::make_shared<BuildTbeJsonCreator>();
   MS_EXCEPTION_IF_NULL(json_creator);
   auto &compute_json = (*kernel_json)[kJOpList].back();
   auto inputs_json_tmp = compute_json[kJInputDesc];

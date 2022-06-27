@@ -42,11 +42,6 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
                          std::vector<nlohmann::json> *outputs_json);
   void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 };
-class CheckTbeJsonCreator : public SingleTbeJsonCreator {
- public:
-  CheckTbeJsonCreator() = default;
-  ~CheckTbeJsonCreator() override = default;
-};
 class SelectTbeJsonCreator : public SingleTbeJsonCreator {
  public:
   SelectTbeJsonCreator() = default;
