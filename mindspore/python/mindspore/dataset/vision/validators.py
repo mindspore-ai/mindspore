@@ -897,8 +897,8 @@ def check_rescale(method):
         [rescale, shift], _ = parse_user_args(method, *args, **kwargs)
         type_check(rescale, (numbers.Number,), "rescale")
         type_check(shift, (numbers.Number,), "shift")
-        check_float32(rescale)
-        check_float32(shift)
+        check_float32(rescale, "rescale")
+        check_float32(shift, "shift")
 
         return method(self, *args, **kwargs)
 
