@@ -112,7 +112,12 @@ class _NLLLoss(Cell):
                             ", but got the type: {}.".format(type(parallel_config)))
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
+        self.repeat_loss = 1
         self.eps_const = Tensor(1e-24, mstype.float32)
+        # In auto parallel, there will be a virtual div in the back propagation begins. As we use custom bprop function
+        # we need to eliminate this virtual div by adding a factor "mp".
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL, ParallelMode.SEMI_AUTO_PARALLEL):
+            self.repeat_loss = mp
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and _is_sharding_propagation():
             self.sum = P.ReduceSum()
             self.mul = P.Mul()
@@ -135,7 +140,7 @@ class _NLLLoss(Cell):
 
     def bprop(self, softmax_result, one_hot_label, out, dout):
         logits = softmax_result - one_hot_label
-        logits = logits * P.ExpandDims()(dout, -1)
+        logits = logits * P.ExpandDims()(dout, -1) * self.repeat_loss
 
         return logits, F.zeros_like(one_hot_label)
 

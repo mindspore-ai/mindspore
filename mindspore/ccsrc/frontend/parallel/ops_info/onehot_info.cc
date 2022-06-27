@@ -85,11 +85,6 @@ Status OneHotInfo::InferDevMatrixShape() {
     }
   }
   old_dev_matrix_back_ = dev_matrix_shape_.back();
-  if (old_dev_matrix_back_ == 1) {
-    repeated_num_in_dev_matrix_right_ = true;
-  } else {
-    repeated_num_in_dev_matrix_right_ = false;
-  }
   return SUCCESS;
 }
 
@@ -130,13 +125,25 @@ Status OneHotInfo::InferTensorMap() {
 Status OneHotInfo::ExtractInputInfo() {
   CheckGlobalDeviceManager();
   rank_ = g_device_manager->rank_index_in_stage();
-  mod_rank_ = rank_ % old_dev_matrix_back_;
+  if (repeated_calc_num_ < 1) {
+    MS_LOG(ERROR)
+      << "Failure:OneHot repeat calc num is less than 1, you should change the strategy of OneHot primitive";
+    return FAILED;
+  }
+  if (old_dev_matrix_back_ < 1) {
+    MS_LOG(ERROR)
+      << "Failure:OneHot old_dev_matrix_back_ is less than 1, you should change the strategy of OneHot primitive";
+    return FAILED;
+  }
+  mod_rank_ = rank_ / repeated_calc_num_ % old_dev_matrix_back_;
   if (!cnode_) {
     MS_LOG(ERROR) << "Failure:OneHot cnode_ is nullptr";
     return FAILED;
   }
-  if (cnode_->inputs().size() != 5) {
-    MS_LOG(ERROR) << "Failure:There is 5 inputs for the CNode corresponding to OneHot Primitive, real input size is "
+  if (cnode_->inputs().size() != ONE_HOT_CNODE_INPUT_SIZE) {
+    MS_LOG(ERROR) << "Failure:There is " << ONE_HOT_CNODE_INPUT_SIZE
+                  << " inputs for the CNode corresponding to "
+                     "OneHot Primitive, real input size is "
                   << cnode_->inputs().size();
     return FAILED;
   }
