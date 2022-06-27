@@ -112,8 +112,13 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     auto send_rank_ids_attr = prim->GetAttr(kAttrSendRankIds);
     auto recv_rank_ids_attr = prim->GetAttr(kAttrRecvRankIds);
     if (send_rank_ids_attr && recv_rank_ids_attr) {
-      send_rank_ids = GetValue<std::vector<int64_t>>(send_rank_ids_attr);
-      recv_rank_ids = GetValue<std::vector<int64_t>>(recv_rank_ids_attr);
+      send_rank_ids_ = GetValue<std::vector<int64_t>>(send_rank_ids_attr);
+      recv_rank_ids_ = GetValue<std::vector<int64_t>>(recv_rank_ids_attr);
+    }
+
+    auto need_drop_input_attr = prim->GetAttr(kAttrNeedDropInput);
+    if (need_drop_input_attr) {
+      need_drop_input_ = GetValue<bool>(need_drop_input_attr);
     }
 
     SelectCollectiveHandle();
@@ -131,6 +136,7 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
+    need_drop_input_ = false;
   }
 
  protected:
@@ -143,26 +149,29 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
     I *output_addr = nullptr;
     cudaStream_t stream = comm_stream_ ? comm_stream_ : reinterpret_cast<cudaStream_t>(stream_ptr);
 
-    // send_rank_id and recv rank_id size needs to be equal to input_list size
-    if (send_rank_ids.size() != input_size_list_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of  send_rank_ids vector "
-                        << "should be " << input_size_list_.size() << ", but got " << send_rank_ids.size();
+    // send_rank_id and recv rank_id size needs to be equal to input_list size, unless there is a depend input in
+    // the input_list.
+    if (send_rank_ids_.size() != input_size_list_.size() && !need_drop_input_) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of send_rank_ids vector "
+                        << "should be " << input_size_list_.size() << ", but got " << send_rank_ids_.size();
     }
-    if (recv_rank_ids.size() != output_size_list_.size()) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of  recv_rank_ids vector "
-                        << "should be " << output_size_list_.size() << ", but got " << recv_rank_ids.size();
+    if (recv_rank_ids_.size() != output_size_list_.size()) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << ", trying to use AlltoAllv, the size of recv_rank_ids vector "
+                        << "should be " << output_size_list_.size() << ", but got " << recv_rank_ids_.size();
     }
 
     // This implementation refers to NVIDIA NCCL 2.11 doc.
     (void)GroupStart();
-    for (int i = 0; i < SizeToInt(input_size_list_.size()); ++i) {
-      input_addr = GetDeviceAddress<T>(inputs, i);
-      (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids[i], stream,
-                 group_name_);
+    if (!need_drop_input_) {
+      for (size_t i = 0; i < input_size_list_.size(); ++i) {
+        input_addr = GetDeviceAddress<T>(inputs, i);
+        (void)Send(input_addr, input_size_list_[i] / sizeof(T), input_nccl_data_type_, send_rank_ids_[i], stream,
+                   group_name_);
+      }
     }
-    for (int i = 0; i < SizeToInt(output_size_list_.size()); ++i) {
+    for (size_t i = 0; i < output_size_list_.size(); ++i) {
       output_addr = GetDeviceAddress<I>(outputs, i);
-      (void)Recv(output_addr, output_size_list_[i] / sizeof(I), output_nccl_data_type_, recv_rank_ids[i], stream,
+      (void)Recv(output_addr, output_size_list_[i] / sizeof(I), output_nccl_data_type_, recv_rank_ids_[i], stream,
                  group_name_);
     }
     (void)GroupEnd();
@@ -196,8 +205,9 @@ class NcclP2PGpuKernel : public NcclGpuKernelMod {
   cudaStream_t comm_stream_;
   ncclDataType_t output_nccl_data_type_;
   ncclDataType_t input_nccl_data_type_;
-  std::vector<int64_t> send_rank_ids;
-  std::vector<int64_t> recv_rank_ids;
+  std::vector<int64_t> send_rank_ids_;
+  std::vector<int64_t> recv_rank_ids_;
+  bool need_drop_input_;
 };
 }  // namespace kernel
 }  // namespace mindspore
