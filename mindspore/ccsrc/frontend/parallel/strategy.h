@@ -84,6 +84,15 @@ class Strategy {
     return divergence;
   }
 
+  bool Compare(const StrategyPtr &another_stra) {
+    if (this->PartitionNum() > another_stra->PartitionNum()) {
+      return true;
+    } else if (this->PartitionNum() < another_stra->PartitionNum()) {
+      return false;
+    }
+    return this->GetInputDim() > another_stra->GetInputDim();
+  }
+
   // Include 'another_stra' into this strategy
   void CoverStrategy(const StrategyPtr &another_stra) {
     internal_stragies_.push_back(another_stra);
