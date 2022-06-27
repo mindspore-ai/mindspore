@@ -52,7 +52,7 @@ class DataFormat:
     NHWC = "NHWC"
     HWCN = "HWCN"
     NC1HWC0 = "NC1HWC0"
-    FRAC_Z = "FracZ"
+    FRAC_Z = "FRACTAL_Z"
     FRAC_NZ = "FRACTAL_NZ"
     C1HWNCOC0 = "C1HWNCoC0"
     NC1HWC0_C04 = "NC1HWC0_C04"
