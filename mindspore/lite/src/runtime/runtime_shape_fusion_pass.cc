@@ -307,7 +307,10 @@ int ShapeFusionPass::UpdateShapeFusionMatrix(const LiteGraph::Node *post_node, S
         indices_tensor->data_type() == kNumberTypeInt || indices_tensor->data_type() == kNumberTypeInt32, RET_ERROR);
       std::vector<int> indices(indices_tensor->ElementsNum());
       memcpy(indices.data(), indices_tensor->data(), indices_tensor->Size());
-      shape_fusion_matrix->Gather(indices);
+      if (shape_fusion_matrix->Gather(indices) != RET_OK) {
+        MS_LOG(ERROR) << "Fuse gather failed.";
+        return RET_ERROR;
+      }
       shape_fusion_matrix->scalar = indices_tensor->category() == CONST_SCALAR ? true : false;
     } break;
     case schema::PrimitiveType_Squeeze: {
