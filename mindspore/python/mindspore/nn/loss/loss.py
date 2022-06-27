@@ -480,8 +480,8 @@ class SmoothL1Loss(LossBase):
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor, loss float tensor. When reduction is set to "none", output has same shape and dtype as the `logits`.
-        When reduction is set to "mean" or "sum", the output is 1-D tensor with one element.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Otherwise it is a scalar.
 
     Raises:
         TypeError: If `beta` is not a float.
@@ -507,6 +507,10 @@ class SmoothL1Loss(LossBase):
     def __init__(self, beta=1.0, reduction='none'):
         """Initialize SmoothL1Loss."""
         super(SmoothL1Loss, self).__init__(reduction)
+        target = context.get_context("device_target")
+        if reduction != 'none' and target.lower() == "ascend":
+            raise ValueError(f"Currently Ascend device_target only support `reduction`='none', "
+                             f"but got {reduction}")
         self.beta = beta
         self.reduction = reduction
         self.smooth_l1_loss = P.SmoothL1Loss(self.beta, self.reduction)
