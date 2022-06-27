@@ -530,30 +530,27 @@ class _Reduce(PrimitiveWithInfer):
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
-        if not isinstance(axis['dtype'], mstype.tensor_type) and axis_v is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
         output_max_shape = None
         output_min_shape = None
+        # when the rank of input_x is dynamic, the rank of output is also dynamic
         if -2 in input_shp:
             out_shape = np.array([-2]).tolist()
             if 'max_shape' in input_x and 'min_shape' in input_x:
                 output_min_shape = input_x['min_shape']
                 output_max_shape = input_x['max_shape']
-        elif -1 in input_shp or axis_v is None:
-            if axis_v is None:
-                axis_shape_list = axis['shape']
-                validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
-                axis_shape = axis_shape_list[0]
-                out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
-                    input_x, axis_shape, self.keep_dims)
-            else:
-                if 'max_shape' in input_x and 'min_shape' in input_x:
-                    output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
-                    output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
-                out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
+        # when axis value is none, the output shape is computed by axis shape
+        elif axis_v is None:
+            axis_shape_list = axis['shape']
+            validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
+            axis_shape = axis_shape_list[0]
+            out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
+                input_x, axis_shape, self.keep_dims)
+        elif -1 in input_shp:
+            if 'max_shape' in input_x and 'min_shape' in input_x:
+                output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
+                output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
+            out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         else:
-            if axis_v is None:
-                raise ValueError(f"For {self.name}, axis must be const, its value cannot be None.")
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
             output_max_shape = out_shape
             output_min_shape = out_shape
