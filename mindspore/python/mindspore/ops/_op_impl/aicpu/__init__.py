@@ -13,6 +13,7 @@
 # limitations under the License.
 
 """aicpu ops"""
+from .extract_glimpse import _extract_glimpse_aicpu
 from .fill_diagonal import _fill_diagonal_aicpu
 from .fractional_max_pool import _fractional_max_pool_aicpu
 from .fractional_max_pool_grad import _fractional_max_pool_grad_aicpu

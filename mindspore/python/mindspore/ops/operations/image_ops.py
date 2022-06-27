@@ -173,6 +173,99 @@ class AdjustHue(Primitive):
         self.init_prim_io_names(inputs=['images', 'delta'], outputs=['y'])
 
 
+class ExtractGlimpse(Primitive):
+    """
+    Extracts glimpse from the input image tensor and return a window.
+
+    Note:
+        If the window and input image tensor not overlap, random noise is filled.
+
+    Args:
+        centered (bool): An optional `bool`. Defaults to `True`. Indicates if the offset coordinates
+            are centered relative to the image, in which case the (0, 0) offset is relative to the center of
+            the center of the input images. If false, the (0, 0) offset corresponds to the upper left corner
+            of the input images.
+        normalized (bool): An optional `bool`. Defaults to `True`. indicates if the offset
+            coordinates are normalized.
+        uniform_noise (bool): An optional `bool`. Defaults to `True`. indicates if the noise should be
+            generated using a uniform distribution or a Gaussian distribution.
+        noise (str): An optional string that defaults to `uniform`. The value can be 'uniform', 'gaussian'
+            and 'zero'. The window is determined by size and offsets.
+            When the window and input image tensor not overlap, random noise is filled.
+            The result is variable when noise is equal to 'uniform' and 'gaussian'.
+            When noise is equal to 'zero', the value of uniform_noise must be 'False' and the
+            filling noise will be zero so that the result is fixed.
+            When uniform_noise is 'True', the value of noise only can be 'uniform'.
+            When uniform_noise is 'False', the value of noise can be 'uniform', 'gaussian' and 'zero'.
+
+    Inputs:
+        - **x** (Tensor) - A 4-D float tensor of shape [batch_size, height, width, channels].
+          Types allowed: float32.
+        - **size** (Tensor) - A 1-D tensor of 2 elements containing the size of the glimpses to extract.
+          The glimpse height must be specified first, following by the glimpse width. Types allowed: int32.
+          The value of size must be greater than zero.
+        - **offsets** (Tensor) - A 2-D integer tensor of shape [batch_size, 2] containing the y, x locations
+          of the center of each window. Types allowed: float32.
+
+    Outputs:
+        A 4-D tensor of shape [batch_size, glimpse_height, glimpse_width, channels] with type: float32.
+
+    Raises:
+        TypeError: If `centered` is not a bool.
+        TypeError: If `normalize` is not a bool.
+        TypeError: If `uniform_noise` is not a bool.
+        ValueError: If `noise` is not `uniform`, `gaussian` or `zero`.
+        ValueError: If the value of `size` is not constant value.
+        ValueError: If the batch_size of input is inconsistent with the batch_size of offsets.
+        ValueError: If the value of offsets[1] is not 2.
+        ValueError: If the input is not Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> class ExtractGlimpse(nn.Cell):
+        ...         def __init__(self, size, centered, normalized, uniform_noise, noise):
+        ...             super(ExtractGlimpse, self).__init__()
+        ...             self.size = size
+        ...             self.attribute = P.ExtractGlimpse(centered = centered, normalized = normalized,
+        ...             uniform_noise = uniform_noise, noise = noise)
+        ...         def construct(self, x, offsets):
+        ...             return self.attribute(x, self.size, offsets);
+        >>> x = Tensor(np.random.randn(1, 4, 2, 3).astype(np.float32))
+        >>> size = Tensor(np.array([2, 2]).astype("int32"))
+        >>> offsets = Tensor(np.array([[0, 0]]).astype("float32"))
+        >>> attribute = ExtractGlimpse(size, True, True, True, "uniform")
+        >>> output = attribute(x, offsets)
+        >>> print(output)
+        [[[[ 0.95008844 -0.1513572  -0.10321885]
+           [ 0.41059852  0.14404356  1.4542735 ]]
+
+          [[ 0.7610377   0.12167501  0.44386324]
+           [ 0.33367434  1.4940791  -0.20515826]]]]
+    """
+    @prim_attr_register
+    def __init__(self, centered=True, normalized=True, uniform_noise=True, noise="uniform"):
+        self.add_prim_attr("max_length", 1000000)
+        self.init_prim_io_names(inputs=['x', 'size', 'offsets'], outputs=['output'])
+        self.centered = centered
+        self.normalized = normalized
+        self.uniform_noise = uniform_noise
+        self.noise = noise
+        self.add_prim_attr('centered', self.centered)
+        self.add_prim_attr('normalized', self.normalized)
+        self.add_prim_attr('noise', self.noise)
+        self.add_prim_attr('uniform_noise', self.uniform_noise)
+        validator.check_value_type("centered", centered, [bool], self.name)
+        validator.check_value_type("normalized", normalized, [bool], self.name)
+        validator.check_value_type("noise", noise, [str], self.name)
+        validator.check_string(noise, ["uniform", "gaussian", "zero"], "noise", self.name)
+        validator.check_value_type("uniform_noise", uniform_noise, [bool], self.name)
+        if uniform_noise and noise != "uniform":
+            raise ValueError(f"For '{self.name}', the value of 'noise' must be uniform "
+                             f"when uniform_noise is True, but got {noise}.")
+
+
 class CropAndResize(PrimitiveWithInfer):
     """
     Extracts crops from the input image tensor and resizes them.

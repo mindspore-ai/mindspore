@@ -28,6 +28,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
                                                AdjustSaturation
+from mindspore.ops.operations.image_ops import ExtractGlimpse
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
@@ -3452,6 +3453,12 @@ test_case_image_ops = [
                         Tensor(4, mstype.int32),
                         Tensor(0.1, mstype.float32),
                         Tensor(0, mstype.float32)],
+        'skip': ['backward']}),
+    ('ExtractGlimpse', {
+        'block': ExtractGlimpse(True, True, True, 'uniform'),
+        'desc_inputs': [Tensor(np.random.randn(1, 4, 2, 3).astype(np.float32)),
+                        Tensor(np.array([2, 2]).astype(np.int32)),
+                        Tensor(np.array([[0, 0]]).astype(np.float32))],
         'skip': ['backward']}),
 ]
 

@@ -35,6 +35,7 @@ GVAR_DEF(mindspore::HashMap<std::string COMMA ValuePtr>, kSideEffectPropagate,
 constexpr auto kAdjustHue = "AdjustHue";
 constexpr auto kAdjustContrastv2 = "AdjustContrastv2";
 constexpr auto kAdjustSaturation = "AdjustSaturation";
+constexpr auto kExtractGlimpse = "ExtractGlimpse";
 constexpr auto kGetNext = "GetNext";
 constexpr auto kGather = "Gather";
 constexpr auto kAddcdiv = "Addcdiv";
@@ -268,6 +269,7 @@ constexpr auto kEnvironGet = "EnvironGet";
 constexpr auto kEnvironAdd = "EnvironAdd";
 constexpr auto kEnvironDestroyAll = "EnvironDestroyAll";
 
+GVAR_DEF(PrimitivePtr, kPrimExtractGlimpse, std::make_shared<Primitive>(kExtractGlimpse));
 //
 // Here list all primitives used in backend or some special primitives used by core.
 // GetNext
