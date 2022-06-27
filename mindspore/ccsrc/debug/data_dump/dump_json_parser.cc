@@ -262,15 +262,15 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
   std::optional<std::string> prefix_path;
   std::optional<std::string> origin_name;
   std::optional<std::string> mapped_name;
-  Common::MappingName(origin_file_path, &prefix_path, &origin_name, &mapped_name);
+  bool need_map = Common::MappingName(origin_file_path, &prefix_path, &origin_name, &mapped_name);
   if (!prefix_path.has_value() || !origin_name.has_value() || !mapped_name.has_value()) {
     MS_LOG(ERROR) << "Cannot get prefix_path or file_name from: " << origin_file_path;
     return false;
   }
-  std::string origin_name_str = origin_name.value();
-  std::string mapped_name_str = mapped_name.value();
-  bool need_map = origin_name_str != mapped_name_str;
+  std::string final_file_path = origin_file_path;
   if (need_map) {
+    std::string origin_name_str = origin_name.value();
+    std::string mapped_name_str = mapped_name.value();
     auto mapping_file = Common::CreatePrefixPath(prefix_path.value() + "/mapping.csv");
     if (!mapping_file.has_value()) {
       MS_LOG(ERROR) << "CreatePrefixPath for mapping.csv failed.";
@@ -289,7 +289,7 @@ bool DumpJsonParser::DumpToFile(const std::string &filename, const void *data, s
     ChangeFileMode(mapping_file_str, S_IRUSR);
     origin_file_path = prefix_path.value() + "/" + mapped_name_str;
   }
-  auto file_path = Common::CreatePrefixPath(origin_file_path);
+  auto file_path = Common::CreatePrefixPath(final_file_path);
   if (!file_path.has_value()) {
     MS_LOG(ERROR) << "CreatePrefixPath failed.";
     return false;
@@ -321,11 +321,9 @@ void DumpJsonParser::ParseCommonDumpSetting(const nlohmann::json &content) {
   MS_EXCEPTION_IF_NULL(context);
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     async_dump_enabled_ = true;
-  } else if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice) {
-    if (!e2e_dump_enabled_) {
-      e2e_dump_enabled_ = true;
-      trans_flag_ = true;
-    }
+  } else if (!e2e_dump_enabled_) {
+    e2e_dump_enabled_ = true;
+    trans_flag_ = true;
   }
 
   auto common_dump_settings = CheckJsonKeyExist(content, kCommonDumpSettings);
