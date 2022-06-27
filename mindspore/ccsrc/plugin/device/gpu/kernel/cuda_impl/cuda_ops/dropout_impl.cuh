@@ -31,4 +31,11 @@ template <typename T>
 CUDA_LIB_EXPORT void FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float keep_prob,
                                          uint64_t seed, uint64_t seed_offset, cudaStream_t cuda_stream);
 
+template <typename T>
+CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask(T *mask, size_t num_count, float keep_prob, uint64_t seed,
+                                                 uint64_t seed_offset, cudaStream_t cuda_stream);
+
+template <typename T>
+CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput(const T *input, T *output, size_t num_count, float keep_prob,
+                                                   uint64_t seed, uint64_t seed_offset, cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_DROPOUT_IMPL_CUH_
