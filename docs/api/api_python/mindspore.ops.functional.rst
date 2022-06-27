@@ -306,6 +306,7 @@ Tensor创建
     mindspore.ops.gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
+    mindspore.ops.standard_laplace
 
 Array操作
 ^^^^^^^^^^^^^^^^

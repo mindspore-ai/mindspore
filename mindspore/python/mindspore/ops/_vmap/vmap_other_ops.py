@@ -17,7 +17,8 @@
 
 from mindspore.ops import operations as P
 from ..primitive import Primitive
-from .._vmap.vmap_base import vmap_rules_getters, get_assign_vmap_rule, _raise_value_error
+from .._vmap.vmap_base import vmap_rules_getters, get_assign_vmap_rule, _raise_value_error, \
+    get_unsupported_dynamic_vmap_rule
 
 
 @vmap_rules_getters.register("Load")
@@ -92,3 +93,5 @@ def get_partical_vmap_rule(prim, axis_size):
 
 
 get_assign_vmap_rule = vmap_rules_getters.register(P.Assign)(get_assign_vmap_rule)
+get_unsupported_dynamic_vmap_rule = \
+    vmap_rules_getters.register(P.StandardLaplace)(get_unsupported_dynamic_vmap_rule)

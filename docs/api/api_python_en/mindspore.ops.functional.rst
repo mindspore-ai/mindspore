@@ -305,6 +305,7 @@ Randomly Generating Operators
     mindspore.ops.gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
+    mindspore.ops.standard_laplace
 
 Array Operation
 ^^^^^^^^^^^^^^^
