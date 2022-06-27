@@ -57,7 +57,8 @@ class ReduceLROnPlateau(Callback):
             `new_lr = lr * factor`. Default: 0.1.
         patience (int): `monitor` value is better than history best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
-            with no improvement after which learning rate
+            with no improvement that would be waited. When the waiting
+            counter `self.wait` is larger than or equal to `patience`,  the
             will be reduced. Default: 10.
         verbose (bool): If False: quiet, if True: print related information.
             Default: False.
@@ -208,7 +209,7 @@ class ReduceLROnPlateau(Callback):
                            'which is not available. Available choices are: %s',
                            self.monitor, support_keys)
         if isinstance(monitor_value, np.ndarray) and monitor_value.shape != ():
-            raise ValueError("EarlyStopping only supports scalar monitor now.")
+            raise ValueError("ReduceLROnPlateau only supports scalar monitor now.")
         return np.array(monitor_value) if monitor_value else None
 
 
