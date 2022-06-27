@@ -76,6 +76,14 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
   return iter->second;
 }
 
+std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(const std::string &op_type) {
+  std::map<std::string, std::string> attrs;
+  static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
+    {"ArgMaxWithValue", {{"axis", "dimension"}}}};
+  auto iter = op_type_map.find(op_type);
+  return iter == op_type_map.end() ? attrs : iter->second;
+}
+
 std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   if (output_names_.size() <= index) {
@@ -143,6 +151,43 @@ void OpTilingCalculateAdapter::ConvertOutputShapeAndType(const CNodePtr &node, :
     ge_tensor_desc.SetOriginShape(::ge::GeShape(ms_ori_shape));
     ge_tensor_desc.SetName(output_name);
     (void)(*op_desc)->AddOutputDesc(output_name, ge_tensor_desc);
+  }
+}
+
+void OpTilingCalculateAdapter::ConvertAttrs(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(*op_desc);
+  auto primitive = GetCNodePrimitive(node);
+  if (primitive == nullptr) {
+    return;
+  }
+  auto to_convert_attr = GetConvertAttr(primitive->name());
+  if (to_convert_attr.empty()) {
+    MS_LOG(DEBUG) << "The attrs of node " << primitive->name() << " does not need to be converted.";
+    return;
+  }
+  for (const auto &attr : primitive->attrs()) {
+    auto &key = attr.first;
+    auto iter = to_convert_attr.find(key);
+    if (iter == to_convert_attr.end()) {
+      continue;
+    }
+    auto &new_key = iter->second;
+    auto &value = attr.second;
+    MS_EXCEPTION_IF_NULL(value);
+    // Should add more types.
+    if (value->isa<Int64Imm>()) {
+      (void)::ge::AttrUtils::SetInt(*(*op_desc), new_key, GetValue<int64_t>(value));
+    } else if (value->isa<StringImm>()) {
+      (void)::ge::AttrUtils::SetStr(*(*op_desc), new_key, GetValue<string>(value));
+    } else if (value->isa<FP32Imm>()) {
+      (void)::ge::AttrUtils::SetFloat(*(*op_desc), new_key, GetValue<float>(value));
+    } else if (value->isa<BoolImm>()) {
+      (void)::ge::AttrUtils::SetBool(*(*op_desc), new_key, GetValue<bool>(value));
+    } else {
+      MS_LOG(EXCEPTION) << "Currently not support to convert the attr '" << key << "' with value: " << value->ToString()
+                        << ", perhaps you should add more supported type.";
+    }
   }
 }
 
@@ -344,6 +389,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(op_desc);
   ConvertInputShapeAndType(node, &op_desc);
   ConvertOutputShapeAndType(node, &op_desc);
+  ConvertAttrs(node, &op_desc);
   ConvertCompileInfo(node, &op_desc);
   ConvertAtomicCompileInfo(node, &op_desc);
   std::vector<std::tuple<std::size_t, ::ge::NodePtr>> constant_ops =
