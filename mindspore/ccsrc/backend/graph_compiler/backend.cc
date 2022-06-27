@@ -1449,6 +1449,10 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
 
   auto device_context = task_context->device_context();
   graph_compiler_->BuildSingleOpGraphs(graphs, device_context);
+  for (const auto &graph_compile_info : graph_compiler_infos) {
+    MS_EXCEPTION_IF_NULL(graph_compile_info);
+    graph_compile_info->input_tensors_.clear();
+  }
 }
 
 void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {
