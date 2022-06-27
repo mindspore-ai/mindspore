@@ -101,13 +101,14 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   is_null_input_ = CHECK_SHAPE_NULL(LongVecToSizeVec(matrix_shape), kernel_name_, "matrix") ||
                    CHECK_SHAPE_NULL(LongVecToSizeVec(rhs_shape), kernel_name_, "rhs");
 
-  batch_num_ = std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, 1, std::multiplies{});
+  batch_num_ = std::accumulate(matrix_shape.begin(), matrix_shape.end() - kIndex2, int64_t(1), std::multiplies{});
   m_ = matrix_shape.back();
   k_ = rhs_shape.back();
 
   const size_t matrix_size =
-    LongToSize(std::accumulate(matrix_shape.begin(), matrix_shape.end(), 1, std::multiplies{}));
-  const size_t rhs_size = LongToSize(std::accumulate(rhs_shape.begin(), rhs_shape.end(), 1, std::multiplies{}));
+    LongToSize(std::accumulate(matrix_shape.begin(), matrix_shape.end(), int64_t(1), std::multiplies{}));
+  const size_t rhs_size =
+    LongToSize(std::accumulate(rhs_shape.begin(), rhs_shape.end(), int64_t(1), std::multiplies{}));
   const size_t type_size = GetTypeByte(TypeIdToType(inputs.at(kIndex1)->GetDtype()));
 
   workspace_size_list_.clear();

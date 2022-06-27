@@ -38,7 +38,7 @@ bool TrilGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vec
   kernel_func_ = func_list_[index].second;
   std::vector<int64_t> input_shape = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                                           inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies<int64_t>());
   int64_t input_dims = input_shape.size();
   if (input_dims <= 1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the dimension of 'x' should be at least 1-D, but got " << input_dims

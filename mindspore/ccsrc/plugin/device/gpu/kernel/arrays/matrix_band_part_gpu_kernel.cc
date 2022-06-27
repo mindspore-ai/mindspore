@@ -98,7 +98,7 @@ int MatrixBandPartGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   (void)std::transform(upper_shape_temp.begin(), upper_shape_temp.end(), std::back_inserter(upper_shape), LongToSize);
   (void)std::transform(output_shape_temp.begin(), output_shape_temp.end(), std::back_inserter(output_shape),
                        LongToSize);
-  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies<size_t>());
+  size_t input_element_num = std::accumulate(x_shape.begin(), x_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;

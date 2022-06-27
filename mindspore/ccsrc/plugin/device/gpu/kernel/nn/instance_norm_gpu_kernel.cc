@@ -70,7 +70,7 @@ int InstanceNormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
   const int batch = 1;
   const int channel = SizeToInt(batch_) * SizeToInt(channel_);
   const int height = 1;
-  const int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), 1, std::multiplies{});
+  const int width = std::accumulate(input_shape.begin() + kNCDims, input_shape.end(), int64_t(1), std::multiplies{});
 
   CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(
     cudnnSetTensor4dDescriptor(x_desc_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch, channel, height, width),

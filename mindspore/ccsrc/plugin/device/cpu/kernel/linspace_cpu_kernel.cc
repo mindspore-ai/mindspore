@@ -47,7 +47,7 @@ int LinSpaceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std
   }
 
   const auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  batch_num_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies{});
+  batch_num_ = std::accumulate(input_shape.begin(), input_shape.end(), int64_t(1), std::multiplies{});
   batch_num_ = (batch_num_ == 0) ? 1 : batch_num_;
 
   const auto dtype_size = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());

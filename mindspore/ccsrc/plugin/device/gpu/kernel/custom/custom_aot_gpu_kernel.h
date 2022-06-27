@@ -153,14 +153,14 @@ class CustomAOTGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void InitSizeLists() override {
     for (size_t i = 0; i < num_input_; i++) {
-      size_t this_size =
-        LongToSizeClipNeg(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+      size_t this_size = LongToSizeClipNeg(
+        std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), int64_t(1), std::multiplies<int64_t>()));
       this_size *= GetDtypeNbyte(type_list_[i]);
       input_size_list_.push_back(this_size);
     }
     for (size_t i = num_input_; i < (num_input_ + num_output_); i++) {
-      size_t this_size =
-        LongToSizeClipNeg(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+      size_t this_size = LongToSizeClipNeg(
+        std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), int64_t(1), std::multiplies<int64_t>()));
 
       this_size *= GetDtypeNbyte(type_list_[i]);
       output_size_list_.push_back(this_size);

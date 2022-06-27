@@ -317,7 +317,8 @@ int UnaryOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return ret;
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
-  size_t input_element_num = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  size_t input_element_num =
+    std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num == 0);
   if (is_null_input_) {
     return KRET_OK;

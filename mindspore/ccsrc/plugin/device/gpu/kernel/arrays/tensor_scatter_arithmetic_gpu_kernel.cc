@@ -110,7 +110,7 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
 
   indices_shape_.clear();
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
@@ -126,7 +126,7 @@ int TensorScatterArithmeticGpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   update_shape_.clear();
   auto update_shapes = inputs.at(kIndex2)->GetShapeVector();
   (void)std::transform(update_shapes.begin(), update_shapes.end(), std::back_inserter(update_shape_), LongToSize);
-  update_size_ = std::accumulate(update_shape_.begin(), update_shape_.end(), 1, std::multiplies<size_t>());
+  update_size_ = std::accumulate(update_shape_.begin(), update_shape_.end(), size_t(1), std::multiplies<size_t>());
 
   output_shape_.clear();
   auto output_shapes = outputs.at(kIndex0)->GetShapeVector();

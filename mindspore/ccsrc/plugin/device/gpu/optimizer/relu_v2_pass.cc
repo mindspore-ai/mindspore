@@ -80,7 +80,7 @@ CNodePtr CreateReluV2(const FuncGraphPtr &graph, const CNodePtr &relu) {
     return nullptr;
   }
   auto output_shape = common::AnfAlgo::GetOutputInferShape(relu, 0);
-  auto element_num = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
+  auto element_num = std::accumulate(output_shape.begin(), output_shape.end(), int64_t(1), std::multiplies<int64_t>());
 
   std::vector<int64_t> mask_shape = {(element_num + kBitPerUInt - 1) / kBitPerUInt};
   std::vector<BaseShapePtr> shapes = {common::AnfAlgo::GetOutputDetailShape(relu, 0),

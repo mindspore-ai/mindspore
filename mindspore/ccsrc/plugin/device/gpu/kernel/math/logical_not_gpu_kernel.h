@@ -54,7 +54,7 @@ class LogicalNotGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       InitSizeLists();
       return true;
     }
-    input_num_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+    input_num_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
     InitSizeLists();
     return true;
   }

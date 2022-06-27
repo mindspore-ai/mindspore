@@ -57,7 +57,7 @@ int MatrixDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  x_size_ = std::accumulate(x_shape.begin(), x_shape.end(), 1, std::multiplies{});
+  x_size_ = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
   if (x_shape.size() < kDim1) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', resize failed, some undefined behaviors happened.";
     return KRET_RESIZE_FAILED;

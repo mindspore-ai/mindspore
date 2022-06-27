@@ -52,7 +52,7 @@ int SeluGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::ve
   input_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_elements_ == 0);
   return KRET_OK;
 }

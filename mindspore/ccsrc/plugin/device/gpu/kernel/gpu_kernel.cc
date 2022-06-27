@@ -292,7 +292,7 @@ bool CheckBroadcast4TensorOp(const std::vector<int> &A, const std::vector<int> &
 
 bool CheckTensorSize(const std::initializer_list<ShapeVector> &shapes) {
   for (auto shape : shapes) {
-    int64_t total_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+    int64_t total_size = std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
     if (total_size >= SHAPE_SIZE_LIMIT) {
       MS_LOG(ERROR) << "The total size of the tensor exceeds the max_limit of 2 Giga-elements, which is " << total_size
                     << " elements (" << shape << ").";

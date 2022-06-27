@@ -60,11 +60,11 @@ int MatrixDiagPartV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   auto k_shape = inputs.at(kIndex1)->GetShapeVector();
   auto diag_shape = outputs.at(kIndex0)->GetShapeVector();
 
-  diag_size_ = std::accumulate(diag_shape.begin(), diag_shape.end(), 1, std::multiplies{});
+  diag_size_ = std::accumulate(diag_shape.begin(), diag_shape.end(), int64_t(1), std::multiplies{});
   num_cols_ = matrix_shape.at(matrix_shape.size() - kIndex1);
   num_rows_ = matrix_shape.at(matrix_shape.size() - kIndex2);
 
-  k_size_ = std::accumulate(k_shape.begin(), k_shape.end(), 1, std::multiplies{});
+  k_size_ = std::accumulate(k_shape.begin(), k_shape.end(), int64_t(1), std::multiplies{});
   max_diag_len_ = diag_shape.back();
 
   return KRET_OK;

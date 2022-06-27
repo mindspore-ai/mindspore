@@ -111,7 +111,7 @@ int DropoutNDGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(input_shape_), LongToSize);
-  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  input_elements_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   if (!CheckDropOutNdShape() || channels_ == 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's input dims is invalid, must be 4D or 5D "
                   << " but got " << input_shape_.size() << "D";

@@ -33,7 +33,7 @@ bool ApplyGradientDescentCpuKernelMod::Init(const BaseOperatorPtr &base_operator
   MS_EXCEPTION_IF_NULL(base_operator);
   kernel_name_ = base_operator->name();
   auto input_shape = inputs[kZero]->GetShapeVector();
-  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<size_t>());
+  input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), size_t(1), std::multiplies<size_t>());
   dtype_ = inputs[kZero]->GetDtype();
   return true;
 }

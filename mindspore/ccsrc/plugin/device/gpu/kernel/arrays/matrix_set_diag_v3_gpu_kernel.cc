@@ -89,8 +89,8 @@ int MatrixSetDiagV3GpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   inner_cols_ = SizeToInt(input_shape.at(IntToSize(input_rank - last_1d_dim)));
   expected_num_diags_ =
     SizeToInt(diag_shape.size()) == input_rank ? SizeToInt(diag_shape.at(IntToSize(input_rank - last_2d_dim))) : 1;
-  diagonal_count_ = std::accumulate(diag_shape.begin(), diag_shape.end(), 1, std::multiplies<size_t>());
-  k_count_ = std::accumulate(k_shape.begin(), k_shape.end(), 1, std::multiplies<size_t>());
+  diagonal_count_ = std::accumulate(diag_shape.begin(), diag_shape.end(), size_t(1), std::multiplies<size_t>());
+  k_count_ = std::accumulate(k_shape.begin(), k_shape.end(), size_t(1), std::multiplies<size_t>());
   k_count_ = k_count_ == 0 ? 1 : k_count_;
   return KRET_OK;
 }

@@ -598,7 +598,7 @@ inline bool GetDynamicAttrIntValue(const std::vector<KernelTensorPtr> &inputs, c
 }
 
 inline size_t GetTensorSize(std::vector<size_t> shape) {
-  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<size_t>());
+  return std::accumulate(shape.begin(), shape.end(), size_t(1), std::multiplies<size_t>());
 }
 }  // namespace kernel
 }  // namespace mindspore

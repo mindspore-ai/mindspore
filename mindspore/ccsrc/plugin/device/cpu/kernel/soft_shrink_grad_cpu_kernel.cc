@@ -71,7 +71,7 @@ int SoftShrinkGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
 
   auto in_shape = inputs[kIndex0]->GetShapeVector();
-  size_ = std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<size_t>());
+  size_ = std::accumulate(in_shape.begin(), in_shape.end(), size_t(1), std::multiplies<size_t>());
   return KRET_OK;
 }
 

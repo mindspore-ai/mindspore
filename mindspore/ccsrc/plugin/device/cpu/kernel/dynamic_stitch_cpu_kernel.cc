@@ -26,7 +26,7 @@ namespace {
 constexpr size_t kDynamicStitchOutputNum = 1;
 }  // namespace
 int64_t GetShapeSize(const ShapeVector &shape) {
-  return std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
+  return std::accumulate(shape.begin(), shape.end(), int64_t(1), std::multiplies<int64_t>());
 }
 
 template <typename T>

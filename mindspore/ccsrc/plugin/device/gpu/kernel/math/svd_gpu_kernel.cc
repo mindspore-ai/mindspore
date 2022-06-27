@@ -48,7 +48,7 @@ int SvdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vec
 
   input_shape_ = std::vector<size_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
                                      inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  total_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+  total_size_ = std::accumulate(input_shape_.begin(), input_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (total_size_ == 0);
   if (is_null_input_) {
     init_size_lists_func_(this);

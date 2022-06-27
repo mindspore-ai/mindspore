@@ -118,7 +118,7 @@ int BroadcastOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   lhs_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   rhs_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   output_shape_ = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
-  output_num_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  output_num_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(lhs_shape_, kernel_name_, "input_0") ||
                    CHECK_SHAPE_NULL(rhs_shape_, kernel_name_, "input_1") ||
                    CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output_0");

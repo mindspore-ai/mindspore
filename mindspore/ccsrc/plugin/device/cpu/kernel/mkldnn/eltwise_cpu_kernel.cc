@@ -86,7 +86,7 @@ int EltWiseCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   src_shape_.clear();
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   (void)std::transform(input_shape.begin(), input_shape.end(), std::back_inserter(src_shape_), LongToSize);
-  input_element_num_ = std::accumulate(src_shape_.begin(), src_shape_.end(), 1, std::multiplies<size_t>());
+  input_element_num_ = std::accumulate(src_shape_.begin(), src_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = (input_element_num_ == 0);
   if (is_null_input_) {
     return KRET_OK;

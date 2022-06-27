@@ -82,7 +82,7 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (divisor_override_ != 0) {
       T *work_addr = GetDeviceAddress<T>(workspace, 0);
       size_t output_num = output_size_ / sizeof(T);
-      int64_t size = std::accumulate(kernel_size_.begin(), kernel_size_.end(), 1, std::multiplies<int64_t>());
+      int64_t size = std::accumulate(kernel_size_.begin(), kernel_size_.end(), int64_t(1), std::multiplies<int64_t>());
       T divisor = static_cast<T>(LongToFloat(size) / LongToFloat(divisor_override_));
       std::vector<T> divisor_value(output_num, divisor);
       CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
