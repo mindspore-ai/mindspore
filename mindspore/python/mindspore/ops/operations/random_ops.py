@@ -133,26 +133,7 @@ class StandardNormal(PrimitiveWithInfer):
     r"""
     Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
 
-    Returns the tensor with the given shape, the random numbers in it drawn from normal distributions
-    whose mean is 0 and standard deviation is 1.
-
-    .. math::
-        f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
-
-    Args:
-        seed (int): Random seed, must be non-negative. Default: 0.
-        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
-
-    Inputs:
-        - **shape** (tuple) - The shape of random tensor to be generated. Only constant value is allowed.
-
-    Outputs:
-        Tensor. The shape is the same as the input `shape`. The dtype is float32.
-
-    Raises:
-        TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `shape` is not a tuple.
-        ValueError: If `shape` is not a constant value.
+    Refer to :func:`mindspore.ops.standard_normal` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

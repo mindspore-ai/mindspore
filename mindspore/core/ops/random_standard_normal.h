@@ -32,7 +32,7 @@ class MIND_API RandomStandardNormal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomStandardNormal);
   /// \brief Constructor.
-  RandomStandardNormal() : BaseOperator(kNameRandomStandardNormal) {}
+  RandomStandardNormal() : BaseOperator(kNameRandomStandardNormal) { InitIOName({"shape"}, {"output"}); }
 
   /// \brief Method to init the op's attributes.
   ///
@@ -60,6 +60,9 @@ class MIND_API RandomStandardNormal : public BaseOperator {
   /// \return seed2 attributes.
   int64_t get_seed2() const;
 };
+
+abstract::AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -176,9 +176,48 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
     return value
 
 
+def standard_normal(shape, seed=0, seed2=0):
+    r"""
+    Generates random numbers according to the standard Normal (or Gaussian) random number distribution.
+
+    Returns the tensor with the given shape, the random numbers in it drawn from normal distributions
+    whose mean is 0 and standard deviation is 1.
+
+    .. math::
+        f(x)=\frac{1}{\sqrt{2 \pi}} e^{\left(-\frac{x^{2}}{2}\right)}
+
+    Args:
+        shape (tuple): The shape of random tensor to be generated. Only constant value is allowed.
+        seed (int): Random seed, must be non-negative. Default: 0.
+        seed2 (int): Random seed2, must be non-negative. A second seed to avoid seed collision. Default: 0.
+
+    Returns:
+        Tensor. The shape is the same as the input `shape`. The dtype is float32.
+
+    Raises:
+        TypeError: If neither `seed` nor `seed2` is an int.
+        TypeError: If `shape` is not a tuple.
+        ValueError: If `shape` is not a constant value.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops import functional as F
+        >>> shape = (4, 4)
+        >>> output = F.standard_normal(shape)
+        >>> result = output.shape
+        >>> print(result)
+        (4, 4)
+    """
+    standard_normal_op = _get_cache_prim(P.StandardNormal)(seed=seed, seed2=seed2)
+    return standard_normal_op(shape)
+
+
 __all__ = [
     'standard_laplace',
     'random_categorical',
     'uniform',
+    'standard_normal',
 ]
 __all__.sort()
