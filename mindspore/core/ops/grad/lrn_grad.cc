@@ -25,6 +25,44 @@
 
 namespace mindspore {
 namespace ops {
+namespace {
+abstract::ShapePtr LrnGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto input_shape_ptr = input_args[kInputIndex1]->BuildShape();
+  auto input_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_shape_ptr);
+  auto input_shape = input_shape_map[kShape];
+
+  auto grad_out_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto grad_out_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_out_shape_ptr);
+  auto grad_out_shape = grad_out_shape_map[kShape];
+  // Check LrnGrad input shape equal to 4D.
+  constexpr int64_t input_rank = 4;
+  CheckAndConvertUtils::CheckValue<size_t>("rank of input ", SizeToLong(input_shape.size()), kEqual, input_rank,
+                                           primitive->name());
+  if (input_shape == grad_out_shape) {
+    return std::make_shared<abstract::Shape>(input_shape);
+  }
+  MS_EXCEPTION(ValueError) << "For '" << op_name
+                           << "', it's input 'input_x', 'grad_output' should have same shape , but got 'x' shape:"
+                           << input_shape << " vs 'grad_output' shape: " << grad_out_shape;
+}
+
+TypePtr LrnGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = prim->name();
+  MS_EXCEPTION_IF_NULL(input_args[1]);
+  auto x_type = input_args[1]->BuildType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  if (!x_type->isa<TensorType>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
+                            << ".";
+  }
+  return x_type;
+}
+}  // namespace
+
 void LRNGrad::set_depth_radius(const int64_t depth_radius) {
   (void)CheckAndConvertUtils::CheckInteger(kDepthRadius, depth_radius, kGreaterEqual, 0, this->name());
   (void)this->AddAttr(kDepthRadius, api::MakeValue(depth_radius));
@@ -64,6 +102,15 @@ void LRNGrad::Init(const int64_t depth_radius, const float bias, const float alp
 }
 
 MIND_API_OPERATOR_IMPL(LRNGrad, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameLRNGrad, LRNGrad);
+AbstractBasePtr LrnGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto type = LrnGradInferType(primitive, input_args);
+  auto shape = LrnGradInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(LRNGrad, prim::kPrimLrnGrad, LrnGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
