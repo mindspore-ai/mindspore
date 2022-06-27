@@ -2303,22 +2303,27 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
 
     output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
 
+    .. warning::
+        The order in which updates are applied is nondeterministic, meaning that if there
+        are multiple index vectors in `indices` that correspond to the same position, the
+        value of that position in the output will be nondeterministic.
+
+    .. note::
+        If some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to `input_x`.
+
     Args:
-        input_x (Parameter): The target tensor, with data type of Parameter.
+        input_x (Tensor): The target tensor.
           The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
         indices (Tensor): The index to do add operation whose data type must be mindspore.int32 or
           mindspore.int64. Same rank as input_x. And accepted range is [-s, s) where s is the size along axis.
         updates (Tensor): The tensor doing the add operation with `input_x`, has the same type as input_x,
           and update.shape should be equal to indices.shape.
-        axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(data).
+        axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(input_x).
         reduction (string): Which reduction operation to scatter, default is "none". Other option: "add".
 
     Outputs:
         Tensor, has the same shape and type as `input_x`.
-
-    Warning:
-        When the indices is not unique, this behavior is not defined one of the value will be picked from the updates.
-        The result is arbitrary.
 
     Raises:
         TypeError: If `indices` is neither int32 nor int64.

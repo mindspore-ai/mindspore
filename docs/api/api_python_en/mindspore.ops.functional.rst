@@ -46,6 +46,7 @@ Neural Network
 
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.avg_pool2d
+    mindspore.ops.interpolate
     mindspore.ops.pad
     mindspore.ops.pdist
     mindspore.ops.deformable_conv2d
@@ -346,6 +347,7 @@ Array Operation
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
+    mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unsorted_segment_min
