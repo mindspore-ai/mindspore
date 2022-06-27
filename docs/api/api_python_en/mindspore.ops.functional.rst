@@ -234,6 +234,7 @@ Comparison operators
     mindspore.ops.less
     mindspore.ops.maximum
     mindspore.ops.minimum
+    mindspore.ops.ne
     mindspore.ops.same_type_shape
 
 .. list-table::
@@ -318,6 +319,7 @@ Array Operation
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.diag
+    mindspore.ops.dyn_shape
     mindspore.ops.expand_dims
     mindspore.ops.gather
     mindspore.ops.gather_d
@@ -341,6 +343,7 @@ Array Operation
     mindspore.ops.select
     mindspore.ops.shape
     mindspore.ops.size
+    mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
     mindspore.ops.tensor_scatter_add
