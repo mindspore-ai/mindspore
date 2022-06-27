@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_COL2IM_IMPL_CUH_
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-template <typename T>
+template <typename T, typename S>
 CUDA_LIB_EXPORT void Col2Im(const T *input, const size_t batch_size, const size_t channels, const size_t out_height,
                             const size_t out_width, const size_t in_height, const size_t in_width,
                             const size_t kernel_height, const size_t kernel_width, const size_t pad_height,

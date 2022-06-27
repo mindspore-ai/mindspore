@@ -20,8 +20,12 @@
 #include <cuda_runtime.h>
 #include <algorithm>
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+template <typename T, typename S>
 __global__ void Col2ImKernel(const T *input, T *output, const size_t num_kernels, const size_t per_batch_size,
                              const size_t per_channel_size, const size_t per_col_batch_size, const size_t out_height,
                              const size_t out_width, const size_t in_height, const size_t in_width,
@@ -29,7 +33,7 @@ __global__ void Col2ImKernel(const T *input, T *output, const size_t num_kernels
                              const size_t pad_width, const size_t stride_height, const size_t stride_width,
                              const size_t dilation_height, const size_t dilation_width) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_kernels; i += blockDim.x * gridDim.x) {
-    T val = static_cast<T>(0);
+    S val = static_cast<S>(0);
     size_t w_id = i % out_height + pad_width;
     size_t h_id = i % per_batch_size / out_width % out_height + pad_height;
     size_t c_id = i % per_batch_size / per_channel_size;
@@ -52,15 +56,15 @@ __global__ void Col2ImKernel(const T *input, T *output, const size_t num_kernels
           size_t data_index =
             n_col_offset +
             (((c_id * kernel_height + kernel_h) * kernel_width + kernel_w) * in_height + height) * in_width + width;
-          val += input[data_index];
+          val += (S)input[data_index];
         }
       }
     }
-    output[i] = val;
+    output[i] = static_cast<T>(val);
   }
 }
 
-template <typename T>
+template <typename T, typename S>
 void Col2Im(const T *input, const size_t batch_size, const size_t channels, const size_t out_height,
             const size_t out_width, const size_t in_height, const size_t in_width, const size_t kernel_height,
             const size_t kernel_width, const size_t pad_height, const size_t pad_width, const size_t stride_height,
@@ -70,24 +74,41 @@ void Col2Im(const T *input, const size_t batch_size, const size_t channels, cons
   size_t per_batch_size = channels * per_channel_size;
   size_t num_kernels = batch_size * per_batch_size;
   size_t per_col_batch_size = channels * in_height * in_width * kernel_width * kernel_height;
-  Col2ImKernel<<<GET_BLOCKS(num_kernels), GET_THREADS, 0, cuda_stream>>>(
+  Col2ImKernel<T, S><<<GET_BLOCKS(num_kernels), GET_THREADS, 0, cuda_stream>>>(
     input, output, num_kernels, per_batch_size, per_channel_size, per_col_batch_size, out_height, out_width, in_height,
     in_width, kernel_height, kernel_width, pad_height, pad_width, stride_height, stride_width, dilation_height,
     dilation_width);
   return;
 }
 
-template CUDA_LIB_EXPORT void Col2Im<float>(const float *input, const size_t batch_size, const size_t channels,
-                                            const size_t out_height, const size_t out_width, const size_t in_height,
-                                            const size_t in_width, const size_t kernel_height,
-                                            const size_t kernel_width, const size_t pad_height, const size_t pad_width,
-                                            const size_t stride_height, const size_t stride_width,
-                                            const size_t dilation_height, const size_t dilation_width, float *output,
-                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Col2Im<float, float>(
+  const float *input, const size_t batch_size, const size_t channels, const size_t out_height, const size_t out_width,
+  const size_t in_height, const size_t in_width, const size_t kernel_height, const size_t kernel_width,
+  const size_t pad_height, const size_t pad_width, const size_t stride_height, const size_t stride_width,
+  const size_t dilation_height, const size_t dilation_width, float *output, cudaStream_t cuda_stream);
 
-template CUDA_LIB_EXPORT void Col2Im<half>(const half *input, const size_t batch_size, const size_t channels,
-                                           const size_t out_height, const size_t out_width, const size_t in_height,
-                                           const size_t in_width, const size_t kernel_height, const size_t kernel_width,
-                                           const size_t pad_height, const size_t pad_width, const size_t stride_height,
-                                           const size_t stride_width, const size_t dilation_height,
-                                           const size_t dilation_width, half *output, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Col2Im<half, float>(
+  const half *input, const size_t batch_size, const size_t channels, const size_t out_height, const size_t out_width,
+  const size_t in_height, const size_t in_width, const size_t kernel_height, const size_t kernel_width,
+  const size_t pad_height, const size_t pad_width, const size_t stride_height, const size_t stride_width,
+  const size_t dilation_height, const size_t dilation_width, half *output, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void Col2Im<double, double>(
+  const double *input, const size_t batch_size, const size_t channels, const size_t out_height, const size_t out_width,
+  const size_t in_height, const size_t in_width, const size_t kernel_height, const size_t kernel_width,
+  const size_t pad_height, const size_t pad_width, const size_t stride_height, const size_t stride_width,
+  const size_t dilation_height, const size_t dilation_width, double *output, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void Col2Im<Complex<float>, Complex<float>>(
+  const Complex<float> *input, const size_t batch_size, const size_t channels, const size_t out_height,
+  const size_t out_width, const size_t in_height, const size_t in_width, const size_t kernel_height,
+  const size_t kernel_width, const size_t pad_height, const size_t pad_width, const size_t stride_height,
+  const size_t stride_width, const size_t dilation_height, const size_t dilation_width, Complex<float> *output,
+  cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void Col2Im<Complex<double>, Complex<double>>(
+  const Complex<double> *input, const size_t batch_size, const size_t channels, const size_t out_height,
+  const size_t out_width, const size_t in_height, const size_t in_width, const size_t kernel_height,
+  const size_t kernel_width, const size_t pad_height, const size_t pad_width, const size_t stride_height,
+  const size_t stride_width, const size_t dilation_height, const size_t dilation_width, Complex<double> *output,
+  cudaStream_t cuda_stream);
