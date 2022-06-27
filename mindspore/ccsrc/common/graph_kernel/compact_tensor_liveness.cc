@@ -26,6 +26,7 @@ bool CompactTensorLiveness::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(mng);
   auto todos = TopoSort(func_graph->get_return());
   bool changed = false;
+  mindspore::HashSet<AnfNodePtr> target_nodes;
   for (auto &node : todos) {
     if (auto cnode = node->cast<CNodePtr>(); cnode != nullptr) {
       bool any_cnode_input = std::any_of(cnode->inputs().cbegin(), cnode->inputs().cend(),
@@ -33,26 +34,31 @@ bool CompactTensorLiveness::Run(const FuncGraphPtr &func_graph) {
       if (any_cnode_input || common::AnfAlgo::IsGraphKernel(cnode) || mng->node_users()[cnode].size() != 1) {
         continue;
       }
-      auto user = mng->node_users()[cnode].front().first;
-      if (auto user_cnode = user->cast<CNodePtr>(); user_cnode != nullptr) {
-        const auto iter = std::find_if(user_cnode->inputs().cbegin() + 1, user_cnode->inputs().cend(),
-                                       [&node](const AnfNodePtr &n) { return n->isa<CNode>() && n != node; });
-        if (iter != user_cnode->inputs().end()) {
-          // Insert update_state_node, need mount a monad node.
-          auto u = NewValueNode(kUMonad);
-          u->set_abstract(kUMonad->ToAbstract());
-          AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u};
-          update_state_inputs.push_back(*iter);
-          auto update_state_cnode = func_graph->NewCNode(update_state_inputs);
-          update_state_cnode->set_abstract(u->abstract());
-          func_graph->AddNode(update_state_cnode);
+      (void)target_nodes.insert(node);
+    }
+  }
+  for (auto &node : target_nodes) {
+    auto cnode = node->cast<CNodePtr>();
+    auto user = mng->node_users()[cnode].front().first;
+    if (auto user_cnode = user->cast<CNodePtr>(); user_cnode != nullptr) {
+      const auto iter = std::find_if(
+        user_cnode->inputs().cbegin() + 1, user_cnode->inputs().cend(),
+        [&node, &target_nodes](const AnfNodePtr &n) { return n->isa<CNode>() && target_nodes.count(n) == 0; });
+      if (iter != user_cnode->inputs().end()) {
+        // Insert update_state_node, need mount a monad node.
+        auto u = NewValueNode(kUMonad);
+        u->set_abstract(kUMonad->ToAbstract());
+        AnfNodePtrList update_state_inputs = {NewValueNode(prim::kPrimUpdateState), u};
+        update_state_inputs.push_back(*iter);
+        auto update_state_cnode = func_graph->NewCNode(update_state_inputs);
+        update_state_cnode->set_abstract(u->abstract());
+        func_graph->AddNode(update_state_cnode);
 
-          // reset inputs
-          auto origin_inputs = cnode->inputs();
-          origin_inputs.push_back(update_state_cnode);
-          cnode->set_inputs(origin_inputs);
-          changed = true;
-        }
+        // reset inputs
+        auto origin_inputs = cnode->inputs();
+        origin_inputs.push_back(update_state_cnode);
+        cnode->set_inputs(origin_inputs);
+        changed = true;
       }
     }
   }
