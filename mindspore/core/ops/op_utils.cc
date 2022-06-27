@@ -32,6 +32,12 @@ std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector
   if (x_shape == y_shape) {
     return x_shape;
   }
+  constexpr int dynamic_rank_len = 1;
+  constexpr int dynamic_rank_value = -2;
+  if ((x_shape.size() == dynamic_rank_len && x_shape[0] == dynamic_rank_value) ||
+      (y_shape.size() == dynamic_rank_len && y_shape[0] == dynamic_rank_value)) {
+    return std::vector<int64_t>({dynamic_rank_value});
+  }
   auto x_length = static_cast<int64_t>(x_shape.size());
   auto y_length = static_cast<int64_t>(y_shape.size());
   auto length = x_length < y_length ? x_length : y_length;
