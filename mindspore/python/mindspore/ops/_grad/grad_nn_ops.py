@@ -1214,10 +1214,17 @@ def get_bprop_ce_with_logits_loss(self):
 @bprop_getters.register(P.KLDivLoss)
 def get_bprop_kl_div_loss(self):
     """Grad definition for `KLDivLoss` operation."""
-    grad = G.KLDivLossGrad(self.reduction)
+    if self.reduction == "mean":
+        grad = G.KLDivLossGrad("sum")
+    else:
+        grad = G.KLDivLossGrad(self.reduction)
+    size = P.Size()
+    reduce_type = self.reduction
 
     def bprop(x, y, out, dout):
         dx = grad(dout, x, y)
+        if reduce_type == "mean":
+            return dx / size(x), zeros_like(y)
         return dx, zeros_like(y)
 
     return bprop

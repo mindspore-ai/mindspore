@@ -358,6 +358,7 @@ constexpr const char kNameIsNan[] = "IsNan";
 constexpr const char kNameKLDiv[] = "KLDivLoss";
 constexpr const char kNameStringLength[] = "StringLength";
 constexpr const char kNameGetShape[] = "GetShape";
+constexpr const char kNameKlDivLossGrad[] = "KLDivLossGrad";
 
 class OpAdapterDesc;
 
