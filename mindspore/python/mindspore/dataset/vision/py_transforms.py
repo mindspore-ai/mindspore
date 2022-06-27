@@ -262,6 +262,11 @@ class Cutout(py_transforms.PyTensorOperation):
                 'img dimension should be 3. Got {}.'.format(np_img.ndim))
 
         _, image_h, image_w = np_img.shape
+        if self.length > image_h or self.length > image_w:
+            raise ValueError(
+                f"Patch length is too large, got patch length: {self.length} and image height: {image_h}, image "
+                f"width: {image_w}")
+
         scale = (self.length * self.length) / (image_h * image_w)
         bounded = False
 

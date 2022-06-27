@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -27,8 +28,8 @@ namespace mindspore {
 namespace dataset {
 class NormalizePadOp : public TensorOp {
  public:
-  NormalizePadOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b,
-                 std::string dtype = "float32", bool is_hwc = true);
+  NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, std::string dtype = "float32",
+                 bool is_hwc = true);
 
   ~NormalizePadOp() override = default;
 
@@ -39,8 +40,8 @@ class NormalizePadOp : public TensorOp {
   std::string Name() const override { return kNormalizePadOp; }
 
  private:
-  std::shared_ptr<Tensor> mean_;
-  std::shared_ptr<Tensor> std_;
+  std::vector<float> mean_;
+  std::vector<float> std_;
   std::string dtype_;
   bool is_hwc_;
 };
