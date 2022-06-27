@@ -69,7 +69,7 @@ from .validators import check_adjust_gamma, check_alpha, check_auto_augment, che
     check_random_erasing, check_random_perspective, check_random_resize_crop, check_random_rotation, \
     check_random_select_subpolicy_op, check_random_solarize, check_range, check_rescale, check_resize, \
     check_resize_interpolation, check_rgb_to_hsv, check_rotate, check_slice_patches, check_ten_crop, \
-    check_uniform_augment_cpp, check_to_tensor, FLOAT_MAX_INTEGER
+    check_uniform_augment, check_to_tensor, FLOAT_MAX_INTEGER
 from ..core.datatypes import mstype_to_detype, nptype_to_detype
 from ..transforms.py_transforms_util import Implementation
 from ..transforms.transforms import CompoundOperation, PyTensorOperation, TensorOperation, TypeCast
@@ -3541,7 +3541,7 @@ class UniformAugment(CompoundOperation):
         ...                                                 input_columns="image")
     """
 
-    @check_uniform_augment_cpp
+    @check_uniform_augment
     def __init__(self, transforms, num_ops=2):
         super().__init__(transforms)
         self.num_ops = num_ops
