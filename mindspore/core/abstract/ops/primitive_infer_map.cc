@@ -57,6 +57,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kDropoutGenMask = prim::kPrimDropoutGenMask->name();
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
+  static const auto &kResizeBicubic = prim::kPrimResizeBicubic->name();
   static const auto &kRandomPoisson = prim::kPrimRandomPoisson->name();
   static const auto &kRandomCategorical = prim::kPrimRandomCategorical->name();
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
@@ -120,6 +121,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kSparseGatherV2, ShapeSet{2}},
                                          {kRange, ShapeSet{0, 1, 2}},
                                          {kRangeV2, ShapeSet{0, 1, 2}},
+                                         {kResizeBicubic, ShapeSet{1}},
                                          {kConv2DBackpropFilter, ShapeSet{2}},
                                          {kConv2DBackpropInput, ShapeSet{2}},
                                          {kCol2Im, ShapeSet{1}},
@@ -153,7 +155,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kBartlettWindow, ShapeSet{0}}};
   return host_depends;
 }
-
 std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

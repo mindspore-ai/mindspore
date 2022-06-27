@@ -2766,3 +2766,78 @@ class GridSampler2DGrad(Primitive):
         self.add_prim_attr('interpolation_mode', interpolation_mode)
         self.add_prim_attr('padding_mode', padding_mode)
         self.add_prim_attr('align_corners', align_corners)
+
+
+class ResizeBicubicGrad(Primitive):
+    """
+    Computes gradients for ResizeBicubicGrad operation.
+
+    Args:
+        align_corners (bool):If true, the centers of the 4 corner pixels of the input
+    and output tensors are aligned, preserving the values at the corner pixels.Default: False.
+        half_pixel_centers (bool): An optional bool. Default: False.
+
+    Inputs:
+        - **grads** (Tensor) - A Tensor of type float. 4-D with shape
+          [batch, height, width,channels]. The format must be NHWC.
+        - **original_image** (Tensor) - A Tensor. Must be one of the following types: float,double.
+          4-D with shape [batch, orig_height, orig_width, channels], The image tensor that was resized.
+          The format must be NHWC.
+
+    Outputs:
+        A 4-D Tensor , with the same shape and data type as `original_image`.
+
+    Rasise:
+        TypeError: If `grads` is not allowed.
+        TypeError: If `original_image` is not allowed.
+        ValueError: If `images` dim is not 4.
+        ValueError: If `size` dim is not 4.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+    @prim_attr_register
+    def __init__(self, align_corners=False, half_pixel_centers=False):
+        """Initialize CropAndResize"""
+        validator.check_value_type('align_corners', align_corners, bool, self.name)
+        validator.check_value_type('half_pixel_centers', half_pixel_centers, bool, self.name)
+        self.init_prim_io_names(inputs=['grads', 'original_image'], outputs=['y'])
+
+    def __infer__(self, grads, original_image):
+        # get shape
+        grads_shape = list(grads['shape'])
+        original_image_shape = list(original_image['shape'])
+        # get value
+        if grads['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'grads' cannot be None,\
+                            but got {grads['value']}.")
+        if original_image['value'] is None:
+            raise ValueError(f"For '{self.name}', the 'original_image' cannot be None,\
+                                but got {original_image['value']}.")
+        # get dtype
+        grads_dtype = grads['dtype']
+        original_image_dtype = original_image['dtype']
+        # check dytpe
+        validator.check_tensor_dtype_valid("grads", grads_dtype,
+                                           [mstype.float32], self.name)
+        validator.check_tensor_dtype_valid("original_image", original_image_dtype,
+                                           [mstype.float32, mstype.float64], self.name)
+        # check input shape rank
+        validator.check("grads rank", len(grads_shape), "expected", 4, Rel.EQ, self.name)
+        validator.check("original_image rank", len(original_image_shape), "expected", 4, Rel.EQ, self.name)
+        validator.check("batch_size equal", grads_shape[0], "expected", original_image_shape[0], Rel.EQ, self.name)
+        validator.check("channel equal", grads_shape[3], "expected", original_image_shape[3], Rel.EQ, self.name)
+        # check original_image_shape and grads_shape
+        validator.check("original_image[0] and grads[0]", original_image_shape[0],
+                        "expected", grads_shape[0], Rel.EQ, self.name)
+        validator.check("original_image[3] and grads[3]", original_image_shape[3],
+                        "expected", grads_shape[3], Rel.EQ, self.name)
+
+        batch_size = grads_shape[0]
+        height = original_image_shape[1]
+        width = original_image_shape[2]
+        channel = grads_shape[3]
+        out_shape = (batch_size, height, width, channel)
+        return {'shape': out_shape,
+                'dtype': original_image_dtype,
+                'value': None}

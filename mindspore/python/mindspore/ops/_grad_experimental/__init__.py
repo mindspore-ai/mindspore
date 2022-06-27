@@ -20,5 +20,6 @@ from . import grad_inner_ops
 from . import grad_nn_ops
 from . import grad_math_ops
 from . import grad_linalg_ops
+from . import grad_image_ops
 
 __all__ = ['get_bprop_fn']
