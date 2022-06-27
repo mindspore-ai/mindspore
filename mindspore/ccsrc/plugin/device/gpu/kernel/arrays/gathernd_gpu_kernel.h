@@ -148,7 +148,7 @@ class GatherNdFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     size_t size = common::AnfAlgo::TensorSizeInByte<T>(input_shapes_);
     input_size_list_.push_back(size);
 
-    size = common::AnfAlgo::TensorSizeInByte<T>(indices_shapes_);
+    size = common::AnfAlgo::TensorSizeInByte<S>(indices_shapes_);
     input_size_list_.push_back(size);
 
     size = common::AnfAlgo::TensorSizeInByte<T>(output_shapes_);
