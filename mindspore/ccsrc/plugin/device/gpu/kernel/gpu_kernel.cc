@@ -54,13 +54,8 @@ int DeprecatedNativeGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     MS_LOG(ERROR) << "kernel_node_ is not a cnode.";
     return KRET_RESIZE_FAILED;
   }
-  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
-      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
-      abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
-    return KRET_OK;
-  }
 
-  MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Update Args: " << cnode->fullname_with_scope();
   DestroyResource();
   ResetResource();
   if (!Init(cnode)) {
