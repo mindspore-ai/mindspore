@@ -189,6 +189,38 @@ def test_coo_method():
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_coo_coalesce():
+    """
+    Feature: Test coo tensor coalesce methods.
+    Description: Test coo_tensor.coalesce()
+    Expectation: Success.
+    """
+    if get_platform() != "linux":
+        return
+
+    class COOCoalesce(nn.Cell):
+        def construct(self, coo_tensor):
+            return coo_tensor.coalesce()
+
+    indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=mstype.int64)
+    values = Tensor([1, 5, 4], dtype=mstype.float32)
+    shape = (3, 3)
+    coo_tensor = COOTensor(indices.transpose(), values, shape)
+
+    coalesce_output = COOCoalesce()(coo_tensor)
+    res_coo = coo_tensor.coalesce()
+
+    expect_indices = np.array([[0, 1], [1, 2]], dtype=np.int64)
+    expect_values = np.array([6., 4.], dtype=np.float32)
+    assert np.allclose(expect_indices, res_coo.indices.asnumpy())
+    assert np.allclose(expect_values, res_coo.values.asnumpy())
+    assert np.allclose(expect_indices, coalesce_output.indices.asnumpy())
+    assert np.allclose(expect_values, coalesce_output.values.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_dtype_coo_tensor():

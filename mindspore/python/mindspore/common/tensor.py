@@ -4491,6 +4491,21 @@ class COOTensor(COOTensor_):
         """Return COOTensor's shape."""
         return self._shape
 
+    def coalesce(self):
+        """
+        Return the coalesced sparse tensor of the input
+
+        Returns:
+            Tensor.
+
+        Supported Platforms:
+            ``GPU``
+        """
+        shape = Tensor(self.shape)
+        res_indices, res_values, _ = tensor_operator_registry.get("coalesce")(self.indices.transpose(), \
+            self.values, shape)
+        return COOTensor(res_indices.transpose(), res_values, self.shape)
+
     def to_csr(self):
         """
         Converts COOTensor to CSRTensor.

@@ -908,6 +908,60 @@ def make_sparse_tensor(indices, values, dense_shape):
     return make_coo_tensor(indices, values, dense_shape)
 
 
+def coalesce(x_indices, x_values, x_shape):
+    """
+    Returns the coalesced sparse tensor of the input.
+
+    Args:
+        - **x_indices** (Tensor) - A 2-D Tensor, represents the indices of the nonzero elements of the sparse tensor.
+          Supported data type is int64. It's elements should be non-negative. The shape is :math:`(y, x)`.
+        - **x_values** (Tensor) - A 1-D Tensor, represents the values corresponding to the indices in `x_indices`.
+          Supported data types are float16 and float32. The shape is :math:`(x,)`.
+        - **x_shape** (Tensor) - A 1-D Tensor, specifies the shape of the sparse tensor.
+          Supported data type is int64. The shape is :math:`(y,)`.
+
+    Returns:
+        - **y_indices** (Tensor) - A 2-D Tensor, represents the indices of the nonzero elements of the sparse tensor.
+          Data type is int64. It's elements are non-negative. The shape is :math:`(y, z)`.
+          `z` represents the number of different indices in `x_indices`.
+        - **y_values** (Tensor) - A 1-D Tensor, represents the values corresponding to the indices in `y_indices`.
+          Data type is the same as `x_values`'s. The shape is :math:`(z,)`.
+        - **y_shape** (Tensor) - A 1-D Tensor, specifies the shape of the sparse tensor.
+          Data type is int64. The shape is :math:`(y,)`.
+
+    Raises:
+        TypeError: If the data type of `x_values` is neither float32 nor float16.
+        TypeError: If any of the data types of `x_indices` and `x_shape` is not int64.
+        ValueError: If any of `x_values` and `x_shape` is not a 1-D tensor.
+        ValueError: If `x_indices` is not a 2-D tensor.
+        ValueError: If sizes of second dimension of `x_indices` and first dimension of `x_values` are not the same.
+        ValueError: If sizes of first dimension of `x_indices` and first dimension of `x_shape` are not the same.
+        ValueError: If any of the values of elements of `x_indices` is negative.
+        ValueError: If any of the values of elements of `x_indices` exceed the limit set by `x_shape`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore.ops import functional as F
+        >>> from mindspore import Tensor
+        >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
+        >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
+        >>> x_shape = Tensor([3, 3], dtype=ms.int64)
+        >>> coalesce = F.coalesce()
+        >>> y_indices, y_values, y_shape = coalesce(x_indices, x_values, x_shape)
+        >>> print(y_indices)
+        [[0 1]
+         [1 2]]
+        >>> print(y_values)
+        [6. 4.]
+        >>> print(y_shape)
+        [3 3]
+    """
+    return P.Coalesce()(x_indices, x_values, x_shape)
+
+
 make_csr_tensor = Primitive('MakeCSRTensor')
 csr_tensor_get_values = Primitive('CSRTensorGetValues')
 csr_tensor_get_indices = Primitive('CSRTensorGetIndices')
@@ -1030,5 +1084,6 @@ tensor_operator_registry.register('bernoulli', bernoulli)
 tensor_operator_registry.register('norm', norm)
 tensor_operator_registry.register('renorm', renorm)
 tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
+tensor_operator_registry.register('coalesce', coalesce)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')
