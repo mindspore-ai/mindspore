@@ -40,6 +40,8 @@ message HeartbeatMessage {
 message HeartbeatRespMessage {
   bool success = 1;
   uint32 topo_state = 2;
+  uint32 nodes_num = 3;
+  uint32 abnormal_nodes_num = 4;
 }
 
 message MetadataMessage {

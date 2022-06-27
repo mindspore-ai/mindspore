@@ -73,7 +73,11 @@ class MetaServerNode : public NodeBase {
  public:
   explicit MetaServerNode(const std::string &node_id, const std::string &role, const size_t &node_num,
                           uint64_t node_timeout = kDefaultNodeTimeout)
-      : NodeBase(node_id, role), total_node_num_(node_num), enable_monitor_(true), node_timeout_(node_timeout) {}
+      : NodeBase(node_id, role),
+        total_node_num_(node_num),
+        abnormal_node_num_(0),
+        enable_monitor_(true),
+        node_timeout_(node_timeout) {}
   ~MetaServerNode() override;
 
   bool Initialize() override;
@@ -150,6 +154,9 @@ class MetaServerNode : public NodeBase {
 
   // The total legal number of compute graph nodes.
   size_t total_node_num_;
+
+  // The total number of abnormal(eg. timeout) compute graph nodes.
+  size_t abnormal_node_num_;
 
   // The monitor thread for update the topo state.
   std::thread topo_monitor_;

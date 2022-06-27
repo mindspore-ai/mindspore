@@ -71,11 +71,16 @@ bool MetaServerNode::Finalize(bool force) {
   if (finalized_) {
     return true;
   }
-  if (topo_state_ != TopoState::kFinished && !force) {
+  if (topo_state_ != TopoState::kFinished && !force &&
+      (recovery::IsEnableRecovery() || (abnormal_node_num_ == 0 && !recovery::IsEnableRecovery()))) {
     MS_LOG(WARNING) << "The meta server node can not be finalized because there are still " << nodes_.size()
                     << " alive nodes.";
     return false;
   } else {
+    if (abnormal_node_num_ > 0) {
+      MS_LOG(ERROR) << "There are " << abnormal_node_num_ << " abnormal compute graph nodes.";
+    }
+
     // Release the TCP server.
     if (tcp_server_ != nullptr) {
       tcp_server_->Finalize();
@@ -242,10 +247,13 @@ MessageBase *const MetaServerNode::ProcessHeartbeat(MessageBase *const message) 
   if (nodes_.find(node_id) != nodes_.end()) {
     auto &node = nodes_[node_id];
     time(&(node->last_update));
+    node->state = NodeState::kRegistered;
 
     HeartbeatRespMessage resp_msg;
     resp_msg.set_success(static_cast<bool>(MessageName::kSuccess));
     resp_msg.set_topo_state(static_cast<uint32_t>(topo_state_));
+    resp_msg.set_nodes_num(total_node_num_);
+    resp_msg.set_abnormal_nodes_num(abnormal_node_num_);
     auto content = resp_msg.SerializeAsString();
     auto response = CreateMessage(meta_server_addr_.GetUrl(), MessageName::kSuccess, content);
     MS_EXCEPTION_IF_NULL(response);
@@ -365,6 +373,7 @@ void MetaServerNode::UpdateTopoState() {
         }
 
         // Update the state of compute graph nodes.
+        size_t abnormal_node_num = 0;
         for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
           auto node_id = iter->first;
           auto node_info = iter->second;
@@ -372,13 +381,14 @@ void MetaServerNode::UpdateTopoState() {
           time_t now = time(&now);
           auto elapsed = difftime(now, node_info->last_update);
           if (elapsed > node_timeout_) {
-            if (recovery::IsEnableRecovery()) {
-              MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
-              node_info->state = NodeState::kTimeout;
-            } else {
-              MS_LOG(EXCEPTION) << "The node: " << node_id << " is timed out.";
-            }
+            node_info->state = NodeState::kTimeout;
+            ++abnormal_node_num;
+            MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
           }
+        }
+        abnormal_node_num_ = abnormal_node_num;
+        if (abnormal_node_num_ > 0 && !recovery::IsEnableRecovery()) {
+          MS_LOG(EXCEPTION) << "The total number of timed out node is " << abnormal_node_num_;
         }
       }
       nodes_mutex_.unlock();
@@ -387,6 +397,7 @@ void MetaServerNode::UpdateTopoState() {
       sleep(interval);
     }
   } catch (const std::exception &e) {
+    nodes_mutex_.unlock();
     MsException::Instance().SetException();
   }
 }

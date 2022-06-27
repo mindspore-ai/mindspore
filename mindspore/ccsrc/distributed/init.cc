@@ -30,10 +30,19 @@ bool Initialize() {
   }
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
+  auto node = cluster::ClusterContext::instance()->node();
+  MS_EXCEPTION_IF_NULL(node);
+
+  // Set the callback for the cluster node.
+  auto callback = std::make_shared<std::function<void(void)>>([]() {
+    if (!collective::CollectiveManager::instance()->Finalize()) {
+      MS_LOG(EXCEPTION) << "Failed to finalize the collective communication lib.";
+    }
+  });
+  node->set_abnormal_callback(callback);
+
   if (cluster::ClusterContext::instance()->initialized() && !collective::CollectiveManager::instance()->initialized()) {
     // Server and Scheduler don't use collective communication library.
-    auto node = cluster::ClusterContext::instance()->node();
-    MS_EXCEPTION_IF_NULL(node);
     const auto &cluster_ctx = cluster::ClusterContext::instance();
     MS_EXCEPTION_IF_NULL(cluster_ctx);
     if (cluster_ctx->node_role() != kEnvRoleOfScheduler) {

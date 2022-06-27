@@ -89,6 +89,7 @@ bool CollectiveNode::SynchronizeAddresses() {
         sleep(interval);
       } else {
         MS_LOG(INFO) << "The address of rank " << rank_id << " has been registered successfully.";
+        break;
       }
       MsException::Instance().CheckException();
     }
