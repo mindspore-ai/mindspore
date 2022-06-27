@@ -94,6 +94,7 @@ parse_expr_statement_white_list = (
 
 _builtin_function_or_method_type = type(abs)
 
+# Unsupported python builtin type in graph mode.
 _unsupported_python_builtin_type = (
     list, tuple, set, dict, slice, bool, int, float, str, complex, reversed, type,
 )
@@ -104,6 +105,11 @@ _unsupported_internal_type = (
 
 _hybrid_type = (
     print, len, enumerate, zip, map, filter,
+)
+
+# Unsupported python builtin type in JIT Fallback.
+_fallback_unsupported_python_builtin_type = (
+    compile, delattr, eval, exec, getattr, hasattr, input, issubclass, open, setattr, super, staticmethod, __import__,
 )
 
 
@@ -740,6 +746,8 @@ class Parser:
         """To check if not supported for namespace"""
         unsupported = isinstance(value, _builtin_function_or_method_type) and value not in convert_object_map
         logger.debug(f"'{value}' unsupported: {unsupported}.")
+        if unsupported and value in _fallback_unsupported_python_builtin_type:
+            raise TypeError(f"'{value}' is not supported both in JIT Fallback and graph mode.")
         return unsupported
 
     @staticmethod
