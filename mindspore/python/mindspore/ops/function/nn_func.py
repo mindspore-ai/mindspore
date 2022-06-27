@@ -660,6 +660,7 @@ def deformable_conv2d(x, weight, offsets, kernel_size, strides, padding, bias=No
     Note:
         - This is an experimental interface that is subject to change or deletion.
         - For Ascend platform, the following cases are not supported:
+
           - :math:`C_{in}` cannot be divisible by 8, e.g. `x` is :math:`(N, 2, H_{in}, W_{in})`
           - `deformable_groups` is 1, e.g. `deformable_groups` is 2
           - `offsets` value is float which does not contain a decimal part, e.g. `offsets` is assigned with
