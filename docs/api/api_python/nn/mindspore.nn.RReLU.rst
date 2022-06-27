@@ -13,7 +13,7 @@ mindspore.nn.RReLU
 
    其中，:math:`\alpha_{ji}` ~ U(l, u), :math:`l \le u`.
 
-   更多细节详见 `https://arxiv.org/pdf/1505.00853.pdf`_。
+   更多细节详见 `Empirical Evaluation of Rectified Activations in Convolution Network <https://arxiv.org/pdf/1505.00853.pdf>`_。
 
    **参数：**
 
