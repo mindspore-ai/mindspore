@@ -87,6 +87,36 @@ TuplePtr ReduceStdInferType(const PrimitivePtr &prim, const std::vector<Abstract
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(ReduceStd, BaseOperator);
+
+void ReduceStd::Init(bool unbiased) { set_unbiased(unbiased); }
+
+void ReduceStd::Init(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+void ReduceStd::Init(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+void ReduceStd::set_unbiased(bool unbiased) { (void)AddAttr(kUnbiased, api::MakeValue(unbiased)); }
+
+bool ReduceStd::get_unbiased() const {
+  auto value_ptr = GetAttr(kUnbiased);
+  return GetValue<bool>(value_ptr);
+}
+
+void ReduceStd::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+std::vector<int64_t> ReduceStd::get_axis() const {
+  std::vector<int64_t> axis;
+  auto axis_value = GetAttr(kAxis);
+  MS_EXCEPTION_IF_NULL(axis_value);
+  if (axis_value->isa<api::ValueSequence>()) {
+    axis = api::GetValue<std::vector<int64_t>>(axis_value);
+  } else if (axis_value->isa<api::Int64Imm>()) {
+    axis.emplace_back(api::GetValue<int64_t>(axis_value));
+  } else {
+    MS_EXCEPTION(TypeError) << "For ReduceStd, the type of attribute `axis` is invalid.";
+  }
+  return axis;
+}
+
 AbstractBasePtr ReduceStdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

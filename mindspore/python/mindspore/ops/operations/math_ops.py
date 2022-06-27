@@ -2274,7 +2274,7 @@ class ReduceStd(Primitive):
         ValueError: If `axis` is not one of the following: int, tuple or list.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
