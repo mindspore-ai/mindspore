@@ -155,4 +155,11 @@ ATTR_MAP(Scale) = {{"axis", ATTR_DESC(axis, AnyTraits<int64_t>())},
 
 OUTPUT_MAP(Scale) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Scale, kNameScale, ADPT_DESC(Scale))
+
+// KlDivLossGrad
+INPUT_MAP(KlDivLossGrad) = {{1, INPUT_DESC(grad)}, {2, INPUT_DESC(input)}, {3, INPUT_DESC(target)}};
+ATTR_MAP(KlDivLossGrad) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())},
+                           {"log_target", ATTR_DESC(log_target, AnyTraits<bool>())}};
+OUTPUT_MAP(KlDivLossGrad) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(KlDivLossGrad, kNameKlDivLossGrad, ADPT_DESC(KlDivLossGrad))
 }  // namespace mindspore::transform

@@ -60,7 +60,8 @@ const std::map<std::string, std::string> opTypeAdapter = {{"ReLUV2", "ReluV2"},
                                                           {"HSwishGrad", "HardSwishGrad"},
                                                           {"CeLU", "CeluV2"},
                                                           {"ArgminV2", "ArgMin"},
-                                                          {"IndexAdd", "InplaceIndexAdd"}};
+                                                          {"IndexAdd", "InplaceIndexAdd"},
+                                                          {"KLDivLossGrad", "KlDivLossGrad"}};
 
 enum FusionDataType { kFusionNormal = 0, kFusionAddN, kFusionReLUGradV2, kFusionAdd };
 using FAttrsPass = void (*)(const AnfNodePtr &anf_node, const std::vector<std::shared_ptr<OpAttr>> &op_info_attrs,
