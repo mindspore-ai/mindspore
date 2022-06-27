@@ -497,50 +497,60 @@ class _Reduce(PrimitiveWithInfer):
         output = _run_op(self, self.name, args)
         return output
 
+    @staticmethod
+    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims):
+        """ compute the shape, min/max shape of output with axis shape when axis value is None """
+        input_shp = input_x['shape']
+        max_v = max(input_shp)
+        if 'max_shape' in input_x and 'min_shape' in input_x:
+            input_max_shp = input_x['max_shape']
+            max_v = max(input_max_shp)
+        if axis_shape == -1 and not keep_dims:
+            out_shape = np.array([-2]).tolist()
+            if 'max_shape' in input_x and 'min_shape' in input_x:
+                output_min_shape = input_x['min_shape']
+                output_max_shape = input_x['max_shape']
+        elif not keep_dims:
+            out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
+            out_shape = out_shape.tolist()
+            output_min_shape = np.ones_like(out_shape).tolist()
+            output_max_shape = max_v * np.ones_like(out_shape)
+            output_max_shape = output_max_shape.tolist()
+        else:
+            out_shape = -1 * np.ones_like(input_shp)
+            out_shape = out_shape.tolist()
+            output_min_shape = np.ones_like(input_shp).tolist()
+            output_max_shape = max_v * np.ones_like(input_shp)
+            output_max_shape = output_max_shape.tolist()
+        return out_shape, output_min_shape, output_max_shape
+
     def do_infer(self, input_x, axis, valid_dtype=mstype.number_type):
         """ return meta infos of input parameters """
         axis_v = axis['value']
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
-        if not isinstance(axis['dtype'], mstype.tensor_type) and axis_v is None:
-            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
         output_max_shape = None
         output_min_shape = None
-        if -1 in input_shp:
-            if axis_v is None:
-                max_v = max(input_shp)
-                if 'max_shape' in input_x and 'min_shape' in input_x:
-                    input_max_shp = input_x['max_shape']
-                    max_v = max(input_max_shp)
-                axis_shape_list = axis['shape']
-                validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
-                axis_shape = axis_shape_list[0]
-                if axis_shape == -1 and not self.keep_dims:
-                    out_shape = np.array([-2]).tolist()
-                    if 'max_shape' in input_x and 'min_shape' in input_x:
-                        output_min_shape = input_x['min_shape']
-                        output_max_shape = input_x['max_shape']
-                elif not self.keep_dims:
-                    out_shape = -1 * np.ones_like(input_shp[:-axis_shape])
-                    out_shape = out_shape.tolist()
-                    output_min_shape = np.ones_like(out_shape).tolist()
-                    output_max_shape = max_v * np.ones_like(out_shape)
-                    output_max_shape = output_max_shape.tolist()
-                else:
-                    out_shape = -1 * np.ones_like(input_shp)
-                    out_shape = out_shape.tolist()
-                    output_min_shape = np.ones_like(input_shp).tolist()
-                    output_max_shape = max_v * np.ones_like(input_shp)
-                    output_max_shape = output_max_shape.tolist()
-            else:
-                if 'max_shape' in input_x and 'min_shape' in input_x:
-                    output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
-                    output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
-                out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
+        # when the rank of input_x is dynamic, the rank of output is also dynamic
+        if -2 in input_shp:
+            out_shape = np.array([-2]).tolist()
+            if 'max_shape' in input_x and 'min_shape' in input_x:
+                output_min_shape = input_x['min_shape']
+                output_max_shape = input_x['max_shape']
+        # when axis value is none, the output shape is computed by axis shape
+        elif axis_v is None:
+            axis_shape_list = axis['shape']
+            validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
+            axis_shape = axis_shape_list[0]
+            out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
+                input_x, axis_shape, self.keep_dims)
+        elif -1 in input_shp:
+            if 'max_shape' in input_x and 'min_shape' in input_x:
+                output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
+                output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
+            out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         else:
-            if axis_v is None:
-                raise ValueError(f"For {self.name}, axis must be const, its value cannot be None.")
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
             output_max_shape = out_shape
             output_min_shape = out_shape

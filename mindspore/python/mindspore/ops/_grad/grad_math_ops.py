@@ -163,6 +163,10 @@ def _dyn_reduced_shape(input_shape, axis):
     """Dynamic reduce shape"""
     input_shape = P.Cast()(input_shape, ms.int32)
     if isinstance(axis, Tensor):
+        if is_shape_unknown(shape_op(axis)):
+            expanded_axis = P.ExpandDims()(axis, 1)
+            update = P.OnesLike()(axis)
+            return P.TensorScatterUpdate()(input_shape, expanded_axis, update)
         input_rank = P.Rank()(input_shape)
         real_axis = (axis + input_rank) % input_rank
         axis_shape = shape_op(real_axis)
