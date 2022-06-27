@@ -18,6 +18,7 @@
 
 #include <typeinfo>
 #include <set>
+#include <mutex>
 #include <memory>
 #include <sstream>
 #include <algorithm>
@@ -262,6 +263,7 @@ session::SessionPtr GetCurrentSession(const std::string &device_target, uint32_t
 compile::MindRTBackendPtr GetMindRtBackend(const std::string &device_target, uint32_t device_id) {
   auto iter = kMindRtBackends.find(device_target);
   if (iter == kMindRtBackends.end()) {
+    std::lock_guard<std::mutex> guard(pipeline::Resource::GetBackendInitMutex());
     auto backend = std::make_shared<compile::MindRTBackend>("ms", device_target, device_id);
     MS_EXCEPTION_IF_NULL(backend);
     kMindRtBackends[device_target] = backend;
@@ -3605,7 +3607,7 @@ void GradExecutor::GradNetInner(const py::object *ret, const prim::GradOperation
   // Launch bprop graph to backend
   SaveForwardTensorInfoInBpropGraph(resource);
   compile::SetMindRTEnable();
-  resource->SetResult(pipeline::kBackend, compile::CreateBackend());
+  resource->SetBackendAsync([]() { return compile::CreateBackend(); });
   MS_LOG(DEBUG) << "Start task emit action";
   auto parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if (parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel) {

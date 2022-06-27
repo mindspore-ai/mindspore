@@ -128,17 +128,19 @@ void DisableMindRT(const ResourcePtr &resource) {
   if (enable_old_runtime || use_old_vm_for_control_parallel) {
     MS_LOG(INFO) << "Disable mindRT in the heterogeneous + control flow + parallel scenario.";
     context_ptr->set_param<bool>(MS_CTX_ENABLE_MINDRT, false);
-    // Update the backend.
-    auto new_backend = compile::CreateBackend();
-    new_backend->SetDebugger();
-    resource->SetResult(kBackend, new_backend);
+    // Async update the backend.
+    resource->SetBackendAsync([]() {
+      auto new_backend = compile::CreateBackend();
+      new_backend->SetDebugger();
+      return new_backend;
+    });
   }
 }
 
 void TaskEmitActionForMindRT(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   // Get the mindRT backend.
-  auto bc_ptr = resource->GetResult(kBackend).cast<compile::BackendPtr>();
+  auto bc_ptr = resource->GetBackend();
   auto mindrt_bc_ptr = std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr);
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
@@ -151,7 +153,7 @@ void ExecuteActionForMindRT(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   const auto actor_info = resource->GetResult(kOutput).cast<compile::ActorInfo>();
   // Get the mindRT backend.
-  std::shared_ptr<compile::Backend> bc_ptr = resource->GetResult(kBackend).cast<std::shared_ptr<compile::Backend>>();
+  auto bc_ptr = resource->GetBackend();
   auto mindrt_bc_ptr = (std::dynamic_pointer_cast<compile::MindRTBackend>(bc_ptr)).get();
   MS_EXCEPTION_IF_NULL(mindrt_bc_ptr);
 
@@ -937,7 +939,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr) {
 void OriginSetRunMode(const ResourcePtr &resource) {
   FuncGraphPtr func_graph = resource->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto bc_ptr = resource->GetResult(kBackend).cast<compile::BackendPtr>();
+  auto bc_ptr = resource->GetBackend();
   auto context_ptr = MsContext::GetInstance();
   std::string backend = MsContext::GetInstance()->backend_policy();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -973,7 +975,7 @@ void SetRunMode(const ResourcePtr &resource) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_MINDRT) && common::GetEnv("DISABLE_ASCEND_MINDRT") != "1") {
-    SetRunMode(resource->func_graph(), resource->GetResult(kBackend).cast<compile::BackendPtr>().get());
+    SetRunMode(resource->func_graph(), resource->GetBackend().get());
   } else {
     OriginSetRunMode(resource);
   }
@@ -1010,7 +1012,7 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   DisableMindRT(resource);
 
   SetRunMode(resource);
-  auto bc_ptr = resource->GetResult(kBackend).cast<compile::BackendPtr>();
+  auto bc_ptr = resource->GetBackend();
   MS_EXCEPTION_IF_NULL(bc_ptr);
   std::string backend = context_ptr->backend_policy();
   // The graph compiling of mindRT.
@@ -1053,7 +1055,7 @@ bool ExecuteAction(const ResourcePtr &resource) {
   // The graph running of control sink.
   if (IsCtrlSink() && backend == kMsConvert) {
     auto graph_id = resource->GetResult(kOutput).cast<GraphId>();
-    std::shared_ptr<compile::Backend> bc_ptr = resource->GetResult(kBackend).cast<std::shared_ptr<compile::Backend>>();
+    auto bc_ptr = resource->GetBackend();
     compile::MsBackend *msbc_ptr = std::dynamic_pointer_cast<compile::MsBackend>(bc_ptr).get();
     MS_EXCEPTION_IF_NULL(msbc_ptr);
     compile::VmEvalFuncPtr run =
