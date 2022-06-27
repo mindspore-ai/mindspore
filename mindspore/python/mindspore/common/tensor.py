@@ -4105,7 +4105,7 @@ class Tensor(Tensor_):
             [ 1.   2.  -0.5]
         """
         self._init_check()
-        return tensor_operator_registry.get("xdivy")(self, y)
+        return tensor_operator_registry.get("xdivy")()(self, y)
 
     def split(self, axis=0, output_num=1):
         """
