@@ -1400,9 +1400,6 @@ def gather_elements(x, dim, index):
 
     Refer to :func:`mindspore.ops.gather_elements` for more detail.
     """
-    check_value_type('x', x, (Tensor,), 'Tensor.gather_elements')
-    check_value_type('dim', dim, (int,), 'Tensor.gather_elements')
-    check_value_type('index', index, (Tensor,), 'Tensor.gather_elements')
     return F.gather_elements(x, dim, index)
 
 
