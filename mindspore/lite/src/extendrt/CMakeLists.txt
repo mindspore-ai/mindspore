@@ -29,10 +29,13 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/inner_kernel.cc)
 
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-            ${MINDIR_MODEL_SRC}
-            ${MINDIR_KERNEL_SRC}
+            # ${MINDIR_MODEL_SRC}
+            # ${MINDIR_KERNEL_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
             )
 
     set(FBS_FILES
@@ -78,6 +81,10 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/backend/common/somas/somas_solver_pre.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_core.cc
         ${CCSRC_DIR}/backend/common/somas/somas_solver_alg.cc
+        ${CCSRC_DIR}/backend/graph_compiler/graph_partition.cc
+        # ${CCSRC_DIR}/backend/graph_compiler/transform.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/segment_utils.cc
+        # ${CCSRC_DIR}/backend/graph_compiler/vmimpl.cc
         # ${CCSRC_DIR}/backend/common/optimizer/helper.cc
         # ${CCSRC_DIR}/backend/common/optimizer/const_input_to_attr.cc
         # ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
@@ -105,7 +112,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/common/thread_pool.cc
         ${CCSRC_DIR}/utils/scoped_long_running.cc
         ${CCSRC_DIR}/utils/cse.cc
-        ${CCSRC_DIR}/utils/comm_manager.cc)
+        ${CCSRC_DIR}/utils/comm_manager.cc
+        # ${CCSRC_DIR}/plugin/device/cpu/hal/device/kernel_select_cpu.cc
+        )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
     add_dependencies(mindspore-kernel-graph  mindspore-lite-proto)
 
@@ -150,6 +159,10 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
     # target_link_libraries(mindspore-extendrt )
 
+    if(NOT WIN32)
+        target_link_libraries(mindspore-extendrt dl)
+    endif()
+
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
         add_subdirectory(kernel/ascend)
@@ -187,6 +200,19 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         )
         add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
         target_link_libraries(mindspore-extendrt tensorrt_stub)
+    endif()
+
+    set(TEST_CLOUD_INFER on)
+
+    if(TEST_CLOUD_INFER)
+        set(CLOUD_INFER_TEST_SRC ${CLOUD_INFER_TEST_SRC}
+            ${CMAKE_CURRENT_SOURCE_DIR}/utils/cloud_infer_test.cc
+            ${LITE_DIR}/tools/common/flag_parser.cc
+            )
+
+        add_executable(cloud_infer_test ${CLOUD_INFER_TEST_SRC})
+        add_dependencies(cloud_infer_test mindspore-extendrt)
+        target_link_libraries(cloud_infer_test mindspore-extendrt)
     endif()
 else()
     add_library(mindspore-extendrt OBJECT ${MSLITE_EXTEND_RUNTIME_SRC})
