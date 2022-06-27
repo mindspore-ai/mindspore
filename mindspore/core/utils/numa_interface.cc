@@ -15,13 +15,14 @@
  */
 #include "utils/numa_interface.h"
 
-#include <dlfcn.h>
-#include <numaif.h>
+#ifndef MPOL_BIND
+#define MPOL_BIND 2
+#endif
 
+#include <dlfcn.h>
 #include <cerrno>
 #include <memory>
 #include <mutex>
-#include <string>
 #include "utils/log_adapter.h"
 
 #define RETURN_STATUS_UNEXPECTED(_e)                                \
@@ -135,14 +136,14 @@ Status NumaBind(void *handle, const int32_t &rank_id) {
     numa_bitmask_setbit(bm, numa_bind_id);
     if (numa_run_on_node_mask(bm) < 0) {
       MS_LOG(WARNING) << "Try to bind numa id: " << numa_bind_id
-                      << ", but execute numa_run_on_node_mask failed, errno: " << std::strerror(errno)
+                      << ", but execute numa_run_on_node_mask failed, errno: " << strerror(errno)
                       << ". Please use mindspore.dataset.config.set_numa_enable(False) to disable numa bind.";
       numa_bitmask_free(bm);
       return Status::OK();
     }
     if (set_mempolicy(MPOL_BIND, bm->maskp, bm->size + 1) < 0) {
       MS_LOG(WARNING) << "Try to bind numa id: " << numa_bind_id
-                      << ", but execute set_mempolicy failed, errno: " << std::strerror(errno)
+                      << ", but execute set_mempolicy failed, errno: " << strerror(errno)
                       << ". Please use mindspore.dataset.config.set_numa_enable(False) to disable numa bind.";
       numa_bitmask_free(bm);
       return Status::OK();
