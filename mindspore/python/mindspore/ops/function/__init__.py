@@ -276,9 +276,6 @@ from .random_func import (
     standard_laplace,
     random_categorical,
 )
-from .image_func import (
-    resize_bilinear,
-)
 
 __all__ = []
 __all__.extend(array_func.__all__)
@@ -288,5 +285,4 @@ __all__.extend(nn_func.__all__)
 __all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
-__all__.extend(image_func.__all__)
 __all__.sort()

@@ -683,7 +683,30 @@ class ResizeBilinearV2(Primitive):
     r"""
     Resizes an image to a certain size using the bilinear interpolation.
 
-    Refer to :func:`mindspore.ops.resize_bilinear` for more detail.
+    The resizing only affects the lower two dimensions which represent the height and width.
+
+    Args:
+        align_corners (bool): If true, rescale input by :math:`(new\_height - 1) / (height - 1)`,
+                       which exactly aligns the 4 corners of images and resized images. If false,
+                       rescale by :math:`new\_height / height`. Default: False.
+        half_pixel_centers (bool): Whether half pixel center. If set to True, `align_corners` should be False.
+                           Default: False.
+
+    Inputs:
+        - **x** (Tensor): Image to be resized. Input images must be a 4-D tensor with shape
+            :math:`(batch, channels, height, width)`, with data type of float32 or float16.
+        - **size** (Union[tuple[int], list[int], Tensor]): The new size of the images.
+            A tuple or list or Tensor of 2 int elements :math:`(new\_height, new\_width)`.
+
+    Outputs:
+        Tensor, resized image. 4-D with shape :math:`(batch, channels, new\_height, new\_width)`,
+        with the same data type as input `x`.
+
+    Raises:
+        TypeError: If `align_corners` is not a bool.
+        TypeError: If `half_pixel_centers` is not a bool.
+        TypeError: If `align_corners` and `half_pixel_centers` are all True.
+        ValueError: If `half_pixel_centers` is True and device_target is CPU.
 
     Supported Platforms:
         ``Ascend`` ``CPU`` ``GPU``

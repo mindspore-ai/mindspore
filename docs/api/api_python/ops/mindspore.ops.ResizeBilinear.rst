@@ -7,6 +7,11 @@ mindspore.ops.ResizeBilinear
 
     调整输入图像的高和宽，且可以输入不同数据类型的图像，但输出的数据类型只能是float32。
 
+    使用通用resize功能请参考 :func:`mindspore.ops.interpolate`。
+
+    .. warning::
+        这个接口不支持动态shape，而且将来可能面临更改或删除，用 :func:`mindspore.ops.interpolate` 可替代该接口。
+
     **参数：**
 
     - **size** (Union[tuple[int], list[int]]) - 指定图像的新尺寸，输入格式为：2个int元素 :math:`(new\_height, new\_width)` 的tuple或者list。
