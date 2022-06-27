@@ -455,9 +455,15 @@ TEST_F(TestTensor, SparseTensor) {
   ASSERT_TRUE(abs_sparse_tensor->elements()[1]->isa<abstract::AbstractTensor>());
 
   // SparseTensorType
-  TypePtr sparse_tensor_type = std::make_shared<SparseTensorType>(TypeIdToType(kNumberTypeFloat32));
+  TypePtrList elements{TypeIdToType(kNumberTypeInt32), TypeIdToType(kNumberTypeInt32), TypeIdToType(kNumberTypeFloat32),
+                       TypeIdToType(kNumberTypeInt64), TypeIdToType(kNumberTypeInt64)};
+  TypePtr sparse_tensor_type = std::make_shared<SparseTensorType>(elements);
   ASSERT_TRUE(sparse_tensor_type->isa<SparseTensorType>());
-  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->element()->type_id(), kNumberTypeFloat32);
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->elements()[0]->type_id(), kNumberTypeInt32);
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->elements()[1]->type_id(), kNumberTypeInt32);
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->elements()[2]->type_id(), kNumberTypeFloat32);
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->elements()[3]->type_id(), kNumberTypeInt64);
+  ASSERT_EQ(sparse_tensor_type->cast<SparseTensorTypePtr>()->elements()[4]->type_id(), kNumberTypeInt64);
 }
 }  // namespace tensor
 }  // namespace mindspore

@@ -105,11 +105,76 @@ bool TensorType::operator==(const Type &other) const {
   return *element_type_ == *other_elem_type;
 }
 
+std::string SparseTensorType::ElementsDtypeStr(const StringType str_type) const {
+  std::ostringstream oss;
+  for (const TypePtr &elem : elements_) {
+    if (str_type == kToString) {
+      oss << elem->ToString();
+    } else if (str_type == kDumpText) {
+      oss << elem->DumpText();
+    } else if (str_type == kReprString) {
+      oss << elem->ToReprString();
+    }
+    oss << ",";
+  }
+  return oss.str();
+}
+
+std::string SparseTensorType::ToString() const {
+  if (elements_.empty()) {
+    return GetSparseTensorTypeName();
+  }
+  return GetSparseTensorTypeName() + "[" + ElementsDtypeStr(kToString) + "]";
+}
+
+std::string SparseTensorType::DumpText() const {
+  if (elements_.empty()) {
+    return GetSparseTensorTypeName();
+  }
+  return GetSparseTensorTypeName() + "[" + ElementsDtypeStr(kDumpText) + "]";
+}
+
+std::string SparseTensorType::ToReprString() const {
+  if (elements_.empty()) {
+    return GetSparseTensorTypeName();
+  }
+  return GetSparseTensorTypeName() + "[" + ElementsDtypeStr(kReprString) + "]";
+}
+
 TypePtr SparseTensorType::DeepCopy() const {
-  if (element_type_ == nullptr || IsGeneric()) {
+  if (IsGeneric()) {
     return std::make_shared<SparseTensorType>();
   }
-  return std::make_shared<SparseTensorType>(element_type_->DeepCopy());
+  TypePtrList new_elements;
+  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(new_elements),
+                       [](const TypePtr &ele) { return ele->DeepCopy(); });
+  auto copy = std::make_shared<SparseTensorType>(new_elements);
+  return copy;
+}
+
+const TypePtr SparseTensorType::operator[](std::size_t dim) const {
+  if (dim >= size()) {
+    MS_LOG(EXCEPTION) << "Index " << dim << " is out range of the SparseTensorType size " << size() << ".";
+  }
+  return elements_[dim];
+}
+
+bool SparseTensorType::operator==(const Type &other) const {
+  if (!IsSameObjectType(*this, other)) {
+    return false;
+  }
+  const SparseTensorType &other_sparse = static_cast<const SparseTensorType &>(other);
+  if (!other_sparse.elements().empty()) {
+    if (elements_.size() != other_sparse.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < elements_.size(); ++i) {
+      if (*elements_[i] != *other_sparse.elements()[i]) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 TypePtr RowTensorType::DeepCopy() const {
@@ -155,86 +220,56 @@ bool RowTensorType::operator==(const Type &other) const {
 }
 
 TypePtr COOTensorType::DeepCopy() const {
-  MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
     return std::make_shared<COOTensorType>();
   }
-  return std::make_shared<COOTensorType>(element_type_->DeepCopy());
-}
-
-std::string COOTensorType::ToReprString() const {
-  if (element_type_ == nullptr) {
-    return "COOTensor";
-  }
-  return "COOTensor[" + element_type_->ToReprString() + "]";
-}
-
-std::string COOTensorType::ToString() const {
-  if (element_type_ == nullptr) {
-    return "COOTensor";
-  }
-  return "COOTensor[" + element_type_->ToString() + "]";
-}
-
-std::string COOTensorType::DumpText() const {
-  if (element_type_ == nullptr) {
-    return "COOTensor";
-  }
-  return "COOTensor[" + element_type_->DumpText() + "]";
+  TypePtrList elements;
+  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elements),
+                       [](const TypePtr &ele) { return ele->DeepCopy(); });
+  auto copy = std::make_shared<COOTensorType>(elements);
+  return copy;
 }
 
 bool COOTensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const COOTensorType &>(other).element_type_;
-  if (element_type_ == nullptr && other_elem_type == nullptr) {
-    return true;
-  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+  const COOTensorType &other_coo = static_cast<const COOTensorType &>(other);
+  if (elements_.size() != other_coo.size()) {
     return false;
   }
-  return *element_type_ == *other_elem_type;
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    if (*elements_[i] != *other_coo.elements()[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 TypePtr CSRTensorType::DeepCopy() const {
-  MS_EXCEPTION_IF_NULL(element_type_);
   if (IsGeneric()) {
     return std::make_shared<CSRTensorType>();
   }
-  return std::make_shared<CSRTensorType>(element_type_->DeepCopy());
-}
-
-std::string CSRTensorType::ToReprString() const {
-  if (element_type_ == nullptr) {
-    return "CSRTensor";
-  }
-  return "CSRTensor[" + element_type_->ToReprString() + "]";
-}
-
-std::string CSRTensorType::ToString() const {
-  if (element_type_ == nullptr) {
-    return "CSRTensor";
-  }
-  return "CSRTensor[" + element_type_->ToString() + "]";
-}
-
-std::string CSRTensorType::DumpText() const {
-  if (element_type_ == nullptr) {
-    return "CSRTensor";
-  }
-  return "CSRTensor[" + element_type_->DumpText() + "]";
+  TypePtrList elements;
+  (void)std::transform(elements_.begin(), elements_.end(), std::back_inserter(elements),
+                       [](const TypePtr &ele) { return ele->DeepCopy(); });
+  auto copy = std::make_shared<CSRTensorType>(elements);
+  return copy;
 }
 
 bool CSRTensorType::operator==(const Type &other) const {
   if (!IsSameObjectType(*this, other)) {
     return false;
   }
-  auto other_elem_type = static_cast<const CSRTensorType &>(other).element_type_;
-  if (element_type_ == nullptr && other_elem_type == nullptr) {
-    return true;
-  } else if (element_type_ == nullptr || other_elem_type == nullptr) {
+  const CSRTensorType &other_csr = static_cast<const CSRTensorType &>(other);
+  if (elements_.size() != other_csr.size()) {
     return false;
   }
-  return *element_type_ == *other_elem_type;
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    if (*elements_[i] != *other_csr.elements()[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 }  // namespace mindspore

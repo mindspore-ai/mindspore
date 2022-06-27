@@ -1431,7 +1431,7 @@ const TypeId AbstractSparseTensor::GetTypeIdAt(size_t index) const {
   if (index < shape_idx) {
     auto abs_tensor = GetAbsPtrAt<abstract::AbstractTensorPtr>(index);
     MS_EXCEPTION_IF_NULL(abs_tensor);
-    return abs_tensor->BuildType()->type_id();
+    return abs_tensor->element()->BuildType()->type_id();
   } else if (index < shape_idx + shape()->size()) {
     return shape()->elements()[index - shape_idx]->BuildType()->type_id();
   }
@@ -1544,9 +1544,13 @@ std::string AbstractRowTensor::ToString() const {
 
 // COOTensor
 TypePtr AbstractCOOTensor::BuildType() const {
+  MS_EXCEPTION_IF_NULL(indices());
   MS_EXCEPTION_IF_NULL(values());
-  TypePtr element_type = values()->element()->BuildType();
-  return std::make_shared<COOTensorType>(element_type);
+  MS_EXCEPTION_IF_NULL(shape());
+  TypePtrList elements{indices()->element()->BuildType(), values()->element()->BuildType()};
+  std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
+                 [](AbstractBasePtr p) { return p->BuildType(); });
+  return std::make_shared<COOTensorType>(elements);
 }
 
 AbstractBasePtr AbstractCOOTensor::Clone() const {
@@ -1589,9 +1593,15 @@ const AbstractTensorPtr AbstractCOOTensor::values() const {
 
 // CSRTensor
 TypePtr AbstractCSRTensor::BuildType() const {
+  MS_EXCEPTION_IF_NULL(indptr());
+  MS_EXCEPTION_IF_NULL(indices());
   MS_EXCEPTION_IF_NULL(values());
-  TypePtr element_type = values()->element()->BuildType();
-  return std::make_shared<CSRTensorType>(element_type);
+  MS_EXCEPTION_IF_NULL(shape());
+  TypePtrList elements{indptr()->element()->BuildType(), indices()->element()->BuildType(),
+                       values()->element()->BuildType()};
+  std::transform(shape()->elements().begin(), shape()->elements().end(), std::back_inserter(elements),
+                 [](AbstractBasePtr p) { return p->BuildType(); });
+  return std::make_shared<CSRTensorType>(elements);
 }
 
 AbstractBasePtr AbstractCSRTensor::Clone() const {
