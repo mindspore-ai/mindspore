@@ -202,6 +202,7 @@ constexpr auto kSrcT = "src_t";
 constexpr auto kStart = "start";
 constexpr auto kStepH = "step_h";
 constexpr auto kStepW = "step_w";
+constexpr auto kSteps = "steps";
 constexpr auto kStride = "stride";
 constexpr auto kStrides = "strides";
 constexpr auto kShapeType = "shape_type";

@@ -29,12 +29,14 @@ abstract::ShapePtr LogSpaceInferShape(const PrimitivePtr &primitive, const std::
   auto start_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto start_shape = start_shape_map[kShape];
   if (start_shape.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For LogSpace, the dim of input[start] must be 0.";
+    MS_EXCEPTION(ValueError) << "For LogSpace, The dim of start must be 0, "
+                             << "but got " << start_shape.size();
   }
   auto end_shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape());
   auto end_shape = end_shape_map[kShape];
   if (end_shape.size() != 0) {
-    MS_EXCEPTION(ValueError) << "For LogSpace, the dim of input[end] must be 0.";
+    MS_EXCEPTION(ValueError) << "For LogSpace, The dim of end must be 0, "
+                             << "but got " << end_shape.size();
   }
   int64_t shape_value = GetValue<int64_t>(primitive->GetAttr("steps"));
   std::vector<int64_t> state_shape = {shape_value};
@@ -43,7 +45,8 @@ abstract::ShapePtr LogSpaceInferShape(const PrimitivePtr &primitive, const std::
 
 TypePtr LogSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+
   std::map<std::string, TypePtr> types;
   (void)types.emplace("start", input_args[0]->BuildType());
   (void)types.emplace("end", input_args[1]->BuildType());
@@ -55,8 +58,18 @@ TypePtr LogSpaceInferType(const PrimitivePtr &prim, const std::vector<AbstractBa
   return infer_type;
 }
 }  // namespace
+void LogSpace::Init(int64_t steps, int64_t base) {
+  set_steps(steps);
+  set_base(base);
+}
 
-MIND_API_OPERATOR_IMPL(LogSpace, BaseOperator);
+void LogSpace::set_steps(int64_t steps) { (void)this->AddAttr(kSteps, api::MakeValue(steps)); }
+void LogSpace::set_base(int64_t base) { (void)this->AddAttr(kBase, api::MakeValue(base)); }
+
+int64_t LogSpace::get_steps() const { return GetValue<int64_t>(GetAttr(kSteps)); }
+
+int64_t LogSpace::get_base() const { return GetValue<int64_t>(GetAttr(kBase)); }
+
 AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -67,6 +80,7 @@ AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const Primiti
   auto infer_shape = LogSpaceInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
+MIND_API_OPERATOR_IMPL(LogSpace, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(LogSpace, prim::kPrimLogSpace, LogSpaceInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
