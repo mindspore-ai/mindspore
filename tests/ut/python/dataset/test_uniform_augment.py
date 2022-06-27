@@ -16,6 +16,7 @@
 Testing UniformAugment in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
@@ -29,7 +30,7 @@ DATA_DIR = "../data/dataset/testImageNetData/train/"
 def test_uniform_augment_callable(num_ops=2):
     """
     Feature: UniformAugment
-    Description: Test UniformAugment under normal test case
+    Description: Test UniformAugment under execute mode
     Expectation: Output's shape is the same as expected output's shape
     """
     logger.info("test_uniform_augment_callable")
@@ -40,11 +41,75 @@ def test_uniform_augment_callable(num_ops=2):
     img = decode_op(img)
     assert img.shape == (2268, 4032, 3)
 
-    transforms_ua = [vision.RandomCrop(size=[400, 400], padding=[32, 32, 32, 32]),
-                     vision.RandomCrop(size=[400, 400], padding=[32, 32, 32, 32])]
+    transforms_ua = [vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32]),
+                     vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32])]
     uni_aug = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
     img = uni_aug(img)
-    assert img.shape == (2268, 4032, 3) or img.shape == (400, 400, 3)
+    assert img.shape == (2268, 4032, 3) or img.shape == (200, 400, 3)
+
+
+def test_uniform_augment_callable_pil(num_ops=2):
+    """
+    Feature: UniformAugment
+    Description: Test UniformAugment under execute mode, with PIL input.
+    Expectation: Output's shape is the same as expected output's shape
+    """
+    logger.info("test_uniform_augment_callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    decode_op = vision.Decode(to_pil=True)
+    img = decode_op(img)
+    assert img.size == (4032, 2268)
+
+    transforms_ua = [vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32]),
+                     vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32])]
+    uni_aug = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
+    img = uni_aug(img)
+    assert img.size == (4032, 2268) or img.size == (400, 200)
+
+
+def test_uniform_augment_callable_pil_pyfunc(num_ops=3):
+    """
+    Feature: UniformAugment
+    Description: Test UniformAugment under execute mode, with PIL input. Include pyfunc in transforms list.
+    Expectation: Output's shape is the same as expected output's shape
+    """
+    logger.info("test_uniform_augment_callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    decode_op = vision.Decode(to_pil=True)
+    img = decode_op(img)
+    assert img.size == (4032, 2268)
+
+    transforms_ua = [vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32]),
+                     lambda x: x,
+                     vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32])]
+    uni_aug = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
+    img = uni_aug(img)
+    assert img.size == (4032, 2268) or img.size == (400, 200)
+
+
+def test_uniform_augment_callable_tuple(num_ops=2):
+    """
+    Feature: UniformAugment
+    Description: Test UniformAugment under execute mode. Use tuple for transforms list argument.
+    Expectation: Output's shape is the same as expected output's shape
+    """
+    logger.info("test_uniform_augment_callable")
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    decode_op = vision.Decode()
+    img = decode_op(img)
+    assert img.shape == (2268, 4032, 3)
+
+    transforms_ua = (vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32]),
+                     vision.RandomCrop(size=[200, 400], padding=[32, 32, 32, 32]))
+    uni_aug = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
+    img = uni_aug(img)
+    assert img.shape == (2268, 4032, 3) or img.shape == (200, 400, 3)
 
 
 def test_uniform_augment(plot=False, num_ops=2):
@@ -74,7 +139,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                         np.transpose(image.asnumpy(), (0, 2, 3, 1)),
                                         axis=0)
 
-            # UniformAugment Images
+    # UniformAugment Images
     data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transform_list = [vision.RandomRotation(45),
@@ -188,12 +253,10 @@ def test_cpp_uniform_augment_exception_large_numops(num_ops=6):
                      vision.RandomColorAdjust(),
                      vision.RandomRotation(degrees=45)]
 
-    try:
+    with pytest.raises(ValueError) as error_info:
         _ = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "num_ops" in str(e)
+    logger.info("Got an exception in DE: {}".format(str(error_info)))
+    assert "num_ops is greater than transforms list size" in str(error_info)
 
 
 def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
@@ -202,7 +265,7 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
     Description: Test UniformAugment using invalid non-positive num_ops
     Expectation: Exception is raised as expected
     """
-    logger.info("Test CPP UniformAugment invalid non-positive num_ops exception")
+    logger.info("Test UniformAugment invalid non-positive num_ops exception")
 
     transforms_ua = [vision.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
                      vision.RandomHorizontalFlip(),
@@ -210,12 +273,10 @@ def test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0):
                      vision.RandomColorAdjust(),
                      vision.RandomRotation(degrees=45)]
 
-    try:
+    with pytest.raises(ValueError) as error_info:
         _ = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input num_ops must be greater than 0" in str(e)
+    logger.info("Got an exception in DE: {}".format(str(error_info)))
+    assert "Input num_ops must be greater than 0" in str(error_info)
 
 
 def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
@@ -224,7 +285,7 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
     Description: Test UniformAugment using invalid float num_ops
     Expectation: Exception is raised as expected
     """
-    logger.info("Test CPP UniformAugment invalid float num_ops exception")
+    logger.info("Test UniformAugment invalid float num_ops exception")
 
     transforms_ua = [vision.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
                      vision.RandomHorizontalFlip(),
@@ -232,12 +293,10 @@ def test_cpp_uniform_augment_exception_float_numops(num_ops=2.5):
                      vision.RandomColorAdjust(),
                      vision.RandomRotation(degrees=45)]
 
-    try:
+    with pytest.raises(TypeError) as error_info:
         _ = vision.UniformAugment(transforms=transforms_ua, num_ops=num_ops)
-
-    except Exception as e:
-        logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Argument num_ops with value 2.5 is not of type [<class 'int'>]" in str(e)
+    logger.info("Got an exception in DE: {}".format(str(error_info)))
+    assert "Argument num_ops with value 2.5 is not of type [<class 'int'>]" in str(error_info)
 
 
 def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
@@ -246,7 +305,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     Description: Test UniformAugment with greater crop size
     Expectation: Exception is raised as expected
     """
-    logger.info("Test CPP UniformAugment with random_crop bad input")
+    logger.info("Test UniformAugment with random_crop bad input")
     batch_size = 2
     cifar10_dir = "../data/dataset/testCifar10Data"
     ds1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
@@ -262,16 +321,18 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     # apply DatasetOps
     ds1 = ds1.batch(batch_size, drop_remainder=True, num_parallel_workers=1)
     num_batches = 0
-    try:
+    with pytest.raises(RuntimeError) as error_info:
         for _ in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_batches += 1
-    except Exception as e:
-        assert "crop size" in str(e)
+    assert "Shape is incorrect. map operation: [UniformAugment] failed." in str(error_info)
 
 
 if __name__ == "__main__":
-    test_uniform_augment_callable(num_ops=2)
-    test_uniform_augment(num_ops=1, plot=True)
+    test_uniform_augment_callable()
+    test_uniform_augment_callable_pil()
+    test_uniform_augment_callable_pil_pyfunc()
+    test_uniform_augment_callable_tuple()
+    test_uniform_augment(num_ops=6, plot=True)
     test_cpp_uniform_augment(num_ops=1, plot=True)
     test_cpp_uniform_augment_exception_large_numops(num_ops=6)
     test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)

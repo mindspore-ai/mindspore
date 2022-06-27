@@ -33,7 +33,7 @@ namespace dataset {
 
 namespace vision {
 
-constexpr char kUniformAugOperation[] = "UniformAug";
+constexpr char kUniformAugOperation[] = "UniformAugment";
 
 class UniformAugOperation : public TensorOperation {
  public:
