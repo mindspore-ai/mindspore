@@ -46,7 +46,6 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                               << ".";
     }
     std::vector<int64_t> output_shape;
-    std::vector<int64_t> real_shape;
     std::vector<int64_t> max_shape;
     std::vector<int64_t> min_shape;
     auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
@@ -66,21 +65,20 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
       }
       for (size_t i = 0; i < out_dims; i++) {
         output_shape.push_back(-1);
-        real_shape.push_back(-1);
         if (min_shape[i] == max_shape[i]) {
-          real_shape[i] = min_shape[i];
+          output_shape[i] = min_shape[i];
         }
       }
-      CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(real_shape.size()),
+      CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(output_shape.size()),
                                   prim_name);
-      auto outer_dim_offset = real_shape.size() - x_shape.size();
+      auto outer_dim_offset = output_shape.size() - x_shape.size();
       for (size_t i = 0; i < x_shape.size(); ++i) {
-        if (real_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
+        if (output_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
           continue;
         }
-        if (real_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
+        if (output_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
           MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: " << x_shape
-                                   << ", target shape: " << real_shape;
+                                   << ", target shape: " << output_shape;
         }
       }
     }

@@ -49,12 +49,26 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   return kAnyType;
 }
 
+inline bool IsMaxOrMinEmpty(const ShapePtr &shape1, const ShapePtr &shape2) {
+  if (shape1->max_shape().empty() || shape1->min_shape().empty() || shape2->max_shape().empty() ||
+      shape2->min_shape().empty()) {
+    return true;
+  }
+
+  return false;
+}
+
 ShapePtr CalculateDynamicShape(const ShapePtr &shape1, const ShapePtr &shape2, const ShapeVector &dims) {
   // calculate dynamic shape
   ShapeVector min_dims(dims.size());
   ShapeVector max_dims(dims.size());
   MS_EXCEPTION_IF_NULL(shape1);
   MS_EXCEPTION_IF_NULL(shape2);
+
+  if (IsMaxOrMinEmpty(shape1, shape2)) {
+    return std::make_shared<Shape>(dims);
+  }
+
   for (size_t i = 0; i < dims.size(); ++i) {
     if (dims[i] != Shape::SHP_ANY) {
       min_dims[i] = max_dims[i] = dims[i];
