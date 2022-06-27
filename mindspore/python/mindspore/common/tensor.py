@@ -4078,12 +4078,12 @@ class Tensor(Tensor_):
         'y' must be tensor or scalar, When y is tensor, dtypes of self and y cannot be bool at the same time,
         and the shapes of them could be broadcast. When y is scalar, the scalar could only be a constant.
 
-        Inputs:
+        Args:
             - **y** (Union[Tensor, Number, bool]) - The second input is a number,
               or a bool when the first input is a tensor, or a tensor whose data type is float16,
               float32, float64, complex64, complex128 or bool.
 
-        Outputs:
+        Returns:
             Tensor, the shape is the same as the one after broadcasting,
             and the data type is the one with higher precision or higher digits among the two inputs.
 
