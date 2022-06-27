@@ -134,6 +134,14 @@ Status AutoTune::ATMainLoop(bool output_intermediate_config) {
 
 #ifndef ENABLE_ANDROID
 Status AutoTune::SaveAutotuneConfig(const std::string &file_name) {
+  Path jsonpath(file_name);
+
+  if (jsonpath.Exists()) {
+    std::string err_msg = "File: <" + file_name +
+                          "> already exists. File will be overwritten with the AutoTuned data pipeline configuration.";
+    MS_LOG(WARNING) << err_msg;
+  }
+
   RETURN_IF_NOT_OK(SetAutotuneConfigJson());
   // The Execution Tree is built by visiting the optimized IR Tree in DFS order.
   // So we visit the optimized IR tree in DFS order and try to match each IR node with its corresponding dataset op.

@@ -53,6 +53,31 @@ class TestAutotuneSaveLoad:
         del os.environ['RANK_ID']
 
     @staticmethod
+    def test_autotune_file_overwrite_warn(tmp_path, capfd):
+        original_autotune = ds.config.get_enable_autotune()
+        config_path = tmp_path / f"test_autotune_generator_atfinal_{os.environ['RANK_ID']}.json"
+        config_path.touch()
+        ds.config.set_enable_autotune(True, str(tmp_path / "test_autotune_generator_atfinal"))
+
+        source = [(np.array([x]),) for x in range(1024)]
+        data1 = ds.GeneratorDataset(source, ["data"])
+        data1 = data1.shuffle(64)
+        data1 = data1.batch(32)
+
+        itr = data1.create_dict_iterator(num_epochs=5)
+        for _ in range(5):
+            for _ in itr:
+                pass
+        del itr
+
+        _, err = capfd.readouterr()
+
+        assert f"test_autotune_generator_atfinal_{os.environ['RANK_ID']}.json> already exists. " \
+               f"File will be overwritten with the AutoTuned data" in err
+
+        ds.config.set_enable_autotune(original_autotune)
+
+    @staticmethod
     def test_autotune_generator_pipeline(tmp_path):
         """
         Feature: Autotuning
