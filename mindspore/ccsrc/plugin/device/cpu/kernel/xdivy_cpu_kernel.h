@@ -63,8 +63,6 @@ class XdivyCpuKernelMod : public NativeCpuKernelMod {
   static std::vector<KernelAttr> support_ops_;
   static std::map<mindspore::TypeId, XdivyFunc> func_map_;
   XdivyFunc kernel_func_;
-  static const size_t INPUT_NUM = 2;
-  static const size_t OUTPUT_NUM = 1;
   ShapeVector x_shape_;
   ShapeVector y_shape_;
   ShapeVector out_shape_;
