@@ -59,11 +59,21 @@ PadMode MaxPoolGradGrad::get_pad_mode() const {
 namespace {
 abstract::ShapePtr MaxPoolGradGradInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
+  const int64_t input_dim = 4;
   auto origin_input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("origin input shape size", SizeToLong(origin_input_shape.size()), kEqual,
+                                           input_dim, primitive->name());
+
   auto origin_output_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  (void)CheckAndConvertUtils::CheckInteger("origin output shape size", SizeToLong(origin_output_shape.size()), kEqual,
+                                           input_dim, primitive->name());
+
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
-  CheckAndConvertUtils::Check("grad_shape", origin_input_shape, kEqual, grad_shape, primitive->name(), TypeError);
+  (void)CheckAndConvertUtils::CheckInteger("grad shape size", SizeToLong(grad_shape.size()), kEqual, input_dim,
+                                           primitive->name());
+
+  CheckAndConvertUtils::Check("grad_shape", origin_input_shape, kEqual, grad_shape, primitive->name(), ValueError);
   return std::make_shared<abstract::Shape>(origin_output_shape);
 }
 
