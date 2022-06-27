@@ -159,8 +159,8 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
     printf("error, outputs and calibs size is mismatch\n");
     return kMSStatusLiteError;
   }
-  float total_error = 0;
   size_t outputs_num = outputs.handle_num;
+  bool is_success = true;
   for (size_t i = 0; i < outputs_num; ++i) {
     MicroTensor *output = (MicroTensor *)outputs.handle_list[i];
     if (!output || !output->data) {
@@ -178,6 +178,7 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
       printf("error, output elements num is not equal to calib\n");
       return kMSStatusLiteError;
     }
+    float cosin = 0.f, dot = 0.f, normx = 0.f, normy = 0.f;
     switch (output->type) {
       case kMSDataTypeNumberTypeFloat32: {
         float *float_output = (float *)output->data;
@@ -187,21 +188,27 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
             printf("error, output data is nan or inf\n");
             return kMSStatusLiteError;
           }
-          total_error += fabsf(float_output[j] - calib[i].data_[j]);
+          dot += float_output[j] * calib[i].data_[j];
+          normx += float_output[j] * float_output[j];
+          normy += calib[i].data_[j] * calib[i].data_[j];
         }
         break;
       }
       case kMSDataTypeNumberTypeInt8: {
         int8_t *int_output = (int8_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+          dot += (float) (int_output[j] * calib[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib[i].data_[j] * calib[i].data_[j]);
         }
         break;
       }
       case kMSDataTypeNumberTypeUInt8: {
         uint8_t *int_output = (uint8_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+          dot += (float) (int_output[j] * calib[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib[i].data_[j] * calib[i].data_[j]);
         }
         break;
       }
@@ -209,20 +216,29 @@ int CompareOutputs(MSTensorHandleArray outputs, CalibTensor **calib_tensors, int
       case kMSDataTypeNumberTypeUInt32: {
         int32_t *int_output = (int32_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib[i].data_[j]);
+          dot += (float) (int_output[j] * calib[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib[i].data_[j] * calib[i].data_[j]);
         }
         break;
       }
       default: {
-        printf("unsupported tensor data type\n");
+        printf("unsupported tensor data type.\n");
       }
     }
+    cosin = dot / (sqrt(normx) * sqrt(normy));
+    if (cosin < 0.9999) {
+      printf("cos-similarity of %s is %f, less than 0.9999.\n", output->name, cosin);
+      is_success = false;
+    } else {
+      printf("cos-similarity of %s is %f.\n", output->name, cosin);
+    }
   }
-  if (total_error > kToleranceVal) {
-    printf("compare outputs failed, total error: %f\n", total_error);
+  if (!is_success) {
+    printf("compare outputs failed.\n");
     return kMSStatusLiteError;
   }
-  printf("compare outputs success, total error: %f\n", total_error);
+  printf("compare outputs success.\n");
   return kMSStatusSuccess;
 }
 
@@ -393,10 +409,11 @@ int CompareOutputs(MSTensorHandleArray *outputs, TensorArray *tensor_array) {
     printf("error, calib tensor is NULL.\n");
     return kMSStatusLiteError;
   }
-  float total_error = 0;
+  bool is_success = true;
   size_t outputs_num = outputs->handle_num;
   for (size_t i = 0; i < outputs_num; ++i) {
     MicroTensor *output = (MicroTensor *)outputs->handle_list[i];
+    float cosin = 0.f, dot = 0.f, normx = 0.f, normy = 0.f;
     if (output == NULL){
       printf("error, output is nullptr.\n");
       return kMSStatusLiteError;
@@ -429,21 +446,27 @@ int CompareOutputs(MSTensorHandleArray *outputs, TensorArray *tensor_array) {
             printf("error, output data is nan or inf\n");
             return kMSStatusLiteError;
           }
-          total_error += fabsf(float_output[j] - calib_tensors[i].data_[j]);
+          dot += float_output[j] * calib_tensors[i].data_[j];
+          normx += float_output[j] * float_output[j];
+          normy += calib_tensors[i].data_[j] * calib_tensors[i].data_[j];
         }
         break;
       }
       case kMSDataTypeNumberTypeInt8: {
         int8_t *int_output = (int8_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib_tensors[i].data_[j]);
+          dot += (float) (int_output[j] * calib_tensors[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib_tensors[i].data_[j] * calib_tensors[i].data_[j]);
         }
         break;
       }
       case kMSDataTypeNumberTypeUInt8: {
         uint8_t *int_output = (uint8_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib_tensors[i].data_[j]);
+          dot += (float) (int_output[j] * calib_tensors[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib_tensors[i].data_[j] * calib_tensors[i].data_[j]);
         }
         break;
       }
@@ -451,7 +474,9 @@ int CompareOutputs(MSTensorHandleArray *outputs, TensorArray *tensor_array) {
       case kMSDataTypeNumberTypeUInt32: {
         int32_t *int_output = (int32_t *)output->data;
         for (size_t j = 0; j < elements; ++j) {
-          total_error += fabsf(int_output[j] - calib_tensors[i].data_[j]);
+          dot += (float) (int_output[j] * calib_tensors[i].data_[j]);
+          normx += (float) (int_output[j] * int_output[j]);
+          normy += (float)(calib_tensors[i].data_[j] * calib_tensors[i].data_[j]);
         }
         break;
       }
@@ -459,12 +484,19 @@ int CompareOutputs(MSTensorHandleArray *outputs, TensorArray *tensor_array) {
         printf("unsupported tensor data type\n");
       }
     }
+    cosin = dot / (sqrt(normx) * sqrt(normy));
+    if (cosin < 0.9999) {
+      printf("cos-similarity of %s is %f, less than 0.9999.\n", output->name, cosin);
+      is_success = false;
+    } else {
+      printf("cos-similarity of %s is %f.\n", output->name, cosin);
+    }
   }
-  if (total_error > kToleranceVal) {
-    printf("compare outputs failed, total error: %f\n", total_error);
+  if (!is_success) {
+    printf("compare outputs failed.\n");
     return kMSStatusLiteError;
   }
-  printf("compare outputs success, total error: %f.\n", total_error);
+  printf("compare outputs success.\n");
   return kMSStatusSuccess;
 }
 )RAW";

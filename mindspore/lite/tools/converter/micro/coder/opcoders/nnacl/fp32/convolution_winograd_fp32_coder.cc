@@ -270,7 +270,7 @@ int ConvolutionWinogradFP32Coder::DoCode(CoderContext *const context) {
   code.CodeFunction("memset", gemm_out_, "0", gemm_out_size_);
   code.CodeFunction("memset", tmp_data_, "0", tmp_data_size_);
   code.CodeFunction("memset", col_buffer_, "0", col_buffer_size_);
-  code << "\t\tfloat *tmp_buffer_address_list[4] = {" << allocator_->GetRuntimeAddr(trans_input_) << ", "
+  code << "    float *tmp_buffer_address_list[4] = {" << allocator_->GetRuntimeAddr(trans_input_) << ", "
        << allocator_->GetRuntimeAddr(gemm_out_) << ", " << allocator_->GetRuntimeAddr(tmp_data_) << ", "
        << allocator_->GetRuntimeAddr(col_buffer_) << "};\n";
   code.CodeStruct("conv_parameter", *conv_param_);
