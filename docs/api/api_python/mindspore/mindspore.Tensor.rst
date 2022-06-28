@@ -162,7 +162,7 @@ mindspore.Tensor
 
         **返回：**
 
-        - **output** (Tensor) - shape和数据类型与当前Tensor相同。
+        Tensor，shape和数据类型与当前Tensor相同。
 
         **异常：**
 
@@ -223,9 +223,9 @@ mindspore.Tensor
         - **choices** (Union[tuple, list, Tensor]) - 索引选择数组。原始输入Tensor和 `choices` 的广播维度必须相同。如果 `choices` 本身是一个Tensor，则其最外层的维度（即，对应于第0维的维度）被用来定义 `choices` 数组。
         - **mode** ('raise', 'wrap', 'clip', optional) - 指定如何处理 `[0, n-1]` 外部的索引：
 
-          - **raise** – 引发异常（默认）；
-          - **wrap** – 原值映射为对n取余后的值；
-          - **clip** – 大于n-1的值会被映射为n-1。该模式下禁用负数索引。
+          - **raise** - 引发异常（默认）；
+          - **wrap** - 原值映射为对n取余后的值；
+          - **clip** - 大于n-1的值会被映射为n-1。该模式下禁用负数索引。
 
         **返回：**
 
@@ -373,7 +373,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor, 指定轴上扩展的维度为1。
+        Tensor，指定轴上扩展的维度为1。
 
         **异常：**
 
@@ -485,7 +485,6 @@ mindspore.Tensor
         - **ValueError** - `x` 和 `index` 的维度长度不一致。
         - **ValueError** - `x` 和 `index` 除 `dim` 维外的维度不一致。
         - **ValueError** - `dim` 的值不在合理范围内。
-
 
     .. py:method:: gather_nd(indices)
 
@@ -677,7 +676,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
+        - **args** (Union[(numbers.Number), (int/tuple(int), numbers.Number)]) - 指定索引和值的参数。如果 `args` 包含一个参数（标量），则其仅在Tensor大小为1的情况下使用。如果 `args` 包含两个参数，则最后一个参数是要设置的值且必须是标量，而第一个参数指定单个Tensor元素的位置。参数值是整数或者元组。
 
         **返回：**
 
@@ -707,7 +706,7 @@ mindspore.Tensor
 
         **返回：**
 
-        返回新的Tensor, 其数据类型和维度必须和输入中的当前Tensor保持一致。
+        返回新的Tensor，其数据类型和维度必须和输入中的当前Tensor保持一致。
 
         **异常：**
 
@@ -760,7 +759,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor, shape和dtype与该Tensor相同。
+        Tensor，shape和dtype与该Tensor相同。
 
         **异常：**
 
@@ -1046,7 +1045,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
+        - **new_shape** (Union[ints, tuple of ints]) - 指定Tensor的新shape。
 
         **返回：**
 
@@ -1093,8 +1092,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **condition** (Tensor[bool]) - 条件Tensor， 决定选择哪一个元素。 shape与当前的Tensor相同。
-        - **y** (Union[Tensor, int, float]) - 如果y是一个Tensor，那么shape与当前Tensor相同。如果y是int或者float， 那么将会被转化为int32或者float32类型，并且被广播为与当前Tensor相同的shape。
+        - **condition** (Tensor[bool]) - 条件Tensor，决定选择哪一个元素。shape与当前的Tensor相同。
+        - **y** (Union[Tensor, int, float]) - 如果y是一个Tensor，那么shape与当前Tensor相同。如果y是int或者float，那么将会被转化为int32或者float32类型，并且被广播为与当前Tensor相同的shape。
 
         **返回：**
 
@@ -1121,7 +1120,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
+        - **axis** (Union[None, int, list(int), tuple(int)], optional) - 选择shape中长度为1的条目的子集。如果选择shape条目长度大于1的轴，则报错。默认值为None。
 
         **返回：**
 
@@ -1276,7 +1275,7 @@ mindspore.Tensor
 
     .. py:method:: scatter_div(indices, updates)
 
-        根据指定的索引, 通过除法进行计算, 将输出赋值到输出Tensor中。
+        根据指定的索引，通过除法进行计算, 将输出赋值到输出Tensor中。
 
         .. note::
             - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为当前Tensor，而不是抛出索引错误。
@@ -1321,7 +1320,7 @@ mindspore.Tensor
 
     .. py:method:: scatter_mul(indices, updates)
 
-        根据指定的索引， 通过乘法进行计算， 将输出赋值到输出Tensor中。
+        根据指定的索引，通过乘法进行计算，将输出赋值到输出Tensor中。
 
         .. note::
             - 如果 `indices` 的某些值超出当前Tensor的维度范围，在 `CPU` 后端会抛出错误，在 `GPU` 后端则忽略错误且更新值不可信任。
@@ -1588,8 +1587,7 @@ mindspore.Tensor
 
         **异常：**
 
-        - **RuntimeError** – `axis` 不在 `[-ndim, ndim-1]` 范围内。
-
+        - **RuntimeError** - `axis` 不在 `[-ndim, ndim-1]` 范围内。
 
     .. py:method:: var(axis=None, ddof=0, keepdims=False)
 

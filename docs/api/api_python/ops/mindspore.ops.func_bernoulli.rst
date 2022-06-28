@@ -21,7 +21,7 @@ mindspore.ops.bernoulli
 
     **异常：**
 
-    - **TypeError** - `x` 的数据类型不在int8, uint8, int16, int32，int64，bool, float32和float64中。
+    - **TypeError** - `x` 的数据类型不在int8、uint8、int16、int32、int64、bool、float32和float64中。
     - **TypeError** - `p` 的数据类型既不是float16也不是float32。
     - **TypeError** - `seed` 不是int。
     - **ValueError** - `seed` 是负数。

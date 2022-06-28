@@ -3,7 +3,7 @@ mindspore.ops.bessel_i1
 
 .. py:function:: mindspore.ops.bessel_i1(x)
 
-    逐元素计算并返回输入Tensor的Bessel i1函数值
+    逐元素计算并返回输入Tensor的Bessel i1函数值。
 
     **参数：**
 

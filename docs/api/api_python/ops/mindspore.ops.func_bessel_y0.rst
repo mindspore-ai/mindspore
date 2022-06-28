@@ -3,7 +3,7 @@ mindspore.ops.bessel_y0
 
 .. py:function:: mindspore.ops.bessel_y0(x)
 
-    逐元素计算并返回输入Tensor的Bessel y0函数值
+    逐元素计算并返回输入Tensor的Bessel y0函数值。
 
     **参数：**
 
