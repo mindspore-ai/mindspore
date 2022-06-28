@@ -20,6 +20,7 @@ from mindspore import context, Tensor, Parameter
 from mindspore.common.api import _cell_graph_executor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum, BatchNorm2d
 from mindspore.ops import operations as P
+from mindspore.parallel import set_algo_parameters
 
 
 class Net(Cell):
@@ -128,4 +129,28 @@ def test_dynamic_programming_1x1x1x8():
             assert v == [[8, 1, 1, 1],]
         elif re.search("Conv2DTranspose", k) is not None:
             assert v == [[8, 1, 1, 1], [1, 1, 1, 1]]
+    context.reset_auto_parallel_context()
+
+
+def test_sharding_propagation_1x1x2x1():
+    """
+    Features: test dynamic programming for conv2d/bn/maxpool/conv2d_transpose
+    Description: the fixed strategy is 1x1x2x1
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=8, global_rank=0,
+                                      search_mode="sharding_propagation")
+    set_algo_parameters(fully_use_devices=False)
+    strategy = ((1, 1, 2, 1),)
+    net = Net(_w1, _w2, out_channel=8, strategy=strategy)
+    strategies = compile_net(net)
+    for (k, v) in strategies.items():
+        if re.search("Conv2D", k) is not None:
+            assert v == [[1, 1, 2, 1], [1, 1, 1, 1]]
+        elif re.search("BatchNorm", k) is not None:
+            assert v == [[1, 1, 2, 1], [1], [1], [1], [1]]
+        elif re.search("MaxPool", k) is not None:
+            assert v == [[1, 1, 2, 1]]
+        elif re.search("Conv2DTranspose", k) is not None:
+            assert v == [[1, 1, 2, 1], [1, 1, 1, 1]]
     context.reset_auto_parallel_context()
