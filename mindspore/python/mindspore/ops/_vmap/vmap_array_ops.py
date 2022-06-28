@@ -233,6 +233,67 @@ def get_concat_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.Stack)
+def get_stack_vmap_rule(prim, axis_size):
+    """VmapRule for `Stack` operation."""
+    if isinstance(prim, str):
+        prim = P.Stack(0)
+        new_axis = 0
+    else:
+        new_axis = prim.axis
+    if new_axis >= 0:
+        new_axis += 1
+
+    def vmap_rule(*inputs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+        if is_all_none:
+            return result
+
+        if not isinstance(inputs_bdim, (tuple, list)):
+            _raise_value_error("The 'x' of P.Stack is neither tuple nor list.")
+
+        args = inputs_bdim[0]
+        vals = ()
+        for each_arg in args:
+            x, bdim = each_arg
+            x = _bdim_at_front(x, bdim, axis_size)
+            vals = vals + (x,)
+
+        out = P.Stack(new_axis)(vals)
+        return out, 0
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(P.Unstack)
+def get_unstack_vmap_rule(prim, axis_size):
+    """VmapRule for `Unstack` operation."""
+    if isinstance(prim, str):
+        prim = P.Unstack(0)
+        new_axis = 0
+    else:
+        new_axis = prim.axis
+    if new_axis >= 0:
+        new_axis += 1
+
+    def vmap_rule(*inputs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+        if is_all_none:
+            return result
+
+        args = inputs_bdim[0]
+        vals = ()
+        for each_arg in args:
+            x, bdim = each_arg
+            x = _bdim_at_front(x, bdim, axis_size)
+            vals = vals + (x,)
+
+        out = P.Unstack(new_axis)(vals)
+        return out, 0
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.Reshape)
 def get_reshape_vmap_rule(prim, axis_size):
     """VmapRule for `Reshape` operation."""
