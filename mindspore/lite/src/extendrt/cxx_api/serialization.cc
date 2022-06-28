@@ -28,7 +28,6 @@ namespace mindspore {
 static Status RealPath(const std::string &file, std::string *realpath_str) {
   MS_EXCEPTION_IF_NULL(realpath_str);
   char real_path_mem[PATH_MAX] = {0};
-  // char *real_path_ret = nullptr;
 #if defined(_WIN32) || defined(_WIN64)
   auto real_path_ret = _fullpath(real_path_mem, common::SafeCStr(file), PATH_MAX);
 #else
