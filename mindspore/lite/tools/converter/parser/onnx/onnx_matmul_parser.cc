@@ -38,7 +38,7 @@ PrimitiveCPtr OnnxMatmulParser::Parse(const onnx::GraphProto &onnx_graph, const 
       beta = onnx_node_attr.f();
     }
   }
-  if (alpha != 1 || beta != 1) {
+  if (alpha != 1 || (beta != 1 && !(onnx_node.input().size() == 2 && beta == 0))) {  // 2 : input num is A and B
     MS_LOG(ERROR) << "not support alpha * A * B + beta * C";
     return nullptr;
   }
