@@ -356,6 +356,15 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
     base_node = neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx);
   }
 
+  // for send empty depend
+  int64_t all_to_all_input_num =
+    std::count_if(send_rank_ids.begin(), send_rank_ids.end(), [](int64_t ids) { return ids != kInvalidId; });
+  bool need_drop_input = false;
+  if (all_to_all_input_num == 0) {
+    all_to_all_v_input.emplace_back(neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx));
+    need_drop_input = true;
+  }
+
   // output shapes and dtypes
   auto base_dtype = common::AnfAlgo::GetOutputInferDataType(base_node, 0);
   auto base_shape = common::AnfAlgo::GetOutputInferShape(base_node, 0);
@@ -384,6 +393,19 @@ CNodePtr CreateAllToAllvNode(const FuncGraphPtr &graph, const CNodePtr &neighbor
   common::AnfAlgo::SetNodeAttr(kAttrSendRankIds, MakeValue<std::vector<int64_t>>(real_send_rank_ids), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrRecvRankIds, MakeValue<std::vector<int64_t>>(real_recv_rank_ids), all_to_all_v);
   common::AnfAlgo::SetNodeAttr(kAttrGroup, MakeValue<std::string>(group), all_to_all_v);
+
+  // add depend for input & alltoallv in send_empty condition
+  common::AnfAlgo::SetNodeAttr(kAttrNeedDropInput, MakeValue<bool>(need_drop_input), all_to_all_v);
+  if (all_to_all_input_num == 0) {
+    auto input = neighbor_exchange_v2_or_grad->input(kNeighborExchangeV2InputIdx);
+    std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                            all_to_all_v, input};
+    auto depend = graph->NewCNode(depend_input);
+    MS_EXCEPTION_IF_NULL(depend);
+    depend->set_abstract(all_to_all_v->abstract());
+    return depend;
+  }
+
   MS_LOG(INFO) << "Create AllToAllv success, send rank size " << send_rank_ids.size() << ", recv rank size "
                << recv_rank_ids.size();
   return all_to_all_v;
