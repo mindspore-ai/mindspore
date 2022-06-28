@@ -117,47 +117,45 @@ using TensorTypePtr = std::shared_ptr<TensorType>;
 /// \brief SparseTensorType is the base type for all sparse tensors.
 class MS_CORE_API SparseTensorType : public Object {
  public:
-  /// \brief Default constructor for SparseTensorType.
   SparseTensorType() : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType) {}
 
-  /// \brief Constructor for SparseTensorType.
-  ///
-  /// \param[in] object_type The type id of derived class type.
   explicit SparseTensorType(const TypeId object_type) : Object(object_type, kObjectTypeUndeterminedType) {}
 
-  /// \brief Constructor for SparseTensorType.
-  ///
-  /// \param[in] ele The element of SparseTensorType.
-  explicit SparseTensorType(const TypePtr &ele)
-      : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  explicit SparseTensorType(const TypePtrList &objs)
+      : Object(kObjectTypeSparseTensorType, kObjectTypeUndeterminedType), elements_(objs.begin(), objs.end()) {}
 
-  /// \brief Constructor for SparseTensorType.
-  ///
-  /// \param[in] object_type The type id of derived class type.
-  /// \param[in] ele The element of SparseTensorType.
-  explicit SparseTensorType(const TypeId object_type, const TypePtr &ele)
-      : Object(object_type, kObjectTypeUndeterminedType, false), element_type_(ele) {}
+  SparseTensorType(const TypeId object_type, const TypePtrList &objs)
+      : Object(object_type, kObjectTypeUndeterminedType), elements_(objs.begin(), objs.end()) {}
 
   /// \brief Destructor of SparseTensorType.
   ~SparseTensorType() override = default;
   MS_DECLARE_PARENT(SparseTensorType, Object)
 
+  enum StringType : int { kToString = 0, kDumpText, kReprString };
+
+  virtual std::string GetSparseTensorTypeName() const { return "SparseTensorType"; }
+  virtual size_t GetElementIndex() { return 0; }
+  virtual TypePtr element_type() {
+    if (elements_.empty()) {
+      return nullptr;
+    }
+    return elements_[GetElementIndex()];
+  }
+  std::string ElementsDtypeStr(const StringType str_type) const;
   TypeId generic_type_id() const override { return kObjectTypeSparseTensorType; }
 
-  /// \brief Get the element of SparseTensorType object.
-  ///
-  /// \return The element of SparseTensorType object.
-  const TypePtr element() const { return element_type_; }
+  const TypePtr operator[](size_t dim) const;
+  bool operator==(const Type &other) const;
+  TypePtrList elements() const { return elements_; }
 
-  /// \brief Set the element of SparseTensorType object.
-  ///
-  /// \param[in] element_type Define the element type to be set.
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
-  TypePtr DeepCopy() const override;
+  std::size_t size() const { return elements_.size(); }
+  std::string ToString() const;
+  std::string ToReprString() const;
+  std::string DumpText() const;
+  TypePtr DeepCopy() const;
 
  private:
-  TypePtr element_type_;
+  TypePtrList elements_;
 };
 using SparseTensorTypePtr = std::shared_ptr<SparseTensorType>;
 
@@ -209,32 +207,22 @@ class MS_CORE_API COOTensorType final : public SparseTensorType {
   /// \brief Constructor for COOTensorType.
   ///
   /// \param[in] ele The element of COOTensorType.
-  explicit COOTensorType(const TypePtr &ele) : SparseTensorType(kObjectTypeCOOTensorType, ele), element_type_(ele) {}
+  explicit COOTensorType(const TypePtrList &obj)
+      : SparseTensorType(kObjectTypeCOOTensorType, obj), elements_(obj.begin(), obj.end()) {}
 
   /// \brief Destructor of COOTensorType.
   ~COOTensorType() override = default;
   MS_DECLARE_PARENT(COOTensorType, SparseTensorType)
 
+  std::string GetSparseTensorTypeName() const override { return "COOTensor"; }
+  size_t GetElementIndex() override { return 1; }
+
   TypeId generic_type_id() const override { return kObjectTypeCOOTensorType; }
-
-  /// \brief Get the element of COOTensorType object.
-  ///
-  /// \return The element of COOTensorType object.
-  const TypePtr element() const { return element_type_; }
-
-  /// \brief Set the element of COOTensorType object.
-  ///
-  /// \param[in] element_type Define the element type to be set.
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
   TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
   bool operator==(const Type &other) const override;
 
  private:
-  TypePtr element_type_;
+  TypePtrList elements_;
 };
 using COOTensorTypePtr = std::shared_ptr<COOTensorType>;
 
@@ -247,32 +235,21 @@ class MS_CORE_API CSRTensorType : public SparseTensorType {
   /// \brief Constructor for CSRTensorType.
   ///
   /// \param[in] ele The element of CSRTensorType.
-  explicit CSRTensorType(const TypePtr &ele) : SparseTensorType(kObjectTypeCSRTensorType, ele), element_type_(ele) {}
+  explicit CSRTensorType(const TypePtrList &obj)
+      : SparseTensorType(kObjectTypeCSRTensorType, obj), elements_(obj.begin(), obj.end()) {}
 
   /// \brief Destructor of CSRTensorType.
   ~CSRTensorType() override = default;
   MS_DECLARE_PARENT(CSRTensorType, SparseTensorType)
 
+  std::string GetSparseTensorTypeName() const override { return "CSRTensor"; }
+  size_t GetElementIndex() override { return 2; }
   TypeId generic_type_id() const override { return kObjectTypeCSRTensorType; }
-
-  /// \brief Get the element of CSRTensorType object.
-  ///
-  /// \return The element of CSRTensorType object.
-  const TypePtr element() const { return element_type_; }
-
-  /// \brief Set the element of CSRTensorType object.
-  ///
-  /// \param[in] element_type Define the element type to be set.
-  void set_element(const TypePtr &element_type) { element_type_ = element_type; }
-
   TypePtr DeepCopy() const override;
-  std::string ToString() const override;
-  std::string ToReprString() const override;
-  std::string DumpText() const override;
   bool operator==(const Type &other) const override;
 
  private:
-  TypePtr element_type_;
+  TypePtrList elements_;
 };
 using CSRTensorTypePtr = std::shared_ptr<CSRTensorType>;
 }  // namespace mindspore
