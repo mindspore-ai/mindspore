@@ -14,27 +14,38 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CATEGORICAL_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CATEGORICAL_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDOM_CATEGORICAL_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDOM_CATEGORICAL_CPU_KERNEL_H_
 #include <memory>
 #include <unordered_map>
 #include <vector>
 #include <random>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 #include "nnacl/base/tile_base.h"
 
 namespace mindspore {
 namespace kernel {
-class RandomCategoricalCpuKernel : public DeprecatedNativeCpuKernelMod {
+class RandomCategoricalCpuKernel : public NativeCpuKernelMod, public MatchKernelHelper<RandomCategoricalCpuKernel> {
  public:
   RandomCategoricalCpuKernel() = default;
   ~RandomCategoricalCpuKernel() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs) override;
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
 
  protected:
   std::vector<KernelAttr> GetOpSupport() override {
@@ -46,6 +57,10 @@ class RandomCategoricalCpuKernel : public DeprecatedNativeCpuKernelMod {
     return support_list;
   }
 
+  template <typename T1, typename T2>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                    const std::vector<kernel::AddressPtr> &outputs);
+
  private:
   ShapeVector input_shape_;
   int seed_{0};
@@ -53,4 +68,4 @@ class RandomCategoricalCpuKernel : public DeprecatedNativeCpuKernelMod {
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_RANDOM_CATEGORICAL_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_RANDOM_CATEGORICAL_CPU_KERNEL_H_

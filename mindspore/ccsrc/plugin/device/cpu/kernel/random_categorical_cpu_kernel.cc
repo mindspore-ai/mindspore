@@ -18,23 +18,76 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+#include <map>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/random_categorical.h"
 
 namespace mindspore {
 namespace kernel {
-void RandomCategoricalCpuKernel::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+namespace {
+using KernelRunFunc = RandomCategoricalCpuKernel::KernelRunFunc;
+}
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomCategoricalCpuKernel::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, RandomCategoricalCpuKernel::KernelRunFunc>> func_list = {
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RandomCategoricalCpuKernel::LaunchKernel<float, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RandomCategoricalCpuKernel::LaunchKernel<float, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RandomCategoricalCpuKernel::LaunchKernel<double, int32_t>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32),
+     &RandomCategoricalCpuKernel::LaunchKernel<double, int32_t>},
+  };
+  return func_list;
+}
 
-  seed_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
+bool RandomCategoricalCpuKernel::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
+  }
+  return true;
+}
+
+int RandomCategoricalCpuKernel::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (auto ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
+    return ret;
+  }
+  input_shape_ = inputs.at(0)->GetShapeVector();
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::RandomCategorical>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  seed_ = kernel_ptr->get_seed();
   if (seed_ <= 0) {
     std::random_device rd;
     seed_ = static_cast<int64_t>(rd());
   }
+  return KRET_OK;
 }
 
-void GetCdf(const float *logits_addr, float *dev_cdf, const size_t batch_size, const size_t num_classes) {
+template <typename T>
+void GetCdf(T *logits_addr, T *dev_cdf, const size_t batch_size, const size_t num_classes) {
   if (num_classes == 0) {
     MS_LOG(EXCEPTION) << "num_classes must > 0";
   }
@@ -51,16 +104,17 @@ void GetCdf(const float *logits_addr, float *dev_cdf, const size_t batch_size, c
         max_of_row = logits_addr[pos + i];
       }
     }
-    dev_cdf[cur_row * num_classes] = std::exp(static_cast<float>(logits_addr[pos] - max_of_row));
+    dev_cdf[cur_row * num_classes] = std::exp(static_cast<T>(logits_addr[pos] - max_of_row));
     for (size_t i = 1; i < num_classes; i++) {
-      float tmp = std::exp(static_cast<float>(logits_addr[pos + i] - max_of_row));
+      T tmp = std::exp(static_cast<T>(logits_addr[pos + i] - max_of_row));
       dev_cdf[cur_row * num_classes + i] = dev_cdf[cur_row * num_classes + i - 1] + tmp;
     }
   }
 }
 
-void RandomCategorical(const size_t num_samples, const float *dev_rand, const float *dev_cdf, const size_t batch_size,
-                       const size_t num_classes, int32_t *output_addr) {
+template <typename T1, typename T2>
+void RandomCategoricalFunc(const size_t num_samples, const T1 *dev_rand, const T1 *dev_cdf, const size_t batch_size,
+                           const size_t num_classes, T2 *output_addr) {
   size_t size = num_samples * batch_size;
   for (size_t pos = 0; pos < size; pos++) {
     size_t cur_row = pos / num_samples;
@@ -71,13 +125,14 @@ void RandomCategorical(const size_t num_samples, const float *dev_rand, const fl
     while (dev_cdf[cur_row * num_classes + idx] < to_find) {
       idx++;
     }
-    output_addr[pos] = static_cast<int32_t>(idx);
+    output_addr[pos] = static_cast<T2>(idx);
   }
 }
 
-bool RandomCategoricalCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                        const std::vector<kernel::AddressPtr> &workspace,
-                                        const std::vector<kernel::AddressPtr> &outputs) {
+template <typename T1, typename T2>
+bool RandomCategoricalCpuKernel::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<AddressPtr> &,
+                                              const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kSizeThree) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 3, but got " << inputs.size()
                       << "input(s).";
@@ -90,9 +145,9 @@ bool RandomCategoricalCpuKernel::Launch(const std::vector<kernel::AddressPtr> &i
   MS_EXCEPTION_IF_NULL(inputs[1]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
 
-  float *input_tensor = reinterpret_cast<float *>(inputs[0]->addr);
+  T1 *input_tensor = reinterpret_cast<T1 *>(inputs[0]->addr);
   int num_sample = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  int *output = reinterpret_cast<int *>(outputs[0]->addr);
+  T2 *output = reinterpret_cast<T2 *>(outputs[0]->addr);
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
@@ -100,22 +155,21 @@ bool RandomCategoricalCpuKernel::Launch(const std::vector<kernel::AddressPtr> &i
   int batch_size = input_shape_[0];
   int num_classes = input_shape_[input_shape_.size() - 1];
 
-  std::vector<float> host_cdf(batch_size * num_classes);
+  std::vector<T1> host_cdf(batch_size * num_classes);
   GetCdf(input_tensor, host_cdf.data(), batch_size, num_classes);
   std::uniform_real_distribution<> dist(0, 1);
   rng_.seed(seed_);
 
-  std::vector<float> host_rand(batch_size * num_sample);
+  std::vector<T1> host_rand(batch_size * num_sample);
   for (int j = 0; j < num_sample; j++) {
     float random = dist(rng_);
     for (int i = 0; i < batch_size; ++i) {
       host_rand[i * num_sample + j] = random;
     }
   }
-  RandomCategorical(num_sample, host_rand.data(), host_cdf.data(), batch_size, num_classes, output);
+  RandomCategoricalFunc(num_sample, host_rand.data(), host_cdf.data(), batch_size, num_classes, output);
   return true;
 }
-
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomCategorical, RandomCategoricalCpuKernel);
 }  // namespace kernel
 }  // namespace mindspore

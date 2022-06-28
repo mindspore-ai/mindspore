@@ -34,6 +34,7 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
     return logits_shape_ptr->cast<abstract::ShapePtr>();
   }
   std::vector<int64_t> output_shape;
+  MS_EXCEPTION_IF_ZERO("logits shape size", logits_shape.size());
   for (size_t i = 0; i < logits_shape.size() - 1; ++i) {
     output_shape.push_back(logits_shape.at(i));
   }
