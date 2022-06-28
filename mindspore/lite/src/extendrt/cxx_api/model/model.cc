@@ -20,6 +20,10 @@
 namespace mindspore {
 std::mutex g_impl_init_lock;
 
+Model::Model() : impl_(nullptr) {}
+
+Model::~Model() {}
+
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
                     const std::shared_ptr<Context> &model_context) {
   if (impl_ == nullptr) {

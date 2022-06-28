@@ -400,6 +400,9 @@ LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs, const s
     MS_LOG(ERROR) << "parameter is nullptr.";
     return nullptr;
   }
+  if (desc.data_type == kTypeUnknown) {
+    MS_LOG(WARNING) << "desc data_type is unknown.";
+  }
   auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, static_cast<const lite::InnerContext *>(ctx));
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
