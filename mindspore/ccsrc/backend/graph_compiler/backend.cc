@@ -1004,8 +1004,13 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     ParseControlNodes(graph_compiler_info);
     actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
     MS_EXCEPTION_IF_NULL(actor_set);
-    // Multithreading can cause spikes in memory usage and performance fluctuations
-    actor_set->is_multi_thread_execution_ = false;
+    constexpr auto kKernelActorThreshold = 5000;
+    // Turning off multithreading may cause stack overflow in control flow scenarios.
+    if (control_nodes_.size() == 1 && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
+      // Multithreading can cause spikes in memory usage and performance fluctuations.
+      actor_set->is_multi_thread_execution_ = false;
+      MS_LOG(INFO) << "Actor Multithreading is turned off!";
+    }
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 
     for (auto &graph : graphs) {
