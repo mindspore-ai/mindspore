@@ -61,6 +61,10 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
     if (kernel_name_ == prim::kPrimUnsortedSegmentMax->name()) {
       for (size_t loop = 0; loop < loop_size_; loop++) {
         auto output_index = ids_addr[loop];
+        if (output_index >= num_segments_) {
+          MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
+          return false;
+        }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;
         for (size_t comp = 0; comp < comp_size_; comp++) {
@@ -70,6 +74,10 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
     } else if (kernel_name_ == prim::kPrimUnsortedSegmentMin->name()) {
       for (size_t loop = 0; loop < loop_size_; loop++) {
         auto output_index = ids_addr[loop];
+        if (output_index >= num_segments_) {
+          MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
+          return false;
+        }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;
         for (size_t comp = 0; comp < comp_size_; comp++) {
@@ -124,6 +132,7 @@ int UnsortedSegmentArithmeticCpuKernelMod::Resize(const BaseOperatorPtr &base_op
 
   comp_size_ = 1;
   out_size_ = out_shape[batch_rank_];
+  num_segments_ = out_shape[batch_rank_];
   for (size_t i = batch_rank_ + 1; i < out_shape.size(); i++) {
     comp_size_ *= out_shape[i];
     out_size_ *= out_shape[i];

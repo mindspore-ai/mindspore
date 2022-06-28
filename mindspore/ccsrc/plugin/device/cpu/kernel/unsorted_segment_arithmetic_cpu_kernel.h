@@ -67,6 +67,7 @@ class UnsortedSegmentArithmeticCpuKernelMod : public NativeCpuKernelMod,
   int64_t in_stride_ = 1;
   int64_t ids_stride_ = 1;
   int64_t out_stride_ = 1;
+  int64_t num_segments_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore
