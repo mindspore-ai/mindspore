@@ -64,6 +64,7 @@ class ScatterNdFunctorGPUKernelMod : public NativeGpuKernelMod, public MatchKern
   size_t index_depth_{0};
   // The out_strides_ would be int64 or int32
   std::vector<int32_t> out_strides_;
+  std::vector<int32_t> work_shape_;
 
   bool is_null_input_{false};
   BaseOperatorPtr kernel_ptr_{nullptr};
