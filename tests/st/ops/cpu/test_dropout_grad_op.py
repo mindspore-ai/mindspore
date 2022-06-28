@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore import context
 from mindspore import dtype as mstype
@@ -140,3 +141,31 @@ def test_dropout_grad_006():
 
     diff = np.abs(output.asnumpy() - expect)
     assert np.all(np.abs(diff) < error)
+
+
+class GradSec(nn.Cell):
+    def __init__(self, network):
+        super(GradSec, self).__init__()
+        self.grad = ops.GradOperation()
+        self.network = network
+
+    def construct(self, x, mask):
+        gout = self.grad(self.network)(x, mask)
+        return gout
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dropout_sec_grad():
+    """
+    Feature: test dropout second-order grad.
+    Description: grad definition for DropoutGrad operation.
+    Expectation: expect correct result.
+    """
+    in_tensor = Tensor(np.array([[[3., 1., 2.]], [[4., 1., 4.]]]), mstype.float16)
+    in_mask = Tensor(np.array([[[1., 0, 0]], [[0., 0., 1.]]]), mstype.float16)
+    dropout_grad = Net(0.3333333333)
+    second_grad = GradSec(dropout_grad)
+    output = second_grad(in_tensor, in_mask)
+    print("output:\n", output)
