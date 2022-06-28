@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fission/topk_split.h"
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -27,6 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
+#include "plugin/device/ascend/optimizer/optimizer_factory.h"
 
 namespace mindspore::opt {
 namespace {
@@ -206,4 +208,6 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
 
   return new_cnode;
 }
+
+MS_PASS_FACTORY_REG(PatternProcessPass, topk_split_fission, TopKSplit, kIRFusionFisionPass);
 }  // namespace mindspore::opt

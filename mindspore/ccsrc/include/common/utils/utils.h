@@ -377,6 +377,26 @@ constexpr auto kPriorityReplayBufferDestroy = "PriorityReplayBufferDestroy";
 constexpr auto kDenseToDenseSetOperation = "DenseToDenseSetOperation";
 constexpr auto kNonZeroOpName = "NonZero";
 constexpr auto kExtractGlimpse = "ExtractGlimpse";
+constexpr auto kConv3DTransposeOpName = "Conv3DTranspose";
+constexpr auto kParallelResizeBilinearGradOpName = "ParallelResizeBilinearGrad";
+constexpr auto kArgminV2OpName = "ArgminV2";
+constexpr auto kCentralizationOpName = "Centralization";
+constexpr auto kGatherOpName = "Gather";
+constexpr auto kGatherDOpName = "GatherD";
+constexpr auto kEmbeddingLookupCommGradOpName = "EmbeddingLookupCommGrad";
+constexpr auto kSubscalarOpName = "Subscalar";
+constexpr auto kUnsortedSegmentSumOpName = "UnsortedSegmentSum";
+constexpr auto kCumSumOpName = "CumSum";
+constexpr auto kCumProdOpName = "CumProd";
+constexpr auto kUnsortedSegmentMaxOpName = "UnsortedSegmentMax";
+constexpr auto kCSRReduceSumOpName = "CSRReduceSum";
+constexpr auto kCSRMVOpName = "CSRMV";
+constexpr auto kCSRMMOpName = "CSRMM";
+constexpr auto kCSRMulOpName = "CSRMul";
+constexpr auto kCSRDivOpName = "CSRDiv";
+constexpr auto kCSRGatherOpName = "CSRGather";
+constexpr auto kCSR2COOOpName = "CSR2COO";
+constexpr auto kCOO2CSROpName = "COO2CSR";
 
 // Communication world group
 constexpr auto kNcclWorldGroup = "nccl_world_group";

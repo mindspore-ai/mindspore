@@ -836,12 +836,28 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
         MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
         return ret;
       }
+      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE, true);
+      if (op_info != nullptr) {
+        auto real_input_index = op_info->real_input_index();
+        if (!real_input_index.first.empty()) {
+          ret = real_input_index.first[cur_index];
+          return ret;
+        }
+      }
     }
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.end()) {
       auto index_converter = find->second;
       ret = index_converter.first[cur_index];
       MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
+    }
+    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
+    if (op_info != nullptr) {
+      auto real_input_index = op_info->real_input_index();
+      if (!real_input_index.first.empty()) {
+        ret = real_input_index.first[cur_index];
+        return ret;
+      }
     }
   }
   return ret;
@@ -860,12 +876,28 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
         MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
         return ret;
       }
+      auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE, true);
+      if (op_info != nullptr) {
+        auto real_input_index = op_info->real_input_index();
+        if (!real_input_index.second.empty()) {
+          ret = real_input_index.second[cur_index];
+          return ret;
+        }
+      }
     }
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.end()) {
       auto index_converter = find->second;
       ret = index_converter.second[cur_index];
       MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
+    }
+    auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
+    if (op_info != nullptr) {
+      auto real_input_index = op_info->real_input_index();
+      if (!real_input_index.second.empty()) {
+        ret = real_input_index.second[cur_index];
+        return ret;
+      }
     }
   }
   return ret;

@@ -193,6 +193,21 @@ class RegOp:
             raise TypeError("%s value must be bool" % str(value))
         return True
 
+    @staticmethod
+    def _is_list(value):
+        """
+        Check if the value is a list.
+
+        Args:
+            value: Parameter to be checked.
+
+        Raises:
+            TypeError: If the type of value is not a list.
+        """
+        if not isinstance(value, list):
+            raise TypeError("%s value must be list" % str(value))
+        return True
+
     def _check_param(self, param_list, key_list, fn_list, kwargs):
         """
         Check if the parameter type is correct.
@@ -492,6 +507,30 @@ class TBERegOp(RegOp):
         self.need_check_supported_ = False
         self.is_dynamic_format_ = False
         self.op_pattern_ = ""
+        self.real_input_index_ = []
+        self.input_to_attr_index_ = []
+
+    def real_input_index(self, real_input_index):
+        """
+        Description operator front end and tbe operator input mapping.
+
+        Args:
+            real_input_index (list): Value of real_input_index. Default: ().
+        """
+        RegOp._is_list(real_input_index)
+        self.real_input_index_ = real_input_index
+        return self
+
+    def input_to_attr_index(self, input_to_attr_index):
+        """
+        Description the index of input need to cast to attr.
+
+        Args:
+            input_to_attr_index (list): Value of input_to_attr_index. Default: ().
+        """
+        RegOp._is_list(input_to_attr_index)
+        self.input_to_attr_index_ = input_to_attr_index
+        return self
 
     def async_flag(self, async_flag=False):
         """

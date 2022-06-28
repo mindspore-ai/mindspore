@@ -174,6 +174,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/common/debug/draw.h"
+#include "plugin/device/ascend/optimizer/optimizer_factory.h"
 
 namespace mindspore {
 namespace opt {
@@ -224,7 +225,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<ReshapeTransposeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<TransposeReshapeFusion>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
-  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
+  //  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
   ir_fusion_pm->AddPass(std::make_shared<DiagPartFission>());
@@ -267,6 +268,11 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<CdistGradFission>());
   ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxDropoutDoMaskV3Fusion>());
+  const auto &pass_creators =
+    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFisionPass);
+  for (const auto &pass_creator : pass_creators) {
+    ir_fusion_pm->AddPass(pass_creator.second());
+  }
 }
 }  // namespace
 
@@ -424,7 +430,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<Conv2dBackpropFilterMul>());
-  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
+  //  ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
   ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<DiagFission>());
@@ -457,6 +463,11 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  const auto &pass_creators =
+    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFisionPass);
+  for (const auto &pass_creator : pass_creators) {
+    ir_fusion_pm->AddPass(pass_creator.second());
+  }
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
 
   optimizer->AddPassManager(ir_fusion_pm);
