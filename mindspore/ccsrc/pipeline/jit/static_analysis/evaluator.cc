@@ -707,9 +707,9 @@ AbstractBasePtr GetLogicalViewAbs(const AbstractBasePtr &physical_view_abs, cons
         return GetLogicalViewAbs(sub_abs, sub_in_axes, axis_size);
       });
     if (physical_view_abs->isa<AbstractList>()) {
-      return std::make_shared<AbstractList>(logical_view_abs_list);
+      return std::make_shared<AbstractList>(logical_view_abs_list, physical_view_abs_sequence->sequence_nodes());
     }
-    return std::make_shared<AbstractTuple>(logical_view_abs_list);
+    return std::make_shared<AbstractTuple>(logical_view_abs_list, physical_view_abs_sequence->sequence_nodes());
   }
   ValuePtr in_axis = in_axes;
   if (in_axis->isa<Int64Imm>()) {
