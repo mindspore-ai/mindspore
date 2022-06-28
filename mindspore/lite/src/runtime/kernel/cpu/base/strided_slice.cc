@@ -75,12 +75,36 @@ int StridedSliceCPUKernel::ReSize() {
     MS_LOG(ERROR) << "StridedSlice not support input rank or begin num exceeds " << DIMENSION_8D;
     return RET_ERROR;
   }
+  soft_copy_mode_ = MatchInOutShapeEqualPattern();
   fast_run_ = MatchFastPattern();
   if (fast_run_) {
     InitFastRunParam();
   }
 
   return RET_OK;
+}
+
+bool StridedSliceCPUKernel::MatchInOutShapeEqualPattern() {
+  for (int i = 0; i < MAX_SHAPE_SIZE; i++) {
+    if (param_->strides_[i] < 0) {
+      return false;
+    }
+  }
+
+  auto in_shape = in_tensors_.front()->shape();
+  auto out_shape = out_tensors_.front()->shape();
+  if (in_tensors_.front()->data_type() != out_tensors_.front()->data_type()) {
+    return false;
+  }
+  if (in_shape.size() != out_shape.size() || in_shape.size() < 1) {
+    return false;
+  }
+  for (size_t i = 0; i < in_shape.size(); ++i) {
+    if (in_shape[i] != out_shape[i] || in_shape[i] == -1) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool StridedSliceCPUKernel::MatchFastPattern() {
@@ -218,7 +242,58 @@ int StridedSliceCPUKernel::NormalRun() {
   return RET_OK;
 }
 
+int StridedSliceCPUKernel::SoftCopyInputToOutput() {
+  auto input_tensor = in_tensors().front();
+  CHECK_NULL_RETURN(input_tensor);
+  auto output_tensor = out_tensors().front();
+  CHECK_NULL_RETURN(output_tensor);
+
+  if (input_tensor->allocator() == nullptr || input_tensor->allocator() != output_tensor->allocator() ||
+      input_tensor->allocator() != ms_context_->allocator || /* runtime allocator */
+      op_parameter_->is_train_session_) {
+    CHECK_NULL_RETURN(output_tensor->data());
+    CHECK_NULL_RETURN(input_tensor->data());
+    MS_CHECK_FALSE(input_tensor->Size() == 0, RET_ERROR);
+    auto size = input_tensor->Size();
+    thread_num_ = MSMIN(static_cast<size_t>(op_parameter_->thread_num_), UP_DIV(size, 16384));  // PerThreadMin : 16384
+    if (thread_num_ < 1) {
+      thread_num_ = 1;
+    }
+    auto block_size = UP_DIV(size, thread_num_);
+    thread_num_ = UP_DIV(size, block_size);
+    auto input_data = static_cast<const uint8_t *>(input_tensor->data());
+    auto output_data = static_cast<uint8_t *>(output_tensor->data());
+    auto Copy = [input_data, output_data, size, block_size, this](void *, int task_id, float, float) {
+      auto in_start = input_data + task_id * block_size;
+      auto out_start = output_data + task_id * block_size;
+      auto copy_size = block_size;
+      if (task_id == (thread_num_ - 1)) {
+        copy_size = size - task_id * block_size;
+      }
+      memcpy(out_start, in_start, copy_size);
+      return RET_OK;
+    };
+    if (input_data != output_data) {
+      if (thread_num_ == 1) {
+        memcpy(output_data, input_data, size);
+        return RET_OK;
+      }
+      return lite::ParallelLaunch(this->ms_context_, Copy, nullptr, thread_num_);
+    }
+    return RET_OK;
+  }
+
+  output_tensor->FreeData();
+  output_tensor->ResetRefCount();
+  output_tensor->set_data(input_tensor->data());
+  output_tensor->set_own_data(input_tensor->own_data());
+  return RET_OK;
+}
+
 int StridedSliceCPUKernel::Run() {
+  if (soft_copy_mode_) {
+    return SoftCopyInputToOutput();
+  }
   if (fast_run_) {
     return FastRun();
   }
