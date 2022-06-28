@@ -208,7 +208,7 @@ struct AsymmetricFunc {
 };
 struct HalfPixelFunc {
   float operator()(const float &new_x, const int &old_length, const int &new_length) const {
-    return new_length != 0 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
+    return new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
   }
 };
 

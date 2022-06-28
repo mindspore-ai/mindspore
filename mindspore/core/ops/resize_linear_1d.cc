@@ -99,11 +99,11 @@ TypePtr ResizeLinear1DInferType(const PrimitivePtr &primitive, const std::vector
   auto prim_name = primitive->name();
   auto input_x_arg = input_args[kInputIndex0];
   auto size_arg = input_args[kInputIndex1];
-  const std::set<TypePtr> valid0_types = {kInt8, kUInt8, kInt16, kUInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid0_types = {kFloat16, kFloat32, kFloat64};
   const std::set<TypePtr> valid1_types = {kInt64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_x_arg->BuildType(), valid0_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("size", size_arg->BuildType(), valid1_types, prim_name);
-  return kFloat32;
+  return input_x_arg->BuildType();
 }
 }  // namespace
 

@@ -33,14 +33,17 @@ void ResizeLinear1DGradCpuKernelMod::ComputeInterpolationCaches(const size_t out
                                                                 CachedInterpolation *interpolation) {
   interpolation[out_size].lower = 0;
   interpolation[out_size].upper = 0;
-  for (size_t i = 0; i <= out_size - 1; ++i) {
-    const float in = func(i, in_size, out_size);
-    const float in_floor = std::floor(in);
-    const float in_ceil = std::ceil(in);
-    interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-    interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
-    interpolation[i].lerp = in - in_floor;
-  }
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      const float in = func(i, in_size, out_size);
+      const float in_floor = std::floor(in);
+      const float in_ceil = std::ceil(in);
+      interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
+      interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
+      interpolation[i].lerp = in - in_floor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, out_size, this, &parallel_search_info_, pool_);
 }
 
 template <typename T>
@@ -49,7 +52,7 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
                                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DGradOutputsNum, kernel_name_);
-  float *grad_output = reinterpret_cast<float *>(inputs[kIndex0]->addr);
+  T *grad_output = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
   T *grad_input = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_input, false);
@@ -57,10 +60,10 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   if (output_width_ == input_width_) {
     auto task = [grad_output, grad_input](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        grad_input[i] = static_cast<T>(grad_output[i]);
+        grad_input[i] = grad_output[i];
       }
     };
-    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(float), this, &parallel_search_info_, pool_);
+    ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_, pool_);
     return true;
   }
 
@@ -78,9 +81,9 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
         const size_t xs_upper = xs[w].upper;
         const float xs_lerp = static_cast<float>(xs[w].lerp);
         *(grad_input + index * input_width_ + xs_lower) +=
-          static_cast<T>((*(grad_output + index * output_width_ + w)) * (1 - xs_lerp));
+          static_cast<T>((*(grad_output + index * output_width_ + w)) * static_cast<T>(1 - xs_lerp));
         *(grad_input + index * input_width_ + xs_upper) +=
-          static_cast<T>((*(grad_output + index * output_width_ + w)) * xs_lerp);
+          static_cast<T>((*(grad_output + index * output_width_ + w)) * static_cast<T>(xs_lerp));
       }
     }
   };
@@ -89,13 +92,14 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)                                          \
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+#define RESIZE_LINEAR_1D_GRAD_CPU_REG(MS_T, T)                            \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
     &ResizeLinear1DGradCpuKernelMod::LaunchKernel<T>
 
 const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>>
   &ResizeLinear1DGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>> func_list = {
+    {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat16, float16)},
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat32, float)},
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat64, double)},
   };

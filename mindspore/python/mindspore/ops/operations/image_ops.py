@@ -648,7 +648,7 @@ class ResizeLinear1D(Primitive):
         - **size** (Tensor) - A 1-D int64 Tensor, describes the size of the output tensor.
 
     Outputs:
-        A 3-D tensor which shape is [batch, channel, new_width] with type: float32.
+        A 3-D tensor which shape is [batch, channel, new_width] with the same type as `x`.
 
     Raises:
         TypeError: If dtype of `x` is not in the support list.
