@@ -550,7 +550,7 @@ py::object GetObjectFromSequence(const NameSpacePtr &name_space, const SymbolPtr
     obj = python_adapter::CallPyModFn(mod, PYTHON_MOD_CONVERT_CELL_LIST_TO_SEQUENCE, obj);
   }
   if (!py::isinstance<py::list>(obj) && !py::isinstance<py::tuple>(obj)) {
-    MS_LOG(EXCEPTION) << "Should not get item from non-sequence type, obj: " << py::str(obj);
+    return py::none();
   }
 
   MS_LOG(DEBUG) << "obj: " << py::str(obj) << ", index_node: " << index_node->ToString();
@@ -597,6 +597,9 @@ AnfNodePtr ResolveGetItemInner(const FuncGraphManagerPtr &manager, const AnfNode
                                const AnfNodePtr &attr_node) {
   auto [name_space, symbol] = GetNamespaceAndSymbol(data_node);
   auto obj = GetObjectFromSequence(name_space, symbol, data_node, index_node);
+  if (py::isinstance<py::none>(obj)) {
+    return nullptr;
+  }
   if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
     return ResolveSequenceWithAttr(manager, obj, data_node, attr_node, getitem_cnode);
   }
