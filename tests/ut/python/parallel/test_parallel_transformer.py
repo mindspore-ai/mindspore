@@ -25,7 +25,8 @@ from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 import mindspore.ops as P
 from mindspore.parallel.nn import TransformerEncoder, TransformerDecoder, Transformer, TransformerOpParallelConfig, \
-    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention
+    VocabEmbedding, CrossEntropyLoss, OpParallelConfig, EmbeddingOpParallelConfig, FixedSparseAttention,\
+    TransformerRecomputeConfig
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, _VirtualDatasetCell, TrainOneStepCell
@@ -105,6 +106,12 @@ class TransformerEncoderNet(nn.Cell):
 
 
 config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False)
+slice_activation_recompute_config = TransformerRecomputeConfig(recompute=True, recompute_slice_activation=True)
+parallel_opt_recompute_config = TransformerRecomputeConfig(recompute=True, parallel_optimizer_comm_recompute=True)
+slice_activtion_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False,
+                                                     recompute=slice_activation_recompute_config)
+parallel_opt_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8, vocab_emb_dp=False,
+                                                  recompute=parallel_opt_recompute_config)
 pipeline_config = TransformerOpParallelConfig(data_parallel=2, model_parallel=8, pipeline_stage=4,
                                               micro_batch_num=4, vocab_emb_dp=False)
 
@@ -399,6 +406,11 @@ def test_transformer_model_int64_sp():
 
 
 def test_transformer_model_head_parallel_only_encoder():
+    """
+    Feature: Test Transformer.
+    Description: only encoder.
+    Expectation: Successful graph compilation.
+    """
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     run_total_transformer_model_head(e_layer=2, d_layer=0, arg_parallel_config=local_config)
 
@@ -406,7 +418,7 @@ def test_transformer_model_head_parallel_only_encoder():
 def test_transformer_model_head_parallel_only_encoder_sp():
     """
     Feature: Test Transformer with sharding propagation.
-    Description: only encode.
+    Description: only encoder.
     Expectation: Successful graph compilation.
     """
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
@@ -418,6 +430,11 @@ def test_transformer_model_head_parallel_only_encoder_sp():
 
 
 def test_transformer_model_head_parallel():
+    """
+    Feature: Test Transformer
+    Description: model parallel.
+    Expectation: Successful graph compilation.
+    """
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     run_total_transformer_model_head(e_layer=1, d_layer=1, arg_parallel_config=local_config)
 
@@ -437,17 +454,32 @@ def test_transformer_model_head_parallel_sp():
 
 
 def test_transformer_model_head_parallel_decoder():
+    """
+    Feature: Test Transformer
+    Description: model parallel.
+    Expectation: Successful graph compilation.
+    """
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=8)
     with pytest.raises(ValueError):
         run_total_transformer_model_head(e_layer=0, d_layer=1, arg_parallel_config=local_config)
 
 
 def test_transformer_model_head_stand_alone():
+    """
+    Feature: Test Transformer
+    Description: stand alone.
+    Expectation: Successful graph compilation.
+    """
     local_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=1)
     run_total_transformer_model_head(e_layer=2, d_layer=2, arg_parallel_config=local_config)
 
 
 def test_transformer_model_auto_parallel_no_support():
+    """
+    Feature: Test Transformer
+    Description: auto parallel no support.
+    Expectation: Successful graph compilation.
+    """
     local_config = TransformerOpParallelConfig(data_parallel=8, model_parallel=1)
     with pytest.raises(RuntimeError):
         run_total_transformer_model_head(e_layer=2, d_layer=2, arg_parallel_config=local_config,
@@ -541,6 +573,11 @@ def test_pipeline_transformer_gradient_shard_false_sp():
 
 
 def test_transformer_wrong_head():
+    """
+    Feature: test transformer api
+    Description: Test transformer exception scene
+    Expectation: Raise correct error.
+    """
     set_auto_parallel_context(device_num=64,
                               full_batch=True,
                               pipeline_stages=pipeline_config.pipeline_stage, global_rank=0,
@@ -571,6 +608,11 @@ def test_transformer_wrong_head():
 
 
 def test_transformer_wrong_dp_no_error():
+    """
+    Feature: test transformer api
+    Description: Test transformer correct scene
+    Expectation: no error.
+    """
     set_auto_parallel_context(device_num=64, full_batch=False, parallel_mode=ParallelMode.DATA_PARALLEL,
                               pipeline_stages=pipeline_config.pipeline_stage, global_rank=0)
     check_config = TransformerOpParallelConfig(data_parallel=8, model_parallel=1, vocab_emb_dp=False)
@@ -581,6 +623,11 @@ def test_transformer_wrong_dp_no_error():
 
 
 def test_transformer_wrong_semi_auto_dp_error():
+    """
+    Feature: test transformer api
+    Description: Test transformer exception scene
+    Expectation: Raise correct error.
+    """
     set_auto_parallel_context(device_num=64, full_batch=False, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
                               pipeline_stages=pipeline_config.pipeline_stage, global_rank=0)
     check_config = TransformerOpParallelConfig(data_parallel=16, model_parallel=1, vocab_emb_dp=False)
@@ -592,6 +639,11 @@ def test_transformer_wrong_semi_auto_dp_error():
 
 
 def test_encoder():
+    """
+    Feature: test transformer api
+    Description: Test encoder layers
+    Expectation: Compile ok.
+    """
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -627,7 +679,96 @@ def test_encoder():
     model.train(1, dataset, dataset_sink_mode=False)
 
 
+def test_encoder_recompute_slice():
+    """
+    Feature: test transformer api
+    Description: Test encoder layers with slice recompute activation
+    Expectation: Compile ok.
+    """
+    class NetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x1, x2):
+            predict, _ = self.network(x1, x2)
+            return self.loss(predict)
+
+    set_auto_parallel_context(device_num=8,
+                              full_batch=True,
+                              global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    net = TransformerEncoder(num_layers=2,
+                             batch_size=2,
+                             seq_length=16,
+                             hidden_size=8,
+                             ffn_hidden_size=64,
+                             num_heads=8,
+                             parallel_config=slice_activtion_config)
+
+    encoder_input_value = Tensor(np.ones((2, 16, 8)), mstype.float32)
+    encoder_input_mask = Tensor(np.ones((2, 16, 16)), mstype.float16)
+
+    net = NetWithLoss(net)
+
+    net = _VirtualDatasetCell(net)
+
+    dataset = Dataset(encoder_input_value, encoder_input_mask)
+
+    model = Model(net)
+
+    model.train(1, dataset, dataset_sink_mode=False)
+
+
 def test_decoder():
+    """
+    Feature: test transformer api
+    Description: Test decoder layers
+    Expectation: Compile ok.
+    """
+    class NetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x1, x2, x3, x4):
+            predict, _, _ = self.network(x1, x2, x3, x4)
+            return self.loss(predict)
+
+    set_auto_parallel_context(device_num=8,
+                              full_batch=True,
+                              global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
+    net = TransformerDecoder(num_layers=1,
+                             batch_size=8,
+                             hidden_size=16,
+                             ffn_hidden_size=8,
+                             num_heads=8,
+                             src_seq_length=20,
+                             tgt_seq_length=10,
+                             parallel_config=parallel_opt_config)
+
+    encoder_input_value = Tensor(np.ones((8, 20, 16)), mstype.float32)
+    decoder_input_value = Tensor(np.ones((8, 10, 16)), mstype.float32)
+    decoder_input_mask = Tensor(np.ones((8, 10, 10)), mstype.float16)
+    memory_mask = Tensor(np.ones((8, 10, 20)), mstype.float16)
+
+    net = NetWithLoss(net)
+
+    net = _VirtualDatasetCell(net)
+
+    dataset = Dataset(decoder_input_value, decoder_input_mask, encoder_input_value, memory_mask)
+
+    model = Model(net)
+    model.train(1, dataset, dataset_sink_mode=False)
+
+
+def test_decoder_parallel_opt_recompute():
+    """
+    Feature: test transformer api
+    Description: Test decoder layers with parallel optimizer recompute
+    Expectation: Compile ok.
+    """
     class NetWithLoss(nn.Cell):
         def __init__(self, network):
             super(NetWithLoss, self).__init__()
@@ -666,6 +807,11 @@ def test_decoder():
 
 
 def test_vocabembedding_dp_true():
+    """
+    Feature: test transformer api
+    Description: Test vocab embedding
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
 
     class NetWithLoss(nn.Cell):
@@ -689,6 +835,11 @@ def test_vocabembedding_dp_true():
 
 
 def test_vocabembedding_dp_false():
+    """
+    Feature: test transformer api
+    Description: Test vocab embedding
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
 
     class NetWithLoss(nn.Cell):
@@ -712,6 +863,11 @@ def test_vocabembedding_dp_false():
 
 
 def test_sparse_attention_parallel_mp():
+    """
+    Feature: test transformer api
+    Description: Test sparse attention
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(model_parallel=8)
@@ -731,6 +887,11 @@ def test_sparse_attention_parallel_mp():
 
 
 def test_sparse_attention_parallel_mix():
+    """
+    Feature: test transformer api
+    Description: Test sparse attention
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=2, model_parallel=4)
@@ -750,6 +911,11 @@ def test_sparse_attention_parallel_mix():
 
 
 def test_sparse_attention_parallel_mix1():
+    """
+    Feature: test transformer api
+    Description: Test sparse attention
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=4, model_parallel=2)
@@ -769,6 +935,11 @@ def test_sparse_attention_parallel_mix1():
 
 
 def test_sparse_attention_parallel_dp():
+    """
+    Feature: test transformer api
+    Description: Test sparse attention
+    Expectation: Compile ok.
+    """
     set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode=ParallelMode.AUTO_PARALLEL)
     set_algo_parameters(fully_use_devices=False)
     sparse_attention_config = OpParallelConfig(data_parallel=8, model_parallel=1)
@@ -789,7 +960,11 @@ def test_sparse_attention_parallel_dp():
 
 
 def test_transformer_args():
-
+    """
+    Feature: test transformer api
+    Description: Test transformer args
+    Expectation: Assert ok.
+    """
     with pytest.raises(TypeError):
         Transformer(hidden_size=10, batch_size=2, ffn_hidden_size=20, src_seq_length=10,
                     tgt_seq_length=20, decoder_layers="aa")
@@ -819,6 +994,11 @@ def test_transformer_args():
 
 
 def test_transformer_parallel_config():
+    """
+    Feature: test transformer api
+    Description: Test transformer op parallel config
+    Expectation: Assert ok.
+    """
     parallel_test_config = TransformerOpParallelConfig(data_parallel=1, model_parallel=3)
 
     with pytest.raises(TypeError):
@@ -860,6 +1040,11 @@ def test_transformer_parallel_config():
 
 
 def test_parallel_config():
+    """
+    Feature: test transformer api
+    Description: Test op parallel config
+    Expectation: Assert ok.
+    """
     parallel_test_config = OpParallelConfig(data_parallel=1, model_parallel=3)
 
     with pytest.raises(ValueError):
@@ -875,6 +1060,11 @@ def test_parallel_config():
 
 
 def test_embedding_parallel_config():
+    """
+    Feature: test transformer api
+    Description: Test embedding parallel config
+    Expectation: Assert ok.
+    """
     parallel_test_config = EmbeddingOpParallelConfig(data_parallel=1, model_parallel=3, vocab_emb_dp=False)
 
     with pytest.raises(ValueError):
