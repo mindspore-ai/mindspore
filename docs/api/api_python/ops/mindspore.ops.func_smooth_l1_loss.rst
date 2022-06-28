@@ -21,8 +21,8 @@ mindspore.ops.smooth_l1_loss
     .. math::
         L =
         \begin{cases}
-            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean`;}\\
-            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum`.}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     其中， :math:`\beta` 代表阈值 `beta` 。 :math:`N` 为batch size。
@@ -38,7 +38,7 @@ mindspore.ops.smooth_l1_loss
     - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值。默认值：1.0。
     - **reduction** (str) - 缩减输出的方法。默认值： 'none'。 其他选项：'mean' 和 'sum'。
 
-    **输出：**
+    **返回：**
 
     Tensor，损失值，与 `logits` 的数据类型相同。当 'reduction' 设定为 'none' 时，shape和 `logits` 的shape相同，其他情况下shape是一维的，并且只有一个值。
 
