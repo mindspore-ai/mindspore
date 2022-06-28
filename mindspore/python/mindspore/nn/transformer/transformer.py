@@ -487,6 +487,7 @@ class FeedForward(Cell):
                                    activation=hidden_act,
                                    transpose_b=False,
                                    expert_num=expert_num,
+                                   expert_group_size=expert_group_size,
                                    outer_batch=dp,
                                    param_init_type=param_init_type)
 
@@ -503,6 +504,7 @@ class FeedForward(Cell):
                                       out_channels=input_size,
                                       transpose_b=False,
                                       expert_num=expert_num,
+                                      expert_group_size=expert_group_size,
                                       outer_batch=dp,
                                       param_init_type=param_init_type)
             if expert_num > 1:
