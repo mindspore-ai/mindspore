@@ -49,6 +49,7 @@ Neural Network
     mindspore.ops.avg_pool2d
     mindspore.ops.deformable_conv2d
     mindspore.ops.interpolate
+    mindspore.ops.max_pool3d
     mindspore.ops.kl_div
     mindspore.ops.pad
     mindspore.ops.pdist
