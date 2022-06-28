@@ -262,29 +262,30 @@ public class ModelTest {
         context.init();
         context.setThreadNum(10);
         val = context.getThreadNum();
-        assert val==10;
+        assertEquals(10, val);
         context.setInterOpParallelNum(1);
         val = context.getInterOpParallelNum();
-        assert val==1;
-        context.setThreadAffinity(1);
+        assertEquals(1,val);
+        context.setThreadAffinity(2);
         val = context.getThreadAffinityMode();
-        assert  val==1;
+        assertEquals(2,val);
         ArrayList<Integer> core_list = new ArrayList<>();
         core_list.add(1);
         core_list.add(2);
         core_list.add(3);
         context.setThreadAffinity(core_list);
         ArrayList<Integer> core_list_ret = context.getThreadAffinityCoreList();
-        assert core_list.equals(core_list_ret);
+        assertEquals(core_list, core_list_ret);
         context.setEnableParallel(true);
-        assert context.getEnableParallel();
+        assertTrue(context.getEnableParallel());
         context.free();
     }
 
     @Test
     public void testCppNullPointer(){
         MSContext context = new MSContext();
-        context.free();//free before init
+        context.free();//free before init, output error log.
         context.init();
+        context.free();
     }
 }
