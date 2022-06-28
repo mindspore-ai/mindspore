@@ -427,6 +427,7 @@ Parameter操作算子
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
     mindspore.ops.index_add
+    mindspore.ops.scatter_add
     mindspore.ops.scatter_div
     mindspore.ops.scatter_min
     mindspore.ops.scatter_max
