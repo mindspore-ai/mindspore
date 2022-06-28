@@ -214,7 +214,7 @@ class Expand(Primitive):
         self.init_prim_io_names(inputs=['x', 'shape'], outputs=['y'])
 
 
-class ExpandDims(PrimitiveWithInfer):
+class ExpandDims(PrimitiveWithCheck):
     """
     Adds an additional dimension to `input_x` at the given axis.
 
@@ -237,29 +237,11 @@ class ExpandDims(PrimitiveWithInfer):
         """Initialize ExpandDims"""
         self.init_prim_io_names(inputs=['x', 'axis'], outputs=['output'])
 
-    def __infer__(self, x, axis):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        x_shape = list(x['shape'])
-        axis_v = axis['value']
-        rank = len(x_shape)
-        validator.check_int_range(axis_v, -rank - 1, rank, Rel.INC_BOTH, 'axis', self.name)
+    def infer_value(self, input_x, axis):
         value = None
-        if x['value'] is not None:
-            value = x['value'].asnumpy()
-            value = np.expand_dims(value, axis_v)
-            value = Tensor(value)
-        if axis_v < 0:
-            axis_v = rank + 1 + axis_v
-        x_shape.insert(axis_v, 1)
-        out = {'shape': x_shape,
-               'dtype': x['dtype'],
-               'value': value}
-        if 'min_shape' in x and 'max_shape' in x:
-            out['min_shape'] = x['min_shape']
-            out['min_shape'].insert(axis_v, 1)
-            out['max_shape'] = x['max_shape']
-            out['max_shape'].insert(axis_v, 1)
-        return out
+        if input_x is not None and axis is not None:
+            value = Tensor(np.expand_dims(input_x.asnumpy(), axis))
+        return value
 
 
 class DType(Primitive):
