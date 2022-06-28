@@ -80,10 +80,15 @@ def _save_final_ckpt(func):
             try:
                 func(self, *args, **kwargs)
             except BaseException as e:
+                # pylint: disable=W0212
                 prefix = _chg_ckpt_file_name_if_same_exist(obj._directory, obj._exception_prefix, True)
                 cur_ckpoint_file = prefix + "-" + str(self._current_epoch_num) + "_" \
                     + str(self._current_step_num) + "_breakpoint.ckpt"
                 cur_file = os.path.join(obj._directory, cur_ckpoint_file)
+                if "epoch_num" in obj._append_dict:
+                    obj._append_dict["epoch_num"] = obj._append_epoch_num + self._current_epoch_num
+                if "step_num" in self._append_dict:
+                    obj._append_dict["step_num"] = obj._append_step_num + self._current_step_num
                 save_checkpoint(self._train_network, cur_file, obj._config.integrated_save, obj._config.async_save,
                                 obj._append_dict, obj._config.enc_key, obj._config.enc_mode)
                 raise e
@@ -217,6 +222,7 @@ class Model:
         self._current_epoch_num = 0
         self._current_step_num = 0
         self.epoch_iter = 0
+        self.enable_recovery = False
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
