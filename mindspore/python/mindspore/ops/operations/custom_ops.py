@@ -18,11 +18,11 @@ import json
 import os
 import re
 import ast
-import fcntl
 import hashlib
 import stat
 import inspect
 import importlib
+import platform
 import subprocess
 import numpy as np
 from mindspore._c_expression import Oplib, typing
@@ -35,6 +35,9 @@ from mindspore import ops
 from ._ms_kernel import determine_variable_usage
 from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
+
+if platform.system() != "Windows":
+    import fcntl
 
 
 def _get_cache_path():
@@ -564,7 +567,8 @@ class Custom(ops.PrimitiveWithInfer):
             if os.path.exists(op_imply_path):
                 os.remove(op_imply_path)
             with open(op_imply_path, 'at') as file:
-                fcntl.flock(file.fileno(), fcntl.LOCK_EX)
+                if platform.system() != "Windows":
+                    fcntl.flock(file.fileno(), fcntl.LOCK_EX)
                 file.seek(0, 2)
                 if file.tell() == 0:
                     file.write(self.func_source_str)
