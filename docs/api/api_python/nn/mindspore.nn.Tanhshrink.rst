@@ -23,5 +23,6 @@ mindspore.nn.Tanhshrink
     Tensor，数据类型和shape与 `x` 的相同。
 
     **异常：**
-    
+
+    - **TypeError** - `x` 不是一个Tensor。
     - **TypeError** - `x` 的数据类型既不是float16也不是float32。
