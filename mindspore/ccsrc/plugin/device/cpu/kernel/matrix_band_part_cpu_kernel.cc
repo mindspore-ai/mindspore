@@ -18,15 +18,18 @@
 #include <algorithm>
 #include <memory>
 #include <functional>
+#include <complex>
 #include "mindspore/core/ops/matrix_band_part.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = std::complex<float>;
+using complex128 = std::complex<double>;
 constexpr size_t kMaxDims = 8;
 constexpr size_t kXMinShapeSize = 2;
-using KernelRunFunc = MatrixBandPartCpuKernelMod::KernelRunFunc;
 }  // namespace
+
 bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -34,9 +37,13 @@ bool MatrixBandPartCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For 'MatrixBandPart', it does not support this kernel data type: " << kernel_attr;
     return false;
   }
+  kernel_func_ = func_list_[index].second;
   return true;
 }
 
@@ -205,7 +212,6 @@ bool MatrixBandPartCpuKernelMod::LaunchKernelBroadcast(const T *x_ptr, const LU 
 
 template <typename T, typename LU>
 bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
   const auto x_ptr = reinterpret_cast<T *>(inputs[0]->addr);
   // Both the lower and upper have done the type check in C++ primitive.
@@ -221,58 +227,169 @@ bool MatrixBandPartCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   }
 }
 
-const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MatrixBandPartCpuKernelMod::GetFuncList() const {
-  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt32),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeInt64),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<float, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt32)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<double, int32_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt32),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeInt64),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat32),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<float, int64_t>},
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddInputAttr(kNumberTypeInt64)
-       .AddOutputAttr(kNumberTypeFloat64),
-     &MatrixBandPartCpuKernelMod::LaunchKernel<double, int64_t>},
-  };
-  return func_list;
+std::vector<std::pair<KernelAttr, MatrixBandPartCpuKernelMod::MatrixBandPartFunc>>
+  MatrixBandPartCpuKernelMod::func_list_ = {{KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt8)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt8),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int8_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt16)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt16),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int16_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt8)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt8),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint8_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt16)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt16),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint16_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint32_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeUInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint64_t, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeFloat32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeFloat64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex64)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeComplex64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<complex64, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex128)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeComplex128),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<complex128, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeBool)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddOutputAttr(kNumberTypeBool),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<bool, int32_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt8)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt8),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int8_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt16)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt16),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int16_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int32_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<int64_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt8)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt8),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt16)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt16),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint16_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint32_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeUInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeUInt64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<uint64_t, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat32)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeFloat32),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<float, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeFloat64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeFloat64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<double, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeComplex64),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<complex64, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeComplex128)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeComplex128),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<complex128, int64_t>},
+                                            {KernelAttr()
+                                               .AddInputAttr(kNumberTypeBool)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddInputAttr(kNumberTypeInt64)
+                                               .AddOutputAttr(kNumberTypeBool),
+                                             &MatrixBandPartCpuKernelMod::LaunchKernel<bool, int64_t>}};
+
+std::vector<KernelAttr> MatrixBandPartCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MatrixBandPartFunc> &pair) { return pair.first; });
+  return support_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MatrixBandPart, MatrixBandPartCpuKernelMod);
