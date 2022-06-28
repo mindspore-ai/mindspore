@@ -170,7 +170,7 @@ def test_graph_tensor():
     x = ms_np.array([[1, 2], [3, 4]])
     index = ms_np.array([[0, 0], [1, 0]])
     dim = 1
-    net = Net(dim)
+    net = TensorNet(dim)
     output = net(x, index)
     expect = np.array([[1, 1], [4, 3]])
     assert np.array_equal(output.asnumpy(), expect)
