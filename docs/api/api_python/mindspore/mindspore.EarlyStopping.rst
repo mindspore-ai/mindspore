@@ -11,7 +11,7 @@ mindspore.EarlyStopping
 
     - **monitor** (str) - 监控指标。如果是边训练边推理场景，合法的monitor配置值可以为"loss", "eval_loss"以及实例化 `Model` 时传入的metric名称；如果在训练时不做推理，合法的monitor配置值为"loss"。当monitor为"loss"时，如果训练网络有多个输出，默认取第一个值为训练损失值。默认值："eval_loss"。
     - **min_delta** (float) - `monitor` 指标变化的最小阈值，超过此阈值才视为 `monitor` 的变化。默认值：0。
-    - **patience** (int) - `moniter` 相对历史最优值变好超过 `min_delta` 视为当前epoch的模型效果有所改善，`patience` 为等待的无改善epoch的数量。默认值：0。
+    - **patience** (int) - `moniter` 相对历史最优值变好超过 `min_delta` 视为当前epoch的模型效果有所改善，`patience` 为等待的无改善epoch的数量，当内部等待的epoch数 `self.wait` 大于等于 `patience` 时，训练停止。默认值：0。
     - **verbose** (bool) - 是否打印相关信息。默认值：False。
     - **mode** (str) - `{'auto', 'min', 'max'}` 中的一种，'min'模式下将在指标不再减小时执行早停，'max'模式下将在指标不再增大时执行早停，'auto'模式将根据当前 `monitor` 指标的特点自动设置。默认值："auto"。
     - **baseline** (float) - 模型效果的基线，当前 `moniter` 相对历史最优值变好且好于 `baseline` 时，内部的等待epoch计数器被清零。默认值：0。
