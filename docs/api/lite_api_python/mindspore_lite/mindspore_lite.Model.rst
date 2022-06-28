@@ -26,6 +26,73 @@ mindspore_lite.Model
         - **TypeError** - `context` 不是Context类型。
         - **RuntimeError** - `model_path` 文件路径不存在。
 
+    .. py:method:: get_input_by_tensor_name(tensor_name)
+
+        按名称获取模型的输入张量。
+
+        **参数：**
+
+        - **tensor_name** (str) – 张量名称。
+
+        **返回：**
+
+        Tensor，张量名称的输入张量。
+
+        **异常：**
+
+        - **TypeError** - `tensor_name` 不是str类型。
+        - **RuntimeError** - 按名称获取模型输入张量失败。
+
+    .. py:method:: get_inputs()
+
+        获取模型的所有输入张量。
+
+        **返回：**
+
+        list[Tensor]，模型的输入张量列表。
+
+    .. py:method:: get_output_by_tensor_name(tensor_name)
+
+        按名称获取模型的输出张量。
+
+        **参数：**
+
+        - **tensor_name** (str) – 张量名称。
+
+        **返回：**
+
+        Tensor，张量名称的输出张量。
+
+        **异常：**
+
+        - **TypeError** - `tensor_name` 不是str类型。
+        - **RuntimeError** - 按名称获取模型输出张量失败。
+
+    .. py:method:: get_outputs()
+
+        获取模型的所有输出张量。
+
+        **返回：**
+
+        list[Tensor]，模型的输出张量列表。
+
+    .. py:method:: predict(inputs, outputs)
+
+        推理模型。
+
+        **参数：**
+
+        - **inputs** (list[Tensor]) – 包含所有输入张量的顺序列表。
+        - **outputs** (list[Tensor]) - 模型输出按顺序填充到容器中。
+
+        **异常：**
+
+        - **TypeError** - `inputs` 不是list类型。
+        - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
+        - **TypeError** - `outputs` 不是list类型。
+        - **TypeError** - `outputs` 是list类型，但元素不是Tensor类型。
+        - **RuntimeError** - 预测推理模型失败。
+
     .. py:method:: resize(inputs, dims)
 
         调整输入形状的大小。
@@ -44,70 +111,3 @@ mindspore_lite.Model
         - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
         - **ValueError** -  `inputs` 的size不等于`dims` 的size。
         - **ValueError** -  `inputs` 的元素的size不等于`dims` 的元素的size。
-
-    .. py:method:: predict(inputs, outputs)
-
-        推理模型。
-
-        **参数：**
-
-        - **inputs** (list[Tensor]) – 包含所有输入张量的顺序列表。
-        - **outputs** (list[Tensor]) - 模型输出按顺序填充到容器中。
-
-        **异常：**
-
-        - **TypeError** - `inputs` 不是list类型。
-        - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
-        - **TypeError** - `inputs` 不是list类型。
-        - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
-        - **RuntimeError** - 预测推理模型失败。
-
-    .. py:method:: get_inputs()
-
-        获取模型的所有输入张量。
-
-        **返回：**
-
-         list[Tensor]，模型的输入张量列表。
-
-    .. py:method:: get_outputs()
-
-        获取模型的所有输出张量。
-
-        **返回：**
-
-         list[Tensor]，模型的输出张量列表。
-
-    .. py:method:: get_input_by_tensor_name(tensor_name)
-
-        按名称获取模型的输入张量。
-
-        **参数：**
-
-        - **tensor_name** (str) – 张量名称。
-
-        **返回：**
-
-         Tensor，张量名称的输入张量。
-
-        **异常：**
-
-        - **TypeError** - `tensor_name` 不是str类型。
-        - **RuntimeError** - 按名称获取模型输入张量失败。
-
-    .. py:method:: get_output_by_tensor_name(tensor_name)
-
-        按名称获取模型的输出张量。
-
-        **参数：**
-
-        - **tensor_name** (str) – 张量名称。
-
-        **返回：**
-
-         Tensor，张量名称的输出张量。
-
-        **异常：**
-
-        - **TypeError** - `tensor_name` 不是str类型。
-        - **RuntimeError** - 按名称获取模型输出张量失败。
