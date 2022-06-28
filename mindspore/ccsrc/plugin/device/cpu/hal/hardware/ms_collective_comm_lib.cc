@@ -165,8 +165,9 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
+  // Retry for 3*80s, which is 4 minutes.
   const size_t interval = 3;
-  size_t retry = 20;
+  size_t retry = 80;
   while (!success && --retry > 0) {
     auto unique_id = cgn_->GetMetadata(group_info_key);
     if (unique_id.length() > 0) {
