@@ -4422,6 +4422,51 @@ def xdivy(x, y):
     return tensor_xdivy(x, y)
 
 
+def log10(x):
+    r"""
+    Returns a new tensor with the logarithm to the base 10 of the elements of input.
+
+    .. math::
+        y_i = log_{10}(x_i)
+
+    .. warning::
+        If the input value of operator Log10 is within the range (0, 0.01] or [0.95, 1.05], the output accuracy may
+        be affacted. If the input value of operator Log10 is less than or equal to 0, it will not raise Error.
+
+    .. note::
+        The dimension of the input Tensor on Ascend should be less than or equal to 8, and the dimension of the
+        input Tensor on the CPU or GPU should be less than 8.
+
+    Args:
+        x (Tensor): Input Tensor of any dimension. The value must be greater than 0.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32 or float64 on CPU and GPU, if dtype of `x` is not float16
+        or float32 on Ascend.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([2, 4, 10]).astype(np.float16))
+        >>> output = ops.log10(x)
+        >>> print(output)
+        [0.301 0.602 1.   ]
+    """
+
+    dtype_op = P.DType()
+
+    x_dtype = dtype_op(x)
+    denominator = log_(_make_tensor(10, x_dtype))
+    frac = log_(x)
+    output = frac / denominator
+    return output
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -4545,6 +4590,7 @@ __all__ = [
     'reduce_prod',
     'sparse_segment_mean',
     'log2',
-    'xlogy'
+    'xlogy',
+    'log10'
 ]
 __all__.sort()
