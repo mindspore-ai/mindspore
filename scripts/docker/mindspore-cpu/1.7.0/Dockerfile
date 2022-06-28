@@ -70,7 +70,9 @@ RUN apt install -y libffi-dev libssl-dev zlib1g-dev libbz2-dev libncurses5-dev \
 RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
-    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
+    && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
+    && pip install --upgrade pip \
+    && pip cache purge
 
 # Install MindSpore cpu and MindInsight packages
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.7.0/MindSpore/cpu/x86_64/mindspore-1.7.0-cp37-cp37m-linux_x86_64.whl \
