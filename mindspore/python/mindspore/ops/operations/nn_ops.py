@@ -2267,7 +2267,48 @@ class MaxPool3DWithArgmax(Primitive):
     r"""
     Performs a 3D max pooling on the input Tensor and returns both max values and indices.
 
-    Refer to :func:`mindspore.ops.max_pool3d` for more detail.
+    Typically the input is a Tensor with shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})`, outputs
+    regional maximum in the :math:`(D_{in}, H_{in}, W_{in})`-dimension. Given `ksize`
+    :math:`ks = (d_{ker}, h_{ker}, w_{ker})` and `strides` :math:`s = (s_0, s_1, s_2)`, the operation is as follows.
+
+    .. math::
+        \text{output}(N_i, C_j, d, h, w) =
+        \max_{l=0, \ldots, d_{ker}-1} \max_{m=0, \ldots, h_{ker}-1} \max_{n=0, \ldots, w_{ker}-1}
+        \text{input}(N_i, C_j, s_0 \times d + l, s_1 \times h + m, s_2 \times w + n)
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
+            value, is an int number that represents depth, height and width of the kernel, or a tuple of
+            three int numbers that represent depth, height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents the depth,
+            height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively.
+        pads (Union[int, tuple[int]]): An int number that represents the depth, height and width of movement are both
+            strides, or a tuple of three int numbers that represent depth, height and width of movement respectively.
+        dilation (Union[int, tuple[int]]): Default: '(1, 1, 1)'.
+        ceil_mode (bool): Whether to use ceil instead of floor to calculate output shape. Default: False.
+        data_format (str) : The optional value for data format. Currently only support 'NCDHW'. Default: 'NCDHW'.
+        argmax_type (mindspore.dtype) : The dtype for argmax. Default: mstype.int64.
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(N_{in}, C_{in}, D_{in}, H_{in}, W_{in})` with data type of int8,
+          int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64.
+
+    Outputs:
+        Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
+
+        - **output** (Tensor) - Maxpooling result, with shape :math:`(N_{out}, C_{out}, D_{out}, H_{out}, W_{out})`.
+          It has the same data type as `x`.
+        - **argmax** (Tensor) - Index corresponding to the maximum value. Data type is int32 or int64.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        ValueError: If length of shape of `x` is not equal to 5.
+        TypeError: If `ksize` , `strides` , `pads` or `dilation` is not int or tuple.
+        ValueError: If `ksize` or `strides` is less than 1.
+        ValueError: If `pads` is less than 0.
+        ValueError: If `data_format` is not 'NCDHW'.
+        ValueError: If `argmax_type` is not mindspore.int64 or mindspore.int32.
 
     Supported Platforms:
         ``GPU``
