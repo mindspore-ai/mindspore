@@ -492,7 +492,7 @@ class Profiler:
         hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
         source_path = validate_and_normalize_path(source_path)
         hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
-        hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename)
+        hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename, self._ascend_dynamic_status)
         logger.info("Profiling: analyzing hwts data.")
         hwtslog_parser.execute()
 

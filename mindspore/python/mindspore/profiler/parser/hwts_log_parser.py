@@ -35,10 +35,11 @@ class HWTSLogParser:
     _dst_file_title = 'title:45 HWTS data'
     _dst_file_column_title = 'Type           cnt  Core_ID  Block_ID  Task_ID  Cycle_counter   Stream_ID'
 
-    def __init__(self, input_path, output_filename):
+    def __init__(self, input_path, output_filename, dynamic_status):
         self._input_path = input_path
         self._output_filename = output_filename
         self._source_flie_name = self._get_source_file()
+        self._dynamic_status = dynamic_status
 
     def _get_source_file(self):
         """Get hwts log file name, which was created by ada service."""
@@ -69,6 +70,9 @@ class HWTSLogParser:
         log_type = ['Start of task', 'End of task', 'Start of block', 'End of block', 'Block PMU']
 
         result_data = ""
+        flip_times = 0
+        last_task_stream_map = {}
+        task_id_threshold = 65536
 
         self._source_flie_name = validate_and_normalize_path(self._source_flie_name)
         with open(self._source_flie_name, 'rb') as hwts_data:
@@ -91,7 +95,7 @@ class HWTSLogParser:
                 is_warn_res0_ov = byte_first[4]
                 cnt = int(byte_first[0:4], 2)
                 core_id = byte_first_four[1]
-                blk_id, task_id = byte_first_four[3], byte_first_four[4]
+                blk_id, task_id = byte_first_four[3], int(byte_first_four[4])
                 if ms_type in ['000', '001', '010']:  # log type 0,1,2
                     result = struct.unpack(content_format[0], line[8:])
                     syscnt = result[0]
@@ -111,10 +115,13 @@ class HWTSLogParser:
                     logger.info("Profiling: invalid hwts log record type %s", ms_type)
                     continue
 
-                if int(task_id) < 25000:
-                    task_id = str(stream_id) + "_" + str(task_id)
+                if task_id < task_id_threshold:
+                    if last_task_stream_map.get(stream_id, task_id) > task_id and self._dynamic_status:
+                        flip_times += 1
+                    task_id_str = str(stream_id) + "_" + str(task_id + flip_times * task_id_threshold)
                 result_data += ("%-14s %-4s %-8s %-9s %-8s %-15s %s\n" % (log_type[int(ms_type, 2)], cnt, core_id,
-                                                                          blk_id, task_id, syscnt, stream_id))
+                                                                          blk_id, task_id_str, syscnt, stream_id))
+                last_task_stream_map[stream_id] = task_id
 
         fwrite_format(self._output_filename, data_source=self._dst_file_title, is_start=True)
         fwrite_format(self._output_filename, data_source=self._dst_file_column_title)
