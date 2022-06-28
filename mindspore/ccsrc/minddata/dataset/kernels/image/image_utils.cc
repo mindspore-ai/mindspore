@@ -565,8 +565,9 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     }
     if (input_cv->Rank() == kDefaultImageRank) {
       int num_channels = input_cv->shape()[kChannelIndexHWC];
-      if (num_channels != kDefaultImageChannel && num_channels != kMaxImageChannel) {
-        RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 3 or 4, but got:" +
+      if (num_channels != kMinImageChannel && num_channels != kDefaultImageChannel &&
+          num_channels != kMaxImageChannel) {
+        RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 1, 3, 4, but got:" +
                                  std::to_string(num_channels));
       }
     }
