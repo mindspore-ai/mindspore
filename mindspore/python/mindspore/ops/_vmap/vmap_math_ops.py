@@ -61,6 +61,7 @@ def _broadcast_shape(nd, x_ndim, x_shape):
 @vmap_rules_getters.register(P.BitwiseOr)
 @vmap_rules_getters.register(P.BitwiseXor)
 @vmap_rules_getters.register(P.IsClose)
+@vmap_rules_getters.register(P.Xlogy)
 def get_broadcast_binary_op_vmap_rule(prim, axis_size):
     """VmapRule for binary operations with broadcasting, such as `Add` and `Sub`."""
 
