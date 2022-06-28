@@ -13,11 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+
 def test_pynative_resnet50_gpu_8p_performance():
     """
     Feature: PyNative ResNet50 8P
