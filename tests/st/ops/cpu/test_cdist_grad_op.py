@@ -52,7 +52,7 @@ def test_CdistGradP0_float32():
     expect = np.array(
         [[[-0.8888889, -0.8888889], [-0.44444445, -0.44444445]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -78,7 +78,7 @@ def test_vmap():
 
     vmap_ceil = vmap(cal_cdist_grad, in_axes=(0), out_axes=0)
     output = vmap_ceil(grad, x1, x2, dist)
-    assert np.allclose(output.asnumpy(), expect)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -111,4 +111,4 @@ def test_vmap2():
     vmap_ceil = vmap(vmap(cal_cdist_grad, in_axes=(
         0), out_axes=0), in_axes=(0), out_axes=0)
     output = vmap_ceil(grad, x1, x2, dist)
-    assert np.allclose(output.asnumpy(), expect)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
