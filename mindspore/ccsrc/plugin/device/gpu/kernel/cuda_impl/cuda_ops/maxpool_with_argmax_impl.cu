@@ -94,7 +94,7 @@ __global__ void MaxPool3DWithArgmax(const T *input, const int n, const int c, co
     const int posh = pos / outputWidth % outputHeight;
     const int posw = pos % outputWidth;
 
-    int dstart = posd * strideHeight - padTop;
+    int dstart = posd * strideDepth - padFront;
     int hstart = posh * strideHeight - padTop;
     int wstart = posw * strideWidth - padLeft;
     const int dend = min(dstart + windowDepth, d);
