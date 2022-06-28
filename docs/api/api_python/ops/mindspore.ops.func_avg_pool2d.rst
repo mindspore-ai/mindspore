@@ -16,7 +16,7 @@ mindspore.ops.avg_pool2d
         - 在Ascend上，`kernel_size` 的高度和宽度取值为[1, 255]范围内的正整数。 其高度和宽度相乘小于256。
         - 由于指令限制，`strides` 的取值为[1, 63]范围内的正整数。
 
-    **参数：**
+    :field-odd:`参数：`
 
     - **x** (Tensor) - 输入shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 的Tensor。
     - **kernel_size** (Union[int, tuple[int]]) - 指定池化核尺寸大小，可以是单个整数表示池化核高度和宽度，或者整数tuple分别表示池化核高度和宽度。默认值：1。

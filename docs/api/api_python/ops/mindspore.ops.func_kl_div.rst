@@ -41,7 +41,7 @@ mindspore.ops.kl_div
     - **logits** (Tensor) - 数据类型支持float16、float32或float64。
     - **labels** (Tensor) - 标签Tensor，与 `logits` 的shape和数据类型相同。
 
-    **输出：**
+    **返回：**
 
     Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
 

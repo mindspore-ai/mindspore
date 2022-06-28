@@ -19,8 +19,8 @@ mindspore.nn.SmoothL1Loss
     .. math::
         L =
         \begin{cases}
-            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean`;}\\
-            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum`.}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     其中，:math:`{\beta}` 代表阈值 `beta` 。

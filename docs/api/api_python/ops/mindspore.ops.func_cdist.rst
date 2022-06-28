@@ -5,7 +5,7 @@ mindspore.ops.cdist
 
     计算两个tensor的p-范数距离。
 
-    **参数：**
+    :field-odd:`参数：`
 
     - **x** (tensor) - 输入tensor x，输入shape [B, P, M]。
     - **y** (tensor) - 输入tensor y，输入shape [B, R, M]。
