@@ -1250,7 +1250,7 @@ class Padding(Primitive):
         self.pad_dim_size = pad_dim_size
 
 
-class UniqueWithPad(PrimitiveWithInfer):
+class UniqueWithPad(PrimitiveWithCheck):
     """
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
@@ -1278,16 +1278,11 @@ class UniqueWithPad(PrimitiveWithInfer):
     def __init__(self):
         """init UniqueWithPad"""
 
-    def __infer__(self, x, pad_num):
+    def __check__(self, x, pad_num):
         validator.check_tensor_dtype_valid("x", x['dtype'], [mstype.int32, mstype.int64], self.name)
         validator.check_subclass("pad_num", pad_num['dtype'], [mstype.int32, mstype.int64], self.name)
         x_shape = list(x['shape'])
         validator.check("rank of x", len(x_shape), "expected", 1, Rel.EQ, self.name)
-        out_shape = x_shape
-        out = {'shape': (out_shape, out_shape),
-               'dtype': (x['dtype'], x['dtype']),
-               'value': None}
-        return out
 
 
 class Split(PrimitiveWithCheck):

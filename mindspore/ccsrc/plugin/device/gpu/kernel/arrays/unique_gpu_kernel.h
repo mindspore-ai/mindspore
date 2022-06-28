@@ -77,11 +77,11 @@ class UniqueGpuKernelMod : public NativeGpuKernelMod {
 
   std::vector<KernelAttr> GetOpSupport() override;
 
- private:
-  void *stream_ptr_;
-  bool is_null_input_;
+ protected:
   std::unique_ptr<cukernel::GpuKernelHelperBase> helper_ptr_ = nullptr;
   std::optional<bool> is_input_dynamic_shape_ = {};
+  bool is_null_input_;
+  void *stream_ptr_;
   BaseOperatorPtr base_operator_ = nullptr;
   std::vector<KernelTensorPtr> inputs_ = {};
   std::vector<KernelTensorPtr> outputs_ = {};
