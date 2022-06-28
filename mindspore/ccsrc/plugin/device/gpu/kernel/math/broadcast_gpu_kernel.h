@@ -64,6 +64,9 @@ static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap
   {"Atan2", BROADCAST_TYPE_ATAN2},
   {"TruncateDiv", BROADCAST_TYPE_TRUNCATEDIV},
   {"TruncateMod", BROADCAST_TYPE_TRUNCATEMOD},
+  {"BitwiseAnd", BROADCAST_TYPE_BITWISEAND},
+  {"BitwiseOr", BROADCAST_TYPE_BITWISEOR},
+  {"BitwiseXor", BROADCAST_TYPE_BITWISEXOR},
 };
 
 static const std::map<std::string, BroadcastOpType> kBroadcastComplexAndRealTypeMap = {

@@ -254,6 +254,9 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Add, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Atan2, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, AbsGrad, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseAnd, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseOr, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseXor, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Div, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, DivNoNan, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Equal, BroadcastOpGpuKernelMod);
