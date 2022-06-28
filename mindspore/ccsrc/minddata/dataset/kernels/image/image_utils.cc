@@ -466,7 +466,8 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   unsigned int crop_x_aligned = (crop_x / mcu_size) * mcu_size;
   unsigned int crop_w_aligned = crop_w + crop_x - crop_x_aligned;
   try {
-    (void)jpeg_start_decompress(&cinfo);
+    bool status = jpeg_start_decompress(&cinfo);
+    CHECK_FAIL_RETURN_UNEXPECTED(status, "JpegCropAndDecode: fail to decode multiscan jpeg image.");
     jpeg_crop_scanline(&cinfo, &crop_x_aligned, &crop_w_aligned);
   } catch (std::runtime_error &e) {
     return DestroyDecompressAndReturnError(e.what());
