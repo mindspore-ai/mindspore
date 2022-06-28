@@ -3,7 +3,7 @@ mindspore.ops.floor
 
 .. py:function:: mindspore.ops.floor(x)
 
-    向下取整函数。
+    逐元素向下取整函数。
 
     .. math::
         out_i = \lfloor x_i \rfloor

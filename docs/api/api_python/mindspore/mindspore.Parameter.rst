@@ -152,7 +152,7 @@
 
         **参数：**
 
-        **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
+        - **init_in_server** (bool) - 表示参数服务器更新的可训练参数是否在服务器上初始化。默认值：False。
 
     .. py:method:: sliced
         :property:

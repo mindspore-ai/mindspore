@@ -28,7 +28,7 @@
               \text{if reduction} = \text{'sum'.}
               \end{cases}
 
-    - 类别概率 (float), 用于目标值为多个类别标签的情况。当reduction为'none'时，交叉熵损失公式如下：
+    - 类别概率 (float)，用于目标值为多个类别标签的情况。当reduction为'none'时，交叉熵损失公式如下：
 
       .. math::
 
