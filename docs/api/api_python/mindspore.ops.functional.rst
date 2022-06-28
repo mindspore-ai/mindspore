@@ -225,6 +225,8 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.argmin
+    mindspore.ops.cummax
+    mindspore.ops.cummin
     mindspore.ops.equal
     mindspore.ops.ge
     mindspore.ops.gt

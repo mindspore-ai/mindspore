@@ -727,10 +727,8 @@ def matmul(x1, x2, dtype=None):
 
 def cummin(x, axis):
     r"""
-    Computation of the cumulative minimum of elements of 'x' in the dimension axis,
-    and the index location of each maximum value found in the dimension 'axis'.
-
-    It returns the cumulative minimum of elements and the index.
+    Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `x`
+    along the dimension `axis`, and `indices` is the index location of each minimum value.
 
     .. math::
         \begin{array}{ll} \\
@@ -738,20 +736,18 @@ def cummin(x, axis):
         \end{array}
 
     Args:
-        x (Tensor): The input tensor, rank of `input_x` > 0.
-        axis (Int): The dimension to do the operation, The axis is in the range from -len(`input_x`.shape)
-          to len(`input_x`.shape) - 1. When it's in the range from 0 to len(`input_x`.shape) - 1, it means starting
-          from the first dimension and counting forwards, When it's less than 0, it means we're counting backwards
-          from the last dimension. For example, -1 means the last dimension.
+        x (Tensor): The input Tensor, rank of `x` > 0.
+        axis (int): The dimension to do the operation over. The value of `axis` must be in the range
+            `[-x.ndim, x.ndim - 1]`.
 
-    Outputs:
-        - **output** (Tensor) - The output tensor of the cumulative minimum of elements.
-        - **indices** (Tensor) - The result tensor of the index of each minimum value been found.
+    Returns:
+        tuple [Tensor], tuple of 2 Tensors, containing the cumulative minimum of elements and the index,
+        The shape of each output tensor is the same as input `x`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If 'axis' is not an int.
-        ValueError:If 'axis' is out the range of [-len(`input_x`.shape) to len(`input_x`.shape) - 1]
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is out the range of `[-x.ndim, x.ndim - 1]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

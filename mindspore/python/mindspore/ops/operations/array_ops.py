@@ -7333,31 +7333,9 @@ class UpperBound(Primitive):
 
 class Cummax(Primitive):
     """
-   Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-   is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-   each maximum value.
+    Returns the cumulative maximum of elements and the index.
 
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    .. math::
-
-        y_i = max(x_1 , x_2 , x_3 ,... ,x_i)
-
-    Args:
-        axis (int): The axis to accumulate the tensor's value. Must be in the range [-rank(input), rank(input)).
-
-    Inputs:
-        - **input** (Tensor) - The input tensor whose dtype is int8, int32, int64, uint8, uint32, float16, float32.
-
-    Outputs:
-        - **values**  (Tensor), the shape of the output tensor is consistent with the input tensor's.
-        - **indices** (Tensor), the shape of the output tensor is consistent with the input tensor's.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `axis` is not an int.
-        ValueError: If `axis` is out of range, `axis` should be [-len(input.shape), len(input.shape)-1].
+    Refer to :func:`mindspore.ops.cummax` for more detail.
 
     Supported Platforms:
         ``GPU`` ``CPU``
