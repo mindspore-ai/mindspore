@@ -72,6 +72,7 @@
 #define MS_CMP256_F32(src1, src2, src3) _mm256_cmp_ps(src1, src2, src3)
 #define MS_CMPGT256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 30)
 #define MS_CMPLE256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 18)
+#define MS_CMPLT256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 17)
 #define MS_CMPGT256_EPI32(src1, src2) _mm256_cmpgt_epi32(src1, src2)
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)

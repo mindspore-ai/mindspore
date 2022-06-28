@@ -174,6 +174,7 @@
 #define SIMD_EXP_F32 MS_SIMD_INSTRUCTION(simd_exp, _f32)
 
 // cmp (float/int) op
+#define SIMD_CMPLT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPLT)
 #define SIMD_CMPLE_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPLE)
 #define SIMD_CMPGT_F32 MS_SIMD_INSTRUCTION_F32(MS_CMPGT)
 #define SIMD_BLEND_F32 MS_SIMD_INSTRUCTION_F32(MS_BLEND)
@@ -425,6 +426,7 @@ static inline void simd_exp32(float src, float *dst) {
 #define MS_EXP_ST_F32(bit_num, ...) MS_EXPAND((simd_exp##bit_num(__VA_ARGS__)))
 #define MS_EXP_F32(bit_num, ...) MS_EXPAND((simd_exp##bit_num##_f32(__VA_ARGS__)))
 
+#define MS_CMPLT_F32(bit_num, ...) MS_EXPAND((MS_CMPLT##bit_num##_F32(__VA_ARGS__)))
 #define MS_CMPLE_F32(bit_num, ...) MS_EXPAND((MS_CMPLE##bit_num##_F32(__VA_ARGS__)))
 #define MS_CMPGT_F32(bit_num, ...) MS_EXPAND((MS_CMPGT##bit_num##_F32(__VA_ARGS__)))
 #define MS_BLEND_F32(bit_num, ...) MS_EXPAND((MS_BLEND##bit_num##_F32(__VA_ARGS__)))
