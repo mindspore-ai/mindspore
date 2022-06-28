@@ -4118,7 +4118,7 @@ class MirrorPad(Primitive):
     Inputs:
         - **input_x** (Tensor) - Tensor of shape :math:`(N, *)`, where :math:`*` means, any number of
           additional dimensions.
-         - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
+        - **paddings** (Tensor) - Paddings requires constant tensor. The value of `paddings` is a
           matrix(list), and its shape is (N, 2). N is the rank of input data. All elements of paddings
           are int type. For the input in the `D` th dimension, paddings[D, 0] indicates how many sizes
           to be extended ahead of the input tensor in the `D` th dimension, and paddings[D, 1]

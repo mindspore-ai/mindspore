@@ -15,7 +15,7 @@ mindspore.ops.interpolate
     **参数：**
 
     - **x** (Tensor) - 输入，3到5维的Tensor, 支持的数据类型有：uint8, int8, int16, int32, int64, float16, float, double。
-    - **roi** (tuple[float]， 可选) -  在`crop_and_resize` 坐标变换模式下生效，当前不支持。
+    - **roi** (tuple[float]， 可选) -  在 `crop_and_resize` 坐标变换模式下生效，当前不支持。
     - **scales** (tuple[float]， 可选) - 输入shape每个维度resize的系数。 `scales` 和 `size` 同时只能指定一个。
     - **size** (tuple[float]， 可选) - 输入shape指定轴的新维度。 `scales` 和 `size` 同时只能指定一个。
     - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners", 还可选"half_pixel"和"asymmetric"。
