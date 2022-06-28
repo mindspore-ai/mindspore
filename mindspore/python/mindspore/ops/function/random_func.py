@@ -67,21 +67,19 @@ def standard_laplace(shape, seed=0, seed2=0):
     return output
 
 
-def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
+def random_categorical(logits, num_sample, seed=0, dtype=mstype.int64):
     r"""
     Generates random samples from a given categorical distribution tensor.
 
     Args:
+        logits (Tensor): The input tensor. 2-D Tensor with shape :math:`(batch_size, num_classes)`.
+        num_sample (int):  Number of sample to be drawn. Only constant values is allowed.
+        seed (int):  Random seed. Only constant values is allowed. Default: 0.
         dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
             mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
-    Inputs:
-        - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
-        - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
-        - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
-
-    Outputs:
-        - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+    Returns:
+        Tensor, The output Tensor with shape :math:`(batch_size, num_samples)`.
 
     Raises:
         TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
@@ -93,15 +91,16 @@ def random_categorical(x, num_sample, seed=0, dtype=mstype.int64):
 
     Examples:
         >>> from mindspore.ops import functional as F
-        >>> x = np.random.random((10, 5)).astype(np.float32)
-        >>> net = F.random_categorical(x, 8)
-        >>> output = net(Tensor(x))
+        >>> import numpy as np
+        >>> logits = np.random.random((10, 5)).astype(np.float32)
+        >>> net = F.random_categorical(logits, 8)
+        >>> output = net(Tensor(logits))
         >>> result = output.shape
         >>> print(result)F
         (10, 8)
     """
     random_categorical_ = P.RandomCategorical(dtype)
-    return random_categorical_(x, num_sample, seed)
+    return random_categorical_(logits, num_sample, seed)
 
 
 def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
