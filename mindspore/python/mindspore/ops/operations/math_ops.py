@@ -498,7 +498,7 @@ class _Reduce(PrimitiveWithInfer):
         return output
 
     @staticmethod
-    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims):
+    def _infer_shape_with_axis_shape(input_x, axis_shape, keep_dims, output_min_shape, output_max_shape):
         """ compute the shape, min/max shape of output with axis shape when axis value is None """
         input_shp = input_x['shape']
         max_v = max(input_shp)
@@ -544,7 +544,7 @@ class _Reduce(PrimitiveWithInfer):
             validator.check_int(len(axis_shape_list), 1, Rel.EQ, 'the shape of axis', self.name)
             axis_shape = axis_shape_list[0]
             out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
-                input_x, axis_shape, self.keep_dims)
+                input_x, axis_shape, self.keep_dims, output_min_shape, output_max_shape)
         elif -1 in input_shp:
             if 'max_shape' in input_x and 'min_shape' in input_x:
                 output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
