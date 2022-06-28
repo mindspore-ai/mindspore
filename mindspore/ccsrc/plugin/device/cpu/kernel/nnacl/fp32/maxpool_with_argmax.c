@@ -43,7 +43,7 @@ int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t star
   for (size_t pos = start; pos < end; pos++) {
     const int pos_n = pos / output_chw;
     const int pos_c = pos / output_hw % channel;
-    const int pos_h = pos / output_height % output_width;
+    const int pos_h = pos / output_width % output_height;
     const int pos_w = pos % output_width;
 
     int h_start = pos_h * stride_height - pad_top;
@@ -111,7 +111,7 @@ int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t st
     const int pos_n = pos / output_cdhw;
     const int pos_c = pos / output_dhw % channel;
     const int pos_d = pos / output_hw % output_depth;
-    const int pos_h = pos / output_height % output_width;
+    const int pos_h = pos / output_width % output_height;
     const int pos_w = pos % output_width;
 
     int d_start = pos_d * stride_depth - pad_front;

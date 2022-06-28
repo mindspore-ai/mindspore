@@ -73,9 +73,6 @@ class MIND_API MaxPoolGradGrad : public BaseOperator {
   PadMode get_pad_mode() const;
 };
 
-AbstractBasePtr MaxPoolGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<AbstractBasePtr> &input_args);
-
 abstract::AbstractBasePtr MaxPoolGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
