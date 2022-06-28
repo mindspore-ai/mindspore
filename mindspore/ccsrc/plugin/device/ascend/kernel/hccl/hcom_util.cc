@@ -103,7 +103,7 @@ bool HcomUtil::GetHcclOpSize(const HcclDataType &data_type, const ShapeVector &s
     return false;
   }
 
-  *size = SizetMulWithOverflowCheck(LongToSize(tmp_size), type_size);
+  *size = SizetMulWithOverflowCheck(LongToSizeClipNeg(tmp_size), type_size);
 
   MS_LOG(DEBUG) << "size[" << *size << "]";
   return true;
