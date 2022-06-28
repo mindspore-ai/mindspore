@@ -10,9 +10,16 @@ ENV CUDA_PATH /usr/local/cuda
 ENV PATH ${PYTHON_ROOT_PATH}/bin:${OMPI_ROOT_PATH}/bin:${CMAKE_ROOT_PATH}/bin:${CUDA_PATH}/bin:/usr/local/bin:$PATH
 ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${PYTHON_ROOT_PATH}:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
-# Install base tools
-RUN apt update \
-    && DEBIAN_FRONTEND=noninteractive apt install -y \
+# Update nvidia GPG key and install base tools
+RUN rm /etc/apt/sources.list.d/cuda.list && \
+    rm /etc/apt/sources.list.d/nvidia-ml.list && \
+    apt-key del 7fa2af80 && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb && \
+    dpkg -i cuda-keyring_1.0-1_all.deb && \
+    DEBIAN_FRONTEND=noninteractive apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y \
     vim \
     wget \
     curl \
@@ -78,6 +85,7 @@ RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
+    && pip install --upgrade pip \
     && pip install --no-cache-dir wheel \
     && pip cache purge
 

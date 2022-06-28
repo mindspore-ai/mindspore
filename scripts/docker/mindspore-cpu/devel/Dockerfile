@@ -73,6 +73,7 @@ RUN mkdir -pv /root/.pip \
     && echo "[global]" > /root/.pip/pip.conf \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf \
+    && pip install --upgrade pip \
     && pip install --no-cache-dir wheel \
     && pip cache purge
 
