@@ -943,7 +943,7 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
   }
 
   // to generate the strategy for (N, C1, H, W, C2), the k1/k2 can not be split
-  Shapes splittable_input = {{1, 1, 1, 1, 1}};
+  Shapes splittable_input = {{1, 1, 1, 1, 0}};  // keep C2 unsplittable and simply avoid redistribution
   Shape tmp_shape = inputs_shape_[0];
   if (name_.find(CONV2D_INFO) != std::string::npos) {  // conv2d: ((N, C-in, H, W), (C-out, C-in, k1, k2))
     tmp_shape.push_back(inputs_shape_[1][0]);          // the tmp shape is (N, C-in, H, W, C-out)
