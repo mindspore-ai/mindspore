@@ -47,12 +47,7 @@ Status NormalizePadOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> NormalizePadOperation::Build() {
-  constexpr size_t dimension_zero = 0;
-  constexpr size_t dimension_one = 1;
-  constexpr size_t dimension_two = 2;
-  return std::make_shared<NormalizePadOp>(mean_[dimension_zero], mean_[dimension_one], mean_[dimension_two],
-                                          std_[dimension_zero], std_[dimension_one], std_[dimension_two], dtype_,
-                                          is_hwc_);
+  return std::make_shared<NormalizePadOp>(mean_, std_, dtype_, is_hwc_);
 }
 
 Status NormalizePadOperation::to_json(nlohmann::json *out_json) {

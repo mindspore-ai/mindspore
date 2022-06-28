@@ -24,6 +24,7 @@ from util import diff_mse, visualize_image
 
 DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
 SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+MNIST_DATA_DIR = "../data/dataset/testMnistData"
 
 GENERATE_GOLDEN = False
 
@@ -188,6 +189,62 @@ def test_decode_normalizepad_op():
         num_iter += 1
 
 
+def test_multi_channel_normalizepad_chw():
+    """
+    Feature: NormalizePad op
+    Description: Test NormalizePad Op with multi-channel CHW input
+    Expectation: Test succeeds.
+    """
+    mean = [0.475, 0.45, 0.392, 0.5]
+    std = [0.275, 0.267, 0.278, 0.3]
+    image = np.random.randn(4, 1024, 856).astype(np.uint8)
+    op = vision.NormalizePad(mean, std, is_hwc=False)
+    op(image)
+
+
+def test_multi_channel_normalizepad_hwc():
+    """
+    Feature: NormalizePad op
+    Description: Test NormalizePad Op with multi-channel HWC input
+    Expectation: Test succeeds.
+    """
+    mean = [0.475, 0.45, 0.392, 0.5]
+    std = [0.275, 0.267, 0.278, 0.3]
+    image = np.random.randn(1024, 856, 4).astype(np.uint8)
+    op = vision.NormalizePad(mean, std, is_hwc=True)
+    op(image)
+
+
+def test_normalizepad_op_1channel(plot=False):
+    """
+    Feature: NormalizePad op
+    Description: Test NormalizePad Op with single channel input
+    Expectation: Test succeeds. MSE difference is negligible.
+    """
+    logger.info("Test NormalizePad Single Channel with HWC")
+    mean = [121.0]
+    std = [70.0]
+    normalizepad_op = vision.NormalizePad(mean, std, is_hwc=True)
+
+    #  First dataset
+    data2 = ds.MnistDataset(MNIST_DATA_DIR, shuffle=False)
+    data1 = data2.map(operations=normalizepad_op, input_columns=["image"])
+
+    num_iter = 0
+    for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                            data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+        image_de_normalized = item1["image"]
+        image_original = item2["image"]
+        image_np_normalized = normalizepad_np(image_original, mean, std)
+        mse = diff_mse(image_de_normalized, image_np_normalized)
+        logger.info("image_{}, mse: {}".format(num_iter + 1, mse))
+        assert mse < 0.01
+        if plot:
+            visualize_image(image_original, image_de_normalized, mse, image_np_normalized)
+        num_iter += 1
+    assert num_iter == 10000
+
+
 def test_normalizepad_exception_unequal_size_1():
     """
     Feature: NormalizePad op
@@ -259,6 +316,9 @@ if __name__ == "__main__":
     test_normalizepad_op_chw(plot=True)
     test_normalizepad_op_comp_chw()
     test_decode_normalizepad_op()
+    test_multi_channel_normalizepad_chw()
+    test_multi_channel_normalizepad_hwc()
     test_normalizepad_exception_unequal_size_1()
     test_normalizepad_exception_unequal_size_2()
     test_normalizepad_exception_invalid_range()
+    test_normalizepad_op_1channel()

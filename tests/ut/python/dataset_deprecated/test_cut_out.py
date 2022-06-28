@@ -16,6 +16,7 @@
 Testing CutOut op in DE
 """
 import numpy as np
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.py_transforms
@@ -219,8 +220,22 @@ def test_cut_out_comp(plot=False):
         visualize_list(image_list_1, image_list_2, visualize_mode=2)
 
 
+def test_cut_out_validation():
+    """
+    Feature: CutOut op
+    Description: Test CutOut Op with patch length greater than image dimensions
+    Expectation: Raises an exception
+    """
+    image = np.random.randn(3, 1024, 856).astype(np.uint8)
+    op = f.Cutout(length=1500, num_patches=3)
+    with pytest.raises(ValueError) as errinfo:
+        op(image)
+    assert 'Patch length is too large' in str(errinfo.value)
+
+
 if __name__ == "__main__":
     test_cut_out_op(plot=True)
     test_cut_out_op_multicut(plot=True)
     test_cut_out_md5()
     test_cut_out_comp(plot=True)
+    test_cut_out_validation()
