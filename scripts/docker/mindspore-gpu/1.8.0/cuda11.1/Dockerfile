@@ -96,5 +96,7 @@ RUN cd /tmp \
     && rm -rf /tmp/openmpi-4.0.3 \
     && rm -f /tmp/openmpi-4.0.3.tar.gz
 
-# Install frequently used python packages
-RUN pip install --no-cache-dir decorator pandas sklearn pyyaml
+# Install MindSpore cuda-11.1, MindInsight, Serving whl package
+RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindSpore/gpu/x86_64/cuda-11.1/mindspore_gpu-1.8.0-cp37-cp37m-linux_x86_64.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/MindInsight/any/mindinsight-1.8.0-py3-none-any.whl \
+    && pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.8.0/Serving/x86_64/mindspore_serving-1.8.0-cp37-cp37m-linux_x86_64.whl
