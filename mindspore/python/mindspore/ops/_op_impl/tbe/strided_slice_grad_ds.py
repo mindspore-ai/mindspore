@@ -31,10 +31,10 @@ strided_slice_grad_ds_op_info = TBERegOp("StridedSliceGrad") \
     .attr("new_axis_mask", "optional", "int", "all", "0") \
     .attr("shrink_axis_mask", "optional", "int", "all", "0") \
     .input(0, "dy", False, "required", "all") \
-    .input(1, "shape", False, "required", "all") \
-    .input(2, "begin", False, "required", "all") \
-    .input(3, "end", False, "required", "all") \
-    .input(4, "strides", False, "required", "all") \
+    .input(1, "shape", False, "required", "all", "optional") \
+    .input(2, "begin", False, "required", "all", "optional") \
+    .input(3, "end", False, "required", "all", "optional") \
+    .input(4, "strides", False, "required", "all", "optional") \
     .output(0, "output", False, "required", "all") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
                   DataType.I32_Default, DataType.I32_Default) \
