@@ -2489,6 +2489,9 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
             shp = [num_segments_v]
 
         shp += x_shp[segment_ids_shp_len:]
+        out = {'shape': shp,
+               'dtype': mstype.tensor_type(x_type.element_type()),
+               'value': None}
         if "max_value" in num_segments and "min_value" in num_segments:
             output_max_shape = list(num_segments['max_value'])
             output_min_shape = list(num_segments['min_value'])
@@ -2506,11 +2509,10 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
             min_output_incoming = x_shp
         output_max_shape += max_output_incoming[segment_ids_shp_len:]
         output_min_shape += min_output_incoming[segment_ids_shp_len:]
-        return {'shape': shp,
-                'max_shape': output_max_shape,
-                'min_shape': output_min_shape,
-                'dtype': mstype.tensor_type(x_type.element_type()),
-                'value': None}
+        if len(output_max_shape) == len(shp):
+            out['max_shape'] = output_max_shape
+            out['min_shape'] = output_min_shape
+        return out
 
 
 class UnsortedSegmentMin(PrimitiveWithCheck):
