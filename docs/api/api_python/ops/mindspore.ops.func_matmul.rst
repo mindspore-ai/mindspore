@@ -16,7 +16,7 @@ mindspore.ops.matmul
 
     **返回：**
 
-    Tensor或Scalar，矩阵乘积的输入。当 `x1` 和 `x2` 为一维向量时，输入为Scalar。
+    Tensor或Scalar，输入的矩阵乘积。仅当 `x1` 和 `x2` 为一维向量时，输出为Scalar。
 
     **异常：**
 
