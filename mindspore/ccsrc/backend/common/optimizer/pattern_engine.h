@@ -184,16 +184,4 @@ class PatternEngine {
   std::shared_ptr<Visitor> visitor_;
 };
 }  // namespace mindspore
-namespace std {
-template <>
-struct hash<mindspore::VarPtr> {
-  std::size_t operator()(const mindspore::VarPtr var) const {
-    if (var == nullptr) {
-      MS_LOG(ERROR) << "Invalid var ptr";
-      return 0;
-    }
-    return std::hash<std::string>{}(var->tag());
-  }
-};
-}  // namespace std
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_PATTERN_ENGINE_H_
