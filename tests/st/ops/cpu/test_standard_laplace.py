@@ -14,9 +14,11 @@
 # ============================================================================
 
 import pytest
+
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -66,3 +68,27 @@ def test_standard_laplace_op():
     net = NetStandardLaplace(shape, seed, seed2)
     output = net()
     assert output.shape == (130, 120, 141)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_standard_laplace_functional():
+    """
+    Feature: Functional interface of StandardLaplace CPU operation
+    Description: input the shape and random seed, test the output value and shape
+    Expectation: the value and shape of output tensor match the predefined values
+    """
+    seed = 10
+    seed2 = 10
+    shape = (5, 6, 8)
+    output = F.standard_laplace(shape, seed, seed2)
+    assert output.shape == shape
+    output_numpy_flatten_1 = output.asnumpy().flatten()
+
+    seed = 0
+    seed2 = 10
+    output = F.standard_laplace(shape, seed, seed2)
+    assert output.shape == shape
+    output_numpy_flatten_2 = output.asnumpy().flatten()
+    assert (output_numpy_flatten_1 == output_numpy_flatten_2).all()
