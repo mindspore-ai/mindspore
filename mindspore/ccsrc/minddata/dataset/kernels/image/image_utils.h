@@ -236,16 +236,15 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
                  std::vector<float> std, bool is_hwc);
 
-/// \brief Returns Normalized and paded image
+/// \brief Returns Normalized and padded image
 /// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
-/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
-/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param mean: vector of float values which are mean of each channel
+/// \param std:  vector of float values which are std of each channel
 /// \param dtype: output dtype
 /// \param is_hwc: Check if input is HWC/CHW format
 /// \param output: Normalized image Tensor and pad an extra channel, return a dtype Tensor
-Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype,
-                    bool is_hwc);
+Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
+                    std::vector<float> std, const std::string &dtype, bool is_hwc);
 
 /// \brief Returns image with adjusted brightness.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
