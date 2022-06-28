@@ -38,15 +38,20 @@ class Col2ImTest(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_col2im_op(mode):
+@pytest.mark.parametrize("mode, input_type",
+                         [(context.GRAPH_MODE, np.float32), (context.PYNATIVE_MODE, np.float32),
+                          (context.GRAPH_MODE, np.float16), (context.PYNATIVE_MODE, np.float16),
+                          (context.GRAPH_MODE, np.float64), (context.PYNATIVE_MODE, np.float64),
+                          (context.GRAPH_MODE, np.complex64), (context.PYNATIVE_MODE, np.complex64),
+                          (context.GRAPH_MODE, np.complex128), (context.PYNATIVE_MODE, np.complex128)])
+def test_col2im_op(mode, input_type):
     """
     Feature: Celu cpu kernel
     Description: test the celu alpha = 1.0.
     Expectation: match to np benchmark.
     """
     context.set_context(mode=mode, device_target='GPU')
-    x = Tensor(np.random.rand(16, 16, 4, 25).astype(np.float32))
+    x = Tensor(np.random.rand(16, 16, 4, 25).astype(input_type))
     output_size = Tensor([8, 8], dtype=mstype.int32)
     kernel_size = [2, 2]
     dilation = [2, 2]
