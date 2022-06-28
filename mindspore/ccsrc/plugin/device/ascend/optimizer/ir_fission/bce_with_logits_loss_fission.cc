@@ -104,17 +104,30 @@ AnfNodePtr BCEWithLogitsLossFission::AddReduceNode(const FuncGraphPtr &func_grap
   }
   auto reduce_node = NewCNode(reduce_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(reduce_node);
+  auto shape = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   if (type == kNumberTypeFloat16) {
-    type = kNumberTypeFloat32;
+    common::AnfAlgo::SetOutputTypeAndDetailShape({kNumberTypeFloat32}, shape, reduce_node.get());
+  } else {
+    common::AnfAlgo::SetOutputTypeAndDetailShape({type}, shape, reduce_node.get());
   }
-  auto shape = {common::AnfAlgo::GetOutputDetailShape(node, 0)};
-  common::AnfAlgo::SetOutputTypeAndDetailShape({type}, shape, reduce_node.get());
+
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(std::vector<int64_t>{}), reduce_node);
   common::AnfAlgo::SetNodeAttr("keep_dims", MakeValue(false), reduce_node);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), reduce_node);
   reduce_node->set_scope(cnode->scope());
+
   ReduceSuitForDynamicShape(func_graph, reduce_node);
+
+  if (type == kNumberTypeFloat16) {
+    std::vector<AnfNodePtr> cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name())),
+                                           reduce_node};
+    auto cast_node = NewCNode(cast_inputs, func_graph);
+    common::AnfAlgo::SetOutputTypeAndDetailShape({kNumberTypeFloat16}, shape, cast_node.get());
+    common::AnfAlgo::SetNodeAttr(kAttrDstType, TypeIdToType(kNumberTypeFloat16), cast_node);
+    cast_node->set_scope(reduce_node->scope());
+    return cast_node;
+  }
   return reduce_node;
 }
 
