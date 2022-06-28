@@ -15,7 +15,11 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_fill_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "include/cuda_fp16.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void ElewiseMaskedFillKernel(size_t inner_size, size_t size, const T *input, const bool *mask, T *value,
@@ -122,6 +126,14 @@ template CUDA_LIB_EXPORT void ElewiseMaskedFill<uint64_t>(size_t inner_size, siz
 template CUDA_LIB_EXPORT void ElewiseMaskedFill<bool>(size_t inner_size, size_t output_size, const bool *input,
                                                       const bool *mask, bool *value, bool *output,
                                                       const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseMaskedFill<Complex<float>>(size_t inner_size, size_t output_size,
+                                                                const Complex<float> *input, const bool *mask,
+                                                                Complex<float> *value, Complex<float> *output,
+                                                                const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void ElewiseMaskedFill<Complex<double>>(size_t inner_size, size_t output_size,
+                                                                 const Complex<double> *input, const bool *mask,
+                                                                 Complex<double> *value, Complex<double> *output,
+                                                                 const uint32_t device_id, cudaStream_t stream);
 
 template CUDA_LIB_EXPORT void BroadcastMaskedFill<half>(size_t inner_size, const std::vector<size_t> &input_shape,
                                                         const std::vector<size_t> &mask_shape,
@@ -190,3 +202,11 @@ template CUDA_LIB_EXPORT void BroadcastMaskedFill<bool>(size_t inner_size, const
                                                         const std::vector<size_t> &output_shape, const bool *input,
                                                         const bool *mask, bool *value, bool *output,
                                                         const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastMaskedFill<Complex<float>>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const Complex<float> *input, const bool *mask, Complex<float> *value,
+  Complex<float> *output, const uint32_t device_id, cudaStream_t stream);
+template CUDA_LIB_EXPORT void BroadcastMaskedFill<Complex<double>>(
+  size_t inner_size, const std::vector<size_t> &input_shape, const std::vector<size_t> &mask_shape,
+  const std::vector<size_t> &output_shape, const Complex<double> *input, const bool *mask, Complex<double> *value,
+  Complex<double> *output, const uint32_t device_id, cudaStream_t stream);
