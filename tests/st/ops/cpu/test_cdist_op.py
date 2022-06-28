@@ -53,7 +53,7 @@ def test_CdistP2_float32():
     expect = np.array(
         [[[2.828427, 2.828427], [1.4142135, 1.4142135]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -71,7 +71,7 @@ def test_CdistP0_float32():
     output = cdist(x1, x2)
     expect = np.array([[[2.0, 2.0], [2.0, 2.0]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -89,7 +89,7 @@ def test_CdistP1_float32():
     output = cdist(x1, x2)
     expect = np.array([[[4.0, 4.0], [2.0, 2.0]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -108,7 +108,7 @@ def test_CdistP8_float32():
     expect = np.array(
         [[[2.1810155, 2.1810155], [1.0905077, 1.0905077]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -126,7 +126,7 @@ def test_CdistPinf_float32():
     output = cdist(x1, x2)
     expect = np.array([[[2., 2.], [1., 1.]]]).astype(np.float32)
     print(output)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -143,7 +143,7 @@ def test_cdist_p2_float32_func():
     expect = np.array(
         [[[2.828427, 2.828427], [1.4142135, 1.4142135]]]).astype(np.float32)
     output = F.cdist(x1, x2, 2.0)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     print(output)
 
 
@@ -180,7 +180,7 @@ def test_vmap():
 
     vmap_cdist = vmap(cal_cdist, in_axes=(0), out_axes=0)
     output = vmap_cdist(x1, x2)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
     # 【注意】由于Vmap特性在PyNative模式下基于ms_function实现，统一基准，for循环实现也基于ms_function
     @ms_function
@@ -191,7 +191,7 @@ def test_vmap():
         return F.stack(output)
 
     expect_m = manually_batched(x1, x2)
-    assert (output.asnumpy() == expect_m.asnumpy()).all()
+    np.testing.assert_allclose(output.asnumpy(), expect_m.asnumpy(), rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -239,4 +239,4 @@ def test_vmap2():
 
     vmap_cdist = vmap(vmap(cal_cdist, in_axes=(0), out_axes=0), in_axes=(0, None), out_axes=0)
     output = vmap_cdist(x1, x2)
-    assert (output.asnumpy() == expect).all()
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
