@@ -159,4 +159,4 @@ def test_fallback_builtin_function_with_non_constance_inputs():
 
     with pytest.raises(ValueError) as ex:
         foo(Tensor([1]), Tensor([1]))
-    assert "is not constant." in str(ex.value)
+    assert "the inputs should be constant, but found variable" in str(ex.value)
