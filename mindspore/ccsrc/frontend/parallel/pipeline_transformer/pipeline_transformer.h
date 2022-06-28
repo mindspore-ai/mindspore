@@ -65,6 +65,8 @@ class PipelineTransformer {
 
  private:
   void CreateForwardGroup();
+  void RemoveMonadNode();
+  std::vector<AnfNodePtr> GetLoadNodeByParam(const AnfNodePtr &param);
   AnfNodePtr ActualOp(const AnfNodePtr &node);
   bool IsParameterGraph(const AnfNodePtr &node);
   AnfNodeIndexSet GetActualOpUsers(const std::pair<AnfNodePtr, int> &node_pair, NodeUsersMap *node_users_map);

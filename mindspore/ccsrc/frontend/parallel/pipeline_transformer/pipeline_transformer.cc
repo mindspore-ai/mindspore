@@ -294,6 +294,17 @@ void PipelineTransformer::BroadCastColoring() {
   }
 }
 
+std::vector<AnfNodePtr> PipelineTransformer::GetLoadNodeByParam(const AnfNodePtr &param) {
+  std::vector<AnfNodePtr> load_vec;
+  auto node_users = manager_->node_users()[param];
+  for (auto &param_user : node_users) {
+    if (IsPrimitiveCNode(param_user.first, prim::kPrimLoad)) {
+      load_vec.emplace_back(param_user.first);
+    }
+  }
+  return load_vec;
+}
+
 bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
@@ -496,18 +507,27 @@ std::vector<AnfNodePtr> PipelineTransformer::HandleSharedParameter() {
 
 void PipelineTransformer::ParameterColoring() {
   auto parameters = root_->parameters();
+  auto node_users_map = manager_->node_users();
   for (auto &parameter : parameters) {
-    auto users = manager_->node_users()[parameter];
+    auto loads = GetLoadNodeByParam(parameter);
     std::set<int64_t> parameter_stage;
-    for (auto &user : users) {
-      auto node = user.first->cast<CNodePtr>();
-      auto graph = node->func_graph();
-      if (IsValueNode<FuncGraph>(node->input(0))) {
-        graph = GetValueNode<FuncGraphPtr>(node->input(0));
-      }
-      if (graph != root_ && graph->stage() != -1) {
-        parameter_stage.insert(graph->stage());
-        parameter->set_user_data<NodeStageInfo>(std::make_shared<NodeStageInfo>(graph->stage()));
+    for (auto &load : loads) {
+      auto load_users = node_users_map[load];
+      for (auto &load_user : load_users) {
+        auto user_cnode = load_user.first->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(user_cnode);
+        auto stage_info = user_cnode->user_data<NodeStageInfo>();
+        if (stage_info != nullptr && stage_info->stage() != -1) {
+          parameter_stage.insert(stage_info->stage());
+          continue;
+        } else {
+          auto graph = user_cnode->func_graph();
+          MS_EXCEPTION_IF_NULL(graph);
+          if (graph != root_ && graph != main_graph_ && graph->stage() != -1) {
+            parameter_stage.insert(graph->stage());
+            continue;
+          }
+        }
       }
     }
     auto param_info = parameter->cast<ParameterPtr>()->param_info();
@@ -521,6 +541,30 @@ void PipelineTransformer::ParameterColoring() {
       virtual_param_ = parameter;
     }
     parameter_color_map_[parameter] = parameter_stage;
+  }
+}
+
+void PipelineTransformer::RemoveMonadNode() {
+  auto all_nodes = DeepScopedGraphSearch(main_graph_->get_return());
+  auto node_users_map = manager_->node_users();
+  for (auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto stage_info = cnode->user_data<NodeStageInfo>();
+    if (stage_info == nullptr) {
+      continue;
+    }
+    auto stage = stage_info->stage();
+    if (stage != stage_ && stage != -1) {
+      auto node_users = node_users_map[node];
+      for (auto &user_node : node_users) {
+        auto u_node = NewValueNode(kUMonad);
+        manager_->SetEdge(user_node.first, user_node.second, u_node);
+      }
+    }
   }
 }
 
@@ -873,6 +917,7 @@ std::pair<std::vector<AnfNodePtr>, std::vector<AnfNodePtr>> PipelineTransformer:
     // Modify for lizard cyclomatic complexity.
     CutBorderForNode(graph, node, &send_ops, &receive_ops);
   }
+  RemoveMonadNode();
   return std::make_pair(send_ops, receive_ops);
 }
 
@@ -976,7 +1021,7 @@ void PipelineTransformer::RedundancyNode(const AnfNodePtr &node,
     // node->UpdateState, replaced node wiht U.
     auto fg = cnode->func_graph();
     MS_EXCEPTION_IF_NULL(fg);
-    if (fg->stage() != -1) {
+    if (fg->stage() != -1 && fg != main_graph_) {
       continue;
     }
     if (IsPrimitiveCNode(cnode, prim::kPrimUpdateState)) {
@@ -1034,7 +1079,7 @@ void PipelineTransformer::ElimParameter() {
     if (!IsRedundancyParameter(parameter)) {
       continue;
     }
-    MS_LOG(DEBUG) << "Parameter:" << parameter->DebugString() << " is Redundancy.";
+    MS_LOG(INFO) << "Parameter:" << parameter->DebugString() << " is Redundancy.";
     RedundancyNode(parameter, &make_tuple_map);
   }
   for (auto &temp : make_tuple_map) {
