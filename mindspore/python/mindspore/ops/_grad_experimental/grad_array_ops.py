@@ -34,6 +34,7 @@ from ..operations.array_ops import ConjugateTranspose
 from ..operations.array_ops import SegmentMax
 from ..operations.array_ops import SegmentMin
 from ..operations.array_ops import SegmentSum
+from ..operations.array_ops import TensorScatterElements
 from ..operations.array_ops import Expand
 from .. import functional as F
 from .. import operations as P
@@ -404,6 +405,22 @@ def get_bprop_segment_min(self):
 
     def bprop(input_x, segment_ids, output, dout):
         return _segment_min_or_max_grad(segment_sum, input_x, segment_ids, output, dout)
+
+    return bprop
+
+
+@bprop_getters.register(TensorScatterElements)
+def get_bprop_tensor_scatter_elements(self):
+    """Generate bprop for TensorScatterElements"""
+    gather_d = P.GatherD()
+    axis = self.axis
+    reduction = self.reduction
+    tensor_scatter_elements = TensorScatterElements(axis, reduction)
+
+    def bprop(x, indices, update, out, dout):
+        x_grad = tensor_scatter_elements(dout, indices, zeros_like(update))
+        update_grad = gather_d(dout, axis, indices)
+        return x_grad, zeros_like(indices), update_grad
 
     return bprop
 
