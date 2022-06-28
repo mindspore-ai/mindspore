@@ -57,7 +57,10 @@ class Context:
         >>> import mindspore_lite as mslite
         >>> context = mslite.Context(thread_num=1, thread_afffinity_mode=1, enable_parallel=False)
         >>> print(context)
-        thread_num: 1, thread_affinity_mode: 1, thread_affinity_core_list: [], enable_parallel: False, \
+        thread_num: 1,
+        thread_affinity_mode: 1,
+        thread_affinity_core_list: [],
+        enable_parallel: False,
         device_list: 0, .
     """
 
@@ -81,10 +84,10 @@ class Context:
         self._context.set_enable_parallel(enable_parallel)
 
     def __str__(self):
-        res = f"thread_num: {self._context.get_thread_num()}, " \
-              f"thread_affinity_mode: {self._context.get_thread_affinity_mode()}, " \
-              f"thread_affinity_core_list: {self._context.get_thread_affinity_core_list()}, " \
-              f"enable_parallel: {self._context.get_enable_parallel()}, " \
+        res = f"thread_num: {self._context.get_thread_num()},\n" \
+              f"thread_affinity_mode: {self._context.get_thread_affinity_mode()},\n" \
+              f"thread_affinity_core_list: {self._context.get_thread_affinity_core_list()},\n" \
+              f"enable_parallel: {self._context.get_enable_parallel()},\n" \
               f"device_list: {self._context.get_device_list()}."
         return res
 
@@ -103,7 +106,10 @@ class Context:
             >>> context = mslite.Context()
             >>> context.append_device_info(mslite.CPUDeviceInfo())
             >>> print(context)
-            thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+            thread_num: 2,
+            thread_affinity_mode: 0,
+            thread_affinity_core_list: [],
+            enable_parallel: False,
             device_list: 0, .
         """
         if not isinstance(device_info, DeviceInfo):
@@ -135,7 +141,8 @@ class CPUDeviceInfo(DeviceInfo):
         >>> import mindspore_lite as mslite
         >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=True)
         >>> print(cpu_device_info)
-        device_type: DeviceType.kCPU, enable_fp16: True.
+        device_type: DeviceType.kCPU,
+        enable_fp16: True.
         >>> context = mslite.Context()
         >>> context.append_device_info(cpu_device_info)
     """
@@ -147,7 +154,7 @@ class CPUDeviceInfo(DeviceInfo):
         self._device_info.set_enable_fp16(enable_fp16)
 
     def __str__(self):
-        res = f"device_type: {self._device_info.get_device_type()}, " \
+        res = f"device_type: {self._device_info.get_device_type()},\n" \
               f"enable_fp16: {self._device_info.get_enable_fp16()}."
         return res
 
@@ -169,13 +176,18 @@ class GPUDeviceInfo(DeviceInfo):
         >>> import mindspore_lite as mslite
         >>> gpu_device_info = mslite.GPUDeviceInfo(device_id=1, enable_fp16=False)
         >>> print(gpu_device_info)
-        device_type: DeviceType.kGPU, device_id: 1, enable_fp16: False.
+        device_type: DeviceType.kGPU,
+        device_id: 1,
+        enable_fp16: False.
         >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
         >>> context = mslite.Context()
         >>> context.append_device_info(mslite.CPUDeviceInfo(gpu_device_info))
         >>> context.append_device_info(mslite.CPUDeviceInfo(cpu_device_info))
         >>> print(context)
-        thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+        thread_num: 2,
+        thread_affinity_mode: 0,
+        thread_affinity_core_list: [],
+        enable_parallel: False,
         device_list: 1, 0, .
     """
 
@@ -190,8 +202,8 @@ class GPUDeviceInfo(DeviceInfo):
         self._device_info.set_enable_fp16(enable_fp16)
 
     def __str__(self):
-        res = f"device_type: {self._device_info.get_device_type()}, " \
-              f"device_id: {self._device_info.get_device_id()}, " \
+        res = f"device_type: {self._device_info.get_device_type()},\n" \
+              f"device_id: {self._device_info.get_device_id()},\n" \
               f"enable_fp16: {self._device_info.get_enable_fp16()}."
         return res
 
@@ -243,13 +255,17 @@ class AscendDeviceInfo(DeviceInfo):
         >>> import mindspore_lite as mslite
         >>> ascend_device_info = mslite.AscendDeviceInfo(device_id=0)
         >>> print(ascend_device_info)
-        device_type: DeviceType.kAscend, device_id: 0.
+        device_type: DeviceType.kAscend,
+        device_id: 0.
         >>> cpu_device_info = mslite.CPUDeviceInfo(enable_fp16=False)
         >>> context = mslite.Context()
         >>> context.append_device_info(ascend_device_info)
         >>> context.append_device_info(cpu_device_info)
         >>> print(context)
-        thread_num: 2, thread_affinity_mode: 0, thread_affinity_core_list: [], enable_parallel: False, \
+        thread_num: 2,
+        thread_affinity_mode: 0,
+        thread_affinity_core_list: [],
+        enable_parallel: False
         device_list: 3, 0, .
     """
 
@@ -262,6 +278,6 @@ class AscendDeviceInfo(DeviceInfo):
         self._device_info.set_device_id(device_id)
 
     def __str__(self):
-        res = f"device_type: {self._device_info.get_device_type()}, " \
+        res = f"device_type: {self._device_info.get_device_type()},\n" \
               f"device_id: {self._device_info.get_device_id()}."
         return res

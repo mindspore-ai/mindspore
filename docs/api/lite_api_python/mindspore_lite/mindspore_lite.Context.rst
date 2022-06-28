@@ -21,7 +21,7 @@ mindspore_lite.Context
       - **2** – 小核优先。
 
     - **thread_affinity_core_list** (list[int]，可选) - 与CPU核心的线程亲和列表。默认值：None。
-    - **enable_parallel** (bool，可选) - 与CPU核心的线程亲和列表。默认值：False。
+    - **enable_parallel** (bool，可选) - 设置状态是否启用并行执行模型推理或并行训练。默认值：False。
 
     **异常：**
 
@@ -38,7 +38,7 @@ mindspore_lite.Context
 
         **参数：**
 
-        - **device_info** (Union[CPUDeviceInfo, GPUDeviceInfo, AscendDeviceInfo]) - 实例化的设备信息。
+        - **device_info** (DeviceInfo) - 实例化的设备信息。
 
         **异常：**
 

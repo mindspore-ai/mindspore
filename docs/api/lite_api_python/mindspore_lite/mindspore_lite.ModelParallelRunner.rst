@@ -21,6 +21,22 @@ mindspore_lite.ModelParallelRunner
         - **RuntimeError** - `model_path` 文件路径不存在。
         - **RuntimeError** - 初始化模型并行Runner失败。
 
+    .. py:method:: get_inputs()
+
+        获取模型的所有输入张量。
+
+        **返回：**
+
+        list[Tensor]，模型的输入张量列表。
+
+    .. py:method:: get_outputs()
+
+        获取模型的所有输出张量。
+
+        **返回：**
+
+        list[Tensor]，模型的输出张量列表。
+
     .. py:method:: predict(inputs, outputs)
 
         推理模型并行Runner。
@@ -34,22 +50,6 @@ mindspore_lite.ModelParallelRunner
 
         - **TypeError** - `inputs` 不是list类型。
         - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
-        - **TypeError** - `inputs` 不是list类型。
-        - **TypeError** - `inputs` 是list类型，但元素不是Tensor类型。
+        - **TypeError** - `output` 不是list类型。
+        - **TypeError** - `output` 是list类型，但元素不是Tensor类型。
         - **RuntimeError** - 预测推理模型失败。
-
-    .. py:method:: get_inputs()
-
-        获取模型的所有输入张量。
-
-        **返回：**
-
-         list[Tensor]，模型的输入张量列表。
-
-    .. py:method:: get_outputs()
-
-        获取模型的所有输出张量。
-
-        **返回：**
-
-         list[Tensor]，模型的输出张量列表。

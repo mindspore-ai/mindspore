@@ -15,6 +15,19 @@ mindspore_lite.Converter
     - **output_file** (str) – 输出模型文件路径。不需加后缀，可自动生成.ms后缀。e.g. "/home/user/model.prototxt"，它将生成名为model.prototxt.ms的模型在/home/user/路径下。
     - **weight_file** (str，可选) – 输入模型权重文件。仅当输入模型框架类型为FmkType.CAFFE时必选。e.g. "/home/user/model.caffemodel"。默认值：""。
     - **config_file** (str，可选) – 作为训练后量化或离线拆分算子并行的配置文件路径，禁用算子融合功能并将插件设置为so路径。默认值：""。
+    - **section** (str，可选) – 配置参数的类别。配合config_info一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
+      有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
+      有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
+
+      - "common_quant_param"： 公共量化参数部分。量化的配置参数之一。
+      - "mixed_bit_weight_quant_param"： 混合位权重量化参数部分。量化的配置参数之一。
+      - "full_quant_param"： 全量化参数部分。量化的配置参数之一。
+      - "data_preprocess_param"： 数据预处理参数部分。量化的配置参数之一。
+      - "registry"： 扩展配置参数部分。量化的配置参数之一。
+
+    - **config_info** (dict{str,str}，可选) – 配置参数列表。配合section一起，设置confile的个别参数。e.g. 对于section是"common_quant_param"，config_info是{"quant_type":"WEIGHT_QUANT"}。默认值：None。
+      有关训练后量化的配置参数，请参见 `quantization <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_。
+      有关扩展的配置参数，请参见 `extension  <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#%E6%89%A9%E5%B1%95%E9%85%8D%E7%BD%AE>`_。
     - **weight_fp16** (bool，可选) – 在Float16数据类型中序列化常量张量，仅对Float32数据类型中的常量张量有效。默认值：""。
     - **input_shape** (dict{string:list[int]}，可选) – 设置模型输入的维度，输入维度的顺序与原始模型一致。对于某些模型，模型结构可以进一步优化，但转换后的模型可能会失去动态形状的特征。e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}。默认值：""。
     - **input_format** (Format，可选) – 指定导出模型的输入格式。仅对四维输入有效。选项：Format.NHWC | Format.NCHW。默认值：Format.NHWC。
@@ -36,6 +49,10 @@ mindspore_lite.Converter
     - **TypeError** - `output_file` 不是str类型。
     - **TypeError** - `weight_file` 不是str类型。
     - **TypeError** - `config_file` 不是str类型。
+    - **TypeError** - `section` 不是str类型。
+    - **TypeError** - `config_info` 不是dict类型。
+    - **TypeError** - `config_info` 是dict类型，但dict的键不是str类型。
+    - **TypeError** - `config_info` 是dict类型，但dict的值不是str类型。
     - **TypeError** - `weight_fp16` 不是bool类型。
     - **TypeError** - `input_shape` 不是dict类型或None。
     - **TypeError** - `input_shape` 是dict类型，但dict的值不是list类型。
