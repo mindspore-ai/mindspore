@@ -24,7 +24,6 @@ mindspore.nn.DynamicLossScaleUpdateCell
 
     Bool，即输入 `overflow` 。
 
-
     .. py:method:: get_loss_scale()
 
         获取当前损失缩放系数。

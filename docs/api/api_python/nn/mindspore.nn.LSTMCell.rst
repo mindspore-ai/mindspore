@@ -33,7 +33,7 @@ mindspore.nn.LSTMCell
     **输入：**
 
     - **x** (Tensor) - shape为(batch_size, `input_size`)的Tensor。
-    - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为(batch_size, `hidden_size`)。 `hx`  的数据类型必须与 `x` 相同。
+    - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，其数据类型为mindspore.float32，shape为(batch_size, `hidden_size`)。 `hx` 的数据类型必须与 `x` 相同。
 
     **输出：**
 

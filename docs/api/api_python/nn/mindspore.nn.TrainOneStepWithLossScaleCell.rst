@@ -46,7 +46,6 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         bool，是否发生溢出。
 
-
     .. py:method:: process_loss_scale(overflow)
 
         根据溢出状态计算损失缩放系数。
@@ -55,12 +54,11 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **参数：**
 
-        **overflow** (bool) - 是否发生溢出。
+        - **overflow** (bool) - 是否发生溢出。
 
         **返回：**
 
         bool，溢出状态，即输入。
-
 
     .. py:method:: set_sense_scale(sens)
 
@@ -68,7 +66,7 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **参数：**
 
-        **sens** （Tensor）- 新的损失缩放系数，其shape和类型需要与原始 `scale_sense` 相同。
+        - **sens** （Tensor）- 新的损失缩放系数，其shape和类型需要与原始 `scale_sense` 相同。
 
     .. py:method:: start_overflow_check(pre_cond, compute_input)
 
@@ -78,9 +76,9 @@ mindspore.nn.TrainOneStepWithLossScaleCell
 
         **参数：**
 
-        - **pre_cond** (Tensor) -启动溢出检测的先决条件。它决定溢出状态清除和先前处理的执行顺序。它确保函数 `start_overflow` 在执行完先决条件后清除状态。
+        - **pre_cond** (Tensor) - 启动溢出检测的先决条件。它决定溢出状态清除和先前处理的执行顺序。它确保函数 `start_overflow` 在执行完先决条件后清除状态。
         - **compute_input** (object) - 后续运算的输入。需要对特定的计算过程进行溢出检测。将 `compute_input` 设置这一计算过程的输入，以确保在执行该计算之前清除了溢出状态。
 
         **返回：**
 
-        **Tuple** [object, object]，GPU后端的第一个值为False，而其他后端的第一个值是NPUAllocFloatStatus的实例。该值用于在 `get_overflow_status` 期间检测溢出。第二个值与 `compute_input` 的输入相同，用于控制执行序。
+        Tuple[object, object]，GPU后端的第一个值为False，而其他后端的第一个值是NPUAllocFloatStatus的实例。该值用于在 `get_overflow_status` 期间检测溢出。第二个值与 `compute_input` 的输入相同，用于控制执行序。

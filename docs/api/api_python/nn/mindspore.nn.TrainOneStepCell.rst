@@ -24,4 +24,4 @@ mindspore.nn.TrainOneStepCell
 
     **异常：**
 
-    **TypeError**：`sens` 不是numbers.Number。
+    - **TypeError** - `sens` 不是numbers.Number。
