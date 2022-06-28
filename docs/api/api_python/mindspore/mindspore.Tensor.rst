@@ -1261,8 +1261,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相加操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相加操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
 
         **返回：**
 
@@ -1306,8 +1306,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
 
         **返回：**
 
@@ -1350,8 +1350,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
 
         **返回：**
 
