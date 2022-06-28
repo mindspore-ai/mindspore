@@ -78,7 +78,7 @@ class FadeShape(str, Enum):
 
 
 class GainType(str, Enum):
-    """"
+    """
     Gain Types.
 
     Possible enumeration values are: GainType.AMPLITUDE, GainType.POWER, GainType.DB.
