@@ -30,6 +30,9 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
+See `Common Data Processing and Augmentation Tutorial
+<https://www.mindspore.cn/tutorials/en/master/advanced/dataset/augment_common_data.html>`_ for more details.
+
 Descriptions of common data processing terms are as follows:
 
 - TensorOperation, the base class of all data processing operations implemented in C++.
