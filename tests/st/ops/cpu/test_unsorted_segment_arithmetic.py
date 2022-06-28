@@ -128,6 +128,27 @@ def test_unsorted_segment_arithmetic_one_d(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['min', 'max'])
+def test_unsorted_segment_arithmetic_error(func):
+    """
+    Feature: UnsortedSegment* operators.
+    Description: test cases for UnsortedSegment* operator
+    Expectation: the result match numpy implementation.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+    x = Tensor(np.array([1, 2, 3, 4]), mstype.float32)
+    segment_ids = Tensor(np.array([0, 0, 1, 2]), mstype.int32)
+    num_segments = 2
+
+    net = TestUnsortedSegmentArithmeticNet(func, num_segments)
+
+    with pytest.raises(RuntimeError):
+        net(x, segment_ids)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['sum'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
