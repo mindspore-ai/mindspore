@@ -379,7 +379,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimReduceScatter, R{InferImplReduceScatter, nullptr, true}},
     {prim::kPrimCast, R{InferImplCast, nullptr, true}},
     {prim::kPrimExp, R{ops::ExpInfer, nullptr, true}},
-    {prim::kPrimExpandDims, R{InferImplExpandDims, nullptr, true}},
     {prim::kPrimAllReduce, R{InferImplAllReduce, nullptr, true}},
     {prim::kPrimBroadcast, R{InferImplBroadcast, nullptr, true}},
     {prim::kPrimAllGather, R{InferImplAllGather, nullptr, true}},

@@ -891,40 +891,6 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
   return ret;
 }
 
-AbstractBasePtr InferImplExpandDims(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_spec_list) {
-  constexpr auto kExpandDimsInputsNum = 2;
-  const std::string op_name = primitive->name();
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-
-  std::vector<int64_t> shape;
-  std::vector<int64_t> x_shape = x->shape()->shape();
-  (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());
-  int64_t value = 0;
-  if (args_spec_list.size() == kExpandDimsInputsNum) {
-    value = GetValue<int64_t>(args_spec_list[1]->BuildValue());
-  } else if (args_spec_list.size() == 1) {
-    auto axis = primitive->GetAttr("axis");
-    value = GetValue<int64_t>(axis);
-  } else {
-    MS_LOG(EXCEPTION) << " The num of ExpandDims must be 1 or 2, but got " << args_spec_list.size();
-  }
-
-  if (value < -(SizeToInt(x_shape.size()) + 1) || value > SizeToInt(x_shape.size())) {
-    MS_LOG(EXCEPTION) << " axis value should be in range [-input_x.dim-1,input_x.dim], but axis value is" << value
-                      << " and input_x.dim is" << x_shape.size();
-  }
-  if (value < 0) {
-    value = value + SizeToInt(x_shape.size()) + 1;
-  }
-  (void)shape.insert(shape.begin() + value, 1);
-
-  auto ret = std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape));
-  return ret;
-}
-
 AbstractBasePtr InferImplGpuConvertToDynamicShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();
