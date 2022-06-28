@@ -32,8 +32,8 @@ mindspore.nn.BiDense
 
     **数据类型：**
 
-    - **input1** (Tensor) - 数据类型必须为float16或float32，且与input1一致。
-    - **input2** (Tensor) - 数据类型必须为float16或float32，且与input2一致。
+    - **input1** (Tensor) - 数据类型必须为float16或float32，且与input2一致。
+    - **input2** (Tensor) - 数据类型必须为float16或float32，且与input1一致。
     - **output** (Tensor) - 数据类型与输入保持一致。
 
     **权重：**
