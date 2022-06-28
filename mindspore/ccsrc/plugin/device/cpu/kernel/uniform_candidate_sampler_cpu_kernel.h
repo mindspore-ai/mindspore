@@ -82,6 +82,7 @@ class UniformCandidateSamplerCpuKernelMod : public NativeCpuKernelMod,
   int64_t range_max_;
   size_t input_size_;
   std::vector<size_t> output_sizes_;
+  std::vector<size_t> output_steps_;
 
   bool remove_accidental_hits_;
   bool is_null_input_;

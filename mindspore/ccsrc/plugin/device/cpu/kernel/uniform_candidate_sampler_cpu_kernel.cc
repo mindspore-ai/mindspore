@@ -69,7 +69,12 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
     };
     ParallelLaunchAutoSearch(task, num_sampled_, this, &parallel_search_info_, pool_);
     counter = num_sampled_;
-    return num_sampled_;
+    std::ostringstream oss;
+    for (int64_t i = 0; i < num_sampled_; i++) {
+      oss << sampled_candidates_[i] << ", ";
+    }
+    MS_LOG(DEBUG) << "For UniformCandidateSampler, sampled_candidates: " << oss.str();
+    return counter;
   }
 
   int64_t picked = 0;
@@ -84,6 +89,11 @@ int64_t UniformCandidateSamplerCpuKernelMod::Sampling(T *sampled_candidates_, co
       picked++;
     }
   }
+  std::ostringstream oss;
+  for (int64_t i = 0; i < num_sampled_; i++) {
+    oss << sampled_candidates_[i] << ", ";
+  }
+  MS_LOG(DEBUG) << "For UniformCandidateSampler, sampled_candidates: " << oss.str();
   return counter;
 }
 
@@ -266,7 +276,11 @@ bool UniformCandidateSamplerCpuKernelMod::LaunchKernel(const std::vector<Address
   if (init_seed_ == 0 && cur_seed_ == 0) {
     cur_seed_ = time(nullptr);
     generator_.seed(cur_seed_);
+  } else if (init_seed_ != 0) {
+    generator_.seed(init_seed_);
   }
+  MS_LOG(DEBUG) << "For UniformCandidateSampler, generator seed : init_seed_ = " << init_seed_
+                << "cur_seed_ = " << cur_seed_;
   T *sampled_candidates = GetDeviceAddress<T>(outputs, kIndex0);
   S *true_expected_count = GetDeviceAddress<S>(outputs, kIndex1);
   S *sampled_expected_count = GetDeviceAddress<S>(outputs, kIndex2);
