@@ -2660,7 +2660,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
             If `degrees` is a number, the range will be converted to (-degrees, degrees).
             If `degrees` is a sequence, it should be (min, max).
         resample (Inter, optional): An optional resampling filter (default=Inter.NEAREST).
-            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA, Inter.ANTIALIAS].
+            It can be any of [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA].
 
             - Inter.BILINEAR, means resample method is bilinear interpolation.
 
@@ -2669,8 +2669,6 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
             - Inter.BICUBIC, means resample method is bicubic interpolation.
 
             - Inter.AREA, means the interpolation method is area interpolation.
-
-            - Inter.ANTIALIAS, means the interpolation method is antialias interpolation.
 
         expand (bool, optional):  Optional expansion flag (default=False). If set to True, expand the output
             image to make it large enough to hold the entire rotated image.
@@ -2723,7 +2721,7 @@ class RandomRotation(ImageTensorOperation, PyTensorOperation):
         self.degrees = degrees
         self.c_resample = None
         self.py_resample = None
-        if resample in [Inter.AREA, Inter.PILCUBIC]:
+        if resample == Inter.AREA:
             self.c_resample = Inter.to_c_type(resample)
         elif resample == Inter.ANTIALIAS:
             self.py_resample = Inter.to_python_type(resample)
