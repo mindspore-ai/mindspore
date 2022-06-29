@@ -38,8 +38,6 @@ CUDA_LIB_EXPORT void CalAdaptiveMaxPool2DGrad(const T *input_data, const S *max_
   const int input_chw = c * input_hw;
   const int input_nchw = n * input_chw;
   const int output_hw = output_height * output_width;
-  const int output_chw = c * output_hw;
-  const int output_nchw = n * output_chw;
 
   AdaptiveMaxPool2DGradKernel<<<CUDA_BLOCKS(device_id, input_nchw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input_data, max_index, input_nchw, input_hw, output_hw, output_data);
