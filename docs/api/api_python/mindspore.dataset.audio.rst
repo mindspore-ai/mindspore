@@ -8,6 +8,8 @@ mindspore.dataset.audio
 
 .. mscnautosummary::
     :toctree: dataset_audio
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.dataset.audio.AllpassBiquad
     mindspore.dataset.audio.AmplitudeToDB
@@ -60,6 +62,8 @@ mindspore.dataset.audio
 
 .. mscnautosummary::
     :toctree: dataset_audio
+    :nosignatures:
+    :template: classtemplate.rst
 
     mindspore.dataset.audio.BorderType
     mindspore.dataset.audio.DensityFunction
