@@ -16,7 +16,6 @@
 import pytest
 import mindspore as ms
 from mindspore import Tensor, ms_function, context, nn, Parameter
-from mindspore import dtype as mstype
 import numpy as np
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -107,7 +106,11 @@ def test_while_in_for_numpy():
     assert res2 == 10
 
 
-@pytest.mark.skip(reason='Not support graph fallback feature yet')
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
 def test_while_in_for_builtin_function():
     """
     Feature: JIT Fallback
@@ -121,14 +124,14 @@ def test_while_in_for_builtin_function():
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
 
         def construct(self):
-            x = np.array(1.1)
+            x = Tensor(np.array(1.1))
             for _ in range(3):
                 while self.param_a < Tensor([7]).astype("int32"):
-                    x = x + int(0) + abs(-1)
+                    x = x + Tensor(int(0) + abs(-1))
                     self.param_a += Tensor([1]).astype("int32")
                 self.param_a -= Tensor([5]).astype("int32")
-            return Tensor(x, mstype.float32)
+            return x
 
     net = Net()
     res = net()
-    assert res == 8.1
+    assert res.asnumpy() == 17.1
