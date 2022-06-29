@@ -18,6 +18,10 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
 template <typename T>
+__inline__ __device__ T GetInput(const T *input, size_t index) { return input[index]; }
+__inline__ __device__ float GetInput(const half *input, size_t index) { return __half2float(input[index]); }
+
+template <typename T>
 __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, const T *grid_addr, T *output_addr,
                                     const size_t C, const size_t inp_H, const size_t inp_W, const size_t out_H,
                                     const size_t out_W, const size_t inp_sN, const size_t inp_sC, const size_t inp_sH,
@@ -33,11 +37,15 @@ __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, cons
     const size_t grid_offset = n * grid_sN + h * grid_sH + w * grid_sW;
 
     // get the corresponding input x, y coordinates from grid
-    T x = grid_addr[grid_offset];
-    T y = grid_addr[grid_offset + grid_sCoor];
+    auto x = GetInput(grid_addr, grid_offset);
+    auto y = GetInput(grid_addr, grid_offset + grid_sCoor);
 
-    T ix = grid_sampler_compute_source_index(x, inp_W, padding_mode, align_corners);
-    T iy = grid_sampler_compute_source_index(y, inp_H, padding_mode, align_corners);
+    // ItmType is the intermediate type for computing.
+    // If input type T is fp16, ItmType represents the upcasting type fp32 of T. Otherwise, im_type is the same as T.
+    using ItmType = decltype(x);
+
+    ItmType ix = grid_sampler_compute_source_index(x, inp_W, padding_mode, align_corners);
+    ItmType iy = grid_sampler_compute_source_index(y, inp_H, padding_mode, align_corners);
 
     if (interpolation_mode == GridSamplerInterpolationMode::BILINEAR) {
       // get NE, NW, SE, SW pixel values from (x, y)
@@ -51,28 +59,29 @@ __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, cons
       size_t iy_se = iy_nw + 1;
 
       // get surfaces to each neighbor:
-      auto nw = static_cast<float>((ix_se - ix) * (iy_se - iy));
-      auto ne = static_cast<float>((ix - ix_sw) * (iy_sw - iy));
-      auto sw = static_cast<float>((ix_ne - ix) * (iy - iy_ne));
-      auto se = static_cast<float>((ix - ix_nw) * (iy - iy_nw));
+      ItmType nw = (ix_se - ix) * (iy_se - iy);
+      ItmType ne = (ix - ix_sw) * (iy_sw - iy);
+      ItmType sw = (ix_ne - ix) * (iy - iy_ne);
+      ItmType se = (ix - ix_nw) * (iy - iy_nw);
 
       // calculate bilinear weighted pixel value and set output pixel
       auto inp_ptr_NC = input_addr + n * inp_sN;
       auto out_ptr_NCHW = output_addr + n * out_sN + h * out_sH + w * out_sW;
       for (size_t c = 0; c < C; ++c, inp_ptr_NC += inp_sC, out_ptr_NCHW += out_sC) {
-        *out_ptr_NCHW = static_cast<T>(0);
+        ItmType intermediate_value = 0;
         if (within_bounds_2d(iy_nw, ix_nw, inp_H, inp_W)) {
-          *out_ptr_NCHW += inp_ptr_NC[iy_nw * inp_sH + ix_nw * inp_sW] * nw;
+          intermediate_value += GetInput(inp_ptr_NC, iy_nw * inp_sH + ix_nw * inp_sW) * nw;
         }
         if (within_bounds_2d(iy_ne, ix_ne, inp_H, inp_W)) {
-          *out_ptr_NCHW += inp_ptr_NC[iy_ne * inp_sH + ix_ne * inp_sW] * ne;
+          intermediate_value += GetInput(inp_ptr_NC, iy_ne * inp_sH + ix_ne * inp_sW) * ne;
         }
         if (within_bounds_2d(iy_sw, ix_sw, inp_H, inp_W)) {
-          *out_ptr_NCHW += inp_ptr_NC[iy_sw * inp_sH + ix_sw * inp_sW] * sw;
+          intermediate_value += GetInput(inp_ptr_NC, iy_sw * inp_sH + ix_sw * inp_sW) * sw;
         }
         if (within_bounds_2d(iy_se, ix_se, inp_H, inp_W)) {
-          *out_ptr_NCHW += inp_ptr_NC[iy_se * inp_sH + ix_se * inp_sW] * se;
+          intermediate_value += GetInput(inp_ptr_NC, iy_se * inp_sH + ix_se * inp_sW) * se;
         }
+        *out_ptr_NCHW = static_cast<T>(intermediate_value);
       }
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
       size_t ix_nearest = static_cast<size_t>(::round(ix));
@@ -92,11 +101,11 @@ __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, cons
       ix = grid_sampler_unnormalize(x, inp_W, align_corners);
       iy = grid_sampler_unnormalize(y, inp_H, align_corners);
 
-      T ix_nw = ::floor(ix);
-      T iy_nw = ::floor(iy);
+      ItmType ix_nw = ::floor(ix);
+      ItmType iy_nw = ::floor(iy);
 
-      const T tx = ix - ix_nw;
-      const T ty = iy - iy_nw;
+      const ItmType tx = ix - ix_nw;
+      const ItmType ty = iy - iy_nw;
 
       auto inp_ptr_NC = input_addr + n * inp_sN;
       auto out_ptr_NCHW = output_addr + n * out_sN + h * out_sH + w * out_sW;
@@ -135,6 +144,13 @@ void GridSampler2D(const size_t size, const T *input_addr, const T *grid_addr, T
     interpolation_mode, padding_mode, align_corners);
 }
 
+template CUDA_LIB_EXPORT void GridSampler2D<half>(
+  const size_t size, const half *input_addr, const half *grid_addr, half *output_addr,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &output_shape, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
+  const GridSamplerInterpolationMode interpolation_mode, const GridSamplerPaddingMode padding_mode,
+  const bool align_corners, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void GridSampler2D<float>(
   const size_t size, const float *input_addr, const float *grid_addr, float *output_addr,
   const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
@@ -168,13 +184,17 @@ __global__ void GridSampler3DKernel(const size_t size, const T *input_addr, cons
     const size_t grid_offset = n * grid_sN + d * grid_sD + h * grid_sH + w * grid_sW;
 
     // get the corresponding input x, y, z coordinates from grid
-    T x = grid_addr[grid_offset];
-    T y = grid_addr[grid_offset + grid_sCoor];
-    T z = grid_addr[grid_offset + 2 * grid_sCoor];
+    auto x = GetInput(grid_addr, grid_offset);
+    auto y = GetInput(grid_addr, grid_offset + grid_sCoor);
+    auto z = GetInput(grid_addr, grid_offset + 2 * grid_sCoor);
 
-    T ix = grid_sampler_compute_source_index(x, inp_W, padding_mode, align_corners);
-    T iy = grid_sampler_compute_source_index(y, inp_H, padding_mode, align_corners);
-    T iz = grid_sampler_compute_source_index(z, inp_D, padding_mode, align_corners);
+    // ItmType is the intermediate type for computing.
+    // If input type T is fp16, ItmType represents the upcasting type fp32 of T. Otherwise, im_type is the same as T.
+    using ItmType = decltype(x);
+
+    ItmType ix = grid_sampler_compute_source_index(x, inp_W, padding_mode, align_corners);
+    ItmType iy = grid_sampler_compute_source_index(y, inp_H, padding_mode, align_corners);
+    ItmType iz = grid_sampler_compute_source_index(z, inp_D, padding_mode, align_corners);
 
     if (interpolation_mode == GridSamplerInterpolationMode::BILINEAR) {
       // get corner pixel values from (x, y, z)
@@ -213,14 +233,14 @@ __global__ void GridSampler3DKernel(const size_t size, const T *input_addr, cons
       size_t iz_bse = iz_tnw + 1;
 
       // get surfaces to each neighbor:
-      T tnw = (ix_bse - ix) * (iy_bse - iy) * (iz_bse - iz);
-      T tne = (ix - ix_bsw) * (iy_bsw - iy) * (iz_bsw - iz);
-      T tsw = (ix_bne - ix) * (iy - iy_bne) * (iz_bne - iz);
-      T tse = (ix - ix_bnw) * (iy - iy_bnw) * (iz_bnw - iz);
-      T bnw = (ix_tse - ix) * (iy_tse - iy) * (iz - iz_tse);
-      T bne = (ix - ix_tsw) * (iy_tsw - iy) * (iz - iz_tsw);
-      T bsw = (ix_tne - ix) * (iy - iy_tne) * (iz - iz_tne);
-      T bse = (ix - ix_tnw) * (iy - iy_tnw) * (iz - iz_tnw);
+      ItmType tnw = (ix_bse - ix) * (iy_bse - iy) * (iz_bse - iz);
+      ItmType tne = (ix - ix_bsw) * (iy_bsw - iy) * (iz_bsw - iz);
+      ItmType tsw = (ix_bne - ix) * (iy - iy_bne) * (iz_bne - iz);
+      ItmType tse = (ix - ix_bnw) * (iy - iy_bnw) * (iz_bnw - iz);
+      ItmType bnw = (ix_tse - ix) * (iy_tse - iy) * (iz - iz_tse);
+      ItmType bne = (ix - ix_tsw) * (iy_tsw - iy) * (iz - iz_tsw);
+      ItmType bsw = (ix_tne - ix) * (iy - iy_tne) * (iz - iz_tne);
+      ItmType bse = (ix - ix_tnw) * (iy - iy_tnw) * (iz - iz_tnw);
 
       auto inp_ptr_NC = input_addr + n * inp_sN;
       auto out_ptr_NCDHW = output_addr + n * out_sN + d * out_sD + h * out_sH + w * out_sW;
@@ -229,31 +249,32 @@ __global__ void GridSampler3DKernel(const size_t size, const T *input_addr, cons
         // + (c, iz_tsw, iy_tsw, ix_tsw) * tsw + (c, iz_tse, iy_tse, ix_tse) * tse
         // + (c, iz_bnw, iy_bnw, ix_bnw) * bnw + (c, iz_bne, iy_bne, ix_bne) * bne
         // + (c, iz_bsw, iy_bsw, ix_bsw) * bsw + (c, iz_bse, iy_bse, ix_bse) * bse
-        *out_ptr_NCDHW = static_cast<T>(0);
+        ItmType intermediate_value = 0;
         if (within_bounds_3d(iz_tnw, iy_tnw, ix_tnw, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_tnw * inp_sD + iy_tnw * inp_sH + ix_tnw * inp_sW] * tnw;
+          intermediate_value += GetInput(inp_ptr_NC, iz_tnw * inp_sD + iy_tnw * inp_sH + ix_tnw * inp_sW) * tnw;
         }
         if (within_bounds_3d(iz_tne, iy_tne, ix_tne, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_tne * inp_sD + iy_tne * inp_sH + ix_tne * inp_sW] * tne;
+          intermediate_value += GetInput(inp_ptr_NC, iz_tne * inp_sD + iy_tne * inp_sH + ix_tne * inp_sW) * tne;
         }
         if (within_bounds_3d(iz_tsw, iy_tsw, ix_tsw, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_tsw * inp_sD + iy_tsw * inp_sH + ix_tsw * inp_sW] * tsw;
+          intermediate_value += GetInput(inp_ptr_NC, iz_tsw * inp_sD + iy_tsw * inp_sH + ix_tsw * inp_sW) * tsw;
         }
         if (within_bounds_3d(iz_tse, iy_tse, ix_tse, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_tse * inp_sD + iy_tse * inp_sH + ix_tse * inp_sW] * tse;
+          intermediate_value += GetInput(inp_ptr_NC, iz_tse * inp_sD + iy_tse * inp_sH + ix_tse * inp_sW) * tse;
         }
         if (within_bounds_3d(iz_bnw, iy_bnw, ix_bnw, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_bnw * inp_sD + iy_bnw * inp_sH + ix_bnw * inp_sW] * bnw;
+          intermediate_value += GetInput(inp_ptr_NC, iz_bnw * inp_sD + iy_bnw * inp_sH + ix_bnw * inp_sW) * bnw;
         }
         if (within_bounds_3d(iz_bne, iy_bne, ix_bne, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_bne * inp_sD + iy_bne * inp_sH + ix_bne * inp_sW] * bne;
+          intermediate_value += GetInput(inp_ptr_NC, iz_bne * inp_sD + iy_bne * inp_sH + ix_bne * inp_sW) * bne;
         }
         if (within_bounds_3d(iz_bsw, iy_bsw, ix_bsw, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_bsw * inp_sD + iy_bsw * inp_sH + ix_bsw * inp_sW] * bsw;
+          intermediate_value += GetInput(inp_ptr_NC, iz_bsw * inp_sD + iy_bsw * inp_sH + ix_bsw * inp_sW) * bsw;
         }
         if (within_bounds_3d(iz_bse, iy_bse, ix_bse, inp_D, inp_H, inp_W)) {
-          *out_ptr_NCDHW += inp_ptr_NC[iz_bse * inp_sD + iy_bse * inp_sH + ix_bse * inp_sW] * bse;
+          intermediate_value += GetInput(inp_ptr_NC, iz_bse * inp_sD + iy_bse * inp_sH + ix_bse * inp_sW) * bse;
         }
+        *out_ptr_NCDHW = static_cast<T>(intermediate_value);
       }
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
       size_t ix_nearest = static_cast<size_t>(::round(ix));
@@ -289,6 +310,14 @@ void GridSampler3D(const size_t size, const T *input_addr, const T *grid_addr, T
     output_stride[1], output_stride[2], output_stride[3], output_stride[4], interpolation_mode, padding_mode,
     align_corners);
 }
+
+template CUDA_LIB_EXPORT void GridSampler3D<half>(
+  const size_t size, const half *input_addr, const half *grid_addr, half *output_addr,
+  const std::vector<size_t> &input_shape, const std::vector<size_t> &grid_shape,
+  const std::vector<size_t> &output_shape, const std::vector<size_t> &input_stride,
+  const std::vector<size_t> &grid_stride, const std::vector<size_t> &output_stride,
+  const GridSamplerInterpolationMode interpolation_mode, const GridSamplerPaddingMode padding_mode,
+  const bool align_corners, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void GridSampler3D<float>(
   const size_t size, const float *input_addr, const float *grid_addr, float *output_addr,

@@ -56,7 +56,8 @@ CUDA_LIB_EXPORT void GridSampler3D(const size_t size, const T *input_addr, const
 
 template <typename T>
 static __forceinline__ __device__ T clip_coordinates(T in, int clip_limit) {
-  return ::min(static_cast<T>(clip_limit - 1), ::max(in, static_cast<T>(0)));
+  in = in > static_cast<T>(0) ? in : static_cast<T>(0);
+  return static_cast<T>(clip_limit - 1) < in ? static_cast<T>(clip_limit - 1) : in;
 }
 
 template <typename T>
@@ -79,8 +80,27 @@ static __forceinline__ __device__ T reflect_coordinates(T in, int twice_low, int
 }
 
 template <typename T>
+static __forceinline__ __device__ half reflect_coordinates(half in, int twice_low, int twice_high) {
+  if (twice_low != twice_high) {
+    float min = static_cast<float>(twice_low) / 2;
+    float span = static_cast<float>(twice_high - twice_low) / 2;
+    float new_in = ::fabs(__half2float(in) - min);
+    // `fmod` returns same sign as `in`, which is positive after the `fabs` above.
+    float extra = ::fmod(in, span);
+    int flips = static_cast<int>(::floor(new_in / span));
+    if (flips % 2 != 0) {
+      return __float2half(span - extra + min);
+    } else {
+      return __float2half(extra + min);
+    }
+  } else {
+    return static_cast<half>(0);
+  }
+}
+
+template <typename T>
 static __forceinline__ __device__ T safe_downgrade_to_int_range(T x) {
-  if (x > INT_MAX - 1 || x < INT_MIN || !::isfinite(static_cast<double>(x))) {
+  if (x > static_cast<T>(INT_MAX - 1) || x < static_cast<T>(INT_MIN) || !::isfinite(static_cast<double>(x))) {
     return static_cast<T>(-100.0);
   } else {
     return x;
@@ -122,9 +142,9 @@ static __forceinline__ __device__ T compute_coordinates(T coord, const size_t si
                                                         bool align_corners) {
   if (padding_mode == GridSamplerPaddingMode::REFLECTION) {
     if (!align_corners) {
-      coord = reflect_coordinates(coord, -1, 2 * size - 1);
+      coord = reflect_coordinates<T>(coord, -1, 2 * size - 1);
     } else {
-      coord = reflect_coordinates(coord, 0, 2 * (size - 1));
+      coord = reflect_coordinates<T>(coord, 0, 2 * (size - 1));
     }
     coord = clip_coordinates(coord, size);
   } else if (padding_mode == GridSamplerPaddingMode::BORDER) {
@@ -164,6 +184,15 @@ __device__ __forceinline__ static T cubic_interp1d(T x0, T x1, T x2, T x3, S t) 
   get_cubic_upsampling_coefficients<S>(coeffs, t);
 
   return x0 * coeffs[0] + x1 * coeffs[1] + x2 * coeffs[2] + x3 * coeffs[3];
+}
+
+template <typename S>
+__device__ __forceinline__ static half cubic_interp1d(half x0, half x1, half x2, half x3, S t) {
+  S coeffs[4];
+  get_cubic_upsampling_coefficients<S>(coeffs, t);
+
+  return __float2half(__half2float(x0) * coeffs[0] + __half2float(x1) * coeffs[1] + __half2float(x2) * coeffs[2] +
+         __half2float(x3) * coeffs[3]);
 }
 
 template <typename T>
