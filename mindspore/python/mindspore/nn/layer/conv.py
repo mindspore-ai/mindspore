@@ -331,9 +331,10 @@ class Conv1d(_Conv):
     where :math:`ccor` is the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
     :math:`C_{in}` is the channel number of the input, :math:`out_{j}` corresponds to the jth channel of
     the output and :math:`j` is in the range of :math:`[0，C_{out}-1]`. :math:`\text{weight}(C_{\text{out}_j}, k)`
-    is a convolution kernel slice with shape :math:`(kernel_size)`, where :math:`\text{kernel_size}` is the width of
-    the convolution kernel. :math:`\text{bias}` is the bias parameter, and :math:`\text{X}` is the input tensor.
-    The shape of full convolution kernel is :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
+    is a convolution kernel slice with shape :math:`\text{kernel_size}`, where :math:`\text{kernel_size}`
+    is the width of the convolution kernel. :math:`\text{bias}` is the bias parameter,
+    and :math:`\text{X}` is the input tensor. The shape of full convolution kernel is
+    :math:`(C_{out}, C_{in} / \text{group}, \text{kernel_size})`,
     where `group` is the number of groups to split the input `x` in the channel dimension.
 
     For more details, please refers to the paper `Gradient Based Learning Applied to Document
