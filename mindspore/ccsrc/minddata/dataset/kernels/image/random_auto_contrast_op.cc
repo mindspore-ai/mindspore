@@ -27,15 +27,17 @@ const float RandomAutoContrastOp::kDefProbability = 0.5;
 Status RandomAutoContrastOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   // Check input
-  if (input->Rank() != kDefaultImageRank) {
-    RETURN_STATUS_UNEXPECTED("RandomAutoContrast: image shape is not <H,W,C>, got rank: " +
+  if (input->Rank() != kMinImageRank && input->Rank() != kDefaultImageRank) {
+    RETURN_STATUS_UNEXPECTED("RandomAutoContrast: image shape is not <H,W,C> or <H,W>, got rank: " +
                              std::to_string(input->Rank()));
   }
-  if (input->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
-    RETURN_STATUS_UNEXPECTED(
-      "RandomAutoContrast: image shape is incorrect, expected num of channels is 3, "
-      "but got:" +
-      std::to_string(input->shape()[kChannelIndexHWC]));
+  if (input->Rank() == kDefaultImageRank) {
+    if (input->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
+      RETURN_STATUS_UNEXPECTED(
+        "RandomAutoContrast: image shape is incorrect, expected num of channels is 3, "
+        "but got: " +
+        std::to_string(input->shape()[kChannelIndexHWC]));
+    }
   }
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().AsCVType() != kCVInvalidType,
                                "RandomAutoContrast: Cannot convert from OpenCV type, unknown CV type. Currently "
