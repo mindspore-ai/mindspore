@@ -165,6 +165,7 @@ def test_random_rotation_op_py_ANTIALIAS():
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         num_iter += 1
     logger.info("use RandomRotation by Inter.ANTIALIAS process {} images.".format(num_iter))
+    assert num_iter == 3
 
 
 def test_random_rotation_expand():
