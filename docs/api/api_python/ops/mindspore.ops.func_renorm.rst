@@ -7,7 +7,7 @@ mindspore.ops.renorm
 
     **参数：**
 
-    - **input_x** (Tensor) - 输入张量。
+    - **input_x** (Tensor) - 输入张量，类型为float32或者float16。
     - **p** (int) - 范数。
     - **dim** (int) - 维度。
     - **maxnorm** (float) - 给定的最大范数。
@@ -21,4 +21,4 @@ mindspore.ops.renorm
     - **TypeError** - `p` 不是int类型。
     - **TypeError** - `dim` 不是int类型。
     - **TypeError** - `maxnorm` 不是float类型。
-    - **ValueError** - `p` 小于等于0。
+    - **ValueError** - `p` 小于1。
