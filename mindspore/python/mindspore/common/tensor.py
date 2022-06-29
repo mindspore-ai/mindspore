@@ -4665,12 +4665,12 @@ class CSRTensor(CSRTensor_):
         indices (Tensor): 1-D Tensor of shape `[N]`, which has the same length as `values`. `indices`
             indicates the which column `values` should be placed. Default: None. If provided,
             must be :class:`mindspore.int16`, :class:`mindspore.int32` or :class:`mindspore.int64`.
-        values (Tensor): 1-D Tensor of shape `[N]`, which has the same length as `indices`. `values`
-            stores the data for CSRTensor. Default: None.
-        shape (Tuple): A tuple indicates the shape of the CSRTensor, its length must
-            be `2`, as only 2-D CSRTensor is currently supported, and `shape[0]` must
-            equal to `M - 1`, which all equal to number of rows of the CSRTensor. Default: None.
-        csr_tensor (CSRTensor): A CSRTensor object. Default: None.
+        values (Tensor): Tensor, which has the same length as `indices` (values.shape[0] == indices.shape[0]).
+            `values`  stores the data for CSRTensor. Default: None.
+        shape (Tuple): A tuple indicates the shape of the CSRTensor, and `shape[0]` must equal to `M - 1`,
+            which all equal to number of rows of the CSRTensor. Default: None.
+        csr_tensor (CSRTensor): A CSRTensor object.  Values' feature dimension should match with
+            CSRTensor's feature dimension (values.shape[1:] == csr_tensor.shape[2:]). Default: None.
 
     Outputs:
         CSRTensor, with shape defined by `shape`, and dtype inferred from `value`.
