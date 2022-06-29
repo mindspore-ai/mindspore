@@ -118,7 +118,7 @@ int BroadcastOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   lhs_shape_ = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
   rhs_shape_ = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
   output_shape_ = LongVecToSizeVec(outputs.at(kIndex0)->GetShapeVector());
-  output_num_ = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<size_t>());
+  output_num_ = std::accumulate(output_shape_.begin(), output_shape_.end(), size_t(1), std::multiplies<size_t>());
   is_null_input_ = CHECK_SHAPE_NULL(lhs_shape_, kernel_name_, "input_0") ||
                    CHECK_SHAPE_NULL(rhs_shape_, kernel_name_, "input_1") ||
                    CHECK_SHAPE_NULL(output_shape_, kernel_name_, "output_0");
@@ -200,6 +200,10 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+   &BroadcastOpGpuKernelMod::LaunchComplexKernel<float, float, Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+   &BroadcastOpGpuKernelMod::LaunchComplexKernel<double, double, Complex<double>>},
 };
 std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::real_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
@@ -249,11 +253,15 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &BroadcastOpGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &BroadcastOpGpuKernelMod::LaunchKernel<double>}};
+   &BroadcastOpGpuKernelMod::LaunchKernel<double>},
+};
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Add, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Atan2, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, AbsGrad, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseAnd, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseOr, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, BitwiseXor, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Div, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, DivNoNan, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Equal, BroadcastOpGpuKernelMod);
