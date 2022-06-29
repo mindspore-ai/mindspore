@@ -50,13 +50,13 @@ def test_resize_op(plot=False):
         data2 = data1.map(operations=resize_op, input_columns=["image"])
         image_original = []
         image_resized = []
+        for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
+                                data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
+            image_1 = item1["image"]
+            image_2 = item2["image"]
+            image_original.append(image_1)
+            image_resized.append(image_2)
         if plot:
-            for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
-                                    data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
-                image_1 = item1["image"]
-                image_2 = item2["image"]
-                image_original.append(image_1)
-                image_resized.append(image_2)
             visualize_list(image_original, image_resized)
 
     test_resize_op_parameters("Test single int for size", 10, plot=plot)
