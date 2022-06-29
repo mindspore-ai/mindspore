@@ -122,7 +122,7 @@ Status AllCommFusion::ProcessCommOpsFusion(const CNodePtr &ret, const std::strin
   MS_EXCEPTION_IF_NULL(root_graph_);
   auto graph_set = ForwardGraph(root_graph_);
   if (graph_set.size() > 1) {
-    MS_LOG(WARNING) << comm_name << "fusion don't support multiple subgraphs now.";
+    MS_LOG(INFO) << comm_name << "fusion don't support multiple subgraphs now.";
     return SUCCESS;
   }
   auto forward_graph = *(graph_set.begin());
