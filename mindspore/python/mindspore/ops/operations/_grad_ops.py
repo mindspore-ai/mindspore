@@ -1023,7 +1023,7 @@ class MaxPoolGradGrad(_PoolGrad):
         float16 nor float32.
         ValueError: If the rank of `origin_input`, `origin_output` or `grad` is not equal to 4.
         ValueError: If data types of all inputs are not equal.
-        ValueError: If the data type of `origin_input` and `origin_output` are not equal.
+        ValueError: If the shapes of `origin_input` and `grad` are not equal.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1144,7 +1144,7 @@ class MaxPool3DGradGrad(PrimitiveWithInfer):
         float16 nor float32.
         ValueError: If the rank of `origin_input`, `origin_output` or `grad` is not equal to 5.
         ValueError: If data types of all inputs are not equal.
-        ValueError: If the data type of `origin_input` and `origin_output` are not equal.
+        ValueError: If the shapes of `origin_input` and `grad` are not equal.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
