@@ -423,7 +423,7 @@ def test_func_with_yield_manifest_dataset_01():
         for _ in data.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_iter += 1
     except RuntimeError as e:
-        assert " map should be numpy array or tuple of numpy array." in str(e)
+        assert " Cannot pickle <class 'generator'> object, please verify pyfunc return with numpy array" in str(e)
 
 
 def test_func_mixed_with_ops():
@@ -454,6 +454,35 @@ def test_func_mixed_with_ops():
         pass
 
 
+def pipeline_testing(returned_data, python_multiprocessing):
+    """Test stub to validate different returned types from a pyfunc"""
+
+    def func(_):
+        return returned_data
+
+    data = ds.NumpySlicesDataset([1], num_parallel_workers=1, shuffle=False)
+    data = data.map(operations=func, num_parallel_workers=2, python_multiprocessing=python_multiprocessing)
+    for d in data.create_tuple_iterator(output_numpy=True, num_epochs=1):
+        np.testing.assert_array_equal(d[0], np.array(returned_data))
+
+
+def test_returned_types():
+    """
+    Feature: Pyfunc testing
+    Description: Test different returned types from a pyfunc
+    Expectation: Success
+    """
+    pipeline_testing(1, False)
+    pipeline_testing(1.5, False)
+    pipeline_testing(True, False)
+    pipeline_testing([1, 2], False)
+
+    pipeline_testing(1, True)
+    pipeline_testing(1.5, True)
+    pipeline_testing(True, True)
+    pipeline_testing([1, 2], True)
+
+
 if __name__ == "__main__":
     test_case_0()
     test_case_1()
@@ -471,3 +500,4 @@ if __name__ == "__main__":
     test_pyfunc_exception_multiprocess()
     test_func_with_yield_manifest_dataset_01()
     test_func_mixed_with_ops()
+    test_returned_types()

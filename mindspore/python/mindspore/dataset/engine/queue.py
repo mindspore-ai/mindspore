@@ -91,16 +91,15 @@ class _SharedQueue(multiprocessing.queues.Queue):
             name_list = []
             count = 0
             start_bytes = 0
-            if not isinstance(data, tuple) and not isinstance(data, np.ndarray):
-                raise TypeError("return value of user defined python function in GeneratorDataset or"
-                                " map should be numpy array or tuple of numpy array.")
+            if not isinstance(data, tuple):
+                data = (data,)
             if isinstance(data, np.ndarray):
                 name_list.append((self.data_immediate, np.array(data)))
             else:
                 for r in data:
                     # the map:pyfunc is a yield generator which can't be serialize
                     if isinstance(r, types.GeneratorType):
-                        raise TypeError("Can not pickle {} object, please verify pyfunc return with numpy array"
+                        raise TypeError("Cannot pickle {} object, please verify pyfunc return with numpy array"
                                         .format(type(r)))
                     if (isinstance(r, np.ndarray) and r.size > self.min_shared_mem
                             and start_bytes + r.nbytes < self.seg_size):

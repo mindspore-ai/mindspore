@@ -2695,12 +2695,8 @@ class ShuffleDataset(UnionBaseDataset):
 
 # Pyfunc collection for multiprocess pyfunc
 # This global variable will only be used within subprocesses
-_GLOBAL_PYFUNC_LIST = []
-_ARGS_QUEUE = []
-_RET_QUEUE = []
 _OP_NAME = dict()
 _OP_PROCESS = dict()
-_LOCK = threading.Lock()
 
 
 # PythonCallable wrapper for multiprocess pyfunc
@@ -2714,19 +2710,28 @@ class _PythonCallable:
         self.py_callable = py_callable
         # Process pool created for current iterator.
         self.pool = pool
-        # Python callable index for subprocess _GLOBAL_PYFUNC_LIST
+        # Python callable index
         self.idx = idx
 
     def __call__(self, *args):
+        result = None
         if self.pool.is_running() and check_iterator_cleanup() is False:
             try:
-                res = self.pool.execute(self.idx, *args)
-                if res is not None:
-                    return res
+                result = self.pool.execute(self.idx, *args)
             except multiprocessing.TimeoutError:
                 pass
-        # Invoke original Python callable in master process in case the pool is gone.
-        return self.py_callable(*args)
+        if result is None:
+            # Invoke original Python callable in master process in case the pool is gone.
+            result = self.py_callable(*args)
+        if isinstance(result, tuple):
+            result_tmp = []
+            for r in result:
+                r = np.array(r) if not isinstance(r, np.ndarray) else r
+                result_tmp.append(r)
+            result = tuple(result_tmp)
+        else:
+            result = np.array(result) if not isinstance(result, np.ndarray) else result
+        return result
 
     def to_json(self):
         return self.py_callable.to_json()
