@@ -271,11 +271,11 @@ void SvdGpuKernelMod::CheckResult(int *dev_info) {
     "Copy to device result failed");
   for (size_t i = 0; i < info_gpu.size(); ++i) {
     if (info_gpu[i] < 0) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the compute result is wrong. The " << -info_gpu[i]
-                    << "th parameter is wrong (not counting handle) in batch " << i << " data.";
+      MS_LOG(INFO) << "For '" << kernel_name_ << "', the compute result has wrong value. The " << -info_gpu[i]
+                   << "th parameter is wrong (not counting handle) in batch " << i << " data.";
     } else if (info_gpu[i] > 0) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', in batch " << i << " data, there are " << info_gpu[i]
-                    << "superdiagonals of an intermediate bidiagonal from did not coverage to zero";
+      MS_LOG(INFO) << "For '" << kernel_name_ << "', in batch " << i << " data, there are " << info_gpu[i]
+                   << " superdiagonals of an intermediate bidiagonal from did not coverage to zero";
     }
   }
 }
