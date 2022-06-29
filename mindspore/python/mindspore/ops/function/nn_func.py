@@ -695,6 +695,9 @@ def soft_shrink(x, lambd=0.5):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float32)
         >>> output = ops.soft_shrink(x)
         >>> print(output)
