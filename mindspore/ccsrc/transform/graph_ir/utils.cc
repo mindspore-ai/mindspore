@@ -109,25 +109,29 @@ bool IsWhileNode(const AnfNodePtr &node) {
   if (!node->isa<CNode>()) {
     return false;
   }
-  if (!IsPartialSuccNode(node)) {
-    return false;
-  }
   auto cnode = node->cast<CNodePtr>();
-  if (!IsPartialCNode(cnode->input(0))) {
+  ValueNodePtr graph_node = nullptr;
+  if (IsPartialSuccNode(cnode) && IsPartialCNode(cnode->input(0))) {
+    auto partial_node = cnode->input(0);
+    MS_EXCEPTION_IF_NULL(partial_node);
+    auto c_partial_node = partial_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(c_partial_node);
+    auto graph_node_input = c_partial_node->input(1);
+    MS_EXCEPTION_IF_NULL(graph_node_input);
+    graph_node = graph_node_input->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(graph_node);
+  } else if (cnode->input(0)->isa<ValueNode>()) {
+    graph_node = cnode->input(0)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(graph_node);
+  } else {
     return false;
   }
-  auto partial_node = cnode->input(0);
-  MS_EXCEPTION_IF_NULL(partial_node);
 
-  auto c_partial_node = partial_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(c_partial_node);
-
-  auto graph_node_input = c_partial_node->input(1);
-  MS_EXCEPTION_IF_NULL(graph_node_input);
-  auto graph_node = graph_node_input->cast<ValueNodePtr>();
-  MS_EXCEPTION_IF_NULL(graph_node);
   auto graph_node_value = graph_node->value();
   MS_EXCEPTION_IF_NULL(graph_node_value);
+  if (!graph_node_value->isa<FuncGraph>()) {
+    return false;
+  }
   auto cond_graph = graph_node_value->cast<FuncGraphPtr>();
   MS_EXCEPTION_IF_NULL(cond_graph);
   if (!cond_graph->recursive()) {

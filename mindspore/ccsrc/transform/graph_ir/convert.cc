@@ -742,10 +742,16 @@ void DfGraphConvertor::CacheWhileGraph(const CNodePtr &cnode) {
   if (while_graph_cache_.find(cnode) != while_graph_cache_.end()) {
     return;
   }
-  auto partial_node = cnode->input(0);
-  auto graph_node = partial_node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
+  ValueNodePtr graph_node = nullptr;
+  if (cnode->input(0)->isa<ValueNode>()) {
+    graph_node = cnode->input(0)->cast<ValueNodePtr>();
+  } else {
+    auto partial_node = cnode->input(0);
+    graph_node = partial_node->cast<CNodePtr>()->input(1)->cast<ValueNodePtr>();
+  }
   MS_EXCEPTION_IF_NULL(graph_node);
   FuncGraphPtr cond_graph = graph_node->value()->cast<FuncGraphPtr>();
+  MS_EXCEPTION_IF_NULL(cond_graph);
   const auto &cond_set = cond_graph->nodes();
   for (auto beg = cond_set.begin(); beg != cond_set.end(); beg++) {
     if (!((*beg)->isa<CNode>())) {
@@ -788,9 +794,11 @@ std::vector<Operator> DfGraphConvertor::GetWhileBodyOutputs() {
   }
 
   auto c_node = real_ret->cast<CNodePtr>();
-
-  auto in0 = c_node->input(0)->cast<CNodePtr>();
-  std::vector<AnfNodePtr> inputs(in0->inputs().begin() + kInputOffset, in0->inputs().end());
+  std::vector<AnfNodePtr> inputs;
+  if (c_node->input(0)->isa<CNode>()) {
+    auto in0 = c_node->input(0)->cast<CNodePtr>();
+    std::copy(in0->inputs().begin() + kInputOffset, in0->inputs().end(), std::back_inserter(inputs));
+  }
   size_t partial_input_size = inputs.size();
 
   std::copy(c_node->inputs().begin() + 1, c_node->inputs().end(), std::back_inserter(inputs));
@@ -799,7 +807,7 @@ std::vector<Operator> DfGraphConvertor::GetWhileBodyOutputs() {
     auto j = inputs[i];
     CNodePtr cur = nullptr;
     if (i < partial_input_size) {
-      cur = in0;
+      cur = c_node->input(0)->cast<CNodePtr>();
     } else {
       cur = c_node;
     }
@@ -1392,8 +1400,11 @@ void DfGraphConvertor::GetCallNodeInputs(const CNodePtr &node) {
   MS_LOG(DEBUG) << "begin to get call node inputs.";
 
   auto call_input_items = std::make_shared<std::vector<OutHandler>>();
-  auto in0 = node->input(0)->cast<CNodePtr>();
-  std::vector<AnfNodePtr> inputs(in0->inputs().begin() + kInputOffset, in0->inputs().end());
+  std::vector<AnfNodePtr> inputs;
+  if (node->input(0)->isa<CNode>()) {
+    auto in0 = node->input(0)->cast<CNodePtr>();
+    std::copy(in0->inputs().begin() + kInputOffset, in0->inputs().end(), std::back_inserter(inputs));
+  }
   std::copy(node->inputs().begin() + 1, node->inputs().end(), std::back_inserter(inputs));
 
   auto &params = anf_graph_->parameters();
