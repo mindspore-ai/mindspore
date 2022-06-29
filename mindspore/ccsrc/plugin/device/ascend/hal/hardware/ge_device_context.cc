@@ -219,11 +219,6 @@ FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph) {
     MS_LOG(ERROR) << "Can not found GraphRunner";
     return nullptr;
   }
-  auto build_ret = transform::BuildAllGraphs(graph_runner);
-  if (build_ret != transform::Status::SUCCESS) {
-    MS_LOG(ERROR) << "Session build graph failed.";
-    return nullptr;
-  }
 
   return anf_graph;
 }
@@ -274,6 +269,8 @@ void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGra
   const auto &front_map = kernel_graph->front_backend_anf_map();
   const auto &origin_parameters = origin_graph->get_inputs();
   std::vector<AnfNodePtr> new_parameters;
+  std::vector<AnfNodePtr> deleted_parameters;
+
   for (const auto &param : origin_parameters) {
     auto iter = front_map.find(param);
     if (iter == front_map.end()) {
@@ -290,11 +287,19 @@ void ReorderInputsAsFrontGraph(const KernelGraphPtr &kernel_graph, const FuncGra
       MS_EXCEPTION_IF_NULL(para);
       if (!para->has_default()) {
         MS_LOG(INFO) << "Erase input " << para->DebugString() << " at sink mode.";
+        deleted_parameters.push_back(anf_node);
         iter = new_parameters.erase(iter);
       } else {
         ++iter;
       }
     }
+  }
+  for (auto deleted_param : deleted_parameters) {
+    auto new_cnode = kernel_graph->NewCNode(
+      std::vector<AnfNodePtr>{NewValueNode(std::make_shared<Primitive>("FakeGetNext" + deleted_param->DebugString()))});
+    MS_EXCEPTION_IF_NULL(new_cnode);
+    new_cnode->set_abstract(deleted_param->abstract());
+    kernel_graph->ReplaceNode(deleted_param, new_cnode);
   }
   kernel_graph->set_parameters(new_parameters);
   kernel_graph->SetGraphInputs(new_parameters);
@@ -386,6 +391,9 @@ bool GeGraphExecutor::CompileGraph(const FuncGraphPtr &graph, const std::map<str
   AllocInputHostMemory(kg);
   AllocOutputHostMemory(kg);
   kg->set_run_mode(RunMode::kGraphMode);
+  if (ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE) {
+    kg->set_is_loop_count_sink(true);
+  }
   // copy init weight to device
   RunGEInitGraph(origin_graph);
   return true;
