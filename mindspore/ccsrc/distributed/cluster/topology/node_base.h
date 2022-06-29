@@ -20,6 +20,7 @@
 #include <time.h>
 #include <chrono>
 #include <string>
+#include <memory>
 #include "distributed/cluster/topology/common.h"
 #include "distributed/cluster/topology/utils.h"
 
@@ -52,6 +53,9 @@ class NodeBase {
   // If the parameter force is set to true, this node will be finalized without waiting for unregister of all the
   // compute graph node.
   virtual bool Finalize(bool force = false) = 0;
+
+  // Set the callback which will be called when the state of the cluster is abnormal.
+  virtual void set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) {}
 
   std::string node_id() const { return node_id_; }
 

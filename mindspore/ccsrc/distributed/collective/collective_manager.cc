@@ -234,8 +234,8 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   };
   MS_LOG(INFO) << "Begin initialize communication group on the device side.";
 
-  // Timeout limit 180 seconds to wait finish initializing device communication group.
-  const int64_t kTimeToWait = 180;
+  // Timeout limit 600 seconds to wait finish initializing device communication group.
+  const int64_t kTimeToWait = 600;
   // Initialize communication group on the device side in thread with timeout limit.
   ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait);
 
