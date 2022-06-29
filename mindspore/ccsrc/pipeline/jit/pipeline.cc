@@ -1657,10 +1657,8 @@ void ClearResAtexit() {
 
   RecordExitStatus();
 #ifdef WITH_BACKEND
-  if (distributed::cluster::ClusterContext::instance()->initialized()) {
-    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
-    (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
-  } else if (ps::PSContext::instance()->is_ps_mode() && ps::PSContext::instance()->is_worker()) {
+  if (!distributed::cluster::ClusterContext::instance()->initialized() && ps::PSContext::instance()->is_ps_mode() &&
+      ps::PSContext::instance()->is_worker()) {
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
     }
@@ -1672,7 +1670,6 @@ void ClearResAtexit() {
       ps::Worker::GetInstance().Finalize();
     }
   }
-
 #endif
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
@@ -1804,5 +1801,14 @@ py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_
 }
 
 bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFile(file_path); }
+
+void FinalizeCluster() {
+#ifdef WITH_BACKEND
+  if (distributed::cluster::ClusterContext::instance()->initialized()) {
+    runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
+    (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
+  }
+#endif
+}
 }  // namespace pipeline
 }  // namespace mindspore
