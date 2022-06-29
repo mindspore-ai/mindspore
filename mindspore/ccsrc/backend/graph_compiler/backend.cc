@@ -1026,6 +1026,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   }
 
   std::vector<std::vector<tensor::TensorPtr>> input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  pynative::GraphAdapter::HandleHeterogeneousTensors(input_tensors, device_contexts);
 
   // Release GIL and run actor DAG.
   mindspore::ScopedLongRunning long_running;
