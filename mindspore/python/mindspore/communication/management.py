@@ -15,7 +15,7 @@
 """Communication management API"""
 import os
 from mindspore import context
-from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched
+from mindspore.parallel._ps_context import _is_ps_mode, _is_role_pserver, _is_role_sched, _get_ps_context
 from ._comm_helper import Backend, _get_rank_helper, _get_size_helper, \
     _get_world_rank_from_group_rank_helper, _get_group_rank_from_world_rank_helper, \
     _create_group_helper, _destroy_group_helper, HCCL_WORLD_COMM_GROUP, NCCL_WORLD_COMM_GROUP, \
@@ -132,6 +132,9 @@ def init(backend_name=None):
             init_cluster()
             if _is_role_sched() or _is_role_pserver():
                 raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")
+            if _get_ps_context("worker_num") == 1:
+                GlobalComm.INITED = True
+                return
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument  'backend_name' should be 'Ascend' to init hccl, "
                                "but got {}".format(device_target))
