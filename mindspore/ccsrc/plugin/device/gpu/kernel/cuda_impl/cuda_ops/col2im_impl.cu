@@ -34,7 +34,7 @@ __global__ void Col2ImKernel(const T *input, T *output, const size_t num_kernels
                              const size_t dilation_height, const size_t dilation_width) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num_kernels; i += blockDim.x * gridDim.x) {
     S val = static_cast<S>(0);
-    size_t w_id = i % out_height + pad_width;
+    size_t w_id = i % out_width + pad_width;
     size_t h_id = i % per_batch_size / out_width % out_height + pad_height;
     size_t c_id = i % per_batch_size / per_channel_size;
     size_t n_col_offset = i / per_batch_size * per_col_batch_size;
