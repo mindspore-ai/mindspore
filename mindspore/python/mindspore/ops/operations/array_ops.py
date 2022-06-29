@@ -761,12 +761,6 @@ class Reshape(PrimitiveWithInfer):
         # for shape is not constant
         if shape_v is None:
             out_shape, min_shape, max_shape = self._get_shape_and_range(x, shape)
-            if is_shape_unknown(out_shape):
-                # `min_shape` and `max_shape` can't be None before dynamic memory allocation is supported
-                shape_shp = shape['shape']
-                shape_rank = 1 if is_shape_unknown(shape_shp) else shape_shp[0]
-                min_shape = [1] * shape_rank if min_shape is None else min_shape
-                max_shape = [1] * shape_rank if max_shape is None else max_shape
             return {
                 'shape': out_shape,
                 'dtype': x['dtype'],
