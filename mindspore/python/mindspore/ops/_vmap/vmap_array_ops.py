@@ -20,6 +20,7 @@ import mindspore.numpy as mnp
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations._grad_ops import MaskedSelectGrad
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _bdim_at_front, _raise_value_error, \
@@ -620,6 +621,32 @@ def get_masked_select_vmap_rule(prim, axis_size):
         if x_rank > 1:
             out = F.reshape(out, (x_shape[0], -1))
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(MaskedSelectGrad)
+def get_masked_select_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `MaskedSelect`."""
+
+    def vmap_rule(x_bdim, mask_bdim, outgrad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, mask_bdim, outgrad_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        mask, mask_dim = mask_bdim
+        outgrad, outgrad_dim = outgrad_bdim
+        if mask_dim is not None:
+            _raise_value_error("The source axis of `mask` in `P.MaskedSelect` must be None, "
+                               "but got {}.".format(mask_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        mask = _bdim_at_front(mask, mask_dim, axis_size)
+        outgrad = _bdim_at_front(outgrad, outgrad_dim, axis_size)
+        outgrad = outgrad.reshape(outgrad[0] * outgrad[0])
+        x_grad = prim(x, mask, outgrad)
+        return (x_grad, 0)
 
     return vmap_rule
 
