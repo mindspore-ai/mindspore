@@ -27,4 +27,4 @@ mindspore.ops.soft_shrink
     - **TypeError** - `lambd` 不是float。
     - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的dtype既不是float16也不是float32。
-    - **TypeError** - `lambd` 小于0。
+    - **ValueError** - `lambd` 小于0。

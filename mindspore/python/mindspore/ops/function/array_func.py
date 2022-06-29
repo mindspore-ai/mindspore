@@ -532,7 +532,7 @@ def unique(x):
         `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor, have the same shape with `x`.
 
-    Raises:x
+    Raises:
         TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
@@ -761,7 +761,7 @@ def dyn_shape(input_x):
     """
     Returns the shape of the input tensor.
 
-    Inputs:
+    Args:
         input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
     Returns:
