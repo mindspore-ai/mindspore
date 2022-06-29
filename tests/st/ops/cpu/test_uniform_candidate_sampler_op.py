@@ -71,7 +71,7 @@ def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, s
                                                                   seed,
                                                                   remove_accidental_hits)
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
-    return out1, out2, out3
+    return out1.shape, out2.shape, out3.shape
 
 
 @pytest.mark.level0
@@ -232,8 +232,8 @@ def test_uniform_candidate_sampler_unique_not_hit():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, False)
-    expected_1 = np.array([0, 3, 1])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1 = (3,)
+    np.testing.assert_array_equal(ms1, expected_1)
 
 
 @pytest.mark.level0
@@ -247,8 +247,8 @@ def test_uniform_candidate_sampler_unique_hit():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, True, 4, 1, True)
-    expected_1 = np.array([0, 3, 2])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1 = (3,)
+    np.testing.assert_array_equal(ms1, expected_1)
 
 
 @pytest.mark.level0
@@ -262,8 +262,8 @@ def test_uniform_candidate_sampler_not_unique_not_hit1():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, False, 4, 1, True)
-    expected_1 = np.array([0, 0, 3])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1 = (3,)
+    np.testing.assert_array_equal(ms1, expected_1)
 
 
 @pytest.mark.level0
@@ -277,8 +277,8 @@ def test_uniform_candidate_sampler_not_unique_not_hit2():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 5, False, 4, 1, True)
-    expected_1 = np.array([0, 0, 3, 1, 2])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1 = (5,)
+    np.testing.assert_array_equal(ms1, expected_1)
 
 
 @pytest.mark.level0
@@ -292,8 +292,8 @@ def test_uniform_candidate_sampler_not_unique_not_hit3():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     ms1, _, _ = uniform_candidate_sampler_hit(np.array([[1]]), 1, 3, False, 4, 1, False)
-    expected_1 = np.array([0, 0, 3])
-    np.testing.assert_array_equal(ms1.asnumpy(), expected_1)
+    expected_1 = (3,)
+    np.testing.assert_array_equal(ms1, expected_1)
 
 
 class UniformCandidateSamplerNetVmap(nn.Cell):

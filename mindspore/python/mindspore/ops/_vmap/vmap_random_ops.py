@@ -16,7 +16,7 @@
 
 """random_ops vmap impl."""
 from ..operations.random_ops import UniformCandidateSampler
-from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front, _update_prim_attr
+from .._vmap.vmap_base import vmap_rules_getters, _bdim_at_front
 
 
 @vmap_rules_getters.register(UniformCandidateSampler)
@@ -27,6 +27,10 @@ def get_uniform_candidate_sampler_vmap_rule(prim, axis_size):
     else:
         batch_rank = 1
 
+    attr = prim.init_attrs
+    batch_prim = UniformCandidateSampler(**attr)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
     def vmap_rule(x_bdim):
         x, x_dim = x_bdim
         if x_dim is None:
@@ -34,9 +38,8 @@ def get_uniform_candidate_sampler_vmap_rule(prim, axis_size):
             return (sampled_candidates, None), (true_expected_count, None), (sampled_expected_count, None)
 
         x = _bdim_at_front(x, x_dim, axis_size)
-        _update_prim_attr(prim, "batch_rank", batch_rank)
+        sampled_candidates, true_expected_count, sampled_expected_count = batch_prim(x)
 
-        sampled_candidates, true_expected_count, sampled_expected_count = prim(x)
         return (sampled_candidates, 0), (true_expected_count, 0), (sampled_expected_count, 0)
 
     return vmap_rule
