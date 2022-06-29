@@ -411,7 +411,7 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
     --- inputs info
         indices.shape = [10, 3, 2, 2]
         updates.shape = [10, 3, 2, 5]
-        shape         = [10, 6, 4, 5]
+        shape         =     [6, 4, 5]
     the first dim (10) is batch.
     the shape without batch dim are:
         indices.shape = [3, 2, 2]
@@ -436,9 +436,9 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
     """
 
     @constexpr
-    def _refine_shape(shape):
-        offset = shape[1]
-        return (shape[0] * shape[1],) + tuple(shape[2:]), offset
+    def _refine_shape(shape, bdim_size):
+        offset = shape[0]
+        return (bdim_size * shape[0],) + tuple(shape[1:]), offset, (bdim_size,) + tuple(shape)
 
     @constexpr
     def _gen_indices_offset(shape, offset):
@@ -465,14 +465,14 @@ def get_scatter_nd_vmap_rule(prim, axis_size):
                                "but got {}.".format(prim.name, shape_dim))
         indices = _bdim_at_front(indices, indices_dim, axis_size)
         updates = _bdim_at_front(updates, updates_dim, axis_size)
-        new_shape, offset = _refine_shape(shape)
+        new_shape, offset, out_shape = _refine_shape(shape, axis_size)
         indices_shape = F.shape(indices)
         indices_dtype = F.dtype(indices)
         offset_val = _gen_indices_offset(indices_shape, offset)
         indices_offset = Tensor(offset_val, indices_dtype)
         new_indices = P.Add()(indices, indices_offset)
         out = prim(new_indices, updates, new_shape)
-        real_out = P.Reshape()(out, shape)
+        real_out = P.Reshape()(out, out_shape)
         return (real_out, 0)
 
     return vmap_rule

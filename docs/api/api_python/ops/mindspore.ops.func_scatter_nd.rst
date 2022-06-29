@@ -19,8 +19,8 @@ mindspore.ops.scatter_nd
 
     **参数：**
 
-    - **indices** (Tensor) - 指定新Tensor中散布的索引，数据类型为int32或int64。索引的秩须至少为2，并且 :math:`indices_shape[-1] \le len(shape)` 。
-    - **updates** (Tensor) - 指定更新Tensor，shape为 :math:`indices_shape[:-1] + shape[indices_shape[-1]:]` 。
+    - **indices** (Tensor) - 指定新Tensor中散布的索引，数据类型为int32或int64。索引的秩须至少为2，并且 :math:`indices\_shape[-1] \le len(shape)` 。
+    - **updates** (Tensor) - 指定更新Tensor，shape为 :math:`indices\_shape[:-1] + shape[indices\_shape[-1]:]` 。
     - **shape** (tuple[int]) - 指定输出Tensor的shape，数据类型与索引相同。 `shape` 为 :math:`(x_1, x_2, ..., x_R)` 且 `shape` 的长度大于或等于2。换句话说， `shape` 至少是 :math:`(x_1, x_2)` ，且 `shape` 中的任何元素的值都必须大于等于1。也就是说， :math:`x_1 \ge 1`， :math:`x_2 \ge 1`。
 
     **返回：**
