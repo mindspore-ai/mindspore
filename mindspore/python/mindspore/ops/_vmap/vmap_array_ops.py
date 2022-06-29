@@ -33,6 +33,7 @@ from ..operations.array_ops import Col2Im
 from ..operations.array_ops import NonZero
 from ..operations.array_ops import IndexFill
 from ..composite import _VmapGeneralRule
+from ..operations.array_ops import TensorScatterElements
 
 
 @vmap_rules_getters.register("Cast")
@@ -1277,6 +1278,90 @@ def get_gather_vmap_rule(prim, axis_size):
         output = prim(x, indices, axis)
 
         return (output, axis)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(TensorScatterElements)
+def get_tensor_scatter_elements_vmap_rule(prim, axis_size):
+    """VmapRule for TensorScatterElements operations."""
+    if isinstance(prim, str):
+        axis = 0
+        reduction = 'none'
+    else:
+        axis = prim.axis
+        reduction = prim.reduction
+
+    def two_dims_are_none(i_bdim, j_no_dim, k_no_dim, axis_size):
+        i, i_dim = i_bdim
+        j = _broadcast_by_axis(j_no_dim, i_dim, axis_size)
+        k = _broadcast_by_axis(k_no_dim, i_dim, axis_size)
+        new_inputs = (i, j, k)
+        return (new_inputs, i_dim)
+
+    def one_dim_is_none(i_bdim, j_bdim, k_no_dim, axis_size):
+        i, i_dim = i_bdim
+        j, j_dim = j_bdim
+        mnp.moveaxis(j, j_dim, i_dim)
+        k = _broadcast_by_axis(k_no_dim, i_dim, axis_size)
+        new_inputs = (i, j, k)
+        return (new_inputs, i_dim)
+
+    def no_dim_is_none(i_bdim, j_bdim, k_bdim):
+        i, i_dim = i_bdim
+        j, j_dim = j_bdim
+        k, k_dim = k_bdim
+        mnp.moveaxis(j, j_dim, i_dim)
+        mnp.moveaxis(k, k_dim, i_dim)
+        new_inputs = (i, j, k)
+        return (new_inputs, i_dim)
+
+    def vmap_rule(x_bdim, index_bdim, update_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, x_bdim, index_bdim, update_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        index, index_dim = index_bdim
+        update, update_dim = update_bdim
+
+        numbers = [x_dim, index_dim, update_dim].count(None)
+        if numbers == 2:
+            if x_dim is not None:
+                inputs, out_dim = two_dims_are_none(
+                    x_bdim, index, update, axis_size)
+                x, index, update = inputs
+            elif index_dim is not None:
+                inputs, out_dim = two_dims_are_none(
+                    index_bdim, x, update, axis_size)
+                index, x, update = inputs
+            else:
+                inputs, out_dim = two_dims_are_none(
+                    update_bdim, x, index, axis_size)
+                update, x, index = inputs
+        elif numbers == 1:
+            if x_dim is None:
+                inputs, out_dim = one_dim_is_none(
+                    index_bdim, update_bdim, x, axis_size)
+                index, update, x = inputs
+            elif index_dim is None:
+                inputs, out_dim = one_dim_is_none(
+                    x_bdim, update_bdim, index, axis_size)
+                x, update, index = inputs
+            else:
+                inputs, out_dim = one_dim_is_none(
+                    x_bdim, index_bdim, update, axis_size)
+                x, index, update = inputs
+        else:
+            inputs, out_dim = no_dim_is_none(x_bdim, index_bdim, update_bdim)
+            x, index, update = inputs
+
+        # Adapt `axis` to vmap case.
+        new_axis = axis + 1 if axis >= out_dim else axis
+
+        out = TensorScatterElements(new_axis, reduction)(x, index, update)
+        return (out, out_dim)
 
     return vmap_rule
 
