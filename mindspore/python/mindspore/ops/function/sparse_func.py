@@ -15,7 +15,7 @@
 
 """Defines sparse operators with functional form."""
 
-from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor
+from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, SparseConcat
 from ..operations.array_ops import GatherNd
 from ...common import CSRTensor, COOTensor, Tensor
 from ...common import dtype as mstype
@@ -146,10 +146,81 @@ def csr_to_coo(tensor):
                                                             tensor.indptr, tensor.indices, tensor.values)
     return COOTensor(indices, values, shape)
 
+
+def sparse_concat(sp_input, concat_dim):
+    """
+    concatenates the input SparseTensor(COO format) along the specified dimension. demo API now
+
+    Args:
+        concat_dim (int64/int): decide the dimension to concatenation along.
+            The value must be in range [-rank, rank), where rank is the number of dimensions in each input
+            SparseTensor.
+
+    Inputs:
+        - **sp_input** (COOTensor) - the list of SparseTensor which need to concatenates.
+            for COOTensor input.
+
+    Outputs:
+        - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
+            specified dimension.
+
+    Raises:
+        ValueError: If only one sparse tensor input.
+        ValueError: If Input COOTensor shape dim > 3. COOtensor.shape dim size must be 2 now
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> values0 = Tensor([1, 2], dtype=mstype.int32)
+        >>> shape0 = (3, 4)
+        >>> input0 = COOTensor(indics0, values0, shape0)
+        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> values1 = Tensor([3, 4], dtype=mstype.int32)
+        >>> shape1 = (3, 4)
+        >>> input1 = COOTensor(indics1, values1, shape1)
+        >>> sparse_concat = ops.SparseConcat()
+        >>> concat_dim = 1
+        >>> out = sparse_concat((input0, input1), concat_dim)
+        >>> print(out)
+        shape = [3 4]
+        [0 1]: "1"
+        [0 4]: "3"
+        [1 2]: "4"
+        [1 5]: "2"
+    """
+    if len(sp_input) < 2:
+        raise_value_error("For sparse_concat, not support COOTensor input number < 2.")
+    sparse_concat_op = SparseConcat()
+    sp_input_indices = []
+    sp_input_values = []
+    sp_input_shapes = []
+    sp_input_indices.append(sp_input[0].indices)
+    sp_input_values.append(sp_input[0].values)
+    sp_input_shapes.append(Tensor(sp_input[0].shape))
+    sp_input_indices.append(sp_input[1].indices)
+    sp_input_values.append(sp_input[1].values)
+    sp_input_shapes.append(Tensor(sp_input[1].shape))
+    indices, values, shape = sparse_concat_op(concat_dim, sp_input_indices, sp_input_values, sp_input_shapes)
+    for i in range(2, len(sp_input)):
+        sp_input_indices[0] = indices
+        sp_input_values[0] = values
+        sp_input_shapes[0] = shape
+        sp_input_indices[1] = sp_input[i].indices
+        sp_input_values[1] = sp_input[i].values
+        sp_input_shapes[1] = Tensor(sp_input[i].shape)
+        indices, values, shape = sparse_concat_op(concat_dim, sp_input_indices, sp_input_values, sp_input_shapes)
+    shape_array = shape.asnumpy()
+    out_shape = tuple(int(x) for x in shape_array)
+    return COOTensor(indices, values, out_shape)
+
+
 __all__ = [
     'dense_to_sparse_coo',
     'dense_to_sparse_csr',
-    'csr_to_coo'
+    'csr_to_coo',
+    'sparse_concat'
 ]
 
 __all__.sort()

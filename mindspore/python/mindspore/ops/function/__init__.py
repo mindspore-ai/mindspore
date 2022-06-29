@@ -265,6 +265,7 @@ from .sparse_func import (
     dense_to_sparse_coo,
     dense_to_sparse_csr,
     csr_to_coo,
+    sparse_concat,
 )
 from .random_func import (
     standard_laplace,

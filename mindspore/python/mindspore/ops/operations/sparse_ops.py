@@ -480,3 +480,61 @@ class Sspaddmm(Primitive):
         """Initialize Sspaddmm."""
         self.init_prim_io_names(inputs=['x1_indices', 'x1_values', 'x1_shape', 'x2_indices', 'x2_values', 'x2_shape',
                                         'x3_dense', 'alpha', 'beta'], outputs=['y_indices', 'y_values', 'y_shape'])
+
+
+class SparseConcat(Primitive):
+    """
+    concatenates the input SparseTensor(COO format) along the specified dimension. demo API now
+
+    Args:
+        concat_dim(Scalar) - A Scalar, decide the dimension to concatenation along.
+        The value must be in range [-rank, rank), where rank is the number of dimensions in each input
+        SparseTensor. Support int32, int64.
+
+    Inputs:
+
+        - **sp_input_indices** (Tensor) - the list of Tensor which means COOTensor indices, and Need to
+            concatenates.
+        - **sp_input_values** (Tensor) - the list of Tensor which means COOTensor values, and
+            need to concatenates.
+        - **sp_input_shape** (Tensor) - the list of Tensor which means COOTensor shape, and
+            need to concatenates.
+
+    Outputs:
+        - **output_indices** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the indices of output COOTensor
+        - **output_values** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the values of output COOTensor
+        - **output_shape** (Tensor) - the result of concatenates the input SparseTensor along the
+            specified dimension. This is the shape of output COOTensor
+
+    Raises:
+        ValueError: If only one sparse tensor input.
+        Error: If input axis value is not in range [-rank, rank).
+
+    Supported Platforms:
+        ``CPU``
+
+    Examples:
+        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> values0 = Tensor([1, 2], dtype=mstype.int32)
+        >>> shape0 = (3, 4)
+        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> values1 = Tensor([3, 4], dtype=mstype.int32)
+        >>> shape1 = (3, 4)
+        >>> sparse_concat = ops.SparseConcat()
+        >>> axis = 1
+        >>> out = sparse_concat(axis, (indices0, indices1), (values0, values1), (shape0, shape1))
+        >>> print(out)
+                shape = [3 4]
+        [0 1]: "1"
+        [0 4]: "3"
+        [1 2]: "4"
+        [1 5]: "2"
+    """
+    @prim_attr_register
+    def __init__(self, expand_nonconcat_dim=False):
+        """Initialize SparseConcat."""
+        self.init_prim_io_names(inputs=['axis', 'sp_input_indices', 'sp_input_values', 'sp_input_shapes'],
+                                outputs=['output_indices', 'output_values', 'output_shape'])
+        validator.check_value_type("expand_nonconcat_dim", expand_nonconcat_dim, [bool], self.name)
