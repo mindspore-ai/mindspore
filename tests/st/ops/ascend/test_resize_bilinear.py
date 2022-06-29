@@ -23,7 +23,7 @@ from mindspore import ParameterTuple
 
 class NetResizeBilinear(nn.Cell):
     def construct(self, inputs, size):
-        return ops.resize_bilinear(inputs, size)
+        return ops.interpolate(inputs, None, None, size, "asymmetric", "bilinear")
 
 
 def case():
@@ -51,7 +51,7 @@ def case():
 @pytest.mark.env_onecard
 def test_resize_bilinear_ascend():
     """
-    Feature: Test mindspore.ops.resize_bilinear on ascend.
+    Feature: Test bilinear on ascend.
     Description: The size is a input
     Expectation: Assert that results are consistent with expect.
     """

@@ -575,7 +575,9 @@ def test_resize_nn_grayscale_align_corners_float(datatype=np.float32):
 
 class NetResizeBilinearFunc(nn.Cell):
     def construct(self, inputs, size, align_corner=False, half_pixel_centers=False):
-        return ops.resize_bilinear(inputs, size, align_corner, half_pixel_centers)
+        if align_corner and not half_pixel_centers:
+            return ops.interpolate(inputs, None, None, size, "align_corners", "bilinear")
+        return ops.interpolate(inputs, None, None, size, "half_pixel", "bilinear")
 
 
 @pytest.mark.level0

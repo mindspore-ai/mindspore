@@ -3333,6 +3333,12 @@ class ResizeBilinear(PrimitiveWithInfer):
     The resizing only affects the lower two dimensions which represent the height and width. The input images
     can be represented by different data types, but the data types of output images are always float32.
 
+    For general resize, refer to :func:`mindspore.ops.interpolate` for more detail.
+
+    .. warning::
+        This interface does not support dynamic shape and is subject to change or deletion,
+        use :func:`mindspore.ops.interpolate` instead.
+
     Args:
         size (Union[tuple[int], list[int]]): A tuple or list of 2 int elements :math:`(new\_height, new\_width)`,
             the new size of the images.
