@@ -146,16 +146,10 @@ device::DeviceAddressPtr HandleAddressForHeterogeneous(const tensor::TensorPtr &
   }
   MS_EXCEPTION_IF_NULL(device_address);
   if (device_address->GetDeviceType() != device_context->GetDeviceType()) {
+    tensor->data_sync();
     auto new_device_address = CreateValueNodeAddress(value_node, device_context);
     MS_EXCEPTION_IF_NULL(new_device_address);
-    MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
-    if (!device_context->device_res_manager_->AllocateMemory(new_device_address.get())) {
-      MS_LOG(EXCEPTION) << "Allocate memory failed, allocate size " << new_device_address->GetSize();
-    }
-    if (!runtime::Copy(new_device_address.get(), device_address.get())) {
-      MS_LOG(EXCEPTION) << "Copy data from " << device_address->GetDeviceType() << " to "
-                        << new_device_address->GetDeviceType() << " failed ";
-    }
+    CopyTensorData(tensor, new_device_address, value_node, device_context);
     return new_device_address;
   }
   return device_address;
@@ -254,6 +248,7 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     MS_EXCEPTION_IF_NULL(tensor);
 
     auto device_address = HandleAddressForHeterogeneous(tensor, value_node, device_context);
+    tensor->set_device_address(device_address);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
     if (device_address->GetDeviceType() != device::DeviceType::kCPU) {
@@ -270,6 +265,29 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     MS_LOG(DEBUG) << "device_address " << address.get() << " ref_count " << address->ref_count();
   }
   MS_LOG(DEBUG) << "Update end";
+}
+
+void GraphAdapter::HandleHeterogeneousTensors(const std::vector<std::vector<tensor::TensorPtr>> &input_tensors,
+                                              const std::vector<device::DeviceContext *> &device_contexts) {
+  if (input_tensors.size() < device_contexts.size()) {
+    MS_LOG(EXCEPTION) << "Invalid input_tensors size " << input_tensors.size() << " device_contexts size "
+                      << device_contexts.size();
+  }
+  for (size_t i = 0; i < device_contexts.size(); ++i) {
+    auto tensors = input_tensors[i];
+    auto device_context = device_contexts[i];
+    MS_EXCEPTION_IF_NULL(device_context);
+    for (auto &tensor : tensors) {
+      if (tensor != nullptr && tensor->device_address() != nullptr) {
+        auto device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
+        MS_EXCEPTION_IF_NULL(device_address);
+        if (device_address->GetDeviceType() != device_context->GetDeviceType()) {
+          tensor->data_sync();
+          tensor->set_device_address(nullptr);
+        }
+      }
+    }
+  }
 }
 
 void GraphAdapter::ReplaceGraphParameterProperties(const KernelGraphPtr &graph,
