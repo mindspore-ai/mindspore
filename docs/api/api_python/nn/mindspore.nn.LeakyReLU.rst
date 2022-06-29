@@ -17,7 +17,7 @@ mindspore.nn.LeakyReLU
 
    **参数：**
 
-   **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值：0.2。
+   - **alpha** (`Union[int, float]`) - x<0时激活函数的斜率，默认值：0.2。
 
    **输入：**
 

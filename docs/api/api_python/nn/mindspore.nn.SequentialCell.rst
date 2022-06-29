@@ -11,11 +11,11 @@ mindspore.nn.SequentialCell
 
     **参数：**
 
-    **args** (list, OrderedDict) - 仅包含Cell子类的列表或有序字典。
+    - **args** (list, OrderedDict) - 仅包含Cell子类的列表或有序字典。
 
     **输入：**
 
-    **x** (Tensor) - Tensor，其shape取决于序列中的第一个Cell。
+    - **x** (Tensor) - Tensor，其shape取决于序列中的第一个Cell。
 
     **输出：**
 
@@ -23,7 +23,7 @@ mindspore.nn.SequentialCell
 
     **异常：**
 
-    **TypeError** - `args` 的类型不是列表或有序字典。
+    - **TypeError** - `args` 的类型不是列表或有序字典。
 
     .. py:method:: append(cell)
 
@@ -31,4 +31,4 @@ mindspore.nn.SequentialCell
 
         **参数：**
 
-        **cell** (Cell) - 要添加的Cell。
+        - **cell** (Cell) - 要添加的Cell。

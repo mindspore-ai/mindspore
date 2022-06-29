@@ -14,7 +14,7 @@ mindspore.nn.PReLU
     其中 :math:`x_i` 是输入的Tensor。
 
     这里 :math:`w` 是一个可学习的参数，默认初始值0.25。
-    
+
     当带参数调用时每个通道上学习一个 :math:`w` 。如果不带参数调用时，则将在所有通道中共享单个参数 :math:`w` 。
 
     PReLU相关图参见 `PReLU <https://en.wikipedia.org/wiki/Activation_function#/media/File:Activation_prelu.svg>`_ 。

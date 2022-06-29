@@ -9,12 +9,11 @@ mindspore.nn.LossBase
 
     **参数：**
 
-    - **reduction** (str) -指定应用于输出结果的计算方式。可选值有："mean"、"sum"、"none"。默认值："mean"。
+    - **reduction** (str) - 指定应用于输出结果的计算方式。可选值有："mean"、"sum"、"none"。默认值："mean"。
 
     **异常：**
 
     - **ValueError** - `reduction` 不为'none'、'mean'或'sum'。
-
 
     .. py:method:: get_axis(x)
 
@@ -23,7 +22,6 @@ mindspore.nn.LossBase
         **参数：**
     
         - **x** (Tensor) - 任何shape的Tensor。
-
 
     .. py:method:: get_loss(x, weights=1.0)
 
