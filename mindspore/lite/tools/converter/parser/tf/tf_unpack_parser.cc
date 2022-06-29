@@ -36,6 +36,9 @@ PrimitiveCPtr TFUnpackParser::Parse(const tensorflow::NodeDef &tf_op,
   prim->set_axis({attr_value.i()});
 
   *output_size = 1;
+  if (TensorFlowUtils::FindAttrValue(tf_op, "num", &attr_value)) {
+    *output_size = attr_value.i();
+  }
   for (int i = 0; i < tf_op.input_size(); ++i) {
     if (AddOpInput(tf_op, i, inputs) != RET_OK) {
       MS_LOG(ERROR) << "add op input " << i << " failed";
