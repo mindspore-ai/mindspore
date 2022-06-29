@@ -170,7 +170,11 @@ bool ClusterContext::BuildCluster() {
   RETURN_IF_FALSE_WITH_LOG(node_base_->Initialize(), "Failed to initialize the node.");
 
   // Check the state of topology construction.
-  auto check_func = [this]() -> bool { return this->node_base_->Initialized(); };
+  auto check_func = [this]() -> bool {
+    // Check exception thrown by child threads in cgn or msn.
+    MsException::Instance().CheckException();
+    return this->node_base_->Initialized();
+  };
   EXECUTE_WITH_RETRY(check_func, topology::kExecuteRetryNum, topology::kExecuteInterval, "Topology build timed out.");
 
   MS_LOG(INFO) << "Cluster is successfully initialized.";
