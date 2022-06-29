@@ -420,10 +420,6 @@ class _Linear(Cell):
         self.expert_num = expert_num
         self.outer_batch = outer_batch
         self.expert_group_size = expert_group_size
-        self.use_expert_group_size = _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) \
-                                     and not _is_sharding_propagation()
-        if self.use_expert_group_size is True and self.expert_group_size is None:
-            raise ValueError("'expert_group_size' should be configured as an integer in MoEConfig.")
         if self.expert_num > 1:
             self.expert_flag = True
             self.weight = Parameter(initializer(weight_init, [self.expert_num] + weight_shape, param_init_type),
@@ -433,6 +429,10 @@ class _Linear(Cell):
             self.expert_flag = False
             self.weight = Parameter(initializer(weight_init, weight_shape, param_init_type), name="weight")
             self.matmul = P.MatMul(transpose_b=transpose_b)
+        self.use_expert_group_size = _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) \
+                                     and not _is_sharding_propagation() and self.expert_flag is True
+        if self.use_expert_group_size is True and self.expert_group_size is None:
+            raise ValueError("'expert_group_size' should be configured as an integer in MoEConfig.")
         self.bias = None
         self.has_bias = has_bias
         if self.has_bias:
