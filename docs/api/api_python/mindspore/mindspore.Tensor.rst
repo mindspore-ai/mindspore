@@ -613,7 +613,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **lambd** (float) - math:`\lambda` 应大于等于0。默认值：0.5。
+        - **lambd** (float) - :math:`\lambda` 应大于等于0。默认值：0.5。
 
         **返回：**
 
