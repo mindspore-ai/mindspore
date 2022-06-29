@@ -870,6 +870,8 @@ class Model:
         cb_params.dataset_sink_mode = False
         run_context = RunContext(cb_params)
         list_callback.on_train_begin(run_context)
+        is_embedding_cache_server = _is_role_pserver() and _cache_enable()
+
         for i in range(initial_epoch, epoch):
             cb_params.cur_epoch_num = i + 1
             self._current_epoch_num = cb_params.cur_epoch_num
@@ -899,6 +901,9 @@ class Model:
                 list_callback.on_train_step_end(run_context)
                 if (_is_role_pserver() and not _enable_distributed_mindrt()) or _is_role_sched():
                     os._exit(0)
+                # Embedding cache server only run one step.
+                if is_embedding_cache_server:
+                    break
                 should_stop = run_context.get_stop_requested()
                 if should_stop:
                     break
@@ -934,7 +939,9 @@ class Model:
             # if param is cache enable, flush data from cache to host before epoch end
             self._flush_from_cache(cb_params)
 
-            list_callback.on_train_epoch_end(run_context)
+            # Embedding cache server need not do epoch end callback, this process only run one step.
+            if not is_embedding_cache_server:
+                list_callback.on_train_epoch_end(run_context)
             if "metrics" in cb_params or "eval_results" in cb_params:
                 cb_params.pop("metrics")
                 cb_params.pop("eval_results")
