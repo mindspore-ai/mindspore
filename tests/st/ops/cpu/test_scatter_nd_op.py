@@ -214,7 +214,7 @@ def vmap_1_batch():
                         [-21.4, -3.1]]).astype(np.float32)
     indices = np.stack([indices1, indices2])
     updates = np.stack([update1, update2])
-    shape = (2, 2, 2)
+    shape = (2, 2)
     expect = np.stack([expect1, expect2])
     output = vmap_calc(Tensor(indices), Tensor(updates), shape).asnumpy()
 

@@ -1410,9 +1410,9 @@ def scatter_nd(indices, updates, shape):
 
     Args:
         indices (Tensor): The index of scattering in the new tensor with int32 or int64 data type.
-            The rank of indices must be at least 2 and :math:`indices_shape[-1] \le len(shape)`.
+            The rank of indices must be at least 2 and :math:`indices\_shape[-1] \le len(shape)`.
         updates (Tensor): The source Tensor to be scattered.
-            It has shape :math:`indices_shape[:-1] + shape[indices_shape[-1]:]`.
+            It has shape :math:`indices\_shape[:-1] + shape[indices\_shape[-1]:]`.
         shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
             The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than
             or equal to 2. In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
