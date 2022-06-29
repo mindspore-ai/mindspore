@@ -9,10 +9,10 @@
 
     .. math::
         \begin{array}{ll} \\
-            accum = \rho * accum + (1 - \rho) * grad^2 \\
-            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}} \\
-            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2 \\
-            var -= lr * update
+            \text{accum} = \rho * \text{accum} + (1 - \rho) * \text{grad}^2 \\
+            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{\text{grad}}{\sqrt{\text{accum} + \epsilon}} \\
+            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * \text{update}^2 \\
+            \text{var} = \text{var} - \text{lr} * \text{update}
         \end{array}
 
     其中 :math:`\rho` 代表 `rho` ， :math:`\epsilon` 代表 `epsilon` 。
@@ -21,10 +21,10 @@
 
     **输入：**
 
-    - **var** (Parameter) - 要更新的权重。数据类型为float32或float16。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
-    - **accum** (Parameter) - :math:`\accum` 要更新的累积，shape和数据类型与 `var` 相同。
-    - **accum_update** (Parameter) - 更新公式中的 :math:`\accum_update` ，shape和数据类型与 `var` 相同。
-    - **lr** (Union[Number, Tensor]) - :math:`\lr` 学习率，必须是Scalar。数据类型为float32或float16。
+    - **var** (Parameter) - 待更新的公式参数 var。数据类型为float32或float16。shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。
+    - **accum** (Parameter) - 待更新的公式参数 accum，shape和数据类型与 `var` 相同。
+    - **accum_update** (Parameter) - 待更新的公式参数 accum_update，shape和数据类型与 `var` 相同。
+    - **lr** (Union[Number, Tensor]) - 学习率，必须是Scalar。数据类型为float32或float16。
     - **rho** (Union[Number, Tensor]) - :math:`\rho` 衰减率，必须是Scalar。数据类型为float32或float16。
     - **epsilon** (Union[Number, Tensor]) - :math:`\epsilon` 加在分母上的值，以确保数值稳定，必须是Scalar。数据类型为float32或float16。
     - **grad** (Tensor) - 梯度，shape和数据类型与 `var` 相同。
