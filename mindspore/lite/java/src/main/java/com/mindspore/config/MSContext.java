@@ -16,26 +16,35 @@
 
 package com.mindspore.config;
 
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+
 public class MSContext {
+    private static final Logger LOGGER = Logger.getLogger(MSContext.class.toString());
     static {
         MindsporeLite.init();
     }
 
     private long msContextPtr;
+    private static final long EMPTY_CONTEXT_PTR_VALUE = 0;
+    private static final int ERROR_VALUE = -1;
+    private static final String NULLPTR_ERROR_MESSAGE="msContext is a nullptr.\n";
 
     /**
      * Construct function.
      */
     public MSContext() {
-        this.msContextPtr = 0;
+        this.msContextPtr = EMPTY_CONTEXT_PTR_VALUE;
     }
 
     /**
      * Add device info to context.
      *
-     * @param deviceType support cpu,npu and gpu.
-     * @param isEnableFloat16  whether to use float16 operator for priority.
-     * @param npuFreq npu frequency used for npu device.
+     * @param deviceType      support cpu,npu and gpu.
+     * @param isEnableFloat16 whether to use float16 operator for priority.
+     * @param npuFreq         npu frequency used for npu device.
      * @return add status.
      */
     public boolean addDeviceInfo(int deviceType, boolean isEnableFloat16, int npuFreq) {
@@ -45,8 +54,8 @@ public class MSContext {
     /**
      * Add device info to context.
      *
-     * @param deviceType support cpu,npu and gpu.
-     * @param isEnableFloat16  whether to use float16 operator for priority.
+     * @param deviceType      support cpu,npu and gpu.
+     * @param isEnableFloat16 whether to use float16 operator for priority.
      * @return add status.
      */
     public boolean addDeviceInfo(int deviceType, boolean isEnableFloat16) {
@@ -60,40 +69,43 @@ public class MSContext {
      */
     public boolean init() {
         this.msContextPtr = createDefaultMSContext();
-        return this.msContextPtr != 0;
+        return this.msContextPtr != EMPTY_CONTEXT_PTR_VALUE;
     }
 
     /**
      * Init Context.
      *
-     * @param threadNum thread nums.
+     * @param threadNum   thread nums.
      * @param cpuBindMode support bind high,mid cpu.0,no bind.1,bind mid cpu.2. bind high cpu.
      * @return init status.
      */
     public boolean init(int threadNum, int cpuBindMode) {
         this.msContextPtr = createMSContext(threadNum, cpuBindMode, false);
-        return this.msContextPtr != 0;
+        return this.msContextPtr != EMPTY_CONTEXT_PTR_VALUE;
     }
 
     /**
      * Init Context.
      *
-     * @param threadNum thread nums.
-     * @param cpuBindMode support bind high,mid cpu.0,no bind.1,bind mid cpu.2. bind high cpu.
+     * @param threadNum        thread nums.
+     * @param cpuBindMode      support bind high,mid cpu.0,no bind.1,bind mid cpu.2. bind high cpu.
      * @param isEnableParallel enable parallel in multi devices.
      * @return init status.
      */
     public boolean init(int threadNum, int cpuBindMode, boolean isEnableParallel) {
         this.msContextPtr = createMSContext(threadNum, cpuBindMode, isEnableParallel);
-        return this.msContextPtr != 0;
+        return this.msContextPtr != EMPTY_CONTEXT_PTR_VALUE;
     }
 
     /**
      * Free context.
      */
     public void free() {
-        this.free(this.msContextPtr);
-        this.msContextPtr = 0;
+        if (isInitialized()) {
+            this.free(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
     }
 
     /**
@@ -105,6 +117,175 @@ public class MSContext {
         return msContextPtr;
     }
 
+    /**
+     * Check weather the msContextPtr has been initialized or not.
+     *
+     * @return true: initialized; false: not initialized.
+     */
+    private boolean isInitialized() {
+        return this.msContextPtr != EMPTY_CONTEXT_PTR_VALUE;
+    }
+
+    /**
+     * set the number of threads at runtime. Only valid for Lite.
+     * If you haven't init context before, it will do nothing.
+     *
+     * @param threadNum the number of threads at runtime.
+     */
+    public void setThreadNum(int threadNum) {
+        if (isInitialized()) {
+            setThreadNum(this.msContextPtr, threadNum);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * get the current thread number setting. Only valid for Lite.
+     * If you haven't init context, it will return {@value  ERROR_VALUE}.
+     *
+     * @return The current thread number setting.
+     */
+    public int getThreadNum() {
+        int ret_val = ERROR_VALUE;
+        if (isInitialized()) {
+            ret_val = getThreadNum(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+        return ret_val;
+    }
+
+    /**
+     * set the parallel number of operators at runtime. Only valid for Lite.
+     * If you haven't init context before, it will do nothing.
+     *
+     * @param parallelNum parallelNum the parallel number of operators at runtime.
+     */
+    public void setInterOpParallelNum(int parallelNum) {
+        if (isInitialized()) {
+            setInterOpParallelNum(this.msContextPtr, parallelNum);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * get the current operators parallel number setting. Only valid for Lite.
+     * If you haven't init context, it will return {@value  ERROR_VALUE}.
+     *
+     * @return The current operators parallel number setting.
+     */
+    public int getInterOpParallelNum() {
+        int ret_val = ERROR_VALUE;
+        if (isInitialized()) {
+            ret_val = getInterOpParallelNum(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+        return ret_val;
+    }
+
+    /**
+     * set the thread affinity to CPU cores. Only valid for Lite.
+     * If you haven't init context before, it will do nothing.
+     *
+     * @param mode: 0: no affinities, 1: big cores first, 2: little cores first
+     */
+    public void setThreadAffinity(int mode) {
+        if (isInitialized()) {
+            setThreadAffinity(this.msContextPtr, mode);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+    }
+
+
+    /**
+     * get the thread affinity of CPU cores. Only valid for Lite.
+     * If you haven't init context, it will return {@value  ERROR_VALUE}.
+     *
+     * @return Thread affinity to CPU cores. 0: no affinities, 1: big cores first, 2: little cores first
+     */
+    public int getThreadAffinityMode() {
+        int ret_val = ERROR_VALUE;
+        if (isInitialized()) {
+            ret_val = getThreadAffinityMode(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+        return ret_val;
+    }
+
+    /**
+     * set the thread lists to CPU cores. Only valid for Lite.
+     * If coreList and mode are set by setThreadAffinity at the same time, the coreList is effective, but the
+     * mode is not effective.
+     * If you haven't init context before, it will do nothing.
+     *
+     * @param coreList An {@code ArrayList<Integer>} of thread core lists.
+     */
+    public void setThreadAffinity(ArrayList<Integer> coreList) {
+        if (isInitialized()) {
+            int len = coreList.size();
+            int[] coreList_array = new int[len];
+            for (int i = 0; i < len; i++) {
+                coreList_array[i] = coreList.get(i);
+            }
+            setThreadAffinity(this.msContextPtr, coreList_array);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * get the thread lists of CPU cores. Only valid for Lite.
+     * If you haven't init context, it will return {@value  ERROR_VALUE}.
+     *
+     * @return An {@code ArrayList<Integer>} of thread core lists.
+     */
+
+    public ArrayList<Integer> getThreadAffinityCoreList() {
+        ArrayList<Integer> ret_val = new ArrayList<>();
+        if (isInitialized()) {
+            ret_val = getThreadAffinityCoreList(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+        return ret_val;
+    }
+
+    /**
+     * set the status whether to perform model inference or training in parallel. Only valid for Lite.
+     * If you haven't init context before, it will do nothing.
+     *
+     * @param isParallel: true, parallel; false, not in parallel.
+     */
+    public void setEnableParallel(boolean isParallel) {
+        if (isInitialized()) {
+            setEnableParallel(this.msContextPtr, isParallel);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * get the status whether to perform model inference or training in parallel. Only valid for Lite.
+     * If you haven't init context, it will also return false.
+     *
+     * @return boolean value that indicates whether in parallel.
+     */
+    public boolean getEnableParallel() {
+        boolean ret_val = false;
+        if (isInitialized()) {
+            ret_val = getEnableParallel(this.msContextPtr);
+        } else {
+            LOGGER.log(Level.SEVERE, NULLPTR_ERROR_MESSAGE);
+        }
+        return ret_val;
+    }
+
+
     private native long createMSContext(int threadNum, int cpuBindMode, boolean enableParallel);
 
     private native long createDefaultMSContext();
@@ -112,4 +293,24 @@ public class MSContext {
     private native boolean addDeviceInfo(long msContextPtr, int deviceType, boolean isEnableFloat16, int npuFrequency);
 
     private native void free(long msContextPtr);
+
+    private native void setThreadNum(long msContextPtr, int threadNum);
+
+    private native int getThreadNum(long msContextPtr);
+
+    private native void setInterOpParallelNum(long msContextPtr, int parallelNum);
+
+    private native int getInterOpParallelNum(long msContextPtr);
+
+    private native void setThreadAffinity(long msContextPtr, int mode);
+
+    private native int getThreadAffinityMode(long msContextPtr);
+
+    private native void setThreadAffinity(long msContextPtr, int[] coreList);
+
+    private native ArrayList<Integer> getThreadAffinityCoreList(long msContextPtr);
+
+    private native void setEnableParallel(long msContextPtr, boolean isParallel);
+
+    private native boolean getEnableParallel(long msContextPtr);
 }
