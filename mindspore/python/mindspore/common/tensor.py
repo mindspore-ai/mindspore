@@ -1132,6 +1132,59 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get("renorm")(self, p, dim, maxnorm)
 
+    def approximate_equal(self, other, tolerance=1e-5):
+        r"""
+        Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
+
+        .. math::
+
+            out_i = \begin{cases}
+            & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
+            & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
+            \end{cases}
+
+        where `tolerance` indicates Acceptable maximum tolerance.
+
+        Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        If they have different data types, the lower precision data type will be converted to
+        the relatively highest precision data type.
+
+        Args:
+            other (Tensor): Second tensor to compare, with data type belongs to float32, float16.
+            tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+
+        Returns:
+            Tensor, has the same shape as self tensor, and the data type is bool.
+
+        Raises:
+            TypeError: If `tolerance` is not a float.
+            RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+                        but data type conversion of Parameter is not supported.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> from mindspore.ops.function.math_func imsport approximate_equal
+            >>> ...
+            >>> tol = 2.
+            >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
+            >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
+            >>> output = Tensor(x).approximate_equal(Tensor(y), tol)
+            >>> print(output)
+            [ True  False  False]
+        """
+        validator.check_isinstance("x", self, Tensor)
+        validator.check_isinstance("y", other, Tensor)
+        validator.check_isinstance("tolerance", tolerance, float)
+        self._init_check()
+        input_x = self.copy() if self.dtype == mstype.float32 else self.astype(mstype.float16)
+        input_y = other.copy() if other.dtype == mstype.float32 else other.astype(mstype.float16)
+        return tensor_operator_registry.get('__lt__')(tensor_operator_registry.get('abs')()(
+            tensor_operator_registry.get('__sub__')(input_x, input_y)
+        ), tolerance)
+
+
     def matrix_determinant(self):
         """
         Computes the determinant of one or more square matrices.
