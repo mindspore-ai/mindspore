@@ -166,8 +166,12 @@ class Tensor:
         >>> tensor = mslite.Tensor()
         >>> tensor.set_data_type(mslite.DataType.FLOAT32)
         >>> print(tensor)
-        tensor_name: , data_type: DataType.FLOAT32, shape: [], format: Format.NCHW, \
-        element_num: 1, data_size: 0.
+        tensor_name: ,
+        data_type: DataType.FLOAT32,
+        shape: [],
+        format: Format.NCHW,
+        element_num: 1,
+        data_size: 0.
     """
 
     def __init__(self, tensor=None):
@@ -323,7 +327,7 @@ class Tensor:
             >>> tensor.set_format(mslite.Format.NHWC)
             >>> tensor_format = tensor.get_format()
             >>> print(tensor_format)
-            Format,NHWC
+            Format.NHWC
         """
         return format_cxx_py_map.get(self._tensor.get_format())
 
@@ -346,7 +350,7 @@ class Tensor:
     def get_data_size(self):
         """
         Get the data size of the tensor, i.e.,
-        :math:`data_size = element_num * data_type`.
+        data_size = element_num * data_type.
 
         Returns:
             int, the data size of the tensor data.
@@ -442,10 +446,10 @@ class Tensor:
         return self._tensor.get_data_to_numpy()
 
     def __str__(self):
-        res = f"tensor_name: {self.get_tensor_name()}, " \
-              f"data_type: {self.get_data_type()}, " \
-              f"shape: {self.get_shape()}, " \
-              f"format: {self.get_format()}, " \
-              f"element_num: {self.get_element_num()}, " \
+        res = f"tensor_name: {self.get_tensor_name()},\n" \
+              f"data_type: {self.get_data_type()},\n" \
+              f"shape: {self.get_shape()},\n" \
+              f"format: {self.get_format()},\n" \
+              f"element_num: {self.get_element_num()},\n" \
               f"data_size: {self.get_data_size()}."
         return res

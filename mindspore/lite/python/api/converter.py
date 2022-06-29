@@ -57,9 +57,31 @@ class Converter:
             e.g. "/home/user/model.caffemodel". Default: "".
         config_file (str, optional): Configuration for post-training, offline split op to parallel,
             disable op fusion ability and set plugin so path. e.g. "/home/user/model.cfg". Default: "".
+        section (str, optional): The category of the configuration parameter.
+            Set the individual parameters of the configFile together with config_info.
+            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: "".
+            For the configuration parameters related to post training quantization, please refer to
+            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            For the configuration parameters related to extension, please refer to
+            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+
+            - "common_quant_param": Common quantization parameter. One of configuration for quantization.
+            - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
+              One of configuration for quantization.
+            - "full_quant_param": Full quantization parameter. One of configuration for quantization.
+            - "data_preprocess_param": Data preprocess parameter. One of configuration for quantization.
+            - "registry": Extension configuration parameter. One of configuration for extension.
+
+        config_info (dict{str, str}, optional): List of configuration parameters.
+            Set the individual parameters of the configFile together with section.
+            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
+            For the configuration parameters related to post training quantization, please refer to
+            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            For the configuration parameters related to extension, please refer to
+            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
         weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
             only effective for const tensor in Float32 data type. Default: False.
-        input_shape (dict{str:list[int]}, optional): Set the dimension of the model input,
+        input_shape (dict{str, list[int]}, optional): Set the dimension of the model input,
             the order of input dimensions is consistent with the original model. For some models, the model structure
             can be further optimized, but the transformed model may lose the characteristics of dynamic shape.
             e.g. {"inTensor1": [1, 32, 32, 32], "inTensor2": [1, 1, 32, 32]}. Default: {}.
@@ -87,6 +109,10 @@ class Converter:
         TypeError: `output_file` is not a str.
         TypeError: `weight_file` is not a str.
         TypeError: `config_file` is not a str.
+        TypeError: `section` is not a str.
+        TypeError: `config_info` is not a dict.
+        TypeError: `config_info` is a dict, but the keys are not str.
+        TypeError: `config_info` is a dict, but the values are not str.
         TypeError: `weight_fp16` is not a bool.
         TypeError: `input_shape` is not a dict or None.
         TypeError: `input_shape` is a dict, but the values are not list.
@@ -112,9 +138,21 @@ class Converter:
         >>> import mindspore_lite as mslite
         >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
         >>> print(converter)
-        config_file: , weight_fp16: False, input_shape: {}, input_format: Format.NHWC, \
-        input_data_type: DataType.FLOAT32, output_data_type: DataType.FLOAT32, export_mindir: False, decrypt_key: , \
-        decrypt_mode: , enable_encryption: False, encrypt_key: , infer: False, train_model: False, no_fusion: False.
+        config_file: ,
+        config_info: ,
+        weight_fp16: False,
+        input_shape: {},
+        input_format: Format.NHWC,
+        input_data_type: DataType.FLOAT32,
+        output_data_type: DataType.FLOAT32,
+        export_mindir: False,
+        decrypt_key: ,
+        decrypt_mode: ,
+        enable_encryption: False,
+        encrypt_key: ,
+        infer: False,
+        train_model: False,
+        no_fusion: False.
     """
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", section="", config_info=None,
@@ -199,20 +237,20 @@ class Converter:
             self._converter.set_no_fusion(no_fusion)
 
     def __str__(self):
-        res = f"config_file: {self._converter.get_config_file()}, " \
-              f"config_info: {self._converter.get_config_info()}, " \
-              f"weight_fp16: {self._converter.get_weight_fp16()}, " \
-              f"input_shape: {self._converter.get_input_shape()}, " \
-              f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())}, " \
-              f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())}, " \
-              f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())}, " \
-              f"export_mindir: {self._converter.get_export_mindir()}, " \
-              f"decrypt_key: {self._converter.get_decrypt_key()}, " \
-              f"decrypt_mode: {self._converter.get_decrypt_mode()}, " \
-              f"enable_encryption: {self._converter.get_enable_encryption()}, " \
-              f"encrypt_key: {self._converter.get_encrypt_key()}, " \
-              f"infer: {self._converter.get_infer()}, " \
-              f"train_model: {self._converter.get_train_model()}, " \
+        res = f"config_file: {self._converter.get_config_file()},\n" \
+              f"config_info: {self._converter.get_config_info()},\n" \
+              f"weight_fp16: {self._converter.get_weight_fp16()},\n" \
+              f"input_shape: {self._converter.get_input_shape()},\n" \
+              f"input_format: {format_cxx_py_map.get(self._converter.get_input_format())},\n" \
+              f"input_data_type: {data_type_cxx_py_map.get(self._converter.get_input_data_type())},\n" \
+              f"output_data_type: {data_type_cxx_py_map.get(self._converter.get_output_data_type())},\n" \
+              f"export_mindir: {self._converter.get_export_mindir()},\n" \
+              f"decrypt_key: {self._converter.get_decrypt_key()},\n" \
+              f"decrypt_mode: {self._converter.get_decrypt_mode()},\n" \
+              f"enable_encryption: {self._converter.get_enable_encryption()},\n" \
+              f"encrypt_key: {self._converter.get_encrypt_key()},\n" \
+              f"infer: {self._converter.get_infer()},\n" \
+              f"train_model: {self._converter.get_train_model()},\n" \
               f"no_fusion: {self._converter.get_no_fusion()}."
         return res
 

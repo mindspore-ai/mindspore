@@ -62,9 +62,9 @@ class Model:
             model_type (ModelType): Define The type of model file. Options: ModelType::MINDIR | ModelType::MINDIR_LITE.
 
                 - ModelType::MINDIR: An intermediate representation of the MindSpore model.
-                      The recommended model file suffix is ".mindir".
+                  The recommended model file suffix is ".mindir".
                 - ModelType::MINDIR_LITE: An intermediate representation of the MindSpore Lite model.
-                      The recommended model file suffix is ".ms".
+                  The recommended model file suffix is ".ms".
 
             context (Context): Define the context used to store options during execution.
 
@@ -186,7 +186,7 @@ class Model:
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
-            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05 \
+            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05
                         3.6021424e-04 8.3650106e-05]]
 
             >>> # predict which indata is numpy array
@@ -317,8 +317,12 @@ class Model:
             >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> input_tensor = model.get_input_by_tensor_name("graph_input-173")
             >>> print(input_tensor)
-            tensor_name: graph_input-173, data_type: DataType.FLOAT32, shape: [1, 224, 224, 3], \
-            format: Format.NHWC, element_num: 150528, data_size: 602112.
+            tensor_name: graph_input-173,
+            data_type: DataType.FLOAT32,
+            shape: [1, 224, 224, 3],
+            format: Format.NHWC,
+            element_num: 150528,
+            data_size: 602112.
         """
         check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_input_by_tensor_name(tensor_name)
@@ -348,8 +352,12 @@ class Model:
             >>> model.build_from_file("mobilenetv2.ms", mslite.ModelType.MINDIR_LITE, context)
             >>> output_tensor = model.get_output_by_tensor_name("Softmax-65")
             >>> print(output_tensor)
-            tensor_name: Softmax-65, data_type: DataType.FLOAT32, shape: [1, 1001], \
-            format: Format.NHWC, element_num: 1001, data_size: 4004.
+            tensor_name: Softmax-65,
+            data_type: DataType.FLOAT32,
+            shape: [1, 1001],
+            format: Format.NHWC,
+            element_num: 1001,
+            data_size: 4004.
         """
         check_isinstance("tensor_name", tensor_name, str)
         _tensor = self._model.get_output_by_tensor_name(tensor_name)
@@ -367,7 +375,7 @@ class RunnerConfig:
     Args:
         context (Context, optional): Define the context used to store options during execution. Default: None.
         workers_num (int, optional): the num of workers. Default: None.
-        config_info (dict{str:dict[str:str]}, optional): Nested map for passing model weight paths. Default: None.
+        config_info (dict{str, dict{str, str}}, optional): Nested map for passing model weight paths. Default: None.
 
     Raises:
         TypeError: `context` is not a Context or None.
@@ -418,8 +426,8 @@ class RunnerConfig:
                 self._runner_config.set_config_info(k, v)
 
     def __str__(self):
-        res = f"workers num: {self._runner_config.get_workers_num()}, \n" \
-              f"config info: {self._runner_config.get_config_info_string()}, \n" \
+        res = f"workers num: {self._runner_config.get_workers_num()},\n" \
+              f"config info: {self._runner_config.get_config_info_string()},\n" \
               f"context: {self._runner_config.get_context_info()}."
         return res
 
@@ -510,7 +518,7 @@ class ModelParallelRunner:
             >>> for output in outputs:
             ...     data = output.get_data_to_numpy()
             ...     print("outputs: ", data)
-            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05 \
+            outputs:  [[8.9401474e-05 4.4536911e-05 1.0089713e-04 ... 3.2687691e-05
                         3.6021424e-04 8.3650106e-05]]
         """
         if not isinstance(inputs, list):
