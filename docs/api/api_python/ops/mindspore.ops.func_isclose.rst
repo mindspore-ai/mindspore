@@ -16,9 +16,9 @@ mindspore.ops.isclose
 
     - **x1** (Tensor) - 对比的第一个输入，支持的类型有float32，float16，int32。
     - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
-    - **rtol** (Tensor) - 相对容忍度。默认值：1e-05。
-    - **atol** (Tensor) - 绝对容忍度。默认值：1e-08。
-    - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。
+    - **rtol** (float, optional) - 相对容忍度。默认值：1e-05。
+    - **atol** (float, optional) - 绝对容忍度。默认值：1e-08。
+    - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。默认值：False。
 
     **返回：**
 
@@ -26,11 +26,11 @@ mindspore.ops.isclose
 
     **异常：**
 
-    - **TypeError** - 如果 `x1` 和 `x2` 中的任何一个不是Tensor。
-    - **TypeError** - 如果 `x1` 和 `x2` 的数据类型不是float16、float32或int32之一。
-    - **TypeError** - 如果 `atol` 和 `rtol` 中的任何一个不是float。
-    - **TypeError** - 如果  `equal_nan`  不是bool。
-    - **TypeError** - 如果 `x1` 和 `x2` 的数据类型不同。
-    - **ValueError** - 如果 `x1` 和 `x2` 无法广播。
-    - **ValueError** - 如果 `atol` 和 `rtol` 中的任何一个小于零。
-    - **ValueError** - 如果Ascend平台上的  `equal_nan`  为False。
+    - **TypeError** - `x1` 和 `x2` 中的任何一个不是Tensor。
+    - **TypeError** - `x1` 和 `x2` 的数据类型不是float16、float32或int32之一。
+    - **TypeError** - `atol` 和 `rtol` 中的任何一个不是float。
+    - **TypeError** - `equal_nan` 不是bool。
+    - **TypeError** - `x1` 和 `x2` 的数据类型不同。
+    - **ValueError** - `x1` 和 `x2` 无法广播。
+    - **ValueError** - `atol` 和 `rtol` 中的任何一个小于零。
+    - **ValueError** - Ascend平台上的 `equal_nan` 为False。

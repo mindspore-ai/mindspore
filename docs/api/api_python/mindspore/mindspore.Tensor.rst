@@ -294,6 +294,50 @@ mindspore.Tensor
 
         Tensor。
 
+    .. py:method:: cummax(axis)
+
+        返回一个元组（最值、索引），其中最值是输入张量 `x` 沿维度 `axis` 的累积最大值，索引是每个最大值的索引位置。
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = max(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        **参数：**
+
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+
+        **返回：**
+
+        一个包含两个Tensor的元组，分别表示累积最大值和对应索引。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是int。
+        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+
+    .. py:method:: cummin(axis)
+
+        返回一个元组（最值、索引），其中最值是输入张量 `x` 沿维度 `axis` 的累积最小值，索引是每个最小值的索引位置。
+
+        .. math::
+            \begin{array}{ll} \\
+                y{i} = min(x{1}, x{2}, ... , x{i})
+            \end{array}
+
+        **参数：**
+
+        - **axis** (int) - 算子操作的维度，维度的大小范围是[-x.ndim, x.ndim - 1]。
+
+        **返回：**
+
+        一个包含两个Tensor的元组，分别表示累积最小值和对应索引。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是int。
+        - **ValueError** - 如果 `axis` 不在范围[-x.ndim, x.ndim - 1]内。
+
     .. py:method:: cumsum(axis=None, dtype=None)
 
         返回指定轴方向上元素的累加值。
@@ -647,6 +691,35 @@ mindspore.Tensor
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
         - **ValueError** - Tensor的shape与 `v` 的shape不同。
+
+    .. py:method:: isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False)
+
+        返回一个布尔型Tensor，表示当前Tensor与 `x2` 的对应元素的差异是否在容忍度内相等。
+
+        .. note::
+            目前，Ascend后端不支持包含 inf 或 NaN 的输入数组。因此，当输入包含NaN或inf时，结果是不确定的。在Ascend后端上， `equal_nan` 必须为真。
+
+        **参数：**
+
+        - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
+        - **rtol** (float, optional) - 相对容忍度。默认值：1e-05。
+        - **atol** (float, optional) - 绝对容忍度。默认值：1e-08。
+        - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。默认值：False。
+
+        **返回：**
+
+        Tensor，shape与广播后的shape相同，数据类型是布尔型。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor和 `x2` 中的任何一个不是Tensor。
+        - **TypeError** - 当前Tensor和 `x2` 的数据类型不是float16、float32或int32之一。
+        - **TypeError** - `atol` 和 `rtol` 中的任何一个不是float。
+        - **TypeError** - `equal_nan`  不是bool。
+        - **TypeError** - 当前Tensor和 `x2` 的数据类型不同。
+        - **ValueError** - 当前Tensor和 `x2` 无法广播。
+        - **ValueError** - `atol` 和 `rtol` 中的任何一个小于零。
+        - **ValueError** - Ascend平台上的 `equal_nan` 为False。
 
     .. py:method:: item(index=None)
 
