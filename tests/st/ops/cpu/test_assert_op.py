@@ -55,4 +55,7 @@ def test_assert_op():
     context.set_context(mode=context.GRAPH_MODE)
     assert1(True, [a, b, c, d, e, f, g, h, i, j, k, l])
     context.set_context(mode=context.PYNATIVE_MODE)
-    assert1(False, [a, b, c, d, e, f, g, h, i, j, k, l])
+
+    with pytest.raises(RuntimeError) as info:
+        assert1(False, [a, b, c, d, e, f, g, h, i, j, k, l])
+    assert "assert failed" in str(info.value)
