@@ -171,7 +171,9 @@ void Worker::YieldAndDeactive() {
 void Worker::WaitUntilActive() {
   std::unique_lock<std::mutex> _l(mutex_);
   cond_var_.wait(_l, [&] { return status_ == kThreadBusy || active_num_ > 0 || !alive_; });
-  active_num_--;
+  if (active_num_ > 0) {
+    active_num_--;
+  }
 }
 
 void Worker::set_scale(float lhs_scale, float rhs_scale) {
@@ -182,15 +184,15 @@ void Worker::set_scale(float lhs_scale, float rhs_scale) {
 void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int task_id_end) {
   {
     std::lock_guard<std::mutex> _l(mutex_);
+    status_ = kThreadBusy;
     // add the first to task_, and others to queue.
-    THREAD_TEST_TRUE(task_ == nullptr);
     task_id_.store(task_id_start, std::memory_order_relaxed);
+    THREAD_TEST_TRUE(task_ == nullptr);
     task_.store((*task_list)[0].task_, std::memory_order_release);
     for (int i = task_id_start + 1; i < task_id_end; ++i) {
       while (!local_task_queue_->Enqueue(&(*task_list)[i])) {
       }
     }
-    status_ = kThreadBusy;
   }
   cond_var_.notify_one();
 }
