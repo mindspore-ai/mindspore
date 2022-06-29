@@ -36,7 +36,7 @@
 
         **参数：**
 
-        **inputs** (tuple) - construct方法的输入。
+        - **inputs** (tuple) - construct方法的输入。
 
         **返回：**
 
@@ -48,7 +48,7 @@
 
         **返回：**
 
-        bool, `_auto_parallel_compile_and_run` 的值。
+        bool，`_auto_parallel_compile_and_run` 的值。
 
     .. py:method:: bprop_debug
         :property:
@@ -232,7 +232,7 @@
 
         **返回：**
 
-        Dict[Parameter, Parameter], 返回一个原始参数和替换参数的字典。
+        Dict[Parameter, Parameter]，返回一个原始参数和替换参数的字典。
 
     .. py:method:: insert_child_to_cell(child_name, child_cell)
 
@@ -273,7 +273,7 @@
 
         **参数：**
 
-        **params** (dict) - 用于初始化数据图的参数字典。
+        - **params** (dict) - 用于初始化数据图的参数字典。
 
     .. py:method:: name_cells()
 
@@ -303,8 +303,8 @@
 
         **参数：**
 
-        - **name_prefix** (str): 作用域。默认值： ''。
-        - **expand** (bool):  如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为False，只生成当前Cell的子Cell的参数及名称。默认值：True。
+        - **name_prefix** (str) - 作用域。默认值： ''。
+        - **expand** (bool) - 如果为True，则递归地获取当前Cell和所有子Cell的参数及名称；如果为False，只生成当前Cell的子Cell的参数及名称。默认值：True。
 
         **返回：**
 
@@ -316,11 +316,11 @@
 
         **参数：**
 
-        - **recurse** (bool): 是否包含子Cell的参数。 默认: True。
+        - **recurse** (bool) - 是否包含子Cell的参数。 默认: True。
 
         **返回：**
 
-        OrderedDict, 返回参数广播字典。
+        OrderedDict，返回参数广播字典。
 
     .. py:method:: parameters_dict(recurse=True)
 
@@ -431,7 +431,7 @@
         运行construct方法。
 
         .. note::
-            - 该函数已经弃用，将会在未来版本中删除，不推荐使用此函数。
+            该函数已经弃用，将会在未来版本中删除，不推荐使用此函数。
 
         **参数：**
 
@@ -492,7 +492,7 @@
 
         递归设置该Cell中的所有算子的并行策略为数据并行。
 
-        .. note:: 仅在图模式、全自动并行(AUTO_PARALLEL)模式下生效。
+        .. note:: 仅在图模式、inputs** (tuple) - construct方法的输入。全自动并行(AUTO_PARALLEL)模式下生效。
 
     .. py:method:: set_grad(requires_grad=True)
 
@@ -523,7 +523,7 @@
 
         **参数：**
 
-        **inputs** (tuple) - construct方法的输入。
+        - **inputs** (tuple) - construct方法的输入。
 
     .. py:method:: set_param_fl(push_to_server=False, pull_from_server=False, requires_aggr=True)
 

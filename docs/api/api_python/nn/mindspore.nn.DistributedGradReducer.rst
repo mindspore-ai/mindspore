@@ -17,4 +17,4 @@ mindspore.nn.DistributedGradReducer
 
     **异常：**
 
-    **ValueError**：如果degree不是int或小于0。
+    - **ValueError** - 如果degree不是int或小于0。

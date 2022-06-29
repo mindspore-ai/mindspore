@@ -18,8 +18,8 @@ mindspore.nn.ForwardValueAndGrad
 
     **输入：**
 
-    - **(\*inputs)** (Tuple(Tensor...))：shape为 :math:`(N, \ldots)` 的输入tuple。
-    - **(sens)**：反向传播梯度的缩放值。如果网络有单个输出，则sens是tensor。如果网络有多个输出，则sens是tuple(tensor)。
+    - **(\*inputs)** (Tuple(Tensor...)) - shape为 :math:`(N, \ldots)` 的输入tuple。
+    - **(sens)** - 反向传播梯度的缩放值。如果网络有单个输出，则sens是tensor。如果网络有多个输出，则sens是tuple(tensor)。
 
     **输出：**
 

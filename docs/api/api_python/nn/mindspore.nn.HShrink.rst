@@ -15,7 +15,7 @@ mindspore.nn.HShrink
 
     **参数：**
 
-    **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值：0.5。
+    - **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值：0.5。
 
     **输入：**
         
