@@ -89,8 +89,6 @@ COMMON_EXPORT DfGraphPtr GetBroadcastGraph(DfGraphConvertorPtr converter);
 // new session
 COMMON_EXPORT std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options);
 
-COMMON_EXPORT Status BuildAllGraphs(const std::shared_ptr<GraphRunner> &runner);
-
 COMMON_EXPORT Status RunGraph(const std::shared_ptr<GraphRunner> &runner, const RunOptions &options,
                               const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
 

@@ -284,11 +284,6 @@ std::shared_ptr<ge::Session> NewSession(const SessionOptions &sess_options) {
   return transform::GraphRunner::NewSession(sess_options);
 }
 
-Status BuildAllGraphs(const std::shared_ptr<GraphRunner> &runner) {
-  MS_EXCEPTION_IF_NULL(runner);
-  return runner->BuildAllGraphs();
-}
-
 Status RunGraph(const std::shared_ptr<transform::GraphRunner> &runner, const RunOptions &options,
                 const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs) {
   MS_EXCEPTION_IF_NULL(runner);
