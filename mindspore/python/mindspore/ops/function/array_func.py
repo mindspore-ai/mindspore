@@ -51,6 +51,7 @@ flatten_ = P.Flatten()
 tensor_slice = P.Slice()
 expand_dims_ = P.ExpandDims()
 transpose_ = P.Transpose()
+scatter_add_ = P.ScatterAdd()
 scatter_max_ = P.ScatterMax()
 scatter_min_ = P.ScatterMin()
 scatter_div_ = P.ScatterDiv()
@@ -1203,6 +1204,44 @@ def scatter_max(input_x, indices, updates):
          [88. 88. 88.]]
     """
     return scatter_max_(input_x, indices, updates)
+
+
+def scatter_add(input_x, indices, updates):
+    r"""
+    Using given values to update tensor value through the add operation, along with the input indices.
+    This operation outputs the `input_x` after the update is done, which makes it convenient to use the updated value.
+
+    Args:
+        input_x (Parameter): The target tensor, with data type of Parameter.
+            The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
+        indices (Tensor): The index to do add operation whose data type must be mindspore.int32.
+        updates (Tensor): The tensor doing the add operation with `input_x`,
+            the data type is same as `input_x`, the shape is `indices.shape + x.shape[1:]`.
+
+    Returns:
+        Tensor, the updated `input_x`, has the same shape and type as `input_x`.
+
+    Raises:
+        TypeError: If `indices` is not an int32 or int64.
+        ValueError: If the shape of `updates` is not equal to `indices.shape + input_x.shape[1:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+            is required when data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
+        >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
+        >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
+        ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
+        >>> scatter_add = ops.scatter_add()
+        >>> output = scatter_add(input_x, indices, updates)
+        >>> print(output)
+        [[ 1.  1.  1.]
+         [19. 19. 19.]]
+    """
+    return scatter_add_(input_x, indices, updates)
 
 
 def scatter_min(input_x, indices, updates):
@@ -3556,6 +3595,7 @@ __all__ = [
     'one_hot',
     'masked_fill',
     'masked_select',
+    'scatter_add',
     'scatter_max',
     'scatter_min',
     'scatter_div',
