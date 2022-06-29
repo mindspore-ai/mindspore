@@ -154,15 +154,12 @@ bool ApplyProximalAdagradCpuKernelMod::Launch(const std::vector<kernel::AddressP
   auto task = [this, &var, &accum, &lr, &l1, &l2, &grad](size_t start, size_t end) {
     auto cur_input_elements = end - start;
     for (int64_t b = 0; b < batch_size_; b++) {
-      auto var_cur = var + start;
-      auto accum_cur = accum + start;
-      auto grad_cur = grad + start;
+      auto offset = b * input_elements_ + start;
+      auto var_cur = var + offset;
+      auto accum_cur = accum + offset;
+      auto grad_cur = grad + offset;
 
       ApplyProximalAdagradOpt(var_cur, accum_cur, lr[b], l1[b], l2[b], grad_cur, cur_input_elements);
-
-      var = var + input_elements_;
-      accum = accum + input_elements_;
-      grad = grad + input_elements_;
     }
   };
 
