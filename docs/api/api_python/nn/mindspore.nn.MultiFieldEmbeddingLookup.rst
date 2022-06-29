@@ -18,7 +18,7 @@ mindspore.nn.MultiFieldEmbeddingLookup
     - **embedding_size** (int) - 每个嵌入向量的大小。
     - **field_size** (int) - 最终输出的字段大小。
     - **param_init** (Union[Tensor, str, Initializer, numbers.Number]) - 嵌入Tensor的初始化方法。当指定字符串时，请参见 `Initializer` 类了解字符串的值。默认值：'normal'。
-    - **target** (str) - 指指定执行操作的'target'。该值必须在['DEVICE', 'CPU']中。默认值：'CPU'。
+    - **target** (str) - 指定执行操作的'target'。该值必须在['DEVICE', 'CPU']中。默认值：'CPU'。
     - **slice_mode** (str) - semi_auto_parallel或auto_parallel模式下的切片方式。该值必须通过 :class:`.nn.EmbeddingLookup` 获得。默认值：'nn.EmbeddingLookup.BATCH_SLICE'。
     - **feature_num_list** (tuple) - 字段切片模式下的伴随数组（accompaniment array）。目前该参数的功能还未实现。默认值：None。
     - **max_norm** (Union[float, None]) - 最大剪切值。数据类型必须为float16、float32或None。默认值：None。
@@ -29,7 +29,7 @@ mindspore.nn.MultiFieldEmbeddingLookup
 
     - **input_indices** (Tensor) - 指定输入Tensor元素的索引，其shape为 :math:`(batch\_size, seq\_length)` 。数据类型为int32、int64。
     - **input_values** (Tensor) - 指定 `input_indices` 元素的权重。将检索出的向量乘以 `input_values` 。其shape为 :math:`(batch\_size, seq\_length)` 。类型为float32。
-    - **field_ids** (Tensor)- 指定 `input_indices` 元素的字段ID，其shape为 :math:`(batch\_size, seq\_length)` 。类型为int32。
+    - **field_ids** (Tensor) - 指定 `input_indices` 元素的字段ID，其shape为 :math:`(batch\_size, seq\_length)` 。类型为int32。
 
     **输出：**
 

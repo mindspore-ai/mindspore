@@ -23,8 +23,7 @@ mindspore.nn.WithLossCell
 
     **异常：**
 
-    **TypeError**：`data` 或 `label` 的数据类型既不是float16也不是float32。
-
+    - **TypeError** - `data` 或 `label` 的数据类型既不是float16也不是float32。
 
     .. py:method:: backbone_network
         :property:

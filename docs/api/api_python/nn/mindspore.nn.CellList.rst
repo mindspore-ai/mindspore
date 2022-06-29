@@ -9,7 +9,7 @@ mindspore.nn.CellList
 
     **参数：**
 
-    **args** (list，可选) - Cell列表。
+    - **args** (list，可选) - Cell列表。
 
     .. py:method:: append(cell)
 
@@ -17,7 +17,7 @@ mindspore.nn.CellList
 
         **参数：**
 
-        **cell** (Cell) - 要添加的Cell。
+        - **cell** (Cell) - 要添加的Cell。
 
     .. py:method:: extend(cells)
 
@@ -25,11 +25,11 @@ mindspore.nn.CellList
 
         **参数：**
 
-        **cells** (list) - 要添加的Cell列表。
+        - **cells** (list) - 要添加的Cell列表。
 
         **异常：**
 
-        **TypeError** - cells中的元素不是Cell。
+        - **TypeError** - cells中的元素不是Cell。
 
     .. py:method:: insert(index, cell)
 

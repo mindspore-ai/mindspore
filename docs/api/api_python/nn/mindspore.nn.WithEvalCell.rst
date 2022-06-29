@@ -22,4 +22,4 @@ mindspore.nn.WithEvalCell
 
     **异常：**
 
-    **TypeError**： `add_cast_fp32` 不是bool。
+    - **TypeError** - `add_cast_fp32` 不是bool。
