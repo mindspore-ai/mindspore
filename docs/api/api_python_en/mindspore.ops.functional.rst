@@ -362,6 +362,7 @@ Array Operation
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
+    mindspore.ops.unique_with_pad
     mindspore.ops.gumbel_softmax
 
 .. list-table::
