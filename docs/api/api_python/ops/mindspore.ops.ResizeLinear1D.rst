@@ -18,12 +18,12 @@ mindspore.ops.ResizeBilinear1D
 
     **输入：**
 
-    - **x** (Tensor) - ResizeBilinear的输入，三维的Tensor，其shape为 :math:`(batch, channels, width)`。支持以下数据类型：uint8, int8, int16, int32, int64, float16, float32, double。
+    - **x** (Tensor) - ResizeBilinear的输入，三维的Tensor，其shape为 :math:`(batch, channels, width)`。支持以下数据类型：float16, float32, double。
     - **size** (Tensor) - 指定Tensor的新尺寸，一维的Tensor，其shape为 :math:`(1)` ，数据类型为int64。
 
     **输出：**
 
-    Tensor，调整大小后的图像。shape为 :math:`(batch, channels,new\_width)` 的三维Tensor，数据类型是float32。 
+    Tensor，调整大小后的图像。shape为 :math:`(batch, channels,new\_width)` 的三维Tensor，数据类型和输入是一致的。
 
     **异常：**
 

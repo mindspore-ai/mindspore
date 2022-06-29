@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.int32])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_align_corners(dtype):
     """
     Feature: ResizeLinear1D gpu kernel align_corners mode
@@ -39,14 +39,14 @@ def test_resize_linear_1d_align_corners(dtype):
     size = Tensor(np.array([6], dtype=np.int64))
     output = ResizeLinear1D()(x, size)
     expect = np.array([[[1., 1.4, 1.8, 2.2, 2.6, 3.],
-                        [4., 4.4, 4.8, 5.2, 5.6, 6.]]]).astype(np.float32)
+                        [4., 4.4, 4.8, 5.2, 5.6, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.int32])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_half_pixel(dtype):
     """
     Feature: ResizeLinear1D gpu kernel half_pixel mode
@@ -59,14 +59,14 @@ def test_resize_linear_1d_half_pixel(dtype):
     output = ResizeLinear1D(
         coordinate_transformation_mode="half_pixel")(x, size)
     expect = np.array([[[1., 1.25, 1.75, 2.25, 2.75, 3.],
-                        [4., 4.25, 4.75, 5.25, 5.75, 6.]]]).astype(np.float32)
+                        [4., 4.25, 4.75, 5.25, 5.75, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.int32])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_size_not_change(dtype):
     """
     Feature: ResizeLinear1D gpu kernel same input shape
@@ -78,14 +78,14 @@ def test_resize_linear_1d_size_not_change(dtype):
     size = Tensor(np.array([3], dtype=np.int64))
     output = ResizeLinear1D()(x, size)
     expect = np.array([[[1., 2., 3.],
-                        [4., 5., 6.]]]).astype(np.float32)
+                        [4., 5., 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_resize_linear_1d_half_pixel_functional_interface(dtype):
     """
     Feature: ResizeLinear1D gpu kernel half_pixel mode functional interface.
@@ -96,14 +96,14 @@ def test_resize_linear_1d_half_pixel_functional_interface(dtype):
                           [4, 5, 6]]], dtype=dtype))
     output = F.interpolate(x, None, None, (6,), 'half_pixel')
     expect = np.array([[[1., 1.25, 1.75, 2.25, 2.75, 3.],
-                        [4., 4.25, 4.75, 5.25, 5.75, 6.]]]).astype(np.float32)
+                        [4., 4.25, 4.75, 5.25, 5.75, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float16, np.float64, np.int32])
+@pytest.mark.parametrize('dtype', [np.float16, np.float64])
 def test_resize_linear_1d_align_corners_functional_interface(dtype):
     """
     Feature: ResizeLinear1D gpu kernel align_corners mode functional interface.
@@ -114,5 +114,5 @@ def test_resize_linear_1d_align_corners_functional_interface(dtype):
                           [4, 5, 6]]], dtype=dtype))
     output = F.interpolate(x, None, (1., 1., 2.), None, 'align_corners')
     expect = np.array([[[1., 1.4, 1.8, 2.2, 2.6, 3.],
-                        [4., 4.4, 4.8, 5.2, 5.6, 6.]]]).astype(np.float32)
+                        [4., 4.4, 4.8, 5.2, 5.6, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)

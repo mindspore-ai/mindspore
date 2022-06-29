@@ -34,14 +34,18 @@ void ResizeLinear1DCpuKernelMod::ComputeInterpolationCaches(const size_t out_siz
                                                             CachedInterpolation *interpolation) {
   interpolation[out_size].lower = 0;
   interpolation[out_size].upper = 0;
-  for (size_t i = 0; i <= out_size - 1; ++i) {
-    const float in = func(i, in_size, out_size);
-    const float in_floor = std::floor(in);
-    const float in_ceil = std::ceil(in);
-    interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-    interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
-    interpolation[i].lerp = in - in_floor;
-  }
+  auto task = [&](size_t start, size_t end) {
+    for (size_t i = start; i < end; ++i) {
+      const float in = func(i, in_size, out_size);
+      const float in_floor = std::floor(in);
+      const float in_ceil = std::ceil(in);
+      interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
+      interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
+      interpolation[i].lerp = in - in_floor;
+    }
+  };
+  ParallelLaunchAutoSearch(task, out_size, this, &parallel_search_info_, pool_);
+  return;
 }
 
 template <typename T>
@@ -55,7 +59,7 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   auto size_input = inputs[kIndex1];
   int64_t *new_shape_data = reinterpret_cast<int64_t *>(size_input->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(new_shape_data, false);
-  float *output = reinterpret_cast<float *>(outputs[kIndex0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
   size_t new_shape_data_size = size_input->size;
@@ -69,7 +73,7 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   if (out_width == in_width_) {
     auto task = [input, output](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
-        output[i] = static_cast<float>(input[i]);
+        output[i] = input[i];
       }
     };
     ParallelLaunchAutoSearch(task, inputs[kIndex0]->size / sizeof(T), this, &parallel_search_info_, pool_);
@@ -87,27 +91,24 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
         const float xs_lerp = static_cast<float>(xs[w].lerp);
         const float left(static_cast<float>(*(input + index * in_width_ + xs_lower)));
         const float right(static_cast<float>(*(input + index * in_width_ + xs_upper)));
-        *(output + index * out_width + w) = (left + (right - left) * xs_lerp);
+        *(output + index * out_width + w) = static_cast<T>(left + (right - left) * xs_lerp);
       }
     }
   };
 
   ParallelLaunchAutoSearch(task, batch_ * channel_, this, &parallel_search_info_, pool_);
-
   return true;
 }
 
-#define RESIZE_LINEAR_1D_CPU_REG(MS_T, T)                                                           \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32), \
+#define RESIZE_LINEAR_1D_CPU_REG(MS_T, T)                                             \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(MS_T), \
     &ResizeLinear1DCpuKernelMod::LaunchKernel<T>
 
 const std::vector<std::pair<KernelAttr, ResizeLinear1DCpuKernelMod::KernelRunFunc>>
   &ResizeLinear1DCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeLinear1DCpuKernelMod::KernelRunFunc>> func_list = {
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeInt8, int8_t)},     {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeUInt8, uint8_t)},
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeInt8, int16_t)},    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeUInt16, uint16_t)},
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeInt32, int32_t)},   {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeInt64, int64_t)},
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat16, float16)}, {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat32, float)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat16, float16)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat32, float)},
     {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat64, double)},
   };
   return func_list;
