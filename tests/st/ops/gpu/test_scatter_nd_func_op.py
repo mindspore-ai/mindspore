@@ -28,6 +28,8 @@ from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+div = P.Div()
+
 func_map = {
     "update": ops.ScatterNdUpdate,
     "add": ops.ScatterNdAdd,
@@ -43,7 +45,7 @@ np_func_map = {
     "add": lambda a, b: a + b,
     "sub": lambda a, b: a - b,
     "mul": lambda a, b: a * b,
-    "div": lambda a, b: a / b,
+    "div": lambda a, b: div(Tensor(np.array(a)), Tensor(np.array(b))).asnumpy(),
     "max": np.maximum,
     "min": np.minimum,
 }
