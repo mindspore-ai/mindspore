@@ -61,7 +61,7 @@ class CumMinMaxGpuKernelMod : public NativeGpuKernelMod {
   int64_t axis_{0};
   size_t inner_size_{1};
   size_t axis_size_{1};
-  size_t element_size_{1};
+  size_t outer_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
