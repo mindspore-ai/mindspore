@@ -118,7 +118,7 @@ constexpr char kSlicePatchesOp[] = "SlicePatchesOp";
 constexpr char kSolarizeOp[] = "SolarizeOp";
 constexpr char kSwapRedBlueOp[] = "SwapRedBlueOp";
 constexpr char kToTensorOp[] = "ToTensorOp";
-constexpr char kUniformAugOp[] = "UniformAugOp";
+constexpr char kUniformAugOp[] = "UniformAugmentOp";
 constexpr char kVerticalFlipOp[] = "VerticalFlipOp";
 
 // video
