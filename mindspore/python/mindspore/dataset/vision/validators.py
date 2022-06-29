@@ -24,7 +24,8 @@ from mindspore.dataset.core.validator_helpers import check_value, check_uint8, F
     check_pos_float32, check_float32, check_2tuple, check_range, check_positive, INT32_MAX, INT32_MIN, \
     parse_user_args, type_check, type_check_list, check_c_tensor_op, UINT8_MAX, check_value_normalize_std, \
     check_value_cutoff, check_value_ratio, check_odd, check_non_negative_float32, check_non_negative_int32, \
-    check_pos_int32, deprecator_factory
+    check_pos_int32, check_tensor_op, deprecator_factory
+from mindspore.dataset.transforms.validators import check_transform_op_type
 from .utils import Inter, Border, ImageBatchFormat, ConvertMode, SliceMode, AutoAugmentPolicy
 
 
@@ -926,6 +927,30 @@ def check_uniform_augment_cpp(method):
         for index, arg in enumerate(parsed_transforms):
             if not isinstance(arg, (TensorOp, TensorOperation)):
                 raise TypeError("Type of Transforms[{0}] must be c_transform, but got {1}".format(index, type(arg)))
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_uniform_augment(method):
+    """Wrapper method to check the parameters of UniformAugment Unified op."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [transforms, num_ops], _ = parse_user_args(method, *args, **kwargs)
+        type_check(num_ops, (int,), "num_ops")
+        check_positive(num_ops, "num_ops")
+
+        if num_ops > len(transforms):
+            raise ValueError("num_ops is greater than transforms list size.")
+
+        type_check(transforms, (list, tuple,), "transforms list")
+        if not transforms:
+            raise ValueError("transforms list can not be empty.")
+        for ind, op in enumerate(transforms):
+            check_tensor_op(op, "transforms[{0}]".format(ind))
+            check_transform_op_type(ind, op)
 
         return method(self, *args, **kwargs)
 
