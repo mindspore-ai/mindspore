@@ -262,16 +262,16 @@ class _LayerNorm(Cell):
             Tensor of shape :math:`(batch, seq_length, hidden_size)`.
     """
 
-    def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32):
+    def __init__(self, normalized_shape, eps=1e-5, param_init_type=mstype.float32, is_self_defined=True):
         super(_LayerNorm, self).__init__()
         if param_init_type not in [mstype.float32, mstype.float16]:
             raise TypeError("The type of parameter 'param_init_type' should in [float32, float16], "
                             "but got the type : {}.".format(type(param_init_type)))
-        if normalized_shape[0] <= 1024:
+        self.is_self_defined = is_self_defined
+        if not self.is_self_defined:
             self.layer_norm = P.LayerNorm(begin_norm_axis=-1,
                                           begin_params_axis=-1,
                                           epsilon=eps)
-        self.is_self_defined = normalized_shape[0] > 1024
         self.gamma = Parameter(initializer('ones', normalized_shape, param_init_type), name="gamma",
                                parallel_optimizer=False)
         self.beta = Parameter(initializer('zeros', normalized_shape, param_init_type), name="beta",
@@ -431,6 +431,7 @@ class _Linear(Cell):
             if isinstance(bias_init, Tensor) and (bias_init.ndim != 1 or bias_init.shape[0] != out_channels):
                 raise ValueError("The shape of parameter 'bias_init' is error, please check shape of 'bias_init'.")
             self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
+            self.bias.parallel_optimizer = False
             self.bias_add = P.Add()
         self.act_name = activation
         self.activation = get_activation(activation) if isinstance(activation, str) else activation
