@@ -5422,12 +5422,16 @@ class ApplyAdadelta(Primitive):
     r"""
     Updates relevant entries according to the adadelta scheme.
 
+    The Adadelta algorithm is proposed in
+    `ADADELTA: AN ADAPTIVE LEARNING RATE METHOD <https://arxiv.org/abs/1212.5701>`_.
+
     .. math::
         \begin{array}{ll} \\
-            accum = \rho * accum + (1 - \rho) * grad^2 \\
-            \text{update} = \sqrt{\text{accum_update} + \epsilon} * \frac{grad}{\sqrt{accum + \epsilon}} \\
-            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * update^2 \\
-            var -= lr * update
+            \text{accum} = \rho * \text{accum} + (1 - \rho) * \text{grad}^2 \\
+            \text{update} = \sqrt{\text{accum_update} +
+              \epsilon} * \frac{\text{grad}}{\sqrt{\text{accum} + \epsilon}} \\
+            \text{accum_update} = \rho * \text{accum_update} + (1 - \rho) * \text{update}^2 \\
+            \text{var} = \text{var} - \text{lr} * \text{update}
         \end{array}
 
     where :math:`\rho` represents `rho`, :math:`\epsilon` represents `epsilon`.
