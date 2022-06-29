@@ -492,7 +492,7 @@ class Profiler:
         hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
         source_path = validate_and_normalize_path(source_path)
         hwts_output_filename = validate_and_normalize_path(hwts_output_filename)
-        hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename)
+        hwtslog_parser = HWTSLogParser(source_path, hwts_output_filename, self._ascend_dynamic_status)
         logger.info("Profiling: analyzing hwts data.")
         hwtslog_parser.execute()
 
@@ -578,7 +578,7 @@ class Profiler:
             pass
 
         if self._ascend_dynamic_status and self._profile_communication:
-            raise RuntimeError("The profiler_communication parameter cannot be set on the dynamic shape network.")
+            raise RuntimeError("The profile_communication parameter cannot be set on the dynamic shape network.")
         if self._ascend_dynamic_status and self._profile_memory:
             raise RuntimeError("The profile_memory parameter cannot be set on the dynamic shape network.")
 
@@ -807,7 +807,7 @@ class Profiler:
         finally:
             pass
         if self._gpu_dynamic_status:
-            raise RuntimeError('Dynamic shape network is not supported in GPU platform currently.')
+            raise RuntimeError('Profiler does not support dynamic shape network on GPU platform currently.')
         logger.warning(
             '\nThe GPU supports only the training mode or inference mode, '
             'it does not support train and infer at the same time.'
@@ -836,12 +836,11 @@ class Profiler:
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
-            return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.')
         if self._cpu_dynamic_status:
-            raise RuntimeError('Dynamic shape network is not supported in CPU platform currently.')
+            raise RuntimeError('Profiler does not support dynamic shape network on CPU platform currently.')
 
     def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True,
                             is_gpu_kernel_async_launch_flag=False):
