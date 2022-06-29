@@ -5655,7 +5655,7 @@ class Trunc(Primitive):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> trunc = ops.Trunc()

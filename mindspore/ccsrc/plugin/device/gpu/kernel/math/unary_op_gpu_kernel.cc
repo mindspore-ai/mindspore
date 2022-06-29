@@ -34,6 +34,7 @@ constexpr auto kErfc = "Erfc";
 constexpr auto kExp = "Exp";
 constexpr auto kExpm1 = "Expm1";
 constexpr auto kFloor = "Floor";
+constexpr auto kTrunc = "Trunc";
 constexpr auto kCeil = "Ceil";
 constexpr auto kLog = "Log";
 constexpr auto kLog1p = "Log1p";
@@ -256,6 +257,19 @@ std::map<std::string, std::vector<std::pair<KernelAttr, UnaryOpGpuKernelMod::Una
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
       {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
        &UnaryOpGpuKernelMod::LaunchKernel<half>}}},
+    {kTrunc,
+     {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+       &UnaryOpGpuKernelMod::LaunchKernel<float>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+       &UnaryOpGpuKernelMod::LaunchKernel<double>},
+      {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+       &UnaryOpGpuKernelMod::LaunchKernel<half>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<char>},
+      {KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+       &UnaryOpGpuKernelMod::LaunchKernel<int32_t>},
+      {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+       &UnaryOpGpuKernelMod::LaunchKernel<uchar>}}},
     {kCeil,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &UnaryOpGpuKernelMod::LaunchKernel<float>},
@@ -360,7 +374,7 @@ bool UnaryOpGpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &in
       {kAsin, Asin<T>},       {kACos, ACos<T>},     {kAtan, Atan<T>},     {kAsinh, Asinh<T>},
       {kAcosh, Acosh<T>},     {kAbs, Abs<T>},       {kFloor, Floor<T>},   {kCeil, Ceil<T>},
       {kRint, Rint<T>},       {kRound, Round<T>},   {kSign, Sign<T>},     {kAtanh, Atanh<T>},
-      {kTan, Tan<T>},         {kSinh, Sinh<T>}};
+      {kTan, Tan<T>},         {kSinh, Sinh<T>},     {kTrunc, Trunc<T>}};
     copy(func_map_normal.begin(), func_map_normal.end(), inserter(func_map, func_map.begin()));
   }
 
@@ -400,6 +414,8 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Expm1,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kExpm1); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Floor,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kFloor); });
+MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Trunc,
+                                 []() { return std::make_shared<UnaryOpGpuKernelMod>(kTrunc); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Ceil,
                                  []() { return std::make_shared<UnaryOpGpuKernelMod>(kCeil); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeGpuKernelMod, Log, []() { return std::make_shared<UnaryOpGpuKernelMod>(kLog); });
