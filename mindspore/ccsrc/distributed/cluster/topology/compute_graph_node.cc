@@ -50,7 +50,7 @@ bool ComputeGraphNode::Initialize() {
 
   // Register itself to meta server node.
   bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
-                                   "Failed to register and try to reconnect to the meta server.");
+                                   "Failed to register and try to reconnect to the meta server.", kExecuteRetryNum);
   if (!success) {
     return false;
   }
@@ -71,11 +71,19 @@ bool ComputeGraphNode::Finalize(bool force) {
   }
 
   // Exit the compute graph node from the cluster topology.
-  if (!force) {
+  while (!force) {
     bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Unregister, this),
-                                     "Failed to unregister and try to reconnect to the meta server.");
-    if (!success && !force) {
-      return false;
+                                     "Failed to unregister and try to reconnect to the meta server.", kNoRetry);
+    if (!success) {
+      MS_LOG(ERROR) << "Failed to unregister from the meta server node.";
+      if (recovery::IsEnableRecovery()) {
+        continue;
+      } else {
+        break;
+      }
+    } else {
+      MS_LOG(INFO) << "The compute graph node has been unregistered successfully.";
+      break;
     }
   }
 
@@ -198,6 +206,10 @@ bool ComputeGraphNode::Heartbeat() {
           << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
         if (!Reconnect()) {
           if (!recovery::IsEnableRecovery() && topo_state_ != TopoState::kInitializing) {
+            topo_state_ = TopoState::kFailed;
+            if (abnormal_callback_ != nullptr) {
+              (*abnormal_callback_)();
+            }
             MS_LOG(EXCEPTION) << "Failed to connect to the meta server.";
           } else {
             MS_LOG(ERROR) << "Failed to connect to the meta server.";
@@ -208,6 +220,16 @@ bool ComputeGraphNode::Heartbeat() {
         HeartbeatRespMessage resp_msg;
         resp_msg.ParseFromArray(body.c_str(), body.length());
         topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
+        auto nodes_num = resp_msg.nodes_num();
+        auto abnormal_nodes_num = resp_msg.abnormal_nodes_num();
+        if (abnormal_nodes_num > 0 && !recovery::IsEnableRecovery()) {
+          topo_state_ = TopoState::kFailed;
+          if (abnormal_callback_ != nullptr) {
+            (*abnormal_callback_)();
+          }
+          MS_LOG(EXCEPTION) << "The state of the cluster is error, total nodes num: " << nodes_num
+                            << ", abnormal nodes num: " << abnormal_nodes_num;
+        }
       }
 
       sleep(interval);
@@ -220,11 +242,10 @@ bool ComputeGraphNode::Heartbeat() {
   return true;
 }
 
-bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error) {
+bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const std::string &error, size_t retry) {
   bool success = false;
-  size_t retry = kExecuteRetryNum;
 
-  while (!success && retry-- > 0) {
+  while (!success && retry > 0) {
     success = func();
     if (!success) {
       // Retry to reconnect to the meta server.
@@ -232,6 +253,7 @@ bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const s
       sleep(kExecuteInterval);
       (void)Reconnect();
     }
+    --retry;
   }
   return success;
 }
@@ -322,6 +344,10 @@ std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role)
   } else {
     return std::vector<std::string>();
   }
+}
+
+void ComputeGraphNode::set_abnormal_callback(std::shared_ptr<std::function<void(void)>> abnormal_callback) {
+  abnormal_callback_ = abnormal_callback;
 }
 
 std::shared_ptr<std::string> ComputeGraphNode::RetrieveMessageFromMSN(const std::string &msg_name,
