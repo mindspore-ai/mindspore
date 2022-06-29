@@ -200,6 +200,10 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
   {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex128, kNumberTypeFloat64, Complex<double>, double)},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeComplex64),
+   &BroadcastOpGpuKernelMod::LaunchComplexKernel<float, float, Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
+   &BroadcastOpGpuKernelMod::LaunchComplexKernel<double, double, Complex<double>>},
 };
 std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::real_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
@@ -249,7 +253,8 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &BroadcastOpGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &BroadcastOpGpuKernelMod::LaunchKernel<double>}};
+   &BroadcastOpGpuKernelMod::LaunchKernel<double>},
+};
 
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Add, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Atan2, BroadcastOpGpuKernelMod);
