@@ -871,8 +871,9 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
     else:
         batch_rank = 1
     prim_name = prim.name
+    attrs = prim.init_attrs
 
-    batch_prime = P.ApplyAdamWithAmsgrad()
+    batch_prime = P.ApplyAdamWithAmsgrad(**attrs)
     batch_prime.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, m_bdim, v_bdim, vhat_bdim, beta1_power_bdim, beta2_power_bdim, lr_bdim, grad_bdim, u_monad):

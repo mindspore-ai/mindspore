@@ -36,51 +36,39 @@ namespace mindspore {
 namespace kernel {
 class ApplyAdamWithAmsgradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  ApplyAdamWithAmsgradGpuKernelMod() { ResetResource(); }
+  ApplyAdamWithAmsgradGpuKernelMod() = default;
   ~ApplyAdamWithAmsgradGpuKernelMod() override = default;
-
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    stream_ptr_ = stream_ptr;
-    return kernel_func_(this, inputs, workspace, outputs);
-  }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
             const std::vector<KernelTensorPtr> &outputs) override;
 
-  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+
+ protected:
   std::vector<KernelAttr> GetOpSupport() override;
-
-  void ResetResource() noexcept;
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using ApplyAdamWithAmsgradFunc =
-    std::function<bool(ApplyAdamWithAmsgradGpuKernelMod *, const std::vector<AddressPtr> &,
-                       const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using KernelFunc = std::function<bool(ApplyAdamWithAmsgradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                        const std::vector<kernel::AddressPtr> &, void *)>;
+  KernelFunc kernel_func_{};
+  static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
- private:
-  size_t t_size_{1};
-  size_t t_elements_;
-  bool is_null_input_{false};
-  void *stream_ptr_{nullptr};
-  ApplyAdamWithAmsgradFunc kernel_func_{};
-  std::optional<bool> is_input_dynamic_shape_{};
-  static std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradFunc>> func_list_;
+  int unit_size_;
+  size_t input_elements_;
+  int64_t batch_rank_;
+  int64_t batch_size_;
 
   float beta1_ = 0.9;
   float beta2_ = 0.999;
   float epsilon_ = 1e-8;
-
-  int64_t batch_rank_{0};
-  int64_t batch_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore
