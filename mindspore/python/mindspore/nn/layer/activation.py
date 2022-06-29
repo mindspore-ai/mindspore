@@ -625,7 +625,6 @@ class Tanh(Cell):
         Tensor, with the same type and shape as the `x`.
 
     Raises:
-        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
@@ -669,6 +668,7 @@ class Tanhshrink(Cell):
         Tensor, with the same type and shape as the `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is neither float16 nor float32.
 
     Supported Platforms:
