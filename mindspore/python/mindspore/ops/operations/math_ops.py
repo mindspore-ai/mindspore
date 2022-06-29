@@ -5777,7 +5777,7 @@ class IsClose(Primitive):
     Refer to :func:`mindspore.ops.isclose` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
