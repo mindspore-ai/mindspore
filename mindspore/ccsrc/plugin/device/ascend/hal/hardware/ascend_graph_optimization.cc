@@ -77,8 +77,6 @@ void AscendGraphOptimization::OptimizeGraph(const KernelGraphPtr &graph) {
   OptimizeExecutionOrder(graph);
   PostOptimization(graph);
 
-  RemoveUnusedValueNode(graph);
-
   memo_.clear();
   // clear and reset graph_manager_ after optimization
   graph_manager_ = MakeManager();
@@ -127,6 +125,7 @@ void AscendGraphOptimization::OptimizeGraphWithDeviceInfo(const KernelGraphPtr &
   memo_.clear();
   UpdateRefOutputMap(graph);
   AnfAlgo::InsertMakeTupleForOutput(NOT_NULL(graph));
+  RemoveUnusedValueNode(graph);
 }
 
 void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph) {
