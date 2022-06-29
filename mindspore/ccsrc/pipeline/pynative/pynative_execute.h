@@ -286,13 +286,14 @@ class GradExecutor {
   void UpdateForwardTensorInfoInBpropGraph(const string &op_info, const ValuePtr &op_out);
   void SaveForwardTensorInfoInBpropGraph(const pipeline::ResourcePtr &resource) const;
   py::object CheckGraph(const py::object &cell, const py::args &args);
-  void ChangeTopCellInfo(const TopCellInfoPtr &top_cell, const std::vector<ShapeVector> &new_args_shape);
+  void ChangeTopCellInfo(const TopCellInfoPtr &top_cell, size_t args_size);
   TopCellInfoPtr ChangeTopCellToDynamicShapeByAuto(const TopCellInfoPtr &top_cell,
                                                    const std::vector<ShapeVector> &new_args_shape,
                                                    const py::object &cell, const py::args &args);
   TopCellInfoPtr ChangeTopCellToDynamicShapeBySetInputs(const TopCellInfoPtr &top_cell,
                                                         const std::vector<ShapeVector> &new_args_shape,
                                                         const py::object &cell);
+  void UpdateTopCellId(const py::args &args);
   TopCellInfoPtr GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto);
   void CheckPreviousTopCellCanBeDynamicShape(const py::object &cell, const py::args &args);
   void RunGradGraph(py::object *ret, const py::object &cell, const py::object &sens_param, const py::tuple &args);
