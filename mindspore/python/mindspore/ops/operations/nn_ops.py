@@ -8548,6 +8548,9 @@ class SoftShrink(Primitive):
         ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float16)
         >>> softshrink = ops.SoftShrink()
         >>> output = softshrink(input_x)

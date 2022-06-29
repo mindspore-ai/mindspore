@@ -2519,6 +2519,9 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 1]).astype(np.int32))
         >>> num_segments = 2
@@ -2674,6 +2677,9 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import ops
+        >>> import numpy as np
         >>> input_x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [4, 2, 1]]).astype(np.float32))
         >>> segment_ids = Tensor(np.array([0, 1, 0]).astype(np.int32))
         >>> num_segments = 2
