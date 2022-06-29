@@ -7,7 +7,7 @@ mindspore.nn.Conv2dTranspose
 
    计算二维转置卷积，可以视为Conv2d对输入求梯度，也称为反卷积（实际不是真正的反卷积）。
 
-   输入的shape通常为 :math:`(N, C, H, W)` ，其中 :math:`N` 是batch size，:math:`C` 是空间维度， :math:`H_{in}, W_{in}` 分别为特征层的高度和宽度。
+   输入的shape通常为 :math:`(N, C_{in}, H_{in}, W_{in})` ，其中 :math:`N` 是batch size，:math:`C_{in}` 是空间维度， :math:`H_{in}, W_{in}` 分别为特征层的高度和宽度。
    当Conv2d和ConvTranspose2d使用相同的参数初始化时，且 `pad_mode` 设置为"pad"，它们会在输入的高度和宽度方向上填充 :math:`dilation * (kernel\_size - 1) - padding` 个零，这种情况下它们的输入和输出shape是互逆的。
    然而，当 `stride` 大于1时，Conv2d会将多个输入的shape映射到同一个输出shape。反卷积网络可以参考 `Deconvolutional Networks <https://www.matthewzeiler.com/mattzeiler/deconvolutionalnetworks.pdf>`_ 。
 

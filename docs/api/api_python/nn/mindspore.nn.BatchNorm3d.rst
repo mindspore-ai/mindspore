@@ -34,7 +34,7 @@ mindspore.nn.BatchNorm3d
 
     **输出：**
 
-    Tensor，归一化后的Tensor，shape为 `(N, C_{out}, D_{out},H_{out}, W_{out})` 。
+    Tensor，归一化后的Tensor，shape为 :math:`(N, C_{out}, D_{out},H_{out}, W_{out})`。
 
     **异常：**
 

@@ -15,7 +15,7 @@ mindspore.nn.Dropout
     **参数：**
 
     - **keep_prob** (float) - 输入神经元保留率，数值范围在0到1之间。例如，rate=0.9，删除10%的神经元。默认值：0.5。
-    - **dtype** (:class:`mindspore.dtype`) - `x` 的数据类型。默认值：float32。
+    - **dtype** (:class:`mindspore.dtype`) - `x` 的数据类型。默认值：mstype.float32。
 
     **输入：**
 
