@@ -201,11 +201,6 @@ uint32_t AscendStreamAssign::GetHcomTaskNum(const CNodePtr &cnode) {
     return kTaskNumPerHcomNode;
   }
 
-  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
-  if (node_name == kHcomSendOpName || node_name == kReceiveOpName) {
-    return kTaskNumPerHcomSendRecvNode;
-  }
-
   uint32_t device_num = 0;
   if (!CommManager::GetInstance().GetRankSize(kHcclWorldGroup, &device_num)) {
     MS_LOG(EXCEPTION) << "Get rank size failed.";
@@ -1060,6 +1055,10 @@ void AscendStreamAssign::ClassifyNodeByGraph(const std::vector<CNodePtr> indepen
 }
 
 uint32_t AscendStreamAssign::GetNodeTaskNum(const CNodePtr &cnode) {
+  auto node_name = common::AnfAlgo::GetCNodeName(cnode);
+  if (node_name == kHcomSendOpName || node_name == kReceiveOpName) {
+    return kTaskNumPerHcomSendRecvNode;
+  }
   return IsHcom(cnode) ? GetHcomTaskNum(cnode) : kTaskNumPerCommonNode;
 }
 
@@ -2461,6 +2460,12 @@ void AscendStreamAssign::GetHcomStreams(std::vector<uint32_t> *streams) {
 }
 
 bool AscendStreamAssign::IsHcom(const CNodePtr &apply_kernel) {
+  MS_EXCEPTION_IF_NULL(apply_kernel);
+  auto node_name = common::AnfAlgo::GetCNodeName(apply_kernel);
+  static const auto send_recv_parallel = (common::GetEnv("SEND_RECV_PARALLEL") == "1");
+  if ((node_name == kHcomSendOpName || node_name == kReceiveOpName) && !send_recv_parallel) {
+    return false;
+  }
   MS_EXCEPTION_IF_NULL(apply_kernel);
   return AnfAlgo::GetKernelType(apply_kernel) == HCCL_KERNEL;
 }
