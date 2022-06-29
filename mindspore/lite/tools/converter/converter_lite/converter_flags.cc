@@ -323,7 +323,7 @@ int Flags::PreInit(int argc, const char **argv) {
 
   if (this->help) {
     std::cout << this->Usage() << std::endl;
-    return lite::RET_OK;
+    return lite::RET_SUCCESS_EXIT;
   }
   if (this->modelFile.empty()) {
     std::cerr << "INPUT MISSING: model file path is necessary" << std::endl;
