@@ -14,6 +14,7 @@
 # ============================================================================
 
 """debug_ops vmap impl."""
+from __future__ import absolute_import
 
 from mindspore.ops import operations as P
 from ..primitive import Primitive

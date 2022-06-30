@@ -14,6 +14,7 @@
 # ============================================================================
 
 """array_ops vmap impl."""
+from __future__ import absolute_import
 
 import numpy as np
 import mindspore
@@ -320,7 +321,7 @@ def get_reshape_vmap_rule(prim, axis_size):
         arr_prod = np.prod(x_shape)
         target_shape_list = list(target_shape)
         if neg_index != -1:
-            neg_index_size = int(arr_prod / (dim_prod * axis_size))
+            neg_index_size = int(arr_prod // (dim_prod * axis_size))
             target_shape_list[neg_index] = neg_index_size
 
         arr_prod_before_dim = np.prod(x_shape[:x_dim])

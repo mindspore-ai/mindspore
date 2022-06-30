@@ -19,9 +19,11 @@ import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import constexpr
+from mindspore.ops.operations import _grad_ops as G
 from .._register_for_op import Registry
 from ..composite import _VmapGeneralPreprocess
 from ..primitive import Primitive
+from ..operations.random_ops import UniformCandidateSampler
 from ...common import Tensor
 
 vmap_rules_getters = Registry()
@@ -349,6 +351,43 @@ def get_unary_grad_vmap_rule(prim, axis_size):
 
 
 @constexpr
-def _update_prim_attr(prim, attr_name, attr_value):
-    """Set new value for attribute of the primitive."""
+def _vmap_update_prim_attr(prim, attr_name, attr_value):
+    """
+    Set new value for attribute of the primitive.
+    Note: when this function is called, the value of "attr_name" will be modified globally,
+          even the value of the same prim called before. So a new prim should be created before call this function.
+          >>> new_prim = _vmap_clone_prim(prim)
+          >>> _vmap_update_prim_attr(new_prim, "group", 1)
+    """
     prim.add_prim_attr(attr_name, attr_value)
+
+
+def _vmap_clone_prim(prim):
+    """
+    Cloning a new primitive object same as `prim`.
+    """
+    new_ops = _ops_vmap_clone_prim_dict.get(prim.name, None)
+    if new_ops is None:
+        ValueError("Failed to get the primitive object of {} from `_ops_vmap_clone_prim_dict`. Please register "
+                   "the primitive object in the dictionary.".format(prim.name))
+    init_args = prim.init_attrs
+    cloned = new_ops(**init_args)
+
+    for name in prim.attrs:
+        value = prim.attrs[name]
+        cloned.add_attr(name, value)
+
+    if hasattr(prim, 'instance_name'):
+        cloned.set_prim_instance_name(prim.instance_name)
+
+    return cloned
+
+_ops_vmap_clone_prim_dict = {"ApplyAdadelta": P.ApplyAdadelta,
+                             "ApplyFtrl": P.ApplyFtrl,
+                             "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
+                             "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,
+                             "ApplyPowerSign": P.ApplyPowerSign,
+                             "ApplyAdagradDA": P.ApplyAdagradDA,
+                             "UniformCandidateSampler": UniformCandidateSampler,
+                             "CdistGrad": G.CdistGrad,
+                             "Cdist": P.Cdist}

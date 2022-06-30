@@ -14,6 +14,8 @@
 # ============================================================================
 
 """nn_ops vmap impl."""
+from __future__ import absolute_import
+
 import mindspore
 from mindspore.common import Tensor
 from mindspore.ops import operations as P
@@ -23,7 +25,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_unop_vmap_rule, \
-    _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _update_prim_attr
+    _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
 
 
 @vmap_rules_getters.register(P.ApplyAdadelta)
@@ -35,6 +37,8 @@ def get_apply_adadelta_rule(prim, axis_size):
         batch_rank = 1
 
     prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(var_bdim, accum_bdim, accum_update_bdim, lr_bdim, rho_bdim, epsilon_bdim, grad_bdim, u_monad):
         var, var_dim = var_bdim
@@ -58,14 +62,12 @@ def get_apply_adadelta_rule(prim, axis_size):
                 "but got the source axis of `var`: {}, `accum`: {}, `accum_update`: {}.".format(
                     prim_name, var_dim, accum_dim, accum_update_dim))
 
-        _update_prim_attr(prim, 'batch_rank', batch_rank)
-
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         rho = _bdim_at_front(rho, rho_dim, axis_size)
         epsilon = _bdim_at_front(epsilon, epsilon_dim, axis_size)
         grad = _bdim_at_front(grad, grad_dim, axis_size)
 
-        var, accum, accum_update = prim(var, accum, accum_update, lr, rho, epsilon, grad, u_monad)
+        var, accum, accum_update = batch_prim(var, accum, accum_update, lr, rho, epsilon, grad, u_monad)
         return (var, 0), (accum, 0), (accum_update, 0)
 
     return vmap_rule
@@ -79,7 +81,7 @@ def get_apply_ftrl_rule(prim, axis_size):
     else:
         batch_rank = 1
     prim_name = prim.name
-    batch_prim = P.ApplyFtrl()
+    batch_prim = _vmap_clone_prim(prim)
     batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(var_bdim, accum_bdim, linear_bdim, grad_bdim, lr_bdim, l1_bdim, l2_bdim, lr_power_bdim, u_monad):
@@ -124,8 +126,7 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
         batch_rank = 1
 
     prim_name = prim.name
-    attr = prim.init_attrs
-    batch_prim = P.ApplyProximalAdagrad(**attr)
+    batch_prim = _vmap_clone_prim(prim)
     batch_prim.add_prim_attr('batch_rank', batch_rank)
 
     def vmap_rule(var_bdim, accum_bdim, lr_bdim, l1_bdim, l2_bdim, grad_bdim, u_monad):
@@ -871,10 +872,8 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
     else:
         batch_rank = 1
     prim_name = prim.name
-    attrs = prim.init_attrs
-
-    batch_prime = P.ApplyAdamWithAmsgrad(**attrs)
-    batch_prime.add_prim_attr("batch_rank", batch_rank)
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, m_bdim, v_bdim, vhat_bdim, beta1_power_bdim, beta2_power_bdim, lr_bdim, grad_bdim, u_monad):
         var, var_dim = var_bdim
@@ -905,7 +904,7 @@ def get_apply_adam_with_amsgrad_rule(prim, axis_size):
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         grad = _bdim_at_front(grad, grad_dim, axis_size)
 
-        out_var, out_m, out_v, out_vhat = batch_prime(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
+        out_var, out_m, out_v, out_vhat = batch_prim(var, m, v, vhat, beta1_power, beta2_power, lr, grad, u_monad)
         return ((out_var, 0), (out_m, 0), (out_v, 0), (out_vhat, 0))
 
     return vmap_rule
@@ -919,9 +918,9 @@ def get_apply_power_sign_rule(prim, axis_size):
     else:
         batch_rank = 1
 
-    batch_prim = P.ApplyPowerSign()
-    batch_prim.add_prim_attr('batch_rank', batch_rank)
     prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, m_bdim, lr_bdim, logbase_bdim, sign_decay_bdim, beta_bdim, grad_bdim, u_monad):
         var, var_dim = var_bdim
@@ -962,6 +961,8 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
     else:
         batch_rank = 1
     prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, gradient_accumulator_bdim, gradient_squared_accumulator_bdim, grad_bdim, lr_bdim, l1_bdim,
                   l2_bdim, global_step_bdim):
@@ -995,18 +996,16 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
                 f"'gradient_accumulator_dim': {gradient_accumulator_dim}, "
                 f"'gradient_squared_accumulator_dim': {gradient_squared_accumulator_dim}")
 
-        _update_prim_attr(prim, 'batch_rank', batch_rank)  # Update the batch_rank attribute of prim
-
         grad = _bdim_at_front(grad, grad_dim, axis_size)
         lr = _bdim_at_front(lr, lr_dim, axis_size)
         l1 = _bdim_at_front(l1, l1_dim, axis_size)
         l2 = _bdim_at_front(l2, l2_dim, axis_size)
         global_step = _bdim_at_front(global_step, global_step_dim, axis_size)
 
-        var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
-                                                                       gradient_squared_accumulator, grad, lr, l1,
-                                                                       l2,
-                                                                       global_step)  # High dimensional operator;
+        var, gradient_accumulator, gradient_squared_accumulator = batch_prim(var, gradient_accumulator,
+                                                                             gradient_squared_accumulator,
+                                                                             grad, lr, l1, l2,
+                                                                             global_step)  # High dimensional operator;
         return (var, 0), (gradient_accumulator, 0), (gradient_squared_accumulator, 0)
 
     return vmap_rule
