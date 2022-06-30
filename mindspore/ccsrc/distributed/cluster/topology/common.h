@@ -86,21 +86,21 @@ static const size_t kExecuteRetryNum = 210;
 static const size_t kNoRetry = 1;
 static const uint32_t kExecuteInterval = 3;
 
-#define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                   \
-  do {                                                                       \
-    bool success = false;                                                    \
-    for (size_t i = 1; i <= retry; ++i) {                                    \
-      success = func();                                                      \
-      if (!success) {                                                        \
-        MS_LOG(ERROR) << err_msg << ", retry(" << i << "/" << retry << ")."; \
-        sleep(interval);                                                     \
-      } else {                                                               \
-        break;                                                               \
-      }                                                                      \
-    }                                                                        \
-    if (!success) {                                                          \
-      return false;                                                          \
-    }                                                                        \
+#define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
+  do {                                                                         \
+    bool success = false;                                                      \
+    for (size_t i = 1; i <= retry; ++i) {                                      \
+      success = func();                                                        \
+      if (!success) {                                                          \
+        MS_LOG(WARNING) << err_msg << ", retry(" << i << "/" << retry << ")."; \
+        sleep(interval);                                                       \
+      } else {                                                                 \
+        break;                                                                 \
+      }                                                                        \
+    }                                                                          \
+    if (!success) {                                                            \
+      return false;                                                            \
+    }                                                                          \
   } while (false)
 }  // namespace topology
 }  // namespace cluster

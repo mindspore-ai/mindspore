@@ -1101,7 +1101,7 @@ bool EmbeddingCachePrefetchActor::PullEembeddingsFromRemote(int32_t param_key, c
 
     // 2. Send unique ids to remote to do embedding lookup.
     RETURN_IF_FALSE_WITH_LOG(SendToRemote(distributed::kLookupEmbeddingCache, param_key, i, embedding_dim,
-                                          slice_ids.data(), slice_ids.size() * sizeof(int)),
+                                          slice_ids.data(), slice_ids.size() * sizeof(int), nullptr, 0, false, false),
                              "Send ids to server failed.");
   }
 
@@ -1253,7 +1253,7 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
 bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operation, int32_t param_key,
                                                size_t server_rank_id, size_t embedding_dim, const void *keys,
                                                size_t keys_len, const void *values, size_t values_len,
-                                               bool finalize_remote) {
+                                               bool finalize_remote, bool sync) {
   MS_ERROR_IF_NULL(keys);
   // Find sender corresponding to cache operation and parameter key.
   auto iter = rpc_operators_.find(cache_operation);
@@ -1293,7 +1293,7 @@ bool EmbeddingCachePrefetchActor::SendToRemote(const std::string &cache_operatio
                               std::make_shared<Address>(&service_id, sizeof(int32_t))};
 
   // Send data.
-  return sender->Send(shapes, data_types, data_list, finalize_remote);
+  return sender->Send(shapes, data_types, data_list, finalize_remote, sync);
 }
 
 std::unique_ptr<std::vector<char>> EmbeddingCachePrefetchActor::ReceiveFromRemote(const std::string &cache_operation,
@@ -1587,11 +1587,16 @@ void EmbeddingCachePrefetchActor::LinkRpcOperators() {
 }
 
 bool Sender::Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
-                  const AddressPtrList &data_list, bool finalize_remote) const {
+                  const AddressPtrList &data_list, bool finalize_remote, bool sync) const {
   MS_ERROR_IF_NULL(receiver_);
   auto message = BuildRpcMessage(shapes, data_types, data_list, receiver_->get_url(), server_url_, finalize_remote);
   MS_ERROR_IF_NULL(message);
   MS_ERROR_IF_NULL(client_);
+  if (sync) {
+    auto ret = client_->SendSync(std::move(message));
+    return ret > 0;
+  }
+
   client_->SendAsync(std::move(message));
   return true;
 }
