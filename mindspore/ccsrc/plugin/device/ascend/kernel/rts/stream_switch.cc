@@ -29,12 +29,6 @@ constexpr size_t kStreamSwitchInputSize = 2;
 }
 namespace mindspore {
 namespace kernel {
-StreamSwitchKernel::StreamSwitchKernel() {
-  cond_ = RT_EQUAL;
-  true_stream_index_ = 0;
-  data_type_ = RT_SWITCH_INT32;
-}
-
 StreamSwitchKernel::~StreamSwitchKernel() {}
 
 bool StreamSwitchKernel::Init(const AnfNodePtr &anf_node) {

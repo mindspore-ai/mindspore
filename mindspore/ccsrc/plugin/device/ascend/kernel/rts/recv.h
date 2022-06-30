@@ -26,18 +26,18 @@ namespace mindspore {
 namespace kernel {
 class RecvKernel : public RtKernel {
  public:
-  RecvKernel();
+  RecvKernel() = default;
   ~RecvKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              void *stream_ptr) override;
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
  private:
-  uint32_t event_id_;
-  rtEvent_t event_;
+  uint32_t event_id_{0};
+  rtEvent_t event_{nullptr};
 };
 
 MS_REG_RTKERNEL(streamrecv, RecvKernel);

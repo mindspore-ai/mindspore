@@ -25,8 +25,6 @@ using LabelSetTaskInfoPtr = std::shared_ptr<LabelSetTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
-LabelSetKernel::LabelSetKernel() { label_ = 0; }
-
 LabelSetKernel::~LabelSetKernel() {}
 
 bool LabelSetKernel::Init(const AnfNodePtr &anf_node) {

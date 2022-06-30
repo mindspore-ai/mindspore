@@ -46,7 +46,7 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
   }
 
   auto x_num = shape_x[0];
-  std::vector<int64_t> x{SizeToLong(x_num)};
+  std::vector<int64_t> x{x_num};
 
   auto x_shape_value = std::make_shared<tensor::Tensor>(type_x, x);
   x_shape_value->set_device_address(address_x);
@@ -54,11 +54,11 @@ std::vector<int64_t> GetInputValue(const CNodePtr &cnode, size_t index) {
 
   std::vector<int64_t> input_shape;
   if (type_x == TypeId::kNumberTypeInt64) {
-    auto x_value = reinterpret_cast<int64_t *>(x_shape_value->data_c());
+    auto x_value = static_cast<int64_t *>(x_shape_value->data_c());
     MS_EXCEPTION_IF_NULL(x_value);
     input_shape = {x_value, x_value + x_num};
   } else {
-    auto x_value = reinterpret_cast<int *>(x_shape_value->data_c());
+    auto x_value = static_cast<int *>(x_shape_value->data_c());
     MS_EXCEPTION_IF_NULL(x_value);
     for (int64_t i = 0; i < x_num; i++) {
       input_shape.push_back(static_cast<int64_t>(*x_value));
@@ -92,13 +92,12 @@ std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
       (void)std::transform(std::begin(reshape_tuple), std::end(reshape_tuple), std::back_inserter(output_shapes),
                            [](const ValuePtr &e) -> int64_t {
                              if (e->isa<UInt64Imm>()) {
-                               return (int64_t)GetValue<uint64_t>(e);
+                               return SizeToLong(GetValue<uint64_t>(e));
                              } else {
                                return GetValue<int64_t>(e);
                              }
                            });
     } else if (sh->isa<tensor::Tensor>()) {
-      auto tensor_value = sh->cast<tensor::TensorPtr>();
       output_shapes = CheckAndConvertUtils::CheckTensorIntValue("shape", sh, "Reshape");
     } else {
       MS_EXCEPTION(ValueError) << "shape must be a tuple or constant Tensor";
@@ -126,7 +125,7 @@ std::vector<int64_t> GetOutputShapes(const CNodePtr &cnode) {
 }
 }  // namespace
 
-void ReshapeKernelMod::Execute() {
+void ReshapeKernelMod::Execute() const {
   MS_LOG(INFO) << "Execute host ReshapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -158,7 +157,7 @@ void ReshapeKernelMod::Execute() {
   MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
 
-void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const {
   MS_LOG(INFO) << "Execute host ReshapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);

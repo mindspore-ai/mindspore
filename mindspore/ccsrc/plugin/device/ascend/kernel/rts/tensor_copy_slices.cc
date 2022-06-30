@@ -105,7 +105,7 @@ void TensorCopySlices::GetInputOutputInfo(const AnfNodePtr &anf_node) {
 }
 
 void *TensorCopySlices::VoidPointerOffset(void *ptr, size_t offset) const {
-  return reinterpret_cast<uint8_t *>(ptr) + offset;
+  return static_cast<uint8_t *>(ptr) + offset;
 }
 
 void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
@@ -116,7 +116,8 @@ void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   }
 
   auto input_shape = AnfAlgo::GetInputDeviceShape(anf_node, 0);
-  size_t total_size = std::accumulate(input_shape.begin(), input_shape.end(), (size_t)1, std::multiplies<>());
+  size_t total_size =
+    std::accumulate(input_shape.begin(), input_shape.end(), static_cast<size_t>(1), std::multiplies<>());
   total_size *= abstract::TypeIdSize(input_type_id_);
   MS_LOG(INFO) << "TensorCopySlices size[" << total_size << "]";
   // Shape and DType of input0 and output0 are same.
@@ -124,7 +125,8 @@ void TensorCopySlices::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
   mutable_output_size_list_.emplace_back(total_size);
 
   auto update_shape = AnfAlgo::GetInputDeviceShape(anf_node, 1);
-  size_t update_size = std::accumulate(update_shape.begin(), update_shape.end(), (size_t)1, std::multiplies<>());
+  size_t update_size =
+    std::accumulate(update_shape.begin(), update_shape.end(), static_cast<size_t>(1), std::multiplies<>());
   update_size *= abstract::TypeIdSize(update_type_id_);
   mutable_input_size_list_.emplace_back(update_size);
 }

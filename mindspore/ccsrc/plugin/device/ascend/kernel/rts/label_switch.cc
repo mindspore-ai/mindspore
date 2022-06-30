@@ -26,11 +26,7 @@ using LabelSwitchTaskInfoPtr = std::shared_ptr<LabelSwitchTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
-LabelSwitchKernel::LabelSwitchKernel() {
-  label_list_ = {};
-  cond_ = nullptr;
-  label_size_ = 0;
-}
+LabelSwitchKernel::LabelSwitchKernel() { label_list_ = {}; }
 
 LabelSwitchKernel::~LabelSwitchKernel() { cond_ = nullptr; }
 

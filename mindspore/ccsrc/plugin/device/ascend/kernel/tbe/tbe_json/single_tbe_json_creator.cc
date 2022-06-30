@@ -72,7 +72,7 @@ bool SingleTbeJsonCreator::GenOpListJson(const AnfNodePtr &anf_node, std::vector
 }
 
 void SingleTbeJsonCreator::GenDataJson(const AnfNodePtr &anf_node, const nlohmann::json &compute_json,
-                                       std::vector<nlohmann::json> *op_list_json) {
+                                       std::vector<nlohmann::json> *op_list_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(op_list_json);
   MS_LOG(DEBUG) << "Start";
@@ -195,7 +195,7 @@ void SingleTbeJsonCreator::GenOutputDescJson(const AnfNodePtr &anf_node, size_t 
 bool SingleTbeJsonCreator::AssignInputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &inputs_desc,
                                             const std::vector<size_t> &inputs_tensor_num,
                                             const std::vector<OpIOInfoPtr> &inputs_ptr,
-                                            std::vector<nlohmann::json> *inputs_json) {
+                                            std::vector<nlohmann::json> *inputs_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(inputs_json);
   MS_LOG(DEBUG) << "Start.";
@@ -284,7 +284,7 @@ bool SingleTbeJsonCreator::AssignOutputsJson(const AnfNodePtr &anf_node,
                                              const std::vector<nlohmann::json> &outputs_desc,
                                              const std::vector<size_t> &outputs_tensor_num,
                                              const std::vector<OpIOInfoPtr> &outputs_ptr,
-                                             std::vector<nlohmann::json> *outputs_json) {
+                                             std::vector<nlohmann::json> *outputs_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_LOG(DEBUG) << "Start.";
   size_t outputs_desc_index = 0;
