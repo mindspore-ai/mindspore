@@ -6389,3 +6389,103 @@ class CholeskySolve(Primitive):
         """Initialize CholeskySolve"""
         self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
         validator.check_value_type('upper', upper, [bool], self.name)
+
+
+class FFTWithSize(Primitive):
+    r"""
+    Fourier transform, can be adjusted by parameters to achieve FFT/IFFT/RFFT/IRFFT.
+
+    For fft, it computes the following expression:
+
+    .. math::
+        X[\omega_1, \dots, \omega_d] =
+            \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
+             e^{-j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
+
+    where :math:`d` = :attr:`signal_ndim` is number of dimensions for the
+    signal, and :math:`N_i` is the size of signal dimension :math:`i`.
+
+    For ifft, it computes the following expression:
+
+    .. math::
+        X[\omega_1, \dots, \omega_d] =
+            \frac{1}{\prod_{i=1}^d N_i} \sum_{n_1=0}^{N_1-1} \dots \sum_{n_d=0}^{N_d-1} x[n_1, \dots, n_d]
+             e^{\ j\ 2 \pi \sum_{i=0}^d \frac{\omega_i n_i}{N_i}},
+
+    where :math:`d` = :attr:`signal_ndim` is number of dimensions for the
+    signal, and :math:`N_i` is the size of signal dimension :math:`i`.
+
+    Note:
+        FFT/IFFT requires complex64 or complex128 inputs, return complex64 or complex128 outputs.
+        RFFT requires float32 or float64 inputs, return complex64 or complex128 outputs.
+        IRFFT requires complex64 or complex128 inputs, return float32 or float64 outputs.
+
+    Args:
+        signal_ndim(int): The number of dimensions in each signal, this controls how many dimensions of the fourier
+                          transform are realized, can only be 1, 2 or 3.
+        inverse(bool): Whether it is the inverse transformation, used to select FFT or IFFT and RFFT or IRFFT.
+        real(bool): Whether it is the real transformation, used to select FFT/IFFT or RFFT/IRFFT.
+        norm(str): The default normalization ("backward") has the direct (forward) transforms unscaled
+            and the inverse (backward) transforms scaled by 1/n.
+            "ortho" has both direct and inverse transforms are scaled by 1/sqrt(n).
+            "forward" has the direct transforms scaled by 1/n and the inverse transforms unscaled.
+            n is the input x's element numbers.
+        onesided(bool): Controls whether the input is halved to avoid redundancy. Default: True.
+        signal_sizes(list): Size of the original signal (the signal before rfft, no batch dimension),
+            only in irfft mode and set onesided=true requires the parameter. Default: [].
+
+    Inputs:
+        - **x** (Tensor) - The dimension of the input tensor must be greater than or equal to signal_ndim.
+
+    Outputs:
+        A tensor containing the complex-to-complex, real-to-complex or complex-to-real Fourier transform result.
+
+    Raises:
+        TypeError: If the input type of FFT/IFFT/IRFF is not one of: complex64, complex128.
+        TypeError: If the input type of RFFT is not one of: float32, float64.
+        TypeError: If the input type is not Tensor.
+        ValueError: If `x` dimension is less than signal_ndim.
+        ValueError: If signal_ndim is greater than 3 or less than 1.
+        ValueError: If norm is none of "backward", "forward" or "ortho".
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+          >>> # case FFT: signal_ndim: 1, inverse: False, real: False.
+          >>> fft_in = Tensor(np.array([2, 1, 2]), mindspore.complex64)
+          >>> fft_net = math_ops.FFTWithSize(signal_ndim=1, inverse=False, real=False)
+          >>> fft_output = fft_net(fft_in)
+          >>> print(fft_output)
+          [5.0000005 +2.9802322e-08j 0.50000036+8.6602569e-01j
+           0.49999955-8.6602527e-01j]
+          >>> # case IFFT: signal_ndim: 1, inverse: True, real: False.
+          >>> ifft_in = fft_output
+          >>> ifft_net = math_ops.FFTWithSize(signal_ndim=1, inverse=True, real=False)
+          >>> ifft_output = ifft_net(ifft_in)
+          >>> print(ifft_output)
+          [2.       +1.291434e-07j 1.0000004+7.947286e-08j 2.0000005-7.947286e-08j]
+          >>> # case RFFT2D: signal_ndim: 2, inverse: False, real: True.
+          >>> rfft_in = Tensor(np.array([[2, 1, 2], [3, 1, 6]]), mindspore.float32)
+          >>> rfft_net = math_ops.FFTWithSize(signal_ndim=2, inverse=False, real=True)
+          >>> rfft_output = rfft_net(rfft_in)
+          >>> print(rfft_output)
+          [[ 1.5000001e+01+2.0954278e-07j  1.1920929e-06+5.1961541e+00j]
+           [-5.0000005e+00-5.9604645e-08j  9.9999934e-01-3.4641027e+00j]]
+          >>> # case IRFFT2D: signal_ndim: 2, inverse: True, real: True.
+          >>> irfft_in = rfft_output
+          >>> irfft_net = math_ops.FFTWithSize(signal_ndim=2, inverse=True, real=True, signal_sizes=rfft_in.shape)
+          >>> irfft_output = irfft_net(irfft_in)
+          >>> print(irfft_output)
+          [[2.0000002  0.99999976 2.0000005 ]
+          [3.0000007  0.999999   6.000002  ]]
+    """
+    @prim_attr_register
+    def __init__(self, signal_ndim, inverse, real, norm="backward", onesided=True, signal_sizes=()):
+        """Initialize FFTWithSize."""
+        validator.check_value_type('signal_ndim', signal_ndim, [int], self.name)
+        validator.check_value_type('inverse', inverse, [bool], self.name)
+        validator.check_value_type('real', real, [bool], self.name)
+        validator.check_value_type('norm', norm, [str], self.name)
+        validator.check_value_type('onesided', onesided, [bool], self.name)
+        validator.check_value_type('signal_sizes', signal_sizes, [tuple, list], self.name)
