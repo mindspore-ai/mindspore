@@ -194,7 +194,7 @@ class _MindsporeFunctionExecutor:
         The result of pipeline running in graph mode.
     """
 
-    def __init__(self, fn, ms_create_time, input_signature=None, obj=None):
+    def __init__(self, fn, ms_create_time, input_signature=None, obj=None, jit_config=None):
         init_pipeline()
         if not isinstance(fn, (types.FunctionType, types.MethodType)):
             raise RuntimeError('fn {} is not function or method'.format(fn))
@@ -208,6 +208,7 @@ class _MindsporeFunctionExecutor:
         self.enable_tuple_broaden = False
         self._graph_executor = GraphExecutor_.get_instance()
         self._create_time = ms_create_time
+        self.jit_config_dict = jit_config.jit_config_dict if jit_config else None
 
     def _set_compile_cache_dep_files(self):
         # If enable compile cache, get the dependency files list
@@ -291,6 +292,8 @@ class _MindsporeFunctionExecutor:
 
         # If enable compile cache, get the dependency files list and set to graph executor.
         self._set_compile_cache_dep_files()
+        if self.jit_config_dict:
+            self._graph_executor.set_jit_config(self.jit_config_dict)
 
         if self.obj is None:
             is_compile = self._graph_executor.compile(self.fn, compile_args, phase, True)
@@ -419,7 +422,7 @@ def _get_ms_function_hash(hash_input):
     return _get_obj_id(hash_input)
 
 
-def ms_function(fn=None, input_signature=None, hash_args=None):
+def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
     """
     Create a callable MindSpore graph from a Python function.
 
@@ -434,6 +437,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None):
         hash_args (Object, List or Tuple of Objects): The local free variables used inside `fn`, like functions or
             objects of class defined outside `fn`. Calling `fn` again with change of `hash_args` will trigger
             recompilation.
+        jit_config (JitConfig): Jit config for compile. Default: None.
 
     Returns:
         Function, if `fn` is not None, returns a callable function that will execute the compiled function; If `fn` is
@@ -507,7 +511,7 @@ def ms_function(fn=None, input_signature=None, hash_args=None):
             if is_pynative_parallel() and func.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
                 process_obj = args[0]
                 args = args[1:]
-            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj)(*args)
+            out = _MindsporeFunctionExecutor(func, hash_obj, input_signature, process_obj, jit_config)(*args)
             return out
 
         return staging_specialize
@@ -952,12 +956,6 @@ class _CellGraphExecutor:
     Returns:
         Graph, return the result of pipeline running.
     """
-
-    VALID_JIT_CONFIG_PARAM = ["jit_level"]
-    VALID_JIT_CONFIG_PARAM_VALUE = {
-        "jit_level": ["o0", "o1"]
-    }
-
     def __init__(self):
         # create needed graph by lazy mode
         self.is_init = False
@@ -1030,7 +1028,7 @@ class _CellGraphExecutor:
         if "train" in phase and (enable_compile_cache is True or enable_compile_cache == "1"):
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
-    def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False):
+    def compile(self, obj, *args, phase='predict', do_convert=True, auto_parallel_mode=False, jit_config_dict=None):
         """
         Compiles graph.
 
@@ -1040,6 +1038,7 @@ class _CellGraphExecutor:
             phase (str): The name of compile phase. Default: 'predict'.
             do_convert (bool): When set to True, convert ME graph to GE graph after compiling graph.
             auto_parallel_mode: When set to True, use auto parallel mode to compile graph.
+            jit_config_dict (dict): Jit config for compile. Default: None.
 
         Return:
             Str, the full phase of the cell.
@@ -1073,6 +1072,8 @@ class _CellGraphExecutor:
 
         enable_ge = context.get_context("enable_ge")
         self._graph_executor.set_weights_values(obj.parameters_dict())
+        if jit_config_dict:
+            self._graph_executor.set_jit_config(jit_config_dict)
         result = self._graph_executor.compile(obj, args_list, phase, self._use_vm_mode())
         obj.compile_cache.add(phase)
         if not result:
@@ -1216,20 +1217,6 @@ class _CellGraphExecutor:
         if self._graph_executor.has_compiled(exec_id) is False:
             return None
         return self._graph_executor.fetch_info_for_quant_export(exec_id)
-
-    def set_jit_config(self, jit_config):
-        """Set jit config."""
-        self._check_jit_config(jit_config)
-        self._graph_executor.set_jit_config(jit_config)
-
-    def _check_jit_config(self, jit_config):
-        """Check the value of jit config."""
-        if not isinstance(jit_config, dict):
-            raise ValueError("The jit_config should be a string.")
-        for param_name, param_value in jit_config.items():
-            Validator.check_string(param_name, self.VALID_JIT_CONFIG_PARAM, "jit_config")
-            Validator.check_string(param_value, self.VALID_JIT_CONFIG_PARAM_VALUE.get(param_name), param_name,
-                                   "jit_config")
 
 
 def ms_memory_recycle():
