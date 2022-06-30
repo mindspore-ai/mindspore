@@ -484,6 +484,8 @@ class RReLU(Cell):
     Raises:
         TypeError: If `lower` is not a float or an int.
         TypeError: If `upper` is not a float or an int.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `x` is not a Tensor of mindspore.float16 or mindpore.float32.
         ValueError: If `lower` is greater than upper.
 
     Supported Platforms:
@@ -495,7 +497,7 @@ class RReLU(Cell):
         >>> from mindspore import Tensor
         >>> import numpy as np
         >>> x = Tensor(np.array([[-1.0, 4.0], [2.0, 0]]), mindspore.float32)
-        >>> r_relu = nn.LeakyReLU()
+        >>> r_relu = nn.RReLU()
         >>> output = r_relu(x)
         >>> print(output)
         [[-0.31465699  4.        ]
@@ -519,11 +521,10 @@ class RReLU(Cell):
         sign_matrix = self.sign(x)
         negative_filter = sign_matrix.clip(None, 0)
         positive_filter = sign_matrix.clip(0, None)
-        mask = Tensor(np.random.uniform(self.lower, self.upper, size=size)).astype(np.float32)
+        mask = P.Cast()(Tensor(np.random.uniform(self.lower, self.upper, size=size)), P.DType()(x))
         negative_mask = negative_filter * mask * -1
-        negative_part = negative_mask * x
-        positive_part = positive_filter * x
-        out = negative_part + positive_part
+        total_mask = negative_mask + positive_filter
+        out = total_mask * x
         return out
 
 
