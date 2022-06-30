@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -73,5 +74,41 @@ def test_softplusgrad_fp16():
     net = SoftplusNet()
     grad = Grad(net)
     output = grad(Tensor(x_np), Tensor(dy_np))
+    expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
+    assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_softplusgrad_fp32_overflow():
+    """
+    Feature: Softplusgrad kernel
+    Description: Softplusgrad kernel
+    Expectation: The Softplusgrad will not overflow
+    """
+    x_np = np.array([-95, 5, 200], np.float64)
+    dy_np = np.array([5, 3, 6]).astype(np.float64)
+    net = SoftplusNet()
+    grad = Grad(net)
+    output = grad(Tensor(x_np, mindspore.float32), Tensor(dy_np, mindspore.float32))
+    expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
+    assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_softplusgrad_fp16_overflow():
+    """
+    Feature: Softplusgrad kernel
+    Description: Softplusgrad kernel
+    Expectation: The Softplusgrad will not overflow
+    """
+    x_np = np.array([-95, 5, 200], np.float64)
+    dy_np = np.array([5, 3, 6]).astype(np.float64)
+    net = SoftplusNet()
+    grad = Grad(net)
+    output = grad(Tensor(x_np, mindspore.float16), Tensor(dy_np, mindspore.float16))
     expect = dy_np * np.exp(x_np) / (1 + np.exp(x_np))
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)

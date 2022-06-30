@@ -15,60 +15,62 @@
  */
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/softplus_impl.cuh"
+#include <math.h>
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
 
+// Refactor the softplus to improve numeric stable.
+// The previous version result overflow when input slightly larger.
 template <typename T>
-__global__ void SoftplusKernel(const size_t size, const T *input_addr, T *output_addr) {
+__global__ void SoftplusKernel(const size_t size, const float threshold, const T *input_addr, T *output_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     float x = input_addr[pos];
-    output_addr[pos] = logf(1. + exp(x));
+    output_addr[pos] = x > -threshold ? x : (x < threshold ? exp(x) : log(1. + exp(x)));
   }
 }
 
 template <>
-__global__ void SoftplusKernel(const size_t size, const half *input_addr, half *output_addr) {
+__global__ void SoftplusKernel(const size_t size, const float threshold, const half *input_addr, half *output_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    float x = __half2float(input_addr[pos]);
-    output_addr[pos] = __float2half(logf(1. + exp(x)));
+    const half one = 1;
+    const half threshold_in_half = __float2half(threshold);
+    half x = input_addr[pos];
+    output_addr[pos] = x > -threshold_in_half ? x : (x < threshold_in_half ? hexp(x) : hlog(one + hexp(x)));
   }
 }
 
 template <typename T>
 void Softplus(const size_t size, const T *input_addr, T *output_addr, cudaStream_t cuda_stream) {
-  SoftplusKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
-}
-
-template <>
-void Softplus(const size_t size, const half *input_addr, half *output_addr, cudaStream_t cuda_stream) {
-  SoftplusKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input_addr, output_addr);
+  const float threshold = log(Epsilon<T>::value) + 2.0f;
+  SoftplusKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, threshold, input_addr, output_addr);
 }
 
 template <typename T>
-__global__ void SoftplusGradKernel(const size_t size, const T *dy_addr, const T *x_addr, T *dx_addr) {
+__global__ void SoftplusGradKernel(const size_t size, const float threshold, const T *dy_addr, const T *x_addr,
+                                   T *dx_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    T exp_x = exp(x_addr[pos]);
-    dx_addr[pos] = dy_addr[pos] * exp_x / (1. + exp_x);
+    const float one = 1;
+    float x = x_addr[pos];
+    dx_addr[pos] = dy_addr[pos] * (x > -threshold ? one : (x < threshold ? exp(x) : one / (one + exp(-x))));
   }
 }
 
-template <typename T>
-__global__ void SoftplusGradKernel(const size_t size, const half *dy_addr, const half *x_addr, half *dx_addr) {
+template <>
+__global__ void SoftplusGradKernel(const size_t size, const float threshold, const half *dy_addr, const half *x_addr,
+                                   half *dx_addr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    float x = __half2float(x_addr[pos]);
-    float dy = __half2float(dy_addr[pos]);
-    float exp_x = exp(x);
-    dx_addr[pos] = __float2half(dy * exp_x / (1. + exp_x));
+    const half one = 1;
+    const half threshold_in_half = __float2half(threshold);
+    half x = x_addr[pos];
+    dx_addr[pos] =
+      dy_addr[pos] * (x > -threshold_in_half ? one : (x < threshold_in_half ? hexp(x) : one / (one + hexp(-x))));
   }
 }
 
 template <typename T>
 void SoftplusGrad(const size_t size, const T *dy_addr, const T *x_addr, T *dx_addr, cudaStream_t cuda_stream) {
-  SoftplusGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
-}
-
-template <>
-void SoftplusGrad(const size_t size, const half *dy_addr, const half *x_addr, half *dx_addr, cudaStream_t cuda_stream) {
-  SoftplusGradKernel<half><<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, dy_addr, x_addr, dx_addr);
+  const float threshold = log(Epsilon<T>::value) + 2.0f;
+  SoftplusGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, threshold, dy_addr, x_addr, dx_addr);
 }
 
 template CUDA_LIB_EXPORT void Softplus(const size_t size, const float *input_addr, float *output_addr,

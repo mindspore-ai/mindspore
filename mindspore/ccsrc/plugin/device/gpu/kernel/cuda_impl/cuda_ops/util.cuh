@@ -382,4 +382,14 @@ enum : unsigned { warp_size = 32, log_wap_size = 5 };
 __device__ __forceinline__ unsigned LaneId() { return threadIdx.x & (warp_size - 1); }
 __device__ __forceinline__ unsigned WarpId(const unsigned &tid) { return tid >> log_wap_size; }
 
+template <typename T>
+struct Epsilon {
+  static constexpr float value = std::numeric_limits<T>::epsilon();
+};
+
+template <>
+struct Epsilon<half> {
+  static constexpr float value = 0.000977;
+};
+
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_
