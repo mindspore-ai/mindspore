@@ -461,7 +461,7 @@ class RandomPoisson(Primitive):
          seed (int): An optional int. Defaults to 0. If either `seed` or `seed2` are set to be non-zero,
             the seed is set by the given seed. Otherwise, it is seeded by a random seed.
          seed2 (int): An optional int. Defaults to 0. A second seed to avoid seed collision.
-         dtype (mindspore.dtype): The type of output. Its value must be mindspore.int64. Default: mindspore.int64.
+         dtype (mindspore.dtype): The type of output. Default: mindspore.int64.
 
     Inputs:
         - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:

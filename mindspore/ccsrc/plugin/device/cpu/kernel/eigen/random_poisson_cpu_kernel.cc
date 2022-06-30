@@ -25,6 +25,16 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+using KernelRunFunc = RandomPoissonCpuKernelMod::KernelRunFunc;
+#define ADD_KERNEL(shape_dtype, rate_dtype, output_dtype, rate_type, output_type) \
+  {                                                                               \
+    KernelAttr()                                                                  \
+      .AddInputAttr(kNumberType##shape_dtype)                                     \
+      .AddInputAttr(kNumberType##rate_dtype)                                      \
+      .AddOutputAttr(kNumberType##output_dtype),                                  \
+      &RandomPoissonCpuKernelMod::LaunchKernel<rate_type, output_type>            \
+  }
+
 static unsigned int seed = time(nullptr);
 EIGEN_DEVICE_FUNC uint64_t get_random_seed() {
   uint64_t rnd = rand_r(&seed);
@@ -35,12 +45,6 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t 
   seed = seed ? seed : get_random_seed();
   return seed * 6364136223846793005ULL + 0xda3e39cb94b95bdbULL;
 }
-
-const std::map<TypeId, size_t> rate_type_size_map = {{kNumberTypeInt32, sizeof(int32_t)},
-                                                     {kNumberTypeInt64, sizeof(int64_t)},
-                                                     {kNumberTypeFloat16, sizeof(float16)},
-                                                     {kNumberTypeFloat32, sizeof(float)},
-                                                     {kNumberTypeFloat64, sizeof(double)}};
 }  // namespace
 
 template <typename T>
@@ -142,129 +146,104 @@ bool AddrAlignedCheck(const void *addr, uint64_t alignment = 16) {
   return reinterpret_cast<uint64_t>(addr) % alignment == 0;
 }
 
-void RandomPoissonCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  cnode_ptr_ = kernel_node;
-  rate_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
-  ouput_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
-  seed_ = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
-  seed2_ = static_cast<size_t>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-}
-
-template <typename T>
-void RandomPoissonCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &outputs) {
-  int64_t final_seed = 0;
-  auto attr_seed = seed_;
-  final_seed = static_cast<int64_t>(attr_seed);
-  if (final_seed == 0) {
-    auto attr_seed2 = seed2_;
-    final_seed = static_cast<int64_t>(attr_seed2);
+bool RandomPoissonCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                     const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  auto prim = base_operator->GetPrim();
+  kernel_name_ = base_operator->name();
+  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
+    return false;
   }
 
-  auto *rate_flat = reinterpret_cast<double *>(inputs[1]->addr);
+  MS_EXCEPTION_IF_NULL(prim);
+  seed_ = GetValue<int64_t>(prim->GetAttr("seed"));
+  seed2_ = GetValue<int64_t>(prim->GetAttr("seed2"));
+  return true;
+}
+
+template <typename Tin, typename T>
+bool RandomPoissonCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                             const std::vector<AddressPtr> &,
+                                             const std::vector<kernel::AddressPtr> &outputs) {
+  auto attr_seed = LongToUlong(seed_);
+  uint64_t final_seed = attr_seed;
+  if (final_seed == 0) {
+    auto attr_seed2 = seed2_;
+    final_seed = LongToUlong(attr_seed2);
+  }
+
+  auto *rate_flat = reinterpret_cast<Tin *>(inputs[1]->addr);
   MS_EXCEPTION_IF_NULL(rate_flat);
 
-  auto rate_type_len = rate_type_size_map.find(rate_type_);
-  size_t size_of_rate_type = rate_type_len->second;
-  size_t num_of_rate = inputs[1]->size / size_of_rate_type;
+  size_t num_of_rate = inputs[1]->size / sizeof(Tin);
   size_t num_of_output = outputs[0]->size / sizeof(T);
 
   auto *output = reinterpret_cast<T *>(outputs[0]->addr);
 
   if (AddrAlignedCheck(outputs[0]->addr)) {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Aligned> eigen_output(static_cast<T *>(output), num_of_output);
-    PoissonRandomGenerator<T> m_generator(rate_flat[0], final_seed);
+    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]), final_seed);
     for (size_t i = 0; i < num_of_rate; i++) {
-      m_generator.setRate(rate_flat[i]);
+      m_generator.setRate(static_cast<double>(rate_flat[i]));
       for (size_t j = i; j < num_of_output; j += num_of_rate) {
         eigen_output(j) = m_generator.gen();
       }
     }
   } else {
     Eigen::TensorMap<Eigen::Tensor<T, 1>, Eigen::Unaligned> eigen_output(static_cast<T *>(output), num_of_output);
-    PoissonRandomGenerator<T> m_generator(rate_flat[0], final_seed);
+    PoissonRandomGenerator<T> m_generator(static_cast<double>(rate_flat[0]), final_seed);
     for (size_t i = 0; i < num_of_rate; i++) {
-      m_generator.setRate(rate_flat[i]);
+      m_generator.setRate(static_cast<double>(rate_flat[i]));
       for (size_t j = i; j < num_of_output; j += num_of_rate) {
         eigen_output(j) = m_generator.gen();
       }
     }
   }
-}
-
-bool RandomPoissonCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                       const std::vector<AddressPtr> &outputs) {
-  if (ouput_type_ == kNumberTypeFloat16) {
-    Generate<float16>(inputs, outputs);
-  } else if (ouput_type_ == kNumberTypeFloat32) {
-    Generate<float>(inputs, outputs);
-  } else if (ouput_type_ == kNumberTypeFloat64) {
-    Generate<double>(inputs, outputs);
-  } else if (ouput_type_ == kNumberTypeInt32) {
-    Generate<int32_t>(inputs, outputs);
-  } else if (ouput_type_ == kNumberTypeInt64) {
-    Generate<int64_t>(inputs, outputs);
-  } else {
-    MS_LOG(EXCEPTION) << "RandomPoisson kernel data type [%s] not support." << TypeIdToType(rate_type_)->ToString();
-  }
   return true;
 }
 
-std::vector<KernelAttr> RandomPoissonCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list = {
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
-    KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)};
-  return support_list;
+const std::vector<std::pair<KernelAttr, KernelRunFunc>> &RandomPoissonCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
+    ADD_KERNEL(Int32, Float16, Float16, float16, float16), ADD_KERNEL(Int32, Float16, Float32, float16, float),
+    ADD_KERNEL(Int32, Float16, Float64, float16, double),  ADD_KERNEL(Int32, Float16, Int32, float16, int),
+    ADD_KERNEL(Int32, Float16, Int64, float16, int64_t),
+
+    ADD_KERNEL(Int32, Float32, Float16, float, float16),   ADD_KERNEL(Int32, Float32, Float32, float, float),
+    ADD_KERNEL(Int32, Float32, Float64, float, double),    ADD_KERNEL(Int32, Float32, Int32, float, int),
+    ADD_KERNEL(Int32, Float32, Int64, float, int64_t),
+
+    ADD_KERNEL(Int32, Float64, Float16, double, float16),  ADD_KERNEL(Int32, Float64, Float32, double, float),
+    ADD_KERNEL(Int32, Float64, Float64, double, double),   ADD_KERNEL(Int32, Float64, Int32, double, int),
+    ADD_KERNEL(Int32, Float64, Int64, double, int64_t),
+
+    ADD_KERNEL(Int32, Int32, Float16, int, float16),       ADD_KERNEL(Int32, Int32, Float32, int, float),
+    ADD_KERNEL(Int32, Int32, Float64, int, double),        ADD_KERNEL(Int32, Int32, Int32, int, int),
+    ADD_KERNEL(Int32, Int32, Int64, int, int64_t),
+
+    ADD_KERNEL(Int32, Int64, Float16, int64_t, float16),   ADD_KERNEL(Int32, Int64, Float32, int64_t, float),
+    ADD_KERNEL(Int32, Int64, Float64, int64_t, double),    ADD_KERNEL(Int32, Int64, Int32, int64_t, int),
+    ADD_KERNEL(Int32, Int64, Int64, int64_t, int64_t),
+
+    ADD_KERNEL(Int64, Float16, Float16, float16, float16), ADD_KERNEL(Int64, Float16, Float32, float16, float),
+    ADD_KERNEL(Int64, Float16, Float64, float16, double),  ADD_KERNEL(Int64, Float16, Int32, float16, int),
+    ADD_KERNEL(Int64, Float16, Int64, float16, int64_t),
+
+    ADD_KERNEL(Int64, Float32, Float16, float, float16),   ADD_KERNEL(Int64, Float32, Float32, float, float),
+    ADD_KERNEL(Int64, Float32, Float64, float, double),    ADD_KERNEL(Int64, Float32, Int32, float, int),
+    ADD_KERNEL(Int64, Float32, Int64, float, int64_t),
+
+    ADD_KERNEL(Int64, Float64, Float16, double, float16),  ADD_KERNEL(Int64, Float64, Float32, double, float),
+    ADD_KERNEL(Int64, Float64, Float64, double, double),   ADD_KERNEL(Int64, Float64, Int32, double, int),
+    ADD_KERNEL(Int64, Float64, Int64, double, int64_t),
+
+    ADD_KERNEL(Int64, Int32, Float16, int, float16),       ADD_KERNEL(Int64, Int32, Float32, int, float),
+    ADD_KERNEL(Int64, Int32, Float64, int, double),        ADD_KERNEL(Int64, Int32, Int32, int, int),
+    ADD_KERNEL(Int64, Int32, Int64, int, int64_t),
+
+    ADD_KERNEL(Int64, Int64, Float16, int64_t, float16),   ADD_KERNEL(Int64, Int64, Float32, int64_t, float),
+    ADD_KERNEL(Int64, Int64, Float64, int64_t, double),    ADD_KERNEL(Int64, Int64, Int32, int64_t, int),
+    ADD_KERNEL(Int64, Int64, Int64, int64_t, int64_t)};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, RandomPoisson, RandomPoissonCpuKernelMod);
