@@ -403,7 +403,22 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
       DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, 0);
     }
   } else {
-    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+    // On Ascend, saving statistic data is only supported npy format.
+    if (dump_json_parser.IsStatisticDump() && dump_json_parser.IsNpyFormat()) {
+      // On Ascend kernel by kernel mode, load tensor data into debugger first.
+      auto format = kOpFormat_DEFAULT;
+      std::string tensor_name = node_name + ":0";
+      uint32_t root_graph_id = debugger->GetCurrentRootGraphId();
+      bool ret = addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, false, true);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost failed, tensor_name: " << tensor_name;
+      }
+      TensorStatDump stat_dump("Parameter", dump_name, task_id, stream_id, timestamp, false, 0, 0);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
+    }
+    if (dump_json_parser.IsTensorDump()) {
+      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+    }
   }
 }
 
@@ -446,7 +461,22 @@ void E2eDump::DumpSingleParameterNode(const AnfNodePtr &anf_node, const std::str
       DumpMemFromTensorLoaderToFile(debugger, file_path, node_name, 0);
     }
   } else {
-    DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+    // On Ascend, saving statistic data is only supported npy format.
+    if (dump_json_parser.IsStatisticDump() && dump_json_parser.IsNpyFormat()) {
+      // On Ascend kernel by kernel mode, load tensor data into debugger first.
+      auto format = kOpFormat_DEFAULT;
+      std::string tensor_name = node_name + ":0";
+      uint32_t root_graph_id = debugger->GetCurrentRootGraphId();
+      bool ret = addr->LoadMemToHost(tensor_name, 0, format, int_shapes, type, 0, true, root_graph_id, false, true);
+      if (!ret) {
+        MS_LOG(ERROR) << "LoadMemToHost failed, tensor_name: " << tensor_name;
+      }
+      TensorStatDump stat_dump("Parameter", node_name, task_id, stream_id, timestamp, false, 0, 0);
+      (void)stat_dump.DumpTensorStatsToFile(node_name, dump_path, debugger);
+    }
+    if (dump_json_parser.IsTensorDump()) {
+      DumpMemToFile(file_path, *addr, int_shapes, type, trans_flag);
+    }
   }
 }
 
