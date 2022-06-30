@@ -108,7 +108,8 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
                                     size_t *sendLen) {
   int eagainCount = 0;
   // Print retry log interval.
-  const int print_interval = 100;
+  const int print_interval = 10000;
+  const int sleep_interval_factor = 10;
   *sendLen = 0;
 
   while (*sendLen != totalSendLen) {
@@ -129,6 +130,7 @@ int TCPSocketOperation::SendMessage(Connection *connection, struct msghdr *sendM
         MS_LOG(WARNING) << "Retry(" + std::to_string(eagainCount) + "/" + std::to_string(EAGAIN_RETRY) +
                              ") sending ...";
       }
+      std::this_thread::sleep_for(eagainCount * std::chrono::microseconds(sleep_interval_factor));
     } else {
       *sendLen += retval;
 
