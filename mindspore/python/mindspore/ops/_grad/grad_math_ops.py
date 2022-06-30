@@ -950,7 +950,7 @@ def get_bprop_reduce_mean(self):
         grad = _sum_grad(x, axis, dout)
         shape_x = shape_op(x)
         shape_out = shape_op(out)
-        if -1 in shape_x:
+        if is_shape_unknown(shape_x):
             shape_x = dyn_shape_op(x)
             shape_out = dyn_shape_op(out)
             div_shape = reduce_prod(shape_x) / reduce_prod(shape_out)

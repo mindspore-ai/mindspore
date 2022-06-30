@@ -17,6 +17,7 @@ import numbers
 
 import numpy as np
 from mindspore.communication.management import get_rank, get_group_size
+from mindspore.common._utils import is_shape_unknown
 from mindspore import context
 
 from mindspore import log as logger
@@ -28,6 +29,7 @@ from .._c_expression import RowTensor as RowTensor_
 from .._c_expression import Tensor as Tensor_
 from .._checkparam import Rel
 from .._checkparam import Validator as validator
+
 
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -5202,7 +5204,7 @@ def _check_tensor_dynamic_shape(dtype=None, shape=None, init=None):
             shape = tuple(shape_replaced_list)
         if isinstance(shape, list):
             shape = shape_replaced_list
-    if -1 in shape and (dtype is None or init is not None):
+    if is_shape_unknown(shape) and (dtype is None or init is not None):
         raise ValueError("If setting dynamic shape, dtype must not be None, init must be None")
     return shape
 

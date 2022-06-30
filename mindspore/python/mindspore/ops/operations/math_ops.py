@@ -23,7 +23,7 @@ from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
 from ...common._decorator import deprecated
-from .._utils import get_broadcast_shape
+from .._utils import get_broadcast_shape, is_shape_unknown
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._c_expression import Tensor as Tensor_
 
@@ -547,7 +547,7 @@ class _Reduce(PrimitiveWithInfer):
             axis_shape = axis_shape_list[0]
             out_shape, output_min_shape, output_max_shape = _Reduce._infer_shape_with_axis_shape(
                 input_x, axis_shape, self.keep_dims, output_min_shape, output_max_shape)
-        elif -1 in input_shp:
+        elif is_shape_unknown(input_shp):
             if 'max_shape' in input_x and 'min_shape' in input_x:
                 output_max_shape = _infer_shape_reduce(input_x['max_shape'], axis_v, self.keep_dims, self.name)
                 output_min_shape = _infer_shape_reduce(input_x['min_shape'], axis_v, self.keep_dims, self.name)
