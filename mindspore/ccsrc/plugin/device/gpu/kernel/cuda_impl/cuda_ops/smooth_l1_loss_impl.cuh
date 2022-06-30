@@ -22,8 +22,8 @@ enum SmoothL1LossReductionMode { NONE = 0, MEAN = 1, SUM = 2, INVALID_MODE = 255
 
 template <typename T>
 CUDA_LIB_EXPORT void SmoothL1Loss(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta,
-                                  const T *prediction, const T *target, T *loss, const uint32_t device_id,
-                                  cudaStream_t stream);
+                                  const T *prediction, const T *target, T *loss, double *tmp_loss,
+                                  const uint32_t device_id, cudaStream_t stream);
 template <typename T>
 CUDA_LIB_EXPORT void SmoothL1LossGrad(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta,
                                       const T *prediction, const T *target, const T *dloss, T *dx,
