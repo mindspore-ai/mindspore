@@ -562,6 +562,8 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
 
   if (run_mode == device::RunMode::kUnknown) {
     graph->set_run_mode(device_context->GetRunMode(graph));
+  } else {
+    graph->set_run_mode(run_mode);
   }
 
   GraphId graph_id;
