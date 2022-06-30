@@ -61,7 +61,10 @@ bool ComputeGraphNode::Initialize() {
   return true;
 }
 
-bool ComputeGraphNode::Initialized() { return authenticated_; }
+bool ComputeGraphNode::Initialized() {
+  // The cgn is initialized only when the cluster is ready, or there will be error message unexpected.
+  return authenticated_ && topo_state_ == TopoState::kInitialized;
+}
 
 bool ComputeGraphNode::Finalize(bool force) {
   // Stop the heartbeat thread.
