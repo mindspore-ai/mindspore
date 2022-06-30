@@ -178,14 +178,14 @@ class Dropout(Cell):
 
 class Dropout2d(Cell):
     """
-    During training, randomly zeroes some channels of the input tensor with probability 1-`keep_prob`
+    During training, randomly zeroes some channels of the input tensor with probability `p`
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math: `NCHW`,
     the channel feature map refers
     to a 2-dimensional feature map with the shape of :math: `HW`).
 
     For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
     `2D` tensor input[i,j].
-    Each channel will be zeroed out independently on every forward call with probability 1-`keep_prob` using samples
+    Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
 
     `Dropout2d` can improve the independence between channel feature maps.
@@ -194,8 +194,8 @@ class Dropout2d(Cell):
         Each channel will be zeroed out independently on every construct call.
 
     Args:
-        keep_prob (float): The keeping probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            which means dropping out 20% of channels. Default: 0.5.
+        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+            which means dropping out 80% of channels. Default: 0.5.
 
     Inputs:
         - **x** (Tensor) - A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size,
@@ -209,30 +209,30 @@ class Dropout2d(Cell):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
-        TypeError: If the data type of `keep_prob` is not float.
-        ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
+        TypeError: If the data type of `p` is not float.
+        ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not 4D.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout = nn.Dropout2d(keep_prob=0.5)
+        >>> dropout = nn.Dropout2d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
 
-    def __init__(self, keep_prob=0.5):
+    def __init__(self, p=0.5):
         """Initialize Dropout2d."""
         super(Dropout2d, self).__init__()
-        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
-        if keep_prob < 0 or keep_prob > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range [0, 1], "
-                             f"but got {keep_prob}.")
-        self.keep_prob = keep_prob
-        self.dropout2d = P.Dropout2D(keep_prob)
+        Validator.check_value_type('p', p, [float], self.cls_name)
+        if p < 0 or p > 1:
+            raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
+                             f"but got {p}.")
+        self.keep_prob = 1.0 - p
+        self.dropout2d = P.Dropout2D(self.keep_prob)
 
     def construct(self, x):
         if not self.training:
@@ -245,26 +245,26 @@ class Dropout2d(Cell):
         return out, mask
 
     def extend_repr(self):
-        return 'keep_prob={}'.format(self.keep_prob)
+        return 'p={}'.format(self.keep_prob)
 
 
 class Dropout3d(Cell):
     """
     During training, randomly zeroes some channels of the input tensor
-    with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with
+    with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor with
     a shape of :math: `NCDHW`,
     the channel feature map refers to a 3-dimensional feature map with a shape of :math: 'DHW').
 
     For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
-    probability 1-`keep_prob`.
+    probability `p`.
 
     `Dropout3d` can improve the independence between channel feature maps.
 
     Args:
-        keep_prob (float): The keeping probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
-            which means dropping out 20% of channels. Default: 0.5.
+        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+            which means dropping out 80% of channels. Default: 0.5.
 
     Inputs:
         - **x** (Tensor) - A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size,
@@ -279,30 +279,30 @@ class Dropout3d(Cell):
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
-        TypeError: If the data type of `keep_prob` is not float.
-        ValueError: If `keep_prob` is out of the range `[0.0, 1.0]`.
+        TypeError: If the data type of `p` is not float.
+        ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not `5D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout = nn.Dropout3d(keep_prob=0.5)
+        >>> dropout = nn.Dropout3d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
         >>> output, mask = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
 
-    def __init__(self, keep_prob=0.5):
+    def __init__(self, p=0.5):
         """Initialize Dropout3d."""
         super(Dropout3d, self).__init__()
-        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
-        if keep_prob < 0 or keep_prob > 1:
-            raise ValueError(f"For '{self.cls_name}', the 'keep_prob' must be a number in range [0, 1], "
-                             f"but got {keep_prob}.")
-        self.keep_prob = keep_prob
-        self.dropout3d = P.Dropout3D(keep_prob)
+        Validator.check_value_type('p', p, [float], self.cls_name)
+        if p < 0 or p > 1:
+            raise ValueError(f"For '{self.cls_name}', the 'p' must be a number in range [0, 1], "
+                             f"but got {p}.")
+        self.keep_prob = 1.0 - p
+        self.dropout3d = P.Dropout3D(self.keep_prob)
 
     def construct(self, x):
         if not self.training:
@@ -315,7 +315,7 @@ class Dropout3d(Cell):
         return out, mask
 
     def extend_repr(self):
-        return 'keep_prob={}'.format(self.keep_prob)
+        return 'p={}'.format(self.keep_prob)
 
 
 class Flatten(Cell):
