@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -104,3 +105,39 @@ def test_softplus_4d_fp16():
     y_ms = net(x_ms)
 
     assert np.allclose(y_np, y_ms.asnumpy(), rtol=5e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_softplus_fp32_overflow():
+    """
+    Feature: Softplus kernel
+    Description: Softplus kernel
+    Expectation: The Softplus will not overflow
+    """
+    x_np = np.array([-95, 5, 200], np.float64)
+    y_np = SoftplusCompute(x_np)
+
+    x_ms = Tensor(x_np, mindspore.float32)
+    net = SoftplusNet()
+    y_ms = net(x_ms)
+    assert np.allclose(y_np, y_ms.asnumpy())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_softplus_fp16_overflow():
+    """
+    Feature: Softplus kernel
+    Description: Softplus kernel
+    Expectation: The Softplus will not overflow
+    """
+    x_np = np.array([-200, 0, 100], np.float64)
+    y_np = SoftplusCompute(x_np)
+
+    x_ms = Tensor(x_np, mindspore.float16)
+    net = SoftplusNet()
+    y_ms = net(x_ms)
+    assert np.allclose(y_np, y_ms.asnumpy(), 5e-3)
