@@ -39,13 +39,13 @@ def svd(a, full_matrices=False, compute_uv=True):
 
     Returns:
         - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
-        - **u**  (Tensor) - Left singular vectors. If compute_uv is False, u will not be returned.
-          The shape is :math:`(*, M, P)`. If full_matrices is True, the shape will be :math:`(*, M, M)`.
-        - **v**  (Tensor) - Right singular vectors. If compute_uv is False, v will not be returned.
-          The shape is :math:`(*, P, N)`. If full_matrices is True, the shape will be :math:`(*, N, N)`.
+        - **u**  (Tensor) - Left singular vectors. If `compute_uv` is False, u will not be returned.
+          The shape is :math:`(*, M, P)`. If `full_matrices` is True, the shape will be :math:`(*, M, M)`.
+        - **v**  (Tensor) - Right singular vectors. If `compute_uv` is False, v will not be returned.
+          The shape is :math:`(*, P, N)`. If `full_matrices` is True, the shape will be :math:`(*, N, N)`.
 
     Raises:
-        TypeError: If full_matrices or compute_uv is not the type of bool.
+        TypeError: If `full_matrices` or `compute_uv` is not the type of bool.
         TypeError: If the rank of input less than 2.
         TypeError: If the type of input is not one of the following dtype: mstype.float32, mstype.float64.
 

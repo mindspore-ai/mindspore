@@ -397,7 +397,8 @@ class Dense(Cell):
             same as `x`. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
         activation (Union[str, Cell, Primitive, None]): activate function applied to the output of the fully connected
-            layer, eg. 'ReLU'.Default: None.
+            layer. Both activation name, e.g. 'relu', and mindspore activation function, e.g. mindspore.ops.ReLU(),
+            are supported. Default: None.
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(*, in\_channels)`. The `in_channels` in `Args` should be equal

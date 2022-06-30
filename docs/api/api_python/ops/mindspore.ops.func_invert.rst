@@ -6,7 +6,7 @@ mindspore.ops.invert
     对输入逐元素按位翻转。
 
     .. math::
-        out_i = ~x_{i}
+        out_i = \sim x_{i}
 
     **参数：**
 

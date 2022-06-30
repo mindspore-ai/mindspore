@@ -2979,7 +2979,7 @@ class MulNoNan(_MathBinaryOp):
         ``Ascend`` ``CPU``
 
     Raises:
-        TypeError: If neither `x` nor `y` is a bool Tensor.
+        TypeError: If neither `x` nor `y` is a Tensor.
 
     Examples:
         >>> # case 1 : same data type and shape of two inputs, there are some 0 in y.
