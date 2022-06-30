@@ -455,7 +455,7 @@ class Adam(Optimizer):
         TypeError: If element of `parameters` is neither Parameter nor dict.
         TypeError: If `beta1`, `beta2`, `eps` or `loss_scale` is not a float.
         TypeError: If `weight_decay` is neither float nor int.
-        TypeError: If `use_locking` or `use_nesterov` or `use_amsgrad` is not a bool.
+        TypeError: If `use_locking`, `use_nesterov` or `use_amsgrad` is not a bool.
         ValueError: If `loss_scale` or `eps` is less than or equal to 0.
         ValueError: If `beta1`, `beta2` is not in range (0.0, 1.0).
         ValueError: If `weight_decay` is less than 0.

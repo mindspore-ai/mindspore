@@ -68,6 +68,7 @@ mindspore.nn.Adam
     - **eps** (float) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：1e-8。
     - **use_locking** (bool) - 是否对参数更新加锁保护。如果为True，则 `w` 、`m` 和 `v` 的tensor更新将受到锁的保护。如果为False，则结果不可预测。默认值：False。
     - **use_nesterov** (bool) - 是否使用Nesterov Accelerated Gradient (NAG)算法更新梯度。如果为True，使用NAG更新梯度。如果为False，则在不使用NAG的情况下更新梯度。默认值：False。
+    - **use_amsgrad** (bool) - 是否使用Amsgrad算法更新梯度。如果为True，使用Amsgrad更新梯度。如果为False，则在不使用Amsgrad的情况下更新梯度。默认值：False。
     - **weight_decay** (Union[float, int, Cell]) - 权重衰减（L2 penalty）。默认值：0.0。
 
       .. include:: mindspore.nn.optim_arg_dynamic_wd.rst
@@ -86,9 +87,9 @@ mindspore.nn.Adam
 
     - **TypeError** - `learning_rate` 不是int、float、Tensor、iterable或LearningRateSchedule。
     - **TypeError** - `parameters` 的元素不是Parameter或字典。
-    - **TypeError** - `beta1` 、`beta2` 、 `eps` 或 `loss_scale` 不是float。
+    - **TypeError** - `beta1` 、 `beta2` 、 `eps` 或 `loss_scale` 不是float。
     - **TypeError** - `weight_decay` 不是float或int。
-    - **TypeError** - `use_locking` 或 `use_nesterov` 不是bool。
+    - **TypeError** - `use_locking` 、 `use_nesterov` 或 `use_amsgrad` 不是bool。
     - **ValueError** - `loss_scale` 或 `eps` 小于或等于0。
     - **ValueError** - `beta1` 、`beta2` 不在（0.0,1.0）范围内。
     - **ValueError** - `weight_decay` 小于0。
