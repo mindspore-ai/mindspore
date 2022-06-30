@@ -696,10 +696,12 @@ class Reshape(PrimitiveWithInfer):
             min_shape = shape["min_value"]
             max_shape = shape["max_value"]
             if len(min_shape) != shape_rank or len(max_shape) != shape_rank:
-                raise RuntimeError("The primitive[Reshape]'s input[shape] min or max value not math the shape rank.")
-            for i in range(shape_rank):
-                if min_shape[i] == max_shape[i] and min_shape[i] != 1:
-                    out_shape[i] = min_shape[i]
+                min_shape = [1] * shape_rank
+                max_shape = [int(np.prod(max_shape))] * shape_rank
+            else:
+                for i in range(shape_rank):
+                    if min_shape[i] == max_shape[i] and min_shape[i] != 1:
+                        out_shape[i] = min_shape[i]
         elif is_shape_unknown(x_shp) and "max_shape" in x:
             # when dynamic memory allocation is supported, max_shape can be left out
             min_shape = [1] * shape_rank
@@ -2839,7 +2841,7 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
             raise ValueError(f"For \'{prim_name}\' element {i} shape in input can not pack with first element")
 
     out = {}
-    if -1 in out_shape:
+    if is_shape_unknown(out_shape):
         if 'min_shape' in value:
             x_min_shp = value['min_shape']
             ret_min_shp = x_min_shp[0].copy()
@@ -3656,7 +3658,7 @@ class StridedSlice(PrimitiveWithInfer):
                     'max_shape': tuple(ret_max_shape),
                     'min_shape': tuple(ret_min_shape)}
 
-        if None in (begin_v['value'], end_v['value'], strides_v['value']) or (-1 in x_shape):
+        if None in (begin_v['value'], end_v['value'], strides_v['value']) or is_shape_unknown(x_shape):
             ret_shape, ret_min_shape, ret_max_shape = \
                 self._compute_dynamic_slicing_shape(x_shape, begin_len, max_shape)
             rets = {'shape': ret_shape,

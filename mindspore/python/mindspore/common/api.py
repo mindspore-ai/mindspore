@@ -41,6 +41,7 @@ from ..parallel._ps_context import _is_role_pserver, _is_role_sched, _enable_dis
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
     _get_parameter_broadcast, _get_pipeline_stages
 from .._checkparam import Validator
+from ._utils import is_shape_unknown
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = set()
@@ -357,7 +358,7 @@ class _MindsporeFunctionExecutor:
             dyn_shape = False
             for sig_args in self.input_signature:
                 Validator.check_isinstance("args in `input_signature` of `ms_function`", sig_args, MetaTensor)
-                if -1 in sig_args.shape:
+                if is_shape_unknown(sig_args.shape):
                     dyn_shape = True
             if not dyn_shape:
                 if not verify_inputs_signature(self.input_signature, args_list):

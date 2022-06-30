@@ -18,6 +18,7 @@ import math
 from mindspore._checkparam import Validator
 from mindspore.common.dtype import pytype_to_dtype
 from mindspore.common.api import _cell_graph_executor
+from mindspore.common._utils import is_shape_unknown
 from mindspore.dataset.engine import offload
 import mindspore.dataset as ds
 from .. import context, nn
@@ -112,7 +113,7 @@ def _generate_dataset_sink_mode_net(network, dataset_shapes, dataset_types, queu
 
 def _has_dynamic_shape(dataset_shapes):
     for shape in dataset_shapes:
-        if -1 in shape:
+        if is_shape_unknown(shape):
             return True
     return False
 

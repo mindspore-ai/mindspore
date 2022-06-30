@@ -45,6 +45,7 @@ from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import One
+from mindspore.common._utils import is_shape_unknown
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.compression.export import quant_export
 from mindspore.parallel._cell_wrapper import get_allgather_cell
@@ -1929,7 +1930,7 @@ def _get_mindir_inputs(file_name):
 
         for ele_shape in ele_input.tensor[0].dims:
             input_shape.append(ele_shape)
-        if -1 in input_shape:
+        if is_shape_unknown(input_shape):
             raise RuntimeError(f"MindIR input's shape is: {input_shape}, dynamic shape is not supported.")
 
         mindir_type = ele_input.tensor[0].data_type

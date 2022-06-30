@@ -23,6 +23,7 @@ from ...operations._inner_ops import TensorCopySlices, SliceGetItem, DynamicBroa
 from ....common import dtype as mstype
 from ....common._register_for_tensor import tensor_operator_registry
 from ....common.tensor import Tensor, CSRTensor
+from ....common._utils import is_shape_unknown
 
 slice_get_item = SliceGetItem()
 hyper_map = base.HyperMap()
@@ -296,7 +297,8 @@ def tensor_index_by_slice(data, slice_index):
     min_data_dim, max_data_dim = 1, 8
     const_utils.judge_data_dim(data.ndim, min_data_dim, max_data_dim)
     data_shape = F.shape(data)
-    is_dynamic = (const_utils.is_shape_unknown(data_shape)
+
+    is_dynamic = (is_shape_unknown(data_shape)
                   or isinstance(slice_get_item(slice_index, "start"), Tensor)
                   or isinstance(slice_get_item(slice_index, "stop"), Tensor)
                   or isinstance(slice_get_item(slice_index, "step"), Tensor))
@@ -372,7 +374,7 @@ def _tensor_index_by_integer(data, int_index):
         const_utils.raise_value_error("Expect Tensor to have dimension between 1 and 8.")
 
     data_shape = F.shape(data)
-    if const_utils.is_shape_unknown(data_shape):
+    if is_shape_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         transformed_tensor = check_range(int_index, data_shape[0])
         begin_strides, end_strides, step_strides = get_stride_info_from_integer(transformed_tensor)
@@ -559,7 +561,8 @@ def _get_stride_info_from_tuple(data, tuple_index):
 def _tensor_getitem_by_tuple_slice(data, tuple_index):
     """Tensor getitem by a tuple of slice"""
     data_shape = F.shape(data)
-    is_dynamic = const_utils.is_shape_unknown(data_shape)
+
+    is_dynamic = is_shape_unknown(data_shape)
     for item in tuple_index:
         if isinstance(item, slice):
             is_dynamic = is_dynamic or isinstance(slice_get_item(item, "start"), Tensor) \
@@ -583,6 +586,7 @@ def _tensor_getitem_by_tuple_slice(data, tuple_index):
 
 def _tensor_getitem_by_tuple(data, tuple_index, op_name):
     """Tensor getitem by a tuple of mixed tensor."""
+
     slice_is_tensor = False
     for item in tuple_index:
         if isinstance(item, slice):
@@ -602,7 +606,7 @@ def _tensor_getitem_by_tuple(data, tuple_index, op_name):
         if i in int_positions:
             int_index = const_utils.check_range(index, dim_size)
             tensor_index = F.scalar_to_tensor(int_index, mstype.int64)
-            if const_utils.is_shape_unknown(data_shape):
+            if is_shape_unknown(data_shape):
                 dyn_shape = F.dyn_shape(data)
                 tensor_index = check_range(index, dyn_shape[i])
                 tensor_index = F.cast(tensor_index, mstype.int64)
@@ -765,7 +769,8 @@ def _generate_updates_from_sequence(data, index, value, op_type):
 def _generate_updates_from_tensor(data, index, value, op_type):
     """Generate an updates tensor from a tensor."""
     value = value.astype(data.dtype)
-    if const_utils.is_shape_unknown(F.shape(data)):
+
+    if is_shape_unknown(F.shape(data)):
         data_shape = F.dyn_shape(data)
         index_shape = F.dyn_shape(index)
         updates_shape = const_utils.generate_updates_shape(data_shape, index_shape, op_type, True)
@@ -855,7 +860,8 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
     tensor_dtype = const_utils.get_index_tensor_dtype(index_dtype)
     if tensor_dtype == const_utils.INT_:
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value_tensor)
-    if const_utils.is_shape_unknown(F.shape(data)):
+
+    if is_shape_unknown(F.shape(data)):
         const_utils.raise_unimplemented_error(
             "Not supported to take the subscript of dynamic shape tensor using Boolean type")
     return _tensor_setitem_by_bool_tensor_with_tensor(data, index, value_tensor)
@@ -909,7 +915,8 @@ def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
             value = _broadcast(value_shape, value)
             return copy_slice(data, value.astype(data.dtype), (start,), (stop,), (step,))
         data_shape = F.shape(data)
-        if const_utils.is_shape_unknown(data_shape):
+
+        if is_shape_unknown(data_shape):
             const_utils.raise_unimplemented_error(
                 "Not supported to take the subscript of dynamic shape tensor slice setitem")
         indices = const_utils.slice2indices(input_slice, data_shape)
@@ -985,7 +992,7 @@ def tensor_setitem_by_number_with_sequence(data, index, value):
 def tensor_setitem_by_number_with_tensor(data, index, value):
     """Assigns the tensor by number with tensor value."""
     data_shape = F.shape(data)
-    if const_utils.is_shape_unknown(data_shape):
+    if is_shape_unknown(data_shape):
         index = Tensor(np.array([index]), mstype.int32)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
     index = const_utils.int_to_index(index, data_shape)
@@ -998,7 +1005,7 @@ def tensor_setitem_by_ellipsis_with_number(data, value):
     """Assigns the tensor by ellipsis with number value."""
     data_shape = F.shape(data)
     data_dtype = F.dtype(data)
-    if const_utils.is_shape_unknown(data_shape):
+    if is_shape_unknown(data_shape):
         value = F.fill(F.dtype(data), (), value)
         return tensor_setitem_by_ellipsis_with_tensor(data, value)
     return F.fill(data_dtype, data_shape, value)
@@ -1009,7 +1016,8 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
     data_shape = F.shape(data)
     data_dtype = F.dtype(data)
     value = value.astype(data_dtype)
-    if const_utils.is_shape_unknown(data_shape):
+
+    if is_shape_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
         return data
@@ -1038,7 +1046,8 @@ def tensor_setitem_by_bool(data, index, value):
         value = const_utils.make_tensor(value, mstype.int32)
     elif isinstance(value, float):
         value = const_utils.make_tensor(value, mstype.float32)
-    if const_utils.is_shape_unknown(data_shape) and index:
+
+    if is_shape_unknown(data_shape) and index:
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
         return data
