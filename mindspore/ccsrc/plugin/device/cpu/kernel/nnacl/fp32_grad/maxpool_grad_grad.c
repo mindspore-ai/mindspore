@@ -9,14 +9,14 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/fp32/maxpool_with_argmax.h"
+#include "nnacl/fp32_grad/maxpool_grad_grad.h"
 
-int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t start, size_t end,
-                      PoolingParameter *param) {
+int MaxPoolGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
+                    PoolingParameter *param) {
   const int channel = param->input_channel_;
   const int input_height = param->input_h_;
   const int input_width = param->input_w_;
@@ -53,13 +53,13 @@ int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t star
     h_start = MSMAX(h_start, 0);
     w_start = MSMAX(w_start, 0);
 
-    int input_start = pos_n * channel * input_height * input_width;
-    int max_idx = pos_c * input_height * input_width + h_start * input_width + w_start;
+    int input_start = pos_n * channel * input_height * input_width + pos_c * input_height * input_width;
+    int max_idx = h_start * input_width + w_start;
     float max_data = input[input_start + max_idx];
 
     for (int h_cur = h_start; h_cur < h_end; ++h_cur) {
       for (int w_cur = w_start; w_cur < w_end; ++w_cur) {
-        int input_idx = pos_c * input_height * input_width + h_cur * input_width + w_cur;
+        int input_idx = h_cur * input_width + w_cur;
         float input_data = input[input_start + input_idx];
         if (input_data > max_data) {
           max_idx = input_idx;
@@ -67,14 +67,13 @@ int MaxPoolWithArgmax(const float *input, float *output, int *index, size_t star
         }
       }
     }
-    output[pos] = max_data;
-    index[pos] = max_idx;
+    output[pos] = grad[input_start + max_idx];
   }
   return NNACL_OK;
 }
 
-int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t start, size_t end,
-                        Pooling3DParameter *param) {
+int MaxPool3DGradGrad(const float *input, const float *grad, float *output, size_t start, size_t end,
+                      Pooling3DParameter *param) {
   PoolingParameter *param_2d = (PoolingParameter *)(param);
   const int channel = param_2d->input_channel_;
   const int input_depth = param->input_d_;
@@ -124,16 +123,15 @@ int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t st
     h_start = MSMAX(h_start, 0);
     w_start = MSMAX(w_start, 0);
 
-    int input_start = pos_n * channel * input_depth * input_height * input_width;
-    int max_idx = pos_c * input_depth * input_height * input_width + d_start * input_height * input_width +
-                  h_start * input_width + w_start;
+    int input_start =
+      pos_n * channel * input_depth * input_height * input_width + pos_c * input_depth * input_height * input_width;
+    int max_idx = d_start * input_height * input_width + h_start * input_width + w_start;
     float max_data = input[input_start + max_idx];
 
     for (int d_cur = d_start; d_cur < d_end; ++d_cur) {
       for (int h_cur = h_start; h_cur < h_end; ++h_cur) {
         for (int w_cur = w_start; w_cur < w_end; ++w_cur) {
-          int input_idx = pos_c * input_depth * input_height * input_width + d_cur * input_height * input_width +
-                          h_cur * input_width + w_cur;
+          int input_idx = d_cur * input_height * input_width + h_cur * input_width + w_cur;
           float input_data = input[input_start + input_idx];
           if (input_data > max_data) {
             max_idx = input_idx;
@@ -142,8 +140,7 @@ int MaxPool3DWithArgmax(const float *input, float *output, int *index, size_t st
         }
       }
     }
-    output[pos] = max_data;
-    index[pos] = max_idx;
+    output[pos] = grad[input_start + max_idx];
   }
   return NNACL_OK;
 }
