@@ -58,13 +58,13 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
     auto args = kernel::AbstractArgsFromCNode(kernel_node);
     auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
     MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
-    // if (!ret) {
-    //   MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
-    // }
-    // if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-    //     kernel::KRET_RESIZE_FAILED) {
-    //   MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
-    // }
+    if (!ret) {
+      MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
+    }
+    if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
+        kernel::KRET_RESIZE_FAILED) {
+      MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
+    }
 
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
