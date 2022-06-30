@@ -32,4 +32,6 @@ mindspore.nn.RReLU
 
    - **TypeError** - `lower` 不是浮点数或整数。
    - **TypeError** - `upper` 不是浮点数或整数。
+   - **TypeError** - `x` 不是Tensor。
+   - **TypeError** - `x` 内的数据类型不是mindspore.float16或mindspore.float32。
    - **ValueError** - `lower` 大于 `upper`。
