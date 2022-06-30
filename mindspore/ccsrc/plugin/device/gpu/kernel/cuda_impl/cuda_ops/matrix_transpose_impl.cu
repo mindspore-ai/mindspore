@@ -30,8 +30,8 @@ __global__ void MatrixTransposeKernel(const T *input, int elements, int row, int
     const int b_stride = b * matrix_size;
     const int r = (pos - b_stride) / col;
     const int c = (pos - b_stride) % col;
-    // For output,  new position is  b_stride + c * col + r.
-    output[b_stride + c * col + r] = input[pos];
+    // For output,  new position is  b_stride + c * row + r.
+    output[b_stride + c * row + r] = input[pos];
   }
 }
 
