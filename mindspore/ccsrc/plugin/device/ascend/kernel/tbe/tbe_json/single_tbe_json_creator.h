@@ -30,16 +30,16 @@ class SingleTbeJsonCreator : public TbeJsonCreator {
  protected:
   bool GenOpListJson(const AnfNodePtr &anf_node, std::vector<nlohmann::json> *op_list_json);
   void GenDataJson(const AnfNodePtr &anf_node, const nlohmann::json &compute_json,
-                   std::vector<nlohmann::json> *op_list_json);
+                   std::vector<nlohmann::json> *op_list_json) const;
   virtual void GenInputDescJson(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc);
   bool AssignInputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &inputs_desc,
                         const std::vector<size_t> &inputs_tensor_num, const std::vector<OpIOInfoPtr> &inputs_ptr,
-                        std::vector<nlohmann::json> *inputs_json);
+                        std::vector<nlohmann::json> *inputs_json) const;
   void GenOutputDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, nlohmann::json *output_desc);
   bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   bool AssignOutputsJson(const AnfNodePtr &anf_node, const std::vector<nlohmann::json> &outputs_desc,
                          const std::vector<size_t> &outputs_tensor_num, const std::vector<OpIOInfoPtr> &outputs_ptr,
-                         std::vector<nlohmann::json> *outputs_json);
+                         std::vector<nlohmann::json> *outputs_json) const;
   void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 };
 class CheckTbeJsonCreator : public SingleTbeJsonCreator {

@@ -26,20 +26,20 @@ namespace mindspore {
 namespace kernel {
 class StreamSwitchKernel : public RtKernel {
  public:
-  StreamSwitchKernel();
+  StreamSwitchKernel() = default;
   ~StreamSwitchKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              void *stream_ptr) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &, uint32_t stream_id) override;
 
  private:
-  rtCondition_t cond_;
-  uint32_t true_stream_index_;
-  rtSwitchDataType_t data_type_;
+  rtCondition_t cond_{RT_EQUAL};
+  uint32_t true_stream_index_{0};
+  rtSwitchDataType_t data_type_{RT_SWITCH_INT32};
 };
 
 MS_REG_RTKERNEL(streamswitch, StreamSwitchKernel);

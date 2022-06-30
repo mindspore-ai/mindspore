@@ -45,8 +45,8 @@ class ReshapeKernelMod : public HostKernelMod {
   }
 
  private:
-  void Execute();
-  void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void Execute() const;
+  void Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) const;
 };
 MS_HOST_REG_KERNEL(Reshape, ReshapeKernelMod);
 }  // namespace kernel

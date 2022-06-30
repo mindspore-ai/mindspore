@@ -26,8 +26,6 @@ using EventRecordTaskInfoPtr = std::shared_ptr<EventRecordTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
-SendKernel::SendKernel() { event_id_ = 0; }
-
 SendKernel::~SendKernel() {}
 
 bool SendKernel::Init(const AnfNodePtr &anf_node) {

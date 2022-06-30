@@ -66,6 +66,23 @@ void DynamicTbeKernelMod::SyncData() {
   }
 }
 
+void DynamicTbeKernelMod::GenFuncStub() {
+  if (func_stub_ == nullptr && handle_ == nullptr) {
+    MS_EXCEPTION_IF_NULL(kernel_pack_);
+    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_, &origin_key_);
+    if (kernel_pack_->kernel_json_info().has_kernel_list) {
+      if (func_stub != 1) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+    } else {
+      if (func_stub == 0) {
+        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
+      }
+      func_stub_ = reinterpret_cast<void *>(func_stub);
+    }
+  }
+}
+
 int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs,
                                 const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -108,21 +125,7 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
     return 0;
   }
 
-  // gen FuncStub
-  if (func_stub_ == nullptr && handle_ == nullptr) {
-    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_, &origin_key_);
-    if (kernel_pack_->kernel_json_info().has_kernel_list) {
-      if (func_stub != 1) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-      }
-    } else {
-      if (func_stub == 0) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-      }
-      func_stub_ = reinterpret_cast<void *>(func_stub);
-    }
-  }
-
+  GenFuncStub();
   // start compute tiling
   optiling::utils::OpRunInfo op_run_info_v2(-1, true, 0);
   MS_LOG(INFO) << "Start compute tiling of: " << cnode->fullname_with_scope();
@@ -147,7 +150,7 @@ int DynamicTbeKernelMod::Resize(const BaseOperatorPtr &base_operator, const std:
   return 0;
 }
 
-std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) {
+std::string DynamicTbeKernelMod::ParseCompileJson(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
 
   bool get_flag = true;
@@ -305,21 +308,7 @@ bool DynamicTbeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const st
 }
 
 void DynamicTbeKernelMod::InitAtomicOps(const optiling::utils::OpRunInfo &op_info) {
-  // gen FuncStub
-  if (func_stub_ == nullptr && handle_ == nullptr) {
-    MS_EXCEPTION_IF_NULL(kernel_pack_);
-    auto func_stub = KernelManager::GenFuncStub(*kernel_pack_, false, &block_dim_, &handle_, &origin_key_);
-    if (kernel_pack_->kernel_json_info().has_kernel_list) {
-      if (func_stub != 1) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-      }
-    } else {
-      if (func_stub == 0) {
-        MS_LOG(EXCEPTION) << "GenFuncStub failed.";
-      }
-      func_stub_ = reinterpret_cast<void *>(func_stub);
-    }
-  }
+  GenFuncStub();
   AscendKernelMod::UpdateOutputSizeList();
   block_dim_ = op_info.GetBlockDim();
   std::vector<int64_t> workspace_size_list;
