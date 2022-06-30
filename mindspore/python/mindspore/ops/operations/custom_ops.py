@@ -83,7 +83,9 @@ def _compile_aot(file):
     include_file = "-I{}include/api/".format(res_path[:find_pos])
 
     file_name = file.split('/')[-1]
+    file_folder = file[:file.rindex('/')]
     func_path = cache_path + file_name + ".so"
+    include_file = "{} -I{}".format(include_file, file_folder)
 
     if not os.path.exists(func_path):
 
@@ -725,7 +727,6 @@ class Custom(ops.PrimitiveWithInfer):
                 for i, item in enumerate(reg_info["attr"]):
                     if isinstance(item, dict) and item.get("value") is not None:
                         self.add_prim_attr(reg_info["attr"][i]["name"], reg_info["attr"][i]["value"])
-                reg_info["attr"] = []
         return reg_info
 
     def _get_target(self, reg_info):

@@ -34,6 +34,9 @@ CustomAOTCpuKernelMod::~CustomAOTCpuKernelMod() {
   if (handle_ != nullptr) {
     dlclose(handle_);
   }
+
+  attrs_.DestructKernelData();
+
 #endif
 }
 
@@ -86,9 +89,64 @@ void CustomAOTCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                        [](auto &v) { return &v[0]; });
   (void)std::transform(std::begin(type_list_), std::end(type_list_), std::back_inserter(type_pointer_list_),
                        [](auto &str) { return str.c_str(); });
+  attrs_.SetKernelNode(kernel_node);
+
+#if !defined(_WIN32) && !defined(_WIN64)
+  if (!handle_) {
+    handle_ = dlopen(file_path_.c_str(), RTLD_LAZY | RTLD_LOCAL);
+    if (!handle_) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, dlopen file '" << file_path_
+                    << "' should be successful, but error occurs! Error message is: " << dlerror();
+      return;
+    }
+  }
+  init_func_ = reinterpret_cast<std::add_pointer<int(int *, int64_t **, const char **, AotExtra *)>::type>(
+    dlsym(handle_, (func_name_ + "Init").c_str()));
+  if (init_func_ != nullptr) {
+    // Init func exist in the custom aot file
+    // Call this init func to set custom op attrs_
+    int ret = 0;
+    try {
+      ret = init_func_(&ndims_[0], &shapes_[0], &type_pointer_list_[0], (&attrs_));
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' on CPU, operator failed when executing user defined file "
+                    << file_path_ << "! "
+                    << "Error message is " << e.what();
+      return;
+    }
+
+    if (ret != 0) {
+      MS_LOG(EXCEPTION) << "Return value from CPU AOT kernel(" << file_path_ << ")'s function(" << func_name_ << ") is "
+                        << ret << ". "
+                        << "Any return value not equal to 0 will be treated as user defined error code and we will "
+                           "terminate execution. If termination is not your purpose, please set return value to 0.";
+    }
+  }
+#else
+  MS_LOG(EXCEPTION) << "Custom AOT Operator doesn't support Windows currently";
+#endif
+  InitSizeLists();
 }
 
-bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+void CustomAOTCpuKernelMod::InitSizeLists() {
+  for (size_t i = 0; i < num_input_; i++) {
+    size_t this_size =
+      LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+    this_size *= GetDtypeNbyte(type_list_[i]);
+    input_size_list_.push_back(this_size);
+  }
+  for (size_t i = num_input_; i < (num_input_ + num_output_); i++) {
+    size_t this_size =
+      LongToSize(std::accumulate(shape_list_[i].begin(), shape_list_[i].end(), 1, std::multiplies<int64_t>()));
+
+    this_size *= GetDtypeNbyte(type_list_[i]);
+    output_size_list_.push_back(this_size);
+  }
+  workspace_size_list_.clear();
+  workspace_size_list_ = attrs_.WorkSpace();
+}
+
+bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs) {
   std::vector<void *> params;
 
@@ -97,6 +155,10 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   }
   for (size_t i = 0; i < num_output_; i++) {
     params.push_back(GetDeviceAddress<void>(outputs, i));
+  }
+
+  for (size_t i = 0; i < attrs_.WorkSpace().size(); i++) {
+    params.push_back(GetDeviceAddress<void>(workspace, i));
   }
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -124,7 +186,8 @@ bool CustomAOTCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     if (nparam == 0) {
       ret = aot_func_(0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
     } else {
-      ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], nullptr, nullptr);
+      ret = aot_func_(nparam, &params[0], &ndims_[0], &shapes_[0], &type_pointer_list_[0], nullptr,
+                      reinterpret_cast<void *>(&attrs_));
     }
   } catch (const std::exception &e) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' on CPU, operator failed when executing user defined file "
