@@ -1,4 +1,4 @@
-mindspore.ops.matmul
+mindspore.ops.MatMul
 =====================
 
 .. py:class:: mindspore.ops.MatMul(transpose_a=False, transpose_b=False)
