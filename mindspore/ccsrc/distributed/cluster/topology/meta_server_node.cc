@@ -371,26 +371,27 @@ void MetaServerNode::UpdateTopoState() {
         if (nodes_.size() == 0) {
           topo_state_ = TopoState::kFinished;
         }
+      }
 
-        // Update the state of compute graph nodes.
-        size_t abnormal_node_num = 0;
-        for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
-          auto node_id = iter->first;
-          auto node_info = iter->second;
-          MS_EXCEPTION_IF_NULL(node_info);
-          time_t now = time(&now);
-          auto elapsed = difftime(now, node_info->last_update);
-          if (elapsed > node_timeout_) {
-            node_info->state = NodeState::kTimeout;
-            ++abnormal_node_num;
-            MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
-          }
-        }
-        abnormal_node_num_ = abnormal_node_num;
-        if (abnormal_node_num_ > 0 && !recovery::IsEnableRecovery()) {
-          MS_LOG(EXCEPTION) << "The total number of timed out node is " << abnormal_node_num_;
+      // Update the state of compute graph nodes.
+      size_t abnormal_node_num = 0;
+      for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+        auto node_id = iter->first;
+        auto node_info = iter->second;
+        MS_EXCEPTION_IF_NULL(node_info);
+        time_t now = time(&now);
+        auto elapsed = difftime(now, node_info->last_update);
+        if (elapsed > node_timeout_) {
+          node_info->state = NodeState::kTimeout;
+          ++abnormal_node_num;
+          MS_LOG(ERROR) << "The node: " << node_id << " is timed out.";
         }
       }
+      abnormal_node_num_ = abnormal_node_num;
+      if (abnormal_node_num_ > 0 && !recovery::IsEnableRecovery()) {
+        MS_LOG(EXCEPTION) << "The total number of timed out node is " << abnormal_node_num_;
+      }
+
       nodes_mutex_.unlock();
 
       static const size_t interval = 3;
