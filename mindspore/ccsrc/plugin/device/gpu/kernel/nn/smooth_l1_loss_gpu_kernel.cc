@@ -85,6 +85,12 @@ int SmoothL1LossGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const
     return KRET_RESIZE_FAILED;
   }
   tensor_size_ = std::accumulate(predict_shape.begin(), predict_shape.end(), int64_t(1), std::multiplies<int64_t>());
+
+  // malloc double space for tmp_loss, prevents float overflow.
+  if (reduction_ != SmoothL1LossReductionMode::NONE) {
+    this->workspace_size_list_.clear();
+    this->workspace_size_list_.push_back(sizeof(double));
+  }
   return KRET_OK;
 }
 
@@ -97,14 +103,18 @@ bool SmoothL1LossGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &input
   const auto *predict_addr = reinterpret_cast<T *>(inputs[0]->addr);
   const auto *target_addr = reinterpret_cast<T *>(inputs[1]->addr);
   T *result_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  if (this->reduction_ == SmoothL1LossReductionMode::MEAN || this->reduction_ == SmoothL1LossReductionMode::SUM) {
+  if (this->reduction_ != SmoothL1LossReductionMode::NONE) {
+    double *tmp_result_addr = reinterpret_cast<double *>(workspace[0]->addr);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
-      cudaMemsetAsync(outputs[0]->addr, false, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      cudaMemsetAsync(workspace[0]->addr, false, workspace[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemsetAsync failed in SmoothL1LossGpuKernelMod::Launch.");
+    SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, tmp_result_addr, device_id_,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
+  } else {
+    SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, nullptr, device_id_,
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
   }
 
-  SmoothL1Loss(reduction_, tensor_size_, beta_, predict_addr, target_addr, result_addr, device_id_,
-               reinterpret_cast<cudaStream_t>(stream_ptr));
   return true;
 }
 
