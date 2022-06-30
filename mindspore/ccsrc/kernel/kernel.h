@@ -194,6 +194,8 @@ class KernelTensor {
   KernelTensor() = default;
   ~KernelTensor() = default;
 
+  bool IsDynamicShape() const;
+  size_t GetSizeInBytes() const;
   AddressPtr GetData() const { return data_; }
   TypeId GetDtype() const;
   mindspore::Format GetFormat() const { return tensor_info_.format; }
@@ -221,6 +223,7 @@ class KernelTensor {
  private:
   TensorInfo tensor_info_;
   AddressPtr data_{nullptr};
+  string GetAbstractName() const;
 };
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 

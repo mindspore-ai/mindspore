@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-#include "plugin/device/cpu/kernel/roi_align_grad_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
 #include <memory>
+#include "plugin/device/cpu/kernel/roi_align_grad_cpu_kernel.h"
+#include "plugin/device/cpu/kernel/atomic_add.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {

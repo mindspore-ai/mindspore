@@ -2628,11 +2628,16 @@ class PSROIPoolingGrad(Primitive):
         """Initialize PSROIPoolingGrad."""
         self.init_prim_io_names(inputs=["x", "rois"], outputs=['y'])
         validator.check_value_type("input_size", input_size, [int, tuple], self.name)
-        validator.check_value_type("spatial_scale", spatial_scale, [float], self.name)
-        validator.check_value_type("group_size", group_size, [int], self.name)
-        validator.check_value_type("output_dim", output_dim, [int], self.name)
+        validator.check_positive_float(spatial_scale, "spatial_scale", self.name)
+        validator.check_positive_int(group_size, "group_size", self.name)
+        validator.check_positive_int(output_dim, "output_dim", self.name)
 
-        self.input_size = list(input_size)
+        if isinstance(input_size, int):
+            self.input_size = [input_size, input_size]
+        else:
+            self.input_size = list(input_size)
+
+        validator.check_positive_int_sequence(self.input_size, "input_size", self.name)
         self.spatial_scale = spatial_scale
         self.group_size = group_size
         self.output_dim = output_dim
