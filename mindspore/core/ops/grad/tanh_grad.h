@@ -31,10 +31,10 @@ class MIND_API TanhGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TanhGrad);
   /// \brief Constructor.
-  TanhGrad() : BaseOperator(kNameTanhGrad) { InitIOName({"x"}, {"output"}); }
+  TanhGrad() : BaseOperator(kNameTanhGrad) { InitIOName({"y", "dy"}, {"z"}); }
   /// \brief Init.
 };
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_TanhGRAD_H_
+#endif  // MINDSPORE_CORE_OPS_TANH_GRAD_H_

@@ -152,7 +152,7 @@ std::map<std::string, std::vector<std::pair<KernelAttr, EltWiseCpuKernelMod::Elt
     {kSigmoid,
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
-    {kTanh,
+    {prim::kPrimTanh->name(),
      {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
        &EltWiseCpuKernelMod::LaunchKernel}}},
     {kSoftplus,
@@ -171,8 +171,6 @@ MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReLU6,
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Exp, []() { return std::make_shared<EltWiseCpuKernelMod>(kExp); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Sigmoid,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSigmoid); });
-MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Tanh,
-                                 []() { return std::make_shared<EltWiseCpuKernelMod>(kTanh); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Softplus,
                                  []() { return std::make_shared<EltWiseCpuKernelMod>(kSoftplus); });
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, Mish,

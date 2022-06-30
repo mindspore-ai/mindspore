@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -659,9 +659,15 @@ def get_bprop_softsign(self):
 def get_bprop_tanh(self):
     """Grad definition for `Tanh` operation."""
     tanh_grad = G.TanhGrad()
+    conj = P.Conj()
 
     def bprop(x, out, dout):
-        dx = tanh_grad(out, dout)
+        if x.dtype in (mstype.complex64, mstype.complex128):
+            dout = conj(dout)
+            dx = tanh_grad(out, dout)
+            dx = conj(dx)
+        else:
+            dx = tanh_grad(out, dout)
         return (dx,)
 
     return bprop
