@@ -284,16 +284,3 @@ def test_compile_tanhshrink():
     net = NetTanhshrink()
     input_data = Tensor(np.array([1, 2, 3, 2, 1]).astype(np.float16))
     _cell_graph_executor.compile(net, input_data)
-
-
-def test_invalid_inputs_tanhshrink():
-    """
-    Feature: Test Tanhshrink
-    Description: Test the functionality of tanhshrink
-    Expectation: success
-    """
-    # case 1:input is not float16 or float32
-    with pytest.raises(TypeError):
-        net = NetTanhshrink()
-        input_data = Tensor(np.array([1, 2, 3, 2, 1]).astype(np.float64))
-        net(input_data)
