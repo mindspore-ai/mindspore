@@ -820,14 +820,14 @@ class MS_CORE_API Parameter final : public ANode {
   /// \return True if this Parameter has a dynamic shape, otherwise false.
   bool has_dynamic_shape() const { return has_dynamic_shape_; }
 
-  /// \brief Set groups attr in FracZ format.
+  /// \brief Set groups attr in FRACTAL_Z format.
   ///
-  /// \param[in] fracz_group Groups attr in FracZ format.
+  /// \param[in] fracz_group Groups attr in FRACTAL_Z format.
   void set_fracz_group(int64_t fracz_group) { format_attrs_.fracz_group = fracz_group; }
 
-  /// \brief Get groups attr in FracZ format.
+  /// \brief Get groups attr in FRACTAL_Z format.
   ///
-  /// \return Groups attr in FracZ format.
+  /// \return Groups attr in FRACTAL_Z format.
   int64_t fracz_group() const { return format_attrs_.fracz_group; }
 
   /// \brief Set input_size attr in FracNZ_RNN or ND_RNN_Bias format.
@@ -979,9 +979,9 @@ class MS_CORE_API ValueNode final : public ANode {
   /// \param[in] group The count of groups using this ValueNode.
   void set_fracz_group(int64_t group) { format_attr_.fracz_group = group; }
 
-  /// \brief Get groups attr in FracZ format.
+  /// \brief Get groups attr in FRACTAL_Z format.
   ///
-  /// \return Groups attr in FracZ format.
+  /// \return Groups attr in FRACTAL_Z format.
   int64_t fracz_group() const { return format_attr_.fracz_group; }
 
   /// \brief Set the count of graphs using this ValueNode.

@@ -144,11 +144,8 @@ std::string TbeAdapter::FormatPass(const std::string &format, const size_t &orig
       return kOpFormat_NCHW;
     }
     return origin_shape_size == kNCHWShapeSize ? kOpFormat_NCHW : kOpFormat_ND;
-  } else if (format == kOpFormat_FRAC_Z) {
-    return kOpFormat_FRACTAL_Z;
-  } else {
-    return format;
   }
+  return format;
 }
 
 bool TbeAdapter::GetSpecDataInput(const FusionScopeInfo &fusion_scope_info,
