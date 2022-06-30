@@ -21,6 +21,7 @@ from contextlib import contextmanager
 import pytest
 import numpy as np
 import mindspore.nn as nn
+import mindspore as ms
 from mindspore import Tensor, ms_function, context
 from tests.security_utils import security_off_wrap
 
@@ -421,3 +422,31 @@ def test_print_dict():
     patterns = {"dict_x1: {'one': 1, 'two': 2, 'three': 3}\n"
                 "dict_x2: {'one': 1, 'two': 2}\n"}
     check_output(cap.output, patterns)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_print_exception():
+    """
+    Feature: graph print.
+    Description: Test print.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def construct(self, input_x, input_y):
+            tensor_sum = input_x + input_y
+            x = np.array([1, 2, 3, 4, 5])
+            y = np.array([1, 2, 3, 4, 5])
+            np_sum = x + y
+            print("np_sum: ", np_sum, "tensor_sum: ", tensor_sum)
+            return tensor_sum, ms.Tensor(np_sum)
+
+    with pytest.raises(ValueError,
+                       match="the inputs should be constant, but found variable 'tensor_sum' to be nonconstant."):
+        ms.set_context(mode=ms.GRAPH_MODE)
+        x = ms.Tensor(np.array([1, 2, 3, 4, 5]))
+        y = ms.Tensor(np.array([1, 2, 3, 4, 5]))
+        net = Net()
+        net(x, y)
