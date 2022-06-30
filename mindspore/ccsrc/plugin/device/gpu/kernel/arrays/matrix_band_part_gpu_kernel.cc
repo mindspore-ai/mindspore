@@ -55,8 +55,8 @@ void MatrixBandPartGpuKernelMod::BroadcastShape(const std::vector<size_t> &x_sha
   broadcast_lower_shape_.resize(kMaxDims, 1);
   broadcast_upper_shape_.resize(kMaxDims, 1);
   broadcast_output_shape_.resize(kMaxDims, 1);
-  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape);
-  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape);
+  auto expanded_lower_shape = ops::GetExpandedShape<size_t>(lower_shape, output_shape.size());
+  auto expanded_upper_shape = ops::GetExpandedShape<size_t>(upper_shape, output_shape.size());
 
   for (size_t i = 0; i < output_shape.size(); i++) {
     broadcast_output_shape_[i] = output_shape[i];

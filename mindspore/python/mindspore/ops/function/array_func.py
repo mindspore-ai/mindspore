@@ -140,14 +140,12 @@ def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
-    The shapes of `x`, `lower` and `upper` need to be the same or broadcast.
-
     Args:
         x (Tensor): Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
             The data type must be float16, float32, float64, int32 or int64.
-        lower (Union[int, Tensor]): Number of subdiagonals to keep. The data type must be int32 or int64.
+        lower (int): Number of subdiagonals to keep. The data type must be int32 or int64.
             If negative, keep entire lower triangle.
-        upper (Union[int, Tensor]): Number of superdiagonals to keep. The data type must be int32 or int64.
+        upper (int): Number of superdiagonals to keep. The data type must be int32 or int64.
             If negative, keep entire upper triangle.
 
     Returns:
@@ -160,7 +158,6 @@ def matrix_band_part(x, lower, upper):
         TypeError: If dtype of `lower` is neither int32 nor a int64.
         TypeError: If dtype of `upper` is neither int32 nor a int64.
         ValueError: If the shape of `x` is not greater than or equal to 2D.
-        ValueError: If the shapes of `x`, `lower` and `upper` could not be broadcast.
 
     Supported Platforms:
         ``GPU`` ``CPU``

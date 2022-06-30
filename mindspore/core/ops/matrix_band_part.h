@@ -25,34 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixBandPart = "MatrixBandPart";
-constexpr int64_t kXMinShapeSize = 2;
 
 template <typename T>
-std::vector<T> GetExpandedShape(const std::vector<T> &shape) {
-  if (shape.size() == 0) {
-    return {1, 1};
-  }
-  size_t expanded_dim_num = 0;
-  size_t visit_count = 0;
-  for (auto it = shape.end() - 1; it >= shape.begin(); it--) {
-    visit_count++;
-    if (*it != 1 && visit_count == 1) {
-      expanded_dim_num += kXMinShapeSize;
-      break;
-    }
-    if (*it != 1) {
-      expanded_dim_num++;
-    }
-    if (it == shape.begin() || visit_count == kXMinShapeSize) {
-      break;
-    }
-  }
-  if (shape.size() < kXMinShapeSize && expanded_dim_num < kXMinShapeSize) {
-    expanded_dim_num++;
-  }
-  auto expanded_shape = shape;
-  for (size_t i = 0; i < expanded_dim_num; ++i) {
-    expanded_shape.emplace_back(1);
+std::vector<T> GetExpandedShape(const std::vector<T> &shape, const size_t expended_rank) {
+  std::vector<T> expanded_shape;
+  expanded_shape.resize(expended_rank, 1);
+  for (size_t i = 0; i < shape.size(); i++) {
+    expanded_shape[i] = shape[i];
   }
   return expanded_shape;
 }
