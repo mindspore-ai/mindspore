@@ -60,6 +60,7 @@ using CuptiGetTimestampFunc = CUptiResult (*)(uint64_t *timestamp);
 using CuptiGetResultStringFunc = CUptiResult (*)(CUptiResult result, const char **str);
 using CuptiGetStreamIdFunc = CUptiResult (*)(CUcontext context, CUstream stream, uint32_t *streamId);
 using CuptiGetDeviceIdFunc = CUptiResult (*)(CUcontext context, uint32_t *deviceId);
+using CuptiFinalizeFunc = CUptiResult (*)();
 
 CUptiResult CuptiSubscribe(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFunc callback, void *userdata) {
   static auto func_ptr = reinterpret_cast<CuptiSubscribeFunc>(GetCUPTIFunc("cuptiSubscribe"));
@@ -69,6 +70,11 @@ CUptiResult CuptiSubscribe(CUpti_SubscriberHandle *subscriber, CUpti_CallbackFun
 CUptiResult CuptiEnableDomain(uint32_t enable, CUpti_SubscriberHandle subscriber, CUpti_CallbackDomain domain) {
   static auto func_ptr = reinterpret_cast<CuptiEnableDomainFunc>(GetCUPTIFunc("cuptiEnableDomain"));
   return func_ptr(enable, subscriber, domain);
+}
+
+CUptiResult CuptiFinalize() {
+  static auto func_ptr = reinterpret_cast<CuptiFinalizeFunc>(GetCUPTIFunc("cuptiFinalize"));
+  return func_ptr();
 }
 
 CUptiResult CuptiActivityEnable(CUpti_ActivityKind kind) {

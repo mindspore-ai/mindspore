@@ -491,6 +491,7 @@ void GPUProfiler::StopCUPTI() {
       CHECK_CUPTI_RET_WITH_ERROR(CuptiActivityDisable(*it), "CuptiActivityDisable");
     }
     subscriber_ = nullptr;
+    CHECK_CUPTI_RET_WITH_ERROR(CuptiFinalize(), "CuptiFinalize");
   }
 }
 

@@ -78,7 +78,7 @@ class DataPreProcessParser:
                               'run_end']
     _ms_unit = 1000
     _us_unit = 100  # Convert 10ns to 1us.
-    _task_id_threshold = 25000
+    _task_id_threshold = 65536
 
     def __init__(self, input_path, output_filename, op_task_dict):
         self._input_path = input_path

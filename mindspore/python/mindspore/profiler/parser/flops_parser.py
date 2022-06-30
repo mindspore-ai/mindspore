@@ -43,7 +43,7 @@ class FlopsParser:
     # If the task id is less than the task id threshold,
     # the combination of task id and Stream id represents one operator,
     # else the task id represents one operator.
-    _task_id_threshold = 25000
+    _task_id_threshold = 65536
 
     def __init__(self, input_dir, output_dir, op_task_dict, device_id, rank_id, is_training_mode_flag=True):
         self._input_dir = input_dir
