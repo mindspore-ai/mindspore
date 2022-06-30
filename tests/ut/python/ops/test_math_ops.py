@@ -530,6 +530,15 @@ class Log10Net(nn.Cell):
         return self.log10(x)
 
 
+class FracNet(nn.Cell):
+    def __init__(self):
+        super(FracNet, self).__init__()
+        self.frac = ops.frac
+
+    def construct(self, x):
+        return self.frac(x)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -655,6 +664,11 @@ test_case_math_ops = [
         'block': Log10Net(),
         'desc_inputs': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))],
         'desc_bprop': [Tensor(np.array([[1.0, 2.0, 4.0]], np.float32))]}),
+    ('Frac', {
+        'block': FracNet(),
+        'desc_inputs': [Tensor(np.array([2, 4.2, -2.5], np.float32))],
+        'desc_bprop': [Tensor(np.array([2, 4.2, -2.5], np.float32))],
+    }),
 ]
 
 test_case_lists = [test_case_math_ops]

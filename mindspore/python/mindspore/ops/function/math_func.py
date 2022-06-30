@@ -3510,6 +3510,37 @@ def rad2deg(x):
     return out
 
 
+def frac(x):
+    """
+    Calculates the fractional part of each element in the input
+
+    Inputs:
+        - x (Tensor) - x is a tensor.
+
+    Outputs:
+        Tensor, has the same shape and type as input.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import mindspore.ops as ops
+        >>> x = Tensor([2, 4.2, -2.5], mstype.float16)
+        >>> output = frac(x)
+        >>> print(output)
+        [ 0.      0.1992 -0.5   ]
+    """
+    frac_op = P.Mod()
+    return frac_op(x, 1)
+
+
 #####################################
 # Reduction Operation Functions.
 #####################################
@@ -4458,8 +4489,8 @@ def log2(x):
 
     x_dtype = dtype_op(x)
     denominator = log_(_make_tensor(2, x_dtype))
-    frac = log_(x)
-    output = frac / denominator
+    frac_log = log_(x)
+    output = frac_log / denominator
     return output
 
 
@@ -4545,8 +4576,8 @@ def log10(x):
 
     x_dtype = dtype_op(x)
     denominator = log_(_make_tensor(10, x_dtype))
-    frac = log_(x)
-    output = frac / denominator
+    frac_log = log_(x)
+    output = frac_log / denominator
     return output
 
 
@@ -4676,5 +4707,6 @@ __all__ = [
     'xlogy',
     'log10',
     'approximate_equal',
+    'frac'
 ]
 __all__.sort()
