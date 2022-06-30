@@ -16,9 +16,9 @@ mindspore.ops.isclose
 
     - **x1** (Tensor) - 对比的第一个输入，支持的类型有float32，float16，int32。
     - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
-    - **rtol** (Tensor) - 相对容忍度。默认值：1e-05。
-    - **atol** (Tensor) - 绝对容忍度。默认值：1e-08。
-    - **equal_nan** (bool, optional) - IsNan的输入，任意维度的Tensor。
+    - **rtol** (float, optional) - 相对容忍度。默认值：1e-05。
+    - **atol** (float, optional) - 绝对容忍度。默认值：1e-08。
+    - **equal_nan** (bool, optional) - 若为True，则两个NaN被视为相同。默认值：False。
 
     **返回：**
 

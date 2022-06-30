@@ -3,7 +3,7 @@ mindspore.ops.scatter_add
 
 .. py:function:: mindspore.ops.scatter_add(input_x, indices, updates)
 
-    根据指定更新值和输入索引通过加法运算更新输入数据的值。
+    根据指定的更新值和输入索引，进行加法运算更新输入Tensor的值，返回更新后的Tensor。当同一索引有不同更新值时，更新的结果将是累积的加法的结果。
 
     **参数：**
 

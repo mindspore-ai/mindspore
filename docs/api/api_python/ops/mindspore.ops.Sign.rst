@@ -2,7 +2,7 @@
 ===================
 
 .. py:class:: mindspore.ops.Sign
-    
+
     符号函数，计算输入Tensor元素的执行符号。
 
     .. math::

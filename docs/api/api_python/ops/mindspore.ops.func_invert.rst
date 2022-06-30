@@ -3,7 +3,7 @@ mindspore.ops.invert
 
 .. py:function:: mindspore.ops.invert(x)
 
-    按位翻转x张量。
+    对输入逐元素按位翻转。
 
     .. math::
         out_i = ~x_{i}

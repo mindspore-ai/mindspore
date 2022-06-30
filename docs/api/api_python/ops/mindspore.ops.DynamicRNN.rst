@@ -29,7 +29,7 @@ mindspore.ops.DynamicRNN
     - **cell_type** (str) - 指定Cell类型。当前仅支持LSTM。默认值：LSTM。
     - **direction** (str) - 指定单向或双向。默认值：UNIDIRECTIONAL。当前仅支持UNIDIRECTIONAL。
     - **cell_depth** (int) - 指定cell的层数。默认值：1。
-    - **use_peephole** (bool) - 是否使用"peephole connections"。默认值：FaLse。
+    - **use_peephole** (bool) - 是否使用"peephole connections"。默认值：False。
     - **keep_prob** (float) - 指定保留率，即每个元素被保留的概率。1.0表示所有元素全部保留。默认值：1.0。
     - **cell_clip** (float) - 将Cell裁剪到指定的值，负值表示禁用。默认值：-1.0。
     - **num_proj** (int) - 投影矩阵的输出维数。默认值：0。

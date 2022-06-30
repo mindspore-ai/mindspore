@@ -5,8 +5,6 @@ mindspore.ops.softsign
 
     Softsign激活函数。
 
-    按元素计算Softsign激活函数。
-
     Softsign函数定义为：
 
     .. math::

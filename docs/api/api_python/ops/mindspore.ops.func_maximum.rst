@@ -3,7 +3,7 @@ mindspore.ops.maximum
 
 .. py:function:: mindspore.ops.maximum(x, y)
 
-    计算输入Tensor的最大值。
+    逐元素计算两个输入Tensor中的最大值。
 
     .. note::
         - 输入 `x` 和 `y` 遵循隐式类型转换规则，使数据类型保持一致。
