@@ -548,7 +548,6 @@ Parameter操作算子
     mindspore.ops.clip_by_value
     mindspore.ops.core
     mindspore.ops.count_nonzero
-    mindspore.ops.cummin
     mindspore.ops.derivative
     mindspore.ops.dot
     mindspore.ops.grad

@@ -583,18 +583,14 @@ def cumsum(x, axis=None, dtype=None):
 
 def cummin(x, axis):
     """
-    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-    each maximum value.
+    Returns the cumulative minimum of elements and the index.
     """
     return F.cummin(x, axis)
 
 
 def cummax(x, axis):
     """
-    Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-    is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-    each maximum value.
+    Returns the cumulative maximum of elements and the index.
     """
     return F.cummax(x, axis)
 

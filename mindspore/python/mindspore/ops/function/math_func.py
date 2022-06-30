@@ -3648,7 +3648,6 @@ def cummax(x, axis):
         >>> import mindspore.ops as ops
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = ops.cummax(x, axis=0)
-        >>> print(output)
         >>> print(output[0])
         [[ 3.  4.  6. 10.]
          [ 3.  6.  7. 10.]
