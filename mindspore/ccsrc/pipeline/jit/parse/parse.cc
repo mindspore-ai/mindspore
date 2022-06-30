@@ -1515,9 +1515,10 @@ AnfNodePtr Parser::ProcessBoolOpValueList(const FunctionBlockPtr &block, const p
     b1->func_graph()->set_output(rest_node);
     b2->func_graph()->set_output(test_node);
 
-    // Interpret node will be converted to scalar, no need to convert to boolean.
-    auto cond_node =
-      IsPrimitiveCNode(test_node, prim::kPrimPyInterpret) ? test_node : block->ForceToBoolNode(test_node);
+    AnfNodePtr cond_node = block->ForceToBoolNode(test_node);
+    UpdateInterpretForUserNode(cond_node, test_node);
+    cond_node = HandleInterpret(block, cond_node, first);
+
     auto switch_app =
       block_fg->NewCNodeInOrder({NewValueNode(prim::kPrimSwitch), cond_node, NewValueNode(true_block->func_graph()),
                                  NewValueNode(false_block->func_graph())});
@@ -1841,6 +1842,7 @@ FunctionBlockPtr Parser::ParseIf(const FunctionBlockPtr &block, const py::object
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
   condition_node = HandleInterpret(block, condition_node, test_node);
+
   AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
   UpdateInterpretForUserNode(bool_node, condition_node);
   bool_node = HandleInterpret(block, bool_node, test_node);
@@ -2033,7 +2035,7 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
 }
 
 AnfNodePtr Parser::ConvertInterpretIterNodeToList(const FunctionBlockPtr &block, const AnfNodePtr &iter_node,
-                                                  const py::object iter_obj) {
+                                                  const py::object &iter_obj) {
   // For interpret iter_node, convert it to list. xs --> list(xs).
   py::object iter_id = python_adapter::GetPyObjAttr(iter_obj, "id");
   if (!py::isinstance<py::none>(iter_id)) {
@@ -2316,9 +2318,10 @@ AnfNodePtr Parser::ParseIfExp(const FunctionBlockPtr &block, const py::object &n
   MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
-  condition_node = HandleInterpret(block, condition_node, test_node);
-  AnfNodePtr bool_node =
-    IsPrimitiveCNode(condition_node, prim::kPrimPyInterpret) ? condition_node : block->ForceToBoolNode(condition_node);
+
+  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  UpdateInterpretForUserNode(bool_node, condition_node);
+  bool_node = HandleInterpret(block, bool_node, test_node);
 
   FunctionBlockPtr true_block = nullptr;
   FunctionBlockPtr false_block = nullptr;
@@ -2976,11 +2979,13 @@ FunctionBlockPtr Parser::MakeAssertErrorBlock(const FunctionBlockPtr &block, con
 //     raise AssertionError(arguments)
 FunctionBlockPtr Parser::ParseAssert(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Assert";
+  MS_EXCEPTION_IF_NULL(block);
   py::object test_node = python_adapter::GetPyObjAttr(node, "test");
   AnfNodePtr condition_node = ParseExprNode(block, test_node);
-  condition_node = HandleInterpret(block, condition_node, test_node);
-  MS_EXCEPTION_IF_NULL(block);
-  CNodePtr bool_node = block->ForceToBoolNode(condition_node);
+
+  AnfNodePtr bool_node = block->ForceToBoolNode(condition_node);
+  UpdateInterpretForUserNode(bool_node, condition_node);
+  bool_node = HandleInterpret(block, bool_node, test_node);
 
   FunctionBlockPtr true_block = MakeFunctionBlock(*this);
   FunctionBlockPtr false_block = MakeFunctionBlock(*this);
