@@ -4032,7 +4032,7 @@ def renorm(input_x, p, dim, maxnorm):
 
     Args:
         input_x: A Tensor, types: float32 or float16.
-        p (float): P-norm.
+        p (int): P-norm.
         dim (int): The dimension that expected to get the slice-tensor.
         maxnorm (float): Max norm.
 
