@@ -38,3 +38,5 @@ CUresult cuDeviceGetAttribute(int *pi, CUdevice_attribute attrib, int dev) {
   *pi = 0;
   return CUDA_SUCCESS;
 }
+
+CUresult cuStreamSynchronize(CUstream hStream) { return CUDA_SUCCESS; }

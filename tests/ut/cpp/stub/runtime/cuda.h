@@ -79,4 +79,5 @@ CUresult cuLaunchKernel(CUfunction f, unsigned int gridDimX, unsigned int gridDi
 CUresult cuModuleUnload(CUmodule hmod);
 CUresult cuGetErrorName(CUresult error, const char **pStr);
 CUresult cuDeviceGetAttribute(int *pi, CUdevice_attribute attrib, int dev);
+CUresult cuStreamSynchronize(CUstream hStream);
 #endif  // TESTS_UT_STUB_RUNTIME_INCLUDE_CUDA_H_

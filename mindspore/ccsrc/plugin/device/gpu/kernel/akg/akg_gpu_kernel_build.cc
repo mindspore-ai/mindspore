@@ -24,6 +24,7 @@
 #include "utils/ms_utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
+#include "common/graph_kernel/graph_kernel_flags.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,7 +32,9 @@ constexpr int32_t ARGS_SIZE = 1;
 
 void AkgGpuKernelBuilder::AkgSetKernelMod(const KernelPackPtr &kernel_pack,
                                           const AkgKernelJsonGenerator &json_generator, const AnfNodePtr &anf_node) {
-  auto kernel_mod_ptr = std::make_shared<AkgGpuKernelMod>(kernel_pack);
+  const auto &flags = graphkernel::GraphKernelFlags::GetInstance();
+  auto kernel_mod_ptr = flags.enable_debug_mode ? std::make_shared<AkgGpuKernelModDebug>(kernel_pack)
+                                                : std::make_shared<AkgGpuKernelMod>(kernel_pack);
   auto kernel_json_info = kernel_pack->kernel_json_info();
   kernel_mod_ptr->SetInputSizeList(json_generator.input_size_list());
   kernel_mod_ptr->SetOutputSizeList(json_generator.output_size_list());

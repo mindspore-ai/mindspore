@@ -103,6 +103,12 @@ class GraphKernelFlags {
   bool enable_low_precision{false};
 
   /**
+   * Debug mode for graph kernel.
+   * Enable Debug mode for graph kernel
+   */
+  bool enable_debug_mode{false};
+
+  /**
    * Expand and cluster AKG's operators by level.
    */
   unsigned int fusion_ops_level{OpLevel_0};

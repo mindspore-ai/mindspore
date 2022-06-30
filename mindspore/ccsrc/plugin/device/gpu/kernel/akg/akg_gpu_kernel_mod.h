@@ -71,7 +71,28 @@ class AkgGpuKernelMod : public GpuKernelMod {
   std::vector<uint32_t> thread_info_;
   CUfunction kernel_addr_{nullptr};
 };
-
+class AkgGpuKernelModDebug : public AkgGpuKernelMod {
+ public:
+  explicit AkgGpuKernelModDebug(const KernelPackPtr &kernel_pack) : AkgGpuKernelMod(kernel_pack) {}
+  virtual ~AkgGpuKernelModDebug() {}
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+    auto ptr = reinterpret_cast<CUstream>(stream_ptr);
+    CUresult before_launch = cuStreamSynchronize(ptr);
+    const char *msg = nullptr;
+    if (before_launch != CUDA_SUCCESS) {
+      cuGetErrorName(before_launch, &msg);
+      MS_LOG(ERROR) << "before_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
+    }
+    auto result = AkgGpuKernelMod::Launch(inputs, workspace, outputs, stream_ptr);
+    CUresult after_launch = cuStreamSynchronize(ptr);
+    if (after_launch != CUDA_SUCCESS) {
+      cuGetErrorName(after_launch, &msg);
+      MS_LOG(ERROR) << "after_launch sycn failed, Kernel name is : " << kernel_name_ << ", Error message: " << msg;
+    }
+    return result;
+  }
+};
 using AkgGpuKernelModPtr = std::shared_ptr<AkgGpuKernelMod>;
 }  // namespace kernel
 }  // namespace mindspore
