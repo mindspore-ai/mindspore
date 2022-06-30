@@ -15,8 +15,9 @@
 """
 Testing RandomRotation op in DE
 """
-import numpy as np
 import cv2
+import numpy as np
+from PIL import Image
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
@@ -285,6 +286,25 @@ def test_rotation_diff(plot=False):
         visualize_list(image_list_c, image_list_py, visualize_mode=2)
 
 
+def test_random_rotation_op_exception():
+    """
+    Feature: RandomRotation op
+    Description: Test RandomRotation in Python transformations op with resample=Inter.ANTIALIAS, but center is not None
+    Expectation: ValueError
+    """
+    logger.info("test_random_rotation_op_exception")
+
+    image = Image.open("../data/dataset/testImageNetData2/train/class1/1_1.jpg")
+
+    try:
+        random_rotation_op = vision.RandomRotation((90, 90), expand=True, resample=Inter.ANTIALIAS, center=(50, 50))
+        out = random_rotation_op(image)
+        assert out.size == image.size[::-1]
+    except ValueError as e:
+        assert "When using Inter.ANTIALIAS, center needs to be None and angle needs to be an integer multiple of 90." \
+               in str(e)
+
+
 if __name__ == "__main__":
     test_random_rotation_op_c(plot=True)
     test_random_rotation_op_c_area()
@@ -293,3 +313,4 @@ if __name__ == "__main__":
     test_random_rotation_expand()
     test_random_rotation_md5()
     test_rotation_diff(plot=True)
+    test_random_rotation_op_exception()
