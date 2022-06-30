@@ -550,8 +550,8 @@ def test_resize_nn_grayscale_align_corners_float(datatype=np.float32):
 
 
 class NetResizeBilinearFunc(nn.Cell):
-    def construct(self, x, size):
-        return ops.resize_bilinear(x, size)
+    def construct(self, x, scale, size):
+        return ops.interpolate(x, None, scale, size, "asymmetric", "bilinear")
 
 
 @pytest.mark.level0
@@ -559,14 +559,14 @@ class NetResizeBilinearFunc(nn.Cell):
 @pytest.mark.env_onecard
 def test_resize_bilinar_func_cpu():
     """
-    Feature: Test mindspore.ops.resize_bilinear on cpu.
-    Description: mindspore.ops.resize_bilinear executes by calling ResizeBilinearV2
+    Feature: Test bilinear on cpu.
+    Description: bilinear executes by calling ResizeBilinearV2
     Expectation: Assert that results are consistent with expect.
     """
     input_tensor = Tensor(
         np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float32))
     resize_nn = NetResizeBilinearFunc()
-    output = resize_nn(input_tensor, (3, 7))
+    output = resize_nn(input_tensor, None, (3, 7))
     expect = np.array([[[[0.1, 0.15714286, 0.21428573, 0.27142859, 0.32857144,
                           0.3857143, 0.4],
                          [0.36666667, 0.42380953, 0.48095244, 0.53809524, 0.5952381,
@@ -574,3 +574,20 @@ def test_resize_bilinar_func_cpu():
                          [0.5, 0.55714285, 0.61428577, 0.67142856, 0.7285714,
                           0.78571427, 0.8]]]]).astype(np.float32)
     assert np.allclose(output.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_resize_bilinar_func_scale_cpu():
+    """
+    Feature: Test bilinear with scale on cpu.
+    Description: bilinear executes by calling ResizeBilinearV2
+    Expectation: Assert that results are consistent with expect.
+    """
+    input_tensor = Tensor(
+        np.array([[[[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]]]).astype(np.float32))
+    resize_nn = NetResizeBilinearFunc()
+    output = resize_nn(input_tensor, (1.0, 1.0, 4.0, 2.0), None)
+    expect = resize_nn(input_tensor, None, (8, 8))
+    assert np.allclose(output.asnumpy(), expect.asnumpy())
