@@ -177,7 +177,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
   bool SendToRemote(const std::string &cache_operation, int32_t param_key, size_t server_rank_id, size_t embedding_dim,
                     const void *keys, size_t keys_len, const void *values = nullptr, size_t values_len = 0,
-                    bool finalize_remote = false);
+                    bool finalize_remote = false, bool sync = true);
   // Wait response of remote and get return result.
   // The parameter 'cache_operation' is cache operation name such as LookupEmbeddingCache and UpdateEmbeddingCache.
   std::unique_ptr<std::vector<char>> ReceiveFromRemote(const std::string &cache_operation, int32_t param_key,
@@ -369,7 +369,7 @@ class Sender : public RpcOperator {
 
   // Send buffer to peer.
   bool Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
-            const AddressPtrList &data_list, bool finalize_remote = false) const;
+            const AddressPtrList &data_list, bool finalize_remote = false, bool sync = true) const;
 
   // Set the receiver paired with the sender to get the 'from url' from the receiver.
   void set_receiver(const ReceiverPtr &receiver) { receiver_ = receiver; }
