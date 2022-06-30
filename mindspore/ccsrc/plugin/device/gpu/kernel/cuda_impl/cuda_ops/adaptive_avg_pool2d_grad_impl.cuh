@@ -20,6 +20,6 @@
 template <typename T>
 CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2DGrad(const uint size, const uint input_height, const uint input_width,
                                                 const uint output_height, const uint output_width, T *input_data,
-                                                T *output_data, cudaStream_t cuda_stream);
+                                                T *output_data, float *workspace, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_ADAPTIVE_AVGPOOL2D_GRAD_IMPL_CUH_
