@@ -1074,6 +1074,31 @@ def get_adaptive_max_pool_2d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.MaxPool3DWithArgmax)
+def get_max_pool3d_with_argmax_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPool3DWithArgmax`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(x_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        input_shape = (-1,) + x_shape[cdhw_reverse_index:]
+        x = F.reshape(x, input_shape)
+        out, indices = prim(x)
+        out_shape = F.shape(out)
+        return_shape = x_shape[:cdhw_reverse_index] + out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, return_shape)
+        indices = F.reshape(indices, return_shape)
+        return (out, 0), (indices, 0)
+
+    return vmap_rule
+
+
 # Unary vmap
 get_unop_vmap_rule = vmap_rules_getters.register(P.Elu)(get_unop_vmap_rule)
 get_unop_vmap_rule = vmap_rules_getters.register(P.ReLU)(get_unop_vmap_rule)

@@ -776,7 +776,7 @@ class Reshape(PrimitiveWithInfer):
             }
 
         if isinstance(shape_v, Tensor_):
-            validator.check_tensor_dtype_valid("shape", shape['dtype'], [mstype.int64], self.name)
+            validator.check_tensor_dtype_valid("shape", shape['dtype'], [mstype.int32, mstype.int64], self.name)
             shape_v = shape_v.asnumpy().tolist()
         else:
             validator.check_value_type("shape", shape_v, [tuple], self.name)
