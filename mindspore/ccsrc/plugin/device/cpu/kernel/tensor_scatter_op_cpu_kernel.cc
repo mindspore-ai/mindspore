@@ -125,7 +125,13 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
 
   // ScatterNd* operations need to write input data and copy into output data,
   // while TensorScatter* operations need to copy input data and write into output data.
-  if (auto ret = memcpy_s(output, outputs[kIndex0]->size, input, inputs[kIndex0]->size); ret != EOK) {
+  auto ret = memcpy_s(output, outputs[kIndex0]->size, input, inputs[kIndex0]->size);
+  if (ret == ERANGE) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', input data size[" << inputs[kIndex0]->size
+                      << " bytes] is larger than memcpy_s cache limit[" << SECUREC_MEM_MAX_LEN
+                      << " bytes]. Error no: " << ret;
+  }
+  if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
   }
 
