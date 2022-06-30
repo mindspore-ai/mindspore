@@ -25,7 +25,7 @@ hard_swish_grad_op_info = TBERegOp("HSwishGrad") \
     .partial_flag(True) \
     .dynamic_shape(True) \
     .input(0, "grad", False, "required", "all") \
-    .input(0, "x", False, "required", "all") \
+    .input(1, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ) \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ) \

@@ -14,69 +14,42 @@
  * limitations under the License.
  */
 #include "backend/common/pass/convert_const_input_to_attr.h"
-#include <vector>
+
 #include <algorithm>
 #include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/optimizer/reg_cpu_const_input_to_attr.h"
+#include "backend/common/optimizer/reg_gpu_const_input_to_attr.h"
+#include "backend/common/optimizer/reg_ascend_const_input_to_attr.h"
 #include "include/common/utils/utils.h"
-#include "utils/ms_context.h"
-#include "mindspore/core/ops/core_ops.h"
 #include "include/common/utils/anfalgo.h"
 
-namespace mindspore {
-namespace opt {
+namespace mindspore::opt {
 const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const AnfNodePtr &node,
                                                   const EquivPtr &) const {
   if (node == nullptr || !AnfUtils::IsRealCNodeKernel(node)) {
     return nullptr;
   }
-
+  auto name = common::AnfAlgo::GetCNodeName(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  ConstInputToAttrInfoRegister reg;
-  if (!ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(common::AnfAlgo::GetCNodeName(cnode), &reg)) {
-    return nullptr;
-  }
-  if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookup->name() ||
-      common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimEmbeddingLookupCommGrad->name()) {
-    if (!common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
-      return nullptr;
-    }
+  std::string primitive_target;
+  if (common::AnfAlgo::HasNodeAttr(kAttrPrimitiveTarget, cnode)) {
+    primitive_target = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrPrimitiveTarget);
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimGatherD->name()) {
-    if (device != kGPUDevice) {
-      return nullptr;
-    }
+  auto backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (backend != primitive_target && !primitive_target.empty()) {
+    MS_LOG(WARNING) << "primitive target does not match backend: " << backend
+                    << ", primitive_target: " << primitive_target;
+    backend = primitive_target;
   }
-  if ((common::AnfAlgo::GetCNodeName(cnode) == kStridedSliceGradOpName) && (device == kAscendDevice)) {
+  auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(node);
+  auto attr_index = ConstInputToAttrRegister::GetInstance().GetConstToAttr(name, backend, is_dynamic_shape);
+  if (attr_index.empty()) {
     return nullptr;
   }
-  if (common::AnfAlgo::IsDynamicShape(cnode)) {
-    if (device == kGPUDevice) {
-      if (DynamicShapeConstInputToAttrGPU.find(common::AnfAlgo::GetCNodeName(cnode)) ==
-          DynamicShapeConstInputToAttrGPU.end()) {
-        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
-        return nullptr;
-      }
-    } else if (device == kCPUDevice) {
-      if (DynamicShapeConstInputToAttrCPU.find(common::AnfAlgo::GetCNodeName(cnode)) ==
-          DynamicShapeConstInputToAttrCPU.end()) {
-        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
-        return nullptr;
-      }
-    } else {
-      if (DynamicShapeConstInputToAttr.find(common::AnfAlgo::GetCNodeName(cnode)) ==
-          DynamicShapeConstInputToAttr.end()) {
-        MS_LOG(INFO) << "current node is dynamic shape " << cnode->fullname_with_scope();
-        return nullptr;
-      }
-    }
-  }
-
-  ConstInputToAttr(cnode, reg.GetConstInputAttrInfo());
+  ConstInputToAttr(cnode, attr_index);
   return node;
 }
-}  // namespace opt
-}  // namespace mindspore
+}  // namespace mindspore::opt

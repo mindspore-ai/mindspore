@@ -30,9 +30,6 @@ class ConvertConstInputToAttr : public PatternProcessPass {
       : PatternProcessPass("convert_const_input_to_attr", multigraph) {}
   ~ConvertConstInputToAttr() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
-
- private:
-  mindspore::HashMap<std::string, mindspore::HashSet<size_t>> op_input_attr_map_;
 };
 }  // namespace opt
 }  // namespace mindspore
