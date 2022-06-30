@@ -15,7 +15,8 @@
 """comm_helper"""
 
 import os
-from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched
+from mindspore import context
+from mindspore.parallel._ps_context import _is_role_pserver, _is_role_sched, _is_ps_mode, _get_ps_context
 from mindspore import log as logger
 from ._hccl_management import load_lib as hccl_load_lib
 from .._c_expression import get_rank_id, get_rank_size, CollectiveManager
@@ -188,6 +189,9 @@ def _check_bypass_rank_id_and_size():
     if _is_role_sched():
         return True
     if _use_old_ps() and _is_role_pserver():
+        return True
+    device_target = context.get_context("device_target")
+    if not _use_old_ps() and _is_ps_mode() and _get_ps_context("worker_num") == 1 and device_target == "Ascend":
         return True
     return False
 
