@@ -8,13 +8,12 @@ mindspore.dataset.vision.RandomRotation
     **参数：**
 
     - **degrees** (Union[int, float, sequence]) - 旋转角度的随机选取范围。若输入单个数字，则从(-degrees, degrees)中随机生成旋转角度；若输入2元素序列，需按(min, max)顺序排列。
-    - **resample** (Inter, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC] 中的任何一个，默认值：Inter.NEAREST。
+    - **resample** (Inter, 可选) - 插值方式。它可以是 [Inter.BILINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.AREA] 中的任何一个，默认值：Inter.NEAREST。
 
       - Inter.BILINEAR，双线性插值。
       - Inter.NEAREST，最近邻插值。
       - Inter.BICUBIC，双三次插值。
       - Inter.AREA，区域插值。
-      - Inter.ANTIALIAS，抗锯齿插值。
 
     - **expand** (bool, 可选) - 若为True，将扩展图像尺寸大小使其足以容纳整个旋转图像；若为False，则保持图像尺寸大小不变。请注意，扩展时将假设图像为中心旋转且未进行平移。默认值：False。
     - **center** (tuple, 可选) - 可选的旋转中心，以图像左上角为原点，旋转中心的位置按照 (宽度, 高度) 格式指定。默认值：None，表示中心旋转。

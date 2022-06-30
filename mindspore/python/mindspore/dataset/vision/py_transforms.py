@@ -1570,13 +1570,14 @@ class RandomRotation(py_transforms.PyTensorOperation):
         degrees (Union[float, Sequence[float, float]]): Range of rotation degree to select from.
             If int is provided, the rotation degree will be randomly selected from (-`degrees`, `degrees`).
             If Sequence[float, float] is provided, it should be arranged in order of (min, max).
-        resample (Inter, optional): Method of interpolation. It can be Inter.NEAREST, Inter.ANTIALIAS,
+        resample (Inter, optional): Method of interpolation. It can be Inter.NEAREST,
             Inter.BILINEAR or Inter.BICUBIC. If the input PIL Image is in mode of "1" or "P",
             Inter.NEAREST will be used directly. Default: Inter.NEAREST.
 
             - Inter.NEAREST, nearest-neighbor interpolation.
-            - Inter.ANTIALIAS, antialias interpolation.
+
             - Inter.BILINEAR, bilinear interpolation.
+
             - Inter.BICUBIC, bicubic interpolation.
 
         expand (bool, optional): If True, it will expand the image to make it large enough to hold the entire

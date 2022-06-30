@@ -634,6 +634,13 @@ def rotate(img, angle, resample, expand, center, fill_value):
     if isinstance(fill_value, int):
         fill_value = tuple([fill_value] * 3)
 
+    angle = angle % 360.0
+    if resample == Inter.ANTIALIAS:
+        if angle in [0, 90, 180, 270] and not center:
+            return img.rotate(angle, resample, expand, center, fillcolor=fill_value)
+        if angle not in [0, 90, 180, 270] or center:
+            raise ValueError("When using Inter.ANTIALIAS, center needs to be None and "
+                             "angle needs to be an integer multiple of 90.")
     return img.rotate(angle, resample, expand, center, fillcolor=fill_value)
 
 
