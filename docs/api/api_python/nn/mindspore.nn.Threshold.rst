@@ -16,12 +16,12 @@ mindspore.nn.Threshold
 
     **参数：**
 
-    - **threshold** (`Union[int, float]`) - Threshold的阈值。
+    - **threshold** (`Union[int, float]`) - 阈值。
     - **value** (`Union[int, float]`) - 输入Tensor中element小于阈值时的填充值。
 
     **输入：**
 
-    - **input_x** (Tensor) - Threshold的输入，数据类型为float16或float32。
+    - **input_x** (Tensor) - 输入Tensor，数据类型为float16或float32。
 
     **输出：**
 

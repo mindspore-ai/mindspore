@@ -14,7 +14,7 @@ mindspore.ops.SGD
 
     - **dampening** (float) - 动量的抑制因子。默认值：0.0。
     - **weight_decay** (float) - 权重衰减系数（L2惩罚）。默认值：0.0。
-    - **nesterov** (bool) - 是否启用Nesterov动量。默认值：FaLse。
+    - **nesterov** (bool) - 是否启用Nesterov动量。默认值：False。
 
     **输入：**
 

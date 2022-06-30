@@ -16,19 +16,19 @@
             var = var - \frac{l}{1 - \beta_1^{t+1}} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
-    :math:`t` 表示更新步长，而 :math:`m` 表示第一个动量矩阵， :math:`m_{t}` 是 :math:`m_{t+1}` 的最后时刻， :math:`v` 代表第二个动量矩阵， :math:`v_{t}` 是 :math:`v_{t+1}` 的最后时刻， :math:`l` 代表学习率 `lr` ， :math:`g` 代表 `grad` ， :math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`\beta_1^{t+1}` 代表 `beta1_power` ， :math:`var` 代表要更新的变量， :math:`\epsilon` 代表 `epsilon` 。
+    :math:`t` 表示更新步长， :math:`m` 为一阶矩， :math:`m_{t}` 是上一步的 :math:`m_{t+1}` ， :math:`v` 为二阶矩， :math:`v_{t}` 是上一步的 :math:`v_{t+1}` ， :math:`l` 代表学习率 `lr` ， :math:`g` 代表 `grad` ， :math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`\beta_1^{t+1}` 代表 `beta1_power` ， :math:`var` 代表要更新的网络参数， :math:`\epsilon` 代表 `epsilon` 。
 
     `var` 、 `m` 、 `v` 和 `grad` 的输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
     **输入：**
 
-    - **var** (Parameter) - 要更新的权重，为任意维度。数据类型为float32或float16。
-    - **m** (Parameter) - 更新公式中的第一个动量矩阵，shape和数据类型与 `var` 相同。数据类型为float32或float16。
-    - **v** (Parameter) - 更新公式中的第二个动量矩阵。shape和类型与 `var` 相同。数据类型为float32或float16。
+    - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。
+    - **m** (Parameter) - 一阶矩，shape和数据类型与 `var` 相同。数据类型为float32或float16。
+    - **v** (Parameter) - 二阶矩。shape和类型与 `var` 相同。数据类型为float32或float16。
     - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` ，必须是Scalar。数据类型为float32或float16。
     - **lr** (Union[Number, Tensor]) - 学习率，公式中的 :math:`l` ，必须是Scalar。数据类型为float32或float16。
-    - **beta1** (Union[Number, Tensor]) - 第一个动量矩阵的指数衰减率，必须是Scalar。数据类型为float32或float16。
-    - **beta2** (Union[Number, Tensor]) - 第二个动量矩阵的指数衰减率，必须是Scalar。数据类型为float32或float16。
+    - **beta1** (Union[Number, Tensor]) - 一阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
+    - **beta2** (Union[Number, Tensor]) - 二阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
     - **epsilon** (Union[Number, Tensor]) - 加在分母上的值，以确保数值稳定，必须是Scalar。数据类型为float32或float16。
     - **grad** (Tensor) - 为梯度，是一个Tensor，shape和数据类型与 `var` 相同。数据类型为float32或float16。
 

@@ -10,8 +10,8 @@ mindspore.ops.ms_kernel
 
     **参数：**
 
-    - **fn** (Function) - MindSpore Hybrid DSL书写的函数。默认值：None。
-    - **reg_info** (tuple[str, dict]) - 算子注册信息。默认值：None。
+    - **fn** (Function) - 将被作为自定义算子运行的Python函数。默认值：None。
+    - **reg_info** (tuple[str, dict]) - 包含算子注册信息的dict或json字符串。默认值：None。
     - **compile_attrs** (Dict) - 算子编译信息。默认值：None。
 
     **返回：**

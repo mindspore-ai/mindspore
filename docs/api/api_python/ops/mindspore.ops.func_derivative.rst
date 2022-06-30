@@ -3,7 +3,7 @@ mindspore.ops.derivative
 
 .. py:function:: mindspore.ops.derivative(fn, primals, order)
 
-    计算函数或网络输出对输入的高阶微分。给定待求导函数的原始输入和求导的阶数n，将返回函数输出对输入的第n阶导数。
+    计算函数或网络输出对输入的高阶微分。给定待求导函数的原始输入和求导的阶数n，将返回函数输出对输入的第n阶导数。输入的初始1阶导数在内部默认设置为1，其他阶设置为0。
 
     .. note::
         - 若 `primals` 是int型的Tensor，会被转化成float32格式进行计算。
