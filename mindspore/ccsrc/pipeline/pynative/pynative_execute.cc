@@ -2679,6 +2679,7 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
       MS_LOG(DEBUG) << "Dynamic input size " << it->second.size() << " is not equal to real input size " << args.size();
       return;
     }
+    bool id_changed = false;
     for (size_t i = 0; i < args.size(); i++) {
       auto abs = it->second.at(i);
       MS_EXCEPTION_IF_NULL(abs);
@@ -2686,12 +2687,16 @@ void ForwardExecutor::SetFeedDynamicInputAbs(const py::object &cell, const py::a
       MS_EXCEPTION_IF_NULL(shape);
       if (shape->IsDynamic()) {
         const auto &arg_id = GetId(args[i]);
-        MS_LOG(DEBUG) << "Set arg " << i << ", id " << arg_id << ", to be dynamic shape; Arg self abs: "
+        MS_LOG(DEBUG) << "Set arg " << i << ", id " << arg_id << " to be dynamic shape; Arg self abs: "
                       << PyObjToValue(args[i])->ToAbstract()->Broaden()->ToString()
                       << ", dynamic abs: " << abs->ToString();
         dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs[arg_id] = abs;
         (void)node_abs_map_.erase(arg_id);
+        id_changed = true;
       }
+    }
+    if (id_changed) {
+      grad()->CheckPreviousTopCellCanBeDynamicShape(cell, args);
     }
   }
 }
@@ -3117,10 +3122,10 @@ void GradExecutor::NewGraphInner(const py::object *ret, const py::object &cell, 
   }
 }
 
-void GradExecutor::ChangeTopCellInfo(const TopCellInfoPtr &top_cell, const std::vector<ShapeVector> &new_args_shape) {
+void GradExecutor::ChangeTopCellInfo(const TopCellInfoPtr &top_cell, size_t args_size) {
   MS_EXCEPTION_IF_NULL(top_cell);
   std::string new_cell_id = top_cell->cell_self_info()->cell_self_id;
-  for (size_t i = 0; i < new_args_shape.size(); ++i) {
+  for (size_t i = 0; i < args_size; ++i) {
     new_cell_id += "_" + top_cell->cell_self_info()->args_shape[i]->ToString();
     new_cell_id += top_cell->cell_self_info()->args_type[i]->ToString();
   }
@@ -3146,7 +3151,7 @@ TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeByAuto(const TopCellInfo
   MS_LOG(DEBUG) << "Set dynamic input for auto dynamic shape";
   forward()->SetDynamicInput(cell, args);
   forward()->SetFeedDynamicInputAbs(cell, args);
-  ChangeTopCellInfo(top_cell, new_args_shape);
+  ChangeTopCellInfo(top_cell, new_args_shape.size());
   return top_cell;
 }
 
@@ -3174,8 +3179,45 @@ TopCellInfoPtr GradExecutor::ChangeTopCellToDynamicShapeBySetInputs(const TopCel
       }
     }
   }
-  ChangeTopCellInfo(top_cell, new_args_shape);
+  ChangeTopCellInfo(top_cell, new_args_shape.size());
   return top_cell;
+}
+
+void GradExecutor::UpdateTopCellId(const py::args &args) {
+  if (top_cell_ == nullptr || top_cell_->cell_self_info() == nullptr) {
+    return;
+  }
+  mindspore::HashMap<std::string, ShapeVector> id_with_shape;
+  ShapeVector empty_shape;
+  bool has_dynamic_id = false;
+  for (size_t i = 0; i < args.size(); i++) {
+    const auto &arg_id = GetId(args[i]);
+    const auto item = forward()->dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs.find(arg_id);
+    if (item != forward()->dynamic_shape_info_ptr()->obj_id_with_dynamic_output_abs.end()) {
+      id_with_shape[arg_id] = (GetShapeFromAbstract(item->second))->shape();
+      has_dynamic_id = true;
+    } else {
+      id_with_shape[arg_id] = empty_shape;
+    }
+  }
+  if (!has_dynamic_id) {
+    return;
+  }
+  // Check current top cell need change id to dynamic id
+  const auto &args_id = top_cell()->cell_self_info()->args_id;
+  bool need_change = std::any_of(args_id.begin(), args_id.end(), [&id_with_shape](const std::string &id) {
+    return id_with_shape.find(id) != id_with_shape.end();
+  });
+  if (need_change) {
+    // Change args shape
+    for (size_t i = 0; i < id_with_shape.size(); ++i) {
+      const auto it = std::next(id_with_shape.begin(), i);
+      if (!it->second.empty() && top_cell()->cell_self_info()->args_id[i] == it->first) {
+        top_cell()->cell_self_info()->args_shape[i] = std::make_shared<abstract::Shape>(it->second);
+      }
+    }
+    ChangeTopCellInfo(top_cell(), top_cell()->cell_self_info()->args_id.size());
+  }
 }
 
 TopCellInfoPtr GradExecutor::GetTopCellWithDynamicShape(const py::object &cell, const py::args &args, bool is_auto) {
@@ -3184,13 +3226,14 @@ TopCellInfoPtr GradExecutor::GetTopCellWithDynamicShape(const py::object &cell, 
     return nullptr;
   }
   const auto &cell_self_id = GetId(cell);
-  auto it = std::find_if(top_cell_list_.begin(), top_cell_list_.end(), [&cell_self_id](const TopCellInfoPtr &elem) {
-    return elem->cell_self_info() != nullptr && elem->cell_self_info()->cell_self_id == cell_self_id;
-  });
+  const auto it =
+    std::find_if(top_cell_list_.begin(), top_cell_list_.end(), [&cell_self_id](const TopCellInfoPtr &elem) {
+      return elem->cell_self_info() != nullptr && elem->cell_self_info()->cell_self_id == cell_self_id;
+    });
   if (it != top_cell_list_.end()) {
     const auto &elem = *it;
     if (elem->dynamic_shape()) {
-      MS_LOG(DEBUG) << "Elem have is already dynamic shape";
+      MS_LOG(DEBUG) << "Elem has already dynamic shape";
       return nullptr;
     }
     std::vector<ShapeVector> new_args_shape;
@@ -3204,6 +3247,7 @@ TopCellInfoPtr GradExecutor::GetTopCellWithDynamicShape(const py::object &cell, 
       }
     }
   }
+  UpdateTopCellId(args);
   return nullptr;
 }
 
@@ -4309,7 +4353,7 @@ void PynativeExecutor::set_graph_phase(const std::string &graph_phase) {
 }
 
 void PynativeExecutor::SetDynamicInput(const py::object &cell, const py::args &args) {
-  MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell";
+  MS_LOG(DEBUG) << "Set dynamic input for feed mode from cell id " << GetId(cell);
   forward_executor()->SetDynamicInput(cell, args);
   // After set input, check previous top cell can be make to dynamic shape
   grad_executor()->CheckPreviousTopCellCanBeDynamicShape(cell, args);
