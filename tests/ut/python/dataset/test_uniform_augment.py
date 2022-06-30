@@ -22,7 +22,7 @@ import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
 from mindspore import log as logger
-from util import visualize_list, diff_mse
+from util import visualize_list, diff_mse, config_get_set_seed
 
 DATA_DIR = "../data/dataset/testImageNetData/train/"
 
@@ -176,6 +176,68 @@ def test_uniform_augment(plot=False, num_ops=2):
 
     if plot:
         visualize_list(images_original, images_ua)
+
+
+def test_uniform_augment_pyfunc(num_ops=2, my_seed=1):
+    """
+    Feature: UniformAugment
+    Description: Test UniformAugment using Python implementation.   Include pyfunc in transforms list.
+    Expectation: Output is the same as expected output
+    """
+    logger.info("Test UniformAugment with pyfunc")
+    original_seed = config_get_set_seed(my_seed)
+    logger.info("my_seed= {}".format(str(my_seed)))
+
+    # Original Images
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+
+    transforms_original = mindspore.dataset.transforms.Compose([vision.Decode(True)])
+
+    ds_original = data_set.map(operations=transforms_original, input_columns="image")
+
+    ds_original = ds_original.batch(512)
+
+    for idx, (image, _) in enumerate(ds_original):
+        if idx == 0:
+            images_original = np.transpose(image.asnumpy(), (0, 2, 3, 1))
+        else:
+            images_original = np.append(images_original,
+                                        np.transpose(image.asnumpy(), (0, 2, 3, 1)),
+                                        axis=0)
+
+    # UniformAugment Images
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+
+    transform_list = [vision.Invert(),
+                      lambda x: x,
+                      vision.AutoContrast(),
+                      vision.Equalize()
+                      ]
+
+    transforms_ua = \
+        mindspore.dataset.transforms.Compose([vision.Decode(True),
+                                              vision.UniformAugment(transforms=transform_list, num_ops=num_ops)])
+
+    ds_ua = data_set.map(operations=transforms_ua, input_columns="image")
+
+    ds_ua = ds_ua.batch(512)
+
+    for idx, (image, _) in enumerate(ds_ua):
+        if idx == 0:
+            images_ua = np.transpose(image.asnumpy(), (0, 2, 3, 1))
+        else:
+            images_ua = np.append(images_ua,
+                                  np.transpose(image.asnumpy(), (0, 2, 3, 1)),
+                                  axis=0)
+
+    num_samples = images_original.shape[0]
+    mse = np.zeros(num_samples)
+    for i in range(num_samples):
+        mse[i] = diff_mse(images_ua[i], images_original[i])
+    logger.info("MSE= {}".format(str(np.mean(mse))))
+
+    # Restore configuration
+    ds.config.set_seed(original_seed)
 
 
 def test_cpp_uniform_augment(plot=False, num_ops=2):
@@ -333,6 +395,7 @@ if __name__ == "__main__":
     test_uniform_augment_callable_pil_pyfunc()
     test_uniform_augment_callable_tuple()
     test_uniform_augment(num_ops=6, plot=True)
+    test_uniform_augment_pyfunc(num_ops=2, my_seed=1)
     test_cpp_uniform_augment(num_ops=1, plot=True)
     test_cpp_uniform_augment_exception_large_numops(num_ops=6)
     test_cpp_uniform_augment_exception_nonpositive_numops(num_ops=0)

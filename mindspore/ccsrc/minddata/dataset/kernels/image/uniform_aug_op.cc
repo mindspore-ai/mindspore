@@ -48,7 +48,9 @@ Status UniformAugOp::Compute(const TensorRow &input, TensorRow *output) {
       RETURN_IF_NOT_OK(tensor_op->Compute(input, output));
       first = false;
     } else {
-      RETURN_IF_NOT_OK(tensor_op->Compute(std::move(*output), output));
+      TensorRow tmp;
+      RETURN_IF_NOT_OK(tensor_op->Compute(std::move(*output), &tmp));
+      *output = std::move(tmp);
     }
   }
 
