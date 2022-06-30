@@ -1042,7 +1042,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustBrightness: image rank should not bigger than: " + std::to_string(kChannelIndexHWC) +
+      "AdjustBrightness: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[kChannelIndexHWC];
     // Rank of the image represents how many dimensions, image is expected to be HWC
@@ -1067,9 +1067,10 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustContrast: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > kChannelIndexHWC,
-                                 "AdjustContrast: image rank should bigger than:" + std::to_string(kChannelIndexHWC) +
-                                   ", but got: " + std::to_string(input_cv->shape().Size()));
+    CHECK_FAIL_RETURN_UNEXPECTED(
+      input_cv->shape().Size() > kChannelIndexHWC,
+      "AdjustContrast: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
+        ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[kChannelIndexHWC];
     if (input_cv->Rank() != kDefaultImageChannel || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3, got image rank: " +
@@ -1245,7 +1246,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     }
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > kChannelIndexHWC,
-      "AdjustSaturation: image rank should not bigger than: " + std::to_string(kChannelIndexHWC) +
+      "AdjustSaturation: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[kChannelIndexHWC];
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
@@ -1277,9 +1278,9 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] AdjustHue: load image failed.");
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      input_cv->shape().Size() > kMinImageRank,
-      "AdjustHue: image should have at least two dimensions, but got: " + std::to_string(input_cv->shape().Size()));
+    CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > kMinImageRank,
+                                 "AdjustHue: image rank should be greater than: " + std::to_string(kMinImageRank) +
+                                   ", but got: " + std::to_string(input_cv->shape().Size()));
     int num_channels = input_cv->shape()[2];
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3, but got rank: " +
