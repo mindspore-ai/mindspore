@@ -60,7 +60,7 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "createOptimizationProfile failed.";
     return RET_ERROR;
   }
-  ctx_ = new TensorRTContext();
+  ctx_ = new (std::nothrow) TensorRTContext();
   if (ctx_ == nullptr) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
     return RET_OK;
@@ -433,7 +433,7 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
-    tensor.MutableData();
+    (void)tensor.MutableData();
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";

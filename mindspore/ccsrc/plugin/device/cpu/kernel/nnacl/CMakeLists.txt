@@ -73,7 +73,13 @@ if(NOT MSVC)
     if("${X86_64_SIMD}" STREQUAL "avx" OR "${X86_64_SIMD}" STREQUAL "avx512")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx -mavx2 -mfma")
     endif()
+    if(WIN32)
+        if("${X86_64_SIMD}" STREQUAL "avx512")
+            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mavx512f -fno-asynchronous-unwind-tables")
+        endif()
+    endif()
 endif()
+
 
 ########################### files ###########################
 file(GLOB KERNEL_SRC
