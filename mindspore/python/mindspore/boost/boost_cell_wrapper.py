@@ -35,9 +35,7 @@ from .dim_reduce import DimReduce
 from .grad_accumulation import gradient_accumulation_op, gradient_clear_op
 from .base import _load_local_pca_mat
 
-
 __all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
-
 
 _get_delta_weight = C.MultitypeFuncGraph("_get_delta_weight")
 
@@ -427,6 +425,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
         >>> train_network = boost.BoostTrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
         >>> output = train_network(inputs, label)
     """
+
     def __init__(self, network, optimizer, scale_sense):
         super(BoostTrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)
         self.base = Tensor(1, mstype.float32)
@@ -530,7 +529,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             bool, overflow value.
             float, loss scale value.
         """
-        overflow_global_flag = 0
+        overflow_global_flag = Tensor(0, mstype.int32)
         layer = 0
         loss_scale_temp = ()
         for param in self.overflow_status_list:
@@ -712,7 +711,7 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             if subcell == network:
                 continue
             elif "GroupLossScaleManager" in subcell.cls_name:
-                network._cells[name] = _OutputToFloat16(subcell.to_float(mstype.float32)) # pylint: disable=W0212
+                network._cells[name] = _OutputToFloat16(subcell.to_float(mstype.float32))  # pylint: disable=W0212
                 change = True
             else:
                 self._do_keep_mix_fp32(subcell)
