@@ -46,6 +46,11 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
   // check dimensions except for the first one
   CheckAndConvertUtils::CheckValue<size_t>("rank of x", x_in_shape.size(), kEqual, "rank of v", v_in_shape.size(),
                                            primitive->name());
+  if (x_in_shape.size() == 0) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
+                             << "', the input 'x' and 'v' must be greater than 0 dimension,"
+                             << " but got: " << x_in_shape.size();
+  }
 
   for (size_t i = 1; i < x_in_shape.size(); ++i) {
     CheckAndConvertUtils::CheckValue<int64_t>(std::to_string(i) + "th dim of x", x_in_shape.at(i), kEqual,
@@ -55,11 +60,15 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
   auto indices = CheckAndConvertUtils::CheckIntOrTupleInt("indices", primitive->GetAttr(kIndices), primitive->name());
 
   // check indices
-  CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, "v.shape[0]",
-                                           LongToSize(v_in_shape.at(0)), primitive->name());
-  for (size_t i = 0; i < indices.size(); ++i) {
-    CheckAndConvertUtils::CheckInRange<int64_t>(std::to_string(i) + "th value of indices", indices.at(i), kIncludeLeft,
-                                                {0, x_in_shape.at(0)}, primitive->name());
+  if (v_in_shape.at(0) > 0) {
+    CheckAndConvertUtils::CheckValue<size_t>("size of indices", indices.size(), kEqual, v_in_shape.at(0),
+                                             primitive->name());
+  }
+  if (v_in_shape.at(0) > 0) {
+    for (size_t i = 0; i < indices.size(); ++i) {
+      CheckAndConvertUtils::CheckInRange<int64_t>("value of indices", indices.at(i), kIncludeLeft,
+                                                  {0, x_in_shape.at(0)}, primitive->name());
+    }
   }
 
   return x_shape_ptr->cast<abstract::ShapePtr>();
@@ -70,7 +79,7 @@ TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractB
     MS_LOG(EXCEPTION) << "For '" << prim->name()
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
-  const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args = {
     {"x", input_args[0]->BuildType()},
     {"v", input_args[1]->BuildType()},
