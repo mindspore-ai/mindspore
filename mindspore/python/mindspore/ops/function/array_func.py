@@ -669,21 +669,24 @@ def ger(x1, x2):
     shape :math:`(m,)` and `x2` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a 2D Tensor of shape
     :math:`(m, n)`.
 
+    Note:
+        Currently Ascend does not support float64 data input.
+
     Args:
-        x1 (Tensor): input Tensor, with dtype of float16 or float32.
-        x2 (Tensor): input Tensor, with dtype of float16 or float32, must have the same dtype as `x1`.
+        x1 (Tensor): input Tensor, with dtype of float16, float32 or float64.
+        x2 (Tensor): input Tensor, with dtype of float16, float32 or float64, must have the same dtype as `x1`.
 
     Returns:
-        Tensor, output matrix with the same dtype as inputs. With `x1` shape :math:`(*B, m)` and
-        `x2` shape of :math:`(*B, n)`, the `output` has shape :math:`(*B, m, n)`.
+        Tensor, output matrix with the same dtype as inputs. With `x1` shape :math:`(m,)` and
+        `x2` shape of :math:`(n,)`, the `output` has shape :math:`(m, n)`.
 
     Raises:
         TypeError: If `x1` or `x2` is not a 1-D Tensor.
-        TypeError: If the dtype of `x1` and `x2` is neither float16 nor float32.
+        TypeError: If the dtype of `x1` and `x2` is not float16, float32 or float64.
         TypeError: If the dtype of `x1` and `x2` are not the same.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)
