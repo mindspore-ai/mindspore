@@ -7348,13 +7348,12 @@ class Cummax(Primitive):
         >>> cummax = ops.Cummax(axis=0)
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = cummax(x)
-        >>> print(output)
-        values:
+        >>> print(output[0])
         [[ 3.  4.  6. 10.]
          [ 3.  6.  7. 10.]
          [ 4.  6.  8. 10.]
          [ 4.  6.  8. 10.]]
-        indices:
+        >>> print(output[1])
         [[0 0 0 0]
          [0 1 1 0]
          [2 1 2 0]
