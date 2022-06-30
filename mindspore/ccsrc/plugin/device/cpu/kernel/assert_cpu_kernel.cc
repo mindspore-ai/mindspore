@@ -122,6 +122,7 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
   for (size_t i = 1; i < inputs.size(); i++) {
     kernel_funcs_[i](inputs[i], summarizes_[i]);
   }
+  MS_LOG(EXCEPTION) << "assert failed";
 
   return true;
 }
