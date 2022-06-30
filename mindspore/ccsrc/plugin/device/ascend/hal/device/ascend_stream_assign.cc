@@ -486,7 +486,7 @@ void AscendStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &graph_ptr) 
     return;
   }
   if (graph_ptr->is_dynamic_shape()) {
-    MS_LOG(WARNING) << "Dynamic shape do not need to assign stream.";
+    MS_LOG(INFO) << "Dynamic shape do not need to assign stream.";
     return;
   }
 
