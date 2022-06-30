@@ -107,15 +107,14 @@ class SliceGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       ShapeNdTo4d(dy_shape, &dy_shape_);
       begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
       CalcBeginAndSize(data_format, kSliceGradDefaultInputShapeSize);
-      input_size_ =
-        static_cast<size_t>(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T));
     } else {
       ShapeNdTo7d(dy_shape, &dy_shape_);
       begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
       CalcBeginAndSize(data_format, kSliceGradMaxInputShapeSize);
-      input_size_ =
-        static_cast<size_t>(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
-                            input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T));
+    }
+    input_size_ = sizeof(T);
+    for (auto shape : input_shape_) {
+      input_size_ = input_size_ * static_cast<size_t>(shape);
     }
     output_size_ = sizeof(T);
     for (auto x : dy_shape_) {
