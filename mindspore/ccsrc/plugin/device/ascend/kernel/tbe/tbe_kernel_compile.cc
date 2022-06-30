@@ -590,7 +590,7 @@ std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::j
       return kFailed;
     }
     if (res != kFullySupported) {
-      PrintProcessLog(json, static_cast<int>(WARNING));
+      PrintProcessLog(json, static_cast<int>(DEBUG));
     }
   } else if (json.at(kStatus) == kFailed) {
     auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
