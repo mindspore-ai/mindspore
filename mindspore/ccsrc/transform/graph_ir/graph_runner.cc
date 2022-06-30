@@ -302,32 +302,5 @@ Status GraphRunner::RunGraph(const RunOptions &options, const std::vector<MeTens
     return Status::SUCCESS;
   }
 }
-
-Status GraphRunner::BuildAllGraphs() {
-  MS_LOG(INFO) << "Build all graphs";
-  std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
-  if (wrappers.empty()) {
-    MS_LOG(INFO) << "The GraphManager is empty!!";
-    return SUCCESS;
-  }
-
-  for (auto &it : wrappers) {
-    MS_LOG(INFO) << "Build the graph " << (*it).name_ << " to GE, it's id is: " << (*it).id_;
-    std::vector<GeTensor> ge_inputs;
-    (void)std::transform(it->inputs_.begin(), it->inputs_.end(), std::back_inserter(ge_inputs),
-                         [](const GeTensorPtr &i) { return *i; });
-
-#ifndef ENABLE_LITE_ACL
-    py::gil_scoped_release release;
-#endif
-#ifdef ENABLE_D
-    if (sess_->BuildGraph(static_cast<uint32_t>(it->id_), ge_inputs) != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Build graph " << it->id_ << " failed.";
-      return FAILED;
-    }
-#endif
-  }
-  return SUCCESS;
-}
 }  // namespace transform
 }  // namespace mindspore

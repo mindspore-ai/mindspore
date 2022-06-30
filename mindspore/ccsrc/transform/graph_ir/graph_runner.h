@@ -37,7 +37,6 @@ class GraphRunner {
   Status RunGraph(const RunOptions &options, const std::vector<GeTensorPtr> &inputs, std::vector<GeTensorPtr> *outputs);
   Status RunGraphAsync(const RunOptions &options, const std::vector<GeTensorPtr> &inputs,
                        std::vector<GeTensorPtr> *outputs);
-  Status BuildAllGraphs();
   static std::shared_ptr<::ge::Session> NewSession(const SessionOptions &sess_options);
 
  private:
