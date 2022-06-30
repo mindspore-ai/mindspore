@@ -16,9 +16,9 @@ mindspore_lite.Context
     - **thread_num** (int，可选) - 设置运行时的线程数。默认值：None。
     - **thread_affinity_mode** (int，可选) - 与CPU核心的线程亲和模式。默认值：None。
 
-      - **0** – 无亲和性。
-      - **1** – 大核优先。
-      - **2** – 小核优先。
+      - **0** - 无亲和性。
+      - **1** - 大核优先。
+      - **2** - 小核优先。
 
     - **thread_affinity_core_list** (list[int]，可选) - 与CPU核心的线程亲和列表。默认值：None。
     - **enable_parallel** (bool，可选) - 设置状态是否启用并行执行模型推理或并行训练。默认值：False。
