@@ -68,7 +68,7 @@ def test_bce_with_logits_loss(reduction, data_type):
         error = 1e-3
     benchmark = bec_np_bencmark(data_type, reduction)
     output = loss(logits, label, weight, pos_weight)
-    np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=error)
+    np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=error, atol=error)
     context.set_context(mode=context.PYNATIVE_MODE)
     output = loss(logits, label, weight, pos_weight)
-    np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=error)
+    np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=error, atol=error)

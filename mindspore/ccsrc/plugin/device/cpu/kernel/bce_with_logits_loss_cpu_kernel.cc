@@ -34,11 +34,11 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   if (inputs.empty() || outputs.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
   if (kernel_name_ != prim::kPrimBCEWithLogitsLoss->name()) {
-    MS_LOG(ERROR) << "For 'BCEWithLogitsLoss', kernl name invalid, got" << kernel_name_;
+    MS_LOG(ERROR) << "For 'BCEWithLogitsLoss', it's kernel name invalid, got " << kernel_name_;
     return false;
   }
   auto kernel_ptr = std::make_shared<ops::BCEWithLogitsLoss>(base_operator->GetPrim());
@@ -54,29 +54,24 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                   << reduction;
     return false;
   }
-  if (!MatchKernelFunc(base_operator, inputs, outputs)) {
-    return false;
-  }
-  return true;
+  return MatchKernelFunc(base_operator, inputs, outputs);
 }
 
 int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &) {
-  ResetResource();
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
 
   input_logits_shape_ = inputs.at(kIndex0)->GetShapeVector();
   input_size_ = SizeOf(input_logits_shape_);
-
   input_label_shape_ = inputs.at(kIndex1)->GetShapeVector();
   input_weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
   input_post_weight_shape_ = inputs.at(kIndex3)->GetShapeVector();
 
-  // output_size_list_ should be clear and reset.
+  // The output_size_list_ should be clear and reset.
   output_size_list_.clear();
   size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->GetDtype()));
   size_t input_byte_size = input_size_ * unit_byte_size;
@@ -100,8 +95,7 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   const auto input_pos_weight = GetDeviceAddress<T>(inputs, kIndex3);
   auto output = GetDeviceAddress<T>(outputs, kIndex0);
   ReductionType reduction = reduction_;
-  // High precision.
-  float middle_output[1] = {};
+  T middle_output[1] = {};
   if (input_post_weight_shape_ == input_label_shape_ && input_weight_shape_ == input_label_shape_) {
     auto task = [&input_logits, &input_label, &input_weight, &input_pos_weight, &output, &reduction, &middle_output](
                   size_t start, size_t end) {
@@ -115,13 +109,12 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
         T max_value = -logits_value;
         max_value = max_value > template_zero ? max_value : template_zero;
         const auto log_weight = (post_weight_value - template_one) * label_value + template_one;
-        const auto log_exp_value = static_cast<T>(
-          std::log(std::exp(static_cast<float>(-max_value)) + std::exp(static_cast<float>(-logits_value - max_value))));
+        const auto log_exp_value = std::log(std::exp(-max_value) + std::exp(-logits_value - max_value));
         T loss = (template_one - label_value) * logits_value + log_weight * (log_exp_value + max_value);
         if (reduction == kNone) {
           output[i] = loss * weight_value;
         } else {
-          middle_output[0] += static_cast<float>(loss * weight_value);
+          middle_output[0] += loss * weight_value;
         }
       }
     };
@@ -143,13 +136,12 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
         T max_value = -logits_value;
         max_value = max_value > template_zero ? max_value : template_zero;
         const auto log_weight = (post_weight_value - template_one) * label_value + template_one;
-        const auto log_exp_value = static_cast<T>(
-          std::log(std::exp(static_cast<float>(-max_value)) + std::exp(static_cast<float>(-logits_value - max_value))));
+        const auto log_exp_value = std::log(std::exp(-max_value) + std::exp(-logits_value - max_value));
         T loss = (template_one - label_value) * logits_value + log_weight * (log_exp_value + max_value);
         if (reduction == kNone) {
           output[i] = loss * weight_value;
         } else {
-          middle_output[0] += static_cast<float>(loss * weight_value);
+          middle_output[0] += loss * weight_value;
         }
         iter.GenNextPos();
       }
@@ -157,32 +149,15 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
     ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_, pool_);
   }
   if (reduction == kMean) {
-    output[0] = static_cast<T>(middle_output[0] / static_cast<double>(input_size_));
+    output[0] = middle_output[0] / static_cast<T>(input_size_);
   } else if (reduction == kSum) {
-    output[0] = static_cast<T>(middle_output[0]);
+    output[0] = middle_output[0];
   }
   return true;
 }
 
-void BCEWithLogitsLossCpuKernelMod::ResetResource() noexcept {
-  input_label_shape_.clear();
-  input_logits_shape_.clear();
-  input_weight_shape_.clear();
-  input_post_weight_shape_.clear();
-  input_size_list_.clear();
-  output_size_list_.clear();
-  workspace_size_list_.clear();
-}
-
 const std::vector<std::pair<KernelAttr, KernelRunFunc>> &BCEWithLogitsLossCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, KernelRunFunc>> func_list = {
-    {KernelAttr()
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddInputAttr(kNumberTypeFloat16)
-       .AddOutputAttr(kNumberTypeFloat16),
-     &BCEWithLogitsLossCpuKernelMod::LaunchKernel<float16>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
