@@ -11,11 +11,11 @@ mindspore_lite.Model
 
         **参数：**
 
-        - **model_path** (str) – 定义模型路径。
+        - **model_path** (str) - 定义模型路径。
         - **model_type** (ModelType) - 定义模型文件的类型。选项：ModelType::MINDIR | ModelType::MINDIR_LITE。
 
-          - **ModelType::MINDIR** – MindSpore模型的中间表示。建议的模型文件后缀为“.mindir”。
-          - **ModelType::MINDIR_LITE** – MindSpore Lite模型的中间表示。建议的模型文件后缀为“.ms”。
+          - **ModelType::MINDIR** - MindSpore模型的中间表示。建议的模型文件后缀为".mindir"。
+          - **ModelType::MINDIR_LITE** - MindSpore Lite模型的中间表示。建议的模型文件后缀为".ms"。
 
         - **context** (Context) - 定义用于在执行期间存储选项的上下文。
 
@@ -32,7 +32,7 @@ mindspore_lite.Model
 
         **参数：**
 
-        - **tensor_name** (str) – 张量名称。
+        - **tensor_name** (str) - 张量名称。
 
         **返回：**
 
@@ -57,7 +57,7 @@ mindspore_lite.Model
 
         **参数：**
 
-        - **tensor_name** (str) – 张量名称。
+        - **tensor_name** (str) - 张量名称。
 
         **返回：**
 
@@ -82,7 +82,7 @@ mindspore_lite.Model
 
         **参数：**
 
-        - **inputs** (list[Tensor]) – 包含所有输入张量的顺序列表。
+        - **inputs** (list[Tensor]) - 包含所有输入张量的顺序列表。
         - **outputs** (list[Tensor]) - 模型输出按顺序填充到容器中。
 
         **异常：**
@@ -99,7 +99,7 @@ mindspore_lite.Model
 
         **参数：**
 
-        - **inputs** (list[Tensor]) – 包含所有输入张量的顺序列表。
+        - **inputs** (list[Tensor]) - 包含所有输入张量的顺序列表。
         - **dims** (list[list[int]]) - 定义输入张量的新形状的列表，应与输入张量的顺序一致。
 
         **异常：**
