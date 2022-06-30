@@ -31,12 +31,10 @@ namespace ops {
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
+constexpr size_t kFirstInput = 0;
 constexpr size_t kSpInputIndicesStart = 1;
 constexpr size_t kSpInputValuesStart = 2;
 constexpr size_t kSpInputShapesStart = 3;
-constexpr size_t kOutputIndicesStart = 0;
-constexpr size_t kOutputValuesStart = 1;
-constexpr size_t kOutputShapesStart = 2;
 constexpr auto kExpandNonconcatDim = "expand_nonconcat_dim";
 
 inline void CheckSparseConcatShape(const size_t sparse_shape_size, const size_t expected_dim,
@@ -97,9 +95,9 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
     (void)shape_types.emplace(elementi, inputs_shapes[i]->BuildType());
   }
   std::vector<TypePtr> out_type = {};
-  out_type.push_back(inputs_indices[kOutputIndicesStart]->BuildType());
-  out_type.push_back(inputs_values[kOutputValuesStart]->BuildType());
-  out_type.push_back(inputs_shapes[kOutputShapesStart]->BuildType());
+  out_type.push_back(inputs_indices[kFirstInput]->BuildType());
+  out_type.push_back(inputs_values[kFirstInput]->BuildType());
+  out_type.push_back(inputs_shapes[kFirstInput]->BuildType());
   return out_type;
 }
 
