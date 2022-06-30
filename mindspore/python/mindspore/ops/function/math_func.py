@@ -852,8 +852,7 @@ def inplace_update(x, v, indices):
         >>> indices = (0, 1)
         >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
         >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
-        >>> inplace_update = ops.InplaceUpdate(indices)
-        >>> output = inplace_update(x, v)
+        >>> output = ops.inplace_update(x, v, indices)
         >>> print(output)
         [[0.5 1. ]
          [1.  1.5]
@@ -1633,7 +1632,7 @@ def invert(x):
     Flips all bits of input tensor element-wise.
 
     .. math::
-        out_i = ~x_{i}
+        out_i = \sim x_{i}
 
     Args:
         x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3182,12 +3181,11 @@ def lerp(start, end, weight):
 
 
 def bernoulli(x, p=0.5, seed=-1):
-    """
+    r"""
     Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli distribution.
 
     .. math::
-
-        out_{i} ~ Bernoulli(p_{i})
+        out_{i} \sim Bernoulli(p_{i})
 
     Args:
         x (Tensor): Tensor of shape :math:`(N,*)` where :math:`*` means, any number of additional dimensions. Data
@@ -3892,7 +3890,7 @@ def renorm(input_x, p, dim, maxnorm):
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-    Example:
+    Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
         >>> y = ops.renorm(x, p=1, dim=0, maxnorm=5.)
         >>> print(y)

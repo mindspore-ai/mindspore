@@ -554,7 +554,9 @@ class TBERegOp(RegOp):
         Reshape type of operator.
 
         Args:
-            reshape_type (str): Value of reshape type.
+            reshape_type (str): Value of reshape type. For example, if the input shape is (2,3) and `reshape_type`
+            is set to "CH", then the new shape is (1,2,3,1). "CH" means the C and H dimensions are kept and
+            new dimensions are added for N and W dimension.
         """
         self._is_string(reshape_type)
         self.reshape_type_ = reshape_type
@@ -609,7 +611,7 @@ class TBERegOp(RegOp):
         The behavior type of operator, such as broadcast, reduce and so on.
 
         Args:
-            pattern (str): Value of op pattern. Default: None.
+            pattern (str): Value of op pattern, e.g. "broadcast", "reduce". Default: None.
         """
         if pattern is not None and self._is_string(pattern):
             self.op_pattern_ = pattern

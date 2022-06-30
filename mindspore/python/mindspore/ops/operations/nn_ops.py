@@ -5981,6 +5981,8 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
 class ApplyProximalAdagrad(Primitive):
     r"""
     Updates relevant entries according to the proximal adagrad algorithm.
+    The proximal adagrad algorithm was proposed in `Efficient Learning using Forward-Backward Splitting
+    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_.
 
     .. math::
         \begin{array}{ll} \\
@@ -6278,6 +6280,9 @@ class ApplyPowerSign(Primitive):
     r"""
     Updates relevant entries according to the AddSign algorithm.
 
+    The AddSign algorithm was proposed in `Neural Optimizer Search with Reinforcement Learning
+    <https://arxiv.org/abs/1709.07417>`_.
+
     .. math::
         \begin{array}{ll} \\
             m_{t+1} = \beta * m_{t} + (1 - \beta) * g \\
@@ -6529,7 +6534,7 @@ class LARSUpdate(PrimitiveWithInfer):
 
     Raises:
         TypeError: If neither `epsilon` nor `hyperpara` is a float.
-        TypeError: If `use_clip` is a bool.
+        TypeError: If `use_clip` is not a bool.
         TypeError: If `weight`, `gradient`, `norm_weight` or `norm_gradient` is not a Tensor.
         TypeError: If `weight_decay` or `learning_rate` is neither a Number nor a Tensor.
         TypeError: If shape of `gradient` is not the same as `weight`.
@@ -8418,7 +8423,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
           :math:`(C_{in}, C_{out}//group, K_d, K_h, K_w)`. Where :math:`group` is the Args parameter,
           :math:`//` is the symbol for integer division.
           Currently weight data type only supports float16 and float32.
-        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none. Default: None.
 
     Outputs:
         Tensor, the gradients with respect to the input of convolution 3D.
