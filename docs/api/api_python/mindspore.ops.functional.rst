@@ -339,6 +339,7 @@ Array操作
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.meshgrid
+    mindspore.ops.affine_grid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.padding

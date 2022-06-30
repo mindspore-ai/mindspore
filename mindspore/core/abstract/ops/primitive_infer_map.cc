@@ -88,6 +88,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kScatterNd = prim::kPrimScatterNd->name();
   static const auto &kTruncatedNormal = prim::kPrimTruncatedNormal->name();
   static const auto &kRandomGamma = prim::kPrimRandomGamma->name();
+  static const auto &kAffineGrid = prim::kPrimAffineGrid->name();
   static const auto &kFillV2 = prim::kPrimFillV2->name();
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
@@ -144,6 +145,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kNonDeterministicInts, ShapeSet{0}},
                                          {prim::kPrimReduceSum->name(), ShapeSet{1}},
                                          {prim::kPrimArgminV2->name(), ShapeSet{1}},
+                                         {kAffineGrid, ShapeSet{1}},
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
                                          {kTransposeNOD, ShapeSet{1}},

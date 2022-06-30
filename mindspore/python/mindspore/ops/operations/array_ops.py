@@ -7886,3 +7886,33 @@ class FillDiagonal(Primitive):
         self.fill_value = fill_value
         validator.check_value_type('wrap', wrap, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
+
+
+class AffineGrid(Primitive):
+    r"""
+    Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
+
+    Refer to :func:`mindspore.ops.affine_grid` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> affinegrid = AffineGrid(align_corners=False)
+        >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
+        >>> out_size = Tensor([1, 3, 2, 3], mindspore.int32)
+        >>> output = affinegrid(theta, out_size)
+        >>> print(output)
+        [[[[-0.78333336 -0.06666666]
+        [-0.25       -0.4       ]
+        [ 0.28333336 -0.73333335]]
+        [[-0.28333336  0.73333335]
+        [ 0.25        0.4       ]
+        [ 0.78333336  0.06666666]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, align_corners=False):
+        """Initialize AffineGrid."""
+        validator.check_value_type("align_corners", align_corners, [bool], self.name)
+        self.init_prim_io_names(inputs=['theta', 'output_size'], outputs=['y'])

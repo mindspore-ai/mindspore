@@ -93,6 +93,7 @@ from .array_func import (
     diag,
     masked_select,
     meshgrid,
+    affine_grid,
     fills,
     broadcast_to,
     adaptive_max_pool2d,

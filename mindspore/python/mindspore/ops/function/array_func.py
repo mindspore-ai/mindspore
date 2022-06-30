@@ -2780,6 +2780,53 @@ def meshgrid(inputs, indexing='xy'):
     return meshgrid_op(inputs)
 
 
+def affine_grid(theta, output_size, align_corners=False):
+    r"""
+    Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
+
+    Args:
+        theta (Tensor) - The input tensor whose dtype is float16, float32.
+          Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
+        output_size (Tensor[int32]) - The target output image size. The input is a  1-dimensional Tensor.
+          The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
+        align_corners (bool): If True, consider -1 and 1 to refer to the centers of the corner pixels rather
+                              than the image corners. The default value is False.
+
+    Returns:
+        Tensor, a tensor whose data type is same as 'theta', and the shape is [N, H, W, 2] for 2D grid
+        or [N, D, H, W, 3] for 3D grid.
+
+    Raises:
+        TypeError: If `theta` or `output_size` is not a Tensor.
+        ValueError: If the shape of `theta` is not [N, 2, 3] or [N, 3, 4].
+        ValueError: the dimension of `output_size` is not 1;
+                    the size of `output_size` is not 4 or 5.
+        ValueError: If the shape of `theta` is [N, 2, 3], the dimension of `output_size` is not 4;
+                    If the shape of `theta` is [N, 3, 4], the dimension of `output_size` is not 5.
+                    If the output_size[0] is not equal to the shape[0] of theta.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
+        >>> out_size = Tensor([1, 3, 2, 3], mindspore.int32)
+        >>> output = op.affine_grid(theta, out_size, False)
+        >>> print(output)
+        [[[[-0.78333336 -0.06666666]
+        [-0.25       -0.4       ]
+        [ 0.28333336 -0.73333335]]
+        [[-0.28333336  0.73333335]
+        [ 0.25        0.4       ]
+        [ 0.78333336  0.06666666]]]]
+    """
+    affine_grid_op = P.AffineGrid(align_corners)
+    return affine_grid_op(theta, output_size)
+
+
 def broadcast_to(x, shape):
     """
     Broadcasts input tensor to a given shape.
@@ -3613,6 +3660,7 @@ __all__ = [
     'matrix_diag_part',
     'diag',
     'meshgrid',
+    'affine_grid',
     'adaptive_max_pool2d',
     'meshgrid',
     'broadcast_to',
