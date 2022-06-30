@@ -859,6 +859,13 @@ APP_ERROR DvppCommon::JpegDecode(const DvppDataInfo &input, const DvppDataInfo &
       return APP_ERR_DVPP_JPEG_DECODE_FAIL;
     }
   }
+
+  decodedImage_->height = acldvppGetPicDescHeight(decodeOutputDesc_.get());
+  decodedImage_->width = acldvppGetPicDescWidth(decodeOutputDesc_.get());
+  decodedImage_->format = acldvppGetPicDescFormat(decodeOutputDesc_.get());
+
+  decodedImage_->heightStride = acldvppGetPicDescHeightStride(decodeOutputDesc_.get());
+  decodedImage_->widthStride = acldvppGetPicDescWidthStride(decodeOutputDesc_.get());
   return APP_ERR_OK;
 }
 
