@@ -380,6 +380,18 @@ class Dataset:
             _OP_PROCESS.update(generator_process)
         return op_name
 
+    def close_pool(self):
+        """
+        Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
+        as a destructor for a processingPool object.
+
+        Note:
+            This interface will be deleted or invisible in the future. Please don't use it.
+            When you find that there are residual processes that do not exit correctly, you can use `kill -9 PROCESS_ID`
+            to end it, or through www.gitee.com/mindspore/mindspore send us an issue.
+        """
+        logger.warning("This interface will be deleted or invisible in the future. Please don't use it.")
+
     def create_ir_tree(self):
         """
         Internal method to build an IR tree.
@@ -550,8 +562,9 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
                 (default=None).
-            per_batch_map (callable, optional): Per batch map callable (default=None). A callable which takes
-                (list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo) as input parameters. Each
+            per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],\
+                ..., List[numpy.ndarray])], optional): Per batch map callable (default=None). A callable
+                which takes (list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo) as input parameters. Each
                 list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists should
                 match with the number of entries in input_columns. The last parameter of the callable should always be
                 a BatchInfo object. Per_batch_map should return (list[numpy.ndarray], list[numpy.ndarray], ...). The
@@ -695,12 +708,12 @@ class Dataset:
         """
         Map `func` to each row in dataset and flatten the result.
 
-        The specified `func` is a function that must take one 'Ndarray' as input
-        and return a 'Dataset'.
+        The specified `func` is a function that must take one `numpy.ndarray` as input
+        and return a `Dataset`.
 
         Args:
-            func (function): A function that must take one 'Ndarray' as an argument and
-                return a 'Dataset'.
+            func (function): A function that must take one `numpy.ndarray` as an argument and
+                return a `Dataset`.
 
         Returns:
             Dataset, dataset applied by the function.
@@ -1244,8 +1257,8 @@ class Dataset:
         Apply a function in this dataset.
 
         Args:
-            apply_func (function): A function that must take one 'Dataset' as an argument and
-                                   return a preprocessed 'Dataset'.
+            apply_func (function): A function that must take one `Dataset` as an argument and
+                                   return a preprocessed `Dataset`.
 
         Returns:
             Dataset, dataset applied by the function.
@@ -1304,6 +1317,8 @@ class Dataset:
                 types and shapes of data or not(default=False).
 
         Note:
+            This interface will be deleted or invisible in the future.
+            Please use `device_que` to enable dataset sink mode.
             If device is Ascend, features of data will be transferred one by one. The limitation
             of data transmission per second is 256M.
 
@@ -1313,22 +1328,25 @@ class Dataset:
         Raises:
             RuntimeError: If distribution file path is given but failed to read.
         """
+        logger.warning("This interface will be deleted or invisible in the future. "
+                       "Please use 'device_que' to enable dataset sink mode.")
+
         return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
     @check_save
     def save(self, file_name, num_files=1, file_type='mindrecord'):
         """
         Save the dynamic data processed by the dataset pipeline in common dataset format.
-        Supported dataset formats: 'mindrecord' only
+        Supported dataset formats: `mindrecord` only. And you can use `MindDataset` API to read the saved file(s).
 
-        Implicit type casting exists when saving data as 'mindrecord'. The transform table shows how to do type casting.
+        Implicit type casting exists when saving data as `mindrecord`. The transform table shows how to do type casting.
 
-        .. list-table:: Implicit Type Casting when Saving as 'mindrecord'
+        .. list-table:: Implicit Type Casting when Saving as `mindrecord`
            :widths: 25 25 50
            :header-rows: 1
 
-           * - Type in 'dataset'
-             - Type in 'mindrecord'
+           * - Type in `dataset`
+             - Type in `mindrecord`
              - Details
            * - bool
              - None
@@ -1400,7 +1418,7 @@ class Dataset:
     @check_tuple_iterator
     def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         """
-        Create an iterator over the dataset. The datatype retrieved back will be a list of ndarrays.
+        Create an iterator over the dataset. The datatype retrieved back will be a list of `numpy.ndarray`.
 
         To specify which columns to list and the order needed, use columns_list. If columns_list
         is not provided, the order of the columns will remain unchanged.
@@ -1475,6 +1493,11 @@ class Dataset:
         """
         Get Input Index Information
 
+        Note:
+            This interface will be deleted or invisible in the future.
+            Please use `project` to change the columns' order and you can use `create_tuple_iterator` to
+            verify the output order.
+
         Returns:
             int, tuple of the input index information.
 
@@ -1485,6 +1508,9 @@ class Dataset:
             >>> print(dataset.input_indexs)
             10
         """
+        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
+                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
+
         if self._input_indexs != ():
             return self._input_indexs
 
@@ -1501,6 +1527,9 @@ class Dataset:
 
     @input_indexs.setter
     def input_indexs(self, value):
+        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
+                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
+
         self._input_indexs = value
 
     def copy_batch_size(self, value):
@@ -3864,9 +3893,9 @@ class Schema:
         Args:
             columns (Union[dict, list[dict], tuple[dict]]): Dataset attribute information, decoded from schema file.
 
-                - list[dict], 'name' and 'type' must be in keys, 'shape' optional.
+                - list[dict], `name` and `type` must be in keys, `shape` optional.
 
-                - dict, columns.keys() as name, columns.values() is dict, and 'type' inside, 'shape' optional.
+                - dict, columns.keys() as name, columns.values() is dict, and `type` inside, `shape` optional.
 
         Raises:
             RuntimeError: If failed to parse columns.
