@@ -1,7 +1,7 @@
 mindspore.ops.matmul
 =====================
 
-.. py:function:: mindspore.ops.matmul(x1, x2, dtype=None)
+.. py:function:: mindspore.ops.matmul(x1, x2)
 
     计算两个数组的乘积。
 
@@ -12,7 +12,6 @@ mindspore.ops.matmul
 
     - **x1** (Tensor) - 输入Tensor，不支持Scalar， `x1` 的最后一维度和 `x2` 的倒数第二维度相等，且 `x1` 和 `x2` 彼此支持广播。
     - **x2** (Tensor) - 输入Tensor，不支持Scalar， `x1` 的最后一维度和 `x2` 的倒数第二维度相等，且 `x1` 和 `x2` 彼此支持广播。
-    - **dtype** (:class:`mindspore.dtype`, optional) - 指定输入Tensor的数据类型，默认：None。
 
     **返回：**
 
