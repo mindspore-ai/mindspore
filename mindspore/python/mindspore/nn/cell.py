@@ -115,7 +115,6 @@ class Cell(Cell_):
         self._id = 1
         self.exist_names = set("")
         self.exist_objs = set()
-        self.jit_config_dict = dict()
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -142,6 +141,7 @@ class Cell(Cell_):
         self._user_parameters = []
         self._dynamic_shape_inputs = None
         self.saved_dynamic_shape = None
+        self._jit_config_dict = dict()
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -927,7 +927,7 @@ class Cell(Cell_):
         """
         if self._dynamic_shape_inputs is None or self._dynamic_shape_inputs[0] is None:
             _cell_graph_executor.compile(self, *inputs, phase=self.phase, auto_parallel_mode=self._auto_parallel_mode,
-                                         jit_config_dict=self.jit_config_dict)
+                                         jit_config_dict=self._jit_config_dict)
         else:
             self._check_compile_dynamic_shape(*inputs)
             if self.saved_dynamic_shape:
@@ -938,7 +938,7 @@ class Cell(Cell_):
             self.saved_dynamic_shape = self._dynamic_shape_inputs
             _cell_graph_executor.compile(self, *self._dynamic_shape_inputs, phase=self.phase,
                                          auto_parallel_mode=self._auto_parallel_mode,
-                                         jit_config_dict=self.jit_config_dict)
+                                         jit_config_dict=self._jit_config_dict)
             logger.debug("Compiled Graph with dynamic shape")
 
     def compile_and_run(self, *inputs):
@@ -1638,10 +1638,10 @@ class Cell(Cell_):
 
     def set_jit_config(self, jit_config):
         """Set jit config for cell."""
-        if self.jit_config_dict:
+        if self._jit_config_dict:
             logger.warning("For Cell, jit config can only be set once, ignore this setting.")
         else:
-            self.jit_config_dict = jit_config.jit_config_dict
+            self._jit_config_dict = jit_config.jit_config_dict
 
     def flatten_weights(self, fusion_size=0):
         """
