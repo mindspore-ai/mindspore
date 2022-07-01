@@ -3,7 +3,7 @@ mindspore.nn.probability.toolbox.UncertaintyEvaluation
 
 .. py:class:: mindspore.nn.probability.toolbox.UncertaintyEvaluation(model, train_dataset, task_type, num_classes=None, epochs=1, epi_uncer_model_path=None, ale_uncer_model_path=None, save_model=False)
 
-    不确定性评估工具箱。
+    包含数据不确定性和模型不确定性的评估工具箱。
 
     **参数：**
 
@@ -16,7 +16,7 @@ mindspore.nn.probability.toolbox.UncertaintyEvaluation
     - **epochs** (int) - 数据的迭代总数。默认值：1。
     - **epi_uncer_model_path** (str) - 认知不确定性模型的保存或读取路径。默认值：None。
     - **ale_uncer_model_path** (str) - 任意不确定性模型的保存或读取路径。默认值：None。
-    - **save_model** (bool) - 是否保存不确定性模型，如果为 true，epi_uncer_model_path 和 ale_uncer_model_path 不能为 None。
+    - **save_model** (bool) - 是否保存不确定性模型，如果为 true，`epi_uncer_model_path` 和 `ale_uncer_model_path` 不能为 None。
       如果为 false，则从不确定性模型的路径中加载要评估的模型；如果未给出路径，则不会保存或加载不确定性模型。默认值：false。
 
     .. py:method:: eval_aleatoric_uncertainty(eval_data)

@@ -13,15 +13,14 @@ mindspore.nn.probability.bnn_layers.DenseReparam
         
         \text{outputs} = \text{activation}(\text{inputs} * \text{weight} + \text{bias}),
 
-    在本公式中 :math:`\text{activation}` 是作为激活参数传递的激活函数（如果传入，:math:`\text{activation}` 是与创建层的输入具有相同数据类型的权重矩阵，
-    weight 是从权重的后验分布采样的权重矩阵，并且 bias 是与层创建的输入具有相同数据类型的偏置向量（仅当 has_bias 为 True 时）。偏差向量是从后验分布中采样的 bias。
+    此公式中，activation 为激活函数（若`activation` 参数传入），是与创建层的输入具有相同数据类型的权重矩阵。weight 是从权重的后验分布采样的权重矩阵。bias 是与由层创建的输入具有相同数据类型的偏置向量（仅当 `has_bias` 为 True 时），从 bias 的后验分布中采样。
 
     **参数：**
 
     - **in_channels** (int) – 输入通道的数量。
     - **out_channels** (int) – 输出通道的数量。
     - **activation** (str, Cell) – 应用于层输出的正则化函数。激活的类型可以是 str（例如'relu'）或 Cell（例如nn.ReLU()）。注意，如果激活的类型是 Cell，则必须事先实例化。默认值：None。
-    - **has_bias** (bool) - 指定层是否使用偏置向量。默认值：false。
+    - **has_bias** (bool) - 指定层是否使用偏置向量。默认值：True。
     - **weight_prior_fn** (Cell) - 权重的先验分布。它必须返回一个 mindspore 分布实例。默认值：NormalPrior。（创建标准正态分布的一个实例）。当前版本仅支持正态分布。 
     - **weight_posterior_fn** (function) - 采样权重的后验分布。它必须是一个函数句柄，它返回一个 mindspore 分布实例。默认值：normal_post_fn。当前版本仅支持正态分布。 
     - **bias_prior_fn** (Cell) - 偏置向量的先验分布。它必须返回一个 mindspore 分布实例。默认值：NormalPrior（创建标准正态分布的实例）。当前版本仅支持正态分布。

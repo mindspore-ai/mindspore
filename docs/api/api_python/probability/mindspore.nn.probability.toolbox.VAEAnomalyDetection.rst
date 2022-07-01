@@ -5,7 +5,7 @@ mindspore.nn.probability.toolbox.VAEAnomalyDetection
 
     使用 VAE 进行异常检测的工具箱。
 
-    变分自动编码器（VAE）可用于无监督异常检测。异常分数是 X 与重建 X 之间的误差。如果分数高，则 X 大多是异常值。
+    变分自动编码器（VAE）可用于无监督异常检测。异常分数是 sample_x 与重建 sample_x 之间的误差。如果分数高，则 X 大多是异常值。
 
     **参数：**
 
@@ -25,7 +25,7 @@ mindspore.nn.probability.toolbox.VAEAnomalyDetection
 
         **返回：**
 
-        bool值，样本是否为异常值。
+        bool，样本是否为异常值。
 
     .. py:method:: predict_outlier_score(sample_x)
 

@@ -1,7 +1,7 @@
 mindspore.nn.probability.bnn_layers.NormalPrior
 ===============================================
 
-.. py:class:: mindspore.nn.probability.bnn_layers.NormalPrior(dtype=mstype.float32, mean=0, std=0.1)
+.. py:class:: mindspore.nn.probability.bnn_layers.NormalPrior(dtype=mindspore.float32, mean=0, std=0.1)
 
     初始化均值 0 和标准差 0.1 的正态分布。
 
