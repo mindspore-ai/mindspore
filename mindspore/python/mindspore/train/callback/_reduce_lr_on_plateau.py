@@ -57,7 +57,8 @@ class ReduceLROnPlateau(Callback):
             `new_lr = lr * factor`. Default: 0.1.
         patience (int): `monitor` value is better than history best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
-            with no improvement after which learning rate
+            with no improvement that would be waited. When the waiting
+            counter `self.wait` is larger than or equal to `patience`,  the lr
             will be reduced. Default: 10.
         verbose (bool): If False: quiet, if True: print related information.
             Default: False.
