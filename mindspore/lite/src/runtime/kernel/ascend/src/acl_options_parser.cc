@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/extendrt/kernel/ascend/src/acl_options_parser.h"
+#include "src/runtime/kernel/ascend/src/acl_options_parser.h"
 #include <utility>
 #include <vector>
 #include "common/log_adapter.h"

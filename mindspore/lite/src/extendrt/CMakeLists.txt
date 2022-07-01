@@ -165,7 +165,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
-        add_subdirectory(kernel/ascend)
         link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     endif()
 
