@@ -95,7 +95,36 @@ bool InferShapeForDefiniteOutputNode(const CNodePtr &cnode) {
   return true;
 }
 
-void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map) {
+tensor::TensorPtr GetDependValueTensor(size_t i, const AnfNodePtr &real_input, size_t real_input_index,
+                                       bool skip_nop_node, void *args) {
+  auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
+  auto host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
+  auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
+  MS_EXCEPTION_IF_NULL(out_tensor);
+
+  auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
+  if (output_addr != nullptr && output_addr->GetPtr() != nullptr) {
+    // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
+    // address size will be wrong in the dynamic shape scenario.
+    out_tensor->set_device_address(output_addr, false);
+    out_tensor->data_sync();
+  } else {
+    // If real_input is parameter and is control flow's output, the device address stored in AnfNode is useless.
+    if (args == nullptr) {
+      MS_LOG(EXCEPTION) << "Address is nullptr, something error";
+    }
+    auto input_device_address = reinterpret_cast<std::vector<device::DeviceAddress *> *>(args);
+    if (i >= input_device_address->size() || input_device_address->at(i) == nullptr) {
+      MS_LOG(EXCEPTION) << "i is nullptr, something error";
+    }
+
+    out_tensor->data_sync_directly(input_device_address->at(i));
+  }
+
+  return out_tensor;
+}
+
+void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *depend_tensor_map, void *args) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(depend_tensor_map);
   MS_LOG(INFO) << "InferShape start, node:" << cnode->fullname_with_scope();
@@ -125,19 +154,11 @@ void InferShape(const CNodePtr &cnode, std::map<uint32_t, tensor::TensorPtr> *de
       InferShapeForNopNode(real_input);
     }
     if (depend_list.find(i) != depend_list.end()) {
-      auto output_addr = AnfAlgo::GetMutableOutputAddr(real_input, real_input_index, skip_nop_node);
-      auto shapes = trans::GetRuntimePaddingShape(real_input, real_input_index);
-      auto host_type = common::AnfAlgo::GetOutputInferDataType(real_input, real_input_index);
-      auto out_tensor = std::make_shared<tensor::Tensor>(host_type, shapes);
-      MS_EXCEPTION_IF_NULL(out_tensor);
-      // The second parameter must be false, otherwise the device address cannot be released and allocated, and the
-      // address size will be wrong in the dynamic shape scenario.
-      out_tensor->set_device_address(output_addr, false);
+      auto out_tensor = GetDependValueTensor(i, real_input, real_input_index, skip_nop_node, args);
       auto ret2 = depend_tensor_map->try_emplace(i, out_tensor);
       if (!ret2.second) {
         MS_LOG(EXCEPTION) << "Insert map failed.";
       }
-      out_tensor->data_sync();
 
       // cppcheck-suppress unreadVariable
       auto lock = AnfUtils::GetAbstractLock(real_input.get());
@@ -170,7 +191,7 @@ AnfNodePtr GenInferNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  auto infer_node = AnfUtils::NewInferActorNode([cnode](void *) { InferOp(cnode); }, cnode);
+  auto infer_node = AnfUtils::NewInferActorNode([cnode](void *args) { InferOp(cnode, args); }, cnode);
   infer_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return infer_node;
 }
@@ -198,7 +219,7 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
   return init_node;
 }
 
-void InferOp(const CNodePtr &cnode) {
+void InferOp(const CNodePtr &cnode, void *args) {
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_mod = AnfAlgo::GetKernelMod(cnode);
   MS_EXCEPTION_IF_NULL(kernel_mod);
@@ -206,21 +227,21 @@ void InferOp(const CNodePtr &cnode) {
     MS_LOG(WARNING) << "The node " << cnode->fullname_with_scope() << " is not dynamic shape.";
     return;
   }
-  kernel::KernelArgs args;
+  kernel::KernelArgs kernel_args;
   if (AnfAlgo::IsDynamicShapeSkipExecute(cnode)) {
     std::vector<TypeId> dtypes{common::AnfAlgo::GetOutputInferDataType(cnode, 0)};
     common::AnfAlgo::SetOutputInferTypeAndShape(dtypes, {AnfAlgo::GetInputDeviceShape(cnode, 0)}, cnode.get());
   } else {
-    InferShape(cnode, &args.depend_tensor_map);
+    InferShape(cnode, &kernel_args.depend_tensor_map, args);
   }
 
   if (kernel_mod->GetKernelModType() == kernel::KernelModType::NativeGpuKernelMod ||
       kernel_mod->GetKernelModType() == kernel::KernelModType::NativeCpuKernelMod) {
     auto update = kernel::AbstractArgsFromCNode(cnode);
-    update.depend_tensor_map = std::move(args.depend_tensor_map);
+    update.depend_tensor_map = std::move(kernel_args.depend_tensor_map);
     kernel::SetArgsToCNode(cnode, update);
   } else {
-    kernel::SetArgsToCNode(cnode, args);
+    kernel::SetArgsToCNode(cnode, kernel_args);
   }
 }
 
