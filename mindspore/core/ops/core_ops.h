@@ -183,6 +183,7 @@ constexpr auto kSlice = "Slice";
 constexpr auto kAffineGrid = "AffineGrid";
 
 // NN
+constexpr auto kApplyAddSign = "ApplyAddSign";
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
 constexpr auto kFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
 constexpr auto kFractionalMaxPool3DGradWithFixedKsize = "FractionalMaxPool3DGradWithFixedKsize";
