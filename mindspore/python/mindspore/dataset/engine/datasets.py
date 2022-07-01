@@ -380,6 +380,18 @@ class Dataset:
             _OP_PROCESS.update(generator_process)
         return op_name
 
+    def close_pool(self):
+        """
+        Close multiprocessing pool in dataset. If you are familiar with multiprocessing library, you can regard this
+        as a destructor for a processingPool object.
+
+        Note:
+            This interface will be deleted or invisible in the future. Please don't use it.
+            When you find that there are residual processes that do not exit correctly, you can use `kill -9 PROCESS_ID`
+            to end it, or through www.gitee.com/mindspore/mindspore send us an issue.
+        """
+        logger.warning("This interface will be deleted or invisible in the future. Please don't use it.")
+
     def create_ir_tree(self):
         """
         Internal method to build an IR tree.
@@ -1305,6 +1317,8 @@ class Dataset:
                 types and shapes of data or not(default=False).
 
         Note:
+            This interface will be deleted or invisible in the future.
+            Please use `device_que` to enable dataset sink mode.
             If device is Ascend, features of data will be transferred one by one. The limitation
             of data transmission per second is 256M.
 
@@ -1314,6 +1328,9 @@ class Dataset:
         Raises:
             RuntimeError: If distribution file path is given but failed to read.
         """
+        logger.warning("This interface will be deleted or invisible in the future. "
+                       "Please use 'device_que' to enable dataset sink mode.")
+
         return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
     @check_save
@@ -1476,6 +1493,11 @@ class Dataset:
         """
         Get Input Index Information
 
+        Note:
+            This interface will be deleted or invisible in the future.
+            Please use `project` to change the columns' order and you can use `create_tuple_iterator` to
+            verify the output order.
+
         Returns:
             int, tuple of the input index information.
 
@@ -1486,6 +1508,9 @@ class Dataset:
             >>> print(dataset.input_indexs)
             10
         """
+        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
+                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
+
         if self._input_indexs != ():
             return self._input_indexs
 
@@ -1502,6 +1527,9 @@ class Dataset:
 
     @input_indexs.setter
     def input_indexs(self, value):
+        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
+                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
+
         self._input_indexs = value
 
     def copy_batch_size(self, value):
