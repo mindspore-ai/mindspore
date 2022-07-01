@@ -837,14 +837,14 @@ class Tensor(Tensor_):
         Refer to :func:`mindspore.ops.ger` for more detail.
 
         Args:
-            x (Tensor): input Tensor, with dtype of float16 or float32.
+            x (Tensor): input Tensor, with dtype of float16, float32 or float64.
 
         Returns:
             Tensor, output matrix with the same dtype as inputs.With `self` shape :math:`(m,)` and
             `x` shape of :math:`(n,)`, the `output` has shape :math:`(m, n)`.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x1 = Tensor([1., 2., 3., 4.], mindspore.float32)
@@ -4698,7 +4698,7 @@ class CSRTensor(CSRTensor_):
         """
         validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
         return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, \
-            self.shape, dense_matrix)
+                                                        self.shape, dense_matrix)
 
     def sum(self, axis):
         """
