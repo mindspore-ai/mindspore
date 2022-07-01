@@ -68,12 +68,12 @@ def test_resize_linear_1d_grad_align_corners(dtype):
                           [4, 5, 6]]], dtype=dtype))
     size = Tensor(np.array([6], dtype=np.int64))
     grad_output = Tensor(np.array([[[1., 2., 3., 4., 5., 6.],
-                                    [7., 8., 9., 10., 11., 12.]]], dtype=np.float32))
+                                    [7., 8., 9., 10., 11., 12.]]], dtype=dtype))
     net_cpu = ResizeLinear1DNet()
     grad = ResizeLinear1DGradNet(net_cpu)
     output = grad(grad_output, x, size)
     expect = np.array([[[2.8, 8.4, 9.8],
-                        [13.6, 22.8, 20.6]]]).astype(np.float32)
+                        [13.6, 22.8, 20.6]]]).astype(dtype)
     print("ms grad input: ", output[0].asnumpy())
     assert np.allclose(output[0].asnumpy(), expect)
 
@@ -92,12 +92,12 @@ def test_resize_linear_1d_grad_half_pixel(dtype):
                           [4, 5, 6]]], dtype=dtype))
     size = Tensor(np.array([6], dtype=np.int64))
     grad_output = Tensor(np.array([[[1., 2., 3., 4., 5., 6.],
-                                    [7., 8., 9., 10., 11., 12.]]], dtype=np.float32))
+                                    [7., 8., 9., 10., 11., 12.]]], dtype=dtype))
     net_cpu = ResizeLinear1DNet("half_pixel")
     grad = ResizeLinear1DGradNet(net_cpu)
     output = grad(grad_output, x, size)
     expect = np.array([[[3.25, 7, 10.75],
-                        [15.25, 19, 22.75]]]).astype(np.float32)
+                        [15.25, 19, 22.75]]]).astype(dtype)
     print("ms grad input: ", output[0].asnumpy())
     assert np.allclose(output[0].asnumpy(), expect)
 
@@ -105,7 +105,7 @@ def test_resize_linear_1d_grad_half_pixel(dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_linear_1d_grad_same_shape(dtype):
     """
     Feature: ResizeLinear1DGrad cpu kernel same shape
@@ -116,11 +116,11 @@ def test_resize_linear_1d_grad_same_shape(dtype):
                           [4, 5, 6]]], dtype=dtype))
     size = Tensor(np.array([3], dtype=np.int64))
     grad_output = Tensor(np.array([[[1., 2., 3.],
-                                    [7., 8., 9.]]], dtype=np.float32))
+                                    [7., 8., 9.]]], dtype=dtype))
     net_cpu = ResizeLinear1DNet()
     grad = ResizeLinear1DGradNet(net_cpu)
     output = grad(grad_output, x, size)
     expect = np.array([[[1., 2., 3.],
-                        [7., 8., 9.]]]).astype(np.float32)
+                        [7., 8., 9.]]]).astype(dtype)
     print("ms grad input: ", output[0].asnumpy())
     assert np.allclose(output[0].asnumpy(), expect)

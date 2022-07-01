@@ -1150,8 +1150,8 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
           same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor, loss float tensor. When 'reduction' is set to 'none', output has same shape and dtype as the `logits`.
-        When reduction is set to 'mean' or 'sum', the output is 1-D tensor with one element.
+        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
+        Otherwise it is a scalar.
 
     Raises:
         TypeError: If `beta` is not a float.
@@ -1432,6 +1432,7 @@ __all__ = [
     'pad',
     'cross_entropy',
     'grid_sample',
+    'smooth_l1_loss',
     'nll_loss'
 ]
 __all__.sort()

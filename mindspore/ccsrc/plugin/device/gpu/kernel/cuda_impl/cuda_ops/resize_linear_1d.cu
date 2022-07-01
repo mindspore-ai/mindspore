@@ -32,28 +32,44 @@ struct AsymmetricFunc {
 
 struct HalfPixelFunc {
   __device__ void operator()(const float &new_x, const int &old_length, const int &new_length, float *old_x) const {
-    *old_x = new_length != 0 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
+    *old_x = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
   }
 };
+
+struct CachedInterpolation {
+  size_t lower;
+  size_t upper;
+  float lerp;
+};
+
+template <typename TransformationT>
+__device__ void InterpolationCal(const int64_t out_i, const int64_t in_width, const int64_t out_width,
+                                 const TransformationT func, CachedInterpolation *ret) {
+  float in_i;
+  func(out_i, in_width, out_width, &in_i);
+  const float in_floor = std::floor(in_i);
+  const float in_ceil = std::ceil(in_i);
+  ret->lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
+  ret->upper = static_cast<size_t>(in_ceil < static_cast<float>(in_width - 1) ? in_ceil : in_width - 1);
+  ret->lerp = in_i - in_floor;
+}
 }  // namespace
 
 template <typename T, typename TransformationT>
 __global__ void ResizeLinear1DKernel(const int64_t output_size, const int64_t in_width, const int64_t out_width,
-                                     const T *input, float *output, const TransformationT func) {
+                                     const T *input, T *output, const TransformationT func) {
   int index = blockDim.x * blockIdx.x + threadIdx.x;
   if (index >= output_size) {
     return;
   }
 
-  int64_t out_i = index % out_width;
   int64_t out_index = index / out_width;
-  float in_i;
-  func(out_i, in_width, out_width, &in_i);
-  const float in_floor = std::floor(in_i);
-  const float in_ceil = std::ceil(in_i);
-  size_t in_lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-  size_t in_upper = static_cast<size_t>(in_ceil < static_cast<float>(in_width - 1) ? in_ceil : in_width - 1);
-  float lerp = in_i - in_floor;
+  int64_t out_i = index % out_width;
+  CachedInterpolation interp;
+  InterpolationCal(out_i, in_width, out_width, func, &interp);
+  size_t in_lower = interp.lower;
+  size_t in_upper = interp.upper;
+  float lerp = interp.lerp;
 
   const float left(static_cast<float>(*(input + out_index * in_width + in_lower)));
   const float right(static_cast<float>(*(input + out_index * in_width + in_upper)));
@@ -64,7 +80,7 @@ __global__ void ResizeLinear1DKernel(const int64_t output_size, const int64_t in
 
 template <typename T>
 void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
-                    const int64_t in_width, const int64_t out_width, const T *input, float *output,
+                    const int64_t in_width, const int64_t out_width, const T *input, T *output,
                     const uint32_t device_id, cudaStream_t stream) {
   switch (mode) {
     case ALIGN_CORNERS:
@@ -83,33 +99,31 @@ void ResizeLinear1D(const enum ResizeLinearCoordinateTransformationMode mode, co
 
 template <typename T, typename TransformationT>
 __global__ void ResizeLinear1DGradKernel(const int64_t output_size, const int64_t in_width, const int64_t out_width,
-                                         const float *grad_output, T *grad_input, const TransformationT func) {
+                                         const T *grad_output, T *grad_input, const TransformationT func) {
   int index = blockDim.x * blockIdx.x + threadIdx.x;
   if (index >= output_size) {
     return;
   }
 
-  int64_t out_i = index % out_width;
   int64_t out_index = index / out_width;
-  float in_i;
-  func(out_i, in_width, out_width, &in_i);
-  const float in_floor = std::floor(in_i);
-  const float in_ceil = std::ceil(in_i);
-  size_t in_lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-  size_t in_upper = static_cast<size_t>(in_ceil < static_cast<float>(in_width - 1) ? in_ceil : in_width - 1);
-  float lerp = in_i - in_floor;
+  int64_t out_i = index % out_width;
+  CachedInterpolation interp;
+  InterpolationCal(out_i, in_width, out_width, func, &interp);
+  size_t in_lower = interp.lower;
+  size_t in_upper = interp.upper;
+  float lerp = interp.lerp;
 
   (void)MsAtomicAdd<T>(grad_input + out_index * in_width + in_lower,
-                       static_cast<T>((*(grad_output + out_index * out_width + out_i)) * (1 - lerp)));
+                       static_cast<T>((*(grad_output + out_index * out_width + out_i)) * static_cast<T>(1 - lerp)));
 
   (void)MsAtomicAdd<T>(grad_input + out_index * in_width + in_upper,
-                       static_cast<T>((*(grad_output + out_index * out_width + out_i)) * lerp));
+                       static_cast<T>((*(grad_output + out_index * out_width + out_i)) * static_cast<T>(lerp)));
   return;
 }
 
 template <typename T>
 void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size,
-                        const int64_t in_width, const int64_t out_width, const float *grad_output, T *grad_input,
+                        const int64_t in_width, const int64_t out_width, const T *grad_output, T *grad_input,
                         const uint32_t device_id, cudaStream_t stream) {
   switch (mode) {
     case ALIGN_CORNERS:
@@ -129,14 +143,8 @@ void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode
 #define RESIZE_LINEAR_1D_FUNC(T)                                                                                 \
   template CUDA_LIB_EXPORT void ResizeLinear1D(                                                                  \
     const enum ResizeLinearCoordinateTransformationMode mode, const int64_t output_size, const int64_t in_width, \
-    const int64_t out_width, const T *input, float *output, const uint32_t device_id, cudaStream_t stream);
+    const int64_t out_width, const T *input, T *output, const uint32_t device_id, cudaStream_t stream);
 
-RESIZE_LINEAR_1D_FUNC(int8_t)
-RESIZE_LINEAR_1D_FUNC(uint8_t)
-RESIZE_LINEAR_1D_FUNC(int16_t)
-RESIZE_LINEAR_1D_FUNC(uint16_t)
-RESIZE_LINEAR_1D_FUNC(int)
-RESIZE_LINEAR_1D_FUNC(int64_t)
 RESIZE_LINEAR_1D_FUNC(half)
 RESIZE_LINEAR_1D_FUNC(float)
 RESIZE_LINEAR_1D_FUNC(double)
@@ -148,5 +156,10 @@ template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordina
 
 template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
                                                  const int64_t output_size, const int64_t in_width,
-                                                 const int64_t out_width, const float *grad_output, double *grad_input,
+                                                 const int64_t out_width, const double *grad_output, double *grad_input,
+                                                 const uint32_t device_id, cudaStream_t stream);
+
+template CUDA_LIB_EXPORT void ResizeLinear1DGrad(const enum ResizeLinearCoordinateTransformationMode mode,
+                                                 const int64_t output_size, const int64_t in_width,
+                                                 const int64_t out_width, const half *grad_output, half *grad_input,
                                                  const uint32_t device_id, cudaStream_t stream);

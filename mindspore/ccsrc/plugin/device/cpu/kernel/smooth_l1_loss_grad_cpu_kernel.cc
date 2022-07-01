@@ -93,16 +93,19 @@ template <typename T>
 bool SmoothL1LossGradCpuKernelMod::CalNoReduce(const T *predict_addr, const T *target_addr, const T *dloss_addr,
                                                T *result_addr) {
   T beta = static_cast<T>(beta_);
-  for (int64_t i = 0; i < tensor_size_; ++i) {
-    T diff = predict_addr[i] - target_addr[i];
-    if (diff > beta) {
-      result_addr[i] = dloss_addr[i];
-    } else if (diff < -beta) {
-      result_addr[i] = -dloss_addr[i];
-    } else {
-      result_addr[i] = (diff / beta) * dloss_addr[i];
+  auto task = [&](size_t start, size_t end) {
+    for (uint64_t i = start; i < end; ++i) {
+      T diff = predict_addr[i] - target_addr[i];
+      if (diff > beta) {
+        result_addr[i] = dloss_addr[i];
+      } else if (diff < -beta) {
+        result_addr[i] = -dloss_addr[i];
+      } else {
+        result_addr[i] = (diff / beta) * dloss_addr[i];
+      }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 
@@ -111,16 +114,19 @@ bool SmoothL1LossGradCpuKernelMod::CalMean(const T *predict_addr, const T *targe
                                            T *result_addr) {
   T beta = static_cast<T>(beta_);
   T val = static_cast<T>(1) / static_cast<T>(tensor_size_);
-  for (int64_t i = 0; i < tensor_size_; ++i) {
-    T diff = predict_addr[i] - target_addr[i];
-    if (diff > beta) {
-      result_addr[i] = dloss_addr[0] * val;
-    } else if (diff < -beta) {
-      result_addr[i] = -dloss_addr[0] * val;
-    } else {
-      result_addr[i] = (diff / beta) * dloss_addr[0] * val;
+  auto task = [&](size_t start, size_t end) {
+    for (uint64_t i = start; i < end; ++i) {
+      T diff = predict_addr[i] - target_addr[i];
+      if (diff > beta) {
+        result_addr[i] = dloss_addr[0] * val;
+      } else if (diff < -beta) {
+        result_addr[i] = -dloss_addr[0] * val;
+      } else {
+        result_addr[i] = (diff / beta) * dloss_addr[0] * val;
+      }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 
@@ -128,16 +134,19 @@ template <typename T>
 bool SmoothL1LossGradCpuKernelMod::CalSum(const T *predict_addr, const T *target_addr, const T *dloss_addr,
                                           T *result_addr) {
   T beta = static_cast<T>(beta_);
-  for (int64_t i = 0; i < tensor_size_; ++i) {
-    T diff = predict_addr[i] - target_addr[i];
-    if (diff > beta) {
-      result_addr[i] = dloss_addr[0];
-    } else if (diff < -beta) {
-      result_addr[i] = -dloss_addr[0];
-    } else {
-      result_addr[i] = (diff / beta) * dloss_addr[0];
+  auto task = [&](size_t start, size_t end) {
+    for (uint64_t i = start; i < end; ++i) {
+      T diff = predict_addr[i] - target_addr[i];
+      if (diff > beta) {
+        result_addr[i] = dloss_addr[0];
+      } else if (diff < -beta) {
+        result_addr[i] = -dloss_addr[0];
+      } else {
+        result_addr[i] = (diff / beta) * dloss_addr[0];
+      }
     }
-  }
+  };
+  ParallelLaunchAutoSearch(task, tensor_size_, this, &parallel_search_info_);
   return true;
 }
 

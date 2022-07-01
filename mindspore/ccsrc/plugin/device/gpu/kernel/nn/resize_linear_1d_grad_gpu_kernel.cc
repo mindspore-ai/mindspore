@@ -98,7 +98,7 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
                                                   const std::vector<AddressPtr> &outputs, void *stream_ptr) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DGradOutputsNum, kernel_name_);
-  float *grad_output = GetDeviceAddress<float>(inputs, kIndex0);
+  T *grad_output = GetDeviceAddress<T>(inputs, kIndex0);
   MS_ERROR_IF_NULL_W_RET_VAL(grad_output, false);
 
   T *grad_input = GetDeviceAddress<T>(outputs, kIndex0);
@@ -114,12 +114,13 @@ bool ResizeLinear1DGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> 
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GRAD_GPU_REG(MS_T, T)                                          \
-  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
+#define RESIZE_LINEAR_1D_GRAD_GPU_REG(MS_T, T)                            \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_T).AddOutputAttr(MS_T), \
     &ResizeLinear1DGradGpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ResizeLinear1DGradGpuKernelMod::ResizeLinear1DGradFunc>>
   ResizeLinear1DGradGpuKernelMod::func_list_ = {
+    {RESIZE_LINEAR_1D_GRAD_GPU_REG(kNumberTypeFloat16, half)},
     {RESIZE_LINEAR_1D_GRAD_GPU_REG(kNumberTypeFloat32, float)},
     {RESIZE_LINEAR_1D_GRAD_GPU_REG(kNumberTypeFloat64, double)},
 };
