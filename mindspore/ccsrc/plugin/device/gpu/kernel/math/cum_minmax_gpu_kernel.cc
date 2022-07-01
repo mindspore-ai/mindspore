@@ -64,44 +64,40 @@ int CumMinMaxGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
     return ret;
   }
-  element_size_ = inner_size_ = axis_size_ = 1;
-  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+  outer_size_ = inner_size_ = axis_size_ = 1;
+  auto input_shape = LongVecToSizeVec(inputs[kIndex0]->GetShapeVector());
   auto rank = SizeToLong(input_shape.size());
   auto axis = axis_ < 0 ? LongToSize(axis_ + rank) : LongToSize(axis_);
   for (size_t i = 0; i < input_shape.size(); i++) {
     if (i < axis) {
-      element_size_ *= input_shape.at(i);
+      outer_size_ *= input_shape.at(i);
     } else if (i > axis) {
       inner_size_ *= input_shape.at(i);
     } else {
       axis_size_ = input_shape.at(i);
     }
   }
-
-  element_size_ *= (inner_size_ * axis_size_);
-  workspace_size_list_.push_back(element_size_ * sizeof(size_t));
   return 0;
 }
 
 template <typename DataType, typename IndexType>
-bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                         const std::vector<AddressPtr> &workspace,
+bool CumMinMaxGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<AddressPtr> &outputs, void *stream_ptr) {
-  if (!element_size_) {
+  auto element_size = (outer_size_ * inner_size_) * axis_size_;
+  if (element_size == 0) {
     return true;
   }
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr);
   auto input_ptr = GetDeviceAddress<DataType>(inputs, kIndex0);
-  auto workspace_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto value_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
   auto index_ptr = GetDeviceAddress<IndexType>(outputs, kIndex1);
-
-  if (input_ptr == nullptr || workspace_ptr == nullptr || value_ptr == nullptr || index_ptr == nullptr) {
+  auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
+  if (any(cuda_stream, input_ptr, value_ptr, index_ptr)) {
     return false;
   }
 
-  CumMinMax(cum_op_type_, input_ptr, workspace_ptr, value_ptr, index_ptr, element_size_, axis_size_, inner_size_,
-            device_id_, cuda_stream);
+  CumMinMax(cum_op_type_, input_ptr, value_ptr, index_ptr, outer_size_, axis_size_, inner_size_, device_id_,
+            cuda_stream);
 
   auto err = cudaGetLastError();
   if (err != cudaSuccess) {
