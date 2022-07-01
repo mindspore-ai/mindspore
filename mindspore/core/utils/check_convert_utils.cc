@@ -515,16 +515,19 @@ TypePtr CheckAndConvertUtils::CheckTensorTypeSame(const std::map<std::string, Ty
       }
       if (!check_list.empty()) {
         buffer << "Valid type list: {";
+        std::set<string> order_set;
         for (auto const &valid_type : check_list) {
           if (valid_type->isa<TensorType>()) {
-            buffer << valid_type->ToString() << ", ";
+            order_set.emplace(valid_type->ToString());
             break;
           } else {
-            buffer << "Tensor[" << valid_type << "]";
+            order_set.emplace("Tensor[" + valid_type->ToString() + "]");
           }
-          if (i < check_list.size()) {
+        }
+        for (auto const &error_item : order_set) {
+          buffer << error_item;
+          if (error_item != *(--order_set.end())) {
             buffer << ", ";
-            ++i;
           }
         }
         buffer << "}.";
@@ -621,16 +624,26 @@ TypePtr CheckAndConvertUtils::CheckTensorSubClass(const string &type_name, const
   }
   std::ostringstream buffer;
   buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
-  for (const auto &item : template_types) {
-    if (item->isa<TensorType>()) {
-      buffer << item->ToString();
-      continue;
-    }
-    buffer << " Tensor[" << item->ToString() << "],";
-  }
+  std::set<string> order_set;
+
   if (is_mix) {
     for (const auto &item : template_types) {
-      buffer << " " << item->ToString() << ",";
+      order_set.emplace(item->ToString());
+    }
+  }
+
+  for (const auto &item : template_types) {
+    if (item->isa<TensorType>()) {
+      order_set.emplace(item->ToString());
+      continue;
+    }
+    order_set.emplace("Tensor[" + item->ToString() + "]");
+  }
+
+  for (const auto &item : order_set) {
+    buffer << item;
+    if (item != *(--order_set.end())) {
+      buffer << ", ";
     }
   }
   buffer << "}, but got " << type->ToString();
@@ -645,8 +658,15 @@ TypePtr CheckAndConvertUtils::CheckSubClass(const std::string &type_name, const 
   }
   std::ostringstream buffer;
   buffer << "For primitive[" << prim_name << "], the input argument[" << type_name << "] must be a type of {";
+  std::set<string> order_set;
   for (const auto &item : template_types) {
-    buffer << " " << item->ToString() << ",";
+    order_set.emplace(item->ToString());
+  }
+  for (const auto &item : order_set) {
+    buffer << item;
+    if (item != *(--order_set.end())) {
+      buffer << ", ";
+    }
   }
   buffer << "}, but got " << type->ToString();
   buffer << ".";
