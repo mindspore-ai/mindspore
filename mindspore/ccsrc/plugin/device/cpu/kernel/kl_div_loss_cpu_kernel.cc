@@ -38,7 +38,6 @@ bool KLDivLossCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   }
   kernel_name_ = kernel_ptr->name();
   reductionMode_ = kernel_ptr->get_reduction();
-  batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
 
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMyAddInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMyAddOutputsNum, kernel_name_);
@@ -83,6 +82,8 @@ int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     size_t type_size = GetTypeByte(TypeIdToType(inputs[kIndex0]->GetDtype()));
     workspace_size_list_.push_back(input_x_shape_size_ * type_size);
   }
+
+  batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
   return ret;
 }
 
