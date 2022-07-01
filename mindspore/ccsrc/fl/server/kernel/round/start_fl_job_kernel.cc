@@ -264,12 +264,15 @@ DeviceMeta StartFLJobKernel::CreateDeviceMetadata(const schema::RequestFLJob *st
   std::string fl_name = start_fl_job_req->fl_name()->str();
   std::string fl_id = start_fl_job_req->fl_id()->str();
   int data_size = start_fl_job_req->data_size();
-  MS_LOG(DEBUG) << "DeviceMeta fl_name:" << fl_name << ", fl_id:" << fl_id << ", data_size:" << data_size;
+  int eval_data_size = start_fl_job_req->eval_data_size();
+  MS_LOG(DEBUG) << "DeviceMeta fl_name:" << fl_name << ", fl_id:" << fl_id << ", data_size:" << data_size
+                << ", eval_data_size:" << eval_data_size;
 
   DeviceMeta device_meta;
   device_meta.set_fl_name(fl_name);
   device_meta.set_fl_id(fl_id);
   device_meta.set_data_size(IntToSize(data_size));
+  device_meta.set_eval_data_size(IntToSize(eval_data_size));
   return device_meta;
 }
 

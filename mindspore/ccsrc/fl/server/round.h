@@ -76,11 +76,19 @@ class Round {
 
   size_t kernel_reject_client_num() const;
 
-  void InitkernelClientVisitedNum();
+  void InitKernelClientVisitedNum();
 
-  void InitkernelClientUploadLoss();
+  void InitKernelClientUploadLoss();
 
   float kernel_upload_loss() const;
+
+  void InitKernelClientUploadAccuracy();
+
+  void InitKernelEvalDataSize();
+
+  float kernel_upload_accuracy() const;
+
+  size_t kernel_eval_data_size() const;
 
   std::map<uint64_t, size_t> GetSendData() const;
 

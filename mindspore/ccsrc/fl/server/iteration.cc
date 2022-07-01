@@ -249,6 +249,8 @@ void Iteration::set_loss(float loss) { loss_ = loss; }
 
 void Iteration::set_accuracy(float accuracy) { accuracy_ = accuracy; }
 
+void Iteration::set_eval_data_size(float eval_data_size) { eval_data_size_ = eval_data_size; }
+
 InstanceState Iteration::instance_state() const { return instance_state_.load(); }
 
 bool Iteration::EnableServerInstance(std::string *result) {
@@ -657,7 +659,11 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       round_client_num_map_[kUpdateModelTotalClientNum] += round->kernel_total_client_num();
       round_client_num_map_[kUpdateModelAcceptClientNum] += round->kernel_accept_client_num();
       round_client_num_map_[kUpdateModelRejectClientNum] += round->kernel_reject_client_num();
-      set_loss(loss_ + round->kernel_upload_loss());
+      if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL) {
+        set_loss(loss_ + round->kernel_upload_loss());
+        set_accuracy(accuracy_ + round->kernel_upload_accuracy());
+        set_eval_data_size(eval_data_size_ + round->kernel_eval_data_size());
+      }
       auto update_model_complete_info = round->GetUpdateModelCompleteInfo();
       if (update_model_complete_info.size() != kParticipationTimeLevelNum) {
         continue;
@@ -686,7 +692,10 @@ bool Iteration::BroadcastEndLastIterRequest(uint64_t last_iter_num) {
       continue;
     }
     UpdateRoundClientNumMap(client_info_rsp_msg);
-    UpdateRoundClientUploadLoss(client_info_rsp_msg);
+    if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL) {
+      UpdateRoundClientUploadLoss(client_info_rsp_msg);
+      UpdateRoundClientUploadAccuracy(client_info_rsp_msg);
+    }
   }
 
   EndLastIter();
@@ -736,6 +745,8 @@ void Iteration::HandleEndLastIterRequest(const std::shared_ptr<ps::core::Message
       end_last_iter_rsp.set_updatemodel_accept_client_num(round->kernel_accept_client_num());
       end_last_iter_rsp.set_updatemodel_reject_client_num(round->kernel_reject_client_num());
       end_last_iter_rsp.set_upload_loss(round->kernel_upload_loss());
+      end_last_iter_rsp.set_upload_accuracy(round->kernel_upload_accuracy());
+      end_last_iter_rsp.set_eval_data_size(round->kernel_eval_data_size());
       auto update_model_complete_info = round->GetUpdateModelCompleteInfo();
       if (update_model_complete_info.size() != kParticipationTimeLevelNum) {
         MS_LOG(EXCEPTION) << "update_model_complete_info size is not equal 3";
@@ -791,12 +802,18 @@ void Iteration::EndLastIter() {
   }
   for (const auto &round : rounds_) {
     MS_ERROR_IF_NULL_WO_RET_VAL(round);
-    round->InitkernelClientVisitedNum();
-    round->InitkernelClientUploadLoss();
+    round->InitKernelClientVisitedNum();
+    round->InitKernelClientUploadLoss();
+    round->InitKernelClientUploadAccuracy();
+    round->InitKernelEvalDataSize();
     round->ResetParticipationTimeAndNum();
   }
   round_client_num_map_.clear();
   set_loss(0.0f);
+  set_accuracy(0.0f);
+  set_eval_data_size(0);
+  size_t &total_data_size = LocalMetaStore::GetInstance().mutable_value<size_t>(kCtxFedAvgTotalDataSize);
+  total_data_size = 0;
   Server::GetInstance().CancelSafeMode();
   iteration_state_cv_.notify_all();
   if (iteration_num_ > ps::PSContext::instance()->fl_iteration_num()) {
@@ -822,7 +839,6 @@ bool Iteration::SummarizeIteration() {
     MS_LOG(INFO) << "This server will not summarize for iteration.";
     return true;
   }
-
   metrics_->SetInstanceName(instance_name_);
   metrics_->SetStartTime(start_time_);
   metrics_->SetEndTime(complete_time_);
@@ -830,12 +846,18 @@ bool Iteration::SummarizeIteration() {
   metrics_->set_fl_iteration_num(ps::PSContext::instance()->fl_iteration_num());
   metrics_->set_cur_iteration_num(iteration_num_);
   metrics_->set_instance_state(instance_state_.load());
-  uint64_t update_model_threshold =
-    ps::PSContext::instance()->start_fl_job_threshold() * ps::PSContext::instance()->update_model_ratio();
-  if (update_model_threshold > 0) {
-    metrics_->set_loss(loss_ / update_model_threshold);
+  if (ps::PSContext::instance()->server_mode() == ps::kServerModeHybrid) {
+    metrics_->set_loss(loss_);
+    metrics_->set_accuracy(accuracy_);
+  } else if (ps::PSContext::instance()->server_mode() == ps::kServerModeFL) {
+    size_t total_data_size = LocalMetaStore::GetInstance().value<size_t>(kCtxFedAvgTotalDataSize);
+    if (total_data_size > 0) {
+      metrics_->set_loss(loss_ / total_data_size);
+    }
+    if (eval_data_size_ > 0) {
+      metrics_->set_accuracy(accuracy_ / eval_data_size_);
+    }
   }
-  metrics_->set_accuracy(accuracy_);
   metrics_->set_round_client_num_map(round_client_num_map_);
   metrics_->set_iteration_result(iteration_result_.load());
 
@@ -985,6 +1007,16 @@ void Iteration::UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<un
   (void)end_last_iter_rsp.ParseFromArray(client_info_rsp_msg->data(), SizeToInt(client_info_rsp_msg->size()));
 
   set_loss(loss_ + end_last_iter_rsp.upload_loss());
+}
+
+void Iteration::UpdateRoundClientUploadAccuracy(
+  const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg) {
+  MS_ERROR_IF_NULL_WO_RET_VAL(client_info_rsp_msg);
+  EndLastIterResponse end_last_iter_rsp;
+  (void)end_last_iter_rsp.ParseFromArray(client_info_rsp_msg->data(), SizeToInt(client_info_rsp_msg->size()));
+
+  set_accuracy(accuracy_ + end_last_iter_rsp.upload_accuracy());
+  set_eval_data_size(eval_data_size_ + end_last_iter_rsp.eval_data_size());
 }
 
 void Iteration::set_instance_state(InstanceState state) {
