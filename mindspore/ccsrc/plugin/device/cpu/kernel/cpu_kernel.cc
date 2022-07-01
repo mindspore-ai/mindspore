@@ -96,13 +96,7 @@ int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto cnode = cnode_ptr_.lock();
   MS_EXCEPTION_IF_NULL(cnode);
-  if (!common::AnfAlgo::GetBooleanAttr(cnode, kAttrInputIsDynamicShape) &&
-      common::AnfAlgo::GetBooleanAttr(cnode, kAttrOutputIsDynamicShape) &&
-      abstract::GetDependsFormMap(common::AnfAlgo::GetCNodeName(cnode), input_size_list_.size()).empty()) {
-    return 0;
-  }
-
-  MS_LOG(INFO) << "Update Args: " << cnode->fullname_with_scope();
+  MS_LOG(DEBUG) << "Update Args: " << cnode->fullname_with_scope();
 
   Init(cnode);
   return 0;
