@@ -18,12 +18,16 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_RESIZE_NEAREST_NEIGHBOR_GRAD_GPU_KERNEL_H_
 
 #include <vector>
+#include <algorithm>
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/resize_nearest_neighbor_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kInputNumOne = 1;
+constexpr size_t kInputNumTwo = 2;
+constexpr size_t kSecondInputSize = 2;
 template <typename T>
 class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -33,7 +37,8 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
         shape_size_(0),
         input_size_(0),
         output_size_(0),
-        workspace_size_(0) {}
+        workspace_size_(0),
+        input_num_(0) {}
   ~ResizeNearestNeighborGradGpuKernelMod() override = default;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -54,10 +59,12 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    input_num_ = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
-    if (input_num != 1) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 1, but got " << input_num;
+    if (input_num_ != kInputNumOne && input_num_ != kInputNumTwo) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name
+                        << "', the number of inputs must be 1(static shape) or 2(dynamic shape), but got "
+                        << input_num_;
     }
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
     if (output_num != 1) {
@@ -68,7 +75,7 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
-    if (is_null_input_) {
+    if (is_null_input_ || IsDynamic(output_shape)) {
       InitSizeLists();
       return true;
     }
@@ -106,7 +113,26 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
  protected:
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
+    if (input_num_ == kInputNumTwo) {
+      // 2 int64_t shape num
+      input_size_list_.push_back(sizeof(int64_t) * kSecondInputSize);
+    }
     output_size_list_.push_back(output_size_);
+  }
+
+  void ResetResource() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    input_shape_.clear();
+    output_shape_.clear();
+    align_corners_ = false;
+    is_null_input_ = false;
+    shape_size_ = 0;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    input_num_ = 0;
   }
 
  private:
@@ -123,6 +149,7 @@ class ResizeNearestNeighborGradGpuKernelMod : public DeprecatedNativeGpuKernelMo
   size_t input_size_;
   size_t output_size_;
   size_t workspace_size_;
+  size_t input_num_;
 };
 }  // namespace kernel
 }  // namespace mindspore

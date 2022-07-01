@@ -172,10 +172,13 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  protected:
   void InitResource() {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
+
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&input_descriptor_),
                                 "cudnnCreateTensorDescriptor failed");
+
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&output_descriptor_),
                                 "cudnnCreateTensorDescriptor failed");
+
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreatePoolingDescriptor(&pooling_descriptor_),
                                 "cudnnCreatePoolingDescriptor failed");
   }
@@ -191,6 +194,12 @@ class PoolingFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
     workspace_size_list_.push_back(output_size_);
+  }
+  void ResetResource() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    stride_.clear();
   }
 
  private:

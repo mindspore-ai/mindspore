@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include <cmath>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -27,6 +28,11 @@
 
 namespace mindspore {
 namespace ops {
+constexpr size_t kSizeFour = 4;
+constexpr size_t kIndex0 = 0;
+constexpr size_t kIndex1 = 1;
+constexpr size_t kIndex2 = 2;
+constexpr size_t kIndex3 = 3;
 void MaxPool::set_pad_mode(const PadMode &pad_mode) {
   int64_t swi = pad_mode;
   (void)this->AddAttr(kPadMode, api::MakeValue(swi));
@@ -80,7 +86,127 @@ void MaxPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
+namespace {
+void ConvertShapeNHWCToNCHW(std::vector<int64_t> *nhwc_shape) {
+  if (nhwc_shape->empty()) {
+    return;
+  }
+  if (nhwc_shape->size() != kSizeFour) {
+    MS_EXCEPTION(ValueError) << "The size of shape should be 4, but got " << nhwc_shape->size();
+  }
+  int64_t tmp = (*nhwc_shape)[kIndex3];
+  (*nhwc_shape)[kIndex3] = (*nhwc_shape)[kIndex2];
+  (*nhwc_shape)[kIndex2] = (*nhwc_shape)[kIndex1];
+  (*nhwc_shape)[kIndex1] = tmp;
+}
+
+int64_t CeilDiv(int64_t a, int64_t b) {
+  if (b == 0) {
+    MS_EXCEPTION(ValueError) << "The number can not be divided by zero.";
+  }
+  int64_t result = a / b;
+  if (a % b != 0) {
+    result += 1;
+  }
+  return result;
+}
+
+abstract::ShapePtr MaxPoolInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto op_name = primitive->name();
+  std::vector<int64_t> kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  std::vector<int64_t> strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
+  int64_t data_format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr(kFormat));
+  int64_t pad_mode = 0;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+
+  (void)CheckAndConvertUtils::CheckValue<size_t>("length of kernel_size", kernel_size.size(), kEqual, kSizeFour,
+                                                 op_name);
+  (void)CheckAndConvertUtils::CheckValue<size_t>("length of strides", strides.size(), kEqual, kSizeFour, op_name);
+
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  if (shape_map.empty()) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input should exist, but missed.";
+  }
+  auto in_shape = shape_map[kShape];
+  auto min_shape = shape_map[kMinShape];
+  auto max_shape = shape_map[kMaxShape];
+  (void)CheckAndConvertUtils::CheckValue<size_t>("length of input", in_shape.size(), kEqual, kSizeFour, op_name);
+
+  if (data_format == NHWC) {
+    ConvertShapeNHWCToNCHW(&in_shape);
+    ConvertShapeNHWCToNCHW(&min_shape);
+    ConvertShapeNHWCToNCHW(&max_shape);
+  } else if (data_format != NCHW) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the input format should be NCHW or NHWC, but got "
+                             << data_format << ".";
+  }
+
+  int64_t out_h = 0, out_w = 0, out_h_min = 0, out_w_min = 0, out_h_max = 0, out_w_max = 0;
+  if (pad_mode == PadMode::SAME) {
+    out_h = in_shape[kIndex2] == -1 ? -1 : CeilDiv(in_shape[kIndex2], strides[kIndex2]);
+    out_w = in_shape[kIndex3] == -1 ? -1 : CeilDiv(in_shape[kIndex3], strides[kIndex3]);
+    if (!min_shape.empty()) {
+      out_h_min = CeilDiv(min_shape[kIndex2], strides[kIndex2]);
+      out_w_min = CeilDiv(min_shape[kIndex3], strides[kIndex3]);
+    }
+    if (!max_shape.empty()) {
+      out_h_max = CeilDiv(max_shape[kIndex2], strides[kIndex2]);
+      out_w_max = CeilDiv(max_shape[kIndex3], strides[kIndex3]);
+    }
+  } else if (pad_mode == PadMode::VALID) {
+    out_h = in_shape[kIndex2] == -1 ? -1 : CeilDiv((in_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
+    out_w = in_shape[kIndex3] == -1 ? -1 : CeilDiv((in_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
+    if (!min_shape.empty()) {
+      out_h_min = CeilDiv((min_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
+      out_w_min = CeilDiv((min_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
+    }
+    if (!max_shape.empty()) {
+      out_h_max = CeilDiv((max_shape[kIndex2] - (kernel_size[kIndex2] - 1)), strides[kIndex2]);
+      out_w_max = CeilDiv((max_shape[kIndex3] - (kernel_size[kIndex3] - 1)), strides[kIndex3]);
+    }
+  } else {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the pad_mode should be same or valid, but got "
+                             << pad_mode << ".";
+  }
+  abstract::ShapePtr shape;
+  if (data_format == NHWC) {
+    std::vector<int64_t> out_shape = {in_shape[kIndex0], out_h, out_w, in_shape[kIndex1]};
+    if (!min_shape.empty() && !max_shape.empty()) {
+      std::vector<int64_t> out_shape_min = {min_shape[kIndex0], out_h_min, out_w_min, min_shape[kIndex1]};
+      std::vector<int64_t> out_shape_max = {max_shape[kIndex0], out_h_max, out_w_max, max_shape[kIndex1]};
+      shape = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
+    } else {
+      shape = std::make_shared<abstract::Shape>(out_shape);
+    }
+  } else {
+    std::vector<int64_t> out_shape = {in_shape[kIndex0], in_shape[kIndex1], out_h, out_w};
+    if (!min_shape.empty() && !max_shape.empty()) {
+      std::vector<int64_t> out_shape_min = {min_shape[kIndex0], min_shape[kIndex1], out_h_min, out_w_min};
+      std::vector<int64_t> out_shape_max = {max_shape[kIndex0], max_shape[kIndex1], out_h_max, out_w_max};
+      shape = std::make_shared<abstract::Shape>(out_shape, out_shape_min, out_shape_max);
+    } else {
+      shape = std::make_shared<abstract::Shape>(out_shape);
+    }
+  }
+  return shape;
+}
+
+TypePtr MaxPoolInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
+    MS_EXCEPTION(TypeError) << "For '" << primitive->name()
+                            << "', the input args used for infer shape and type is necessary, but missing it.";
+  }
+  return input_args[0]->BuildType();
+}
+}  // namespace
 MIND_API_OPERATOR_IMPL(MaxPool, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameMaxPool, MaxPool);
+abstract::AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
+  TypePtr type = MaxPoolInferType(primitive, input_args);
+  abstract::ShapePtr shape = MaxPoolInferShape(primitive, input_args);
+  return abstract::MakeAbstract(shape, type);
+}
+REGISTER_PRIMITIVE_EVAL_IMPL(MaxPool, prim::kPrimMaxPool, MaxPoolInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

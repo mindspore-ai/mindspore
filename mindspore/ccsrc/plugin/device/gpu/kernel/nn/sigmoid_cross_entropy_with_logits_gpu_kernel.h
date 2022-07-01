@@ -84,6 +84,16 @@ class SigmoidCrossEntropyWithLogitsGpuKernelMod : public DeprecatedNativeGpuKern
     output_size_list_.push_back(outputs_size_);
   }
 
+  void ResetResource() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    logits_size_ = 0;
+    labels_size_ = 0;
+    outputs_size_ = 0;
+    is_null_input_ = false;
+  }
+
  private:
   size_t logits_size_;
   size_t labels_size_;

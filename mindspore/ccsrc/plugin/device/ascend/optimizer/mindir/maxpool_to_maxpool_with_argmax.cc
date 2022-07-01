@@ -137,6 +137,11 @@ const AnfNodePtr MaxPool2MaxPoolWithArgmax::Process(const FuncGraphPtr &graph, c
   MS_EXCEPTION_IF_NULL(maxpool_grad);
   auto maxpool = GetMaxPool(maxpool_grad);
   MS_EXCEPTION_IF_NULL(maxpool);
+  if (common::AnfAlgo::IsDynamicShape(maxpool)) {
+    // maxpoolwithargmax and maxpoolgradwithargmax don't support dynamic shape, so add the judgement;
+    // can delete the judgement after supported;
+    return nullptr;
+  }
 
   auto maxpool_argmax = CreateMaxPoolWithArgmax(graph, maxpool);
   std::vector<AnfNodePtr> maxpool_argmax_outputs;
