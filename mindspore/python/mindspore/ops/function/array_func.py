@@ -1238,12 +1238,15 @@ def scatter_add(input_x, indices, updates):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> from mindspore import Tensor, Parameter
+        >>> from mindspore import ops
         >>> input_x = Parameter(Tensor(np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[7.0, 7.0, 7.0], [9.0, 9.0, 9.0]]]), mindspore.float32)
-        >>> scatter_add = ops.scatter_add()
-        >>> output = scatter_add(input_x, indices, updates)
+        >>> output = ops.scatter_add(input_x, indices, updates)
         >>> print(output)
         [[ 1.  1.  1.]
          [19. 19. 19.]]

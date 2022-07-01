@@ -16,12 +16,14 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 
 
@@ -146,6 +148,39 @@ def test_soft_shrink_dy_shape():
     output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
 
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+class ShapeSoftShrinkGradNet(nn.Cell):
+    def __init__(self):
+        super(ShapeSoftShrinkGradNet, self).__init__()
+        self.soft_shrink_grad_op = G.SoftShrinkGrad()
+
+    def construct(self, in_x, grad):
+        return self.soft_shrink_grad_op(in_x, grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_soft_shrink_grad_ds_shape():
+    """
+    Feature: test_soft_shrink_dy_shape.
+    Description: test cases for dynamic shape.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    soft_shrink_net = ShapeSoftShrinkGradNet()
+
+    x = Tensor(np.random.randn(10, 20).astype(np.float32))
+    grad = Tensor(np.random.randn(10, 20).astype(np.float32))
+    static_output = soft_shrink_net(x, grad)
+
+    x_ds = Tensor(shape=[None, 20], dtype=mindspore.float32)
+    grad_ds = Tensor(shape=[None, 20], dtype=mindspore.float32)
+    soft_shrink_net.set_inputs(x_ds, grad_ds)
+    dynamic_output = soft_shrink_net(x, grad)
+
+    np.testing.assert_allclose(static_output.asnumpy(), dynamic_output.asnumpy(), rtol=1e-3)
 
 
 def soft_shrink_graph(x):
