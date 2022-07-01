@@ -1342,3 +1342,28 @@ def get_bprop_lrn(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register(G.Conv2DBackpropFilter)
+def get_bprop_conv2d_backprop_filter(self):
+    """Grad definition for `Conv2DBackpropFilter` operation."""
+    input_grad = P.Conv2DBackpropInput(
+        self.out_channel, self.kernel_size, self.pad_mode, self.pad, self.pad_list, mode=self.mode,
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+    )
+    filter_grad = P.Conv2D(
+        self.out_channel, self.kernel_size, pad_mode=self.pad_mode.lower(), pad=self.pad,
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+    )
+    get_shape = P.Shape()
+    get_dyn_shape = P.TensorShape()
+
+    def bprop(dy, x, filter_size, out, dout):
+        x_shape = get_shape(x)
+        if -1 in x_shape:
+            x_shape = get_dyn_shape(x)
+        dw_dx = input_grad(dy, dout, x_shape)
+        dw_dy = filter_grad(x, dout)
+        return dw_dy, dw_dx, zeros_like(filter_size)
+
+    return bprop
