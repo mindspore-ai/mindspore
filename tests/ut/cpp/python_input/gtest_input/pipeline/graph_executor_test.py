@@ -15,11 +15,11 @@
 
 
 def get_jit_config_o0():
-    return {"jit_level": "o0"}
+    return {"jit_level": "O0"}
 
 
 def get_jit_config_o1():
-    return {"jit_level": "o1"}
+    return {"jit_level": "O1"}
 
 
 def get_unused_config():
