@@ -693,10 +693,6 @@ class Tanhshrink(Cell):
         self.tanh = P.Tanh()
 
     def construct(self, x):
-        if not isinstance(x, Tensor):
-            raise TypeError(
-                "For {}, the x_dtype must be float32 or float16, but got {}.".format(self.cls_name, type(x)))
-        _dtype_check(x.dtype, self.cls_name)
         return x - self.tanh(x)
 
 
