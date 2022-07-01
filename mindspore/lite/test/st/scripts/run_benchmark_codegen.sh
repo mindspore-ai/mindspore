@@ -195,6 +195,8 @@ function Run_cortex_m_codegen() {
       mkdir -p ${output_file}/build || exit 1
       cp ${cortex_path}/mindspore-lite-${version}*-none-cortex-m7.tar.gz ${output_file}/mindspore-lite-${version}-none-cortex-m7.tar.gz || exit 1
       cd ${output_file} || exit 1
+      tar zxf mindspore-lite-${version}-none-cortex-m7.tar.gz -C ${output_file}/build || exit 1
+      mv ${output_file}/build/mindspore-lite-${version}*-none-cortex-m7 mindspore-lite-${version}-none-cortex-m7 || exit 1
       in_data=`cat ${models_path}/input_output/input/${model_name}.ms.in.txt`
       out_data=`cat ${models_path}/input_output/output/${model_name}.ms.out.txt`
       sed -i "s/float calib_input0_data\[NET_INPUT0_SIZE\] = {};/float calib_input0_data\[NET_INPUT0_SIZE\] = {${in_data}};/g" benchmark/data.c
