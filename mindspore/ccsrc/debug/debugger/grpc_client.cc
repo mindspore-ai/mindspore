@@ -79,7 +79,7 @@ std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size
     }
     std::string buffer;
     buffer.resize(chunk_size);
-    auto err = memcpy_s(reinterpret_cast<char *>(buffer.data()), chunk_size, str.data() + size_iter, chunk_size);
+    auto err = memcpy_s(static_cast<char *>(buffer.data()), chunk_size, str.data() + size_iter, chunk_size);
     if (err != 0) {
       MS_LOG(EXCEPTION) << "memcpy_s failed. errorno is: " << err;
     }

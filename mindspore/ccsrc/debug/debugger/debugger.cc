@@ -204,7 +204,8 @@ void Debugger::EnableDebugger() {
 }
 
 void Debugger::CheckDatasetSinkMode(const KernelGraphPtr &graph_ptr) {
-  bool sink_mode = ConfigManager::GetInstance().dataset_mode() || graph_ptr->IsDatasetGraph();
+  bool sink_mode =
+    ConfigManager::GetInstance().dataset_mode() == DatasetMode::DS_SINK_MODE || graph_ptr->IsDatasetGraph();
   if (CheckDebuggerDumpEnabled() && sink_mode && device_target_ == kGPUDevice) {
     MS_EXCEPTION(NotSupportError)
       << "e2e_dump is not supported on GPU with dataset_sink_mode=True. Please set dataset_sink_mode=False";
@@ -370,7 +371,7 @@ void Debugger::SetCurrentAndPrevRootGraph(uint32_t root_graph_id) {
  */
 void Debugger::StoreRunGraphIdList(uint32_t graph_id) {
   // collect rungrap_ids to update step number in multigraph case for GPU old runtime
-  if (!rungraph_id_list_.size()) {
+  if (rungraph_id_list_.size() > 0) {
     rungraph_id_list_.push_back(graph_id);
   } else {
     if (std::find(rungraph_id_list_.begin(), rungraph_id_list_.end(), graph_id) == rungraph_id_list_.end()) {
@@ -537,7 +538,7 @@ void Debugger::DumpConstantDataAscend(const KernelGraphPtr &graph) {
  * Runtime category: MindRT.
  * Description: Dumps a single node for given graph_id.
  */
-void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) {
+void Debugger::DumpSingleNode(const CNodePtr &node, uint32_t graph_id) const {
   if (debugger_ && debugger_->DebuggerBackendEnabled()) {
     uint32_t rank_id = GetRankID();
     (void)E2eDump::DumpSingleNodeData(node, graph_id, rank_id, debugger_.get());
@@ -1246,8 +1247,8 @@ std::list<TensorBase> Debugger::LoadTensorsBase(const ProtoVector<TensorProto> &
     }
     // tensor was found creating tensor base object.
     TensorBase tensor_base_item;
-    tensor_base_item.set_data_size((int64_t)tensor->GetByteSize());
-    tensor_base_item.set_data_type((int32_t)tensor->GetType());
+    tensor_base_item.set_data_size(static_cast<int64_t>(tensor->GetByteSize()));
+    tensor_base_item.set_data_type(static_cast<int32_t>(tensor->GetType()));
     for (auto elem : tensor->GetShape()) {
       tensor_base_item.add_shape(elem);
     }
@@ -1486,15 +1487,23 @@ bool Debugger::CheckPort(const std::string &port) const {
   const int min_port_num = 1;
   const int max_port_num = 65535;
   const int decimal = 10;
-  if (port[0] == '0' && port[1] != '\0') return false;
+  if (port[0] == '0' && port[1] != '\0') {
+    return false;
+  }
   int i = 0;
   while (port[i] != '\0') {
-    if (port[i] < '0' || port[i] > '9') return false;
+    if (port[i] < '0' || port[i] > '9') {
+      return false;
+    }
     num = num * decimal + (port[i] - '0');
-    if (num > max_port_num) return false;
+    if (num > max_port_num) {
+      return false;
+    }
     i++;
   }
-  if (num < min_port_num) return false;
+  if (num < min_port_num) {
+    return false;
+  }
   return true;
 }
 
@@ -1686,7 +1695,9 @@ void Debugger::LoadConstsForGraph(const KernelGraphPtr &graph) {
  * Description: Load all the kernels for the last loaded graph.
  */
 void Debugger::LoadGraphOutputs() {
-  if (!(debugger_enabled() && device_target_ == kAscendDevice)) return;
+  if (!(debugger_enabled() && device_target_ == kAscendDevice)) {
+    return;
+  }
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   const auto &apply_kernels = graph_ptr_->execution_order();
   auto root_graph_id = graph_ptr_->root_graph_id();
@@ -1784,7 +1795,7 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
  * for Ascend a + m dump. If not found, create a new one for it and add to dump_data_construct_map_.
  */
 std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string &node_name) {
-  auto iter = dump_data_construct_map_.find(node_name);
+  const auto iter = dump_data_construct_map_.find(node_name);
   if (iter == dump_data_construct_map_.end()) {
     dump_data_construct_map_[node_name] = std::make_shared<DumpDataBuilder>();
   }

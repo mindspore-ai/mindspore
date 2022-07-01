@@ -1764,7 +1764,7 @@ void DebugServices::ReadNodesTensors(const std::vector<std::string> &name, std::
     }
 #endif
     (void)ret_name->emplace_back(std::get<0>(result));
-    (void)data_ptr->emplace_back(reinterpret_cast<const char *>(std::get<1>(result)->GetDataPtr()));
+    (void)data_ptr->emplace_back(std::get<1>(result)->GetDataPtr());
     (void)data_size->emplace_back(std::get<1>(result)->GetByteSize());
     (void)dtype->emplace_back(std::get<1>(result)->GetType());
     (void)shape->emplace_back(std::get<1>(result)->GetShape());
