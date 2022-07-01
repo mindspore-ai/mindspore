@@ -46,6 +46,8 @@
 #include "ops/rpc_recv.h"
 #include "ops/rpc_send.h"
 #include "ops/tensor_scatter_arithmetic.h"
+#include "ops/max_pool.h"
+#include "ops/grad/max_pool_grad.h"
 
 namespace mindspore {
 namespace abstract {
@@ -102,6 +104,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSspaddmm = prim::kPrimSspaddmm->name();
   static const auto &kBartlettWindow = prim::kPrimBartlettWindow->name();
   static const auto &kExtractGlimpse = prim::kPrimExtractGlimpse->name();
+  static const auto &kResizeNearestNeighborGrad = prim::kPrimResizeNearestNeighborGrad->name();
 
   // Common host depends.
   static PrimShapeDependMap host_depends{{kExtractGlimpse, ShapeSet{1}},
@@ -155,7 +158,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kBlackmanWindow, ShapeSet{0}},
                                          {kExpand, ShapeSet{1}},
                                          {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
-                                         {kBartlettWindow, ShapeSet{0}}};
+                                         {kBartlettWindow, ShapeSet{0}},
+                                         {kResizeNearestNeighborGrad, ShapeSet{1}}};
   return host_depends;
 }
 std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {
@@ -389,6 +393,8 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimAdamApplyOne, R{InferImplAdamApplyOne, nullptr, true}},
     {prim::kPrimAdamApplyOneWithDecay, R{InferImplAdamApplyOneWithDecay, nullptr, true}},
     {prim::kPrimTensorScatterUpdate, R{ops::TensorScatterArithmeticInfer, nullptr, true}},
+    {prim::kPrimMaxPool, R{ops::MaxPoolInfer, nullptr, true}},
+    {prim::kPrimMaxPoolGrad, R{ops::MaxPoolGradInfer, nullptr, true}},
   };
   return prim_backend_eval_implement_map;
 }

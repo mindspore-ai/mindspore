@@ -101,6 +101,19 @@ class ResizeNearestNeighborGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
   }
+  void ResetResource() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+    input_shape_.clear();
+    output_shape_.clear();
+    align_corners_ = false;
+    is_null_input_ = false;
+    shape_size_ = 0;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+  }
 
  private:
   float Scaling(const int in_size, const int out_size, bool align_corners) {

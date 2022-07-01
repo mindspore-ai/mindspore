@@ -54,7 +54,7 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
   auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
   auto x_shape = x_shape_ptr->shape();
   ValuePtr size_ptr;
-  if (x_shape_ptr->IsDynamic()) {
+  if (x_shape_ptr->IsDynamic() && input_args.size() > 1) {
     size_ptr = input_args[1]->BuildValue();
   } else {
     size_ptr = primitive->GetAttr(kSize);
@@ -72,10 +72,12 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
   if (x_shape_ptr->IsDynamic()) {
     auto x_min_shape = x_shape_ptr->min_shape();
     auto x_max_shape = x_shape_ptr->max_shape();
-    x_min_shape.erase(x_min_shape.begin() + size_size, x_min_shape.end());
-    x_min_shape.insert(x_min_shape.end(), size_v.begin(), size_v.end());
-    x_max_shape.erase(x_max_shape.begin() + size_size, x_max_shape.end());
-    x_max_shape.insert(x_max_shape.end(), size_v.begin(), size_v.end());
+    if (!x_min_shape.empty() && !x_max_shape.empty()) {
+      x_min_shape.erase(x_min_shape.begin() + size_size, x_min_shape.end());
+      x_min_shape.insert(x_min_shape.end(), size_v.begin(), size_v.end());
+      x_max_shape.erase(x_max_shape.begin() + size_size, x_max_shape.end());
+      x_max_shape.insert(x_max_shape.end(), size_v.begin(), size_v.end());
+    }
     return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
   }
   return std::make_shared<abstract::Shape>(x_shape);

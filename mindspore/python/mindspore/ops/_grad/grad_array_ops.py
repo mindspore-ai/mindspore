@@ -767,11 +767,15 @@ def get_bprop_zeroslike(self):
 def get_bprop_resize_nearest_neighbor(self):
     """Generate bprop for ResizeNearestNeighbor"""
     op = G.ResizeNearestNeighborGrad(self.align_corners)
+    tensor_shape = P.TensorShape()
 
     def bprop(inputs, out, dout):
-        shp = shape_op(inputs)
+        if -1 in shape_op(inputs):
+            shp = tensor_shape(inputs)
+        else:
+            shp = shape_op(inputs)
         # 2 and 3 represent the height and width
-        shp = (shp[2], shp[3])
+        shp = shp[2:]
         return (op(dout, shp),)
 
     return bprop

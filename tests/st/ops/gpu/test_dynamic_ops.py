@@ -93,6 +93,42 @@ class GradNetWrtX(nn.Cell):
         return gradient_function(*inputs)
 
 
+def comm_func(dyn_range, input_shp, data_type, op_net, num=None, output_compare_idx=None):
+    list_data = []
+    for i in dyn_range:
+        tmp_data = []
+        for data_shp in input_shp:
+            if num is None:
+                cur_shp = [dim if dim is not None else i for dim in data_shp]
+            else:
+                cur_shp = []
+                k = 0
+                for dim in data_shp:
+                    if dim is not None:
+                        cur_shp.append(dim)
+                    elif k == 1:
+                        cur_shp.append(num)
+                    else:
+                        cur_shp.append(i)
+                    k = k + 1
+            tmp_data.append(np.random.random(cur_shp).astype(data_type))
+        list_data.append(tuple(tmp_data))
+
+    data_map = {}
+    for i, val in enumerate(input_shp):
+        data_map["data" + str(i + 1)] = val
+
+    dataset = ds.GeneratorDataset(list_data, list(data_map.keys()))
+    dataset.set_dynamic_columns(columns=data_map)
+
+    gradient = dynamic_shape_sink_process(op_net, dataset)
+    gradient_cmp = fixed_shape_process(op_net, dataset)
+    if output_compare_idx is None:
+        assert compare(gradient, gradient_cmp)
+    else:
+        assert compare(gradient[output_compare_idx], gradient_cmp[output_compare_idx])
+
+
 class ConcatNet(nn.Cell):
     def __init__(self, axis):
         super(ConcatNet, self).__init__()
@@ -359,3 +395,229 @@ def test_dynamic_add():
     output = dynamic_shape_sink_process(net, dataset)
     output_cmp = fixed_shape_process(net, dataset)
     assert compare(output, output_cmp)
+
+
+class BatchNorm(nn.Cell):
+    def __init__(self):
+        super(BatchNorm, self).__init__()
+        self.batch_norm = ops.BatchNorm()
+
+    def construct(self, input_x, scale, bias, mean, variance):
+        out = self.batch_norm(input_x, scale, bias, mean, variance)
+        return out
+
+
+class MaxPool(nn.Cell):
+    def __init__(self):
+        super(MaxPool, self).__init__()
+        self.maxpool = ops.MaxPool(pad_mode="VALID", kernel_size=2, strides=1)
+
+    def construct(self, x):
+        out = self.maxpool(x)
+        return out
+
+
+class SigmoidCrossEntropyWithLogits(nn.Cell):
+    def __init__(self):
+        super(SigmoidCrossEntropyWithLogits, self).__init__()
+        self.op = ops.SigmoidCrossEntropyWithLogits()
+
+    def construct(self, x, y):
+        out = self.op(x, y)
+        return out
+
+
+class Sigmoid(nn.Cell):
+    def __init__(self):
+        super(Sigmoid, self).__init__()
+        self.op = ops.Sigmoid()
+
+    def construct(self, x):
+        out = self.op(x)
+        return out
+
+
+class ResizeNearestNeighbor(nn.Cell):
+    def __init__(self):
+        super(ResizeNearestNeighbor, self).__init__()
+        self.op = ops.ResizeNearestNeighbor((2, 2))
+
+    def construct(self, x):
+        out = self.op(x)
+        return out
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_batchnorm():
+    """
+    Feature: Test Dynamic batchnorm and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 64), (64,), (64,), (64,), (64,)]
+    net = BatchNorm()
+    comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_batchnorm2():
+    """
+    Feature: Test Dynamic batchnorm and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(64, None), (None,), (None,), (None,), (None,)]
+    net = BatchNorm()
+    comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool1():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, 16, 32, None)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool2():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, 16, None, 8)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool3():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, None, 32, 8)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool4():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 16, 32, 8)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_sigmoid_cross_entropy_with_logits():
+    """
+    Feature: Test Dynamic SigmoidCrossEntropyWithLogits and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 16, 32, 8), (None, 16, 32, 8)]
+    net = SigmoidCrossEntropyWithLogits()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
+    """
+    Feature: Test Dynamic SigmoidCrossEntropyWithLogitsGrad and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(4, 16, None, 8), (4, 16, None, 8), (4, 16, None, 8)]
+    net = GradNetWrtX(SigmoidCrossEntropyWithLogits())
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_sigmoid_grad():
+    """
+    Feature: Test Dynamic SigmoidGrad and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(4, 16, None, 8), (4, 16, None, 8)]
+    net = GradNetWrtX(Sigmoid())
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_resize_nearest_neighbor():
+    """
+    Feature: Test Dynamic ResizeNearestNeighbor and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(4, 16, None, 8)]
+    net = ResizeNearestNeighbor()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_resize_nearest_neighbor_grad():
+    """
+    Feature: Test Dynamic ResizeNearestNeighborGrad and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(4, 16, None, 8), (4, 16, 2, 2)]
+    net = GradNetWrtX(ResizeNearestNeighbor())
+    comm_func(dynamic_range, input_shape, data_type, net)

@@ -26,12 +26,14 @@ max_pool_grad_op_info = TBERegOp("MaxPoolGrad") \
     .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
     .attr("pad_mode", "required", "str", "all") \
-    .attr("data_format", "optional", "str", "all", "NHWC") \
+    .attr("format", "optional", "str", "all", "NHWC") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "grad", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
+    .dynamic_shape(True) \
+    .is_dynamic_format(True) \
     .get_op_info()
 
 

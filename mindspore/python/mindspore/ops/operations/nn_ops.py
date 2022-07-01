@@ -1609,15 +1609,27 @@ class _Pool(PrimitiveWithInfer):
             _, _, stride_h, stride_w = self.strides
 
         if self.pad_mode == "VALID":
-            out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
-            out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
+            if input_h == -1:
+                out_h = -1
+            else:
+                out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
+            if input_w == -1:
+                out_w = -1
+            else:
+                out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
         elif self.pad_mode == "SAME":
-            out_h = math.ceil(input_h / stride_h)
-            out_w = math.ceil(input_w / stride_w)
+            if input_h == -1:
+                out_h = -1
+            else:
+                out_h = math.ceil(input_h / stride_h)
+            if input_w == -1:
+                out_w = -1
+            else:
+                out_w = math.ceil(input_w / stride_w)
         out_shape = [batch, channel, out_h, out_w] if self.format == "NCHW" else [batch, out_h, out_w, channel]
 
         for shape_value in out_shape:
-            if shape_value <= 0:
+            if shape_value <= 0 and shape_value != -1:
                 raise ValueError(f"For '{self.name}', the each element of the output shape must be larger than 0, "
                                  f"but got output shape: {out_shape}. The input shape: {x_shape}, "
                                  f"kernel size: {self.kernel_size}, strides: {self.strides}."

@@ -36,7 +36,29 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
   auto grad_shape = grad_shape_ptr->shape();
   auto size_ptr = input_args[1]->BuildValue();
   MS_EXCEPTION_IF_NULL(size_ptr);
-  std::vector<int64_t> size_v = GetValue<std::vector<int64_t>>(size_ptr);
+
+  std::vector<int64_t> size_v;
+  if (size_ptr->isa<tensor::Tensor>()) {
+    auto size_tensor = size_ptr->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(size_tensor);
+    size_t data_size = size_tensor->DataSize();
+    auto tensor_data = reinterpret_cast<int64_t *>(size_tensor->data_c());
+    MS_EXCEPTION_IF_NULL(tensor_data);
+    for (size_t i = 0; i < data_size; ++i) {
+      size_v.push_back(static_cast<int64_t>(*tensor_data));
+      ++tensor_data;
+    }
+  } else if (size_ptr->isa<ValueTuple>()) {
+    std::vector<ValuePtr> size_vec = size_ptr->cast<ValueTuplePtr>()->value();
+    std::transform(size_vec.begin(), size_vec.end(), std::back_inserter(size_v),
+                   [](const ValuePtr e) { return GetValue<int64_t>(e); });
+  } else if (size_ptr->isa<AnyValue>()) {
+    size_v.push_back(-1);
+    size_v.push_back(-1);
+  } else {
+    size_v = GetValue<std::vector<int64_t>>(size_ptr);
+  }
+
   std::vector<int64_t> ret_shape;
   ret_shape.push_back(grad_shape[0]);
   ret_shape.push_back(grad_shape[1]);
@@ -44,14 +66,18 @@ abstract::ShapePtr ResizeNearestNeighborGradInferShape(const PrimitivePtr &primi
   if (grad_shape_ptr->IsDynamic()) {
     auto grad_min_shape = grad_shape_ptr->min_shape();
     std::vector<int64_t> ret_min_shape;
-    ret_min_shape.push_back(grad_min_shape[0]);
-    ret_min_shape.push_back(grad_min_shape[1]);
-    ret_min_shape.insert(ret_min_shape.end(), size_v.begin(), size_v.end());
+    if (!grad_min_shape.empty()) {
+      ret_min_shape.push_back(grad_min_shape[0]);
+      ret_min_shape.push_back(grad_min_shape[1]);
+      ret_min_shape.insert(ret_min_shape.end(), size_v.begin(), size_v.end());
+    }
     auto grad_max_shape = grad_shape_ptr->max_shape();
     std::vector<int64_t> ret_max_shape;
-    ret_max_shape.push_back(grad_max_shape[0]);
-    ret_max_shape.push_back(grad_max_shape[1]);
-    ret_max_shape.insert(ret_max_shape.end(), size_v.begin(), size_v.end());
+    if (!grad_max_shape.empty()) {
+      ret_max_shape.push_back(grad_max_shape[0]);
+      ret_max_shape.push_back(grad_max_shape[1]);
+      ret_max_shape.insert(ret_max_shape.end(), size_v.begin(), size_v.end());
+    }
     return std::make_shared<abstract::Shape>(ret_shape, ret_min_shape, ret_max_shape);
   }
   return std::make_shared<abstract::Shape>(ret_shape);

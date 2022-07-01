@@ -80,6 +80,17 @@ class GradNetWrtX(nn.Cell):
         return self.grad(self.network)(input_, output_grad)
 
 
+
+class GradNetWrtX2inputs(nn.Cell):
+    def __init__(self, network):
+        super(GradNetWrtX2inputs, self).__init__()
+        self.grad = ops.GradOperation(get_all=True, sens_param=True)
+        self.network = network
+
+    def construct(self, input1, input2, output_grad):
+        return self.grad(self.network)(input1, input2, output_grad)
+
+
 def comm_func(dyn_range, input_shp, data_type, op_net, num=None):
     list_data = []
     for i in dyn_range:
@@ -282,6 +293,16 @@ class Stack(nn.Cell):
         return out
 
 
+class MaxPool(nn.Cell):
+    def __init__(self):
+        super(MaxPool, self).__init__()
+        self.maxpool = ops.MaxPool(pad_mode="VALID", kernel_size=2, strides=1)
+
+    def construct(self, x):
+        out = self.maxpool(x)
+        return out
+
+
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -450,4 +471,72 @@ def test_dynamic_stack():
     data_type = np.float32
     input_shape = [(None, 5)]
     net = Stack()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool1():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, 16, 32, None)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool2():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, 16, None, 8)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool3():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(32, None, 32, 8)]
+    net = MaxPool()
+    comm_func(dynamic_range, input_shape, data_type, net)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_maxpool4():
+    """
+    Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
+    Description: The input shape is dynamic.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    dynamic_range = range(2, 64)
+    data_type = np.float32
+    input_shape = [(None, 16, 32, 8)]
+    net = MaxPool()
     comm_func(dynamic_range, input_shape, data_type, net)

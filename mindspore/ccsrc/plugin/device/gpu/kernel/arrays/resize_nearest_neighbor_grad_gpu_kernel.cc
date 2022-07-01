@@ -27,5 +27,17 @@ MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborGrad,
 MS_REG_GPU_KERNEL_ONE(ResizeNearestNeighborGrad,
                       KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
                       ResizeNearestNeighborGradGpuKernelMod, int)
+MS_REG_GPU_KERNEL_ONE(
+  ResizeNearestNeighborGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  ResizeNearestNeighborGradGpuKernelMod, float)
+MS_REG_GPU_KERNEL_ONE(
+  ResizeNearestNeighborGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  ResizeNearestNeighborGradGpuKernelMod, half)
+MS_REG_GPU_KERNEL_ONE(
+  ResizeNearestNeighborGrad,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  ResizeNearestNeighborGradGpuKernelMod, int)
 }  // namespace kernel
 }  // namespace mindspore

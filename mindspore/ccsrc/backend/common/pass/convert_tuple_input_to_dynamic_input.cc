@@ -57,7 +57,8 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
   if (common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
-      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial) ||
+      common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimResizeNearestNeighborGrad)) {
     return;
   }
   std::vector<AnfNodePtr> plant_inputs;
