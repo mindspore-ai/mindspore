@@ -1712,6 +1712,57 @@ class Neg(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
+class InplaceUpdateV2(Primitive):
+    r"""
+    Updates specified rows with values in `v`.
+
+    Note:
+        This operator only supports dynamic shape. As for static shape, please use operator 'InplaceUpdate' instead.
+
+    Args:
+
+    Inputs:
+        - **x** (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
+          float32, float16 and int32.
+        - **indices** (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        - **v** (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
+          the first dimension, which must be the same as the size of `indices`.
+
+    Outputs:
+        Tensor, with the same type and shape as the input `x`.
+
+    Raises:
+        TypeError: If `indices` is neither int nor tuple.
+        TypeError: If `indices` is a tuple and its element is not an int.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> indices = (0, 1)
+        >>> x = Tensor(np.array([[1, 2], [3, 4], [5, 6]]), mindspore.float32)
+        >>> v = Tensor(np.array([[0.5, 1.0], [1.0, 1.5]]), mindspore.float32)
+        >>> inplace_update = ops.InplaceUpdate(indices)
+        >>> output = inplace_update(x, v)
+        >>> print(output)
+        [[0.5 1. ]
+         [1.  1.5]
+         [5.  6. ]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize InplaceUpdateV2"""
+        self.init_prim_io_names(inputs=['x', 'indices', 'v'], outputs=['y'])
+
+    def __call__(self, x, indices, v):
+        args = [x, indices, v]
+        output = _run_op(self, self.name, args)
+        return output
+
+
+
 class InplaceUpdate(PrimitiveWithInfer):
     r"""
     Updates specified rows with values in `v`.
