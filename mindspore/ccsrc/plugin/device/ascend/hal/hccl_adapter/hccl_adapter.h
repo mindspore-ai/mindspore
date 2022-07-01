@@ -74,7 +74,8 @@ class HcclAdapter {
   static std::string GetHcclType(const AnfNodePtr &node);
 
   // for single op
-  HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream) const;
+  HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
+                           const std::string &group = "") const;
   HcclResult HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
                            aclrtStream stream, const std::string &group = "") const;
   HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, aclrtStream stream,
