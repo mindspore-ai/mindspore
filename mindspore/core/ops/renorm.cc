@@ -42,6 +42,7 @@ abstract::ShapePtr RenormInferShape(const PrimitivePtr &primitive, const std::ve
                                            prim_name);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
   auto shape = input_shape[kShape];
+  MS_EXCEPTION_IF_ZERO("Renorm input shape", shape.size());
   auto min_shape = input_shape[kMinShape];
   auto max_shape = input_shape[kMaxShape];
   auto out_shape = shape;
