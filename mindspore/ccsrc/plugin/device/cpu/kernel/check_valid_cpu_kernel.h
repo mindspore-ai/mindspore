@@ -19,24 +19,30 @@
 
 #include <vector>
 #include <utility>
-
+#include <map>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t COORDINATE = 4;
-class CheckValidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class CheckValidCpuKernelMod : public NativeCpuKernelMod {
  public:
   CheckValidCpuKernelMod() = default;
   ~CheckValidCpuKernelMod() override = default;
-
-  void InitKernel(const CNodePtr &kernel_node) override;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, workspace, outputs);
+    if (is_null_input_) {
+      return true;
+    }
+    return kernel_func_(this, inputs, outputs);
   }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
 
@@ -44,16 +50,15 @@ class CheckValidCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   void CheckParams(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
-                    const std::vector<kernel::AddressPtr> &outputs);
-  using CheckValidFunc =
-    std::function<bool(CheckValidCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
+  using CheckValidFunc = std::function<bool(CheckValidCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                            const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, CheckValidFunc>> func_list_;
   CheckValidFunc kernel_func_;
-  std::vector<int64_t> anchor_box_shape_;
-  std::vector<int64_t> img_metas_shape_;
-  std::vector<int64_t> output_shape_;
+  std::vector<int64_t> anchor_box_shape_{};
+  std::vector<int64_t> img_metas_shape_{};
+  std::vector<int64_t> output_shape_{};
+  bool is_null_input_{false};
 };
 }  // namespace kernel
 }  // namespace mindspore
