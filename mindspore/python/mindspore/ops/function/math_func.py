@@ -4580,6 +4580,93 @@ def log10(x):
     return output
 
 
+def kron(x, y):
+    """
+    Computes the Kronecker product, denoted by ⊗, of `x` and `y`.
+
+    If `x` is a :math:`(a_{0}` x :math:`a_{1}` x ... x :math:`a_{n})` tensor
+    and `y` is a :math:`(b_{0}` x :math:`b_{1}` x ... x :math:`b_{n})` tensor,
+    the result will be a :math:`(a_{0}*b_{0}` x :math:`a_{1}*b_{1}` x ... x :math:`a_{n}*b_{n})`
+    tensor with the following entries:
+
+    .. math::
+            (x ⊗ y)_{k_{0},k_{1},...k_{n}} =
+            x_{i_{0},i_{1},...i_{n}} * y_{j_{0},j_{1},...j_{n}},
+
+    where :math:`k_{t} = i_{t} * b_{t} + j_{t}` for 0 ≤ `t` ≤ `n`. If one
+    tensor has fewer dimensions than the other it is unsqueezed
+    until it has the same number of dimensions.
+
+    Note:
+        Supports real-valued and complex-valued inputs.
+
+    Args:
+        x (Tensor): Input tensor.
+        y (Tensor): Input tensor.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `y` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import ops
+        >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]])).astype(np.float32)
+        >>> y = Tensor(np.array([[-1, -2, -3], [-4, -6, -8]])).astype(np.float32)
+        >>> output = ops.kron(x, y)
+        >>> print(output)
+        [[  0.   0.   0.  -1.  -2.  -3.  -2.  -4.  -6.]
+         [  0.   0.   0.  -4.  -6.  -8.  -8. -12. -16.]
+         [ -3.  -6.  -9.  -4.  -8. -12.  -5. -10. -15.]
+         [-12. -18. -24. -16. -24. -32. -20. -30. -40.]]
+    """
+
+    if not isinstance(x, (Tensor, Tensor_)):
+        raise TypeError("the input x must be Tensor!")
+    if not isinstance(y, (Tensor, Tensor_)):
+        raise TypeError("the input y must be Tensor!")
+    if x is None or y is None:
+        return None
+    if x.ndim == 0 or y.ndim == 0:
+        return x*y
+
+    if x.ndim >= y.ndim:
+        maxdim = x.ndim
+    else:
+        maxdim = y.ndim
+    pad_x = maxdim - x.ndim
+    pad_y = maxdim - y.ndim
+    x_reshape = [0 for x in range(2 * maxdim)]
+    y_reshape = [0 for x in range(2 * maxdim)]
+    result_shape = [0 for x in range(maxdim)]
+
+    for i in range(maxdim):
+        if i >= pad_x:
+            x_reshape[2 * i] = x.shape[i - pad_x]
+        else:
+            x_reshape[2 * i] = 1
+        x_reshape[2 * i + 1] = 1
+        y_reshape[2 * i] = 1
+        if i >= pad_y:
+            y_reshape[2 * i + 1] = y.shape[i - pad_y]
+        else:
+            y_reshape[2 * i + 1] = 1
+        result_shape[i] = x_reshape[2 * i] * y_reshape[2 * i + 1]
+
+    x = x.reshape(x_reshape)
+    y = y.reshape(y_reshape)
+    result = (x * y).reshape(result_shape)
+    return result
+
+
 __all__ = [
     'addn',
     'absolute',
@@ -4706,6 +4793,7 @@ __all__ = [
     'xlogy',
     'log10',
     'approximate_equal',
-    'frac'
+    'frac',
+    'kron'
 ]
 __all__.sort()

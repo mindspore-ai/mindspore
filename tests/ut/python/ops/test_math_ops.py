@@ -539,6 +539,15 @@ class FracNet(nn.Cell):
         return self.frac(x)
 
 
+class KronFunc(nn.Cell):
+    def __init__(self):
+        super(KronFunc, self).__init__()
+        self.kron = ops.kron
+
+    def construct(self, x, y):
+        return self.kron(x, y)
+
+
 test_case_math_ops = [
     ('MatMulGrad', {
         'block': GradWrap(NetWithLoss(MatMulNet())),
@@ -669,6 +678,11 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([2, 4.2, -2.5], np.float32))],
         'desc_bprop': [Tensor(np.array([2, 4.2, -2.5], np.float32))],
     }),
+    ('Kron', {
+        'block': KronFunc(),
+        'desc_inputs': [Tensor(np.array([[0, 1, 2], [3, 4, 5]]).astype(np.float32)),
+                        Tensor(np.array([[-1, -2, -3], [-4, -6, -8]]).astype(np.float32))],
+        'skip': ['backward']}),
 ]
 
 test_case_lists = [test_case_math_ops]
@@ -789,6 +803,20 @@ raise_set = [
     ('Log10_Error_2', {
         'block': (Log10Net(), {'exception': TypeError}),
         'desc_inputs': [Tensor(np.array([[1, 2, 4]], np.int32))],
+        'skip': ['backward']}),
+    ('Kron_1_Error', {
+        'block': (KronFunc(), {'exception': TypeError}),
+        'desc_inputs': [[-5, -3, -1, 1, 3, 5], [-5, -3, -1, 1, 3, 5]],
+        'skip': ['backward']}),
+    ('Kron_2_Error', {
+        'block': (KronFunc(), {'exception': TypeError}),
+        'desc_inputs': [Tensor(np.random.randn(2, 5), dtype=mstype.float64),
+                        Tensor(np.random.randn(2, 5), dtype=mstype.float64)],
+        'skip': ['backward']}),
+    ('Kron_3_Error', {
+        'block': (KronFunc(), {'exception': RuntimeError}),
+        'desc_inputs': [Tensor(np.random.randn(2, 2, 3, 2, 3), dtype=mstype.float16),
+                        Tensor(np.random.randn(3, 2), dtype=mstype.float16)],
         'skip': ['backward']}),
 ]
 
