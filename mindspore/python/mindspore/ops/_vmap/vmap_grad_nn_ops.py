@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from ..primitive import Primitive
 from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, _raise_value_error, _bdim_at_front,\
-     _vmap_clone_prim
+     _vmap_clone_prim, _bdim_at_any
 
 
 @vmap_rules_getters.register(G.NLLLossGrad)
@@ -261,6 +261,40 @@ def get_adaptive_avgpool2d_vmap_rule(prim, axis_size):
         out = F.reshape(out, real_out_shape)
         return (out, 0)
 
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.BatchNormGradGrad)
+def get_batchnorm_grad_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `BatchNormGradGrad` operation."""
+    data_format = prim.format
+
+    def vmap_rule(dy_bdim, x_bdim, scale_bdim, mean_bdim, variance_bdim, dout_dx_bdim,
+                  dout_dscale_bdim, dout_dbias_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, dy_bdim, x_bdim, scale_bdim, mean_bdim, variance_bdim,
+                                                      dout_dx_bdim, dout_dscale_bdim, dout_dbias_bdim)
+        if is_all_none:
+            return result
+
+        dst_dim = 1 if data_format == "NCHW" else 3
+        dy = _bdim_at_any(*dy_bdim, dst_dim, axis_size)
+        x = _bdim_at_any(*x_bdim, dst_dim, axis_size)
+        dout_dx = _bdim_at_any(*dout_dx_bdim, dst_dim, axis_size)
+
+        scale = _bdim_at_front(*scale_bdim, axis_size)
+        mean = _bdim_at_front(*mean_bdim, axis_size)
+        variance = _bdim_at_front(*variance_bdim, axis_size)
+        dout_dscale = _bdim_at_front(*dout_dscale_bdim, axis_size)
+        dout_dbias = _bdim_at_front(*dout_dbias_bdim, axis_size)
+
+        dy_shape = dy.shape
+        scale_shape = scale.shape
+        shape = (dy_shape[0], -1,) + dy_shape[3:] if data_format == "NCHW" else dy_shape[:-2] + (-1,)
+        ddy, dx, dscale = prim(dy.reshape(shape), x.reshape(shape), scale.flatten(), mean.flatten(),
+                               variance.flatten(), dout_dx.reshape(shape), dout_dscale.flatten(),
+                               dout_dbias.flatten())
+        pos = 1 if data_format == "NCHW" else 3
+        return (ddy.reshape(dy_shape), pos), (dx.reshape(dy_shape), pos), (dscale.reshape(scale_shape), 0)
     return vmap_rule
 
 
