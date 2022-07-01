@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,10 +61,10 @@ class ContinuousMemInfoHelper {
   void AddContinuousMemInfo(bool is_input, size_t compute_index, size_t total_size,
                             const std::vector<size_t> &align_size_list,
                             const std::vector<const void *> &address_key_list);
-  std::shared_ptr<ContinuousMemInfo> GetContinuousMemInfo(const void *address_key);
-  std::vector<ContinuousMemInfoPtr> GetAllContinuousMemInfo();
-  bool IsContinuousMem(const void *address_key);
-  bool IsContinuousInputMem(const void *address_key);
+  std::shared_ptr<ContinuousMemInfo> GetContinuousMemInfo(const void *address_key) const;
+  std::vector<ContinuousMemInfoPtr> GetAllContinuousMemInfo() const;
+  bool IsContinuousMem(const void *address_key) const;
+  bool IsContinuousInputMem(const void *address_key) const;
 
   void AddContinuousMallocIndex(const ContinuousMemInfoPtr &mem_info, size_t index) {
     first_malloc_index_.emplace(mem_info, index);
@@ -136,15 +136,15 @@ class MemOffloadStrategy {
                                  std::set<MemEventPtr> *events_no_need_swap);
 
   size_t GetMaxSpanForContinuousMem(const ContinuousMemInfoPtr &continuous_mem_info,
-                                    const std::vector<size_t> &mem_used);
+                                    const std::vector<size_t> &mem_used) const;
 
-  size_t GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info);
+  size_t GetFirstMallocIndex(const ContinuousMemInfoPtr &continuous_mem_info) const;
 
   void GenContinuousMemAllocSteps();
 
   void GenContinuousMemAllocStep(const ContinuousMemInfoPtr &continuous_mem_info);
 
-  void CountContinuousMemUsage(std::vector<size_t> *total_mem_used);
+  void CountContinuousMemUsage(std::vector<size_t> *total_mem_used) const;
 
   size_t GetSpanBetweenMemEvents(size_t pre_index, size_t post_index) const {
     return (post_index + total_step_ - pre_index) % total_step_;
