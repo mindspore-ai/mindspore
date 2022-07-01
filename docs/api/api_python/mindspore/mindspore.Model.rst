@@ -38,7 +38,7 @@
       为使功能生效，需要同时设置optimizer、eval_network或metric参数。
       注意：当前默认开启的优化仅适用部分网络，并非所有网络都能获得相同收益。建议在图模式+Ascend平台下开启该模式，同时为了获取更好的加速效果，请参考文档配置boost_config_dict。
 
-    .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1, jit_config=None)
+    .. py:method:: build(train_dataset=None, valid_dataset=None, sink_size=-1, epoch=1)
 
         数据下沉模式下构建计算图和数据图。
 
@@ -52,9 +52,6 @@
         - **valid_dataset** (Dataset) - 一个验证集迭代器。如果定义了 `valid_dataset` ，将会构建验证计算图，此时 `Model` 中的 `metrics` 不能为None。默认值：None。
         - **sink_size** (int) - 控制每次数据下沉的数据量。默认值：-1。
         - **epoch** (int) - 控制训练轮次。默认值：1。
-        - **jit_config** (Union[str, str]) – 控制jit设置。默认情况下，如果设置为None，计算图会按默认方式编译。用户可以使用字典自定义编译配置。 例如，可以设置 {'jit_level':'o0'} 来控制 jit 级别。支持控制的数据如下所示。 默认值：None。
-
-          - jit_level (string): 控制计算图编译优化级别。可选项: o0/o1。默认值: o1。如果设置为o0，则计算图编译将会传入类似于图阶段的组合。
 
     .. py:method:: eval(valid_dataset, callbacks=None, dataset_sink_mode=True)
 
