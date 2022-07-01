@@ -44,6 +44,7 @@ from ..operations.math_ops import (
     Lcm,
     Gcd,
     SparseSegmentMean,
+    InplaceUpdateV2,
 )
 from ...common import dtype as mstype
 from ...common.tensor import Tensor
@@ -829,8 +830,9 @@ def inplace_update(x, v, indices):
     Updates specified rows with values in `v`.
 
     Args:
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of x
-            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x).
+        indices (Union[int, tuple], Tensor): Indices into the left-most dimension of `x`, and determines which rows of x
+            to update with v. It is an int or tuple, whose value is in [0, the first dimension size of x). If the type
+            is Tensor, it supports dynamic shape. Otherwise, it only supports static shape.
         x (Tensor) - A tensor which to be inplace updated. It can be one of the following data types:
             float32, float16 and int32.
         v (Tensor) - A tensor with the same type as `x` and the same dimension size as `x` except
@@ -857,8 +859,13 @@ def inplace_update(x, v, indices):
          [1.  1.5]
          [5.  6. ]]
     """
-    inplace_update_inner = _get_cache_prim(P.InplaceUpdate)(indices)
-    return inplace_update_inner(x, v)
+    if not isinstance(indices, (Tensor, Tensor_)):
+        inplace_update_inner = _get_cache_prim(P.InplaceUpdate)(indices)
+        output = inplace_update_inner(x, v)
+    else:
+        inplace_update_inner = InplaceUpdateV2()
+        output = inplace_update_inner(x, indices, v)
+    return output
 
 
 def inplace_add(x, v, indices):

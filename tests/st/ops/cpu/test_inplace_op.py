@@ -246,7 +246,7 @@ def test_vmap_inplace_sub(shape, indice_len, dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('op', ['add', 'sub'])
+@pytest.mark.parametrize('op', ['add', 'sub', 'update'])
 def test_inplace_op_dynamic_shape(op):
     """
     Feature: test test_inplace_op_dynamic_shape dynamic_shape feature.
@@ -266,8 +266,10 @@ def test_inplace_op_dynamic_shape(op):
 
     if op == 'add':
         dynamic_net = InplaceAdd(indices)
-    else:
+    elif op == 'sub':
         dynamic_net = InplaceSub(indices)
+    else:
+        dynamic_net = InplaceUpdate(indices)
 
     place_holder_x = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
     place_holder_v = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
