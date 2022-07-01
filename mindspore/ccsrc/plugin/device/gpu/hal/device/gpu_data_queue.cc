@@ -17,10 +17,10 @@
 #include <string>
 #include "plugin/device/gpu/hal/device/queue_common.h"
 #include "utils/ms_context.h"
+#include "plugin/device/gpu/hal/device/gpu_device_manager.h"
 namespace mindspore {
 namespace device {
-GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capacity), stream_(0), node_info_(nullptr) {
-  CHECK_CUDA_RET_WITH_ERROR(cudaStreamCreate(&stream_), "Cuda Create Stream Failed");
+GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capacity), node_info_(nullptr) {
   node_info_ = std::make_unique<NodeInfo[]>(capacity);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -28,6 +28,7 @@ GpuDataQueueDynamic::GpuDataQueueDynamic(const size_t capacity) : DataQueue(capa
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   device_context_ = DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_target, device_id});
   device_context_->Initialize();
+  stream_ = reinterpret_cast<cudaStream_t>(gpu::GPUDeviceManager::GetInstance().default_stream());
 }
 
 BlockQueueStatus_T GpuDataQueueDynamic::Push(std::vector<DataQueueItem> data) {
@@ -68,19 +69,7 @@ BlockQueueStatus_T GpuDataQueueDynamic::Pop() {
   return SUCCESS;
 }
 
-bool GpuDataQueueDynamic::Destroy() {
-  if (stream_ != nullptr) {
-    auto ret = cudaStreamDestroy(stream_);
-    if (ret == cudaSuccess) {
-      stream_ = nullptr;
-      return true;
-    } else {
-      return false;
-    }
-  } else {
-    return true;
-  }
-}
+bool GpuDataQueueDynamic::Destroy() { return true; }
 
 GpuQueue::GpuQueue(void *addr, const std::vector<size_t> &shape, const size_t &capacity)
     : DataQueue(capacity), buffer_(addr), shape_(shape), len_(0), stream_(0), node_info_(nullptr) {
