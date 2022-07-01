@@ -19,7 +19,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ms_function
-from mindspore.ops.functional import grad
+from mindspore.ops.functional import grad, value_and_grad
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from mindspore import Parameter, ParameterTuple
@@ -29,31 +29,45 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class SingleInputSingleOutputNet(nn.Cell):
     def construct(self, x):
-        return x**3
+        return x ** 3
+
 
 class SingleInputMultipleOutputsNet(nn.Cell):
     def construct(self, x):
-        return x**3, 2*x
+        return x ** 3, 2 * x
+
 
 class MultipleInputsSingleOutputNet(nn.Cell):
     def construct(self, x, y, z):
-        return x*y*z
+        return x * y * z
+
 
 class MultipleInputsMultipleOutputsNet(nn.Cell):
     def construct(self, x, y, z):
-        return x**2 + y**2 + z**2, x*y*z
+        return x ** 2 + y ** 2 + z ** 2, x * y * z
+
+
+class ParamNet(nn.Cell):
+    def __init__(self):
+        super(ParamNet, self).__init__()
+        self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+        self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+    def construct(self, x):
+        res = x * self.w * self.z
+        return res
 
 
 def function(x, y, z):
-    return x**2 + y**2 + z**2, x*y*z
+    return x ** 2 + y ** 2 + z ** 2, x * y * z
 
 
 def iteration_grad_function(x, y, z):
-    return x**2*y*z
+    return x ** 2 * y * z
 
 
 @ms_function
-def grad_warp_with_msfunction(x, y, z):
+def grad_wrap_with_msfunction(x, y, z):
     output = grad(function)(x, y, z)
     return output
 
@@ -137,28 +151,6 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_function_with_sens_graph():
-    """
-    Features: Function grad.
-    Description: Test F.grad with function setting sens_param in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
-    v = Tensor(np.array([[-1, 3], [2, 1]]).astype(np.float32))
-    expect_grad1 = Tensor(np.array([[4, 36], [26, 0]]).astype(np.float32))
-    expect_grad2 = Tensor(np.array([[2, 36], [14, 6]]).astype(np.float32))
-    real_grad = grad(function, grad_position=(1, 2), sens_param=True)(x, y, z, (v, v))
-    assert isinstance(real_grad, tuple)
-    assert len(real_grad) == 2
-    assert np.allclose(real_grad[0].asnumpy(), expect_grad1.asnumpy())
-    assert np.allclose(real_grad[1].asnumpy(), expect_grad2.asnumpy())
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test_grad_iteration_function_graph():
     """
     Features: Function grad.
@@ -180,17 +172,17 @@ def test_grad_iteration_function_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_grad_warp_with_msfunction_graph():
+def test_grad_wrap_with_msfunction_graph():
     """
     Features: Function grad.
-    Description: Test F.grad warpped with ms_function in graph mode.
+    Description: Test F.grad wrapped with ms_function in graph mode.
     Expectation: No exception.
     """
     x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
     y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
     expect_grad = Tensor(np.array([[2, 13], [1, 6]]).astype(np.float32))
-    real_grad = grad_warp_with_msfunction(x, y, z)
+    real_grad = grad_wrap_with_msfunction(x, y, z)
     assert np.allclose(real_grad.asnumpy(), expect_grad.asnumpy())
 
 
@@ -216,12 +208,158 @@ def test_grad_with_grad_position_twice_graph():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_grad_with_weights_twice_graph():
+    """
+    Features: GradOperation and grad.
+    Description: Test F.grad with different weights twice in graph mode.
+    Expectation: No exception.
+    """
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNet()
+    grad_fn = C.GradOperation(get_by_list=True)
+    weights1 = ParameterTuple(net.trainable_params()[:1])
+    weights2 = ParameterTuple(net.trainable_params()[1:])
+    expect1 = np.array([3, 6]).astype(np.float32)
+    expect2 = np.array([2, 4]).astype(np.float32)
+    out1 = grad_fn(net, weights1)(x)
+    out2 = grad_fn(net, weights2)(x)
+    out3 = grad(net, None, weights1)(x)
+    out4 = grad(net, None, weights2)(x)
+    assert np.allclose(out1[0].asnumpy(), expect1)
+    assert np.allclose(out3[0].asnumpy(), expect1)
+    assert np.allclose(out2[0].asnumpy(), expect2)
+    assert np.allclose(out4[0].asnumpy(), expect2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_with_weights_has_aux_graph():
+    """
+    Features: Function grad.
+    Description: Test F.grad with different weights and has_aux in graph mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetAux(nn.Cell):
+        def __init__(self):
+            super(ParamNetAux, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            res = x * self.w * self.z
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetAux()
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([6, 6]).astype(np.float32)
+    expect_grad_weight1 = np.array([3, 6]).astype(np.float32)
+    expect_grad_weight2 = np.array([2, 4]).astype(np.float32)
+    expect_aux1 = np.array([1, 2]).astype(np.float32)
+    expect_aux2 = np.array([2, 2]).astype(np.float32)
+    res, aux = grad(net, 0, weights, True)(x)
+    assert np.allclose(res[0].asnumpy(), expect_grad_input)
+    assert np.allclose(res[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[1][1].asnumpy(), expect_grad_weight2)
+    assert np.allclose(aux[0].asnumpy(), expect_aux1)
+    assert np.allclose(aux[1].asnumpy(), expect_aux2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_if_with_weights_has_aux_graph():
+    """
+    Features: Function grad.
+    Description: Test F.grad with different weights and has_aux as well as if case in graph mode.
+    Expectation: No exception.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+
+        def construct(self, x):
+            if x[0] == 1:
+                res = x * self.w * self.z
+            else:
+                res = x * x
+            return res, x, self.w
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = Net()
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([6, 6]).astype(np.float32)
+    expect_grad_weight1 = np.array([3, 6]).astype(np.float32)
+    expect_grad_weight2 = np.array([2, 4]).astype(np.float32)
+    expect_aux1 = np.array([1, 2]).astype(np.float32)
+    expect_aux2 = np.array([2, 2]).astype(np.float32)
+    res, aux = grad(net, 0, weights, True)(x)
+    assert np.allclose(res[0].asnumpy(), expect_grad_input)
+    assert np.allclose(res[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[1][1].asnumpy(), expect_grad_weight2)
+    assert np.allclose(aux[0].asnumpy(), expect_aux1)
+    assert np.allclose(aux[1].asnumpy(), expect_aux2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_grad_nest_with_weights_has_aux_graph():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.grad with different weights and has_aux as well as nested nets in graph mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([18, 18]).astype(np.float32)
+    expect_grad_weight1 = np.array([9, 18]).astype(np.float32)
+    expect_grad_weight2 = np.array([6, 12]).astype(np.float32)
+    expect_aux = np.array([6, 12]).astype(np.float32)
+    res, aux = grad(net, 0, weights, True)(x)
+    assert np.allclose(res[0].asnumpy(), expect_grad_input)
+    assert np.allclose(res[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(res[1][1].asnumpy(), expect_grad_weight2)
+    assert np.allclose(aux[0].asnumpy(), expect_aux)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_grad_if_ith_train_one_step():
     """
     Features: Grad with multiple funcgraph at the same J level.
     Description: Grad a network with each output. A simplification for GAN network.
     Expectation: Compile success.
     """
+
     class IthOutputCell(nn.Cell):
         def __init__(self, network, output_index):
             super().__init__()
@@ -283,6 +421,7 @@ def test_grad_net_d_net_g():
     Description: Grad two different network. A simplification for GAN network.
     Expectation: Compile success.
     """
+
     class NetD(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -365,3 +504,130 @@ def test_grad_net_d_net_g():
     network = Backbone()
     train_one_net = MyTrainOneStepCell(network)
     train_one_net(x, y)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_with_weights_has_aux_graph():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad with different weights and has_aux in graph mode.
+    Expectation: No exception.
+    """
+
+    class ParamNetMultipleOutputs(nn.Cell):
+        def __init__(self):
+            super(ParamNetMultipleOutputs, self).__init__()
+            self.w1 = Parameter(Tensor([2., 2.], mstype.float32), name="w1")
+            self.w2 = Parameter(Tensor([3., 3.], mstype.float32), name="w2")
+
+        def construct(self, x):
+            res = x * self.w1 * self.w2
+            return res, x, self.w1
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    net = ParamNetMultipleOutputs()
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([6, 6]).astype(np.float32)
+    expect_grad_weight1 = np.array([3, 6]).astype(np.float32)
+    expect_grad_weight2 = np.array([2, 4]).astype(np.float32)
+    expect_value0 = np.array([6, 12]).astype(np.float32)
+    expect_value1 = np.array([1, 2]).astype(np.float32)
+    expect_value2 = np.array([2, 2]).astype(np.float32)
+    value, gradient = value_and_grad(net, 0, weights, True)(x)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(value[2].asnumpy(), expect_value2)
+    assert np.allclose(gradient[0].asnumpy(), expect_grad_input)
+    assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_graph():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad with different weights and has_aux as well as nested nets in graph mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([24, 24]).astype(np.float32)
+    expect_grad_weight1 = np.array([12, 24]).astype(np.float32)
+    expect_grad_weight2 = np.array([8, 16]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    value, gradient = value_and_grad(net, 0, weights, False)(x)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(gradient[0].asnumpy(), expect_grad_input)
+    assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_value_and_grad_nest_with_weights_has_aux_graph():
+    """
+    Features: Function value_and_grad.
+    Description: Test F.value_and_grad with different weights and has_aux as well as nested nets in graph mode.
+    Expectation: No exception.
+    """
+
+    class InnerNet(nn.Cell):
+        def construct(self, x):
+            return x * 3, x
+
+    class Net(nn.Cell):
+        def __init__(self, net):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
+            self.z = Parameter(Tensor([3., 3.], mstype.float32), name="z")
+            self.net = net
+
+        def construct(self, x):
+            res1 = x * self.w * self.z
+            res2 = self.net(res1)
+            return res2
+
+    x = Tensor(np.array([1, 2]).astype(np.float32))
+    inner_net = InnerNet()
+    net = Net(inner_net)
+    weights = ParameterTuple(net.trainable_params())
+    expect_grad_input = np.array([18, 18]).astype(np.float32)
+    expect_grad_weight1 = np.array([9, 18]).astype(np.float32)
+    expect_grad_weight2 = np.array([6, 12]).astype(np.float32)
+    expect_value0 = np.array([18, 36]).astype(np.float32)
+    expect_value1 = np.array([6, 12]).astype(np.float32)
+    value, gradient = value_and_grad(net, 0, weights, True)(x)
+    assert np.allclose(value[0].asnumpy(), expect_value0)
+    assert np.allclose(value[1].asnumpy(), expect_value1)
+    assert np.allclose(gradient[0].asnumpy(), expect_grad_input)
+    assert np.allclose(gradient[1][0].asnumpy(), expect_grad_weight1)
+    assert np.allclose(gradient[1][1].asnumpy(), expect_grad_weight2)

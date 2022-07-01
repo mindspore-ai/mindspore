@@ -40,6 +40,16 @@ class KPynativeCell {
 
 using KPynativeCellPtr = std::shared_ptr<KPynativeCell>;
 
+struct GradAttr {
+  bool grad_all_inputs;
+  bool grad_weights;
+  bool has_sens;
+  bool get_by_position;
+
+  GradAttr(bool get_all, bool get_by_list, bool sens_param, bool get_by_position)
+      : grad_all_inputs(get_all), grad_weights(get_by_list), has_sens(sens_param), get_by_position(get_by_position) {}
+};
+
 // bprop_fg: user defined back propagate funcgraph or back propagate funcgraph of primitive, it will be passed after
 //           just parsed. will have prototype:
 //           (sens_input1, sens_input2, ...) bprop_fg(input1, input2, ..., out, dout)
@@ -71,8 +81,8 @@ KPynativeCellPtr GradPynativeCellBegin(const AnfNodePtrList &cell_inputs,
 // else:
 // each cnode in primal funcgraph is replaced by value node
 FuncGraphPtr GradPynativeCellEnd(const KPynativeCellPtr &k_cell, const AnfNodePtrList &weights,
-                                 const std::vector<size_t> &grad_position, bool grad_inputs, bool grad_weights,
-                                 bool has_sens_arg = false, bool build_formal_param = false);
+                                 const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
+                                 bool build_formal_param = false);
 
 // Grad for each operation.
 // c_node: CNode with contains the prim (index 0) and the formal input parameters of that prim.

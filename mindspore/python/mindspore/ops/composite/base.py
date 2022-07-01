@@ -20,6 +20,7 @@ from functools import partial
 from types import FunctionType
 import mindspore as ms
 from mindspore import context
+from mindspore.common.parameter import ParameterTuple, Parameter
 from ..._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFuncGraph_, Tail_, Shard_, \
     TupleAdd_, UnpackCall_, ZipOperation_, ListAppend_, TupleGetItemTensor_, ListInsert_, \
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_
@@ -337,6 +338,7 @@ class GradOperation(GradOperation_):
         GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param, False)
         self.grad_fn = None
         self.fn = None
+        self.weights_id = None
         self.pynative_ = False
 
     def _pynative_forward_run(self, grad, args, kwargs, fn):
@@ -362,7 +364,8 @@ class GradOperation(GradOperation_):
                 fn.set_grad(False)
 
     def __call__(self, fn, weights=None):
-        if self.grad_fn is not None and self.fn == fn:
+        weights_id = self._get_weights_id(weights)
+        if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
             return self.grad_fn
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
@@ -382,6 +385,8 @@ class GradOperation(GradOperation_):
                 def after_grad(*args):
                     return grad_(fn)(*args)
         elif self.pynative_:
+            if weights and weights_id:
+                _pynative_executor.set_weights_id(grad_, weights_id)
             @_wrap_func
             def after_grad(*args, **kwargs):
                 if _pynative_executor.check_graph(fn, *args, **kwargs):
@@ -403,7 +408,19 @@ class GradOperation(GradOperation_):
 
         self.grad_fn = after_grad
         self.fn = fn
+        self.weights_id = weights_id
         return self.grad_fn
+
+    def _get_weights_id(self, weights=None):
+        if isinstance(weights, Parameter):
+            return weights.name
+        if isinstance(weights, ParameterTuple):
+            res = ''.join(item.name for item in weights)
+            return res
+        if isinstance(weights, list):
+            res = ''.join(item.name for item in weights if isinstance(item, Parameter))
+            return res
+        return None
 
 
 class _TaylorOperation(TaylorOperation_):
@@ -456,9 +473,12 @@ class _Grad(GradOperation_):
         self.fn = None
         self.pynative_ = False
         self.grad_position = None
+        self.weights_id = None
 
     def __call__(self, fn, weights=None, grad_position=0):
-        if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position:
+        weights_id = self._get_weights_id(weights)
+        if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
+                self.weights_id == weights_id:
             return self.grad_fn
         grad_ = _Grad(self.get_by_list, self.sens_param, self.get_by_position)
         # If calling Grad in GRAPH_MODE or calling Grad in ms_function, do grad in GRAPH_MODE
@@ -484,6 +504,8 @@ class _Grad(GradOperation_):
                         return grad_(fn)(*args)
         elif self.pynative_:
             _pynative_executor.set_grad_position(grad_, grad_position)
+            if weights and weights_id:
+                _pynative_executor.set_weights_id(grad_, weights_id)
 
             @_wrap_func
             def after_grad(*args, **kwargs):
@@ -511,6 +533,7 @@ class _Grad(GradOperation_):
         self.grad_fn = after_grad
         self.fn = fn
         self.grad_position = grad_position
+        self.weights_id = weights_id
         return self.grad_fn
 
     def _pynative_forward_run(self, grad, args, kwargs, fn):
@@ -534,6 +557,17 @@ class _Grad(GradOperation_):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
                 fn.set_grad(False)
+
+    def _get_weights_id(self, weights=None):
+        if isinstance(weights, Parameter):
+            return weights.name
+        if isinstance(weights, ParameterTuple):
+            res = ''.join(item.name for item in weights)
+            return res
+        if isinstance(weights, list):
+            res = ''.join(item.name for item in weights if isinstance(item, Parameter))
+            return res
+        return None
 
 
 class _Vmap(VmapOperation_):

@@ -608,7 +608,7 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
   if (tail_type_ >= kNotGrad) {
     AbstractSequencePtr sequence_arg = dyn_cast<AbstractSequence>(args_spec_list[0]);
     if (sequence_arg == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple or list, but got " << sequence_arg->ToString();
+      MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple or list, but got " << args_spec_list[0]->ToString();
     }
     return GenerateTailFuncGraph(sequence_arg);
   }
@@ -620,12 +620,12 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
   }
   AbstractTuplePtr tuple_arg = dyn_cast<AbstractTuple>(args_spec_list[0]);
   if (tuple_arg == nullptr) {
-    MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple, but got " << tuple_arg->ToString();
+    MS_LOG(EXCEPTION) << "'Tail' arg0 must be tuple, but got " << args_spec_list[0]->ToString();
   }
   if (args_spec_list.size() == args_max_size) {
     AbstractTuplePtr pos = dyn_cast<AbstractTuple>(args_spec_list[1]);
     if (pos == nullptr) {
-      MS_LOG(EXCEPTION) << "'Tail' arg1 'position' must be tuple, but got " << pos->ToString();
+      MS_LOG(EXCEPTION) << "'Tail' arg1 'position' must be tuple, but got " << args_spec_list[1]->ToString();
     }
     return GenerateGradFuncGraph(tuple_arg, pos);
   }
@@ -709,10 +709,7 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   if (get_by_position_) {
     TailPtr tail_grad_by_position = std::make_shared<Tail>("tail_grad_by_position", kGradByPosition);
     inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_by_position), b_app, position});
-    k_child->set_output(inputs_bprop);
-    return;
-  }
-  if (get_all_) {
+  } else if (get_all_) {
     TailPtr tail_grad_all = std::make_shared<Tail>("tail_grad_all", kGradAll);
     inputs_bprop = k_child->NewCNodeInOrder({NewValueNode(tail_grad_all), b_app});
   }
@@ -738,6 +735,7 @@ void GradOperation::GradByParameter(const FuncGraphPtr &k_child, const AnfNodePt
   // b_app returns (EnvInstance(grads wrt params), grads wrt input0, grads wrt input1, ...),
   // so obtain first input grad by setting tail_type of Tail to kGradFirst.
   TailPtr tail_grad_first = std::make_shared<Tail>("tail_grad_first", kGradFirst);
+  tail_grad_first->set_enable_tuple_grad_first(enable_tuple_grad);
   tail_grad_first->set_enable_tuple_grad_first(enable_tuple_grad);
   k_child->set_output(k_child->NewCNodeInOrder({NewValueNode(tail_grad_first), b_app}));
 }
@@ -790,6 +788,7 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   FuncGraphPtr forward_graph = real_fn->func_graph();
   MS_EXCEPTION_IF_NULL(forward_graph);
+
   forward_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
 
   // Check if primal func graph has the primitive returned sparse result in its bprop().
@@ -809,13 +808,12 @@ FuncGraphPtr GradOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   ParameterPtr param_graph = grad_fg->add_parameter();
 
   AnfNodePtr weights = nullptr;
-  if (get_by_list_) {
-    weights = grad_fg->add_parameter();
-  }
   AnfNodePtr position = nullptr;
   if (get_by_position_) {
     weights = grad_fg->add_parameter();
     position = grad_fg->add_parameter();
+  } else if (get_by_list_) {
+    weights = grad_fg->add_parameter();
   }
 
   std::vector<AnfNodePtr> inputs;

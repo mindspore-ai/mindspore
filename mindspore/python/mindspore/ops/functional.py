@@ -187,23 +187,35 @@ def _convert_grad_position_type(grad_position):
     return grad_position
 
 
-grad_by_position = _Grad(get_by_list=False, sens_param=False, get_by_position=True)
-grad_by_position_with_sens = _Grad(get_by_list=False, sens_param=True, get_by_position=True)
+_grad_weight_position = _Grad(get_by_list=True, get_by_position=True)
+_grad_position = _Grad(get_by_list=False, get_by_position=True)
+_grad_weight = _Grad(get_by_list=True, get_by_position=False)
 
 
-def grad(fn, grad_position=0, sens_param=False):
+def grad(fn, grad_position=0, weights=None, has_aux=False):
     r"""
     A wrapper function to generate the gradient function for the input function.
 
     Args:
         fn (Union(Cell, function)): Function to do GradOperation.
-        grad_position (Union(int, tuple[int])): If int, get the gradient with respect to single input.
+        grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
             If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
-        sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
-            If sens_param is False, a 'ones_like(outputs)' sensitivity will be attached automatically. Default: False.
+            If None, none derivative of any input will be figured out, and in this case, `weights` is required.
+        weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
+            calculate the gradient. `weights` can be got through `weights = ParameterTuple(net.trainable_params())`.
+            Default: None.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False. Specially, this is an experimental feature and is subjected to change.
 
     Returns:
-        Function, returns the gradient function for the input function or cell.
+        Function, the gradient function to calculate gradient for the input function or cell.
+            For example, as for `out1, out2 = fn(*args)`, gradient function will return outputs like (gradient, out2)
+            when has_aux is set True, otherwise gradient.
+
+    Raises:
+        ValueError: If both `grad_position` and `weights` are None.
+        TypeError: If type of Args does not belong to required ones.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -212,12 +224,12 @@ def grad(fn, grad_position=0, sens_param=False):
         >>> import numpy as np
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
-        >>> from mindspore import Tensor
-        >>> from mindspore.ops.functional import grad
-        >>> ms.set_context(mode=ms.GRAPH_MODE)
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Parameter, ParameterTuple
+        >>> from mindspore.ops import grad
         >>> class Net(nn.Cell):
         ...     def construct(self, x, y, z):
-        ...         return x*y*z
+        ...         return x * y * z
         >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
         >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
         >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
@@ -229,11 +241,195 @@ def grad(fn, grad_position=0, sens_param=False):
          [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[-2.00000000e+00,  6.00000000e+00],
          [-3.00000000e+00,  8.00000000e+00]]))
+        >>>
+        >>> def fn(x, y, z):
+        ...     res = x * ops.exp(y) * ops.pow(z, 2)
+        ...     return res, z
+        >>> x = Tensor(np.array([3, 3]).astype(np.float32))
+        >>> y = Tensor(np.array([0, 0]).astype(np.float32))
+        >>> z = Tensor(np.array([2, 2]).astype(np.float32))
+        >>> gradient, aux = grad(net, (1, 2), None, True)(x, y)
+        >>> print(gradient)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
+        >>> print(aux)
+        (Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]),)
+        >>>
+        >>> class NetWithWeight(nn.Cell):
+        ...     def __init__(self):
+        ...         super(NetWithWeight, self).__init__()
+        ...         self.w = Parameter(Tensor(np.array([2, 2], np.float32)), name='w')
+        ...         self.z = Parameter(Tensor(np.array([3, 3], np.float32)), name='z')
+        ...     def construct(self, x, y):
+        ...         out = x * y * self.w * self.z
+        ...         return out, x
+        >>> net = NetWithWeight()
+        >>> params = ParameterTuple(net.trainable_params())
+        >>> x = Tensor(np.array([1, 2]).astype(np.float32))
+        >>> y = Tensor(np.array([3, 4]).astype(np.float32))
+        >>> gradient, aux = grad(net, (0, 1), params, True)(x, y)
+        >>> print(gradient)
+        ((Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  2.40000000e+01]),
+          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.20000000e+01])),
+         (Tensor(shape=[2], dtype=Float32, value= [ 9.00000000e+00,  2.40000000e+01]),
+          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.60000000e+01])))
+        >>> print(aux)
+        (Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]),)
     """
-    grad_position = _convert_grad_position_type(grad_position)
-    if sens_param:
-        return grad_by_position_with_sens(fn, None, grad_position)
-    return grad_by_position(fn, None, grad_position)
+    if grad_position is None and weights is None:
+        raise ValueError("`grad_position` and `weight` can not be None at the same time.")
+
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError(" `fn` must return more than one outputs when has_aux is set True.")
+        res = ()
+        for item in outputs[1:]:
+            res += (stop_gradient(item),)
+        return outputs[0], res
+
+    if has_aux:
+        fn_ = aux_fn
+    else:
+        fn_ = fn
+
+    def inner_fn(*args):
+        if grad_position is None:
+            return _grad_weight(fn, weights)(*args)
+        grad_position_ = _convert_grad_position_type(grad_position)
+        if weights is None:
+            return _grad_position(fn, None, grad_position_)(*args)
+        return _grad_weight_position(fn, weights, grad_position_)(*args)
+
+    def inner_fn_aux(*args):
+        _, aux_value = fn_(*args)
+        if grad_position is None:
+            return _grad_weight(fn_, weights)(*args), aux_value
+        grad_position_ = _convert_grad_position_type(grad_position)
+        if weights is None:
+            return _grad_position(fn_, None, grad_position_)(*args), aux_value
+        return _grad_weight_position(fn_, weights, grad_position_)(*args), aux_value
+
+    if has_aux:
+        return inner_fn_aux
+    return inner_fn
+
+
+def value_and_grad(fn, grad_position=0, weights=None, has_aux=False):
+    r"""
+    A wrapper function to generate the function to calculate forward output and gradient for the input function.
+
+    Args:
+        fn (Union(Cell, function)): Function to do GradOperation.
+        grad_position (Union(NoneType, int, tuple[int])): If int, get the gradient with respect to single input.
+            If tuple, get the gradients with respect to selected inputs. 'grad_position' begins with 0. Default: 0.
+            If None, none derivative of any input will be figured out, and in this case, `weights` is required.
+        weights (Union(ParameterTuple, Parameter, list(Parameter))): The parameters of the training network that need to
+            calculate the gradient. `weights` can be got through `weights = ParameterTuple(net.trainable_params())`.
+            Default: None.
+        has_aux (bool): If True, only the first output of `fn` contributes the gradient of `fn`, while the other outputs
+            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            Default: False. Specially, this is an experimental feature and is subjected to change.
+
+    Returns:
+        Function, returns the gradient function to calculate forward output and gradient for the input function or cell.
+            For example, as for `out = fn(*args)`, gradient function will return outputs like (gradient, out).
+
+    Raises:
+        ValueError: If both `grad_position` and `weights` are None.
+        TypeError: If type of Args does not belong to required ones.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore import Parameter, ParameterTuple
+        >>> from mindspore.ops import value_and_grad
+        >>> class Net(nn.Cell):
+        ...     def construct(self, x, y, z):
+        ...         return x * y * z
+        >>> x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
+        >>> y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
+        >>> z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
+        >>> net = Net()
+        >>> output, gradient = value_and_grad(net, grad_position=(1, 2))(x, y, z)
+        >>> print(output)
+        [[ -0.  18.]
+         [-15.  -8.]]
+        >>> print(gradient)
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 0.00000000e+00,  6.00000000e+00],
+         [ 1.50000000e+01, -4.00000000e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-2.00000000e+00,  6.00000000e+00],
+         [-3.00000000e+00,  8.00000000e+00]]))
+        >>>
+        >>> def fn(x, y, z):
+        ...     res = x * ops.exp(y) * ops.pow(z, 2)
+        ...     return res, z
+        >>> x = Tensor(np.array([3, 3]).astype(np.float32))
+        >>> y = Tensor(np.array([0, 0]).astype(np.float32))
+        >>> z = Tensor(np.array([2, 2]).astype(np.float32))
+        >>> output, gradient = grad(net, (1, 2), None, True)(x, y)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 5.00000000e+00,  5.00000000e+00]))
+        >>> print(gradient)
+        (Tensor(shape=[2], dtype=Float32, value= [ 7.50000000e+01,  7.50000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 3.00000000e+01,  3.00000000e+01]))
+        >>>
+        >>> class NetWithWeight(nn.Cell):
+        ...     def __init__(self):
+        ...         super(NetWithWeight, self).__init__()
+        ...         self.w = Parameter(Tensor(np.array([2, 2], np.float32)), name='w')
+        ...         self.z = Parameter(Tensor(np.array([3, 3], np.float32)), name='z')
+        ...     def construct(self, x, y):
+        ...         out = x * y * self.w * self.z
+        ...         return out, x
+        >>> net = NetWithWeight()
+        >>> params = ParameterTuple(net.trainable_params())
+        >>> x = Tensor(np.array([1, 2]).astype(np.float32))
+        >>> y = Tensor(np.array([3, 4]).astype(np.float32))
+        >>> output, gradient = value_and_grad(net, (0, 1), params, True)(x, y)
+        >>> print(output)
+        (Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  4.80000000e+01]),
+         Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.00000000e+00]))
+        >>> print(gradient)
+        ((Tensor(shape=[2], dtype=Float32, value= [ 1.80000000e+01,  2.40000000e+01]),
+          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.20000000e+01])),
+         (Tensor(shape=[2], dtype=Float32, value= [ 9.00000000e+00,  2.40000000e+01]),
+          Tensor(shape=[2], dtype=Float32, value= [ 6.00000000e+00,  1.60000000e+01])))
+    """
+    if grad_position is None and weights is None:
+        raise ValueError("`grad_position` and `weight` can not be None at the same time.")
+
+    def aux_fn(*args):
+        outputs = fn(*args)
+        if not isinstance(outputs, tuple) or len(outputs) < 2:
+            raise ValueError(" `fn` must return more than one outputs when has_aux is set True.")
+        res = (outputs[0],)
+        for item in outputs[1:]:
+            res += (stop_gradient(item),)
+        return res
+
+    if has_aux:
+        fn_ = aux_fn
+    else:
+        fn_ = fn
+
+    def inner_fn(*args):
+        res = fn_(*args)
+        if grad_position is None:
+            return res, _grad_weight(fn_, weights)(*args)
+        grad_position_ = _convert_grad_position_type(grad_position)
+        if weights is None:
+            return res, _grad_position(fn_, None, grad_position_)(*args)
+        return res, _grad_weight_position(fn_, weights, grad_position_)(*args)
+
+    return inner_fn
 
 
 def _trans_jet_inputs(primals_item, series_item):

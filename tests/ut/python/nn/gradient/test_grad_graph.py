@@ -58,16 +58,3 @@ def test_grad_multiple_inputs_multiple_outputs_cell_graph():
     z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
     net = MultipleInputsMultipleOutputsNet()
     grad(net, grad_position=(1, 2))(x, y, z)
-
-
-def test_grad_function_with_sens_graph():
-    """
-    Features: Function grad.
-    Description: Test F.grad with function setting sens_param in graph mode.
-    Expectation: No exception.
-    """
-    x = Tensor(np.array([[1, 2], [3, 4]]).astype(np.float32))
-    y = Tensor(np.array([[-2, 3], [-1, 2]]).astype(np.float32))
-    z = Tensor(np.array([[0, 3], [5, -1]]).astype(np.float32))
-    v = Tensor(np.array([[-1, 3], [2, 1]]).astype(np.float32))
-    grad(function, grad_position=(1, 2), sens_param=True)(x, y, z, (v, v))
