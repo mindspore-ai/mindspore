@@ -33,7 +33,7 @@ def test_noop_pserver():
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
-    assert num == 0
+    assert num == 1
     del os.environ['MS_ROLE']
     context.set_ps_context(enable_ps=False)
 
@@ -50,7 +50,7 @@ def test_noop_sched():
     num = 0
     for _ in data1.create_dict_iterator(num_epochs=1):
         num += 1
-    assert num == 0
+    assert num == 1
     del os.environ['MS_ROLE']
     context.set_ps_context(enable_ps=False)
 
