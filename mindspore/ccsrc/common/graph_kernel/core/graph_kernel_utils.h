@@ -125,6 +125,13 @@ class GkUtils {
    * @brief Get op's prim by op name.
    */
   static PrimitivePtr GetOpsPrim(const std::string &name);
+
+  /**
+   * @brief Get the real kernel nodes from a FuncGraph, the parameters and output nodes are extracted if the input_list
+   * and output_list is set.
+   */
+  static void GetValidKernelNodes(const FuncGraphPtr &func_graph, AnfNodePtrList *node_list,
+                                  AnfNodePtrList *input_list = nullptr, AnfNodePtrList *output_list = nullptr);
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_CORE_GRAPH_KERNEL_UTILS_H_

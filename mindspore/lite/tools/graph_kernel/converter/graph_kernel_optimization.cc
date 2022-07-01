@@ -23,7 +23,6 @@
 #include "backend/common/optimizer/optimizer.h"
 
 #include "backend/common/pass/getitem_tuple.h"
-#include "common/graph_kernel/core/graph_kernel_splitter.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/core/shape_ops_splitter.h"
 #include "common/graph_kernel/core/update_state_formatter.h"
@@ -34,6 +33,7 @@
 #include "tools/graph_kernel/converter/graph_kernel_cluster_lite.h"
 #include "tools/graph_kernel/converter/graph_kernel_expander_lite.h"
 #include "tools/graph_kernel/converter/insert_abstract.h"
+#include "tools/graph_kernel/converter/graph_kernel_splitter_lite.h"
 
 namespace mindspore::graphkernel {
 using opt::GetitemTuple;
@@ -82,7 +82,7 @@ GkPassManagerPtr GraphKernelOptimizer::Split() const {
   pm->Add(std::make_shared<ShapeOpsSplitter>(duplicated_ops), OptLevel_1);
 
   // Split kernel according to costmodel
-  pm->Add(std::make_shared<GraphKernelSplitter>(), OptLevel_1);
+  pm->Add(std::make_shared<GraphKernelSplitterWithTuning>(), OptLevel_1);
 
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
