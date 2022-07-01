@@ -104,16 +104,13 @@ int Tanh(const float *src, int length, float *dst) {
 }
 
 int Swish(const float *src, int length, float *dst) {
-  int ret = Sigmoid(src, length, dst);
-  if (ret != NNACL_OK) {
-    return NNACL_ERR;
-  }
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(Swish, i, src, length, dst);
 
   for (; i < length; ++i) {
-    dst[i] = src[i] * dst[i];
+    simd_exp32(-src[i], dst + i);
+    dst[i] = src[i] / (1.0f + dst[i]);
   }
   return NNACL_OK;
 }
