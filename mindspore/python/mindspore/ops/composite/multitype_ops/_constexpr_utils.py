@@ -48,6 +48,9 @@ SET_ITEM_BY_ONE_TENSOR = 0
 SET_ITEM_BY_TUPLE_OF_TENSOR = 1
 SET_ITEM_BY_NON_TENSOR = 2
 
+DYNAMIC_SHAPE = -1
+DYNAMIC_RANK = -2
+
 
 @constexpr
 def raise_value_error(msg):
@@ -870,3 +873,10 @@ def use_copy_slice(tuple_index):
 @constexpr
 def gen_exception_msg(msg_format, *args):
     return msg_format.format(args)
+
+
+@constexpr
+def is_shape_unknown(data_shape):
+    if DYNAMIC_SHAPE in data_shape or DYNAMIC_RANK in data_shape:
+        return True
+    return False
