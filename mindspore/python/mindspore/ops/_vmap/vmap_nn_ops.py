@@ -966,8 +966,6 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
     batch_prim = P.ApplyAdagradDA(**attr)
     batch_prim.add_prim_attr('batch_rank', batch_rank)
     prim_name = prim.name
-    batch_prim = _vmap_clone_prim(prim)
-    batch_prim.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, gradient_accumulator_bdim, gradient_squared_accumulator_bdim, grad_bdim, lr_bdim, l1_bdim,
                   l2_bdim, global_step_bdim, u_monad):
