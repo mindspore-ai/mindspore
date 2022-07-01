@@ -25,7 +25,7 @@ class InplaceAssignForCustomOp : public PatternProcessPass {
   explicit InplaceAssignForCustomOp(bool multigraph = true)
       : PatternProcessPass("inplace_assign_for_custom_op", multigraph) {}
   ~InplaceAssignForCustomOp() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   mutable mindspore::HashSet<CNodePtr> visited_{};

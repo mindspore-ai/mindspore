@@ -159,7 +159,7 @@ bool LinkCustomOp::LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, 
  * @param g Graph.
  * @param depend_nodes Custom's Depend nodes.
  */
-void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes) {
+void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes) const {
   if (depend_nodes.empty()) {
     return;
   }
@@ -172,7 +172,7 @@ void LinkCustomOp::AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList
 
   // New MakeTuple node
   auto mk_inputs = AnfNodePtrList{NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())), output_node};
-  (void)mk_inputs.insert(mk_inputs.end(), depend_nodes.begin(), depend_nodes.end());
+  (void)mk_inputs.insert(mk_inputs.cend(), depend_nodes.cbegin(), depend_nodes.cend());
   auto make_tuple_node = g->NewCNode(mk_inputs);
 
   // Get first element item form that maketuple and return.

@@ -30,10 +30,10 @@ void CacheManager::Update(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto type_iter = type_map_.find(node);
   auto shape_iter = shape_map_.find(node);
-  if (type_iter != type_map_.end()) {
+  if (type_iter != type_map_.cend()) {
     (void)type_map_.erase(type_iter);
   }
-  if (shape_iter != shape_map_.end()) {
+  if (shape_iter != shape_map_.cend()) {
     (void)shape_map_.erase(shape_iter);
   }
 }
@@ -41,10 +41,10 @@ void CacheManager::Update(const AnfNodePtr &node) {
 TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto iter = type_map_.find(node);
-  if (iter != type_map_.end()) {
+  if (iter != type_map_.cend()) {
     auto types = iter->second;
     auto type_iter = types.find(index);
-    if (type_iter != types.end()) {
+    if (type_iter != types.cend()) {
       return type_iter->second;
     }
     return kTypeUnknown;
@@ -66,10 +66,10 @@ TypeId CacheManager::GetOutputType(const AnfNodePtr &node, size_t index) {
 ShapeVector CacheManager::GetOutputShape(const AnfNodePtr &node, size_t index) {
   MS_EXCEPTION_IF_NULL(node);
   auto iter = shape_map_.find(node);
-  if (iter != shape_map_.end()) {
+  if (iter != shape_map_.cend()) {
     auto shapes = iter->second;
     auto shape_iter = shapes.find(index);
-    if (shape_iter != shapes.end()) {
+    if (shape_iter != shapes.cend()) {
       return shape_iter->second;
     }
     return {};
