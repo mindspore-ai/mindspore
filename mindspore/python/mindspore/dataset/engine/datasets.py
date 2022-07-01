@@ -550,7 +550,7 @@ class Dataset:
                 be dropped and not propagated to the child node.
             num_parallel_workers (int, optional): Number of workers(threads) to process the dataset in parallel
                 (default=None).
-            per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],
+            per_batch_map (Callable[[List[numpy.ndarray], ..., List[numpy.ndarray], BatchInfo], (List[numpy.ndarray],\
                 ..., List[numpy.ndarray])], optional): Per batch map callable (default=None). A callable
                 which takes (list[numpy.ndarray], list[numpy.ndarray], ..., BatchInfo) as input parameters. Each
                 list[numpy.ndarray] represents a batch of numpy.ndarray on a given column. The number of lists should

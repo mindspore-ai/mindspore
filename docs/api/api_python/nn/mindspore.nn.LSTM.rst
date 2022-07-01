@@ -26,32 +26,28 @@ mindspore.nn.LSTM
     .. math::
         h_{0:n},(h_{n}, c_{n}) = LSTM(x_{0:n},(h_{0},c_{0}))
 
-    **参数：**
+    参数：
+        - **input_size** (int) - 输入的大小。
+        - **hidden_size** (int) - 隐藏状态大小。
+        - **num_layers** (int) - 网络层数。默认值：1。
+        - **has_bias** (bool) - Cell是否有偏置项 `b_{ih}` 和 `b_{fh}`。默认值：True。
+        - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值：False。
+        - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值：0。dropout的范围为[0.0, 1.0)。
+        - **bidirectional** (bool) - 是否为双向LSTM。默认值：False。
 
-    - **input_size** (int) - 输入的大小。
-    - **hidden_size** (int) - 隐藏状态大小。
-    - **num_layers** (int) - 网络层数。默认值：1。
-    - **has_bias** (bool) - Cell是否有偏置项 `b_{ih}` 和 `b_{fh}`。默认值：True。
-    - **batch_first** (bool) - 指定输入 `x` 的第一个维度是否为batch_size。默认值：False。
-    - **dropout** (float, int) - 指的是除第一层外每层输入时的dropout概率。默认值：0。dropout的范围为[0.0, 1.0)。
-    - **bidirectional** (bool) - 是否为双向LSTM。默认值：False。
+    输入：
+        - **x** (Tensor) - shape为 (seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的Tensor。
+        - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为(num_directions * `num_layers`, batch_size, `hidden_size`)。`hx` 的数据类型必须与 `x` 相同。
+        - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 `(batch_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
 
-    **输入：**
+    输出：
+        Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。
 
-    - **x** (Tensor) - shape为 (seq_len, batch_size, `input_size`)或(batch_size, seq_len, `input_size`)的Tensor。
-    - **hx** (tuple) - 两个Tensor(h_0,c_0)的元组，数据类型为mindspore.float32或mindspore.float16，shape为(num_directions * `num_layers`, batch_size, `hidden_size`)。`hx` 的数据类型必须与 `x` 相同。
-    - **seq_length** (Tensor) - 输入batch的序列长度。Tensor的shape 为 `(batch_size)` 。默认：None。这里输入指明真实的序列长度，以避免使用填充后的元素计算隐藏状态，影响最后的输出。推荐这种输入方法。
+        - **output** (Tensor) - 形状为(seq_len, batch_size, num_directions * `hidden_size`)的Tensor。
+        - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是(num_directions * `num_layers`, batch_size, `hidden_size`)。
 
-    **输出：**
-
-    Tuple，包含 (`output`, (`h_n`, `c_n`))的元组。
-
-    - **output** (Tensor) - 形状为(seq_len, batch_size, num_directions * `hidden_size`)的Tensor。
-    - **hx_n** (tuple) - 两个Tensor (h_n, c_n)的元组，shape都是(num_directions * `num_layers`, batch_size, `hidden_size`)。
-
-    **异常：**
-
-    - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是int。
-    - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
-    - **TypeError** - `dropout` 既不是float也不是int。
-    - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
+    异常：
+        - **TypeError** - `input_size`， `hidden_size` 或  `num_layers` 不是int。
+        - **TypeError** - `has_bias` ， `batch_first` 或 `bidirectional` 不是bool。
+        - **TypeError** - `dropout` 既不是float也不是int。
+        - **ValueError** - `dropout` 不在[0.0, 1.0)范围内。
