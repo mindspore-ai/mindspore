@@ -18,7 +18,7 @@
 
 namespace mindspore {
 namespace opt {
-FusionIdAllocator::FusionIdAllocator() { fusion_id = 0; }
+FusionIdAllocator::FusionIdAllocator() {}
 
 FusionIdAllocator::~FusionIdAllocator() {}
 
@@ -38,14 +38,14 @@ bool FusionIdAllocator::HasFusionIdAttr(const AnfNodePtr &node) const {
   return common::AnfAlgo::HasNodeAttr(kAttrFusionId, cnode);
 }
 
-int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) {
+int64_t FusionIdAllocator::GetFusionId(const AnfNodePtr &node) const {
   if (HasFusionIdAttr(node)) {
     return common::AnfAlgo::GetNodeAttr<int64_t>(node, kAttrFusionId);
   }
   return -1;
 }
 
-void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int64_t id) {
+void FusionIdAllocator::SetFusionId(const AnfNodePtr &node, int64_t id) const {
   ValuePtr fusion_id_v = MakeValue(id);
   common::AnfAlgo::SetNodeAttr(kAttrFusionId, fusion_id_v, node);
 }

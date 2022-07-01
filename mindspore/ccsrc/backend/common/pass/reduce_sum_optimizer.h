@@ -25,12 +25,12 @@ class ReduceSumOptimizer : public PatternProcessPass {
   explicit ReduceSumOptimizer(bool multigraph = true) : PatternProcessPass("reduce_sum_optimizer", multigraph) {}
   ~ReduceSumOptimizer() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr NewRankOp(const AnfNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
   AnfNodePtr NewRangeOp(const AnfNodePtr &rank_op, const KernelGraphPtr &kernel_graph) const;
-  AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
+  AnfNodePtr InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const;
   AnfNodePtr NewAssistValueNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const;
 };
 }  // namespace opt

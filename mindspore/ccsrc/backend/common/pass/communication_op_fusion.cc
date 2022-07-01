@@ -350,7 +350,7 @@ AnfNodePtr CommunicationOpFusion::CreateFusedCommunicationOp(const FuncGraphPtr 
     if (idx != start_index) {
       AdjustAllReduceInputWithLoad(cnode);
     }
-    (void)fusion_inputs.insert(fusion_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+    (void)fusion_inputs.insert(fusion_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
     (void)orig_nodes.emplace_back(cnode);
   }
   CheckInputs(fusion_inputs);

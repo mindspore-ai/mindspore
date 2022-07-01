@@ -324,11 +324,11 @@ class ParameterPool {
 //
 class BaseContext {
  public:
-  void MarkVisited(const KernelGraphPtr &kg) { visited_graphs_.insert(kg); }
+  void MarkVisited(const KernelGraphPtr &kg) { (void)visited_graphs_.insert(kg); }
 
   bool IsVisited(const KernelGraphPtr &kg) const { return visited_graphs_.find(kg) != visited_graphs_.end(); }
 
-  const std::set<KernelGraphPtr> &visited_graphs() const { return visited_graphs_; }
+  const std::set<KernelGraphPtr> &visited_graphs() { return visited_graphs_; }
 
   void ClearVisited() { visited_graphs_.clear(); }
 
@@ -529,7 +529,7 @@ class CallInfoFinder {
           continue;
         }
         // Mark visited.
-        visited.emplace(kg);
+        (void)visited.emplace(kg);
         // Check callee.
         auto &call_info = context_.call_info_map[kg];
         auto &sites = call_info.call_sites;
@@ -580,7 +580,7 @@ class CallInfoFinder {
         continue;
       }
       // Mark visited.
-      ctx->visited.emplace(sub_graph);
+      (void)ctx->visited.emplace(sub_graph);
       // Check call sites in the sub-graph.
       auto &call_info = context_.call_info_map[sub_graph];
       auto &sites = call_info.call_sites;
@@ -626,7 +626,7 @@ class CallInfoFinder {
         auto abs = std::make_shared<abstract::AbstractTensor>(kInt32, shape);
         call_info.label_param = context_.CreateParameter(abs);
         // Add label index for the first call site.
-        call_info.return_points.front().call_site->label_indexes.emplace(call_info.label_param, 0);
+        (void)call_info.return_points.front().call_site->label_indexes.emplace(call_info.label_param, 0);
         // Judge the last call_site whether is loop, set recursive attr if yes.
         if (!call_info.call_sites.empty() && call_info.call_sites.back().disable_tail) {
           SearchRecursiveCall(callee, &call_info.call_sites.back());
@@ -634,7 +634,7 @@ class CallInfoFinder {
       }
       // Add label index for the current call site.
       auto label_index = static_cast<uint32_t>(call_info.return_points.size() - 1);
-      call_site->label_indexes.emplace(call_info.label_param, label_index);
+      (void)call_site->label_indexes.emplace(call_info.label_param, label_index);
     }
   }
 
@@ -653,7 +653,7 @@ class CallInfoFinder {
     auto &call_site = call_info->call_sites.emplace_back();
     call_site.cnode = cnode;
     call_site.last_monad = last_monad;
-    call_site.callees.emplace_back(GetCallBranch(cnode));
+    (void)call_site.callees.emplace_back(GetCallBranch(cnode));
   }
 
   // Create CallSite for Switch/SwitchLayer node.
@@ -664,7 +664,7 @@ class CallInfoFinder {
     call_site.callees = GetSwitchBranches(cnode);
   }
 
-  CallBranch GetCallBranch(const CNodePtr &cnode) {
+  CallBranch GetCallBranch(const CNodePtr &cnode) const {
     auto input_graph = cnode->input(kPartialGraphIndex);
     MS_EXCEPTION_IF_NULL(input_graph);
     auto kg = GetValueNode<KernelGraphPtr>(input_graph);
@@ -679,12 +679,12 @@ class CallInfoFinder {
     constexpr size_t cond_start_index = 2;
     std::vector<CallBranch> branches;
     for (size_t index = cond_start_index; index < cnode->inputs().size(); ++index) {
-      branches.emplace_back(GetSwitchBranch(cnode, index));
+      (void)branches.emplace_back(GetSwitchBranch(cnode, index));
     }
     return branches;
   }
 
-  CallBranch GetSwitchBranch(const CNodePtr &cnode, size_t index) {
+  CallBranch GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
     auto partial_cnode = dyn_cast<CNode>(cnode->input(index));
     if (partial_cnode == nullptr) {
       return {nullptr, {}};
@@ -772,7 +772,7 @@ class AscendAutoMonadConverter {
     auto &nodes = kg->execution_order();
     auto end_iter = nodes.rend();
     std::set<KernelGraphPtr> memo;
-    memo.insert(kg);
+    (void)memo.insert(kg);
     auto call_info = context->call_info_map[kg];
     if (call_info.call_sites.empty()) {
       SetIterEndAttr(context, kg, false);
@@ -836,7 +836,7 @@ class AscendAutoMonadConverter {
   static void FindProfilingEndPoints(AscendAutoMonadContext *context, const KernelGraphPtr &kg,
                                      std::set<KernelGraphPtr> *memo) {
     MS_EXCEPTION_IF_NULL(memo);
-    memo->insert(kg);
+    (void)memo->insert(kg);
     auto call_info = context->call_info_map[kg];
     // 1. find the last call site; if no call site, goto step 3.
     // 2. Judge the call site whether is tail call or not.
@@ -944,7 +944,7 @@ class AscendAutoMonadConverter {
     MS_EXCEPTION_IF_NULL(node_input);
     MS_EXCEPTION_IF_NULL(stack_pushs);
     auto stack_push = StackPush(node_input);
-    stack_pushs->emplace_back(stack_push);
+    (void)stack_pushs->emplace_back(stack_push);
     auto stack_pop = StackPop();
     MS_EXCEPTION_IF_NULL(stack_pop);
     stack_pop->set_abstract(node_input->abstract());
@@ -953,7 +953,8 @@ class AscendAutoMonadConverter {
 
   // Arrange StackPushs according to the rules of the last pop-up StackPush first,
   // while ensuring that the last StackPush node is next to the jump_node.
-  void InsertStackPush(const KernelGraphPtr &kg, const CNodePtr &jump_node, const std::vector<CNodePtr> &stack_pushs) {
+  void InsertStackPush(const KernelGraphPtr &kg, const CNodePtr &jump_node,
+                       const std::vector<CNodePtr> &stack_pushs) const {
     MS_LOG(DEBUG) << "There are " << stack_pushs.size() << " stack_push ops";
     if (stack_pushs.size() < 1) {
       return;
@@ -970,7 +971,7 @@ class AscendAutoMonadConverter {
   }
 
   // Ensure StackPop is next to the jump_node.
-  void KeepOrderForStackPop(const KernelGraphPtr &kg, const CNodePtr &pop, const CNodePtr &jump_node) {
+  void KeepOrderForStackPop(const KernelGraphPtr &kg, const CNodePtr &pop, const CNodePtr &jump_node) const {
     auto nodes = kg->execution_order();
     auto node_iter = std::find(nodes.cbegin(), nodes.cend(), jump_node);
     if (node_iter == nodes.cend()) {
@@ -984,7 +985,7 @@ class AscendAutoMonadConverter {
     AnfAlgo::KeepOrder(kg, pop, jump_node);
   }
 
-  void RemoveIdleParameter(const KernelGraphPtr &top_graph, const AnfNodePtr &parameter) {
+  void RemoveIdleParameter(const KernelGraphPtr &top_graph, const AnfNodePtr &parameter) const {
     MS_EXCEPTION_IF_NULL(top_graph);
     auto erase_item_from_vec = [](std::vector<AnfNodePtr> vec, const AnfNodePtr &item) -> std::vector<AnfNodePtr> {
       for (auto iter = vec.begin(); iter != vec.end();) {
@@ -1098,7 +1099,7 @@ class AscendAutoMonadConverter {
   // Create or reuse ValueNode for the index.
   ValueNodePtr GetIndexValueNode(uint32_t index) {
     auto iter = index_nodes_.find(index);
-    if (iter != index_nodes_.end()) {
+    if (iter != index_nodes_.cend()) {
       // Reuse ValueNode for same index.
       return iter->second;
     }
@@ -1108,7 +1109,7 @@ class AscendAutoMonadConverter {
     auto tensor = std::make_shared<tensor::Tensor>(data, kInt32);
     auto value_node = top_graph->NewValueNode(tensor->ToAbstract(), tensor);
     top_graph->AddValueNodeToGraph(value_node);
-    index_nodes_.emplace(index, value_node);
+    (void)index_nodes_.emplace(index, value_node);
     return value_node;
   }
 
@@ -1167,8 +1168,8 @@ class AscendAutoMonadConverter {
     std::vector<uint32_t> return_labels;
     return_labels.reserve(return_points.size());
     // Get return labels from return points.
-    std::transform(return_points.begin(), return_points.end(), std::back_inserter(return_labels),
-                   [](const ReturnPoint &return_point) { return return_point.call_site->return_label; });
+    (void)std::transform(return_points.begin(), return_points.end(), std::back_inserter(return_labels),
+                         [](const ReturnPoint &return_point) { return return_point.call_site->return_label; });
     // Insert label_switch for multi return points.
     auto &label_param = call_info_.label_param;
     MS_EXCEPTION_IF_NULL(label_param);
@@ -1233,12 +1234,12 @@ class AscendAutoMonadConverter {
     // Multi arguments.
     AnfNodePtrList tuple_inputs;
     tuple_inputs.reserve(args.size() + 1);
-    tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < args.size(); ++i) {
       auto &value = args.at(i);
       if (HasAbstractMonad(value)) {
         // No assign for monad arguments.
-        tuple_inputs.emplace_back(value);
+        (void)tuple_inputs.emplace_back(value);
         continue;
       }
       // Assign general arguments.
@@ -1261,7 +1262,9 @@ class AscendAutoMonadConverter {
   bool IsRecursive(const KernelGraphPtr &kg) { return context_.call_info_map[kg].recursive; }
 
   // For some cnode, attributes may set to primitive instance, so we create a new prim instance for each cnode.
-  AnfNodePtr NewPrimitive(const PrimitivePtr &prim) { return NewValueNode(std::make_shared<Primitive>(prim->name())); }
+  AnfNodePtr NewPrimitive(const PrimitivePtr &prim) const {
+    return NewValueNode(std::make_shared<Primitive>(prim->name()));
+  }
 
   AnfNodePtr GetLinkMonad() {
     if (last_monad_ != nullptr) {
@@ -1333,12 +1336,12 @@ class AscendAutoMonadConverter {
     if (!common::AnfAlgo::CheckPrimitiveType(source_cnode, prim::kPrimMakeTuple)) {
       MS_LOG(WARNING) << "Source : " << source_cnode->DebugString() << " is not MakeTuple.";
     }
-    tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
+    (void)tuple_inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 1; i < target_cnode->inputs().size(); ++i) {
       if (common::AnfAlgo::IsTupleOutput(target_cnode->input(i))) {
-        tuple_inputs.emplace_back(AssignAll(target_cnode->input(i), source_cnode->input(i), link, keep, output));
+        (void)tuple_inputs.emplace_back(AssignAll(target_cnode->input(i), source_cnode->input(i), link, keep, output));
       } else {
-        tuple_inputs.emplace_back(Assign(target_cnode->input(i), source_cnode->input(i), link, keep, output));
+        (void)tuple_inputs.emplace_back(Assign(target_cnode->input(i), source_cnode->input(i), link, keep, output));
       }
     }
     auto new_tuple = kernel_graph_->NewCNode(tuple_inputs);
@@ -1448,7 +1451,7 @@ class AscendAutoMonadConverter {
   }
 
   // Set child graph attribute for label_goto/label_switch node.
-  void SetChildGrapAttr(const AnfNodePtr &node, const std::vector<KernelGraphPtr> &graphs) {
+  void SetChildGrapAttr(const AnfNodePtr &node, const std::vector<KernelGraphPtr> &graphs) const {
     common::AnfAlgo::SetNodeAttr(kAttrChildGraph, MakeValue(graphs), node);
   }
 
@@ -1543,7 +1546,7 @@ class ExecuteOrderGenerator {
     generator.GenerateExecuteOrder();
   }
 
-  uint32_t FindMaxLabelId(const std::vector<CNodePtr> &nodes) {
+  uint32_t FindMaxLabelId(const std::vector<CNodePtr> &nodes) const {
     uint32_t max_label = 0;
     for (auto &node : nodes) {
       if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLabelSet)) {
@@ -1573,7 +1576,7 @@ class ExecuteOrderGenerator {
       (void)labels->emplace_back(label_id);
       is_new_labels = true;
     }
-    (void)switch_labels->insert(switch_labels->end(), new_labels.begin(), new_labels.end());
+    (void)switch_labels->insert(switch_labels->cend(), new_labels.cbegin(), new_labels.cend());
     if (is_new_labels) {
       common::AnfAlgo::SetNodeAttr(kAttrLabelSwitchList, MakeValue(new_labels), node);
     }
@@ -1639,24 +1642,26 @@ class ExecuteOrderGenerator {
     }
   }
 
-  void AppendGraphOrder(std::vector<CNodePtr> *execution_order, const KernelGraphPtr &graph) {
+  void AppendGraphOrder(std::vector<CNodePtr> *execution_order, const KernelGraphPtr &graph) const {
     auto &order = graph->execution_order();
-    execution_order->insert(execution_order->end(), order.begin(), order.end());
+    (void)execution_order->insert(execution_order->cend(), order.cbegin(), order.cend());
   }
 
-  bool HasSubGraphs(const CNodePtr &cnode) { return (cnode && common::AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode)); }
+  bool HasSubGraphs(const CNodePtr &cnode) const {
+    return (cnode && common::AnfAlgo::HasNodeAttr(kAttrChildGraph, cnode));
+  }
 
-  std::vector<KernelGraphPtr> GetSubGraphs(const CNodePtr &cnode) {
+  std::vector<KernelGraphPtr> GetSubGraphs(const CNodePtr &cnode) const {
     return common::AnfAlgo::GetNodeAttr<std::vector<KernelGraphPtr>>(cnode, kAttrChildGraph);
   }
 
-  void EraseNodeFromExecOrder(const AnfNodePtr &node, const NotNull<std::vector<CNodePtr> *> exec_order) {
+  void EraseNodeFromExecOrder(const AnfNodePtr &node, const NotNull<std::vector<CNodePtr> *> exec_order) const {
     MS_EXCEPTION_IF_NULL(node);
     auto exec_iter = std::find(exec_order->begin(), exec_order->end(), node);
     if (exec_iter == exec_order->end()) {
       MS_LOG(EXCEPTION) << "Cannot find " << node->DebugString() << " in exec order.";
     }
-    exec_order->erase(exec_iter);
+    (void)exec_order->erase(exec_iter);
   }
 
   void GenerateExecuteOrder() {
@@ -1702,7 +1707,7 @@ class ExecuteOrderGenerator {
   std::set<CNodePtr> GetAllNodes(std::map<CNodePtr, const size_t> *search_list) {
     const auto &all_graphs = context_.visited_graphs();
     std::set<CNodePtr> all_nodes;
-    for (auto &graph : all_graphs) {
+    for (const auto &graph : all_graphs) {
       auto out = graph->get_return();
       MS_EXCEPTION_IF_NULL(out);
       (void)search_list->emplace(out->cast<CNodePtr>(), 0);
@@ -1744,7 +1749,7 @@ class ExecuteOrderGenerator {
     auto exec_order = graph_->execution_order();
     std::map<CNodePtr, const size_t> search_list;
     for (size_t i = 0; i < exec_order.size(); i++) {
-      search_list.emplace(exec_order[i], i);
+      (void)search_list.emplace(exec_order[i], i);
     }
 
     // Remove assigns that target and source are same.
@@ -1752,7 +1757,7 @@ class ExecuteOrderGenerator {
 
     // Get all nodes and all graphs
     std::set<CNodePtr> all_nodes = GetAllNodes(&search_list);
-    auto &all_graphs = context_.visited_graphs();
+    const auto &all_graphs = context_.visited_graphs();
 
     // Count parameter write times by check all assign nodes.
     auto param_write_times = CountParameterAssigns(search_list, exec_order);
@@ -1786,7 +1791,7 @@ class ExecuteOrderGenerator {
           kg->ReplaceNode(target, source);
 
           // replace parameter in graph input
-          for (auto &g : all_graphs) {
+          for (const auto &g : all_graphs) {
             auto child_graph_inputs = g->MutableInputs();
             std::replace(child_graph_inputs->begin(), child_graph_inputs->end(), target, source);
             MS_LOG(DEBUG) << "Replace parameter " << target->DebugString() << " by " << source->DebugString()
@@ -1794,7 +1799,7 @@ class ExecuteOrderGenerator {
           }
 
           // replace parameter in node
-          for (auto &iter_node : all_nodes) {
+          for (const auto &iter_node : all_nodes) {
             for (size_t i = 0; i < iter_node->size(); ++i) {
               if (iter_node->input(i) == target) {
                 MS_LOG(INFO) << "Replace " << iter_node->DebugString() << " input " << i << " by "
@@ -1842,7 +1847,7 @@ class ExecuteOrderGenerator {
     for (const auto &graph : all_graphs) {
       for (auto &input : graph->inputs()) {
         if (input->isa<Parameter>()) {
-          param_write_times.emplace(input, std::make_pair(0, 0));
+          (void)param_write_times.emplace(input, std::make_pair(0, 0));
         }
       }
     }
@@ -1880,7 +1885,7 @@ class ExecuteOrderGenerator {
   }
 
   // Check if a node is an assign for argument link and can be optimized.
-  bool IsOptimizableAssign(const AnfNodePtr &node) {
+  bool IsOptimizableAssign(const AnfNodePtr &node) const {
     auto cnode = dyn_cast<CNode>(node);
     if (cnode == nullptr) {
       return false;
@@ -1902,7 +1907,7 @@ class ExecuteOrderGenerator {
       if (IsPrimitiveCNode(node, prim::kPrimLabelSwitch)) {
         auto labels = common::AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(node, kAttrLabelSwitchList);
         for (auto label : labels) {
-          label_used.insert(label);
+          (void)label_used.insert(label);
         }
       } else if (IsPrimitiveCNode(node, prim::kPrimLabelGoto)) {
         auto label = common::AnfAlgo::GetNodeAttr<uint32_t>(node, kAttrLabelIndex);

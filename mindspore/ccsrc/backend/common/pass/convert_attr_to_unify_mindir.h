@@ -26,7 +26,7 @@ class ConvertAttrToUnifyMindIR : public PatternProcessPass {
   explicit ConvertAttrToUnifyMindIR(bool multigraph = true)
       : PatternProcessPass("convert_attr_to_unify_mindir", multigraph) {}
   ~ConvertAttrToUnifyMindIR() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

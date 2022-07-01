@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace opt {
-kernel::KernelBuildInfoPtr ReplaceNodeByProxy::GenerateKernelBuildInfo(const CNodePtr &cnode) {
+kernel::KernelBuildInfoPtr ReplaceNodeByProxy::GenerateKernelBuildInfo(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<std::string> inputs_device_format;
   std::vector<std::string> outputs_device_format;
@@ -64,7 +64,7 @@ bool ReplaceNodeByProxy::Run(const FuncGraphPtr &func_graph) {
       auto prim = std::make_shared<Primitive>(kEmbeddingLookupProxyOpName);
       MS_EXCEPTION_IF_NULL(prim);
       std::vector<AnfNodePtr> proxy_inputs = {NewValueNode(prim)};
-      proxy_inputs.insert(proxy_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+      proxy_inputs.insert(proxy_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
       AnfNodePtr proxy_node = func_graph->NewCNode(proxy_inputs);
       MS_EXCEPTION_IF_NULL(proxy_node);
 

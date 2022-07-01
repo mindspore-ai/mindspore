@@ -27,7 +27,7 @@ class EraseVisitAttr : public PatternProcessPass {
   explicit EraseVisitAttr(bool multigraph = true) : PatternProcessPass("erase_visit_attr", multigraph) {}
   ~EraseVisitAttr() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

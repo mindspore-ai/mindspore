@@ -847,7 +847,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
     if (common::AnfAlgo::IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
-      if (find_dynamic != spec_dynamic_node_list.end()) {
+      if (find_dynamic != spec_dynamic_node_list.cend()) {
         auto dyn_index_converter = find_dynamic->second;
         ret = dyn_index_converter.first[cur_index];
         MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
@@ -855,7 +855,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
       }
     }
     auto find = spec_node_list.find(node_name);
-    if (find != spec_node_list.end()) {
+    if (find != spec_node_list.cend()) {
       auto index_converter = find->second;
       ret = index_converter.first[cur_index];
       MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
@@ -871,7 +871,7 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
     if (common::AnfAlgo::IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
-      if (find_dynamic != spec_dynamic_node_list.end()) {
+      if (find_dynamic != spec_dynamic_node_list.cend()) {
         auto dyn_index_converter = find_dynamic->second;
         ret = dyn_index_converter.second[cur_index];
         MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
@@ -879,7 +879,7 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
       }
     }
     auto find = spec_node_list.find(node_name);
-    if (find != spec_node_list.end()) {
+    if (find != spec_node_list.cend()) {
       auto index_converter = find->second;
       ret = index_converter.second[cur_index];
       MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
@@ -1040,7 +1040,7 @@ ShapeVector AnfRuntimeAlgorithm::GetOutputDeviceShapeAdaptively(const AnfNodePtr
     auto ConvertNegOneToOne = [&kDefaultValueForDynamicDim](int64_t size) {
       return size < 0 ? kDefaultValueForDynamicDim : size;
     };
-    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToOne);
+    (void)std::transform(shape.cbegin(), shape.cend(), std::back_inserter(ret_shape), ConvertNegOneToOne);
     auto format = GetOutputFormat(anf_node, index);
     auto dtype = GetOutputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
@@ -1117,7 +1117,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node, std::map<uint32_t, te
     MS_EXCEPTION_IF_NULL(cnode_input);
     if (depend_tensors != nullptr) {
       auto iter_tensor = depend_tensors->find(i);
-      if (iter_tensor != depend_tensors->end()) {
+      if (iter_tensor != depend_tensors->cend()) {
         auto tensor_ptr = iter_tensor->second;
         MS_EXCEPTION_IF_NULL(tensor_ptr);
         if (!SkipDataSync(node, *depend_tensors)) {
@@ -1337,7 +1337,7 @@ bool AnfRuntimeAlgorithm::IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &
   return kernel_mod->IsNeedRetrieveOutputShape();
 }
 
-void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo *kernel_info, const CNodePtr &kernel) {
+void AnfRuntimeAlgorithm::UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   auto &output_addresses = kernel_info->output_address_list();
   for (size_t i = 0; i < output_addresses.size(); ++i) {

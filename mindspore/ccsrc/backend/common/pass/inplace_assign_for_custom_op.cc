@@ -46,7 +46,7 @@ std::vector<std::vector<int64_t>> GetHybridInplaceIndex(const CNodePtr &cnode) {
   std::vector<int64_t> tmp;
   for (size_t i = 0; i < index.size(); i++) {
     tmp.push_back(std::stol(index[i]));
-    if (i & 1) {
+    if ((i & 1) != 0) {
       inplace_index.push_back(tmp);
       tmp.clear();
     }
@@ -74,7 +74,9 @@ CNodePtr InplaceAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &src, co
 
 CNodePtr InplaceAssignAfterCustom(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   auto inplace_info = GetHybridInplaceIndex(cnode);
-  if (inplace_info.size() != 1) return nullptr;
+  if (inplace_info.size() != 1) {
+    return nullptr;
+  }
   auto input_size = common::AnfAlgo::GetInputTensorNum(cnode);
   if (auto i = LongToSize(inplace_info[0][kCustomInput]); i < input_size) {
     return InplaceAssign(func_graph, cnode->input(i + 1), cnode);
@@ -120,7 +122,7 @@ const AnfNodePtr InplaceAssignForCustomOp::Process(const FuncGraphPtr &func_grap
     visited_.insert(cnode);
     return InplaceAssignAfterCustom(func_graph, cnode);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && visited_.find(cnode) == visited_.end()) {
-    visited_.insert(cnode);
+    (void)visited_.insert(cnode);
     return InplaceAssignAfterTupleGetItem(func_graph, cnode);
   }
 

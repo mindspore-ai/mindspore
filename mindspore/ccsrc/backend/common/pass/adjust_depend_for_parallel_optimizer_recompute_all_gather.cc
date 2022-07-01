@@ -76,7 +76,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::Run(const FuncGraphPtr 
 void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusionId(
   const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers,
   const std::vector<AnfNodePtr> &parallel_optimizer_recompute_first_fusion_allgathers,
-  int64_t unrecompute_max_fusion_id, int64_t recompute_min_fusion_id) {
+  int64_t unrecompute_max_fusion_id, int64_t recompute_min_fusion_id) const {
   // means that there may some forward allgather and duplicated allgather would be fused.
   if (recompute_min_fusion_id <= unrecompute_max_fusion_id) {
     MS_LOG(WARNING) << "Increase the duplicated allgather fusion id";

@@ -28,7 +28,9 @@ namespace {
 void ClonePrimitive(const AnfNodePtr &node) {
   // Several CNode may share a primitive pointer, so we clone the primitive before setting attr.
   auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) return;
+  if (cnode == nullptr) {
+    return;
+  }
   auto prim_node = NewValueNode(common::AnfAlgo::GetCNodePrimitive(cnode)->Clone());
   cnode->set_input(kAnfPrimitiveIndex, prim_node);
 }

@@ -26,7 +26,7 @@ class OptimizeDependence : public PatternProcessPass {
   explicit OptimizeDependence(bool multigraph = true) : PatternProcessPass("optimize_dependence", multigraph) {}
   ~OptimizeDependence() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
   const AnfNodePtr GetConvertNode(const FuncGraphPtr &graph, const AnfNodePtr &node, const size_t index) const;
 };
 }  // namespace opt
