@@ -212,6 +212,7 @@ def get_bias_add_vmap_rule(prim, axis_size):
         result = add_op(x, b)
 
         return (result, 0)
+
     return vmap_rule
 
 
@@ -960,12 +961,16 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
         batch_rank = prim.batch_rank + 1
     else:
         batch_rank = 1
+
+    attr = prim.init_attrs
+    batch_prim = P.ApplyAdagradDA(**attr)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
     prim_name = prim.name
     batch_prim = _vmap_clone_prim(prim)
     batch_prim.add_prim_attr("batch_rank", batch_rank)
 
     def vmap_rule(var_bdim, gradient_accumulator_bdim, gradient_squared_accumulator_bdim, grad_bdim, lr_bdim, l1_bdim,
-                  l2_bdim, global_step_bdim):
+                  l2_bdim, global_step_bdim, u_monad):
         var, var_dim = var_bdim
         gradient_accumulator, gradient_accumulator_dim = gradient_accumulator_bdim
         gradient_squared_accumulator, gradient_squared_accumulator_dim = gradient_squared_accumulator_bdim
@@ -986,7 +991,8 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
             var, gradient_accumulator, gradient_squared_accumulator = prim(var, gradient_accumulator,
                                                                            gradient_squared_accumulator, grad, lr, l1,
                                                                            l2,
-                                                                           global_step)  # Low dimensional operator
+                                                                           global_step,
+                                                                           u_monad)  # Low dimensional operator
             return (var, None), (gradient_accumulator, None), (gradient_squared_accumulator, None)
         if var_dim != 0 or var_dim != gradient_accumulator_dim or var_dim != gradient_squared_accumulator_dim:
             raise ValueError(
@@ -1003,9 +1009,10 @@ def get_apply_adagrad_da_vmap_rule(prim, axis_size):
         global_step = _bdim_at_front(global_step, global_step_dim, axis_size)
 
         var, gradient_accumulator, gradient_squared_accumulator = batch_prim(var, gradient_accumulator,
-                                                                             gradient_squared_accumulator,
-                                                                             grad, lr, l1, l2,
-                                                                             global_step)  # High dimensional operator;
+                                                                             gradient_squared_accumulator, grad, lr, l1,
+                                                                             l2,
+                                                                             global_step,
+                                                                             u_monad)  # High dimensional operator;
         return (var, 0), (gradient_accumulator, 0), (gradient_squared_accumulator, 0)
 
     return vmap_rule

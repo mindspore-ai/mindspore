@@ -8722,6 +8722,7 @@ class ApplyAdagradDA(Primitive):
     def __init__(self, use_locking=False):
         """Initialize ApplyAdagradDA"""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class SparseApplyRMSProp(Primitive):
