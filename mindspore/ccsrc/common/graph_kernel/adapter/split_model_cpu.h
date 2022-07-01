@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_CPU_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_CPU_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_SPLIT_MODEL_CPU_H_
+#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_SPLIT_MODEL_CPU_H_
 
-#include "common/graph_kernel/split_model/split_model.h"
+#include "common/graph_kernel/split_model/split_model_factory.h"
 namespace mindspore::graphkernel::inner {
 class SplitModelCpu : public SplitModel {
  public:
@@ -28,4 +28,4 @@ class SplitModelCpu : public SplitModel {
   void InitFusePatterns() override;
 };
 }  // namespace mindspore::graphkernel::inner
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_SPLIT_MODEL_CPU_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_ADAPTER_SPLIT_MODEL_CPU_H_

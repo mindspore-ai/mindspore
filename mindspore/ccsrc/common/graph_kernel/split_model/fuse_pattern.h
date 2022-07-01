@@ -72,6 +72,88 @@ class FusePattern {
 using FusePatternPtr = std::shared_ptr<FusePattern>;
 
 /* some common patterns are defined below */
+enum class FuseType { kWidth, kDepth };
+class FuseReshape : public FusePattern {
+ public:
+  FuseReshape() : FusePattern("reshape") {}
+  ~FuseReshape() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->pattern() == NodePattern::RESHAPE; }
+  bool Match(const AreaPtr &dom) override;
+  void KeepMinimumArea(const AreaPtr &a, FuseDirection dir);
+  AreaPtr min_area_;
+};
+
+class FuseIsolateReshape : public FusePattern {
+ public:
+  FuseIsolateReshape() : FusePattern("isolate_reshape") {}
+  ~FuseIsolateReshape() = default;
+
+ protected:
+  bool Check(const AreaPtr &dom) override { return dom->pattern() == NodePattern::RESHAPE && dom->size() == 1; }
+  bool Match(const AreaPtr &dom) override;
+};
+
+class FuseElemwiseBroadcastFwd : public FusePattern {
+ public:
+  explicit FuseElemwiseBroadcastFwd(FuseType fuse_type) : FusePattern("elemwise_broadcast_fwd"), fuse_type_(fuse_type) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseElemwiseBroadcastFwd() = default;
+  static FusePatternPtr CreateDepthMatcher() { return std::make_shared<FuseElemwiseBroadcastFwd>(FuseType::kDepth); }
+  static FusePatternPtr CreateWidthMatcher() { return std::make_shared<FuseElemwiseBroadcastFwd>(FuseType::kWidth); }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+};
+
+class FuseReduceFwd : public FusePattern {
+ public:
+  FuseReduceFwd(FuseType fuse_type, size_t size_limit)
+      : FusePattern("reduce_fwd"), fuse_type_(fuse_type), size_limit_(size_limit) {
+    direction_ = FuseDirection::FORWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseReduceFwd() = default;
+  static FusePatternPtr CreateDepthMatcher(size_t size_limit) {
+    return std::make_shared<FuseReduceFwd>(FuseType::kDepth, size_limit);
+  }
+  static FusePatternPtr CreateWidthMatcher(size_t size_limit) {
+    return std::make_shared<FuseReduceFwd>(FuseType::kWidth, size_limit);
+  }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+  size_t size_limit_;
+};
+
+class FuseElemwiseBroadcastBwd : public FusePattern {
+ public:
+  FuseElemwiseBroadcastBwd(FuseType fuse_type, size_t size_limit)
+      : FusePattern("elemwise_broadcast_bwd"), fuse_type_(fuse_type), size_limit_(size_limit) {
+    direction_ = FuseDirection::BACKWARD;
+    name_ += (fuse_type == FuseType::kWidth ? "_width" : "_depth");
+  }
+  ~FuseElemwiseBroadcastBwd() = default;
+  static FusePatternPtr CreateDepthMatcher(size_t size_limit) {
+    return std::make_shared<FuseElemwiseBroadcastBwd>(FuseType::kDepth, size_limit);
+  }
+  static FusePatternPtr CreateWidthMatcher(size_t size_limit) {
+    return std::make_shared<FuseElemwiseBroadcastBwd>(FuseType::kWidth, size_limit);
+  }
+
+ protected:
+  bool Check(const AreaPtr &dom) override;
+  bool Match(const AreaPtr &dom) override;
+  FuseType fuse_type_;
+  size_t size_limit_;
+};
 
 // bind the virtual nodes to their inputs
 class FuseVirtualNode : public FusePattern {
