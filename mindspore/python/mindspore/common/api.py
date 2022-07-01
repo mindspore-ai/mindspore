@@ -250,6 +250,14 @@ class _MindsporeFunctionExecutor:
                             layout = obj.parameter_layout_dict[param.name]
                             new_tensor = _load_tensor_by_layout(state.data, layout)
                             state.set_data(new_tensor, True)
+
+            # set data for all optimizer states in case it is executed in graph mode
+            prefix_list = ["moments", "accum", "moment1", "moment2", "lamb_m", "lamb_v", "mean_grad",
+                           "mean_square", "prev"]
+            for opt_param in opt_params:
+                prefix = opt_param.name[:opt_param.name.find(".")]
+                if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
+                    opt_param.init_data()
         _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
 
     def compile(self, args_list, method_name):
