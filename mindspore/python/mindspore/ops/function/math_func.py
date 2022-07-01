@@ -47,6 +47,7 @@ from ..operations.math_ops import (
     Hypot,
     Lcm,
     Gcd,
+    Sinc,
     SparseSegmentMean,
     InplaceUpdateV2,
 )
@@ -106,6 +107,7 @@ logical_not_ = P.LogicalNot()
 logical_or_ = P.LogicalOr()
 logical_and_ = P.LogicalAnd()
 sin_ = P.Sin()
+sinc_ = Sinc()
 cos_ = P.Cos()
 tan_ = P.Tan()
 asin_ = P.Asin()
@@ -1176,6 +1178,37 @@ def sin(x):
         [0.5810352 0.27635565 0.41687083 0.5810352]
     """
     return sin_(x)
+
+
+def sinc(x):
+    r"""
+    Computes the normalized sinc of input.
+
+    .. math::
+
+        out_i = sinc(x_i)
+
+    Args:
+        x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+
+    Returns:
+        Tensor, has the same shape as the `x`. The dtype of output is float32 when dtype of `x` is in
+        [uint8, uint8, uint16, int16, uint32, int32, uint64, int64, bool]. Otherwise output has the
+        same dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.62, 0.28, 0.43, 0.62]), mindspore.float32)
+        >>> output = ops.sinc(x)
+        >>> print(output)
+        [0.47735003 0.8759357  0.7224278  0.47735003]
+    """
+    return sinc_(x)
 
 
 def cos(x):
