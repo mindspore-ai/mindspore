@@ -25,6 +25,7 @@ concat_op_info = TBERegOp("Concat") \
     .partial_flag(True) \
     .dynamic_compile_static(True) \
     .dynamic_shape(True) \
+    .need_check_supported(True) \
     .attr("axis", "required", "int", "all") \
     .input(0, "input_values", False, "dynamic", "all") \
     .output(0, "output_data", False, "required", "all") \
