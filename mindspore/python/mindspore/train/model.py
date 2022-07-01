@@ -87,7 +87,7 @@ def _save_final_ckpt(func):
                 cur_file = os.path.join(obj._directory, cur_ckpoint_file)
                 if "epoch_num" in obj._append_dict:
                     obj._append_dict["epoch_num"] = obj._append_epoch_num + self._current_epoch_num
-                if "step_num" in self._append_dict:
+                if "step_num" in obj._append_dict:
                     obj._append_dict["step_num"] = obj._append_step_num + self._current_step_num
                 save_checkpoint(self._train_network, cur_file, obj._config.integrated_save, obj._config.async_save,
                                 obj._append_dict, obj._config.enc_key, obj._config.enc_mode)
