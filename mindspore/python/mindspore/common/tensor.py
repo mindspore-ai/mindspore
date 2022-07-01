@@ -3128,19 +3128,13 @@ class Tensor(Tensor_):
         The shape of input tensor is :math:`(x_1, x_2, ..., x_R)`. For convenience, define it as `input_params`,
         the variable `input_params` refers to input tensor.
 
-        The following figure shows the calculation process of Gather commonly:
-
-        .. image:: Gather.png
-
-        where params represents the input `input_params`, and indices represents the index to be sliced `input_indices`.
-
-        .. note::
+        Note:
             1.The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
-                is undefined out of range.
+              is undefined out of range.
 
             2.The data type of `input_params` cannot be
-                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-                platform currently.
+              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+              platform currently.
 
         Args:
             input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
@@ -4697,7 +4691,7 @@ class CSRTensor(CSRTensor_):
             [1. 2.]]
         """
         validator.check_value_type('dense_matrix', dense_matrix, (Tensor_,), 'CSRTensor.mm')
-        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values, \
+        return tensor_operator_registry.get("csr_mm")()(self.indptr, self.indices, self.values,
                                                         self.shape, dense_matrix)
 
     def sum(self, axis):
