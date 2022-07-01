@@ -1137,8 +1137,7 @@ def tan(x):
         out_i = tan(x_i)
 
     Args:
-        x (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        x (Tensor): The input Tensor, valid for any dimensions.
 
     Returns:
         Tensor, has the same shape as `x`.
