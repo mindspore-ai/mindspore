@@ -2249,7 +2249,7 @@ class Pow(Primitive):
         return None
 
 
-class Exp(PrimitiveWithInfer):
+class Exp(Primitive):
     r"""
     Returns exponential of a tensor element-wise.
 
@@ -2259,32 +2259,20 @@ class Exp(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> x = Tensor(np.array([0.0, 1.0, 3.0]), mindspore.float32)
         >>> exp = ops.Exp()
         >>> output = exp(x)
         >>> print(output)
-        [ 2.718282  7.389056 54.598152]
+        [ 1.        2.718282 20.085537]
     """
 
     @prim_attr_register
     def __init__(self):
         """Initialize Exp"""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_type):
-        validator.check_subclass("x", x_type, mstype.tensor, self.name)
-        return x_type
-
-    def infer_value(self, x):
-        if x is not None:
-            x = x.asnumpy()
-            out = np.exp(x)
-            out = np.array(out, x.dtype)
-            return Tensor(out)
-        return None
+        self.add_prim_attr("base", -1.0)
+        self.add_prim_attr("scale", 1.0)
+        self.add_prim_attr("shift", 0.0)
 
 
 class ReduceStd(Primitive):
@@ -2449,11 +2437,11 @@ class Expm1(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
+        >>> x = Tensor(np.array([0.0, 2.0, 3.0, 5.0]), mindspore.float32)
         >>> expm1 = ops.Expm1()
         >>> output = expm1(x)
         >>> print(output)
-        [ 0.        1.718282  6.389056 53.598152]
+        [  0.         6.389056  19.085537 147.41316 ]
     """
 
     @prim_attr_register

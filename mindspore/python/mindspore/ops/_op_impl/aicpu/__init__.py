@@ -35,6 +35,8 @@ from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
 from .gather_d import _gather_d_aicpu
 from .scatter import _scatter_aicpu
+from .exp import _exp_aicpu
+from .expm1 import _expm1_aicpu
 from .identity import _identity_aicpu
 from .identity_n import _identity_n_aicpu
 from .edit_distance import _edit_distance_aicpu
