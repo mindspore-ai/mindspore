@@ -110,13 +110,17 @@ bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(hb_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
   if (!hb_client_->IsConnected(server_url)) {
-    RETURN_IF_FALSE_WITH_LOG(hb_client_->Connect(server_url, kNoRetry),
-                             "Failed to connect to the meta server node url: " << server_url);
+    if (!hb_client_->Connect(server_url, kNoRetry)) {
+      MS_LOG(WARNING) << "Failed to connect to the meta server node url: " << server_url;
+      return false;
+    }
   }
 
   if (!tcp_client_->IsConnected(server_url)) {
-    RETURN_IF_FALSE_WITH_LOG(tcp_client_->Connect(server_url, kNoRetry),
-                             "Failed to connect to the meta server node url: " << server_url);
+    if (!tcp_client_->Connect(server_url, kNoRetry)) {
+      MS_LOG(WARNING) << "Failed to connect to the meta server node url: " << server_url;
+      return false;
+    }
   }
 
   RegistrationMessage reg_msg;
@@ -252,7 +256,7 @@ bool ComputeGraphNode::ReconnectIfNeeded(std::function<bool(void)> func, const s
     success = func();
     if (!success) {
       // Retry to reconnect to the meta server.
-      MS_LOG(ERROR) << error;
+      MS_LOG(WARNING) << error;
       sleep(kExecuteInterval);
       (void)Reconnect();
     }
