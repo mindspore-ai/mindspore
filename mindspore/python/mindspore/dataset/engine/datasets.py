@@ -1432,7 +1432,7 @@ class Dataset:
             output_numpy = False
 
         if Dataset._noop_mode():
-            return DummyIterator(self, 'tuple')
+            return DummyIterator(self, 'tuple', output_numpy)
         return TupleIterator(self, columns, num_epochs, output_numpy, do_copy)
 
     @check_dict_iterator
@@ -1464,7 +1464,7 @@ class Dataset:
             output_numpy = False
 
         if Dataset._noop_mode():
-            return DummyIterator(self, 'dict')
+            return DummyIterator(self, 'dict', output_numpy)
         return DictIterator(self, num_epochs, output_numpy)
 
     def __iter__(self):
