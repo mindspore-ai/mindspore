@@ -1328,7 +1328,7 @@ def get_expand_dims_vmap_rule(prim, axis_size):
     @constexpr
     def process_axis(axis, rank, x_dim):
         if axis < 0:
-            axis += rank - 1
+            axis += rank
         axis_processed = axis + 1 if x_dim <= axis else axis
         x_dim = x_dim if x_dim < axis_processed else x_dim + 1
         return axis_processed, x_dim
