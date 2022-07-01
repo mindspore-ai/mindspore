@@ -40,7 +40,7 @@ namespace mindspore {
 
 using TypeInfoToProtoTypeMap = std::vector<std::pair<uint32_t, debugger::DataType>>;
 
-void SetOutputType(const TypePtr &node, const BaseShapePtr &shape, debugger::TypeProto *type_proto);
+void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::TypeProto *type_proto);
 
 void CheckIfValidType(const TypePtr &type, debugger::TypeProto *const type_proto) {
   if (!(type->isa<Number>() || type->isa<TensorType>() || type->isa<Tuple>() || type->isa<TypeType>() ||
@@ -310,10 +310,10 @@ std::string DebuggerProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const 
   }
 
   if (node->isa<ValueNode>()) {
-    auto iter = const_map_ptr->find(node);
+    const auto iter = const_map_ptr->find(node);
     if (iter == const_map_ptr->end()) {
       // Start index number from 1
-      auto const_idx = const_map_ptr->size() + 1;
+      const auto const_idx = const_map_ptr->size() + 1;
       (*const_map_ptr)[node] = const_idx;
     }
     return GetConstNodeId((*const_map_ptr)[node]);
