@@ -293,6 +293,7 @@ from .sign_ds import _sign_ds_tbe
 from .greater import _greater_tbe
 from .greater_ds import _greater_ds_tbe
 from .clip_by_norm_no_div_sum import _clip_by_norm_no_div_sum_tbe
+from .clip_by_norm_no_div_sum_ds import _clip_by_norm_no_div_sum_ds_tbe
 from .clip_by_value import _clip_by_value_tbe
 from .clip_by_value_ds import _clip_by_value_ds_tbe
 from .layer_norm_beta_gamma_backprop import _layer_norm_beta_gamma_backprop_tbe

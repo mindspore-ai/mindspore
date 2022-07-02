@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_ClipByValue_H_
-#define MINDSPORE_CORE_OPS_ClipByValue_H_
+#ifndef MINDSPORE_CORE_OPS_CLIP_BY_VALUE_H_
+#define MINDSPORE_CORE_OPS_CLIP_BY_VALUE_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -41,4 +41,4 @@ using kPrimClipByValuePtr = std::shared_ptr<ClipByValue>;
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_ClipByValue_H_
+#endif  // MINDSPORE_CORE_OPS_CLIP_BY_VALUE_H_
