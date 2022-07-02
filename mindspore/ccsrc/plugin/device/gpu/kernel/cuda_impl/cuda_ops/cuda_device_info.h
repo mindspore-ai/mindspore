@@ -42,6 +42,7 @@ class GPUdeviceInfo {
   inline int blocks_num(const int total_threads) const {
     return std::min(((total_threads - 1) / threads_per_block_) + 1, max_blocks_);
   }
+  inline int blocks_max_num(int size) const { return std::min(size, max_blocks_); }
   size_t share_memory_size() const { return max_share_memory_; }
   void set_check_sm(const bool &flag) { check_sm_ = flag; }
   bool check_sm() const { return check_sm_; }
@@ -66,6 +67,8 @@ class GPUdeviceInfo {
 #define CUDA_THREADS(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num()
 #define CUDA_THREADS_MAXSIZE(device_id, size) \
   mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->threads_num(size)
+#define CUDA_BLOCKS_MAXSIZE(device_id, size) \
+  mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->blocks_max_num(size)
 #define CUDA_MAJOR_SM(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->major_sm()
 #define CUDA_CAP(device_id) mindspore::device::gpu::GPUdeviceInfo::GetInstance(device_id)->cuda_cap()
 #define CUDA_SHARED_MEM_PER_BLOCK(device_id) \
