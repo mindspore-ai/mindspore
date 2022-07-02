@@ -266,6 +266,7 @@ from .nn_func import (
     smooth_l1_loss,
     cross_entropy,
     grid_sample,
+    ctc_greedy_decoder,
 )
 from .linalg_func import (
     svd,
