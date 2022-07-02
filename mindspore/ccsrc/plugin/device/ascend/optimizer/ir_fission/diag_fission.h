@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_DIAG_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_DIAG_FISSION_H_
 
-#include <vector>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 

@@ -68,7 +68,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
 
   auto elem_num = LongToSize(dims) * kFloat16Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()),
-                           reinterpret_cast<void *>(half_data.data()), elem_num);
+                           static_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR)
       << "Failed to copy data into Tensor while creating assist input for MaxPool3dGradGrad op, memcpy_s errorno: "
@@ -115,7 +115,7 @@ const AnfNodePtr MaxPool3DGradGradFission::Process(const FuncGraphPtr &graph, co
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kMaxPool3DGradGradOpName))};
   auto assist_const = CreateValueNode(cnode);
-  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   (void)new_inputs.emplace_back(assist_const);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
