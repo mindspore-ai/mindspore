@@ -2211,7 +2211,6 @@ def _get_lambda_func(total_layer=None):
         # the pipeline stage must be in [0, parallel_config.pipeline_stage - 1]
         pp_id = min((layer_id + offset) // pp_dis, parallel_config.pipeline_stage - 1)
         network.pipeline_stage = pp_id
-        logger.info(f"pipeline stage id is {pp_id}")
 
         # Used for optimizer's fusion tag
         dis = max(int(layers / parallel_config.gradient_aggregation_group), 1)
