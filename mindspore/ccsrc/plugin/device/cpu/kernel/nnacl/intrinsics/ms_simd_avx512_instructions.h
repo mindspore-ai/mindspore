@@ -165,9 +165,9 @@ static inline MS_FLOAT32X16 simd_exp512_f32(MS_FLOAT32X16 input) {
   MS_INT32X16 integer = MS_CVT512PS_EPI32(MS_DIV512_F32(input, param[0]));
   MS_FLOAT32X16 decimal = MS_SUB512_F32(input, MS_MUL512_F32(MS_CVT512EPI32_PS(integer), param[0]));
   MS_INT32X16 int_exp = MS_SLLI512_EPI32(MS_ADD512_EPI32(integer, MS_MOV512_EPI32(127)), 23);
-  MS_FLOAT32X16 tmp = MS_MUL512_F32(decimal, (MS_ADD512_F32(param[2], MS_MUL512_F32(decimal, param[1]))));
-  tmp = MS_MUL512_F32(decimal, MS_ADD512_F32(param[4], MS_MUL512_F32(decimal, MS_ADD512_F32(param[3], tmp))));
-  MS_FLOAT32X16 decimal_exp = MS_ADD512_F32(param[5], MS_MUL512_F32(decimal, MS_ADD512_F32(param[5], tmp)));
+  MS_FLOAT32X16 tmp = MS_FMADD512_F32(decimal, MS_FMADD512_F32(decimal, param[1], param[2]), param[3]);
+  tmp = MS_FMADD512_F32(decimal, MS_FMADD512_F32(decimal, tmp, param[4]), param[5]);
+  MS_FLOAT32X16 decimal_exp = MS_FMADD512_F32(decimal, tmp, param[5]);
   return MS_MUL512_F32(decimal_exp, MS_CAST512_F32_S32(int_exp));
 }
 
