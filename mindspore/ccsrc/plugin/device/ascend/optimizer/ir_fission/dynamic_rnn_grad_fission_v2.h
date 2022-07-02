@@ -71,8 +71,7 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
                                const AnfNodePtr &matmul, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDwReshape(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
                              const AnfNodePtr &matmul, const RNNShapeSpecs &specs) const;
-  AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
-                             const RNNShapeSpecs &specs) const;
+  AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &, const RNNShapeSpecs &specs) const;
   AnfNodePtr CreateDbReduceSum(const FuncGraphPtr &func_graph, const CNodePtr &, const AnfNodePtr &lstm_input_grad,
                                const AnfNodePtr &value_node, const RNNShapeSpecs &specs) const;
 };

@@ -41,7 +41,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(value);
   auto tensor = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
-  int32_t *data = reinterpret_cast<int32_t *>(tensor->data_c());
+  int32_t *data = static_cast<int32_t *>(tensor->data_c());
   MS_EXCEPTION_IF_NULL(data);
 
   // 2 create tensor
@@ -110,7 +110,7 @@ const AnfNodePtr LinSpaceFission::Process(const FuncGraphPtr &graph, const AnfNo
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kLinSpaceOpName))};
   auto assist_const = CreateValueNode(cnode);
   new_inputs.push_back(assist_const);
-  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());

@@ -29,8 +29,8 @@ constexpr int64_t kInputXDimP = -1;
 constexpr int64_t kInputYDimR = -2;
 
 ShapeVector CalCdistBroadCastShape(ShapeVector x_shape, ShapeVector y_shape) {
-  (void)x_shape.insert(x_shape.end() + kInputXDimP, 1);
-  (void)y_shape.insert(y_shape.end() + kInputYDimR, 1);
+  (void)x_shape.insert(x_shape.cend() + kInputXDimP, 1);
+  (void)y_shape.insert(y_shape.cend() + kInputYDimR, 1);
   if (x_shape.size() != y_shape.size()) {
     MS_EXCEPTION(ValueError) << "For Cdist, input_x and input_y should have the same rank.";
   }
@@ -65,7 +65,7 @@ AnfNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const AnfNodePtr &
   auto expand_dims = pass.NewCNode(expand_dims_inputs, func_graph);
   auto dtype = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
   auto expand_shape = common::AnfAlgo::GetOutputInferShape(input_node, 0);
-  (void)expand_shape.insert(expand_shape.end() + dim, 1);
+  (void)expand_shape.insert(expand_shape.cend() + dim, 1);
   common::AnfAlgo::SetOutputInferTypeAndShape({dtype}, {expand_shape}, expand_dims.get());
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue(dim), expand_dims);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), expand_dims);

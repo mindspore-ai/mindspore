@@ -58,10 +58,10 @@ AnfNodePtr PackFission::CreateNewPack(const FuncGraphPtr &func_graph, const CNod
   ShapeVector new_shape_max = output_shape->max_shape();
   auto axis_l = LongToSize(axis);
   if (axis_l < new_shape.size()) {
-    new_shape[axis_l] = offset;
+    new_shape[axis_l] = SizeToLong(offset);
     if (!new_shape_min.empty() && !new_shape_max.empty()) {
-      new_shape_min[axis_l] = offset;
-      new_shape_max[axis_l] = offset;
+      new_shape_min[axis_l] = SizeToLong(offset);
+      new_shape_max[axis_l] = SizeToLong(offset);
     }
   }
   auto new_output_shape = std::make_shared<abstract::Shape>(new_shape, new_shape_min, new_shape_max);

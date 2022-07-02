@@ -16,6 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fission/diag_fission.h"
 #include <algorithm>
 #include <memory>
+#include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "frontend/optimizer/opt.h"
@@ -46,7 +47,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
   for (size_t i = 0; i < ori_shape.size(); i++) {
     dims = dims * ori_shape[i];
   }
-  (void)output_shape.insert(output_shape.end(), ori_shape.begin(), ori_shape.end());
+  (void)output_shape.insert(output_shape.cend(), ori_shape.cbegin(), ori_shape.cend());
   auto type = common::AnfAlgo::GetOutputInferDataType(node, 0);
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(type, output_shape);
   AbstractBasePtr x_abstract;
@@ -96,7 +97,7 @@ const AnfNodePtr DiagFission::Process(const FuncGraphPtr &graph, const AnfNodePt
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiag->name()))};
   auto assist_const = CreateAssistNode(graph, diag_cnode, input_shape);
-  (void)new_inputs.insert(new_inputs.end(), diag_cnode->inputs().begin() + 1, diag_cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), diag_cnode->inputs().cbegin() + 1, diag_cnode->inputs().cend());
   new_inputs.push_back(assist_const);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);

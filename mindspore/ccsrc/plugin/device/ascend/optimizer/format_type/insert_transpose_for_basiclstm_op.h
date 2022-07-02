@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_TRANSPOSE_FOR_BASICLSTM_OP_H
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_TRANSPOSE_FOR_BASICLSTM_OP_H
 #include <string>
-#include <utility>
 #include <memory>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/helper.h"

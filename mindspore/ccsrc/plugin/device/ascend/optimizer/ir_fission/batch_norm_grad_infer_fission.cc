@@ -62,18 +62,18 @@ AnfNodePtr BatchNormGradInferFission::CreateBNInferGrad(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(bn_grad);
   MS_EXCEPTION_IF_NULL(equiv);
   // Set inputs
-  auto iter_input0 = (*equiv).find(input0_var_);
-  if (iter_input0 == (*equiv).end()) {
+  Equiv::const_iterator iter_input0 = (*equiv).find(input0_var_);
+  if (iter_input0 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
-  auto iter_input2 = (*equiv).find(input2_var_);
-  if (iter_input2 == (*equiv).end()) {
+  Equiv::const_iterator iter_input2 = (*equiv).find(input2_var_);
+  if (iter_input2 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input2 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
-  auto iter_input4 = (*equiv).find(input4_var_);
-  if (iter_input4 == (*equiv).end()) {
+  Equiv::const_iterator iter_input4 = (*equiv).find(input4_var_);
+  if (iter_input4 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
@@ -102,23 +102,23 @@ AnfNodePtr BatchNormGradInferFission::CreateBNTrainingUpdateGrad(const FuncGraph
   MS_EXCEPTION_IF_NULL(bn_grad);
   MS_EXCEPTION_IF_NULL(equiv);
   // Set inputs
-  auto iter_input0 = (*equiv).find(input0_var_);
-  if (iter_input0 == (*equiv).end()) {
+  Equiv::const_iterator iter_input0 = (*equiv).find(input0_var_);
+  if (iter_input0 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input0 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
-  auto iter_input1 = (*equiv).find(input1_var_);
-  if (iter_input1 == (*equiv).end()) {
+  Equiv::const_iterator iter_input1 = (*equiv).find(input1_var_);
+  if (iter_input1 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input1 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
-  auto iter_input3 = (*equiv).find(input3_var_);
-  if (iter_input3 == (*equiv).end()) {
+  Equiv::const_iterator iter_input3 = (*equiv).find(input3_var_);
+  if (iter_input3 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input3 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
-  auto iter_input4 = (*equiv).find(input4_var_);
-  if (iter_input4 == (*equiv).end()) {
+  Equiv::const_iterator iter_input4 = (*equiv).find(input4_var_);
+  if (iter_input4 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the input4 var after matched."
                       << trace::DumpSourceLines(bn_grad);
   }
