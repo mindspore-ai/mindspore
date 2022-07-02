@@ -181,6 +181,7 @@ constexpr auto kConfusionMulGradOpName = "ConfusionMulGrad";
 constexpr auto kStreamSwitchOpName = "StreamSwitch";
 constexpr auto kStreamActiveOpName = "StreamActive";
 constexpr auto kAssignAddOpName = "AssignAdd";
+constexpr auto kAssignSubOpName = "AssignSub";
 constexpr auto kSendOpName = "StreamSend";
 constexpr auto kRecvOpName = "StreamRecv";
 constexpr auto kRpcSendOpName = "RpcSend";

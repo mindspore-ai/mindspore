@@ -1076,14 +1076,17 @@ void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_in
   auto &node = nodes[current_index];
   for (size_t j = current_index + 1; j < nodes.size(); ++j) {
     auto &child = nodes[j];
+    auto child_name = AnfAlgo::GetCNodeName(child);
+    if (child_name == kAssignAddOpName || child_name == kAssignSubOpName || child_name == kAssignOpName ||
+        kOptOperatorSet.find(child_name) != kOptOperatorSet.end()) {
+      return;
+    }
+
     auto input_size = child->inputs().size() - 1;
     for (size_t k = 0; k < input_size; ++k) {
       auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
       if (kernel_index.first != node) {
         continue;
-      }
-      if (AnfAlgo::GetCNodeName(child) == kApplyMomentumOpName) {
-        return;
       }
       (void)invalid_position->insert(current_index);
       auto iter = insert_nodes->find(j);
