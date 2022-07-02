@@ -1438,6 +1438,10 @@ Status GenerateStrategiesForIndependentInputs(int64_t stage_id, const Shapes &in
         }
         auto new_stra_arrays{stra_arrays};
         new_stra_arrays[i][j] = new_stra_arrays[i][j] * UlongToLong(dev_num_not_2_power);
+        // discard invalid strategy
+        if (inputs_shape[i][j] % new_stra_arrays[i][j] != 0) {
+          continue;
+        }
         StrategyPtr new_stra = std::make_shared<Strategy>(stage_id, new_stra_arrays);
         sp_vector->push_back(new_stra);
       }
