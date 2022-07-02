@@ -25,6 +25,18 @@ constexpr size_t kBatchNormGradGradInputsNum = 8;
 constexpr size_t kBatchNormGradGradTrainingWorkSpacesNum = 7;
 constexpr size_t kBatchNormGradGradInferenceWorkSpacesNum = 2;
 constexpr size_t kBatchNormGradGradOutputsNum = 3;
+
+using ShapeArray = std::vector<ShapeVector>;
+
+bool CheckShapesEqual(const ShapeArray &shape_array) {
+  auto first_shape = shape_array[0];
+  return std::all_of(shape_array.begin() + 1, shape_array.end(), [&first_shape](const ShapeVector &shape) {
+    if (shape.size() != first_shape.size()) {
+      return false;
+    }
+    return std::equal(shape.begin(), shape.end(), first_shape.begin());
+  });
+}
 }  // namespace
 bool BatchNormGradGradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
@@ -96,10 +108,37 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                           const std::vector<KernelTensorPtr> &inputs,
                                           const std::vector<KernelTensorPtr> &outputs,
                                           const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  std::vector<int64_t> x_shape = inputs[kIndex1]->GetShapeVector();
-  if (x_shape.size() != kDim2 && x_shape.size() != kDim4) {
-    MS_EXCEPTION(ValueError) << "BatchNormGradGrad only support 2-D or 4-D tensor.";
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kBatchNormGradGradInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kBatchNormGradGradOutputsNum, kernel_name_);
+  auto ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
   }
+  auto dy_shape = inputs[kIndex0]->GetShapeVector();
+  auto x_shape = inputs[kIndex1]->GetShapeVector();
+  auto scale_shape = inputs[kIndex2]->GetShapeVector();
+  auto mean_shape = inputs[kIndex3]->GetShapeVector();
+  auto variance_shape = inputs[kIndex4]->GetShapeVector();
+  auto dout_dx_shape = inputs[kIndex5]->GetShapeVector();
+  auto dout_dscale_shape = inputs[kIndex6]->GetShapeVector();
+  auto dout_dbias_shape = inputs[kIndex7]->GetShapeVector();
+  ShapeArray shape_array_1{dy_shape, x_shape, dout_dx_shape};
+  ShapeArray shape_array_2{scale_shape, mean_shape, variance_shape, dout_dscale_shape, dout_dbias_shape};
+  if (!CheckShapesEqual(shape_array_1) || !CheckShapesEqual(shape_array_2)) {
+    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the input shapes are invalid!";
+  }
+  if (x_shape.size() != kDim2 && x_shape.size() != kDim4) {
+    MS_EXCEPTION(ValueError) << "BatchNormGradGrad only support 2-D or 4-D input tensor, but got " << x_shape.size();
+  }
+  if (scale_shape.size() != kDim1) {
+    MS_EXCEPTION(ValueError) << "BatchNormGradGrad requires scale should be a 1-D tensor, but got "
+                             << scale_shape.size();
+  }
+  auto c = format_ == DataFormat::NCHW ? x_shape[kIndex1] : x_shape[kIndex3];
+  if (scale_shape[kIndex0] != c) {
+    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the scale shape is not equal to the channel of x!";
+  }
+
   if (x_shape.size() == kDim2) {
     shape_info_ = ShapeInfo{LongToSize(x_shape[N]), LongToSize(x_shape[C]), 1, 1};
   } else {
@@ -110,22 +149,7 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   size_t x_size = shape_info_.n * shape_info_.c * shape_info_.h * shape_info_.w * sizeof(float);
   size_t scale_size = shape_info_.c * sizeof(float);
-  input_size_list_.clear();
-  output_size_list_.clear();
   workspace_size_list_.clear();
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(scale_size);
-  input_size_list_.push_back(scale_size);
-  input_size_list_.push_back(scale_size);
-  input_size_list_.push_back(x_size);
-  input_size_list_.push_back(scale_size);
-  input_size_list_.push_back(scale_size);
-
-  output_size_list_.push_back(x_size);
-  output_size_list_.push_back(x_size);
-  output_size_list_.push_back(scale_size);
-
   workspace_size_list_.push_back(scale_size);
   workspace_size_list_.push_back(x_size);
   if (is_training_) {

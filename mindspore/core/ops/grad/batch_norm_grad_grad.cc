@@ -25,26 +25,6 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr auto kBatchNormGradGradInputsNum = 8;
-
-using BaseShapeArray = std::vector<BaseShapePtr>;
-
-bool CheckShapesEqual(const BaseShapeArray &shape_array) {
-  if (shape_array.empty()) {
-    return true;
-  }
-  MS_EXCEPTION_IF_NULL(shape_array[0]);
-  auto first_shape = shape_array[0]->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(first_shape);
-  return std::all_of(shape_array.begin() + 1, shape_array.end(), [&first_shape](const BaseShapePtr &base_shape) {
-    MS_EXCEPTION_IF_NULL(base_shape);
-    auto shape = base_shape->cast<abstract::ShapePtr>();
-    MS_EXCEPTION_IF_NULL(shape);
-    if (shape->shape().size() != first_shape->shape().size()) {
-      return false;
-    }
-    return std::equal(shape->shape().begin(), shape->shape().end(), first_shape->shape().begin());
-  });
-}
 }  // namespace
 
 void BatchNormGradGrad::Init(bool is_training, float epsilon, const std::string &format) {
@@ -87,22 +67,6 @@ abstract::TupleShapePtr BatchNormGradGradInferShape(const PrimitivePtr &primitiv
   BaseShapePtr dy_shape = input_args[kInputIndex0]->BuildShape();
   BaseShapePtr x_shape = input_args[kInputIndex1]->BuildShape();
   BaseShapePtr scale_shape = input_args[kInputIndex2]->BuildShape();
-  BaseShapePtr mean_shape = input_args[kInputIndex3]->BuildShape();
-  BaseShapePtr variance_shape = input_args[kInputIndex4]->BuildShape();
-  BaseShapePtr dout_dx_shape = input_args[kInputIndex5]->BuildShape();
-  BaseShapePtr dout_dscale_shape = input_args[kInputIndex6]->BuildShape();
-  BaseShapePtr dout_dbias_shape = input_args[kInputIndex7]->BuildShape();
-  BaseShapeArray shape_array_1{dy_shape, x_shape, dout_dx_shape};
-  BaseShapeArray shape_array_2{scale_shape, mean_shape, variance_shape, dout_dscale_shape, dout_dbias_shape};
-  if (!CheckShapesEqual(shape_array_1) || !CheckShapesEqual(shape_array_2)) {
-    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the input shapes are invalid!";
-  }
-  auto c = GetValue<std::string>(primitive->GetAttr(kFormat)) == kFormatNCHW
-             ? x_shape->cast<abstract::ShapePtr>()->shape()[kInputIndex1]
-             : x_shape->cast<abstract::ShapePtr>()->shape()[kInputIndex3];
-  if (scale_shape->cast<abstract::ShapePtr>()->shape()[kInputIndex0] != c) {
-    MS_LOG(EXCEPTION) << "For BatchNormGradGrad, the scale shape is not equal to the channel of x!";
-  }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{dy_shape, x_shape, scale_shape});
 }
 
