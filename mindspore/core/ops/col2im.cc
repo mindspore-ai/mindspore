@@ -74,13 +74,12 @@ void Col2ImShapeCheck(const ShapeVector &x_shape, const std::vector<int64_t> &ke
     DivRtn<int64_t>(output_width + kInt64Number2 * pad_width - dilation_width * (kernel_width - 1) - 1, stride_width) +
     1;
   if (input_length != (n_blocks_height * n_blocks_width)) {
-    MS_EXCEPTION(ValueError)
-      << "For Col2Im, given output_size=(" << output_height << ", " << output_width << "), kernel_size=("
-      << kernel_height << ", " << kernel_width << "), dilation=(" << dilation_height << ", " << dilation_width
-      << "), padding=(" << pad_height << ", " << pad_width << "), stride=(" << stride_height << ", " << stride_width
-      << "), expected size of input's dimension 3 to match the calculated number of sliding blocks " << n_blocks_height
-      << " * " << n_blocks_width << " = " << (n_blocks_height * n_blocks_width)
-      << ", but got input.size(3)=" << input_length << ",";
+    MS_EXCEPTION(ValueError) << "For 'Col2Im', size of input's 4th dimension must be equal to calculated number of "
+                                "sliding blocks, but got input.size["
+                             << kInputIndex3 << "]: " << input_length
+                             << ", calculated number of sliding blocks: " << n_blocks_height * n_blocks_width
+                             << ". Please refer to Mindspore official website API docs for details about how the "
+                                "number of sliding blocks is calculated.";
   }
   if (n_blocks_height <= 0 || n_blocks_width <= 0) {
     MS_EXCEPTION(ValueError) << "For Col2Im, given output_size=(" << output_height << ", " << output_width
