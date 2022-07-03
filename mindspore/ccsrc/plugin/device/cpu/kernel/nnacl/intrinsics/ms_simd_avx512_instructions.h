@@ -208,6 +208,27 @@ static inline MS_FLOAT32X16 MS_TANHX16_F32(MS_FLOAT32X16 src) {
 
 #define MS_TANH512_F32 MS_TANHX16_F32
 
+static inline MS_FLOAT32X16 MS512_ERF_F32(MS_FLOAT32X16 src) {
+  MS_FLOAT32X16 dst;
+  MS_F32X16_GETI(dst, 0) = erff(MS_F32X16_GETI(src, 0));
+  MS_F32X16_GETI(dst, 1) = erff(MS_F32X16_GETI(src, 1));
+  MS_F32X16_GETI(dst, 2) = erff(MS_F32X16_GETI(src, 2));
+  MS_F32X16_GETI(dst, 3) = erff(MS_F32X16_GETI(src, 3));
+  MS_F32X16_GETI(dst, 4) = erff(MS_F32X16_GETI(src, 4));
+  MS_F32X16_GETI(dst, 5) = erff(MS_F32X16_GETI(src, 5));
+  MS_F32X16_GETI(dst, 6) = erff(MS_F32X16_GETI(src, 6));
+  MS_F32X16_GETI(dst, 7) = erff(MS_F32X16_GETI(src, 7));
+  MS_F32X16_GETI(dst, 8) = erff(MS_F32X16_GETI(src, 8));
+  MS_F32X16_GETI(dst, 9) = erff(MS_F32X16_GETI(src, 9));
+  MS_F32X16_GETI(dst, 10) = erff(MS_F32X16_GETI(src, 10));
+  MS_F32X16_GETI(dst, 11) = erff(MS_F32X16_GETI(src, 11));
+  MS_F32X16_GETI(dst, 12) = erff(MS_F32X16_GETI(src, 12));
+  MS_F32X16_GETI(dst, 13) = erff(MS_F32X16_GETI(src, 13));
+  MS_F32X16_GETI(dst, 14) = erff(MS_F32X16_GETI(src, 14));
+  MS_F32X16_GETI(dst, 15) = erff(MS_F32X16_GETI(src, 15));
+  return dst;
+}
+
 #define MS_LOAD512X8_F32(src, input_ptr, num)               \
   MS_FLOAT32X16 src##1 = MS_LD512_F32(input_ptr);           \
   MS_FLOAT32X16 src##2 = MS_LD512_F32(input_ptr + 1 * num); \
