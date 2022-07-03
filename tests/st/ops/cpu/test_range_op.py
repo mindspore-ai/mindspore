@@ -18,6 +18,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
+import mindspore as ms
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -55,6 +56,36 @@ def test_float():
     print(outputs)
     assert outputs.shape == (5,)
     assert np.allclose(outputs.asnumpy(), [10., 30., 50., 70., 90.])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_range_op_int():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is int.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(2, ms.int32), ms.Tensor(5, ms.int32), ms.Tensor(2, ms.int32))
+    expect = np.array([2, 4], np.int32)
+    assert np.array_equal(result.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_range_op_float():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is float.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(2, ms.float32), ms.Tensor(5, ms.float32), ms.Tensor(1, ms.float32))
+    expect = np.array([2, 3, 4], np.float32)
+    assert np.array_equal(result.asnumpy(), expect)
 
 
 if __name__ == '__main__':

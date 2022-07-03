@@ -26,8 +26,10 @@ constexpr size_t kRangeOutputsNum = 1;
 
 void RangeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  node_wpt_ = kernel_node;
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  is_need_retrieve_output_shape_ = true;
 }
 
 bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &,
@@ -35,32 +37,43 @@ bool RangeCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, co
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kRangeInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kRangeOutputsNum, kernel_name_);
   if (dtype_ == kNumberTypeInt32) {
-    return LaunchKernel<int32_t>(inputs, outputs);
+    LaunchKernel<int32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32) {
-    return LaunchKernel<float>(inputs, outputs);
+    LaunchKernel<float>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dtype of input must be int or float, but got "
                       << TypeIdLabel(dtype_);
   }
+  if (!node_wpt_.expired()) {
+    auto node = node_wpt_.lock();
+    if (!node) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', node_wpt_(kernel_node) is expired. Error no: " << node;
+    }
+    ShapeVector out_shape{SizeToLong(output_size_)};
+    TypeId out_type = AnfAlgo::GetOutputDeviceDataType(node, 0);
+    common::AnfAlgo::SetOutputInferTypeAndShape({out_type}, {out_shape}, node.get());
+  }
+  return true;
 }
 
 template <typename T>
-bool RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                     const std::vector<AddressPtr> &outputs) const {
+void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
   auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
   auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
   auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];
 
-  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
-  size_t elem_num = outputs[0]->size / sizeof(T);
-  for (size_t i = 0; i < elem_num; i++) {
-    T val = start + static_cast<T>(i) * delta;
-    if (val > limit) {
-      break;
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t max_index = outputs[0]->size / sizeof(T) - 1;
+  size_t index = 0;
+  while (start < limit) {
+    if (index > max_index) {
+      MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the output element number exceeds the maximum number.";
     }
-    output_addr[i] = val;
+    output[index] = start;
+    start += delta;
+    index++;
   }
-  return true;
+  output_size_ = index;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Range, RangeCpuKernelMod);
