@@ -3,7 +3,7 @@ mindspore.ops.interpolate
 
 .. py:function:: mindspore.ops.interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="linear")
 
-    使用插值函数resize输入。
+    使用插值函数resize输入 `x` 。
 
     .. warning::
         - 实验特性，接口可能发生变化。
@@ -28,9 +28,9 @@ mindspore.ops.interpolate
     **异常：**
 
     - **TypeError** - `x` 不是Tensor。
-    - **TypeError** - `scales` 的不是float类型的tuple。
-    - **TypeError** - `size` 的不是int64类型的tuple。
+    - **TypeError** - `scales` 不是float类型的tuple。
+    - **TypeError** - `size` 不是int64类型的tuple。
     - **TypeError** - `coordinate_transformation_mode` 不是string。
     - **TypeError** - `coordinate_transformation_mode` 不在支持的列表中。
-    - **TypeError** - `mode` 不是string。
+    - **TypeError** - `mode` 不是string类型。
     - **TypeError** - `mode` 不在支持的列表中。
