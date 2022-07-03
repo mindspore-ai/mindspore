@@ -39,6 +39,31 @@ def get_bprop_bias_add(self):
     return bprop
 
 
+@bprop_getters.register(G.BiasAddGrad)
+def get_bprop_bias_add_grad(self):
+    """Grad definition for `BiasAddGrad` operation."""
+
+    def bprop(x, out, dout):
+        get_shape = P.Shape()
+        concat = P.Concat(axis=0)
+        reshape = P.Reshape()
+        tile = P.Tile()
+
+        shape = get_shape(x)
+        bias_shape = get_shape(dout)
+
+        if self.data_format == "NCHW":
+            expand_shape = concat((P.ones_like(shape[:1], bias_shape, P.ones_like(shape[2:]))))
+            tile_mults = concat((shape[:1], [1], shape[2:]))
+        else:
+            expand_shape = concat((P.ones_like(shape[:-1], bias_shape)))
+            tile_mults = concat((shape[:1], [1]))
+        expand_grad = reshape(dout, expand_shape)
+        return tile(expand_grad, tile_mults)
+
+    return bprop
+
+
 @bprop_getters.register(P.Conv2D)
 def get_bprop_conv2d(self):
     """Grad definition for `Conv2D` operation."""

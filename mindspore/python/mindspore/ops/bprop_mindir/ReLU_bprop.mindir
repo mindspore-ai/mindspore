@@ -8,9 +8,9 @@ m
 	bprop.1:x*
 bprop.1:out*
 bprop.1:dout2
-bprop.1:[CNode]2:3:@c3b784055020f26853bf8810898ed0dc0317483adac76918f3b8ef6ff639fae5Pb&
-S-Prim-MakeTuple:4S-Prim-MakeTuplebr
+bprop.1:[CNode]2:3:@3bb59bfb3a99678d99fd070f9d30ad071146cb47ad7351bac84954974a37c85cPbr
 S-Prim-ReluGrad:2S-Prim-ReluGrad
 output_names€ŠZoutput€+
 input_names€ŠZ
-y_backprop€ŠZx€h
+y_backprop€ŠZx€b&
+S-Prim-MakeTuple:4S-Prim-MakeTupleh
