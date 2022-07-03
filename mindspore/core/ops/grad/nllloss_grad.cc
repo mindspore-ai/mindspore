@@ -117,11 +117,11 @@ class NLLLossGradInfer : public abstract::OpInferBase {
     auto t_dtype = input_args[kInputIndex2]->BuildType();
     auto w_dtype = input_args[kInputIndex3]->BuildType();
     auto tw_dtype = input_args[kInputIndex4]->BuildType();
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("logits dtype", x_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad dtype", y_grad_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("labels dtype", t_dtype, {kInt32}, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("weight dtype", w_dtype, valid_types, prim_name);
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("total_weight dtype", tw_dtype, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("logits", x_dtype, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("loss's grad", y_grad_dtype, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("labels", t_dtype, {kInt32, kInt64}, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("weight", w_dtype, valid_types, prim_name);
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("total_weight", tw_dtype, valid_types, prim_name);
     CheckAndConvertUtils::Check("weight dtype", std::vector<TypeId>{tw_dtype->type_id()}, kEqual,
                                 std::vector<TypeId>{w_dtype->type_id()}, prim_name);
     return x_dtype;
@@ -150,6 +150,6 @@ Reduction NLLLossGrad::get_reduction() const {
 }
 
 MIND_API_OPERATOR_IMPL(NLLLossGrad, BaseOperator);
-REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLossGrad, std::make_shared<Primitive>("NLLLossGrad"), NLLLossGradInfer, false);
+REGISTER_PRIMITIVE_OP_INFER_IMPL(NLLLossGrad, prim::kPrimNLLLossGrad, NLLLossGradInfer, false);
 }  // namespace ops
 }  // namespace mindspore

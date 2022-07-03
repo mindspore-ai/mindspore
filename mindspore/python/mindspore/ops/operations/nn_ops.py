@@ -2669,7 +2669,8 @@ class NLLLoss(Primitive):
 
     Inputs:
         - **logits** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only supports float32 or float16.
-        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only supports int32.
+        - **labels** (Tensor) - Ground truth labels, with shape :math:`(N,)`, where each value belong to
+          :math:`[0, C-1]`. Data type only supports int32 or int64.
         - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C,)` and data type only
           supports float32 or float16.
 
@@ -2681,13 +2682,15 @@ class NLLLoss(Primitive):
         - **total_weight** (Tensor) - The `total_weight` is a scalar. The data type is the same with `weight's`.
 
     Raises:
-        TypeError: If dtype of `logits` or `weight` is neither float16 nor float32, `labels` is not int32.
+        TypeError: If dtype of `logits` or `weight` is neither float16 nor float32.
+        TypeError: If dtype of `labels` is neither int32 nor int64.
         ValueError: If `logits` is not a one or two dimension tensor, `labels` and `weight` are not
                     one dimension tensors.
                     When `logits` is a two dimension tensor, the first dimension of `logits` is not equal to `labels`,
                     and second dimension of `logits` is not equal to `weight`.
                     When `logits` is a one dimension tensor, the dimensions of `logits`, `labels`
                     and `weight` should be equal to each other.
+        ValueError: If the value of `labels` exceed :math:`[0, C-1]`, where :math:`C` is the number of classes.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

@@ -2088,6 +2088,14 @@ test_case_math_ops = [
                         Tensor(np.random.rand(3), mstype.int32),
                         Tensor(np.random.rand(16), mstype.float32)],
         'desc_bprop': [(Tensor(np.random.rand(1), mstype.float32), Tensor(np.random.rand(1), mstype.float32))]}),
+    ('NLLLossGrad', {
+        'block': G.NLLLossGrad(reduction="mean"),
+        'desc_inputs': [Tensor(np.random.rand(3, 16), mstype.float32),
+                        Tensor(np.random.rand(1), mstype.float32),
+                        Tensor(np.random.rand(3), mstype.int32),
+                        Tensor(np.random.rand(16), mstype.float32),
+                        Tensor(np.random.rand(1), mstype.float32)],
+        'skip': ['backward']}),
     ('BatchNorm3d', {
         'block': BatchNorm3d(num_features=3),
         'desc_inputs': [Tensor(np.random.rand(3, 3, 3, 5, 4).astype(np.float32))],
