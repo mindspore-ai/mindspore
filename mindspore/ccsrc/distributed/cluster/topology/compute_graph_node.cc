@@ -28,6 +28,11 @@ namespace mindspore {
 namespace distributed {
 namespace cluster {
 namespace topology {
+constexpr char kStartExchangeMetaPrefix[] = "START_EXCHANGE_META_";
+constexpr char kExchangeMetaDonePrefix[] = "EXCHANGE_META_DONE_";
+constexpr char kMetaFlagValue[] = "1";
+constexpr char kMetaDeleteFlagValue[] = "";
+
 ComputeGraphNode::~ComputeGraphNode() {
   if (!finalized_) {
     (void)Finalize(true);
@@ -341,6 +346,112 @@ std::string ComputeGraphNode::GetMetadata(const std::string &name, uint32_t time
     return metadata.value();
   }
   return "";
+}
+
+bool ComputeGraphNode::DeleteMetadata(const std::string &name, uint32_t timeout) {
+  MetadataMessage metadata;
+  metadata.set_name(name);
+
+  auto message =
+    CreateMessage(meta_server_addr_.GetUrl(), std::to_string(static_cast<int>(MessageName::kDeleteMetadata)),
+                  metadata.SerializeAsString());
+  MS_EXCEPTION_IF_NULL(message);
+
+  MS_EXCEPTION_IF_NULL(tcp_client_);
+  auto retval = tcp_client_->ReceiveSync(std::move(message), timeout);
+  if (retval != rpc::NULL_MSG && (retval->name == std::to_string(static_cast<int>(MessageName::kValidMetadata)))) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+// The transaction of the exchange process is as follows:
+// step 1: RANK[0]       - Start the exchange process (set EXCHANGE_META_${name} flag);
+// step 2: RANK[1-(N-1)] - Start the exchange process (check EXCHANGE_META_${name} flag);
+// step 3: RANK[0-(N-1)] - Do the exchange (exchange the metadata through meta server node);
+// step 4: RANK[0-(N-1)] - Finish the exchange process (set EXCHANGE_META_${name}_DONE_RANK_${RANK_ID});
+// step 5: RANK[0]       - Exit the exchange process (check all the EXCHANGE_META_${name}_DONE_RANK_${RANK_ID} flag &
+//                                                    delete all the EXCHANGE_META_${name}_DONE_RANK_${RANK_ID} flag &
+//                                                    delete all the metadata in results &
+//                                                    delete EXCHANGE_META_${name} flag);
+// step 6: RANK[1-(N-1)] - Exit the exchange process (check EXCHANGE_META_${name} flag deleted);
+bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &rank_size,
+                                        const std::vector<std::string> &names_prefix,
+                                        const std::vector<std::string> &values,
+                                        std::map<std::string, std::string> *results, uint32_t timeout) {
+  std::unique_lock<std::shared_mutex> lock(exchange_meta_mutex_);
+  MS_LOG(INFO) << "Start to exchange metadata for the biz: " << biz;
+  if (names_prefix.size() != values.size()) {
+    return false;
+  }
+  if (timeout == 0) {
+    return false;
+  }
+  bool success = false;
+
+  // step 1 set the start flag.
+  std::string meta_name = kStartExchangeMetaPrefix + biz;
+  if (rank_id_ == 0) {
+    EXECUTE_WITH_TIMEOUT(PutMetadata(meta_name, kMetaFlagValue), kExecuteInterval,
+                         "Failed to set the metadata exchange flag " + meta_name + ".", success, timeout);
+  }
+  // step 2 check the start flag.
+  EXECUTE_WITH_EXPECTED(GetMetadata(meta_name), kMetaFlagValue, kExecuteInterval,
+                        "Failed to check the metadata exchange flag " << meta_name << ".", timeout);
+  // step 3 exchange the metadata.
+  for (size_t i = 0; i < names_prefix.size(); ++i) {
+    auto name = names_prefix[i] + std::to_string(rank_id_);
+    auto value = values[i];
+    EXECUTE_WITH_TIMEOUT(PutMetadata(name, value), kExecuteInterval,
+                         "Failed to put metadata name: " + name + ", value: " + value + ".", success, timeout);
+  }
+  for (size_t i = 0; i < rank_size; ++i) {
+    for (size_t j = 0; j < names_prefix.size(); ++j) {
+      auto other_name = names_prefix[j] + std::to_string(i);
+      while (true) {
+        auto other_value = GetMetadata(other_name);
+        if (other_value.length() > 0) {
+          (*results)[other_name] = other_value;
+          break;
+        } else {
+          MS_LOG(WARNING) << "Failed to get metadata " << other_name << " from rank " << i;
+          sleep(kExecuteInterval);
+        }
+      }
+    }
+  }
+  // step 4 set the exchange done flag.
+  auto done = kExchangeMetaDonePrefix + std::to_string(rank_id_);
+  EXECUTE_WITH_TIMEOUT(PutMetadata(done, kMetaFlagValue), kExecuteInterval,
+                       "Failed to set the metadata exchange done flag " + done + ".", success, timeout);
+  // step 5 check all node done and then clear the metadata in meta server and remove the start flag finally.
+  if (rank_id_ == 0) {
+    for (size_t i = 0; i < rank_size; ++i) {
+      auto other_done = kExchangeMetaDonePrefix + std::to_string(i);
+      EXECUTE_WITH_EXPECTED(
+        GetMetadata(other_done), kMetaFlagValue, kExecuteInterval,
+        "Failed to check the metadata exchange done flag " << other_done << " for rank " << i << ".", timeout);
+    }
+    for (size_t i = 0; i < rank_size; ++i) {
+      auto other_done = kExchangeMetaDonePrefix + std::to_string(i);
+      EXECUTE_WITH_TIMEOUT(DeleteMetadata(other_done), kExecuteInterval,
+                           "Failed to delete the metadata exchange done flag " + other_done + ".", success, timeout);
+    }
+    for (auto iter = results->begin(); iter != results->end(); ++iter) {
+      auto delete_name = iter->first;
+      EXECUTE_WITH_TIMEOUT(DeleteMetadata(delete_name), kExecuteInterval,
+                           "Failed to delete the metadata: " + delete_name + ".", success, timeout);
+    }
+    EXECUTE_WITH_TIMEOUT(DeleteMetadata(meta_name), kExecuteInterval,
+                         "Failed to delete the metadata flag: " + meta_name + ".", success, timeout);
+  }
+
+  // step 6 check the exchange finish flag.
+  EXECUTE_WITH_EXPECTED(GetMetadata(meta_name), kMetaDeleteFlagValue, kExecuteInterval,
+                        "Failed to check the metadata exchange flag " << meta_name << ".", timeout);
+  MS_LOG(INFO) << "The metadata exchange for the biz: " << biz << " has been completed";
+  return true;
 }
 
 std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role) {
