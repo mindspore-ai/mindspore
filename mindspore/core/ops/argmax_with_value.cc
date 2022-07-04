@@ -49,13 +49,6 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
     MS_EXCEPTION(ValueError) << "For ArgMaxWithValue, axis must be in range [-x_rank, x_rank), but got" << axis << ".";
   }
   (void)primitive->AddAttr("dimension", MakeValue(axis));
-  // Get and check the min and max shape.
-  auto x_min_shape = x_shape_map[kMinShape];
-  auto x_max_shape = x_shape_map[kMaxShape];
-  CheckAndConvertUtils::CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
-  abstract::CheckShapeAnyAndPositive(prim_name + " x_shape", x_shape);
-  abstract::CheckShapeAllPositive(prim_name + " x_min_shape", x_min_shape);
-  abstract::CheckShapeAllPositive(prim_name + " x_max_shape", x_max_shape);
   // Calculate all the shapes.
   auto cal_shape = [axis, keep_dims](ShapeVector &shape, const ShapeVector &x_shape) -> void {
     (void)shape.insert(shape.end(), x_shape.begin(), x_shape.end());
@@ -66,16 +59,9 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
     }
   };
   ShapeVector output_shape;
-  ShapeVector output_shape_min;
-  ShapeVector output_shape_max;
   cal_shape(output_shape, x_shape);
-  cal_shape(output_shape_min, x_min_shape);
-  cal_shape(output_shape_max, x_max_shape);
-  abstract::CheckShapeAnyAndPositive(prim_name + " output_shape", output_shape);
-  abstract::CheckShapeAllPositive(prim_name + " output_shape_min", output_shape_min);
-  abstract::CheckShapeAllPositive(prim_name + " output_shape_max", output_shape_max);
 
-  auto index_and_value_shape = std::make_shared<abstract::Shape>(output_shape, output_shape_min, output_shape_max);
+  auto index_and_value_shape = std::make_shared<abstract::Shape>(output_shape);
   return std::make_shared<abstract::TupleShape>(
     std::vector<abstract::BaseShapePtr>{index_and_value_shape, index_and_value_shape});
 }
