@@ -6,12 +6,12 @@ mindspore.ops.sparse_concat
     根据指定的轴concat_dim对输入的COO Tensor（sp_input）进行合并操作。
 
     .. note::
-        实验特性接口，目前只支持CPU
+        实验特性接口，目前只支持CPU。
 
     **参数：**
 
     - **sp_input** (Union[lsit(COOTnesor), tuple(COOTensor)) - 输入的需要concat合并的稀疏张量。
-    - **concat_dim** (标量，整形) - 指定需要合并的轴序号
+    - **concat_dim** (标量，整形) - 指定需要合并的轴序号。
 
     **返回：**
 
