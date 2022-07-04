@@ -31,6 +31,9 @@ class ResizeMapper : public PrimitiveMapper {
   ~ResizeMapper() override = default;
 
   STATUS Mapper(const CNodePtr &cnode) override;
+
+ private:
+  STATUS ProcScaleInput(const CNodePtr &cnode, const PrimitivePtr &prim);
 };
 }  // namespace lite
 }  // namespace mindspore

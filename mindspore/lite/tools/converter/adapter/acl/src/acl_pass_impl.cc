@@ -424,9 +424,11 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     return lite::RET_OK;
   }
   AnfNodePtr cur_node = node;
+  CNodePtr pre_node = nullptr;
   while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
     auto tmp = cur_node->cast<CNodePtr>();
     CHECK_NULL_RETURN(tmp);
+    pre_node = tmp;
     cur_node = tmp->input(kTupleGetItemFirstInputIdx);
     CHECK_NULL_RETURN(cur_node);
   }
@@ -456,7 +458,13 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     MS_LOG(INFO) << "Name of graph output node is " << cnode->fullname_with_scope();
     graph_output_names_.emplace_back(cnode->fullname_with_scope());
     std::vector<int64_t> dims;
-    if (lite::acl::GetShapeVectorFromCNode(cnode, &dims) != lite::RET_OK) {
+    STATUS ret;
+    if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
+      ret = lite::acl::GetShapeVectorFromCNode(pre_node, &dims);
+    } else {
+      ret = lite::acl::GetShapeVectorFromCNode(cnode, &dims);
+    }
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Get node shape failed.";
       return lite::RET_ERROR;
     }

@@ -69,7 +69,8 @@ STATUS GetShapeVectorFromCNode(const mindspore::CNodePtr &cnode, std::vector<int
     MS_CHECK_TRUE_MSG(get_item_input_cnode != nullptr, lite::RET_ERROR, "input node is nullptr.");
     auto idx = GetTupleGetItemOutIndex(cnode);
     if (!mindspore::utils::isa<mindspore::abstract::AbstractTuplePtr>(get_item_input_cnode->abstract())) {
-      MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple";
+      MS_LOG(ERROR) << "TupleGetItem's abstract is not AbstractTuple, cnode name: "
+                    << get_item_input_cnode->fullname_with_scope();
       return lite::RET_ERROR;
     }
     auto abstract_tuple =
