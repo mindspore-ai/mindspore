@@ -15,8 +15,79 @@
 import numpy as np
 import pytest
 from mindspore import context, nn
-from mindspore import Tensor
+from mindspore import Tensor, ParameterTuple
+from mindspore.ops.composite import GradOperation
+from mindspore.nn import Cell
 import mindspore.common.dtype as mstype
+
+
+class _Grad(Cell):
+    def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):
+        super().__init__()
+        self.network = network
+        self.grad = grad
+        self.sens_param = self.grad.sens_param
+        self.wrt_params = wrt_params
+        self.real_inputs_count = real_inputs_count
+        if self.wrt_params:
+            self.params = ParameterTuple(self.network.trainable_params())
+
+    def construct(self, *inputs):
+        if self.real_inputs_count is None or self.sens_param is False:
+            if self.wrt_params:
+                return self.grad(self.network, self.params)(*inputs)
+            return self.grad(self.network)(*inputs)
+
+        real_inputs = inputs[:self.real_inputs_count]
+        sense_param_inputs = inputs[self.real_inputs_count:]
+        if self.wrt_params:
+            return self.grad(self.network, self.params)(*real_inputs, sense_param_inputs)
+        return self.grad(self.network)(*real_inputs, sense_param_inputs)
+
+
+class GradOfAllInputs(_Grad):
+    """
+    get grad of all inputs
+    """
+
+    def __init__(self, network, sens_param=True, real_inputs_count=None):
+        super().__init__(grad=GradOperation(get_all=True, sens_param=sens_param),
+                         network=network, real_inputs_count=real_inputs_count)
+
+
+class CommonFunc():
+    def __init__(self, ms_net, np_net):
+        super(CommonFunc, self).__init__()
+        self.ms_net = ms_net
+        self.ms_net.set_grad()
+        self.np_net = np_net
+
+        input_dyn0 = Tensor(shape=[8, None, 3], dtype=mstype.float32)
+        input_dyn1 = Tensor(shape=[None, 32, 3], dtype=mstype.float32)
+        ms_net.set_inputs(input_dyn0, input_dyn1)
+
+        self.input_np0 = np.arange(
+            8 * 16 * 3).reshape(8, 16, 3).astype(np.float32)
+        self.input_np1 = np.arange(
+            16 * 32 * 3).reshape(16, 32, 3).astype(np.float32)
+        self.input_np0_bp = self.input_np0.copy()
+        self.input_np1_bp = self.input_np1.copy()
+        self.out_np0 = np.array(1).astype(self.input_np0.dtype)
+        self.out_np1 = np.array(1).astype(self.input_np1.dtype)
+
+    def forward_cmp(self):
+        out_ms0, out_ms1 = self.ms_net(
+            Tensor(self.input_np0), Tensor(self.input_np1))
+        self.out_np0, self.out_np1 = self. np_net(
+            self.input_np0, self.input_np1)
+        assert np.all(out_ms0.asnumpy() == self.out_np0)
+        assert np.all(out_ms1.asnumpy() == self.out_np1)
+
+    def grad_impl(self):
+        grad_net = GradOfAllInputs(self.ms_net)
+        grad_net.set_train()
+        grad_net(Tensor(self.input_np0_bp), Tensor(self.input_np1_bp),
+                 (Tensor(self.out_np0), Tensor(self.out_np1)))
 
 
 class NumpySetItem():
@@ -43,18 +114,6 @@ class TensorSetItem(nn.Cell):
         return tensor1, tensor2
 
 
-def common_func(ms_net, np_net):
-    x = Tensor(shape=[8, None, 3], dtype=mstype.float32)
-    y = Tensor(shape=[None, 32, 3], dtype=mstype.float32)
-    ms_net.set_inputs(x, y)
-    input_np1 = np.arange(8 * 16 * 3).reshape(8, 16, 3).astype(np.float32)
-    input_np2 = np.arange(16 * 32 * 3).reshape(16, 32, 3).astype(np.float32)
-    out0, out1 = ms_net(Tensor(input_np1), Tensor(input_np2))
-    out_np0, out_np1 = np_net(input_np1, input_np2)
-    assert np.all(out0.asnumpy() == out_np0)
-    assert np.all(out1.asnumpy() == out_np1)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -69,10 +128,14 @@ def test_dynamic_setitem_int_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -90,10 +153,14 @@ def test_dynamic_setitem_int_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -110,10 +177,14 @@ def test_dynamic_setitem_int_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -131,10 +202,14 @@ def test_dynamic_setitem_tensor_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -153,10 +228,14 @@ def test_dynamic_setitem_tensor_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -174,10 +253,14 @@ def test_dynamic_setitem_tensor_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index.asnumpy(), value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -194,10 +277,10 @@ def test_dynamic_setitem_none_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -215,10 +298,10 @@ def test_dynamic_setitem_none_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -235,10 +318,10 @@ def test_dynamic_setitem_none_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -255,10 +338,10 @@ def test_dynamic_setitem_ellipsis_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -276,10 +359,10 @@ def test_dynamic_setitem_ellipsis_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -296,10 +379,10 @@ def test_dynamic_setitem_ellipsis_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -316,10 +399,10 @@ def test_dynamic_setitem_bool_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -337,10 +420,10 @@ def test_dynamic_setitem_bool_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -357,10 +440,10 @@ def test_dynamic_setitem_bool_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -377,10 +460,14 @@ def test_dynamic_setitem_list_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -398,10 +485,14 @@ def test_dynamic_setitem_list_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
 
 
 @pytest.mark.level0
@@ -418,7 +509,11 @@ def test_dynamic_setitem_list_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    common_func(ms_net, np_net)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
+    context.set_context(mode=context.GRAPH_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
