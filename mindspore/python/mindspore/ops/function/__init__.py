@@ -236,6 +236,7 @@ from .math_func import (
 )
 from .nn_func import (
     adaptive_avg_pool2d,
+    adaptive_max_pool3d,
     avg_pool2d,
     celu,
     dropout2d,

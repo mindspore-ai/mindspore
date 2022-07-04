@@ -14,6 +14,8 @@
 # ============================================================================
 
 """nn_ops vmap impl."""
+import mindspore
+from mindspore.common import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import nn_ops as NN
@@ -411,6 +413,45 @@ def get_avgpool_vmap_rule(prim, axis_size):
         real_out_shape = x_shape[:chw_reverse_index] + out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)
         return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(NN.AdaptiveMaxPool3D)
+def get_adaptive_max_pool3d_vmap_rule(prim, axis_size):
+    """VmapRule for `AdaptiveMaxPool3D`."""
+    dhw_reverse_index = -3
+    max_dims = 5
+
+    @constexpr
+    def convert_shape_to_tensor(shape):
+        return Tensor(shape, dtype=mindspore.int32)
+
+    def vmap_rule(x_bdim, out_size_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, out_size_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        out_size, out_size_dim = out_size_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        if out_size_dim is not None:
+            _raise_value_error("The source axis of `output_size` in `AdaptiveMaxPool3D` must be None, "
+                               "but got {}.".format(out_size_dim))
+        if F.rank(x) == max_dims:
+            out, indices = prim(x, out_size)
+            return (out, 0), (indices, 0)
+
+        x_shape = F.shape(x)
+        shape = (-1,) + x_shape[dhw_reverse_index:]
+        x = F.reshape(x, shape)
+        out, indices = prim(x, out_size)
+        # AdaptiveMaxPool3D is a dynamic op, the 'shape' of reshape should be a tensor
+        front_shape = convert_shape_to_tensor(x_shape[:dhw_reverse_index])
+        output_shape = F.concat((front_shape, out_size))
+        out = F.reshape(out, output_shape)
+        indices = F.reshape(indices, output_shape)
+        return (out, 0), (indices, 0)
 
     return vmap_rule
 

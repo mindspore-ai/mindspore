@@ -2953,7 +2953,8 @@ class Stack(PrimitiveWithInfer):
                    'dtype': x_type[0],
                    'value': infered_value}
         else:
-            out = {'shape': all_shape,
+            shape = all_shape.get('shape') if isinstance(all_shape, dict) else all_shape
+            out = {'shape': shape,
                    'dtype': x_type[0],
                    'value': infered_value}
 

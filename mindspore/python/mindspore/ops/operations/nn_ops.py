@@ -341,6 +341,55 @@ class AdaptiveMaxPool2D(Primitive):
         self.add_prim_attr('return_indices', return_indices)
 
 
+class AdaptiveMaxPool3D(Primitive):
+    r"""
+    Applies a 3D adaptive max pooling over an input signal composed of several input planes.
+
+    Refer to :func:`mindspore.ops.adaptive_max_pool3d` for more detail.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> # case 1: Dynamic output size
+        >>> class AdaptiveMaxPool3DNet(nn.Cell):
+        ...     def __init__(self):
+        ...         super(AdaptiveMaxPool3DNet, self).__init__()
+        ...         self.adaptive_max_pool_3d = ops.AdaptiveMaxPool3D()
+        ...     def construct(self, x_, output_size_):
+        ...         return self.adaptive_max_pool_3d(x_, output_size_)
+        >>> x = np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32)
+        >>> output_size = np.array([1, 1, 2], dtype=np.int32)
+        >>> net = AdaptiveMaxPool3DNet()
+        >>> output = net(Tensor(x), Tensor(output_size))
+        >>> print(output[0].asnumpy())
+        [[[[33. 35.]]]]
+        >>> print(output[1].asnumpy())
+        [[[[33 35]]]]
+
+        >>> # case 2: Constant output size
+        >>> class ConstAdaptiveMaxPool3DNet(nn.Cell):
+        ...     def __init__(self, output_size):
+        ...         super(ConstAdaptiveMaxPool3DNet, self).__init__()
+        ...         self.output_size_ = output_size
+        ...         self.adaptive_max_pool_3d = ops.AdaptiveMaxPool3D()
+        ...     def construct(self, x_):
+        ...         return self.adaptive_max_pool_3d(x_, self.output_size_)
+        >>> x = np.arange(0,36).reshape((1, 3, 3, 4)).astype(np.float32)
+        >>> output_size = np.array([1, 1, 2], dtype=np.int32)
+        >>> net = ConstAdaptiveMaxPool3DNet(Tensor(output_size))
+        >>> output = net(Tensor(x))
+        >>> print(output[0].asnumpy())
+        [[[[33. 35.]]]]
+        >>> print(output[1].asnumpy())
+        [[[[33 35]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['x', 'output_size'], outputs=['y', 'argmax'])
+
+
 class Softmax(Primitive):
     r"""
     Softmax operation.
