@@ -28,7 +28,7 @@ __device__ inline uint end_index(uint a, uint b, uint c) {
 template <typename T>
 __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_height, const uint input_width,
                                             const uint output_height, const uint output_width, T *input_data,
-                                            T *output_data) {
+                                            T *output_data, float *) {
   for (uint c = blockIdx.x * blockDim.x + threadIdx.x; c < size; c += gridDim.x * blockDim.x) {
     T *input_ptr = input_data + c * input_height * input_width;
     T *output_ptr = output_data + c * output_height * output_width;
@@ -62,7 +62,7 @@ __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_he
 template <>
 __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_height, const uint input_width,
                                             const uint output_height, const uint output_width, float *input_data,
-                                            float *output_data) {
+                                            float *output_data, float *) {
   for (uint c = blockIdx.x * blockDim.x + threadIdx.x; c < size; c += gridDim.x * blockDim.x) {
     float *input_ptr = input_data + c * input_height * input_width;
     float *output_ptr = output_data + c * output_height * output_width;
@@ -96,14 +96,16 @@ __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_he
 template <>
 __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_height, const uint input_width,
                                             const uint output_height, const uint output_width, half *input_data,
-                                            half *output_data) {
+                                            half *output_data, float *workspace) {
   for (uint c = blockIdx.x * blockDim.x + threadIdx.x; c < size; c += gridDim.x * blockDim.x) {
     half *input_ptr = input_data + c * input_height * input_width;
     half *output_ptr = output_data + c * output_height * output_width;
+    float *workspace_ptr = workspace + c * output_height * output_width;
 
     size_t output_size = output_height * output_width;
     for (size_t i = 0; i < output_size; i++) {
       output_ptr[i] = 0;
+      workspace_ptr[i] = 0;
     }
 
     for (uint ih = 0; ih < input_height; ih++) {
@@ -119,10 +121,14 @@ __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_he
         half delta = input_ptr[ih * input_width + iw] / __uint2half_rn(kh * kw);
         for (uint oh = oh0; oh < oh1; oh++) {
           for (uint ow = ow0; ow < ow1; ow++) {
-            output_ptr[oh * output_width + ow] += delta;
+            // avoid accumulating out of range of fp16
+            workspace_ptr[oh * output_width + ow] += static_cast<float>(delta);
           }
         }
       }
+    }
+    for (size_t i = 0; i < output_size; i++) {
+      output_ptr[i] = static_cast<half>(workspace_ptr[i]);
     }
   }
 }
@@ -130,7 +136,7 @@ __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_he
 template <>
 __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_height, const uint input_width,
                                             const uint output_height, const uint output_width, double *input_data,
-                                            double *output_data) {
+                                            double *output_data, float *) {
   for (uint c = blockIdx.x * blockDim.x + threadIdx.x; c < size; c += gridDim.x * blockDim.x) {
     double *input_ptr = input_data + c * input_height * input_width;
     double *output_ptr = output_data + c * output_height * output_width;
@@ -164,22 +170,25 @@ __global__ void AdaptiveAvgPool2DGradKernel(const uint size, const uint input_he
 template <typename T>
 void ApplyAdaptiveAvgPool2DGrad(const uint size, const uint input_height, const uint input_width,
                                 const uint output_height, const uint output_width, T *input_data,
-                                T *output_data, cudaStream_t cuda_stream) {
+                                T *output_data, float *workspace, cudaStream_t cuda_stream) {
   AdaptiveAvgPool2DGradKernel<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(
-    size, input_height, input_width, output_height, output_width, input_data, output_data);
+    size, input_height, input_width, output_height, output_width, input_data, output_data, workspace);
 }
 
 template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2DGrad<float>(const uint size, const uint input_height,
                                                                 const uint input_width, const uint output_height,
                                                                 const uint output_width, float *input_data,
-                                                                float *output_data, cudaStream_t cuda_stream);
+                                                                float *output_data, float *workspace,
+                                                                cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2DGrad<half>(const uint size, const uint input_height,
                                                                const uint input_width, const uint output_height,
                                                                const uint output_width, half *input_data,
-                                                               half *output_data, cudaStream_t cuda_stream);
+                                                               half *output_data, float *workspace,
+                                                               cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void ApplyAdaptiveAvgPool2DGrad<double>(const uint size, const uint input_height,
                                                                  const uint input_width, const uint output_height,
                                                                  const uint output_width, double *input_data,
-                                                                 double *output_data, cudaStream_t cuda_stream);
+                                                                 double *output_data, float *workspace,
+                                                                 cudaStream_t cuda_stream);

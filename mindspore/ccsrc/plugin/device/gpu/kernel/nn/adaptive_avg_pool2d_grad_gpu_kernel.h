@@ -35,6 +35,7 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
   AdaptiveAvgPool2DGradKernelMod()
       : input_size_(0),
         output_size_(0),
+        workspace_size_(0),
         input_height_(0),
         input_width_(0),
         output_height_(0),
@@ -44,16 +45,17 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
         kernel_name_("AdaptiveAvgPool2DGrad") {}
   ~AdaptiveAvgPool2DGradKernelMod() override = default;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
     T *dy_addr = GetDeviceAddress<T>(inputs, 1);
     T *dx_addr = GetDeviceAddress<T>(outputs, 0);
+    float *wk_addr = GetDeviceAddress<float>(workspace, 0);
 
     ApplyAdaptiveAvgPool2DGrad(size_, input_height_, input_width_, output_height_, output_width_, dy_addr, dx_addr,
-                               reinterpret_cast<cudaStream_t>(stream_ptr));
+                               wk_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
 
     return true;
   }
@@ -69,6 +71,7 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
 
     input_size_ = sizeof(T);
     output_size_ = sizeof(T);
+    workspace_size_ = sizeof(float);  // used as float buffer when T is half
 
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);  // dy
     auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);         // dx
@@ -99,6 +102,7 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
     output_width_ = static_cast<uint>(output_shape[output_rank - 1]);
     output_size_ *= SizeOf(output_shape);
 
+    workspace_size_ *= SizeOf(output_shape);
     InitSizeLists();
     return true;
   }
@@ -107,11 +111,13 @@ class AdaptiveAvgPool2DGradKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitSizeLists() override {
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
+    workspace_size_list_.push_back(workspace_size_);
   }
 
  private:
   size_t input_size_;
   size_t output_size_;
+  size_t workspace_size_;
   uint input_height_;
   uint input_width_;
   uint output_height_;
