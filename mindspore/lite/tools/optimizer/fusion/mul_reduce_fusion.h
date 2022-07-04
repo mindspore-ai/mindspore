@@ -56,6 +56,7 @@ class MulReduceFusion : public Pass {
   int PostProcessSqueezeWithConcat(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int GenerateMatmul(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int GenerateSqueeze(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  int GenerateMul(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   int ProcessGather(const FuncGraphPtr &func_graph);
   bool CheckBasicCond(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool CheckAxisCond(const CNodePtr &cnode);
