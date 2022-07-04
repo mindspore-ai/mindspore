@@ -356,8 +356,9 @@ Array操作
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_div
+    mindspore.ops.tensor_scatter_max
+    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements
