@@ -2983,8 +2983,8 @@ void GradExecutor::ClearCellRes(const std::string &cell_id) {
     if (IsCellObjIdEq(cell_id, top_cell_id)) {
       MS_LOG(DEBUG) << "Clear top cell resource. Top cell id " << top_cell_id;
       (*it)->Clear();
-      it = top_cell_list_.erase(it);
       (void)already_run_top_cell_.erase(already_run_cell_id);
+      it = top_cell_list_.erase(it);
       continue;
     }
     ++it;
@@ -3278,11 +3278,14 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::object &cell
   // disable backend cache
   if (top_cell_list_.size() >= MAX_TOP_CELL_COUNTS) {
     EnableOpGraphCache(false);
-    const auto last_top_cell = top_cell_list_.back();
-    top_cell_list_.pop_back();
-    MS_EXCEPTION_IF_NULL(last_top_cell);
-    last_top_cell->Clear();
-    (void)already_run_top_cell_.erase(last_top_cell->already_run_cell_id());
+    // Delete top cell from begin
+    auto delete_first_top_cell = top_cell_list_.front();
+    MS_EXCEPTION_IF_NULL(delete_first_top_cell);
+    delete_first_top_cell->Clear();
+    (void)already_run_top_cell_.erase(delete_first_top_cell->already_run_cell_id());
+    top_cell_list_.erase(top_cell_list_.begin());
+    MS_LOG(WARNING) << "Too many top cell has been built, please check if the cell " << cell.cast<CellPtr>()->ToString()
+                    << " is repeatedly defined in each epoch";
   }
   // Create top cell
   auto fg = std::make_shared<FuncGraph>();
