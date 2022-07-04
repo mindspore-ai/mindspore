@@ -24,9 +24,9 @@ from mindspore.ops.operations import _grad_ops as G
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-class NetPoolGradGrad(nn.Cell):
+class NetMaxPoolGradGrad(nn.Cell):
     def __init__(self, mode, kernel, stride):
-        super(NetPoolGradGrad, self).__init__()
+        super(NetMaxPoolGradGrad, self).__init__()
         self.maxpool_grad_grad_fun = G.MaxPoolGradGrad(pad_mode=mode,
                                                        kernel_size=kernel,
                                                        strides=stride)
@@ -35,7 +35,7 @@ class NetPoolGradGrad(nn.Cell):
         return self.maxpool_grad_grad_fun(x, out, grad)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool2d_grad_grad_fp16():
@@ -58,12 +58,12 @@ def test_maxpool2d_grad_grad_fp16():
         [3.1, 3.3, 3.5]
     ]]])).astype(np.float16)
 
-    maxpool2d_grad_grad = NetPoolGradGrad("VALID", 2, 2)
+    maxpool2d_grad_grad = NetMaxPoolGradGrad("VALID", 2, 2)
     output = maxpool2d_grad_grad(x, out, d)
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_maxpool2d_grad_grad_fp32():
@@ -88,6 +88,6 @@ def test_maxpool2d_grad_grad_fp32():
                                  [-1.6, -1.7, -1.7],
                                  [-1.6, -1.7, -1.7]]]]).astype(np.float32))
 
-    maxpool2d_grad_grad = NetPoolGradGrad("SAME", 3, 1)
+    maxpool2d_grad_grad = NetMaxPoolGradGrad("SAME", 3, 1)
     output = maxpool2d_grad_grad(x, out, d)
     assert np.allclose(output.asnumpy(), expect_result)
