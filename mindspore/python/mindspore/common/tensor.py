@@ -1107,7 +1107,7 @@ class Tensor(Tensor_):
         divided by the p-norm of the substensor and then multiplied by `maxnorm`.
 
         Args:
-            p (float): P-norm.
+            p (float): Power of norm calculation.
             dim (int): The dimension that expected to get the slice-tensor.
             maxnorm (float): Max norm.
 
@@ -1123,7 +1123,7 @@ class Tensor(Tensor_):
         Supported Platforms:
             ``Ascend`` ``CPU``
 
-        Example:
+        Examples:
             >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
             >>> y = x.renorm(p=1, dim=0, maxnorm=5.)
             >>> print(y)
