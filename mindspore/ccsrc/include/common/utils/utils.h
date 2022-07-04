@@ -684,6 +684,12 @@ constexpr auto kRealInputNodeIndexInTupleGetItem = 1;
 constexpr auto kInputNodeOutputIndexInTupleGetItem = 2;
 constexpr auto kSparseGetAttrInputSize = 2;
 constexpr auto kTupleGetItemInputSize = 3;
+
+// index define of kTupleSetItem
+constexpr auto kTupleSetItemTupleIndex = 1;
+constexpr auto kTupleSetItemIndexIndex = 2;
+constexpr auto kTupleSetItemValueIndex = 3;
+constexpr auto kTupleSetItemInputSize = 4;
 // index define of partial
 constexpr auto kPartialMinInputSize = 2;
 constexpr auto kPartialGraphIndex = 1;
