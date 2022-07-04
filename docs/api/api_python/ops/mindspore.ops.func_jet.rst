@@ -12,7 +12,7 @@ mindspore.ops.jet
 
     - **fn** (Union[Function, Cell]) - 待求导的函数或网络。
     - **primals** (Union[Tensor, tuple[Tensor]]) - `fn` 的输入，单输入的type为Tensor，多输入的type为Tensor组成的tuple。
-    - **series** (Union[Tensor, tuple[Tensor]]) - 输入的原始第1到第n阶导数。type与 `primals` 一致，长度表示待求导的阶数n。
+    - **series** (Union[Tensor, tuple[Tensor]]) - 输入的原始第1到第n阶导数。若为tuple则长度与数据类型应与 `primals` 一致。type与 `primals` 相同，Tensor第一维度i对应输出对输入的第1到第i+1阶导数。
 
     **返回：**
 

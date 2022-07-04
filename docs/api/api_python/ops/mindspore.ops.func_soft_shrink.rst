@@ -16,7 +16,7 @@ mindspore.ops.soft_shrink
     **参数：**
 
     - **x** (Tensor) - Soft Shrink的输入，数据类型为float16或float32。
-    - **lambd** (float) - math:`\lambda` 应大于等于0。默认值：0.5。
+    - **lambd** (float) - :math:`\lambda` ，应大于等于0。默认值：0.5。
 
     **返回：**
 

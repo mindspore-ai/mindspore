@@ -32,10 +32,10 @@ mindspore.ops.ApplyRMSProp
 
     - **var** (Tensor) - 待更新的网络参数。
     - **mean_square** (Tensor) - 均方梯度，数据类型需与 `var` 相同。
-    - **moment** (Tensor) - moment， 数据类型需与 `var` 相同。
+    - **moment** (Tensor) - 一阶矩，数据类型需与 `var` 相同。
     - **learning_rate** (Union[Number, Tensor]) - 学习率。需为浮点数或者数据类型为float16或float32的标量矩阵。
     - **grad** (Tensor) - 梯度，数据类型需与 `var` 相同。
-    - **decay** (float) - 衰减率。 需为常量。
+    - **decay** (float) - 衰减率。需为常量。
     - **momentum** (float) - 移动平均的动量项momentum。需为常量。
     - **epsilon** (float) - 避免除数为零的平滑项。需为常量。
 

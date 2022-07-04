@@ -9,8 +9,8 @@
 
     **输入：**
 
-    - **x** (Union[Tensor, Number, bool]) - 第一个输入是数值型，或bool，或数据类型为float16、float32或bool的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - 第二个输入是数值型，或第一个输入是Tensor时的bool，或数据类型为float16、float32或bool的Tensor。
+    - **x** (Union[Tensor, Number, bool]) - float，complex或bool类型的Tensor。
+    - **y** (Union[Tensor, Number, bool]) - float、complex或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
 
     **输出：**
 

@@ -15,8 +15,8 @@ mindspore.ops.TruncateDiv
 
     **输入：**
 
-    - **x** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
+    - **x** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
+    - **y** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
 
     **输出：**
 

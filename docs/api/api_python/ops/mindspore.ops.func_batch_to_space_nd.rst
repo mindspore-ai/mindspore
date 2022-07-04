@@ -7,7 +7,7 @@ mindspore.ops.batch_to_space_nd
 
     此函数会将批次维度 `N` 划分为具有 `block_shape` 的块，即输出张量的 `N` 维度是划分后对应的块数。
     输出张量的 `H` 、`W` 维度是原始的 `H` 、`W` 维度和 `block_shape` 的乘积从维度裁剪给定。
-    如此，假设输入的形状为 :math:`(n, c, h, w)`，则输出的形状为 :math:`(n', c', h', w')`，
+    如此，若输入的shape为 :math:`(n, c, h, w)` ，则输出的shape为 :math:`(n', c', h', w')` 。
     其中
 
     :math:`n' = n//(block\_shape[0]*block\_shape[1])`
@@ -20,9 +20,9 @@ mindspore.ops.batch_to_space_nd
 
     **参数：**
 
-    - **input_x** (Tensor) - 输入张量，必须大于或者等于四维。
-    - **block_shape** (list[int], tuple[int], int) - 块形状描述批次维度为分割的个数。
-    - **crops** (tuple, list) - 空间维度的裁剪大小。
+    - **input_x** (Tensor) - 输入张量，必须大于或者等于四维（Ascend平台必须为4维）。批次维度需能被 `block_shape` 整除。支持数据类型float16和float32。
+    - **block_shape** (list[int], tuple[int], int) - 分割批次维度的块的数量，取值需大于1。
+    - **crops** (tuple, list) - 空间维度的裁剪大小，包含两个长度为2的list，分别对应空间维度H和W。取值需大于或等于0，同时要求 `input_shape[i+2] * block_shape[i] > crops[i][0] + crops[i][1]` 。
 
     **返回：**
 
