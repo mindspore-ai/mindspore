@@ -33,7 +33,7 @@ struct Context::Data {
   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
 
 #ifdef PARALLEL_INFERENCE
-  int32_t thread_num = 8;
+  int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
   int affinity_mode_ = 1;
   int32_t inter_op_parallel_num_ = 4;
 #else

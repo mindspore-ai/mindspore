@@ -116,51 +116,51 @@ def test_context_04():
 
 def test_context_05():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context(thread_affinity_mode="1")
+        context = mslite.Context(thread_num=2, thread_affinity_mode="1")
     assert "thread_affinity_mode must be int" in str(raise_info.value)
 
 
 def test_context_06():
-    context = mslite.Context(thread_affinity_mode=2)
+    context = mslite.Context(thread_num=2, thread_affinity_mode=2)
     assert "thread_affinity_mode: 2" in str(context)
 
 
 def test_context_07():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context(thread_affinity_core_list=2)
+        context = mslite.Context(thread_num=2, thread_affinity_core_list=2)
     assert "thread_affinity_core_list must be list" in str(raise_info.value)
 
 
 def test_context_08():
-    context = mslite.Context(thread_affinity_core_list=[2])
+    context = mslite.Context(thread_num=2, thread_affinity_core_list=[2])
     assert "thread_affinity_core_list: [2]" in str(context)
 
 
 def test_context_09():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context(thread_affinity_core_list=["1", "0"])
+        context = mslite.Context(thread_num=2, thread_affinity_core_list=["1", "0"])
     assert "thread_affinity_core_list element must be int" in str(raise_info.value)
 
 
 def test_context_10():
-    context = mslite.Context(thread_affinity_core_list=[1, 0])
+    context = mslite.Context(thread_num=2, thread_affinity_core_list=[1, 0])
     assert "thread_affinity_core_list: [1, 0]" in str(context)
 
 
 def test_context_11():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context(enable_parallel=1)
+        context = mslite.Context(thread_num=2, enable_parallel=1)
     assert "enable_parallel must be bool" in str(raise_info.value)
 
 
 def test_context_12():
-    context = mslite.Context(enable_parallel=True)
+    context = mslite.Context(thread_num=2, enable_parallel=True)
     assert "enable_parallel: True" in str(context)
 
 
 def test_context_13():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context()
+        context = mslite.Context(thread_num=2)
         context.append_device_info("CPUDeviceInfo")
     assert "device_info must be DeviceInfo" in str(raise_info.value)
 
@@ -168,7 +168,7 @@ def test_context_13():
 def test_context_14():
     gpu_device_info = mslite.GPUDeviceInfo()
     cpu_device_info = mslite.CPUDeviceInfo()
-    context = mslite.Context()
+    context = mslite.Context(thread_num=2)
     context.append_device_info(gpu_device_info)
     context.append_device_info(cpu_device_info)
     assert "device_list: 1, 0" in str(context)
@@ -293,7 +293,7 @@ def test_model_01():
 
 def test_model_build_01():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context()
+        context = mslite.Context(thread_num=2)
         model = mslite.Model()
         model.build_from_file(model_path=1, model_type=mslite.ModelType.MINDIR_LITE, context=context)
     assert "model_path must be str" in str(raise_info.value)
@@ -317,7 +317,7 @@ def test_model_build_03():
 
 def test_model_build_04():
     with pytest.raises(RuntimeError) as raise_info:
-        context = mslite.Context()
+        context = mslite.Context(thread_num=2)
         model = mslite.Model()
         model.build_from_file(model_path="test.ms", model_type=mslite.ModelType.MINDIR_LITE, context=context)
     assert "model_path does not exist" in str(raise_info.value)
@@ -325,7 +325,7 @@ def test_model_build_04():
 
 def get_model():
     cpu_device_info = mslite.CPUDeviceInfo()
-    context = mslite.Context()
+    context = mslite.Context(thread_num=2)
     context.append_device_info(cpu_device_info)
     model = mslite.Model()
     model.build_from_file(model_path="mobilenetv2.ms", model_type=mslite.ModelType.MINDIR_LITE, context=context)

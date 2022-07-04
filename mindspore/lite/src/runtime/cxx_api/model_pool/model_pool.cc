@@ -296,9 +296,18 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
     MS_LOG(ERROR) << "user set config context nullptr.";
     return nullptr;
   }
-  if (context->GetThreadNum() <= 0) {
+  if (context->GetThreadNum() < 0) {
     MS_LOG(ERROR) << "Invalid thread num " << context->GetThreadNum();
     return nullptr;
+  }
+  if (context->GetThreadNum() == 0) {
+    // Defaults are automatically adjusted based on computer performance
+    auto thread_num = GetDefaultThreadNum();
+    if (thread_num == 0) {
+      MS_LOG(ERROR) << "computer thread num failed.";
+      return nullptr;
+    }
+    context->SetThreadNum(thread_num);
   }
   if (!context->GetThreadAffinityCoreList().empty()) {
     MS_LOG(ERROR) << "parallel predict not support user set core list.";
