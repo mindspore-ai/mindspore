@@ -205,7 +205,7 @@ std::string AscendMemAdapter::DevMemDetailInfo() const {
   return oss.str();
 }
 
-size_t AscendMemAdapter::GetDeviceMemSizeFromContext() {
+size_t AscendMemAdapter::GetDeviceMemSizeFromContext() const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   size_t size_from_context;
@@ -232,7 +232,7 @@ size_t AscendMemAdapter::GetDeviceMemSizeFromContext() {
   return size_from_context;
 }
 
-uint8_t *AscendMemAdapter::MallocFromRts(size_t size) {
+uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   uint8_t *ptr = nullptr;
   auto ret = rtMalloc(reinterpret_cast<void **>(&ptr), size, RT_MEMORY_HBM);
   if (ret != ACL_RT_SUCCESS) {

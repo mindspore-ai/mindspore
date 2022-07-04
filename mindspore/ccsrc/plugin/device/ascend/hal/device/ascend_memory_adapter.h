@@ -64,9 +64,9 @@ class AscendMemAdapter {
     std::string mem_tag;
   };
 
-  uint8_t *MallocFromRts(size_t size);
+  uint8_t *MallocFromRts(size_t size) const;
   bool FreeToRts(void *devPtr) const;
-  size_t GetDeviceMemSizeFromContext();
+  size_t GetDeviceMemSizeFromContext() const;
 
   bool initialized_{false};
 

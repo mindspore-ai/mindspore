@@ -95,7 +95,11 @@ class OpIOInfo {
 class OpInfo {
  public:
   OpInfo() = default;
-  OpInfo(const OpInfo &opinfo) {
+  OpInfo(const OpInfo &opinfo) { *this = opinfo; }
+  OpInfo &operator=(const OpInfo &opinfo) {
+    if (this == &opinfo) {
+      return *this;
+    }
     op_name_ = opinfo.op_name();
     imply_type_ = opinfo.imply_type();
 
@@ -122,6 +126,7 @@ class OpInfo {
       outputs_ptr_.push_back(std::make_shared<OpIOInfo>(*output));
     }
     ref_infos_ = opinfo.ref_infos();
+    return *this;
   }
   ~OpInfo() = default;
   std::string op_name() const { return op_name_; }

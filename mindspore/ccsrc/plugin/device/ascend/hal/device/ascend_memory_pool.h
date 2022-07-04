@@ -34,7 +34,7 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
   bool FreeDeviceMem(const DeviceMemPtr &addr) override;
   size_t free_mem_size() override;
 
-  void ResetIdleMemBuf();
+  void ResetIdleMemBuf() const;
 
   static AscendMemoryPool &GetInstance() {
     static AscendMemoryPool instance;

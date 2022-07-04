@@ -31,21 +31,7 @@ class KernelBuildInfo {
  public:
   class KernelBuildInfoBuilder;
 
-  KernelBuildInfo() {
-    kernel_type_ = TBE_KERNEL;
-    fusion_type_ = OPAQUE;
-    processor_ = AICORE;
-    op_pattern_ = kCommonPattern;
-    core_type_ = "";
-    input_reshape_type_ = {};
-    output_reshape_type_ = {};
-    origin_data_format_ = kOpFormat_DEFAULT;
-    inputs_format_ = {};
-    outputs_format_ = {};
-    inputs_device_type_ = {};
-    outputs_device_type_ = {};
-    output_data_desc_ = {};
-  }
+  KernelBuildInfo() {}
 
   ~KernelBuildInfo() = default;
 
@@ -67,7 +53,7 @@ class KernelBuildInfo {
 
   bool IsOutputDefaultPadding() const;
 
-  std::string GetOutputReshapeType(size_t input_index) const;
+  std::string GetOutputReshapeType(size_t output_index) const;
 
   const std::string &GetOriginDataFormat() const;
 
@@ -118,11 +104,11 @@ class KernelBuildInfo {
   static auto constexpr kInvalidFormat = "InvalidFormat";
 
  private:
-  KernelType kernel_type_;
-  std::string origin_data_format_;
+  KernelType kernel_type_{TBE_KERNEL};
+  std::string origin_data_format_{kOpFormat_DEFAULT};
   std::string core_type_;
   std::vector<std::string> inputs_format_;
-  OpPattern op_pattern_;
+  OpPattern op_pattern_{kCommonPattern};
   std::vector<std::string> outputs_format_;
   std::vector<std::string> input_reshape_type_;
   std::vector<std::string> output_reshape_type_;
@@ -130,8 +116,8 @@ class KernelBuildInfo {
   std::vector<TypeId> outputs_device_type_;
   std::vector<nlohmann::json> output_data_desc_;
   std::vector<std::string> input_value_depend_;
-  FusionType fusion_type_;
-  Processor processor_;
+  FusionType fusion_type_{OPAQUE};
+  Processor processor_{AICORE};
 };
 using KernelBuildInfoPtr = std::shared_ptr<KernelBuildInfo>;
 

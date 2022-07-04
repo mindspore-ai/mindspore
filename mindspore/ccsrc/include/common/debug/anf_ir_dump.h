@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_DEBUG_ANF_IR_DUMP_H_
 
 #include <string>
-#include <vector>
 #include "ir/dtype/type.h"
 #include "ir/anf.h"
 #include "include/common/debug/common.h"

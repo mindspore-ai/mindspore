@@ -658,7 +658,7 @@ void ArithmeticSelfCpuKernelFunc::LaunchKernel(const std::vector<AddressPtr> &in
 
   const auto func_pair = arithmeticSelfFuncMap.find(kernel_name_);
   if (arithmeticSelfFuncMap.find(kernel_name_) == arithmeticSelfFuncMap.end()) {
-    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', only supports operators in " << Unorderedmap2Str(arithmeticSelfFuncMap)
+    MS_LOG(EXCEPTION) << "For 'ArithmeticSelf', only supports operators in " << Map2Str(arithmeticSelfFuncMap)
                       << ", but got " << kernel_name_;
   }
   func_pair->second(this, input, output, lens);
