@@ -67,7 +67,7 @@ def compare_with_numpy(x, dim, index, value):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('data_type', [np.int8, np.int16, np.int32, np.float16, np.float64])
+@pytest.mark.parametrize('data_type', [np.bool, np.int8, np.int16, np.int32, np.float16, np.float64])
 def test_index_fill_data_type(data_type):
     """
     Feature: IndexFill

@@ -3116,7 +3116,7 @@ def index_fill(x, dim, index, value):
     """
     if isinstance(dim, int) and not isinstance(dim, bool):
         dim = cast_(dim, mstype.int32)
-    if isinstance(value, (float, int)) and not isinstance(value, bool):
+    if isinstance(value, (bool, float, int)):
         value = cast_(value, x.dtype)
     return index_fill_(x, dim, index, value)
 
