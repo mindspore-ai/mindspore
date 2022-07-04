@@ -758,6 +758,18 @@ def get_bprop_batch_norm(self):
     return bprop
 
 
+@bprop_getters.register(G.BatchNormGrad)
+def get_bprop_batch_norm_grad(self):
+    """Grad definition for `BatchNorm` operation."""
+    grad_op = G.BatchNormGradGrad(self.is_training, self.epsilon, self.data_format)
+
+    def bprop(dy, x, scale, mean, variance, reserve, out, dout):
+        dx, ddy, dscale = grad_op(x, dy, scale, mean, variance, dout[0], dout[1], dout[2])
+        return ddy, dx, dscale, zeros_like(mean), zeros_like(variance), zeros_like(reserve)
+
+    return bprop
+
+
 @bprop_getters.register(P.LayerNorm)
 def get_bprop_layer_norm(self):
     """Grad definition for `LayerNorm` operation."""
