@@ -38,7 +38,8 @@ TypePtr MatrixBandPartInferType(const PrimitivePtr &prim, const std::vector<Abst
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_type = input_args[kInputIndex0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, common_valid_types_with_complex_and_bool, prim_name);
+  const std::set valid_types = {kInt32, kInt64, kFloat16, kFloat32, kFloat64};
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("lower", input_args[kInputIndex1]->BuildType(), {kInt32, kInt64},
                                              prim_name);
   (void)CheckAndConvertUtils::CheckTypeValid("upper", input_args[kInputIndex2]->BuildType(), {kInt32, kInt64},
@@ -73,18 +74,19 @@ abstract::ShapePtr MatrixBandPartInferShape(const PrimitivePtr &primitive,
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
+  // Input 'lower' must be a tensor with a value or a scalar.
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'lower'", SizeToLong(lower_shape.size()), kEqual, batch_rank,
+                                           prim_name);
+  // Input 'upper' must be a tensor with a value or a scalar.
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'upper'", SizeToLong(upper_shape.size()), kEqual, batch_rank,
+                                           prim_name);
+
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
   // Ascend will use the batch_rank to implement vmap feature.
   if (!is_gpu && !is_cpu) {
-    // Input 'lower' must be a tensor with a value or a scalar.
-    (void)CheckAndConvertUtils::CheckInteger("rank of 'lower'", SizeToLong(lower_shape.size()), kEqual, batch_rank,
-                                             prim_name);
-    // Input 'upper' must be a tensor with a value or a scalar.
-    (void)CheckAndConvertUtils::CheckInteger("rank of 'upper'", SizeToLong(upper_shape.size()), kEqual, batch_rank,
-                                             prim_name);
     return std::make_shared<abstract::Shape>(x_shape);
   }
 
