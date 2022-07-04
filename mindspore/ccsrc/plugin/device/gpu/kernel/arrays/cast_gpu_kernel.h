@@ -98,8 +98,8 @@ class CastGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
  private:
-  int input_size_;
-  int output_size_;
+  int64_t input_size_;
+  int64_t output_size_;
   bool is_null_input_;
 
   std::string kernel_name_;
