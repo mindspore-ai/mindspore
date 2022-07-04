@@ -84,8 +84,8 @@ TypePtr ClipByNormInferType(const PrimitivePtr &primitive, const std::vector<Abs
   auto x_type = CheckAndConvertUtils::GetTensorInputType(kNameClipByNorm, input_args_abs, 0);
   auto clip_norm_type = CheckAndConvertUtils::GetTensorInputType(kNameClipByNorm, input_args_abs, 1);
   const std::set<TypePtr> supported_types{kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckSubClass("data type of x", x_type, supported_types, kNameClipByNorm);
-  (void)CheckAndConvertUtils::CheckSubClass("data type of clip_norm", clip_norm_type, supported_types, kNameClipByNorm);
+  (void)CheckAndConvertUtils::CheckSubClass("x", x_type, supported_types, kNameClipByNorm);
+  (void)CheckAndConvertUtils::CheckSubClass("clip_norm", clip_norm_type, supported_types, kNameClipByNorm);
   return kFloat32;
 }
 }  // namespace
