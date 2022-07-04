@@ -277,5 +277,20 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
   return x_type;
 }
+
+bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs) {
+  if (lhs == rhs) {
+    return true;
+  }
+  if (lhs.size() != rhs.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < lhs.size(); ++i) {
+    if (lhs[i] != rhs[i] && lhs[i] != -1 && rhs[i] != -1) {
+      return false;
+    }
+  }
+  return true;
+}
 }  // namespace ops
 }  // namespace mindspore

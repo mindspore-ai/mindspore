@@ -26,21 +26,6 @@
 namespace mindspore {
 namespace ops {
 namespace {
-bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs) {
-  if (lhs == rhs) {
-    return true;
-  }
-  if (lhs.size() != rhs.size()) {
-    return false;
-  }
-  for (size_t i = 0; i < lhs.size(); ++i) {
-    if (lhs[i] != rhs[i] && lhs[i] != -1 && rhs[i] != -1) {
-      return false;
-    }
-  }
-  return true;
-}
-
 abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);

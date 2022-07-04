@@ -25,6 +25,7 @@ reduce_mean_op_info = TBERegOp("ReduceMean") \
     .partial_flag(True) \
     .dynamic_shape(True) \
     .attr("keep_dims", "optional", "bool", "all", "false") \
+    .attr("noop_with_empty_axes", "optional", "bool", "all", "false") \
     .input(0, "x", False, "required", "all") \
     .input(1, "axes", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
