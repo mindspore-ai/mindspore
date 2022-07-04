@@ -18,11 +18,15 @@
 #include <functional>
 #include <algorithm>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/masked_fill_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "mindspore/core/ops/masked_fill.h"
 #include "abstract/utils.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 constexpr int MAX_DIMS = 8;
 
 template <typename T>
@@ -257,6 +261,18 @@ std::vector<std::pair<KernelAttr, MaskedFillGpuKernelMod::MaskedFillFunc>> Maske
      .AddInputAttr(kNumberTypeBool)
      .AddOutputAttr(kNumberTypeBool),
    &MaskedFillGpuKernelMod::LaunchKernel<bool>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeComplex64)
+     .AddOutputAttr(kNumberTypeComplex64),
+   &MaskedFillGpuKernelMod::LaunchKernel<Complex<float>>},
+  {KernelAttr()
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddInputAttr(kNumberTypeBool)
+     .AddInputAttr(kNumberTypeComplex128)
+     .AddOutputAttr(kNumberTypeComplex128),
+   &MaskedFillGpuKernelMod::LaunchKernel<Complex<double>>},
 };
 
 std::vector<KernelAttr> MaskedFillGpuKernelMod::GetOpSupport() {
