@@ -109,8 +109,13 @@ class MatMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(INFO) << "input and output type is float16, allow to use Tensor Core operations if possible";
       algo_ = CUBLAS_GEMM_DEFAULT_TENSOR_OP;
     }
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
-    auto input1_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto output_shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    auto input1_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({output_shape_signed, input1_shape_signed})) {
+      return true;
+    }
+    auto output_shape = Convert2SizeTClipNeg(output_shape_signed);
+    auto input1_shape = Convert2SizeTClipNeg(input1_shape_signed);
     is_null_input_ =
       CHECK_SHAPE_NULL(input1_shape, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
     if (is_null_input_) {

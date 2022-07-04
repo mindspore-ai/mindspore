@@ -92,8 +92,14 @@ class ExtractImagePatchesKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 1, but got " << output_num;
     }
-    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+
+    auto input_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape_signed, output_shape_signed})) {
+      return true;
+    }
+    auto input_shape = Convert2SizeTClipNeg(input_shape_signed);
+    auto output_shape = Convert2SizeTClipNeg(output_shape_signed);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {

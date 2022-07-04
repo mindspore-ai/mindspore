@@ -53,20 +53,17 @@ class DynamicReshapeKernelMod : public DeprecatedNativeGpuKernelMod {
   }
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
-    auto output_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
-    auto input_x_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
-    auto input_shape_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto output_shape = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_x_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
     auto data_type = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
     data_type_size_ = mindspore::kernel::GetDtypeNbyte(TypeIdToString(data_type, true));
     shape_size_ = input_shape_shape.size();
-    size_t input_x_size =
-      std::accumulate(input_x_shape.begin(), input_x_shape.end(), data_type_size_, std::multiplies<size_t>());
+    size_t input_x_size = data_type_size_ * SizeOf(input_x_shape);
     input_size_list_.push_back(input_x_size);
-    size_t input_shape_size =
-      std::accumulate(input_shape_shape.begin(), input_shape_shape.end(), sizeof(S), std::multiplies<size_t>());
+    size_t input_shape_size = sizeof(S) * SizeOf(input_shape_shape);
     input_size_list_.push_back(input_shape_size);
-    size_t output_size =
-      std::accumulate(output_shape.begin(), output_shape.end(), data_type_size_, std::multiplies<size_t>());
+    size_t output_size = data_type_size_ * SizeOf(output_shape);
     output_size_list_.push_back(output_size);
     is_need_retrieve_output_shape_ = true;
     return true;

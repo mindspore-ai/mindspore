@@ -114,9 +114,12 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
     auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
     auto input_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input");
-    if (is_null_input_ || IsDynamic(shape_signed)) {
+    if (is_null_input_) {
       InitSizeLists();
       return true;
     }
