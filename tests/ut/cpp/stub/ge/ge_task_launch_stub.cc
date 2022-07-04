@@ -35,7 +35,8 @@ bool HcclAdapter::GenTask(const AnfNodePtr &, HcclDataType, std::vector<HcclTask
 int64_t HcclAdapter::CalcWorkspaceSize(const AnfNodePtr &, HcclDataType) const { return 0; }
 void *HcclAdapter::GetHcclOpsKernelInfoStore() const { return nullptr; }
 std::string HcclAdapter::GetHcclType(const AnfNodePtr &) { return ""; }
-HcclResult HcclAdapter::HcclBroadcast(void *, uint64_t, HcclDataType, uint32_t, aclrtStream) const {
+HcclResult HcclAdapter::HcclBroadcast(void *, uint64_t, HcclDataType, uint32_t, aclrtStream,
+                                      const std::string &) const {
   return HCCL_SUCCESS;
 }
 HcclResult HcclAdapter::HcclAllReduce(void *, void *, uint64_t, HcclDataType, HcclReduceOp, aclrtStream,
