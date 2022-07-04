@@ -59,10 +59,12 @@ class TensorInplace : public InplaceAssignBuilder {
  public:
   explicit TensorInplace(const std::string &name = "tensor_inplace") : InplaceAssignBuilder(name) {}
   ~TensorInplace() override = default;
+  bool Run(const FuncGraphPtr &func_graph) override;
+
+ protected:
   void SetTargetAttrs(const CNodePtr &cnode) override {
     SetNodeAttrSafely("enable_auto_inplace", MakeValue(true), cnode);
   }
-  bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_TENSOR_INPLACE_H_
