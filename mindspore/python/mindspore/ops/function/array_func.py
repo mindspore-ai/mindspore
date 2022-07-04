@@ -1294,8 +1294,7 @@ def scatter_min(input_x, indices, updates):
         >>> input_x = Parameter(Tensor(np.zeros((2, 3)), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([1, 0]), mindspore.int32)
         >>> update = Tensor(np.arange(6).reshape((2, 3)), mindspore.float32)
-        >>> scatter_min = ops.ScatterMin()
-        >>> output = scatter_min(input_x, indices, update)
+        >>> output = ops.scatter_min(input_x, indices, update)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]]
@@ -1346,8 +1345,7 @@ def scatter_div(input_x, indices, updates):
         >>> input_x = Parameter(Tensor(np.array([[6.0, 6.0, 6.0], [2.0, 2.0, 2.0]]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> updates = Tensor(np.array([[2.0, 2.0, 2.0], [2.0, 2.0, 2.0]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
-        >>> output = scatter_div(input_x, indices, updates)
+        >>> output = ops.scatter_div(input_x, indices, updates)
         >>> print(output)
         [[3. 3. 3.]
          [1. 1. 1.]]
@@ -1364,8 +1362,7 @@ def scatter_div(input_x, indices, updates):
         >>> indices = Tensor(np.array([[0, 1], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
-        >>> output = scatter_div(input_x, indices, updates)
+        >>> output = ops.scatter_div(input_x, indices, updates)
         >>> print(output)
         [[105. 105. 105.]
          [  3.   3.   3.]]
@@ -1382,8 +1379,7 @@ def scatter_div(input_x, indices, updates):
         >>> indices = Tensor(np.array([[1, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1.0, 1.0, 1.0], [3.0, 3.0, 3.0]],
         ...                            [[5.0, 5.0, 5.0], [7.0, 7.0, 7.0]]]), mindspore.float32)
-        >>> scatter_div = ops.ScatterDiv()
-        >>> output = scatter_div(input_x, indices, updates)
+        >>> output = ops.scatter_div(input_x, indices, updates)
         >>> print(output)
         [[35. 35. 35.]
          [ 9.  9.  9.]]
