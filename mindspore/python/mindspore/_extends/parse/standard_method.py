@@ -1874,7 +1874,7 @@ def unsorted_segment_prod(x, segment_ids, num_segments):
 
 def nonzero(x):
     """
-    Return a tensor of the positions of all non-zero values.
+    Return a Tensor of the positions of all non-zero values.
     """
     return F.nonzero(x)
 

@@ -3749,10 +3749,10 @@ class Tensor(Tensor_):
 
     def nonzero(self):
         """
-        Return a tensor of the positions of all non-zero values.
+        Return a Tensor of the positions of all non-zero values.
 
         Returns:
-            Tensor, a 2-D tensor, containing the positions of all non-zero values of the input.
+            Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
         Supported Platforms:
             ``GPU``
