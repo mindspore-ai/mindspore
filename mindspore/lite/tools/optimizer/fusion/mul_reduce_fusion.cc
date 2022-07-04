@@ -26,6 +26,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/lite_exporter/fetch_content.h"
 #include "ops/fusion/mat_mul_fusion.h"
+#include "ops/fusion/mul_fusion.h"
 #include "ops/squeeze.h"
 #include "ops/op_name.h"
 #include "nnacl/op_base.h"
@@ -426,18 +427,24 @@ int MulReduceFusion::ProcessOp(const FuncGraphPtr &func_graph, const CNodePtr &c
   if (!is_meet_cond) {
     return lite::RET_OK;
   }
+  bool need_post_mul = false;
   if (reduce_mode_ == ReduceMode::Reduce_Mean) {
     auto ret = ProcessGather(func_graph);
     if (ret == lite::RET_NOT_SUPPORT) {
-      return lite::RET_OK;
-    }
-    if (ret != lite::RET_OK) {
+      need_post_mul = true;
+    } else if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Process Gather op failed.";
       return lite::RET_ERROR;
     }
   }
   if (!keep_dim_) {
     auto ret = GenerateSqueeze(func_graph, cnode);
+    if (ret != lite::RET_OK) {
+      return lite::RET_ERROR;
+    }
+  }
+  if (need_post_mul) {
+    auto ret = GenerateMul(func_graph, cnode);
     if (ret != lite::RET_OK) {
       return lite::RET_ERROR;
     }
@@ -591,6 +598,31 @@ int MulReduceFusion::GenerateSqueeze(const FuncGraphPtr &func_graph, const CNode
   return lite::RET_OK;
 }
 
+int MulReduceFusion::GenerateMul(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(cnode != nullptr);
+  if (coeff_ == 1.0f) {
+    return lite::RET_OK;
+  }
+  auto manager = func_graph->manager();
+  MS_CHECK_TRUE_MSG(manager != nullptr, lite::RET_ERROR, "Manager is a nullptr.");
+  auto mul = std::make_shared<ops::MulFusion>();
+  MS_CHECK_TRUE_MSG(mul != nullptr, lite::RET_ERROR, "Mul create failed.");
+  auto mul_prim = mul->GetPrim();
+  MS_CHECK_TRUE_MSG(mul_prim != nullptr, lite::RET_ERROR, "Mul create failed.");
+  auto old_mul_op = cnode->input(1);
+  MS_ASSERT(old_mul_op != nullptr);
+  auto second_input_node =
+    BuildFloatValueParameterNode(func_graph, coeff_, old_mul_op->fullname_with_scope() + "/scale");
+  MS_CHECK_TRUE_MSG(second_input_node != nullptr, lite::RET_ERROR, "Mul second-input create failed.");
+  auto mul_cnode = func_graph->NewCNode(mul_prim, {cnode, second_input_node});
+  MS_CHECK_TRUE_MSG(mul_cnode != nullptr, lite::RET_ERROR, "Mul-cnode create failed.");
+  mul_cnode->set_fullname_with_scope(old_mul_op->fullname_with_scope());
+  auto success = manager->Replace(cnode, mul_cnode);
+  MS_CHECK_TRUE_MSG(success, lite::RET_ERROR, "Replace old node failed.");
+  return lite::RET_OK;
+}
+
 bool MulReduceFusion::CheckBasicCond(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (cnode->size() < kInputSizeThree) {
@@ -712,7 +744,7 @@ bool MulReduceFusion::CheckShapeCond(const CNodePtr &cnode) {
     transpose_a_ = false;
     transpose_b_ = true;
     MS_ASSERT(mul_in0_shape.back() != 0);
-    coeff_ = 1.0f / mul_in0_shape.back();
+    coeff_ = 1.0f / static_cast<float>(mul_in0_shape.back());
     return true;
   }
   if (axis_ == kReciprocalSecondIndex) {
@@ -724,7 +756,7 @@ bool MulReduceFusion::CheckShapeCond(const CNodePtr &cnode) {
     transpose_a_ = true;
     transpose_b_ = false;
     MS_ASSERT(mul_in0_shape[mul_in0_shape.size() - C2NUM] != 0);
-    coeff_ = 1.0f / mul_in0_shape[mul_in0_shape.size() - C2NUM];
+    coeff_ = 1.0f / static_cast<float>(mul_in0_shape[mul_in0_shape.size() - C2NUM]);
     return true;
   }
   return false;
