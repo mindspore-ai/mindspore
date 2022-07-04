@@ -18,7 +18,7 @@ mindspore.ops.dropout2d
 
     **返回：**
 
-    Tensor， 具有与输入 `x` 相同的形状和数据类型。
+    Tensor，具有与输入 `x` 相同的形状和数据类型。
     掩码（Tensor），形状与 `x` 相同，数据类型为bool。
 
     **异常：**
