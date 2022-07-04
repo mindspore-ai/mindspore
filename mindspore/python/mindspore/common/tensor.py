@@ -3644,21 +3644,18 @@ class Tensor(Tensor_):
         validator.check_is_int(seed, 'seed')
         return tensor_operator_registry.get('bernoulli')(self, p, seed)
 
-    def random_categorical(self, num_sample=None, seed=0, dtype=mstype.int64):
+    def random_categorical(self, num_sample, seed=0, dtype=mstype.int64):
         r"""
         Generates random samples from a given categorical distribution tensor.
 
         Args:
+            num_sample (int): Number of sample to be drawn. Only constant values is allowed.
+            seed (int): Random seed.Only constant values is allowed. Default: 0
             dtype (mindspore.dtype): The type of output. Its value must be one of mindspore.int16,
                 mindspore.int32 and mindspore.int64. Default: mindspore.int64.
 
-        Inputs:
-            - **logits** (Tensor) - The input tensor. 2-D Tensor with shape [batch_size, num_classes].
-            - **num_sample** (int) - Number of sample to be drawn. Only constant values is allowed.
-            - **seed** (int) - Random seed. Default: 0. Only constant values is allowed.
-
-        Outputs:
-            - **output** (Tensor) - The output Tensor with shape [batch_size, num_samples].
+        Returns:
+            Tensor, the output Tensor with shape :math:`(batch_size, num_samples)`.
 
         Raises:
             TypeError: If `dtype` is not one of the following: mindspore.int16, mindspore.int32, mindspore.int64.
