@@ -49,6 +49,7 @@ class SingleOpInferSession : public InferSession {
   device::DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) const;
   void CopyInputs(const std::vector<tensor::TensorPtr> inputs);
+  std::vector<AnfNodePtr> GetGraphDataInputs() const;
   void CopyOutputs(std::vector<tensor::TensorPtr> *outputs);
 
  private:

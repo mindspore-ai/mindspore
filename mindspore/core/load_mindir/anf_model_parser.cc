@@ -1441,6 +1441,10 @@ bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph
         outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_bool(attr_proto));
         break;
       }
+      case mind_ir::AttributeProto_AttributeType_INT32: {
+        outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_int32_t(attr_proto));
+        break;
+      }
       default:
         MS_LOG(ERROR) << "Obtain attr for graph has not support input type: " << attr_type << "!";
         return false;

@@ -26,11 +26,13 @@
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
 #include "include/common/utils/utils.h"
+#include "mindspore/ccsrc/kernel/kernel.h"
 
 namespace mindspore {
 namespace infer {
 using DataType = std::pair<TypeId, std::string>;
 void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
+void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensorPtr> &inputs);
 }  // namespace infer
 }  // namespace mindspore
 

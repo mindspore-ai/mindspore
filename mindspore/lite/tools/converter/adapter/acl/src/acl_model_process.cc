@@ -15,7 +15,11 @@
  */
 
 #include "tools/converter/adapter/acl/src/acl_model_process.h"
+#ifdef ENABLE_CLOUD_FUSION_INFERENCE
+#include "src/extendrt/kernel/ascend/model/acl_env_guard.h"
+#else
 #include "src/runtime/kernel/ascend/src/acl_env_guard.h"
+#endif
 #include "src/common/log_util.h"
 #include "acl/acl.h"
 #include "acl/acl_rt.h"

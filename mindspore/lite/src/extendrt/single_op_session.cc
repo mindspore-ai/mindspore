@@ -52,16 +52,19 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
   for (const auto &kernel_node : kernel_nodes) {
     mindspore::infer::SetKernelInfo(kernel_node);
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    std::shared_ptr<kernel::CpuKernelMod> cpu_kernel_mod =
-      kernel::Factory<kernel::CpuKernelMod>::Instance().Create(kernel_name);
+    std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
     MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
     auto args = kernel::AbstractArgsFromCNode(kernel_node);
-    auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
+    if (kernel_mod == nullptr) {
+      MS_LOG(EXCEPTION) << "Kernel mod is nullptr, kernel name: " << kernel_name;
+    }
+    mindspore::infer::CopyInputWeights(kernel_node, args.inputs);
+    auto ret = kernel_mod->Init(args.op, args.inputs, args.outputs);
     MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
     if (!ret) {
       MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
     }
-    if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
+    if (kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
         kernel::KRET_RESIZE_FAILED) {
       MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
     }
@@ -90,10 +93,10 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
       tensor_size = std::max(tensor_size, type_size);
       (void)output_size_list.emplace_back(tensor_size);
     }
-    cpu_kernel_mod->SetInputSizeList(input_size_list);
-    cpu_kernel_mod->SetOutputSizeList(output_size_list);
+    kernel_mod->SetInputSizeList(input_size_list);
+    kernel_mod->SetOutputSizeList(output_size_list);
 
-    AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
+    AnfAlgo::SetKernelMod(kernel_mod, kernel_node.get());
   }
 
   this->AssignKernelGraphAddress(kernel_graph_);
@@ -284,9 +287,29 @@ device::DeviceAddressPtr SingleOpInferSession::CreateDeviceAddress(void *device_
   return std::make_shared<InferDeviceAddress>(device_ptr, device_size, format, type_id);
 }
 
+std::vector<AnfNodePtr> SingleOpInferSession::GetGraphDataInputs() const {
+  MS_EXCEPTION_IF_NULL(kernel_graph_);
+  std::vector<AnfNodePtr> data_inputs;
+  auto inputs = kernel_graph_->inputs();
+  for (auto input : inputs) {
+    if (input->isa<Parameter>()) {
+      auto parameter = input->cast<ParameterPtr>();
+      if (parameter != nullptr && !parameter->has_default()) {
+        data_inputs.push_back(input);
+      }
+    }
+  }
+  return data_inputs;
+}
+
 void SingleOpInferSession::CopyInputs(const std::vector<tensor::TensorPtr> inputs) {
   MS_EXCEPTION_IF_NULL(kernel_graph_);
-  auto graph_inputs = kernel_graph_->inputs();
+  auto graph_inputs = GetGraphDataInputs();
+  if (graph_inputs.size() != inputs.size()) {
+    MS_LOG(ERROR) << "Graph inputs size[" << graph_inputs.size() << "] is not equal to User input size[ "
+                  << inputs.size() << "].";
+    return;
+  }
   for (size_t i = 0; i < graph_inputs.size(); i++) {
     auto input = inputs[i];
     auto graph_input = graph_inputs[i];

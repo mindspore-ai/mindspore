@@ -35,6 +35,9 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
 constexpr auto kParamDynamic = "dynamic";
+constexpr auto kCustomAscendInputNum = 3;
+constexpr auto kNameCustomAscend = "CustomAscend";
+constexpr auto kCustomTypeAscend = "acl_build";
 
 bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
   auto input_node = common::AnfAlgo::VisitKernel(kernel_node->input(input_index + 1), 0).first;
@@ -326,8 +329,9 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   GetOutputFormat(kernel_node, &output_formats);
   builder->SetOutputsDeviceType(output_types);
   builder->SetOutputsFormat(output_formats);
-  //   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
-
+  if (op_name == kNameCustomAscend) {
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
+  }
   // check reg info if kernel_attr is not null
   if (kernel_attr != nullptr) {
     std::vector<std::shared_ptr<KernelBuildInfo>> kernel_info_list;
@@ -465,6 +469,10 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
       UpdateCustomKernelBuildInfo(kernel_node, true);
       return {};
     }
+    if (tp == kCustomTypeAscend) {
+      UpdateCustomKernelBuildInfo(kernel_node, false);
+      return {};
+    }
     // If Custom op has not set reg info, then infer info from inputs
     if (mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kCPU) == nullptr) {
       MS_LOG(WARNING) << "Not find operator information for Custom operator[" << op_name << "]. "
@@ -534,6 +542,50 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
   auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
   if (msg.empty()) return;
   MS_EXCEPTION(etype) << msg;
+}
+
+void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensorPtr> &inputs) {
+  std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  if (kernel_name == kNameCustomAscend) {
+    auto node_input_size = kernel_node->inputs().size();
+    if (node_input_size < kCustomAscendInputNum) {
+      MS_LOG(ERROR) << "Input num of custom ascend kernel should larger than " << (kCustomAscendInputNum - 1)
+                    << ", real num is " << node_input_size;
+      return;
+    }
+    if (node_input_size != inputs.size() + 1) {
+      MS_LOG(ERROR) << "Input num of custom ascend kernel [" << node_input_size << "]"
+                    << " is not equal to kernel tensor size[" << (inputs.size() + 1) << "].";
+      return;
+    }
+    auto om_input = kernel_node->input(node_input_size - 1);
+    if (!om_input->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Om input is not parameter.";
+      return;
+    }
+    ParameterPtr om_param = om_input->cast<ParameterPtr>();
+    if (om_param == nullptr || !om_param->has_default()) {
+      MS_LOG(ERROR) << "Om param is invalid, val= " << om_param;
+      return;
+    }
+    auto tensor = std::static_pointer_cast<tensor::Tensor>(om_param->default_param());
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "Tensor is nullptr.";
+      return;
+    }
+    if (tensor->data_c() == nullptr || tensor->Size() == 0) {
+      MS_LOG(ERROR) << "Tensor data is invalid.";
+      return;
+    }
+    auto new_addr = malloc(tensor->Size());
+    if (new_addr == nullptr) {
+      MS_LOG(ERROR) << "Malloc failed, size= " << tensor->Size();
+      return;
+    }
+    memcpy(new_addr, tensor->data_c(), tensor->Size());
+    kernel::AddressPtr addr_ptr = std::make_shared<kernel::Address>(new_addr, tensor->Size());
+    inputs[inputs.size() - 1]->SetData(addr_ptr);
+  }
 }
 }  // namespace infer
 }  // namespace mindspore
