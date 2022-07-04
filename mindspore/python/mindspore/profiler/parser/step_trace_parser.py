@@ -177,6 +177,7 @@ class BaseStepTraceParser:
         if not self._header:
             self._header = list(row_data.keys())
             log.info("Profiler step trace header: %s", str(self._header))
+        self._header.extend([reduce_col for reduce_col in row_data if reduce_col not in self._header])
         row_data_list = [row_data.get(header_name, 0) for header_name in self._header]
         self._result.append(row_data_list)
 
@@ -523,11 +524,12 @@ class AscendStepTraceParser(BaseStepTraceParser):
         """This function can not support multi graph scenario."""
         tag_map_task = {}
         for ts_track in ts_tracks:
-            tag_map_task[ts_track['tagId']] = combine_stream_task_id(ts_track['streamId'], ts_track['taskId'])
+            unique_id = combine_stream_task_id(ts_track.get('streamId'), ts_track.get('taskId'))
+            tag_map_task[unique_id] = ts_track.get('tagId')
 
         tag_map_op = {}
-        for tag, task_id in tag_map_task.items():
-            tag_map_op[tag] = self._get_real_point_op_name(tag, task_id, task_id_op_name_dict)
+        for task_id, tag in tag_map_task.items():
+            tag_map_op[task_id] = self._get_real_point_op_name(tag, task_id, task_id_op_name_dict)
         return tag_map_op
 
     def _get_real_point_op_name(self, tag, profiling_task_id, task_id_op_name_dict):
@@ -627,7 +629,8 @@ class AscendStepTraceParser(BaseStepTraceParser):
         elif tag_id == PointTag.ITER_END.value:
             step_trace['end'] = timestamp
         elif self._is_all_reduce_tag(tag_id):
-            step_trace['reduce'][stream_id].append((tag_id, timestamp))
+            unique_id = combine_stream_task_id(ts_track.get('streamId'), ts_track.get('taskId'))
+            step_trace['reduce'][stream_id].append((unique_id, timestamp))
 
     def _get_single_reduce_event_info(self, field_name, start_point, end_point):
         """
@@ -642,7 +645,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
             dict, reduce info.
         """
         reduce_info = {}
-        if end_point[0] - start_point[0] != 1 or start_point[0] % 2:
+        if self._tag_map.get(end_point[0]) != self._tag_map.get(start_point[0]):
             log.warning("Unmatched reduce event <%s, %s>.", start_point, end_point)
             return reduce_info
         op_type = self._tag_map.get(start_point[0])
