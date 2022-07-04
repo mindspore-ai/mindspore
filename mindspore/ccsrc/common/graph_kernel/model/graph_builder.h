@@ -31,11 +31,15 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Mul(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Mul", {lhs, rhs}); }
   NodePtr Div(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("RealDiv", {lhs, rhs}); }
   NodePtr Greater(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Greater", {lhs, rhs}); }
+  NodePtr Less(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Less", {lhs, rhs}); }
   NodePtr GreaterEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("GreaterEqual", {lhs, rhs}); }
   NodePtr LessEqual(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LessEqual", {lhs, rhs}); }
   NodePtr Equal(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Equal", {lhs, rhs}); }
   NodePtr LogicalOr(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("LogicalOr", {lhs, rhs}); }
   NodePtr Assign(const NodePtr &lhs, const NodePtr &rhs) const { return Emit("Assign", {lhs, rhs}); }
+  NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
+    return Emit("Select", {cond, lhs, rhs});
+  }
 
   NodePtr Neg(const NodePtr &input) const { return Emit("Neg", {input}); }
   NodePtr Exp(const NodePtr &input) const { return Emit("Exp", {input}); }

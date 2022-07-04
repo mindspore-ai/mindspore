@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <vector>
+#include <limits>
 
 #include "common/graph_kernel/expanders/op_desc_registry.h"
 #include "ir/dtype.h"
@@ -38,10 +39,25 @@ class Softplus : public OpDesc {
 
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
+    constexpr double num_two = 2.0;
+    auto threshold = log(std::numeric_limits<double>::epsilon()) + num_two;
+    if (input_x->type == kNumberTypeFloat16) {
+      threshold = log(std::numeric_limits<float>::epsilon()) + num_two;
+    }
+    // if x > -t  result = x
+    // if x < t result = exp(x)
+    // else result = log(1 + exp(x))
     auto exp_x = gb.Exp(input_x);
+    auto const_threshold = gb.Const(threshold, input_x->type);
+    auto const_neg_threshold = gb.Const(-threshold, input_x->type);
     auto const_one = gb.Const(1.0, input_x->type);
     auto exp_x_add_one = gb.Add(exp_x, const_one);
     auto result = gb.Log(exp_x_add_one);
+    auto greater_neg_t = gb.Greater(input_x, const_neg_threshold);
+    result = gb.Select(greater_neg_t, input_x, result);
+    auto less_t = gb.Less(input_x, const_threshold);
+    result = gb.Select(less_t, exp_x, result);
+
     return {result};
   }
 };
