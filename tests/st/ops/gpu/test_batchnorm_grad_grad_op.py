@@ -33,8 +33,8 @@ class BatchnormGradGradNet(nn.Cell):
         self.bn_grad_gad = BatchNormGradGrad(is_training=is_training, epsilon=epsilon, data_format=data_format)
 
     def construct(self, dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias):
-        ddy, dx, dscale = self.bn_grad_gad(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias)
-        return ddy, dx, dscale
+        ddy, dx, dscale = self.bn_grad_gad(x, dy, scale, mean, variance, dout_dx, dout_dscale, dout_dbias)
+        return dx, ddy, dscale
 
 
 np_type_fp32 = np.float32

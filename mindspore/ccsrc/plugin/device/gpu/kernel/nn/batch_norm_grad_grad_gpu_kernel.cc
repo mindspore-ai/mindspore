@@ -71,8 +71,8 @@ bool BatchNormGradGradGpuKernelMod::Execute(const std::vector<AddressPtr> &input
   CHECK_KERNEL_WORKSPACE_SIZE(
     workspace.size(), is_training_ ? kBatchNormGradGradTrainingWorkSpacesNum : kBatchNormGradGradInferenceWorkSpacesNum,
     kernel_name_);
-  auto dy = GetDeviceAddress<T>(inputs, kIndex0);
-  auto x = GetDeviceAddress<T>(inputs, kIndex1);
+  auto x = GetDeviceAddress<T>(inputs, kIndex0);
+  auto dy = GetDeviceAddress<T>(inputs, kIndex1);
   auto scale = GetDeviceAddress<float>(inputs, kIndex2);
   auto mean = GetDeviceAddress<float>(inputs, kIndex3);
   auto variance = GetDeviceAddress<float>(inputs, kIndex4);
@@ -80,8 +80,8 @@ bool BatchNormGradGradGpuKernelMod::Execute(const std::vector<AddressPtr> &input
   auto dout_dscale = GetDeviceAddress<float>(inputs, kIndex6);
   auto dout_dbias = GetDeviceAddress<float>(inputs, kIndex7);
 
-  auto ddy = GetDeviceAddress<T>(outputs, kIndex0);
-  auto dx = GetDeviceAddress<T>(outputs, kIndex1);
+  auto dx = GetDeviceAddress<T>(outputs, kIndex0);
+  auto ddy = GetDeviceAddress<T>(outputs, kIndex1);
   auto dscale = GetDeviceAddress<float>(outputs, kIndex2);
 
   auto inv_std = GetDeviceAddress<float>(workspace, kIndex0);
@@ -114,8 +114,8 @@ int BatchNormGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (ret != KRET_OK) {
     return ret;
   }
-  auto dy_shape = inputs[kIndex0]->GetShapeVector();
-  auto x_shape = inputs[kIndex1]->GetShapeVector();
+  auto x_shape = inputs[kIndex0]->GetShapeVector();
+  auto dy_shape = inputs[kIndex1]->GetShapeVector();
   auto scale_shape = inputs[kIndex2]->GetShapeVector();
   auto mean_shape = inputs[kIndex3]->GetShapeVector();
   auto variance_shape = inputs[kIndex4]->GetShapeVector();

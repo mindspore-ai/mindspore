@@ -64,20 +64,20 @@ abstract::TupleShapePtr BatchNormGradGradInferShape(const PrimitivePtr &primitiv
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kBatchNormGradGradInputsNum, prim_name);
-  BaseShapePtr dy_shape = input_args[kInputIndex0]->BuildShape();
-  BaseShapePtr x_shape = input_args[kInputIndex1]->BuildShape();
+  BaseShapePtr x_shape = input_args[kInputIndex0]->BuildShape();
+  BaseShapePtr dy_shape = input_args[kInputIndex1]->BuildShape();
   BaseShapePtr scale_shape = input_args[kInputIndex2]->BuildShape();
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{dy_shape, x_shape, scale_shape});
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, dy_shape, scale_shape});
 }
 
 TuplePtr BatchNormGradGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kBatchNormGradGradInputsNum, prim_name);
-  TypePtr dy_type = input_args[kInputIndex0]->BuildType();
-  TypePtr x_type = input_args[kInputIndex1]->BuildType();
+  TypePtr x_type = input_args[kInputIndex0]->BuildType();
+  TypePtr dy_type = input_args[kInputIndex1]->BuildType();
   TypePtr scale_type = input_args[kInputIndex2]->BuildType();
-  return std::make_shared<Tuple>(std::vector<TypePtr>{dy_type, x_type, scale_type});
+  return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, dy_type, scale_type});
 }
 
 AbstractBasePtr BatchNormGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

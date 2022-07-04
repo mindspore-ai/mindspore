@@ -770,7 +770,7 @@ def get_bprop_batch_norm_grad(self):
     grad_op = G.BatchNormGradGrad(self.is_training, self.epsilon, self.data_format)
 
     def bprop(dy, x, scale, mean, variance, reserve, out, dout):
-        ddy, dx, dscale = grad_op(dy, x, scale, mean, variance, dout[0], dout[1], dout[2])
+        dx, ddy, dscale = grad_op(x, dy, scale, mean, variance, dout[0], dout[1], dout[2])
         return ddy, dx, dscale, zeros_like(mean), zeros_like(variance), zeros_like(reserve)
 
     return bprop
