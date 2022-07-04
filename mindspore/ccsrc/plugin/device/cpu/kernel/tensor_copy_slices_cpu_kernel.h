@@ -34,6 +34,44 @@ class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override {
+    static std::vector<KernelAttr> support_list = {
+      KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeBool),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat64)};
+    return support_list;
+  }
+
  private:
   TypeId data_type_;
   size_t offset_{0};
@@ -41,6 +79,7 @@ class TensorCopySlicesCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> update_shape_;
   std::vector<int64_t> output_shape_;
+  void FillSlice(std::vector<int64_t> *begin, std::vector<int64_t> *end);
 };
 }  // namespace kernel
 }  // namespace mindspore

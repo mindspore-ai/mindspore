@@ -34,6 +34,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   cnode_ptr_ = kernel_node;
+  constexpr size_t kInputNum2 = 2;
   ClearVectors();
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (input_shape.size() > kSliceGradMaxInputShapeSize) {
@@ -44,6 +45,7 @@ void SliceGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num == kSliceGradDynamicInputsNum || input_num == kStridedSliceGradDynamicInputsNum) {
+    strides_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputNum2);
     return;
   }
   // in the case that begin, end, size, stride are const value.
@@ -97,14 +99,21 @@ void SliceGradCpuKernelMod::ClearVectors() {
 
 void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   auto output_len = output_shape_.size();
+  auto strides_len = strides_.size();
   if (output_len < expand_dims) {
     for (size_t i = 0; i < expand_dims - output_len; ++i) {
       (void)output_shape_.insert(output_shape_.begin(), 1);
+    }
+  }
+
+  if (strides_len < expand_dims) {
+    for (size_t i = 0; i < expand_dims - strides_len; ++i) {
       (void)begin_.insert(begin_.begin(), 0);
       (void)strides_.insert(strides_.begin(), 1);
       (void)end_.insert(end_.begin(), 1);
     }
   }
+
   for (size_t i = 0; i < expand_dims; ++i) {
     if (SignOfStride(i)) {
       int ax = (end_[i] - begin_[i]) * SignOfStride(i);
@@ -116,16 +125,17 @@ void SliceGradCpuKernelMod::ExpandAllMemberDims(size_t expand_dims) {
   }
 }
 
+template <typename T>
 void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &inputs) {
   auto cnode = cnode_ptr_.lock();
   ClearVectors();
   output_shape_ = common::AnfAlgo::GetOutputInferShape(cnode, 0);
   std::string kernel_name = common::AnfAlgo::GetCNodeName(cnode);
   auto begin_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 2);
-  auto begin_ptr = reinterpret_cast<int32_t *>(inputs[2]->addr);
-  std::vector<int32_t> begin{begin_ptr, begin_ptr + begin_shape[0]};
+  auto begin_ptr = reinterpret_cast<T *>(inputs[2]->addr);
+  std::vector<T> begin{begin_ptr, begin_ptr + begin_shape[0]};
   (void)std::transform(begin.begin(), begin.end(), std::back_inserter(begin_),
-                       [](const int32_t &value) { return value; });
+                       [](const T &value) { return static_cast<int>(value); });
   if (kernel_name == prim::kPrimStridedSliceGrad->name()) {  // StridedSliceGrad
     auto end_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 3);
     auto stride_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 4);
@@ -137,15 +147,15 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                         << ", and the dimension of 'strides': " << stride_shape.size();
     }
 
-    auto end_ptr = reinterpret_cast<int32_t *>(inputs[3]->addr);
-    auto strides_ptr = reinterpret_cast<int32_t *>(inputs[4]->addr);
+    auto end_ptr = reinterpret_cast<T *>(inputs[3]->addr);
+    auto strides_ptr = reinterpret_cast<T *>(inputs[4]->addr);
 
-    std::vector<int32_t> end{end_ptr, end_ptr + end_shape[0]};
-    std::vector<int32_t> strides{strides_ptr, strides_ptr + stride_shape[0]};
+    std::vector<T> end{end_ptr, end_ptr + end_shape[0]};
+    std::vector<T> strides{strides_ptr, strides_ptr + stride_shape[0]};
     (void)std::transform(strides.begin(), strides.end(), std::back_inserter(strides_),
-                         [](const int32_t &value) { return value; });
-    (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const int32_t &value) { return value; });
-    if (strides_.size() != end_.size() || strides_.size() != output_shape_.size()) {
+                         [](const T &value) { return static_cast<int>(value); });
+    (void)std::transform(end.begin(), end.end(), std::back_inserter(end_), [](const T &value) { return value; });
+    if (strides_.size() != end_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', the dimension of 'strides|end|output' must be equal, but got the dimension of "
                         << "'strides': " << strides_.size() << ", the dimension of 'end': " << end_.size()
@@ -159,10 +169,10 @@ void SliceGradCpuKernelMod::InitParams(const std::vector<kernel::AddressPtr> &in
                         << "', the dimensions of 'begin', 'end' must be 1, but got the dimension of 'begin': "
                         << begin_shape.size() << ", and the dimension of 'end': " << size_shape.size();
     }
-    auto size_ptr = reinterpret_cast<int32_t *>(inputs[3]->addr);
-    std::vector<int32_t> size{size_ptr, size_ptr + size_shape[0]};
+    auto size_ptr = reinterpret_cast<T *>(inputs[3]->addr);
+    std::vector<T> size{size_ptr, size_ptr + size_shape[0]};
     (void)std::transform(size.begin(), size.end(), std::back_inserter(size_),
-                         [](const int32_t &value) { return value; });
+                         [](const T &value) { return static_cast<int>(value); });
     if (size_.size() != output_shape_.size() || begin_.size() != output_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
                         << "', 'begin|size|input' size must be equal, but got 'begin' size: " << begin_.size()
@@ -209,7 +219,11 @@ bool SliceGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
 
   // init params for not const inputs
   if (inputs.size() == kSliceGradDynamicInputsNum || inputs.size() == kStridedSliceGradDynamicInputsNum) {
-    InitParams(inputs);
+    if (strides_dtype_ == kNumberTypeInt32) {
+      InitParams<int32_t>(inputs);
+    } else {
+      InitParams<int64_t>(inputs);
+    }
   }
   auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
@@ -439,8 +453,10 @@ std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeFloat32),
       KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
@@ -451,12 +467,42 @@ std::vector<KernelAttr> SliceGradCpuKernelMod::GetOpSupport() {
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
         .AddOutputAttr(kNumberTypeFloat64),
       KernelAttr()
         .AddInputAttr(kNumberTypeBool)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
         .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeBool),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat64),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeBool)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
         .AddOutputAttr(kNumberTypeBool)}}};
 
   auto iter = support_list_map.find(kernel_type_);

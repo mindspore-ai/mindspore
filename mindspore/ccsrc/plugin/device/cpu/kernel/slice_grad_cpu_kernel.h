@@ -55,6 +55,7 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
                         const std::vector<kernel::AddressPtr> &outputs, size_t out_offset, size_t copy_num,
                         int id) const;
 
+  template <typename T>
   void InitParams(const std::vector<kernel::AddressPtr> &inputs);
 
   void ClearVectors();
@@ -80,6 +81,7 @@ class SliceGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   ShapeVector output_shape_;
   std::vector<size_t> output_element_num_;
   TypeId dtype_{kTypeUnknown};
+  TypeId strides_dtype_{kNumberTypeInt32};
   std::string kernel_type_{kUnknown};
 };
 }  // namespace kernel

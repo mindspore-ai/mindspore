@@ -703,6 +703,15 @@ def normalize_stop(stop, dim_size):
 
 
 @constexpr
+def get_step_from_slice(input_slice):
+    """get step in a slice."""
+    step = input_slice.step
+    if step is None:
+        step = 1
+    return step
+
+
+@constexpr
 def normalize_slice(input_slice, dim_size):
     """Normalizes start, stop, step in a slice."""
     start = normalize_start(input_slice.start, dim_size)

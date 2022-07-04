@@ -104,6 +104,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSspaddmm = prim::kPrimSspaddmm->name();
   static const auto &kBartlettWindow = prim::kPrimBartlettWindow->name();
   static const auto &kExtractGlimpse = prim::kPrimExtractGlimpse->name();
+  static const auto &kTensorCopySlices = prim::kPrimTensorCopySlices->name();
   static const auto &kResizeNearestNeighborGrad = prim::kPrimResizeNearestNeighborGrad->name();
 
   // Common host depends.
@@ -133,6 +134,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kDropoutGenMask, ShapeSet{0}},
                                          {kStridedSlice, ShapeSet{1, 2, 3}},
                                          {kStridedSliceGrad, ShapeSet{1, 2, 3, 4}},
+                                         {kTensorCopySlices, ShapeSet{2, 3, 4}},
                                          {kTile, ShapeSet{1}},
                                          {kTopK, ShapeSet{1}},
                                          {kReshape, ShapeSet{1}},
