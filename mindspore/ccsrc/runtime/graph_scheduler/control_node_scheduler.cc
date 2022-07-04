@@ -621,6 +621,8 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
 
   LinkControlArrowForLoopCountActor(actor_set, graph_compiler_info);
 
+  LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
+
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
 
   // At the end of the link, if the exit actor of the kernel graph has no output arrow, you need to link the control
@@ -1473,6 +1475,67 @@ void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &
         }
         LinkDataArrowByKernelGraph(kernel_graph, entrance_actor, parser);
       }
+    }
+  }
+}
+
+void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
+                                                       const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
+
+  for (const auto &custom_actor : actor_set->custom_actors_) {
+    MS_EXCEPTION_IF_NULL(custom_actor);
+    auto kernel = custom_actor->kernel().lock();
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfUtils::GetCustomActorType(kernel) != kInfer) {
+      continue;
+    }
+    // Kernel in depends form map should link data arrow for infer shape.
+    auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+    MS_EXCEPTION_IF_NULL(base_node);
+    auto dynamic_shape_depends = abstract::GetDependsFormMap(base_node);
+    for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
+      auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
+      MS_EXCEPTION_IF_NULL(input_node);
+      KernelWithIndex from_kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+      const AnfNodePtr real_input_node = from_kernel_with_index.first;
+      MS_EXCEPTION_IF_NULL(real_input_node);
+      if (real_input_node->isa<ValueNode>()) {
+        continue;
+      }
+      auto graph = AnfAlgo::FetchKernelGraph(real_input_node);
+      MS_EXCEPTION_IF_NULL(graph);
+      if (!parser->IsControlFlowDataArrow(graph, real_input_node)) {
+        continue;
+      }
+
+      // Link data arrow from entrance actor or stack actor to infer shape custom actor.
+      const auto &front_node_with_index = GetFrontNodeByKernelGraph(real_input_node, graph.get());
+      MS_EXCEPTION_IF_NULL(front_node_with_index.first);
+      AbstractActor *from_base_actor = nullptr;
+      if (parser->IsCallInputKernelGraph(graph.get())) {
+        from_base_actor = FetchActor(parser->FetchGroupNameByKernelGraph(graph) + kStackActorNameSuffix);
+        MS_EXCEPTION_IF_NULL(from_base_actor);
+      } else {
+        if (!front_node_with_index.first->isa<Parameter>()) {
+          MS_LOG(EXCEPTION) << "Invalid front node:" << front_node_with_index.first->DebugString()
+                            << " index:" << front_node_with_index.second
+                            << " for custom actor:" << custom_actor->GetAID()
+                            << " kernel:" << kernel->fullname_with_scope() << " input index:" << *iter
+                            << ",it should be a parameter.";
+        }
+        const auto &func_graph = front_node_with_index.first->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        from_base_actor = FetchActor(func_graph->ToString() + kEntranceActorNameSuffix);
+        MS_EXCEPTION_IF_NULL(from_base_actor);
+      }
+      const auto &from_actor = dynamic_cast<ControlActor *>(from_base_actor);
+      size_t from_index = from_actor->FetchNodePosition(front_node_with_index);
+      MS_LOG(DEBUG) << "Link data arrow from actor:" << from_actor->GetAID()
+                    << " to custom actor:" << custom_actor->GetAID();
+      SchedulerHelper::AddDataArrow(from_actor, custom_actor.get(), from_index, *iter);
     }
   }
 }

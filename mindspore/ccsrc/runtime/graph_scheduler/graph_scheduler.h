@@ -165,6 +165,7 @@ class BACKEND_EXPORT GraphScheduler {
   void LinkGlobalControlArrow(ActorSet *const actor_set, const GroupNameToCommuNodes &communication_node_groups,
                               const std::vector<AbstractActor *> &auto_monad_actors,
                               const GraphCompilerInfo &graph_compiler_info);
+  void LinkDataArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowForCustomActor(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info);
   void LinkControlArrowByExecutionOrder(const KernelGraphPtr &graph);
   // Link the control arrows by the communication nodes in the kernel graph to ensure communication nodes running order.

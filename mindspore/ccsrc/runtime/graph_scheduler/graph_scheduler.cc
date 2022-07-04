@@ -1723,8 +1723,9 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
                                         graph_compiler_info.control_node_parser_);
   }
 
-  // Link control arrows for custom actor.
+  // Link arrows for custom actor.
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+  LinkDataArrowForCustomActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForLoopCountActor(actor_set->loop_count_actor_.get(), actor_set,
                                     graph_compiler_info.control_node_parser_);
@@ -1735,7 +1736,6 @@ void GraphScheduler::LinkGlobalControlArrow(ActorSet *const actor_set,
 void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
                                                     const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
-  MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
   // Link depend(custom, custom) or depend(custom, kernel) or depend(internal parameter, custom).
@@ -1768,7 +1768,9 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
 
       AbstractActor *from_actor = nullptr;
       // InternalParameter --> CustomActor.
-      if (IsInternalParameter(from_node, graph) && (!parser->IsInited())) {
+      MS_LOG(DEBUG) << "Link control arrow from:" << from_node->fullname_with_scope()
+                    << " in graph:" << graph->ToString() << " to actor:" << to_actor->GetAID();
+      if (IsInternalParameter(from_node, graph) && (!parser->IsControlFlowDataArrow(graph, from_node))) {
         auto front_output_with_index = graph->GetFrontNodeByInternalParameter(from_node);
         auto front_output_node = front_output_with_index.first;
         MS_EXCEPTION_IF_NULL(front_output_node);
@@ -1797,12 +1799,14 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
       SchedulerHelper::AddControlArrow(from_actor, to_actor);
     }
   }
+}
 
-  // In control flow, no input actors should be linked to entrance actors.
-  if (parser->IsInited()) {
-    return;
-  }
-
+void GraphScheduler::LinkDataArrowForCustomActor(ActorSet *const actor_set,
+                                                 const GraphCompilerInfo &graph_compiler_info) {
+  MS_EXCEPTION_IF_NULL(actor_set);
+  MS_EXCEPTION_IF_NULL(actor_set->data_prepare_actor_);
+  const auto &parser = graph_compiler_info.control_node_parser_;
+  MS_EXCEPTION_IF_NULL(parser);
   // Handle the no input custom actor.
   for (const auto &custom_actor : actor_set->custom_actors_) {
     MS_EXCEPTION_IF_NULL(custom_actor);
@@ -1816,8 +1820,18 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
     auto dynamic_shape_depends = abstract::GetDependsFormMap(base_node);
     for (auto iter = dynamic_shape_depends.begin(); iter != dynamic_shape_depends.end(); ++iter) {
       auto input_node = common::AnfAlgo::GetInputNode(base_node, *iter);
+      MS_EXCEPTION_IF_NULL(input_node);
       KernelWithIndex from_kernel_with_output_idx = common::AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
       auto graph = AnfAlgo::FetchKernelGraph(from_kernel_with_output_idx.first);
+      if (graph != nullptr && parser->IsControlFlowDataArrow(graph, from_kernel_with_output_idx.first)) {
+        MS_LOG(DEBUG) << "Skip link arrow for custom actor:" << custom_actor->GetAID()
+                      << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
+                      << " index:" << *iter;
+        continue;
+      }
+      MS_LOG(DEBUG) << "Link arrow for custom actor:" << custom_actor->GetAID()
+                    << " kernel:" << base_node->fullname_with_scope() << " input node:" << input_node->DebugString()
+                    << " index:" << *iter;
       auto kernel_type =
         FetchKernelTransformType(from_kernel_with_output_idx.first, graph, graph_compiler_info.origin_parameters_order_,
                                  graph_compiler_info.strategy_);
@@ -1828,8 +1842,10 @@ void GraphScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
                                       from_kernel_with_output_idx.first);
       }
     }
-
-    SchedulerHelper::AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
+    // In control flow, no input actors should be linked to entrance actors.
+    if (!parser->IsInited()) {
+      SchedulerHelper::AddControlArrow(actor_set->data_prepare_actor_.get(), custom_actor.get());
+    }
   }
 }
 
