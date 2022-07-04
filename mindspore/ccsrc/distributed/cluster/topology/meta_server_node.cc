@@ -118,6 +118,8 @@ bool MetaServerNode::InitTCPServer() {
     std::bind(&MetaServerNode::ProcessWriteMetadata, this, std::placeholders::_1);
   system_msg_handlers_[MessageName::kReadMetadata] =
     std::bind(&MetaServerNode::ProcessReadMetadata, this, std::placeholders::_1);
+  system_msg_handlers_[MessageName::kDeleteMetadata] =
+    std::bind(&MetaServerNode::ProcessDeleteMetadata, this, std::placeholders::_1);
   system_msg_handlers_[MessageName::kGetHostNames] =
     std::bind(&MetaServerNode::ProcessGetHostNames, this, std::placeholders::_1);
   return true;
@@ -292,6 +294,26 @@ MessageBase *const MetaServerNode::ProcessReadMetadata(MessageBase *const messag
     result = MessageName::kValidMetadata;
     std::string meta_value = metadata_[meta_msg.name()];
     meta_msg.set_value(meta_value);
+  }
+  response = CreateMessage(meta_server_addr_.GetUrl(), result, meta_msg.SerializeAsString());
+  MS_EXCEPTION_IF_NULL(response);
+  return response.release();
+}
+
+MessageBase *const MetaServerNode::ProcessDeleteMetadata(MessageBase *const message) {
+  const std::string &body = message->Body();
+  MetadataMessage meta_msg;
+  meta_msg.ParseFromArray(body.c_str(), body.length());
+
+  std::shared_lock<std::shared_mutex> lock(meta_mutex_);
+  MessageName result;
+  std::unique_ptr<MessageBase> response;
+
+  if (metadata_.find(meta_msg.name()) == metadata_.end()) {
+    result = MessageName::kInvalidMetadata;
+  } else {
+    result = MessageName::kValidMetadata;
+    metadata_.erase(meta_msg.name());
   }
   response = CreateMessage(meta_server_addr_.GetUrl(), result, meta_msg.SerializeAsString());
   MS_EXCEPTION_IF_NULL(response);
