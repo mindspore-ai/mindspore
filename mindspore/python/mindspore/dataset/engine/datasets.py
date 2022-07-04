@@ -1491,12 +1491,8 @@ class Dataset:
     @property
     def input_indexs(self):
         """
-        Get Input Index Information
-
-        Note:
-            This interface will be deleted or invisible in the future.
-            Please use `project` to change the columns' order and you can use `create_tuple_iterator` to
-            verify the output order.
+        Get the column index, which represents the corresponding relationship between the data column order
+        and the network when using the sink mode.
 
         Returns:
             int, tuple of the input index information.
@@ -1508,9 +1504,6 @@ class Dataset:
             >>> print(dataset.input_indexs)
             10
         """
-        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
-                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
-
         if self._input_indexs != ():
             return self._input_indexs
 
@@ -1527,9 +1520,6 @@ class Dataset:
 
     @input_indexs.setter
     def input_indexs(self, value):
-        logger.warning("This interface will be deleted or invisible in the future. Please use 'project' to change the "
-                       "columns' order and you can use 'create_tuple_iterator' to verify the output order.")
-
         self._input_indexs = value
 
     def copy_batch_size(self, value):
