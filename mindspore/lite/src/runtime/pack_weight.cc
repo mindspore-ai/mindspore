@@ -108,6 +108,10 @@ void *PackWeight::ReplaceFp16Data(void *origin_fp16_data, size_t size) {
         }
         auto allocator = model_weight->allocator;
         void *data = allocator->Malloc(size);
+        if (data == nullptr) {
+          MS_LOG(ERROR) << "malloc failed.";
+          return nullptr;
+        }
         origin_and_packed_pair.insert(std::make_pair(data, nullptr));
         model_weight->fp16_fp32_data.insert(data);
         origin_and_packed_pair.erase(origin_fp16_data);
@@ -166,6 +170,10 @@ void *PackWeight::GetPackData(const void *tensor_data, const size_t size, bool *
     } else {
       auto weight_allocator = model_weight->allocator;
       packed_tensor_data = weight_allocator->Malloc(size);
+      if (packed_tensor_data == nullptr) {
+        MS_LOG(ERROR) << "malloc failed.";
+        return nullptr;
+      }
       origin_packed_weight[tensor_data] = packed_tensor_data;
       *is_packed = false;
       return packed_tensor_data;
