@@ -29,8 +29,8 @@ constexpr int kNumDeviceInfo = 2;
 constexpr int kNumIndex = 2;
 constexpr int kNumCoreDataLen = 3;
 constexpr int kNumMaxTaskQueueSize = 1000;
-constexpr int kNumPhysicalCoreThreshold = 32;
-constexpr int kDefaultWorkerNumPerPhysicalCpu = 4;
+constexpr int kNumPhysicalCoreThreshold = 16;
+constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
 constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 int GetCoreNum() {
@@ -108,7 +108,7 @@ int GetDefaultThreadNum() {
     return 0;
   }
   auto physical_core_size = physical_core_lite.size();
-  if (physical_core_lite.size() < kNumPhysicalCoreThreshold) {
+  if (physical_core_lite.size() <= kNumPhysicalCoreThreshold) {
     return physical_core_size / kDefaultWorkerNumPerPhysicalCpu;
   } else {
     return kDefaultThreadsNum;
@@ -566,9 +566,8 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
     return {};
   }
   for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
-    auto tensor =
-      mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(), model_pool_outputs_.at(i).DataType(),
-                                        model_pool_outputs_.at(i).Shape(), nullptr, 0);
+    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(),
+                                                    model_pool_outputs_.at(i).DataType(), {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
