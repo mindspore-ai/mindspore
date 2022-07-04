@@ -39,7 +39,8 @@ void ScatterNdCheckShape(const PrimitivePtr &prim, const std::vector<AbstractBas
                              << indices_shape.size() << " and rank('updates') = " << updates_shape.size() << ".";
   }
   for (size_t i = 0; i + 1 < indices_shape.size(); ++i) {
-    if (updates_shape[i] != indices_shape[i]) {
+    auto is_dyn = ((updates_shape[i] == abstract::Shape::SHP_ANY) || (indices_shape[i] == abstract::Shape::SHP_ANY));
+    if ((updates_shape[i] != indices_shape[i]) && (!is_dyn)) {
       MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', when the rank of 'indices' is 'N', "
                                << "the 'updates.shape[0: N-1]' should be equal to 'indices.shape[0: N-1]', "
                                << "but got the shape of 'indices' is " << indices_shape_ptr->ToString()

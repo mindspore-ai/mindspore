@@ -530,6 +530,8 @@ class _Reduce(PrimitiveWithInfer):
         input_shp = input_x['shape']
         args = {'input_x': input_x['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtype, self.name)
+        if not isinstance(axis['dtype'], mstype.tensor_type) and axis_v is None:
+            raise ValueError(f"For '{self.name}', the 'axis' cannot be None, but got {axis}.")
         output_max_shape = None
         output_min_shape = None
         # when the rank of input_x is dynamic, the rank of output is also dynamic
