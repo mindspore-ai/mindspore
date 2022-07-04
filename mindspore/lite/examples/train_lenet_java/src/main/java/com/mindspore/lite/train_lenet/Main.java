@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package com.mindspore.lite.train_lenet;
 
-import com.mindspore.lite.Version;
+import com.mindspore.config.Version;
 
 public class Main {
     public static void main(String[] args) {
