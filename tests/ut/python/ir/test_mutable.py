@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test mutable"""
-
 import numpy as np
 import pytest
 from mindspore.ops.composite import GradOperation
@@ -23,6 +22,7 @@ from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
+from mindspore._c_expression import Tensor as Tensor_
 from mindspore import Parameter
 
 
@@ -240,6 +240,49 @@ def test_dict_inputs_compile_phase():
     assert phase1 != phase2
     phase1, _ = _cell_graph_executor.compile(net, mutable({'a': x, 'b': y}))
     phase2, _ = _cell_graph_executor.compile(net, mutable({'a': p, 'b': q}))
+    assert phase1 == phase2
+
+
+def test_tensor_inputs_compile_phase():
+    """
+    Feature: Set Constants mutable.
+    Description: Test whether the compilation phase for Tensor input twice are the same.
+    Expectation: The phases are the same.
+    """
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.matmul = P.MatMul()
+            self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+
+        def construct(self, x, y):
+            x = x * self.z
+            out = self.matmul(x, y)
+            return out
+
+    x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    p = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
+    q = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
+    net = Net()
+    _cell_graph_executor = _CellGraphExecutor()
+    # tuple of Tensor
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 == phase2
+    phase1, _ = _cell_graph_executor.compile(net, mutable(x), mutable(y))
+    phase2, _ = _cell_graph_executor.compile(net, mutable(p), mutable(q))
+    assert phase1 == phase2
+    x = Tensor_(x)
+    y = Tensor_(y)
+    p = Tensor_(p)
+    q = Tensor_(q)
+    phase1, _ = _cell_graph_executor.compile(net, x, y)
+    phase2, _ = _cell_graph_executor.compile(net, p, q)
+    assert phase1 == phase2
+    phase1, _ = _cell_graph_executor.compile(net, mutable(x), mutable(y))
+    phase2, _ = _cell_graph_executor.compile(net, mutable(p), mutable(q))
     assert phase1 == phase2
 
 

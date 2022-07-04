@@ -2134,6 +2134,10 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
       MS_LOG(EXCEPTION) << "Convert the python object failed";
     }
     MS_EXCEPTION_IF_NULL(converted_val);
+    if (converted_val->isa<tensor::Tensor>() && HasConstArgAttr(obj)) {
+      MS_LOG(WARNING) << "The tensor " << converted_val->ToString()
+                      << " which is not used for network input argument should not be set const.";
+    }
     AbstractBasePtr res = ToAbstract(converted_val, AnalysisContext::DummyContext(), out_conf);
     auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
     evaluator_cache_mgr_->SetValue(args_spec_list, infer_result);
@@ -2247,6 +2251,11 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
                          return (!item.second->isa<abstract::AbstractFunction>());
                        });
     return std::make_shared<AbstractDictionary>(kv);
+  }
+
+  bool HasConstArgAttr(const py::object &obj) {
+    constexpr char const_arg_attr[] = "const_arg";
+    return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
   }
 };
 

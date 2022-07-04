@@ -221,6 +221,27 @@ def _restore_mutable_attr(args_list, compile_args):
     return new_compile_args
 
 
+def _get_args_for_run(obj, args_list):
+    """Get the actual input args for runtime."""
+    inputs = []
+    for i in args_list:
+        if isinstance(i, PythonTensor):
+            if i.has_init:
+                i.init_data()
+            if not i.const_arg:
+                inputs.append(i)
+        elif isinstance(i, (Tensor, CSRTensor, COOTensor)):
+            inputs.append(i)
+        elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
+            inputs.append(i)
+        elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
+            inputs.append(i)
+        elif hasattr(obj, "enable_tuple_broaden") and obj.enable_tuple_broaden and isinstance(i, tuple) and \
+                _check_all_tensor(i):
+            inputs.append(i)
+    return inputs
+
+
 class _MindsporeFunctionExecutor:
     """
     Represents a function compiled by graph compiler.
@@ -443,17 +464,7 @@ class _MindsporeFunctionExecutor:
         Returns:
             new_inputs, new input args, which are required for running.
         """
-        new_inputs = []
-        for i in args_list:
-            if isinstance(i, (Tensor, CSRTensor, COOTensor)):
-                new_inputs.append(i)
-            elif hasattr(i, "__ms_mutable__") and getattr(i, "__ms_mutable__"):
-                new_inputs.append(i)
-            elif context.get_context("grad_for_scalar") and isinstance(i, (int, float)):
-                new_inputs.append(i)
-            elif self.enable_tuple_broaden and isinstance(i, tuple) and _check_all_tensor(i):
-                new_inputs.append(i)
-        return new_inputs
+        return _get_args_for_run(self, args_list)
 
 
 # The attributes used to identify a given object.

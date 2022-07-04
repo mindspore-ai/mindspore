@@ -233,6 +233,11 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   BroadenCNodeAbstract(resolved_graph);
 }
 
+bool HasConstArgAttr(const py::object &obj) {
+  constexpr char const_arg_attr[] = "const_arg";
+  return py::hasattr(obj, const_arg_attr) && py::cast<bool>(py::getattr(obj, const_arg_attr));
+}
+
 AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
   // When the cell is set recomputed, it should not use old scope from cache.
   MS_EXCEPTION_IF_NULL(origin_node);
@@ -253,6 +258,10 @@ AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &
   AnfNodePtr output = NewValueNode(convert_result);
   if (convert_result->isa<tensor::Tensor>()) {
     output = GetMixedPrecisionCastHelp(func_graph, output);
+    if (HasConstArgAttr(obj)) {
+      MS_LOG(WARNING) << "The tensor " << convert_result->ToString()
+                      << " which is not used for network input argument should not be set const.";
+    }
   }
   return output;
 }

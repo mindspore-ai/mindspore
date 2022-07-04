@@ -129,11 +129,30 @@ bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
   return true;
 }
 
-AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false, bool set_mutable = false) {
-  MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>() || set_mutable || value->isa<MetaSparseTensor>() ||
-                 (enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>())) ||
-                 (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
+bool Mutable(const py::object &obj) {
+  constexpr char mutable_attr[] = "__ms_mutable__";
+  return py::hasattr(obj, mutable_attr) && py::cast<bool>(py::getattr(obj, mutable_attr));
+}
+
+bool TensorArgMutable(const py::object &obj, const ValuePtr &value) {
+  if (!value->isa<MetaTensor>()) {
+    return false;
+  }
+  constexpr char const_arg_attr[] = "const_arg";
+  return !py::hasattr(obj, const_arg_attr) || !py::cast<bool>(py::getattr(obj, const_arg_attr));
+}
+
+bool EnableTupleBroaden(const ValuePtr &value, bool enable_tuple_broaden) {
+  return enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>());
+}
+
+bool GradForScalar(const ValuePtr &value) {
+  return MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>();
+}
+
+AbstractBasePtr ArgsToAbstract(const py::object &arg, const ValuePtr &value, bool enable_tuple_broaden = false) {
+  bool broaden = TensorArgMutable(arg, value) || Mutable(arg) || value->isa<MetaSparseTensor>() ||
+                 EnableTupleBroaden(value, enable_tuple_broaden) || GradForScalar(value);
 
   return abstract::FromValue(value, broaden);
 }
@@ -208,33 +227,6 @@ void RecordInitStatus() {
 
 void RecordExitStatus() { MS_LOG(INFO) << "Status record: system exit."; }
 
-void SetValueMutable(const abstract::AbstractBasePtr &abs) {
-  MS_EXCEPTION_IF_NULL(abs);
-  if (abs->isa<abstract::AbstractTensor>()) {
-    return;
-  }
-
-  auto abs_sequence = abs->cast_ptr<abstract::AbstractSequence>();
-  if (abs_sequence != nullptr) {
-    const auto &elements = abs_sequence->elements();
-    for (auto &ele : elements) {
-      SetValueMutable(ele);
-    }
-    return;
-  }
-
-  auto abs_dict = abs->cast_ptr<abstract::AbstractDictionary>();
-  if (abs_dict != nullptr) {
-    const auto &elements = abs_dict->elements();
-    for (auto &ele : elements) {
-      SetValueMutable(ele.second);
-    }
-    return;
-  }
-
-  abs->set_value_mutable(true);
-}
-
 std::string ToOrdinal(const size_t &i) {
   auto suffix = "th";
   if (i == kIndex1) {
@@ -291,13 +283,7 @@ py::object GraphExecutorPy::GenerateArgumentsKey(const py::tuple &args, bool ena
       MS_EXCEPTION(TypeError) << "parse::ConvertData for " << i << "th argument failed, the argument type is "
                               << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.";
     }
-    constexpr char mutable_attr[] = "__ms_mutable__";
-    bool set_mutable = false;
-    if (py::hasattr(args[i], mutable_attr) && py::cast<bool>(py::getattr(args[i], mutable_attr))) {
-      SetValueMutable(converted->ToAbstract());
-      set_mutable = true;
-    }
-    AbstractBasePtr abs = ArgsToAbstract(converted, enable_tuple_broaden, set_mutable);
+    AbstractBasePtr abs = ArgsToAbstract(args[i], converted, enable_tuple_broaden);
     (void)args_abs.emplace_back(abs);
     // The 'converted' maybe a Parameter, we need connect it to the Parameter of func graph,
     // so we keep all inputs for subsequent procedure.
@@ -880,7 +866,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
       MS_LOG(EXCEPTION) << "Fail to convert the " << i << "th argument, args[" << i << "]: " << py::str(args[i]);
     }
     (void)arguments.emplace_back(converted);
-    auto args_abstract_item = ArgsToAbstract(converted, enable_tuple_broaden_);
+    auto args_abstract_item = ArgsToAbstract(args[i], converted, enable_tuple_broaden_);
     if (is_auto_parallel) {
       (void)parallel::ExtendInputArgsAbstractShape(args_abstract_item, i);
     }

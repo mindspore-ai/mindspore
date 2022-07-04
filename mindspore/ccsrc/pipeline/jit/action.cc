@@ -102,8 +102,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
-    if (param_abs->isa<abstract::AbstractUndetermined>() || param_abs->BuildValue() == kAnyValue ||
-        EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
+    if (param_abs->BuildValue() == kAnyValue || EnableGradForScalar(param_abs) || EnableTupleBroaden(param_abs)) {
       new_paras.push_back(param_node);
     } else {
       MS_LOG(INFO) << "Remove the " << i << "th parameter, since it's passed a constant argument.";
