@@ -187,7 +187,11 @@ class CrossEntropyLoss(Cell):
                             ", but got the type: {}.".format(type(parallel_config)))
         dp = parallel_config.data_parallel
         mp = parallel_config.model_parallel
-        self.add = P.Add().shard(((dp, mp), (1,)))
+        self.enable_force_redistribute = False
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL, ParallelMode.SEMI_AUTO_PARALLEL):
+            self.enable_force_redistribute = True
+        self.add = P.Add().shard(((dp, mp), ())).add_prim_attr("keep_alive", True)
+        self.add_label = P.Add().shard(((dp,), ())).add_prim_attr("keep_alive", True)
         self.sum2 = P.ReduceSum().shard(((1,),))
         self.mul2 = P.Mul().shard(((1,), (1,)))
         self.add2 = P.Add()
@@ -202,7 +206,9 @@ class CrossEntropyLoss(Cell):
 
         # The add is used for forcing the redistribution before stepping in sub graphs, when semi/auto parallel enabled.
         # After relu, the following case should be euqal to add(logits, 0)
-        logits = self.add(logits, F.cast(self.relu(F.tuple_to_array((-1e-32,))), F.dtype(logits)))
+        if self.enable_force_redistribute:
+            logits = self.add(logits, 0)
+            label = self.add_label(label, 0)
         softmax, one_hot_label = self._softmax(logits, label)
         loss_reduce = self._nllloss(softmax, one_hot_label)
 
