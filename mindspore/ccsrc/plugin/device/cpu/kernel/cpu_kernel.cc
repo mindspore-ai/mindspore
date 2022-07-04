@@ -22,7 +22,7 @@
 #include <map>
 #include <set>
 #include <numeric>
-
+#include "kernel/oplib/oplib.h"
 #include "utils/profile.h"
 #include "runtime/graph_scheduler/actor/actor_common.h"
 

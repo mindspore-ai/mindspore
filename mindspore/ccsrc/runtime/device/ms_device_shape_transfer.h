@@ -33,7 +33,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_utils.h"
 #include "abstract/utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
 #include "runtime/device/convert_tensor_utils.h"
 #include "include/common/utils/convert_utils.h"
 #include "utils/log_adapter.h"

@@ -25,8 +25,6 @@ using LabelGotoTaskInfoPtr = std::shared_ptr<LabelGotoTaskInfo>;
 
 namespace mindspore {
 namespace kernel {
-LabelGotoKernel::LabelGotoKernel() { label_ = 0; }
-
 LabelGotoKernel::~LabelGotoKernel() {}
 
 bool LabelGotoKernel::Init(const AnfNodePtr &anf_node) {

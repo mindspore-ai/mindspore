@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_BUILD_H
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_RTS_RT_KERNEL_BUILD_H
 
-#include <vector>
-#include <memory>
 #include "kernel/kernel.h"
 namespace mindspore {
 namespace kernel {
