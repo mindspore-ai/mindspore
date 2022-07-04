@@ -252,6 +252,15 @@ ValuePtr ConvertModuleNameSpace(const py::object &obj) {
 ValuePtr ConvertMsClass(const py::object &obj) {
   MS_LOG(DEBUG) << "Converting ms class";
   // Convert class instance decorated with ms_class.
+  if (py::hasattr(obj, PYTHON_PARSE_METHOD)) {
+    MS_LOG(DEBUG) << "Convert obj to func graph.";
+    FuncGraphPtr func_graph = ConvertToFuncGraph(obj);
+    if (func_graph == nullptr) {
+      MS_LOG(ERROR) << "Parse resolve function error.";
+      return nullptr;
+    }
+    return func_graph;
+  }
   py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
   py::object name = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MS_CLASS_NAME, obj);
   auto cls_name = py::cast<std::string>(name);
@@ -382,7 +391,8 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     // desc has format "<class xxxx>", strip the '<' and '>' by offset 1.
     return std::make_shared<ClassType>(obj, std::string(desc.begin() + 1, desc.end() - 1));
   }
-  if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD) {
+  if (obj_type == RESOLVE_TYPE_FUNCTION || obj_type == RESOLVE_TYPE_METHOD ||
+      (obj_type == RESOLVE_TYPE_CLASS_INSTANCE && py::hasattr(obj, PYTHON_PARSE_METHOD))) {
     MS_LOG(DEBUG) << "Convert the obj to func graph, type is " << obj_type;
     FuncGraphPtr func_graph = ConvertToFuncGraph(obj, PYTHON_MOD_GET_PARSE_METHOD, forbid_reuse);
     if (func_graph == nullptr) {
@@ -392,13 +402,7 @@ ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
     return func_graph;
   }
   if (obj_type == RESOLVE_TYPE_CLASS_INSTANCE) {
-    // Create the namespace for common class instance
-    // When the obj is Cell, default parse the 'construct'
-    py::module mod = python_adapter::GetPyModule(PYTHON_MOD_PARSE_MODULE);
-    py::object namespace_var = python_adapter::CallPyModFn(mod, PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, obj);
-    auto res = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_var);
-    MS_LOG(DEBUG) << "name_space: " << res->ToString();
-    return res;
+    MS_LOG(EXCEPTION) << "Fail to convert class instance: " << py::str(obj);
   }
   // Start RESOLVE_TYPE_INVALID...
   // The fallback feature is enabled in default.

@@ -50,15 +50,15 @@ def add_flags(fn=None, **flags):
     Examples:
         >>> net = Net();
         >>> net = add_flags(net, predit=True)
-        >>> print(hasattr(net, '_mindspore_flags'))
+        >>> print(hasattr(net, '_func_graph_flags'))
         True
     """
     def deco(fn):
         # need set the attr and access on c++
-        if not hasattr(fn, "_mindspore_flags"):
-            fn._mindspore_flags = {}
+        if not hasattr(fn, "_func_graph_flags"):
+            fn._func_graph_flags = {}
 
-        fn._mindspore_flags.update({**flags})
+        fn._func_graph_flags.update({**flags})
         return fn
     ret = deco
     if fn is not None:
@@ -84,13 +84,13 @@ def core(fn=None, **flags):
     Examples:
         >>> net = Net()
         >>> net = core(net, predit=True)
-        >>> print(hasattr(net, '_mindspore_flags'))
+        >>> print(hasattr(net, '_func_graph_flags'))
         True
     """
     # need set the attr and access on c++
 
     def deco(fn):
-        fn._mindspore_flags = {
+        fn._func_graph_flags = {
             'core': True,
             **flags,
         }

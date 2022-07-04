@@ -404,7 +404,7 @@ bool ParseAction(const ResourcePtr &resource) {
   }
 
   FuncGraphPtr top_graph = nullptr;
-  if (py::isinstance<Cell>(input)) {
+  if (py::hasattr(input, parse::PYTHON_PARSE_METHOD)) {
     top_graph = parse::MakeTopGraph(input, converted_ret);
   } else if (converted_ret->isa<FuncGraph>()) {
     top_graph = converted_ret->cast<FuncGraphPtr>();

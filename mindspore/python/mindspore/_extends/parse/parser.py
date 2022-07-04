@@ -37,7 +37,7 @@ from mindspore import ops
 from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
-from .namespace import CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
+from .namespace import Namespace, CellNamespace, ClosureNamespace, ClassMemberNamespace, ClassAttrNamespace
 from .resources import parse_object_map, ops_symbol_map, convert_object_map, trope_ns, SYMBOL_UNDEFINE, NO_IMPLEMENT
 from .jit_fallback_modules import jit_fallback_third_party_modules_whitelist
 
@@ -46,14 +46,15 @@ RET_SUCCESS = 0
 RET_FAILURE = 0xFF
 
 # Define resolve type
-RESOLVE_TYPE_NONE = 0                   # Resolve None
-RESOLVE_TYPE_FUNCTION = 1               # Resolve function
-RESOLVE_TYPE_METHOD = 2                 # Resolve class method
-RESOLVE_TYPE_CLASS_TYPE = 3             # Resolve class type
-RESOLVE_TYPE_CLASS_INSTANCE = 4         # Resolve the class instance of common class
-RESOLVE_TYPE_NUMPY_INT_NUMBER = 5       # Resolve numpy int number
-RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 6     # Resolve numpy float number
-RESOLVE_TYPE_INVALID = 0xFF
+RESOLVE_TYPE_NONE = 0                   # Resolve None.
+RESOLVE_TYPE_FUNCTION = 1               # Resolve function.
+RESOLVE_TYPE_METHOD = 2                 # Resolve class method.
+RESOLVE_TYPE_CLASS_TYPE = 3             # Resolve class type.
+RESOLVE_TYPE_CLASS_INSTANCE = 4         # Resolve the class instance of common class.
+RESOLVE_TYPE_NAMESPACE_INSTANCE = 5     # Resolve the namespace instance.
+RESOLVE_TYPE_NUMPY_INT_NUMBER = 6       # Resolve numpy int number.
+RESOLVE_TYPE_NUMPY_FLOAT_NUMBER = 7     # Resolve numpy float number.
+RESOLVE_TYPE_INVALID = 0xFF             # Resolve invalid.
 
 # Define the class instance detail type
 # When the type is RESOLVE_TYPE_CLASS_INSTANCE
@@ -125,7 +126,7 @@ def parse_cb(func, parse_method=None):
 
 def get_parse_method_of_class(obj, parse_method=None):
     """
-    Het parse method of class.
+    Get parse method of class.
 
     Args:
         obj(Object): Instance of class.
@@ -216,13 +217,13 @@ def resolve_symbol(namespace, symbol):
     try:
         resolve_ = namespace[symbol]
 
-        # list and dict is not hashable ,it can not be key for the map, just return the result
+        # The list and dict is not hashable, it can not be key for the map, just return the result
         if isinstance(resolve_, (tuple, list, dict)):
             return resolve_
         if getattr(resolve_, "__hash__") is None:
             return resolve_
 
-        # Raise a proper error if not using Fallback feature.
+        # Raise a proper error if not using JIT Fallback feature.
         if support_fallback_ == '0':
             # Raise NotImplementedError when parsing the numpy methods, but not the numpy constant.
             if namespace.name == "numpy" and \
@@ -317,6 +318,8 @@ def get_obj_type(obj):
         obj_type = RESOLVE_TYPE_METHOD
     elif isinstance(obj, type):
         obj_type = RESOLVE_TYPE_CLASS_TYPE
+    elif isinstance(obj, Namespace):
+        obj_type = RESOLVE_TYPE_NAMESPACE_INSTANCE
     elif _is_class_instance(obj):
         obj_type = RESOLVE_TYPE_CLASS_INSTANCE
     elif _is_numpy_int_number(obj):
@@ -361,7 +364,7 @@ def _is_ms_class(obj):
 
 def _is_class_instance(obj):
     """Confirm the obj is class instance."""
-    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_ms_class(obj)
+    return isinstance(obj, (nn.Cell, ops.Primitive)) or _is_ms_class(obj) or hasattr(obj, '__parse_method__')
 
 
 def _is_numpy_int_number(obj):
@@ -504,9 +507,6 @@ def is_class_type(cls):
 
 def get_ms_class_name(cls):
     """Get the name of the class instance decorated by ms_class."""
-    # Check if cls is nn.Cell.
-    if isinstance(cls, nn.Cell):
-        raise TypeError(f"ms_class is used for user-defined classes and cannot be used for nn.Cell: {cls}.")
     if isinstance(cls, type):
         return cls.__name__
     return cls.__class__.__name__

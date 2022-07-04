@@ -25,9 +25,6 @@ grad_all = C.GradOperation(get_all=True)
 
 
 class CellBprop(nn.Cell):
-    def __init__(self):
-        super(CellBprop, self).__init__()
-
     def construct(self, x, y):
         return 2 * x * x + y * y
 

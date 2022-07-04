@@ -440,12 +440,12 @@ def test_fallback_raise_error_decorate_cell():
     Description: Decorator ms_class cannot be used for nn.Cell
     Expectation: No exception.
     """
-    @ms_class
-    class Net(nn.Cell):
-        def construct(self, x):
-            return x
-
     with pytest.raises(TypeError):
+        @ms_class
+        class Net(nn.Cell):
+            def construct(self, x):
+                return x
+
         x = Tensor(1)
         net = Net()
         net(x)

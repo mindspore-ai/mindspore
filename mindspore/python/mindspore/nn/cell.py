@@ -83,7 +83,7 @@ class Cell(Cell_):
     """
 
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
-                   '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
+                   '_construct_inputs_num', '_create_time', '_func_graph_flags', '_parallel_inputs_run',
                    '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase', '_auto_parallel_mode',
                    '_forward_pre_hook', '_forward_hook', '_enable_forward_pre_hook', '_enable_forward_hook',
                    '_bprop_debug', '_enable_backward_hook', '_cell_backward_hook', '_is_run', '_param_prefix',
@@ -1473,9 +1473,9 @@ class Cell(Cell_):
             flags (dict): Network configuration information, currently it is used for the binding of network and
                 dataset. Users can also customize network attributes by this parameter. Default: None.
         """
-        if not hasattr(self, "_mindspore_flags"):
-            self._mindspore_flags = {}
-        self._mindspore_flags.update({**flags})
+        if not hasattr(self, "_func_graph_flags"):
+            self._func_graph_flags = {}
+        self._func_graph_flags.update({**flags})
         self.__dict__.update({**flags})
         self._add_mixed_precision_flag(**flags)
         return self
@@ -1502,9 +1502,9 @@ class Cell(Cell_):
         """
         Get the self_defined attributes of the cell, which can be added by `add_flags` method.
         """
-        if not hasattr(self, "_mindspore_flags"):
-            self._mindspore_flags = {}
-        return self._mindspore_flags
+        if not hasattr(self, "_func_graph_flags"):
+            self._func_graph_flags = {}
+        return self._func_graph_flags
 
     def _set_mixed_precision_type_recursive(self, mixed_type):
         """Set mixed precision type to each cell"""
