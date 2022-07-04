@@ -49,7 +49,7 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const ConvParamete
                         quant_arg_in, quant_arg_w, quant_arg_out, real_multiplier, left_shift, right_shift,
                         quant_multiplier, out_act_min, out_act_max, quant_arg.input_arg_num_, quant_arg.filter_arg_num_,
                         quant_arg.output_arg_num_, quant_arg.per_channel_);
-  code << "int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
+  code << "    int thread_num = MSMIN(" << gThreadNum << ", " << conv_parameter.output_h_ << ");\n";
   CodeBaseStruct<false>(
     "ConvParameter", name, conv_parameter.op_parameter_, conv_quant_arg, conv_parameter.kernel_h_,
     conv_parameter.kernel_w_, conv_parameter.stride_h_, conv_parameter.stride_w_, conv_parameter.dilation_h_,
@@ -100,10 +100,10 @@ void NNaclInt8Serializer::CodeStruct(const std::string &name, const PoolingParam
   MS_CHECK_PTR_IF_NULL(in_quant_args);
   MS_CHECK_PTR_IF_NULL(out_quant_args);
 
-  code << "static QuantArg " << in_quant_name << " = " << *in_quant_args << ";\n";
-  code << "static QuantArg " << out_quant_name << " = " << *out_quant_args << ";\n";
+  code << "    static QuantArg " << in_quant_name << " = " << *in_quant_args << ";\n";
+  code << "    static QuantArg " << out_quant_name << " = " << *out_quant_args << ";\n";
 
-  code << "static QuantArg *" << quant_name << "[2] = {"
+  code << "    static QuantArg *" << quant_name << "[2] = {"
        << " &" << in_quant_name << ", "
        << " &" << out_quant_name << "};\n";
 
