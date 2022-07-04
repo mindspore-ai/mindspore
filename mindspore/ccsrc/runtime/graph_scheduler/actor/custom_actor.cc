@@ -21,12 +21,41 @@
 
 namespace mindspore {
 namespace runtime {
+void CustomActor::Init() {
+  auto kernel = kernel_.lock();
+  MS_EXCEPTION_IF_NULL(kernel);
+  auto base_node = AnfUtils::GetCustomActorBaseNode(kernel);
+  MS_EXCEPTION_IF_NULL(base_node);
+  if (base_node->isa<CNode>()) {
+    const auto &cnode = base_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    input_device_tensors_.resize(common::AnfAlgo::GetInputNum(cnode));
+  }
+}
+
 void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
   auto node = kernel_.lock();
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_ZERO("device_contexts_ size", device_contexts_.size());
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   try {
+    // Collect the input data for infer shape.
+    const auto &data_iter = input_op_datas_.find(ctx->sequential_num_);
+    if (data_iter != input_op_datas_.end()) {
+      for (auto &input_data : data_iter->second) {
+        MS_EXCEPTION_IF_NULL(input_data);
+        if (IntToSize(input_data->index_) >= input_device_tensors_.size()) {
+          SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(
+            strategy_, (*ctx),
+            "The input index:" + std::to_string(input_data->index_) + " is out of vector size:" +
+              std::to_string(input_device_tensors_.size()) + " for node:" + node->DebugString());
+          return;
+        }
+        MS_LOG(DEBUG) << "Collect input data index:" << input_data->index_ << " for custom actor:" << GetAID();
+        input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
+      }
+    }
+
     // Launch custom func
     MS_EXCEPTION_IF_NULL(node);
     auto custom_func = AnfUtils::GetCustomFunc(node);
@@ -34,7 +63,7 @@ void CustomActor::Run(OpContext<DeviceTensor> *const ctx) {
       std::string error_info = "BindDevice to current thread failed: " + node->fullname_with_scope();
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*ctx), error_info);
     }
-    custom_func(nullptr);
+    custom_func(&input_device_tensors_);
 
     // Update the output addr size after inferop && updateop, because after the inferop & updateop, the shape of output
     // maybe changed.
