@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/extendrt/delegate/tensorrt/tensorrt_subgraph.h"
+#include "src/runtime/delegate/tensorrt/tensorrt_subgraph.h"
 #include <cuda_runtime_api.h>
 #include <string>
 #include <vector>
@@ -381,10 +381,6 @@ int TensorRTSubGraph::Prepare() {
     return RET_ERROR;
   }
   int binding_num = this->engine_->getNbBindings();
-  if (binding_num < 0) {
-    MS_LOG(ERROR) << "invalid binding_num " << binding_num;
-    return RET_ERROR;
-  }
   tensor_bindings_ = new (std::nothrow) void *[binding_num];
   if (tensor_bindings_ == nullptr) {
     MS_LOG(ERROR) << "malloc tensor binding array failed.";
