@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/graph_kernel/split_model/split_model_factory.h"
-#include <memory>
-#include "utils/ms_context.h"
+#ifndef MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_CPU_H_
+#define MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_CPU_H_
 
+#include "common/graph_kernel/split_model/split_model_factory.h"
 namespace mindspore::graphkernel::inner {
-SplitModelPtr SplitModelFactory::CreateSplitModel(const std::string &processor) {
-  if (creators.count(processor) != 0) {
-    return creators[processor]();
-  }
-  return nullptr;
-}
+class SplitModelCpu : public SplitModel {
+ public:
+  SplitModelCpu() = default;
+  virtual ~SplitModelCpu() = default;
+
+ protected:
+  AreaMode GetDefaultAreaMode(const PrimOpPtr &) const override;
+  void InitFusePatterns() override;
+};
 }  // namespace mindspore::graphkernel::inner
+#endif  // MINDSPORE_LITE_TOOLS_GRAPH_KERNEL_CONVERTER_SPLIT_MODEL_CPU_H_

@@ -732,7 +732,7 @@ class CppCostModelSplitSchemer : public SplitSchemer {
     for (size_t i = 0; i < lg->ops().size(); ++i) {
       node_idx_map[op_node_map[lg->ops()[i]]] = i;
     }
-    auto model = inner::SplitModelFactory::CreateSplitModel(processor_);
+    auto model = inner::SplitModelFactory::Instance().CreateSplitModel(processor_);
     MS_EXCEPTION_IF_NULL(model);
     model->Run(lg);
     auto &areas = model->areas();
