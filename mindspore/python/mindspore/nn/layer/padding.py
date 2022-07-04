@@ -201,7 +201,7 @@ class ConstantPad1d(_ConstantPadNd):
     Examples:
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.nn import ConstantPad2d
+        >>> from mindspore.nn import ConstantPad1d
         >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
         >>> x = Tensor(x)
         >>> # padding is tuple
@@ -335,8 +335,8 @@ class ConstantPad3d(_ConstantPadNd):
     Using a given constant value to pads the last three dimensions of input tensor.
 
     Args:
-        padding (union[int, tuple]): The padding size to pad the last two dimensions of input tensor.
-            If is int, uses the same padding in boundaries of input's last two dimensions.
+        padding (union[int, tuple]): The padding size to pad the last three dimensions of input tensor.
+            If is int, uses the same padding in boundaries of input's last three dimensions.
             If is tuple and length of padding is 6 uses
             (padding_0, padding_1, padding_2, padding_3, padding_4, padding_5) to pad. If the input is `x`,
             the size of last dimension of output is :math:`padding\_0 + x.shape[-1] + padding\_1`.
