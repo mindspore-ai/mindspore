@@ -246,6 +246,20 @@ void BenchmarkFlags::InitResizeDimsList() {
   }
 }
 
+void BenchmarkFlags::InitCoreList() {
+  std::string core_list_str = this->core_list_str_;
+  if (core_list_str.empty()) {
+    return;
+  }
+  auto core_ids = StrSplit(core_list_str, std::string(DELIM_COMMA));
+  std::cout << "core list: ";
+  for (const auto &core_id : core_ids) {
+    std::cout << core_id << " ";
+    this->core_list_.emplace_back(static_cast<int>(std::stoi(core_id)));
+  }
+  std::cout << std::endl;
+}
+
 int BenchmarkBase::CheckModelValid() {
   this->flags_->in_data_type_ = this->flags_->in_data_type_in_ == "img" ? kImage : kBinary;
 
@@ -451,6 +465,7 @@ int BenchmarkBase::Init() {
   }
 
   flags_->InitInputDataList();
+  flags_->InitCoreList();
   flags_->InitResizeDimsList();
   if (!flags_->resize_dims_.empty() && !flags_->input_data_list_.empty() &&
       flags_->resize_dims_.size() != flags_->input_data_list_.size()) {

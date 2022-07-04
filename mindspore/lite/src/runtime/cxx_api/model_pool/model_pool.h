@@ -88,7 +88,7 @@ class ModelPool {
   Status DistinguishPhysicalAndLogicalByNuma(const std::vector<int> &physical_core_list,
                                              const std::vector<int> &logical_core_list);
 
-  Status InitNumaParameter();
+  Status InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_config);
 
   Status InitModelPoolBindList(const std::shared_ptr<Context> &init_context,
                                std::vector<std::vector<int>> *bind_core_list, std::vector<int> *bind_numa_list);
@@ -104,6 +104,8 @@ class ModelPool {
                                            const std::vector<int> &numa_node_id);
 
   Status CreateWorkers(char *graph_buf, size_t size, const ModelPoolConfig &model_pool_config);
+
+  Status CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config);
 
  private:
   // different workers get tasks from different task queues.
@@ -124,6 +126,9 @@ class ModelPool {
   PredictTask *tasks_ = nullptr;
   std::mutex task_id_mutex_;
   std::queue<size_t> free_tasks_id_;
+
+  // bind core
+  bool is_user_core_list_ = false;
 
   // use numa
   bool numa_available_ = false;
