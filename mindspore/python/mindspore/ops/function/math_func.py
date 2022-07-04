@@ -4182,9 +4182,9 @@ def renorm(input_x, p, dim, maxnorm):
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
         >>> y = ops.renorm(x, p=1, dim=0, maxnorm=5.)
         >>> print(y)
-        [[1.       1.        1.        1.       ]
-        [1.6666666 1.6666666 1.6666666 1.6666666]
-        [1.6666667 1.6666667 1.6666667 1.6666667]]
+        [[1.       1.        1.        ]
+        [1.6666666 1.6666666 1.6666666 ]
+        [1.6666667 1.6666667 1.6666667 ]]
     """
     renorm_ = _get_cache_prim(Renorm)(p, dim, maxnorm)
     return renorm_(input_x)

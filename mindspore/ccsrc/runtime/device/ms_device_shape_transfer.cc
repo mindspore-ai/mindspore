@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace trans {
-auto SHP_ANY = abstract::Shape::SHP_ANY;
+static auto SHP_ANY = abstract::Shape::SHP_ANY;
 
 const int b1 = 1;
 const int b2 = 2;
@@ -445,7 +445,7 @@ ShapeVector DeviceShapeTransfer::GetDeviceShapeByFormat(const ShapeVector &shape
 }
 
 std::optional<ShapeVector> DeviceShapeTransfer::GetFixedDeviceShape(const ShapeVector &, const AnfNodePtr &node,
-                                                                    size_t index, bool is_output) {
+                                                                    size_t index, bool is_output) const {
   if (node == nullptr || !node->isa<CNode>()) {
     return {};
   }
@@ -464,7 +464,7 @@ std::optional<ShapeVector> DeviceShapeTransfer::GetFixedDeviceShape(const ShapeV
 }
 
 ShapeVector DeviceShapeTransfer::TransCore(const ShapeVector &shape, const std::string &format, const TypeId &type,
-                                           int64_t groups, const ShapeVector &input_hidden_size) {
+                                           int64_t groups, const ShapeVector &input_hidden_size) const {
   using DeviceShapeTransfer = std::function<ShapeVector(const ShapeVector &, const TypeId &)>;
   const std::map<std::string, DeviceShapeTransfer> device_shape_map = {
     {kOpFormat_NCHW, NCHWDeviceShape},
@@ -822,7 +822,7 @@ ShapeVector DeviceShapeTransfer::NDRNNBiasDeviceShape(const ShapeVector &shape, 
   return device_shape;
 }
 
-ShapeVector DeviceShapeTransfer::GetAttrInputAndHiddenSize(const AnfNodePtr &node) {
+ShapeVector DeviceShapeTransfer::GetAttrInputAndHiddenSize(const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   std::vector<int64_t> input_hidden_size = {kAlign16, kAlign16};
   if (!node->isa<CNode>() && !node->isa<Parameter>()) {
@@ -1776,7 +1776,7 @@ int64_t FormatTransfer::Common4DCheck(const FormatArgs &args) {
 
 // ########################  RANGE TRANS ########################
 RangePair ShapeRangeTransfer::GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type,
-                                           const std::string &padding_str) {
+                                           const std::string &padding_str) const {
   const std::set<std::string> no_need_change = {kOpFormat_ND, kOpFormat_DEFAULT, kOpFormat_NCHW, kOpFormat_NCDHW};
   using RangeTransfer = std::function<RangePair(const RangePair &, const TypeId &)>;
   const std::map<std::string, RangeTransfer> format_range_map = {{kOpFormat_NHWC, NHWCRange},
