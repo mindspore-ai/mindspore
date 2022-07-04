@@ -1919,6 +1919,13 @@ def coo_to_dense(x):
     return F.tensor_scatter_update(zeros_tensor, x.indices, x.values)
 
 
+def coo_coalesce(x):
+    """Returns the coalesced sparse tensor of the input."""
+    shape = const_utils.make_tensor(x.shape)
+    res_indices, res_values, _ = P.Coalesce()(x.indices.transpose(), x.values, shape)
+    return COOTensor(res_indices.transpose(), res_values, x.shape)
+
+
 def csr_to_coo(x):
     """convert csr to coo."""
     row_indices = F.csr2coo(x.indptr, x.values.shape[0])

@@ -142,6 +142,13 @@ MS_REG_GPU_KERNEL_THREE(Gather,
                           .AddInputAttr(kNumberTypeInt64)
                           .AddOutputAttr(kNumberTypeBool),
                         GatherV2FwdGpuKernelMod, bool, int64_t, int64_t)
+MS_REG_GPU_KERNEL_THREE(Gather,
+                        KernelAttr()
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeInt32)
+                          .AddInputAttr(kNumberTypeInt64)
+                          .AddOutputAttr(kNumberTypeInt32),
+                        GatherV2FwdGpuKernelMod, int, int, int64_t)
 // dynamic shape ends
 MS_REG_GPU_KERNEL_THREE(
   SparseGatherV2,

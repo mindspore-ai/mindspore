@@ -288,6 +288,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"to_tuple", std::string("coo_to_tuple")},  // C.coo_to_tuple
        {"to_csr", std::string("coo_to_csr")},      // C.coo_to_csr
        {"to_dense", std::string("coo_to_dense")},  // C.coo_to_dense
+       {"coalesce", std::string("coo_coalesce")},  // C.coo_coalesce
      }},
     {kObjectTypeJTagged, {}},
     {kObjectTypeSymbolicKeyType, {}},
