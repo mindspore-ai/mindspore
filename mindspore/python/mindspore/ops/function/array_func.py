@@ -2394,11 +2394,11 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
     For a 3-D tensor, the output is:
     .. code-block::
 
-    output[indices[i][j][k]][j][k] = updates[i][j][k]  # if axis == 0, reduction == "none"
+        output[indices[i][j][k]][j][k] = updates[i][j][k]  # if axis == 0, reduction == "none"
 
-    output[i][indices[i][j][k]][k] += updates[i][j][k]  # if axis == 1, reduction == "add"
+        output[i][indices[i][j][k]][k] += updates[i][j][k]  # if axis == 1, reduction == "add"
 
-    output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
+        output[i][j][indices[i][j][k]] = updates[i][j][k]  # if axis == 2, reduction == "none"
 
     .. warning::
         The order in which updates are applied is nondeterministic, meaning that if there
