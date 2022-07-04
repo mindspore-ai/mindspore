@@ -15,6 +15,7 @@
 
 """Define the taylor rules of operations."""
 
+from __future__ import absolute_import
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
@@ -205,3 +206,15 @@ def taylor_cos(self):
         return series_cos
 
     return taylor_fprop_cos
+
+
+@taylor_fprop_getters.register(P.Tan)
+def taylor_tan(self):
+    """Higher order derivatives rule definition for `Tan` operation."""
+
+    def taylor_fprop_tan(inputs):
+        series_sin_cos = _taylor_fprop_sin_cos(inputs)
+        series_tan = _taylor_fprop_realdiv(series_sin_cos[0], series_sin_cos[1])
+        return series_tan
+
+    return taylor_fprop_tan

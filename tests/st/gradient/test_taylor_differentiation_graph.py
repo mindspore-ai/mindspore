@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.ops import operations as P
+from mindspore import ops
 from mindspore import Tensor
 from mindspore.ops.functional import jet, derivative
 
@@ -27,9 +27,9 @@ context.set_context(mode=context.GRAPH_MODE)
 class MultipleInputSingleOutputNet(nn.Cell):
     def __init__(self):
         super(MultipleInputSingleOutputNet, self).__init__()
-        self.sin = P.Sin()
-        self.cos = P.Cos()
-        self.exp = P.Exp()
+        self.sin = ops.Sin()
+        self.cos = ops.Cos()
+        self.exp = ops.Exp()
 
     def construct(self, x, y):
         out1 = self.sin(x)
@@ -42,8 +42,8 @@ class MultipleInputSingleOutputNet(nn.Cell):
 class MultipleInputMultipleOutputNet(nn.Cell):
     def __init__(self):
         super(MultipleInputMultipleOutputNet, self).__init__()
-        self.sin = P.Sin()
-        self.cos = P.Cos()
+        self.sin = ops.Sin()
+        self.cos = ops.Cos()
 
     def construct(self, x, y):
         out1 = self.sin(x)
@@ -54,9 +54,9 @@ class MultipleInputMultipleOutputNet(nn.Cell):
 class SingleInputSingleOutputNet(nn.Cell):
     def __init__(self):
         super(SingleInputSingleOutputNet, self).__init__()
-        self.sin = P.Sin()
-        self.cos = P.Cos()
-        self.exp = P.Exp()
+        self.sin = ops.Sin()
+        self.cos = ops.Cos()
+        self.exp = ops.Exp()
 
     def construct(self, x):
         out1 = self.sin(x)
@@ -66,10 +66,16 @@ class SingleInputSingleOutputNet(nn.Cell):
         return out
 
 
+def function_graph(x):
+    y = ops.exp(x)
+    z = ops.tan(y)
+    return z
+
+
 class SingleInputSingleOutputWithScalarNet(nn.Cell):
     def __init__(self):
         super(SingleInputSingleOutputWithScalarNet, self).__init__()
-        self.log = P.Log()
+        self.log = ops.Log()
 
     def construct(self, x):
         out1 = self.log(x)
@@ -258,3 +264,22 @@ def test_derivative_construct_graph_mode():
     assert np.allclose(out_primals[1].asnumpy(), expected_primals_y, atol=1.e-4)
     assert np.allclose(out_series[0].asnumpy(), expected_series_x, atol=1.e-4)
     assert np.allclose(out_series[1].asnumpy(), expected_series_y, atol=1.e-4)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_jet_function_graph_mode():
+    """
+    Features: Function jet
+    Description: Test function in graph mode.
+    Expectation: No exception.
+    """
+    primals = Tensor([1., 1.])
+    series = Tensor([[1., 1.], [0., 0.], [0., 0.]])
+    out_primals, out_series = jet(function_graph, primals, series)
+    expected_primals = np.array([-0.450549, -0.450549]).astype(np.float32)
+    expected_series = np.array([[3.270079, 3.270079], [-4.739784, -4.739784],
+                                [56.995613, 56.995613]]).astype(np.float32)
+    assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
+    assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
