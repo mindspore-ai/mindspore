@@ -467,12 +467,12 @@ class RReLU(Cell):
 
     .. math::
             \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
-            {\alpha_{ji}} * x, &\text{otherwise.}\end{cases}
+            {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
-    where :math:`\alpha_{ji}` ~ U(l, u), :math: `l \le u`.
+    where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math: `l \le u`.
 
     Args:
-        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 0.125.
+        lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
         upper (Union[int, float]): Slope of the activation function at x < 0. Default: 1/3.
 
     Inputs:
@@ -504,7 +504,7 @@ class RReLU(Cell):
          [ 2.          0.        ]]
     """
 
-    def __init__(self, lower=0.125, upper=float(1. / 3)):
+    def __init__(self, lower=1/8, upper=1/3):
         super(RReLU, self).__init__()
         validator.check_value_type('upper', upper, [float, int], self.cls_name)
         validator.check_value_type('lower', lower, [float, int], self.cls_name)
