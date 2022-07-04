@@ -28,7 +28,6 @@ namespace mindspore {
 static Status RealPath(const std::string &file, std::string *realpath_str) {
   MS_EXCEPTION_IF_NULL(realpath_str);
   char real_path_mem[PATH_MAX] = {0};
-  // char *real_path_ret = nullptr;
 #if defined(_WIN32) || defined(_WIN64)
   auto real_path_ret = _fullpath(real_path_mem, common::SafeCStr(file), PATH_MAX);
 #else
@@ -181,6 +180,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
+    MS_LOG(ERROR) << dec_key.len;
     MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
                                false);
     anf_graph = mindir_loader.LoadMindIR(file_path);

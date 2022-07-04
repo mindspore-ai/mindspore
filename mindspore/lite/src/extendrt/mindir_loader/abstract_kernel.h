@@ -20,6 +20,7 @@
 #include <vector>
 
 #include "include/api/kernel.h"
+#include "src/tensor.h"
 
 using mindspore::kernel::Kernel;
 
