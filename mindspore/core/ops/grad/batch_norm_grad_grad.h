@@ -30,8 +30,8 @@ class MIND_API BatchNormGradGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchNormGradGrad);
   BatchNormGradGrad() : BaseOperator(kNameBatchNormGradGrad) {
-    InitIOName({"dy", "x", "scale", "mean", "variance", "dout_dx", "dout_dscale", "dout_dbias"},
-               {"ddy", "dx", "dscale"});
+    InitIOName({"x", "dy", "scale", "mean", "variance", "dout_dx", "dout_dscale", "dout_dbias"},
+               {"dx", "ddy", "dscale"});
   }
   void Init(bool is_training = false, float epsilon = 1e-05, const std::string &format = "NCHW");
   void set_is_training(bool is_training);

@@ -195,6 +195,6 @@ class LARS(Optimizer):
             gradients = self.hyper_map(F.partial(_lars_opt, self.lars, self.loss_scale, lr, weight_decay),
                                        gradients, params, self.decay_flags, self.lars_flag)
         success = self.opt(gradients)
-        if self.is_dynamic_lr_or_weight_decay() and not self.opt.is_dynamic_lr_or_weight_decay():
+        if self._is_dynamic_lr_or_weight_decay() and not self.opt.dynamic_lr and not self.opt.dynamic_weight_decay:
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         return success
