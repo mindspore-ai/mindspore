@@ -30,8 +30,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
-                                               const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr BinaryCrossEntropyInferShape(const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t kInputNum = 3;
   auto prim_name = primitive->name();
@@ -61,7 +61,7 @@ abstract::ShapePtr BinaryCrossEntroyInferShape(const PrimitivePtr &primitive,
   return x_shape_ptr;
 }
 
-TypePtr BinaryCrossEntroyInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr BinaryCrossEntropyInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   const int64_t kInputNum = 3;
   auto prim_name = prim->name();
@@ -98,8 +98,8 @@ AbstractBasePtr BinaryCrossEntropyInfer(const abstract::AnalysisEnginePtr &, con
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto infer_type = BinaryCrossEntroyInferType(primitive, input_args);
-  auto infer_shape = BinaryCrossEntroyInferShape(primitive, input_args);
+  auto infer_type = BinaryCrossEntropyInferType(primitive, input_args);
+  auto infer_shape = BinaryCrossEntropyInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(BinaryCrossEntropy, prim::kPrimBinaryCrossEntropy, BinaryCrossEntropyInfer, nullptr, true);
