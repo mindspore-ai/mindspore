@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 class NetPoolGradGrad(nn.Cell):

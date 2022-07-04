@@ -21,15 +21,13 @@
 #include "utils/ms_utils.h"
 #include "utils/profile.h"
 #include "mindspore/ccsrc/kernel/common_utils.h"
-#include "nnacl/fp32/maxpool_with_argmax.h"
-#include "nnacl/base/gather_base.h"
+#include "nnacl/fp32_grad/maxpool_grad_grad.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMaxPoolGradGradInputsNum = 3;
 constexpr size_t kMaxPoolGradGradOutputsNum = 1;
-constexpr size_t kMaxPoolGradGradWorkSpaceNum = 2;
 constexpr size_t kGradIndex = 2;
 constexpr size_t kPadHalf = 2;
 
@@ -125,12 +123,6 @@ void MaxPoolGradGradCpuKernelMod::CalPad() {
   }
 }
 
-void MaxPoolGradGradCpuKernelMod::InitWorkspace() {
-  workspace_size_list_.push_back(input_size_list_[1]);
-  output_elements_ = std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<size_t>());
-  workspace_size_list_.push_back(sizeof(int32_t) * output_elements_);
-}
-
 int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
                                         const std::vector<KernelTensorPtr> &outputs,
@@ -152,6 +144,7 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   param_->output_channel_ = LongToInt(out_shapes_[kDim1]);
   param_->output_h_ = LongToInt(out_shapes_[height_index_]);
   param_->output_w_ = LongToInt(out_shapes_[width_index_]);
+  output_elements_ = std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<size_t>());
 
   if (dim_ == kMaxPool3DGradGradDim) {
     reinterpret_cast<Pooling3DParameter *>(param_)->input_d_ = LongToInt(in_shapes_[depth_index_]);
@@ -162,7 +155,6 @@ int MaxPoolGradGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   CheckInputVaild();
   CalPad();
-  InitWorkspace();
   return KRET_OK;
 }
 
@@ -171,18 +163,17 @@ bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
                                          const std::vector<AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kMaxPoolGradGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kMaxPoolGradGradOutputsNum, kernel_name_);
-  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), kMaxPoolGradGradWorkSpaceNum, kernel_name_);
   auto *input_addr = reinterpret_cast<float *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<float *>(workspace[0]->addr);
-  auto *index_addr = reinterpret_cast<int32_t *>(workspace[1]->addr);
+  auto *grad_addr = reinterpret_cast<float *>(inputs[kGradIndex]->addr);
+  auto *dx_addr = reinterpret_cast<float *>(outputs[0]->addr);
 
-  auto task = [input_addr, output_addr, index_addr, this](size_t start, size_t end) {
+  auto task = [input_addr, grad_addr, dx_addr, this](size_t start, size_t end) {
     auto ret = static_cast<int>(NNACL_OK);
     if (dim_ == kMaxPool2DGradGradDim) {
-      ret = MaxPoolWithArgmax(input_addr, output_addr, index_addr, start, end, param_);
+      ret = MaxPoolGradGrad(input_addr, grad_addr, dx_addr, start, end, param_);
     } else if (dim_ == kMaxPool3DGradGradDim) {
-      ret = MaxPool3DWithArgmax(input_addr, output_addr, index_addr, start, end,
-                                reinterpret_cast<Pooling3DParameter *>(param_));
+      ret =
+        MaxPool3DGradGrad(input_addr, grad_addr, dx_addr, start, end, reinterpret_cast<Pooling3DParameter *>(param_));
     }
     if (ret != static_cast<int>(NNACL_OK)) {
       MS_LOG(ERROR) << "For '" << kernel_name_
@@ -192,23 +183,6 @@ bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     return true;
   };
   ParallelLaunchAutoSearch(task, output_elements_, this, &parallel_search_info_, pool_);
-
-  int64_t outer_size = 1;
-  int64_t inner_size = 1;
-  int64_t indices_element_size = SizeToLong(output_batch_stride_);
-  int64_t limit = SizeToLong(input_batch_stride_);
-  size_t byte_inner_size = inner_size * sizeof(float);
-  size_t byte_out_stride = indices_element_size * byte_inner_size;
-
-  for (int b = 0; b < param_->input_batch_; b++) {
-    auto *index_t = index_addr + b * output_batch_stride_;
-    auto *grad_t = reinterpret_cast<float *>(inputs[kGradIndex]->addr) + b * input_batch_stride_;
-    auto *dx_t = reinterpret_cast<float *>(outputs[0]->addr) + b * output_batch_stride_;
-    int ret = Gather(grad_t, outer_size, byte_inner_size, limit, index_t, indices_element_size, dx_t, byte_out_stride);
-    if (ret != 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', error_code[" << ret << "]";
-    }
-  }
   return true;
 }
 

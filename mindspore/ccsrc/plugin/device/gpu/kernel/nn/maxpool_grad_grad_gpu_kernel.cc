@@ -20,15 +20,13 @@
 #include "mindspore/core/ops/grad/max_pool_grad_grad.h"
 #include "abstract/utils.h"
 #include "plugin/factory/ms_factory.h"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_with_argmax_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/maxpool_grad_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
 namespace {
 constexpr size_t kMaxPoolGradGradInputsNum = 3;
 constexpr size_t kMaxPoolGradGradOutputsNum = 1;
-constexpr size_t kMaxPoolGradGradWorkSpaceNum = 2;
 constexpr size_t kGradIndex = 2;
 constexpr size_t kPadHalf = 2;
 }  // namespace
@@ -131,48 +129,27 @@ int MaxPoolGradGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   output_batch_stride_ = std::accumulate(out_shapes_.begin() + 1, out_shapes_.end(), 1, std::multiplies<size_t>());
 
   CalPad();
-
-  workspace_size_list_.clear();
-  workspace_size_list_.push_back(input_size_list_[1]);
-  auto output_elements = std::accumulate(out_shapes_.begin(), out_shapes_.end(), 1, std::multiplies<size_t>());
-  workspace_size_list_.push_back(sizeof(int32_t) * output_elements);
   return KRET_OK;
 }
 
 template <typename T>
 bool MaxPoolGradGradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                               const std::vector<AddressPtr> &workspace,
                                                const std::vector<AddressPtr> &outputs) {
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
-  T *output_addr = GetDeviceAddress<T>(workspace, kIndex0);
-  auto *index_addr = GetDeviceAddress<int32_t>(workspace, kIndex1);
+  T *grad_addr = GetDeviceAddress<T>(inputs, kGradIndex);
+  T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   if (dim_ == kMaxPool2DGradGradDim) {
-    CalMaxPoolWithArgmax<T, int32_t>(input_addr, batch_, channel_, input_height_, input_width_, window_height_,
-                                     window_width_, stride_height_, stride_width_, pad_top_, pad_left_, output_height_,
-                                     output_width_, output_addr, index_addr, device_id_,
-                                     reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CalMaxPoolGradGrad<T>(input_addr, grad_addr, batch_, channel_, input_height_, input_width_, window_height_,
+                          window_width_, stride_height_, stride_width_, pad_top_, pad_left_, output_height_,
+                          output_width_, output_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else if (dim_ == kMaxPool3DGradGradDim) {
-    CalMaxPool3DWithArgmax<T, int32_t>(
-      input_addr, batch_, channel_, input_depth_, input_height_, input_width_, window_depth_, window_height_,
-      window_width_, stride_depth_, stride_height_, stride_width_, pad_front_, pad_top_, pad_left_, output_depth_,
-      output_height_, output_width_, output_addr, index_addr, device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    CalMaxPool3DGradGrad<T>(input_addr, grad_addr, batch_, channel_, input_depth_, input_height_, input_width_,
+                            window_depth_, window_height_, window_width_, stride_depth_, stride_height_, stride_width_,
+                            pad_front_, pad_top_, pad_left_, output_depth_, output_height_, output_width_, output_addr,
+                            device_id_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', only supports 2D or 3D max pooling.";
     return false;
-  }
-
-  T *grad_addr = GetDeviceAddress<T>(inputs, kIndex2);
-  T *dx = GetDeviceAddress<T>(outputs, kIndex0);
-  size_t dim_before_axis = 1;
-  size_t dim_at_axis_input = input_batch_stride_;
-  size_t dim_at_axis_output = output_batch_stride_;
-  size_t dim_after_axis = 1;
-  for (int b = 0; b < batch_; b++) {
-    int32_t *index_t = index_addr + b * output_batch_stride_;
-    T *grad_t = grad_addr + b * input_batch_stride_;
-    T *dx_t = dx + b * output_batch_stride_;
-    Gather<T, int32_t>(grad_t, index_t, dx_t, dim_before_axis, dim_at_axis_input, dim_at_axis_output, dim_after_axis,
-                       reinterpret_cast<cudaStream_t>(cuda_stream_), device_id_);
   }
   return true;
 }

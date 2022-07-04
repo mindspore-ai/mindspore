@@ -60,7 +60,6 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   void CheckInputVaild();
   void CalPad();
-  void InitWorkspace();
 
   std::vector<int64_t> kernels_;
   std::vector<int64_t> strides_;
