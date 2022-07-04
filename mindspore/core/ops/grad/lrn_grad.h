@@ -58,6 +58,9 @@ class MIND_API LRNGrad : public BaseOperator {
   ///
   /// \return beta.
   float get_beta() const;
+
+  abstract::AbstractBasePtr LrnGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 };
 }  // namespace ops
 }  // namespace mindspore
