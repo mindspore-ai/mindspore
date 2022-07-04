@@ -23,7 +23,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/determinant_by_lu_impl.cuh"
-#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_transpose_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -94,42 +94,25 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   auto batch_lu_device_address = GetDeviceAddress<T *>(workspace, kIndex1);
   auto pivot = GetDeviceAddress<int>(workspace, kIndex2);
   auto info = GetDeviceAddress<int>(workspace, kIndex3);
-  auto device_input_shape = GetDeviceAddress<size_t>(workspace, kIndex4);
-  auto device_input_axis = GetDeviceAddress<size_t>(workspace, kIndex5);
-
   std::vector<T *> batch_lu_address_data;
   for (size_t i = 0; i < batch_size_; i++) {
     batch_lu_address_data.emplace_back(middle_lu_output + i * m_ * m_);
   }
-
-  // Transpose input data from rowMajor to colMajor.
-  constexpr size_t input_shape_length = 3;
-  std::vector<size_t> host_input_shape = {batch_size_, m_, m_};
-  // From (0, 1, 2) --> (0, 2, 1)
-  std::vector<size_t> host_input_axis = {0, 2, 1};
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(device_input_shape, host_input_shape.data(), sizeof(size_t) * input_shape_length,
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
-    cudaMemcpyAsync(device_input_axis, host_input_axis.data(), sizeof(size_t) * input_shape_length,
-                    cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
-    "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
-  CalTranspose(input_elements_, input, device_input_shape, device_input_axis, input_shape_length, middle_lu_output,
-               reinterpret_cast<cudaStream_t>(cuda_stream_));
-
-  // Compute the partial pivoted lu factorization.
-  // If m_ / batch_size_ <= 128 :
-  //  We use batched cublas api is faster by empiricism, for small matrices or large batch.
-  // Otherwise:
-  // We use no-batched cusolver api is faster by empiricism, For small batch sizes. But ms cuda10 do not support
-  // api cusolverDnXgetrf, just skip it.
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemcpyAsync(batch_lu_device_address, batch_lu_address_data.data(), sizeof(T *) * batch_size_,
                     cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(cuda_stream_)),
     "MatrixDeterminantGpuKernelMod cudaMemcpyAsync Fail");
   CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(cuda_stream_)),
                                        "For MatrixDeterminantGpuKernelMod cublasSetStream Fail");
+  // Transpose input data from rowMajor to colMajor.
+  MatrixTranspose(input, SizeToInt(input_elements_), SizeToInt(m_), SizeToInt(m_), middle_lu_output, device_id_,
+                  reinterpret_cast<cudaStream_t>(cuda_stream_));
+  // Compute the partial pivoted lu factorization.
+  // If m_ / batch_size_ <= 128 :
+  //  We use batched cublas api is faster by empiricism, for small matrices or large batch.
+  // Otherwise:
+  // We use no-batched cusolver api is faster by empiricism, For small batch sizes. But ms cuda10 do not support
+  // api cusolverDnXgetrf, just skip it.
   if constexpr (std::is_same_v<T, float>) {
     CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
       cublasSgetrfBatched(cublas_handle_, SizeToInt(m_), reinterpret_cast<float **>(batch_lu_device_address),
@@ -155,6 +138,7 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
                   << "', it's the input data type must be float32, float64, complex64 or complex128.";
     return false;
   }
+  // Just checking first of lu factorization info is ok.
   int host_info;
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpyAsync(&host_info, info, sizeof(int), cudaMemcpyDeviceToHost,
                                                     reinterpret_cast<cudaStream_t>(cuda_stream_)),
@@ -170,7 +154,6 @@ bool MatrixDeterminantGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   if (is_sign_log_determinant_) {
     // For LogMatrixDeterminant, two output -->(sign determinant, log_abs_determinant)
     auto log_determinant_output = GetDeviceAddress<T>(outputs, kIndex1);
-    // For LogMatrixDeterminant, only one output -->(determinant)
     CalculateDeterminantByLu(middle_lu_output, pivot, SizeToInt(m_), SizeToInt(batch_size_), is_sign_log_determinant_,
                              log_determinant_output, sign_output, device_id_,
                              reinterpret_cast<cudaStream_t>(cuda_stream_));
@@ -221,14 +204,8 @@ void MatrixDeterminantGpuKernelMod::InitWorkSpaceSizeList() {
   const size_t pivot_size = batch_size_ * m_ * sizeof(int);
   // The workspace for device return info.
   const size_t info_size = batch_size_ * sizeof(int);
-  // The workspace for device transpose row <--> col.
-  // The input will flatten into (batch_size, m, m) for matrix_determinant.
-  constexpr size_t three_dims = 3;
-  const size_t device_input_shape_size = three_dims * sizeof(size_t);
-  const size_t device_input_axis_size = device_input_shape_size;
   workspace_size_list_.clear();
-  workspace_size_list_ = {middle_output_size, batch_lu_address_size,   pivot_size,
-                          info_size,          device_input_shape_size, device_input_axis_size};
+  workspace_size_list_ = {middle_output_size, batch_lu_address_size, pivot_size, info_size};
 }
 
 std::vector<KernelAttr> MatrixDeterminantGpuKernelMod::GetOpSupport() {
