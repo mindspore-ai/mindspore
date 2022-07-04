@@ -16,7 +16,7 @@ mindspore.ops.interpolate
     - **x** (Tensor) - 输入，3到5维的Tensor。
     - **roi** (tuple[float]， 可选) -  在 `crop_and_resize` 坐标变换模式下生效，当前不支持。
     - **scales** (tuple[float]， 可选) - 输入shape每个维度resize的系数。 `scales` 的长度跟 `x` 的shape长度相同。 `scales` 和 `size` 同时只能指定一个。
-    - **size** (tuple[int]， 可选) - 输入shape指定轴的新维度。 `scales` 和 `size` 同时只能指定一个。当 `mode` 是"linear"时, `size` 为1个int元素 :math:`(new\_width,)` 的tuple。当 `mode` 是"bilinear"时, `size` 为2个int元素 :math:`(new\_height, new\_width)` 的tuple。
+    - **sizes** (tuple[int]， 可选) - 输入shape指定轴的新维度。 `scales` 和 `size` 同时只能指定一个。当 `mode` 是"linear"时, `size` 为1个int元素 :math:`(new\_width,)` 的tuple。当 `mode` 是"bilinear"时, `size` 为2个int元素 :math:`(new\_height, new\_width)` 的tuple。
     - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners", 还可选"half_pixel"和"asymmetric"。
     - **mode** (str) - 所使用的插值方式。 目前支持"linear"和"bilinear"插值方式。默认值: "linear"。
 
