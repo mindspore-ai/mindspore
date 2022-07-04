@@ -12,7 +12,7 @@ mindspore.ops.Conv3D
         \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
         \operatorname{input}\left(N_{i}, k\right))
 
-    其中 :math:`k` 为kernel， :math:`ccor` 是 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>` 。
+    其中 :math:`k` 为kernel， :math:`ccor` 是 `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_ 。
 
     如果指定 `pad_mode` 为 "valid"，则输出的深度、高度和宽度分别为
     :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
@@ -33,7 +33,7 @@ mindspore.ops.Conv3D
     - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值："valid"。
 
       - same: 输出的深度、高度和宽度分别与对应输入整除 `stride` 后的值相同。
-        同一维度的padding将被尽可能均匀填充在两侧，额外的padding将被填充在尾侧。
+        填充将被均匀地添加到高和宽的两侧，剩余填充量将被添加到维度末端。
         若设置该模式， `pad` 的值必须为0。
 
       - valid: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。

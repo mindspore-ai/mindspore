@@ -7,7 +7,7 @@ mindspore.ops.logsumexp
 
     .. math::
 
-        logsumexp(x) = \log(\sum(e^(x-x_{max}))) + x_{max}
+        logsumexp(x) = \log(\sum e^{x-x_{max}}) + x_{max}
 
     .. note::
         Ascend上输入Tensor的维度要小于等于8，CPU上输入Tensor的维度要小于8。
@@ -20,8 +20,8 @@ mindspore.ops.logsumexp
 
     **返回：**
 
-    Tensor，具有与 `x` 相同的dtype。
+    Tensor，具有与 `x` 相同的数据类型。
 
-    - 若axis为()，且keep_dims设为False，则输出为0维Tensor。
-    - 若axis为int类型，假设为2，且keep_dims设为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)`。
-    - 若axis为tuple(int)，假设为(2, 3)，且keep_dims为False，则输出shape为 :math:`(x_1, x_4, ..., x_R)`。
+    - 若axis为()，且 `keep_dims` 设为False，则输出为0维Tensor。
+    - 若axis为int类型，假设为2，且 `keep_dims` 设为False，则输出的shape为 :math:`(x_1, x_3, ..., x_R)` 。
+    - 若axis为tuple(int)，假设为(2, 3)，且 `keep_dims` 为False，则输出shape为 :math:`(x_1, x_4, ..., x_R)` 。

@@ -3,7 +3,7 @@ mindspore.ops.inv
 
 .. py:function:: mindspore.ops.inv(x)
 
-    计算输入x张量的倒数。
+    逐元素计算输入Tensor的倒数。
 
     .. math::
         out_i = \frac{1}{x_{i} }

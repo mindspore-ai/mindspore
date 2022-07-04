@@ -18,8 +18,8 @@ mindspore.ops.TruncateMod
 
     **输入：**
 
-    - **x** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - Number或bool类型，或这两个类型的Tensor。
+    - **x** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
+    - **y** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
 
     **输出：**
 

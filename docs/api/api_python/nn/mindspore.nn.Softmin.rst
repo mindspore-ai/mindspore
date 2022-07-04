@@ -10,7 +10,7 @@ mindspore.nn.Softmin
     Softmin定义为：
 
     .. math::
-        \text{softmax}(x_{i}) =  \frac{\exp(-x_i)}{\sum_{j=0}^{n-1}\exp(-x_j)},
+        \text{softmin}(x_{i}) =  \frac{\exp(-x_i)}{\sum_{j=0}^{n-1}\exp(-x_j)},
 
     其中， :math:`x_{i}` 是输入Tensor在轴 `axis` 上的第 :math:`i` 个元素。
 

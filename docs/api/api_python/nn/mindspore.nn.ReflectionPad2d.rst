@@ -11,11 +11,11 @@ mindspore.nn.ReflectionPad2d
 
     **输入：**
 
-    - **x** (Tensor) - 输入Tensor, shape为 :math:`(C, H_{in}, W_{in})` 或 :math:`(N, C, H_{in}, W_{in})`。
+    - **x** (Tensor) - 输入Tensor, shape为 :math:`(C, H_{in}, W_{in})` 或 :math:`(N, C, H_{in}, W_{in})` 。
 
     **输出：**
 
-    Tensor，填充后的Tensor, shape为 :math:`(C, H_{out}, W_{out})` 或 :math:`(N, C, H_{out}, W_{out})`。其中 :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,:math:`W_{out} = W_{in} + pad_{left} + pad_{right}`。
+    Tensor，填充后的Tensor, shape为 :math:`(C, H_{out}, W_{out})` 或 :math:`(N, C, H_{out}, W_{out})`。其中 :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`,:math:`W_{out} = W_{in} + pad\_left + pad\_right` 。
 
     **异常：**
 
