@@ -2133,8 +2133,48 @@ class Tensor(Tensor_):
 
     def index_fill(self, dim, index, value):
         """
-        Fills the elements under the dim dimension of the self tensor with the input value
-        by selecting the indices in the order given in index.
+        Fills the elements under the `dim` dimension of the self Tensor with the input `value`
+        by selecting the indices in the order given in `index`.
+
+        Args:
+            dim (Union[int, Tensor]): Dimension along which to fill the input Tensor. Only supports
+                an int number or a 0-dimensional Tensor, whose data type is int32 or int64.
+            index (Tensor): Indices of the input Tensor to fill in. The dtype must be int32.
+            value (Union[bool, int, float, Tensor]): Value to fill the returned Tensor. If `value` is
+                a Tensor, it must be a 0-dimensional Tensor and has the same dtype as self Tensor. Otherwise,
+                the `value` will be cast to a 0-dimensional Tensor with the same data type as self Tensor.
+
+        Outputs:
+            Tensor, has the same dtype and shape as self Tensor.
+
+        Raises:
+            TypeError: If `dim` is neither int number nor Tensor.
+            TypeError: When `dim` is a Tensor and its dtype is not int32 or int64.
+            TypeError: If `index` is not a Tensor.
+            TypeError: If dtype of `index` is not int32.
+            TypeError: If `value` is not a bool, int, float, or Tensor.
+            TypeError: If dtype of self Tensor and `value` are not the same.
+            ValueError: When `dim` is a Tensor and its rank is not equal to 0.
+            ValueError: If the rank of `index` is greater than 1D.
+            ValueError: When `value` is a Tensor and its rank is not equal to 0.
+            RuntimeError: If the value of `dim` is out the range of `[-self.ndim, self.ndim - 1]`.
+            RuntimeError: If the values of `index` are out the range of `[-self.shape[dim], self.shape[dim] - 1]`.
+
+        Supported Platforms:
+            ``GPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import mindspore.ops as ops
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]).astype(np.float32))
+            >>> index = Tensor([0, 2], mindspore.int32)
+            >>> value = Tensor(-2.0, mindspore.float32)
+            >>> y = x.index_fill(1, index, value)
+            >>> print(y)
+            [[-2. 2. -2.]
+             [-2. 5. -2.]
+             [-2. 8. -2.]]
         """
         return tensor_operator_registry.get('index_fill')(self, dim, index, value)
 

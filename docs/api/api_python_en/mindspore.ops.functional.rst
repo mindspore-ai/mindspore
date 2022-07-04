@@ -334,6 +334,7 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
+    mindspore.ops.index_fill
     mindspore.ops.intopk
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
