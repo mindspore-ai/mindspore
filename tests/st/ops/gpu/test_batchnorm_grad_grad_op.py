@@ -317,7 +317,7 @@ def test_batchnorm_grad_grad_training_nchw_2():
 def test_batchnorm_grad_grad_training_nhwc_2():
     """
     Feature: test BatchNormGradGrad
-    Description: test BatchNormGradGrad in training mode and NCHW format
+    Description: test BatchNormGradGrad in training mode and NHWC format
     Expectation: The outputs are same as exception
     """
     for np_type in np_types:
@@ -359,10 +359,120 @@ def test_batchnorm_grad_grad_training_nhwc_2():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_batchnorm_grad_grad_inference_nchw_vmap():
+def test_batchnorm_grad_grad_training_nchw_dynamic_shape():
     """
     Feature: test BatchNormGradGrad
-    Description: test BatchNormGradGrad vmap function in inference mode and NC format
+    Description: test BatchNormGradGrad dynamic shape in training mode and NCHW format
+    Expectation: The outputs are same as exception
+    """
+    for np_type in np_types:
+        x = Tensor(np.array([1, 6, 2, 11, 10, 16, 22, 11, 10, 6, 23, 11, 18, 36, 24, 11, 3, 5, 9, 2, 7, 4, 5, 13])
+                   .reshape((2, 3, 2, 2)).astype(np_type))
+        scale = Tensor(np.array([5, 10, 13]).astype(np_type_fp32))
+        dy = Tensor(np.array([4, 3, 11, 6, 7, 3, 2, 15, 21, 8, 10, 5, 12, 6, 8, 5, 21, 30, 8, 5, 4, 20, 12, 26])
+                    .reshape((2, 3, 2, 2)).astype(np_type))
+        dout_dx = Tensor(np.array([10, 45, 1, 31, 10, 5, 13, 3, 10, 25, 7, 23, 10, 5, 21,
+                                   3, 10, 5, 19, 6, 10, 5, 2, 33]).reshape((2, 3, 2, 2)).astype(np_type))
+        dout_dscale = Tensor(np.array([10, 20, 8]).astype(np_type_fp32))
+        dout_dbias = Tensor(np.array([10, 15, 2]).astype(np_type_fp32))
+        mean = Tensor(np.array([13.625, 9.75, 9.875]).astype(np_type_fp32))
+        variance = Tensor(np.array([124.234375, 39.9375, 33.109375]).astype(np_type_fp32))
+        batchnorf_grad_grad = BatchnormGradGradNet(is_training=True, epsilon=1e-10, data_format="NCHW")
+        x_dyn = Tensor(shape=(2, 3, 2, None), dtype=x.dtype)
+        scale_dyn = Tensor(shape=(None,), dtype=scale.dtype)
+        dout_dx_dyn = Tensor(shape=(2, None, 2, 2), dtype=dout_dx.dtype)
+        dout_dbias_dyn = Tensor(shape=(None,), dtype=dout_dbias.dtype)
+        batchnorf_grad_grad.set_inputs(dy, x_dyn, scale_dyn, mean, variance,
+                                       dout_dx_dyn, dout_dscale, dout_dbias_dyn)
+        ddy, dx, dscale = batchnorf_grad_grad(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias)
+        expect_ddy = np.array([[[[-5.0274234, 15.603123],
+                                 [-8.078747, 14.252785]],
+                                [[17.515953, 27.26279],
+                                 [57.58051, 9.382442]],
+                                [[-7.7716827, 22.513603],
+                                 [-2.8373299, 22.499744]]],
+                               [[[11.734285, 27.239033],
+                                 [22.584667, 1.6922784]],
+                                [[-3.0858822, -5.1115246],
+                                 [28.814217, -12.358505]],
+                                [[-10.474489, -24.473639],
+                                 [-30.350508, 46.8943]]]]).astype(np_type)
+        expect_dx = np.array([[[[-3.0650284, -4.545036],
+                                [4.0242057, -1.2047515]],
+                               [[-10.74366, -13.374659],
+                                [9.901716, 6.22377]],
+                               [[6.9668703, -1.8542786],
+                                [-13.217213, -8.492305]]],
+                              [[[5.2714543, -0.08000898],
+                                [1.2891254, -1.6899571]],
+                               [[12.131741, 37.288],
+                                [1.404377, -42.831272]],
+                               [[-5.9648676, 10.930217],
+                                [2.98559, 8.645981]]]]).astype(np_type)
+        expect_dscale = np.array([-13.763241, -11.468014, 16.121202]).astype(np_type_fp32)
+        assert np.allclose(dx.asnumpy(), expect_dx)
+        assert np.allclose(ddy.asnumpy(), expect_ddy)
+        assert np.allclose(dscale.asnumpy(), expect_dscale)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_batchnorm_grad_grad_training_nhwc_dynamic_shape():
+    """
+    Feature: test BatchNormGradGrad
+    Description: test BatchNormGradGrad dynamic shape in training mode NHWC format
+    Expectation: The outputs are same as exception
+    """
+    for np_type in np_types:
+        x = Tensor(np.array([1, 6, 2, 11, 10, 16, 22, 11, 10, 6, 23, 11, 18, 36, 24, 11, 3, 5, 9, 2, 7, 4, 5, 13])
+                   .reshape((2, 2, 2, 3)).astype(np_type))
+        scale = Tensor(np.array([5, 10, 13]).astype(np_type_fp32))
+        dy = Tensor(np.array([4, 3, 11, 6, 7, 3, 2, 15, 21, 8, 10, 5, 12, 6, 8, 5, 21, 30, 8, 5, 4, 20, 12, 26])
+                    .reshape((2, 2, 2, 3)).astype(np_type))
+        dout_dx = Tensor(np.array([10, 45, 1, 31, 10, 5, 13, 3, 10, 25, 7, 23, 10, 5, 21,
+                                   3, 10, 5, 19, 6, 10, 5, 2, 33]).reshape((2, 2, 2, 3)).astype(np_type))
+        dout_dscale = Tensor(np.array([10, 20, 8]).astype(np_type_fp32))
+        dout_dbias = Tensor(np.array([10, 15, 2]).astype(np_type_fp32))
+        mean = Tensor(np.array([10.25, 12., 11.]).astype(np_type_fp32))
+        variance = Tensor(np.array([42.9375, 121., 41.5]).astype(np_type_fp32))
+        batchnorf_grad_grad = BatchnormGradGradNet(is_training=True, epsilon=1e-10, data_format="NHWC")
+        x_dyn = Tensor(shape=(2, 2, 2, None), dtype=x.dtype)
+        scale_dyn = Tensor(shape=(None,), dtype=scale.dtype)
+        dout_dx_dyn = Tensor(shape=(2, None, 2, 3), dtype=dout_dx.dtype)
+        dout_dbias_dyn = Tensor(shape=(None,), dtype=dout_dbias.dtype)
+        batchnorf_grad_grad.set_inputs(dy, x_dyn, scale_dyn, mean, variance,
+                                       dout_dx_dyn, dout_dscale, dout_dbias_dyn)
+        ddy, dx, dscale = batchnorf_grad_grad(dy, x, scale, mean, variance, dout_dx, dout_dscale, dout_dbias)
+        expect_ddy = np.array([[[[-7.508998, 33.534935, -19.357697],
+                                 [23.731525, 9.96619, -17.301367]],
+                                [[26.734844, 5.664913, -4.6332817],
+                                 [11.544975, 34.049587, 21.170918]]],
+                               [[[18.359093, 59.042076, 11.548992],
+                                 [2.3661919, -4.4703217, -12.574798]],
+                                [[11.531647, -10.169046, -3.3442173],
+                                 [-6.7592793, -7.618332, 40.491455]]]]).astype(np_type)
+        expect_dx = np.array([[[[-12.525581, -13.745609, 10.849744],
+                                [0.18534184, -7.1285133, -14.531107]],
+                               [[-2.6849413, 9.152922, -3.9971244],
+                                [-0.79296684, 5.818636, 12.025189]]],
+                              [[[9.639168, 4.4382114, -21.06007],
+                                [-6.3899727, 17.928495, -0.7197275]],
+                               [[-0.11268234, -16.05016, 10.23838],
+                                [12.681629, -0.41397095, 7.1947174]]]]).astype(np_type)
+        expect_dscale = np.array([-15.722887, -26.014277, 35.56406]).astype(np_type_fp32)
+        assert np.allclose(dx.asnumpy(), expect_dx)
+        assert np.allclose(ddy.asnumpy(), expect_ddy)
+        assert np.allclose(dscale.asnumpy(), expect_dscale)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_batchnorm_grad_grad_training_nchw_vmap():
+    """
+    Feature: test BatchNormGradGrad
+    Description: test BatchNormGradGrad vmap function in training mode and NCHW format
     Expectation: The outputs are same as exception
     """
     for np_type in np_types:
@@ -389,6 +499,43 @@ def test_batchnorm_grad_grad_inference_nchw_vmap():
                                [[-1.05440617e+01, 1.40203199e+01, 1.59743786e+00]]]]).astype(np_type) \
             .reshape(x_new_shape)
         expect_dscale = np.array([1.00431015e+02, 2.65164828e+00]).astype(np_type_fp32) \
+            .reshape(scale_new_shape)
+        assert np.allclose(dx.asnumpy(), expect_dx)
+        assert np.allclose(ddy.asnumpy(), expect_ddy)
+        assert np.allclose(dscale.asnumpy(), expect_dscale)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_batchnorm_grad_grad_inference_nhwc_vmap():
+    """
+    Feature: test BatchNormGradGrad
+    Description: test BatchNormGradGrad vmap function in inference mode and NHWC format
+    Expectation: The outputs are same as exception
+    """
+    for np_type in np_types:
+        x, scale, dy, dout_dx, dout_dscale, dout_dbias = get_nhwc_inputs(np_type)
+        mean = Tensor(np.array([10., 4., 2.]).astype(np_type_fp32))
+        variance = Tensor(np.array([0.1, 0.4, 0.3]).astype(np_type_fp32))
+        x_new_shape = (2, 2, 1, 3, 1)
+        scale_new_shape = (3, 1)
+        batchnorf_grad_grad = BatchnormGradGradNet(is_training=False, epsilon=1e-10, data_format="NHWC")
+        ddy, dx, dscale = F.vmap(batchnorf_grad_grad, (3, 3, 0, 0, 0, 3, 0, 0), (3, 3, 0))(
+            dy.reshape(x_new_shape), x.reshape(x_new_shape), scale.reshape(scale_new_shape),
+            mean.reshape(scale_new_shape), variance.reshape(scale_new_shape), dout_dx.reshape(x_new_shape),
+            dout_dscale.reshape(scale_new_shape), dout_dbias.reshape(scale_new_shape))
+        expect_ddy = np.array([[[[-1.16491104e+02, 1.57302490e+02, 4.94995819e+02]],
+                                [[-2.27170822e+02, 2.83793610e+02, 8.96811523e+01]]],
+                               [[[1.36491104e+02, 4.73530273e+02, 3.52587952e+02]],
+                                [[-1.32302490e+02, 3.08113918e+01, 2.28437531e+02]]]]).astype(np_type)\
+            .reshape(x_new_shape)
+        expect_dx = np.array([[[[3.16227760e+01, 9.48683319e+01, 7.59508545e+02]],
+                               [[3.16227760e+01, 1.58113876e+02, 7.12039261e+01]]],
+                              [[[3.16227760e+01, 9.48683319e+01, 7.59508545e+02]],
+                               [[3.16227760e+01, 1.58113876e+02, 1.18673210e+02]]]]).astype(np_type)\
+            .reshape(x_new_shape)
+        expect_dscale = np.array([6.95701065e+01, 9.48683319e+01, 2.39354736e+03]).astype(np_type_fp32)\
             .reshape(scale_new_shape)
         assert np.allclose(dx.asnumpy(), expect_dx)
         assert np.allclose(ddy.asnumpy(), expect_ddy)
