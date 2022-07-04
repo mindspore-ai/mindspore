@@ -2324,7 +2324,8 @@ class Tile(PrimitiveWithInfer):
                     a = a.asnumpy()
                 if isinstance(b, (Tensor_, Tensor)):
                     b = b.asnumpy()
-                x_shp[i] *= a
+                if x_shp[i] >= 0:
+                    x_shp[i] *= a
                 if a != b:
                     x_shp[i] = -1
                 min_shape[i] *= a
@@ -2332,7 +2333,8 @@ class Tile(PrimitiveWithInfer):
                 i += 1
         else:
             for i, a in enumerate(multiples_w):
-                x_shp[i] *= a
+                if x_shp[i] >= 0:
+                    x_shp[i] *= a
                 max_shape[i] *= a
                 min_shape[i] *= a
             if x['value'] is not None:
