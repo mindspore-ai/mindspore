@@ -5,6 +5,11 @@ mindspore.dataset.VOCDataset
 
     读取和解析VOC数据集的源文件构建数据集。
 
+    根据给定的 `task` 配置，生成数据集具有不同的输出列：
+
+    - `task` = 'Detection'，输出列： `[image, dtype=uint8]` , `[bbox, dtype=float32]` , `[label, dtype=uint32]` , `[difficult, dtype=uint32]` , `[truncate, dtype=uint32]` 。
+    - `task` = 'Segmentation'，输出列： `[image, dtype=uint8]` , `[target, dtype=uint8]` 。
+
     **参数：**
 
     - **dataset_dir** (str) - 包含数据集文件的根目录的路径。
@@ -25,11 +30,6 @@ mindspore.dataset.VOCDataset
     - **cache** (DatasetCache, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/dataset/cache.html>`_ 。默认值：None，不使用缓存。
     - **extra_metadata** (bool, 可选) - 用于指定是否额外输出一个数据列用于表示图片元信息。如果为True，则将额外输出一个名为 `[_meta-filename, dtype=string]` 的数据列，默认值：False。
     - **decrypt** (callable, 可选) - 图像解密函数，接受加密的图片路径并返回bytes类型的解密数据。默认值：None，不进行解密。
-
-    根据给定的 `task` 配置，生成数据集具有不同的输出列：
-
-    - `task` = 'Detection'，输出列： `[image, dtype=uint8]` , `[bbox, dtype=float32]` , `[label, dtype=uint32]` , `[difficult, dtype=uint32]` , `[truncate, dtype=uint32]` 。
-    - `task` = 'Segmentation'，输出列： `[image, dtype=uint8]` , `[target, dtype=uint8]` 。
 
     **异常：**
 
