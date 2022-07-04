@@ -1560,10 +1560,6 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
     `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
-    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to
-    the relatively highest priority data type.
-
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)` where :math:`*` means,any number of additional dimensions.
@@ -1636,10 +1632,6 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
 
     `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
-
-    Inputs of `input_x` and `updates` comply with the implicit type conversion rules to make the data types consistent.
-    If they have different data types, the lower priority data type will be converted to the
-    relatively highest priority data type.
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
@@ -1785,11 +1777,6 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
     `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
 
-    Inputs of `input_x` and `updates` comply with the implicit type of conversion rules to make the data types
-    consistent.
-    If they have different data types, the lower priority data type will be converted to the
-    relatively higher priority data type.
-
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
             The shape is :math:`(N,*)`, where :math:`*` means any number of additional dimensions.
@@ -1933,11 +1920,6 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
 
     `updates` is a tensor of rank `Q-1+P-N`. Its shape is:
     :math:`(i_0, i_1, ..., i_{Q-2}, x\_shape_N, ..., x\_shape_{P-1})`.
-
-    Inputs of `input_x` and `updates` comply with the implicit type of conversion rules to make the data types
-    consistent.
-    If they have different data types, the lower priority data type will be converted to the
-    relatively higher priority data type.
 
     Args:
         input_x (Parameter): The target tensor, with data type of Parameter.
