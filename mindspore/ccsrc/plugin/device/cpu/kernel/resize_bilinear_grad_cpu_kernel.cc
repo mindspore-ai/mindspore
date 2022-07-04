@@ -30,8 +30,13 @@ constexpr size_t kResizeBilinearGradInputsXShapeSize = 4;
 void ResizeBilinearGradCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  size_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
+  auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto size_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+  if (AnfAlgo::IsShapesDynamic({shape_signed, size_signed})) {
+    return;
+  }
+  shape_ = Convert2SizeTClipNeg(shape_signed);
+  size_ = Convert2SizeTClipNeg(size_signed);
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   if (shape_.size() < kResizeBilinearGradInputsDoutShapeSize) {

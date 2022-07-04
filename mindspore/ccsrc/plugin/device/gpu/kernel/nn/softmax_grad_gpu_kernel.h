@@ -113,6 +113,7 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
+
     auto temp_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> input_shape(temp_shape.begin(), temp_shape.end());
     auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));

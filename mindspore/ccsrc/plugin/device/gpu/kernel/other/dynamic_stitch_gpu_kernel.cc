@@ -43,7 +43,7 @@ bool DynamicStitchKernelMod::Init(const CNodePtr &kernel_node) {
   auto first_index_dims = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0).size();
   one_data_ele_num_ = 1;
   for (size_t d = first_index_dims; d < first_data_shape.size(); ++d) {
-    one_data_ele_num_ *= LongToSizeClipNeg(first_data_shape[d]);
+    one_data_ele_num_ *= first_data_shape[d];
   }
   for (size_t i = 0; i < n_; i++) {
     auto data_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, n_ + i);

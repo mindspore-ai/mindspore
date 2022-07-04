@@ -188,8 +188,12 @@ class UpdateThorGradientGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  private:
   void SetProperty(const CNodePtr &kernel_node) {
     auto matrix_a_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto gradient_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    auto gradient_shape = Convert2SizeTClipNeg(shape_signed);
     auto matrix_g_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
+    if (AnfAlgo::IsShapesDynamic({matrix_a_shape, shape_signed, matrix_g_shape})) {
+      return;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(matrix_a_shape, kernel_name_, "matrix_a") ||
                      CHECK_SHAPE_NULL(gradient_shape, kernel_name_, "gradient") ||
                      CHECK_SHAPE_NULL(matrix_g_shape, kernel_name_, "matrix_g");

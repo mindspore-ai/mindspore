@@ -59,8 +59,13 @@ class CholeskySolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
 
-    auto in_a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0));
-    auto in_b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1));
+    auto a_shape_singed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim0);
+    auto b_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kDim1);
+    if (AnfAlgo::IsShapesDynamic({a_shape_singed, b_shape_signed})) {
+      return true;
+    }
+    auto in_a_shape = Convert2SizeTClipNeg(a_shape_singed);
+    auto in_b_shape = Convert2SizeTClipNeg(b_shape_signed);
     is_null_input_ =
       CHECK_SHAPE_NULL(in_a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(in_b_shape, kernel_name_, "input_b");
     if (is_null_input_) {

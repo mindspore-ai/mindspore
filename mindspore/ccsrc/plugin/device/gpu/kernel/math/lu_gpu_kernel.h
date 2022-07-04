@@ -157,7 +157,11 @@ class LUGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     // 1. get CuSolver Dense matrix handler
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
-    auto in_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto in_shape = Convert2SizeTClipNeg(shape_signed);
     // 2. check input shape not null
     is_null_input_ = CHECK_SHAPE_NULL(in_shape, kernel_name_, "input");
     if (is_null_input_) {

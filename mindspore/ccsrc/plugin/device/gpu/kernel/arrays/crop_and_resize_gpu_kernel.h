@@ -93,7 +93,7 @@ class CropAndResizeGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto input_boxes_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto input_box_index_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto input_crop_size_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+    auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(input_image_shape, kernel_name, "x") ||
                      CHECK_SHAPE_NULL(input_boxes_shape, kernel_name, "boxes") ||
                      CHECK_SHAPE_NULL(input_box_index_shape, kernel_name, "boxes_index") ||

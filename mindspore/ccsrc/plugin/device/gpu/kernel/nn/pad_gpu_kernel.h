@@ -76,7 +76,11 @@ class PadFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     (void)CheckIONumber(kernel_node);
 
-    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    input_shape_ = Convert2SizeTClipNeg(shape_signed);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
