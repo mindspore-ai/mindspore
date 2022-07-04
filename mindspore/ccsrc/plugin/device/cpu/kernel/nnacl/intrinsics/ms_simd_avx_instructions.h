@@ -240,9 +240,9 @@ static inline MS_FLOAT32X8 simd_exp256_f32(MS_FLOAT32X8 input) {
   MS_INT32X8 integer = MS_CVT256PS_EPI32(MS_DIV256_F32(input, param[0]));
   MS_FLOAT32X8 decimal = MS_SUB256_F32(input, MS_MUL256_F32(MS_CVT256EPI32_PS(integer), param[0]));
   MS_INT32X8 int_exp = MS_SLLI256_EPI32(MS_ADD256_EPI32(integer, MS_MOV256_EPI32(127)), 23);
-  MS_FLOAT32X8 tmp = MS_MUL256_F32(decimal, (MS_ADD256_F32(param[2], MS_MUL256_F32(decimal, param[1]))));
-  tmp = MS_MUL256_F32(decimal, MS_ADD256_F32(param[4], MS_MUL256_F32(decimal, MS_ADD256_F32(param[3], tmp))));
-  MS_FLOAT32X8 decimal_exp = MS_ADD256_F32(param[5], MS_MUL256_F32(decimal, MS_ADD256_F32(param[5], tmp)));
+  MS_FLOAT32X8 tmp = MS_FMADD256_F32(decimal, MS_FMADD256_F32(decimal, param[1], param[2]), param[3]);
+  tmp = MS_FMADD256_F32(decimal, MS_FMADD256_F32(decimal, tmp, param[4]), param[5]);
+  MS_FLOAT32X8 decimal_exp = MS_FMADD256_F32(decimal, tmp, param[5]);
   return MS_MUL256_F32(decimal_exp, MS_CAST256_F32_S32(int_exp));
 }
 
@@ -274,6 +274,19 @@ static inline MS_FLOAT32X8 MS_TANHX8_F32(MS_FLOAT32X8 src) {
 }
 
 #define MS_TANH256_F32 MS_TANHX8_F32
+
+static inline MS_FLOAT32X8 MS256_ERF_F32(MS_FLOAT32X8 src) {
+  MS_FLOAT32X8 dst;
+  MS_F32X8_GETI(dst, 0) = erff(MS_F32X8_GETI(src, 0));
+  MS_F32X8_GETI(dst, 1) = erff(MS_F32X8_GETI(src, 1));
+  MS_F32X8_GETI(dst, 2) = erff(MS_F32X8_GETI(src, 2));
+  MS_F32X8_GETI(dst, 3) = erff(MS_F32X8_GETI(src, 3));
+  MS_F32X8_GETI(dst, 4) = erff(MS_F32X8_GETI(src, 4));
+  MS_F32X8_GETI(dst, 5) = erff(MS_F32X8_GETI(src, 5));
+  MS_F32X8_GETI(dst, 6) = erff(MS_F32X8_GETI(src, 6));
+  MS_F32X8_GETI(dst, 7) = erff(MS_F32X8_GETI(src, 7));
+  return dst;
+}
 
 #define MS_FMADD256X8_F32(src, weight, dst)       \
   dst##1 = MS_MLA256_F32(dst##1, src##1, weight); \
