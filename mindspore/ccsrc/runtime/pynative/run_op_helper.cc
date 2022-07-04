@@ -167,6 +167,7 @@ void CopyValueNodeTensorToDevice(const ValueNodePtr &node, const device::DeviceC
 
     const auto &node_address = AnfAlgo::GetMutableOutputAddr(node, i, false);
     MS_EXCEPTION_IF_NULL(node_address);
+    node_address->SetNodeIndex(node, i);
     if (node_address->GetPtr() != nullptr) {
       return;
     }
