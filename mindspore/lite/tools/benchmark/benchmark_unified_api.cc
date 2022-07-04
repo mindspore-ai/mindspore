@@ -400,6 +400,9 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
   context->SetEnableParallel(flags_->enable_parallel_);
   context->SetThreadAffinity(flags_->cpu_bind_mode_);
   context->SetInterOpParallelNum(flags_->inter_op_parallel_num_);
+  if (!flags_->core_list_.empty()) {
+    context->SetThreadAffinity(flags_->core_list_);
+  }
 
   auto &device_list = context->MutableDeviceInfo();
 

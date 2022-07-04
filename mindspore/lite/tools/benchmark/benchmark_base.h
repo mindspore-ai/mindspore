@@ -151,6 +151,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::parallel_num_, "parallelNum", "parallel num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::parallel_task_num_, "parallelTaskNum", "parallel task num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::workers_num_, "workersNum", "works num of parallel predict", 2);
+    AddFlag(&BenchmarkFlags::core_list_str_, "cpuCoreList", "The core id of the bundled core, e.g. 0,1,2,3", "");
     AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
             1);
     AddFlag(&BenchmarkFlags::enable_gl_texture_, "enableGLTexture", "Enable GlTexture2D", false);
@@ -161,6 +162,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   void InitInputDataList();
 
   void InitResizeDimsList();
+
+  void InitCoreList();
 
  public:
   // common
@@ -177,6 +180,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   InDataType in_data_type_ = kBinary;
   std::string in_data_type_in_ = "bin";
   int cpu_bind_mode_ = 1;
+  std::string core_list_str_;
+  std::vector<int> core_list_;
   // MarkPerformance
   int loop_count_ = 10;
   int num_threads_ = 2;
