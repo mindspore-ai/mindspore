@@ -1,7 +1,7 @@
 mindspore.ops.xlogy
 ====================
 
-.. py:class:: mindspore.ops.xlogy(x, y)
+.. py:function:: mindspore.ops.xlogy(x, y)
 
     计算第一个输入Tensor乘以第二个输入Tensor的对数。当 `x` 为零时，则返回零。
 
@@ -13,7 +13,7 @@ mindspore.ops.xlogy
     **参数：**
 
     - **x** (Union[Tensor, number.Number, bool]) - 第一个输入为数值型。数据类型为 `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 或 `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.dtype.html#mindspore.dtype>`_ 。
-    - **y** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时， 则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
+    - **y** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时，则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
 
     **返回：**
 

@@ -29,7 +29,6 @@
         - **value** (str) - 表示算子属性的值。默认值：None。
         - **default_value** (str) - 表示算子属性的默认值。默认值：None。
         - **kwargs** (dict) - 表示算子属性的其他信息。
-            
 
     .. py:method:: binfile_name(binfile_name)
 

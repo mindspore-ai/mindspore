@@ -54,7 +54,7 @@ mindspore.nn.Optimizer
 
         衰减权重。
 
-        一种减少深度学习神经网络模型过拟合的方法。继承  :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行权重衰减。
+        一种减少深度学习神经网络模型过拟合的方法。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可调用该接口进行权重衰减。
 
         **参数：**
 

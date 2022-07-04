@@ -156,7 +156,7 @@
 
         若需要在print时输出个性化的扩展信息，请在您的网络中重新实现此方法。
 
-    .. py:method:: flatten_weights(fusion_size=0):
+    .. py:method:: flatten_weights(fusion_size=0)
 
         重置权重参数（即可训练参数）使用的数据内存，让这些参数按数据类型分组使用连续内存块。
 
@@ -325,7 +325,7 @@
 
         **参数：**
 
-        - **recurse** (bool) - 是否包含子Cell的参数。 默认: True。
+        - **recurse** (bool) - 是否包含子Cell的参数。 默认值：True。
 
         **返回：**
 

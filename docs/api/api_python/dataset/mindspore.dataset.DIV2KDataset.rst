@@ -38,7 +38,6 @@ mindspore.dataset.DIV2KDataset
     - **ValueError** - `scale` 参数取值为8，但 `downgrade` 参数的值不为 'bicubic'。
     - **ValueError** - `downgrade` 参数取值为'mild'、'difficult'或'wild'，但 `scale` 参数的值不为4。
     - **ValueError** - `shard_id` 参数值错误（小于0或者大于等于 `num_shards` ）。
-    
 
     .. note:: 此数据集可以指定参数 `sampler` ，但参数 `sampler` 和参数 `shuffle` 的行为是互斥的。下表展示了几种合法的输入参数组合及预期的行为。
 
@@ -70,7 +69,7 @@ mindspore.dataset.DIV2KDataset
 
     **关于DIV2K数据集：**
 
-    DIV2K数据集由1000张2K分辨率图像组成，其中800张用于训练，100张用于验证，100张用于测试。 
+    DIV2K数据集由1000张2K分辨率图像组成，其中800张用于训练，100张用于验证，100张用于测试。
     作为NTIRE比赛的数据集，NTIRE 2017 和 NTIRE 2018 仅包括DIV2K的训练数据集和验证数据集。
 
     您可以解压缩原始DIV2K数据集文件到如下目录结构，并通过MindSpore的API进行读取。

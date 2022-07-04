@@ -56,28 +56,6 @@ mindspore.Tensor
 
         Tensor。如果在指定轴方向上所有Tensor元素都为True，则其值为True，否则其值为False。如果轴为None或空元组，则默认降维。
 
-    .. py:method:: col2im(output_size, kernel_size, dilation, padding_value, stride)
-
-        将一组滑动的局部块组合成一个大张量。
-
-        **参数：**
-
-        - **output_size** (Tensor) - 输出张量的后两维的shape。
-        - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑动窗口的大小。
-        - **dilation** (Union[int, tuple[int], list[int]]) - 滑动窗口扩张的大小。
-        - **padding_value** (Union[int, tuple[int], list[int]]) - 填充的大小。
-        - **stride** (Union[int, tuple[int], list[int]]) - 步长的大小。
-
-        **返回：**
-
-        Tensor，输出的张量，维度和类型和输入一致。
-
-        **异常：**
-
-        - **TypeError** - 如果 `kernel_size`，`dilation`，`padding_value`，`stride` 不属于 Union[int, tuple[int], list[int]]。
-        - **ValueError** - 如果 `kernel_size`，`dilation`，`stride` 值小于等于0或者个数大于2。
-        - **ValueError** - 如果 `padding_value` 值小于0或者个数大于2。
-
     .. py:method:: argmax(axis=None)
 
         返回指定轴上最大值的索引。
@@ -214,6 +192,18 @@ mindspore.Tensor
 
         Tensor，是一个与 `x` 相同类型的Tensor。
 
+    .. py:method:: ceil()
+
+        向上取整。
+
+        **返回：**
+
+        Tensor。向上取整的结果。
+
+        **异常：**
+
+        - **TypeError** - 如果当前Tensor的数据类型不是float16或者float32。
+
     .. py:method:: choose(choices, mode='clip')
 
         根据原始Tensor数组和一个索引数组构造一个新的Tensor。
@@ -234,18 +224,6 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 输入Tensor和任一 `choices` 无法广播。
-
-    .. py:method:: ceil()
-
-        向上取整。
-
-        **返回：**
-
-        Tensor。向上取整的结果。
-
-        **异常：**
-
-        - **TypeError** - 如果当前Tensor的数据类型不是float16或者float32。
 
     .. py:method:: clip(xmin, xmax, dtype=None)
 
@@ -271,6 +249,28 @@ mindspore.Tensor
 
         - **TypeError** - 输入的类型与Tensor不一致。
         - **ValueError** - 输入与Tensor的shape不能广播，或者 `xmin` 和 `xmax` 都是 `None` 。
+
+    .. py:method:: col2im(output_size, kernel_size, dilation, padding_value, stride)
+
+        将一组滑动的局部块组合成一个大张量。
+
+        **参数：**
+
+        - **output_size** (Tensor) - 输出张量的后两维的shape。
+        - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑动窗口的大小。
+        - **dilation** (Union[int, tuple[int], list[int]]) - 滑动窗口扩张的大小。
+        - **padding_value** (Union[int, tuple[int], list[int]]) - 填充的大小。
+        - **stride** (Union[int, tuple[int], list[int]]) - 步长的大小。
+
+        **返回：**
+
+        Tensor，输出的张量，维度和类型和输入一致。
+
+        **异常：**
+
+        - **TypeError** - 如果 `kernel_size`，`dilation`，`padding_value`，`stride` 不属于 Union[int, tuple[int], list[int]]。
+        - **ValueError** - 如果 `kernel_size`，`dilation`，`stride` 值小于等于0或者个数大于2。
+        - **ValueError** - 如果 `padding_value` 值小于0或者个数大于2。
 
     .. py:method:: copy()
 
@@ -470,7 +470,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：'C'。
+        - **order** (str, optional) - 可以在'C'和'F'之间进行选择。'C'表示按行优先（C风格）顺序展开。'F'表示按列优先顺序（Fortran风格）进行扁平化。仅支持'C'和'F'。默认值：'C'。
 
         **返回：**
 
@@ -492,11 +492,33 @@ mindspore.Tensor
 
         **参数：**
 
-        **array** (numpy.array) - 输入数组。
+        - **array** (numpy.array) - 输入数组。
 
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+    .. py:method:: gather(input_indices, axis)
+
+        返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。
+
+        .. note::
+            1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
+            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
+
+        **参数：**
+
+        - **input_indices** (Tensor) - 待切片的索引张量，其形状为 :math:`(y_1, y_2, ..., y_S)`，代表指定原始张量元素的索引，其数据类型包括：int32，int64。
+        - **axis** (int) - 指定维度索引的轴以搜集切片。
+
+        **返回：**
+
+        Tensor，其中shape维度为 :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是一个整数。
+        - **TypeError** - 如果 `input_indices` 不是一个整数类型的Tensor。
 
     .. py:method:: gather_elements(dim, index)
 
@@ -554,28 +576,6 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 如果输入Tensor的shape长度小于 `indices` 的最后一个维度。
-
-    .. py:method:: gather(input_indices, axis)
-
-        返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。
-
-        .. note::
-            1. input_indices 的值必须在 `[0, input_params.shape[axis])` 的范围内，结果未定义超出范围。
-            2. 当前在Ascend平台，input_params的值不能是 `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ 类型。
-
-        **参数：**
-
-        - **input_indices** (Tensor) - 待切片的索引张量，其形状为 :math:`(y_1, y_2, ..., y_S)`，代表指定原始张量元素的索引，其数据类型包括：int32，int64。
-        - **axis** (int) - 指定维度索引的轴以搜集切片。
-
-        **返回：**
-
-        Tensor,其中shape维度为 :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`。
-
-        **异常：**
-
-        - **TypeError** - 如果 `axis` 不是一个整数。
-        - **TypeError** - 如果 `input_indices` 不是一个整数类型的Tensor。
 
     .. py:method:: ger(x)
 
@@ -642,33 +642,6 @@ mindspore.Tensor
 
         初始化的Tensor。
 
-    .. py:method:: soft_shrink(lambd=0.5)
-
-        Soft Shrink激活函数，按输入元素计算输出，公式定义如下：
-
-        .. math::
-            \text{SoftShrink}(x) =
-            \begin{cases}
-            x - \lambda, & \text{ if } x > \lambda \\
-            x + \lambda, & \text{ if } x < -\lambda \\
-            0, & \text{ otherwise }
-            \end{cases}
-
-        **参数：**
-
-        - **lambd** (float) - :math:`\lambda` 应大于等于0。默认值：0.5。
-
-        **返回：**
-
-        Tensor，shape和数据类型与输入相同。
-
-        **异常：**
-
-        - **TypeError** - `lambd` 不是float。
-        - **TypeError** - `x` 不是Tensor。
-        - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
-        - **ValueError** - `lambd` 小于0。
-
     .. py:method:: inplace_update(v, indices)
 
         根据 `indices` 以 `v` 来更新Tensor中的值。
@@ -690,6 +663,40 @@ mindspore.Tensor
         - **TypeError** - `indices` 不是int或tuple。
         - **TypeError** - `indices` 是元组，但是其中的元素不是int。
         - **ValueError** - Tensor的shape与 `v` 的shape不同。
+
+    .. py:method:: inv()
+
+        计算当前Tensor的倒数。
+
+        .. math::
+            out_i = \frac{1}{x_{i} }
+
+        其中 `x` 表示当前Tensor。
+
+        **返回：**
+
+        Tensor，shape和类型与当前Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor的数据类型不为float16、float32或int32。
+
+    .. py:method:: invert()
+
+        按位翻转当前Tensor。
+
+        .. math::
+            out_i = ~x_{i}
+
+        其中 `x` 表示当前Tensor。
+
+        **返回：**
+
+        Tensor，shape和类型与当前Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor的数据类型不为int16或uint16。
 
     .. py:method:: isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False)
 
@@ -791,35 +798,6 @@ mindspore.Tensor
         - **ValueError** - 如果 `end` 的维度信息无法相互广播到当前Tensor。
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
-    .. py:method:: norm(axis, p=2, keep_dims=False, epsilon=1e-12)
-
-        返回给定Tensor的矩阵范数或向量范数。
-
-        .. math::
-            output = sum(abs(input)**p)**(1/p)
-
-        **参数：**
-
-        - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
-        - **p** (int) - 范数的值。默认值：2。
-        - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
-        - **epsilon** (float) - 用于保持数据稳定性的常量。默认值：1e-12。
-
-        **返回：**
-
-        Tensor，其数据类型与当前Tensor相同，其维度信息取决于 `axis` 轴以及参数 `keep_dims` 。例如如果输入的大小为 `(2,3,4)` 轴为 `[0,1]` ，输出的维度为 `(4，)` 。
-
-        **异常：**
-
-        - **TypeError** - 当前Tensor的数据类型不是float16或者float32。
-        - **TypeError** - `axis` 不是int，tuple或者list。
-        - **TypeError** - `p` 不是int。
-        - **TypeError** - `axis` 是tuple或者list但其元素不是int。
-        - **TypeError** - `keep_dims` 不是bool。
-        - **TypeError** - `epsilon` 不是float。
-        - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor。
-        - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
-
     .. py:method:: masked_fill(mask, value)
 
         将掩码位置为True的位置填充指定的值。该Tensor和 `mask` 的shape需相同或可广播。
@@ -858,40 +836,6 @@ mindspore.Tensor
 
         - **TypeError** - `mask` 不是bool类型的Tensor。
 
-    .. py:method:: inv()
-
-        计算当前Tensor的倒数。
-
-        .. math::
-            out_i = \frac{1}{x_{i} }
-
-        其中 `x` 表示当前Tensor。
-
-        **返回：**
-
-        Tensor，shape和类型与当前Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - 当前Tensor的数据类型不为float16、float32或int32。
-
-    .. py:method:: invert()
-
-        按位翻转当前Tensor。
-
-        .. math::
-            out_i = ~x_{i}
-
-        其中 `x` 表示当前Tensor。
-
-        **返回：**
-
-        Tensor，shape和类型与当前Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - 当前Tensor的数据类型不为int16或uint16。
-
     .. py:method:: max(axis=None, keepdims=False, initial=None, where=True)
 
         返回Tensor的最大值或轴方向上的最大值。
@@ -923,25 +867,6 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
-
-    .. py:method:: prod(axis=(), keep_dims=False)
-
-        默认情况下，通过将维度中的所有元素相乘来减少张量的维度。并且还可以沿轴减小“x”的维度。通过控制 `keep_dims` 判断输出和输入的维度是否相同。
-
-        **参数：**
-
-        - **axis** (Union[None, int, tuple(int), list(int)]) - 计算prod的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
-        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
-
-        **返回：**
-
-        与输入的张量具有相同的数据类型的Tensor。
-
-        **异常：**
-
-        - **TypeError** - 如果 `keep_dims` 不是bool类型
-        - **TypeError** - 如果 `x` 不是Tensor类型
-        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
 
     .. py:method:: min(axis=None, keepdims=False, initial=None, where=True)
 
@@ -1003,6 +928,35 @@ mindspore.Tensor
 
         Tensor，维度为2，类型为int64，表示输入中所有非零元素的下标。
 
+    .. py:method:: norm(axis, p=2, keep_dims=False, epsilon=1e-12)
+
+        返回给定Tensor的矩阵范数或向量范数。
+
+        .. math::
+            output = sum(abs(input)**p)**(1/p)
+
+        **参数：**
+
+        - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
+        - **p** (int) - 范数的值。默认值：2。
+        - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
+        - **epsilon** (float) - 用于保持数据稳定性的常量。默认值：1e-12。
+
+        **返回：**
+
+        Tensor，其数据类型与当前Tensor相同，其维度信息取决于 `axis` 轴以及参数 `keep_dims` 。例如如果输入的大小为 `(2,3,4)` 轴为 `[0,1]` ，输出的维度为 `(4，)` 。
+
+        **异常：**
+
+        - **TypeError** - 当前Tensor的数据类型不是float16或者float32。
+        - **TypeError** - `axis` 不是int，tuple或者list。
+        - **TypeError** - `p` 不是int。
+        - **TypeError** - `axis` 是tuple或者list但其元素不是int。
+        - **TypeError** - `keep_dims` 不是bool。
+        - **TypeError** - `epsilon` 不是float。
+        - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor。
+        - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
+
     .. py:method:: pow(power)
 
         计算Tensor中每个元素的 `power` 次幂。
@@ -1023,6 +977,25 @@ mindspore.Tensor
 
         - **TypeError** - `power` 不是Tensor、number.Number或bool。
         - **ValueError** - 当Tensor和 `power` 都为Tensor时，它们的shape不相同。
+
+    .. py:method:: prod(axis=(), keep_dims=False)
+
+        默认情况下，通过将维度中的所有元素相乘来减少张量的维度。并且还可以沿轴减小"x"的维度。通过控制 `keep_dims` 判断输出和输入的维度是否相同。
+
+        **参数：**
+
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 计算prod的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
+
+        **返回：**
+
+        与输入的张量具有相同的数据类型的Tensor。
+
+        **异常：**
+
+        - **TypeError** - 如果 `keep_dims` 不是bool类型
+        - **TypeError** - 如果 `x` 不是Tensor类型
+        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
 
     .. py:method:: ptp(axis=None, keepdims=False)
 
@@ -1117,7 +1090,7 @@ mindspore.Tensor
 
         **参数：**
 
-        **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
+        - **shape** (Union[int, tuple(int), list(int)]) - 新的shape应与原来的shape兼容。如果参数值为整数，则结果是该长度的一维数组。shape的维度可以为-1。在这种情况下，将根据数组的长度和剩下的维度计算出该值。
 
         **返回：**
 
@@ -1130,7 +1103,7 @@ mindspore.Tensor
 
     .. py:method:: resize(*new_shape)
 
-        将Tensor改为输入的新shape, 并将不足的元素补0。
+        将Tensor改为输入的新shape，并将不足的元素补0。
 
         .. note::
             此方法不更改输入数组的大小，也不返回NumPy中的任何内容，而是返回一个具有输入大小的新Tensor。不支持Numpy参数 `refcheck` 。
@@ -1151,6 +1124,118 @@ mindspore.Tensor
 
         Tensor，shape和数据类型与原Tensor相同。
 
+    .. py:method:: scatter_add(indices, updates)
+
+        根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
+
+        .. note::
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor，而不是抛出索引错误。
+
+        **参数：**
+
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相加操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
+
+        **返回：**
+
+        Tensor，shape和数据类型与原Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
+    .. py:method:: scatter_div(indices, updates)
+
+        根据索引，通过相除运算得到输出Tensor的值。更新后的结果是通过算子output返回，而不是直接原地更新当前Tensor。
+
+        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。其中 `input_x` 指当前Tensor。 有关更多详细信息，请参见使用用例。
+
+        .. note::
+            - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为当前Tensor，而不是抛出索引错误。
+            - 算子无法处理除0异常, 用户需保证 `updates` 中没有0值。
+
+        **参数：**
+
+        - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。 `updates.shape` 应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]` ，其中 `input_x` 指当前Tensor。
+
+        **返回：**
+
+        Tensor，shape和数据类型与该Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
+    .. py:method:: scatter_min(indices, updates)
+
+        根据指定的更新值和输入索引，通过最小值运算，将结果赋值到输出Tensor中。
+
+        索引的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见下方样例。
+
+        .. note::
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
+
+        **参数：**
+
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
+
+        **返回：**
+
+        Tensor，shape和数据类型与原Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
+    .. py:method:: scatter_mul(indices, updates)
+
+        根据指定的索引，通过乘法进行计算，将输出赋值到输出Tensor中。
+
+        .. note::
+            - 如果 `indices` 的某些值超出当前Tensor的维度范围，在 `CPU` 后端会抛出错误，在 `GPU` 后端则忽略错误且更新值不可信任。
+
+        **参数：**
+
+        - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
+        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。updates.shape应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`， 其中 `input_x` 代指当前Tensor本身。
+
+        **返回：**
+
+        Tensor，shape和数据类型与该Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
+    .. py:method:: scatter_sub(indices, updates)
+
+        根据指定的更新值和输入索引，通过减法进行运算，将结果赋值到输出Tensor中。当同一索引有不同值时，更新的结果将是所有值的总和。此操作几乎等同于使用 :class:`mindspore.ops.ScatterNdSub` ，只是更新后的结果是通过算子output返回，而不是直接原地更新input。
+
+        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。`updates` 的shape应该等于 `input_x[indices]` 的shape，其中 `input_x` 指当前Tensor。有关更多详细信息，请参见使用用例。
+
+        .. note::
+            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor，而不是抛出索引错误。
+
+        **参数：**
+
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
+
+        **返回：**
+
+        Tensor，shape和数据类型与原Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
+
     .. py:method:: searchsorted(v, side='left', sorter=None)
 
         查找应插入元素以保存顺序的位置索引。
@@ -1159,7 +1244,7 @@ mindspore.Tensor
 
         - **v** (Union[int, float, bool, list, tuple, Tensor]) - 要插入元素的值。
         - **side** ('left', 'right', optional) - 如果参数值为'left'，则给出找到的第一个合适位置的索引。如果参数值为'right'，则返回最后一个这样的索引。如果没有合适的索引，则返回0或N（其中N是Tensor的长度）。默认值：'left'。
-        - **sorter** (Union[int, float, bool, list, tuple, Tensor]) - 整数索引的可选一维数组，将Tensor按升序排序。它们通常是NumPy argsort方法的结果。
+        - **sorter** (Union[int, float, bool, list, tuple, Tensor]) - 整数索引的可选一维数组，将Tensor按升序排序。它们通常是NumPy argsort方法的结果。默认值：None。
 
         **返回：**
 
@@ -1206,6 +1291,54 @@ mindspore.Tensor
 
         返回Tensor中的元素总数。
 
+    .. py:method:: soft_shrink(lambd=0.5)
+
+        Soft Shrink激活函数，按输入元素计算输出，公式定义如下：
+
+        .. math::
+            \text{SoftShrink}(x) =
+            \begin{cases}
+            x - \lambda, & \text{ if } x > \lambda \\
+            x + \lambda, & \text{ if } x < -\lambda \\
+            0, & \text{ otherwise }
+            \end{cases}
+
+        **参数：**
+
+        - **lambd** (float) - :math:`\lambda` 应大于等于0。默认值：0.5。
+
+        **返回：**
+
+        Tensor，shape和数据类型与输入相同。
+
+        **异常：**
+
+        - **TypeError** - `lambd` 不是float。
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
+        - **ValueError** - `lambd` 小于0。
+
+    .. py:method:: split(axis=0, output_num=1)
+
+        根据指定的轴和分割数量对Tensor进行分割。
+
+        Tensor将被分割为相同shape的子Tensor，且要求 `self.shape(axis)` 可被 `output_num` 整除。
+
+        **参数：**
+
+        - **axis** (int) - 指定分割轴。默认值：0。
+        - **output_num** (int) - 指定分割数量。其值为正整数。默认值：1。
+
+        **返回：**
+
+        tuple[Tensor]，每个输出Tensor的shape相同，即 :math:`(y_1, y_2, ..., y_S)` 。数据类型与Tensor相同。
+
+        **异常：**
+
+        - **TypeError** - `axis` 或 `output_num` 不是int。
+        - **ValueError** - `axis` 超出[-len(`self.shape`), len(`self.shape`))范围。或 `output_num` 小于或等于0。
+        - **ValueError** - `self.shape(axis)` 不可被 `output_num` 整除。
+
     .. py:method:: squeeze(axis=None)
 
         从Tensor中删除shape为1的维度。
@@ -1222,6 +1355,23 @@ mindspore.Tensor
 
         - **TypeError** - 输入的参数类型有误。
         - **ValueError** - 指定维度的shape大于1。
+
+    .. py:method:: standard_laplace(seed=0, seed2=0)
+
+        创建一个Tensor，其shape与原Tensor相同，value服从标准Laplace分布（mean=0， lambda=1）的随机数。
+        其概率密度函数为：
+
+        .. math::
+            \text{f}(x) = \frac{1}{2}\exp(-|x|)
+
+        **参数：**
+
+        - **seed** (int) - 算子层的随机种子，用于生成随机数，必须是非负的。默认值：0。
+        - **seed2** (int) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数，必须是非负的。默认值：0。
+
+        **返回：**
+
+        Tensor，具有与原Tensor相同的维度。
 
     .. py:method:: std(axis=None, ddof=0, keepdims=False)
 
@@ -1278,7 +1428,7 @@ mindspore.Tensor
         **参数：**
 
         - **full_matrices** (bool, optional) - 如果这个参数为True，则计算完整的 :math:`U` 和 :math:`V` 。否则 :math:`U` 和 :math:`V` 的shape和P有关，P是M和N的较小值, M和N是输入矩阵的行和列。默认值：False。
-        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` , 否则只计算 :math:`S` 。默认值：True。
+        - **compute_uv** (bool, optional) - 如果这个参数为True，则计算 :math:`U` 和 :math:`V` ，否则只计算 :math:`S` 。默认值：True。
 
         **返回：**
 
@@ -1344,162 +1494,6 @@ mindspore.Tensor
 
         - **TypeError** - 当前输入不是Tensor。
 
-    .. py:method:: scatter_add(indices, updates)
-
-        根据指定的更新值和输入索引，通过相加运算更新本Tensor的值。当同一索引有不同值时，更新的结果将是所有值的总和。
-
-        .. note::
-            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor ，而不是抛出索引错误。
-
-        **参数：**
-
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相加操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
-
-        **返回：**
-
-        Tensor，shape和数据类型与原Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: scatter_div(indices, updates)
-
-        根据索引，通过相除运算得到输出Tensor的值。更新后的结果是通过算子output返回，而不是直接原地更新当前Tensor。
-
-        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。其中 `input_x` 指当前Tensor。 有关更多详细信息，请参见使用用例。
-
-        .. note::
-            - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为当前Tensor，而不是抛出索引错误。
-            - 算子无法处理除0异常, 用户需保证 `updates` 中没有0值。
-
-        **参数：**
-
-        - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64。其rank至少为2。
-        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。 `updates.shape` 应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]` ，其中 `input_x` 指当前Tensor。
-
-        **返回：**
-
-        Tensor，shape和数据类型与该Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: scatter_min(indices, updates)
-
-        根据指定的更新值和输入索引，通过最小值运算，将结果赋值到输出Tensor中。
-
-        索引的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见下方样例。
-
-        .. note::
-            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到 `input_x` ，而不是抛出索引错误。
-
-        **参数：**
-
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
-
-        **返回：**
-
-        Tensor，shape和数据类型与原Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: scatter_max(indices, updates)
-
-        根据指定的更新值和输入索引，通过最大值运算，输出结果以Tensor形式返回。
-
-        索引的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见下方样例。
-
-        .. note::
-            如果 `indices` 的某些值超出范围，则不会更新相应的 `updates`，同时也不会抛出索引错误。
-
-        **参数：**
-
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
-
-        **返回：**
-
-        Tensor，shape和数据类型与原Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: scatter_mul(indices, updates)
-
-        根据指定的索引，通过乘法进行计算，将输出赋值到输出Tensor中。
-
-        .. note::
-            - 如果 `indices` 的某些值超出当前Tensor的维度范围，在 `CPU` 后端会抛出错误，在 `GPU` 后端则忽略错误且更新值不可信任。
-
-        **参数：**
-
-        - **indices** (Tensor) - 该Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
-        - **updates** (Tensor) - 指定与当前Tensor相加操作的Tensor，其数据类型与输入相同。updates.shape应等于 `indices.shape[:-1] + input_x.shape[indices.shape[-1]:]`， 其中 `input_x` 代指当前Tensor本身。
-
-        **返回：**
-
-        Tensor，shape和数据类型与该Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: scatter_sub(indices, updates)
-
-        根据指定的更新值和输入索引，通过减法进行运算，将结果赋值到输出Tensor中。当同一索引有不同值时，更新的结果将是所有值的总和。此操作几乎等同于使用 :class:`mindspore.ops.ScatterNdSub` ，只是更新后的结果是通过算子output返回，而不是直接原地更新input。
-
-        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。`updates` 的shape应该等于 `input_x[indices]` 的shape，其中 `input_x` 指当前Tensor。有关更多详细信息，请参见使用用例。
-
-        .. note::
-            如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新到当前Tensor，而不是抛出索引错误。
-
-        **参数：**
-
-        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64。其rank至少为2。
-        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。 `updates.shape` 应等于 `indices.shape[:-1] + self.shape[indices.shape[-1]:]` 。
-
-        **返回：**
-
-        Tensor，shape和数据类型与原Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
-
-    .. py:method:: split(axis=0, output_num=1)
-
-        根据指定的轴和分割数量对Tensor进行分割。
-
-        Tensor将被分割为相同shape的子Tensor，且要求 `self.shape(axis)` 可被 `output_num` 整除。
-
-        **参数：**
-
-        - **axis** (int) - 指定分割轴。默认值：0。
-        - **output_num** (int) - 指定分割数量。其值为正整数。默认值：1。
-
-        **返回：**
-
-        tuple[Tensor]，每个输出Tensor的shape相同，即 :math:`(y_1, y_2, ..., y_S)` 。数据类型与Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `axis` 或 `output_num` 不是int。
-        - **ValueError** - `axis` 超出[-len(`self.shape`), len(`self.shape`))范围。或 `output_num` 小于或等于0。
-        - **ValueError** - `self.shape(axis)` 不可被 `output_num` 整除。
-
     .. py:method:: to_coo()
 
         将常规Tensor转为稀疏化的COOTensor。
@@ -1544,7 +1538,7 @@ mindspore.Tensor
         返回init_data()的结果，并获取此Tensor的数据。
 
         .. note::
-            不建议使用 `to_tensor`。请使用 `init_data` 。
+            不建议使用 `to_tensor` 。请使用 `init_data` 。
 
         **参数：**
 
@@ -1554,74 +1548,35 @@ mindspore.Tensor
 
         **返回：**
 
-        初始化的Tensor。
-
-    .. py:method:: unsorted_segment_min(segment_ids, num_segments)
-
-        沿分段计算输入Tensor的最小值。
-
-        .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最大值填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
-
-
-        **参数：**
-
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
-
-        **返回：**
-
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
+        Tensor，shape和数据类型与原Tensor相同。
 
         **异常：**
 
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
-    .. py:method:: unsorted_segment_max(segment_ids, num_segments)
+    .. py:method:: scatter_max(indices, updates)
 
-        沿分段计算输入Tensor的最大值。
+        根据指定的更新值和输入索引，通过最大值运算，输出结果以Tensor形式返回。
+
+        索引的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见下方样例。
 
         .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最小值填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
+            如果 `indices` 的某些值超出范围，则不会更新相应的 `updates`，同时也不会抛出索引错误。
 
         **参数：**
 
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
+        - **indices** (Tensor) - Tensor的索引，数据类型为int32或int64的。其rank必须至少为2。
+        - **updates** (Tensor) - 指定与本Tensor相减操作的Tensor，其数据类型与该Tensor相同。updates.shape应等于indices.shape[:-1] + self.shape[indices.shape[-1]:]。
 
         **返回：**
 
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
+        Tensor，shape和数据类型与原Tensor相同。
 
         **异常：**
 
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
-
-    .. py:method:: unsorted_segment_prod(segment_ids, num_segments)
-
-        沿分段计算输入Tensor元素的乘积。
-
-        .. note::
-            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用1填充输出 `output[i]` 。
-            - `segment_ids` 必须是一个非负Tensor。
-
-        **参数：**
-
-        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
-        - **num_segments** (int) - 分段的数量。
-
-        **返回：**
-
-        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
-
-        **异常：**
-
-        - **TypeError** - `num_segments` 不是int类型。
-        - **ValueError** - `segment_ids` 的维度不等于1。
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
     .. py:method:: trace(offset=0, axis1=0, axis2=1, dtype=None)
 
@@ -1665,6 +1620,26 @@ mindspore.Tensor
         - **TypeError** - 输入参数类型有误。
         - **ValueError** - `axes` 的数量不等于Tensor.ndim。
 
+    .. py:method:: unique_consecutive(return_idx=False, return_counts=False, axis=None)
+
+        返回输入张量中每个连续等效元素组中唯一的元素。
+
+        **参数：**
+
+        - **return_idx** (bool, optional) - 是否返回原始输入中，各元素在返回的唯一列表中的结束位置的索引。默认值：False。
+        - **return_counts** (bool, optional) - 是否返回每个唯一元素的计数。默认值：False。
+        - **axis** (int, optional) - 维度。如果为None，对输入进行展平操作，返回其唯一性。如果指定，必须是int32或int64类型。默认值：None。
+
+        **返回：**
+
+        Tensor或包含Tensor对象的元组（ `output` 、 `idx` 、 `counts` ）。 `output` 与输入张量具有相同的类型，用于表示唯一标量元素的输出列表。
+        如果 `return_idx` 为 True，则会有一个额外的返回张量 `idx`，它的形状与输入张量相同，表示原始输入中的元素映射到输出中的位置的索引。如果
+        `return_idx` 为 True，则会有一个额外的返回张量 `counts`，表示每个唯一值或张量的出现次数。
+
+        **异常：**
+
+        - **RuntimeError** - `axis` 不在 `[-ndim, ndim-1]` 范围内。
+
     .. py:method:: unique_with_pad(pad_num)
 
         对当前一维张量中元素去重，返回一维张量中的唯一元素（使用pad_num填充）和相对索引。
@@ -1686,25 +1661,71 @@ mindspore.Tensor
         - **TypeError** - 当前张量的数据类型既不是int32也不是int64。
         - **ValueError** - 当前张量不是一维张量。
 
-    .. py:method:: unique_consecutive(return_idx=False, return_counts=False, axis=None)
+    .. py:method:: unsorted_segment_max(segment_ids, num_segments)
 
-        返回输入张量中每个连续等效元素组中唯一的元素。
+        沿分段计算输入Tensor的最大值。
+
+        .. note::
+            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最小值填充输出 `output[i]` 。
+            - `segment_ids` 必须是一个非负Tensor。
 
         **参数：**
 
-        - **return_idx** (bool, optional) - 是否返回原始输入中，各元素在返回的唯一列表中的结束位置的索引。默认值：False。
-        - **return_counts** (bool, optional) - 是否返回每个唯一元素的计数。默认值：False。
-        - **axis** (int, optional) - 维度。如果为None，对输入进行展平操作，返回其唯一性。如果指定，必须是int32或int64类型。默认值：None。
+        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
+        - **num_segments** (int) - 分段的数量。
 
         **返回：**
 
-        Tensor或包含Tensor对象的元组（ `output` 、 `idx` 、 `counts` ）。 `output` 与输入张量具有相同的类型，用于表示唯一标量元素的输出列表。
-        如果 `return_idx` 为 True，则会有一个额外的返回张量 `idx`，它的形状与输入张量相同，表示原始输入中的元素映射到输出中的位置的索引。如果
-        `return_idx` 为 True，则会有一个额外的返回张量 `counts`，表示每个唯一值或张量的出现次数。
+        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
 
         **异常：**
 
-        - **RuntimeError** - `axis` 不在 `[-ndim, ndim-1]` 范围内。
+        - **TypeError** - `num_segments` 不是int类型。
+        - **ValueError** - `segment_ids` 的维度不等于1。
+
+    .. py:method:: unsorted_segment_min(segment_ids, num_segments)
+
+        沿分段计算输入Tensor的最小值。
+
+        .. note::
+            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用 `x` 的数据类型的最大值填充输出 `output[i]` 。
+            - `segment_ids` 必须是一个非负Tensor。
+
+        **参数：**
+
+        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
+        - **num_segments** (int) - 分段的数量。
+
+        **返回：**
+
+        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
+
+        **异常：**
+
+        - **TypeError** - `num_segments` 不是int类型。
+        - **ValueError** - `segment_ids` 的维度不等于1。
+
+    .. py:method:: unsorted_segment_prod(segment_ids, num_segments)
+
+        沿分段计算输入Tensor元素的乘积。
+
+        .. note::
+            - 如果 `segment_ids` 中不存在segment_id `i` ，则将使用1填充输出 `output[i]` 。
+            - `segment_ids` 必须是一个非负Tensor。
+
+        **参数：**
+
+        - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
+        - **num_segments** (int) - 分段的数量。
+
+        **返回：**
+
+        Tensor，若 `num_segments` 值为 `N` ，则shape为 :math:`(N, x_2, ..., x_R)` 。
+
+        **异常：**
+
+        - **TypeError** - `num_segments` 不是int类型。
+        - **ValueError** - `segment_ids` 的维度不等于1。
 
     .. py:method:: var(axis=None, ddof=0, keepdims=False)
 
@@ -1738,21 +1759,4 @@ mindspore.Tensor
         **返回：**
 
         Tensor，具有与入参 `shape` 相同的维度。
-
-    .. py:method:: standard_laplace(seed=0, seed2=0)
-
-        创建一个Tensor，其shape与原Tensor相同，value服从标准Laplace分布（mean=0， lambda=1）的随机数。
-        其概率密度函数为：
-
-        .. math::
-            \text{f}(x) = \frac{1}{2}\exp(-|x|)
-
-        **参数：**
-
-        - **seed** (int) - 算子层的随机种子，用于生成随机数，必须是非负的。默认值：0。
-        - **seed2** (int) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数，必须是非负的。默认值：0。
-
-        **返回：**
-
-        Tensor，具有与原Tensor相同的维度。
 
