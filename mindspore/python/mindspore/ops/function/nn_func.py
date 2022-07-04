@@ -289,6 +289,11 @@ def dropout2d(x, p=0.5):
     `2D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
+    The parper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ mentioned this technology，And it is proved that
+    it can effectively reduce over fitting and prevent neuronal coadaptation.
+    For more details, refer to `Improving neural networks by preventing co-adaptation of feature detectors
+    <https://arxiv.org/pdf/1207.0580.pdf>`_ .
 
     `dropout2d` can improve the independence between channel feature maps.
 

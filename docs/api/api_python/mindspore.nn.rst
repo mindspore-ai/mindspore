@@ -150,6 +150,8 @@ Dropout层
     :template: classtemplate.rst
 
     mindspore.nn.Dropout
+    mindspore.nn.Dropout2d
+    mindspore.nn.Dropout3d
 
 归一化层
 ---------
