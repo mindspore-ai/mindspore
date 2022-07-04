@@ -248,6 +248,18 @@ void SetValueMutable(const abstract::AbstractBasePtr &abs) {
 
   abs->set_value_mutable(true);
 }
+
+std::string ToOrdinal(const size_t &i) {
+  auto suffix = "th";
+  if (i == kIndex1) {
+    suffix = "st";
+  } else if (i == kIndex2) {
+    suffix = "nd";
+  } else if (i == kIndex3) {
+    suffix = "rd";
+  }
+  return std::to_string(i) + suffix;
+}
 }  // namespace
 
 void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
@@ -266,7 +278,7 @@ void CheckArgsValid(const py::object &source_obj, const py::tuple &args) {
         << " support bool, int, float, None, Tensor, Parameter, "
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
            "and tuple or list containing only these types, and dict whose values are these types, but the "
-        << i << "th arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"
+        << ToOrdinal(i + 1) << " arg type is " << args[i].get_type() << ", value is '" << py::str(args[i]) << "'.\n"
         << "For more details, please search 'outermost network' at https://www.mindspore.cn.";
     }
   }
