@@ -1535,8 +1535,7 @@ def scatter_update(input_x, indices, updates):
         >>> indices = Tensor(np.array([0, 1]), mindspore.int32)
         >>> np_updates = np.array([[2.0, 1.2, 1.0], [3.0, 1.2, 1.0]])
         >>> updates = Tensor(np_updates, mindspore.float32)
-        >>> op = ops.scatter_update()
-        >>> output = op(input_x, indices, updates)
+        >>> output = ops.scatter_update(input_x, indices, updates)
         >>> print(output)
         [[2. 1.2  1.]
          [3. 1.2  1.]]
