@@ -31,7 +31,8 @@ class AicpuOpKernelMod : public AscendKernelMod {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs,
+                                   const std::vector<AddressPtr> & /* workspace */,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
   void SetInputList(const std::vector<int64_t> &input_list);

@@ -38,6 +38,7 @@ class HostKernelMod : public AscendKernelMod {
 
  protected:
   void SyncData() override{};
+
   std::string op_name_;
 };
 

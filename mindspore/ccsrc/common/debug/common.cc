@@ -112,8 +112,7 @@ std::optional<std::string> Common::CreatePrefixPath(const std::string &input_pat
   return std::string(prefix_path_str + "/" + file_name_str);
 }
 
-bool Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path,
-                                     std::string *const value) {
+bool Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value) {
   MS_EXCEPTION_IF_NULL(value);
   value->clear();
   if (!env_path.empty()) {

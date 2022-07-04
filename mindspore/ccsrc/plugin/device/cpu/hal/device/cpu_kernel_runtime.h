@@ -45,7 +45,7 @@ class CPUKernelRuntime : public KernelRuntime {
                        VectorRef *outputs);
   void IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
   void DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs);
-  bool RunDynamicKernelAsync(const session::KernelGraph &graph) override { return true; }
+  bool RunDynamicKernelAsync(const session::KernelGraph & /* graph */) override { return true; }
   DeviceType GetTargetDeviceType() const override { return DeviceType::kCPU; };
 
  protected:

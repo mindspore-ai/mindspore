@@ -71,7 +71,6 @@ using mindspore::dataset::TdtHandle;
 #include "include/common/debug/rdr/recorder_manager.h"
 #endif
 
-#include "backend/common/session/pynative_task_manager.h"
 #include "profiler/device/profiling.h"
 #include "kernel/common_utils.h"
 
@@ -1080,7 +1079,6 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph &graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   SetCurrentContext();
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &iter : stream_id_map_) {
     // cppcheck-suppress unreadVariable
     auto lock = device::KernelRuntime::LockRuntime(iter.second);
@@ -1181,14 +1179,16 @@ bool AscendKernelRuntime::CreateDefaultStream(uint32_t device_id) {
 
   ret = rtStreamCreateWithFlags(&independent_stream_, 0, RT_STREAM_HUGE);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
+    MS_LOG(ERROR) << "Call rtStreamCreate, ret[" << ret << "]";
+    return false;
   }
   stream_id_map_[kIndependentStreamIndex] = independent_stream_;
   stream_id_map->insert(std::make_pair(kIndependentStreamIndex, independent_stream_));
 
   ret = rtStreamCreate(&communication_stream_, 0);
   if (ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "create communication stream failed, ret:" << ret;
+    MS_LOG(ERROR) << "create communication stream failed, ret:" << ret;
+    return false;
   }
   stream_id_map_[kWorldGroupStreamIndex] = communication_stream_;
   stream_id_map->insert(std::make_pair(kWorldGroupStreamIndex, communication_stream_));
@@ -1338,33 +1338,6 @@ bool AscendKernelRuntime::GraphWithEmptyTaskList(const session::KernelGraph &gra
 
 bool AscendKernelRuntime::CheckGraphIdValid(GraphId graph_id) const {
   return task_map_.find(graph_id) != task_map_.end() && graph_model_map_.find(graph_id) != graph_model_map_.end();
-}
-
-void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) {
-#ifndef ENABLE_SECURITY
-  auto profiler_manager = profiler::ProfilerManager::GetInstance();
-  MS_EXCEPTION_IF_NULL(profiler_manager);
-  if (!profiler_manager->GetProfilingEnableFlag()) {
-    return;
-  }
-
-  // save task info
-  uint32_t stream_id;
-  uint32_t task_id;
-  auto rt_ret = rtGetTaskIdAndStreamID(&task_id, &stream_id);
-  if (rt_ret != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Profiling get task_id stream_id failed";
-  }
-  std::pair<uint32_t, uint32_t> stream_task_pair = {stream_id, task_id};
-  auto try_emplace_ret = stream_id_task_id_op_name_map_.try_emplace(stream_task_pair, kernel_name);
-  if (!try_emplace_ret.second) {
-    MS_LOG(WARNING) << "Profiling duplicate key, task_id:" << stream_task_pair.second
-                    << " stream_id:" << stream_task_pair.first << " name:" << kernel_name;
-  }
-  if (stream_id_task_id_op_name_map_.size() > kProfilingMaxTaskIdInStream) {
-    MS_LOG(EXCEPTION) << "Too many profiling data";
-  }
-#endif
 }
 
 std::shared_ptr<DeviceEvent> AscendKernelRuntime::CreateDeviceEvent() {

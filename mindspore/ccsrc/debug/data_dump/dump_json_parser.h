@@ -114,7 +114,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseCommonDumpSetting(const nlohmann::json &content);
   void ParseE2eDumpSetting(const nlohmann::json &content);
 
-  auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
+  static auto CheckJsonKeyExist(const nlohmann::json &content, const std::string &key);
 
   void ParseDumpMode(const nlohmann::json &content);
   void ParseDumpPath(const nlohmann::json &content);

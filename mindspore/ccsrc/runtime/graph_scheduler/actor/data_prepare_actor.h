@@ -94,7 +94,7 @@ class DataPrepareActor : public DebugAwareActor {
                                const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
   //  The branch processing of PrepareDataForValueNode that value type is tensor.
   void PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value, const AnfNodePtr &front_node,
-                                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context);
+                                     const DeviceContext *device_context, OpContext<DeviceTensor> *const context) const;
 
   // The data prepare in the control flow scene.
   // If the parameters in the root graph are only used by the control node, these parameters will not be initialized

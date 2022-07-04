@@ -617,9 +617,11 @@ void AscendDeviceAddress::ClearDeviceMemory() {
 
 AscendDeviceAddress::~AscendDeviceAddress() {
   try {
-    ClearDeviceMemory();
+    AscendDeviceAddress::ClearDeviceMemory();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "AscendDeviceAddress destructor failed: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AscendDeviceAddress destructor failed";
   }
 }
 

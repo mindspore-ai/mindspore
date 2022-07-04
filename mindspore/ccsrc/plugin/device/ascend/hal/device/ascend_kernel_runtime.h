@@ -42,7 +42,7 @@ class AscendKernelRuntime : public KernelRuntime {
   AscendKernelRuntime() = default;
   ~AscendKernelRuntime() override;
   bool Init() override;
-  bool LoadData(const session::KernelGraph &graph) override;
+  bool LoadData(const session::KernelGraph &) override;
   bool GenTask(const session::KernelGraph &graph);
   void GenKernelEvents(const session::KernelGraph &graph) override;
   void SetKernelModStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *last_stream_nodes);
@@ -86,8 +86,6 @@ class AscendKernelRuntime : public KernelRuntime {
   DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const KernelWithIndex &node_index) const override;
   bool KernelMemNotReuse(const AnfNodePtr &node) override;
-
-  void KernelLaunchProfiling(const std::string &kernel_name) override;
 
  private:
   bool InitDevice();

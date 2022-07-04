@@ -300,7 +300,6 @@ class KernelMod {
     return true;
   }
 
- protected:
   std::string kernel_name_;
   std::string unique_name_;
   std::string fullname_;

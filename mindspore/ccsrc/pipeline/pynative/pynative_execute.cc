@@ -4416,7 +4416,6 @@ void PynativeExecutor::ClearGrad(const py::object &cell, const py::args &args) {
 
 void PynativeExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear all res";
-  session::PynativeTaskManager::GetInstance().Reset();
   runtime::OpExecutor::GetInstance().Reset();
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
@@ -4521,7 +4520,6 @@ bool PynativeExecutor::IsFirstCell() const { return forward_executor()->IsFirstC
 
 void PynativeExecutor::ExecuteLazyTask() {
   mindspore::ScopedLongRunning long_running;
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   for (auto &item : kMindRtBackends) {
     MS_EXCEPTION_IF_NULL(item.second);
     item.second->WaitTaskFinish();

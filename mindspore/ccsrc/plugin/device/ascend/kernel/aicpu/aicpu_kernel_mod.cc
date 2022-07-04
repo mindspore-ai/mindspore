@@ -176,7 +176,7 @@ bool AicpuOpKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
 }
 
 std::vector<TaskInfoPtr> AicpuOpKernelMod::GenTask(const std::vector<AddressPtr> &inputs,
-                                                   const std::vector<AddressPtr> &,
+                                                   const std::vector<AddressPtr> & /* workspace */,
                                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   MS_LOG(INFO) << "AicpuOpKernelMod GenTask start";
 

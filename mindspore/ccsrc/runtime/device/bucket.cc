@@ -68,23 +68,23 @@ void Bucket::AllocateAllReduceMemory() {
   std::vector<size_t> origin_size_list;
   for (auto &tensor : grad_tensor_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
-    tensor_type_list_.emplace_back(tensor->data_type());
+    (void)tensor_type_list_.emplace_back(tensor->data_type());
     DeviceAddressPtr device_address = std::dynamic_pointer_cast<DeviceAddress>(tensor->device_address());
     MS_EXCEPTION_IF_NULL(device_address);
     auto origin_size = device_address->GetSize();
     auto align_size = GetAlignSize(origin_size);
-    origin_size_list.emplace_back(origin_size);
-    align_size_list_.emplace_back(align_size);
+    (void)origin_size_list.emplace_back(origin_size);
+    (void)align_size_list_.emplace_back(align_size);
     total_size += align_size;
-    memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
+    (void)memcpy_input_addrs_.emplace_back(std::make_shared<kernel::Address>(
       static_cast<uint8_t *>(device_address->GetMutablePtr()), device_address->GetSize()));
 
     auto tensor_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
     MS_EXCEPTION_IF_NULL(tensor_address);
 
-    ar_input_address_list_.emplace_back(
+    (void)ar_input_address_list_.emplace_back(
       CreateDeviceAddress(origin_size, tensor_address->type_id(), tensor_address->format()));
-    ar_output_address_list_.emplace_back(
+    (void)ar_output_address_list_.emplace_back(
       CreateDeviceAddress(origin_size, tensor_address->type_id(), tensor_address->format()));
   }
 

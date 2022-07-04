@@ -43,7 +43,10 @@ class OpTaskContext {
         is_pyantive_infer_(is_pynative_infer) {}
   ~OpTaskContext() = default;
 
-  GraphCompilerInfo *graph_compiler_info() const { return graph_compiler_info_; }
+  GraphCompilerInfo *graph_compiler_info() const {
+    MS_EXCEPTION_IF_NULL(graph_compiler_info_);
+    return graph_compiler_info_;
+  }
   const KernelGraphPtr &graph() const { return graph_; }
   const std::vector<session::KernelWithIndex> &output_nodes() const { return output_nodes_; }
   const session::OpRunInfo &op_run_info() const { return op_run_info_; }
@@ -73,7 +76,7 @@ class OpTask {
 
   virtual void Run() = 0;
   OpTaskType task_type() const { return task_type_; }
-  const std::shared_ptr<OpTaskContext> &context() { return context_; }
+  const std::shared_ptr<OpTaskContext> &context() const { return context_; }
 
  protected:
   std::shared_ptr<OpTaskContext> context_;

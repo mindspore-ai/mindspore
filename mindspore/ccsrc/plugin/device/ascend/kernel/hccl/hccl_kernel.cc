@@ -30,14 +30,14 @@ using mindspore::ge::model_runner::HcclTaskInfo;
 using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace {
-static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
-  {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
-  {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
-  {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
-  {mindspore::kHcomSendOpName, mindspore::kHcomOpTypeSend},
-  {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
-  {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter}};
 std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
+  static const std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
+    {mindspore::kAllReduceOpName, mindspore::kHcomOpTypeAllReduce},
+    {mindspore::kAllGatherOpName, mindspore::kHcomOpTypeAllGather},
+    {mindspore::kBroadcastOpName, mindspore::kHcomOpTypeBroadcast},
+    {mindspore::kHcomSendOpName, mindspore::kHcomOpTypeSend},
+    {mindspore::kReceiveOpName, mindspore::kHcomOpTypeReceive},
+    {mindspore::kReduceScatterOpName, mindspore::kHcomOpTypeReduceScatter}};
   auto iter = kMsOpNameToHcomHcclType.find(ms_op_type);
   if (iter == kMsOpNameToHcomHcclType.end()) {
     MS_LOG(EXCEPTION) << "Invalid MsOpType:" << ms_op_type;
