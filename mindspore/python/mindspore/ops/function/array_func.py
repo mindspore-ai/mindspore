@@ -2579,13 +2579,13 @@ def batch_to_space_nd(input_x, block_shape, crops):
 
 def nonzero(x):
     """
-    Return a tensor of the positions of all non-zero values.
+    Return a Tensor of the positions of all non-zero values.
 
     Args:
-        x (int): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+        x (int): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
 
     Returns:
-        y (Tensor): The shape of tensor is 2-D. The data type is int64.
+        Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.
 
     Raises:
        TypeError: If `x` is not Tensor.
@@ -2600,8 +2600,7 @@ def nonzero(x):
         >>> from mindspore import Tensor
         >>> import mindspore.ops as ops
         >>> x = Tensor(np.array([[[1,  0], [-5, 0]]]), mindspore.int32)
-        >>> nonzero = ops.nonzero()
-        >>> output = nonzero(x)
+        >>> output = ops.nonzero(x)
         >>> print(output)
         [[0 0 0]
          [0 1 0]]
