@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "plugin/device/gpu/kernel/nn/apply_adam_with_amsgrad_gpu_kernel.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/apply_adam_with_amsgrad_impl.cuh"
 #include "abstract/utils.h"
@@ -40,9 +41,13 @@ constexpr size_t kIndexGrad = 7;
 bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                             const std::vector<KernelTensorPtr> &inputs,
                                             const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  batch_rank_ = base_operator->get_batch_rank();
   auto kernel_ptr_ = std::dynamic_pointer_cast<ops::ApplyAdamWithAmsgrad>(base_operator);
   MS_ERROR_IF_NULL_W_RET_VAL(kernel_ptr_, false);
-
+  beta1_ = kernel_ptr_->get_beta1();
+  beta2_ = kernel_ptr_->get_beta2();
+  epsilon_ = kernel_ptr_->get_epsilon();
   if (inputs.size() != kApplyAdamWithAmsgradInputsNum || outputs.size() != kApplyAdamWithAmsgradOutputsNum) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', input and output size should be " << kApplyAdamWithAmsgradInputsNum
                   << " and " << kApplyAdamWithAmsgradOutputsNum << ", but got " << inputs.size() << " and "
@@ -50,47 +55,33 @@ bool ApplyAdamWithAmsgradGpuKernelMod::Init(const BaseOperatorPtr &base_operator
     return false;
   }
 
-  kernel_name_ = kernel_ptr_->name();
-  beta1_ = kernel_ptr_->get_beta1();
-  beta2_ = kernel_ptr_->get_beta2();
-  epsilon_ = kernel_ptr_->get_epsilon();
-  batch_rank_ = base_operator->get_batch_rank();
-
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
   if (!is_match) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' dose not support this kernel type: " << kernel_attr;
     return false;
   }
+
   kernel_func_ = func_list_[index].second;
-  t_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
+  unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).first);
   return true;
 }
 
 int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                              const std::vector<KernelTensorPtr> &inputs,
                                              const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &) {
-  for (const auto &input : inputs) {
-    // If any input shape contains -1, means input shape is dynamic, so just return do nothing.
-    auto input_shape = input->GetShapeVector();
-    if (!IsValidShape(input_shape)) {
-      return KRET_UNKNOWN_SHAPE;
-    }
-  }
-  ResetResource();
-  std::vector<int64_t> variable_shape_ = std::vector<int64_t>(inputs.at(kIndex0)->GetDeviceShapeAdaptively().begin(),
-                                                              inputs.at(kIndex0)->GetDeviceShapeAdaptively().end());
-  t_elements_ = std::accumulate(variable_shape_.begin(), variable_shape_.end(), 1, std::multiplies<size_t>());
-  is_null_input_ = (t_elements_ == 0);
-  if (is_null_input_) {
-    return 0;
+                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
+    return ret;
   }
 
   std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
   std::vector<int64_t> m_shape = inputs[kIndexM]->GetShapeVector();
   std::vector<int64_t> v_shape = inputs[kIndexV]->GetShapeVector();
   std::vector<int64_t> vhat_shape = inputs[kIndexVhat]->GetShapeVector();
+  std::vector<int64_t> beta1_power_shape = inputs[kIndexBeta1Power]->GetShapeVector();
+  std::vector<int64_t> beta2_power_shape = inputs[kIndexBeta2Power]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();
   std::vector<int64_t> grad_shape = inputs[kIndexGrad]->GetShapeVector();
 
@@ -109,75 +100,79 @@ int ApplyAdamWithAmsgradGpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return KRET_RESIZE_FAILED;
   }
 
-  if (batch_rank_ < 0 || lr_shape.size() < static_cast<size_t>(batch_rank_)) {
+  if (!IsSameShape(beta1_power_shape, beta2_power_shape)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shapes of 'beta1_power' and 'beta2_power' must be the same, "
+                  << "but get the shapes of 'beta1_power': " << Vector2Str(beta1_power_shape)
+                  << " and 'beta2_power': " << Vector2Str(beta2_power_shape);
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the shape size of 'lr' must be larger than or equal to 'batch_rank', "
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', "
                      "but got the shape of 'lr': "
                   << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
     return KRET_RESIZE_FAILED;
   }
 
+  batch_size_ = 1;
   if (!lr_shape.empty()) {
-    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), batch_size_, std::multiplies<int64_t>());
   }
-
   if (batch_size_ <= 0) {
     MS_LOG(ERROR) << "For '" << kernel_name_
                   << "', batch_size_ must be greater than 0, but got batch_size: " << batch_size_;
     return KRET_RESIZE_FAILED;
   }
 
-  size_t var_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t m_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t v_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t vhat_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t beta1_power_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t beta2_power_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t lr_size_ = t_elements_ * t_size_ * batch_size_;
-  size_t grad_size_ = t_elements_ * t_size_ * batch_size_;
-  input_size_list_.emplace_back(var_size_);
-  input_size_list_.emplace_back(m_size_);
-  input_size_list_.emplace_back(v_size_);
-  input_size_list_.emplace_back(vhat_size_);
-  input_size_list_.emplace_back(beta1_power_size_);
-  input_size_list_.emplace_back(beta2_power_size_);
-  input_size_list_.emplace_back(lr_size_);
-  input_size_list_.emplace_back(grad_size_);
-  output_size_list_.emplace_back(var_size_);
-  output_size_list_.emplace_back(m_size_);
-  output_size_list_.emplace_back(v_size_);
-  output_size_list_.emplace_back(vhat_size_);
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  input_elements_ = input_elements_ / batch_size_;
+  if (batch_rank_ > 1) {
+    if (var_shape.size() < lr_shape.size()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the shape size of 'var' must be greater than 'lr_shape', but got the shape of 'var': "
+                    << Vector2Str(var_shape) << " and 'lr_shape': " << Vector2Str(lr_shape);
+      return KRET_RESIZE_FAILED;
+    }
+    std::vector<int64_t> var_batch_shape(var_shape.begin(), var_shape.begin() + batch_rank_);
+    if (!IsSameShape(lr_shape, var_batch_shape)) {
+      MS_LOG(ERROR) << "For '" << kernel_name_
+                    << "', the batch shape of 'var' must be the same as the shape of 'lr', "
+                       "but got the batch shape of 'var': "
+                    << Vector2Str(var_batch_shape) << " and the shape of 'lr': " << Vector2Str(lr_shape);
+      return KRET_RESIZE_FAILED;
+    }
+  }
 
   return KRET_OK;
 }
 
-void ApplyAdamWithAmsgradGpuKernelMod::ResetResource() noexcept {
-  t_elements_ = 0;
-  is_null_input_ = false;
-  input_size_list_.clear();
-  output_size_list_.clear();
+bool ApplyAdamWithAmsgradGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                              const std::vector<kernel::AddressPtr> &workspace,
+                                              const std::vector<kernel::AddressPtr> &outputs, void *stream_ptr) {
+  kernel_func_(this, inputs, outputs, stream_ptr);
+  return true;
 }
 
 template <typename T>
 bool ApplyAdamWithAmsgradGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &workspace,
-                                                    const std::vector<AddressPtr> &outputs) {
-  T *var = GetDeviceAddress<T>(inputs, 0);
-  T *m = GetDeviceAddress<T>(inputs, 1);
-  T *v = GetDeviceAddress<T>(inputs, 2);
-  T *vhat = GetDeviceAddress<T>(inputs, 3);
-  T *beta1_power = GetDeviceAddress<T>(inputs, 4);
-  T *beta2_power = GetDeviceAddress<T>(inputs, 5);
-  T *lr = GetDeviceAddress<T>(inputs, 6);
-  T *grad = GetDeviceAddress<T>(inputs, 7);
+                                                    const std::vector<AddressPtr> &, void *stream_ptr) {
+  auto var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
+  auto m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
+  auto v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
+  auto vhat = reinterpret_cast<T *>(inputs[kIndexVhat]->addr);
+  auto beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
+  auto beta2_power = reinterpret_cast<T *>(inputs[kIndexBeta2Power]->addr);
+  auto lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
+  auto grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
 
-  ApplyAdamWithAmsgrad(t_elements_ * batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1_, beta2_,
-                       epsilon_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr_));
+  CalApplyAdamWithAmsgrad(input_elements_, batch_size_, var, m, v, vhat, beta1_power, beta2_power, lr, grad, beta1_,
+                          beta2_, epsilon_, device_id_, reinterpret_cast<cudaStream_t>(stream_ptr));
 
   return true;
 }
 
-std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::ApplyAdamWithAmsgradFunc>>
+std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::KernelFunc>>
   ApplyAdamWithAmsgradGpuKernelMod::func_list_ = {{KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat64)
                                                      .AddInputAttr(kNumberTypeFloat64)
@@ -236,9 +231,10 @@ std::vector<std::pair<KernelAttr, ApplyAdamWithAmsgradGpuKernelMod::ApplyAdamWit
 std::vector<KernelAttr> ApplyAdamWithAmsgradGpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list;
   (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, ApplyAdamWithAmsgradFunc> &pair) { return pair.first; });
+                       [](const std::pair<KernelAttr, KernelFunc> &pair) { return pair.first; });
   return support_list;
 }
+
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ApplyAdamWithAmsgrad, ApplyAdamWithAmsgradGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
