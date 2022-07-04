@@ -1331,7 +1331,6 @@ class Threshold(Cell):
         self.select = P.Select()
 
     def construct(self, input_x):
-        _dtype_check(input_x.dtype, self.cls_name)
         cond = self.greater(input_x, self.threshold)
         value = self.fill(input_x.dtype, input_x.shape, self.value)
         return self.select(cond, input_x, value)
