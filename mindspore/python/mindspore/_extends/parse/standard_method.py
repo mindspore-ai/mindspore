@@ -1913,6 +1913,8 @@ def coo_to_dense(x):
 
 def csr_to_coo(x):
     """convert csr to coo."""
+    if x.ndim != 2:
+        const_utils.raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
     row_indices = F.csr2coo(x.indptr, x.values.shape[0])
     coo_indices = P.Stack(1)((row_indices, x.indices))
     return COOTensor(coo_indices, x.values, x.shape)
