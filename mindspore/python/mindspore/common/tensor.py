@@ -4140,7 +4140,7 @@ class Tensor(Tensor_):
 
             - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as self tensor.
             - idx (Tensor) - The index of each value of self tensor in the unique output `y`,
-                            the shape and data type same as self tensor.
+              the shape and data type same as self tensor.
 
         Raises:
             TypeError: If dtype of self tensor is neither int32 nor int64.
