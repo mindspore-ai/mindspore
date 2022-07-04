@@ -423,7 +423,7 @@ add_dependencies(lite_src_mid fbs_src)
 
 if(MSLITE_ENABLE_ACL AND NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     include_directories(${TOP_DIR}/graphengine/inc/external)
-    add_subdirectory(extendrt/kernel/ascend)
+    add_subdirectory(runtime/kernel/ascend)
     link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 endif()
 
