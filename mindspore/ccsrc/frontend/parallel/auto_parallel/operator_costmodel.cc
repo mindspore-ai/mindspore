@@ -1569,8 +1569,8 @@ double UniqueCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inp
   return result;
 }
 
-double GatherV2PCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
-                                         int64_t) const {
+double GatherCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                      int64_t) const {
   double result = 0.0;
   if (outputs_type_lengths_.size() != outputs.size()) {
     MS_LOG(EXCEPTION) << "Invalid inputs type size " << inputs_type_lengths_.size() << " for gatherv2 cost";
@@ -1591,8 +1591,8 @@ double GatherV2PCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, 
   return result;
 }
 
-double GatherV2PCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                          int64_t stage_id) const {
+double GatherCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                       int64_t stage_id) const {
   double result = 0.0;
   CheckGlobalDeviceManager();
   MS_EXCEPTION_IF_NULL(g_device_manager);
@@ -1635,8 +1635,8 @@ void UniformCandidateSamplerCost::CalculateInputsInMemory(const std::map<size_t,
   is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
-double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                                int64_t) const {
+double GatherCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                             int64_t) const {
   double result = 0.0;
   Shape input0_slice_shape = inputs[0].slice_shape();
   Shape input1_slice_shape = inputs[1].slice_shape();
@@ -1656,8 +1656,8 @@ double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
   return result;
 }
 
-double GatherV2PCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                 const std::vector<TensorInfo> &outputs, int64_t) const {
+double GatherCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                              const std::vector<TensorInfo> &outputs, int64_t) const {
   double result = 0.0;
   Shape input1_slice_shape = inputs[1].slice_shape();
   Shape output0_slice_shape = outputs[0].slice_shape();

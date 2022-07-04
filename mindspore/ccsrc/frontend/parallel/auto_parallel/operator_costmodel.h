@@ -1121,10 +1121,10 @@ class GatherV2Cost : public OperatorCost {
   void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 
-class GatherV2PCost : public GatherV2Cost {
+class GatherCost : public GatherV2Cost {
  public:
-  GatherV2PCost() : GatherV2Cost(), axis_(0) {}
-  ~GatherV2PCost() override = default;
+  GatherCost() : GatherV2Cost(), axis_(0) {}
+  ~GatherCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                      int64_t stage_id) const override {
