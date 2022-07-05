@@ -1863,8 +1863,8 @@ void ForwardExecutor::DoSignatureCast(const PrimitivePyPtr &prim,
     }
 
     if (IsPyObjTypeInvalid(obj)) {
-      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << i << "th input " << signature[i].name
-                              << " is a not support implicit conversion. "
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "', the " << (i + 1) << "th input " << signature[i].name
+                              << " can not be implicitly converted. "
                               << "Its type is " << py::cast<std::string>(obj.attr("__class__").attr("__name__"))
                               << ", and the value is " << py::cast<py::str>(obj) << ". Only support Tensor or Scalar.";
     }
