@@ -31,22 +31,22 @@ class LabelSwitchKernel : public RtKernel {
 
   bool Init(const AnfNodePtr &anf_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              void *) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &, uint32_t stream_id) override;
 
  private:
   std::vector<uint32_t> label_list_;
-  uint32_t label_size_;
-  void *cond_;
+  uint32_t label_size_{0};
+  void *cond_{nullptr};
 };
 
 class LabelSwitchDesc : public RtKerDesc {
  public:
   LabelSwitchDesc() = default;
   ~LabelSwitchDesc() override = default;
-  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo(const CNodePtr &kernel_node = nullptr) override;
+  std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetKernelInfo(const CNodePtr &) override;
 };
 
 MS_REG_RTKERNEL_DESC(labelswitch, LabelSwitchDesc);

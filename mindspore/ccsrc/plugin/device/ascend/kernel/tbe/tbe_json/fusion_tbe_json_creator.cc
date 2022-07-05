@@ -86,12 +86,12 @@ bool FusionBuildTbeJsonCreator::GenOpListJson(const FusionScopeInfo &fusion_scop
     return false;
   }
   GenDataJson(compute_nodes, compute_list, fusion_json, spec_data_input);
-  (*fusion_json).insert((*fusion_json).end(), compute_list.begin(), compute_list.end());
+  (*fusion_json).insert((*fusion_json).end(), compute_list.cbegin(), compute_list.cend());
   MS_LOG(DEBUG) << "End";
   return true;
 }
 
-bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_info) {
+bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_info) const {
   MS_LOG(DEBUG) << "Start";
   auto input_nodes = fusion_scope_info.input_nodes;
   auto compute_nodes = fusion_scope_info.compute_nodes;
@@ -152,7 +152,7 @@ void FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compu
   }
   MS_LOG(DEBUG) << "End.";
 }
-AnfNodePtr FusionBuildTbeJsonCreator::GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc) {
+AnfNodePtr FusionBuildTbeJsonCreator::GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc) const {
   auto input_name = GetJsonValue<std::string>(input_desc, kJName);
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -218,7 +218,7 @@ bool FusionBuildTbeJsonCreator::GenInputsJson(const AnfNodePtr &anf_node, nlohma
   return true;
 }
 
-bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) {
+bool FusionBuildTbeJsonCreator::CheckDynamicInput(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   if (!common::AnfAlgo::HasNodeAttr(kAttrDynInputSizes, cnode)) {
     MS_LOG(WARNING) << "Fusion Error: cnode [ " << common::AnfAlgo::GetCNodeName(cnode)
@@ -287,10 +287,13 @@ void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, 
   (*output_desc)[kJOutputIndex] = output_index;
   std::vector<size_t> shape;
   (*output_desc)[kJShape] = shape;
+  if (out_size < 1) {
+    MS_LOG(EXCEPTION) << "Invalid output size: " << out_size;
+  }
   (*output_desc)[kJDataType] = tbe::TypeIdToString(AnfAlgo::GetOutputDeviceDataType(anf_node, out_size - 1));
 }
 
-std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) {
+std::vector<size_t> FusionBuildTbeJsonCreator::GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) const {
   std::vector<size_t> desc_output_index = {};
   for (size_t idx = 0; idx < output_used_nums.size(); ++idx) {
     auto index = idx;

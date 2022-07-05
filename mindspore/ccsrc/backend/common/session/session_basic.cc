@@ -46,6 +46,7 @@
 #include "utils/file_utils.h"
 #include "utils/trace_base.h"
 #include "include/common/utils/parallel_context.h"
+#include "kernel/oplib/oplib.h"
 #ifdef WITH_BACKEND
 #include "ps/ps_cache/ps_cache_manager.h"
 #include "ps/constants.h"

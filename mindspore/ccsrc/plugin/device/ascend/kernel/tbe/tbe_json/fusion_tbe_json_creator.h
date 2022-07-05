@@ -26,24 +26,23 @@ class FusionBuildTbeJsonCreator : public TbeJsonCreator {
   FusionBuildTbeJsonCreator() : TbeJsonCreator(), optional_index_(0) {}
   ~FusionBuildTbeJsonCreator() override = default;
   bool GenJson(const FusionScopeInfo &fusion_scope_info, nlohmann::json *fusion_json) override;
+  bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  protected:
   bool GenOpListJson(const FusionScopeInfo &fusion_scope_info, std::vector<nlohmann::json> *fusion_json);
-  bool GenInputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
-  std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums);
+  std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) const;
   void GenReusedOutputDesc(const AnfNodePtr &anf_node, size_t index, size_t output_index, nlohmann::json *output_desc,
                            size_t out_size);
   void GenDataJson(const std::vector<AnfNodePtr> &compute_nodes, const std::vector<nlohmann::json> &compute_json,
                    std::vector<nlohmann::json> *op_list_json, const ANodeFusionDataTypeMap &spec_data_input);
-  bool AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
-                               nlohmann::json *attrs_json) override;
+  bool AttrsJsonPostProcessing(const AnfNodePtr &, const OpInfoPtr &, nlohmann::json *) override;
   void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
  private:
-  AnfNodePtr GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc);
-  bool CheckDynamicInput(const CNodePtr &cnode);
-  bool CheckInput(const FusionScopeInfo &fusion_scope_info);
+  AnfNodePtr GetInputCNode(const AnfNodePtr &node, const nlohmann::json &input_desc) const;
+  bool CheckDynamicInput(const CNodePtr &cnode) const;
+  bool CheckInput(const FusionScopeInfo &fusion_scope_info) const;
   size_t optional_index_;
 };
 }  // namespace mindspore::kernel

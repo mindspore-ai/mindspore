@@ -26,18 +26,18 @@ namespace mindspore {
 namespace kernel {
 class LabelGotoKernel : public RtKernel {
  public:
-  LabelGotoKernel();
+  LabelGotoKernel() = default;
   ~LabelGotoKernel() override;
 
   bool Init(const AnfNodePtr &anf_node) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
-  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                                   const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
+  bool Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+              void *) override;
+  std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                                   const std::vector<AddressPtr> &, uint32_t stream_id) override;
 
  private:
-  uint32_t label_;
+  uint32_t label_{0};
 };
 
 MS_REG_RTKERNEL(labelgoto, LabelGotoKernel);

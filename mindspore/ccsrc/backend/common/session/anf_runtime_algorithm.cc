@@ -37,6 +37,7 @@
 #include "utils/trace_base.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
+#include "kernel/oplib/oplib.h"
 
 namespace mindspore {
 namespace session {

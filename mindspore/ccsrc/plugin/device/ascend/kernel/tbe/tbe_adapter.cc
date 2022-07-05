@@ -130,7 +130,7 @@ void TbeAdapter::FusionDescJsonPass(const AnfNodePtr &node, nlohmann::json *outp
 }
 
 std::string TbeAdapter::GetRealOpType(const std::string &origin_type) {
-  static std::map<std::string, std::string> buffer_fussion_op_map = {
+  const std::map<std::string, std::string> buffer_fussion_op_map = {
     {parallel::DEPTHWISE_CONV2D_NATIVE, parallel::DEPTHWISE_CONV2D}};
   auto iter = buffer_fussion_op_map.find(origin_type);
   return (iter != buffer_fussion_op_map.end()) ? iter->second : origin_type;
