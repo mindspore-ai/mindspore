@@ -498,14 +498,14 @@ if(SUPPORT_TENSORRT)
         set(CUDA_LIB_PATH ${CUDA_PATH}/lib64)
         include_directories(${TENSORRT_PATH}/include)
         include_directories(${CUDA_PATH}/include)
-        add_subdirectory(extendrt/delegate/tensorrt)
+        add_subdirectory(runtime/delegate/tensorrt)
     endif()
     target_link_libraries(mindspore-lite tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
     target_link_libraries(mindspore-lite_static tensorrt_kernel_mid cuda_kernel_mid gpu_distribution_collective)
 else()
     if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         set(TENSORRT_STUB
-            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/delegate/tensorrt/distribution/distribution_base.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/delegate/tensorrt/distribution/distribution_base.cc
         )
         add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
     endif()
