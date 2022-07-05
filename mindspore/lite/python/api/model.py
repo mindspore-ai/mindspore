@@ -537,10 +537,12 @@ class ModelParallelRunner:
                 raise TypeError(f"outputs element must be Tensor, but got "
                                 f"{type(element)} at index {i}.")
             _outputs.append(element._tensor)
-
-        ret = self._model.predict(_inputs, _outputs, None, None)
-        if not ret.IsOk():
-            raise RuntimeError(f"predict failed! Error is {ret.ToString()}")
+        predict_output = self._model.predict(_inputs, _outputs, None, None)
+        if not isinstance(predict_output, list) or len(predict_output) == 0:
+            raise RuntimeError(f"predict failed!")
+        outputs.clear()
+        for i, element in enumerate(predict_output):
+            outputs.append(Tensor(element))
 
     def get_inputs(self):
         """

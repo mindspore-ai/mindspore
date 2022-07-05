@@ -98,3 +98,24 @@ def test_server_inference_01():
     model_parallel_runner.predict(inputs, outputs)
     data = outputs[0].get_data_to_numpy()
     print("data: ", data)
+
+
+# ============================ server inference ============================
+def test_server_inference_02():
+    cpu_device_info = mslite.CPUDeviceInfo()
+    print("cpu_device_info: ", cpu_device_info)
+    context = mslite.Context(thread_num=4)
+    context.append_device_info(cpu_device_info)
+    runner_config = mslite.RunnerConfig(context, 1)
+    model_parallel_runner = mslite.ModelParallelRunner()
+    cpu_model_path = "mobilenetv2.ms"
+    cpu_in_data_path = "mobilenetv2.ms.bin"
+    model_parallel_runner.init(model_path=cpu_model_path, runner_config=runner_config)
+
+    inputs = model_parallel_runner.get_inputs()
+    in_data = np.fromfile(cpu_in_data_path, dtype=np.float32)
+    inputs[0].set_data_from_numpy(in_data)
+    outputs = []
+    model_parallel_runner.predict(inputs, outputs)
+    data = outputs[0].get_data_to_numpy()
+    print("data: ", data)

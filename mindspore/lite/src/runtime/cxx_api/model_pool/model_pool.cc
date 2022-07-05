@@ -29,8 +29,8 @@ constexpr int kNumDeviceInfo = 2;
 constexpr int kNumIndex = 2;
 constexpr int kNumCoreDataLen = 3;
 constexpr int kNumMaxTaskQueueSize = 1000;
-constexpr int kNumPhysicalCoreThreshold = 32;
-constexpr int kDefaultWorkerNumPerPhysicalCpu = 4;
+constexpr int kNumPhysicalCoreThreshold = 16;
+constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
 constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
 int GetCoreNum() {
@@ -108,7 +108,7 @@ int GetDefaultThreadNum() {
     return 0;
   }
   auto physical_core_size = physical_core_lite.size();
-  if (physical_core_lite.size() < kNumPhysicalCoreThreshold) {
+  if (physical_core_lite.size() <= kNumPhysicalCoreThreshold) {
     return physical_core_size / kDefaultWorkerNumPerPhysicalCpu;
   } else {
     return kDefaultThreadsNum;
@@ -248,7 +248,7 @@ Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
     MS_LOG(ERROR) << "the number of threads set in the context is less than 1.";
     return kLiteError;
   }
-  if (use_numa_bind_mode_) {
+  if (numa_available_) {
     // now only supports the same number of cores per numa node
     // do not use if there are extra cores
     auto worker_num = 0;
@@ -290,6 +290,33 @@ std::shared_ptr<mindspore::Context> ModelPool::GetDefaultContext() {
   return context;
 }
 
+Status ModelPool::CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &runner_config) {
+  auto context = runner_config->GetContext();
+  auto all_bind_core_list = context->GetThreadAffinityCoreList();
+  auto worker_num = runner_config->GetWorkersNum();
+  if (worker_num != 0 && !all_bind_core_list.empty() &&
+      static_cast<int>(all_bind_core_list.size()) != context->GetThreadNum() * worker_num) {
+    MS_LOG(ERROR) << "user set core list size != " << context->GetThreadNum() * worker_num
+                  << " If the user sets the Bind core list, the size must be equal to the number of threads "
+                     "multiplied by the number of workers";
+    return kLiteError;
+  }
+  if (worker_num != 0 && !all_bind_core_list.empty() &&
+      static_cast<int>(all_bind_core_list.size()) == context->GetThreadNum() * worker_num) {
+    // Use the core id set by the user. Currently, this function can only be enabled when the worker num is not 0.
+    auto max_core_id = GetCoreNum();
+    for (size_t i = 0; i < all_bind_core_list.size(); i++) {
+      if (all_bind_core_list[i] < 0 || all_bind_core_list[i] >= max_core_id) {
+        MS_LOG(ERROR) << "Please set correct core id, core id should be less than " << max_core_id
+                      << "and greater than 0";
+        return kLiteError;
+      }
+    }
+    is_user_core_list_ = true;
+  }
+  return kSuccess;
+}
+
 std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<RunnerConfig> &runner_config) {
   auto context = runner_config->GetContext();
   if (context == nullptr) {
@@ -309,8 +336,9 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
     }
     context->SetThreadNum(thread_num);
   }
-  if (!context->GetThreadAffinityCoreList().empty()) {
-    MS_LOG(ERROR) << "parallel predict not support user set core list.";
+  auto status = CheckAffinityCoreList(runner_config);
+  if (status != kSuccess) {
+    MS_LOG(ERROR) << "user set core list failed.";
     return nullptr;
   }
   auto device_list = context->MutableDeviceInfo();
@@ -492,6 +520,19 @@ Status ModelPool::InitModelPoolBindList(const std::shared_ptr<Context> &init_con
                                         std::vector<std::vector<int>> *bind_core_list,
                                         std::vector<int> *bind_numa_list) {
   if (init_context->GetThreadAffinityMode() == lite::HIGHER_CPU) {
+    // The user specified the id of the bundled core
+    if (is_user_core_list_) {
+      auto user_core_list = init_context->GetThreadAffinityCoreList();
+      auto thread_num = init_context->GetThreadNum();
+      for (size_t work_index = 0; work_index < workers_num_; work_index++) {
+        std::vector<int> core_list;
+        core_list.insert(core_list.end(), user_core_list.begin() + work_index * thread_num,
+                         user_core_list.begin() + work_index * thread_num + thread_num);
+        bind_core_list->push_back(core_list);
+        bind_numa_list->push_back(kInvalidNumaId);
+      }
+      return kSuccess;
+    }
     auto status = SetModelBindMode(bind_core_list, bind_numa_list, init_context);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "SetModelBindMode failed.";
@@ -575,9 +616,8 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
     return {};
   }
   for (size_t i = 0; i < model_pool_outputs_.size(); i++) {
-    auto tensor =
-      mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(), model_pool_outputs_.at(i).DataType(),
-                                        model_pool_outputs_.at(i).Shape(), nullptr, 0);
+    auto tensor = mindspore::MSTensor::CreateTensor(model_pool_outputs_.at(i).Name(),
+                                                    model_pool_outputs_.at(i).DataType(), {}, nullptr, 0);
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "create tensor failed.";
       return {};
@@ -588,10 +628,17 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
   return outputs;
 }
 
-Status ModelPool::InitNumaParameter() {
+Status ModelPool::InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_config) {
   numa_available_ = numa::NUMAAdapter::GetInstance()->Available();
-  if (!numa_available_) {
+  if (!numa_available_ && runner_config->GetWorkersNum() != 0 &&
+      runner_config->GetContext()->GetThreadAffinityCoreList().size() != 0) {
     MS_LOG(DEBUG) << "numa node is unavailable.";
+    return kSuccess;
+  }
+  if (runner_config != nullptr && runner_config->GetWorkersNum() != 0 && runner_config->GetContext() != nullptr &&
+      runner_config->GetContext()->GetThreadAffinityCoreList().size() != 0) {
+    MS_LOG(DEBUG) << "If the user explicitly sets the core list, the numa binding is not performed by default.";
+    numa_available_ = false;
     return kSuccess;
   }
   numa_node_num_ = numa::NUMAAdapter::GetInstance()->NodesNum();
@@ -658,7 +705,7 @@ Status ModelPool::CreateWorkers(char *graph_buf, size_t size, const ModelPoolCon
 }
 
 Status ModelPool::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
-  Status status = InitNumaParameter();
+  Status status = InitNumaParameter(runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "Init numa parameter failed.";
     return kLiteError;

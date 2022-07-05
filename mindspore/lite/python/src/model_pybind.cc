@@ -114,7 +114,15 @@ void ModelPyBind(const py::module &m) {
     .def("init", &ModelParallelRunner::Init)
     .def("get_inputs", &ModelParallelRunner::GetInputs)
     .def("get_outputs", &ModelParallelRunner::GetOutputs)
-    .def("predict", &ModelParallelRunner::Predict);
+    .def("predict", [](ModelParallelRunner &runner, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
+                       const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
+      auto status = runner.Predict(inputs, outputs, before, after);
+      if (status != kSuccess) {
+        std::vector<MSTensor> empty;
+        return empty;
+      }
+      return *outputs;
+    });
 #endif
 }
 }  // namespace mindspore::lite
