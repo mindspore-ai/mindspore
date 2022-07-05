@@ -19,11 +19,12 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 smooth_l1_loss_grad_op_info = TBERegOp("SmoothL1LossGrad") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("smooth_l1_loss_grad.so") \
+    .binfile_name("smooth_l1_loss_grad_v2.so") \
     .compute_cost(10) \
-    .kernel_name("smooth_l1_loss_grad") \
+    .kernel_name("smooth_l1_loss_grad_v2") \
     .partial_flag(True) \
-    .attr("beta", "required", "float", "all") \
+    .attr("beta", "optional", "float", "all") \
+    .attr("reduction", "optional", "str", "all") \
     .input(0, "predict", False, "required", "all") \
     .input(1, "label", False, "required", "all") \
     .input(2, "dout", False, "required", "all") \
