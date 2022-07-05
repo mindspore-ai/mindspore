@@ -26,7 +26,7 @@ class LarsV2Fission : public PatternProcessPass {
   explicit LarsV2Fission(bool multigraph = true) : PatternProcessPass("lars_v2_fission", multigraph) {}
   ~LarsV2Fission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void CreateOutputsOfSquareSumAll(const FuncGraphPtr &graph, const CNodePtr &lars_v2,

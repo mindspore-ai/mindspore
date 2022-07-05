@@ -29,7 +29,7 @@ class BnGradSplit : public PatternProcessPass {
       : PatternProcessPass(name, multigraph) {}
   ~BnGradSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
   void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,
@@ -47,7 +47,7 @@ class SyncBnGradSplit : public BnGradSplit {
   explicit SyncBnGradSplit(bool multigraph = true) : BnGradSplit("sync_bn_grad_split", multigraph) {}
   ~SyncBnGradSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   CNodePtr SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;

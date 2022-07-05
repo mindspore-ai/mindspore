@@ -39,7 +39,7 @@ class DynamicRnnGradFissionV2 : public PatternProcessPass {
       : PatternProcessPass("dynamic_rnn_grad_fission_v2", multigraph) {}
   ~DynamicRnnGradFissionV2() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void CreateTLoopNode(const FuncGraphPtr &func_graph, const CNodePtr &dynamic_rnn_grad_cnode,
