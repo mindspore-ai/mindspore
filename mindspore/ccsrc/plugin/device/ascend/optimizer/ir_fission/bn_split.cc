@@ -187,7 +187,7 @@ AnfNodePtr CreateValueNodeOfDeviceNumReciprocal(const FuncGraphPtr &graph, const
   MS_EXCEPTION_IF_NULL(device_num_reciprocal_tensor);
   auto data_ptr = device_num_reciprocal_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
-  auto *val = reinterpret_cast<float *>(data_ptr);
+  auto *val = static_cast<float *>(data_ptr);
   *val = device_num_reciprocal;
 
   auto kernel_graph = graph->cast<KernelGraphPtr>();

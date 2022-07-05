@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_SET_FRACZ_GROUP_ATTR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_SET_FRACZ_GROUP_ATTR_H_
 
-#include <vector>
 #include <memory>
-#include <utility>
 #include "ir/anf.h"
 #include "backend/common/optimizer/pass.h"
 
