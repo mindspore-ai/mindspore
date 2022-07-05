@@ -180,7 +180,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   bool need_copy_output = true;
   auto model_output = model_->GetOutputs();
   for (size_t i = 0; i < outputs->size(); i++) {
-    if (outputs->at(i).MutableData() != nullptr) {
+    if (outputs->at(i).Data() != nullptr) {
       /* user set graph-output-tensor from outside */
       model_output[i].SetData(outputs->at(i).MutableData());
       model_output[i].SetAllocator(nullptr);
