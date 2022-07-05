@@ -17,7 +17,7 @@ mindspore.ops.CumProd
 
     **输入：**
 
-    - **x** (Tensor[Number]) - 输入Tensor，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其轶应小于8。
+    - **x** (Tensor[Number]) - 输入Tensor，shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其秩应小于8。
     - **axis** (int) - 沿此方向计算累计积。仅支持常量值。
 
     **输出：**

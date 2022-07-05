@@ -76,6 +76,14 @@
         - **value_depend** (str) - 表示输入是否为常量值。默认值：None。
         - **kwargs** (dict) - 表示输入的其他信息。
 
+    .. py:method:: input_to_attr_index(input_to_attr_index)
+
+        需要转换为属性的输入的索引。
+
+        **参数：**
+
+        - **input_to_attr_index** (int) - 索引。默认值：()。
+
     .. py:method:: is_dynamic_format(is_dynamic_format=False)
 
         表示算子是否需要op_select_format函数来动态选择合适的数据格式和数据类型。
@@ -128,6 +136,14 @@
         **参数：**
 
         - **partial_flag** (bool) - 表示是否支持部分计算。默认值：True。
+
+    .. py:method:: real_input_index(real_input_index)
+
+        算子前端输入到后端TBE算子输入的映射。
+
+        **参数：**
+
+        - **real_input_index** (list) - 真实输入的索引。默认值：()。
 
     .. py:method:: reshape_type(reshape_type)
 

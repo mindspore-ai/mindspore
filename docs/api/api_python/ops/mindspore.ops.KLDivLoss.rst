@@ -10,7 +10,7 @@ mindspore.ops.KLDivLoss
     .. math::
         L(x, target) = target \cdot (\log target - x)
 
-    可得
+    输出
 
     .. math::
         \ell(x, target) = \begin{cases}

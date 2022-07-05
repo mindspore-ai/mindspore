@@ -3,7 +3,7 @@ mindspore.ops.ApplyProximalGradientDescent
 
 .. py:class:: mindspore.ops.ApplyProximalGradientDescent
 
-    更新FOBOS(Forward Backward Splitting)算法的参数。
+    根据FOBOS(Forward Backward Splitting)算法更新网络参数。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting
     <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_。
 

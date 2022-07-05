@@ -23,8 +23,8 @@ mindspore.nn.SSIM
 
     **输入：**
 
-    - **img1** (Tensor)：格式为'NCHW'的第一批图像。shape和数据类型必须与img2相同。
-    - **img2** (Tensor)：格式为'NCHW'的第二批图像。shape和数据类型必须与img1相同。
+    - **img1** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img2相同。
+    - **img2** (Tensor)：格式为'NCHW'的输入图像。shape和数据类型必须与img1相同。
 
     **输出：**
 
