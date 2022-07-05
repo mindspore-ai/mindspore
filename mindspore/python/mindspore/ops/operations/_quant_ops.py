@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0(the "License");
 # you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ from functools import partial
 import mindspore.context as context
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
-from ..primitive import PrimitiveWithInfer, prim_attr_register
+from ..primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from ...common import dtype as mstype
 
 if context.get_context('device_target') == "Ascend":
@@ -1713,7 +1713,7 @@ class WtsARQ(PrimitiveWithInfer):
         return w_dtype
 
 
-class IFMR(PrimitiveWithInfer):
+class IFMR(Primitive):
     """
     The TFMR(Input Feature Map Reconstruction).
 
@@ -1760,19 +1760,3 @@ class IFMR(PrimitiveWithInfer):
         validator.check('search_range[1]', search_range[1], 'search_range[0]', search_range[0], Rel.GE, self.name)
         validator.check_value_type("search_step", search_step, [float], self.name)
         validator.check_value_type("offset_flag", with_offset, [bool], self.name)
-
-    def infer_shape(self, data_shape, data_min_shape, data_max_shape, cumsum_shape):
-        validator.check_equal_int(len(data_min_shape), 1, "dims of data_min", self.name)
-        validator.check_equal_int(data_min_shape[0], 1, "data_min[0]", self.name)
-        validator.check_equal_int(len(data_max_shape), 1, "dims of data_max", self.name)
-        validator.check_equal_int(data_max_shape[0], 1, "data_max[0]", self.name)
-        validator.check_equal_int(len(cumsum_shape), 1, "dims of cumsum", self.name)
-        return (1,), (1,)
-
-    def infer_dtype(self, data_dtype, data_min_dtype, data_max_dtype, cumsum_dtype):
-        tuple(map(partial(validator.check_tensor_dtype_valid,
-                          valid_dtypes=(mstype.float16, mstype.float32), prim_name=self.name),
-                  ("input_value", "input_min", "input_max"),
-                  (data_dtype, data_min_dtype, data_max_dtype)))
-        validator.check_tensor_dtype_valid("input_bins", cumsum_dtype, [mstype.int32], self.name)
-        return mstype.tensor_type(mstype.float32), mstype.tensor_type(mstype.float32)

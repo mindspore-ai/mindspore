@@ -543,6 +543,7 @@ from .parallel_concat import _parallel_concat_tbe
 from .adam_apply_one_assign import _adam_apply_one_assign_tbe
 from .adam_apply_one_with_decay_assign import _adam_apply_one_with_decay_assign_tbe
 from .ifmr import _ifmr_tbe
+from .ifmr_ds import _ifmr_ds_tbe
 from .acts_ulq import _acts_ulq_tbe
 from .acts_ulq_input_grad import _acts_ulq_input_grad_tbe
 from .act_ulq_clamp_min_grad import _act_ulq_clamp_min_grad_tbe

@@ -46,6 +46,7 @@ constexpr auto kCdistGrad = "CdistGrad";
 constexpr auto kCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 constexpr auto kResizeBilinearV2 = "ResizeBilinearV2";
 constexpr auto kResizeBilinearGrad = "ResizeBilinearGrad";
+constexpr auto kCropAndResize = "CropAndResize";
 
 // Arithmetic
 constexpr auto kScalarAdd = "ScalarAdd";
@@ -245,6 +246,7 @@ constexpr auto kHSwishGrad = "HSwishGrad";
 constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 constexpr auto kUpsampleTrilinear3DGrad = "UpsampleTrilinear3DGrad";
+constexpr auto kIFMR = "IFMR";
 
 // Random
 constexpr auto kStandardNormal = "StandardNormal";
@@ -551,6 +553,7 @@ GVAR_DEF(PrimitivePtr, kPrimSegmentProd, std::make_shared<Primitive>(kSegmentPro
 GVAR_DEF(PrimitivePtr, kPrimCropAndResizeGradBoxes, std::make_shared<Primitive>(kCropAndResizeGradBoxes));
 GVAR_DEF(PrimitivePtr, kPrimResizeBilinearV2, std::make_shared<Primitive>(kResizeBilinearV2));
 GVAR_DEF(PrimitivePtr, kPrimResizeBilinearGrad, std::make_shared<Primitive>(kResizeBilinearGrad));
+GVAR_DEF(PrimitivePtr, kPrimCropAndResize, std::make_shared<Primitive>(kCropAndResize));
 
 // NN
 GVAR_DEF(PrimitivePtr, kPrimCeLU, std::make_shared<Primitive>("CeLU"));
@@ -804,6 +807,7 @@ GVAR_DEF(PrimitivePtr, kPrimSparseApplyAdagradDA, std::make_shared<Primitive>(kS
 GVAR_DEF(PrimitivePtr, kPrimAdaptiveMaxPool2DGrad, std::make_shared<Primitive>("AdaptiveMaxPool2DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleNearest3DGrad, std::make_shared<Primitive>("UpsampleNearest3DGrad"));
 GVAR_DEF(PrimitivePtr, kPrimUpsampleTrilinear3DGrad, std::make_shared<Primitive>("UpsampleTrilinear3DGrad"));
+GVAR_DEF(PrimitivePtr, kPrimIFMR, std::make_shared<Primitive>(kIFMR));
 
 // Comm ops
 GVAR_DEF(PrimitivePtr, kPrimMirror, std::make_shared<Primitive>("_MirrorOperator"));

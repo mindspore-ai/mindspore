@@ -3980,7 +3980,7 @@ class IsInf(Primitive):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
 
 
-class IsFinite(PrimitiveWithInfer):
+class IsFinite(Primitive):
     r"""
     Determines which elements are finite for each position.
 
@@ -4001,13 +4001,6 @@ class IsFinite(PrimitiveWithInfer):
     def __init__(self):
         """Initialize IsFinite"""
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-
-    def infer_shape(self, x_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type + (mstype.bool_,), self.name)
-        return mstype.tensor_type(mstype.bool_)
 
 
 class FloatStatus(PrimitiveWithInfer):
