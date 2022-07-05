@@ -93,16 +93,16 @@ class AscendStreamAssign {
                             std::vector<CNodePtr> *comm_sub_graph_list);
   void ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr> hcom_list, GroupGraphMap *group_graph_map);
   void ClassifyNodeByGraph(const std::vector<CNodePtr> indepent_list,
-                           std::map<uint32_t, std::vector<CNodePtr>> *graph_node_map);
+                           std::map<uint32_t, std::vector<CNodePtr>> *graph_nodes_map) const;
   uint32_t GetNodeTaskNum(const CNodePtr &cnode);
 
-  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
-  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id);
+  CNodePtr CreateSendApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id) const;
+  CNodePtr CreateRecvApplyKernel(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t event_id, uint32_t stream_id) const;
   void CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr);
-  void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr);
-  void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr);
+  void CheckStreamAssign(const NotNull<KernelGraphPtr> &graph_ptr) const;
+  void CheckEventAssign(const NotNull<KernelGraphPtr> &graph_ptr) const;
 
-  void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
+  void UpdateAtomicAddrCleanStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void InsertStreamActive(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForCommon(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertStreamActiveForIndependent(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -112,7 +112,7 @@ class AscendStreamAssign {
   void ActiveRootGraphIndependent(const NotNull<KernelGraphPtr> &graph_ptr,
                                   const std::set<uint32_t> &independent_streams);
   void ActiveOtherGraphParallel(const NotNull<KernelGraphPtr> &graph_ptr,
-                                std::map<uint32_t, std::set<uint32_t>> other_graph);
+                                std::map<uint32_t, std::set<uint32_t>> other_graph) const;
   void InsertEventForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertCtrlForIndependentParallel(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventForHcomParallel(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -127,14 +127,14 @@ class AscendStreamAssign {
   void InsertEventHcomDependHcomAtSameGroup(const NotNull<KernelGraphPtr> &graph_ptr,
                                             std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item);
   std::vector<std::pair<uint32_t, vector<size_t>>> GetStreamIDHcomMap(std::vector<CNodePtr> cnode_ptr_list,
-                                                                      std::string group, size_t graph_id);
+                                                                      const std::string group, size_t graph_id);
 
   void AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr);
   vector<CNodePtr> GetLastInputCnode(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr &cur_cnode_ptr);
   vector<CNodePtr> GetIndependentNodesNeedsInsertActive(const std::vector<CNodePtr> exe_orders,
-                                                        const uint32_t graph_id);
+                                                        const uint32_t graph_id) const;
   bool IsSatisfiedHcom(const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index, const CNodePtr &node_ptr,
-                       size_t index);
+                       size_t index) const;
 
   void GetProcessedStream(const NotNull<KernelGraphPtr> &graph_ptr);
   void GetNeedActiveStreams(const NotNull<KernelGraphPtr> &graph_ptr);
@@ -149,11 +149,11 @@ class AscendStreamAssign {
   void TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr);
 
   uint32_t GetMaxIndexTarget(const NotNull<KernelGraphPtr> &graph_ptr);
-  uint32_t GetIndexByKey(const NotNull<KernelGraphPtr> &graph_ptr, const CNodeKey &key);
-  uint32_t GetIndependentStreamSwitchStreamId(const NotNull<KernelGraphPtr> &graph_ptr);
+  uint32_t GetIndexByKey(const NotNull<KernelGraphPtr> &graph_ptr, const CNodeKey &key) const;
+  uint32_t GetIndependentStreamSwitchStreamId(const NotNull<KernelGraphPtr> &graph_ptr) const;
   void GetIndependentMaxTarget(const NotNull<KernelGraphPtr> &graph_ptr);
-  bool IsTaskSink();
-  bool IsHcom(const CNodePtr &cur_cnode_ptr);
+  bool IsTaskSink() const;
+  bool IsHcom(const CNodePtr &cur_cnode_ptr) const;
   bool IsIndependentNode(const CNodePtr &node_ptr);
   vector<CNodePtr>::iterator FindFirstUserInExecutionOrder(vector<CNodePtr>::iterator begin,
                                                            vector<CNodePtr>::iterator end, const CNodePtr &node,
@@ -211,7 +211,7 @@ class AscendStreamAssign {
   std::map<CNodePtr, CNodePtr> event_map_{};
   std::set<uint32_t> middle_active_streams_{};
   // new policy end
-  bool IsAllOutGraphOut(const KernelGraphPtr &graph, const CNodePtr &cnode);
+  bool IsAllOutGraphOut(const KernelGraphPtr &graph, const CNodePtr &cnode) const;
 
   uint32_t max_stream_count_ = 0;
   uint32_t max_task_count_ = 0;
@@ -222,8 +222,8 @@ class AscendStreamAssign {
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
                               HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_recv);
   void UpdateEventsToExecutionOrder(const NotNull<KernelGraphPtr> &kernel_graph,
-                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &recv_before_node,
-                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &send_after_node) const;
+                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &send_after_node,
+                                    const HashMap<AnfNodePtr, vector<CNodePtr>> &recv_before_node) const;
 
   void InsertEventsForInputs(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &kernel,
                              const NodeIoExecInfoPtr &io_exec_info, HashMap<AnfNodePtr, vector<CNodePtr>> *kernel_send,
