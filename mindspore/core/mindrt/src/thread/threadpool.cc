@@ -162,6 +162,7 @@ void Worker::RunOtherKernelTask() {
 void Worker::YieldAndDeactive() {
   // deactivate this worker only on the first entry
   if (spin_count_ == 0) {
+    std::lock_guard<std::mutex> _l(mutex_);
     status_.store(kThreadIdle);
   }
   spin_count_++;
@@ -184,7 +185,6 @@ void Worker::set_scale(float lhs_scale, float rhs_scale) {
 void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int task_id_end) {
   {
     std::lock_guard<std::mutex> _l(mutex_);
-    status_ = kThreadBusy;
     // add the first to task_, and others to queue.
     task_id_.store(task_id_start, std::memory_order_relaxed);
     THREAD_TEST_TRUE(task_ == nullptr);
@@ -193,6 +193,7 @@ void Worker::Active(std::vector<TaskSplit> *task_list, int task_id_start, int ta
       while (!local_task_queue_->Enqueue(&(*task_list)[i])) {
       }
     }
+    status_ = kThreadBusy;
   }
   cond_var_.notify_one();
 }
