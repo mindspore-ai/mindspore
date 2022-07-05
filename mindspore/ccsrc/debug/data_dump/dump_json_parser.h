@@ -52,6 +52,7 @@ class BACKEND_EXPORT DumpJsonParser {
   bool IsStatisticDump() const;
   bool IsTensorDump() const;
   bool IsFullDump() const;
+  bool IsNpyFormat() const;
   bool IsDumpIter(uint32_t iteration) const;
 
   bool async_dump_enabled() const { return async_dump_enabled_; }
