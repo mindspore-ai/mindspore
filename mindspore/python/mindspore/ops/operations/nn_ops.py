@@ -681,14 +681,15 @@ class SeLU(Primitive):
         Tensor, with the same type and shape as the `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If dtype of `input_x` is neither float16 nor float32.
 
     Examples:
+        >>> from mindspore.ops.operations.nn_ops import SeLU
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> selu = ops.SeLU()
+        >>> selu = SeLU()
         >>> output = selu(input_x)
         >>> print(output)
         [[-1.1113307 4.202804 -1.7575096]
@@ -698,7 +699,8 @@ class SeLU(Primitive):
     @prim_attr_register
     def __init__(self):
         """Initialize SeLU"""
-        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+        super().__init__("SeLU")
+        self.init_prim_io_names(inputs=['input_x'], outputs=['output'])
 
 
 class ReLU6(PrimitiveWithCheck):
