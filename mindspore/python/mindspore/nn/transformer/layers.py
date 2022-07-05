@@ -440,14 +440,8 @@ class _Linear(Cell):
             if isinstance(bias_init, Tensor) and (bias_init.ndim != 1 or bias_init.shape[0] != out_channels):
                 raise ValueError("The shape of parameter 'bias_init' is error, please check shape of 'bias_init'.")
             if self.expert_flag:
-                if self.use_expert_group_size is True:
-                    self.bias = Parameter(initializer(bias_init,
-                                                      [1, self.expert_num, self.expert_group_size, out_channels],
-                                                      param_init_type), name="bias")
-                else:
-                    self.bias = Parameter(initializer(bias_init,
-                                                      [self.outer_batch, self.expert_num, 1, out_channels],
-                                                      param_init_type), name="bias")
+                self.bias = Parameter(initializer(bias_init, [1, self.expert_num, 1, out_channels],
+                                                  param_init_type), name="bias")
             else:
                 self.bias = Parameter(initializer(bias_init, [out_channels], param_init_type), name="bias")
             self.bias.parallel_optimizer = False
