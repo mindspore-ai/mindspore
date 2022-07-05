@@ -67,8 +67,8 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
     mindspore.ops.log_softmax
-    mindspore.ops.padding
     mindspore.ops.soft_shrink
+    mindspore.ops.softsign
     mindspore.ops.tanh
 
 损失函数
