@@ -238,6 +238,7 @@ from .nn_func import (
     adaptive_avg_pool2d,
     adaptive_max_pool3d,
     avg_pool2d,
+    max_pool3d,
     celu,
     dropout2d,
     dropout3d,
