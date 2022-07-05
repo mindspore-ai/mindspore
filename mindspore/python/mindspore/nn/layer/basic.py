@@ -241,8 +241,8 @@ class Dropout2d(Cell):
         if self.keep_prob == 1:
             return x
 
-        out, mask = self.dropout2d(x)
-        return out, mask
+        out, _ = self.dropout2d(x)
+        return out
 
     def extend_repr(self):
         return 'keep_prob={}'.format(self.keep_prob)
@@ -311,8 +311,8 @@ class Dropout3d(Cell):
         if self.keep_prob == 1:
             return x
 
-        out, mask = self.dropout3d(x)
-        return out, mask
+        out, _ = self.dropout3d(x)
+        return out
 
     def extend_repr(self):
         return 'keep_prob={}'.format(self.keep_prob)
