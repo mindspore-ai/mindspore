@@ -13,6 +13,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_compile_definitions(USE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    string(REPLACE "-fno-exceptions" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
+    string(REPLACE "-fno-exceptions" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
     remove_definitions(-DBUILD_LITE_INFERENCE)
     set(MINDIR_MODEL_SRC
@@ -165,7 +167,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
 
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
+        add_subdirectory(kernel/ascend)
         link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+        target_link_libraries(mindspore-extendrt ascend_kernel_mid)
     endif()
 
     if(SUPPORT_CUDA)

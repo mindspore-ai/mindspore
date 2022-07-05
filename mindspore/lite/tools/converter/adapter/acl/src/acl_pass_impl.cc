@@ -52,6 +52,8 @@ constexpr auto kInferShapePass = "InferShapePass";
 constexpr auto kConstFoldPass = "ConstFoldPass";
 constexpr auto kRemoveRedundantOpPass = "RemoveRedundantOpPass";
 constexpr auto kDelRedundantTranspose = "DeleteRedundantTranspose";
+constexpr auto kFuncType = "func_type";
+constexpr auto kUniqueName = "uniq_name";
 constexpr size_t kDependInputNum = 3;
 constexpr size_t kDependFirstInputIdx = 1;
 constexpr size_t kTupleGetItemFirstInputIdx = 1;
@@ -155,6 +157,10 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
+  if (lite::acl::DelRedundantParameter(func_graph) != RET_SUCCESS) {
+    MS_LOG(ERROR) << "Delete redundant parameters failed.";
+    return lite::RET_ERROR;
+  }
   if (!user_options_cfg_.offline) {
     MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
     return lite::RET_OK;
@@ -548,6 +554,8 @@ void AclPassImpl::SetCustomAttrs(const std::shared_ptr<ops::Custom> &prim) {
   std::vector<uint8_t> output_dim_char(output_dim_str.begin(), output_dim_str.end());
   std::map<std::string, std::vector<uint8_t>> attrs = {{lite::acl::kOutputShapes, output_dim_char}};
   prim->set_attr(attrs);
+  prim->AddAttr(kFuncType, api::MakeValue<std::string>("acl_build"));
+  prim->AddAttr(kUniqueName, api::MakeValue<std::string>("CustomAscend"));
 }
 
 CNodePtr AclPassImpl::CreateCustomNode(const FuncGraphPtr &func_graph) {

@@ -136,6 +136,9 @@ STATUS DeleteRedundantTranspose::TransTransFusion(const FuncGraphPtr &func_graph
       if (!manager_->Replace(cnode, pre_cnode->input(1))) {
         MS_LOG(ERROR) << "replace old node failed, please check.";
         return lite::RET_ERROR;
+      } else {
+        func_graph->DropNode(cnode->input(kInputIndexTwo));
+        func_graph->DropNode(pre_cnode->input(kInputIndexTwo));
       }
     }
   }

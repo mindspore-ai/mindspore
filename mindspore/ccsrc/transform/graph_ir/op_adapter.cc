@@ -84,7 +84,7 @@ std::string OpAdapterImpl::GetCustomOpType(const PrimitivePtr &prim) const {
   MS_EXCEPTION_IF_NULL(prim);
   auto value = prim->GetAttr("reg_op_name");
   if (value == nullptr) {
-    MS_LOG(ERROR) << "Custom op has no func_type attr.";
+    MS_LOG(ERROR) << "Custom op has no reg_op_name attr.";
     return "";
   }
   auto op_type = GetValue<std::string>(value);
