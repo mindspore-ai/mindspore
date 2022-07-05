@@ -28,11 +28,11 @@ mindspore.ops.smooth_l1_loss
     其中， :math:`\beta` 代表阈值 `beta` 。 :math:`N` 为batch size。
 
     .. note::
-        在Ascend上，目前不支持将 `reduction` 设定成'sum'或'mean'。
+        在Ascend上，目前不支持 `logits` 的数据类型是float64。
 
     **参数：**
 
-    - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型支持float16或float32。
+    - **logits** (Tensor) - shape： :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。数据类型为float16或float32， CPU和GPU后端还支持float64。
     - **labels** (Tensor) - shape： :math:`(N, *)` ，与 `logits` 的shape和数据类型相同。
     - **beta** (float) - 控制损失函数在L1Loss和L2Loss间变换的阈值。默认值：1.0。
     - **reduction** (str) - 缩减输出的方法。默认值：'none'。 其他选项：'mean'和'sum'。
@@ -44,7 +44,8 @@ mindspore.ops.smooth_l1_loss
     **异常：**
 
     - **TypeError** - `beta` 不是float类型。
-    - **ValueError** - `reduction` 不是'none'，'mean'和'sum'中的任意一个。
-    - **TypeError** - `logits` 或 `labels` 的数据类型非float16或float32。
+    - **ValueError** - `reduction` 不是'none'，'mean'和'sum'中的任一者。
+    - **TypeError** - `logits` 或 `labels` 的数据类型不是float16，float32和float64中的任一者。
     - **ValueError** - `beta` 小于或等于0。
     - **ValueError** - `logits` 与 `labels` 的shape不同。
+    - **ValueError** - Ascend后端不支持数据类型是float64的 `logits` 输入。
