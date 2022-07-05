@@ -160,44 +160,33 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
   auto cgn = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(node);
   MS_EXCEPTION_IF_NULL(cgn);
 
-  auto ckpt_epoch_key = kCkptEpochInfoPrefix + std::to_string(cgn->rank_id());
-  auto ckpt_step_key = kCkptStepInfoPrefix + std::to_string(cgn->rank_id());
+  // Start the ckpt file info exchange process.
+  std::map<std::string, std::string> results;
+  const std::string biz = "sync_ckpt";
 
-  const size_t interval = 3;
-  bool success = false;
-  while (!success) {
-    success = (cgn->PutMetadata(ckpt_epoch_key, std::to_string(latest_ckpt_epoch_)) &&
-               cgn->PutMetadata(ckpt_step_key, std::to_string(latest_ckpt_step_)));
-    if (success) {
-      break;
-    } else {
-      MS_LOG(WARNING) << "Retry to register the checkpoint information to the meta server.";
-      sleep(interval);
-    }
-  }
-  MS_LOG(INFO) << "The checkpoint information for rank " << cgn->rank_id()
-               << " has been reported. (epoch: " << latest_ckpt_epoch_ << ", step: " << latest_ckpt_step_ << ")";
-  for (uint32_t i = 0; i < global_rank_size_; ++i) {
-    success = false;
-    auto epoch_key = kCkptEpochInfoPrefix + std::to_string(i);
-    auto step_key = kCkptStepInfoPrefix + std::to_string(i);
+  std::vector<std::string> names_prefix;
+  names_prefix.push_back(kCkptEpochInfoPrefix);
+  names_prefix.push_back(kCkptStepInfoPrefix);
 
-    while (!success) {
-      auto ckpt_epoch = cgn->GetMetadata(epoch_key);
-      auto ckpt_step = cgn->GetMetadata(step_key);
-      if (ckpt_epoch.length() == 0 || ckpt_step.length() == 0) {
-        sleep(interval);
-        continue;
-      } else {
+  std::vector<std::string> values;
+  values.push_back(std::to_string(latest_ckpt_epoch_));
+  values.push_back(std::to_string(latest_ckpt_step_));
+
+  if (cgn->ExchangeMetadata(biz, global_rank_size_, names_prefix, values, &results, INT_MAX)) {
+    for (uint32_t i = 0; i < global_rank_size_; ++i) {
+      auto epoch_key = kCkptEpochInfoPrefix + std::to_string(i);
+      auto step_key = kCkptStepInfoPrefix + std::to_string(i);
+      auto ckpt_epoch = results[epoch_key];
+      auto ckpt_step = results[step_key];
+      if (ckpt_epoch.length() > 0 && ckpt_step.length() > 0) {
         recv_buffer[kSendBufferLen * i] = std::stoi(ckpt_epoch);
         recv_buffer[kSendBufferLen * i + 1] = std::stoi(ckpt_step);
-        success = true;
         MS_LOG(INFO) << "The latest checkpoint for rank " << i << "is that epoch: " << ckpt_epoch
                      << ", step: " << ckpt_step;
       }
     }
+    MS_LOG(INFO) << "The checkpoint information of all the ranks have been synchronized.";
   }
-  MS_LOG(INFO) << "The checkpoint information of all the ranks have been synchronized.";
 #endif
 
   // 3. Check whether save checkpoint successfully on every workers.

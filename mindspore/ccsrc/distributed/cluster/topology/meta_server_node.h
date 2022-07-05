@@ -114,6 +114,7 @@ class MetaServerNode : public NodeBase {
   // Process user-defined metadata writing and reading requests.
   MessageBase *const ProcessWriteMetadata(MessageBase *const message);
   MessageBase *const ProcessReadMetadata(MessageBase *const message);
+  MessageBase *const ProcessDeleteMetadata(MessageBase *const message);
 
   // Gather all the hostname of registered compute graph nodes.
   MessageBase *const ProcessGetHostNames(MessageBase *const message);
