@@ -46,8 +46,8 @@ const AnfNodePtr DiagPartFission::Process(const FuncGraphPtr &func_graph, const 
   }
   std::vector<AnfNodePtr> new_node_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimDiagPart->name()))};
   auto assist_node = CreateAssistNode(func_graph, diag_part_cnode, out_shape);
-  (void)new_node_inputs.insert(new_node_inputs.end(), diag_part_cnode->inputs().begin() + 1,
-                               diag_part_cnode->inputs().end());
+  (void)new_node_inputs.insert(new_node_inputs.cend(), diag_part_cnode->inputs().cbegin() + 1,
+                               diag_part_cnode->inputs().cend());
   new_node_inputs.push_back(assist_node);
   CNodePtr new_cnode = NewCNode(new_node_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);

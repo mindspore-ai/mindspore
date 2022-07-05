@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_DYNAMIC_RNN_GRAD_REFORMAT_H_
-#include <utility>
 #include "ir/anf.h"
 #include "backend/common/optimizer/pattern_engine.h"
 #include "backend/common/optimizer/helper.h"

@@ -433,10 +433,9 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateSplitV(const FuncGraphPtr &func_graph,
   common::AnfAlgo::SetNodeAttr(kAttrNumSplit, MakeValue(SizeToLong(kAttrNumSplitValue)), split_v);
   std::vector<int64_t> size_splits;
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
-    size_splits = {SizeToLong((origin_input6_shape[kDim0] - 1) * origin_input6_shape[kDim1]),
-                   SizeToLong(origin_input6_shape[kDim1])};
+    size_splits = {(origin_input6_shape[kDim0] - 1) * origin_input6_shape[kDim1], origin_input6_shape[kDim1]};
   } else {
-    size_splits = {SizeToLong(origin_input6_shape[kDim0] - 1), 1};
+    size_splits = {origin_input6_shape[kDim0] - 1, 1};
   }
   common::AnfAlgo::SetNodeAttr(kAttrSizeSplits, MakeValue(size_splits), split_v);
   common::AnfAlgo::SetNodeAttr("is_backend_insert", MakeValue(true), split_v);
@@ -794,8 +793,7 @@ AnfNodePtr DynamicRnnGradFissionV2::CreateDwReshape(const FuncGraphPtr &func_gra
   return ret_node;
 }
 
-AnfNodePtr DynamicRnnGradFissionV2::CreateValueNode(const FuncGraphPtr &func_graph,
-                                                    const CNodePtr &dynamic_rnn_grad_cnode,
+AnfNodePtr DynamicRnnGradFissionV2::CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &,
                                                     const RNNShapeSpecs &specs) const {
   std::vector<size_t> shape;
   if (specs.batch_size % kCubeSize == 0 && !specs.shape_need_align) {
@@ -914,7 +912,7 @@ const AnfNodePtr DynamicRnnGradFissionV2::Process(const FuncGraphPtr &func_graph
   // create reduce_sum_2
   auto db_reduce_sum = CreateDbReduceSum(func_graph, dynamic_rnn_grad_cnode, lstm_input_grad, value_node, specs);
   (void)make_tuple_inputs.emplace_back(db_reduce_sum);
-  make_tuple_inputs.insert(make_tuple_inputs.end(), new_outputs.begin(), new_outputs.end());
+  make_tuple_inputs.insert(make_tuple_inputs.cend(), new_outputs.cbegin(), new_outputs.cend());
   auto make_tuple = func_graph->NewCNode(make_tuple_inputs);
   return make_tuple;
 }

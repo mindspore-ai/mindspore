@@ -110,7 +110,7 @@ void ChangeAxisOfReduceKernel::NormalizeReduceAttrAxis(const CNodePtr &cnode) {
   }
   for (const auto &elem : axis_list) {
     if (elem < 0) {
-      axis.emplace_back(input_shape.size() + elem);
+      axis.emplace_back(SizeToLong(input_shape.size()) + elem);
     } else {
       axis.emplace_back(elem);
     }

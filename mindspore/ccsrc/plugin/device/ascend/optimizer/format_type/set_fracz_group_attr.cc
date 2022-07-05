@@ -18,6 +18,8 @@
 #include <set>
 #include <string>
 #include <algorithm>
+#include <utility>
+#include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -87,7 +89,7 @@ bool HasFraczGroupAttrAndSet(const AnfNodePtr &node, size_t index, int64_t group
       if (common::AnfAlgo::HasNodeAttr(kAttrFracZGroupIdx, cnode)) {
         fz_group_idx = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(cnode, kAttrFracZGroupIdx);
         if (input_num > fz_group_idx.size()) {
-          (void)fz_group_idx.insert(fz_group_idx.begin(), input_num - fz_group_idx.size(), 1);
+          (void)fz_group_idx.insert(fz_group_idx.cbegin(), input_num - fz_group_idx.size(), 1);
         }
         if (fz_group_idx[index] == 1) {
           fz_group_idx[index] = groups;
