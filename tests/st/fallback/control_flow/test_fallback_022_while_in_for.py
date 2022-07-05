@@ -124,7 +124,7 @@ def test_while_in_for_builtin_function():
             self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
 
         def construct(self):
-            x = Tensor(np.array(1.1))
+            x = Tensor(np.array(1.1)).astype("float32")
             for _ in range(3):
                 while self.param_a < Tensor([7]).astype("int32"):
                     x = x + Tensor(int(0) + abs(-1))
@@ -134,4 +134,4 @@ def test_while_in_for_builtin_function():
 
     net = Net()
     res = net()
-    assert res.asnumpy() == 17.1
+    assert res == 17.1
