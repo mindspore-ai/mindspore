@@ -1201,8 +1201,7 @@ def scatter_max(input_x, indices, updates):
         >>> input_x = Parameter(Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mindspore.float32), name="input_x")
         >>> indices = Tensor(np.array([[0, 0], [1, 1]]), mindspore.int32)
         >>> updates = Tensor(np.ones([2, 2, 3]) * 88, mindspore.float32)
-        >>> scatter_max = ops.ScatterMax()
-        >>> output = scatter_max(input_x, indices, updates)
+        >>> output = ops.scatter_max(input_x, indices, updates)
         >>> print(output)
         [[88. 88. 88.]
          [88. 88. 88.]]
