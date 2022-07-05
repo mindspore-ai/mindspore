@@ -341,7 +341,10 @@ class SamplerFn:
             thread.join()
 
     def __del__(self):
-        self._stop_subprocess()
+        try:
+            self._stop_subprocess()
+        except TypeError:
+            pass
 
 
 def _subprocess_handle(eof, signum, frame):
