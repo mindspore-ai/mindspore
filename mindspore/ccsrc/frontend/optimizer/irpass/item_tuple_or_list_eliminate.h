@@ -346,67 +346,70 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
     AnfVisitor::Match(prim::kPrimTupleGetItem, {IsCNode, IsVNode})(node);
     AnfVisitor::Match(prim::kPrimListGetItem, {IsCNode, IsVNode})(node);
 
-    auto fg = node->func_graph();
-    if (fg != nullptr && key1_ >= 0 && key2_ >= 0) {
-      if (key1_ == key2_) {
-        return last_;
-      }
-      auto new_tuple_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), tuple_, c2_});
-      new_tuple_getitem->set_abstract(node->abstract());
-      return new_tuple_getitem;
+    if (set_item_index_ < 0 || get_item_index_ < 0) {
+      return nullptr;
     }
-    return nullptr;
+    auto fg = node->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    if (set_item_index_ == get_item_index_) {
+      return set_item_value_;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    auto new_tuple_getitem =
+      fg->NewCNode({cnode->input(kAnfPrimitiveIndex), set_item_tuple_, get_item_index_value_node_});
+    new_tuple_getitem->set_abstract(node->abstract());
+    return new_tuple_getitem;
   }
 
   void Visit(const CNodePtr &cnode) override {
     if (IsPrimitiveCNode(cnode, prim::kPrimTupleSetItem) || IsPrimitiveCNode(cnode, prim::kPrimListSetItem)) {
-      if (cnode->size() < 4) {
+      if (cnode->size() < kTupleSetItemInputSize) {
         return;
       }
-
-      tuple_ = cnode->input(1);
-      last_ = cnode->input(3);
-
-      // key of setitem
-      is_in_set_ = true;
-      AnfVisitor::Visit(cnode->input(2));
-      is_in_set_ = false;
+      set_item_tuple_ = cnode->input(kTupleSetItemTupleIndex);
+      set_item_index_ = GePositiveIndex(cnode->input(kTupleSetItemIndexIndex));
+      set_item_value_ = cnode->input(kTupleSetItemValueIndex);
     }
   }
 
   void Visit(const ValueNodePtr &vnode) override {
-    if (tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
-      auto key = GetValue<int64_t>(vnode->value());
-      if (key < 0) {
-        MS_EXCEPTION_IF_NULL(tuple_->abstract());
-        auto sequeue_abstract = tuple_->abstract()->cast<abstract::AbstractSequencePtr>();
-        if (sequeue_abstract == nullptr) {
-          return;
-        }
-        key = key + SizeToLong(sequeue_abstract->size());
-      }
-      if (is_in_set_) {
-        key1_ = key;
-      } else {
-        c2_ = vnode;
-        key2_ = key;
-      }
+    if (set_item_tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
+      get_item_index_ = GePositiveIndex(vnode);
+      get_item_index_value_node_ = vnode;
     }
   }
 
   void Reset() {
-    key1_ = -1;
-    key2_ = -1;
-    c2_ = nullptr;
-    last_ = nullptr;
-    tuple_ = nullptr;
-    is_in_set_ = false;
+    set_item_index_ = -1;
+    get_item_index_ = -1;
+    get_item_index_value_node_ = nullptr;
+    set_item_value_ = nullptr;
+    set_item_tuple_ = nullptr;
   }
 
  private:
-  bool is_in_set_{false};
-  int64_t key1_{-1}, key2_{-1};
-  AnfNodePtr tuple_{nullptr}, last_{nullptr}, c2_{nullptr};
+  // TupleSetItem: {primTupleSetItem, set_item_tuple_, ValueNode{set_item_index_}, set_item_value_}
+  int64_t set_item_index_{-1}, get_item_index_{-1};
+  AnfNodePtr set_item_tuple_{nullptr}, set_item_value_{nullptr}, get_item_index_value_node_{nullptr};
+
+  int64_t GePositiveIndex(const AnfNodePtr &node) {
+    auto vnode = node->cast<ValueNodePtr>();
+    if (vnode == nullptr) {
+      return -1;
+    }
+    auto index = GetValue<int64_t>(vnode->value());
+    if (index < 0) {
+      MS_EXCEPTION_IF_NULL(set_item_tuple_->abstract());
+      auto sequence_abstract = set_item_tuple_->abstract()->cast<abstract::AbstractSequencePtr>();
+      MS_EXCEPTION_IF_NULL(sequence_abstract);
+      index = index + SizeToLong(sequence_abstract->size());
+    }
+    if (index < 0) {
+      MS_LOG(EXCEPTION) << "Unexpected negative index:" << index << " , node: " << node->DebugString();
+    }
+    return index;
+  }
 };
 
 // {prim::kPrimTupleGetItem, {prim::kPrimDepend, X, Y}, C} => {prim::kPrimDepend, {prim::kPrimTupleGetItem, X, C}, Y}

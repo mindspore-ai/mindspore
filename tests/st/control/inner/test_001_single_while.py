@@ -65,7 +65,8 @@ def test_forward():
 def test_backward():
     c1 = Tensor([0], mstype.int32)
     c2 = Tensor([0], mstype.int32)
-    expect = Tensor([75], mstype.int32)
+    expect = Tensor([15], mstype.int32)
     forward_net = ForwardNet()
-    output = forward_net(c1, c2)
+    backward_net = BackwardNet(forward_net)
+    output = backward_net(c1, c2)
     assert expect == output
