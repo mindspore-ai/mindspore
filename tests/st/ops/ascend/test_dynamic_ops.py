@@ -423,3 +423,51 @@ def test_dynamic_hswish(dtype):
     input_shape = [(batch_size, 2, None), (batch_size, 2, None)]
     net = HSwishNet()
     common_func(dynamic_range, input_shape, dtype, net)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dynamic_reshape():
+    """
+    Feature: dynamic shape for reshape
+    Description: This case tests the dynamic shape for op reshape on ascend and gpu.
+    Expectation: success
+    """
+    class MyReLU(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.relu = ops.ReLU()
+
+        def construct(self, x):
+            return self.relu(x)
+
+    class ReshapeNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.reshape = ops.Reshape()
+            self.sin = ops.Sin()
+            self.relu = MyReLU()
+
+        def construct(self, x):
+            res = self.relu(x)
+            res = self.reshape(res, (128, -1))
+            res = self.sin(res)
+            res = self.reshape(res, (32, 16, 4, -1))
+            res = self.relu(res)
+            return res
+
+    data_list = []
+    for i in range(48, 50):
+        data_list.append((np.random.rand(32, 16, 4, i).astype(np.float32),
+                          np.random.rand(32, 16, 4, i).astype(np.float32)))
+
+    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    dataset.set_dynamic_columns(columns=
+                                {"data1": [32, 16, 4, None], "data2": [32, 16, 4, None]})
+    net = ReshapeNet()
+    net.add_flags_recursive(defer_inline=True)
+    grad_net = GradNetWrtX(net)
+    gradients = dynamic_shape_sink_process(grad_net, dataset)
+    print(gradients)
