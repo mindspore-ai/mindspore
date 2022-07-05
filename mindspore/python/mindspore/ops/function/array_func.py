@@ -2379,6 +2379,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
     value according to the indices.
 
     For a 3-D tensor, the output is:
+
     .. code-block::
 
         output[indices[i][j][k]][j][k] = updates[i][j][k]  # if axis == 0, reduction == "none"
@@ -2406,7 +2407,7 @@ def tensor_scatter_elements(input_x, indices, updates, axis=0, reduction="none")
         axis (int): Which axis to scatter, default is 0. Accepted range is [-r, r) where r = rank(input_x).
         reduction (string): Which reduction operation to scatter, default is "none". Other option: "add".
 
-    Outputs:
+    Returns:
         Tensor, has the same shape and type as `input_x`.
 
     Raises:
