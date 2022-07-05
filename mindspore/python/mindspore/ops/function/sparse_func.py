@@ -39,10 +39,11 @@ def dense_to_sparse_coo(tensor):
         tensor: A dense tensor, must be 2-D.
 
     Returns:
-        COOTensor, a 2-D coo_tensor, containing:
-        indices: the positions of all non-zero values of the input.
-        values: the non-zero values of the dense tensor.
-        shape: the shape of the coo_tensor, length is 2.
+        COOTensor, a sparse representation of the original dense tensor, containing:
+
+        - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
+        - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
+        - shape (tuple(int)): the shape of the COOTensor, is the same as the original dense tensor.
 
     Raises:
         TypeError: If input is not a tensor.
@@ -78,11 +79,12 @@ def dense_to_sparse_csr(tensor):
         tensor: A dense tensor, must be 2-D.
 
     Returns:
-        CSRTensor, a 2-D csr_tensor, containing:
-        indptr: indicates the start and end point for `values` in each row.
-        indices: the column positions of all non-zero values of the input.
-        values: the non-zero values of the dense tensor.
-        shape: the shape of the csr_tensor, length is 2.
+        CSRTensor, a sparse representation of the original dense tensor, containing:
+
+        - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
+        - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
+        - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
+        - shape (tuple(int)): the shape of the CSRTensor, is the same as the original dense tensor.
 
     Raises:
         TypeError: If input is not a tensor.

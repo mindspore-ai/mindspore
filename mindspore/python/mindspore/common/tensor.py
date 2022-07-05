@@ -3904,10 +3904,11 @@ class Tensor(Tensor_):
             Only 2-D tensor is supported for now.
 
         Returns:
-            COOTensor, a 2-D coo_tensor, containing:
-            indices: the positions of all non-zero values of the input.
-            values: the non-zero values of the dense tensor.
-            shape: the shape of the coo_tensor.
+            COOTensor, a sparse representation of the original dense tensor, containing:
+
+            - indices (Tensor): 2-D integer tensor, indicates the positions of `values` of the dense tensor.
+            - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
+            - shape (tuple(int)): the shape of the COOTensor, is the same as the original dense tensor.
 
         Raises:
             ValueError: If input tensor is not 2-D.
@@ -3937,11 +3938,12 @@ class Tensor(Tensor_):
             Only 2-D tensor is supported for now.
 
         Returns:
-            CSRTensor, a 2-D csr_tensor, containing:
-            indptr: indicates the start and end point for `values` in each row.
-            indices: the column positions of all non-zero values of the input.
-            values: the non-zero values of the dense tensor.
-            shape: the shape of the csr_tensor.
+            CSRTensor, a sparse representation of the original dense tensor, containing:
+
+            - indptr (Tensor): 1-D integer tensor, indicates the start and end point for `values` in each row.
+            - indices (Tensor): 1-D integer tensor, indicates the column positions of all non-zero values of the input.
+            - values (Tensor): 1-D tensor, indicates the non-zero values of the dense tensor.
+            - shape (tuple(int)): the shape of the CSRTensor, is the same as the original dense tensor.
 
         Raises:
             ValueError: If input tensor is not 2-D.
@@ -4651,7 +4653,7 @@ class COOTensor(COOTensor_):
         Return the coalesced sparse tensor of the input
 
         Returns:
-            Tensor.
+            COOTensor.
 
         Supported Platforms:
             ``GPU``
@@ -4664,6 +4666,9 @@ class COOTensor(COOTensor_):
     def to_csr(self):
         """
         Converts COOTensor to CSRTensor.
+
+        Note:
+            Currently only supports CPU backend with LLVM 12.0.1 installed.
 
         Returns:
             CSRTensor.

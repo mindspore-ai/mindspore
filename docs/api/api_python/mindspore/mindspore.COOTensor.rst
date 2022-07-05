@@ -49,6 +49,14 @@ mindspore.COOTensor
 
         COOTensor。
 
+    .. py:method:: coalesce()
+
+        合并COOTensor中相同索引的值。
+
+        **返回：**
+
+        COOTensor。
+
     .. py:method:: dtype
         :property:
 
@@ -110,3 +118,4 @@ mindspore.COOTensor
         :property:
 
         返回COOTensor的非零元素值。
+
