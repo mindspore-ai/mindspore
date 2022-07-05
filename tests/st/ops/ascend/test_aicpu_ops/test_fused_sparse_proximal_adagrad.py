@@ -22,6 +22,7 @@ from mindspore.common.parameter import Parameter
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
+
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
@@ -36,7 +37,13 @@ class Net(nn.Cell):
         return self.fused_sparse_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2,
                                                   grad, indices)
 
+
 def test_net():
+    """
+    Feature: FusedSparseProximalAdagrad
+    Description: normal inputs
+    Expectation: the result meets the expectation
+    """
     gradient = Tensor(np.array([-3, 2, 3, 0, 0, 0, -4, -1, -2])
                       .reshape([3, 3]).astype(np.float32))
     indices = Tensor(np.ones([3]), mstype.int32)
@@ -45,3 +52,45 @@ def test_net():
     print(output)
     print(net.var.data)
     print(net.accum.data)
+
+
+def test_fused_sparse_proximal_adagrad_dynamic():
+    """
+    Feature: FusedSparseProximalAdagrad
+    Description: dynamic inputs
+    Expectation: the result meets the expectation
+    """
+
+    class DynamicNet(nn.Cell):
+        def __init__(self):
+            super(DynamicNet, self).__init__()
+            self.unique = P.Unique()
+            self.gather = P.Gather()
+            self.axis = 0
+
+            self.sparse_apply_proximal_adagrad = P.FusedSparseProximalAdagrad()
+            self.var = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="var")
+            self.accum = Parameter(Tensor(np.ones([3, 1, 2]).astype(np.float32)), name="accum")
+            self.lr = Tensor(0.01, mstype.float32)
+            self.l1 = Tensor(0.0, mstype.float32)
+            self.l2 = Tensor(0.0, mstype.float32)
+
+        def construct(self, grad, indices, indices_dy):
+            indices_dy, _ = self.unique(indices_dy)
+            grad = self.gather(grad, indices_dy, self.axis)
+            indices = self.gather(indices, indices_dy, self.axis)
+            out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1,
+                                                     self.l2, grad, indices)
+            return out
+
+    net = DynamicNet()
+    grad = Tensor(np.array([[[0.1, 0.1]], [[0.1, 0.1]], [[0.1, 0.1]]]).astype(np.float32))
+    indices = Tensor(np.array([0, 1, 2]).astype(np.int32))
+
+    indices_dy = Tensor([0, 1], mstype.int32)
+    net(grad, indices, indices_dy)
+    print(net.var.data)
+    expect_var = np.array([[[0.99900496, 0.99900496]],
+                           [[0.99900496, 0.99900496]],
+                           [[1., 1.]]]).astype(np.float32)
+    assert np.allclose(net.var.data.asnumpy(), expect_var)

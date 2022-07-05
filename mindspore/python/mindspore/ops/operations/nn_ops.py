@@ -4790,7 +4790,7 @@ class AdamNoUpdateParam(PrimitiveWithInfer):
         return grad_dtype
 
 
-class FusedSparseAdam(PrimitiveWithInfer):
+class FusedSparseAdam(Primitive):
     r"""
     Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse.
@@ -4915,31 +4915,8 @@ class FusedSparseAdam(PrimitiveWithInfer):
                                 outputs=['var', 'm', 'v'])
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
-                    beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
-            raise ValueError(f"For '{self.name}', the shape of updates must be [] or "
-                             f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
-                             f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return var_shape, [1], [1]
 
-    def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
-                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        args = {"beta1_power": beta1_power_dtype, "beta2_power": beta2_power_dtype, 'lr': lr_dtype,
-                "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
-        validator.check_scalar_or_tensor_types_same(args, [mstype.float16, mstype.float32], self.name, True)
-        validator.check_tensor_dtype_valid("indices_dtype", indices_dtype, [mstype.int32], self.name)
-        return var_dtype, m_dtype, v_dtype
-
-
-class FusedSparseLazyAdam(PrimitiveWithInfer):
+class FusedSparseLazyAdam(Primitive):
     r"""
     Merges the duplicate value of the gradient and then updates parameters by the Adaptive Moment Estimation (Adam)
     algorithm. This operator is used when the gradient is sparse. The behavior is not equivalent to the
@@ -5066,32 +5043,8 @@ class FusedSparseLazyAdam(PrimitiveWithInfer):
                                 outputs=['var', 'm', 'v'])
         self.add_prim_attr('side_effect_mem', True)
 
-    def infer_shape(self, var_shape, m_shape, v_shape, beta1_power_shape, beta2_power_shape, lr_shape,
-                    beta1_shape, beta2_shape, epsilon_shape, grad_shape, indices_shape):
-        validator.check("var_shape", var_shape, "m_shape", m_shape, Rel.EQ, self.name)
-        validator.check("var_shape", var_shape, "v_shape", v_shape, Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        if len(var_shape) > 1 and grad_shape != indices_shape + var_shape[1:]:
-            raise ValueError(f"For '{self.name}', the shape of updates must be [] or "
-                             f"grad_shape = indices_shape + var_shape[1:], but got var_shape: {var_shape}, "
-                             f"indices_shape: {indices_shape}, grad_shape: {grad_shape}.")
-        return var_shape, [1], [1]
 
-    def infer_dtype(self, var_dtype, m_dtype, v_dtype, beta1_power_dtype, beta2_power_dtype, lr_dtype,
-                    beta1_dtype, beta2_dtype, epsilon_dtype, grad_dtype, indices_dtype):
-        args = {"var": var_dtype, "m": m_dtype, "v": v_dtype, "grad": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-
-        args = {"beta1_power": beta1_power_dtype, "beta2_power": beta2_power_dtype, 'lr': lr_dtype,
-                "beta1": beta1_dtype, "beta2": beta2_dtype, "epsilon": epsilon_dtype}
-        validator.check_scalar_or_tensor_types_same(args, [mstype.float16, mstype.float32], self.name, True)
-
-        validator.check_tensor_dtype_valid("indices_dtype", indices_dtype, [mstype.int32], self.name)
-        return var_dtype, m_dtype, v_dtype
-
-
-class FusedSparseFtrl(PrimitiveWithInfer):
+class FusedSparseFtrl(Primitive):
     """
     Merges the duplicate value of the gradient and then updates relevant entries according to the FTRL-proximal scheme.
 
@@ -5183,24 +5136,8 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         self.lr_power = validator.check_number("lr_power", lr_power, 0, Rel.LE, self.name)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
-    def infer_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
-        if len(var_shape) > 1:
-            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-        return var_shape, [1], [1]
 
-    def infer_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
-        args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
-                "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid("indices_dtype", indices_dtype, [mstype.int32], self.name)
-        return var_dtype, accum_dtype, linear_dtype
-
-
-class FusedSparseProximalAdagrad(PrimitiveWithInfer):
+class FusedSparseProximalAdagrad(Primitive):
     r"""
     Merges the duplicate value of the gradient and then updates relevant entries according to the proximal adagrad
     algorithm.
@@ -5288,23 +5225,6 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
                                 outputs=['output'])
         self.add_prim_attr('side_effect_mem', True)
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
-
-    def infer_shape(self, var_shape, accum_shape, lr_shape, l1_shape, l2_shape,
-                    grad_shape, indices_shape):
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        return var_shape, [1]
-
-    def infer_dtype(self, var_dtype, accum_dtype, lr_dtype, l1_dtype, l2_dtype,
-                    grad_dtype, indices_dtype):
-        args = {'var': var_dtype, 'accum': accum_dtype, 'grad': grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"l1": l1_dtype}, [mstype.float32], self.name)
-        validator.check_scalar_or_tensor_types_same({"l2": l2_dtype}, [mstype.float32], self.name)
-        valid_dtypes = [mstype.int16, mstype.int32, mstype.int64,
-                        mstype.uint16, mstype.uint32, mstype.uint64]
-        validator.check_tensor_dtype_valid('indices', indices_dtype, valid_dtypes, self.name)
-        return var_dtype, accum_dtype
 
 
 class KLDivLoss(Primitive):

@@ -367,7 +367,6 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimReshape, R{InferImplReshape, nullptr, true}},
     {prim::kPrimConcat, R{InferImplConcat, nullptr, true}},
     {prim::kPrimConcatOffset, R{InferImplConcatOffset, nullptr, true}},
-    {prim::kPrimFusedSparseAdam, R{InferImplFusedSparseAdam, nullptr, true}},
     {prim::kPrimTransData, R{InferImplTransData, nullptr, true}},
     {prim::kPrimTensorMove, R{InferImplTensorMove, nullptr, true}},
     {prim::kPrimLstm, R{ops::LstmInfer, nullptr, true}},
