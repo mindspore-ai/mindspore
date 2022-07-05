@@ -1304,7 +1304,7 @@ class Dataset:
         Returns:
             Dataset, dataset for transferring.
         """
-        return self.to_device(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
+        return TransferDataset(self, send_epoch_end, create_data_info_queue)
 
     @check_device_send
     def to_device(self, send_epoch_end=True, create_data_info_queue=False):
