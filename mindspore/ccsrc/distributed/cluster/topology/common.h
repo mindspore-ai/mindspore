@@ -76,6 +76,7 @@ enum class MessageName {
   kUninitTopo,
   kWriteMetadata,
   kReadMetadata,
+  kDeleteMetadata,
   kGetHostNames,
   kValidMetadata,
   kInvalidMetadata
@@ -101,6 +102,46 @@ static const uint32_t kExecuteInterval = 3;
     if (!success) {                                                            \
       return false;                                                            \
     }                                                                          \
+  } while (false)
+
+#define EXECUTE_WITH_TIMEOUT(func, interval, err_msg, success, time) \
+  do {                                                               \
+    success = false;                                                 \
+    while (!success) {                                               \
+      success = func;                                                \
+      if (!success) {                                                \
+        MS_LOG(WARNING) << err_msg << ", retry...";                  \
+        sleep(interval);                                             \
+        if ((time - interval) < 0) break;                            \
+        time -= interval;                                            \
+      } else {                                                       \
+        break;                                                       \
+      }                                                              \
+    }                                                                \
+    if (!success && time <= 0) {                                     \
+      MS_LOG(ERROR) << err_msg;                                      \
+      return false;                                                  \
+    }                                                                \
+  } while (false)
+
+#define EXECUTE_WITH_EXPECTED(func, expected, interval, err_msg, time) \
+  do {                                                                 \
+    bool success = false;                                              \
+    while (!success) {                                                 \
+      success = (func == expected);                                    \
+      if (!success) {                                                  \
+        MS_LOG(WARNING) << err_msg << ", retry...";                    \
+        sleep(interval);                                               \
+        if ((time - interval) < 0) break;                              \
+        time -= interval;                                              \
+      } else {                                                         \
+        break;                                                         \
+      }                                                                \
+    }                                                                  \
+    if (!success && time <= 0) {                                       \
+      MS_LOG(ERROR) << err_msg;                                        \
+      return false;                                                    \
+    }                                                                  \
   } while (false)
 }  // namespace topology
 }  // namespace cluster

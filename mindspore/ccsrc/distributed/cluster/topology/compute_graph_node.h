@@ -21,6 +21,8 @@
 #include <memory>
 #include <thread>
 #include <vector>
+#include <map>
+#include <shared_mutex>
 #include "distributed/cluster/topology/common.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 #include "distributed/cluster/topology/node_base.h"
@@ -53,6 +55,14 @@ class ComputeGraphNode : public NodeBase {
   bool PutMetadata(const std::string &name, const void *value, const size_t &size);
 
   std::string GetMetadata(const std::string &name, uint32_t timeout = 5);
+
+  bool DeleteMetadata(const std::string &name, uint32_t timeout = 5);
+
+  // Exchange metadata(name:value) between all the compute graph nodes.
+  // The transaction of the exchange process is guaranteed.
+  bool ExchangeMetadata(const std::string &biz, const size_t &rank_size, const std::vector<std::string> &names_prefix,
+                        const std::vector<std::string> &values, std::map<std::string, std::string> *results,
+                        uint32_t timeout = 90);
 
   // Get all the hostnames of compute graph nodes.
   std::vector<std::string> GetHostNames(const std::string &role);
@@ -97,6 +107,8 @@ class ComputeGraphNode : public NodeBase {
   bool enable_hb_;
 
   std::shared_ptr<std::function<void(void)>> abnormal_callback_;
+
+  mutable std::shared_mutex exchange_meta_mutex_;
 };
 }  // namespace topology
 }  // namespace cluster
