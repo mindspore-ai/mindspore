@@ -26,7 +26,7 @@ mindspore.ops.scatter_nd_min
 
     **异常：**
 
-    - **TypeError** - `use_locking` 不是bool。
+    - **TypeError** - `use_locking` 的数据类型不是bool。
     - **TypeError** - `indices` 的数据类型不是int32或int64。
     - **TypeError** - `input_x` 和 `updates` 的数据类型不相同。
     - **ValueError** - `updates` 的shape不等于 `indices.shape[:-1] + x.shape[indices.shape[-1]:]` 。

@@ -1572,9 +1572,9 @@ def scatter_nd_add(input_x, indices, updates, use_locking=False):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
-
+        TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1645,8 +1645,9 @@ def scatter_nd_sub(input_x, indices, updates, use_locking=False):
         Tensor, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1717,10 +1718,12 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
         TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -1789,8 +1792,9 @@ def scatter_nd_div(input_x, indices, updates, use_locking=False):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
@@ -1862,10 +1866,12 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
         TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
+        RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
+                      is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1933,8 +1939,9 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
         Tensor, the updated `input_x`, has the same shape and type as `input_x`.
 
     Raises:
-        TypeError: If `use_locking` is not a bool.
+        TypeError: If the dtype of `use_locking` is not bool.
         TypeError: If the dtype of `indices` is not int32 or int64.
+        TypeError: If dtype of `input_x` and `updates` are not the same.
         ValueError: If the shape of `updates` is not equal to `indices.shape[:-1] + x.shape[indices.shape[-1]:]`.
         RuntimeError: If the data type of `input_x` and `updates` conversion of Parameter
                       is required when data type conversion of Parameter is not supported.
