@@ -4351,9 +4351,6 @@ class Tensor(Tensor_):
         Supported Platforms:
             ``Ascend`` ``GPU``  ``CPU``
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
         Examples:
             >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
             >>> output = x.erf()

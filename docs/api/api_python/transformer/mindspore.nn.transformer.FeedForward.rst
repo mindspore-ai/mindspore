@@ -1,4 +1,4 @@
-﻿.. py:class:: mindspore.nn.transformer.FeedForward(hidden_size, ffn_hidden_size, dropout_rate, hidden_act="gelu", expert_num=1, param_init_type=mstype.float32, parallel_config=default_dpmp_config)
+﻿.. py:class:: mindspore.nn.transformer.FeedForward(hidden_size, ffn_hidden_size, dropout_rate, hidden_act="gelu", expert_num=1, expert_group_size=None, param_init_type=mstype.float32, parallel_config=default_dpmp_config)
 
     具有两层线性层的多层感知器，并在最终输出上使用Dropout。第一个线性层将输入维度从hidden_size投影到ffn_hidden_size，并在中间应用激活层。第二个线性层将该维度从ffn_hidden_size投影到hidden_size。配置parallel_config之后，
     第一个线性层的权重将在输入维度上被分片，第二个线性层在输出维度上进行切分。总体过程如下
