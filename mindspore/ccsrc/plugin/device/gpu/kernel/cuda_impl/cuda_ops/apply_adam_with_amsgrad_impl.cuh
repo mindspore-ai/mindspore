@@ -19,19 +19,9 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
 
 template <typename T>
-CUDA_LIB_EXPORT void ApplyAdamWithAmsgrad(const size_t size,
-                                  T *var,
-                                  T *m,
-                                  T *v,
-                                  T *vhat,
-                                  T *beta1_power,
-                                  T *beta2_power,
-                                  T *lr,
-                                  T *grad,
-                                  const float beta1,
-                                  const float beta2,
-                                  const float epsilon,
-                                  const uint32_t &device_id,
-                                  cudaStream_t stream);
+CUDA_LIB_EXPORT void CalApplyAdamWithAmsgrad(const size_t size, const int64_t batch_size, T *var, T *m, T *v, T *vhat,
+                                             T *beta1_power, T *beta2_power, const T *lr, const T *grad,
+                                             const float beta1, const float beta2, const float epsilon,
+                                             const uint32_t &device_id, cudaStream_t stream_ptr);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_APPLY_ADAM_WITH_AMSGRAD_IMPL_CUH_
