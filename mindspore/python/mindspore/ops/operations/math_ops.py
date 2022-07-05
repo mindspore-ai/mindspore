@@ -5289,6 +5289,12 @@ class LinSpace(PrimitiveWithInfer):
     def __init__(self):
         """Initialize LinSpace"""
 
+    def check_elim(self, start, stop, num):
+        if num != 1:
+            return False, None
+        start_npy = start.asnumpy().reshape((1,))
+        return True, Tensor(start_npy)
+
 
 class MatrixInverse(Primitive):
     """

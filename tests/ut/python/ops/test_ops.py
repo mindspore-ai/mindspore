@@ -3192,6 +3192,13 @@ test_case_array_ops = [
                         Tensor(10, mstype.float32)],
         'skip': ['backward'],
     }),
+    ('LinSpace', {
+        'block': P.LinSpace(),
+        'desc_const': [1],
+        'desc_inputs': [Tensor(4, mstype.float32),
+                        Tensor(10, mstype.float32)],
+        'skip': ['backward'],
+    }),
     ('ListDiff', {
         'block': ListDiff(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.int32),
