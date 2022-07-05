@@ -398,6 +398,13 @@ int ConverterImpl::InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPa
       return RET_INPUT_PARAM_INVALID;
     }
   }
+
+  if (!extended_info.fusion_blacklists.empty()) {
+    std::vector<std::string> fusions = SplitStringToVector(extended_info.fusion_blacklists, ",");
+    for (const auto &fusion : fusions) {
+      param->fusion_blacklists.insert(fusion);
+    }
+  }
   return RET_OK;
 }
 

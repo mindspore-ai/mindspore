@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <set>
 #include "include/converter.h"
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/preprocess/preprocess_param.h"
@@ -56,6 +57,7 @@ struct ConverterPara {
   bool pre_infer = false;
   bool train_model = false;
   bool no_fusion = false;
+  std::set<std::string> fusion_blacklists;
 
   // inner
   std::vector<std::string> plugins_path;
