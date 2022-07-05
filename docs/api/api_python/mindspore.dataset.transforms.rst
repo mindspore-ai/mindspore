@@ -17,6 +17,8 @@ mindspore.dataset.transforms
     from mindspore.dataset.transforms import c_transforms
     from mindspore.dataset.transforms import py_transforms
 
+更多详情请参考[通用数据处理与增强](https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/augment_common_data.html)。
+
 常用数据处理术语说明如下：
 
 - TensorOperation，所有C++实现的数据处理操作的基类。
