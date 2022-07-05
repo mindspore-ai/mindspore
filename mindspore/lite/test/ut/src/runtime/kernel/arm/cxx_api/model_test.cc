@@ -21,6 +21,9 @@
 #include "include/api/metrics/accuracy.h"
 
 namespace mindspore {
+namespace {
+constexpr int32_t kNumThreads = 2;
+}
 class TestCxxApiLiteModel : public mindspore::CommonTest {
  public:
   TestCxxApiLiteModel() = default;
@@ -40,6 +43,7 @@ TEST_F(TestCxxApiLiteModel, test_build_graph_uninitialized_FAILED) {
   Model model;
   GraphCell graph_cell;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
@@ -50,6 +54,7 @@ TEST_F(TestCxxApiLiteModel, test_build_SUCCES) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
@@ -66,6 +71,7 @@ TEST_F(TestCxxApiLiteModel, test_train_mode_SUCCES) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
@@ -85,6 +91,7 @@ TEST_F(TestCxxApiLiteModel, test_outputs_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
@@ -106,6 +113,7 @@ TEST_F(TestCxxApiLiteModel, test_metrics_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
 
@@ -121,6 +129,7 @@ TEST_F(TestCxxApiLiteModel, test_getparams_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
   auto train_cfg = std::make_shared<TrainCfg>();
@@ -157,6 +166,7 @@ TEST_F(TestCxxApiLiteModel, test_getgrads_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   context->MutableDeviceInfo().push_back(cpu_context);
   auto train_cfg = std::make_shared<TrainCfg>();
@@ -188,6 +198,7 @@ TEST_F(TestCxxApiLiteModel, test_fp32_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);
@@ -201,6 +212,7 @@ TEST_F(TestCxxApiLiteModel, test_fp16_SUCCESS) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);
@@ -216,6 +228,7 @@ TEST_F(TestCxxApiLiteModel, set_weights_FAILURE) {
   Model model;
   Graph graph;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);
@@ -239,6 +252,7 @@ TEST_F(TestCxxApiLiteModel, set_get_lr_SUCCESS) {
   Graph graph;
   float learn_rate = 0.2;
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   auto cpu_context = std::make_shared<mindspore::CPUDeviceInfo>();
   cpu_context->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu_context);

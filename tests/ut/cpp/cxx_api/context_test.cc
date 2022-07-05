@@ -18,6 +18,9 @@
 #include "include/api/context.h"
 
 namespace mindspore {
+namespace {
+constexpr int32_t kNumThreads = 2;
+}
 class TestCxxApiContext : public UT::Common {
  public:
   TestCxxApiContext() = default;
@@ -59,6 +62,7 @@ TEST_F(TestCxxApiContext, test_context_get_set_SUCCESS) {
 
 TEST_F(TestCxxApiContext, test_context_cpu_context_SUCCESS) {
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   std::shared_ptr<CPUDeviceInfo> cpu = std::make_shared<CPUDeviceInfo>();
   cpu->SetEnableFP16(true);
   context->MutableDeviceInfo().push_back(cpu);
@@ -81,6 +85,7 @@ TEST_F(TestCxxApiContext, test_context_ascend_context_FAILED) {
   std::string option_9_ans = "1,2,3,4,5";
 
   auto context = std::make_shared<Context>();
+  context->SetThreadNum(kNumThreads);
   std::shared_ptr<AscendDeviceInfo> ascend310 = std::make_shared<AscendDeviceInfo>();
   ascend310->SetInputShape(option_1);
   ascend310->SetInsertOpConfigPath(option_2);
