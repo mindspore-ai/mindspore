@@ -116,12 +116,15 @@ void ModelPyBind(const py::module &m) {
     .def("get_outputs", &ModelParallelRunner::GetOutputs)
     .def("predict", [](ModelParallelRunner &runner, const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
                        const MSKernelCallBack &before = nullptr, const MSKernelCallBack &after = nullptr) {
-      auto status = runner.Predict(inputs, outputs, before, after);
-      if (status != kSuccess) {
-        std::vector<MSTensor> empty;
-        return empty;
+      {
+        py::gil_scoped_release release;
+        auto status = runner.Predict(inputs, outputs, before, after);
+        if (status != kSuccess) {
+          std::vector<MSTensor> empty;
+          return empty;
+        }
+        return *outputs;
       }
-      return *outputs;
     });
 #endif
 }
