@@ -6988,6 +6988,9 @@ class Dropout2D(PrimitiveWithInfer):
 
     Refer to :func:`mindspore.ops.dropout2d` for more detail.
 
+    Note:
+        The keep probability :math:`keep_prob` is equal to 'ops.dropout2d' input '1-p'.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -7017,6 +7020,9 @@ class Dropout3D(PrimitiveWithInfer):
     Dropout3D can improve the independence between channel feature maps.
 
     Refer to :func:`mindspore.ops.dropout3d` for more detail.
+
+    Note:
+        The keep probability :math:`keep_prob` is equal to 'ops.dropout3d' input '1-p'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
