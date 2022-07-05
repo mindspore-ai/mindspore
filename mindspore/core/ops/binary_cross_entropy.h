@@ -42,9 +42,6 @@ class MIND_API BinaryCrossEntropy : public BaseOperator {
   /// \return reduction.
   Reduction get_reduction() const;
 };
-abstract::AbstractBasePtr BinaryCrossEntropyGradInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimBinaryCrossEntropyPtr = std::shared_ptr<BinaryCrossEntropy>;
 }  // namespace ops
