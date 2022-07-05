@@ -621,7 +621,7 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
 //  The branch processing of PrepareDataForValueNode that value type is tensor.
 void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, const ValuePtr &node_value,
                                                      const AnfNodePtr &front_node, const DeviceContext *device_context,
-                                                     OpContext<DeviceTensor> *const context) {
+                                                     OpContext<DeviceTensor> *const context) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(node_value);
   MS_EXCEPTION_IF_NULL(device_context);

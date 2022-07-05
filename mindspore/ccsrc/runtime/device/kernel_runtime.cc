@@ -237,8 +237,8 @@ void KernelRuntime::GetCommunicationOutputInfo(const AnfNodePtr &node, size_t *t
     MS_EXCEPTION_IF_NULL(address);
     auto align_size = MemoryManager::GetCommonAlignSize(address->size());
     *total_size += align_size;
-    align_size_list->emplace_back(align_size);
-    address_list->emplace_back(address);
+    (void)align_size_list->emplace_back(align_size);
+    (void)address_list->emplace_back(address);
   }
 }
 
@@ -264,7 +264,7 @@ void KernelRuntime::AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &no
 }
 
 void KernelRuntime::RunOpMallocPre(const session::KernelGraph &graph,
-                                   const std::vector<tensor::TensorPtr> &input_tensors) {
+                                   const std::vector<tensor::TensorPtr> &input_tensors) const {
   const auto &nodes = graph.execution_order();
   // Malloc for Node output
   for (const auto &node : nodes) {
@@ -1345,7 +1345,7 @@ void KernelRuntime::GenKernelEvents(const session::KernelGraph &graph) {
         }
       }
       if (found_nearest_child) {
-        kernel_pre_run_events[child].emplace_back([post_event]() { post_event->WaitEvent(); });
+        (void)kernel_pre_run_events[child].emplace_back([post_event]() { post_event->WaitEvent(); });
         break;
       }
     }
@@ -1790,7 +1790,6 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
         MS_LOG(ERROR) << "Launch kernel failed.";
         return false;
       }
-      KernelLaunchProfiling(kernel->fullname_with_scope());
       DebugStreamSync(kernel);
     }
     LaunchKernelEvent(kernel_post_run_events, kernels[i]);

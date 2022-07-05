@@ -26,7 +26,6 @@ namespace mindspore {
 namespace kernel {
 using TbeTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
-using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
 bool TbeKernelMod::Launch(const std::vector<mindspore::kernel::AddressPtr> &inputs,
                           const std::vector<mindspore::kernel::AddressPtr> &workspace,
                           const std::vector<mindspore::kernel::AddressPtr> &outputs, void *stream_ptr) {

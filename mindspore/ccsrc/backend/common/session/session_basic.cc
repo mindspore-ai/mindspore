@@ -55,7 +55,6 @@
 #include "abstract/abstract_value.h"
 #endif
 #include "backend/common/session/session_factory.h"
-#include "backend/common/session/pynative_task_manager.h"
 #include "runtime/pynative/op_executor.h"
 #ifdef ENABLE_DEBUGGER
 #include "debug/tensor_load.h"
@@ -2611,7 +2610,6 @@ void SessionBasic::ProcessInputTensorsForHeterogeneous(const std::string &cur_ta
 void SessionBasic::RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                      VectorRef *outputs) {
   MS_LOG(INFO) << "Clean task in Queue";
-  session::PynativeTaskManager::GetInstance().ExecuteRemainingTasks();
   MS_LOG(INFO) << "Start!";
   auto kernel_graph = GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -2801,6 +2799,10 @@ void PreProcessOnSplitIndex(const KernelGraphPtr &graph, vector<uint32_t> *split
   auto split_index_num = split_index->back();
   // obtain graph output tensor num
   auto grads_count = GetBpropGraphGradsCount(graph);
+  if (grads_count == 0) {
+    split_index->clear();
+    return;
+  }
   if (split_index_num >= grads_count) {
     MS_LOG(WARNING) << "The context configuration all_reduce_fusion_config's upper boundary value should be smaller "
                     << "than total grads count: " << grads_count << ", but got: " << *split_index
@@ -2884,8 +2886,8 @@ void SessionBasic::DoAllReduceOnGrads(const std::string &actor_info, const std::
     auto deprecated_kernel_executor =
       dynamic_cast<device::DeprecatedKernelExecutor *>(device_context->kernel_executor_.get());
     if (deprecated_kernel_executor != nullptr) {
-      static size_t bucket_id = 0;
-      bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, outputs.size());
+      static uint32_t bucket_id = 0;
+      bucket = deprecated_kernel_executor->CreateBucket(bucket_id++, SizeToUint(outputs.size()));
     } else {
       MS_LOG(EXCEPTION) << "Not Support CreateBucket() in Device Context.";
     }

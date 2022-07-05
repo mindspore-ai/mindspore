@@ -26,12 +26,6 @@
 
 namespace mindspore::parse {
 static mindspore::HashSet<std::string> cell_input_args_ = {};
-static const std::set<std::string> ignore_judge_dynamic_cell = {
-  "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
-  "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask", "Cell mindspore.nn.layer.math.MatMul"};
-static const std::set<std::string> unchanged_named_primitive = {
-  parse::NAMED_PRIMITIVE_ATTRIBUTE, parse::NAMED_PRIMITIVE_NAMECONSTANT, parse::NAMED_PRIMITIVE_CONSTANT,
-  parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
 
 std::string DynamicParser::ParseNodeName(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
                                          parse::AstMainType type) {
@@ -97,6 +91,9 @@ bool DynamicParser::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseFunct
       left = ParseNodeName(ast, value_in_subscript, parse::AST_MAIN_TYPE_EXPR);
     }
     MS_LOG(DEBUG) << "Left is " << left << " Right is " << right;
+    static const std::set<std::string> unchanged_named_primitive = {
+      parse::NAMED_PRIMITIVE_ATTRIBUTE, parse::NAMED_PRIMITIVE_NAMECONSTANT, parse::NAMED_PRIMITIVE_CONSTANT,
+      parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
     if (unchanged_named_primitive.find(left) == unchanged_named_primitive.end() ||
         unchanged_named_primitive.find(right) == unchanged_named_primitive.end()) {
       return true;
@@ -232,6 +229,9 @@ std::string DynamicParser::GetCellInfo(const py::object &cell) {
 
 bool DynamicParser::IsDynamicCell(const py::object &cell) {
   std::string cell_info = GetCellInfo(cell);
+  static const std::set<std::string> ignore_judge_dynamic_cell = {
+    "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
+    "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask", "Cell mindspore.nn.layer.math.MatMul"};
   if (ignore_judge_dynamic_cell.find(cell_info) != ignore_judge_dynamic_cell.end()) {
     return false;
   }

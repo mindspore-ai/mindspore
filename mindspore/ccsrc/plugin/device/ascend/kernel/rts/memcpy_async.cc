@@ -104,7 +104,7 @@ void MemCpyAsyncKernel::GetInputOutputTotalCount(const AnfNodePtr &anf_node) {
 }
 
 std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr> &inputs,
-                                                    const std::vector<AddressPtr> &,
+                                                    const std::vector<AddressPtr> & /* workspace */,
                                                     const std::vector<AddressPtr> &outputs, uint32_t stream_id) {
   if (inputs.size() != 1) {
     MS_LOG(EXCEPTION) << "MemCpyAsync op inputs is not one";
@@ -132,20 +132,19 @@ std::vector<TaskInfoPtr> MemCpyAsyncKernel::GenTask(const std::vector<AddressPtr
   return {task_info_ptr};
 }
 
-const std::vector<TypeId> data_type_list = {
-  kNumberTypeInt,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,   kNumberTypeInt64,
-  kNumberTypeUInt,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,
-  kNumberTypeFloat, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeBool};
-const std::vector<std::string> format_list = {kOpFormat_DEFAULT,  kOpFormat_NCHW,   kOpFormat_NHWC,
-                                              kOpFormat_NC1HWC0,  kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0,
-                                              kOpFormat_C1HWNCoC0};
-
 MemCpyAsyncDesc::MemCpyAsyncDesc() {}
 
 MemCpyAsyncDesc::~MemCpyAsyncDesc() {}
 
 std::vector<std::shared_ptr<kernel::KernelBuildInfo>> MemCpyAsyncDesc::GetKernelInfo(const CNodePtr &) {
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> memcpy_build_info{};
+  static const std::vector<TypeId> data_type_list = {
+    kNumberTypeInt,   kNumberTypeInt8,    kNumberTypeInt16,   kNumberTypeInt32,   kNumberTypeInt64,
+    kNumberTypeUInt,  kNumberTypeUInt8,   kNumberTypeUInt16,  kNumberTypeUInt32,  kNumberTypeUInt64,
+    kNumberTypeFloat, kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64, kNumberTypeBool};
+  static const std::vector<std::string> format_list = {kOpFormat_DEFAULT,  kOpFormat_NCHW,   kOpFormat_NHWC,
+                                                       kOpFormat_NC1HWC0,  kOpFormat_FRAC_Z, kOpFormat_NC1KHKWHWC0,
+                                                       kOpFormat_C1HWNCoC0};
   for (const auto &format : format_list) {
     for (const auto &type : data_type_list) {
       auto builder = KernelBuildInfo::KernelBuildInfoBuilder();

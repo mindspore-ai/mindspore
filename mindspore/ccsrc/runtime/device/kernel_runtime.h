@@ -62,12 +62,12 @@ class KernelRuntime {
   void AssignCommunicationOutputFromMemoryPool(const AnfNodePtr &node) const;
   void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph &graph) const;
-  void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
+  void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors) const;
 #ifdef ENABLE_DEBUGGER
   BACKEND_EXPORT static bool DumpDataEnabled();
   BACKEND_EXPORT static bool DumpDataEnabledIteration();
 #endif
-  virtual bool LoadData(const session::KernelGraph &graph);
+  virtual bool LoadData(const session::KernelGraph &);
   virtual bool Load(const session::KernelGraph &graph, bool is_task_sink);
   virtual bool Run(const session::KernelGraph &graph, bool is_task_sink) = 0;
   virtual bool RunDynamicKernelAsync(const session::KernelGraph &graph) = 0;
@@ -98,7 +98,7 @@ class KernelRuntime {
   // for GPU and D to impl
   virtual void ReleaseDeviceRes() {}
   void set_device_id(uint32_t device_id) { device_id_ = device_id; }
-  uint32_t device_id() { return device_id_; }
+  uint32_t device_id() const { return device_id_; }
   static bool UseMemScheduler();
   void SyncParameter(const session::KernelGraph &graph, const std::shared_ptr<MemScheduler> &mem_scheduler);
 
@@ -146,7 +146,7 @@ class KernelRuntime {
                                                TypeId type_id) const = 0;
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id, const KernelWithIndex &node_index) const = 0;
-  virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &node, size_t index);
+  virtual bool NodeOutputDeviceAddressExist(const AnfNodePtr &kernel, size_t index);
   virtual bool KernelMemNotReuse(const AnfNodePtr &node);
 
   void AssignStaticMemory(const session::KernelGraph &graph);
@@ -159,7 +159,6 @@ class KernelRuntime {
   bool LaunchKernelWithPynativeProfiling(kernel::KernelMod *kernel_mod, const std::string &op_name,
                                          const KernelLaunchInfo &kernel_launch_address, void *stream);
 
-  virtual void KernelLaunchProfiling(const std::string &kernel_name) {}
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
 
  private:
@@ -168,7 +167,7 @@ class KernelRuntime {
   void UseMemSchedulerIfNeeded(const session::KernelGraph &graph);
   bool LaunchKernel(const session::KernelGraph &graph, const AnfNodePtr &kernel,
                     const std::shared_ptr<MemScheduler> &mem_scheduler, bool mock = false);
-  void ResetNodeAddress(const session::KernelGraph &graph);
+  void ResetNodeAddress(const session::KernelGraph &kernel_graph);
   void AssignKernelAddress(const std::shared_ptr<MemScheduler> &mem_scheduler, const AnfNodePtr &kernel,
                            KernelLaunchInfo *kernel_launch_address);
   static void GetOrMallocAddress(const std::shared_ptr<MemScheduler> &mem_scheduler,

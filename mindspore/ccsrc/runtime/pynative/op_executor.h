@@ -35,7 +35,7 @@
 namespace mindspore::runtime {
 class BACKEND_EXPORT OpExecutor {
  public:
-  static OpExecutor &GetInstance();
+  static OpExecutor &GetInstance() noexcept;
 
   class ExecuteGuard {
    public:
@@ -90,7 +90,7 @@ class BACKEND_EXPORT OpExecutor {
   std::queue<std::shared_ptr<OpTask>> op_run_tasks_;
   std::set<std::string> actor_in_queue_;
   std::function<void()> batch_build_callback_{nullptr};
-  inline static size_t kMaxQueueSize = 20;
+  inline static const size_t kMaxQueueSize = 20;
   bool executing_{false};
   bool registered_{false};
   std::shared_ptr<std::thread> worker_;

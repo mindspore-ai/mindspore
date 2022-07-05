@@ -17,14 +17,22 @@
 #include "runtime/pynative/op_executor.h"
 
 namespace mindspore::runtime {
-OpExecutor &OpExecutor::GetInstance() {
-  static OpExecutor instance;
+OpExecutor &OpExecutor::GetInstance() noexcept {
+  static OpExecutor instance{};
   return instance;
 }
 
 OpExecutor::OpExecutor() { worker_ = std::make_shared<std::thread>(&OpExecutor::WorkerLoop, this); }
 
-OpExecutor::~OpExecutor() { WorkerJoin(); }
+OpExecutor::~OpExecutor() {
+  try {
+    WorkerJoin();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "OpExecutor call destructor failed: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "OpExecutor call destructor failed";
+  }
+}
 
 void OpExecutor::Register(const std::function<void()> &callback) {
   batch_build_callback_ = callback;
@@ -61,6 +69,7 @@ void OpExecutor::ClearResources() {
 
 void OpExecutor::WaitForBuild() {
   if (!executing_) {
+    // cppcheck-suppress unreadVariable
     ExecuteGuard guard;
     if (batch_build_callback_ != nullptr) {
       batch_build_callback_();
@@ -70,6 +79,7 @@ void OpExecutor::WaitForBuild() {
 
 void OpExecutor::WaitForRun() {
   MS_LOG(DEBUG) << "Start";
+  // cppcheck-suppress unreadVariable
   std::unique_lock<std::mutex> lock(task_mutex_);
   task_cond_var_.wait(lock, [this]() { return op_run_tasks_.empty(); });
   MsException::Instance().CheckException();
@@ -82,18 +92,21 @@ void OpExecutor::Wait() {
 }
 
 void OpExecutor::PushOpBuildTask(const std::shared_ptr<OpBuildTask> &op_build_task) {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   op_build_tasks_.push_back(op_build_task);
 }
 
 void OpExecutor::PushOpRunTask(const std::shared_ptr<OpTask> &op_run_task) {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   op_run_tasks_.push(op_run_task);
-  actor_in_queue_.insert(op_run_task->context()->graph_compiler_info()->name_);
+  (void)actor_in_queue_.insert(op_run_task->context()->graph_compiler_info()->name_);
   task_cond_var_.notify_all();
 }
 
 void OpExecutor::ClearOpBuildTasks() {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   for (auto &task : op_build_tasks_) {
     task->SetBuildReady(true);
@@ -103,21 +116,25 @@ void OpExecutor::ClearOpBuildTasks() {
 }
 
 bool OpExecutor::BuildQueueEmpty() {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   return op_build_tasks_.empty();
 }
 
 bool OpExecutor::RunQueueEmpty() {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   return op_run_tasks_.empty();
 }
 
 bool OpExecutor::BuildQueueFull() {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   return op_build_tasks_.size() > kMaxQueueSize;
 }
 
 bool OpExecutor::ActorInQueue(const std::string &actor_info) {
+  // cppcheck-suppress unreadVariable
   std::lock_guard<std::mutex> lock(task_mutex_);
   auto iter = actor_in_queue_.find(actor_info);
   return iter != actor_in_queue_.end();
@@ -136,6 +153,7 @@ void OpExecutor::WorkerLoop() {
     std::shared_ptr<OpTask> task;
     {
       MS_LOG(DEBUG) << "Wait task in queue";
+      // cppcheck-suppress unreadVariable
       std::unique_lock<std::mutex> lock(task_mutex_);
       task_cond_var_.wait(lock, [this]() { return !op_run_tasks_.empty(); });
       task = op_run_tasks_.front();
@@ -149,10 +167,11 @@ void OpExecutor::WorkerLoop() {
     }
     try {
       task->Run();
+      // cppcheck-suppress unreadVariable
       std::unique_lock<std::mutex> lock(task_mutex_);
       if (!op_run_tasks_.empty()) {
         op_run_tasks_.pop();
-        actor_in_queue_.erase(task->context()->graph_compiler_info()->name_);
+        (void)actor_in_queue_.erase(task->context()->graph_compiler_info()->name_);
       }
 
       if (op_run_tasks_.empty()) {
@@ -162,6 +181,7 @@ void OpExecutor::WorkerLoop() {
     } catch (const std::exception &e) {
       MS_LOG(ERROR) << "Run lazy task failed, error message:" << e.what();
       {
+        // cppcheck-suppress unreadVariable
         std::unique_lock<std::mutex> lock(task_mutex_);
         ClearRunOpTasks();
         MsException::Instance().SetException();
@@ -176,6 +196,7 @@ void OpExecutor::WorkerJoin() {
     // Avoid worker thread join itself which will cause deadlock
     if (worker_->joinable() && worker_->get_id() != std::this_thread::get_id()) {
       {
+        // cppcheck-suppress unreadVariable
         std::lock_guard<std::mutex> lock(task_mutex_);
         auto task = std::make_shared<ExitOpTask>();
         op_run_tasks_.push(task);

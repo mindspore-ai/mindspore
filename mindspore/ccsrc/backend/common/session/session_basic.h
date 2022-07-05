@@ -38,7 +38,6 @@
 #include "debug/debugger/debugger.h"
 #endif
 #include "runtime/hardware/device_context.h"
-#include "backend/common/session/pynative_task_manager.h"
 #include "include/backend/visible.h"
 
 namespace mindspore {
@@ -195,16 +194,16 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                             const FuncGraphManagerPtr &front_func_graph_manager,
                             const std::shared_ptr<KernelGraph> &backend_graph);
   std::string AddPartialParametersMap(const AnfNodePtr &partial_node);
-  void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
-                         std::map<AnfNodePtr, size_t> *parameter_index);
+  static void GetParameterIndex(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
+                                std::map<AnfNodePtr, size_t> *parameter_index);
   void CreateOutputPlaceholder(const KernelGraphPtr &kernel_graph, const std::vector<tensor::TensorPtr> &input_tensors,
                                VectorRef *const outputs,
                                std::map<KernelWithIndex, std::vector<std::vector<size_t>>> *output_indexes);
   void GetRefCount(const KernelGraph *graph, std::map<KernelWithIndex, size_t> *ref_count);
   void GetForwardOpOutputRefCount(const KernelGraph *graph, const std::vector<tensor::TensorPtr> &inputs,
                                   std::map<std::string, size_t> *forward_op_output_tensor_id);
-  void ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
-                              std::map<std::string, size_t> *forward_op_output_tensor_id);
+  static void ReleaseForwardOpOutput(const std::vector<tensor::TensorPtr> &input_tensors,
+                                     std::map<std::string, size_t> *forward_op_output_tensor_id);
   void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<KernelWithIndex, size_t> *ref_count,
                       std::map<KernelWithIndex, tensor::TensorPtr> *op_output_map);
 
@@ -260,12 +259,12 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
                                      const std::vector<int64_t> & /* tensors_mask */) {
     return nullptr;
   }
-  virtual void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
-                         std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                         const std::vector<int64_t> &tensors_mask) {}
-  virtual void RunOpImplOrigin(const GraphInfo &graph_info, OpRunInfo *op_run_info,
-                               std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
-                               const std::vector<int64_t> &tensors_mask) {}
+  virtual void RunOpImpl(const GraphInfo & /* graph_info */, OpRunInfo * /* op_run_info */,
+                         std::vector<tensor::TensorPtr> * /* input_tensors */, VectorRef * /* outputs */,
+                         const std::vector<int64_t> & /* tensors_mask */) {}
+  virtual void RunOpImplOrigin(const GraphInfo & /* graph_info */, OpRunInfo * /* op_run_info */,
+                               std::vector<tensor::TensorPtr> * /* input_tensors */, VectorRef * /* outputs */,
+                               const std::vector<int64_t> & /* tensors_mask */) {}
   void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
   void ProcessInputTensorsForHeterogeneous(const std::string &cur_target,
                                            const std::vector<tensor::TensorPtr> &input_tensors);
@@ -337,7 +336,9 @@ class BACKEND_EXPORT SessionBasic : public std::enable_shared_from_this<SessionB
   void AddParameterToGraphInputs(const std::vector<AnfNodePtr> &parameters, KernelGraph *graph);
   void InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter);
   AnfNodePtr FindPullNode(const AnfNodePtr &push_node, const std::vector<AnfNodePtr> &node_list);
-  virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t bucket_id, uint32_t bucket_size) { return nullptr; }
+  virtual std::shared_ptr<device::Bucket> CreateBucket(uint32_t /* bucket_id */, uint32_t /* bucket_size */) {
+    return nullptr;
+  }
   void InitAllBucket(const KernelGraphPtr &graph, const device::DeviceContext *device_context = nullptr);
   void AddGradAddrToBucket(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &grad_tensor);
   void ClearAllBucket(const GraphId &graph_id);
