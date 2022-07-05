@@ -231,3 +231,14 @@ int HShrink(const float *src, int length, float *dst, float lambd) {
   }
   return NNACL_OK;
 }
+
+int SoftShrink(const float *src, int length, float *dst, float lambd) {
+  int i = 0;
+  const float neg_lambd = -1 * lambd;
+  SIMD_RUN_NO_SCALAR(SoftShrink, i, src, length, dst, lambd);
+
+  for (; i < length; ++i) {
+    dst[i] = (src[i] > lambd) ? (src[i] - lambd) : ((src[i] < neg_lambd) ? (src[i] + lambd) : (0));
+  }
+  return NNACL_OK;
+}

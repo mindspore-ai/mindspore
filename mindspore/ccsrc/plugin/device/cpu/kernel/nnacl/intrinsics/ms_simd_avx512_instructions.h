@@ -90,6 +90,22 @@
 #define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 #define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
+#define MS_OR512_MASK(src1, src2) _mm512_kor(src1, src2)
+
+static inline MS_FLOAT512_F32 MS_OR512_F32(MS_FLOAT512_F32 src1, MS_FLOAT512_F32 src2) {
+  /* _mm512_or_ps valid in avx512dq */
+  MS_FLOAT512_F32 result;
+  for (int i = 0; i < 16; i++) {
+    result[i] = (int32_t)(MS512_F32_GETI(src1, i)) | (int32_t)(MS512_F32_GETI(src2, i));
+  }
+  return result;
+}
+
+static inline MS_FLOAT512_F32 MS_AND512_MASK_F32(MS_MASK512_TYPE mask, MS_FLOAT512_F32 value) {
+  /* mask = T ? value ; 0 */
+  MS_FLOAT512_F32 zeros = _mm512_set1_ps(0.0f);
+  return _mm512_mask_blend_ps(mask, zeros, value);
+}
 
 static inline MS_FLOAT32X16 MS_POW512_F32(MS_FLOAT32X16 src1, MS_FLOAT32X16 src2) {
   MS_FLOAT32X16 dst;
