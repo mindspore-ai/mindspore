@@ -90,7 +90,7 @@ AnfNodePtr ReduceSumOptimizer::NewRangeOp(const AnfNodePtr &rank_op, const Kerne
   return range_op;
 }
 
-AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &kernel_graph) const {
+AnfNodePtr ReduceSumOptimizer::InsertAssistNode(const CNodePtr &cnode, const KernelGraphPtr &) const {
   // the input dim is unknown, need rank + range, don't supported now;
   MS_LOG(EXCEPTION)
     << "Can not support the case that input is dim unknown and axis is empty or axis contain value less 0. node: "

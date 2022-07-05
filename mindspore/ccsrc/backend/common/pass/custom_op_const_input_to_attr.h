@@ -25,7 +25,7 @@ class CustomOpConstInputToAttr : public PatternProcessPass {
   explicit CustomOpConstInputToAttr(bool multigraph = true)
       : PatternProcessPass("custom_op_const_input_to_attr", multigraph) {}
   ~CustomOpConstInputToAttr() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

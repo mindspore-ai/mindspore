@@ -37,7 +37,7 @@ class CommunicationOpFusion : public Pass {
   explicit CommunicationOpFusion(const std::string &name, std::string op_name, size_t groups = 1)
       : Pass(name), op_name_(std::move(op_name)), groups_(groups) {}
   ~CommunicationOpFusion() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   bool DoFusion(const FuncGraphPtr &func_graph, const CommunicationOpInfo &communication_op_info,

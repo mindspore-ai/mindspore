@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ADJUST_DEPEND_FOR_PARALLEL_OPTIMIZER_RECOMPUTE_ALL_GATHER_H_
 #include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 
 #include "backend/common/optimizer/pass.h"
@@ -41,7 +40,7 @@ class AdjustDependForParallelOptimizerRecomputeAllGather : public Pass {
                              const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers);
   void IncreaseAllgatherFusionId(const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers,
                                  const std::vector<AnfNodePtr> &parallel_optimizer_recompute_first_fusion_allgathers,
-                                 int64_t unrecompute_max_fusion_id, int64_t recompute_min_fusion_id);
+                                 int64_t unrecompute_max_fusion_id, int64_t recompute_min_fusion_id) const;
 };
 }  // namespace opt
 }  // namespace mindspore

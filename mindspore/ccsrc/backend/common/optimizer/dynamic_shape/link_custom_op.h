@@ -45,7 +45,7 @@ class LinkCustomOp : public Pass {
   bool LinkInternalOp(const FuncGraphPtr &g, const AnfNodePtr &node, AnfNodePtrList *depend_nodes);
   bool LinkInputOp(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes);
   bool LinkDependSync(const FuncGraphPtr &g, const CNodePtr &cnode, AnfNodePtrList *depend_nodes);
-  void AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes);
+  void AttachDependNodes(const FuncGraphPtr &g, const AnfNodePtrList &depend_nodes) const;
 
   std::set<DependPair, DependPairCmp> added_set_;
 };

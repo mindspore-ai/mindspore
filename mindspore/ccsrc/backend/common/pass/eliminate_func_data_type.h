@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ELIMINATE_FUNC_TYPE_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_ELIMINATE_FUNC_TYPE_H_
 
-#include <vector>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 #include "backend/common/optimizer/pattern_engine.h"
@@ -32,7 +31,7 @@ class EliminateFuncDataType : public PatternProcessPass {
     Init();
   }
   ~EliminateFuncDataType() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void Init();

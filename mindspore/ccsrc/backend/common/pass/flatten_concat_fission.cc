@@ -65,7 +65,7 @@ CNodePtr NewConcatNode(const FuncGraphPtr &func_graph, const std::pair<std::vect
 
   size_t input_num = node_info.first.size() - 1;
   common::AnfAlgo::SetNodeAttr(kAttrAxis, MakeValue<int64_t>(0), concat_node);
-  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>(input_num), concat_node);
+  common::AnfAlgo::SetNodeAttr(kAttrInputNums, MakeValue<int64_t>((int64_t)input_num), concat_node);
   std::vector<int64_t> dyn_input_size{UlongToLong(input_num)};
   common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_size), concat_node);
   return concat_node;
@@ -78,9 +78,9 @@ CNodePtr NewMakeTupleNode(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr
   for (size_t i = 0; i < concat_nodes->size(); ++i) {
     auto concat_node = (*concat_nodes)[i];
     MS_EXCEPTION_IF_NULL(concat_node);
-    abstract_list.emplace_back(concat_node->abstract());
+    (void)abstract_list.emplace_back(concat_node->abstract());
   }
-  (void)concat_nodes->insert(concat_nodes->begin(), NewValueNode(prim::kPrimMakeTuple));
+  (void)concat_nodes->insert(concat_nodes->cbegin(), NewValueNode(prim::kPrimMakeTuple));
   auto make_tuple_node = NewCNode(*concat_nodes, func_graph);
 
   auto abstract_tuple = std::make_shared<abstract::AbstractTuple>(abstract_list);

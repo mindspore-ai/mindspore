@@ -15,8 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REPLACE_NODE_BY_PROXY_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_REPLACE_NODE_BY_PROXY_H_
-#include <utility>
-#include <vector>
 #include <string>
 
 #include "backend/common/optimizer/pass.h"
@@ -31,10 +29,10 @@ class ReplaceNodeByProxy : public Pass {
  public:
   explicit ReplaceNodeByProxy(const std::string &name) : Pass(name) {}
   ~ReplaceNodeByProxy() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
-  kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &cnode);
+  kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &cnode) const;
 };
 }  // namespace opt
 }  // namespace mindspore
