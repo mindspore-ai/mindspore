@@ -1,7 +1,7 @@
 mindspore_lite.Context
 ======================
 
-.. py:function:: mindspore_lite.Context(thread_num=None, thread_affinity_mode=None, thread_affinity_core_list=None, enable_parallel=False)
+.. py:class:: mindspore_lite.Context(thread_num=None, thread_affinity_mode=None, thread_affinity_core_list=None, enable_parallel=False)
 
     Context用于在执行期间存储环境变量。
 

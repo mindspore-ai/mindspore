@@ -375,7 +375,11 @@ class RunnerConfig:
     Args:
         context (Context, optional): Define the context used to store options during execution. Default: None.
         workers_num (int, optional): the num of workers. Default: None.
-        config_info (dict{str, dict{str, str}}, optional): Nested map for passing model weight paths. Default: None.
+        config_info (dict{str, dict{str, str}}, optional): Nested map for passing model weight paths.
+            e.g. {"weight": {"weight_path": "/home/user/weight.cfg"}}. Default: None.
+            key currently supports ["weight"];
+            value is in dict format, key of it currently supports ["weight_path"],
+            value of it is the path of weight, e.g. "/home/user/weight.cfg".
 
     Raises:
         TypeError: `context` is not a Context or None.
