@@ -469,7 +469,7 @@ class RReLU(Cell):
             \text{RReLU}(x_{ji}) = \begin{cases}x_{ji}, &\text{if } x_{ji} \geq 0; \cr
             {\alpha_{ji}} * x_{ji}, &\text{otherwise.}\end{cases}
 
-    where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math: `l \le u`.
+    where :math:`\alpha_{ji}` ~ :math:`U(l, u)`, :math:`l \le u`.
 
     Args:
         lower (Union[int, float]): Slope of the activation function at x < 0. Default: 1/8.
