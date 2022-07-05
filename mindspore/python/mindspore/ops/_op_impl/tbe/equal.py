@@ -27,6 +27,7 @@ equal_op_info = TBERegOp("Equal") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("broadcast") \
+    .dtype_format(DataType.BOOL_None, DataType.BOOL_None, DataType.BOOL_None) \
     .dtype_format(DataType.I8_None, DataType.I8_None, DataType.BOOL_None) \
     .dtype_format(DataType.U8_None, DataType.U8_None, DataType.BOOL_None) \
     .dtype_format(DataType.I32_None, DataType.I32_None, DataType.BOOL_None) \
