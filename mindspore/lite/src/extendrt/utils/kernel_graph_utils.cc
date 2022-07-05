@@ -792,9 +792,6 @@ CNodePtr KernelGraphUtils::CreateSwitchInput(const CNodePtr &cnode, const AnfNod
 void KernelGraphUtils::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph,
                                           const std::vector<AnfNodePtr> &real_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  // func1 =switch(branch1, branch2)
-  // func2 = func1(param1)
-  // out = func2(param2)
   // process the last cnode(func2), not func1 which abstract is AbstractFunction
   if (cnode->abstract()->isa<abstract::AbstractFunction>()) {
     return;
