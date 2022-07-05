@@ -92,9 +92,7 @@ int MatMulTensorRT::AddInnerOp(TensorRTContext *ctx) {
 
 int MatMulTensorRT::PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b) {
   if (tensorrt_in_tensors_.size() == INPUT_SIZE2) {
-    int a_index =
-      GetDimsVolume(tensorrt_in_tensors_[0].trt_tensor_->getDimensions()) == GetDimsVolume(in_tensors_[0].Shape()) ? 0
-                                                                                                                   : 1;
+    int a_index = SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape()) ? 0 : 1;
     int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[a_index], matmul_a);
     ret += PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[1 - a_index], matmul_b);
     if (ret != RET_OK || matmul_a->trt_tensor_ == nullptr || matmul_b->trt_tensor_ == nullptr) {
