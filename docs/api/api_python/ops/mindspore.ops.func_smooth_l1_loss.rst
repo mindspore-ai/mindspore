@@ -16,7 +16,7 @@ mindspore.ops.smooth_l1_loss
         |x_i - y_i| - 0.5 * \beta, & \text{otherwise. }
         \end{cases}
 
-    当 `reduction` 不是设定为 `none` 时，计算如下:
+    当 `reduction` 不是设定为 `none` 时，计算如下：
 
     .. math::
         L =
@@ -28,7 +28,7 @@ mindspore.ops.smooth_l1_loss
     其中， :math:`\beta` 代表阈值 `beta` 。 :math:`N` 为batch size。
 
     .. note::
-        在Ascend上, 目前不支持将 `reduction` 设定成'sum'或'mean'。
+        在Ascend上，目前不支持将 `reduction` 设定成'sum'或'mean'。
 
     **参数：**
 

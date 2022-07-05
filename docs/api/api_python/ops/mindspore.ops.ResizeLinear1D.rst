@@ -14,16 +14,16 @@ mindspore.ops.ResizeLinear1D
 
     **参数：**
 
-    - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners", 还可选"half_pixel"和"asymmetric"。
+    - **coordinate_transformation_mode** (str) - 指定进行坐标变换的方式，默认值是"align_corners"，还可选"half_pixel"和"asymmetric"。
 
     **输入：**
 
-    - **x** (Tensor) - ResizeBilinear的输入，三维的Tensor，其shape为 :math:`(batch, channels, width)`。支持以下数据类型：float16, float32, double。
+    - **x** (Tensor) - ResizeBilinear的输入，三维的Tensor，其shape为 :math:`(batch, channels, width)`。支持以下数据类型：float16、float32、double。
     - **size** (Tensor) - 指定 `x` 宽的新尺寸，一维的Tensor，其shape为 :math:`(1)` ，数据类型为int64。
 
     **输出：**
 
-    Tensor，调整大小后的Tensor。shape为 :math:`(batch, channels,new\_width)` 的三维Tensor，数据类型和输入是一致的。
+    Tensor，调整大小后的Tensor。shape为 :math:`(batch, channels, new\_width)` 的三维Tensor，数据类型和输入是一致的。
 
     **异常：**
 
