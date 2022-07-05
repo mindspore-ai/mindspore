@@ -141,11 +141,13 @@ void NativeGpuKernelModFactory::CheckSM(const KernelBuildInfo *kernel_info, cons
   const bool check_sm = mindspore::device::gpu::CudaCommon::GetInstance().check_sm();
   if (check_sm && major_sm < RECOMMEND_SM && kernel_info->GetInputDeviceType(input_index) == kNumberTypeFloat16) {
     if (major_sm < MINIUM_SM) {
-      MS_LOG(EXCEPTION) << "Half precision ops can be used on Devices which computing capacity is >= " << MINIUM_SM
+      MS_LOG(EXCEPTION) << "Half precision ops must be used on Devices which computing capacity is >= " << MINIUM_SM
                         << ", but the current device's computing capacity is " << major_sm;
     }
     MS_LOG(WARNING) << "It is recommended to use devices with a computing capacity >= " << RECOMMEND_SM
-                    << ", but the current device's computing capacity is " << major_sm;
+                    << ", but the current device's computing capacity is " << major_sm << ". "
+                    << "In this case, the computation may not be accelerated. Architectures with TensorCores can be "
+                       "used to speed up half precision operations, such as Volta and Ampere.";
     mindspore::device::gpu::CudaCommon::GetInstance().set_check_sm(false);
   }
 }
