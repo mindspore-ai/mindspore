@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,12 @@ int64_t SplitTupleInputs(const FuncGraphPtr &graph, const AnfNodePtr &tuple_inpu
   return input_size;
 }
 
-void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
+AnfNodePtr ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePtr &cnode_ptr) {
   MS_EXCEPTION_IF_NULL(cnode_ptr);
   MS_EXCEPTION_IF_NULL(graph);
   if (common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimCall) ||
       common::AnfAlgo::CheckPrimitiveType(cnode_ptr, prim::kPrimPartial)) {
-    return;
+    return nullptr;
   }
   std::vector<AnfNodePtr> plant_inputs;
   std::vector<int64_t> dyn_input_sizes;
@@ -76,9 +76,19 @@ void ConvertMakeTupleInputToPlantInputs(const FuncGraphPtr &graph, const CNodePt
   }
   // If there is dynamic input, set the dyn_input_sizes as an attribute and update the inputs.
   if (std::any_of(dyn_input_sizes.begin(), dyn_input_sizes.end(), [](int64_t s) { return s >= 0; })) {
-    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), cnode_ptr);
-    cnode_ptr->set_inputs(plant_inputs);
+    auto new_cnode = NewCNode(plant_inputs, graph, {cnode_ptr});
+    new_cnode->set_abstract(cnode_ptr->abstract());
+    new_cnode->set_scope(cnode_ptr->scope());
+    new_cnode->set_primal_attrs(cnode_ptr->primal_attrs());
+    new_cnode->set_attrs(cnode_ptr->attrs());
+    common::AnfAlgo::SetNodeAttr(kAttrDynInputSizes, MakeValue(dyn_input_sizes), new_cnode);
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    if (kernel_graph != nullptr) {
+      kernel_graph->FrontBackendlMapUpdate(cnode_ptr, new_cnode);
+    }
+    return new_cnode;
   }
+  return nullptr;
 }
 }  // namespace
 
@@ -93,8 +103,7 @@ const AnfNodePtr ConvertTupleInputToDynamicInput::Process(const FuncGraphPtr &fu
   if (node == nullptr || !node->isa<CNode>() || !AnfUtils::IsRealKernel(node)) {
     return nullptr;
   }
-  ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());
-  return node;
+  return ConvertMakeTupleInputToPlantInputs(func_graph, node->cast<CNodePtr>());
 }
 }  // namespace opt
 }  // namespace mindspore
