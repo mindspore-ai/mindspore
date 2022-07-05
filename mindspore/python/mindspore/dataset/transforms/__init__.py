@@ -31,7 +31,7 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
     from mindspore.dataset.transforms import py_transforms
 
 See `Common Data Processing and Augmentation Tutorial
-<https://www.mindspore.cn/tutorials/en/master/advanced/dataset/augment_common_data.html>`_ for more details.
+<https://www.mindspore.cn/tutorials/en/r1.8/advanced/dataset/augment_common_data.html>`_ for more details.
 
 Descriptions of common data processing terms are as follows:
 
