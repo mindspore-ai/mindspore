@@ -84,6 +84,10 @@ index_fill_ = IndexFill()
 
 @constexpr
 def get_x_shape(x_shape):
+    if -1 in x_shape:
+        return (-1,)
+    if -2 in x_shape:
+        return (-2,)
     s = 1
     for i in x_shape:
         s = s * i
