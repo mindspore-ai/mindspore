@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
+from mindspore.ops import operations as P
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore.ops.functional import vmap
 
@@ -50,7 +51,7 @@ class DynamicShapeNet(nn.Cell):
         return self.net(x, output_size)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_4d():
@@ -67,7 +68,7 @@ def test_net_4d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_5d():
@@ -84,7 +85,7 @@ def test_net_5d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_net_dynamic_shape():
