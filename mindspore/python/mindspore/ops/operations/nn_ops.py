@@ -675,7 +675,8 @@ class SeLU(Primitive):
     See more details in `Self-Normalizing Neural Networks <https://arxiv.org/abs/1706.02515>`_.
 
     Inputs:
-        - **input_x** (Tensor) - Tensor of any dimension, the data type is float16 or float32.
+        - **input_x** (Tensor) - Tensor of any dimension.
+          The data type is int8, int32, float16, float32, float64(only CPU, GPU).
 
     Outputs:
         Tensor, with the same type and shape as the `input_x`.
@@ -684,7 +685,7 @@ class SeLU(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If dtype of `input_x` is not int8, int32, float16, float32, float64.
 
     Examples:
         >>> from mindspore.ops.operations.nn_ops import SeLU
