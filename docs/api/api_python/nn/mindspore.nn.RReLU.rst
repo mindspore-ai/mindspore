@@ -1,7 +1,7 @@
 mindspore.nn.RReLU
 ==================
 
-.. py:class:: mindspore.nn.RReLU(lower=0.125, upper=float(1. / 3))
+.. py:class:: mindspore.nn.RReLU(lower=1/8, upper=1/3)
 
    Randomized Leaky ReLU激活函数。
 
