@@ -42,7 +42,47 @@ class UnsortedSegmentSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
       KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32)};
+      KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt32)
+        .AddOutputAttr(kNumberTypeInt32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeInt32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeInt32)};
     return support_list;
   }
 
@@ -53,6 +93,7 @@ class UnsortedSegmentSumCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   size_t input_dim1_{1};
   size_t output_dim0_{1};
   size_t output_dim1_{1};
+  void ResetResource();
 };
 }  // namespace kernel
 }  // namespace mindspore

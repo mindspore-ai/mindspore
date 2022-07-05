@@ -32,11 +32,12 @@ void UnsortedSegmentSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   segment_ids_dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
   auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
   auto segment_ids_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-  auto output_shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+  auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
   if (output_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the dimension of output must be at least 1, but got shape: " << output_shape;
   }
+  ResetResource();
   for (size_t i = 0; i < input_shape.size(); ++i) {
     unit_num_ *= input_shape[i];
     if (i >= segment_ids_shape.size()) {
@@ -49,10 +50,16 @@ void UnsortedSegmentSumCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
 }
 
+void UnsortedSegmentSumCpuKernelMod::ResetResource() {
+  unit_num_ = 1;
+  input_dim1_ = 1;
+  output_dim0_ = 1;
+  output_dim1_ = 1;
+}
+
 bool UnsortedSegmentSumCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                             const std::vector<kernel::AddressPtr> &,
                                             const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kUnsortedSegmentInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kUnsortedSegmentOutputsNum, kernel_name_);
   void *input_addr = inputs[0]->addr;
   void *indices_addr = inputs[1]->addr;

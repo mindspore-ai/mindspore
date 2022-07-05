@@ -64,7 +64,7 @@ class StridedSliceGpuKernelMod : public DeprecatedNativeGpuKernelMod, public Str
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the dimension of input cannot be greater than " << MAX_DIMS
                         << ", but got " << input_shape_.size();
     }
-    if (!is_dynamic_attr_) {
+    if (is_dynamic_attr_) {
       GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetKernelDepends(kernel_node));
       GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetKernelDepends(kernel_node));
       GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetKernelDepends(kernel_node));

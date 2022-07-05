@@ -29,7 +29,8 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+constexpr int DynamicInputNum = 5;
+template <typename T, typename S = int64_t>
 class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   TensorCopySlicesGpuKernelMod()
@@ -59,8 +60,8 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << input_num;
+    if (input_num == DynamicInputNum) {
+      is_dynamic_attr_ = true;
     }
 
     size_t output_num = common::AnfAlgo::GetOutputTensorNum(kernel_node);
@@ -81,9 +82,15 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << ", but got " << input_shape_.size();
     }
 
-    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
-    end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
-    strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+    if (is_dynamic_attr_) {
+      GetDynamicAttrIntValue(kernel_node, kBeginIndex_, &begin_, kernel::GetKernelDepends(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kEndIndex_, &end_, kernel::GetKernelDepends(kernel_node));
+      GetDynamicAttrIntValue(kernel_node, kStrideIndex_, &strides_, kernel::GetKernelDepends(kernel_node));
+    } else {
+      begin_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrBegin);
+      end_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrEnd);
+      strides_ = GetAttr<std::vector<int64_t>>(kernel_node, kAttrStrides);
+    }
 
     if (begin_.size() > input_shape_.size()) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_
@@ -99,6 +106,19 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     GetSize();
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_size_ = 1;
+    output_size_ = 1;
+    update_size_ = 1;
+    is_null_input_ = false;
+    is_dynamic_attr_ = false;
+    input_shape_.clear();
+    output_shape_.clear();
+    update_shape_.clear();
+    input_size_list_.clear();
+    output_size_list_.clear();
   }
 
  protected:
@@ -140,6 +160,8 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void InitSizeLists() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
     input_size_list_.push_back(input_size_);
     input_size_list_.push_back(update_size_);
     output_size_list_.push_back(output_size_);
@@ -199,7 +221,11 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t output_size_;
   inline static size_t kMaxDims = 8;
   bool is_null_input_;
+  bool is_dynamic_attr_{false};
   std::string kernel_name_;
+  static constexpr size_t kBeginIndex_{2};
+  static constexpr size_t kEndIndex_{3};
+  static constexpr size_t kStrideIndex_{4};
 };
 }  // namespace kernel
 }  // namespace mindspore

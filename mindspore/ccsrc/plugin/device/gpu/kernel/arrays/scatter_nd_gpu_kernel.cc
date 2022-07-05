@@ -19,6 +19,12 @@
 
 namespace mindspore {
 namespace kernel {
+#define DTYPE_REGISTER(INDICES, UPDATES, SHAPE, OUTPUT, T, S)                                           \
+  {                                                                                                     \
+    KernelAttr().AddInputAttr(INDICES).AddInputAttr(UPDATES).AddInputAttr(SHAPE).AddOutputAttr(OUTPUT), \
+      &ScatterNdGpuKernelMod::LaunchKernel<T, S>                                                        \
+  }
+
 const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &ScatterNdGpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> func_list = {
@@ -46,6 +52,18 @@ const std::vector<std::pair<KernelAttr, ScatterNdGpuKernelMod::KernelRunFunc>> &
      &ScatterNdGpuKernelMod::LaunchKernel<uint8_t, int32_t>},
     {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
      &ScatterNdGpuKernelMod::LaunchKernel<uint8_t, int64_t>},
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeInt64, kNumberTypeFloat64, double, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeInt64, kNumberTypeFloat32, float, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeFloat16, kNumberTypeInt64, kNumberTypeFloat16, half, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, int32_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt16, int16_t, int64_t),
+    DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int32_t),
+    DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeUInt8, kNumberTypeInt64, kNumberTypeUInt8, uint8_t, int64_t),
   };
   return func_list;
 }
@@ -67,6 +85,10 @@ bool ScatterNdGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, 
   S *indices = GetDeviceAddress<S>(inputs, 0);
   T *update = GetDeviceAddress<T>(inputs, 1);
   T *output = GetDeviceAddress<T>(outputs, 0);
+
+  if (is_dynamic_attr_ && !get_dynamic_attr_value_) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', fail to get value of the dynamic attr!";
+  }
 
   if (!memcpy_flag_) {
     const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
@@ -106,6 +128,14 @@ bool ScatterNdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
+  size_t input_num = inputs.size();
+  constexpr size_t kDynamicScatterNdInputNum = 3;
+  kernel_name_ = base_operator->name();
+
+  if (input_num == kDynamicScatterNdInputNum) {
+    is_dynamic_attr_ = true;
+    return true;
+  }
 
   auto attr = base_operator->GetPrim()->GetAttr(kAttrShape);
   if (attr == nullptr) {
@@ -119,6 +149,9 @@ bool ScatterNdGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
 int ScatterNdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  if (GetDynamicAttrIntValue(inputs, kShapeIndex_, inputsOnHost, kernel_name_, &attr_shape_)) {
+    get_dynamic_attr_value_ = true;
+  }
   if (int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost); ret != KRET_OK) {
     return ret;
   }

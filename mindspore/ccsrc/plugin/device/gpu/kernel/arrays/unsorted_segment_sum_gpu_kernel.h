@@ -53,6 +53,7 @@ class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto input_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
     auto ids_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
     auto output_shapes = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
+    ResetResource();
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
                      CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");

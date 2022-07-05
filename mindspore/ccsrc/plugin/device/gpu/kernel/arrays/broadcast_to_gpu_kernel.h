@@ -98,6 +98,8 @@ class BroadcastToGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
  protected:
   void InitSizeLists() override {
+    input_size_list_.clear();
+    output_size_list_.clear();
     input_size_list_.push_back(input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * input_shape_[4] *
                                input_shape_[5] * input_shape_[6] * input_shape_[7] * sizeof(T));
     output_size_list_.push_back(output_shape_[0] * output_shape_[1] * output_shape_[2] * output_shape_[3] *

@@ -898,20 +898,40 @@ def tensor_setitem_by_tuple_with_number(data, tuple_index, value):
     return tensor_setitem_by_tuple_with_tensor(data, tuple_index, value)
 
 
+def tensor_copy_slice_from_slice(data, input_slice, value):
+    """using TensorCopySlices by slice."""
+    data_shape = F.dyn_shape(data)
+    start, stop, step = get_slice_stride(input_slice, data_shape[0])
+    start_tensor = stack((start,))
+    stop_tensor = stack((stop,))
+    step_tensor = stack((step,))
+    dim0_size = stop_tensor - start_tensor
+    if dim0_size <= 0:
+        return data
+    if dim0_size >= data_shape[0]:
+        dim0_size = data_shape[0:1]
+    value_shape = P.Concat(-1)((dim0_size, data_shape[1:]))
+    value = dynamic_broadcast_to(value, value_shape)
+    return copy_slice(data, value.astype(data.dtype), start_tensor, stop_tensor, step_tensor)
+
+
 def tensor_setitem_by_slice_with_tensor(data, input_slice, value):
     """Assigns a tensor value to the tensor by slice."""
     result = None
     check_result = const_utils.check_tensor_setitem_index(input_slice)
     if check_result:
-        start, stop, step = const_utils.normalize_slice(input_slice, data.shape[0])
+        data_shape = F.shape(data)
+        step = const_utils.get_step_from_slice(input_slice)
         if step == 1:
+            if -1 in data_shape:
+                return tensor_copy_slice_from_slice(data, input_slice, value)
+            start, stop, step = const_utils.normalize_slice(input_slice, data.shape[0])
             dim0_size = stop - start
             if dim0_size <= 0:
                 return data
             value_shape = (dim0_size,) + const_utils.tuple_slice(data.shape, 1, None)
             value = _broadcast(value_shape, value)
             return copy_slice(data, value.astype(data.dtype), (start,), (stop,), (step,))
-        data_shape = F.shape(data)
         if -1 in data_shape:
             const_utils.raise_unimplemented_error(
                 "Not supported to take the subscript of dynamic shape tensor slice setitem")
@@ -930,12 +950,36 @@ def tensor_setitem_by_slice_with_sequence(data, input_slice, value):
     return tensor_setitem_by_slice_with_tensor(data, input_slice, value)
 
 
+def tensor_copy_slice_from_tuple(data, tuple_index, value):
+    """using TensorCopySlices by fixed model tuple."""
+    data_shape = F.dyn_shape(data)
+    dim1_start, dim1_stop, _ = get_slice_stride(tuple_index[1], data_shape[1])
+    if dim1_stop - dim1_start <= 0:
+        return data
+    dim0_start = check_range(tuple_index[0], data_shape[0])
+    dim0_stop = dim0_start + const_utils.scalar_to_tensor(1)
+    start = (dim0_start, dim1_start)
+    stop = (dim0_stop, dim1_stop)
+    step = (const_utils.scalar_to_tensor(1), const_utils.scalar_to_tensor(1))
+    start_tensor = stack(start)
+    stop_tensor = stack(stop)
+    step_tensor = stack(step)
+    dim1_size = stack((dim1_stop - dim1_start,))
+    if dim1_size > data_shape[1]:
+        dim1_size = data_shape[1:2]
+    value_shape = P.Concat(-1)((dim1_size, data_shape[2:]))
+    value = dynamic_broadcast_to(value, value_shape)
+    return copy_slice(data, value.astype(data.dtype), start_tensor, stop_tensor, step_tensor)
+
+
 def tensor_setitem_by_tuple_with_tensor(data, tuple_index, value):
     """Assigns the tensor by tuple with tensor value."""
     op_name = const_utils.TENSOR_SETITEM
     tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
 
     if const_utils.use_copy_slice(tuple_index):
+        if -1 in F.shape(data) or -2 in F.shape(data):
+            return tensor_copy_slice_from_tuple(data, tuple_index, value)
         dim1_start, dim1_stop, _ = const_utils.normalize_slice(tuple_index[1], data.shape[1])
         if dim1_stop - dim1_start <= 0:
             return data
