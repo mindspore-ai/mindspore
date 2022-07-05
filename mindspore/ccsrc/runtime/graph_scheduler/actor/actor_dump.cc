@@ -83,6 +83,7 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
   }
   if (actor->output_data_arrows().size() > 0) {
     ofs << "\t\toutput_data_arrows:" << actor->output_data_arrows().size() - batch_output_data_size << "\n ";
+    size_t batch_count = 0;
     for (size_t i = 0; i < actor->output_data_arrows().size(); ++i) {
       auto data_arrow = actor->output_data_arrows()[i];
       auto output_node = actor->output_data_nodes()[i];
@@ -92,7 +93,13 @@ void DumpBaseOutputInfo(const AbstractActor *actor, std::ofstream &ofs) {
         ofs << "\t\t\tfrom_output_node:" << node_name << "\tfrom_output_index:" << data_arrow->from_output_index_
             << "\tto_actor_name:" << data_arrow->to_op_id_.Name() << "\tto_input_index:" << data_arrow->to_input_index_
             << "\tflag:" << data_arrow->flag_ << "\n";
+      } else {
+        ++batch_count;
       }
+    }
+    if (batch_count != batch_output_data_size) {
+      MS_LOG(EXCEPTION) << "Check batch output data error, the expect num:" << batch_output_data_size
+                        << ", but get num:" << batch_count << " for " << actor->GetAID().Name();
     }
   }
 
