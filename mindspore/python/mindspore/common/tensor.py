@@ -1188,8 +1188,11 @@ class Tensor(Tensor_):
         """
         Computes the determinant of one or more square matrices.
 
+        `x` refer to self tensor.
+
         Returns:
-            y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as self tensor. `x` refer to self tensor.
+
+            Tensor, The shape is `x_shape[:-2]`, the dtype is same as 'x'.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
@@ -1213,11 +1216,12 @@ class Tensor(Tensor_):
         """
         Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
+        `x` refer to self tensor.
+
         Returns:
-            sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`,
-                the dtype is same as self tensor. `x` refer to self tensor.
-            y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
-                as self tensor. `x` refer to self tensor.
+            Tensor, The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+
+            Tensor, The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
