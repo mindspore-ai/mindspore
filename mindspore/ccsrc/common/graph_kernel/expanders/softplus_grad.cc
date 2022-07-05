@@ -39,11 +39,11 @@ class SoftplusGrad : public OpDesc {
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_dy = inputs[0];
     const auto &input_x = inputs[1];
-    auto exp_x = gb.Exp(input_x);
+    auto neg_x = gb.Neg(input_x);
+    auto exp_neg_x = gb.Exp(neg_x);
     auto const_one = gb.Const(1.0, input_x->type);
-    auto exp_x_add_one = gb.Add(exp_x, const_one);
-    auto dy_mul_exp_x = gb.Mul(input_dy, exp_x);
-    auto result = gb.Div(dy_mul_exp_x, exp_x_add_one);
+    auto exp_neg_x_add_one = gb.Add(exp_neg_x, const_one);
+    auto result = gb.Div(input_dy, exp_neg_x_add_one);
     return {result};
   }
 };
