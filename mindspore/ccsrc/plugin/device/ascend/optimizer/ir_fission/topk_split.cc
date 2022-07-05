@@ -209,5 +209,5 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   return new_cnode;
 }
 
-MS_PASS_FACTORY_REG(PatternProcessPass, topk_split_fission, TopKSplit, kIRFusionFisionPass);
+MS_PASS_FACTORY_REG(PatternProcessPass, topk_split_fission, TopKSplit, kIRFusionFissionPass);
 }  // namespace mindspore::opt

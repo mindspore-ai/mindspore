@@ -269,7 +269,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<BNReduceGradConv2dBackpropFilterFusion>());
   ir_fusion_pm->AddPass(std::make_shared<SoftmaxDropoutDoMaskV3Fusion>());
   const auto &pass_creators =
-    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFisionPass);
+    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
     ir_fusion_pm->AddPass(pass_creator.second());
   }
@@ -464,7 +464,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   const auto &pass_creators =
-    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFisionPass);
+    opt::Factory<PatternProcessPass>::Instance().GetPassCreatorsByType(kPassType::kIRFusionFissionPass);
   for (const auto &pass_creator : pass_creators) {
     ir_fusion_pm->AddPass(pass_creator.second());
   }

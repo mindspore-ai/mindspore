@@ -665,7 +665,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(tensors_mask);
   MS_EXCEPTION_IF_NULL(input_tensors);
 
-  mindspore::HashSet<size_t> input_to_attr;
+  mindspore::HashSet<size_t> input_to_attr = {};
   bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, &input_to_attr);
   MS_LOG(DEBUG) << "Need convert input to addr " << need_convert_input_to_attr;
   if (need_convert_input_to_attr) {
