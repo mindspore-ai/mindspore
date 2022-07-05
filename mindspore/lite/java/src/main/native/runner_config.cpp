@@ -63,6 +63,62 @@ extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setWork
   pointer->SetWorkersNum(workers_num);
 }
 
+extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_setConfigInfo(JNIEnv *env, jobject thiz,
+                                                                                       jstring runner_config_ptr,
+                                                                                       jstring section,
+                                                                                       jobject hashMapConfig) {
+  auto *pointer = reinterpret_cast<mindspore::RunnerConfig *>(runner_config_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("runner config pointer from java is nullptr");
+    return;
+  }
+  const char *c_section = env->GetStringUTFChars(section, nullptr);
+  std::string str_section(c_section, env->GetStringLength(section));
+
+  jclass classHashMap = env->FindClass("java/util/HashMap");
+  jclass ClassSet = env->FindClass("java/util/Set");
+  jmethodID methodIDSet = env->GetMethodID(classHashMap, "entrySet", "()Ljava/util/Set;");
+  jmethodID methodIDIterator = env->GetMethodID(ClassSet, "iterator", "()Ljava/util/Iterator;");
+  jobject objectMethodSet = env->CallObjectMethod(hashMapConfig, methodIDSet);
+  jobject iteratorObject = env->CallObjectMethod(objectMethodSet, methodIDIterator);
+  jclass classIterator = env->FindClass("java/util/Iterator");
+  jmethodID nextMethodID = env->GetMethodID(classIterator, "next", "()Ljava/lang/Object;");
+  jmethodID hasNextMethodID = env->GetMethodID(classIterator, "hasNext", "()Z");
+  jclass classMapEntry = env->FindClass("java/util/Map$Entry");
+  jmethodID keyMethodID = env->GetMethodID(classMapEntry, "getKey", "()Ljava/lang/Object;");
+  jmethodID valueMethodID = env->GetMethodID(classMapEntry, "getValue", "()Ljava/lang/Object;");
+  std::map<std::string, std::string> configInfo;
+  while (env->CallBooleanMethod(iteratorObject, hasNextMethodID)) {
+    jobject objectEntry = env->CallObjectMethod(iteratorObject, nextMethodID);
+    jstring keyObjectMethod = (jstring)env->CallObjectMethod(objectEntry, keyMethodID);
+    if (keyObjectMethod == nullptr) {
+      continue;
+    }
+    const char *c_keyConfigInfo = env->GetStringUTFChars(keyObjectMethod, nullptr);
+    std::string str_keyConfigInfo(c_keyConfigInfo, env->GetStringLength(keyObjectMethod));
+    jstring valueObjectMethod = (jstring)env->CallObjectMethod(objectEntry, valueMethodID);
+    if (valueObjectMethod == nullptr) {
+      continue;
+    }
+    const char *c_valueConfigInfo = env->GetStringUTFChars(valueObjectMethod, nullptr);
+    std::string str_valueConfigInfo(c_valueConfigInfo, env->GetStringLength(valueObjectMethod));
+    configInfo.insert(std::make_pair(str_keyConfigInfo, str_valueConfigInfo));
+    env->ReleaseStringUTFChars(keyObjectMethod, c_keyConfigInfo);
+    env->ReleaseStringUTFChars(valueObjectMethod, c_valueConfigInfo);
+    env->DeleteLocalRef(objectEntry);
+    env->DeleteLocalRef(keyObjectMethod);
+    env->DeleteLocalRef(valueObjectMethod);
+  }
+  env->DeleteLocalRef(classHashMap);
+  env->DeleteLocalRef(objectMethodSet);
+  env->DeleteLocalRef(ClassSet);
+  env->DeleteLocalRef(iteratorObject);
+  env->DeleteLocalRef(classIterator);
+  env->DeleteLocalRef(classMapEntry);
+  pointer->SetConfigInfo(str_section, configInfo);
+  env->ReleaseStringUTFChars(section, c_section);
+}
+
 extern "C" JNIEXPORT void JNICALL Java_com_mindspore_config_RunnerConfig_free(JNIEnv *env, jobject thiz,
                                                                               jlong runner_config_ptr) {
   auto *pointer = reinterpret_cast<void *>(runner_config_ptr);
