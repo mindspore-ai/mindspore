@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import nn_ops as NN
 from mindspore.ops.operations import image_ops as IMG
 import mindspore.common.dtype as mstype
+from .math_func import logsumexp
 from ...common.tensor import Tensor
 from ..._c_expression import Tensor as Tensor_
 from .._primitive_cache import _get_cache_prim
@@ -972,6 +973,11 @@ def pad(input_x, paddings):
     return slice_(out, slice_begin, slice_size)
 
 
+def _innner_log_softmax(inputs, axis):
+    """inner implementation of log_softmax, since the LogSoftmaxGrad op do not support inputs > 2d"""
+    return inputs - logsumexp(inputs, axis, True)
+
+
 def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mean', label_smoothing=0.0):
     r"""
     The cross entropy loss between input and target.
@@ -1059,18 +1065,16 @@ def cross_entropy(inputs, target, weight=None, ignore_index=-100, reduction='mea
     class_dim = 0 if inputs.ndim == 1 else 1
     if inputs.size == target.size:
         return _cross_entropy(inputs, target, class_dim, weight, reduction, label_smoothing)
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(class_dim)
-    return nll_loss(_log_softmax(inputs), target, weight, ignore_index, reduction, label_smoothing)
+    return nll_loss(_innner_log_softmax(inputs, class_dim), target, weight, ignore_index, reduction, label_smoothing)
 
 
 def _cross_entropy(inputs, target, target_dim, weight=None, reduction='mean', label_smoothing=0.0):
     """cross entropy inner function"""
-    _log_softmax = _get_cache_prim(P.LogSoftmax)(target_dim)
     _ones_like = _get_cache_prim(P.OnesLike)()
 
     class_dim = 0 if inputs.ndim == 1 else 1
     n_classes = inputs.shape[class_dim]
-    inputs = _log_softmax(inputs)
+    inputs = _innner_log_softmax(inputs, class_dim)
     if label_smoothing > 0.0:
         target = target * (1 - label_smoothing) + label_smoothing / n_classes
 
