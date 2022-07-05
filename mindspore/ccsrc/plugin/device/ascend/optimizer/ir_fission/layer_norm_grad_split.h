@@ -29,14 +29,15 @@ class LayerNormGradSplit : public PatternProcessPass {
   explicit LayerNormGradSplit(bool multigraph = true) : PatternProcessPass("layer_norm_grad_split", multigraph) {}
   ~LayerNormGradSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void CreateOutputsOfLayerNormXBackpropV2(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
-                                           std::vector<AnfNodePtr> *layer_norm_grad_outputs, bool is_dynamic) const;
+                                           std::vector<AnfNodePtr> *layer_norm_x_backprop_outputs,
+                                           bool is_dynamic) const;
   void CreateOutputsOfLayerNormBetaGammaBackpropV2(const FuncGraphPtr &graph, const CNodePtr &layer_norm_grad,
                                                    const AnfNodePtr &res_for_gamma,
-                                                   std::vector<AnfNodePtr> *layer_norm_beta_gamma_outputs,
+                                                   std::vector<AnfNodePtr> *layer_norm_beta_gamma_backprop_outputs,
                                                    bool is_dynamic) const;
 };
 }  // namespace opt

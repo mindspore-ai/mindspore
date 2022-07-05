@@ -31,7 +31,7 @@ class ConvertCastFormat : public PatternProcessPass {
   explicit ConvertCastFormat(bool multigraph = true) : PatternProcessPass("convert_cast_format", multigraph) {}
   ~ConvertCastFormat() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   mindspore::HashMap<string, size_t> CalculateFormat(

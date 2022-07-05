@@ -32,7 +32,7 @@ class RectifyDoMaskKernelInfo : public PatternProcessPass {
         kernel_selecter(std::make_shared<KernelSelect>()) {}
   ~RectifyDoMaskKernelInfo() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void RectifyKernelInfo(const std::vector<CNodePtr> &do_mask_node_list, const FuncGraphPtr &graph) const;

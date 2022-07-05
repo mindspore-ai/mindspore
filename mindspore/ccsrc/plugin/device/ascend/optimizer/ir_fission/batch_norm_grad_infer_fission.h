@@ -32,7 +32,8 @@ class BatchNormGradInferFission : public PatternProcessPass {
         input4_var_(std::make_shared<Var>()) {}
   ~BatchNormGradInferFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                           const EquivPtr &equiv) const override;
 
  private:
   AnfNodePtr CreateBNInferGrad(const FuncGraphPtr &func_graph, const AnfNodePtr &bn_grad, const EquivPtr &equiv) const;

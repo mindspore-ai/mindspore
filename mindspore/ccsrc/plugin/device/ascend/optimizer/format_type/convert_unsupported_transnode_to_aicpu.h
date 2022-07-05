@@ -27,7 +27,8 @@ class ConvertUnSupportNodeToAICPU : public PatternProcessPass {
         supported_checker_(std::make_shared<SupportedChecker>()) {}
   ~ConvertUnSupportNodeToAICPU() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const mindspore::FuncGraphPtr &, const mindspore::AnfNodePtr &node,
+                           const mindspore::EquivPtr &) const override;
 
  private:
   SupportedCheckerPtr supported_checker_;

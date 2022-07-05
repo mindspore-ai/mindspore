@@ -27,7 +27,7 @@ class PackFission : public PatternProcessPass {
       : PatternProcessPass("stack_fission", multigraph), inputs_divisor_(kPackInputsDivisor) {}
   ~PackFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr CreateNewPack(const FuncGraphPtr &func_graph, const CNodePtr &origin_pack_cnode, size_t begin_index,
