@@ -236,7 +236,7 @@ static inline MS_FLOAT32X4 MS_TANHX4_F32(MS_FLOAT32X4 src) {
 
 #define MS_TANH128_F32 MS_TANHX4_F32
 
-static inline MS_FLOAT32X4 MS_ERFX4_F32(MS_FLOAT32X4 src) {
+static inline MS_FLOAT32X4 MS128_ERF_F32(MS_FLOAT32X4 src) {
   MS_FLOAT32X4 dst;
   MS_F32X4_GETI(dst, 0) = erff(MS_F32X4_GETI(src, 0));
   MS_F32X4_GETI(dst, 1) = erff(MS_F32X4_GETI(src, 1));

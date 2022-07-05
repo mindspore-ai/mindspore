@@ -34,9 +34,11 @@ class StridedSliceCPUKernel : public LiteKernel {
   int Prepare() override;
   int ReSize() override;
   int Run() override;
+  bool MatchInOutShapeEqualPattern();
   bool MatchFastPattern();
   void InitFastRunParam();
   int NormalRun();
+  int SoftCopyInputToOutput();
   int FastRun();
   int FastRunImpl(int task_id);
 
@@ -50,6 +52,7 @@ class StridedSliceCPUKernel : public LiteKernel {
   int cal_num_per_thread_{1};
   size_t inner_size_{1};
   bool fast_run_{false};
+  bool soft_copy_mode_{false};
   bool parallel_on_split_axis_{false};
   bool parallel_on_outer_{false};
 };

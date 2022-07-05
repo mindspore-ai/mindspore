@@ -104,16 +104,13 @@ int Tanh(const float *src, int length, float *dst) {
 }
 
 int Swish(const float *src, int length, float *dst) {
-  int ret = Sigmoid(src, length, dst);
-  if (ret != NNACL_OK) {
-    return NNACL_ERR;
-  }
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(Swish, i, src, length, dst);
 
   for (; i < length; ++i) {
-    dst[i] = src[i] * dst[i];
+    simd_exp32(-src[i], dst + i);
+    dst[i] = src[i] / (1.0f + dst[i]);
   }
   return NNACL_OK;
 }
@@ -176,24 +173,15 @@ int Gelu(const float *src, int length, float *dst, bool approximate) {
   }
   int i = 0;
   if (approximate) {
-    SIMD_RUN_NO_SCALAR(Gelu, i, src, length, dst);
+    SIMD_RUN_NO_SCALAR(GeluApproximate, i, src, length, dst);
 
     // dst = 0.5 * x * (1 + tanh((2 / pi) ^ 0.5 * (x + 0.044715x^3)))
     for (; i < length; i++) {
       dst[i] = 0.5 * src[i] * (1.0 + TanhOpt((0.79788456080287f + 0.035677408136f * src[i] * src[i]) * src[i]));
     }
   } else {
-#if defined(ENABLE_SSE) || defined(ENABLE_ARM)
-    MS_FLOAT32X4 para1 = MS_MOVQ_F32(1.4142135623730951f);
-    MS_FLOAT32X4 para2 = MS_MOVQ_F32(1.0f);
-    MS_FLOAT32X4 para3 = MS_MOVQ_F32(0.5f);
-    int C4 = DOWN_ROUND(length, C4NUM);
-    for (; i < C4; i += C4NUM) {
-      MS_FLOAT32X4 in = MS_LDQ_F32(src + i);
-      MS_FLOAT32X4 res = MS_MULQ_F32(MS_MULQ_F32(para3, in), MS_ADDQ_F32(para2, MS_ERFX4_F32(MS_DIVQ_F32(in, para1))));
-      MS_STQ_F32(dst + i, res);
-    }
-#endif
+    SIMD_RUN_NO_SCALAR(Gelu, i, src, length, dst);
+
     for (; i < length; i++) {
       dst[i] =
         0.5 * src[i] * (1.0 + erf(src[i] / 1.4142135623730951f));  // dst = 0.5 * x * (1.0 + x / 1.4142135623730951f))

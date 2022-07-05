@@ -105,7 +105,7 @@
 #define SIMD_SIN_F32 MS_SIMD_INSTRUCTION_F32(MS_SIN)
 
 // erf (float) op
-#define SIMD_ERF_F32 MS_SIMD_INSTRUCTION_F32(MS_ERF)
+#define SIMD_ERF_F32 MS_SIMD_INSTRUCTION(MS, _ERF_F32)
 
 // log (float) op
 #define SIMD_ABS_F32 MS_SIMD_INSTRUCTION_F32(MS_ABS)
@@ -278,7 +278,15 @@ static inline float simd_exp32_f32(float data) {
     int i;
   } fi;
   static float param[] = {0.693147f, 1.0f / 120, 1.0f / 24, 1.0f / 6, 1.0f / 2, 1.0f};  // Approximate calculation param
-  data = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, data));                               // clamp(-88, 88)
+#ifdef _WIN32
+  if (data < -88.0f) {
+    return 0.0f;
+  } else if (data > 88.0f) {
+    return 1.6516363e+38;  // e^88 = 1.6516363e+38
+  }
+#else
+  data = MS_MAX32_F32(-88.0f, MS_MIN32_F32(88.0f, data));  // clamp(-88, 88)
+#endif
   int integer = data / param[0];
   float decimal = data - integer * param[0];
   fi int_exp;
