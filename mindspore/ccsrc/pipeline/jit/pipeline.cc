@@ -1123,7 +1123,7 @@ void Pipeline::Run() {
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
         FuncGraphPtr graph = resource_->func_graph();
-        profiler::ascend::DumpProfileParallelStrategy(graph);
+        profiler::ascend::ParallelStrategy::GetInstance()->DumpProfileParallelStrategy(graph);
 #endif
 #endif
       }

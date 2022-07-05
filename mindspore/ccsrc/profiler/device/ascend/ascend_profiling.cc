@@ -23,7 +23,7 @@
 #include "include/common/utils/utils.h"
 #include "profiler/device/ascend/memory_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
-#include "profiler/device/ascend/parallel_strategy_profiling.h"
+#include "mindspore/ccsrc/profiler/device/ascend/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
@@ -69,7 +69,15 @@ void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t d
   profiling_options_ = profiling_options;
   profile_data_path_ = profiling_path;
   device_id_ = device_id;
-
+  nlohmann::json options;
+  try {
+    options = nlohmann::json::parse(profiling_options);
+  } catch (nlohmann::json::exception &e) {
+    MS_LOG(EXCEPTION) << "Failed to parse profiling options because of format error, current options is " << options;
+  }
+  if (options["parallel_strategy"] == "off") {
+    is_parallel_strategy = false;
+  }
   aclError ret = aclrtSetDevice(static_cast<int32_t>(device_id));
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Device " << device_id << " call aclrtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
@@ -154,7 +162,7 @@ void AscendProfiler::Start() {
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
 
-  SaveParallelStrategyToFile();
+  profiler::ascend::ParallelStrategy::GetInstance()->SaveParallelStrategyToFile();
 
   StepProfilingEnable(true);
 }

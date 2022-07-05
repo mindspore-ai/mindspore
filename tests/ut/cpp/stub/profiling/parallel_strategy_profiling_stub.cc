@@ -19,8 +19,14 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
-void SaveParallelStrategyToFile() {}
+void ParallelStrategy::DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {}
+
+std::shared_ptr<ParallelStrategy> &ParallelStrategy::GetInstance(){
+  static std::shared_ptr<ParallelStrategy> parallel_strategy_inst_;
+  return parallel_strategy_inst_;
+}
+
+void ParallelStrategy::SaveParallelStrategyToFile(){}
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

@@ -40,6 +40,7 @@ class AscendProfiler : public Profiler {
   void OpDataProducerEnd() { return; }
   void Start();
   bool GetProfilingEnableFlag() const { return enable_flag_; }
+  bool GetParallelStrategyEnableFlag() const { return is_parallel_strategy; }
   std::string GetProfilingOptions() const { return profiling_options_; }
   uint64_t GetOptionsMask() const;
   aclprofAicoreMetrics GetAicMetrics() const;
@@ -63,6 +64,7 @@ class AscendProfiler : public Profiler {
   uint32_t device_id_ = 0;
   uint32_t aicpu_kernel_type_ = 2;
   uint32_t max_op_taskid_limit_ = 65536;
+  bool is_parallel_strategy = true;
   aclprofConfig *acl_config_{nullptr};
 };
 }  // namespace ascend
