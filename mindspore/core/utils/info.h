@@ -35,6 +35,8 @@ const CacheBool Uncached = -1;
 const CacheBool False = 0;
 const CacheBool True = 1;
 
+MS_CORE_API void ClearThreadLocal();
+
 // Location class record the location in source code.
 class Location {
  public:
