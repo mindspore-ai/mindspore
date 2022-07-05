@@ -67,4 +67,4 @@ class TensorRTDelegate : public Delegate {
   cudaStream_t stream_{nullptr};
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_TENSORRT_DELEGATE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_DELEGATE_

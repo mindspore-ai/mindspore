@@ -241,7 +241,7 @@ int SliceTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 
 int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper slice_input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &slice_input);
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &slice_input);
   if (ret != RET_OK || slice_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return RET_ERROR;
@@ -270,9 +270,7 @@ int SliceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "output tensor create failed";
     return RET_ERROR;
   }
-  out_tensor->setName((op_name_ + "_output").c_str());
-
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, slice_input.format_, slice_input.same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, slice_input.format_, slice_input.same_format_}, out_tensors_[0].Name());
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_StridedSlice, SliceTensorRT)

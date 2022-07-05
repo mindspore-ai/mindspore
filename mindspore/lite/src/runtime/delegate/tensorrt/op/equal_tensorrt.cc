@@ -47,7 +47,7 @@ int EqualTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 }
 
 int EqualTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[1].trt_tensor_};
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 1).trt_tensor_};
   auto plugin = std::make_shared<EqualPlugin>(op_name_, device_id_);
   nvinfer1::IPluginV2Layer *equal_layer = ctx->network()->addPluginV2(inputTensors, INPUT_SIZE2, *plugin);
   if (equal_layer == nullptr) {
@@ -57,9 +57,8 @@ int EqualTensorRT::AddInnerOp(TensorRTContext *ctx) {
   layer_ = equal_layer;
   nvinfer1::ITensor *equal_out = equal_layer->getOutput(0);
   equal_layer->setName(op_name_.c_str());
-  equal_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{equal_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{equal_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 

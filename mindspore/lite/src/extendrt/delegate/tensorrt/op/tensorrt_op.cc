@@ -21,19 +21,15 @@
 namespace mindspore::lite {
 const schema::Primitive *TensorRTOp::GetPrimitive() { return this->op_primitive_; }
 
-void TensorRTOp::AddInnerInTensors(ITensorHelper tensor) { this->tensorrt_in_tensors_.push_back(tensor); }
-
-void TensorRTOp::AddInnerOutTensors(ITensorHelper tensor) { this->tensorrt_out_tensors_.push_back(tensor); }
-
-std::vector<ITensorHelper> &TensorRTOp::GetInnerOutTensor() { return this->tensorrt_out_tensors_; }
-
-std::vector<ITensorHelper> &TensorRTOp::GetInnerInTensors() { return this->tensorrt_in_tensors_; }
-
 std::string TensorRTOp::GetOpName() { return this->op_name_; }
 
 std::vector<mindspore::MSTensor> &TensorRTOp::inputs() { return this->in_tensors_; }
 
 std::vector<mindspore::MSTensor> &TensorRTOp::outputs() { return this->out_tensors_; }
+
+ITensorHelper TensorRTOp::input(TensorRTContext *ctx, size_t i) { return ctx->MsName2Tensor(in_tensors_[i].Name()); }
+
+ITensorHelper TensorRTOp::output(TensorRTContext *ctx, size_t i) { return ctx->MsName2Tensor(out_tensors_[i].Name()); }
 
 schema::PrimitiveType TensorRTOp::type() const { return this->type_; }
 
@@ -50,6 +46,16 @@ const std::vector<TensorRTOp *> &TensorRTOp::out_ops() const { return this->out_
 void TensorRTOp::SetRuntime(TensorRTRuntime *runtime) {
   this->runtime_ = runtime;
   device_id_ = runtime_->GetDeviceID();
+}
+
+bool TensorRTOp::HasConst() const {
+  return std::any_of(in_tensors_.begin(), in_tensors_.end(),
+                     [](const mindspore::MSTensor &tensor) { return tensor.Data() != nullptr && tensor.IsConst(); });
+}
+
+int TensorRTOp::ReadyInputsNumber(TensorRTContext *ctx) const {
+  return std::count_if(in_tensors_.begin(), in_tensors_.end(),
+                       [&](const mindspore::MSTensor &tensor) { return ctx->HasTensor(tensor.Name()); });
 }
 
 bool TensorRTOp::IsShapeKnown() {
@@ -69,7 +75,7 @@ int TensorRTOp::Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *e
 
 DynamicShapeParams TensorRTOp::GetDynamicShapeParams() const { return this->dynamic_shape_params_; }
 
-int TensorRTOp::SetInt8DynamicRange() {
+int TensorRTOp::SetInt8DynamicRange(TensorRTContext *ctx) {
   // setting param layer_ forcely
   if (this->layer_ == nullptr) {
     MS_LOG(ERROR) << op_name_ << " layer is nullptr.";
@@ -92,8 +98,7 @@ int TensorRTOp::SetInt8DynamicRange() {
   for (size_t i = 0; i < in_tensors_.size(); i++) {
     auto tensor = in_tensors_.at(i);
     if (!tensor.IsConst()) {
-      tensorrt_in_tensors_.at(i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min,
-                                                              tensor.QuantParams().at(0).max);
+      input(ctx, i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min, tensor.QuantParams().at(0).max);
       // Don't set the presion on non-computation layers as they don't support int8.
       if (this->layer_->getType() != nvinfer1::LayerType::kCONSTANT &&
           this->layer_->getType() != nvinfer1::LayerType::kCONCATENATION &&
@@ -104,8 +109,7 @@ int TensorRTOp::SetInt8DynamicRange() {
   }
   for (size_t i = 0; i < out_tensors_.size(); i++) {
     auto tensor = out_tensors_.at(0);
-    tensorrt_out_tensors_.at(i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min,
-                                                             tensor.QuantParams().at(0).max);
+    output(ctx, i).trt_tensor_->setDynamicRange(tensor.QuantParams().at(0).min, tensor.QuantParams().at(0).max);
     // set output type of execution tensors.
     if (this->layer_->getOutput(i)->isExecutionTensor()) {
       this->layer_->setOutputType(i, nvinfer1::DataType::kINT8);

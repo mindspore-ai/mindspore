@@ -51,7 +51,7 @@ int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::
 }
 
 int AllGatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_};
   auto allgather_op = op_primitive_->value_as_AllGather();
   if (allgather_op == nullptr) {
     MS_LOG(ERROR) << "convert failed for " << op_name_;
@@ -67,9 +67,8 @@ int AllGatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   nvinfer1::ITensor *allgather_out = allgather_layer->getOutput(0);
   allgather_layer->setName(op_name_.c_str());
-  allgather_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{allgather_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{allgather_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = allgather_layer;
   return RET_OK;
 }

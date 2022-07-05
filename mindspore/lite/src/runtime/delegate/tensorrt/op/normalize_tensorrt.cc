@@ -15,7 +15,6 @@
  */
 
 #include "src/runtime/delegate/tensorrt/op/normalize_tensorrt.h"
-#include <functional>
 #include <memory>
 #include <numeric>
 #include "src/runtime/delegate/tensorrt/op/normalize_opt_plugin.h"
@@ -62,7 +61,7 @@ int NormalizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
 }
 
 int NormalizeTensorRT::PreprocessInputs(TensorRTContext *ctx) {
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &norm_input_);
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &norm_input_);
   if (ret != RET_OK || norm_input_.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim norm_input failed for " << op_name_;
     return RET_ERROR;
@@ -91,22 +90,19 @@ int NormalizeTensorRT::RunAsOptPlugin(TensorRTContext *ctx) {
   }
   layer_ = norm_layer;
   layer_->setName(op_name_.c_str());
-  AddInnerOutTensors(ITensorHelper{norm_layer->getOutput(0), norm_input_.format_, norm_input_.same_format_});
+  nvinfer1::ITensor *out_tensor = norm_layer->getOutput(0);
+  ctx->RegisterTensor(ITensorHelper{out_tensor, norm_input_.format_, norm_input_.same_format_}, out_tensors_[0].Name());
   return RET_OK;
 }
 
 int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   size_t axis = 1u << axis_;
   // first output, add later
-  AddInnerOutTensors(ITensorHelper{nullptr, norm_input_.format_, norm_input_.same_format_});
 
   // mean
   auto mean =
     ctx->network()->addReduce(*(norm_input_.trt_tensor_), nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(mean);
-  if (out_tensors_.size() == INPUT_SIZE3) {
-    AddInnerOutTensors(ITensorHelper{mean, norm_input_.format_, norm_input_.same_format_});
-  }
   // x - mean
   auto sub_mean = ctx->network()
                     ->addElementWise(*(norm_input_.trt_tensor_), *mean, nvinfer1::ElementWiseOperation::kSUB)
@@ -121,9 +117,6 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   // mean of (x - mean)^2
   auto var = ctx->network()->addReduce(*pow, nvinfer1::ReduceOperation::kAVG, axis, true)->getOutput(0);
   CHECK_NULL_RETURN(var);
-  if (out_tensors_.size() == INPUT_SIZE3) {
-    AddInnerOutTensors(ITensorHelper{var, norm_input_.format_, norm_input_.same_format_});
-  }
 
   // var + min epsilon
   auto const_epsilon = ConvertScalarToITensor(ctx, in_tensors_[0].Shape().size(), &epsilon_,
@@ -145,6 +138,7 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
   CHECK_NULL_RETURN(norm);
 
   // scale with gamma and beta
+  nvinfer1::ITensor *out_tensor = nullptr;
   if (gamma_ != nullptr && beta_ != nullptr) {
     auto gamma_out =
       ctx->network()->addElementWise(*norm, *gamma_, nvinfer1::ElementWiseOperation::kPROD)->getOutput(0);
@@ -152,10 +146,11 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
     auto beta_out =
       ctx->network()->addElementWise(*gamma_out, *beta_, nvinfer1::ElementWiseOperation::kSUM)->getOutput(0);
     CHECK_NULL_RETURN(beta_out);
-    tensorrt_out_tensors_[0].trt_tensor_ = beta_out;
+    out_tensor = beta_out;
   } else {
-    tensorrt_out_tensors_[0].trt_tensor_ = norm;
+    out_tensor = norm;
   }
+  ctx->RegisterTensor(ITensorHelper{out_tensor, norm_input_.format_, norm_input_.same_format_}, out_tensors_[0].Name());
   return RET_OK;
 }
 

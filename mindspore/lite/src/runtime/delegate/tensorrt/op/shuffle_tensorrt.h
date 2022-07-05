@@ -36,7 +36,7 @@ class ShuffleTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int InputTensorPreprocess();
+  int InputTensorPreprocess(TensorRTContext *ctx);
   int AddSqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddUnsqueezeOp(nvinfer1::IShuffleLayer *shuffle_layer);
   int AddTransposeOp(nvinfer1::IShuffleLayer *shuffle_layer);

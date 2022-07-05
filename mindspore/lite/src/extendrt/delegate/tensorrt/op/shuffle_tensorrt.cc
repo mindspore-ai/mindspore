@@ -98,7 +98,7 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   ctx_ = ctx;
 
-  int ret = InputTensorPreprocess();
+  int ret = InputTensorPreprocess(ctx);
   if (ret != RET_OK || shuffler_input_ == nullptr) {
     MS_LOG(ERROR) << "InputTensorPreprocess failed for " << op_name_;
     return RET_ERROR;
@@ -155,19 +155,19 @@ int ShuffleTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "output tensor create failed for " << op_name_;
     return RET_ERROR;
   }
-  shuffler_output_->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{shuffler_output_, out_format_, true});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{shuffler_output_, out_format_, true};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 
-int ShuffleTensorRT::InputTensorPreprocess() {
-  shuffler_input_ = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
-  out_format_ = tensorrt_in_tensors_[0].format_;
-  if (shuffler_input_->getDimensions().nbDims == DIMENSION_4D && !tensorrt_in_tensors_[0].same_format_) {
+int ShuffleTensorRT::InputTensorPreprocess(TensorRTContext *ctx) {
+  shuffler_input_ = input(ctx, 0).trt_tensor_;
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
+  out_format_ = input(ctx, 0).format_;
+  if (shuffler_input_->getDimensions().nbDims == DIMENSION_4D && !input(ctx, 0).same_format_) {
     // input tensor support NCHW format input
-    if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+    if (input(ctx, 0).format_ == Format::NCHW) {
       // for transpose op, if tensor has same dim with ms tensor, keep origin dims
       nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx_, *shuffler_input_);
       if (transpose_layer == nullptr) {
@@ -177,7 +177,7 @@ int ShuffleTensorRT::InputTensorPreprocess() {
       transpose_layer->setName((op_name_ + "_transpose_in").c_str());
       shuffler_input_ = transpose_layer->getOutput(0);
       out_format_ = Format::NHWC;
-    } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    } else if (input(ctx, 0).format_ == Format::NHWC) {
       // infer format may error, correct here
       nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx_, *shuffler_input_);
       if (transpose_layer == nullptr) {
@@ -289,11 +289,11 @@ int ShuffleTensorRT::AddReshapeOp(nvinfer1::IShuffleLayer *shuffle_layer) {
     shuffle_layer->setReshapeDimensions(
       InferReshapeDims(shuffler_input_->getDimensions(), in_tensors_[0].Shape(), out_tensors_[0].Shape()));
   } else {
-    if (tensorrt_in_tensors_.size() != INPUT_SIZE2) {
+    if (in_tensors_.size() != INPUT_SIZE2) {
       MS_LOG(ERROR) << "invalid shape tensor for reshape " << op_name_;
       return RET_ERROR;
     }
-    shuffle_layer->setInput(1, *tensorrt_in_tensors_[1].trt_tensor_);
+    shuffle_layer->setInput(1, *input(ctx_, 1).trt_tensor_);
   }
   shuffler_output_ = shuffle_layer->getOutput(0);
   return RET_OK;
@@ -303,9 +303,8 @@ int ShuffleTensorRT::AddFlattenOp(nvinfer1::IShuffleLayer *shuffle_layer) {
   nvinfer1::Dims flatten_dims;
   const std::vector<int64_t> &input_shape = in_tensors_[0].Shape();
   flatten_dims.nbDims = DIMENSION_2D;
-  flatten_dims.d[0] = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0] == -1
-                        ? 0
-                        : tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0];
+  flatten_dims.d[0] =
+    input(ctx_, 0).trt_tensor_->getDimensions().d[0] == -1 ? 0 : input(ctx_, 0).trt_tensor_->getDimensions().d[0];
   flatten_dims.d[1] = std::accumulate(input_shape.begin() + 1, input_shape.end(), 1, std::multiplies<int>());
   if (flatten_dims.d[1] <= 0) {
     MS_LOG(ERROR) << op_name_ << "infer shape failed";

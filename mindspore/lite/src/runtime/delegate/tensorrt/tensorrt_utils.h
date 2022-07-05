@@ -42,11 +42,6 @@ namespace mindspore::lite {
   (NV_TENSORRT_MAJOR > major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR >= minor))
 #define TRT_VERSION_LS(major, minor) \
   (NV_TENSORRT_MAJOR < major) || ((NV_TENSORRT_MAJOR == major && NV_TENSORRT_MINOR < minor))
-struct ITensorHelper {
-  nvinfer1::ITensor *trt_tensor_{nullptr};
-  mindspore::Format format_{Format::NHWC};
-  bool same_format_{true};
-};
 struct ActivationParams {
   nvinfer1::ActivationType activation_type;
   bool has_alpha;
@@ -90,6 +85,9 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
 nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const void *value,
                                           const DataType data_type, const std::string &op_name);
 
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const mindspore::MSTensor &ms_tensor,
+                                          const DataType data_type, const std::string &op_name);
+
 nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
                                                  const std::vector<int64_t> &expect_shape, const std::string &op_name);
 
@@ -121,8 +119,7 @@ std::string GetTensorFormat(nvinfer1::ITensor *trt_tensors);
 
 std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(schema::ReduceMode mode);
 
-int PreprocessInputs2SameDim(TensorRTContext *ctx, const ITensorHelper &input_tensor_helper,
-                             ITensorHelper *out_tensor_helper);
+int PreprocessInputs2SameDim(TensorRTContext *ctx, ITensorHelper input_tensor_helper, ITensorHelper *out_tensor_helper);
 
 int GetDimsVolume(const nvinfer1::Dims &dims);
 
@@ -137,6 +134,8 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
 nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const nvinfer1::Dims &shape);
 
 int ParseData2Vector(const mindspore::MSTensor &ms_tensor, std::vector<float> *dst);
+
+void DebugDims(const nvinfer1::Dims &dims);
 
 template <typename T1, typename T2>
 bool SameDims(const std::vector<T1> &shape1, const std::vector<T2> &shape2) {

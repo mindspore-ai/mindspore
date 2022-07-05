@@ -79,29 +79,30 @@ class LSTMTensorRT : public TensorRTOp {
   int Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine) override;
 
  private:
-  int PreProcess();
+  int PreProcess(TensorRTContext *ctx);
 
-  int AddLSTMLayers();
+  int AddLSTMLayers(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddLSTMCell(const LstmState *layer_input_states, const LstmWeights *layer_weights,
-                                 LstmState *next_state);
+  nvinfer1::ITensor *AddLSTMCell(TensorRTContext *ctx, const LstmState *layer_input_states,
+                                 const LstmWeights *layer_weights, LstmState *next_state);
 
-  nvinfer1::ITensor *Reshape(nvinfer1::ITensor *tensor, nvinfer1::Dims dims);
+  nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *tensor, nvinfer1::Dims dims);
 
-  nvinfer1::ITensor *ConcateAll(std::vector<nvinfer1::ITensor *> all_tensort, int axis = 0);
+  nvinfer1::ITensor *ConcateAll(TensorRTContext *ctx, std::vector<nvinfer1::ITensor *> all_tensort, int axis = 0);
 
-  nvinfer1::ITensor *AddLSTMCalculation(const LstmState &input_state, const LstmWeights &lstm_weights,
-                                        nvinfer1::ITensor **hidden_out, nvinfer1::ITensor **cell_out,
-                                        bool is_backward = false);
-  nvinfer1::ITensor *AddLSTMOneLoop(const LstmState &input_state, const LstmWeights &lstm_weights,
+  nvinfer1::ITensor *AddLSTMCalculation(TensorRTContext *ctx, const LstmState &input_state,
+                                        const LstmWeights &lstm_weights, nvinfer1::ITensor **hidden_out,
+                                        nvinfer1::ITensor **cell_out, bool is_backward = false);
+  nvinfer1::ITensor *AddLSTMOneLoop(TensorRTContext *ctx, const LstmState &input_state, const LstmWeights &lstm_weights,
                                     nvinfer1::ITensor **hidden_out, nvinfer1::ITensor **cell_out,
                                     bool is_backward = false);
 
-  int ParseLSTMCellInputs(int layer_index, nvinfer1::ITensor *hidden_init, nvinfer1::ITensor *cell_init,
-                          LstmState *input_state, int *input_weight_offset, int *state_weight_offset, int *bias_offset,
-                          LstmWeights *lstm_weights, const LstmState &next_state);
+  int ParseLSTMCellInputs(TensorRTContext *ctx, int layer_index, nvinfer1::ITensor *hidden_init,
+                          nvinfer1::ITensor *cell_init, LstmState *input_state, int *input_weight_offset,
+                          int *state_weight_offset, int *bias_offset, LstmWeights *lstm_weights,
+                          const LstmState &next_state);
 
-  nvinfer1::INetworkDefinition *network_{nullptr};
+  // nvinfer1::INetworkDefinition *network_{nullptr};
   nvinfer1::ITensor *input_data_{nullptr};
   nvinfer1::ITensor *sequence_size_input_{nullptr};
   nvinfer1::ITensor *op_data_out_{nullptr};

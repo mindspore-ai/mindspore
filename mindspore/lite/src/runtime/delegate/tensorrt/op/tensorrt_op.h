@@ -69,25 +69,25 @@ class TensorRTOp {
 
   virtual int AddInnerOp(TensorRTContext *ctx) = 0;
 
-  virtual int SetInt8DynamicRange();
+  virtual int SetInt8DynamicRange(TensorRTContext *ctx);
 
   virtual int Prepare(void **network_tensor_bindings, nvinfer1::ICudaEngine *engine);
 
   const schema::Primitive *GetPrimitive();
 
-  void AddInnerInTensors(ITensorHelper tensor);
+  bool HasConst() const;
 
-  void AddInnerOutTensors(ITensorHelper tensor);
-
-  std::vector<ITensorHelper> &GetInnerOutTensor();
-
-  std::vector<ITensorHelper> &GetInnerInTensors();
+  int ReadyInputsNumber(TensorRTContext *ctx) const;
 
   std::string GetOpName();
 
   std::vector<mindspore::MSTensor> &inputs();
 
+  ITensorHelper input(TensorRTContext *ctx, size_t i);
+
   std::vector<mindspore::MSTensor> &outputs();
+
+  ITensorHelper output(TensorRTContext *ctx, size_t i);
 
   schema::PrimitiveType type() const;
 
@@ -122,10 +122,6 @@ class TensorRTOp {
   std::vector<mindspore::MSTensor> in_tensors_;
 
   std::vector<mindspore::MSTensor> out_tensors_;
-
-  std::vector<ITensorHelper> tensorrt_in_tensors_;
-
-  std::vector<ITensorHelper> tensorrt_out_tensors_;
 
   std::vector<TensorRTOp *> in_ops_;
 

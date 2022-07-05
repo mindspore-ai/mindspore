@@ -49,8 +49,8 @@ int TileTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
 int TileTensorRT::AddInnerOp(TensorRTContext *ctx) {
   auto repeats_tensor = in_tensors_[1];
   CHECK_NULL_RETURN(repeats_tensor.Data());
-  if (repeats_tensor.ElementNum() != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims) {
-    MS_LOG(ERROR) << op_name_ << " has input dims: " << tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims
+  if (repeats_tensor.ElementNum() != input(ctx, 0).trt_tensor_->getDimensions().nbDims) {
+    MS_LOG(ERROR) << op_name_ << " has input dims: " << input(ctx, 0).trt_tensor_->getDimensions().nbDims
                   << ", and invalid repeats cnt: " << repeats_tensor.ElementNum();
     return RET_ERROR;
   }
@@ -61,7 +61,7 @@ int TileTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   ITensorHelper tile_input;
 
-  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &tile_input);
+  ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &tile_input);
   if (ret != RET_OK || tile_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << op_name_ << " preprocess tensor failed.";
     return RET_ERROR;
@@ -93,8 +93,7 @@ int TileTensorRT::RunAsConcat(TensorRTContext *ctx, const ITensorHelper &tile_in
   concat_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *tile_out = concat_layer->getOutput(0);
   layer_ = concat_layer;
-  tile_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{tile_out, tile_input.format_, true});
+  ctx->RegisterTensor(ITensorHelper{tile_out, tile_input.format_, true}, out_tensors_[0].Name());
   return RET_OK;
 }
 int TileTensorRT::RunAsPlugin(TensorRTContext *ctx, const ITensorHelper &tile_input) {
@@ -105,8 +104,7 @@ int TileTensorRT::RunAsPlugin(TensorRTContext *ctx, const ITensorHelper &tile_in
   CHECK_NULL_RETURN(tile_layer);
   nvinfer1::ITensor *tile_out = tile_layer->getOutput(0);
   tile_layer->setName(op_name_.c_str());
-  tile_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{tile_out, tile_input.format_, true});
+  ctx->RegisterTensor(ITensorHelper{tile_out, tile_input.format_, true}, out_tensors_[0].Name());
   this->layer_ = tile_layer;
   return RET_OK;
 }

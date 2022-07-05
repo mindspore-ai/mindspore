@@ -45,11 +45,8 @@ class MatMulTensorRT : public TensorRTOp {
 
   nvinfer1::ITensor *AddAsFullConnect(TensorRTContext *ctx);
 
-  nvinfer1::ITensor *AddAsOptPlugin(TensorRTContext *ctx);
-
   nvinfer1::ITensor *AddBias(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor);
 
-  bool RunOptPlugin();
   bool RunFullConnect();
 
   bool transpose_a_{false};
