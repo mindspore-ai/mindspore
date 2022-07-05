@@ -270,7 +270,7 @@ build_lite() {
     elif [[ ("${MSLITE_ENABLE_NNIE}" == "on" || "${MSLITE_REGISTRY_DEVICE}" == "Hi3516D") && "${local_lite_platform}" == "x86_64" ]]; then
       MSLITE_REGISTRY_DEVICE=Hi3516D
     elif [[ "${MSLITE_MICRO_PLATFORM}" == cortex-m* && "${local_lite_platform}" == "x86_64" ]]; then
-      TOOLCHAIN_NAME="cortex-m7"
+      TOOLCHAIN_NAME=${MSLITE_MICRO_PLATFORM}
     fi
 
     machine=`uname -m`
@@ -353,9 +353,9 @@ build_lite() {
         echo "Use the '-I arm64' command when compiling MindSpore Lite on an aarch64 architecture system."
         exit 1
       fi
-      if [[ "${TOOLCHAIN_NAME}" == "cortex-m7" ]]; then
-        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/cortex-m7.toolchain.cmake
-        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=cortex-m7"
+      if [[ "${TOOLCHAIN_NAME}" == cortex-m* ]]; then
+        CMAKE_TOOLCHAIN_FILE=${BASEPATH}/mindspore/lite/cmake/${TOOLCHAIN_NAME}.toolchain.cmake
+        LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DTOOLCHAIN_NAME=${TOOLCHAIN_NAME}"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DPLATFORM_MCU=on"
         LITE_CMAKE_ARGS="${LITE_CMAKE_ARGS} -DMSLITE_MINDDATA_IMPLEMENT=off -DMSLITE_ENABLE_TRAIN=off -DMSLITE_GPU_BACKEND=off -DMSLITE_ENABLE_TOOLS=off"
       else
