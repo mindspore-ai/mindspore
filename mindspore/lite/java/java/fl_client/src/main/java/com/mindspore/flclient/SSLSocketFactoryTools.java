@@ -54,34 +54,6 @@ public class SSLSocketFactoryTools {
     private SSLSocketFactory sslSocketFactory;
     private SSLContext sslContext;
     private MyTrustManager myTrustManager;
-    private final HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-        @Override
-        public boolean verify(String hostname, SSLSession session) {
-            if (hostname == null || hostname.isEmpty()) {
-                LOGGER.severe("[SSLSocketFactoryTools] the parameter of <hostname> is null or empty, " +
-                        "please check!");
-                throw new IllegalArgumentException();
-            }
-            if (session == null) {
-                LOGGER.severe("[SSLSocketFactoryTools] the parameter of <session> is null, please " +
-                        "check!");
-                throw new IllegalArgumentException();
-            }
-            String domainName = flParameter.getDomainName();
-            if ((domainName == null || domainName.isEmpty() || domainName.split("//").length < 2)) {
-                LOGGER.severe("[SSLSocketFactoryTools] the <domainName> is null or not valid, it should" +
-                        " be like https://...... , please check!");
-                throw new IllegalArgumentException();
-            }
-            if (domainName.split("//")[1].split(":").length < 2) {
-                LOGGER.severe("[SSLSocketFactoryTools] the format of <domainName> is not valid, it " +
-                        "should be like as https://127.0.0.1:6666 when setting <useSSL> to true, please check!");
-                throw new IllegalArgumentException();
-            }
-            String ip = domainName.split("//")[1].split(":")[0];
-            return hostname.equals(ip);
-        }
-    };
 
     private SSLSocketFactoryTools() {
         initSslSocketFactory();
@@ -151,10 +123,6 @@ public class SSLSocketFactoryTools {
             }
         }
         return cert;
-    }
-
-    public HostnameVerifier getHostnameVerifier() {
-        return hostnameVerifier;
     }
 
     public SSLSocketFactory getmSslSocketFactory() {
