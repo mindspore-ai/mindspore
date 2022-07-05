@@ -499,7 +499,7 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
           when mode is "bilinear".
 
     Args:
-        x (Tensor): a 3-D, 4-D or 5-D tensor which to resize.
+        x (Tensor): a 3-D or 4-D tensor which to resize.
         roi (tuple[float], optional): a tuple of float. Only takes effect when attr coordinate_transformation_mode is
             'crop_and_resize'.
         scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension. Its length is the
