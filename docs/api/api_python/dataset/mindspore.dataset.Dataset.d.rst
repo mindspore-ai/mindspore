@@ -153,10 +153,7 @@
 .. py:method:: input_indexs
     :property:
 
-    数据集的input index信息。
-
-    .. note::
-        该接口在将来会被删除或不可见，请使用 `project` 更改列的顺序，并可以使用 `create_tuple_iterator` 验证输出顺序。
+    获取/设置数据列索引，它表示使用下沉模式时数据列映射至网络中的对应关系。
 
     **返回：**
 
