@@ -64,6 +64,7 @@ constexpr auto kGather = "Gather";
 constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
+constexpr auto kConcatOffsetV1 = "ConcatOffsetV1";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
 constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
@@ -155,7 +156,8 @@ const std::set<std::string> kDynamicInputOps{kPrint,
                                              kReservoirReplayBufferPush,
                                              kReservoirReplayBufferSample,
                                              kIdentityN,
-                                             kSparseConcat};
+                                             kSparseConcat,
+                                             kConcatOffsetV1};
 const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kKLDivLoss, "KLDiv"},
   {kKLDivLossGrad, "KlDivLossGrad"},
@@ -181,6 +183,7 @@ const std::map<std::string, std::string> kOpNameToAicpuOpNameMap{
   {kAvgPoolV1, "AvgPool"},
   {kNonZero, "Where"},
   {kAvgPoolGradV1, "AvgPoolGrad"},
+  {kConcatOffsetV1, "ConcatOffset"},
   {kTensorScatterElements, "ScatterElements"},
   {kHSigmoid, "HardSigmoid"},
   {kHSigmoidGrad, "HardSigmoidGrad"}};

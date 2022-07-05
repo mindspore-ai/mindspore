@@ -2656,6 +2656,63 @@ class Concat(PrimitiveWithCheck):
         return value
 
 
+class ConcatOffsetV1(Primitive):
+    r"""
+    primitive for computing Concat’s gradient.
+
+    Computes offsets of concat inputs within its output. Accumulate offsets from zero along `axis`.
+    If tensor element in `x` isn't along `axis`, they should be the same along their axis.
+
+    Inputs:
+        - **axis** (Tensor): The specified axis, required to be 0-D Tensor object with dtype int32.
+          Input `axis` should fall in :math:`[-numelement, numelement - 1]`,
+          say numelement is the element number of first tensor in `x`.
+        - **x** (tuple[Tensor], list[Tensor]) - A tuple or a list of input tensors.
+          The tensors in `x` are all required to be a vector, in other word, 1-D Tensor object with dtype int32.
+          Suppose there are two tensors in this tuple or list, namely x1 and x2.
+          To perform `ConcatOffsetV1` in the axis 0 direction,
+          except for the 0th axis, all elements in other axes should be equal,
+          that is, :math:`x1[1] == x2[1], x1[2] == x2[2], ..., x1[R] == x2[R]`,
+          where the :math:`R` indicates the last axis.
+
+    Outputs:
+        Tensors. A tuple of N 1-D Tensor objects.
+        The data type is the same with the Inputs `x`, dtype int32.
+        The shape is the same with the Inputs `x`.
+
+    Raises:
+        TypeError: If `axis` is not a tensor.
+        TypeError: If dtype of tensor in `axis` is not int32.
+        TypeError: If `x` have different type of tensor.
+        TypeError: If dtype of tensor in `x` is not int32.
+        ValueError: If the shape rank of `axis` does not equal to 0.
+        ValueError: If the number of tensors in `x` is less than 2.
+        ValueError: If the shape rank of tensor in `x` does not equal to 1.
+        ValueError: If the element number of tensor in `x` is less than 1.
+        ValueError: If `x` have different shape of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> axis = Tensor(1, dtype=mstype.int32)
+        >>> x1 = Tensor(np.array([1, 2, 3]).astype(np.int32))
+        >>> x2 = Tensor(np.array([1, 5, 3]).astype(np.int32))
+        >>> x3 = Tensor(np.array([1, 4, 3]).astype(np.int32))
+        >>> op = ops.ConcatOffsetV1()
+        >>> output = op(axis, (x1, x2, x3))
+        >>> print(output)
+        (Tensor(shape=[3,], dtype=Int32, value=[0, 0, 0]),
+         Tensor(shape=[3,], dtype=Int32, value=[0, 2, 0]),
+         Tensor(shape=[3,], dtype=Int32, value=[0, 7, 0]))
+
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize ConcatOffsetV1"""
+
+
 class ParallelConcat(PrimitiveWithInfer):
     r"""
     Concats tensor in the first dimension.
