@@ -68,8 +68,12 @@ class TensorCopySlicesGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
 
-    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    input_shape_ = Convert2SizeTClipNeg(shape_signed);
     auto update_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    if (AnfAlgo::IsShapesDynamic({shape_signed, update_shape})) {
+      return true;
+    }
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") || CHECK_SHAPE_NULL(update_shape, kernel_name_, "update");
     if (is_null_input_) {

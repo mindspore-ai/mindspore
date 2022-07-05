@@ -53,10 +53,16 @@ class SquaredDifferenceOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    auto input_shape1 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
-    auto input_shape2 = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
-    auto output_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     kernel_node_ = kernel_node;
+    auto input_shape1_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto input_shape2_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto output_shape_signed = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape1_signed, input_shape2_signed, output_shape_signed})) {
+      return true;
+    }
+    auto input_shape1 = Convert2SizeTClipNeg(input_shape1_signed);
+    auto input_shape2 = Convert2SizeTClipNeg(input_shape2_signed);
+    auto output_shape = Convert2SizeTClipNeg(output_shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape1, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(input_shape2, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name, "output");

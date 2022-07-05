@@ -63,16 +63,16 @@ class DynamicBroadcastGradientArgsGpuKernelMod : public DeprecatedNativeGpuKerne
     if (input_num != kInputNum) {
       MS_LOG(EXCEPTION) << "DynamicBroadcastGradiendArgs needs " << kInputNum << " inputs, but get " << input_num;
     }
-    auto s0_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
-    auto s1_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
+    auto s0_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto s1_shape = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
     auto r0_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
     auto r1_shape = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 1));
     if (s0_shape.size() != 1 || s1_shape.size() != 1) {
       MS_LOG(EXCEPTION) << "Inputs must be [1-D], but get " << s0_shape.size() << "-D and " << s1_shape.size() << "-D.";
     }
 
-    auto s0_size = std::accumulate(s0_shape.begin(), s0_shape.end(), sizeof(T), std::multiplies<size_t>());
-    auto s1_size = std::accumulate(s1_shape.begin(), s1_shape.end(), sizeof(T), std::multiplies<size_t>());
+    auto s0_size = sizeof(T) * SizeOf(s0_shape);
+    auto s1_size = sizeof(T) * SizeOf(s1_shape);
 
     input_size_list_.push_back(s0_size);
     input_size_list_.push_back(s1_size);

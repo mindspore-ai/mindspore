@@ -55,7 +55,11 @@ class FlattenGardBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 1, but got " << input_num;
     }
 
-    auto shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

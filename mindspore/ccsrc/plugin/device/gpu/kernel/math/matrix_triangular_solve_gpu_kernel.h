@@ -131,6 +131,10 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
 
     InitShape(kernel_node);
+    if (is_dynamic_) {
+      return true;
+    }
+
     if (is_null_input_) {
       InitSizeLists();
       return true;
@@ -203,8 +207,15 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   }
 
   void InitShape(const CNodePtr &kernel_node) {
-    auto a_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-    auto b_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1));
+    is_dynamic_ = false;
+    auto a_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto b_shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    if (AnfAlgo::IsShapesDynamic({a_shape_signed, b_shape_signed})) {
+      is_dynamic_ = true;
+      return;
+    }
+    auto a_shape = Convert2SizeTClipNeg(a_shape_signed);
+    auto b_shape = Convert2SizeTClipNeg(b_shape_signed);
 
     is_null_input_ =
       CHECK_SHAPE_NULL(a_shape, kernel_name_, "input_a") || CHECK_SHAPE_NULL(b_shape, kernel_name_, "input_b");
@@ -234,6 +245,7 @@ class MatrixTriangularSolveGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   int lda_{0};
   int ldb_{0};
   bool is_null_input_{false};
+  bool is_dynamic_{false};
   std::vector<T *> host_a_array_;
   std::vector<T *> host_dst_array_;
   cublasHandle_t blas_handle_{nullptr};

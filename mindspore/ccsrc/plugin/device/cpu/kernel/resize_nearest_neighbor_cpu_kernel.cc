@@ -30,7 +30,11 @@ constexpr size_t kResizeNearestNeighborAttrSize = 2;
 void ResizeNearestNeighborCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  if (IsDynamic(shape_signed)) {
+    return;
+  }
+  auto input_shape = Convert2SizeTClipNeg(shape_signed);
   std::vector<int64_t> output_size = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, SIZE);
   align_corners_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "align_corners");
   dtype_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);

@@ -75,7 +75,11 @@ class SparseFtrlGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     gradient_size_ = sizeof(T);
     indices_size_ = sizeof(S);
 
-    auto variable_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto variable_shape = Convert2SizeTClipNeg(shape_signed);
     auto accumulation_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
     auto linear_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 2);
     auto gradient_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 3);

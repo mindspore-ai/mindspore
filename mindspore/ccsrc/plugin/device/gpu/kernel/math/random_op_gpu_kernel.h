@@ -172,7 +172,11 @@ class RandomOpGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs should be 1, but got " << output_num;
     }
     auto input_shape_0 = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape_0, shape_signed})) {
+      return true;
+    }
+    auto output_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ =
       CHECK_SHAPE_NULL(input_shape_0, kernel_name, "input") || CHECK_SHAPE_NULL(output_shape, kernel_name, "output");
     if (is_null_input_) {
