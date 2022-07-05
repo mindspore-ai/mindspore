@@ -596,7 +596,8 @@ void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &s
 void DumpConstantInfo(const KernelGraphPtr &graph, const std::string &target_dir) {
   // Dump constant to npy file
   MS_LOG(INFO) << "Start e2e dump Const values";
-  E2eDump::DumpConstantData(graph.get(), target_dir);
+  auto debugger = Debugger::GetInstance();
+  E2eDump::DumpConstantData(graph.get(), target_dir, debugger.get());
 }
 #else
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &, const std::string &, const std::string &, LocDebugDumpMode) {

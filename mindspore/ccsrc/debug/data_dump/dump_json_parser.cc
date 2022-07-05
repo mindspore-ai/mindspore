@@ -461,7 +461,7 @@ void DumpJsonParser::ParseSavedData(const nlohmann::json &content) {
                          "set saved_data to tensor or use a GPU or Ascend device";
   }
   if (IsStatisticDump() && context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    if (file_format_ != JsonFileFormat::FORMAT_NPY) {
+    if (!IsNpyFormat()) {
       MS_LOG(EXCEPTION) << "Dump Json parse failed, storing statistic dump is only supported on Ascend when "
                            "file_format is set to 'npy'.";
     }
@@ -535,6 +535,8 @@ bool DumpJsonParser::IsStatisticDump() const { return saved_data_ == kStatisticD
 bool DumpJsonParser::IsTensorDump() const { return saved_data_ == kTensorDump || IsFullDump(); }
 
 bool DumpJsonParser::IsFullDump() const { return saved_data_ == kFullDump; }
+
+bool DumpJsonParser::IsNpyFormat() const { return file_format_ == JsonFileFormat::FORMAT_NPY; }
 
 bool DumpJsonParser::IsDumpIter(uint32_t iteration) const {
   // bool DumpJsonParser::IsDumpIter(uint32_t iteration) --> checks if iteration should be dumped or not.
