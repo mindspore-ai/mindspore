@@ -425,7 +425,6 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       // 'ActorA->ActorB' to 'ActorA->FusionActor'.
       auto from_actor = FetchActor(input_data_arrow_aid.first.Name());
       MS_EXCEPTION_IF_NULL(from_actor);
-      auto old_to_actor_name = input_data_arrow->to_op_id_.Name();
       // Record the input index of real actor and fusion actor.
       (void)fusion_actor->real_input_data_.emplace_back(std::make_pair(actor.get(), input_data_arrow->to_input_index_));
       from_actor->data_arrow_to_fusion_actor_indexs_[input_data_arrow] = fusion_actor->input_data_arrow_aids_.size();
@@ -435,16 +434,6 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       ++fusion_actor->input_datas_num_;
       (void)fusion_actor->input_data_arrow_aids_.emplace_back(
         std::make_pair(input_data_arrow_aid.first, input_data_arrow));
-
-      // Modify the batch data arrows.
-      if (TEST_FLAG(input_data_arrow->flag_, kOutputDataFlagBatch)) {
-        if (from_actor->batch_output_data_arrows_.count(old_to_actor_name) > 0) {
-          auto &new_to_actor_name = fusion_actor->GetAID().Name();
-          auto batch_data_arrow = from_actor->batch_output_data_arrows_[old_to_actor_name];
-          from_actor->batch_output_data_arrows_[new_to_actor_name] = batch_data_arrow;
-          (void)from_actor->batch_output_data_arrows_.erase(old_to_actor_name);
-        }
-      }
     }
 
     // Link control arrow of fusion actor by the input control arrow of real actor.
@@ -458,6 +447,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
         continue;
       }
 
+      SET_FLAG(input_control_arrow->flag_, kOutputDataFlagToFusion);
       // The ActorB is in fusion actor and the input ActorA is on the outside of fusion actor, then change
       // 'ActorA->ActorB' to 'ActorA->FusionActor'.
       (void)fusion_actor->real_input_controls_[input_control_arrow_aid.first.Name()].emplace_back(actor.get());
