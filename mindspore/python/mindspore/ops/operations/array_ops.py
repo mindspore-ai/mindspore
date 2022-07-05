@@ -26,7 +26,7 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.initializer import Zero
 from .. import signature as sig
-from .._utils import get_broadcast_shape, is_shape_unknown
+from .._utils import get_broadcast_shape, is_shape_unknown, is_shape_known
 from ..operations.math_ops import _infer_shape_reduce
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from ..._checkparam import Rel
@@ -1329,7 +1329,7 @@ class Split(PrimitiveWithCheck):
         x_shape = list(x['shape'])
         dim = len(x_shape)
         validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
-        if -1 not in x_shape:
+        if is_shape_known(x_shape):
             # only validate when shape fully known
             output_valid_check = x_shape[self.axis] % self.output_num
             if output_valid_check != 0:
@@ -1622,7 +1622,7 @@ class Fill(PrimitiveWithInfer):
                         mstype.complex128]
         validator.check_types_same_and_valid({"value": dtype['value']}, valid_dtypes, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
-        if -1 not in dims['value']:
+        if is_shape_known(dims['value']):
             for i, item in enumerate(dims['value']):
                 validator.check_positive_int(item, f'dims[{i}]', self.name)
             ret = np.full(dims['value'], x['value'], x_nptype)
@@ -2499,7 +2499,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         validator.check_positive_int(segment_ids_shp_len, "rank of segment_ids", self.name)
         validator.check(f'rank of input_x', len(x_shp),
                         'rank of segments_id', len(segment_ids_shp), Rel.GE, self.name)
-        if -1 not in x_shp and -1 not in segment_ids_shp:
+        if is_shape_known(x_shp) and is_shape_known(segment_ids_shp):
             # only validate when both shapes fully known
             for i, value in enumerate(segment_ids_shp):
                 validator.check("ids[%d]" % i, value, 'input[%d]' % i, x_shp[i], Rel.EQ, self.name)
@@ -2583,7 +2583,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
 
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if -1 not in x_shape and -1 not in segment_ids_shape:
+        if is_shape_known(x_shape) and is_shape_known(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -2691,7 +2691,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
 
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.number], self.name)
-        if -1 not in x_shape and -1 not in segment_ids_shape:
+        if is_shape_known(x_shape) and is_shape_known(segment_ids_shape):
             # only validate when both shapes fully known
             validator.check(f'first shape of input_x', x_shape[0],
                             'length of segments_id', segment_ids_shape[0], Rel.EQ, self.name)
@@ -3680,7 +3680,7 @@ class StridedSlice(PrimitiveWithInfer):
         if begin_specical_value or end_specical_value:
             bd_has_min_max_value = True
 
-        if bd_has_min_max_value and (-1 not in x_shape):
+        if bd_has_min_max_value and is_shape_known(x_shape):
             ret_shape = [-1] * len(x_shape)
             ret_min_shape = list(x_shape)
             ret_max_shape = list(x_shape)
@@ -3709,7 +3709,7 @@ class StridedSlice(PrimitiveWithInfer):
                 rets['min_shape'] = ret_min_shape
                 rets['max_shape'] = ret_max_shape
 
-            if -1 not in x_shape:
+            if is_shape_known(x_shape):
                 return self._compute_max_min_shape(rets, x_shape, ret_shape)
 
             return rets
