@@ -19,10 +19,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_COMMON_VISIT_H_
 
-#include <stdexcept>
-#include <list>
 #include <vector>
-#include <string>
 #include <memory>
 
 #include "utils/hash_map.h"
@@ -35,8 +32,8 @@ class Visitor {
  public:
   Visitor() {}
   ~Visitor() = default;
-  bool Visit(const VectorRef &e, VectorRef *const values_ref, BaseRef *out) const;
-  bool Visit(const BaseRef &e, VectorRef *const values_ref, BaseRef *out) const;
+  bool Visit(const VectorRef &v_any, VectorRef *const values_ref, BaseRef *visit_out) const;
+  bool Visit(const BaseRef &any, VectorRef *const values_ref, BaseRef *visit_out) const;
   void Visit(const AnfNodePtr &node, VectorRef *const values_ref, AnfNodePtr *output) const;
   void Visit(const CNodePtr &cnode, VectorRef *const values_ref, AnfNodePtr *output) const;
   void Visit(const ValueNodePtr &vnode, VectorRef *const values_ref, AnfNodePtr *output) const;

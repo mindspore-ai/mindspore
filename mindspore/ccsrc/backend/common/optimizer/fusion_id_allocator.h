@@ -31,11 +31,11 @@ class FusionIdAllocator {
   void Init();
   int64_t AllocateFusionId();
   bool HasFusionIdAttr(const AnfNodePtr &node) const;
-  int64_t GetFusionId(const AnfNodePtr &node);
-  void SetFusionId(const AnfNodePtr &node, int64_t id);
+  int64_t GetFusionId(const AnfNodePtr &node) const;
+  void SetFusionId(const AnfNodePtr &node, int64_t id) const;
 
  private:
-  int64_t fusion_id;
+  int64_t fusion_id = 0;
 };
 using FusionIdAllocatorPtr = std::shared_ptr<FusionIdAllocator>;
 }  // namespace opt

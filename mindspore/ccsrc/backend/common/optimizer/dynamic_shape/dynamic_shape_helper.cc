@@ -188,7 +188,7 @@ AnfNodePtr GenInitNode(const AnfNodePtr &node) {
       args = std::make_shared<kernel::KernelArgs>();
     }
     if (kernel_mod->Resize(args->op, args->inputs, args->outputs, args->depend_tensor_map) ==
-        kernel::KRET_RESIZE_FAILED) {
+        static_cast<int>(kernel::KRET_RESIZE_FAILED)) {
       MS_LOG(EXCEPTION) << "Node " << cnode->fullname_with_scope() << " Resize failed.";
     }
   };

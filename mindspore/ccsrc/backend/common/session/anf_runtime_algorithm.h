@@ -67,7 +67,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get input format select of anf node
   static std::string GetInputFormat(const AnfNodePtr &node, size_t input_idx);
   // get output format from prev node,input_index is the input index of current node related to prev node
-  static std::string GetPrevNodeOutputFormat(const AnfNodePtr &node, size_t input_idx);
+  static std::string GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx);
   // get reshape_type of from the output of input node.
   static std::string GetPrevNodeOutputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // get output shapes which will built and run in device
@@ -81,7 +81,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static std::vector<int64_t> GetInputDeviceShapeForTbeBuild(const AnfNodePtr &node, const size_t input_idx,
                                                              const std::string &format);
   // Get Input Padding Axis
-  static std::string GetInputReshapeType(const AnfNodePtr &node, size_t output_idx);
+  static std::string GetInputReshapeType(const AnfNodePtr &node, size_t input_idx);
   // Get Output Padding Axis
   static std::string GetOutputReshapeType(const AnfNodePtr &node, size_t output_idx);
   // get output select data type of anf node
@@ -89,7 +89,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // get input select data type of anf node
   static TypeId GetInputDeviceDataType(const AnfNodePtr &node, size_t input_idx);
   // get output select data type from prev node,input_index is the input index of current node related to prev node
-  static TypeId GetPrevNodeOutputDeviceDataType(const AnfNodePtr &node, size_t input_idx);
+  static TypeId GetPrevNodeOutputDeviceDataType(const AnfNodePtr &anf_node, size_t input_idx);
   // get output device addr of anf_node
   static const DeviceAddress *GetOutputAddr(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = true);
   // get mutable output device addr of anf_node
@@ -102,7 +102,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   // check whether workspace addr is exist or not
   static bool WorkspaceAddrExist(const AnfNodePtr &node, size_t output_idx);
   // get address from prev node,input_index is the input index of current node related to prev node
-  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &node, size_t input_idx,
+  static const DeviceAddress *GetPrevNodeOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                     bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
@@ -176,7 +176,7 @@ class BACKEND_EXPORT AnfRuntimeAlgorithm {
   static bool IsNeedUpdateShapeAndTypeAfterLaunch(const AnfNodePtr &cnode);
   // The size of output address may be changed in dynamic shape scenario, for example, the output shape of operator
   // 'Unique' will change after Launch, the output address size should update.
-  static void UpdateOutputAddrSize(device::KernelInfo *kernel_info, const CNodePtr &kernel);
+  static void UpdateOutputAddrSize(device::KernelInfo const *kernel_info, const CNodePtr &kernel);
   // Update the shape of internal parameter in the sub graph.
   static void UpdateInternalParameterShape(const std::map<size_t, std::vector<AnfNodeWeakPtr>> &internal_parameters,
                                            const CNodePtr &cnode);

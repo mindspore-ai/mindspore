@@ -26,7 +26,7 @@ class AddDynamicShapeAttr : public PatternProcessPass {
  public:
   explicit AddDynamicShapeAttr(bool multigraph = true) : PatternProcessPass("add_dynamic_shape_attr", multigraph) {}
   ~AddDynamicShapeAttr() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

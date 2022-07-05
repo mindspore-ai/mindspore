@@ -36,7 +36,7 @@ class ConstInputToAttrInfoRegister {
   }
 
   ConstInputToAttrInfoRegister &SetConstInputToAttr(const mindspore::HashSet<size_t> &input_attr_set) {
-    (void)input_attr_set_.insert(input_attr_set.begin(), input_attr_set.end());
+    (void)input_attr_set_.insert(input_attr_set.cbegin(), input_attr_set.cend());
     return *this;
   }
 

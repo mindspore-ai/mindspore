@@ -145,7 +145,7 @@ CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg, const std::ve
 // check if the input node is CNode, then check it's input_size, return CNodePtr if check success.
 CNodePtr CheckAnfNodeIfCNodeAndInputSize(const AnfNodePtr &node, size_t input_size);
 
-void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_num);
+void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size);
 
 bool HasSymmetricalKernelInfo(const AnfNodePtr &node_x, const AnfNodePtr &node_y);
 
@@ -161,7 +161,7 @@ void CreateOutputsOfFusedBn3(const FuncGraphPtr &graph, const AnfNodePtr &data_i
                              const std::vector<AnfNodePtr> &fused_bn2_outputs, const CNodePtr &bn_node,
                              std::vector<AnfNodePtr> *fused_bn3_outputs);
 
-void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &kernel_graph, const AnfNodePtr &anf_node_ptr, size_t output_num,
+void CreateMultipleOutputsOfAnfNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_num,
                                     std::vector<AnfNodePtr> *outputs);
 
 tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_ptr, const TypePtr &type_ptr,

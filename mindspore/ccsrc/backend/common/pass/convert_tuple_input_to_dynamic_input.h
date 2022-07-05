@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_CONVERT_TUPLE_INPUT_TO_DYNAMIC_INPUT_H_
 
 #include <string>
-#include <vector>
 
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
@@ -33,7 +32,7 @@ class ConvertTupleInputToDynamicInput : public PatternProcessPass {
 
   const BaseRef DefinePattern() const override;
 
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

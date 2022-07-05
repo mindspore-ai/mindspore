@@ -28,7 +28,7 @@ class ConvertConstInputToTensorInput : public PatternProcessPass {
   explicit ConvertConstInputToTensorInput(bool multigraph = true)
       : PatternProcessPass("convert_const_input_to_tensor_input", multigraph) {}
   ~ConvertConstInputToTensorInput() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr ConstInputToTensorInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;

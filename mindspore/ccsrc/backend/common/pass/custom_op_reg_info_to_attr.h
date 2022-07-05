@@ -25,7 +25,7 @@ class CustomOpRegInfoToAttr : public PatternProcessPass {
   explicit CustomOpRegInfoToAttr(bool multigraph = true)
       : PatternProcessPass("custom_op_reg_info_to_attr", multigraph) {}
   ~CustomOpRegInfoToAttr() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

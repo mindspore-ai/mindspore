@@ -85,7 +85,7 @@ bool IsDepend(const FuncGraph &graph, const AnfNodePtr &node, const std::vector<
       auto cnode = nd->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
       auto inputs = cnode->inputs();
-      (void)todo.insert(todo.end(), inputs.begin(), inputs.end());
+      (void)todo.insert(todo.cend(), inputs.cbegin(), inputs.cend());
     }
   }
   return false;
@@ -806,7 +806,7 @@ AnfNodePtr GetAnfNodeByVar(const EquivPtr &equiv, const VarPtr &var_node) {
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(var_node);
   auto iter = (*equiv).find(var_node);
-  if (iter == (*equiv).end()) {
+  if (iter == (*equiv).cend()) {
     MS_LOG(INFO) << "The equiv map doesn't contain the var_node after matched.";
     return nullptr;
   }

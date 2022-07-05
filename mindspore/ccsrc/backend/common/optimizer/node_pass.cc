@@ -56,7 +56,7 @@ void SkipSameOp(const AnfNodePtr &old_node, const AnfNodePtr &new_node, mindspor
   MS_EXCEPTION_IF_NULL(seen_node);
   if (old_node->isa<CNode>() && new_node->isa<CNode>() &&
       (common::AnfAlgo::GetCNodeName(old_node) == common::AnfAlgo::GetCNodeName(new_node))) {
-    seen_node->insert(new_node);
+    (void)seen_node->insert(new_node);
   }
 }
 
