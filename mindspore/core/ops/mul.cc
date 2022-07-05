@@ -49,7 +49,8 @@ TypePtr MulInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  return CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, prim->name());
+  return input_args[0]->BuildType();
 }
 }  // namespace
 
