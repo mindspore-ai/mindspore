@@ -16,6 +16,7 @@
 Parallel Loss for the Parallel Training
 This is an experimental interface that is subject to change or deletion.
 """
+from mindspore.parallel import set_algo_parameters
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -24,6 +25,7 @@ from mindspore.nn import Cell
 from mindspore.nn.loss.loss import _check_is_tensor
 from mindspore.parallel._utils import _get_parallel_mode, _is_sharding_propagation
 from mindspore.context import ParallelMode
+from mindspore.parallel._utils import _get_device_num, _get_pipeline_stages
 from .layers import _check_input_dtype, _check_input_shape
 from .op_parallel_config import default_dpmp_config, OpParallelConfig
 
@@ -190,8 +192,9 @@ class CrossEntropyLoss(Cell):
         self.enable_force_redistribute = False
         if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL, ParallelMode.SEMI_AUTO_PARALLEL):
             self.enable_force_redistribute = True
-        self.add = P.Add().shard(((dp, mp), ())).add_prim_attr("keep_alive", True)
-        self.add_label = P.Add().shard(((dp,), ())).add_prim_attr("keep_alive", True)
+            self.add = P.Add().shard(((dp, mp), ())).add_prim_attr("keep_alive", True)
+            self.add_label = P.Add().shard(((dp,), ())).add_prim_attr("keep_alive", True)
+            self._check_and_modify_sharding_context(dp)
         self.sum2 = P.ReduceSum().shard(((1,),))
         self.mul2 = P.Mul().shard(((1,), (1,)))
         self.add2 = P.Add()
@@ -201,11 +204,17 @@ class CrossEntropyLoss(Cell):
         self._softmax = _Softmax(parallel_config)
         self._nllloss = _NLLLoss(parallel_config)
 
+    @staticmethod
+    def _check_and_modify_sharding_context(dp):
+        device_num = _get_device_num()
+        stages = _get_pipeline_stages()
+        if _get_parallel_mode() in (ParallelMode.AUTO_PARALLEL,) and dp * stages != device_num:
+            set_algo_parameters(fully_use_devices=False)
+
     def construct(self, logits, label, input_mask):
         self._check_input(logits, label, input_mask)
 
         # The add is used for forcing the redistribution before stepping in sub graphs, when semi/auto parallel enabled.
-        # After relu, the following case should be euqal to add(logits, 0)
         if self.enable_force_redistribute:
             logits = self.add(logits, 0)
             label = self.add_label(label, 0)

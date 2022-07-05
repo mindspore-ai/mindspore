@@ -631,6 +631,9 @@ void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const
       MS_LOG(INFO) << "No kernel address";
       return;
     }
+    if (!AnfAlgo::OutputAddrExist(ref_real_node, ref_real_node_index, true)) {
+      return;
+    }
     auto address = AnfAlgo::GetMutableOutputAddr(ref_real_node, ref_real_node_index);
     auto format = AnfAlgo::GetOutputFormat(ref_real_node, ref_real_node_index);
     auto type = AnfAlgo::GetOutputDeviceDataType(ref_real_node, ref_real_node_index);

@@ -130,15 +130,7 @@ bool NeedUpdate(const CNodePtr &getitem_cnode) {
 }
 
 bool WhetherUseDropoutV3(const CNodePtr &dropout, const abstract::ShapePtr &input_shape) {
-  // Only GPT with static shape use DropoutV3
-  auto fullname = dropout->fullname_with_scope();
-  if (fullname.find("PanguAlpha") != std::string::npos && !input_shape->IsDynamic()) {
-    auto shape = input_shape->shape();
-    int64_t shape_size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int64_t>());
-    if (shape_size < kV3ShapeLimitSize) {
-      return true;
-    }
-  }
+  // v3 will cause memory error
   return false;
 }
 
