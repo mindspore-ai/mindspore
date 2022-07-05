@@ -1349,7 +1349,7 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, the shape is the same as the one after broadcasting,
-                and the data type is the one with higher precision or higher digits among `Tensor` and `power`.
+            and the data type is the one with higher precision or higher digits among `Tensor` and `power`.
 
         Raises:
             TypeError: If `power` is not one of the following: Tensor, number.Number or bool.
