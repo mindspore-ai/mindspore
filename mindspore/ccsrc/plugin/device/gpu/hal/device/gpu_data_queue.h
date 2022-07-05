@@ -71,6 +71,7 @@ class GpuQueue : public DataQueue {
   size_t len_;
   cudaStream_t stream_;
   std::unique_ptr<NodeInfo[]> node_info_;
+  bool ds_detected_{false};
 };
 }  // namespace device
 }  // namespace mindspore
