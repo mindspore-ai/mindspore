@@ -95,10 +95,10 @@ class ITensorSummary {
     NO_VALUE = 32
   };
   virtual ~ITensorSummary() = default;
-  virtual void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) = 0;
+  virtual void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &wps) = 0;
   virtual std::tuple<bool, int32_t, std::vector<DebugServices::parameter_t>> IsWatchpointHit(
     DebugServices::watchpoint_t) = 0;
-  virtual void TensorStatistics(DbgDataType) = 0;
+  virtual void TensorStatistics(DbgDataType dtype_value) = 0;
   virtual const bool is_bool() const = 0;
   virtual const double max_value() const = 0;
   virtual const double min_value() const = 0;
@@ -117,11 +117,13 @@ class TensorSummary : public ITensorSummary {
  public:
   TensorSummary() = default;
   ~TensorSummary() override = default;
-  TensorSummary(const void *, const void *, uint64_t, uint64_t);
-  void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) override;
+  TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr, uint64_t num_elements,
+                uint64_t prev_num_elements);
+  void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &wps) override;
   // returns hit, error_code, parameter_list
-  std::tuple<bool, int, std::vector<DebugServices::parameter_t>> IsWatchpointHit(DebugServices::watchpoint_t) override;
-  void TensorStatistics(DbgDataType) override;
+  std::tuple<bool, int, std::vector<DebugServices::parameter_t>> IsWatchpointHit(
+    DebugServices::watchpoint_t wp) override;
+  void TensorStatistics(DbgDataType dtype_value) override;
   const bool is_bool() const override { return is_bool_; }
   const double max_value() const override { return max_; }
   const double min_value() const override { return min_; }
@@ -156,8 +158,8 @@ class TensorSummary : public ITensorSummary {
   mindspore::HashMap<std::string, std::unique_ptr<MeanCalculator>> means_;
   mindspore::HashMap<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
   mindspore::HashMap<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
-  double_t StatLookup(const DebugServices::watchpoint_t &);
-  double_t StatLookup(const std::string &, const DebugServices::watchpoint_t &);
+  double_t StatLookup(const DebugServices::watchpoint_t &wp);
+  double_t StatLookup(const std::string &parameter_name, const DebugServices::watchpoint_t &wp);
   double_t GetZeroValPercent();
   void TensorStatisticsSingleThread();
   void InitCalculators(const std::vector<DebugServices::watchpoint_t> &);
