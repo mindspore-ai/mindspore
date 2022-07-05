@@ -86,11 +86,20 @@ BlockQueueStatus_T GpuQueue::Push(std::vector<DataQueueItem> data) {
   void *addr = reinterpret_cast<uint8_t *>(buffer_) + tail_ * len_;
   for (size_t i = 0; i < data.size(); i++) {
     auto &item = data[i];
-    if (item.data_ptr_ == nullptr || item.data_len_ > shape_[i]) {
-      MS_LOG(ERROR) << "Invalid Input: ptr: " << item.data_ptr_ << ", len: " << item.data_len_
-                    << ", exceeds the max len: " << shape_[i];
+    MS_EXCEPTION_IF_NULL(item.data_ptr_);
+    if (item.data_len_ != shape_[i] && !ds_detected_) {
+      MS_LOG(WARNING) << "Detected that dataset is dynamic shape, it is suggested to call network.set_inputs() to "
+                         "configure dynamic dims of input data before running the network";
+      ds_detected_ = true;
+    }
+    if (item.data_len_ > shape_[i]) {
+      MS_LOG(ERROR) << "Data size(" << item.data_len_ << ") of item " << item.data_ptr_ << " exceeds the max capacity("
+                    << shape_[i] << "), "
+                    << "you need to call network.set_inputs() to "
+                       "configure dynamic dims of input data before running the network";
       return ERROR_INPUT;
     }
+
     CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(addr, item.data_ptr_, item.data_len_, cudaMemcpyHostToDevice, stream_),
                               "Cuda Memcpy Error");
     item.device_addr_ = addr;
