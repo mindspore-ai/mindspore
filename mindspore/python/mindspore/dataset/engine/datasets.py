@@ -2928,7 +2928,10 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         self.threads_to_workers = {}
 
     def __del__(self):
-        self.terminate()
+        try:
+            self.terminate()
+        except TypeError:
+            pass
 
     # This wait function is for cleaning zombie subprocesses
     @staticmethod
