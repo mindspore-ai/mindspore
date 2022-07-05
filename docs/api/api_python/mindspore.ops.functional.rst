@@ -124,6 +124,8 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.div
+    mindspore.ops.dropout2d
+    mindspore.ops.dropout3d
     mindspore.ops.erf
     mindspore.ops.erfc
     mindspore.ops.exp

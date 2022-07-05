@@ -6927,12 +6927,15 @@ class Dropout(PrimitiveWithCheck):
 
 
 class Dropout2D(PrimitiveWithInfer):
-    """
+    r"""
     During training, randomly zeroes some of the channels of the input tensor with probability 1-`keep_prob`
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
     to a 2-dimensional feature map with the shape of HW).
 
     Dropout2D can improve the independence between channel feature maps.
+
+    Note:
+        The keep probability :math:`keep\_prob` is equal to 'ops.dropout2d' input '1-p'.
 
     Refer to :func:`mindspore.ops.dropout2d` for more detail.
 
@@ -6957,12 +6960,16 @@ class Dropout2D(PrimitiveWithInfer):
 
 
 class Dropout3D(PrimitiveWithInfer):
-    """
+    r"""
     During training, randomly zeroes some of the channels of the input tensor
     with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
     the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
 
     Dropout3D can improve the independence between channel feature maps.
+
+
+    Note:
+        The keep probability :math:`keep\_prob` is equal to 'ops.dropout3d' input '1-p'.
 
     Refer to :func:`mindspore.ops.dropout3d` for more detail.
 

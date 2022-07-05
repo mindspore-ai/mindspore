@@ -190,21 +190,7 @@ class Dropout2d(Cell):
 
     `Dropout2d` can improve the independence between channel feature maps.
 
-    Note:
-        Each channel will be zeroed out independently on every construct call.
-
-    Args:
-        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means dropping out 80% of channels. Default: 0.5.
-
-    Inputs:
-        - **x** (Tensor) - A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size,
-          `C` is the number of channels, `H` is the feature height, and `W` is the feature width.
-          The data type must be int8, int16, int32,int64, float16 or float32.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask (Tensor)** - With the same shape as `x` and the data type is bool.
+    Refer to :func:`mindspore.ops.dropout2d` for more details.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -262,19 +248,7 @@ class Dropout3d(Cell):
 
     `Dropout3d` can improve the independence between channel feature maps.
 
-    Args:
-        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
-            which means dropping out 80% of channels. Default: 0.5.
-
-    Inputs:
-        - **x** (Tensor) - A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size,
-          `C` is the number of channels, `D` is the feature depth, `H` is the feature height,
-          and `W` is the feature width.
-          The data type must be int8, int16, int32, int64, float16 or float32.
-
-    Outputs:
-        - **output** (Tensor) - With the same shape and data type as `x`.
-        - **mask** (Tensor) - With the same shape as `x` and the data type is bool.
+    Refer to :func:`mindspore.ops.dropout3d` for more details.
 
     Raises:
         TypeError: If `x` is not a Tensor.
