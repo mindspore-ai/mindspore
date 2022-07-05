@@ -3787,9 +3787,9 @@ def norm(input_x, axis, p=2, keep_dims=False, epsilon=1e-12):
         output = sum(abs(input)**p)**(1/p)
 
     Args:
-        input_x (Tensor): Input tensor.
+        input_x (Tensor): Input tensor. The dtype must be float32 or float16.
         axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
-        p (int): The order of norm. Default: 2.
+        p (int): The order of norm. Default: 2. `p` is greater than or equal to 0.
         keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
         epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
 
