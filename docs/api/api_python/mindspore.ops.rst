@@ -459,6 +459,7 @@ Array操作
     mindspore.ops.TensorScatterDiv
     mindspore.ops.TensorScatterMax
     mindspore.ops.TensorScatterMin
+    mindspore.ops.TensorScatterMul
     mindspore.ops.TensorScatterSub
     mindspore.ops.TensorScatterUpdate
     mindspore.ops.TensorScatterElements
