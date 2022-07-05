@@ -71,6 +71,50 @@ def get_apply_adadelta_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyFtrl)
+def get_apply_ftrl_rule(prim, axis_size):
+    """VmapRule for `ApplyFtrl` operation"""
+    if hasattr(prim, "batch_rank"):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    prim_name = prim.name
+    batch_prim = P.ApplyFtrl()
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(var_bdim, accum_bdim, linear_bdim, grad_bdim, lr_bdim, l1_bdim, l2_bdim, lr_power_bdim, u_monad):
+        var, var_dim = var_bdim
+        accum, accum_dim = accum_bdim
+        linear, linear_dim = linear_bdim
+        grad, grad_dim = grad_bdim
+        lr, lr_dim = lr_bdim
+        l1, l1_dim = l1_bdim
+        l2, l2_dim = l2_bdim
+        lr_power, lr_power_dim = lr_power_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [accum_dim, linear_dim, grad_dim, lr_dim, l1_dim, l2_dim, lr_power_dim]):
+                ValueError("The source axis of `var` is None, "
+                           "but the source axis of `accum/linear/grad/lr/l1/l1/lr_power` is not None. "
+                           "The execution order of operator `{}` cannot be guaranteed.".format(prim_name))
+            var = prim(var, accum, linear, grad, lr, l1, l2, lr_power, u_monad)
+            return (var, None)
+        if var_dim != 0 or accum_dim != var_dim or linear_dim != var_dim:
+            ValueError("For `{}`, the source axis of `var/accum/linear` must be 0, "
+                       "but get `var`: {}, `accum`: {}, `linear`: {}.".format(prim_name, var_dim, accum_dim,
+                                                                              linear_dim))
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        l1 = _bdim_at_front(l1, l1_dim, axis_size)
+        l2 = _bdim_at_front(l2, l2_dim, axis_size)
+        lr_power = _bdim_at_front(lr_power, lr_power_dim, axis_size)
+
+        var = batch_prim(var, accum, linear, grad, lr, l1, l2, lr_power, u_monad)
+        return (var, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.ApplyProximalAdagrad)
 def get_apply_proximal_adagrad_rule(prim, axis_size):
     """VmapRule for `ApplyProximalAdagrad` operation."""

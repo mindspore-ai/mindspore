@@ -6671,7 +6671,7 @@ class ApplyFtrl(Primitive):
         TypeError: If `grad` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class ApplyFtrlNet(nn.Cell):
