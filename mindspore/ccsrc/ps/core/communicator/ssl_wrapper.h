@@ -74,6 +74,9 @@ class SSLWrapper {
   std::mutex mutex_;
   std::condition_variable cond_;
   std::mutex verify_mutex_;
+
+  // Indicates whether the ssl wrapper has been initialized.
+  bool init_{false};
 };
 }  // namespace core
 }  // namespace ps
