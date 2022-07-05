@@ -15,6 +15,7 @@
  */
 
 package com.mindspore.config;
+import java.util.HashMap;
 
 /**
  * Configuration for ModelParallelRunner.
@@ -69,6 +70,15 @@ public class RunnerConfig {
     }
 
     /**
+     * Set config info
+     *
+     * @param config_info The config info.
+     */
+    public void setConfigInfo(String section, HashMap<String, String> config) {
+        setConfigInfo(runnerConfigPtr, section, config);
+    }
+
+    /**
      * Get RunnerConfig pointer.
      *
      * @return RunnerConfig pointer.
@@ -90,6 +100,8 @@ public class RunnerConfig {
     private native long createRunnerConfigWithContext(long msContextPtr);
 
     private native void setWorkersNum(long runnerConfigPtr, int workersNum);
+
+    private native void setConfigInfo(long runnerConfigPtr, String section, HashMap<String, String> config);
 
     private native boolean free(long runnerConfigPtr);
 }
