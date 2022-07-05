@@ -695,7 +695,7 @@ class Optimizer(Cell):
                     lr += (current_dynamic_lr,)
             else:
                 lr = self.learning_rate(self.global_step).reshape(())
-        if self.is_dynamic_lr_or_weight_decay():
+        if self._is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         return lr
 
@@ -754,7 +754,7 @@ class Optimizer(Cell):
 
         return lr if isinstance(param, list) else lr[0]
 
-    def is_dynamic_lr_or_weight_decay(self):
+    def _is_dynamic_lr_or_weight_decay(self):
         """
         Determine whether the learning rate or weight decay is dynamic.
 

@@ -196,7 +196,7 @@ class Rprop(Optimizer):
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
         lrs = self.get_lr()
-        if not self.is_dynamic_lr_or_weight_decay():
+        if not self._is_dynamic_lr_or_weight_decay():
             self.assignadd(self.global_step, self.global_step_increase_tensor)
         success = True
 
