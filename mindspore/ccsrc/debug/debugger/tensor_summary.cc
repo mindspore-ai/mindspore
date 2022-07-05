@@ -38,7 +38,9 @@ RangeCountCalculator::RangeCountCalculator()
       total(0) {}
 
 void RangeCountCalculator::ProcessElement(double element) {
-  count += (element >= range_start_inclusive && element <= range_end_inclusive);
+  if (element >= range_start_inclusive && element <= range_end_inclusive) {
+    count += 1;
+  }
   total += 1;
 }
 
@@ -91,8 +93,8 @@ double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVarian
 template <typename T>
 TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr,
                                 uint64_t num_elements, uint64_t prev_num_elements)
-    : current_tensor_ptr_(reinterpret_cast<const T *>(current_tensor_ptr)),
-      prev_tensor_ptr_(reinterpret_cast<const T *>(previous_tensor_ptr)),
+    : current_tensor_ptr_(static_cast<const T *>(current_tensor_ptr)),
+      prev_tensor_ptr_(static_cast<const T *>(previous_tensor_ptr)),
       num_elements_(num_elements),
       prev_num_elements_(prev_num_elements),
       min_(std::numeric_limits<double>::max()),
@@ -135,7 +137,7 @@ void TensorSummary<T>::SummarizeTensor(const std::vector<DebugServices::watchpoi
     if (std::isnan(current_value)) {
       nan_count_ += 1;
     }
-    if (current_value == 0) {
+    if (current_value == 0.0) {
       zero_count_ += 1;
     }
     max_ = std::max(max_, current_value);
@@ -240,7 +242,7 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
         neg_inf_count_ += 1;
       }
     }
-    if (current_value == 0) {
+    if (current_value == 0.0) {
       zero_count_ += 1;
     }
     if (std::isnan(current_value)) {
@@ -248,9 +250,9 @@ void TensorSummary<T>::TensorStatisticsSingleThread() {
     }
     if (!(std::isnan(current_value) || std::isinf(current_value))) {
       // only considering tensor elements with value
-      if (std::signbit(current_value) && !(current_value == 0)) {
+      if (std::signbit(current_value) && !(current_value == 0.0)) {
         neg_zero_count_ += 1;
-      } else if (!(current_value == 0)) {
+      } else if (!(current_value == 0.0)) {
         pos_zero_count_ += 1;
       }
       max_ = std::max(max_, current_value);
@@ -321,7 +323,9 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
 
 template <typename T>
 double_t TensorSummary<T>::StatLookup(const std::string &parameter_name, const DebugServices::watchpoint_t &wp) {
-  if (parameter_name == "param") return StatLookup(wp);
+  if (parameter_name == "param") {
+    return StatLookup(wp);
+  }
   std::string param_type;
   auto pos = parameter_name.find_last_of('_');
   if (pos != std::string::npos) {
@@ -388,7 +392,7 @@ double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) {
 template <typename T>
 double_t TensorSummary<T>::GetZeroValPercent() {
   if (num_elements_ == 0) {
-    return 0;
+    return 0.0;
   }
 
   return (zero_count_ * 100.0) / num_elements_;

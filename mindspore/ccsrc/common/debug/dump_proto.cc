@@ -46,7 +46,7 @@ class ProtoExporter {
   void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const CNodePtr &cnode, irpb::NodeProto *node_proto);
   std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
-                               std::map<AnfNodePtr, size_t> *const_map_ptr);
+                               std::map<AnfNodePtr, size_t> *const_map_ptr) const;
   void SetValueToProtoBasicTypes(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
@@ -382,7 +382,7 @@ void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const CNodePtr &
 
 std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodePtr &node,
                                             const std::map<AnfNodePtr, size_t> &apply_map,
-                                            std::map<AnfNodePtr, size_t> *const_map_ptr) {
+                                            std::map<AnfNodePtr, size_t> *const_map_ptr) const {
   if (node == nullptr || const_map_ptr == nullptr) {
     return "";
   }

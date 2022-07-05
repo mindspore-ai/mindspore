@@ -144,8 +144,7 @@ class TensorLoader {
   void SearchTensors(const std::vector<std::string> &search_list,
                      std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
     for (auto i : search_list) {
-      std::map<std::string, std::shared_ptr<TensorData>>::iterator iter;
-      iter = tensor_list_map_.find(i);
+      const std::map<std::string, std::shared_ptr<TensorData>>::iterator iter = tensor_list_map_.find(i);
       if (iter != tensor_list_map_.end()) {
         result_list->push_back(std::make_tuple(i, iter->second));
       } else {
@@ -251,7 +250,7 @@ class TensorLoader {
     }
 
     std::string tensor_loader_name = tensor_name + ":" + std::to_string(slot);
-    auto iter = tensor_list_map_.find(tensor_loader_name);
+    const auto iter = tensor_list_map_.find(tensor_loader_name);
     if (iter != tensor_list_map_.end()) {
       std::shared_ptr<TensorData> node = iter->second;
       std::string path = filepath + '.' + node->GetFormat();
