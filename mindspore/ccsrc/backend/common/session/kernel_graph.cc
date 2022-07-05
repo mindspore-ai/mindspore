@@ -1166,7 +1166,20 @@ void KernelGraph::EnableRuntimeCache() {
       continue;
     }
     auto runtime_cache = kernel_info->runtime_cache();
-    runtime_cache.runtime_cache().set_valid();
+    runtime_cache.runtime_cache().set_is_valid(true);
+  }
+}
+
+void KernelGraph::DisableRuntimeCache() {
+  auto node_list = TopoSort(get_return());
+  for (auto &node : node_list) {
+    auto kernel_info = node->kernel_info();
+    if (!kernel_info) {
+      continue;
+    }
+    auto runtime_cache = kernel_info->runtime_cache();
+    runtime_cache.runtime_cache().set_is_valid(false);
+    runtime_cache.runtime_cache().reset();
   }
 }
 
