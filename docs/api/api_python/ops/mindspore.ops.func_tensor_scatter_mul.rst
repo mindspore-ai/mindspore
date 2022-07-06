@@ -8,7 +8,7 @@ mindspore.ops.tensor_scatter_mul
     `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。有关更多详细信息，请参见使用用例。
 
     .. note::
-        - 如果 `indices` 的某些值超出 `input_x` 的维度范围，在 `CPU` 后端会抛出错误，在 `GPU` 后端则忽略错误且更新值不可信任。
+        - 如果 `indices` 的某些值超出 `input_x` 的维度范围，则相应的 `updates` 不会更新为 `input_x` ，而不是抛出索引错误。
 
     **参数：**
 
