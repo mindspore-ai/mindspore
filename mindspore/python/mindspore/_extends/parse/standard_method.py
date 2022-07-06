@@ -604,7 +604,7 @@ def cummax(x, axis):
 
 def index_fill(x, dim, index, value):
     """
-    Fills the elements under the dim dimension of the self tensor with the input value
+    Fills the elements under the dim dimension of the input Tensor with the input value
     by selecting the indices in the order given in index.
     """
     return F.index_fill(x, dim, index, value)

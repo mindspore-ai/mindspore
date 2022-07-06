@@ -341,6 +341,7 @@ Array操作
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.gumbel_softmax
+    mindspore.ops.index_fill
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
