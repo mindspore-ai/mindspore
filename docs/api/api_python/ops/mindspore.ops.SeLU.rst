@@ -21,7 +21,7 @@ mindspore.ops.SeLU
 
     **输入：**
 
-    - **input_x** (Tensor) - 任意维度的Tensor，数据类型为float16或float32。
+    - **input_x** (Tensor) - 任意维度的Tensor，数据类型为int8、int32、float16、float32、float64（仅CPU、GPU）。
 
     **输出：**
 
@@ -29,4 +29,4 @@ mindspore.ops.SeLU
 
     **异常：**
 
-    - **TypeError** - `input_x` 的数据类型既不是float16也不是float32。
+    - **TypeError** - `input_x` 的数据类型不是int8、int32、float16、float32、float64。
