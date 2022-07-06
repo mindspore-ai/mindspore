@@ -109,7 +109,7 @@ mindspore.dataset.Caltech101Dataset
                     An Incremental Bayesian Approach Tested on 101 Object Categories},
         journal   = {Computer Vision and Pattern Recognition Workshop},
         year      = {2004},
-        url       = {http://www.vision.caltech.edu/Image_Datasets/Caltech101/},
+        url       = {http://data.caltech.edu/records/20086},
         }
 
     .. include:: mindspore.dataset.Dataset.add_sampler.rst
