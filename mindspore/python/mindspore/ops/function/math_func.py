@@ -1986,7 +1986,7 @@ def matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-       y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -1995,7 +1995,7 @@ def matrix_determinant(x):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -2015,9 +2015,8 @@ def log_matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-       sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
-       y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
-         as `x`.
+        Tensor, The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
