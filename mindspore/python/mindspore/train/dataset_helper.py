@@ -141,10 +141,9 @@ def _check_inputs(network, dataset_shapes):
         raise ValueError(
             f"For 'set_inputs', the Length of Tensor must be {dataset_inputs_len}, but got {network_inputs_len}"
         )
-    for tensor_index, ele_tensor in enumerate(dataset_shapes):
-        i_inputs = dataset_shapes[tensor_index]
-        set_inputs_shape = list(ele_tensor)
-        inputs_shape = list(i_inputs)
+    for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
+        set_inputs_shape = list(network_shapes[tensor_index].shape)
+        inputs_shape = list(ele_dataset_shape)
         if len(inputs_shape) != len(set_inputs_shape):
             raise ValueError(
                 f"For 'set_inputs', the Dimension of Tensor shape must be {len(inputs_shape)}, but got "
@@ -152,12 +151,12 @@ def _check_inputs(network, dataset_shapes):
             )
         if network_shapes[tensor_index] is None:
             break
-        for index, ele_shape in enumerate(ele_tensor):
+        for index, ele_shape in enumerate(ele_dataset_shape):
             if network_shapes[tensor_index].shape[index] != -1:
-                if set_inputs_shape[index] != inputs_shape[index]:
+                if set_inputs_shape[index] != ele_shape:
                     raise ValueError(
-                        f"For 'Length of Tensor shape', the value must be the same with that of inputs,but "
-                        f"got {ele_shape}"
+                        f"For 'Tensor shape', the value must be the same with that of inputs, but "
+                        f"got {set_inputs_shape[index]}"
                     )
             else:
                 dataset_shapes[tensor_index][index] = -1
