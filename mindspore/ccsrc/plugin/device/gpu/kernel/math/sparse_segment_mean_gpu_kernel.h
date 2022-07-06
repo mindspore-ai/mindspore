@@ -65,6 +65,10 @@ class SparseSegmentMeanGpuKernelMod : public NativeGpuKernelMod {
   size_t inner_size_{1};
   size_t indices_size_{1};
   size_t segment_size_{0};
+  size_t x_size_{1};
+  size_t y_size_{1};
+  size_t batch_rank_{0};
+  size_t batch_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

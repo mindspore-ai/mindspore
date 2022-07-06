@@ -45,14 +45,17 @@ int SparseSegmentMeanGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return ret;
   }
   auto x_shape = inputs.at(kIndex0)->GetShapeVector();
-  auto x_size = std::accumulate(x_shape.begin(), x_shape.end(), int64_t(1), std::multiplies{});
-  outer_size_ = LongToSize(x_shape.front());
-  inner_size_ = LongToSize(x_size / x_shape.front());
   auto indices_shape = inputs.at(kIndex1)->GetShapeVector();
-  auto indices_size = std::accumulate(indices_shape.begin(), indices_shape.end(), int64_t(1), std::multiplies{});
-  indices_size_ = LongToSize(indices_size);
   auto y_shape = outputs.at(kIndex0)->GetShapeVector();
-  segment_size_ = LongToSize(y_shape.front());
+  batch_rank_ = LongToSize(base_operator->get_batch_rank());
+  batch_size_ = std::accumulate(x_shape.begin(), x_shape.begin() + batch_rank_, size_t(1), std::multiplies{});
+  outer_size_ = LongToSize(x_shape.at(batch_rank_));
+  inner_size_ = std::accumulate(x_shape.begin() + batch_rank_ + 1, x_shape.end(), size_t(1), std::multiplies{});
+  x_size_ = inner_size_ * outer_size_;
+  indices_size_ = LongToSize(indices_shape.at(batch_rank_));
+  y_size_ = std::accumulate(y_shape.begin() + batch_rank_, y_shape.end(), size_t(1), std::multiplies{});
+  segment_size_ = LongToSize(y_shape.at(batch_rank_));
+  // In vmap case, all batch of the 'segment_ids' are same, therefore, workspace just one copy.
   workspace_size_list_.push_back((segment_size_ + 1) * sizeof(size_t));
   return ret;
 }
@@ -68,15 +71,13 @@ bool SparseSegmentMeanGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &
   auto segment_ids_ptr = GetDeviceAddress<IndexType>(inputs, kIndex2);
   auto segment_pos_ptr = GetDeviceAddress<size_t>(workspace, kIndex0);
   auto y_ptr = GetDeviceAddress<DataType>(outputs, kIndex0);
-
-  bool is_nullptr = (x_ptr == nullptr) || (indices_ptr == nullptr) || (segment_ids_ptr == nullptr) ||
-                    (segment_pos_ptr == nullptr) || (y_ptr == nullptr);
-  if (is_nullptr) {
+  auto any = [](auto... args) -> bool { return ((args == nullptr) || ...); };
+  if (any(x_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr)) {
     return false;
   }
 
   SparseSegmentMean(x_ptr, indices_ptr, segment_ids_ptr, segment_pos_ptr, y_ptr, outer_size_, inner_size_,
-                    indices_size_, segment_size_, device_id_, cuda_stream);
+                    indices_size_, segment_size_, x_size_, y_size_, batch_size_, device_id_, cuda_stream);
   return true;
 }
 
