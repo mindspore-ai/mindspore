@@ -194,6 +194,8 @@ def test_eager_compose_py():
 
     assert img.size == (64, 96)
 
+    pixel = img.getpixel((0, 0))[0]
+
     mean_vec = [.100, .100, .100]
     std_vec = [.2, .2, .2]
 
@@ -210,6 +212,10 @@ def test_eager_compose_py():
     # Note: Output of Compose is a tuple
     img = transform(img)
     assert isinstance(img, tuple)
+
+    pixel_normalized = img[0][0][0]
+
+    assert (pixel / 255 - mean_vec[0]) / std_vec[0] == pytest.approx(pixel_normalized[0], 0.0001)
 
 
 def test_eager_hwc2chw():
