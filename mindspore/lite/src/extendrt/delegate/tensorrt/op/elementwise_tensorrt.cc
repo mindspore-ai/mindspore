@@ -120,6 +120,7 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   cal_layer->setName(op_name_.c_str());
   this->layer_ = cal_layer;
+  ctx->RegisterLayer(cal_layer, op_name_);
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
   if (op_out_tensor == nullptr) {
@@ -157,32 +158,31 @@ int ElementWiseTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(INFO) << "bool result cast to int32" << op_name_;
   }
 #endif
-  op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{op_out_tensor, x_input.format_, x_input.same_format_};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 
 int ElementWiseTensorRT::PreprocessInputTensors(TensorRTContext *ctx, ITensorHelper *x_input, ITensorHelper *y_input) {
-  int input_x_index = SameTensor(tensorrt_in_tensors_[0].trt_tensor_, &in_tensors_[0]) ? 0 : 1;
-  if (in_tensors_[0].Shape() == in_tensors_[1].Shape() && in_tensors_[0].IsConst()) {
-    input_x_index = 1;
-  }
-
-  if (this->tensorrt_in_tensors_.size() != INPUT_SIZE2) {
+  if (HasConst()) {
     int ret = AddConstTensor(ctx);
     if (ret != RET_OK) {
       return ret;
     }
   }
-  *x_input = tensorrt_in_tensors_[input_x_index];
-  *y_input = tensorrt_in_tensors_[1 - input_x_index];
+  *x_input = input(ctx, 0);
+  *y_input = input(ctx, 1);
+  int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
+  auto input_helper = const_tensor_index == 0 ? y_input : x_input;
+  auto const_helper = const_tensor_index == 0 ? x_input : y_input;
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*x_input);
   MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(*y_input);
 
-  if (x_input->trt_tensor_->getDimensions().nbDims == DIMENSION_4D && x_input->format_ != y_input->format_) {
+  if (input_helper->trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      input_helper->format_ != const_helper->format_) {
     // when inputs format are different, change to NHWC
-    auto need_trans = x_input->format_ == Format::NCHW ? x_input : y_input;
+    auto need_trans = input_helper->format_ == Format::NCHW ? input_helper : const_helper;
     nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *need_trans->trt_tensor_);
     if (transpose_layer == nullptr) {
       MS_LOG(ERROR) << "op action convert failed";
@@ -265,14 +265,17 @@ nvinfer1::ITensor *ElementWiseTensorRT::AddActivation(TensorRTContext *ctx, nvin
   }
   return activation_out_tensor;
 }
+
 int ElementWiseTensorRT::AddConstTensor(TensorRTContext *ctx) {
   int const_tensor_index = (in_tensors_[0].Data() != nullptr && in_tensors_[0].IsConst()) ? 0 : 1;
   nvinfer1::ITensor *constant_input = ConvertConstantTensorWithDims(
     ctx, in_tensors_[const_tensor_index], in_tensors_[1 - const_tensor_index].Shape(), op_name_);
   CHECK_NULL_RETURN(constant_input);
-  AddInnerInTensors(ITensorHelper{constant_input, tensorrt_in_tensors_[0].format_, true});
+  auto const_helper = ITensorHelper{constant_input, input(ctx, 1 - const_tensor_index).format_, true};
+  ctx->RegisterTensor(const_helper, in_tensors_[const_tensor_index].Name());
   return RET_OK;
 }
+
 bool ElementWiseTensorRT::SameTensor(nvinfer1::ITensor *trt_tensor, mindspore::MSTensor *ms_tensor) {
   if (SameDims(trt_tensor->getDimensions(), ms_tensor->Shape())) {
     return true;

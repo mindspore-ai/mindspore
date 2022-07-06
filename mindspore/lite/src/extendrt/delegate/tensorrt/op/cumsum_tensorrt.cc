@@ -41,17 +41,18 @@ int CumsumTensorRT::IsSupport(const schema::Primitive *primitive, const std::vec
 }
 
 int CumsumTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  ITensorHelper input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &input);
-  if (ret != RET_OK || input.trt_tensor_ == nullptr) {
+  ITensorHelper input_helper;
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &input_helper);
+  if (ret != RET_OK || input_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
   int axis = static_cast<const int *>(in_tensors_[1].Data().get())[0];
   bool exclusive = op_primitive_->value_as_CumSum()->exclusive();
   bool reverse = op_primitive_->value_as_CumSum()->reverse();
-  auto plugin = std::make_shared<CumsumPlugin>(input.trt_tensor_->getName(), axis, exclusive, reverse, device_id_);
-  nvinfer1::ITensor *inputTensors[] = {input.trt_tensor_};
+  auto plugin =
+    std::make_shared<CumsumPlugin>(input_helper.trt_tensor_->getName(), axis, exclusive, reverse, device_id_);
+  nvinfer1::ITensor *inputTensors[] = {input_helper.trt_tensor_};
   nvinfer1::IPluginV2Layer *cumsum_opt_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   if (cumsum_opt_layer == nullptr) {
     MS_LOG(ERROR) << "add cumsum op failed for TensorRT.";
@@ -59,9 +60,8 @@ int CumsumTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   cumsum_opt_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *out_tensor = cumsum_opt_layer->getOutput(0);
-  out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, input_helper.format_, input_helper.same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = cumsum_opt_layer;
   return RET_OK;
 }

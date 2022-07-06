@@ -47,7 +47,7 @@ int GatherDTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
 }
 
 int GatherDTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[2].trt_tensor_};
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 2).trt_tensor_};
   auto dim_tensor = static_cast<const int *>(in_tensors_[1].Data().get());
   if (dim_tensor == nullptr) {
     MS_LOG(ERROR) << op_name_ << " gatherd dim_tensor is null!";
@@ -63,9 +63,8 @@ int GatherDTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   nvinfer1::ITensor *gatherd_out = gatherd_layer->getOutput(0);
   gatherd_layer->setName(op_name_.c_str());
-  gatherd_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{gatherd_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{gatherd_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = gatherd_layer;
   return RET_OK;
 }

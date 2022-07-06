@@ -43,14 +43,33 @@ void TensorRTContext::RegisterLayer(nvinfer1::ILayer *layer, const std::string &
     MS_LOG(ERROR) << "Register null layer!";
     return;
   }
+  MS_LOG(DEBUG) << "ms_layer " << basename << " register";
   layer->setName((basename + "_" + std::to_string(counter_++)).c_str());
 }
 
-void TensorRTContext::RegisterTensor(nvinfer1::ITensor *tensor, const std::string &basename) {
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "Register null tensor!";
-    return;
+void TensorRTContext::RegisterTensor(ITensorHelper tensor, const std::string &basename) {
+  std::string trt_name = basename + "_" + std::to_string(counter_++);
+  tensor.trt_tensor_->setName(trt_name.c_str());
+  MS_LOG(DEBUG) << "ms_tensor " << basename << " register to " << trt_name;
+  ms_name2trt_tensor_[basename] = tensor;
+}
+
+void TensorRTContext::RegisterTensorWithSameName(ITensorHelper tensor, const std::string &basename) {
+  std::string trt_name = basename;
+  tensor.trt_tensor_->setName(trt_name.c_str());
+  MS_LOG(DEBUG) << "ms_tensor " << basename << " register to " << trt_name;
+  ms_name2trt_tensor_[basename] = tensor;
+}
+
+bool TensorRTContext::HasTensor(const std::string &name) const {
+  return ms_name2trt_tensor_.find(name) != ms_name2trt_tensor_.end();
+}
+
+ITensorHelper TensorRTContext::MsName2Tensor(const std::string &ms_name) {
+  if (ms_name2trt_tensor_.find(ms_name) != ms_name2trt_tensor_.end()) {
+    return ms_name2trt_tensor_[ms_name];
   }
-  tensor->setName((basename + "_" + std::to_string(counter_++)).c_str());
+  MS_LOG(ERROR) << "Get Tensorrt tensor by ms_tensor: " << ms_name << " fail!";
+  return {};
 }
 }  // namespace mindspore::lite

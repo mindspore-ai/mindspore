@@ -53,7 +53,7 @@ int ReduceScatterTensorRT::IsSupport(const schema::Primitive *primitive,
 }
 
 int ReduceScatterTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_};
   auto reduce_op = op_primitive_->value_as_ReduceScatter();
   if (reduce_op == nullptr) {
     MS_LOG(ERROR) << "convert failed for " << op_name_;
@@ -70,10 +70,9 @@ int ReduceScatterTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   nvinfer1::ITensor *reduce_scatter_out = reduce_scatter_layer->getOutput(0);
   reduce_scatter_layer->setName(op_name_.c_str());
-  reduce_scatter_out->setName((op_name_ + "_output").c_str());
+  ctx->RegisterTensor(ITensorHelper{reduce_scatter_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = reduce_scatter_layer;
-  this->AddInnerOutTensors(
-    ITensorHelper{reduce_scatter_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
   return RET_OK;
 }
 
