@@ -25,6 +25,44 @@
 
 namespace mindspore {
 namespace kernel {
+class BACKEND_EXPORT FusedSparseFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod,
+                                                   public MatchKernelHelper<FusedSparseFtrlCpuKernelMod> {
+ public:
+  FusedSparseFtrlCpuKernelMod() = default;
+  ~FusedSparseFtrlCpuKernelMod() override = default;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+              const std::vector<AddressPtr> &outputs) override {
+    return kernel_func_(this, inputs, workspace, outputs);
+  }
+
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  void ResetResource() noexcept;
+
+ protected:
+  float lr_{0.0};
+  float l1_{0.0};
+  float l2_{0.0};
+  float lr_power_{0.0};
+
+ private:
+  template <typename T>
+  void InitWorkspaceSize();
+
+  template <typename T>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &) const;
+};
+
 class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKernelMod,
                                                    public MatchKernelHelper<SparseApplyFtrlCpuKernelMod> {
  public:
@@ -55,10 +93,7 @@ class BACKEND_EXPORT SparseApplyFtrlCpuKernelMod : public SparseOptimizerCpuKern
   float lr_power_{0.0};
 
  private:
-  template <typename T>
-  void InitWorkspaceSize();
-
-  template <typename T>
+  template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &) const;
 };
