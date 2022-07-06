@@ -21,6 +21,7 @@
 #include <utility>
 #include <map>
 #include <cmath>
+#include <complex>
 
 #include "mindspore/core/ops/renorm.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
@@ -127,27 +128,27 @@ bool RenormCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inp
   auto inner_size = inner_size_;    // continuous number
   auto stride_size = stride_size_;  // stride number
   auto total_size = total_size_;    // total number
-  auto p = static_cast<T>(p_);
-  auto maxnorm = static_cast<T>(max_norm_);
+  auto p = static_cast<double>(p_);
+  auto maxnorm = static_cast<double>(max_norm_);
 
-  auto pnorm = std::make_unique<T[]>(axis_size);
+  auto pnorm = std::make_unique<double[]>(axis_size);
   auto task = [&](const size_t start, const size_t end) {
     for (size_t ith = start; ith < end; ++ith) {
-      T single_sum = static_cast<T>(0.0);
+      double single_sum = static_cast<double>(0.0);
       size_t step_len = total_size / stride_size;
       for (size_t pos_ith = ith * inner_size; pos_ith < total_size; pos_ith += step_len) {
         for (size_t j = 0; j < inner_size; ++j) {
           size_t index = pos_ith + j;
-          single_sum += pow(abs(x[index]), p);
+          single_sum += pow(static_cast<double>(abs(x[index])), p);
         }
       }
-      pnorm[ith] = pow(single_sum, static_cast<T>(1) / p);
+      pnorm[ith] = pow(single_sum, static_cast<double>(1.0) / p);
 
       for (size_t pos_ith = ith * inner_size; pos_ith < total_size; pos_ith += step_len) {
         for (size_t j = 0; j < inner_size; ++j) {
           size_t index = pos_ith + j;
           if (pnorm[ith] > maxnorm) {
-            output[index] = x[index] / pnorm[ith] * maxnorm;
+            output[index] = x[index] / static_cast<T>(pnorm[ith]) * static_cast<T>(maxnorm);
           } else {
             output[index] = x[index];
           }
@@ -165,7 +166,11 @@ std::vector<std::pair<KernelAttr, RenormCpuKernelMod::RenormFunc>> RenormCpuKern
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &RenormCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &RenormCpuKernelMod::LaunchKernel<float16>}};
+   &RenormCpuKernelMod::LaunchKernel<float16>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &RenormCpuKernelMod::LaunchKernel<std::complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &RenormCpuKernelMod::LaunchKernel<std::complex<double>>}};
 
 std::vector<KernelAttr> RenormCpuKernelMod::GetOpSupport() {
   static std::vector<KernelAttr> support_list;
