@@ -107,7 +107,7 @@ int64_t CalSplitAttrs(const ShapeVector &base_shape, const bool is_first, const 
     if (split_middle_size > 0) {
       ++num_split;
       size_splits->push_back(split_middle_size);
-      shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
+      shape_tmp[split_dim] = split_middle_size;
 
       UpdateMaxMinShape(min_shape, max_shape, is_dynamic, split_middle_size, split_dim);
 
@@ -116,12 +116,12 @@ int64_t CalSplitAttrs(const ShapeVector &base_shape, const bool is_first, const 
     // last
     ++num_split;
     size_splits->push_back(last_size);
-    shape_tmp[split_dim] = static_cast<size_t>(last_size);
+    shape_tmp[split_dim] = last_size;
     shapes->push_back(shape_tmp);
   } else if (split_middle_size > 0) {
     ++num_split;
     size_splits->push_back(split_middle_size);
-    shape_tmp[split_dim] = static_cast<size_t>(split_middle_size);
+    shape_tmp[split_dim] = split_middle_size;
 
     UpdateMaxMinShape(min_shape, max_shape, is_dynamic, split_middle_size, split_dim);
 
@@ -597,10 +597,16 @@ CNodePtr NeighborExchangeV2UnifyMindIR::CreateMiddleConcat(
   auto max_shape = common::AnfAlgo::GetOutputMaxShape(neighbor_exchange_v2_input, 0);
   auto min_shape = common::AnfAlgo::GetOutputMinShape(neighbor_exchange_v2_input, 0);
   auto is_dynamic = IsDynamic(single_shape);
-  size_t first_idx = concat_dim == kWDim ? kIndex6 : kIndex0;
-  size_t last_idx = concat_dim == kWDim ? kIndex2 : kIndex4;
-  int64_t first_len = concat_dim == kWDim ? recv_lens[kDim2] : recv_lens[0];
-  int64_t last_len = concat_dim == kWDim ? recv_lens[kDim3] : recv_lens[1];
+  size_t first_idx = kIndex0;
+  size_t last_idx = kIndex4;
+  int64_t first_len = recv_lens[0];
+  int64_t last_len = recv_lens[1];
+  if (concat_dim == kWDim) {
+    first_idx = kIndex6;
+    last_idx = kIndex2;
+    first_len = recv_lens[kDim2];
+    last_len = recv_lens[kDim3];
+  }
 
   // left
   if (recv_rank_ids[first_idx] != kInvalidId) {
