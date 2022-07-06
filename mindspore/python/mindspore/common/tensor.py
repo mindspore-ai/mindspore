@@ -3237,12 +3237,11 @@ class Tensor(Tensor_):
         the variable `input_params` refers to input tensor.
 
         Note:
-            1.The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
-              is undefined out of range.
-
-            2.The data type of `input_params` cannot be
-              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
-              platform currently.
+            1. The value of `input_indices` must be in the range of `[0, input_param.shape[axis])`, the result
+               is undefined out of range.
+            2. The data type of `input_params` cannot be
+               `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ on Ascend
+               platform currently.
 
         Args:
             input_indices (Tensor): Index tensor to be sliced, the shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
