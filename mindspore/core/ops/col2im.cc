@@ -96,7 +96,17 @@ abstract::ShapePtr Col2ImInferShape(const PrimitivePtr &primitive, const std::ve
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
   auto output_size_value = input_args[kInputIndex1]->BuildValue();
-
+  auto output_size_shape =
+    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+  if (output_size_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For 'Col2Im', 'output_size' must be a 1-D Tensor, but got a "
+                             << output_size_shape.size() << "-D Tensor.";
+  }
+  if (output_size_shape[0] != 2) {
+    MS_EXCEPTION(ValueError)
+      << "For 'Col2Im', 'output_size' must be a 1-D Tensor with 2 elements, but got a 1-D Tensor with "
+      << output_size_shape[0] << " elements.";
+  }
   constexpr int64_t x_size = 4;
   constexpr int64_t attr_size = 2;
   (void)CheckAndConvertUtils::CheckInteger("x dimension", SizeToLong(x_shape.size()), kEqual, x_size, op_name);
