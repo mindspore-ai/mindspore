@@ -7,8 +7,8 @@ mindspore.ops.cdist
 
     **参数：**
 
-    - **x** (tensor) - 输入Tensor x，输入shape [B, P, M]。
-    - **y** (tensor) - 输入Tensor y，输入shape [B, R, M]。
+    - **x** (tensor) - 输入tensor x，输入shape [B, P, M], B维度可以为0，即shape为 [P, M]。
+    - **y** (tensor) - 输入tensor y，输入shape [B, R, M]。
     - **p** (float) - P -范数距离的P值，P∈[0，∞]。默认值:2.0。
 
     **返回：**
