@@ -149,7 +149,9 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   }
 
   auto execution_order = graph->execution_order();
+  graph->EnableRuntimeCache();
   common::AnfAlgo::ReorderExecList(NOT_NULL(&execution_order));
+  graph->DisableRuntimeCache();
   graph->set_execution_order(execution_order);
 
   device::KernelAdjust::GetInstance().InsertOverflowCheckOperations(NOT_NULL(graph));

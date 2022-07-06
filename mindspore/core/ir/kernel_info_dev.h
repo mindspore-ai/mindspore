@@ -56,11 +56,19 @@ class RuntimeCache {
     prev_node_output_map_[index] = output;
   }
 
+  void reset() {
+    MS_EXCEPTION_IF_CHECK_FAIL(!is_valid_, "this runtime cache is valid, can't reset!!!!");
+    prev_node_output_map_.clear();
+    device_target_.clear();
+    output_tensor_num_ = -1;
+    is_real_kernel_ = Uncached;
+  }
+
   std::string device_target() { return device_target_; }
 
   void set_device_target(const std::string &target) { device_target_ = target; }
   bool is_valid() const { return is_valid_; }
-  void set_valid() { is_valid_ = true; }
+  void set_is_valid(bool is_vaild) { is_valid_ = is_vaild; }
   void set_output_tensor_num(const ssize_t output_tensor_num) { output_tensor_num_ = output_tensor_num; }
   ssize_t output_tensor_num() const { return output_tensor_num_; }
   void set_real_kernel(CacheBool b) { is_real_kernel_ = b; }

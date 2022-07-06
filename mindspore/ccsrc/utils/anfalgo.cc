@@ -1084,7 +1084,7 @@ void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_in
 
     auto input_size = child->inputs().size() - 1;
     for (size_t k = 0; k < input_size; ++k) {
-      auto kernel_index = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(child, k), 0, true);
+      auto kernel_index = AnfAlgo::GetPrevNodeOutput(child, k, true);
       if (kernel_index.first != node) {
         continue;
       }
@@ -1112,7 +1112,7 @@ std::vector<CNodePtr> DelayExecNode(const std::vector<CNodePtr> &nodes, const st
       bool is_seed = true;
       auto input_size = node->inputs().size() - 1;
       for (size_t k = 0; k < input_size; ++k) {
-        auto input = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(node, k), 0, true).first;
+        auto input = AnfAlgo::GetPrevNodeOutput(node, k, true).first;
         if (input != nullptr && input->isa<CNode>()) {
           is_seed = false;
           break;
