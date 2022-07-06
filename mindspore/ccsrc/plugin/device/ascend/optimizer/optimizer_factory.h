@@ -30,7 +30,7 @@
 namespace mindspore::opt {
 enum kPassType {
   kMindIRPass = 0,
-  kIRFusionFisionPass,
+  kIRFusionFissionPass,
   kUBFusionPass,
 };
 
@@ -43,13 +43,13 @@ class Factory {
   void operator=(const Factory &) = delete;
 
   static Factory &Instance() {
-    static Factory instance;
+    static Factory instance{};
     return instance;
   }
 
   void Register(kPassType pass_type, const std::string &name, CreatorFunc &&creator) {
     if (IsRegistered(pass_type, name)) {
-      MS_LOG(ERROR) << "Pass " << name << " is already registered!";
+      MS_LOG(WARNING) << "Pass " << name << " is already registered!";
     }
     (void)pass_creators_[pass_type].emplace(name, creator);
   }

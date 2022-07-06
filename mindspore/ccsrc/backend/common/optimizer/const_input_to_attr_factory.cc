@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 
 #include "kernel/oplib/oplib.h"
 #include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore::opt {
@@ -75,7 +74,7 @@ ConstInputToAttrRegister::RegisterHelper::RegisterHelper(const string &name, con
   va_list var_ptr;
   va_start(var_ptr, len);
   for (int i = 0; i < len; ++i) {
-    input_to_attr.insert(va_arg(var_ptr, size_t));
+    input_to_attr.insert(static_cast<size_t>(va_arg(var_ptr, int)));
   }
   va_end(var_ptr);
   ConstInputToAttrRegister::GetInstance().RegConstToAttr(name, backend, is_dynamic_shape, input_to_attr);
