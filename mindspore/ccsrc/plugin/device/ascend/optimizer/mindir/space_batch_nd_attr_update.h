@@ -27,7 +27,7 @@ class SpaceToBatchNDAttrUpdate : public PatternProcessPass {
       : PatternProcessPass("space_to_batch_nd_attr_update", multigraph) {}
   ~SpaceToBatchNDAttrUpdate() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 
 class BatchToSpaceNDAttrUpdate : public PatternProcessPass {
@@ -36,7 +36,7 @@ class BatchToSpaceNDAttrUpdate : public PatternProcessPass {
       : PatternProcessPass("batch_to_space_nd_attr_update", multigraph) {}
   ~BatchToSpaceNDAttrUpdate() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
