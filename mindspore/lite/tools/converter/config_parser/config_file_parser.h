@@ -60,6 +60,7 @@ struct FullQuantString {
 struct RegistryInfoString {
   std::string plugin_path;
   std::string disable_fusion;
+  std::string fusion_blacklists;
 };
 
 struct AclOptionCfgString {

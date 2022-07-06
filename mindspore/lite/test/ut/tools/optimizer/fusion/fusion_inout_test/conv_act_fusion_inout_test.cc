@@ -27,7 +27,7 @@ class ConvActFusionInoutTest : public ConvFusionInoutTest {
   ConvActFusionInoutTest() = default;
 
  protected:
-  void InitPass() override { this->pass_ = std::make_shared<opt::ConvActivationFusion>(); }
+  void InitPass() override { this->pass_ = std::make_shared<opt::ConvActivationFusion>(lite::quant::CPU); }
 
   void InitGraph() override {
     this->graph_ = std::make_shared<FuncGraph>();

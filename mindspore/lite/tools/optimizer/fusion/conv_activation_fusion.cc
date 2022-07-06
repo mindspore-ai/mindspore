@@ -22,6 +22,7 @@
 #include "ops/fusion/activation.h"
 #include "ops/op_utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/quantizer/quant_params.h"
 
 namespace mindspore::opt {
 const BaseRef ConvActivationFusion::DefinePattern() const {
@@ -34,6 +35,10 @@ const BaseRef ConvActivationFusion::DefinePattern() const {
 
 const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const EquivPtr &) const {
+  // NVGPU don't support ConvActivationFusion
+  if (target_device_ == lite::quant::NVGPU) {
+    return nullptr;
+  }
   if (func_graph == nullptr || node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return nullptr;

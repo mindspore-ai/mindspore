@@ -186,48 +186,55 @@ int AnfTransform::RunFusionPass(const FuncGraphPtr &old_graph, const std::shared
 
   // The training model only does the fusion of the inference part
   // remove quantdtype when awaretraining
-  fusion_pm->AddPass(std::make_shared<opt::AddConcatActivationFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::SqueezeFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TransposeFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ReshapeReshapeFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>(param->fmk_type));
-  fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>(param->fmk_type));
-  fusion_pm->AddPass(std::make_shared<opt::GroupNormFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfNormFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::OnnxLayerNormFusion2>());
-  fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::BatchNormToScaleFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ActivationFusion>());
-  if (param->fullQuantParam.target_device != quant::NVGPU) {
-    fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
+  std::vector<opt::PassPtr> fusions{std::make_shared<opt::AddConcatActivationFusion>(),
+                                    std::make_shared<opt::SqueezeFusion>(),
+                                    std::make_shared<opt::TransposeFusion>(),
+                                    std::make_shared<opt::ReshapeReshapeFusion>(),
+                                    std::make_shared<opt::ConvBiasaddFusion>(),
+                                    std::make_shared<opt::ConvBatchNormFusion>(param->fmk_type),
+                                    std::make_shared<opt::ConvScaleFusion>(param->fmk_type),
+                                    std::make_shared<opt::GroupNormFusion>(),
+                                    std::make_shared<opt::TfNormFusion>(),
+                                    std::make_shared<opt::OnnxLayerNormFusion>(),
+                                    std::make_shared<opt::OnnxLayerNormFusion2>(),
+                                    std::make_shared<opt::BatchMatMulFusion>(),
+                                    std::make_shared<opt::BatchNormToScaleFusion>(),
+                                    std::make_shared<opt::SigmoidMulFusion>(),
+                                    std::make_shared<opt::ActivationFusion>(),
+                                    std::make_shared<opt::ConvActivationFusion>(param->fullQuantParam.target_device),
+                                    std::make_shared<opt::ConvTupleGetItemFusion>(),
+                                    std::make_shared<opt::ConvTupleActivationFusion>(),
+                                    std::make_shared<opt::TfliteLstmCellFusion>(),
+                                    std::make_shared<opt::TfLstmCellFusion>(),
+                                    std::make_shared<opt::TfBidirectionGruFusion>(),
+                                    std::make_shared<opt::TfGeLUFusion>(),
+                                    std::make_shared<opt::OnnxGeLUFusion>(),
+                                    std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>(),
+                                    std::make_shared<opt::GLUFusion>(),
+                                    std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model),
+                                    std::make_shared<opt::AffineFusion>(),
+                                    std::make_shared<opt::AffineActivationFusion>(),
+                                    std::make_shared<opt::ConvConvFusion>(),
+                                    std::make_shared<opt::ConvPadFusion>(),
+                                    std::make_shared<opt::MatMulAddFusion>(),
+                                    std::make_shared<opt::MatMulMulFusion>(),
+                                    std::make_shared<opt::TransposeMatMulFusion>(),
+                                    std::make_shared<opt::MulAddFusion>(),
+                                    std::make_shared<opt::ScaleActivationFusion>(),
+                                    std::make_shared<opt::ScaleScaleFusion>(),
+                                    std::make_shared<opt::FullConnectedFusion>(),
+                                    std::make_shared<opt::FullconnectedAddFusion>(),
+                                    std::make_shared<opt::TensorDotFusion>(),
+                                    std::make_shared<opt::MatMulActivationFusion>(param)};
+  for (size_t index = 0; index < fusions.size(); index++) {
+    auto pass_ptr = fusions.at(index);
+    auto pass_name = pass_ptr->name();
+    if (param->fusion_blacklists.find(pass_name) != param->fusion_blacklists.end()) {
+      MS_LOG(INFO) << "Disable fusion: " << pass_name;
+      continue;
+    }
+    fusion_pm->AddPass(pass_ptr);
   }
-  fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfBidirectionGruFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfGeLUFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::OnnxGeLUFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TfliteRelPosMultiHeadAttentionFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::GLUFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConstFoldPass>(param->fmk_type, param->train_model));
-  fusion_pm->AddPass(std::make_shared<opt::AffineFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::AffineActivationFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ConvPadFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MatMulAddFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MatMulMulFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TransposeMatMulFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MulAddFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ScaleActivationFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::ScaleScaleFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::FullConnectedFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::FullconnectedAddFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::TensorDotFusion>());
-  fusion_pm->AddPass(std::make_shared<opt::MatMulActivationFusion>(param));
   optimizer->AddPassManager(fusion_pm);
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run op fusion failed.";
