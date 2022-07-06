@@ -4031,7 +4031,7 @@ def renorm(input_x, p, dim, maxnorm):
 
     Args:
         input_x: A Tensor, types: float32 or float16.
-        p (int): P-norm.
+        p (int): Power of norm calculation.
         dim (int): The dimension that expected to get the slice-tensor.
         maxnorm (float): Max norm.
 
@@ -4047,7 +4047,7 @@ def renorm(input_x, p, dim, maxnorm):
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-    Example:
+    Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
         >>> y = ops.renorm(x, p=1, dim=0, maxnorm=5.)
         >>> print(y)

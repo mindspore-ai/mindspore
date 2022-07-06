@@ -6195,7 +6195,7 @@ class Renorm(Primitive):
     Supported Platforms:
         ``Ascend`` ``CPU``
 
-    Example:
+    Examples:
         >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
         >>> y = Renorm(x, p=1, dim=0, maxnorm=5.)
         >>> print(y)
