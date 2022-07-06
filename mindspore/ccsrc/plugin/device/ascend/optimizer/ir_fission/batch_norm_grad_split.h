@@ -27,7 +27,7 @@ class BatchNormGradSplit : public PatternProcessPass {
   explicit BatchNormGradSplit(bool multigraph = true) : PatternProcessPass("batch_norm_grad_split", multigraph) {}
   ~BatchNormGradSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void CreateOutputsOfUpdateGrad(const FuncGraphPtr &graph, const CNodePtr &bn_grad_node,

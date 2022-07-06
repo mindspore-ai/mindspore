@@ -31,7 +31,7 @@ class InsertTransOp : public PatternProcessPass {
       : PatternProcessPass("insert_trans_op", multigraph), kernel_select_(std::make_shared<KernelSelect>()) {}
   ~InsertTransOp() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   KernelSelectPtr kernel_select_;

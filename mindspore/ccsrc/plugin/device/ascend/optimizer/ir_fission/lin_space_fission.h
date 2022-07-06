@@ -25,7 +25,7 @@ class LinSpaceFission : public PatternProcessPass {
   explicit LinSpaceFission(bool multigraph = true) : PatternProcessPass("lin_space_fission", multigraph) {}
   ~LinSpaceFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
