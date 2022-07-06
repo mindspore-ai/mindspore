@@ -4700,6 +4700,10 @@ class SquareSumAll(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
         >>> x = Tensor(np.array([0, 0, 2, 0]), mindspore.float32)
         >>> y = Tensor(np.array([0, 0, 2, 4]), mindspore.float32)
         >>> square_sum_all = ops.SquareSumAll()
