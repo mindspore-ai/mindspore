@@ -1442,7 +1442,7 @@ class Tensor(Tensor_):
             6.0
         """
         self._init_check()
-        return tensor_operator_registry.get('reduce_prod')(self, axis, keep_dims)
+        return tensor_operator_registry.get('prod')(self, axis, keep_dims)
 
     def select(self, condition, y):
         r"""
