@@ -189,16 +189,17 @@ class HcclParser:
         # The name of the operator in step trace is like: stream_xx_xx_operatorName-opxx.
         operators_names_in_step_trace = [self._step_trace_info[0][i]
                                          for i in range(0, len(self._step_trace_info[0]), 3)]
-        op_names_in_step_trace_set = set({i.split('_')[3].split('-')[0] for i in operators_names_in_step_trace})
+        op_names_in_step_trace_set = set({op_name.split('/')[-1].split('-')[0].split('_')[-1]
+                                          for op_name in operators_names_in_step_trace})
         op_names_in_step_trace_dic = dict()
         for item in op_names_in_step_trace_set:
-            op_names_in_step_trace_dic[item] = [i for i in operators_names_in_step_trace
-                                                if i.split('_')[3].split('-')[0] == item]
+            op_names_in_step_trace_dic[item] = [op_name for op_name in operators_names_in_step_trace
+                                                if op_name.split('/')[-1].split('-')[0].split('_')[-1] == item]
 
         communication_operator_mapping_info = dict()
         for hccl_key, hccl_value in op_names_in_hccl_dic.items():
             for step_trace_key, step_trace_value in op_names_in_step_trace_dic.items():
-                # the step_trace_key format is: scope/operatorName
+                # the step_trace_key format is: operatorName
                 if hccl_key.lower() == step_trace_key.lower().split('/')[-1]:
                     communication_operator_mapping_info[hccl_key] = list(zip(hccl_value, step_trace_value))
 
