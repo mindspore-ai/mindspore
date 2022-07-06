@@ -19,6 +19,9 @@ mindspore.ops.adaptive_max_pool2d
         Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
         \end{align}
 
+    .. note::
+        Ascend平台input_x参数仅支持float16类型。
+
     **参数：**
 
     - **input_x** (Tensor) - adaptive_max_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
