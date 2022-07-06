@@ -33,8 +33,10 @@ abstract::ShapePtr RandomCategoricalInferShape(const PrimitivePtr &primitive,
   if (logits_shape_ptr->IsDynamic()) {
     return logits_shape_ptr->cast<abstract::ShapePtr>();
   }
+  if (logits_shape.size() != kDim2) {
+    MS_EXCEPTION(TypeError) << "logits shape size only support 2D";
+  }
   std::vector<int64_t> output_shape;
-  MS_EXCEPTION_IF_ZERO("logits shape size", logits_shape.size());
   for (size_t i = 0; i < logits_shape.size() - 1; ++i) {
     output_shape.push_back(logits_shape.at(i));
   }
@@ -61,9 +63,8 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
       MS_EXCEPTION_IF_NULL(num_sample_ptr);
       num_sample = GetValue<int32_t>(num_sample_ptr->BuildValue());
     } else {
-      MS_LOG(EXCEPTION) << "For '" << prim->name()
-                        << "' second input build type is invalid:" << TypeIdToString(num_sample_input_type->type_id())
-                        << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
+                              << TypeIdToString(num_sample_input_type->type_id()) << ".";
     }
   } else if (nun_sample_arg->isa<abstract::AbstractTensor>()) {
     auto num_sample_ptr = nun_sample_arg->cast<abstract::AbstractTensorPtr>();
@@ -77,14 +78,13 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
     } else if (num_sample_tensor->data_type() == kNumberTypeInt32) {
       num_sample = static_cast<int32_t *>(num_sample_tensor->data_c())[0];
     } else {
-      MS_LOG(EXCEPTION) << "For '" << prim->name()
-                        << "' second input build type is invalid:" << TypeIdToString(num_sample_tensor->data_type())
-                        << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim->name() << "' second input build type is invalid:"
+                              << TypeIdToString(num_sample_tensor->data_type()) << ".";
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << "', the second input type should be scalar or tensor, but got invalid abstract type:"
-                      << nun_sample_arg->type_name() << ".";
+    MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                            << "', the second input type should be scalar or tensor, but got invalid abstract type:"
+                            << nun_sample_arg->type_name() << ".";
   }
   prim->AddAttr(kNumSample, MakeValue(num_sample));
 }
@@ -103,8 +103,9 @@ void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input
       MS_EXCEPTION_IF_NULL(seed_ptr);
       seed = GetValue<int32_t>(seed_ptr->BuildValue());
     } else {
-      MS_LOG(EXCEPTION) << "For '" << prim->name()
-                        << "' third input build type is invalid:" << TypeIdToString(seed_input_type->type_id()) << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                              << "' third input build type is invalid:" << TypeIdToString(seed_input_type->type_id())
+                              << ".";
     }
   } else if (seed_arg->isa<abstract::AbstractTensor>()) {
     auto seed_ptr = seed_arg->cast<abstract::AbstractTensorPtr>();
@@ -118,13 +119,14 @@ void AddSeed(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input
     } else if (seed_tensor->data_type() == kNumberTypeInt32) {
       seed = static_cast<int32_t *>(seed_tensor->data_c())[0];
     } else {
-      MS_LOG(EXCEPTION) << "For '" << prim->name()
-                        << "' third input build type is invalid:" << TypeIdToString(seed_tensor->data_type()) << ".";
+      MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                              << "' third input build type is invalid:" << TypeIdToString(seed_tensor->data_type())
+                              << ".";
     }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
-                      << "', the third input type should be scalar, but got invalid abstract type:"
-                      << seed_arg->type_name() << ".";
+    MS_EXCEPTION(TypeError) << "For '" << prim->name()
+                            << "', the third input type should be scalar, but got invalid abstract type:"
+                            << seed_arg->type_name() << ".";
   }
   prim->AddAttr(kSeed, MakeValue(seed));
 }
