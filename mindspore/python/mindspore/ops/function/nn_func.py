@@ -301,7 +301,7 @@ def dropout2d(x, p=0.5):
     Args:
         x (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `H` is the feature height, and `W` is the feature width. The data type must be int8,
-            int16, int32, int64, float16 or float32.
+            int16, int32, int64, float16, float32 or float64.
         p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
 
@@ -311,7 +311,7 @@ def dropout2d(x, p=0.5):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not `4D`.
@@ -346,7 +346,7 @@ def dropout3d(x, p=0.5):
     Args:
         x (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `D` is the feature depth, `H` is the feature height, and `W` is the feature width.
-            The data type must be int8, int16, int32, int64, float16 or float32.
+            The data type must be int8, int16, int32, int64, float16, float32 or float64.
         p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
 
@@ -356,7 +356,7 @@ def dropout3d(x, p=0.5):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not 5D.
