@@ -137,6 +137,72 @@ def test_renorm_op2_float16(data_type=np.float16):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+def test_renorm_op2_float64(data_type=np.float64):
+    """
+    Feature: test Renorm using float64.
+    Description: inputs with batch.
+    Expectation: the result match with expect.
+    """
+    error = 1e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_x = np.array([[[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]],
+                        [[9.0, 10.0, 11.0, 12.0], [13.0, 14.0, 15.0, 16.0]]]).astype(data_type)
+    benchmark_output = np.array([[[0.60192926, 1.09108945, 1.49255578, 1.82574185],
+                                  [3.00964631, 3.27326834, 3.48263015, 3.65148370]],
+                                 [[5.41736336, 5.45544723, 5.47270452, 5.47722555],
+                                  [7.82508040, 7.63762612, 7.46277889, 7.30296740]]]).astype(data_type)
+
+    re_norm = ReNormNet(p=2, axis=2, maxnorm=10.0)
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
+
+def test_renorm_op2_complex64(data_type=np.complex64):
+    """
+    Feature: test Renorm using complex64.
+    Description: inputs with batch.
+    Expectation: the result match with expect.
+    """
+    error = 1e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_x = np.array([[1+2j, 2+3j], [3+4j, 4+5j]]).astype(data_type)
+    benchmark_output = np.array([[0.91287088+1.82574177j, 1.36082768+2.04124165j],
+                                 [2.73861265+3.65148354j, 2.72165537+3.40206909j]]).astype(data_type)
+
+    re_norm = ReNormNet(p=2, axis=1, maxnorm=5.0)
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
+
+def test_renorm_op2_complex128(data_type=np.complex128):
+    """
+    Feature: test Renorm using complex128.
+    Description: inputs with batch.
+    Expectation: the result match with expect.
+    """
+    error = 1e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    input_x = np.array([[1+2j, 2+3j], [3+4j, 4+5j]]).astype(data_type)
+    benchmark_output = np.array([[0.91287091+1.82574183j, 1.36082762+2.04124142j],
+                                 [2.73861274+3.65148365j, 2.72165523+3.40206904j]]).astype(data_type)
+
+    re_norm = ReNormNet(p=2, axis=1, maxnorm=5.0)
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+
+
 def vmap_case():
     class Net(nn.Cell):
         def __init__(self, p, axis, maxnorm):
