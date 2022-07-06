@@ -2825,7 +2825,7 @@ test_case_nn_ops = [
         'block': G.MaxPoolGradGradWithArgmax(),
         'desc_inputs': [Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
                         Tensor(np.random.rand(1, 1, 2, 2), mstype.float16),
-                        Tensor(np.zeros((1, 1, 2, 2)), mstype.uint16)],
+                        Tensor(np.zeros((1, 1, 2, 2)), mstype.int32)],
         'desc_bprop': [],
         'skip': ['backward']}),
     ('Roll', {
