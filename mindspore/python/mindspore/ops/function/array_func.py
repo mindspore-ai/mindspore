@@ -144,8 +144,6 @@ def matrix_band_part(x, lower, upper):
     r"""
     Copy a tensor setting everything outside a central band in each innermost matrix to zero.
 
-    The shapes of `x`, `lower` and `upper` need to be the same or broadcast.
-
     Args:
         x (Tensor): Input tensor. :math:`(*, m, n)` where :math:`*` means, any number of additional dimensions.
             The data type must be float16, float32, float64, int32 or int64.
@@ -158,13 +156,15 @@ def matrix_band_part(x, lower, upper):
         Tensor, has the same type and shape as `x`.
 
     Raises:
+        TypeError: If `x` is not a Tensor.
         TypeError: If dtype of `x` is not one of float16, float32, float64, int32 or int64.
         TypeError: If `lower` is neither a number nor a Tensor.
         TypeError: If `upper` is neither a number nor a Tensor.
-        TypeError: If dtype of `lower` is neither int32 nor a int64.
-        TypeError: If dtype of `upper` is neither int32 nor a int64.
+        TypeError: If dtype of `lower` is neither int32 nor int64.
+        TypeError: If dtype of `upper` is neither int32 nor int64.
         ValueError: If the shape of `x` is not greater than or equal to 2D.
-        ValueError: If the shapes of `x`, `lower` and `upper` could not be broadcast.
+        ValueError: If the shape of `lower` is not equal to 0D.
+        ValueError: If the shape of `upper` is not equal to 0D.
 
     Supported Platforms:
         ``GPU`` ``CPU``

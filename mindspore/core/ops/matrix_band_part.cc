@@ -16,18 +16,18 @@
 #include "ops/matrix_band_part.h"
 #include <string>
 #include <algorithm>
-#include <map>
-#include <set>
 #include <vector>
-
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
 namespace {
+constexpr int64_t kXMinShapeSize = 2;
+
 TypePtr MatrixBandPartInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
@@ -69,16 +69,37 @@ abstract::ShapePtr MatrixBandPartInferShape(const PrimitivePtr &primitive,
   auto lower_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
   auto upper_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex2]->BuildShape())[kShape];
 
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+  // Input 'lower' must be a tensor with a value or a scalar.
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'lower'", SizeToLong(lower_shape.size()), kEqual, batch_rank,
+                                           prim_name);
+  // Input 'upper' must be a tensor with a value or a scalar.
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'upper'", SizeToLong(upper_shape.size()), kEqual, batch_rank,
+                                           prim_name);
+
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_gpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  // Ascend will use the batch_rank to implement vmap feature.
+  if (!is_gpu && !is_cpu) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+
   auto broadcast_shape = x_shape;
   if (input_args[kInputIndex1]->isa<abstract::AbstractTensor>()) {
-    auto expanded_lower_shape = GetExpandedShape<int64_t>(lower_shape);
+    auto expanded_lower_shape = GetExpandedShape<int64_t>(lower_shape, broadcast_shape.size());
     // Check whether broadcasting is possible
     (void)CalBroadCastShape(x_shape, expanded_lower_shape, prim_name, "x", "lower");
     // Get broadcast shape
     broadcast_shape = CalBroadCastShape(broadcast_shape, expanded_lower_shape, prim_name);
   }
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>()) {
-    auto expanded_upper_shape = GetExpandedShape<int64_t>(upper_shape);
+    auto expanded_upper_shape = GetExpandedShape<int64_t>(upper_shape, broadcast_shape.size());
     // Check whether broadcasting is possible
     (void)CalBroadCastShape(x_shape, expanded_upper_shape, prim_name, "x", "upper");
     // Get broadcast shape

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace kernel {
-class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<MatrixBandPartCpuKernelMod> {
+class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod {
  public:
   MatrixBandPartCpuKernelMod() = default;
   ~MatrixBandPartCpuKernelMod() override = default;
@@ -34,29 +34,30 @@ class MatrixBandPartCpuKernelMod : public NativeCpuKernelMod, public MatchKernel
   int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
              const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs) override {
     if (is_null_input_) {
       return true;
     }
-    return kernel_func_(this, inputs, workspace, outputs);
+    return kernel_func_(this, inputs, outputs);
   }
 
-  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
-
  protected:
-  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
+  std::vector<KernelAttr> GetOpSupport() override;
 
  private:
   template <typename T, typename LU>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs);
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
   template <typename T, typename LU>
   bool LaunchKernelNotBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
   template <typename T, typename LU>
   bool LaunchKernelBroadcast(const T *x_ptr, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr);
   void BroadcastShape(const ShapeVector &x_shape, const ShapeVector &lower_shape, const ShapeVector &upper_shape,
                       const ShapeVector &output_shape);
+  using MatrixBandPartFunc = std::function<bool(MatrixBandPartCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                                const std::vector<kernel::AddressPtr> &)>;
+  static std::vector<std::pair<KernelAttr, MatrixBandPartFunc>> func_list_;
+  MatrixBandPartFunc kernel_func_;
   bool is_null_input_{false};
   size_t dim_size_{1};
   size_t output_element_num_{0};
