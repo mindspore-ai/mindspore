@@ -111,7 +111,7 @@ def test_net_inputs_including_str(mode):
     assert "support bool, int, float, None, Tensor, " \
            "Parameter, mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but the 1th arg type is <class 'str'>, value is 'ok'" in str(err.value)
+           "but the 2nd arg type is <class 'str'>, value is 'ok'" in str(err.value)
 
 
 # Support the Parameter as outermost input.
