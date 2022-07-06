@@ -205,7 +205,7 @@ def adaptive_max_pool3d(x, output_size, return_indices=False):
         x (Tensor): Tensor, with shape :math:`(C, D, H, W)` or :math:`(N, C, D, H, W)`, which support int8, int16,
             int32, int64, uint8, uint16, uint32, uint64, float16, float32 or float64 data type.
         output_size (Union[int, tuple]): The target output size. `ouput_size` can be a tuple :math:`(D, H, W)`,
-            or a single D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
+            or an int D for :math:`(D, D, D)`. :math:`(D)`, :math:`(H)` and :math:`(W)` can be int or None
             which means the output size is the same as that of the input.
         return_indices (bool): If `return_indices` is True, the indices of max value would be output,
             else would not be output. Default: False.
@@ -220,7 +220,7 @@ def adaptive_max_pool3d(x, output_size, return_indices=False):
         ValueError: If the dimensions number of `x` is not 4 or 5.
         TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
                    float16, float32 or float64.
-        ValueError: If the shape of `output_size` is not (3,).
+        ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
     Supported Platforms:
         ``GPU``
@@ -1624,6 +1624,7 @@ __all__ = [
     'adaptive_avg_pool2d',
     'adaptive_max_pool3d',
     'avg_pool2d',
+    'max_pool3d',
     'celu',
     'deformable_conv2d',
     'dropout2d',
