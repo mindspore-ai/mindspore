@@ -173,3 +173,8 @@ template CUDA_LIB_EXPORT void MaskedSelect<double>(const double *input_ptr, cons
                                                    const std::vector<size_t> broadcast_shape,
                                                    double *input_broadcast_ptr, bool *mask_broadcast_ptr,
                                                    double *output_ptr, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void MaskedSelect<bool>(const bool *input_ptr, const bool *mask_ptr, size_t *index_ptr,
+                                                 const std::vector<size_t> input_shape,
+                                                 const std::vector<size_t> mask_shape,
+                                                 const std::vector<size_t> broadcast_shape, bool *input_broadcast_ptr,
+                                                 bool *mask_broadcast_ptr, bool *output_ptr, cudaStream_t cuda_stream);

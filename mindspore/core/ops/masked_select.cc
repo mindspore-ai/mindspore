@@ -55,8 +55,8 @@ abstract::ShapePtr MaskedSelectInferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr MaskedSelectInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set valid_types = {kInt8,   kInt16,  kInt32,   kInt64, kUInt8,  kUInt16,
-                                kUInt32, kUInt64, kFloat16, kFloat, kFloat64};
+  const std::set valid_types = {kInt8,   kInt16,  kInt32,   kInt64, kUInt8,   kUInt16,
+                                kUInt32, kUInt64, kFloat16, kFloat, kFloat64, kBool};
   auto op_name = prim->name();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("mask", input_args[1]->BuildType(), {kBool}, op_name);
   std::map<std::string, TypePtr> types;
