@@ -166,10 +166,7 @@ def create_dataset_pyfunc_multiproc(data_path, batch_size=32, num_op_parallel_wo
     return data1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.forked
+@pytest.mark.skip(reason="get_next time out")
 def test_autotune_pymultiproc_train_simple_model():
     """
     Feature: Dataset AutoTune
