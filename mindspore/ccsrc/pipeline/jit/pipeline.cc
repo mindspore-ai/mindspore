@@ -1516,11 +1516,6 @@ void InitHccl() {
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
     (void)InitPipeline();
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET), context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    device_context->Initialize();
     return;
   }
 #endif
@@ -1638,9 +1633,16 @@ void InitPipeline() {
   // set python env flag
   RecordInitStatus();
   mindspore::python_adapter::set_python_env_flag(true);
-  // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+#ifdef ENABLE_D
+  auto backend = ms_context->backend_policy();
+  if (backend == "ge") {
+    const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    device_context->Initialize();
+  }
+#endif
   if (!context::OpenTsd(ms_context)) {
     MS_LOG(EXCEPTION) << "Open tsd failed";
   }
