@@ -334,36 +334,38 @@ def get_deformable_offsets_vmap_rule(prim, axis_size):
 
 
 @vmap_rules_getters.register(G.MaxPoolGradGrad)
+@vmap_rules_getters.register(G.MaxPoolGradGradWithArgmax)
 def get_maxpool_grad_grad_vmap_rule(prim, axis_size):
-    """VmapRule for `MaxPoolGradGrad`."""
+    """VmapRule for `MaxPoolGradGrad` and `MaxPoolGradGradWithArgmax`."""
     chw_reverse_index = -3
 
-    def vmap_rule(x_bdim, y_bdim, grad_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, y_bdim)
+    def vmap_rule(in0_bdim, in1_bdim, in2_bdim):
+        is_all_none, result = vmap_general_preprocess(
+            prim, in0_bdim, in1_bdim, in2_bdim)
         if is_all_none:
             return result
 
-        x, x_dim = x_bdim
-        x = _bdim_at_front(x, x_dim, axis_size)
-        x_shape = F.shape(x)
-        input_shape = (-1,) + x_shape[chw_reverse_index:]
-        x = F.reshape(x, input_shape)
+        in0, in0_dim = in0_bdim
+        in0 = _bdim_at_front(in0, in0_dim, axis_size)
+        in0_shape = F.shape(in0)
+        input_shape = (-1,) + in0_shape[chw_reverse_index:]
+        in0 = F.reshape(in0, input_shape)
 
-        y, y_dim = y_bdim
-        y = _bdim_at_front(y, y_dim, axis_size)
-        y_shape = F.shape(y)
-        y_shape = (-1,) + y_shape[chw_reverse_index:]
-        y = F.reshape(y, y_shape)
+        in1, in1_dim = in1_bdim
+        in1 = _bdim_at_front(in1, in1_dim, axis_size)
+        in1_shape = F.shape(in1)
+        in1_shape = (-1,) + in1_shape[chw_reverse_index:]
+        in1 = F.reshape(in1, in1_shape)
 
-        grad, grad_dim = grad_bdim
-        grad = _bdim_at_front(grad, grad_dim, axis_size)
-        grad_shape = F.shape(grad)
-        grad_shape = (-1,) + grad_shape[chw_reverse_index:]
-        grad = F.reshape(grad, grad_shape)
+        in2, in2_dim = in2_bdim
+        in2 = _bdim_at_front(in2, in2_dim, axis_size)
+        in2_shape = F.shape(in2)
+        in2_shape = (-1,) + in2_shape[chw_reverse_index:]
+        in2 = F.reshape(in2, in2_shape)
 
-        out = prim(x, y, grad)
+        out = prim(in0, in1, in2)
         out_shape = F.shape(out)
-        real_out_shape = x_shape[:chw_reverse_index] + \
+        real_out_shape = in0_shape[:chw_reverse_index] + \
             out_shape[chw_reverse_index:]
         out = F.reshape(out, real_out_shape)
         return (out, 0)
