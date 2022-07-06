@@ -2581,7 +2581,7 @@ def nonzero(x):
     Return a Tensor of the positions of all non-zero values.
 
     Args:
-        x (int): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
+        x (Tensor): The shape of Tensor is :math:`(x_1, x_2, ..., x_R)`. The data type is Number or Bool.
 
     Returns:
         Tensor, a 2-D Tensor whose data type is int64, containing the positions of all non-zero values of the input.

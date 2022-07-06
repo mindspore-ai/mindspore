@@ -1278,7 +1278,7 @@ class Tensor(Tensor_):
             >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
             >>> output = ops.isclose(input, other)
             >>> print(output)
-                [true false false false true]
+                [True False False False True]
         """
         self._init_check()
         return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)
