@@ -170,7 +170,7 @@ def test_aot_single_output_cpu():
     Expectation: nn result matches numpy result
     """
     sys = platform.system()
-    if sys == 'Windows':
+    if sys.lower() in {"windows", "darwin"}:
         pass
     else:
         context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
