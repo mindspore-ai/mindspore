@@ -8697,7 +8697,7 @@ class ApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class ApplyAdagradDANet(nn.Cell):
@@ -8751,6 +8751,7 @@ class ApplyAdagradDA(Primitive):
     def __init__(self, use_locking=False):
         """Initialize ApplyAdagradDA"""
         validator.check_value_type("use_locking", use_locking, [bool], self.name)
+        self.add_prim_attr('side_effect_mem', True)
 
 
 class SparseApplyRMSProp(Primitive):

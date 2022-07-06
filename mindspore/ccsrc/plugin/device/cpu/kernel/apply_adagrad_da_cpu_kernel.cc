@@ -49,6 +49,28 @@ bool ApplyAdagradDACpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
+void ApplyAdagradDACpuKernelMod::CheckDType(const std::vector<KernelTensorPtr> &inputs,
+                                            const std::vector<KernelTensorPtr> &outputs) const {
+  auto LRDtype = inputs[kLRIndex]->GetDtype();
+  auto L1Dtype = inputs[kL1Index]->GetDtype();
+  auto L2Dtype = inputs[kL2Index]->GetDtype();
+  auto StepDtype = inputs[kStepIndex]->GetDtype();
+  if (LRDtype != kNumberTypeFloat16 && LRDtype != kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be float16 or float32, but got " << LRDtype
+                      << " .";
+  }
+  if (L1Dtype != kNumberTypeFloat16 && L1Dtype != kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'l1' should be float16 or float32, but got " << L1Dtype
+                      << " .";
+  }
+  if (L2Dtype != kNumberTypeFloat16 && L2Dtype != kNumberTypeFloat32) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'l2' should be float16 or float32, but got " << L2Dtype
+                      << " .";
+  }
+  if (StepDtype != kNumberTypeInt32 && StepDtype != kNumberTypeInt64) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'lr' should be int32 or int64, but got " << LRDtype << " .";
+  }
+}
 int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                        const std::vector<KernelTensorPtr> &outputs,
                                        const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
@@ -56,6 +78,7 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if (ret != 0) {
     return ret;
   }
+  CheckDType(inputs, outputs);
   std::vector<int64_t> var_shape = inputs[kVarIndex]->GetShapeVector();
   std::vector<int64_t> lr_shape = inputs[kLRIndex]->GetShapeVector();
 
@@ -68,11 +91,11 @@ int ApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   }
 
   if (!lr_shape.empty()) {
-    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), int64_t(1), std::multiplies<int64_t>());
   }
 
   if (batch_size_ > 0) {
-    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+    input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
     input_elements_ = input_elements_ / batch_size_;
 
     return ret;
@@ -107,18 +130,6 @@ void ApplyAdagradDACpuKernelMod::CheckShapeAndDtypeEqual(int64_t size_a, int64_t
   }
 }
 
-template <typename T>
-void ApplyAdagradDACpuKernelMod::CheckTypeSize(T inputs, int64_t input_size, const char *input_name,
-                                               const int64_t desired_type_a_size, const char *type_a_name,
-                                               const int64_t desired_type_b_size, const char *type_b_name) {
-  if (input_size != desired_type_a_size && input_size != desired_type_b_size) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the '" << input_name << "' must be " << type_a_name
-                      << "(memory size: " << desired_type_a_size << ") or " << type_b_name
-                      << "(memory size:" << desired_type_b_size << "), but got '" << input_name << "': " << inputs
-                      << ", with memory size: " << input_size << " bytes.";
-  }
-}
-
 void ApplyAdagradDACpuKernelMod::CheckParam(const std::vector<AddressPtr> &inputs,
                                             const std::vector<AddressPtr> &outputs) {
   // Inputs: var, gradient_accumulator, gradient_squared_accumulator, grad, lr, l1, l2, global_step
@@ -127,14 +138,6 @@ void ApplyAdagradDACpuKernelMod::CheckParam(const std::vector<AddressPtr> &input
   CheckShapeAndDtypeEqual(inputs[kAccIndex]->size, inputs[kVarIndex]->size, "gradient_accumulator", "var");
   CheckShapeAndDtypeEqual(inputs[kSquarAccIndex]->size, inputs[kVarIndex]->size, "gradient_squared_accumulator", "var");
   CheckShapeAndDtypeEqual(inputs[kGradIndex]->size, inputs[kVarIndex]->size, "grad", "var");
-  CheckTypeSize<float>(reinterpret_cast<float *>(inputs[kLRIndex]->addr)[0], inputs[kLRIndex]->size, "lr", kSizeFloat16,
-                       "float16", kSizeFloat32, "float32");
-  CheckTypeSize<float>(reinterpret_cast<float *>(inputs[kL1Index]->addr)[0], inputs[kL1Index]->size, "l1", kSizeFloat16,
-                       "float16", kSizeFloat32, "float32");
-  CheckTypeSize<float>(reinterpret_cast<float *>(inputs[kL2Index]->addr)[0], inputs[kL2Index]->size, "l2", kSizeFloat16,
-                       "float16", kSizeFloat32, "float32");
-  CheckTypeSize<int>(reinterpret_cast<int *>(inputs[kStepIndex]->addr)[0], inputs[kStepIndex]->size, "global_step",
-                     kSizeInt32, "int32", kSizeInt64, "int64");
 }
 
 template <typename T>
@@ -167,8 +170,7 @@ T max(T num1, T num2) {
 }
 
 template <typename T>
-void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &outputs) {
+void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &) {
   auto *var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto *gradient_accumulator = reinterpret_cast<T *>(inputs[kAccIndex]->addr);
   auto *gradient_squared_accumulator = reinterpret_cast<T *>(inputs[kSquarAccIndex]->addr);
@@ -186,26 +188,6 @@ void ApplyAdagradDACpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
                            start, end);
     };
     CPUKernelUtils::ParallelForAutoSearch(task, input_elements_, &parallel_search_info_);
-
-    // Copy result to output tensor
-    auto output_var = reinterpret_cast<T *>(outputs[kVarIndex]->addr);
-    auto output_gradient_accumulator = reinterpret_cast<T *>(outputs[kAccIndex]->addr);
-    auto output_gradient_squared_accumulator = reinterpret_cast<T *>(outputs[kSquarAccIndex]->addr);
-    auto ret = memcpy_s(output_var, outputs[kVarIndex]->size, var, inputs[kVarIndex]->size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-    }
-    ret =
-      memcpy_s(output_gradient_accumulator, outputs[kAccIndex]->size, gradient_accumulator, inputs[kAccIndex]->size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-    }
-    ret = memcpy_s(output_gradient_squared_accumulator, outputs[kSquarAccIndex]->size, gradient_squared_accumulator,
-                   inputs[kSquarAccIndex]->size);
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-    }
-
     var = var + input_elements_;
     gradient_accumulator = gradient_accumulator + input_elements_;
     gradient_squared_accumulator = gradient_squared_accumulator + input_elements_;
@@ -251,7 +233,10 @@ std::vector<KernelAttr> ApplyAdagradDACpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeInt32)
                                                        .AddOutputAttr(kNumberTypeFloat32)
                                                        .AddOutputAttr(kNumberTypeFloat32)
-                                                       .AddOutputAttr(kNumberTypeFloat32),
+                                                       .AddOutputAttr(kNumberTypeFloat32)
+                                                       .AddOutInRef(0, 0)
+                                                       .AddOutInRef(1, 1)
+                                                       .AddOutInRef(2, 2),
                                                      KernelAttr()
                                                        .AddInputAttr(kNumberTypeFloat16)
                                                        .AddInputAttr(kNumberTypeFloat16)
@@ -263,7 +248,10 @@ std::vector<KernelAttr> ApplyAdagradDACpuKernelMod::GetOpSupport() {
                                                        .AddInputAttr(kNumberTypeInt64)
                                                        .AddOutputAttr(kNumberTypeFloat16)
                                                        .AddOutputAttr(kNumberTypeFloat16)
-                                                       .AddOutputAttr(kNumberTypeFloat16)};
+                                                       .AddOutputAttr(kNumberTypeFloat16)
+                                                       .AddOutInRef(0, 0)
+                                                       .AddOutInRef(1, 1)
+                                                       .AddOutInRef(2, 2)};
   return kernel_attr_list;
 }
 

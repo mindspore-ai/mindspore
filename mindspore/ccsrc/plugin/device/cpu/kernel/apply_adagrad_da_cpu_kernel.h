@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_CPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_DA_CPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_APPLY_ADAGRAD_DA_CPU_KERNEL_H_
 
 #include <thread>
 #include <vector>
@@ -49,9 +49,9 @@ class ApplyAdagradDACpuKernelMod : public NativeCpuKernelMod {
   void CheckParam(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
   void CheckShapeAndDtypeEqual(int64_t size_a, int64_t size_b, const char *name_a, const char *name_b);
-  template <typename T>
-  void CheckTypeSize(T inputs, int64_t input_size, const char *input_name, const int64_t desired_type_a_size,
-                     const char *type_a_name, const int64_t desired_type_b_size, const char *type_b_name);
+
+  void CheckDType(const std::vector<KernelTensorPtr> &inputs, const std::vector<KernelTensorPtr> &outputs) const;
+
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 
