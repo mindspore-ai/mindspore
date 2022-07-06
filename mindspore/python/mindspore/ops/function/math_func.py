@@ -889,6 +889,8 @@ def inplace_add(x, v, indices):
         TypeError: If `indices` is neither int nor tuple.
         TypeError: If `indices` is a tuple whose elements are not all int.
         ValueError: If the rank of `x` is not equal to the rank of `v`.
+        ValueError: If the length of `indices` is not equal to `v.shape[0]`.
+        ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -929,6 +931,8 @@ def inplace_sub(x, v, indices):
         TypeError: If `indices` is neither int nor tuple.
         TypeError: If `indices` is a tuple whose elements are not all int.
         ValueError: If the rank of `x` is not equal to the rank of `v`.
+        ValueError: If the length of `indices` is not equal to `v.shape[0]`.
+        ValueError: If the values of `indices` are not in range of `[0, x.shape[0])`.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -2092,6 +2096,13 @@ def log_matrix_determinant(x):
 def matrix_solve(matrix, rhs, adjoint=False):
     r"""
     Solves systems of linear equations.
+
+    .. math::
+        \begin{aligned}
+        &matrix[..., M, M] * x[..., M, K] = rhs[..., M, K] \\
+        &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
+        \end{aligned}
+
 
     Args:
         matrix (Tensor): The shape of tensor is :math:`[..., M, M]`.
