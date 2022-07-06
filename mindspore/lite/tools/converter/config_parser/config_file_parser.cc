@@ -183,6 +183,7 @@ int ConfigFileParser::ParseRegistryInfoString(const std::map<std::string, std::m
     std::map<std::string, std::string &> parse_map{
       {"plugin_path", registry_info_string_.plugin_path},
       {"disable_fusion", registry_info_string_.disable_fusion},
+      {"fusion_blacklists", registry_info_string_.fusion_blacklists},
     };
     return SetMapData(map, parse_map, kRegistry);
   }

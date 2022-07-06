@@ -18,19 +18,27 @@
 #define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_CONV_ACTIVATION_FUSION_H_
 
 #include <string>
+#include <memory>
 #include "backend/common/optimizer/optimizer.h"
+#include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore {
 namespace opt {
 class ConvActivationFusion : public PatternProcessPass {
  public:
-  explicit ConvActivationFusion(bool multigraph = true, const std::string &name = "ConvActivationFusion")
-      : PatternProcessPass(name, multigraph) {}
+  explicit ConvActivationFusion(const lite::quant::TargetDevice &target_device, bool multigraph = true,
+                                const std::string &name = "ConvActivationFusion")
+      : PatternProcessPass(name, multigraph), target_device_(target_device) {}
+
   ~ConvActivationFusion() override = default;
 
  private:
   const BaseRef DefinePattern() const override;
+
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+
+ private:
+  const lite::quant::TargetDevice target_device_;
 };
 }  // namespace opt
 }  // namespace mindspore
