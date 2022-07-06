@@ -23,9 +23,8 @@
 #include "ops/selection_ops.h"
 
 namespace mindspore::transform {
-DECLARE_OP_ADAPTER(SliceD)
-DECLARE_OP_USE_INPUT_ATTR(SliceD)
-DECLARE_OP_USE_OUTPUT(SliceD)
+DECLARE_OP_ADAPTER(Slice)
+DECLARE_OP_USE_OUTPUT(Slice)
 
 DECLARE_OP_ADAPTER(ScatterNd)
 DECLARE_OP_USE_OUTPUT(ScatterNd)
