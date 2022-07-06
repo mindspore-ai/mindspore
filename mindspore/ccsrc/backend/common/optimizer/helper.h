@@ -169,6 +169,8 @@ tensor::TensorPtr CreateTensorWithValueTuple(const ValueTuplePtr &value_tuple_pt
 
 BACKEND_EXPORT tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple);
 
+AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node);
+
 bool IsAllNopNode(const session::KernelGraph *const graph);
 
 void HideNopNode(session::KernelGraph *const graph);
