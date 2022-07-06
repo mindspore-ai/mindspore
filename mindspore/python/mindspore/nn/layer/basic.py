@@ -194,7 +194,7 @@ class Dropout2d(Cell):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not 4D.
@@ -252,7 +252,7 @@ class Dropout3d(Cell):
 
     Raises:
         TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16 or float32.
+        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
         TypeError: If the data type of `p` is not float.
         ValueError: If `p` is out of the range `[0.0, 1.0]`.
         ValueError: If `x` shape is not `5D`.
