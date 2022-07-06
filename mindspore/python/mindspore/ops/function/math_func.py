@@ -2693,7 +2693,7 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
         >>> output = ops.isclose(input, other)
         >>> print(output)
-            [true false false false true]
+            [True False False False True]
     """
     is_close = _get_cache_prim(P.IsClose)(rtol=rtol, atol=atol, equal_nan=equal_nan)
     return is_close(x1, x2)
