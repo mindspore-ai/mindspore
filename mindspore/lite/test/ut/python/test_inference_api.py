@@ -116,56 +116,73 @@ def test_context_04():
 
 def test_context_05():
     with pytest.raises(TypeError) as raise_info:
+        context = mslite.Context(thread_num=2, parallel_num="1")
+    assert "parallel_num must be int" in str(raise_info.value)
+
+
+def test_context_06():
+    with pytest.raises(ValueError) as raise_info:
+        context = mslite.Context(thread_num=2, parallel_num=-1)
+    assert "parallel_num must be positive" in str(raise_info.value)
+
+
+def test_context_07():
+    context = mslite.Context(thread_num=2, parallel_num=1)
+    assert "parallel_num: 1" in str(context)
+
+
+def test_context_08():
+    with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num=2, thread_affinity_mode="1")
     assert "thread_affinity_mode must be int" in str(raise_info.value)
 
 
-def test_context_06():
+def test_context_09():
     context = mslite.Context(thread_num=2, thread_affinity_mode=2)
     assert "thread_affinity_mode: 2" in str(context)
 
 
-def test_context_07():
+def test_context_10():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num=2, thread_affinity_core_list=2)
     assert "thread_affinity_core_list must be list" in str(raise_info.value)
 
 
-def test_context_08():
+def test_context_11():
     context = mslite.Context(thread_num=2, thread_affinity_core_list=[2])
     assert "thread_affinity_core_list: [2]" in str(context)
 
 
-def test_context_09():
+def test_context_12():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num=2, thread_affinity_core_list=["1", "0"])
     assert "thread_affinity_core_list element must be int" in str(raise_info.value)
 
 
-def test_context_10():
+def test_context_13():
     context = mslite.Context(thread_num=2, thread_affinity_core_list=[1, 0])
     assert "thread_affinity_core_list: [1, 0]" in str(context)
 
 
-def test_context_11():
+def test_context_14():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num=2, enable_parallel=1)
     assert "enable_parallel must be bool" in str(raise_info.value)
 
 
-def test_context_12():
+def test_context_15():
     context = mslite.Context(thread_num=2, enable_parallel=True)
     assert "enable_parallel: True" in str(context)
 
 
-def test_context_13():
+def test_context_16():
     with pytest.raises(TypeError) as raise_info:
         context = mslite.Context(thread_num=2)
         context.append_device_info("CPUDeviceInfo")
     assert "device_info must be DeviceInfo" in str(raise_info.value)
 
 
-def test_context_14():
+def test_context_17():
     gpu_device_info = mslite.GPUDeviceInfo()
     cpu_device_info = mslite.CPUDeviceInfo()
     context = mslite.Context(thread_num=2)

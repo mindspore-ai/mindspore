@@ -87,6 +87,8 @@ void ContextPyBind(const py::module &m) {
          })
     .def("set_thread_num", &Context::SetThreadNum)
     .def("get_thread_num", &Context::GetThreadNum)
+    .def("set_inter_op_parallel_num", &Context::SetInterOpParallelNum)
+    .def("get_inter_op_parallel_num", &Context::GetInterOpParallelNum)
     .def("set_thread_affinity_mode", py::overload_cast<int>(&Context::SetThreadAffinity))
     .def("get_thread_affinity_mode", &Context::GetThreadAffinityMode)
     .def("set_thread_affinity_core_list", py::overload_cast<const std::vector<int> &>(&Context::SetThreadAffinity))
