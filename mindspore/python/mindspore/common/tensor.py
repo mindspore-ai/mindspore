@@ -1067,7 +1067,7 @@ class Tensor(Tensor_):
 
         Args:
             axis (Union[int,list,tuple]): Specifies which dimension or dimensions of input to calculate the norm across.
-            p (int): The order of norm. Default: 2.
+            p (int): The order of norm. Default: 2. `p` is greater than or equal to 0.
             keep_dims (bool): Whether the output tensors have dim retained or not. Default: False.
             epsilon (float): A value added to the denominator for numerical stability. Default: 1e-12.
 
