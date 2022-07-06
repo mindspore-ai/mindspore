@@ -904,6 +904,28 @@ void Tensor::data_sync(bool need_wait) const {
   sync_status_ = kNeedSyncHostToDevice;
 }
 
+void Tensor::data_sync_directly(const DeviceSync *const device_sync, bool need_wait) const {
+  if (need_wait) {
+    ExecuteLazyTask();
+    Wait();
+  }
+  if (device_sync == nullptr) {
+    return;
+  }
+
+  if (data_->is_sub_data()) {
+    return;
+  }
+
+  std::vector<size_t> shape_tmp;
+  (void)std::transform(shape().begin(), shape().end(), std::back_inserter(shape_tmp), IntToSize);
+  auto size = abstract::ShapeSize(shape_tmp) * abstract::TypeIdSize(data_type());
+  if (size != 0 && !device_sync->SyncDeviceToHost(shape(), size, data_type(), data_c())) {
+    MS_LOG(EXCEPTION) << "SyncDeviceToHost failed.";
+  }
+  sync_status_ = kNeedSyncHostToDevice;
+}
+
 TypeId Tensor::set_data_type(TypeId data_type) {
   if (data_type != data_type_) {
     data_ = MakeTensorData(data_type, shape_, data_->data(), data_type_);

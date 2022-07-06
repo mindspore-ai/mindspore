@@ -318,6 +318,11 @@ class MS_CORE_API Tensor final : public MetaTensor {
   ///
   void data_sync(bool need_wait = true) const;
 
+  /// \brief To synchronize data with the device without keeping device address, you need to wait for the data to be
+  /// valid.
+  ///
+  void data_sync_directly(const DeviceSync *const device_sync, bool need_wait = true) const;
+
   /// \brief Get the internal data object.
   ///
   /// \return The reference to internal data object.
