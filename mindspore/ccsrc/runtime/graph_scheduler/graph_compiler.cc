@@ -736,6 +736,13 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
 #endif
 
+  // dynamic shape pass of graphmode
+  auto kernel_graph = graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  if (kernel_graph->is_dynamic_shape()) {
+    opt::DynamicShapeConvertPass(graph);
+  }
+
   // Adjust kernel graph before run graph.
   device_context->kernel_executor_->PreprocessBeforeRun(graph);
 
