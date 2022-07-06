@@ -23,3 +23,5 @@ mindspore.ops.inplace_sub
     - **TypeError** - `indices` 不是int或tuple。
     - **TypeError** - `indices` 是元组，但是其中的元素不是int。
     - **ValueError** - `x` 的维度与 `v` 的维度不相等。
+    - **ValueError** - `indices` 的长度与 `v.shape[0]` 不相等。
+    - **ValueError** - `indices` 的值不属于范围 `[0, x.shape[0])` 。
