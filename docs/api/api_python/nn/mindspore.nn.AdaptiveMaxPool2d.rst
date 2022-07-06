@@ -19,6 +19,9 @@ mindspore.nn.AdaptiveMaxPool2d
         Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
         \end{align}
 
+    .. note::
+        Ascend平台input_x输入仅支持float16类型。
+
     **参数：**
 
     - **output_size** (Union[int, tuple]) - 输出特征图的尺寸为H * W。可以是int类型的H和W组成的tuple，也可以为一个int值，代表相同H和W，或None，如果是None，则意味着输出大小与输入相同。
