@@ -94,6 +94,7 @@ from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
+from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
@@ -747,6 +748,16 @@ class SparseApplyProximalAdagradNet(nn.Cell):
     def construct(self, grad, indices):
         out = self.sparse_apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad, indices)
         return out
+
+
+class SparseTensorDenseMatMul(nn.Cell):
+    def __init__(self, shape, adjoint_a, adjoint_b):
+        super(SparseTensorDenseMatMul, self).__init__()
+        self.shape = shape
+        self.sparse_tensor_dense_mat_mul = SparseTensorDenseMatmul(adjoint_st=adjoint_a, adjoint_dt=adjoint_b)
+
+    def construct(self, indices, values, x2):
+        return self.sparse_tensor_dense_mat_mul(indices, values, self.shape, x2)
 
 
 class ApplyProximalAdagradNet(nn.Cell):
@@ -3914,8 +3925,18 @@ test_case_quant_ops = [
         'skip': ['backward']}),
 ]
 
+test_case_sparse_ops = [
+    ('SparseTensorDenseMatmul', {
+        'block': SparseTensorDenseMatMul(Tensor(np.array([2, 2]), mstype.int64), False, False),
+        'desc_inputs': [Tensor(np.array([[0, 0], [1, 1]]), mstype.int64),
+                        Tensor(np.array([1, 1]), mstype.int64),
+                        Tensor(np.array([[1, 2], [3, 4]]), mstype.int64)],
+        'skip': ['backward']})
+]
+
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,
-                   test_case_other_ops, test_case_quant_ops, test_case_image_ops]
+                   test_case_other_ops, test_case_quant_ops, test_case_image_ops,
+                   test_case_sparse_ops]
 test_case = functools.reduce(lambda x, y: x + y, test_case_lists)
 # use -k to select certain testcast
 # pytest tests/python/ops/test_ops.py::test_backward -k LayerNorm

@@ -18,6 +18,8 @@
 #include <algorithm>
 #include <functional>
 #include <utility>
+#include <complex>
+#include <type_traits>
 
 namespace mindspore {
 namespace kernel {
@@ -78,8 +80,8 @@ bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel:
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
   if (outputs[0]->size == 0) {
-    MS_LOG(WARNING) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
-    return true;
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
+    return false;
   }
   auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
   if (ret != EOK) {
@@ -137,6 +139,71 @@ bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernel(const std::vector<kernel:
   return true;
 }
 
+template <typename I, typename T>
+bool SparseTensorDenseMatmulCpuKernelMod::LaunchKernelComplex(const std::vector<kernel::AddressPtr> &inputs,
+                                                              const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kSparseTensorDenseMatmulInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kSparseTensorDenseMatmulOutputsNum, kernel_name_);
+  if (outputs[0]->size == 0) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output memory size must be greater than 0, but got 0.";
+    return false;
+  }
+  auto ret = memset_s(outputs[0]->addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset output failed. Error no: " << ret;
+  }
+
+  const size_t b_index = 3;
+  const auto *a_indices = reinterpret_cast<I *>(inputs[0]->addr);
+  const auto *a_values = reinterpret_cast<T *>(inputs[1]->addr);
+  const auto *b = reinterpret_cast<T *>(inputs[b_index]->addr);
+  auto *out = reinterpret_cast<T *>(outputs[0]->addr);
+  const size_t indices_length = inputs[0]->size / sizeof(I);
+  const size_t values_length = inputs[1]->size / sizeof(T);
+  const size_t b_length = inputs[b_index]->size / sizeof(T);
+
+  const size_t dim_num = 2;
+  const size_t out_dim_0 = output_shape_[0];
+  const size_t out_dim_1 = output_shape_[1];
+  const size_t b_dim_0 = b_shape_[0];
+  const size_t b_dim_1 = b_shape_[1];
+  const size_t same_dim = adj_dt_ ? b_dim_1 : b_dim_0;
+
+  for (size_t i = 0; i < values_size_; ++i) {
+    if (i * dim_num + 1 >= indices_length) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'indices' out of bounds.";
+    }
+    if (i >= values_length) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'values' out of bounds.";
+    }
+    const int row = adj_st_ ? a_indices[i * dim_num + 1] : a_indices[i * dim_num];
+    const int col = adj_st_ ? a_indices[i * dim_num] : a_indices[i * dim_num + 1];
+    if (row >= SizeToInt(out_dim_0) || row < 0 || col >= SizeToInt(same_dim) || col < 0) {
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                               << "', the indices including out of bounds index, row range: [0, " << out_dim_0
+                               << "), col range: [0, " << same_dim << "), but got row: " << row << ", col: " << col;
+    }
+    const size_t row_s = IntToSize(row);
+    const size_t col_s = IntToSize(col);
+    for (size_t n = 0; n < out_dim_1; ++n) {
+      if (adj_dt_) {
+        if (n * b_dim_1 + col_s >= b_length) {
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'b' out of bounds.";
+        }
+        T b_value = std::conj(b[n * b_dim_1 + col_s]);
+        out[row_s * out_dim_1 + n] += a_values[i] * b_value;
+      } else {
+        if (col_s * b_dim_1 + n >= b_length) {
+          MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the index of 'b' out of bounds.";
+        }
+        const T b_value = b[col_s * b_dim_1 + n];
+        out[row_s * out_dim_1 + n] += a_values[i] * b_value;
+      }
+    }
+  }
+  return true;
+}
+
 std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulCpuKernelMod::SparseTensorDenseMatmulFunc>>
   SparseTensorDenseMatmulCpuKernelMod::func_list_ = {
     {KernelAttr()
@@ -166,7 +233,21 @@ std::vector<std::pair<KernelAttr, SparseTensorDenseMatmulCpuKernelMod::SparseTen
        .AddInputAttr(kNumberTypeInt32)
        .AddInputAttr(kNumberTypeFloat64)
        .AddOutputAttr(kNumberTypeFloat64),
-     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, double>}};
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernel<int32_t, double>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeComplex64)
+       .AddOutputAttr(kNumberTypeComplex64),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernelComplex<int32_t, std::complex<float>>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeComplex128),
+     &SparseTensorDenseMatmulCpuKernelMod::LaunchKernelComplex<int32_t, std::complex<double>>}};
 
 std::vector<KernelAttr> SparseTensorDenseMatmulCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
