@@ -2038,7 +2038,7 @@ def matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-       y (Tensor): The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2047,7 +2047,7 @@ def matrix_determinant(x):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -2067,9 +2067,8 @@ def log_matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-       sign (Tensor): The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
-       y (Tensor): The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same
-         as `x`.
+        Tensor, The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2078,7 +2077,7 @@ def log_matrix_determinant(x):
         ValueError: If the dimension of `x` is less than 2.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
@@ -4194,6 +4193,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
     def _is_complex(x):
         dtype = P.DType()
         return dtype(x) in [mstype.complex64, mstype.complex128]
+
     if onesided is None:
         onesided = (not _is_complex(x)) and (not _is_complex(window))
     if return_complex is None:
@@ -4643,7 +4643,7 @@ def kron(x, y):
     if x is None or y is None:
         return None
     if x.ndim == 0 or y.ndim == 0:
-        return x*y
+        return x * y
 
     if x.ndim >= y.ndim:
         maxdim = x.ndim
