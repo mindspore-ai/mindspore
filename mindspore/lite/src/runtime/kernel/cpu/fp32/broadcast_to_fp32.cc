@@ -58,20 +58,16 @@ int BroadcastToCPUKernel::Run() {
   auto data_type = in_tensors_.at(0)->data_type();
   switch (data_type) {
     case kNumberTypeFloat32:
-      return BROADCAST_TO(float, reinterpret_cast<const float *>(input_data), &shape_info_,
-                          reinterpret_cast<float *>(output_data));
+      return BroadcastToSize32(input_data, &shape_info_, output_data);
 #ifdef ENABLE_FP16
     case kNumberTypeFloat16:
-      return BROADCAST_TO(float16_t, reinterpret_cast<const float16_t *>(input_data), &shape_info_,
-                          reinterpret_cast<float16_t *>(output_data));
+      return BroadcastToSize16(input_data, &shape_info_, output_data);
 #endif
     case kNumberTypeInt32:
     case kNumberTypeInt:
-      return BROADCAST_TO(int, reinterpret_cast<const int *>(input_data), &shape_info_,
-                          reinterpret_cast<int *>(output_data));
+      return BroadcastToSize32(input_data, &shape_info_, output_data);
     case kNumberTypeBool:
-      return BROADCAST_TO(bool, reinterpret_cast<const bool *>(input_data), &shape_info_,
-                          reinterpret_cast<bool *>(output_data));
+      return BroadcastToSize8(input_data, &shape_info_, output_data);
     default:
       MS_LOG(ERROR) << "UnSupported data type: " << data_type;
       return RET_ERROR;

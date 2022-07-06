@@ -143,46 +143,28 @@ bool MeshgridCpuKernelMod::LaunchKernel(const kernel::AddressPtr input, const ke
   MS_ERROR_IF_NULL_W_RET_VAL(input->addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output->addr, false);
   int status = static_cast<int>(NNACL_OK);
-  if constexpr (std::is_same_v<T, bool>) {
-    status = BROADCAST_TO(bool, reinterpret_cast<T *>(input->addr), &shape_info_, reinterpret_cast<T *>(output->addr));
-  } else if constexpr (std::is_same_v<T, uint8_t>) {
-    status = BROADCAST_TO(int8_t, reinterpret_cast<int8_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int8_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, uint16_t>) {
-    status = BROADCAST_TO(int16_t, reinterpret_cast<int16_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int16_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, uint32_t>) {
-    status = BROADCAST_TO(int32_t, reinterpret_cast<int32_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int32_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, uint64_t>) {
-    status = BROADCAST_TO(int64_t, reinterpret_cast<int64_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int64_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, int8_t>) {
-    status = BROADCAST_TO(int8_t, reinterpret_cast<int8_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int8_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, int16_t>) {
-    status = BROADCAST_TO(int16_t, reinterpret_cast<int16_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int16_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, int32_t>) {
-    status = BROADCAST_TO(int32_t, reinterpret_cast<int32_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int32_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, int64_t>) {
-    status = BROADCAST_TO(int64_t, reinterpret_cast<int64_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int64_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, float16>) {
-    status = BROADCAST_TO(int16_t, reinterpret_cast<int16_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int16_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, float>) {
-    status = BROADCAST_TO(int32_t, reinterpret_cast<int32_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int32_t *>(output->addr));
-  } else if constexpr (std::is_same_v<T, double>) {
-    status = BROADCAST_TO(int64_t, reinterpret_cast<int64_t *>(input->addr), &shape_info_,
-                          reinterpret_cast<int64_t *>(output->addr));
-  } else {
-    MS_LOG(ERROR) << "'" << kernel_name_
-                  << "' does not supported data type, the dtype of input must be bool, uint8, uint16, uint32, uint64, "
-                     "int8, int16, int32, int64, float16, float32 or float64.";
-    return false;
+  switch (sizeof(T)) {
+    case sizeof(int8_t):
+      status = BroadcastToSize8(input->addr, &shape_info_, output->addr);
+      break;
+    case sizeof(int16_t):
+      status = BroadcastToSize16(input->addr, &shape_info_, output->addr);
+      break;
+    case sizeof(int32_t):
+      status = BroadcastToSize32(input->addr, &shape_info_, output->addr);
+      break;
+    case sizeof(int64_t):
+      status = BroadcastToSize64(input->addr, &shape_info_, output->addr);
+      break;
+    case sizeof(__int128_t):
+      status = BroadcastToSize128(input->addr, &shape_info_, output->addr);
+      break;
+    default:
+      MS_LOG(ERROR)
+        << "'" << kernel_name_
+        << "' does not supported data type, the dtype of input must be bool, uint8, uint16, uint32, uint64, "
+           "int8, int16, int32, int64, float16, float32, float64, complex64, complex128";
+      return false;
   }
   if (status != static_cast<int>(NNACL_OK)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', broadcast input to output failed. Error code: " << status;
@@ -216,6 +198,10 @@ std::vector<std::pair<KernelAttr, MeshgridCpuKernelMod::MeshgridFunc>> MeshgridC
    &MeshgridCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &MeshgridCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &MeshgridCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &MeshgridCpuKernelMod::LaunchKernel<__int128_t>},
 };
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Meshgrid, MeshgridCpuKernelMod);
