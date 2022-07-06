@@ -37,7 +37,6 @@ import time
 import uuid
 import multiprocessing
 from enum import Enum
-from functools import partial
 from importlib import import_module
 import sys
 import threading
@@ -2825,12 +2824,9 @@ def _worker_loop(operations, pipe):
         """
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    def _subprocess_handle(eof, signum, frame):
-        threading.Thread(target=eof.set()).start()
 
     while not _main_process_already_exit():
         _ignore_sigint()
-        signal.signal(signal.SIGTERM, partial(_subprocess_handle, pipe.eof))
 
         result = pipe.worker_receive()
         if result is None:
