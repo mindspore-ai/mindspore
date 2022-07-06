@@ -15,6 +15,7 @@
 
 """Defines sparse operators with functional form."""
 
+from ..primitive import constexpr
 from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, SparseConcat
 from ..operations.array_ops import GatherNd
 from ...common import CSRTensor, COOTensor, Tensor
@@ -147,18 +148,34 @@ def csr_to_coo(tensor):
     return COOTensor(indices, values, shape)
 
 
+@constexpr
+def _calc_out_shape(sp_input, concat_dim):
+    "calculating the COOTensor output shape in sparse_concat"
+    if isinstance(sp_input[0], tuple):
+        out_shape_list = list(sp_input[0][2])
+    else:
+        out_shape_list = list(sp_input[0].shape)
+    for i in range(1, len(sp_input)):
+        if isinstance(sp_input[i], tuple):
+            out_shape_list[concat_dim] += sp_input[i][2][concat_dim]
+        else:
+            out_shape_list[concat_dim] += sp_input[i].shape[concat_dim]
+    return tuple(out_shape_list)
+
+
 def sparse_concat(sp_input, concat_dim):
     """
-    concatenates the input SparseTensor(COO format) along the specified dimension. demo API now
+    concatenates the input SparseTensor(COO format) along the specified dimension.
+
+    .. note:
+        demo API now, and only supported CPU
 
     Args:
-        concat_dim (int64/int): decide the dimension to concatenation along.
+        sp_input (Union[list(COOTensor), tuple(COOTensor)) - the list of SparseTensor which need to concatenates.
+            for COOTensor input.
+        concat_dim (scalar): decide the dimension to concatenation along.
             The value must be in range [-rank, rank), where rank is the number of dimensions in each input
             SparseTensor.
-
-    Inputs:
-        - **sp_input** (COOTensor) - the list of SparseTensor which need to concatenates.
-            for COOTensor input.
 
     Outputs:
         - **output** (COOtensor) - the result of concatenates the input SparseTensor along the
@@ -166,7 +183,7 @@ def sparse_concat(sp_input, concat_dim):
 
     Raises:
         ValueError: If only one sparse tensor input.
-        ValueError: If Input COOTensor shape dim > 3. COOtensor.shape dim size must be 2 now
+        ValueError: If Input COOTensor shape dim > 3. COOtensor shape dim size must be 2 now
 
     Supported Platforms:
         ``CPU``
@@ -192,27 +209,18 @@ def sparse_concat(sp_input, concat_dim):
     """
     if len(sp_input) < 2:
         raise_value_error("For sparse_concat, not support COOTensor input number < 2.")
-    sparse_concat_op = SparseConcat()
-    sp_input_indices = []
-    sp_input_values = []
-    sp_input_shapes = []
-    sp_input_indices.append(sp_input[0].indices)
-    sp_input_values.append(sp_input[0].values)
-    sp_input_shapes.append(Tensor(sp_input[0].shape))
-    sp_input_indices.append(sp_input[1].indices)
-    sp_input_values.append(sp_input[1].values)
-    sp_input_shapes.append(Tensor(sp_input[1].shape))
-    indices, values, shape = sparse_concat_op(concat_dim, sp_input_indices, sp_input_values, sp_input_shapes)
-    for i in range(2, len(sp_input)):
-        sp_input_indices[0] = indices
-        sp_input_values[0] = values
-        sp_input_shapes[0] = shape
-        sp_input_indices[1] = sp_input[i].indices
-        sp_input_values[1] = sp_input[i].values
-        sp_input_shapes[1] = Tensor(sp_input[i].shape)
-        indices, values, shape = sparse_concat_op(concat_dim, sp_input_indices, sp_input_values, sp_input_shapes)
-    shape_array = shape.asnumpy()
-    out_shape = tuple(int(x) for x in shape_array)
+    sparse_concat_op = SparseConcat(concat_dim)
+    indices = sp_input[0].indices
+    values = sp_input[0].values
+    sp_input_0_shape = sp_input[0].shape
+    shape = Tensor(sp_input_0_shape)
+    for i in range(1, len(sp_input)):
+        in_indices = (indices, sp_input[i].indices)
+        in_values = (values, sp_input[i].values)
+        sp_input_i_shape = sp_input[i].shape
+        in_shapes = (shape, Tensor(sp_input_i_shape))
+        indices, values, shape = sparse_concat_op(in_indices, in_values, in_shapes)
+    out_shape = _calc_out_shape(sp_input, concat_dim)
     return COOTensor(indices, values, out_shape)
 
 

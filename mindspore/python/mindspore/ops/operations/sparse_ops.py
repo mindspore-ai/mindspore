@@ -518,23 +518,22 @@ class SparseConcat(Primitive):
     Examples:
         >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
-        >>> shape0 = (3, 4)
+        >>> shape0 = Tensor([3, 4], dtype=mstype.int64)
         >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
-        >>> shape1 = (3, 4)
-        >>> sparse_concat = ops.SparseConcat()
-        >>> axis = 1
-        >>> out = sparse_concat(axis, (indices0, indices1), (values0, values1), (shape0, shape1))
+        >>> shape1 = Tensor([3, 4], dtype=mstype.int64)
+        >>> sparse_concat = ops.SparseConcat(0)
+        >>> out = sparse_concat((indices0, indices1), (values0, values1), (shape0, shape1))
         >>> print(out)
-                shape = [3 4]
+        shape = [3 4]
         [0 1]: "1"
         [0 4]: "3"
         [1 2]: "4"
         [1 5]: "2"
     """
     @prim_attr_register
-    def __init__(self, expand_nonconcat_dim=False):
+    def __init__(self, concat_dim=0):
         """Initialize SparseConcat."""
-        self.init_prim_io_names(inputs=['axis', 'sp_input_indices', 'sp_input_values', 'sp_input_shapes'],
+        self.init_prim_io_names(inputs=['sp_input_indices', 'sp_input_values', 'sp_input_shapes'],
                                 outputs=['output_indices', 'output_values', 'output_shape'])
-        validator.check_value_type("expand_nonconcat_dim", expand_nonconcat_dim, [bool], self.name)
+        validator.check_value_type("concat_dim", concat_dim, [int], self.name)
