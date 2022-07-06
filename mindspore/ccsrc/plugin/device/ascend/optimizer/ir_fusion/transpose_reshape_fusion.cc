@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/transpose_reshape_fusion.h"
 #include <memory>
+#include <vector>
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
@@ -30,11 +31,11 @@ bool CheckShapeDimInfo(const ShapeVector &shape) {
   if (shape.empty()) {
     return false;
   }
-  if (shape.size() == 1 && shape[0] % kCubeSize != 0) {
+  if (shape.size() == 1 && shape[0] % SizeToLong(kCubeSize) != 0) {
     return false;
   }
-  return !(shape.size() >= kShape2Dim &&
-           (shape[shape.size() - 1] % kCubeSize != 0 || shape[shape.size() - kShape2Dim] % kCubeSize != 0));
+  return !(shape.size() >= kShape2Dim && (shape[shape.size() - 1] % SizeToLong(kCubeSize) != 0 ||
+                                          shape[shape.size() - kShape2Dim] % SizeToLong(kCubeSize) != 0));
 }
 }  // namespace
 

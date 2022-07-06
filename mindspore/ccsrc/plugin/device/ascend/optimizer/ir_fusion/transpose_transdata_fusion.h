@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_TRANSPOSE_TRANSDATA_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_TRANSPOSE_TRANSDATA_FUSION_H_
 
-#include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 #include "ir/anf.h"
 #include "backend/common/optimizer/pattern_engine.h"
