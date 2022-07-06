@@ -28,7 +28,7 @@ class Conv2dBackpropFilterMul : public PatternProcessPass {
       : PatternProcessPass("conv2d_backprop_filter_mul", multigraph) {}
   ~Conv2dBackpropFilterMul() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

@@ -39,7 +39,7 @@ class RunOpInsertTransData : public Pass {
  private:
   bool InsertTransdataForOutput(const FuncGraphPtr &graph);
   bool ConvertNodeFormat(const FuncGraphPtr &graph, const AnfNodePtr &node, const std::string &format,
-                         size_t insert_index, size_t index, bool is_insert) const;
+                         size_t insert_index, size_t input_index, bool is_insert) const;
   KernelSelectPtr kernel_select_;
   size_t input_size_{0};
 };

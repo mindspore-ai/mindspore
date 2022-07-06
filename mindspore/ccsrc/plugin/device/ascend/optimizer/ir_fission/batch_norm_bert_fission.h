@@ -26,7 +26,7 @@ class BatchNormBertFission : public PatternProcessPass {
   explicit BatchNormBertFission(bool multigraph = true) : PatternProcessPass("batch_norm_bert_fission", multigraph) {}
   ~BatchNormBertFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &bn) const;

@@ -30,7 +30,7 @@ class MergeCastToOp : public PatternProcessPass {
       : PatternProcessPass("merge_cast_to_op", multigraph), kernel_query_(std::make_shared<KernelQuery>()) {}
   ~MergeCastToOp() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   KernelQueryPtr kernel_query_;

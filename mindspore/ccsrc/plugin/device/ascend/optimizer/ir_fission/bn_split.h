@@ -28,7 +28,7 @@ class BnSplit : public PatternProcessPass {
   explicit BnSplit(const string &name = "bn_split", bool multigraph = true) : PatternProcessPass(name, multigraph) {}
   ~BnSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
   bool CreateOutputsOfBNTrainingReduce(const FuncGraphPtr &graph, const CNodePtr &bn_cnode,
@@ -46,7 +46,7 @@ class SyncBnSplit : public BnSplit {
   explicit SyncBnSplit(bool multigraph = true) : BnSplit("sync_bn_split", multigraph) {}
   ~SyncBnSplit() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;

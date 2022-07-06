@@ -27,7 +27,7 @@ class AddnFission : public PatternProcessPass {
       : PatternProcessPass("addn_fission", multigraph), inputs_divisor_(kAddnInputsDivisor) {}
   ~AddnFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr CreateNewAddn(const FuncGraphPtr &func_graph, const CNodePtr &origin_addn_cnode, size_t begin_index,

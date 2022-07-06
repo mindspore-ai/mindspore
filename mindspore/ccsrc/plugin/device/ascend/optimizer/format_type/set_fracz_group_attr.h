@@ -27,7 +27,7 @@ class SetFraczGroupAttr : public Pass {
  public:
   SetFraczGroupAttr() : Pass("set_fracz_group_attr") {}
   ~SetFraczGroupAttr() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore

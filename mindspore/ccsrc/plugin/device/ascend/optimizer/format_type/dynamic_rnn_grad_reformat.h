@@ -29,7 +29,7 @@ class DynamicRNNGradReformat : public PatternProcessPass {
       : PatternProcessPass("dynamic_rnn_grad_reformat", multigraph) {}
   ~DynamicRNNGradReformat() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

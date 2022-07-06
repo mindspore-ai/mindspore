@@ -31,7 +31,7 @@ class InsertTransposeForDynamicGRUV2 : public PatternProcessPass {
       : PatternProcessPass("insert_transpose_for_dynamic_gru_v2_op", multigraph) {}
   ~InsertTransposeForDynamicGRUV2() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

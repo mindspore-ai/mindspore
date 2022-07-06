@@ -30,7 +30,7 @@ class InsertTranspose : public PatternProcessPass {
       : PatternProcessPass("insert_transpose_for_basiclstm_op", multigraph) {}
   ~InsertTranspose() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

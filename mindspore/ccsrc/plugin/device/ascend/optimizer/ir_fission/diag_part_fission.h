@@ -26,7 +26,7 @@ class DiagPartFission : public DiagFission {
   explicit DiagPartFission(bool multigraph = true) : DiagFission("diag_part_fission", multigraph) {}
   ~DiagPartFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

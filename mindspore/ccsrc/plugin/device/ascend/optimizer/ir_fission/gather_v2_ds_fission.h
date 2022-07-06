@@ -29,7 +29,7 @@ class GatherV2DsFission : public PatternProcessPass {
   explicit GatherV2DsFission(bool multigraph = true) : PatternProcessPass("gather_v2_ds_fission", multigraph) {}
   ~GatherV2DsFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   CNodePtr CreatePad(const FuncGraphPtr &graph, const CNodePtr &origin_node, const size_t &pad_dim_size) const;
