@@ -20,9 +20,10 @@ mindspore.ops.hardshrink
 
     **返回：**
 
-    Tensor，shape和数据类型与输入相同。
+    Tensor，shape和数据类型与输入`x` 相同。
 
     **异常：**
 
     - **TypeError** - `lambd` 不是float。
+    - **TypeError** - `x` 不是Tensor。
     - **TypeError** - `x` 的dtype既不是float16也不是float32。
