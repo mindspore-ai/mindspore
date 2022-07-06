@@ -1391,11 +1391,12 @@ mindspore.Tensor
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
     .. py:method:: scatter_mul(indices, updates)
+        根据指定的索引，通过乘法进行计算，将结果赋值到输出Tensor中。更新后的结果是通过算子output返回，而不是直接原地更新当前Tensor。
 
-        根据指定的索引， 通过乘法进行计算， 将输出赋值到输出Tensor中。
+        `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。其中 `input_x` 指当前Tensor。 有关更多详细信息，请参见使用用例。
 
         .. note::
-            - 如果 `indices` 的某些值超出当前Tensor的维度范围，在 `CPU` 后端会抛出错误，在 `GPU` 后端则忽略错误且更新值不可信任。
+            - 如果 `indices` 的某些值超出范围，则相应的 `updates` 不会更新为当前Tensor，而不是抛出索引错误。
 
         **参数：**
 

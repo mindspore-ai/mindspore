@@ -3161,7 +3161,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     """
     Creates a new tensor by multiplying the values from the positions in `input_x` indicated by
     `indices`, with values from `updates`. When divided values are provided for the same
-    index, the result of the update will be to divided these values respectively. Except that
+    index, the result of the update will multiply these values respectively. Except that
     the updates are applied on output `Tensor` instead of input `Parameter`.
 
     The last axis of `indices` is the depth of each index vectors. For each index vector,
@@ -3169,16 +3169,14 @@ def tensor_scatter_mul(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
-        - If some values of the `indices` are out of bound, CPU backend will raise an index error.
-          GPU backend will not raise and index error
-          and the corresponding `updates` will not be updated to `input_x`.
+        - If some values of the `indices` are out of bound, instead of raising an index error,
+          the corresponding `updates` will not be updated to `input_x`.
 
     Args:
         input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].
-        indices (Tensor): The index of input tensor whose data type is int32 or int64.
-            The rank must be at least 2.
+        indices (Tensor): The index of input tensor whose data type is int32 or int64. The rank must be at least 2.
         updates (Tensor): The tensor to update the input tensor, has the same type as input,
-            and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+            and updates shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
     Returns:
         Tensor, has the same shape and type as `input_x`.
