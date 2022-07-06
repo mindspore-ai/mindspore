@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-constexpr size_t kTwo = 2;
 constexpr size_t kAdamInputsNum = 10;
 constexpr size_t kAdamOutputsNum = 3;
 constexpr size_t kScalarIndex = 0;
@@ -131,13 +130,7 @@ bool AdamCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs, con
                       << "', the shape and dtype of 'v' and 'var' must be the same, but got the memory size of 'v': "
                       << inputs[kIndexV]->size << " and 'var': " << inputs[kIndexVar]->size;
   }
-  if ((dtype_ == kNumberTypeFloat32 && inputs[kIndexVar]->size != inputs[kIndexGrad]->size) ||
-      (dtype_ == kNumberTypeFloat16 && inputs[kIndexVar]->size != inputs[kIndexGrad]->size / kTwo)) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape and dtype of 'gradient' and 'var' must be the same, but got "
-                         "the memory size of 'gradient': "
-                      << inputs[kIndexGrad]->size << " and 'var': " << inputs[kIndexVar]->size;
-  }
+
   size_t f_size = sizeof(float);
   if (inputs[kIndexBeta1Power]->size != f_size) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
