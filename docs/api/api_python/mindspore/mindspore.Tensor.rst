@@ -976,17 +976,21 @@ mindspore.Tensor
 
         计算Tensor中每个元素的 `power` 次幂。
 
+        .. math::
+
+            out_{i} = x_{i} ^{ y_{i}}
+
         .. note::
             - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
-            - 当 `power` 是Tensor时，它们的数据类型不能同时是bool，并保证其shape可以广播。
+            - 当前的Tensor和`power`的数据类型不能同时是bool，并保证其shape可以广播。
 
         **参数：**
 
-        - **power** (Union[Tensor, number.Number, bool]) - 幂值，是一个number.Number或bool值，或数据类型为number或bool的Tensor。
+        - **power** (Union[Tensor, number.Number, bool]) - 幂值，是一个number.Number或bool值，或数据类型为number或bool_的Tensor。
 
         **返回：**
 
-        Tensor，shape与广播后的shape相同，数据类型为Tensor与幂值中精度较高的类型。
+        Tensor，shape与广播后的shape相同，数据类型为`Tensor`与`power`中精度较高的类型。
 
         **异常：**
 
