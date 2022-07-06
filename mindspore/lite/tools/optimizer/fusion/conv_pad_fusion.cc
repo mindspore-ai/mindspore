@@ -19,6 +19,7 @@
 #include <memory>
 #include <vector>
 #include "tools/common/tensor_util.h"
+#include "tools/lite_exporter/fetch_content.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
@@ -55,16 +56,22 @@ void ReplaceParamsAndNodes(const FuncGraphPtr &func_graph, const CNodePtr &conv_
   MS_ASSERT(pad_data != nullptr);
 
   std::vector<int64_t> pad_list_data;
+  std::vector<int> zero_pos;
   if (pattern_name == "PadConvPatternName") {
+    zero_pos = {0, 1, kLeft + NCHWTopPadPos, kRight + NCHWTopPadPos};
     pad_list_data.push_back(pad_data[kTop + NHWCTopPadPos]);
     pad_list_data.push_back(pad_data[kBottom + NHWCTopPadPos]);
     pad_list_data.push_back(pad_data[kLeft + NHWCTopPadPos]);
     pad_list_data.push_back(pad_data[kRight + NHWCTopPadPos]);
   } else {
+    zero_pos = {0, 1, kTop + NHWCTopPadPos, kBottom + NHWCTopPadPos};
     pad_list_data.push_back(pad_data[kTop + NCHWTopPadPos]);
     pad_list_data.push_back(pad_data[kBottom + NCHWTopPadPos]);
     pad_list_data.push_back(pad_data[kLeft + NCHWTopPadPos]);
     pad_list_data.push_back(pad_data[kRight + NCHWTopPadPos]);
+  }
+  if (std::any_of(zero_pos.begin(), zero_pos.end(), [&pad_data](int pos) { return pad_data[pos] != 0; })) {
+    return;
   }
 
   auto conv_primitive = ops::GetOperator<ops::Conv2DFusion>(conv_cnode->input(0));
@@ -144,11 +151,29 @@ bool IsPrimitiveProper(const CNodePtr &pad_cnode) {
   if (pad_mode != PaddingMode::CONSTANT) {
     return false;
   }
-  auto pad_constant_node = pad_primitive->GetAttr(ops::kConstantValue);
-  if (pad_constant_node == nullptr) {
-    return false;
+  float pad_value = 0;
+  if (pad_cnode->size() == kInputSizeThree) {
+    auto pad_constant_node = pad_primitive->GetAttr(ops::kConstantValue);
+    if (pad_constant_node == nullptr) {
+      return false;
+    }
+    pad_value = GetValue<float>(pad_constant_node);
+  } else {
+    MS_ASSERT(pad_cnode->size() == kInputSizeFour);
+    if (pad_cnode->input(kInputIndexThree)->isa<CNode>()) {
+      return false;
+    }
+    lite::DataInfo data_info;
+    auto ret = lite::FetchConstData(pad_cnode, kInputIndexThree, converter::kFmkTypeMs, &data_info, false);
+    MS_CHECK_TRUE_RET(ret == lite::RET_OK, lite::RET_ERROR);
+    if (data_info.data_ptr_ == nullptr) {
+      return false;
+    }
+    if (data_info.data_type_ != kNumberTypeFloat32 && data_info.data_type_ != kNumberTypeFloat) {
+      return false;
+    }
+    pad_value = *static_cast<float *>(data_info.data_ptr_);
   }
-  float pad_value = GetValue<float>(pad_constant_node);
   if (pad_value != 0) {
     return false;
   }
@@ -239,7 +264,7 @@ AnfNodePtr ConvPadFusion::Process(const std::string &pattern_name, const FuncGra
     return nullptr;
   }
 
-  if (pad_cnode->size() != kInputSizeThree) {
+  if (pad_cnode->size() != kInputSizeThree && pad_cnode->size() != kInputSizeFour) {
     MS_LOG(INFO) << "pad node inputs error ,name:" << pad_cnode->fullname_with_scope();
     return nullptr;
   }
