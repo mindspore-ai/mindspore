@@ -1083,7 +1083,7 @@ mindspore.Tensor
 
         - **TypeError** - `self` 不是Tensor，或者 `axis` 和 `keepdims` 具有前面未指定的类型。
 
-    .. py:method:: random_categorical(num_sample=None, seed=0, dtype=mstype.int64)
+    .. py:method:: random_categorical(num_sample, seed=0, dtype=mstype.int64)
 
         从分类分布中抽取样本。
 
