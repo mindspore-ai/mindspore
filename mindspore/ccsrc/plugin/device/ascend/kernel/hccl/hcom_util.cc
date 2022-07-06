@@ -24,14 +24,6 @@
 #include "utils/trace_base.h"
 
 namespace mindspore {
-namespace {
-bool IsPyNativeMode() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode;
-}
-}  // namespace
-
 bool HcomUtil::GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_intput_shape_list) {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(hccl_kernel_intput_shape_list);
@@ -173,8 +165,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
           block_size = input_size;
         }
       } else {
-        block_size =
-          IsPyNativeMode() ? input_size : (input_size + align_size - 1 + filled_size) / align_size * align_size;
+        block_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
       }
       total_size = total_size + block_size;
     }

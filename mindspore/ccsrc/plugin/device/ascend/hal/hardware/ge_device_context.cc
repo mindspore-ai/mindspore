@@ -294,8 +294,18 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       continue;
     }
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
+
+    size_t tensor_size;
+    if (kernel_graph->is_dynamic_shape()) {
+      tensor_size = 0;
+    } else {
+      std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
+      size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
+      tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
+    }
+
     auto device_address_ptr =
-      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
+      std::make_shared<cpu::CPUDeviceAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }

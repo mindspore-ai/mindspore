@@ -453,6 +453,13 @@ std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompile
 
   return input_tensor_lists;
 }
+
+bool IsAutoParallel() {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  return parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
+}
 }  // namespace
 
 VectorRef MsBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
@@ -1047,16 +1054,6 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
 
   ConstructOutputs(actor_set, outputs, root_graph_);
 
-  MS_EXCEPTION_IF_NULL(root_graph_);
-  if (root_graph_->has_flag(kFlagIsPynativeBpropGraph)) {
-    if (graph_compiler_info.device_contexts_.empty()) {
-      MS_LOG(EXCEPTION) << "RunGraph failed, actor_info " << actor_info << " has no device_context";
-    }
-    MS_EXCEPTION_IF_NULL(graph_compiler_);
-    graph_compiler_->DoAllReduceOnGrads(actor_info, actor_set->output_actor_->outputs(),
-                                        graph_compiler_info.device_contexts_.front());
-  }
-
   runtime::GraphScheduler::GetInstance().ClearActorData(actor_set);
   // Close abstract_lock for dynamic_shape
   AnfUtils::CloseAbstractLock();
@@ -1123,7 +1120,7 @@ void MindRTBackend::RunGraphBySingleOp(const GraphCompilerInfo &graph_compiler_i
 
       // Save grad node to Bucket
       if (graph->has_flag(kFlagIsPynativeBpropGraph) && (!common::AnfAlgo::IsControlOpExecInBackend(kernel)) &&
-          !kernel->is_parallel()) {
+          !kernel->is_parallel() && IsAutoParallel()) {
         graph_compiler_->AddGradAddrToBucket(graph->graph_id(), graph_output_info.graph_output_tensors);
       }
     }
