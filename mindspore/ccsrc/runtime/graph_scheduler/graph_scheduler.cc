@@ -88,6 +88,9 @@ static const size_t kInterval = 3;
 
 int64_t GetLoopCount(const GraphCompilerInfo &graph_compiler_info) {
   const auto &graphs = graph_compiler_info.graphs_;
+  if (graphs.empty() && graph_compiler_info.control_nodes_.size() > 1) {
+    return 1;
+  }
   if (graphs.empty()) {
     MS_LOG(EXCEPTION) << "No graphs found in GraphCompilerInfo";
   }
@@ -486,7 +489,7 @@ ActorSet *GraphScheduler::Transform(const GraphCompilerInfo &graph_compiler_info
   ScopeCleaner cleaner(this);
   MS_LOG(INFO) << "Graph(" << graph_compiler_info.name_
                << ") transforms actor begin, strategy:" << kGraphExecutionStrategyStr.at(graph_compiler_info.strategy_);
-  if (graph_compiler_info.graphs_.size() == 0) {
+  if (graph_compiler_info.graphs_.size() == 0 && graph_compiler_info.control_nodes_.size() <= 1) {
     MS_LOG(EXCEPTION) << "The number of graphs is zero.";
   }
   if (graph_compiler_info.graphs_.size() != graph_compiler_info.device_contexts_.size()) {
