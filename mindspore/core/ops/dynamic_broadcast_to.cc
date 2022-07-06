@@ -23,6 +23,18 @@
 namespace mindspore {
 namespace ops {
 namespace {
+inline void CheckShapeValid(const ShapeVector &x_shape, const ShapeVector &output_shape) {
+  auto outer_dim_offset = output_shape.size() - x_shape.size();
+  for (size_t i = 0; i < x_shape.size(); ++i) {
+    if (output_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
+      continue;
+    }
+    if (output_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
+      MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: " << x_shape
+                               << ", target shape: " << output_shape;
+    }
+  }
+}
 abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
                                                 const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -48,39 +60,35 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
     std::vector<int64_t> output_shape;
     std::vector<int64_t> max_shape;
     std::vector<int64_t> min_shape;
-    auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
-    auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
-    if (y_shape->IsDynamic() || !min_value || !max_value) {
-      // max shape unknown
+
+    if (y_shape->IsDynamic()) {
       output_shape.push_back(-2);
     } else {
       auto out_dims = LongToSize(y_shape->shape()[0]);
-      min_shape = GetValue<std::vector<int64_t>>(min_value);
-      max_shape = GetValue<std::vector<int64_t>>(max_value);
-      if (min_shape.size() != out_dims || max_shape.size() != out_dims) {
-        MS_EXCEPTION(ValueError) << "For 'BroadcastTo', inputs['shape'] min or max must have the same size as output's"
-                                    ". But got min shape size: "
-                                 << min_shape.size() << ", max shape size: " << max_shape.size()
-                                 << ", output size: " << out_dims << ".";
-      }
-      for (size_t i = 0; i < out_dims; i++) {
-        output_shape.push_back(-1);
-        if (min_shape[i] == max_shape[i]) {
-          output_shape[i] = min_shape[i];
+      auto min_value = input_y->cast<abstract::AbstractTensorPtr>()->get_min_value();
+      auto max_value = input_y->cast<abstract::AbstractTensorPtr>()->get_max_value();
+      min_shape = min_value ? GetValue<std::vector<int64_t>>(min_value) : ShapeVector();
+      max_shape = max_value ? GetValue<std::vector<int64_t>>(max_value) : ShapeVector();
+      if (min_shape.empty() || max_shape.empty()) {
+        for (size_t i = 0; i < out_dims; i++) {
+          output_shape.push_back(-1);
+        }
+      } else {
+        if (min_shape.size() != out_dims || max_shape.size() != out_dims) {
+          MS_EXCEPTION(ValueError)
+            << "For 'BroadcastTo', inputs['shape'] min or max must have the same size as output's"
+               ". But got min shape size: "
+            << min_shape.size() << ", max shape size: " << max_shape.size() << ", output size: " << out_dims << ".";
+        }
+        for (size_t i = 0; i < out_dims; i++) {
+          auto value = min_shape[i] == max_shape[i] ? max_shape[i] : -1;
+          output_shape.push_back(value);
         }
       }
+
       CheckAndConvertUtils::Check("x shape", SizeToLong(x_shape.size()), kLessEqual, SizeToLong(output_shape.size()),
                                   prim_name);
-      auto outer_dim_offset = output_shape.size() - x_shape.size();
-      for (size_t i = 0; i < x_shape.size(); ++i) {
-        if (output_shape[i + outer_dim_offset] == -1 || x_shape[i] == -1) {
-          continue;
-        }
-        if (output_shape[i + outer_dim_offset] != x_shape[i] && x_shape[i] != 1) {
-          MS_EXCEPTION(ValueError) << "Not support shapes for broadcast, x_shape: " << x_shape
-                                   << ", target shape: " << output_shape;
-        }
-      }
+      CheckShapeValid(x_shape, output_shape);
     }
     return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
   } else if (input_y->isa<abstract::AbstractTuple>()) {
