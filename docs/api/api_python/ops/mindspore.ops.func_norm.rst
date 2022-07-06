@@ -10,9 +10,9 @@ mindspore.ops.norm
 
     **参数：**
 
-    - **input_x** (Tensor) - 输入Tensor。
+    - **input_x** (Tensor) - 输入Tensor。 数据类型必须为float16或者float32。
     - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
-    - **p** (int) - 范数的值。默认值：2。
+    - **p** (int) - 范数的值。默认值：2。 `p` 大于等于0。
     - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
     - **epsilon** (float) - 用于保持数据稳定性的常量。默认值：1e-12。
 

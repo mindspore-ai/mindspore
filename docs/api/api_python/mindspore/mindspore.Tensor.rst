@@ -972,7 +972,7 @@ mindspore.Tensor
         **参数：**
 
         - **axis** (Union[int, list, tuple]) - 指定要计算范数的输入维度。
-        - **p** (int) - 范数的值。默认值：2。
+        - **p** (int) - 范数的值。默认值：2。 `p` 大于等于0。
         - **keep_dims** (bool) - 输出Tensor是否保留原有的维度。默认值：False。
         - **epsilon** (float) - 用于保持数据稳定性的常量。默认值：1e-12。
 
