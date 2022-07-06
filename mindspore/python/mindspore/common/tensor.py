@@ -2002,6 +2002,54 @@ class Tensor(Tensor_):
         # P.Argmin is currently not supported
         return tensor_operator_registry.get('argmax')(axis)(tensor_operator_registry.get('__neg__')(a))
 
+    def arg_min_with_value(self, axis=0, keep_dims=False):
+        """
+        Returns the minimum value with corresponding index.
+
+        Note:
+            In auto_parallel and semi_auto_parallel mode, the first output index can not be used.
+
+        .. warning::
+            - If there are multiple minimum values, the index of the first minimum value is used.
+            - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+
+        Args:
+            axis (int): The dimension to reduce. Default: 0.
+            keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
+                            the output will reduce dimension if false. Default: False.
+
+        Inputs:
+            - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+            :math:`(x_1, x_2, ..., x_N)` .
+
+        Outputs:
+            tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
+            tensor.
+
+            - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
+            output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+            :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+            - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+
+        Raises:
+            TypeError: If `keep_dims` is not a bool.
+            TypeError: If `axis` is not an int.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+            >>> output = ops.arg_min_with_value(input_x)
+            >>> print(output)
+            (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
+            >>> output = ops.arg_min_with_value(input_x, keep_dims=True)
+            >>> print(output)
+            (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
+        """
+        self._init_check()
+        return tensor_operator_registry.get('arg_min_with_value')(self, axis, keep_dims)
+
     def cumsum(self, axis=None, dtype=None):
         """
         Return the cumulative sum of the elements along a given axis.
