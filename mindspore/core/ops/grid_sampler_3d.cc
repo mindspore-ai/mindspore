@@ -54,7 +54,7 @@ abstract::ShapePtr GridSampler3DInferShape(const PrimitivePtr &primitive,
 
 TypePtr GridSampler3DInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[kInputIndex0]->BuildType();
   TypePtr grid_type = input_args[kInputIndex1]->BuildType();
   (void)types.emplace("input_x", input_x_type);

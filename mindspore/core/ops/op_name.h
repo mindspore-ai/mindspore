@@ -206,6 +206,7 @@ constexpr auto kShapeType = "shape_type";
 constexpr auto kSubGraphIndex = "sub_graph_index";
 constexpr auto kSummarize = "summarize";
 constexpr auto kTimeMajor = "time_major";
+constexpr auto kTolerance = "tolerance";
 constexpr auto kTopK = "top_k";
 constexpr auto kTransposeA = "transpose_a";
 constexpr auto kTransposeB = "transpose_b";
@@ -307,6 +308,8 @@ constexpr auto kL1 = "l1";
 constexpr auto kL2 = "l2";
 constexpr auto kLrPower = "lr_power";
 constexpr auto kArgmaxType = "argmax_type";
+constexpr auto kNumSample = "num_samples";
+constexpr auto kMergeRepeated = "merge_repeated";
 
 enum Index : size_t {
   kInputIndex0 = 0,

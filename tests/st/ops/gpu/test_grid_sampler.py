@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -40,31 +41,59 @@ class Net3D(Cell):
 
 
 def run_net2d(dtype):
-    in_tensor = Tensor(np.arange(36).reshape((2, 3, 3, 2)).astype(dtype))
-    grid = Tensor(np.arange(0.2, 1, 0.1).reshape((2, 2, 1, 2)).astype(dtype))
-    if dtype == np.float32:
-        expect_out = np.array([[[[3.2], [3.7]], [[9.2], [9.7]], [[15.200001], [15.7]]],
-                               [[[22.2], [22.699999]], [[28.2], [28.699999]], [[34.2], [34.7]]]])
+    input_np = np.arange(16).reshape((2, 2, 2, 2))
+    grid_np = np.arange(0.2, 1, 0.1).reshape((2, 2, 1, 2))
+
+    if dtype == np.float16:
+        in_tensor = Tensor(input_np, ms.float16)
+        grid = Tensor(grid_np, ms.float16)
+        expect_out = np.array([[[[1.9], [2.2]], [[5.9], [6.2]]],
+                               [[[10.5], [10.8]], [[14.5], [14.8]]]], np.float16)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-3
+    elif dtype == np.float32:
+        in_tensor = Tensor(input_np, ms.float32)
+        grid = Tensor(grid_np, ms.float32)
+        expect_out = np.array([[[[1.9], [2.1999998]], [[5.9], [6.2]]],
+                               [[[10.5], [10.8]], [[14.5], [14.8]]]], np.float32)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-6
     elif dtype == np.float64:
-        expect_out = np.array([[[[3.2], [3.7]], [[9.2], [9.7]], [[15.2], [15.7]]],
-                               [[[22.2], [22.7]], [[28.2], [28.7]], [[34.2], [34.7]]]])
-    error_out = np.ones(shape=expect_out.shape) * 1.0e-6
-    net = Net2D('bilinear', 'border', True)
+        in_tensor = Tensor(input_np, ms.float64)
+        grid = Tensor(grid_np, ms.float64)
+        expect_out = np.array([[[[1.9], [2.2]], [[5.9], [6.2]]],
+                               [[[10.5], [10.8]], [[14.5], [14.8]]]], np.float64)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-6
+
+    net = Net2D('bilinear', 'zeros', True)
     output = net(in_tensor, grid)
     diff_out = output.asnumpy() - expect_out
     assert np.all(np.abs(diff_out) < error_out)
 
 
 def run_net3d(dtype):
-    in_tensor = Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(dtype))
-    grid = Tensor(np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3)).astype(dtype))
-    if dtype == np.float32:
-        expect_out = np.array([[[[[3.3]], [[4.35]]], [[[11.300001]], [[12.349999]]]],
-                               [[[[21.4]], [[22.449999]]], [[[29.4]], [[30.449999]]]]])
-    elif dtype == np.float64:
+    input_np = np.arange(32).reshape((2, 2, 2, 2, 2))
+    grid_np = np.arange(-0.2, 1, 0.1).reshape((2, 2, 1, 1, 3))
+
+    if dtype == np.float16:
+        in_tensor = Tensor(input_np, ms.float16)
+        grid = Tensor(grid_np, ms.float16)
         expect_out = np.array([[[[[3.3]], [[4.35]]], [[[11.3]], [[12.35]]]],
-                               [[[[21.4]], [[22.45]]], [[[29.4]], [[30.45]]]]])
-    error_out = np.ones(shape=expect_out.shape) * 1.0e-6
+                               [[[[21.4]], [[22.45]]], [[[29.4]], [[30.45]]]]],
+                              np.float16)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-3
+    elif dtype == np.float32:
+        in_tensor = Tensor(input_np, ms.float32)
+        grid = Tensor(grid_np, ms.float32)
+        expect_out = np.array([[[[[3.3]], [[4.35]]], [[[11.300001]], [[12.349999]]]],
+                               [[[[21.4]], [[22.449999]]], [[[29.4]], [[30.449999]]]]],
+                              np.float32)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-6
+    elif dtype == np.float64:
+        in_tensor = Tensor(input_np, ms.float64)
+        grid = Tensor(grid_np, ms.float64)
+        expect_out = np.array([[[[[3.3]], [[4.35]]], [[[11.3]], [[12.35]]]],
+                               [[[[21.4]], [[22.45]]], [[[29.4]], [[30.45]]]]],
+                              np.float64)
+        error_out = np.ones(shape=expect_out.shape) * 1.0e-6
     net = Net3D('bilinear', 'zeros', True)
     output = net(in_tensor, grid)
     diff_out = output.asnumpy() - expect_out
@@ -77,10 +106,11 @@ def run_net3d(dtype):
 def test_gridsampler2d():
     """
     Feature: GridSampler2D op.
-    Description: test data type is float32 and float64 in GPU.
+    Description: test data type is float16, float32 and float64 in GPU.
     Expectation: success.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_net2d(np.float16)
     run_net2d(np.float32)
     run_net2d(np.float64)
 
@@ -91,9 +121,10 @@ def test_gridsampler2d():
 def test_gridsampler3d():
     """
     Feature: GridSampler3D op.
-    Description: test data type is float32 and float64 in GPU.
+    Description: test data type is float16, float32 and float64 in GPU.
     Expectation: success.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    run_net3d(np.float16)
     run_net3d(np.float32)
     run_net3d(np.float64)

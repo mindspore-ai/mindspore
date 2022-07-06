@@ -64,6 +64,10 @@ __global__ void GridSamplerGradInitKernel(const size_t size_init, T *dx) {
 }
 
 template <typename T>
+__inline__ __device__ T GetInput(const T *input, size_t index) { return input[index]; }
+__inline__ __device__ float GetInput(const half *input, size_t index) { return __half2float(input[index]); }
+
+template <typename T>
 __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *input_addr,
                                         T *grid_addr, T *dinput_addr, T *dgrid_addr,
                                         const size_t C, const size_t inp_H, const size_t inp_W,
@@ -85,13 +89,17 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
     const auto grid_offset = n * grid_sN + h * grid_sH + w * grid_sW;
 
     // get the corresponding input x, y coordinates from grid
-    T x = grid_addr[grid_offset];
-    T y = grid_addr[grid_offset + grid_sCoor];
+    auto x = GetInput(grid_addr, grid_offset);
+    auto y = GetInput(grid_addr, grid_offset + grid_sCoor);
+
+    // ItmType is the intermediate type for computing.
+    // If input type T is fp16, ItmType represents the upcasting type fp32 of T. Otherwise, im_type is the same as T.
+    using ItmType = decltype(x);
 
     // multipliers for gradients on ix, and iy
-    T dix_mul, diy_mul;
-    T ix = grid_sampler_compute_source_index_set_grad(x, inp_W, padding_mode, align_corners, &dix_mul);
-    T iy = grid_sampler_compute_source_index_set_grad(y, inp_H, padding_mode, align_corners, &diy_mul);
+    ItmType dix_mul, diy_mul;
+    ItmType ix = grid_sampler_compute_source_index_set_grad(x, inp_W, padding_mode, align_corners, &dix_mul);
+    ItmType iy = grid_sampler_compute_source_index_set_grad(y, inp_H, padding_mode, align_corners, &diy_mul);
 
     if (interpolation_mode == GridSamplerInterpolationMode::BILINEAR) {
       // get NE, NW, SE, SW pixel values from (x, y)
@@ -105,42 +113,42 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       size_t iy_se = iy_nw + 1;
 
       // get surfaces to each neighbor:
-      T nw = (ix_se - ix)    * (iy_se - iy);
-      T ne = (ix    - ix_sw) * (iy_sw - iy);
-      T sw = (ix_ne - ix)    * (iy    - iy_ne);
-      T se = (ix    - ix_nw) * (iy    - iy_nw);
+      ItmType nw = (ix_se - ix)    * (iy_se - iy);
+      ItmType ne = (ix    - ix_sw) * (iy_sw - iy);
+      ItmType sw = (ix_ne - ix)    * (iy    - iy_ne);
+      ItmType se = (ix    - ix_nw) * (iy    - iy_nw);
 
-      T dix = static_cast<T>(0), diy = static_cast<T>(0);
-      T *grad_ptr_NCHW = grad_addr + n * grad_sN + h * grad_sH + w * grad_sW;
+      ItmType dix = 0, diy = 0;
+      size_t grad_idx_NCHW = n * grad_sN + h * grad_sH + w * grad_sW;
       size_t NC_offset = n * dinp_sN;
       T *inp_ptr_NC = input_addr + n * inp_sN;
-      for (size_t c = 0; c < C; ++c, inp_ptr_NC += inp_sC, NC_offset += dinp_sC, grad_ptr_NCHW += grad_sC) {
-        T grad = *grad_ptr_NCHW;
+      for (size_t c = 0; c < C; ++c, inp_ptr_NC += inp_sC, NC_offset += dinp_sC, grad_idx_NCHW += grad_sC) {
+        auto grad = GetInput(grad_addr, grad_idx_NCHW);
 
         // calculate and set grad_input. See Note [Passing pointer and offset to fastAtomicAdd].
-        safe_add_2d(dinput_addr, iy_nw, ix_nw, dinp_sH, dinp_sW, inp_H, inp_W, nw * grad, NC_offset);
-        safe_add_2d(dinput_addr, iy_ne, ix_ne, dinp_sH, dinp_sW, inp_H, inp_W, ne * grad, NC_offset);
-        safe_add_2d(dinput_addr, iy_sw, ix_sw, dinp_sH, dinp_sW, inp_H, inp_W, sw * grad, NC_offset);
-        safe_add_2d(dinput_addr, iy_se, ix_se, dinp_sH, dinp_sW, inp_H, inp_W, se * grad, NC_offset);
+        safe_add_2d(dinput_addr, iy_nw, ix_nw, dinp_sH, dinp_sW, inp_H, inp_W, static_cast<T>(nw * grad), NC_offset);
+        safe_add_2d(dinput_addr, iy_ne, ix_ne, dinp_sH, dinp_sW, inp_H, inp_W, static_cast<T>(ne * grad), NC_offset);
+        safe_add_2d(dinput_addr, iy_sw, ix_sw, dinp_sH, dinp_sW, inp_H, inp_W, static_cast<T>(sw * grad), NC_offset);
+        safe_add_2d(dinput_addr, iy_se, ix_se, dinp_sH, dinp_sW, inp_H, inp_W, static_cast<T>(se * grad), NC_offset);
 
         // calculate grad_grid
         if (within_bounds_2d(iy_nw, ix_nw, inp_H, inp_W)) {
-          T nw_val = inp_ptr_NC[iy_nw * inp_sH + ix_nw * inp_sW];
+          auto nw_val = GetInput(inp_ptr_NC, iy_nw * inp_sH + ix_nw * inp_sW);
           dix -= nw_val * (iy_se - iy) * grad;
           diy -= nw_val * (ix_se - ix) * grad;
         }
         if (within_bounds_2d(iy_ne, ix_ne, inp_H, inp_W)) {
-          T ne_val = inp_ptr_NC[iy_ne * inp_sH + ix_ne * inp_sW];
+          auto ne_val = GetInput(inp_ptr_NC, iy_ne * inp_sH + ix_ne * inp_sW);
           dix += ne_val * (iy_sw - iy) * grad;
           diy -= ne_val * (ix - ix_sw) * grad;
         }
         if (within_bounds_2d(iy_sw, ix_sw, inp_H, inp_W)) {
-          T sw_val = inp_ptr_NC[iy_sw * inp_sH + ix_sw * inp_sW];
+          auto sw_val = GetInput(inp_ptr_NC, iy_sw * inp_sH + ix_sw * inp_sW);
           dix -= sw_val * (iy - iy_ne) * grad;
           diy += sw_val * (ix_ne - ix) * grad;
         }
         if (within_bounds_2d(iy_se, ix_se, inp_H, inp_W)) {
-          T se_val = inp_ptr_NC[iy_se * inp_sH + ix_se * inp_sW];
+          auto se_val = GetInput(inp_ptr_NC, iy_se * inp_sH + ix_se * inp_sW);
           dix += se_val * (iy - iy_nw) * grad;
           diy += se_val * (ix - ix_nw) * grad;
         }
@@ -151,8 +159,8 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       //   1. use index with dgrid_sW to directly compute dgrid_ptr_NHW
       //   2. directly assign to dgrid_ptr_NHW[0], dgrid_ptr_NHW[1]
       T *dgrid_ptr_NHW = dgrid_addr + index * dgrid_sW;
-      dgrid_ptr_NHW[0] = dix_mul * dix;
-      dgrid_ptr_NHW[1] = diy_mul * diy;
+      dgrid_ptr_NHW[0] = static_cast<T>(dix_mul * dix);
+      dgrid_ptr_NHW[1] = static_cast<T>(diy_mul * diy);
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
       size_t ix_nearest = static_cast<size_t>(::round(ix));
       size_t iy_nearest = static_cast<size_t>(::round(iy));
@@ -176,31 +184,31 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       ix = grid_sampler_unnormalize_set_grad(x, inp_W, align_corners, &dix_mul);
       iy = grid_sampler_unnormalize_set_grad(y, inp_H, align_corners, &diy_mul);
 
-      T ix_nw = ::floor(ix);
-      T iy_nw = ::floor(iy);
+      ItmType ix_nw = ::floor(ix);
+      ItmType iy_nw = ::floor(iy);
 
-      const T tx = ix - ix_nw;
-      const T ty = iy - iy_nw;
+      const ItmType tx = ix - ix_nw;
+      const ItmType ty = iy - iy_nw;
 
-      T x_coeffs[4];
-      T y_coeffs[4];
-      T x_coeffs_grad[4];
-      T y_coeffs_grad[4];
+      ItmType x_coeffs[4];
+      ItmType y_coeffs[4];
+      ItmType x_coeffs_grad[4];
+      ItmType y_coeffs_grad[4];
 
-      get_cubic_upsampling_coefficients<T>(x_coeffs, tx);
-      get_cubic_upsampling_coefficients<T>(y_coeffs, ty);
-      get_cubic_coefficients_grad<T>(x_coeffs_grad, tx);
-      get_cubic_coefficients_grad<T>(y_coeffs_grad, ty);
+      get_cubic_upsampling_coefficients<ItmType>(x_coeffs, tx);
+      get_cubic_upsampling_coefficients<ItmType>(y_coeffs, ty);
+      get_cubic_coefficients_grad<ItmType>(x_coeffs_grad, tx);
+      get_cubic_coefficients_grad<ItmType>(y_coeffs_grad, ty);
 
-      T dix = static_cast<T>(0);
-      T diy = static_cast<T>(0);
+      ItmType dix = 0;
+      ItmType diy = 0;
 
-      T *grad_ptr_NCHW = grad_addr + n * grad_sN + h * grad_sH + w * grad_sW;
+      size_t grad_idx_NCHW = n * grad_sN + h * grad_sH + w * grad_sW;
       size_t NC_offset = n * dinp_sN;
       T *inp_ptr_NC = input_addr + n * inp_sN;
 
-      for (size_t c = 0; c < C; ++c, grad_ptr_NCHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC+= inp_sC) {
-        T grad = *grad_ptr_NCHW;
+      for (size_t c = 0; c < C; ++c, grad_idx_NCHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC+= inp_sC) {
+        auto grad = GetInput(grad_addr, grad_idx_NCHW);
 
         #pragma unroll 4
         for (size_t i = 0; i < 4; ++i) {
@@ -214,7 +222,7 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
               NC_offset);
 
             // set grid gradient
-            T val = get_value_bounded<T>(inp_ptr_NC, ix_nw - 1 + i, iy_nw - 1 + j,
+            ItmType val = get_value_bounded<T>(inp_ptr_NC, ix_nw - 1 + i, iy_nw - 1 + j,
               inp_W, inp_H, inp_sW, inp_sH, padding_mode, align_corners);
 
             dix -= val * x_coeffs_grad[i] * y_coeffs[j] * grad;
@@ -224,8 +232,8 @@ __global__ void GridSampler2DGradKernel(const size_t size, T *grad_addr, T *inpu
       }
 
       T *dgrid_ptr_NHW = dgrid_addr + index * dgrid_sW;
-      dgrid_ptr_NHW[0] = dix_mul * dix;
-      dgrid_ptr_NHW[1] = diy_mul * diy;
+      dgrid_ptr_NHW[0] = static_cast<T>(dix_mul * dix);
+      dgrid_ptr_NHW[1] = static_cast<T>(diy_mul * diy);
     }
   }
 }
@@ -262,6 +270,24 @@ CUDA_LIB_EXPORT void GridSampler2DGrad(const size_t size, const size_t dinput_si
     grad_stride[0], grad_stride[1], grad_stride[2], grad_stride[3],
     dgrid_stride[2], interpolation_mode, padding_mode, align_corners);
 }
+
+template CUDA_LIB_EXPORT void GridSampler2DGrad<half>(const size_t size, const size_t dinput_size,
+                                                       const size_t dgrid_size, half *grad_addr, half *input_addr,
+                                                       half *grid_addr, half *dinput_addr, half *dgrid_addr,
+                                                       const std::vector<size_t> &grad_shape,
+                                                       const std::vector<size_t> &input_shape,
+                                                       const std::vector<size_t> &grid_shape,
+                                                       const std::vector<size_t> &dinput_shape,
+                                                       const std::vector<size_t> &dgrid_shape,
+                                                       const std::vector<size_t> &grad_stride,
+                                                       const std::vector<size_t> &input_stride,
+                                                       const std::vector<size_t> &grid_stride,
+                                                       const std::vector<size_t> &dinput_stride,
+                                                       const std::vector<size_t> &dgrid_stride,
+                                                       const GridSamplerInterpolationMode interpolation_mode,
+                                                       const GridSamplerPaddingMode padding_mode,
+                                                       const bool align_corners,
+                                                       cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void GridSampler2DGrad<float>(const size_t size, const size_t dinput_size,
                                                        const size_t dgrid_size, float *grad_addr, float *input_addr,
@@ -323,15 +349,19 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
     const auto grid_offset = n * grid_sN + d * grid_sD + h * grid_sH + w * grid_sW;
 
     // get the corresponding input x, y, z coordinates from grid
-    T x = grid_addr[grid_offset];
-    T y = grid_addr[grid_offset + grid_sCoor];
-    T z = grid_addr[grid_offset + 2 * grid_sCoor];
+    auto x = GetInput(grid_addr, grid_offset);
+    auto y = GetInput(grid_addr, grid_offset + grid_sCoor);
+    auto z = GetInput(grid_addr, grid_offset + 2 * grid_sCoor);
+
+    // ItmType is the intermediate type for computing.
+    // If input type T is fp16, ItmType represents the upcasting type fp32 of T. Otherwise, im_type is the same as T.
+    using ItmType = decltype(x);
 
     // multipliers for gradients on ix, iy, and iz
-    T dix_mul, diy_mul, diz_mul;
-    T ix = grid_sampler_compute_source_index_set_grad(x, inp_W, padding_mode, align_corners, &dix_mul);
-    T iy = grid_sampler_compute_source_index_set_grad(y, inp_H, padding_mode, align_corners, &diy_mul);
-    T iz = grid_sampler_compute_source_index_set_grad(z, inp_D, padding_mode, align_corners, &diz_mul);
+    ItmType dix_mul, diy_mul, diz_mul;
+    ItmType ix = grid_sampler_compute_source_index_set_grad(x, inp_W, padding_mode, align_corners, &dix_mul);
+    ItmType iy = grid_sampler_compute_source_index_set_grad(y, inp_H, padding_mode, align_corners, &diy_mul);
+    ItmType iz = grid_sampler_compute_source_index_set_grad(z, inp_D, padding_mode, align_corners, &diz_mul);
 
     if (interpolation_mode == GridSamplerInterpolationMode::BILINEAR) {
       // get corner pixel values from (x, y, z)
@@ -370,86 +400,86 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
       size_t iz_bse = iz_tnw + 1;
 
       // get surfaces to each neighbor:
-      T tnw = (ix_bse - ix)    * (iy_bse - iy)    * (iz_bse - iz);
-      T tne = (ix - ix_bsw)    * (iy_bsw - iy)    * (iz_bsw - iz);
-      T tsw = (ix_bne - ix)    * (iy - iy_bne)    * (iz_bne - iz);
-      T tse = (ix - ix_bnw)    * (iy - iy_bnw)    * (iz_bnw - iz);
-      T bnw = (ix_tse - ix)    * (iy_tse - iy)    * (iz - iz_tse);
-      T bne = (ix - ix_tsw)    * (iy_tsw - iy)    * (iz - iz_tsw);
-      T bsw = (ix_tne - ix)    * (iy - iy_tne)    * (iz - iz_tne);
-      T bse = (ix - ix_tnw)    * (iy - iy_tnw)    * (iz - iz_tnw);
+      ItmType tnw = (ix_bse - ix)    * (iy_bse - iy)    * (iz_bse - iz);
+      ItmType tne = (ix - ix_bsw)    * (iy_bsw - iy)    * (iz_bsw - iz);
+      ItmType tsw = (ix_bne - ix)    * (iy - iy_bne)    * (iz_bne - iz);
+      ItmType tse = (ix - ix_bnw)    * (iy - iy_bnw)    * (iz_bnw - iz);
+      ItmType bnw = (ix_tse - ix)    * (iy_tse - iy)    * (iz - iz_tse);
+      ItmType bne = (ix - ix_tsw)    * (iy_tsw - iy)    * (iz - iz_tsw);
+      ItmType bsw = (ix_tne - ix)    * (iy - iy_tne)    * (iz - iz_tne);
+      ItmType bse = (ix - ix_tnw)    * (iy - iy_tnw)    * (iz - iz_tnw);
 
-      T dix = static_cast<T>(0), diy = static_cast<T>(0), diz = static_cast<T>(0);
-      T *grad_ptr_NCDHW = grad_addr + n * grad_sN + d * grad_sD + h * grad_sH + w * grad_sW;
+      ItmType dix = 0, diy = 0, diz = 0;
+      size_t grad_idx_NCDHW = n * grad_sN + d * grad_sD + h * grad_sH + w * grad_sW;
       size_t NC_offset = n * dinp_sN;
       T *inp_ptr_NC = input_addr + n * inp_sN;
       // calculate bilinear weighted pixel value and set output pixel
-      for (size_t c = 0; c < C; ++c, grad_ptr_NCDHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC += inp_sC) {
-        T grad = *grad_ptr_NCDHW;
+      for (size_t c = 0; c < C; ++c, grad_idx_NCDHW += grad_sC, NC_offset += dinp_sC, inp_ptr_NC += inp_sC) {
+        auto grad = GetInput(grad_addr, grad_idx_NCDHW);
 
         // calculate and set grad_input.
-        safe_add_3d(dinput_addr, iz_tnw, iy_tnw, ix_tnw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, tnw * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_tne, iy_tne, ix_tne, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, tne * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_tsw, iy_tsw, ix_tsw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, tsw * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_tse, iy_tse, ix_tse, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, tse * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_bnw, iy_bnw, ix_bnw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, bnw * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_bne, iy_bne, ix_bne, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, bne * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_bsw, iy_bsw, ix_bsw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, bsw * grad,
-                    NC_offset);
-        safe_add_3d(dinput_addr, iz_bse, iy_bse, ix_bse, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W, bse * grad,
-                    NC_offset);
+        safe_add_3d(dinput_addr, iz_tnw, iy_tnw, ix_tnw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(tnw * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_tne, iy_tne, ix_tne, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(tne * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_tsw, iy_tsw, ix_tsw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(tsw * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_tse, iy_tse, ix_tse, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(tse * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_bnw, iy_bnw, ix_bnw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(bnw * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_bne, iy_bne, ix_bne, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(bne * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_bsw, iy_bsw, ix_bsw, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(bsw * grad), NC_offset);
+        safe_add_3d(dinput_addr, iz_bse, iy_bse, ix_bse, dinp_sD, dinp_sH, dinp_sW, inp_D, inp_H, inp_W,
+                    static_cast<T>(bse * grad), NC_offset);
 
         // calculate grad_grid
         if (within_bounds_3d(iz_tnw, iy_tnw, ix_tnw, inp_D, inp_H, inp_W)) {
-          T tnw_val = inp_ptr_NC[iz_tnw * inp_sD + iy_tnw * inp_sH + ix_tnw * inp_sW];
+          auto tnw_val = GetInput(inp_ptr_NC, iz_tnw * inp_sD + iy_tnw * inp_sH + ix_tnw * inp_sW);
           dix -= tnw_val * (iy_bse - iy)    * (iz_bse - iz)    * grad;
           diy -= tnw_val * (ix_bse - ix)    * (iz_bse - iz)    * grad;
           diz -= tnw_val * (ix_bse - ix)    * (iy_bse - iy)    * grad;
         }
         if (within_bounds_3d(iz_tne, iy_tne, ix_tne, inp_D, inp_H, inp_W)) {
-          T tne_val = inp_ptr_NC[iz_tne * inp_sD + iy_tne * inp_sH + ix_tne * inp_sW];
+          auto tne_val = GetInput(inp_ptr_NC, iz_tne * inp_sD + iy_tne * inp_sH + ix_tne * inp_sW);
           dix += tne_val * (iy_bsw - iy)    * (iz_bsw - iz)    * grad;
           diy -= tne_val * (ix - ix_bsw)    * (iz_bsw - iz)    * grad;
           diz -= tne_val * (ix - ix_bsw)    * (iy_bsw - iy)    * grad;
         }
         if (within_bounds_3d(iz_tsw, iy_tsw, ix_tsw, inp_D, inp_H, inp_W)) {
-          T tsw_val = inp_ptr_NC[iz_tsw * inp_sD + iy_tsw * inp_sH + ix_tsw * inp_sW];
+          auto tsw_val = GetInput(inp_ptr_NC, iz_tsw * inp_sD + iy_tsw * inp_sH + ix_tsw * inp_sW);
           dix -= tsw_val * (iy - iy_bne)    * (iz_bne - iz)    * grad;
           diy += tsw_val * (ix_bne - ix)    * (iz_bne - iz)    * grad;
           diz -= tsw_val * (ix_bne - ix)    * (iy - iy_bne)    * grad;
         }
         if (within_bounds_3d(iz_tse, iy_tse, ix_tse, inp_D, inp_H, inp_W)) {
-          T tse_val = inp_ptr_NC[iz_tse * inp_sD + iy_tse * inp_sH + ix_tse * inp_sW];
+          auto tse_val = GetInput(inp_ptr_NC, iz_tse * inp_sD + iy_tse * inp_sH + ix_tse * inp_sW);
           dix += tse_val * (iy - iy_bnw)    * (iz_bnw - iz)    * grad;
           diy += tse_val * (ix - ix_bnw)    * (iz_bnw - iz)    * grad;
           diz -= tse_val * (ix - ix_bnw)    * (iy - iy_bnw)    * grad;
         }
         if (within_bounds_3d(iz_bnw, iy_bnw, ix_bnw, inp_D, inp_H, inp_W)) {
-          T bnw_val = inp_ptr_NC[iz_bnw * inp_sD + iy_bnw * inp_sH + ix_bnw * inp_sW];
+          auto bnw_val = GetInput(inp_ptr_NC, iz_bnw * inp_sD + iy_bnw * inp_sH + ix_bnw * inp_sW);
           dix -= bnw_val * (iy_tse - iy)    * (iz - iz_tse)    * grad;
           diy -= bnw_val * (ix_tse - ix)    * (iz - iz_tse)    * grad;
           diz += bnw_val * (ix_tse - ix)    * (iy_tse - iy)    * grad;
         }
         if (within_bounds_3d(iz_bne, iy_bne, ix_bne, inp_D, inp_H, inp_W)) {
-          T bne_val = inp_ptr_NC[iz_bne * inp_sD + iy_bne * inp_sH + ix_bne * inp_sW];
+          auto bne_val = GetInput(inp_ptr_NC, iz_bne * inp_sD + iy_bne * inp_sH + ix_bne * inp_sW);
           dix += bne_val * (iy_tsw - iy)    * (iz - iz_tsw)    * grad;
           diy -= bne_val * (ix - ix_tsw)    * (iz - iz_tsw)    * grad;
           diz += bne_val * (ix - ix_tsw)    * (iy_tsw - iy)    * grad;
         }
         if (within_bounds_3d(iz_bsw, iy_bsw, ix_bsw, inp_D, inp_H, inp_W)) {
-          T bsw_val = inp_ptr_NC[iz_bsw * inp_sD + iy_bsw * inp_sH + ix_bsw * inp_sW];
+          auto bsw_val = GetInput(inp_ptr_NC, iz_bsw * inp_sD + iy_bsw * inp_sH + ix_bsw * inp_sW);
           dix -= bsw_val * (iy - iy_tne)    * (iz - iz_tne)    * grad;
           diy += bsw_val * (ix_tne - ix)    * (iz - iz_tne)    * grad;
           diz += bsw_val * (ix_tne - ix)    * (iy - iy_tne)    * grad;
         }
         if (within_bounds_3d(iz_bse, iy_bse, ix_bse, inp_D, inp_H, inp_W)) {
-          T bse_val = inp_ptr_NC[iz_bse * inp_sD + iy_bse * inp_sH + ix_bse * inp_sW];
+          auto bse_val = GetInput(inp_ptr_NC, iz_bse * inp_sD + iy_bse * inp_sH + ix_bse * inp_sW);
           dix += bse_val * (iy - iy_tnw)    * (iz - iz_tnw)    * grad;
           diy += bse_val * (ix - ix_tnw)    * (iz - iz_tnw)    * grad;
           diz += bse_val * (ix - ix_tnw)    * (iy - iy_tnw)    * grad;
@@ -461,9 +491,9 @@ __global__ void GridSampler3DGradKernel(const size_t size, T *grad_addr, T *inpu
       //   1. use index with dgrid_sW to directly compute dgrid_ptr_NDHW
       //   2. directly assign to dgrid_ptr_NDHW[0], dgrid_ptr_NDHW[1], dgrid_ptr_NDHW[2]
       T *dgrid_ptr_NDHW = dgrid_addr + index * dgrid_sW;
-      dgrid_ptr_NDHW[0] = dix_mul * dix;
-      dgrid_ptr_NDHW[1] = diy_mul * diy;
-      dgrid_ptr_NDHW[2] = diz_mul * diz;
+      dgrid_ptr_NDHW[0] = static_cast<T>(dix_mul * dix);
+      dgrid_ptr_NDHW[1] = static_cast<T>(diy_mul * diy);
+      dgrid_ptr_NDHW[2] = static_cast<T>(diz_mul * diz);
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
       auto ix_nearest = static_cast<size_t>(::round(ix));
       auto iy_nearest = static_cast<size_t>(::round(iy));
@@ -522,6 +552,24 @@ CUDA_LIB_EXPORT void GridSampler3DGrad(const size_t size, const size_t dinput_si
     grad_stride[0], grad_stride[1], grad_stride[2], grad_stride[3], grad_stride[4],
     dgrid_stride[3], interpolation_mode, padding_mode, align_corners);
 }
+
+template CUDA_LIB_EXPORT void GridSampler3DGrad<half>(const size_t size, const size_t dinput_size,
+                                                       const size_t dgrid_size, half *grad_addr, half *input_addr,
+                                                       half *grid_addr, half *dinput_addr, half *dgrid_addr,
+                                                       const std::vector<size_t> &grad_shape,
+                                                       const std::vector<size_t> &input_shape,
+                                                       const std::vector<size_t> &grid_shape,
+                                                       const std::vector<size_t> &dinput_shape,
+                                                       const std::vector<size_t> &dgrid_shape,
+                                                       const std::vector<size_t> &grad_stride,
+                                                       const std::vector<size_t> &input_stride,
+                                                       const std::vector<size_t> &grid_stride,
+                                                       const std::vector<size_t> &dinput_stride,
+                                                       const std::vector<size_t> &dgrid_stride,
+                                                       const GridSamplerInterpolationMode interpolation_mode,
+                                                       const GridSamplerPaddingMode padding_mode,
+                                                       const bool align_corners,
+                                                       cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void GridSampler3DGrad<float>(const size_t size, const size_t dinput_size,
                                                        const size_t dgrid_size, float *grad_addr, float *input_addr,

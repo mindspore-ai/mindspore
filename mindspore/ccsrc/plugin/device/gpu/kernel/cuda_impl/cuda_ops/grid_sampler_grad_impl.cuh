@@ -123,6 +123,37 @@ T reflect_coordinates_set_grad(T in, int twice_low, int twice_high,
   }
 }
 
+template <typename T>
+static __forceinline__ __device__
+T reflect_coordinates_set_grad(half in, int twice_low, int twice_high,
+                               half *din) {
+  if (twice_low != twice_high) {
+    int din_mult_;
+    float min = static_cast<float>(twice_low) / 2;
+    float span = static_cast<float>(twice_high - twice_low) / 2;
+    float new_in = __half2float(in) - min;
+    if (in >= static_cast<T>(0)) {
+      din_mult_ = 1;
+    } else {
+      din_mult_ = -1;
+      new_in = -new_in;
+    }
+    // `fmod` returns same sign as `in`, which is positive after the `if` above.
+    float extra = ::fmod(new_in, span);
+    int flips = static_cast<int>(::floor(new_in / span));
+    if (flips % 2 != 0) {
+      *din = static_cast<T>(-din_mult_);
+      return __float2half(span - extra + min);
+    } else {
+      *din = static_cast<T>(din_mult_);
+      return __float2half(extra + min);
+    }
+  } else {
+    *din = static_cast<T>(0);
+    return static_cast<T>(0);
+  }
+}
+
 // Calculate the differential of the cubic convolution, i.e. `d coeff / d x`
 template<typename T>
 static __forceinline__ __device__
@@ -155,9 +186,9 @@ T grid_sampler_compute_source_index_set_grad(
   if (padding_mode == GridSamplerPaddingMode::REFLECTION) {
     // reflect coordinates by image borders
     if (!align_corners) {
-      coord = reflect_coordinates_set_grad(coord, -1, 2*size - 1, &drefl);
+      coord = reflect_coordinates_set_grad<T>(coord, -1, 2*size - 1, &drefl);
     } else {
-      coord = reflect_coordinates_set_grad(coord, 0, 2*(size - 1), &drefl);
+      coord = reflect_coordinates_set_grad<T>(coord, 0, 2*(size - 1), &drefl);
     }
     // clip coordinates to image borders
     coord = clip_coordinates_set_grad(coord, size, &dclip);

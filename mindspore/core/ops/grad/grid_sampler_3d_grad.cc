@@ -82,7 +82,7 @@ abstract::TupleShapePtr GridSampler3DGradInferShape(const PrimitivePtr &primitiv
 
 TuplePtr GridSampler3DGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   std::map<std::string, TypePtr> types;
-  std::set<TypePtr> valid_types = {kFloat32, kFloat64};
+  std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   TypePtr grad_type = input_args[kZero]->BuildType();
   TypePtr input_x_type = input_args[kOne]->BuildType();
   TypePtr grid_type = input_args[kTwo]->BuildType();

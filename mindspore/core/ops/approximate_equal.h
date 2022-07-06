@@ -28,8 +28,10 @@ constexpr auto kNameApproximateEqual = "ApproximateEqual";
 class MIND_API ApproximateEqual : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApproximateEqual);
-  ApproximateEqual() : BaseOperator(kNameApproximateEqual) {}
-  void Init() {}
+  ApproximateEqual() : BaseOperator(kNameApproximateEqual) { InitIOName({"x", "y"}, {"output"}); }
+  void Init(const float tolerance = 1e-05);
+  void set_tolerance(const float tolerance);
+  float get_tolerance() const;
 };
 abstract::AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                 const std::vector<abstract::AbstractBasePtr> &input_args);

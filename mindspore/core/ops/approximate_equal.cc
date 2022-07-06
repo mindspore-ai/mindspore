@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ abstract::ShapePtr ApproximateEqualInferShape(const PrimitivePtr &primitive,
 TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto x1_dtype = input_args[0]->BuildType();
   auto x2_dtype = input_args[1]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x1", x1_dtype, valid_types, prim->name());
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x2", x2_dtype, valid_types, prim->name());
   std::map<std::string, TypePtr> types;
@@ -63,6 +63,14 @@ TypePtr ApproximateEqualInferType(const PrimitivePtr &prim, const std::vector<Ab
   return y_dtype;
 }
 }  // namespace
+
+void ApproximateEqual::Init(const float tolerance) { set_tolerance(tolerance); }
+
+void ApproximateEqual::set_tolerance(const float tolerance) {
+  (void)this->AddAttr(kTolerance, api::MakeValue(tolerance));
+}
+
+float ApproximateEqual::get_tolerance() const { return GetValue<float>(GetAttr(kTolerance)); }
 
 MIND_API_OPERATOR_IMPL(ApproximateEqual, BaseOperator);
 AbstractBasePtr ApproximateEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

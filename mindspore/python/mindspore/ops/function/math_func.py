@@ -2484,6 +2484,53 @@ def ne(x, y):
     return not_equal(x, y)
 
 
+def approximate_equal(x, y, tolerance=1e-5):
+    r"""
+    Returns True if abs(x-y) is smaller than tolerance element-wise, otherwise False.
+
+    .. math::
+
+        out_i = \begin{cases}
+        & \text{ if } \left | x_{i} - y_{i} \right | < \text{tolerance},\ \ True  \\
+        & \text{ if } \left | x_{i} - y_{i} \right | \ge \text{tolerance},\ \  False
+        \end{cases}
+
+    where `tolerance` indicates Acceptable maximum tolerance.
+
+    Inputs of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+    If they have different data types, the lower precision data type will be converted to
+    the relatively highest precision data type.
+
+    Args:
+        x (Tensor): A tensor. Must be one of the following types: float32, float16.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        y (Tensor): A tensor of the same type and shape as `x`.
+        tolerance (float): The maximum deviation that two elements can be considered equal. Default: 1e-05.
+
+    Outputs:
+        Tensor, the shape is the same as the shape of `x`, and the data type is bool.
+
+    Raises:
+        TypeError: If `tolerance` is not a float.
+        RuntimeError: If the data type of `x`, `y` conversion of Parameter is given
+                      but data type conversion of Parameter is not supported.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.function.math_func import approximate_equal
+        >>> ...
+        >>> tol = 2.
+        >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
+        >>> y = Tensor(np.array([2, 4, 6]), mstype.float32)
+        >>> output = approximate_equal(Tensor(x), Tensor(y), tol)
+        >>> print(output)
+        [ True  False  False]
+    """
+    return P.ApproximateEqual(tolerance)(x, y)
+
+
 def isfinite(x):
     r"""
     Determines which elements are finite for each position.
@@ -4454,6 +4501,7 @@ __all__ = [
     'reduce_mean',
     'reduce_prod',
     'sparse_segment_mean',
-    'log2'
+    'log2',
+    'approximate_equal',
 ]
 __all__.sort()
