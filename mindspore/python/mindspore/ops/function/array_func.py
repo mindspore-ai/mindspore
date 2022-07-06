@@ -3635,7 +3635,7 @@ def max(input_x, axis=0, keep_dims=False):
     return argmax_with_value_op(input_x)
 
 
-def min(input_x, axis=0, keep_dims=False):
+def min(x, axis=0, keep_dims=False):
     """
     Calculates the minimum value with corresponding index, and returns indices and values.
 
@@ -3647,19 +3647,19 @@ def min(input_x, axis=0, keep_dims=False):
 
     .. warning::
         - If there are multiple minimum values, the index of the first minimum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Also see: class: `mindspore.ops.ArgMinWithValue`.
 
     Args:
-        input_x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` . And the data type only support mindspore.float16 or float32.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true the output will keep the same dimension as the input,
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        - x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
 
     Outputs:
@@ -3669,7 +3669,7 @@ def min(input_x, axis=0, keep_dims=False):
         - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - values (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -3696,7 +3696,7 @@ def min(input_x, axis=0, keep_dims=False):
         [0] [0.0]
     """
     argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
-    return argmin_with_value_op(input_x)
+    return argmin_with_value_op(x)
 
 __all__ = [
     'unique',
