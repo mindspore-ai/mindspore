@@ -1112,9 +1112,7 @@ TensorPtr CSRTensor::GetTensorAt(size_t index) const {
     MS_EXCEPTION_IF_NULL(values_);
     return values_;
   } else if (index >= kShapeIdx && index < kShapeIdx + shape().size()) {
-    auto scalar = MakeValue(shape_[index - kShapeIdx])->cast<ScalarPtr>();
-    MS_EXCEPTION_IF_NULL(scalar);
-    return std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), scalar->type());
+    return std::make_shared<tensor::Tensor>(shape_[index - kShapeIdx], TypeIdToType(kNumberTypeInt64));
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for CSRTensor: " << ToString();
   return nullptr;
@@ -1128,9 +1126,7 @@ TensorPtr COOTensor::GetTensorAt(size_t index) const {
     MS_EXCEPTION_IF_NULL(values_);
     return values_;
   } else if (index >= kShapeIdx && index < kShapeIdx + shape().size()) {
-    auto scalar = MakeValue(shape_[index - kShapeIdx])->cast<ScalarPtr>();
-    MS_EXCEPTION_IF_NULL(scalar);
-    return std::make_shared<tensor::Tensor>(GetValue<int64_t>(scalar), scalar->type());
+    return std::make_shared<tensor::Tensor>(shape_[index - kShapeIdx], TypeIdToType(kNumberTypeInt64));
   }
   MS_LOG(EXCEPTION) << "Invalid index: " << index << " for COOTensor: " << ToString();
   return nullptr;

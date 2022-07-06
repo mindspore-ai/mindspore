@@ -102,6 +102,7 @@ namespace mindspore {
 namespace pipeline {
 using Tensor = mindspore::tensor::Tensor;
 using MetaTensor = mindspore::tensor::MetaTensor;
+using MetaSparseTensor = mindspore::tensor::MetaSparseTensor;
 using CSRTensor = mindspore::tensor::CSRTensor;
 using COOTensor = mindspore::tensor::COOTensor;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
@@ -146,7 +147,7 @@ bool CheckAllTensor(const ValueTuplePtr &value_tuple) {
 
 AbstractBasePtr ArgsToAbstract(const ValuePtr &value, bool enable_tuple_broaden = false, bool set_mutable = false) {
   MS_EXCEPTION_IF_NULL(value);
-  bool broaden = value->isa<MetaTensor>() || set_mutable ||
+  bool broaden = value->isa<MetaTensor>() || set_mutable || value->isa<MetaSparseTensor>() ||
                  (enable_tuple_broaden && value->isa<ValueTuple>() && CheckAllTensor(value->cast<ValueTuplePtr>())) ||
                  (MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR) && value->isa<Scalar>());
 

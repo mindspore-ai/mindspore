@@ -691,6 +691,8 @@ class MS_CORE_API CSRTensor : public MetaSparseTensor {
   /// Destructor of CSRTensor.
   ~CSRTensor() override = default;
 
+  MS_DECLARE_PARENT(CSRTensor, MetaSparseTensor)
+
   /// \brief Gets CSRTensor's indptr.
   ///
   /// \return [TensorPtr] The indices pointer.
@@ -759,6 +761,8 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   /// Destructor of COOTensor.
   ~COOTensor() override = default;
 
+  MS_DECLARE_PARENT(COOTensor, MetaSparseTensor)
+
   /// \brief Gets COOTensor's indices.
   ///
   /// \return [TensorPtr] The indices.
@@ -770,6 +774,8 @@ class MS_CORE_API COOTensor : public MetaSparseTensor {
   TensorPtr GetValues() { return values_; }
 
   TensorPtr GetTensorAt(size_t index) const;
+
+  const size_t GetTensorLength() const { return kShapeIdx + shape().size(); }
 
   /// \brief Compare two cootensor objects to see if they have same address.
   ///

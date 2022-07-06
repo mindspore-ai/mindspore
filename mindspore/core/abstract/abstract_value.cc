@@ -1426,18 +1426,25 @@ BaseShapePtrList AbstractSparseTensor::ElementsShapeTupleRecursive() const {
   return element_shape_list;
 }
 
-const TypeId AbstractSparseTensor::GetTypeIdAt(size_t index) const {
+const TypeId AbstractSparseTensor::GetTensorTypeIdAt(size_t index) const {
   size_t shape_idx = size() - 1;
-  if (index < shape_idx) {
-    auto abs_tensor = GetAbsPtrAt<abstract::AbstractTensorPtr>(index);
-    MS_EXCEPTION_IF_NULL(abs_tensor);
-    return abs_tensor->element()->BuildType()->type_id();
-  } else if (index < shape_idx + shape()->size()) {
-    return shape()->elements()[index - shape_idx]->BuildType()->type_id();
+  if (index >= shape_idx || index < 0) {
+    MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx << "), but got " << index << " for "
+                      << ToString();
+    return kTypeUnknown;
   }
-  MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape_idx + shape()->size() << "), but got " << index
-                    << " for " << ToString();
-  return kTypeUnknown;
+  auto abs_tensor = GetAbsPtrAt<abstract::AbstractTensorPtr>(index);
+  MS_EXCEPTION_IF_NULL(abs_tensor);
+  return abs_tensor->element()->BuildType()->type_id();
+}
+
+const TypeId AbstractSparseTensor::GetShapeTypeIdAt(size_t index) const {
+  if (index >= shape()->size() || index < 0) {
+    MS_LOG(EXCEPTION) << "Index must be in range of [0, " << shape()->size() << "), but got " << index << " for "
+                      << ToString();
+    return kTypeUnknown;
+  }
+  return shape()->elements()[index]->BuildType()->type_id();
 }
 
 TypePtr AbstractSparseTensor::BuildType() const { return std::make_shared<SparseTensorType>(); }
