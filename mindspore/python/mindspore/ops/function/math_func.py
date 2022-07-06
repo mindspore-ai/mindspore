@@ -3921,7 +3921,7 @@ def gumbel_softmax(logits, tau=1, hard=False, dim=-1):
 
     Args:
         logits (Tensor): Unnormalized log probabilities. The data type must be float16 or float32.
-        tau (float): Non-negative scalar temperature. Default: 1.0.
+        tau (float): The scalar temperature, which is a positive number. Default: 1.0.
         hard (bool): if `True`, the returned samples will be discretized as one-hot vectors, but will be differentiated
           as if it is the soft sample in autograd. Default: False.
         dim (int): Dim for softmax to compute. Default: -1.
