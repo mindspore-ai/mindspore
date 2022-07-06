@@ -319,9 +319,8 @@ def dropout2d(x, p=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout2d_op = ops.dropout2d(p=0.5)
         >>> input_x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
-        >>> output, mask = dropout2d_op(input_x)
+        >>> output, mask = dropout2d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
@@ -365,9 +364,8 @@ def dropout3d(x, p=0.5):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> dropout3d_op = ops.dropout2D(p=0.5)
         >>> input_x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
-        >>> output, mask = dropout3d_op(input_x)
+        >>> output, mask = dropout3d(input_x, 0.5)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
