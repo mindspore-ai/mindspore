@@ -46,20 +46,26 @@ class GammaCpuKernelMod : public NativeCpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   std::vector<KernelAttr> GetOpSupport() override;
+  std::vector<KernelTensorPtr> GetOutputs() override { return outputs_; };
 
  private:
   template <typename T>
   void Generate(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  template <typename T>
+  void InferShape(const std::vector<AddressPtr> &inputs);
   size_t seed_{0};
   size_t seed2_{0};
 
-  std::vector<int64_t> output_shape_;
-  std::vector<int64_t> shape_shape_;
-  std::vector<int64_t> alpha_shape_;
+  ShapeVector output_shape_;
+  ShapeVector shape_shape_;
+  ShapeVector alpha_shape_;
   TypeId shape_dtype_{kTypeUnknown};
   TypeId alpha_dtype_{kTypeUnknown};
 
   GuardedPhiloxRandom generator_;
+  // Dealing with dynamic shapes
+  bool dyamic_shape_{false};
+  std::vector<KernelTensorPtr> outputs_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

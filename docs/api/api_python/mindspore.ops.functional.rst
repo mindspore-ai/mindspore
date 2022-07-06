@@ -313,6 +313,7 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.ops.gamma
+    mindspore.ops.random_gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.random_categorical
