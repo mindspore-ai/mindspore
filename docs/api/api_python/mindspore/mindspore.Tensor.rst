@@ -292,7 +292,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor。
+        Tensor，数据类型和shape与 `x` 相同。
 
     .. py:method:: cummax(axis)
 
