@@ -189,10 +189,13 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (shape->shape().size() != 1) {
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
+
+  bool is_input_dynamic = std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
+
   ShapeVector ids_shape = {Shape::SHP_ANY};
   ShapeVector min_shape = {1};
   ShapeVector max_shape = shape->max_shape();
-  if (max_shape.empty()) {
+  if (max_shape.empty() && !is_input_dynamic) {
     max_shape = shape->shape();
   }
 
@@ -207,11 +210,11 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   }
   ShapeVector idx_shape = shape->shape();
   ShapeVector idx_min_shape = shape->min_shape();
-  if (idx_min_shape.empty()) {
+  if (idx_min_shape.empty() && !is_input_dynamic) {
     idx_min_shape = shape->shape();
   }
   ShapeVector idx_max_shape = shape->max_shape();
-  if (idx_max_shape.empty()) {
+  if (idx_max_shape.empty() && !is_input_dynamic) {
     idx_max_shape = shape->shape();
   }
 
