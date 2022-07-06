@@ -107,7 +107,7 @@ void EntranceActor::FetchInput(OpContext<DeviceTensor> *const context) {
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
       }
       MS_EXCEPTION_IF_NULL(input_data->data_);
-      input_device_tensors_[input_data->index_] = input_data->data_;
+      input_device_tensors_[IntToSize(input_data->index_)] = input_data->data_;
     }
   } else {
     // 2.Data comes from the gather actor, it is in the form of data with branch id.

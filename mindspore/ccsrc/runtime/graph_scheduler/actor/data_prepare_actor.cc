@@ -120,9 +120,9 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
     MS_EXCEPTION_IF_NULL(csr_tensor->GetIndptr());
     MS_EXCEPTION_IF_NULL(csr_tensor->GetIndices());
     MS_EXCEPTION_IF_NULL(csr_tensor->GetValues());
-    values->emplace_back(csr_tensor->GetIndptr());
-    values->emplace_back(csr_tensor->GetIndices());
-    values->emplace_back(csr_tensor->GetValues());
+    (void)values->emplace_back(csr_tensor->GetIndptr());
+    (void)values->emplace_back(csr_tensor->GetIndices());
+    (void)values->emplace_back(csr_tensor->GetValues());
     std::transform(csr_tensor->shape().begin(), csr_tensor->shape().end(), std::back_inserter(*values),
                    [](int64_t n) { return std::make_shared<Int64Imm>(n); });
   } else if (value->isa<tensor::COOTensor>()) {
@@ -130,8 +130,8 @@ void ValueTupleToValue(const ValuePtr &value, std::vector<ValuePtr> *const value
     MS_EXCEPTION_IF_NULL(coo_tensor);
     MS_EXCEPTION_IF_NULL(coo_tensor->GetIndices());
     MS_EXCEPTION_IF_NULL(coo_tensor->GetValues());
-    values->emplace_back(coo_tensor->GetIndices());
-    values->emplace_back(coo_tensor->GetValues());
+    (void)values->emplace_back(coo_tensor->GetIndices());
+    (void)values->emplace_back(coo_tensor->GetValues());
     std::transform(coo_tensor->shape().begin(), coo_tensor->shape().end(), std::back_inserter(*values),
                    [](int64_t n) { return std::make_shared<Int64Imm>(n); });
   } else {
