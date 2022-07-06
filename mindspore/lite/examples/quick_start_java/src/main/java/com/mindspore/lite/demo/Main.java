@@ -91,6 +91,7 @@ public class Main {
         // Run Inference.
         boolean ret = model.predict();
         if (!ret) {
+            inputTensor.free();
             System.err.println("MindSpore Lite run failed.");
             return false;
         }
@@ -107,11 +108,15 @@ public class Main {
         }
         msgSb.append("]");
         if (outTensor.getDataType() != DataType.kNumberTypeFloat32) {
+            inputTensor.free();
+            outTensor.free();
             System.err.println("output tensor data type is not float, the data type is " + outTensor.getDataType());
             return false;
         }
         float[] result = outTensor.getFloatData();
         if (result == null) {
+            inputTensor.free();
+            outTensor.free();
             System.err.println("decodeBytes return null");
             return false;
         }
@@ -120,6 +125,9 @@ public class Main {
             msgSb.append(" ").append(result[i]);
         }
         System.out.println(msgSb.toString());
+        // In/Out Tensor must free
+        inputTensor.free();
+        outTensor.free();
         return true;
     }
 
