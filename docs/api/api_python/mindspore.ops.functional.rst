@@ -428,6 +428,7 @@ Array操作
 
     mindspore.ops.dense_to_sparse_coo
     mindspore.ops.dense_to_sparse_csr
+    mindspore.ops.csr_to_coo
 
 Parameter操作算子
 --------------------
