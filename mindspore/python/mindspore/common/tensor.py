@@ -740,15 +740,13 @@ class Tensor(Tensor_):
         equal to the shape of `input_x[indices]`. For more details, see use cases.
 
         Note:
-            - If some values of the `indices` are out of bound, CPU backend will raise an index error.
-              GPU backend will not raise and index error
-              and the corresponding `updates` will not be updated to self tensor.
+            - If some values of the `indices` are out of bound, instead of raising an index error,
+              the corresponding `updates` will not be updated to `input_x`.
 
         Args:
-            indices (Tensor): The index of input tensor whose data type is int32 or int64.
-                The rank must be at least 2.
+            indices (Tensor): The index of input tensor whose data type is int32 or int64. The rank must be at least 2.
             updates (Tensor): The tensor to update the input tensor, has the same type as input,
-                and updates.shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
+                and updates shape should be equal to indices.shape[:-1] + input_x.shape[indices.shape[-1]:].
 
         Returns:
             Tensor, has the same shape and type as self tensor.
