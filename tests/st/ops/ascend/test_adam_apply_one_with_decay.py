@@ -90,21 +90,6 @@ def compute_func(ms_net, np_net, is_dyn=False):
     assert np.all(out2.asnumpy() == np2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_adam_apply_one_with_decay_dyn():
-    """
-    Feature: Test Dynamic AdamApplyOneWithDecay.
-    Description: The input shape is dynamic.
-    Expectation: Assert that results are consistent with numpy.
-    """
-    ms_net = AdamApplyOneWithDecayNet()
-    np_net = adam_apply_one_with_decay_np
-    compute_func(ms_net, np_net, True)
-
-
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
