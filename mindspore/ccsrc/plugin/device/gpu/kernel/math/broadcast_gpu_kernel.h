@@ -59,6 +59,7 @@ static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap
   {"AbsGrad", BROADCAST_TYPE_ABSGRAD},
   {"Div", BROADCAST_TYPE_DIV},
   {"DivNoNan", BROADCAST_TYPE_DIVNONAN},
+  {"MulNoNan", BROADCAST_TYPE_MULNONAN},
   {"Mod", BROADCAST_TYPE_MOD},
   {"FloorMod", BROADCAST_TYPE_FLOORMOD},
   {"Atan2", BROADCAST_TYPE_ATAN2},
@@ -71,7 +72,7 @@ static const std::map<std::string, BroadcastOpType> kBroadcastArithmetricTypeMap
 
 static const std::map<std::string, BroadcastOpType> kBroadcastComplexAndRealTypeMap = {
   {"RealDiv", BROADCAST_TYPE_REALDIV}, {"Mul", BROADCAST_TYPE_MUL}, {"Sub", BROADCAST_TYPE_SUB},
-  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV},
+  {"Add", BROADCAST_TYPE_ADD},         {"Div", BROADCAST_TYPE_DIV}, {"MulNoNan", BROADCAST_TYPE_MULNONAN},
 };
 
 static const std::map<std::string, BroadcastOpType> kBroadcastComplexOnlyTypeMap = {

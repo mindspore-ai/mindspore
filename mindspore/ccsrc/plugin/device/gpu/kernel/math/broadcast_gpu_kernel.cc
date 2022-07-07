@@ -204,6 +204,15 @@ std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> Broad
    &BroadcastOpGpuKernelMod::LaunchComplexKernel<float, float, Complex<float>>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeComplex128),
    &BroadcastOpGpuKernelMod::LaunchComplexKernel<double, double, Complex<double>>},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>, Complex<float>)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>, Complex<float>)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex64, kNumberTypeComplex64, Complex<float>, Complex<float>)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL1(kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>,
+                                        Complex<double>)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL2(kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>,
+                                        Complex<double>)},
+  {MS_REG_BROADCAST_COMPLEX_GPU_KERNEL3(kNumberTypeComplex128, kNumberTypeComplex128, Complex<double>,
+                                        Complex<double>)},
 };
 std::vector<std::pair<KernelAttr, BroadcastOpGpuKernelMod::BroadCastFunc>> BroadcastOpGpuKernelMod::real_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
@@ -274,6 +283,7 @@ MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LessEqual, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogicalOr, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, LogicalAnd, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Mul, BroadcastOpGpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MulNoNan, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Mod, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Minimum, BroadcastOpGpuKernelMod);
 MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Maximum, BroadcastOpGpuKernelMod);

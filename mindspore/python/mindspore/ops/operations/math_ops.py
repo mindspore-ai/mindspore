@@ -2976,7 +2976,7 @@ class MulNoNan(_MathBinaryOp):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If neither `x` nor `y` is a Tensor.
