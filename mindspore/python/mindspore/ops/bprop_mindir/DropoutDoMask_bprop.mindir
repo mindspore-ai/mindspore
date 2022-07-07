@@ -21,7 +21,7 @@ bprop.13:y*
 bprop.13:keep_prob*
 bprop.13:out*
 bprop.13:dout2
-bprop.13:[CNode]17:6:@3ff00a96a42589f106b9f338ac2deee3a835cd6aa9b7ab6e6f665be01d88441dPb.
-S-Prim-DropoutDoMask:2S-Prim-DropoutDoMaskb&
-S-Prim-MakeTuple:7S-Prim-MakeTuplebH
+bprop.13:[CNode]17:6:@78a8f1d2d7733353bf9628929b95b205c4c1413defa6d6dafa7554432b1e10e9Pb&
+S-Prim-MakeTuple:7S-Prim-MakeTupleb.
+S-Prim-DropoutDoMask:2S-Prim-DropoutDoMaskbH
 #S-Prim-hyper_map[zeros_like_leaf]:4!S-Prim-hyper_map[zeros_like_leaf]h
