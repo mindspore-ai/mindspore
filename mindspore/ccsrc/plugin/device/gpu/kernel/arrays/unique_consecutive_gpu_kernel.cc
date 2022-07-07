@@ -94,7 +94,8 @@ void UniqueConsecutiveGpuKernelMod::InitUniqueConsecutiveAttrs(const BaseOperato
   auto attr_axis = GetBaseOperatorAttr(base_operator_, "axis");
   return_idx_ = GetValue<bool>(attr_idx);
   return_counts_ = GetValue<bool>(attr_counts);
-  if (attr_axis->isa<None>()) {
+  constexpr int64_t kAxisIsNone = 1000;
+  if (attr_axis->isa<None>() || GetValue<int64_t>(attr_axis) == kAxisIsNone) {
     is_flattend_ = true;
   } else {
     axis_ = GetValue<int64_t>(attr_axis);

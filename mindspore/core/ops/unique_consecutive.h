@@ -16,8 +16,13 @@
 
 #ifndef MINDSPORE_CORE_OPS_UNIQUE_CONSECUTIVE_H_
 #define MINDSPORE_CORE_OPS_UNIQUE_CONSECUTIVE_H_
-#include "ops/base_operator.h"
+#include <memory>
+#include <vector>
+
+#include "abstract/abstract_value.h"
 #include "mindapi/base/types.h"
+#include "ops/base_operator.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace ops {
@@ -34,6 +39,9 @@ class MIND_API UniqueConsecutive : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
+AbstractBasePtr UniqueConsecutiveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args);
+using PrimUniqueConsecutivePtr = std::shared_ptr<UniqueConsecutive>;
 }  // namespace ops
 }  // namespace mindspore
 
