@@ -116,19 +116,19 @@ def test_context_04():
 
 def test_context_05():
     with pytest.raises(TypeError) as raise_info:
-        context = mslite.Context(thread_num=2, parallel_num="1")
-    assert "parallel_num must be int" in str(raise_info.value)
+        context = mslite.Context(thread_num=2, inter_op_parallel_num="1")
+    assert "inter_op_parallel_num must be int" in str(raise_info.value)
 
 
 def test_context_06():
     with pytest.raises(ValueError) as raise_info:
-        context = mslite.Context(thread_num=2, parallel_num=-1)
-    assert "parallel_num must be positive" in str(raise_info.value)
+        context = mslite.Context(thread_num=2, inter_op_parallel_num=-1)
+    assert "inter_op_parallel_num must be positive" in str(raise_info.value)
 
 
 def test_context_07():
-    context = mslite.Context(thread_num=2, parallel_num=1)
-    assert "parallel_num: 1" in str(context)
+    context = mslite.Context(thread_num=2, inter_op_parallel_num=1)
+    assert "inter_op_parallel_num: 1" in str(context)
 
 
 def test_context_08():
