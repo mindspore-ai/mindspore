@@ -22,6 +22,7 @@
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/constants.h"
 #include "proto/topology.pb.h"
+#include "ps/ps_context.h"
 #include "distributed/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
@@ -45,17 +46,49 @@ bool ComputeGraphNode::Initialize() {
                            "Failed to init the address of meta server node.");
 
   // Init the TCP client.
-  tcp_client_ = std::make_unique<rpc::TCPClient>();
+  bool enable_ssl = ps::PSContext::instance()->enable_ssl();
+  tcp_client_ = std::make_unique<rpc::TCPClient>(enable_ssl);
   MS_EXCEPTION_IF_NULL(tcp_client_);
   RETURN_IF_FALSE_WITH_LOG(tcp_client_->Initialize(), "Failed to create the TCP client.");
 
-  hb_client_ = std::make_unique<rpc::TCPClient>();
+  hb_client_ = std::make_unique<rpc::TCPClient>(enable_ssl);
   MS_EXCEPTION_IF_NULL(hb_client_);
   RETURN_IF_FALSE_WITH_LOG(hb_client_->Initialize(), "Failed to create the heartbeat tcp client.");
 
   // Register itself to meta server node.
-  bool success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
-                                   "Failed to register and try to reconnect to the meta server.", kExecuteRetryNum);
+  bool success = false;
+  if (!enable_ssl) {
+    success = ReconnectIfNeeded(std::bind(&ComputeGraphNode::Register, this),
+                                "Failed to register and try to reconnect to the meta server.", kExecuteRetryNum);
+  } else {
+    const auto &server_url = meta_server_addr_.GetUrl();
+    size_t retry = 10;
+    while (!success && retry-- > 0) {
+      success = Register();
+      if (success) {
+        break;
+      }
+
+      if (tcp_client_ != nullptr) {
+        tcp_client_->Disconnect(server_url);
+        tcp_client_->Finalize();
+        tcp_client_.reset();
+      }
+      if (hb_client_ != nullptr) {
+        hb_client_->Disconnect(server_url);
+        hb_client_->Finalize();
+        hb_client_.reset();
+      }
+
+      tcp_client_ = std::make_unique<rpc::TCPClient>(enable_ssl);
+      MS_EXCEPTION_IF_NULL(tcp_client_);
+      RETURN_IF_FALSE_WITH_LOG(tcp_client_->Initialize(), "Failed to create the TCP client.");
+
+      hb_client_ = std::make_unique<rpc::TCPClient>(enable_ssl);
+      MS_EXCEPTION_IF_NULL(hb_client_);
+      RETURN_IF_FALSE_WITH_LOG(hb_client_->Initialize(), "Failed to create the heartbeat tcp client.");
+    }
+  }
   if (!success) {
     return false;
   }
@@ -96,15 +129,20 @@ bool ComputeGraphNode::Finalize(bool force) {
   }
 
   // Release the TCP client.
+  bool enable_ssl = ps::PSContext::instance()->enable_ssl();
   const auto &server_url = meta_server_addr_.GetUrl();
   if (tcp_client_ != nullptr) {
-    tcp_client_->Disconnect(server_url);
+    if (!(enable_ssl && !authenticated_)) {
+      tcp_client_->Disconnect(server_url);
+    }
     tcp_client_->Finalize();
     tcp_client_.reset();
   }
 
   if (hb_client_ != nullptr) {
-    hb_client_->Disconnect(server_url);
+    if (!(enable_ssl && !authenticated_)) {
+      hb_client_->Disconnect(server_url);
+    }
     hb_client_->Finalize();
     hb_client_.reset();
   }

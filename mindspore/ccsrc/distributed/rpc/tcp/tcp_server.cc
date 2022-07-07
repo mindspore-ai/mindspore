@@ -39,7 +39,7 @@ uint32_t TCPServer::GetPort() const { return port_; }
 
 bool TCPServer::InitializeImpl(const std::string &url) {
   if (tcp_comm_ == nullptr) {
-    tcp_comm_ = std::make_unique<TCPComm>();
+    tcp_comm_ = std::make_unique<TCPComm>(enable_ssl_);
     MS_EXCEPTION_IF_NULL(tcp_comm_);
     bool rt = tcp_comm_->Initialize();
     if (!rt) {
