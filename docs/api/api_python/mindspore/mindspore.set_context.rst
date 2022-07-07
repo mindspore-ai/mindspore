@@ -64,6 +64,8 @@ mindspore.set_context
     |                         |  runtime_num_threads         |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  disable_format_transform    |  GPU                       |
     +-------------------------+------------------------------+----------------------------+
 
     **参数：**
@@ -131,6 +133,7 @@ mindspore.set_context
     - **enable_compile_cache** (bool) - 表示是否加载或者保存前端编译的图。当 `enable_compile_cache` 被设置为True时，在第一次执行的过程中，一个硬件无关的编译缓存会被生成并且导出为一个MINDIR文件。当该网络被再次执行时，如果 `enable_compile_cache` 仍然为True并且网络脚本没有被更改，那么这个编译缓存会被加载。注意目前只支持有限的Python脚本更改的自动检测，这意味着可能有正确性风险。默认值：False。这是一个实验特性，可能会被更改或者删除。
     - **compile_cache_path** (str) - 保存前端图编译缓存的路径。默认值："."。如果目录不存在，系统会自动创建这个目录。缓存会被保存到如下目录： `compile_cache_path/rank_${rank_id}/` 。 `rank_id` 是集群上当前设备的ID。
     - **runtime_num_threads** (int) - 运行时线程池的线程数控制。 默认值为30。
+    - **disable_format_transform** (bool) - 表示是否取消NCHW到NHWC的自动格式转换功能。当fp16的网络性能不如fp32的时，可以设置 `disable_format_transform` 为True，以尝试提高训练性能。默认值：False。
 
     **异常：**
 

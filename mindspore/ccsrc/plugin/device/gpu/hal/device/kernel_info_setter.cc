@@ -296,11 +296,6 @@ void TransformFormatPosition(std::vector<size_t> *format_position, size_t positi
 }
 
 bool IsNeedProcessFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeId> &inputs_type) {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    return false;
-  }
   if (!FormatTransformChecker::GetInstance().format_transform()) {
     return false;
   }
@@ -467,6 +462,18 @@ std::pair<std::string, ExceptionType> PrintUnsupportedTypeWarning(const CNodePtr
 
 void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM)) {
+    MS_LOG(INFO) << "Disable the automatic format transform function.";
+    format_transform_ = false;
+    return;
+  }
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    format_transform_ = false;
+    return;
+  }
+
   // TensorCore can be used only in Volta or newer devices.
   const int marjor_sm = GET_MAJOR_SM;
   if (marjor_sm < RECOMMEND_SM) {
