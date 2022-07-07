@@ -851,6 +851,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
       auto index_converter = find->second;
       ret = index_converter.first[cur_index];
       MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
+      return ret;
     }
     auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
     if (op_info != nullptr) {
