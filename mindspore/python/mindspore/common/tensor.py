@@ -1423,6 +1423,10 @@ class Tensor(Tensor_):
         Returns:
             Tensor, has the same data type as input tensor.
 
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 

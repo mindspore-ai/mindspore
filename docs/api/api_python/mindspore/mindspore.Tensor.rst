@@ -1060,9 +1060,9 @@ mindspore.Tensor
 
         **异常：**
 
-        - **TypeError** - 如果 `keep_dims` 不是bool类型
-        - **TypeError** - 如果 `x` 不是Tensor类型
         - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
+        - **TypeError** - 如果 `x` 不是Tensor类型。
+
 
     .. py:method:: ptp(axis=None, keepdims=False)
 

@@ -19,7 +19,7 @@ from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 reduce_mean_op_info = TBERegOp("ReduceMean") \
     .fusion_type("OPAQUE") \
     .async_flag(False) \
-    .binfile_name("reduce_mean.so") \
+    .binfile_name("reduce_mean_d.so") \
     .compute_cost(10) \
     .kernel_name("reduce_mean_d") \
     .partial_flag(True) \
