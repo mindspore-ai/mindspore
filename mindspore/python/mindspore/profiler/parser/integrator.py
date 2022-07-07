@@ -99,6 +99,10 @@ class Integrator:
 
     def _parse_aicore_type_time(self):
         """Parse the parsed AICORE operator type file."""
+        if self._total_time == 0:
+            logger.info("AICORE data does not exist.")
+            return
+
         framework_file = os.path.join(
             self._profiling_dir,
             self._file_name_framework.format(self._device_id)
@@ -125,8 +129,6 @@ class Integrator:
                 op_type_time[0] += op_time
                 op_type_time[1] += 1
 
-        if self._total_time == 0:
-            raise ValueError("The total time of operations can not be 0.")
         op_type_file_name = 'aicore_intermediate_' + self._device_id + '_type.csv'
         op_type_file_path = os.path.join(self._profiling_dir, op_type_file_name)
         with open(op_type_file_path, 'w') as type_file:
