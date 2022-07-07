@@ -61,20 +61,20 @@ class Col2ImFwdGpuKernelMod : public NativeGpuKernelMod {
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
 
  private:
-  size_t batch_size_{0};
-  size_t channels_{0};
-  size_t out_height_{0};
-  size_t out_width_{0};
-  size_t in_height_{0};
-  size_t in_width_{0};
-  size_t pad_width_{0};
-  size_t pad_height_{0};
-  size_t kernel_height_{0};
-  size_t kernel_width_{0};
-  size_t stride_height_{0};
-  size_t stride_width_{0};
-  size_t dilation_height_{0};
-  size_t dilation_width_{0};
+  uint32_t batch_size_{0};
+  uint32_t channels_{0};
+  uint32_t out_height_{0};
+  uint32_t out_width_{0};
+  uint32_t in_height_{0};
+  uint32_t in_width_{0};
+  uint32_t pad_width_{0};
+  uint32_t pad_height_{0};
+  uint32_t kernel_height_{0};
+  uint32_t kernel_width_{0};
+  uint32_t stride_height_{0};
+  uint32_t stride_width_{0};
+  uint32_t dilation_height_{0};
+  uint32_t dilation_width_{0};
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
   Col2ImFunc kernel_func_{};

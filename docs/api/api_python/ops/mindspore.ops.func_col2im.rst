@@ -7,7 +7,7 @@ mindspore.ops.col2im
 
     **参数：**
 
-    - **input_x** (Tensor) - 4维Tensor，输入的批量的滑动局部块， 数据类型支持float16和float32。
+    - **input_x** (Tensor) - 4维Tensor，输入的批量的滑动局部块， 数据类型支持float16，float32，float64，complex64，complex128。
     - **output_size** (Tensor) -  包含两个int元素的1维Tensor，输出张量的后两维的shape。
     - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑动窗口的大小。tuple的两个元素分别对应kernel的高度与宽度。如果为一个int则kernel的高度与宽度均为该值。
     - **dilation** (Union[int, tuple[int], list[int]]) - 滑动窗口扩张的大小。
