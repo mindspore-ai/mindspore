@@ -218,7 +218,7 @@ PYBIND_REGISTER(
 
 PYBIND_REGISTER(GetImageNumChannels, 1, ([](py::module *m) {
                   (void)m->def("get_image_num_channels", ([](const std::shared_ptr<Tensor> &image) {
-                                 int channels;
+                                 dsize_t channels;
                                  THROW_IF_ERROR(ImageNumChannels(image, &channels));
                                  return channels;
                                }));

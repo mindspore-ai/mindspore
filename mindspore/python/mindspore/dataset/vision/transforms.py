@@ -1185,6 +1185,7 @@ class NormalizePad(ImageTensorOperation):
         TypeError: If `is_hwc` is not of type bool.
         ValueError: If `mean` is not in range [0.0, 255.0].
         ValueError: If `mean` is not in range (0.0, 255.0].
+        RuntimeError: If given tensor shape is not <H, W>, <H, W, C> or <C, H, W>.
 
     Supported Platforms:
         ``CPU``

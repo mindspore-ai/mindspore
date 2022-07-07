@@ -252,9 +252,9 @@ APP_ERROR MDAclProcess::D2H_Pop(const std::shared_ptr<mindspore::dataset::Device
 }
 
 APP_ERROR MDAclProcess::JPEG_D(const RawData &ImageInfo) {
-  MS_LOG(WARNING) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
-                     "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
-                     "This API will be removed later";
+  MS_LOG(INFO) << "It's deprecated to use kCpu as input device for Dvpp operators to compute, because it's slow and "
+                  "unsafe, we recommend you to set input device as MapTargetDevice::kAscend for Dvpp operators. "
+                  "This API will be removed later";
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);

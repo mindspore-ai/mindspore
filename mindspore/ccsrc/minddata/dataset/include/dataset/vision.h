@@ -313,7 +313,7 @@ class MS_API Equalize final : public TensorTransform {
 /// \param[in] image Tensor of the image.
 /// \param[out] channels Channels of the image.
 /// \return The status code.
-Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, int *channels);
+Status MS_API GetImageNumChannels(const mindspore::MSTensor &image, dsize_t *channels);
 
 /// \brief Get the size of input image.
 /// \param[in] image Tensor of the image.
