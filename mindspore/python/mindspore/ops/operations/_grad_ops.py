@@ -1259,13 +1259,27 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **x** (Tensor) - Tensor with data format "NCHW", data type must be float16.
-        - **grad** (Tensor) - Data type same as `x`.
-        - **argmax** (Tensor) - Data type must be uint16 or int64.
+        - **x** (Tensor) - Tensor with data format "NCHW".
+          For Ascend, data type must be float16. For CPU and GPU, data type support float16 and float32.
+        - **grad** (Tensor) - Data type and shape same as `x`.
+        - **argmax** (Tensor) - Data type must be int32 or int64.
 
     Outputs:
-        Tensor, with data type same as `x`.
+        Tensor, with data type same as `x`. Shape same as `argmax`.
 
+    Raises:
+        TypeError: If kernel_size is neither int nor a tuple of 2/4 int numbers.
+        TypeError: If strides is neither int nor a tuple of 2/4 int numbers.
+        TypeError: If pad_mode is not string.
+        ValueError: If pad_mode is neither "same" nor "valid"(not case sensitive).
+        TypeError: For Ascend, the data types of `x` and `grad` are not float16.
+        For CPU or GPU, the data types of `x` and `grad` are neither float16 nor float32.
+        TypeError: The data type of `argmax` is neither int32 nor int64.
+        ValueError: If the rank of `x`, `grad` or `argmax` is not equal to 4.
+        ValueError: If the shapes of `x` and `grad` are not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register

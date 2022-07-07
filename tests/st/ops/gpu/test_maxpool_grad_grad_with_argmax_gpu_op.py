@@ -31,8 +31,8 @@ class NetMaxPoolGradGradWithArgmax(nn.Cell):
                                                                         kernel_size=kernel,
                                                                         strides=stride)
 
-    def construct(self, x, out, grad):
-        return self.maxpool_grad_grad_argmax_fun(x, out, grad)
+    def construct(self, x, grad, argmax):
+        return self.maxpool_grad_grad_argmax_fun(x, grad, argmax)
 
 
 @pytest.mark.level0

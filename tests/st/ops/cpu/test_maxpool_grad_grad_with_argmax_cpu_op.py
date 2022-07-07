@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.functional import vmap
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -31,8 +32,8 @@ class NetMaxPoolGradGradWithArgmax(nn.Cell):
                                                                         kernel_size=kernel,
                                                                         strides=stride)
 
-    def construct(self, x, out, grad):
-        return self.maxpool_grad_grad_argmax_fun(x, out, grad)
+    def construct(self, x, grad, argmax):
+        return self.maxpool_grad_grad_argmax_fun(x, grad, argmax)
 
 
 @pytest.mark.level0
@@ -105,3 +106,33 @@ def test_maxpool_grad_grad_argmax_fp32(argmax_type):
     maxpool_grad_grad_argmax = NetMaxPoolGradGradWithArgmax("SAME", 3, 1)
     output = maxpool_grad_grad_argmax(x, grad, argmax)
     assert np.allclose(output.asnumpy(), expect_result)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('axis', [2])
+def test_maxpool_grad_grad_argmax_vmap(axis):
+    """
+    Feature: MaxPoolGradGradWithArgmax cpu kernel
+    Description: test the rightness of MaxPoolGradGradWithArgmax cpu kernel vmap feature.
+    Expectation: Success.
+    """
+    maxpool_grad_grad_argmax = NetMaxPoolGradGradWithArgmax("SAME", 3, 1)
+
+    x = np.random.random((2, 3, 5, 5, axis)).astype(np.float32)
+    grad = np.random.random((2, 3, 5, 5, axis)).astype(np.float32)
+    argmax = np.random.random((2, 3, 5, 5, axis)).astype(np.int32)
+
+    output_vmap = vmap(maxpool_grad_grad_argmax, in_axes=(-1, -1, -1)
+                       )(Tensor(x), Tensor(grad), Tensor(argmax))
+
+    def manually_batched(x, grad, argmax):
+        output = []
+        for i in range(x.shape[-1]):
+            output.append(maxpool_grad_grad_argmax(Tensor(x[:, :, :, :, i]), Tensor(
+                grad[:, :, :, :, i]), Tensor(argmax[:, :, :, :, i])).asnumpy())
+        return np.stack(output)
+
+    expect = manually_batched(x, grad, argmax)
+    assert np.array_equal(output_vmap.asnumpy(), expect)
