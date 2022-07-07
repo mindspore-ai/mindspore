@@ -1183,14 +1183,14 @@ class Tensor(Tensor_):
         ), tolerance)
 
     def matrix_determinant(self):
-        """
+        r"""
         Computes the determinant of one or more square matrices.
 
         `x` refer to self tensor.
 
         Returns:
 
-            Tensor, The shape is `x_shape[:-2]`, the dtype is same as 'x'.
+            Tensor, The shape is :math:`x\_shape[:-2]`, the dtype is same as 'x'.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
@@ -1211,15 +1211,16 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('matrix_determinant')(self)
 
     def log_matrix_determinant(self):
-        """
+        r"""
         Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
         `x` refer to self tensor.
 
         Returns:
-            Tensor, The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+            Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.\n
 
-            Tensor, The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+            Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
+            the dtype is same as `x`.
 
         Raises:
             TypeError: If self tensor is not a Tensor.
@@ -1786,10 +1787,10 @@ class Tensor(Tensor_):
         perm = tuple(range(0, self.ndim))
         if axis2 + 1 < self.ndim:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
         else:
             new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
-                perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
+                       perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
         return tensor_operator_registry.get('transpose')()(self, new_perm)
 

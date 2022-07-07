@@ -177,13 +177,12 @@ class Dropout(Cell):
 
 
 class Dropout2d(Cell):
-    """
+    r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
-    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math: `NCHW`,
-    the channel feature map refers
-    to a 2-dimensional feature map with the shape of :math: `HW`).
+    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math:`NCHW`,
+    the channel feature map refers to a 2-dimensional feature map with the shape of :math:`HW`).
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `2D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
@@ -205,7 +204,7 @@ class Dropout2d(Cell):
     Examples:
         >>> dropout = nn.Dropout2d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
-        >>> output, mask = dropout(x)
+        >>> output = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 3)
     """
@@ -235,13 +234,13 @@ class Dropout2d(Cell):
 
 
 class Dropout3d(Cell):
-    """
+    r"""
     During training, randomly zeroes some channels of the input tensor
     with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor with
-    a shape of :math: `NCDHW`,
-    the channel feature map refers to a 3-dimensional feature map with a shape of :math: 'DHW').
+    a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional feature
+    map with a shape of :math:'DHW').
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
@@ -263,7 +262,7 @@ class Dropout3d(Cell):
     Examples:
         >>> dropout = nn.Dropout3d(p=0.5)
         >>> x = Tensor(np.ones([2, 1, 2, 1, 2]), mindspore.float32)
-        >>> output, mask = dropout(x)
+        >>> output = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 1, 2)
     """
