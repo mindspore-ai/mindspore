@@ -52,7 +52,7 @@ void SharedMemory::Detach() {
   shmat_addr_ = nullptr;
 }
 
-void SharedMemory::Destroy() {
+void SharedMemory::Destroy() const {
   // Remove the shared memory and never mind about the return code.
   auto err = shmctl(shm_id_, IPC_RMID, nullptr);
   if (err == -1) {
