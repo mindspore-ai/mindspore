@@ -42,6 +42,11 @@ SSLWrapper::SSLWrapper()
 SSLWrapper::~SSLWrapper() { CleanSSL(); }
 
 void SSLWrapper::InitSSL() {
+  std::unique_lock<std::mutex> lock(mutex_);
+  if (init_) {
+    return;
+  }
+  init_ = true;
   CommUtil::InitOpensslLib();
   ssl_ctx_ = SSL_CTX_new(SSLv23_server_method());
   if (!ssl_ctx_) {
