@@ -163,7 +163,11 @@ void Worker::YieldAndDeactive() {
   // deactivate this worker only on the first entry
   if (spin_count_ == 0) {
     std::lock_guard<std::mutex> _l(mutex_);
-    status_.store(kThreadIdle);
+    if (local_task_queue_->Empty()) {
+      status_.store(kThreadIdle);
+    } else {
+      return;
+    }
   }
   spin_count_++;
   std::this_thread::yield();
