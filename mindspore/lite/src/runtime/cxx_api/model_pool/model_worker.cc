@@ -19,6 +19,13 @@
 #include "src/common/common.h"
 #include "nnacl/op_base.h"
 namespace mindspore {
+void ModelWorker::PrintWorkerInfo() {
+  MS_LOG(ERROR) << "worker id: " << worker_config_->worker_id
+                << " | bind core id list: " << worker_config_->context->GetThreadAffinityCoreList()
+                << " | worker thread num: " << worker_config_->context->GetThreadNum()
+                << " | worker bind numa id: " << worker_config_->numa_id;
+}
+
 bool ModelWorker::IsAvailable() {
   bool expected = true;
   return available_.compare_exchange_strong(expected, false);
@@ -43,6 +50,7 @@ void ModelWorker::CreateThreadWorker(const char *model_buf, size_t size,
   numa::NUMAAdapter::GetInstance()->Bind(worker_config_->numa_id);
   auto status = Init(model_buf, size);
   if (status != kSuccess) {
+    PrintWorkerInfo();
     MS_LOG(ERROR) << "init failed in model worker.";
     *create_success = false;
     create_work_done_ = true;
@@ -69,6 +77,7 @@ void ModelWorker::Run() {
     auto after = task->after;
     auto status = Predict(*inputs, outputs, before, after);
     if (status != kSuccess) {
+      PrintWorkerInfo();
       MS_LOG(ERROR) << "model predict failed.";
       task->ready = true;
       predict_task_queue_->ActiveTask(task);
@@ -162,6 +171,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   available_ = false;
   auto model_input = model_->GetInputs();
   if (model_input.size() != inputs.size()) {
+    PrintWorkerInfo();
     MS_LOG(ERROR) << "model input size is: " << model_input.size() << ", but get input size is: " << inputs.size();
     available_ = true;
     return kLiteError;
@@ -173,6 +183,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
     auto status = model_->Resize(model_->GetInputs(), dims);
     if (status != kSuccess) {
       MS_LOG(ERROR) << "model pool resize failed.";
+      PrintWorkerInfo();
       available_ = true;
       return kLiteError;
     }
@@ -194,6 +205,7 @@ Status ModelWorker::Predict(const std::vector<MSTensor> &inputs, std::vector<MST
   auto status = model_->Predict(model_input, &model_output, before, after);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model predict failed.";
+    PrintWorkerInfo();
     available_ = true;
     return status;
   }

@@ -68,6 +68,8 @@ class ModelWorker {
 
   Status CopyOutputTensor(std::vector<MSTensor> model_outputs, std::vector<MSTensor> *user_outputs);
 
+  void PrintWorkerInfo();
+
  private:
   std::shared_ptr<mindspore::Model> model_ = nullptr;
   std::shared_ptr<WorkerConfig> worker_config_ = nullptr;
