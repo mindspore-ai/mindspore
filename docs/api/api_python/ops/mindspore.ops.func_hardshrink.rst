@@ -20,7 +20,7 @@ mindspore.ops.hardshrink
 
     **返回：**
 
-    Tensor，shape和数据类型与输入`x` 相同。
+    Tensor，shape和数据类型与输入 `x` 相同。
 
     **异常：**
 

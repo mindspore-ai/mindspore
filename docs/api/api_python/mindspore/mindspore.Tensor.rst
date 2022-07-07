@@ -649,7 +649,7 @@ mindspore.Tensor
         - **TypeError** - `value` 的类型不是bool、int、float或者Tensor。
         - **TypeError** - 当 `value` 是Tensor时， `value` 的数据类型和当前Tensor的数据类型不相同。
         - **ValueError** - 当 `dim` 是Tensor时， `dim` 的维度不等于0。
-        - **ValueError** - index` 的维度大于1。
+        - **ValueError** - `index` 的维度大于1。
         - **ValueError** - 当 `value` 是Tensor时， `value` 的维度不等于0。
         - **RuntimeError** - `dim` 值超出范围[-self.ndim, self.ndim - 1]。
         - **RuntimeError** - `index` 存在值超出范围[-self.shape[dim], self.shape[dim]-1]。
@@ -1030,7 +1030,7 @@ mindspore.Tensor
 
         .. note::
             - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
-            - 当前的Tensor和`power`的数据类型不能同时是bool，并保证其shape可以广播。
+            - 当前的Tensor和 `power` 的数据类型不能同时是bool，并保证其shape可以广播。
 
         **参数：**
 
@@ -1038,7 +1038,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，shape与广播后的shape相同，数据类型为`Tensor`与`power`中精度较高的类型。
+        Tensor，shape与广播后的shape相同，数据类型为 `Tensor` 与 `power` 中精度较高的类型。
 
         **异常：**
 

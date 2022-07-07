@@ -329,9 +329,9 @@ Boost能够自动加速网络，如减少BN/梯度冻结/累积梯度等。
 
     Tuple，包含三个Tensor，分别为损失函数值、溢出状态和当前损失缩放系数。
 
-    - loss(Tensor)，标量Tensor。
-    - overflow(Tensor)，标量Tensor，类型为bool。
-    - loss scaling value(Tensor)，标量Tensor。
+    - **loss** (Tensor) - 标量Tensor。
+    - **overflow** (Tensor) - 标量Tensor，类型为bool。
+    - **loss scaling value** (Tensor) - 标量Tensor。
 
     **异常：**
 
