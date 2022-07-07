@@ -503,13 +503,16 @@ void EliminateNopNode(KernelGraph *graph) {
 
   // Invalid nopnode is those cannot be eliminated in some scene.
   const auto &invalid_nopnodes = FetchNopNodeNotSupportEliminate(graph);
-  const auto &graph_outputs = graph->graph_output_map();
+  const auto &output_node = graph->output();
+  MS_EXCEPTION_IF_NULL(output_node);
+  const auto &graph_outputs = common::AnfAlgo::GetAllOutputWithIndex(output_node);
   // Collect all the nopnodes that can be eliminated.
   for (const auto &cnode : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(cnode);
     // Nopnode as graph output or has side effect cannot be eliminated.
-    if (!IsNopNode(cnode) || (graph_outputs.find({cnode, 0}) != graph_outputs.end()) || HasMonadInput(cnode) ||
-        (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
+    if (!IsNopNode(cnode) ||
+        (std::find(graph_outputs.begin(), graph_outputs.end(), KernelWithIndex(cnode, 0)) != graph_outputs.end()) ||
+        HasMonadInput(cnode) || (invalid_nopnodes.find(cnode) != invalid_nopnodes.end())) {
       new_execution_order.emplace_back(cnode);
       continue;
     }
@@ -573,7 +576,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     graphkernel::GraphKernelFlags::GetInstance().CheckSupport();
     graph_id = graph->graph_id();
   } else {
-    graph_id = CompileGraphImpl(graph, device_context);
+    graph_id = CompileGraphImpl(graph, device_context, run_in_pynative);
   }
   session_->InitAllBucket(graph, device_context);
 
@@ -601,10 +604,6 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     if (common::AnfAlgo::IsControlOpExecInBackend(node)) {
       graph->set_flag(kFlagsIsCutGraph, true);
     }
-  }
-
-  if (!run_in_pynative) {
-    EliminateNopNode(graph.get());
   }
 
   MS_LOG(INFO) << "Status record: end compile graph. graph id: " << graph_id;
@@ -682,7 +681,8 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   return graph_id;
 }
 
-GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const {
+GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                                        bool run_in_pynative) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
@@ -735,6 +735,14 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   // Set device address for embedding cache parameter, only enable when enable embedding cache mode.
   EmbeddingCacheScheduler::GetInstance().SetEmbedCachedParamAddress(device_context, graph);
 #endif
+  if (!run_in_pynative) {
+    EliminateNopNode(graph.get());
+#ifdef ENABLE_DUMP_IR
+    if (save_graphs) {
+      DumpIR("hwopt_comm_after_eliminate_nopnode_" + graph->ToString(), graph);
+    }
+#endif
+  }
 
   // Adjust kernel graph before run graph.
   device_context->kernel_executor_->PreprocessBeforeRun(graph);
