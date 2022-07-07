@@ -63,29 +63,23 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
   if (ConfigManager::GetInstance().parallel_strategy() == ParallelStrategy::ONE_DEVICE) {
     MS_LOG(INFO) << "ME run in ONE_DEVICE strategy mode";
   }
-
-  if (options.sess_ptr != nullptr) {
-    sess_ = options.sess_ptr;
-  } else {
-    sess_ = NewSession(options.options);
-    if (sess_ == nullptr) {
-      MS_LOG(WARNING) << "graph runner sess_ is nullptr!";
-    }
-  }
 #ifdef ENABLE_D
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->backend_policy() == "ge") {
-    // register the callback function
-    if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "register callback failed!";
-    }
-
-    if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ::ge::GRAPH_SUCCESS) {
-      MS_LOG(EXCEPTION) << "register summary callback failed!";
-    }
-  }
 #endif
+  if (options.sess_ptr != nullptr) {
+    sess_ = options.sess_ptr;
+  } else {
+#ifdef ENABLE_D
+    if (ms_context->backend_policy() == "ge") {
+      sess_ = NewSession(options.options);
+      if (sess_ == nullptr) {
+        MS_LOG(EXCEPTION) << "Graph runner sess_ is nullptr!";
+      }
+    }
+#endif
+  }
+
   std::vector<DfGraphWrapperPtr> wrappers = graph_manager_.GetAllGraphs();
   if (wrappers.empty()) {
     MS_LOG(INFO) << "The GraphManager is empty!!";
@@ -94,6 +88,13 @@ GraphRunner::GraphRunner(const GraphRunnerOptions &options)
 #ifdef ENABLE_D
   if (ms_context->backend_policy() != "ge") {
     return;
+  }
+  // register the callback function
+  if (sess_->RegisterCallBackFunc(callbacks::kCheckPoint, callbacks::CheckpointSaveCallback) != ::ge::GRAPH_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Register callback failed!";
+  }
+  if (sess_->RegisterCallBackFunc(callbacks::kSummary, callbacks::SummarySaveCallback) != ::ge::GRAPH_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Register summary callback failed!";
   }
 
   for (auto &it : wrappers) {
