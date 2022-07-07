@@ -22,7 +22,7 @@
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "src/runtime/delegate/coreml/pass/coreml_base_pass.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLFormatTransPass : public CoreMLBasePass {
  public:
   CoreMLFormatTransPass() { name_ = "CoreMLFormatTransPass"; }
@@ -39,5 +39,5 @@ class CoreMLFormatTransPass : public CoreMLBasePass {
   std::vector<CoreMLOp *> *all_ops_ = nullptr;
   std::vector<mindspore::MSTensor *> *all_tensors_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_FORMAT_TRANS_PASS_H_

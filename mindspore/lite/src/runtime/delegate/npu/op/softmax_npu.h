@@ -21,7 +21,7 @@
 #include "include/graph/op/nn_defs.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class SoftmaxNPUOp : public NPUOp {
  public:
   SoftmaxNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -50,5 +50,5 @@ class SoftmaxNPUOp : public NPUOp {
   hiai::op::Softmax *softmax_ = nullptr;
   int32_t axis_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SOFTMAX_NPU_H_

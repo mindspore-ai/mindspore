@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class SoftmaxCoreMLOp : public CoreMLOp {
  public:
   SoftmaxCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -36,5 +36,5 @@ class SoftmaxCoreMLOp : public CoreMLOp {
   const schema::Softmax *softmax_prim_;
   int axis_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_SOFTMAX_COREML_H_

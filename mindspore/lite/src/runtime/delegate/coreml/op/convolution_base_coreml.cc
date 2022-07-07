@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/coreml/op/convolution_base_coreml.h"
 #include "src/runtime/delegate/delegate_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ConvolutionBaseCoreMLOp::SetConvWeight() {
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   auto weight_shape = weight_tensor.Shape();
@@ -32,8 +32,8 @@ int ConvolutionBaseCoreMLOp::SetConvWeight() {
     auto *ml_weight_container = conv_param_->mutable_weights()->mutable_floatvalue();
     ml_weight_container->Resize(weight_tensor.ElementNum(), 0);
     auto *ml_weight = reinterpret_cast<void *>(ml_weight_container->mutable_data());
-    lite::PackNHWCToNCHWFp32(org_weight, ml_weight, weight_shape[MS_WT_COUT],
-                             weight_shape[MS_WT_H] * weight_shape[MS_WT_W], weight_shape[MS_WT_CIN]);
+    PackNHWCToNCHWFp32(org_weight, ml_weight, weight_shape[MS_WT_COUT], weight_shape[MS_WT_H] * weight_shape[MS_WT_W],
+                       weight_shape[MS_WT_CIN]);
   } else {
     MS_LOG(ERROR) << "Unsupported data type of weight tensor for CoreML convolution.";
     return RET_ERROR;
@@ -86,4 +86,4 @@ int ConvolutionBaseCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

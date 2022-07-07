@@ -19,7 +19,7 @@
 #include "src/runtime/kernel_registry.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int EltwiseNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                        const std::vector<mindspore::MSTensor> &out_tensors) {
   eltwise_ = new (std::nothrow) hiai::op::Eltwise(name_);
@@ -64,4 +64,4 @@ EltwiseNPUOp::~EltwiseNPUOp() {
     eltwise_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

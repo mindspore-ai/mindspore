@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/reshape_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ReshapeCoreMLOp::IsSupport() {
   MS_CHECK_GE(in_tensors_.size(), kInputSize1, RET_NOT_SUPPORT);
   return RET_OK;
@@ -45,4 +45,4 @@ void ReshapeCoreMLOp::SetMLOpInOut() {
   }
   op_->add_output(out_tensors_[0].Name());
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

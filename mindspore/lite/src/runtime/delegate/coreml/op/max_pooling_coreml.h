@@ -21,7 +21,7 @@
 #include <utility>
 #include <unordered_map>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class MaxPoolingCoreMLOp : public CoreMLOp {
  public:
   MaxPoolingCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -35,5 +35,5 @@ class MaxPoolingCoreMLOp : public CoreMLOp {
  private:
   const schema::MaxPoolFusion *pooling_prim_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_MAX_POOLING_COREML_H_

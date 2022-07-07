@@ -21,7 +21,7 @@
 #include <utility>
 #include <unordered_map>
 #include "src/runtime/delegate/coreml/op/convolution_base_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 class DeconvolutionCoreMLOp : public ConvolutionBaseCoreMLOp {
  public:
   DeconvolutionCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -38,5 +38,5 @@ class DeconvolutionCoreMLOp : public ConvolutionBaseCoreMLOp {
  private:
   const schema::Conv2dTransposeFusion *deconv_prim_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_DECONVOLUTION_COREML_H_

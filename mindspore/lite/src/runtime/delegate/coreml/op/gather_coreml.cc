@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/gather_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int GatherCoreMLOp::IsSupport() {
   MS_CHECK_GE(in_tensors_.size(), kInputSize2, RET_NOT_SUPPORT);
   return RET_OK;
@@ -48,4 +48,4 @@ void GatherCoreMLOp::SetMLOpInOut() {
   op_->add_input(indices_tensor.Name());
   op_->add_output(out_tensors_[0].Name());
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/unsqueeze_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int UnsqueezeCoreMLOp::InitParams() {
   unsqueeze_prim_ = op_primitive_->value_as_Unsqueeze();
   if (unsqueeze_prim_ == nullptr) {
@@ -35,4 +35,4 @@ int UnsqueezeCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

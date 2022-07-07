@@ -19,7 +19,7 @@
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 #include "src/runtime/delegate/npu/npu_manager.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int FlattenNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (out_tensors.at(0).Shape().size() != C2NUM) {
@@ -94,4 +94,4 @@ FlattenNPUOp::~FlattenNPUOp() {
     shape_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

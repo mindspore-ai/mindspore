@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/avg_pooling_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int AvgPoolingCoreMLOp::InitParams() {
   pooling_prim_ = op_primitive_->value_as_AvgPoolFusion();
   if (pooling_prim_ == nullptr) {
@@ -69,4 +69,4 @@ int AvgPoolingCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

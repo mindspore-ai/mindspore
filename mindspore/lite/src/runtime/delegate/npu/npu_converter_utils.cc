@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 #define C4NUM 4
 #define C8NUM 8
 #ifdef ENABLE_ARM
@@ -254,4 +254,4 @@ int ConverterToNPUActivationMode(schema::ActivationType type) {
       return ACTIVATION_INVALID;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

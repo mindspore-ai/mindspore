@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int INPUT_INDEX = 0;
 constexpr int SCALE_INDEX = 1;
 constexpr int BIAS_INDEX = 2;
@@ -289,4 +289,4 @@ ScaleNPUOp::~ScaleNPUOp() {
     }
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

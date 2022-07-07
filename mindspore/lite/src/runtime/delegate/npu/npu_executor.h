@@ -25,7 +25,7 @@
 #include "src/runtime/delegate/npu/npu_manager.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUExecutor {
  public:
   explicit NPUExecutor(const std::string &model_name, NPUManager *npu_manager = nullptr)
@@ -53,5 +53,5 @@ class NPUExecutor {
   std::vector<std::shared_ptr<hiai::AiTensor>> npu_output_tensors_;
   std::vector<size_t> input_relationship_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_EXECUTOR_H_

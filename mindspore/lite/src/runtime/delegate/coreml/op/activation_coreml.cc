@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/activation_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ActivationCoreMLOp::IsSupport() {
   auto act_prim = op_primitive_->value_as_Activation();
   if (act_prim == nullptr) {
@@ -57,4 +57,4 @@ int ActivationCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

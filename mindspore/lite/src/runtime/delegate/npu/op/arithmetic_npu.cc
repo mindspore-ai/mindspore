@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/op/arithmetic_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int ARITHMETIC_INPUT_NUM = 2;
 constexpr int MAX_HW_SIZE = 1664;
 int ArithmeticNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -250,4 +250,4 @@ ArithmeticNPUOp::~ArithmeticNPUOp() {
     act_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

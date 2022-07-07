@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CropAndResizeNPUOp : public NPUOp {
  public:
   CropAndResizeNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -45,5 +45,5 @@ class CropAndResizeNPUOp : public NPUOp {
  private:
   hiai::op::CropAndResize *crop_and_resize_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CROP_AND_RESIZE_NPU_H_

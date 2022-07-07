@@ -18,7 +18,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int ExpandDimsNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                           const std::vector<mindspore::MSTensor> &out_tensors) {
   expand_dims_ = new (std::nothrow) hiai::op::ExpandDims(name_);
@@ -45,4 +45,4 @@ ExpandDimsNPUOp::~ExpandDimsNPUOp() {
     expand_dims_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

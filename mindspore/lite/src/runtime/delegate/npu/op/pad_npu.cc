@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int PAD_PAIR_SIZE = 2;
 constexpr int PAD_SIZE = 8;
 constexpr int PAD_INPUT_SIZE = 2;
@@ -148,4 +148,4 @@ PadNPUOp::~PadNPUOp() {
     constant_value_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

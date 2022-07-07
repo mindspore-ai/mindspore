@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class MatMulNPUOp : public NPUOp {
  public:
   MatMulNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -55,5 +55,5 @@ class MatMulNPUOp : public NPUOp {
   hiai::op::Activation *act_op_ = nullptr;
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_MATMUL_NPU_H_

@@ -23,7 +23,7 @@
 #include "src/runtime/delegate/npu/op/npu_op.h"
 #include "src/runtime/delegate/npu/op/transpose_npu.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUPassUtils {
  public:
   static NPUOp *CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
@@ -53,5 +53,5 @@ class NPUPassUtils {
   static std::vector<mindspore::MSTensor> GetNonConstInputs(NPUOp *op);
   static bool Scale4dCase(NPUOp *op);
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_PASS_UTILS_H_

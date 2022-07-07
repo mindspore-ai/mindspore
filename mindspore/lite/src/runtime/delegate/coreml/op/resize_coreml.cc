@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/resize_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ResizeCoreMLOp::IsSupport() {
   resize_prim_ = op_primitive_->value_as_Resize();
   if (resize_prim_ == nullptr) {
@@ -80,4 +80,4 @@ int ResizeCoreMLOp::BuildLayer() {
   resize_param->mutable_mode()->set_samplingmethod(CoreML::Specification::SamplingMode::STRICT_ALIGN_ENDPOINTS_MODE);
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

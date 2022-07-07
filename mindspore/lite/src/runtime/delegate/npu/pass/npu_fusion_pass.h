@@ -20,7 +20,7 @@
 #include "src/runtime/delegate/npu/op/npu_op.h"
 #include "src/runtime/delegate/npu/pass/npu_base_pass.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUFusionPass : public NPUBasePass {
  public:
   NPUFusionPass() { name_ = "NPUFusionPass"; }
@@ -38,5 +38,5 @@ class NPUFusionPass : public NPUBasePass {
  private:
   std::vector<NPUOp *> *all_ops_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_FUSION_PASS_H_

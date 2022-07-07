@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/arithmetic_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ArithmeticCoreMLOp::IsSupport() {
   MS_CHECK_TRUE_MSG(in_tensors_.size() == kInputSize1, RET_NOT_SUPPORT, "Arithmetic op only support two inputs.");
   auto input_a = in_tensors_.at(0);
@@ -101,4 +101,4 @@ void ArithmeticCoreMLOp::SetMLOpInOut() {
   }
   op_->add_output(out_tensors_[0].Name());
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/op/convolution_int8_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ConvolutionInt8NPUOp::IsSupport(const schema::Primitive *primitive,
                                     const std::vector<mindspore::MSTensor> &in_tensors,
                                     const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -141,4 +141,4 @@ ConvolutionInt8NPUOp::~ConvolutionInt8NPUOp() {
     conv_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

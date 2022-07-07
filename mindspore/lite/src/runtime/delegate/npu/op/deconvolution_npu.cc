@@ -19,7 +19,7 @@
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int DeconvolutionNPUOp::IsSupport(const schema::Primitive *primitive,
                                   const std::vector<mindspore::MSTensor> &in_tensors,
                                   const std::vector<mindspore::MSTensor> &out_tensors) {
@@ -166,4 +166,4 @@ DeconvolutionNPUOp::~DeconvolutionNPUOp() {
     out_shape_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

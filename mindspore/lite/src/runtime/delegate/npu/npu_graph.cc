@@ -20,7 +20,7 @@
 #include "src/runtime/delegate/delegate_utils.h"
 #include "src/runtime/delegate/npu/op/transpose_npu.h"
 #include "src/runtime/delegate/npu/transpose_kernel.h"
-namespace mindspore {
+namespace mindspore::lite {
 NPUGraph::~NPUGraph() {
   for (auto *kernel : all_kernels_) {
     delete kernel;
@@ -259,10 +259,10 @@ kernel::Kernel *NPUGraph::CreateNPUSubgraphKernel(std::vector<NPUOp *> npu_ops) 
     return nullptr;
   }
   std::vector<size_t> input_index;
-  subgraph->set_inputs(lite::GetGraphInTensors(npu_ops, &input_index));
+  subgraph->set_inputs(GetGraphInTensors(npu_ops, &input_index));
   subgraph->UpdateInputMappingRelationShip(input_index);
   // The output of NPUGraph should be assigned to the corresponding NPUSubgraph
-  auto subgraph_outputs = lite::GetGraphOutTensors(npu_ops);
+  auto subgraph_outputs = GetGraphOutTensors(npu_ops);
   for (auto graph_output : this->outputs()) {
     for (auto subgraph_op : npu_ops) {
       auto subgraph_op_outputs = subgraph_op->outputs();
@@ -336,4 +336,4 @@ int NPUGraph::Execute() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

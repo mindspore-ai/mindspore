@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class GatherNPUOp : public NPUOp {
  public:
   GatherNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class GatherNPUOp : public NPUOp {
   hiai::op::GatherV2D *gather_ = nullptr;
   int axis_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_GATHER_NPU_H_

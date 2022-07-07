@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/gather_npu.h"
 #include "src/runtime/delegate/npu/npu_manager.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int AXIS_INDEX = 2;
 constexpr int GATHER_INPUT_SIZE = 3;
 
@@ -70,4 +70,4 @@ GatherNPUOp::~GatherNPUOp() {
     gather_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

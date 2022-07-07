@@ -444,13 +444,29 @@ if(APPLE)
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/type_id.h
             ${CMAKE_CURRENT_SOURCE_DIR}/../../core/mindapi/base/types.h
             )
-    add_library(mindspore-lite_static STATIC
-            ${LITE_SRC}
-            ${MINDSPORE_LITE_PUB_HDRS}
-            ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
-            ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
-            )
-    if(MSLITE_ENABLE_COREML)
+
+    if(NOT MSLITE_ENABLE_COREML)
+        add_library(mindspore-lite_static STATIC
+                ${LITE_SRC}
+                ${MINDSPORE_LITE_PUB_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
+                )
+    else()
+        file(GLOB MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS
+                ${CMAKE_BINARY_DIR}/schema/model_generated.h
+                ${CMAKE_BINARY_DIR}/schema/ops_generated.h
+                ${CMAKE_BINARY_DIR}/schema/ops_types_generated.h
+                )
+        file(GLOB_RECURSE MINDSPORE_LITE_PUB_HDRS_FBS_HDRS LIST_DIRECTORIES true ${flatbuffers_INC}/flatbuffers/*)
+        add_library(mindspore-lite_static STATIC
+                ${LITE_SRC}
+                ${MINDSPORE_LITE_PUB_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_IR_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS}
+                ${MINDSPORE_LITE_PUB_HDRS_FBS_HDRS}
+                )
         add_subdirectory(runtime/delegate/coreml)
         target_link_libraries(mindspore-lite_static coreml_proto_mid coreml_kernel_mid)
     endif()
@@ -626,7 +642,7 @@ if(DEFINED ARCHS)
             OUTPUT_NAME "mindspore-lite"
             FRAMEWORK_VERSION C
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
-            XCODE_ATTRIBUTE_INSTALL_PAYH "@rpath"
+            XCODE_ATTRIBUTE_INSTALL_PATH "@rpath"
             )
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS})
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/api/)
@@ -637,6 +653,15 @@ if(DEFINED ARCHS)
     FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_MINDAPI_HDRS})
         SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/mindapi/base/)
     ENDFOREACH()
+    if(MSLITE_ENABLE_COREML)
+        FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_SCHEMA_HDRS})
+            SET_SOURCE_FILES_PROPERTIES(${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/schema/)
+        ENDFOREACH()
+        FOREACH(HDR ${MINDSPORE_LITE_PUB_HDRS_FBS_HDRS})
+            SET_SOURCE_FILES_PROPERTIES(
+                    ${HDR} PROPERTIES MACOSX_PACKAGE_LOCATION Headers/include/third_party/flatbuffers/)
+        ENDFOREACH()
+    endif()
     target_link_libraries(mindspore-lite_static)
 endif()
 

@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/op/matmul_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int BIAS_INDEX = 2;
 constexpr int MATMUL_COMMON_DIM = 2;
 constexpr int MATMUL_INPUT_SIZE = 3;
@@ -182,4 +182,4 @@ MatMulNPUOp::~MatMulNPUOp() {
     act_op_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

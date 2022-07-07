@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/op/activation_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ActivationNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   auto act_prim = primitive->value_as_Activation();
@@ -111,4 +111,4 @@ ActivationNPUOp::~ActivationNPUOp() {
     mul_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

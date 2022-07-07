@@ -19,7 +19,7 @@
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 #include "src/runtime/delegate/npu/npu_manager.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int ResizeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                            const std::vector<mindspore::MSTensor> &out_tensors) {
   auto resize_prim = primitive->value_as_Resize();
@@ -155,4 +155,4 @@ ResizeNPUOp::~ResizeNPUOp() {
     out_size_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

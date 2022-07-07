@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/transpose_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int TransposeCoreMLOp::IsSupport() {
   MS_CHECK_GE(in_tensors_.size(), kInputSize1, RET_NOT_SUPPORT);
   auto perm_tensor = in_tensors_.at(1);
@@ -34,4 +34,4 @@ int TransposeCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

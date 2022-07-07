@@ -20,7 +20,7 @@
 #include <string>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class TransposeNPUOp : public NPUOp {
  public:
   TransposeNPUOp(const std::vector<mindspore::MSTensor> &in_tensors,
@@ -49,5 +49,5 @@ class TransposeNPUOp : public NPUOp {
  protected:
   std::vector<int> perm_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_TRANSPOSE_NPU_H_

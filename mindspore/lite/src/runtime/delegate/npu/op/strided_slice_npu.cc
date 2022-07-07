@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/strided_slice_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int StridedSliceNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                  const std::vector<mindspore::MSTensor> &out_tensors) {
   // Only onnx StridedSlice has 5 in_tensors, of which the 4th input is axes and the 5th input is strides.
@@ -152,4 +152,4 @@ StridedSliceNPUOp::~StridedSliceNPUOp() {
     out_cast_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/concat_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int ConcatNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
   concat_ = new (std::nothrow) hiai::op::ConcatD(name_);
@@ -72,4 +72,4 @@ ConcatNPUOp::~ConcatNPUOp() {
     concat_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

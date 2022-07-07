@@ -26,7 +26,7 @@
 #include "include/hiai_ir_build.h"
 #include "src/common/utils.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 static std::set<mindspore::schema::PrimitiveType> npu_specific_weight_nodes = {
   schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_PadFusion,
   schema::PrimitiveType_BatchNorm,    schema::PrimitiveType_FullConnection,        schema::PrimitiveType_InstanceNorm,
@@ -287,4 +287,4 @@ int NPUSubGraph::Prepare() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

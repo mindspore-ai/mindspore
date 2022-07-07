@@ -30,7 +30,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 
 struct SubGraphModel {
  public:
@@ -92,5 +92,5 @@ class NPUManager {
   int frequency_ = 0;
 };
 
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_MANAGER_H_

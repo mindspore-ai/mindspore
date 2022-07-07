@@ -44,7 +44,8 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
 namespace mindspore {
-CoreMLDelegate::~CoreMLDelegate() {
+namespace lite {
+CoreMLDelegateImpl::~CoreMLDelegateImpl() {
   if (pass_manager_ != nullptr) {
     pass_manager_->Clear();
     delete pass_manager_;
@@ -52,14 +53,14 @@ CoreMLDelegate::~CoreMLDelegate() {
   }
 }
 
-bool CoreMLDelegate::IsSupportCoreML() {
+bool CoreMLDelegateImpl::IsSupportCoreML() const {
   if (@available(iOS 11, *)) {
     return true;
   }
   return false;
 }
 
-Status CoreMLDelegate::AddPasses() {
+Status CoreMLDelegateImpl::AddPasses() {
   auto format_trans_pass = new (std::nothrow) CoreMLFormatTransPass();
   if (format_trans_pass == nullptr) {
     MS_LOG(ERROR) << "New CoreMLFormatTransPass failed.";
@@ -83,8 +84,9 @@ Status CoreMLDelegate::AddPasses() {
   return mindspore::kSuccess;
 }
 
-Status CoreMLDelegate::Init() {
+Status CoreMLDelegateImpl::Init() {
   if (!IsSupportCoreML()) {
+    MS_LOG(WARNING) << "Current device not support CoreML.";
     return mindspore::kLiteNotSupport;
   }
   pass_manager_ = new (std::nothrow) CoreMLPassManager();
@@ -120,7 +122,7 @@ Status CoreMLDelegate::Init() {
   return mindspore::kSuccess;
 }
 
-Status CoreMLDelegate::Build(DelegateModel<schema::Primitive> *model) {
+Status CoreMLDelegateImpl::Build(DelegateModel<schema::Primitive> *model) {
   KernelIter from, end;
   std::vector<CoreMLOp *> coreml_ops;
   for (KernelIter iter = model->BeginKernelIterator(); iter != model->EndKernelIterator(); iter++) {
@@ -158,7 +160,7 @@ Status CoreMLDelegate::Build(DelegateModel<schema::Primitive> *model) {
   return mindspore::kSuccess;
 }
 
-CoreMLOp *CoreMLDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive) {
+CoreMLOp *CoreMLDelegateImpl::GetOP(kernel::Kernel *kernel, const schema::Primitive *primitive) {
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "primitive is NULL!";
     return nullptr;
@@ -192,16 +194,16 @@ CoreMLOp *CoreMLDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive 
 
   if (coreml_op != nullptr) {
     MS_LOG(DEBUG) << "kernel: [" << kernel->name().c_str() << "] op success. "
-                  << "op_type: " << lite::PrimitiveCurVersionTypeName(kernel->type());
+                  << "op_type: " << PrimitiveCurVersionTypeName(kernel->type());
   }
   return coreml_op;
 }
 
-kernel::Kernel *CoreMLDelegate::CreateCoreMLGraph(const std::vector<CoreMLOp *> &ops,
-                                                  DelegateModel<schema::Primitive> *model, KernelIter from,
-                                                  KernelIter end) {
-  auto in_tensors = lite::GetGraphInTensors(ops, nullptr);
-  auto out_tensors = lite::GraphOutTensors<CoreMLOp>(ops, model, from, end);
+kernel::Kernel *CoreMLDelegateImpl::CreateCoreMLGraph(const std::vector<CoreMLOp *> &ops,
+                                                      DelegateModel<schema::Primitive> *model, KernelIter from,
+                                                      KernelIter end) {
+  auto in_tensors = GetGraphInTensors(ops, nullptr);
+  auto out_tensors = GraphOutTensors<CoreMLOp>(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) CoreMLGraph(ops, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {
     MS_LOG(ERROR) << "New CoreML Graph failed.";
@@ -210,7 +212,7 @@ kernel::Kernel *CoreMLDelegate::CreateCoreMLGraph(const std::vector<CoreMLOp *> 
   graph_kernel->set_name("CoreMLGraph" + std::to_string(graph_index_++));
 
   // 1. For every op, find pre and next ops
-  lite::FindPreNextOps<CoreMLOp>(ops);
+  FindPreNextOps<CoreMLOp>(ops);
 
   // 2. Run pass
   auto ret = pass_manager_->RunPass(graph_kernel);
@@ -229,5 +231,30 @@ kernel::Kernel *CoreMLDelegate::CreateCoreMLGraph(const std::vector<CoreMLOp *> 
     return nullptr;
   }
   return graph_kernel;
+}
+}  // namespace lite
+
+// the definition of open CoreMLDelegate class
+CoreMLDelegate::CoreMLDelegate() : impl_(nullptr) {}
+
+Status CoreMLDelegate::Init() {
+  if (impl_ == nullptr) {
+    impl_ = std::make_shared<lite::CoreMLDelegateImpl>();
+    if (impl_ == nullptr) {
+      MS_LOG(ERROR) << "new CoreMLDelegate inner implementation failed.";
+      return kLiteError;
+    }
+  }
+  Status ret = impl_->Init();
+  return ret;
+}
+
+Status CoreMLDelegate::Build(DelegateModel<schema::Primitive> *model) {
+  if (impl_ == nullptr) {
+    MS_LOG(ERROR) << "CoreMLDelegate implementation is null.";
+    return kLiteNullptr;
+  }
+  Status ret = impl_->Build(model);
+  return ret;
 }
 }  // namespace mindspore

@@ -19,7 +19,7 @@
 #include <string>
 #include "src/runtime/delegate/npu/npu_graph.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUBasePass {
  public:
   virtual int Run(NPUGraph *subgraph) = 0;
@@ -32,6 +32,6 @@ class NPUBasePass {
   std::string name_;
   NPUGraph *subgraph_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_BASE_PASS_H_

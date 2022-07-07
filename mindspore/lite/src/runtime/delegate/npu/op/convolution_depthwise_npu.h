@@ -20,7 +20,7 @@
 #include <string>
 #include "include/graph/compatible/all_ops.h"
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ConvolutionDepthwiseNPUOp : public ConvolutionBaseNPUOp {
  public:
   ConvolutionDepthwiseNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class ConvolutionDepthwiseNPUOp : public ConvolutionBaseNPUOp {
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
   hiai::op::ConvolutionDepthwise *conv_dw_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_DEPTHWISE_NPU_H_

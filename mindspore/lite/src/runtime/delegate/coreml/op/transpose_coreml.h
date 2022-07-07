@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class TransposeCoreMLOp : public CoreMLOp {
  public:
   TransposeCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -50,5 +50,5 @@ class TransposeCoreMLOp : public CoreMLOp {
  protected:
   std::vector<int> perm_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_TRANSPOSE_COREML_H_

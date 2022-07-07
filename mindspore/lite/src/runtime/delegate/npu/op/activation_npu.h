@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "include/graph/compatible/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ActivationNPUOp : public NPUOp {
  public:
   ActivationNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -48,5 +48,5 @@ class ActivationNPUOp : public NPUOp {
   hiai::op::Activation *act_ = nullptr;
   hiai::op::Mul *mul_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ACTIVATION_NPU_H_

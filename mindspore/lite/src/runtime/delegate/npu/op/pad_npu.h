@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class PadNPUOp : public NPUOp {
  public:
   PadNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -50,5 +50,5 @@ class PadNPUOp : public NPUOp {
   hiai::op::Const *constant_value_ = nullptr;
   std::vector<int> paddings_vec_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_PAD_NPU_H_

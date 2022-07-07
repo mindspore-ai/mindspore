@@ -44,7 +44,8 @@ int LayerNormCPUKernel::ReSize() {
     param_->begin_norm_axis_ >= 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
   param_->begin_params_axis_ =
     param_->begin_params_axis_ >= 0 ? param_->begin_params_axis_ : param_->begin_params_axis_ + shape.size();
-
+  MS_CHECK_LT(param_->begin_norm_axis_, static_cast<int>(shape.size()), RET_ERROR);
+  MS_CHECK_LT(param_->begin_params_axis_, static_cast<int>(shape.size()), RET_ERROR);
   param_->norm_outer_size_ = 1;
   for (int i = 0; i < param_->begin_norm_axis_; ++i) {
     param_->norm_outer_size_ *= shape.at(i);

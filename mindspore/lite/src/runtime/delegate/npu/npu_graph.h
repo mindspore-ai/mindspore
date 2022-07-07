@@ -25,7 +25,7 @@
 #include "src/runtime/delegate/npu/op/npu_op.h"
 #include "src/runtime/delegate/npu/npu_executor.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUGraph : public kernel::Kernel {
  public:
   NPUGraph(std::vector<NPUOp *> npu_ops, NPUManager *npu_manager, const std::vector<mindspore::MSTensor> &inputs,
@@ -42,7 +42,7 @@ class NPUGraph : public kernel::Kernel {
 
   int ReSize() override {
     MS_LOG(ERROR) << "NPU does not support the resize function temporarily.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
 
   void set_input(mindspore::MSTensor in_tensor, int index) override;
@@ -82,6 +82,6 @@ class NPUGraph : public kernel::Kernel {
   NPUManager *npu_manager_ = nullptr;
 };
 
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_GRAPH_H_

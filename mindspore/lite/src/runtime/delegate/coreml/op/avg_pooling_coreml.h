@@ -21,7 +21,7 @@
 #include <utility>
 #include <unordered_map>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class AvgPoolingCoreMLOp : public CoreMLOp {
  public:
   AvgPoolingCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -35,5 +35,5 @@ class AvgPoolingCoreMLOp : public CoreMLOp {
  private:
   const schema::AvgPoolFusion *pooling_prim_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_AVG_POOLING_COREML_H_

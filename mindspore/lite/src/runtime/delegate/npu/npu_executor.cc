@@ -21,7 +21,7 @@
 #include "src/runtime/delegate/npu/npu_manager.h"
 #include "src/common/log_adapter.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 NPUExecutor::~NPUExecutor() {
   client_.reset();
   for (auto t : npu_input_tensors_) {
@@ -199,4 +199,4 @@ int NPUExecutor::UpdateOutputTensorVec(const std::vector<hiai::TensorDimension> 
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

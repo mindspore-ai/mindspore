@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "nnacl/base/cast_base.h"
-namespace mindspore {
+namespace mindspore::lite {
 int CoreMLOp::Init() {
   auto ret = InitParams();
   if (ret != RET_OK) {
@@ -152,4 +152,4 @@ std::vector<CoreML::Specification::NeuralNetworkLayer *> CoreMLOp::GetLayers() {
   }
   return ret_ops;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

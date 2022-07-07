@@ -16,8 +16,7 @@
 
 #include "src/runtime/delegate/delegate_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel) {
   int hw8 = plane / C8NUM * C8NUM;
   int batch = plane * channel;
@@ -59,5 +58,4 @@ void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int ch
 bool IsSubGraphInputTensor(const std::vector<mindspore::MSTensor> &inputs, mindspore::MSTensor input) {
   return std::find(inputs.begin(), inputs.end(), input) != inputs.end();
 }
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

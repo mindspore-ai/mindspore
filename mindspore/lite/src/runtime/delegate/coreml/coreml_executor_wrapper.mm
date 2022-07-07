@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/coreml/coreml_executor_wrapper.h"
 #import "src/runtime/delegate/coreml/coreml_executor.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 CoreMLExecutorWrapper::CoreMLExecutorWrapper() {
   if (coreml_executor_ == nullptr) {
     //cast object-c ptr to c ptr, and transfer its ownership to a c object to avoid auto release
@@ -40,20 +40,20 @@ int CoreMLExecutorWrapper::CompileMLModel(const std::string &modelPath) {
   if (error) {
     NSLog(@"Compile MLModel to MLModelC Error: %@", error);
     (void)CleanTmpFile();
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   mlmodelc_path_ = [[MLModelCURL path] UTF8String];
   bool success = [(__bridge id)coreml_executor_ loadModelC:MLModelCURL];
   if (!success) {
     NSLog(@"Load MLModelC failed!");
     (void)CleanTmpFile();
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   auto ret = CleanTmpFile();
-  if (ret != lite::RET_OK) {
+  if (ret != RET_OK) {
     NSLog(@"Clean temp model file failed!");
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
 
 int CoreMLExecutorWrapper::Run(const std::vector<mindspore::MSTensor> &in_tensors,
@@ -61,10 +61,10 @@ int CoreMLExecutorWrapper::Run(const std::vector<mindspore::MSTensor> &in_tensor
   auto success = [(__bridge id)coreml_executor_ ExecuteWithInputs:in_tensors outputs:out_tensors];
   if (!success) {
     NSLog(@"coreML model execute failed!");
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
   NSLog(@"coreML model execute success!");
-  return lite::RET_OK;
+  return RET_OK;
 }
 
 int CoreMLExecutorWrapper::CleanTmpFile() {
@@ -77,7 +77,7 @@ int CoreMLExecutorWrapper::CleanTmpFile() {
     [fileManager removeItemAtPath:mlModelPath error:&error];
     if (error != nil) {
       NSLog(@"Failed cleaning up model: %@", [error localizedDescription]);
-      return lite::RET_ERROR;
+      return RET_ERROR;
     }
   }
   isDir = NO;
@@ -85,9 +85,9 @@ int CoreMLExecutorWrapper::CleanTmpFile() {
     [fileManager removeItemAtPath:mlModelCPath error:&error];
     if (error != nil) {
       NSLog(@"Failed cleaning up compiled model: %@", [error localizedDescription]);
-      return lite::RET_ERROR;
+      return RET_ERROR;
     }
   }
-  return lite::RET_OK;
+  return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

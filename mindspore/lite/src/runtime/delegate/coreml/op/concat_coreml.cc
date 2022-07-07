@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/concat_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ConcatCoreMLOp::IsSupport() {
   MS_CHECK_GE(in_tensors_.size(), kInputSize1, RET_NOT_SUPPORT);
   if (std::any_of(in_tensors_.begin(), in_tensors_.end(), [](mindspore::MSTensor &tensor) {
@@ -69,4 +69,4 @@ void ConcatCoreMLOp::SetMLOpInOut() {
   }
   op_->add_output(out_tensors_[0].Name());
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

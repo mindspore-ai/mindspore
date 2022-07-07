@@ -20,7 +20,7 @@
 #include <string>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 class AvgPoolingNPUOp : public ConvolutionBaseNPUOp {
  public:
   AvgPoolingNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class AvgPoolingNPUOp : public ConvolutionBaseNPUOp {
   schema::ActivationType act_type_ = schema::ActivationType_NO_ACTIVATION;
   hiai::op::PoolingD *pooling_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_AVG_POOLING_NPU_H_

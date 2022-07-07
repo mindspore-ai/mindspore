@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/npu/op/transpose_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 int TransposeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() < 2) {
@@ -39,4 +39,4 @@ int TransposeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vec
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

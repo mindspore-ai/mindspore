@@ -21,7 +21,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 bool CheckFusion(CoreMLOp *cur_op, const std::vector<mindspore::MSTensor> &graph_outputs) {
   if (cur_op->in_ops().empty() || cur_op->out_ops().empty()) {
     return false;
@@ -381,4 +381,4 @@ int CoreMLFusionPass::Run(CoreMLGraph *subgraph) {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

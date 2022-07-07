@@ -18,7 +18,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/kernel_registry.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int AbsNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                    const std::vector<mindspore::MSTensor> &out_tensors) {
   // NPU ddk does not support Abs op in fact. Square and Sqrt are utilized to realize it.
@@ -55,4 +55,4 @@ AbsNPUOp::~AbsNPUOp() {
     sqrt_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/reshape_npu.h"
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ReshapeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                             const std::vector<mindspore::MSTensor> &out_tensors) {
   if (in_tensors.size() != kInputSize1) {
@@ -72,4 +72,4 @@ ReshapeNPUOp::~ReshapeNPUOp() {
     reshape_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

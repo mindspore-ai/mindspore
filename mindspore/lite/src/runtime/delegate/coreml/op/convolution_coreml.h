@@ -21,7 +21,7 @@
 #include <utility>
 #include <unordered_map>
 #include "src/runtime/delegate/coreml/op/convolution_base_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ConvolutionCoreMLOp : public ConvolutionBaseCoreMLOp {
  public:
   ConvolutionCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -42,5 +42,5 @@ class ConvolutionCoreMLOp : public ConvolutionBaseCoreMLOp {
   int dilation_w_;
   const schema::Conv2DFusion *conv_prim_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_CONVOLUTION_COREML_H_

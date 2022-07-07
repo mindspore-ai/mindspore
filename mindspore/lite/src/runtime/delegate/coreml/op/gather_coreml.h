@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class GatherCoreMLOp : public CoreMLOp {
  public:
   GatherCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -32,5 +32,5 @@ class GatherCoreMLOp : public CoreMLOp {
 
   void SetMLOpInOut() override;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_GATHER_COREML_H_

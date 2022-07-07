@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int TileNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                          const std::vector<mindspore::MSTensor> &out_tensors) {
   MS_CHECK_GE(in_tensors.size(), kInputSize1, RET_NOT_SUPPORT);
@@ -79,4 +79,4 @@ TileNPUOp::~TileNPUOp() {
     multiple_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

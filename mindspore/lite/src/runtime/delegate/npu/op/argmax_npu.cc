@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/argmax_npu.h"
 #include <memory>
 
-namespace mindspore {
+namespace mindspore::lite {
 int ArgmaxNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                       const std::vector<mindspore::MSTensor> &out_tensors) {
   argmax_ = new (std::nothrow) hiai::op::ArgMaxExt2(name_);
@@ -72,4 +72,4 @@ ArgmaxNPUOp::~ArgmaxNPUOp() {
     axis_const_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

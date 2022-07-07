@@ -20,7 +20,7 @@
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "src/runtime/delegate/coreml/pass/coreml_base_pass.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLFusionPass : public CoreMLBasePass {
  public:
   CoreMLFusionPass() { name_ = "CoreMLFusionPass"; }
@@ -38,5 +38,5 @@ class CoreMLFusionPass : public CoreMLBasePass {
  private:
   std::vector<CoreMLOp *> *all_ops_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_FUSION_PASS_H_

@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class ExpandDimsNPUOp : public NPUOp {
  public:
   ExpandDimsNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class ExpandDimsNPUOp : public NPUOp {
  private:
   hiai::op::ExpandDims *expand_dims_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_EXPAND_DIMS_NPU_H_

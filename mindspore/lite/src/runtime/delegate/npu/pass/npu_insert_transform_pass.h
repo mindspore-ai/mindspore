@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/runtime/delegate/npu/op/npu_op.h"
 #include "src/runtime/delegate/npu/pass/npu_base_pass.h"
-namespace mindspore {
+namespace mindspore::lite {
 enum class InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 class NPUInsertTransformPass : public NPUBasePass {
  public:
@@ -39,5 +39,5 @@ class NPUInsertTransformPass : public NPUBasePass {
   std::vector<NPUOp *> *all_ops_ = nullptr;
   std::vector<mindspore::MSTensor *> *all_tensors_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_INSERT_TRANSFORM_PASS_H_

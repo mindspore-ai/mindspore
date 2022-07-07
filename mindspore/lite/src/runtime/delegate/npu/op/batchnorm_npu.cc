@@ -18,7 +18,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int SCALE_INDEX = 1;
 constexpr int OFFSET_INDEX = 2;
 constexpr int MEAN_INDEX = 3;
@@ -108,4 +108,4 @@ BatchnormNPUOp::~BatchnormNPUOp() {
     variance_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

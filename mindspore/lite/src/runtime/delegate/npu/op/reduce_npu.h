@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class ReduceNPUOp : public NPUOp {
  public:
   ReduceNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -48,5 +48,5 @@ class ReduceNPUOp : public NPUOp {
   schema::ReduceMode reduce_mode_ = schema::ReduceMode_ReduceMean;
   hiai::Operator *reduce_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_REDUCE_NPU_H_

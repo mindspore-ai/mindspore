@@ -52,9 +52,6 @@
 #if GPU_TENSORRT
 #include "src/extendrt/delegate/tensorrt/tensorrt_delegate.h"
 #endif
-#ifdef ENABLE_COREML
-#include "src/runtime/delegate/coreml/coreml_delegate.h"
-#endif
 #include "src/runtime/runtime_convert.h"
 #include "extendrt/mindir_loader/model_loader.h"
 
@@ -823,38 +820,21 @@ int LiteSession::CreateNPUDelegate() {
   return RET_OK;
 }
 
-int LiteSession::CreateCoreMLDelegate() {
-#ifdef ENABLE_COREML
-  delegate_ = std::make_shared<CoreMLDelegate>();
-  if (delegate_ == nullptr) {
-    MS_LOG(ERROR) << "New delegate_ failed";
-    return RET_ERROR;
-  }
-  delegate_device_type_ = DT_CPU;
-  this->context_->delegate = delegate_;
-#endif
-  return RET_OK;
-}
-
 int LiteSession::DelegateInit() {
 #ifndef DELEGATE_CLIP
   if (context_->delegate != nullptr) {
     delegate_ = context_->delegate;
     delegate_device_type_ = -1;
   } else {
-    auto ret = CreateCoreMLDelegate();
-    if (ret != RET_OK) {
-      return ret;
-    }
     if (context_->IsDeviceTypeEnabled(DT_NPU)) {
-      ret = CreateNPUDelegate();
+      auto ret = CreateNPUDelegate();
       if (ret != RET_OK) {
         return ret;
       }
     }
 
     if (context_->IsDeviceTypeEnabled(DT_GPU)) {
-      ret = CreateTensorRTDelegate();
+      auto ret = CreateTensorRTDelegate();
       if (ret != RET_OK) {
         return ret;
       }

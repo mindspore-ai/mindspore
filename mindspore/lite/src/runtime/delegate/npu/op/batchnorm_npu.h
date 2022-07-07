@@ -22,7 +22,7 @@
 #include "include/graph/compatible/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class BatchnormNPUOp : public NPUOp {
  public:
   BatchnormNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -52,5 +52,5 @@ class BatchnormNPUOp : public NPUOp {
   hiai::op::Const *mean_ = nullptr;
   hiai::op::Const *variance_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_BATCHNORM_NPU_H_

@@ -117,17 +117,40 @@ class MS_API Delegate {
 
   /// \brief Init delegate.
   ///
-  /// \note Init willed be called in Model::Build.
+  /// \note Init will be called in Model::Build.
   ///
   /// \return Status. If Status is kLiteNotSupport, the program will return to the MindSpore Lite inner inference.
   virtual Status Init() = 0;
 
   /// \brief Build delegate graph for MindSpore Lite model.
   ///
-  /// \note Build willed be called in Model::Build.
+  /// \note Build will be called in Model::Build.
   ///
   /// \param[in] model Define the delegate model to be built.
   virtual Status Build(DelegateModel<schema::Primitive> *model) = 0;
+};
+
+class MS_API CoreMLDelegate : public Delegate {
+ public:
+  /// \brief Constructor of MindSpore Lite CoreML Delegate.
+  CoreMLDelegate();
+
+  /// \brief Init CoreML delegate.
+  ///
+  /// \note Init will be called in Model::Build.
+  ///
+  /// \return Status. If Status is kLiteNotSupport, the program will return to the MindSpore Lite inner inference.
+  Status Init() override;
+
+  /// \brief Build CoreML delegate graph for MindSpore Lite model.
+  ///
+  /// \note Build will be called in Model::Build.
+  ///
+  /// \param[in] model Define the delegate model to be built.
+  Status Build(DelegateModel<schema::Primitive> *model) override;
+
+ protected:
+  std::shared_ptr<Delegate> impl_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_DELEGATE_H
