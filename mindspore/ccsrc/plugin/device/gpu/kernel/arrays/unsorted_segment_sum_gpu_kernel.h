@@ -50,10 +50,17 @@ class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto input_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
-    auto ids_shapes = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1));
-    auto output_shapes = Convert2SizeTClipNeg(AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0));
+
     ResetResource();
+    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    auto ids_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
+    auto output_shape_signed = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({input_shape_signed, ids_shape_signed, output_shape_signed})) {
+      return true;
+    }
+    auto input_shapes = Convert2SizeTClipNeg(input_shape_signed);
+    auto ids_shapes = Convert2SizeTClipNeg(ids_shape_signed);
+    auto output_shapes = Convert2SizeTClipNeg(output_shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
                      CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");

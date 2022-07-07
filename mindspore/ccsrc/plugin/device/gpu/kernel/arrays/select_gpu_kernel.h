@@ -49,7 +49,11 @@ class SelectGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     (void)CheckParam(kernel_node);
-    auto shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

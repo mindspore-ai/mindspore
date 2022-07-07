@@ -100,10 +100,14 @@ class CtcLossGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
     InitResource();
-    auto probs_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput0th);
+    auto probs_shape = Convert2SizeTClipNeg(shape_signed);
     auto indice_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput1st);
     auto labels_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput2nd);
     auto sequence_length_dims = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, kPrevOutput3rd);
+    if (AnfAlgo::IsShapesDynamic({shape_signed, indice_dims, labels_dims, sequence_length_dims})) {
+      return true;
+    }
     is_null_input_ = CHECK_SHAPE_NULL(probs_shape, kernel_name_, "x") ||
                      CHECK_SHAPE_NULL(indice_dims, kernel_name_, "labels_indices") ||
                      CHECK_SHAPE_NULL(labels_dims, kernel_name_, "labels_values") ||

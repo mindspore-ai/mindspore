@@ -54,7 +54,11 @@ class CorrectionMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs should be 3, but got " << input_num;
     }
 
-    auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto input_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

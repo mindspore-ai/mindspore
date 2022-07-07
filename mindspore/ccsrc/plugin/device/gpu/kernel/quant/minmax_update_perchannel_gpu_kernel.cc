@@ -45,7 +45,7 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
 
   // init size
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();
@@ -54,14 +54,10 @@ bool MinMaxUpdatePerChannelGpuKernelMod::Init(const CNodePtr &kernel_node) {
   if (input_shape.empty()) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name << "', input cannot be empty, but got empty";
   }
-  num_channels_ = SizeToInt(input_shape[0]);
-  for (size_t i = 0; i < input_shape.size(); ++i) {
-    quant_num_ *= SizeToInt(input_shape[i]);
-  }
-  input_size_ = sizeof(float);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= input_shape[i];
-  }
+  num_channels_ = LongToInt(input_shape[0]);
+  auto size = SizeOf(input_shape);
+  quant_num_ = SizeToInt(size);
+  input_size_ = sizeof(float) * size;
   InitSizeLists();
   return true;
 }

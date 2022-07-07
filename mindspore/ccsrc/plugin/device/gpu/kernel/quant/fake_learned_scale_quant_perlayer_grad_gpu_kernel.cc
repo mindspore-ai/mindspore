@@ -44,14 +44,10 @@ bool FakeLearnedScaleQuantPerLayerGradGpuKernelMod::Init(const CNodePtr &kernel_
   neg_trunc_ = GetValue<bool>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("neg_trunc"));
 
   // init size
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-  for (size_t i = 0; i < input_shape.size(); ++i) {
-    quant_num_ *= SizeToInt(input_shape[i]);
-  }
-  input_size_ = sizeof(float);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= input_shape[i];
-  }
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto size = SizeOf(input_shape);
+  quant_num_ = SizeToInt(size);
+  input_size_ = sizeof(float) * size;
   InitSizeLists();
   return true;
 }

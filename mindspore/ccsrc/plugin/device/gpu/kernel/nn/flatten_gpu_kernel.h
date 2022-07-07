@@ -49,8 +49,11 @@ class FlattenFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
-    auto shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
-    kernel_node_ = kernel_node;
+    auto shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    auto shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
     if (is_null_input_) {
       InitSizeLists();

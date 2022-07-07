@@ -87,11 +87,15 @@ class MirrorPadBackGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
     auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto padding_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
-    auto output_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetOutputInferShape(kernel_node, 0));
+    auto shape_signed = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    if (AnfAlgo::IsShapesDynamic({shape_signed, input_shape, padding_shape})) {
+      return true;
+    }
+    auto output_shape = Convert2SizeTClipNeg(shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input_x") ||
                      CHECK_SHAPE_NULL(padding_shape, kernel_name_, "paddings") ||
                      CHECK_SHAPE_NULL(output_shape, kernel_name_, "output");
-    if (is_null_input_ || AnfAlgo::IsShapesDynamic({input_shape, padding_shape})) {
+    if (is_null_input_) {
       InitSizeLists();
       return true;
     }

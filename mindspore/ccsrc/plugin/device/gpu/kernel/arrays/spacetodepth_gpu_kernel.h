@@ -68,7 +68,11 @@ class SpaceToDepthFwdKernelMod : public DeprecatedNativeGpuKernelMod {
       MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of outputs must be 2, but got " << output_num;
     }
     // check input_shape
-    auto input_shape = Convert2SizeTClipNeg(AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0));
+    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
+    if (IsDynamic(input_shape_signed)) {
+      return true;
+    }
+    auto input_shape = Convert2SizeTClipNeg(input_shape_signed);
     is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
     if (is_null_input_) {
       InitSizeLists();

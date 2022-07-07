@@ -45,19 +45,15 @@ bool MinMaxUpdatePerLayerGpuKernelMod::Init(const CNodePtr &kernel_node) {
   ema_decay_ = GetValue<float>(prim->GetAttr("ema_decay"));
 
   // init size
-  auto input_shape = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name, "input");
   if (is_null_input_) {
     InitSizeLists();
     return true;
   }
-  for (size_t i = 0; i < input_shape.size(); ++i) {
-    quant_num_ *= SizeToInt(input_shape[i]);
-  }
-  input_size_ = sizeof(float);
-  for (size_t i = 0; i < input_shape.size(); i++) {
-    input_size_ *= input_shape[i];
-  }
+  auto size = SizeOf(input_shape);
+  quant_num_ = SizeToInt(size);
+  input_size_ = sizeof(float) * size;
   InitSizeLists();
   return true;
 }

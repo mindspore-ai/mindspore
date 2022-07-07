@@ -50,11 +50,15 @@ class StridedSliceGpuKernelMod : public DeprecatedNativeGpuKernelMod, public Str
   bool Init(const CNodePtr &kernel_node) override {
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
+    kernel_node_ = kernel_node;
     if (input_num == DynamicInputNum) {
       is_dynamic_attr_ = true;
     }
-    input_shape_ = Convert2SizeTClipNeg(common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0));
-    kernel_node_ = kernel_node;
+    auto shape_signed = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    if (IsDynamic(shape_signed)) {
+      return true;
+    }
+    input_shape_ = Convert2SizeTClipNeg(shape_signed);
     null_output_ = CHECK_SHAPE_NULL(input_shape_, kernel_name, "input");
     if (null_output_) {
       InitSizeLists();
