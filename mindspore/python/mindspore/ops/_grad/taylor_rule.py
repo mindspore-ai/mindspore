@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Define the taylor rules of operations."""
+from __future__ import absolute_import
 
 import mindspore as ms
 import mindspore.nn as nn
