@@ -63,6 +63,7 @@ struct MultiThreadComputeParams {
   size_t var_first_dim_size_{0};
   size_t var_outer_dim_size_{0};
   bool use_nesterov_;
+  bool update_slots_;
 };
 
 template <typename T>

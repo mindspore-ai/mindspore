@@ -600,6 +600,8 @@ constexpr auto kAttrKsize = "ksize";
 constexpr auto kActualAbstract = "actual_abstract";
 constexpr auto kAttrZeroInfinity = "zero_infinity";
 constexpr auto kAttrBlank = "blank";
+constexpr auto kAttrUpdateSlots = "update_slots";
+constexpr auto kAttrLr = "lr";
 
 // FuncGraph Flags
 constexpr auto kFlagsIsCutGraph = "is_cut_graph";
