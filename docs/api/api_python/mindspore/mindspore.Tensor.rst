@@ -983,7 +983,7 @@ mindspore.Tensor
 
         .. note::
             - Tensor和 `power` 遵循 `隐式类型转换规则 <https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html>`_ ，使数据类型保持一致。
-            - 当前的Tensor和`power`的数据类型不能同时是bool，并保证其shape可以广播。
+            - 当前的Tensor和 `power` 的数据类型不能同时是bool，并保证其shape可以广播。
 
         **参数：**
 
@@ -991,7 +991,7 @@ mindspore.Tensor
 
         **返回：**
 
-        Tensor，shape与广播后的shape相同，数据类型为`Tensor`与`power`中精度较高的类型。
+        Tensor，shape与广播后的shape相同，数据类型为 `Tensor` 与 `power` 中精度较高的类型。
 
         **异常：**
 

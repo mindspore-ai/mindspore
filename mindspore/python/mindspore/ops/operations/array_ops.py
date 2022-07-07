@@ -2135,10 +2135,10 @@ class ArgMaxWithValue(Primitive):
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the maximum value of the input
         tensor.
 
-        - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
+        - **index** (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
+        - **output_x** (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If data type `input_x` is not float16, float32 and float64.
