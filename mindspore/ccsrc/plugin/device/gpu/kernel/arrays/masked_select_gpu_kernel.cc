@@ -230,7 +230,9 @@ std::vector<std::pair<KernelAttr, MaskedSelectGpuKernelMod::MaskedSelectFunc>> M
   {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt32),
    &MaskedSelectGpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeUInt64),
-   &MaskedSelectGpuKernelMod::LaunchKernel<uint64_t>}};
+   &MaskedSelectGpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+   &MaskedSelectGpuKernelMod::LaunchKernel<bool>}};
 
 std::vector<KernelAttr> MaskedSelectGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
