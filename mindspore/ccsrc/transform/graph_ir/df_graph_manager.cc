@@ -155,7 +155,7 @@ void DfGraphManager::EraseAnfGraph() {
 void DfGraphManager::SetGeSession(const std::shared_ptr<::ge::Session> &sess_ptr) {
   std::lock_guard<std::mutex> lg(lock_);
   if (sess_ptr == nullptr) {
-    MS_LOG(WARNING) << "You are adding a empty Ge Session";
+    return;
   }
 
   if (sess_ptr_ == nullptr) {
