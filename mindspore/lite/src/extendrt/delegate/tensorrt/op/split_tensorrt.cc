@@ -67,7 +67,7 @@ int SplitTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 
 int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper split_input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &split_input);
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &split_input);
   if (ret != RET_OK || split_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
@@ -102,8 +102,8 @@ int SplitTensorRT::AddInnerOp(TensorRTContext *ctx) {
       shuffer_layer->setReshapeDimensions(shuffer_dims_opt.value());
       out_tensor = shuffer_layer->getOutput(0);
     }
-    out_tensor->setName((op_name_ + "_" + std::to_string(i)).c_str());
-    this->AddInnerOutTensors(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_});
+    ctx->RegisterTensor(ITensorHelper{out_tensor, split_input.format_, split_input.same_format_},
+                        out_tensors_[i].Name());
   }
   this->layer_ = slice_layer;
   return RET_OK;

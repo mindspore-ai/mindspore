@@ -57,14 +57,13 @@ int SoftMaxTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "softmax output tensor create failed for TensorRT.";
     return RET_ERROR;
   }
-  out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 
 nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
-  nvinfer1::ISoftMaxLayer *current_layer_ = ctx->network()->addSoftMax(*tensorrt_in_tensors_[0].trt_tensor_);
+  nvinfer1::ISoftMaxLayer *current_layer_ = ctx->network()->addSoftMax(*input(ctx, 0).trt_tensor_);
   if (current_layer_ == nullptr) {
     MS_LOG(ERROR) << "add softmax op failed for TensorRT.";
     return nullptr;
@@ -75,14 +74,12 @@ nvinfer1::ISoftMaxLayer *SoftMaxTensorRT::AddSoftMaxOp(TensorRTContext *ctx) {
     return nullptr;
   }
   auto axis_val = std::vector<int64_t>(axis->begin(), axis->end());
-  if (axis_val[0] >= tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims) {
+  if (axis_val[0] >= input(ctx, 0).trt_tensor_->getDimensions().nbDims) {
     MS_LOG(ERROR) << "axis is larger than input tensor dims.";
     return nullptr;
   }
-  int64_t axis_format_value =
-    (axis_val[0] == -1) ? tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+  int64_t axis_format_value = (axis_val[0] == -1) ? input(ctx, 0).trt_tensor_->getDimensions().nbDims - 1 : axis_val[0];
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NCHW) {
     // transpose axis to NCHW
     axis_format_value = ConvertAxisFromNHWC2NCHW(axis_format_value);
   }

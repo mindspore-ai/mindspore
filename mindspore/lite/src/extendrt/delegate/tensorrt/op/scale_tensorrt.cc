@@ -51,10 +51,10 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // mode of scale
   axis_ = scale_op->axis();
   axis_ = axis_ < 0 ? static_cast<int64_t>(in_tensors_[0].Shape().size() + axis_) : axis_;
-  out_format_ = tensorrt_in_tensors_[0].format_;
-  out_same_format_ = tensorrt_in_tensors_[0].same_format_;
+  out_format_ = input(ctx, 0).format_;
+  out_same_format_ = input(ctx, 0).same_format_;
   mode_ = GetScaleMode(axis_);
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
 
   nvinfer1::ITensor *scale_in_tensor = PreProcessInputTensor(ctx);
   if (scale_in_tensor == nullptr) {
@@ -80,21 +80,20 @@ int ScaleTensorRT::AddInnerOp(TensorRTContext *ctx) {
     op_out_tensor = activation_layer->getOutput(0);
   }
 
-  op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_out_tensor, out_format_, out_same_format_});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{op_out_tensor, out_format_, out_same_format_};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 
 nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(TensorRTContext *ctx) {
-  nvinfer1::ITensor *scale_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      mode_ == nvinfer1::ScaleMode::kCHANNEL) {
+  nvinfer1::ITensor *scale_in_tensor = input(ctx, 0).trt_tensor_;
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && mode_ == nvinfer1::ScaleMode::kCHANNEL) {
     // per channel input format should be nchw, otherwise should be same with scale nhwc
     // transpose: NHWC->NCHW
-    if ((tensorrt_in_tensors_[0].format_ == Format::NHWC && axis_ == kNHWC_C) ||
-        (tensorrt_in_tensors_[0].same_format_ == true && axis_ == kNHWC_C)) {
-      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+    if ((input(ctx, 0).format_ == Format::NHWC && axis_ == kNHWC_C) ||
+        (input(ctx, 0).same_format_ == true && axis_ == kNHWC_C)) {
+      nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
       if (transpose_layer_in == nullptr) {
         MS_LOG(ERROR) << "op action convert failed";
         return nullptr;
@@ -107,10 +106,10 @@ nvinfer1::ITensor *ScaleTensorRT::PreProcessInputTensor(TensorRTContext *ctx) {
       MS_LOG(WARNING) << op_name_ << " out format (NHWC:1, NCHW:0) infer as " << out_format_ << ", and axis is "
                       << axis_;
     }
-  } else if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-             tensorrt_in_tensors_[0].format_ == Format::NCHW && mode_ == nvinfer1::ScaleMode::kELEMENTWISE) {
+  } else if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+             input(ctx, 0).format_ == Format::NCHW && mode_ == nvinfer1::ScaleMode::kELEMENTWISE) {
     // transpose: NCHW->NHWC
-    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "op action convert failed";
       return nullptr;

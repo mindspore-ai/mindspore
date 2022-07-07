@@ -35,7 +35,7 @@ int TopKTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
 }
 
 int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx->network() == nullptr || this->tensorrt_in_tensors_.size() != 1) {
+  if (ctx->network() == nullptr || ReadyInputsNumber(ctx) != 1) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
@@ -74,9 +74,10 @@ int TopKTensorRT::AddInnerOp(TensorRTContext *ctx) {
     index_out_tensor->setName((op_name_ + "_index_output").c_str());
   }
   if (out_tensors_.size() == INPUT_SIZE2) {
-    AddInnerOutTensors(ITensorHelper{value_out_tensor, topk_input.format_, true});
+    ctx->RegisterTensor(ITensorHelper{value_out_tensor, topk_input.format_, true}, out_tensors_[0].Name());
   }
-  AddInnerOutTensors(ITensorHelper{index_out_tensor, topk_input.format_, true});
+  ctx->RegisterTensor(ITensorHelper{index_out_tensor, topk_input.format_, true},
+                      out_tensors_[out_tensors_.size() == INPUT_SIZE2].Name());
   return RET_OK;
 }
 
@@ -131,10 +132,10 @@ int TopKTensorRT::ParseParams(TensorRTContext *ctx) {
   return RET_OK;
 }
 int TopKTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_input) {
-  auto input_dim = tensorrt_in_tensors_[0].trt_tensor_->getDimensions();
+  auto input_dim = input(ctx, 0).trt_tensor_->getDimensions();
   int ret = RET_ERROR;
   if (input_dim.nbDims == DIMENSION_4D) {
-    ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], topk_input);
+    ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), topk_input);
   } else if (input_dim.nbDims < DIMENSION_4D) {
     // only support 4d
     nvinfer1::Dims4 expect_dim;
@@ -145,7 +146,7 @@ int TopKTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *topk_inp
         expect_dim.d[DIMENSION_4D - 1 - i] = 1;
       }
     }
-    topk_input->trt_tensor_ = Reshape(ctx, tensorrt_in_tensors_[0].trt_tensor_, expect_dim);
+    topk_input->trt_tensor_ = Reshape(ctx, input(ctx, 0).trt_tensor_, expect_dim);
     CHECK_NULL_RETURN(topk_input->trt_tensor_);
     axis_value_ += (DIMENSION_4D - input_dim.nbDims);
     return RET_OK;

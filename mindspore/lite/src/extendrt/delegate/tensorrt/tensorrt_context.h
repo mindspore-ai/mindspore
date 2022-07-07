@@ -16,11 +16,18 @@
 #ifndef MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_CONTEXT_H_
 #define MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_TENSORRT_CONTEXT_H_
 
+#include <experimental/optional>
 #include <NvInfer.h>
 #include <string>
+#include <unordered_map>
 #include "src/extendrt/delegate/tensorrt/tensorrt_runtime.h"
 
 namespace mindspore::lite {
+struct ITensorHelper {
+  nvinfer1::ITensor *trt_tensor_{nullptr};
+  mindspore::Format format_{Format::NHWC};
+  bool same_format_{true};
+};
 class TensorRTContext {
  public:
   TensorRTContext() = default;
@@ -29,11 +36,16 @@ class TensorRTContext {
   void SetRuntime(TensorRTRuntime *runtime);
   nvinfer1::INetworkDefinition *network();
   void RegisterLayer(nvinfer1::ILayer *layer, const std::string &basename);
-  void RegisterTensor(nvinfer1::ITensor *tensor, const std::string &basename);
+  void RegisterTensor(ITensorHelper tensor, const std::string &basename);
+  void RegisterTensorWithSameName(ITensorHelper tensor, const std::string &basename);
+  // void RegisterTensor(ITensorHelper tensor);
+  bool HasTensor(const std::string &name) const;
+  ITensorHelper MsName2Tensor(const std::string &ms_name);
 
  private:
   int counter_{0};
   nvinfer1::INetworkDefinition *network_{nullptr};
+  std::unordered_map<std::string, ITensorHelper> ms_name2trt_tensor_;
   TensorRTRuntime *runtime_{nullptr};
 };
 }  // namespace mindspore::lite
