@@ -493,14 +493,15 @@ def hardshrink(x, lambd=0.5):
         lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
 
     Returns:
-        Tensor, has the same data type and shape as the input.
+        Tensor, has the same data type and shape as the input `x`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: If `lambd` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `x` is not a tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Examples:
         >>> x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
