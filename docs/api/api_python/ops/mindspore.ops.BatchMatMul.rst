@@ -3,7 +3,7 @@ mindspore.ops.BatchMatMul
 
 .. py:class:: mindspore.ops.BatchMatMul(transpose_a=False, transpose_b=False)
 
-    两个batch后的Tensor之间的矩阵乘法。
+    基于batch维度的两个Tensor的矩阵乘法。
 
     .. math::
         \text{output}[..., :, :] = \text{matrix}(x[..., :, :]) * \text{matrix}(y[..., :, :])
