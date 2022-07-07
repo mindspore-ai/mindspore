@@ -12,6 +12,7 @@ mindspore.ops.log_matrix_determinant
     **返回：**
 
     Tensor，行列式的绝对值的对数的符号， 形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
+
     Tensor，行列式的绝对值的对数， 形状为 `x_shape[:-2]` ，数据类型与 `x` 相同。
 
     **异常：**

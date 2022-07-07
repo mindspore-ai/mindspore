@@ -1981,7 +1981,7 @@ def linspace(start, stop, num):
 
 
 def matrix_determinant(x):
-    """
+    r"""
     Computes the determinant of one or more square matrices.
 
     Args:
@@ -1989,7 +1989,7 @@ def matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor, The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -2010,7 +2010,7 @@ def matrix_determinant(x):
 
 
 def log_matrix_determinant(x):
-    """
+    r"""
     Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
 
     Args:
@@ -2018,8 +2018,10 @@ def log_matrix_determinant(x):
           dimensions must be the same size. Data type must be float32, float64, complex64 or complex128.
 
     Returns:
-        Tensor, The signs of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
-        Tensor, The absolute values of the log determinants. The shape is `x_shape[:-2]`, the dtype is same as `x`.
+        Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.\n
+
+        Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
+        the dtype is same as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -4041,6 +4043,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
     def _is_complex(x):
         dtype = P.DType()
         return dtype(x) in [mstype.complex64, mstype.complex128]
+
     if onesided is None:
         onesided = (not _is_complex(x)) and (not _is_complex(window))
     if return_complex is None:
