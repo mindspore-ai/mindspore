@@ -3969,9 +3969,6 @@ def col2im(input_x, output_size, kernel_size, dilation, padding_value, stride):
         ``GPU``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore.ops as ops
-        >>> from mindspore import Tensor
         >>> x = Tensor(input_data=np.random.rand(16, 16, 4, 25), dtype=mstype.float32)
         >>> output_size = Tensor(input_data=[8, 8], dtype=mstype.int32)
         >>> output = ops.col2im(x, output_size, [2, 2], [2, 2], [2, 2], [2, 2])
