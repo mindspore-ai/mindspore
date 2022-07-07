@@ -102,6 +102,8 @@ class MS_CORE_API CheckAndConvertUtils {
  public:
   static std::vector<int64_t> CheckPositiveVector(const std::string &arg_name, const std::vector<int64_t> &arg_value,
                                                   const std::string &prim_name);
+  static std::vector<float> CheckPositiveVector(const std::string &arg_name, const std::vector<float> &arg_value,
+                                                const std::string &prim_name);
   static std::string CheckString(const std::string &arg_name, const std::string &arg_value,
                                  const std::set<std::string> &check_list, const std::string &prim_name);
 
