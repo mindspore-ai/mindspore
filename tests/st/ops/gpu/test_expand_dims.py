@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops import operations as P
-from mindspore.ops.operations import _inner_ops as inner
 
 
 class Net(nn.Cell):
@@ -29,17 +28,6 @@ class Net(nn.Cell):
 
     def construct(self, tensor):
         return self.expand_dims(tensor, -1)
-
-
-class NetDynamic(nn.Cell):
-    def __init__(self):
-        super(NetDynamic, self).__init__()
-        self.conv = inner.GpuConvertToDynamicShape()
-        self.expand_dims = P.ExpandDims()
-
-    def construct(self, x):
-        x_conv = self.conv(x)
-        return self.expand_dims(x_conv, -1)
 
 
 class NetConstant(nn.Cell):
@@ -55,142 +43,17 @@ class NetConstant(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_net_bool():
+@pytest.mark.parametrize("data_type",
+                         [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
+                          np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_net(data_type):
     """
     Feature: Test ExpandDims GPU.
     Description: The input data type contains common valid types including bool
     Expectation: match to np benchmark.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.bool)
-    net = NetDynamic()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_int8():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.int8)
-    net = NetDynamic()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_uint8():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.uint8)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_int16():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.int16)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_int32():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_int64():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.int64)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_float16():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.float16)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_float32():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.float32)
-    net = Net()
-    output = net(Tensor(x))
-    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_net_float64():
-    """
-    Feature: Test ExpandDims GPU.
-    Description: The input data type contains common valid types including bool
-    Expectation: match to np benchmark.
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    x = np.random.randn(1, 16, 1, 1).astype(np.float64)
+    x = np.random.randn(1, 16, 1, 1).astype(data_type)
     net = Net()
     output = net(Tensor(x))
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))
@@ -209,4 +72,34 @@ def test_net_constant():
     x = np.random.randn(1, 16, 1, 1).astype(np.int32)
     net = NetConstant(x)
     output = net()
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_func():
+    """
+    Feature: Test ExpandDims GPU.
+    Description: Test functional api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    output = ops.expand_dims(Tensor(x), -1)
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor():
+    """
+    Feature: Test ExpandDims GPU.
+    Description: Test Tensor api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    output = Tensor(x).expand_dims(-1)
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))

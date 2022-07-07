@@ -851,33 +851,7 @@ class Squeeze(Primitive):
     """
     Return the Tensor after deleting the dimension of size 1 in the specified `axis`.
 
-    If :math:`axis=()`, it will remove all the dimensions of size 1.
-    If `axis` is specified, it will remove the dimensions of size 1 in the given `axis`.
-    For example, if the dimension is not specified :math:`axis=()`, input shape is (A, 1, B, C, 1, D),
-    then the shape of the output Tensor is (A, B, C, D). If the dimension is specified, the squeeze operation
-    is only performed in the specified dimension. If input shape is (A, 1, B), input Tensor will not be
-    changed when :math:`axis=0` , but when :math:`axis=1` , the shape of the input Tensor will be changed to (A, B).
-
-    Note:
-        - Please note that in dynamic graph mode, the output Tensor will share data with the input Tensor,
-    and there is no Tensor data copy process.
-        - The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim]`.
-
-    Args:
-        axis (Union[int, tuple(int)]): Specifies the dimension indexes of shape to be removed, which will remove
-            all the dimensions of size 1 in the given axis parameter. If specified, it must be int32 or int64.
-            Default: (), an empty tuple.
-
-    Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-
-    Outputs:
-        Tensor, the shape of tensor is :math:`(x_1, x_2, ..., x_S)`.
-
-    Raises:
-        TypeError: If `axis` is neither an int nor tuple.
-        TypeError: If `axis` is a tuple whose elements are not all int.
-        ValueError: If the corresponding dimension of the specified axis isn't equal to 1.
+    Refer to :func:`mindspore.ops.squeeze` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

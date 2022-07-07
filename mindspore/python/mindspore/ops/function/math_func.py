@@ -869,12 +869,12 @@ def inplace_add(x, v, indices):
     Adds `v` into specified rows of `x`. Computes `y` = `x`; y[i,] += `v`.
 
     Args:
+        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
+            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
         x (Tensor) - The first input is a tensor whose data type is float16, float32, float64 or int32.
             :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         v (Tensor) - The second input is a tensor that has the same dimension sizes as `x` except
             the first dimension, which must be the same as indices' size. It has the same data type with `x`.
-        indices (Union[int, tuple]): Indices into the left-most dimension of `x`, and determines which rows of `x`
-            to add with `v`. It is an integer or a tuple, whose value is in [0, the first dimension size of `x`).
 
     Returns:
         Tensor, has the same shape and dtype as `x`.

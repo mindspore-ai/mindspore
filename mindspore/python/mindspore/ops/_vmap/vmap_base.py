@@ -26,7 +26,7 @@ from ..composite import _VmapGeneralPreprocess
 from ..primitive import Primitive
 from ..operations.random_ops import UniformCandidateSampler
 from ...common import Tensor
-
+from ..operations import nn_ops as nps
 
 vmap_rules_getters = Registry()
 
@@ -393,15 +393,20 @@ def _vmap_clone_prim(prim):
 
     return cloned
 
-_ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
-                             "ApplyAdadelta": P.ApplyAdadelta,
-                             "ApplyRMSProp": P.ApplyRMSProp,
-                             "ApplyCenteredRMSProp": P.ApplyCenteredRMSProp,
-                             "ApplyFtrl": P.ApplyFtrl,
-                             "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
-                             "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,
-                             "ApplyPowerSign": P.ApplyPowerSign,
-                             "ApplyAdagradDA": P.ApplyAdagradDA,
-                             "UniformCandidateSampler": UniformCandidateSampler,
-                             "CdistGrad": G.CdistGrad,
-                             "Cdist": P.Cdist}
+
+_ops_vmap_clone_prim_dict = {
+    "ApplyAdaMax": P.ApplyAdaMax,
+    "ApplyAdadelta": P.ApplyAdadelta,
+    "ApplyRMSProp": P.ApplyRMSProp,
+    "ApplyCenteredRMSProp": P.ApplyCenteredRMSProp,
+    "ApplyFtrl": P.ApplyFtrl,
+    "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
+    "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,
+    "ApplyPowerSign": P.ApplyPowerSign,
+    "ApplyAdagradDA": P.ApplyAdagradDA,
+    "UniformCandidateSampler": UniformCandidateSampler,
+    "CdistGrad": G.CdistGrad,
+    "Cdist": P.Cdist,
+    "InstanceNorm": nps.InstanceNorm,
+    "InstanceNormGrad": G.InstanceNormGrad,
+}

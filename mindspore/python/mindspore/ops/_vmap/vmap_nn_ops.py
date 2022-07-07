@@ -623,6 +623,46 @@ def get_adaptive_max_pool3d_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(NN.InstanceNorm)
+def get_instance_norm_rule(prim, axis_size):
+    """VmapRule for `InstanceNorm` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(input_x_bdim, gamma_bdim, beta_bdim, mean_bdim, variance_bdim, u_monad):
+        input_x, input_x_dim = input_x_bdim
+        gamma, gamma_dim = gamma_bdim
+        beta, beta_dim = beta_bdim
+        mean, mean_dim = mean_bdim
+        variance, variance_dim = variance_bdim
+        if gamma_dim is None:
+            if any(dim is not None for dim in [input_x_dim, beta_dim, mean_dim, variance_dim]):
+                ValueError("The source axis of `gamma` is None, but the source "
+                           "axis of `input_x/beta/mean/variance` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            output_x, updated_moving_mean, updated_moving_variance = prim(input_x, gamma, beta, mean, variance, u_monad)
+            return (output_x, None), (updated_moving_mean, None), (updated_moving_variance, None)
+
+        if gamma_dim != 0 or beta_dim != gamma_dim or mean_dim != gamma_dim or variance_dim != gamma_dim:
+            # pylint: disable=too-many-format-args
+            ValueError(
+                "For `{}`, the source axis of `var` must be equal to `accum` and `accum_update`, and not equal to 0, "
+                "but got the source axis of `var`: {}, `accum`: {}, `accum_update`: {}.".format(
+                    prim_name, gamma_dim, beta_dim, mean_dim, variance_dim))
+        input_x = _bdim_at_front(input_x, input_x_dim, axis_size)
+        output_x, updated_moving_mean, updated_moving_variance = batch_prim(input_x, gamma, beta, mean, variance,
+                                                                            u_monad)
+        return (output_x, 0), (updated_moving_mean, 0), (updated_moving_variance, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.KLDivLoss)
 def get_kl_div_loss_vmap_rule(prim, axis_size):
     """VmapRule for `KLDivLoss` operation."""
