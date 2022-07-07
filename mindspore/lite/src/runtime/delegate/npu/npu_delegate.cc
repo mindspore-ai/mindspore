@@ -63,7 +63,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 NPUDelegate::~NPUDelegate() {
   if (npu_manager_ != nullptr) {
     npu_manager_->Reset();
@@ -281,15 +281,15 @@ NPUOp *NPUDelegate::GetOP(kernel::Kernel *kernel, const schema::Primitive *primi
   }
 
   MS_LOG(DEBUG) << "kernel: [" << kernel->name().c_str() << "] op success. "
-                << "op_type: " << lite::PrimitiveCurVersionTypeName(kernel->type()) << ", "
+                << "op_type: " << PrimitiveCurVersionTypeName(kernel->type()) << ", "
                 << "arch: " << kKirinNPU;
   return npu_op;
 }
 
 kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, DelegateModel<schema::Primitive> *model,
                                             KernelIter from, KernelIter end) {
-  auto in_tensors = lite::GetGraphInTensors(ops, nullptr);
-  auto out_tensors = lite::GraphOutTensors<NPUOp>(ops, model, from, end);
+  auto in_tensors = GetGraphInTensors(ops, nullptr);
+  auto out_tensors = GraphOutTensors<NPUOp>(ops, model, from, end);
   auto graph_kernel = new (std::nothrow) NPUGraph(ops, npu_manager_, in_tensors, out_tensors);
   if (graph_kernel == nullptr) {
     MS_LOG(DEBUG) << "New NPU Graph failed.";
@@ -319,4 +319,4 @@ kernel::Kernel *NPUDelegate::CreateNPUGraph(const std::vector<NPUOp *> &ops, Del
   }
   return graph_kernel;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

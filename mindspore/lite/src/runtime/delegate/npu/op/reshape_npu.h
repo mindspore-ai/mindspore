@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ReshapeNPUOp : public NPUOp {
  public:
   ReshapeNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class ReshapeNPUOp : public NPUOp {
  private:
   hiai::op::Reshape *reshape_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_RESHAPE_NPU_H_

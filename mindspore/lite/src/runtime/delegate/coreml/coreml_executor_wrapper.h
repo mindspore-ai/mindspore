@@ -21,7 +21,7 @@
 #include "include/errorcode.h"
 #include "include/api/types.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLExecutorWrapper {
  public:
   CoreMLExecutorWrapper();
@@ -39,5 +39,5 @@ class CoreMLExecutorWrapper {
   std::string mlmodel_path_;
   std::string mlmodelc_path_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_COREML_EXECUTOR_WRAPPER_H_

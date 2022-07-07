@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/matmul_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int MatMulCoreMLOp::IsSupport() {
   MS_CHECK_GE(in_tensors_.size(), kInputSize1, RET_NOT_SUPPORT);
   if (in_tensors_.size() > kInputSize1 && !in_tensors_.at(SECOND_INPUT).IsConst()) {
@@ -181,4 +181,4 @@ std::vector<CoreML::Specification::NeuralNetworkLayer *> MatMulCoreMLOp::GetLaye
   }
   return ret_ops;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

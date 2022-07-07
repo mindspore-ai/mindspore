@@ -21,7 +21,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 std::set<mindspore::schema::PrimitiveType> nchw_nodes = {
   schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion, schema::PrimitiveType_Resize,
   schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,         schema::PrimitiveType_ScaleFusion,
@@ -211,4 +211,4 @@ int NPUTransformPass::Run(NPUGraph *subgraph) {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -25,11 +25,12 @@
 #include "src/runtime/delegate/coreml/pass/coreml_pass_manager.h"
 
 namespace mindspore {
-class CoreMLDelegate : public Delegate {
+namespace lite {
+class CoreMLDelegateImpl : public mindspore::Delegate {
  public:
-  CoreMLDelegate() = default;
+  CoreMLDelegateImpl() = default;
 
-  ~CoreMLDelegate() override;
+  ~CoreMLDelegateImpl() override;
 
   bool IsSupportCoreML() const;
 
@@ -50,6 +51,7 @@ class CoreMLDelegate : public Delegate {
   CoreMLPassManager *pass_manager_ = nullptr;
   std::map<schema::PrimitiveType, CoreMLGetOp> op_func_lists_;
 };
+}  // namespace lite
 }  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_COREML_DELEGATE_H_

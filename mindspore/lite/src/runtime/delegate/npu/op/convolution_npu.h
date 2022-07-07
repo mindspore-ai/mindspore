@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ConvolutionNPUOp : public ConvolutionBaseNPUOp {
  public:
   ConvolutionNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -53,5 +53,5 @@ class ConvolutionNPUOp : public ConvolutionBaseNPUOp {
 
 NPUOp *GetNPUConvOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                     const std::vector<mindspore::MSTensor> &out_tensors, std::string name);
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_NPU_H_

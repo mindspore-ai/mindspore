@@ -21,7 +21,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 void NPUPassManager::AddPass(NPUBasePass *pass) { all_pass_.push_back(pass); }
 
 int NPUPassManager::RunPass(NPUGraph *subgraph) {
@@ -41,4 +41,4 @@ void NPUPassManager::Clear() {
   }
   all_pass_.clear();
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

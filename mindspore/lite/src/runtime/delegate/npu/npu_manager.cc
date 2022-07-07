@@ -20,7 +20,7 @@
 #include "include/HiAiModelManagerService.h"
 #include "src/common/file_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int MAX_MODEL_NUM = 20;
 int NPUManager::CompareVersion(const string &version1, const string &version2) {
   std::istringstream iss1(version1);
@@ -248,4 +248,4 @@ int NPUManager::LoadModel(const std::shared_ptr<hiai::AiModelMngerClient> &clien
   this->clients_.push_back(client);
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

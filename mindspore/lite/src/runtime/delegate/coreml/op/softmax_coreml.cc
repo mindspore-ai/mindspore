@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/softmax_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int SoftmaxCoreMLOp::InitParams() {
   softmax_prim_ = op_primitive_->value_as_Softmax();
   if (softmax_prim_ == nullptr) {
@@ -38,4 +38,4 @@ int SoftmaxCoreMLOp::HandleAxis() {
   axis_ = NCHW2NHWC_PERM[axis_];
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

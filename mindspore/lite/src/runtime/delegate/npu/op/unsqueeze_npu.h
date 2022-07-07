@@ -20,7 +20,7 @@
 #include <string>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class UnsqueezeNPUOp : public NPUOp {
  public:
   UnsqueezeNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class UnsqueezeNPUOp : public NPUOp {
   hiai::op::Const *axis_const_ = nullptr;
   vector<int> axis_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_

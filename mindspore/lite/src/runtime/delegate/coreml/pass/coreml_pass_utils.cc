@@ -18,7 +18,7 @@
 #include <algorithm>
 #include "src/runtime/delegate/coreml/op/transpose_coreml.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 CoreMLOp *CoreMLPassUtils::CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
                                              const std::vector<mindspore::MSTensor> &out_tensors,
                                              const std::string &name) {
@@ -175,4 +175,4 @@ std::vector<mindspore::MSTensor> CoreMLPassUtils::GetNonConstInputs(CoreMLOp *op
                [](const auto &tensor) { return !tensor.IsConst(); });
   return non_const_in_tensors;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

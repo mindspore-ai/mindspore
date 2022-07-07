@@ -20,7 +20,7 @@
 #include "src/runtime/delegate/npu/op/transpose_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 NPUOp *NPUPassUtils::CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
                                        const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name) {
   std::vector<int> perm = {0, 2, 3, 1};
@@ -181,4 +181,4 @@ bool NPUPassUtils::Scale4dCase(NPUOp *op) {
   return in_tensor.Shape().size() == NPU_SHAPE_SIZE && scale_tensor.Shape().size() == 1 &&
          (axis == NHWC_C || axis == -1);
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

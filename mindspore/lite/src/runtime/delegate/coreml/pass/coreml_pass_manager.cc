@@ -21,7 +21,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 void CoreMLPassManager::AddPass(CoreMLBasePass *pass) { all_pass_.push_back(pass); }
 
 int CoreMLPassManager::RunPass(CoreMLGraph *subgraph) {
@@ -41,4 +41,4 @@ void CoreMLPassManager::Clear() {
   }
   all_pass_.clear();
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

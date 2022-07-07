@@ -19,7 +19,7 @@
 #include <string>
 #include "src/runtime/delegate/coreml/coreml_graph.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLBasePass {
  public:
   virtual int Run(CoreMLGraph *subgraph) = 0;
@@ -32,6 +32,6 @@ class CoreMLBasePass {
   std::string name_;
   CoreMLGraph *subgraph_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_BASE_PASS_H_

@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/npu/op/crop_and_resize_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int BOXES_INDEX = 1;
 constexpr int BOX_INDEX = 2;
 constexpr int CROP_SIZE_INDEX = 3;
@@ -86,4 +86,4 @@ CropAndResizeNPUOp::~CropAndResizeNPUOp() {
     crop_and_resize_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -15,10 +15,10 @@
  */
 
 #include "src/runtime/delegate/coreml/op/shape_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ShapeCoreMLOp::BuildLayer() {
   MS_ASSERT(op_ != nullptr);
   (void)op_->mutable_getshape();
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

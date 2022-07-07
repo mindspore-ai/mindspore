@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/slice_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int OFFSET_INDEX = 1;
 constexpr int SLICE_SIZE_INDEX = 2;
 
@@ -48,4 +48,4 @@ SliceNPUOp::~SliceNPUOp() {
     slice_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

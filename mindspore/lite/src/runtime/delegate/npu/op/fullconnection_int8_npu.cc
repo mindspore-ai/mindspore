@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int FC_INPUT_DIM = 2;
 constexpr int FC_INPUT_SIZE = 3;
 
@@ -137,4 +137,4 @@ FullconnectionINT8NPUOp::~FullconnectionINT8NPUOp() {
     bias_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

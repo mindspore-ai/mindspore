@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_PASS_MANAGER_H_
 #include <vector>
 #include "src/runtime/delegate/npu/pass/npu_base_pass.h"
-namespace mindspore {
+namespace mindspore::lite {
 class NPUPassManager {
  public:
   static NPUPassManager *GetInstance() {
@@ -37,5 +37,5 @@ class NPUPassManager {
  private:
   std::vector<NPUBasePass *> all_pass_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_PASS_NPU_PASS_MANAGER_H_

@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/arithmetic_self_npu.h"
 #include <string>
 
-namespace mindspore {
+namespace mindspore::lite {
 template <typename T>
 ge::Operator *CreateOperator(const std::string &name) {
   auto op = new (std::nothrow) T(name);
@@ -165,4 +165,4 @@ ArithmeticSelfNPUOp::~ArithmeticSelfNPUOp() {
     op_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class InstanceNormNPUOp : public NPUOp {
  public:
   InstanceNormNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -49,5 +49,5 @@ class InstanceNormNPUOp : public NPUOp {
   hiai::op::Const *gamma_ = nullptr;
   hiai::op::Const *beta_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_INSTANCE_NORM_NPU_H_

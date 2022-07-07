@@ -19,7 +19,7 @@
 #include "src/runtime/delegate/npu/op/npu_op.h"
 #include "src/runtime/delegate/delegate_utils.h"
 #include "nnacl/fp32/pack_fp32.h"
-namespace mindspore {
+namespace mindspore::lite {
 int TransposeNPUKernel::Execute() {
   if (perm_ != NHWC2NCHW_PERM && perm_ != NCHW2NHWC_PERM) {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";
@@ -37,13 +37,13 @@ int TransposeNPUKernel::Execute() {
   auto output = out_tensor.MutableData();
   MS_ASSERT(output);
   if (perm_ == NHWC2NCHW_PERM) {
-    lite::PackNHWCToNCHWFp32(input, output, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
+    PackNHWCToNCHWFp32(input, output, shape[NHWC_N], shape[NHWC_H] * shape[NHWC_W], shape[NHWC_C]);
   } else if (perm_ == NCHW2NHWC_PERM) {
-    lite::PackNCHWToNHWCFp32(input, output, shape[NCHW_N], shape[NCHW_H] * shape[NCHW_W], shape[NCHW_C]);
+    PackNCHWToNHWCFp32(input, output, shape[NCHW_N], shape[NCHW_H] * shape[NCHW_W], shape[NCHW_C]);
   } else {
     MS_LOG(ERROR) << "NPU transpose op only supports nhwc->nchw or nchw->nhwc.";
     return RET_ERROR;
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ResizeCoreMLOp : public CoreMLOp {
  public:
   ResizeCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -34,5 +34,5 @@ class ResizeCoreMLOp : public CoreMLOp {
   const schema::Resize *resize_prim_ = nullptr;
   bool use_upsample_ = false;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_RESIZE_COREML_H_

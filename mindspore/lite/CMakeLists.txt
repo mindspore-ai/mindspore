@@ -15,6 +15,7 @@ set(MSLITE_REGISTRY_DEVICE "off" CACHE STRING "Compile Mindspore Lite that suppo
 set(MSLITE_MICRO_PLATFORM "auto" CACHE STRING "Platform of micro static library micro static, \
     currently supported : cortex-m7/cortex-m4/cortex-m33/auto")
 option(MSLITE_ENABLE_NPU "enable npu, only arm64 or arm32 support" off)
+option(MSLITE_ENABLE_COREML "enable coreML, only apple ios devices support" off)
 option(MSLITE_ENABLE_TRAIN "enable train" on)
 option(MSLITE_ENABLE_SSE "enable SSE instruction set, only x86_64 support" off)
 option(MSLITE_ENABLE_AVX "enable AVX instruction set, only x86_64 support" off)

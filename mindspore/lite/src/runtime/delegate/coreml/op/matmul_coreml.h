@@ -20,7 +20,7 @@
 #include <string>
 #include <memory>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class MatMulCoreMLOp : public CoreMLOp {
  public:
   MatMulCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -46,5 +46,5 @@ class MatMulCoreMLOp : public CoreMLOp {
   CoreML::Specification::BatchedMatMulLayerParams *matmul_param_ = nullptr;
   std::unique_ptr<CoreML::Specification::NeuralNetworkLayer> bias_op_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_MATMUL_COREML_H_

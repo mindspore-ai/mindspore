@@ -23,7 +23,7 @@
 #include "include/graph/op/math_defs.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class ArithmeticSelfNPUOp : public NPUOp {
  public:
   ArithmeticSelfNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -53,5 +53,5 @@ class ArithmeticSelfNPUOp : public NPUOp {
  private:
   ge::Operator *op_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETICSELF_NPU_H_

@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/coreml/coreml_graph.h"
 #include <fstream>
-namespace mindspore {
+namespace mindspore::lite {
 CoreMLGraph::~CoreMLGraph() {
   for (auto *kernel : all_kernels_) {
     delete kernel;
@@ -168,4 +168,4 @@ int CoreMLGraph::Execute() {
   MS_LOG(INFO) << "run model success!";
   return ret;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

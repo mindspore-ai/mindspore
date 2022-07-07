@@ -34,7 +34,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
-namespace mindspore {
+namespace mindspore::lite {
 inline const std::vector<int> NHWC2NCHW_PERM = {0, 3, 1, 2};
 inline const std::vector<int> NCHW2NHWC_PERM = {0, 2, 3, 1};
 enum COREML_WEIGHT_SHAPE { ML_WT_COUT = 0, ML_WT_CIN = 1, ML_WT_H = 2, ML_WT_W = 3 };
@@ -151,5 +151,5 @@ CoreMLOp *GetCoreMLOp(const schema::Primitive *primitive, const std::vector<mind
   }
   return op;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_COREML_OP_

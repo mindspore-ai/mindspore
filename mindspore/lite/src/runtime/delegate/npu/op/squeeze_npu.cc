@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/npu/op/squeeze_npu.h"
-namespace mindspore {
+namespace mindspore::lite {
 int SqueezeNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                        const std::vector<mindspore::MSTensor> &out_tensors) {
   squeeze_ = new (std::nothrow) hiai::op::Squeeze(name_);
@@ -50,4 +50,4 @@ SqueezeNPUOp::~SqueezeNPUOp() {
     squeeze_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

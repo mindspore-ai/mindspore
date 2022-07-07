@@ -23,7 +23,7 @@
 #include "include/graph/compatible/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 
 class ArgmaxNPUOp : public NPUOp {
  public:
@@ -51,5 +51,5 @@ class ArgmaxNPUOp : public NPUOp {
   hiai::op::ArgMaxExt2 *argmax_ = nullptr;
   hiai::op::Const *axis_const_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_ARGMAX_NPU_H_

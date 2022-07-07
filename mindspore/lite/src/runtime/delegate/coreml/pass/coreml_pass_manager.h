@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_PASS_MANAGER_H_
 #include <vector>
 #include "src/runtime/delegate/coreml/pass/coreml_base_pass.h"
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLPassManager {
  public:
   static CoreMLPassManager *GetInstance() {
@@ -37,5 +37,5 @@ class CoreMLPassManager {
  private:
   std::vector<CoreMLBasePass *> all_pass_{};
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_PASS_MANAGER_H_

@@ -22,7 +22,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class DeconvolutionNPUOp : public ConvolutionBaseNPUOp {
  public:
   DeconvolutionNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -49,5 +49,5 @@ class DeconvolutionNPUOp : public ConvolutionBaseNPUOp {
   hiai::op::ConvTranspose *deconv_ = nullptr;
   hiai::op::Const *out_shape_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_DECONVOLUTION_NPU_H_

@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "src/runtime/delegate/coreml/pass/coreml_base_pass.h"
-namespace mindspore {
+namespace mindspore::lite {
 enum class InsertState { InsertNone, PreInsert, PostInsert, BothInsert };
 class CoreMLTransExtendPass : public CoreMLBasePass {
  public:
@@ -41,5 +41,5 @@ class CoreMLTransExtendPass : public CoreMLBasePass {
   std::vector<CoreMLOp *> *all_ops_ = nullptr;
   std::vector<mindspore::MSTensor *> *all_tensors_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_TRANS_EXTEND_PASS_H_

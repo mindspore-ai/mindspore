@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ShapeCoreMLOp : public CoreMLOp {
  public:
   ShapeCoreMLOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -28,5 +28,5 @@ class ShapeCoreMLOp : public CoreMLOp {
 
   int BuildLayer() override;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_OP_SHAPE_COREML_H_

@@ -27,7 +27,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 void PackNHWCToNCHWFp32(const void *src, void *dst, int batches, int plane, int channel);
 
 void PackNCHWToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel);
@@ -50,11 +50,11 @@ class TransposeNPUKernel : public kernel::Kernel {
 
   int ReSize() override {
     MS_LOG(ERROR) << "NPU does not support the resize function temporarily.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
 
  protected:
   std::vector<int> perm_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_TRANSPOSE_KERNEL_H_

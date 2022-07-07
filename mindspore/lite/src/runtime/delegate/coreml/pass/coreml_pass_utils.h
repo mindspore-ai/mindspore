@@ -23,7 +23,7 @@
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "src/runtime/delegate/coreml/op/transpose_coreml.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class CoreMLPassUtils {
  public:
   static CoreMLOp *CreateNchw2NhwcOp(const std::vector<mindspore::MSTensor> &in_tensors,
@@ -52,5 +52,5 @@ class CoreMLPassUtils {
   static CoreMLOp *OpInputFromOp(CoreMLOp *op, mindspore::MSTensor in_tensor);
   static std::vector<mindspore::MSTensor> GetNonConstInputs(CoreMLOp *op);
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_PASS_COREML_PASS_UTILS_H_

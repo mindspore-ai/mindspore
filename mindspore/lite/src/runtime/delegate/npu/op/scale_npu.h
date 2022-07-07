@@ -22,7 +22,7 @@
 #include "include/graph/op/nn_defs.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class ScaleNPUOp : public NPUOp {
  public:
   ScaleNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -66,5 +66,5 @@ class ScaleNPUOp : public NPUOp {
   hiai::op::Activation *act_ = nullptr;
   std::vector<ge::Operator *> scale_ops_ = {};
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_SCALE_NPU_H_

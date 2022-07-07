@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int ONNX_INPUT_SIZE = 5;
 constexpr int MIN_INPUT_SIZE = 4;
 constexpr int BEGIN_INDEX = 1;
@@ -62,5 +62,5 @@ class StridedSliceNPUOp : public NPUOp {
   int new_axis_mask_ = 0;
   int shrink_axis_mask_ = 0;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_STRIDED_SLICE_NPU_H_

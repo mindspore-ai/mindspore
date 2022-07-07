@@ -22,7 +22,7 @@
 #include <string>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int WEIGHT_INDEX = 1;
 constexpr int BIAS_INDEX = 2;
 constexpr int CONV_INPUT_SIZE = 3;
@@ -59,5 +59,5 @@ class ConvolutionBaseNPUOp : public NPUOp {
   float *fp32_weight_ = nullptr;
   void *nchw_weight_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONVOLUTION_BASE_NPU_H_

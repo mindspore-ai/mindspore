@@ -28,7 +28,7 @@
 #include "src/runtime/delegate/coreml/op/coreml_op.h"
 #include "src/runtime/delegate/coreml/coreml_executor_wrapper.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int kCoreMLVersion4 = 4;
 class CoreMLGraph : public kernel::Kernel {
  public:
@@ -40,13 +40,13 @@ class CoreMLGraph : public kernel::Kernel {
 
   int Init();
 
-  int Prepare() override { return lite::RET_OK; }
+  int Prepare() override { return RET_OK; }
 
   int Execute() override;
 
   int ReSize() override {
     MS_LOG(ERROR) << "CoreML does not support the resize function temporarily.";
-    return lite::RET_ERROR;
+    return RET_ERROR;
   }
 
   void set_input(mindspore::MSTensor in_tensor, int index) override;
@@ -70,6 +70,6 @@ class CoreMLGraph : public kernel::Kernel {
   CoreMLExecutorWrapper *executor_wrapper_ = nullptr;
   std::vector<mindspore::MSTensor *> insert_tensors_;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_COREML_COREML_GRAPH_H_

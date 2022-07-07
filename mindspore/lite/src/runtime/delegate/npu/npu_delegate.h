@@ -25,10 +25,10 @@
 #include "src/runtime/delegate/npu/pass/npu_pass_manager.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class NPUDelegate : public Delegate {
  public:
-  explicit NPUDelegate(lite::NpuDeviceInfo device_info) : Delegate() { frequency_ = device_info.frequency_; }
+  explicit NPUDelegate(NpuDeviceInfo device_info) : Delegate() { frequency_ = device_info.frequency_; }
 
   ~NPUDelegate() override;
 
@@ -49,6 +49,6 @@ class NPUDelegate : public Delegate {
   std::map<schema::PrimitiveType, NPUGetOp> op_func_lists_;
   int frequency_ = 0;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_DELEGATE_H_

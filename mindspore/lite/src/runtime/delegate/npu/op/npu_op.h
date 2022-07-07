@@ -32,7 +32,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NOT_SUPPORT;
 using mindspore::lite::RET_OK;
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int NPU_SHAPE_SIZE = 4;
 constexpr int REPEAT_TIMES2 = 2;
 
@@ -168,5 +168,5 @@ NPUOp *GetNPUOp(const schema::Primitive *primitive, const std::vector<mindspore:
   }
   return op;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_NPU_OP_H_

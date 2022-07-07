@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
-namespace mindspore {
+namespace mindspore::lite {
 class ConcatNPUOp : public NPUOp {
  public:
   ConcatNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -51,5 +51,5 @@ class ConcatNPUOp : public NPUOp {
   hiai::op::ConcatD *concat_ = nullptr;
   int axis_ = 0;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_CONCAT_NPU_H_

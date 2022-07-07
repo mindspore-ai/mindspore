@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/instance_norm_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 constexpr int GAMMA_INDEX = 1;
 constexpr int BETA_INDEX = 2;
 
@@ -100,4 +100,4 @@ InstanceNormNPUOp::~InstanceNormNPUOp() {
     beta_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

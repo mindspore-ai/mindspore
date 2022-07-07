@@ -18,7 +18,7 @@
 #include <memory>
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 int SplitNPUOp::Init(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                      const std::vector<mindspore::MSTensor> &out_tensors) {
   split_ = new (std::nothrow) hiai::op::SplitV(name_);
@@ -109,4 +109,4 @@ SplitNPUOp::~SplitNPUOp() {
     split_dim_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

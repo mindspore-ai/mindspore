@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/delegate/coreml/op/max_pooling_coreml.h"
-namespace mindspore {
+namespace mindspore::lite {
 int MaxPoolingCoreMLOp::InitParams() {
   pooling_prim_ = op_primitive_->value_as_MaxPoolFusion();
   if (pooling_prim_ == nullptr) {
@@ -68,4 +68,4 @@ int MaxPoolingCoreMLOp::BuildLayer() {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

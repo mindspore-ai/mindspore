@@ -16,7 +16,7 @@
 
 #include "src/runtime/delegate/npu/op/max_pooling_npu.h"
 #include "src/runtime/delegate/npu/npu_converter_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int MaxPoolingNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                                const std::vector<mindspore::MSTensor> &out_tensors) {
   auto pooling_prim = primitive->value_as_MaxPoolFusion();
@@ -116,4 +116,4 @@ MaxPoolingNPUOp::~MaxPoolingNPUOp() {
     pooling_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

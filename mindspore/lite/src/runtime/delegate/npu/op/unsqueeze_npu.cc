@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/npu/op/unsqueeze_npu.h"
 #include <memory>
 
-namespace mindspore {
+namespace mindspore::lite {
 int UnsqueezeNPUOp::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                               const std::vector<mindspore::MSTensor> &out_tensors) {
   CHECK_LESS_RETURN(in_tensors.size(), 1);
@@ -78,4 +78,4 @@ UnsqueezeNPUOp::~UnsqueezeNPUOp() {
     axis_const_ = nullptr;
   }
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

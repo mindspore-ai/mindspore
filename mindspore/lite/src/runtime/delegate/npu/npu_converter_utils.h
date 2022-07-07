@@ -31,7 +31,7 @@
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 enum NCHW_SHAPE { NCHW_INVALID = -1, NCHW_N = 0, NCHW_C = 1, NCHW_H = 2, NCHW_W = 3 };
 enum NHWC_SHAPE { NHWC_N = 0, NHWC_H = 1, NHWC_W = 2, NHWC_C = 3 };
 inline const std::vector<int> NHWC2NCHW_PERM = {0, 3, 1, 2};
@@ -118,5 +118,5 @@ hiai::op::Const *GetNPUConst(const uint8_t *const_data, const std::vector<int64_
   const_op->set_attr_value(const_tensor);
   return const_op;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_NPU_CONVERTER_UTILS_H_

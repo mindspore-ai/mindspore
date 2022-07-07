@@ -17,7 +17,7 @@
 #include "src/runtime/delegate/coreml/op/convolution_coreml.h"
 #include <cmath>
 #include "src/runtime/delegate/delegate_utils.h"
-namespace mindspore {
+namespace mindspore::lite {
 int ConvolutionCoreMLOp::IsSupport() {
   if (!in_tensors_[kWeightIndex].IsConst()) {
     MS_LOG(WARNING) << "CoreML convolution does not support dynamic weight.";
@@ -68,4 +68,4 @@ int ConvolutionCoreMLOp::SetConvParam() {
   act_type_ = conv_prim_->activation_type();
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

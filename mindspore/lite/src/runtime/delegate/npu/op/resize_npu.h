@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/npu_op.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class ResizeNPUOp : public NPUOp {
  public:
   ResizeNPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -51,5 +51,5 @@ class ResizeNPUOp : public NPUOp {
   ge::Operator *resize_ = nullptr;
   hiai::op::Const *out_size_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_RESIZE_NPU_H_

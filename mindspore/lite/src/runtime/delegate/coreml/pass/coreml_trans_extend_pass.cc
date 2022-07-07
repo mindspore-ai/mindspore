@@ -22,7 +22,7 @@
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-namespace mindspore {
+namespace mindspore::lite {
 std::set<mindspore::schema::PrimitiveType> format_depend_nodes = {
   schema::PrimitiveType_Conv2DFusion,  schema::PrimitiveType_Conv2dTransposeFusion,
   schema::PrimitiveType_MaxPoolFusion, schema::PrimitiveType_AvgPoolFusion,
@@ -313,4 +313,4 @@ int CoreMLTransExtendPass::Run(CoreMLGraph *subgraph) {
   }
   return RET_OK;
 }
-}  // namespace mindspore
+}  // namespace mindspore::lite

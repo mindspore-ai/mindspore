@@ -21,7 +21,7 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/delegate/npu/op/convolution_base_npu.h"
 
-namespace mindspore {
+namespace mindspore::lite {
 class FullconnectionINT8NPUOp : public ConvolutionBaseNPUOp {
  public:
   FullconnectionINT8NPUOp(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
@@ -50,5 +50,5 @@ class FullconnectionINT8NPUOp : public ConvolutionBaseNPUOp {
   hiai::op::QuantizedFullyConnection *fc_ = nullptr;
   hiai::op::Const *reshape_op_ = nullptr;
 };
-}  // namespace mindspore
+}  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_NPU_OP_FULLCONNECTION_INT8_NPU_H_
