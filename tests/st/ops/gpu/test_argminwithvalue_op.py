@@ -103,12 +103,12 @@ def argminwithvalue_3d(data_type, shape_x):
     assert (output[1].asnumpy() == expect2).all()
 
 
-def argminwithvalue_tensor(context_mode):
+def argminwithvalue_tensor(context_mode, np_type):
     context.set_context(mode=context_mode, device_target="GPU")
     x = Tensor(np.array([[1., 20., 5.],
                          [67., 8., 9.],
                          [130., 24., 15.],
-                         [0.3, -0.4, -15.]]).astype(np.float32))
+                         [0.3, -0.4, -15.]]).astype(np_type))
     return x.arg_min_with_value(axis=-1)
 
 
@@ -191,13 +191,18 @@ def test_argminwithvalue_tensor():
     expect_index = np.array([0, 1, 2, 2]).astype(np.int32)
     expect_output = np.array([1., 8., 15., -15.]).astype(np.float32)
 
-    index, output = argminwithvalue_tensor(context.GRAPH_MODE)
+    index, output = argminwithvalue_tensor(context.GRAPH_MODE, np.float32)
     assert (index.asnumpy() == expect_index).all()
     assert (output.asnumpy() == expect_output).all()
 
-    index, output = argminwithvalue_tensor(context.PYNATIVE_MODE)
+    index, output = argminwithvalue_tensor(context.PYNATIVE_MODE, np.float32)
     assert (index.asnumpy() == expect_index).all()
     assert (output.asnumpy() == expect_output).all()
+
+    expect_output_int16 = np.array([1., 8., 15., -15.]).astype(np.int16)
+    index, output = argminwithvalue_tensor(context.GRAPH_MODE, np.int16)
+    assert (index.asnumpy() == expect_index).all()
+    assert (output.asnumpy() == expect_output_int16).all()
 
 
 @pytest.mark.level1

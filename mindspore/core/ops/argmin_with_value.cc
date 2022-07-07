@@ -82,7 +82,7 @@ abstract::TupleShapePtr ArgMinWithValueInferShape(const PrimitivePtr &primitive,
 }
 
 TuplePtr ArgMinWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  const std::set<TypePtr> valid_types = {kInt16, kInt32, kUInt16, kUInt32, kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
