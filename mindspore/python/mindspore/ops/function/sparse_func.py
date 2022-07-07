@@ -130,12 +130,12 @@ def csr_to_coo(tensor):
         ``GPU``
 
     Examples:
-        >>> from mindspore import Tensor, COOTensor
-        >>> import mindspore as ms
-        >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
-        >>> values = Tensor([1, 2], dtype=ms.float32)
-        >>> shape = (3, 4)
-        >>> x = COOTensor(indices, values, shape)
+        >>> from mindspore import Tensor, CSRTensor
+        >>> indptr = Tensor([0, 1, 2]).astype("int32")
+        >>> indices = Tensor([0, 1]).astype("int32")
+        >>> values = Tensor([2, 1]).astype("float32")
+        >>> shape = (2, 4)
+        >>> x = CSRTensor(indptr, indices, values, shape)
         >>> output = ops.csr_to_coo(x)
         >>> print(output)
     """
