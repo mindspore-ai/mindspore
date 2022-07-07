@@ -102,6 +102,12 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
   for (auto &node : parallel_optimizer_recompute_allgathers) {
     auto cnode = node->cast<CNodePtr>();
     auto depend_node = common::AnfAlgo::GetInputNode(cnode, 0);
+    auto set_edge_node = node;
+    if (IsPrimitiveCNode(depend_node, prim::kPrimTensorMove)) {
+      auto tensormove_cnode = depend_node->cast<CNodePtr>();
+      set_edge_node = depend_node;
+      depend_node = common::AnfAlgo::GetInputNode(tensormove_cnode, 0);
+    }
     if (IsPrimitiveCNode(depend_node, prim::kPrimDepend)) {
       auto depend_cnode = depend_node->cast<CNodePtr>();
       AnfNodeIndexSet allgather_node_set = manager->node_users()[cnode];
@@ -115,7 +121,7 @@ bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
                                           allgather_next_node, common::AnfAlgo::GetInputNode(depend_cnode, 1)};
         auto new_depend = graph->NewCNode(inputs);
         new_depend->set_abstract(depend_node->abstract());
-        manager->SetEdge(node, 1, common::AnfAlgo::GetInputNode(depend_cnode, 0));
+        manager->SetEdge(set_edge_node, 1, common::AnfAlgo::GetInputNode(depend_cnode, 0));
         (void)manager->Replace(allgather_next_node, new_depend);
         changed = true;
       }
