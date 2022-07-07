@@ -135,8 +135,8 @@ mindspore.Tensor
 
         **参数：**
 
-        - **p** (Union[Tensor, float], optional) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
-        - **seed** (int) - 随机种子，用于生成随机数，数值范围是正数，默认取当前时间。默认值：-1。
+        - **p** (Union[Tensor, float], 可选) - shape需要可以被广播到当前Tensor。其数据类型为float32或float64。`p` 中每个值代表输出Tensor中对应广播位置为1的概率，数值范围在0到1之间。默认值：0.5。
+        - **seed** (int, 可选) - 随机种子，用于生成随机数，数值范围是正数，默认取当前时间。默认值：-1。
 
         **返回：**
 
