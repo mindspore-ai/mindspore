@@ -984,7 +984,7 @@ def logical_not(x):
     return logical_not_(x)
 
 
-def logical_or(x):
+def logical_or(x, y):
     """
     Computes the "logical OR" of two tensors element-wise.
 
@@ -1023,10 +1023,10 @@ def logical_or(x):
         >>> print(output)
         [ True  True  True]
     """
-    return logical_or_(x)
+    return logical_or_(x, y)
 
 
-def logical_and(x):
+def logical_and(x, y):
     r"""
     Computes the "logical AND" of two tensors element-wise.
 
@@ -1065,7 +1065,7 @@ def logical_and(x):
         >>> print(output)
         [ True False False]
     """
-    return logical_and_(x)
+    return logical_and_(x, y)
 
 
 def sin(x):
