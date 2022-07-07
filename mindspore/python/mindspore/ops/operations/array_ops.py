@@ -6343,7 +6343,7 @@ class MaskedSelect(PrimitiveWithCheck):
 
     def check_dtype(self, x_dtype, mask_dtype):
         validator.check_tensor_dtype_valid('mask', mask_dtype, [mstype.bool_], self.name)
-        validator.check_tensor_dtype_valid('x', x_dtype, mstype.number_type, self.name)
+        validator.check_tensor_dtype_valid('x', x_dtype, (mstype.bool_,) + mstype.number_type, self.name)
 
 
 class SearchSorted(PrimitiveWithInfer):
