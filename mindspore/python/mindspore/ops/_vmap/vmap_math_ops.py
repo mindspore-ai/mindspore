@@ -121,6 +121,33 @@ def get_cdist_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(math_ops.STFT)
+def get_stft_vmap_rule(prim, axis_size):
+    """VmapRule for `stft` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim, win_bdim):
+        x, x_dim = x_bdim
+        win, win_dim = win_bdim
+
+        if x_dim is None and win_dim is None:
+            out = prim(x, win)
+            return (out, None)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        win = _bdim_at_front(win, win_dim, axis_size)
+
+        out = batch_prim(x, win)
+        return (out, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(math_ops.Lerp)
 def get_lerp_vamp_rule(prim, axis_size):
     """VmapRule for ternary operations with broadcasting, such as `Lerp` ."""
@@ -189,7 +216,7 @@ def get_broadcast_grad_grad_vmap_rule(prim, axis_size):
         dx2_shape = F.shape(dx2)
 
         if x1_dim == x2_dim and dx1_dim == dx2_dim and x1_dim == dx1_dim \
-            and x1_shape == x2_shape and dx1_shape == dx2_shape:
+                and x1_shape == x2_shape and dx1_shape == dx2_shape:
             sopd_x1, sopd_x2, sopd_grad = prim(x1, x2, dx1, dx2)
             return (sopd_x1, x1_dim), (sopd_x2, x1_dim), (sopd_grad, x1_dim)
 

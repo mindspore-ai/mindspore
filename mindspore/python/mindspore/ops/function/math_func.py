@@ -4297,7 +4297,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         signal_dim = len(x.shape)
         pad = n_fft // 2
         if signal_dim == 1:
-            x = layer.Pad(((pad, pad)), pad_mode)(x)
+            x = layer.Pad(((pad, pad),), pad_mode)(x)
         elif signal_dim == 2:
             x = layer.Pad(((0, 0), (pad, pad)), pad_mode)(x)
         else:

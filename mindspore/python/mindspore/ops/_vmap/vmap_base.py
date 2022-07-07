@@ -18,6 +18,7 @@
 import mindspore.numpy as mnp
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops.operations import math_ops
 from mindspore.ops import constexpr
 from mindspore.ops.operations import _grad_ops as G
 from .._register_for_op import Registry
@@ -382,6 +383,7 @@ def _vmap_clone_prim(prim):
 
     return cloned
 
+
 _ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
                              "ApplyAdadelta": P.ApplyAdadelta,
                              "ApplyFtrl": P.ApplyFtrl,
@@ -391,4 +393,5 @@ _ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
                              "ApplyAdagradDA": P.ApplyAdagradDA,
                              "UniformCandidateSampler": UniformCandidateSampler,
                              "CdistGrad": G.CdistGrad,
-                             "Cdist": P.Cdist}
+                             "Cdist": P.Cdist,
+                             "STFT": math_ops.STFT}
