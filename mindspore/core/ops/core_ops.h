@@ -229,6 +229,9 @@ constexpr auto kHSwishGrad = "HSwishGrad";
 constexpr auto kSparseApplyAdagradDA = "SparseApplyAdagradDA";
 constexpr auto kMaxPool3DWithArgmax = "MaxPool3DWithArgmax";
 
+// Random
+constexpr auto kStandardNormal = "StandardNormal";
+
 // CSRTensor
 constexpr auto kMakeCSRTensor = "MakeCSRTensor";
 constexpr auto kCSRTensorGetValues = "CSRTensorGetValues";
@@ -1201,7 +1204,7 @@ GVAR_DEF(PrimitivePtr, kPrimDynamicBroadcastGradientArgs, std::make_shared<Primi
 
 // Random
 GVAR_DEF(PrimitivePtr, kPrimStandardLaplace, std::make_shared<Primitive>("StandardLaplace"));
-GVAR_DEF(PrimitivePtr, kPrimStandardNormal, std::make_shared<Primitive>("StandardNormal"));
+GVAR_DEF(PrimitivePtr, kPrimStandardNormal, std::make_shared<Primitive>(kStandardNormal));
 GVAR_DEF(PrimitivePtr, kPrimRandomNormal, std::make_shared<Primitive>("RandomNormal"));
 GVAR_DEF(PrimitivePtr, kPrimNonDeterministicInts, std::make_shared<Primitive>("NonDeterministicInts"));
 GVAR_DEF(PrimitivePtr, kPrimTruncatedNormal, std::make_shared<Primitive>("TruncatedNormal"));

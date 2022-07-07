@@ -318,6 +318,7 @@ Tensor创建
     mindspore.ops.random_categorical
     mindspore.ops.standard_laplace
     mindspore.ops.uniform
+    mindspore.ops.standard_normal
 
 Array操作
 ^^^^^^^^^^^^^^^^

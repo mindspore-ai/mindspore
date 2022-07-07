@@ -359,6 +359,7 @@ constexpr const char kNameKLDiv[] = "KLDivLoss";
 constexpr const char kNameStringLength[] = "StringLength";
 constexpr const char kNameGetShape[] = "GetShape";
 constexpr const char kNameKlDivLossGrad[] = "KLDivLossGrad";
+constexpr const char kNameRandomStandardNormal[] = "RandomStandardNormal";
 
 class OpAdapterDesc;
 

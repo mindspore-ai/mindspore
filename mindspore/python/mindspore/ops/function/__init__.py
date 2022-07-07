@@ -284,6 +284,7 @@ from .random_func import (
     standard_laplace,
     random_categorical,
     uniform,
+    standard_normal,
 )
 
 __all__ = []
