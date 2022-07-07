@@ -15,6 +15,7 @@
 
 """Inner operators for reinforcement learning."""
 
+from __future__ import absolute_import
 import functools
 from mindspore.common.dtype import type_size_in_bytes
 import mindspore.context as context
