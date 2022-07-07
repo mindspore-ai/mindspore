@@ -336,8 +336,9 @@ class OBSMindDataset(GeneratorDataset):
         dataset_files (list[str]): List of files in cloud storage to be read and file path is in
             the format of s3://bucketName/objectKey.
         server (str): Endpoint for accessing cloud storage.
-            If cloud storage is OBS, the endpoint is the form of <obs.cn-north-4.myhuaweicloud.com>.
-            If cloud storage is Minio, the endpoint is the form of <https://your-endpoint:9000>.
+            If it's OBS Service of Huawei Cloud，the endpoint is
+            like <obs.cn-north-4.myhuaweicloud.com> (Region cn-north-4).
+            If it's Minio which starts locally, the endpoint is like <https://127.0.0.1:9000>.
         ak (str): Access key ID of cloud storage.
         sk (str): Secret key ID of cloud storage.
         sync_obs_path (str): Remote dir path used for synchronization, users need to
@@ -382,12 +383,18 @@ class OBSMindDataset(GeneratorDataset):
 
     Examples:
         >>> # OBS
-        >>> dataset_obs_dir = ["s3://dataset/imagenet21k/mr_imagenet21k_01",
-        ...                    "s3://dataset/imagenet21k/mr_imagenet21k_02"]
-        >>> sync_obs_dir = "s3://work/sync_node"
+        >>> bucket = "iris"  # your obs bucket name
+        >>> # the bucket directory structure is similar to the following:
+        >>> #  - imagenet21k
+        >>> #        | - mr_imagenet21k_01
+        >>> #        | - mr_imagenet21k_02
+        >>> #  - sync_node
+        >>> dataset_obs_dir = ["s3://" + bucket + "/imagenet21k/mr_imagenet21k_01",
+        ...                    "s3://" + bucket + "/imagenet21k/mr_imagenet21k_02"]
+        >>> sync_obs_dir = "s3://" + bucket + "/sync_node"
         >>> num_shards = 8
         >>> shard_id = 0
-        >>> dataset = ds.OBSMindDataset(dataset_obs_dir, "https://obs.cn-north-4.myhuaweicloud.com",
+        >>> dataset = ds.OBSMindDataset(dataset_obs_dir, "obs.cn-north-4.myhuaweicloud.com",
         ...                             "AK of OBS", "SK of OBS",
         ...                             sync_obs_dir, shuffle=True, num_shards=num_shards, shard_id=shard_id)
     """
