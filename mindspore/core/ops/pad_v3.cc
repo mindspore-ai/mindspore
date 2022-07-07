@@ -51,8 +51,8 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
     MS_EXCEPTION(ValueError) << "For 'PadV3', the length of 'paddings' should be even, but got " << paddings_size;
   }
   int64_t paddings_dim = paddings_size / 2;
-  (void)CheckAndConvertUtils::CheckInteger("the length of padding", paddings_size, kLessEqual, nSix, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("the pad dims", paddings_dim, kLessEqual, size, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("length of padding", paddings_size, kLessEqual, nSix, prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("pad dims", paddings_dim, kLessEqual, size, prim_name);
   auto mode = GetValue<string>(primitive->GetAttr("mode"));
   if (mode != kReflect) {
     (void)CheckAndConvertUtils::CheckInteger("input dims for constant or edge mode", size, kLessEqual, kConstantMaxDims,
@@ -60,7 +60,7 @@ abstract::ShapePtr PadV3InferShape(const PrimitivePtr &primitive, const std::vec
   } else {
     (void)CheckAndConvertUtils::CheckInteger("input dims for reflect mode", size, kLessEqual, kReflectMaxDims,
                                              prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("the length of padding for reflect mode", paddings_size, kLessEqual, nFour,
+    (void)CheckAndConvertUtils::CheckInteger("length of padding for reflect mode", paddings_size, kLessEqual, nFour,
                                              prim_name);
   }
 
