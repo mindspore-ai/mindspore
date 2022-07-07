@@ -1032,9 +1032,9 @@ mindspore.Tensor
 
         **参数：**
 
-        - **p** (int) - 范数。
-        - **dim** (int) - 维度。
-        - **maxnorm** (float) - 给定的最大范数。
+        - **p** (int) - 范数计算的幂。
+        - **dim** (int) - 获得子张量的维度。
+        - **maxnorm** (float32) - 给定的最大范数。
 
         **返回：**
 
@@ -1044,7 +1044,7 @@ mindspore.Tensor
 
         - **TypeError** - `p` 不是int类型。
         - **TypeError** - `dim` 不是int类型。
-        - **TypeError** - `maxnorm` 不是float类型。
+        - **TypeError** - `maxnorm` 不是float32类型。
         - **ValueError** - `p` 小于等于0。
 
     .. py:method:: repeat(repeats, axis=None)
