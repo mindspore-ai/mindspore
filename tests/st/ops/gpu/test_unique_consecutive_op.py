@@ -216,6 +216,27 @@ def test_unique_consecutive_1d_float():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_unique_consecutive_0d():
+    """
+    Feature: UniqueConsecutive operator.
+    Description: Test UniqueConsecutive operator with 0-dimensional data.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x = Tensor(5)
+    net = NetUniqueConsecutive(return_idx=True, return_counts=True, axis=None)
+    out, idx, counts = net(x)
+    exp_out = np.array([5])
+    exp_idx = 0
+    exp_counts = np.array([1])
+    assert (out.asnumpy() == exp_out).all()
+    assert idx.asnumpy() == exp_idx
+    assert (counts.asnumpy() == exp_counts).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_unique_consecutive_3d():
     """
     Feature: UniqueConsecutive operator.
