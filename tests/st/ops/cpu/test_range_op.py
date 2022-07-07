@@ -88,6 +88,36 @@ def test_range_op_float():
     assert np.array_equal(result.asnumpy(), expect)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_range_op_int_reserve():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is int and delta is negative.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(8, ms.int32), ms.Tensor(1, ms.int32), ms.Tensor(-1, ms.int32))
+    expect = np.array([8, 7, 6, 5, 4, 3, 2], np.int32)
+    assert np.array_equal(result.asnumpy(), expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_range_op_float_reserve():
+    """
+    Feature: test Range op on CPU.
+    Description: test the Range when input is float and delta is negative.
+    Expectation: result is right.
+    """
+    range_op = ms.ops.Range()
+    result = range_op(ms.Tensor(8, ms.float32), ms.Tensor(1, ms.float32), ms.Tensor(-1, ms.float32))
+    expect = np.array([8, 7, 6, 5, 4, 3, 2], np.float32)
+    assert np.array_equal(result.asnumpy(), expect)
+
+
 if __name__ == '__main__':
     test_int()
     test_float()
