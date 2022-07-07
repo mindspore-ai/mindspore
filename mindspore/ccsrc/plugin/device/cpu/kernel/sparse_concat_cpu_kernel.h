@@ -47,8 +47,7 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
  private:
   template <typename T, typename S>
   bool SparseConcat(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                    const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size, const int size,
-                    const int axis);
+                    const std::vector<kernel::AddressPtr> &outputs, const size_t shape_size, const int size);
   template <typename T, typename S>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                     const std::vector<kernel::AddressPtr> &outputs);
@@ -58,7 +57,7 @@ class SparseConcatCpuKernelMod : public NativeCpuKernelMod {
   std::pair<bool, size_t> Match2OutputAttrFromNode(const KernelAttr &kernel_attr,
                                                    const std::vector<KernelAttr> &kernel_attr_list);
   SparseConcatFunc kernel_func_;
-  bool expand_nonconcat_dims_;
+  int64_t concat_dim_;
   size_t input_num_;
   static std::vector<std::pair<KernelAttr, SparseConcatFunc>> func_list_;
 };

@@ -7,9 +7,6 @@ from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 
 
-context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-
-
 class SparseConcatNet(nn.Cell):
     def construct(self, input_list, concat_dim, num):
         sp_input = []
@@ -203,10 +200,13 @@ def test_sparse_concat_int():
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     values_types = (mstype.int8, mstype.int16, mstype.int32, mstype.int64, \
                      mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
+    indices_types = (mstype.int64, mstype.int16, mstype.int32)
     for v_type in values_types:
-        sparse_concat_int(mstype.int32, v_type)
+        for i_type in indices_types:
+            sparse_concat_int(i_type, v_type)
 
 
 @pytest.mark.level0
@@ -218,4 +218,6 @@ def test_sparse_concat_float():
     Description: Test spare_concat, test different inputs.
     Expectation: Success.
     """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
     sparse_concat_float(mstype.int32, mstype.float32)
+    sparse_concat_float(mstype.int32, mstype.float16)

@@ -32,15 +32,15 @@ using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
 constexpr size_t kFirstInput = 0;
-constexpr size_t kSpInputIndicesStart = 1;
-constexpr size_t kSpInputValuesStart = 2;
-constexpr size_t kSpInputShapesStart = 3;
-constexpr auto kExpandNonconcatDim = "expand_nonconcat_dim";
+constexpr size_t kSpInputIndicesStart = 0;
+constexpr size_t kSpInputValuesStart = 1;
+constexpr size_t kSpInputShapesStart = 2;
+constexpr auto kConcatDim = "concat_dim";
 
 inline void CheckSparseConcatShape(const size_t sparse_shape_size, const size_t expected_dim,
-                                   const std::string &arg_name) {
+                                   const std::string &arg_name, const std::string &prim_name) {
   if (sparse_shape_size != expected_dim) {
-    MS_EXCEPTION(mindspore::ValueError) << "For " << arg_name << "must be a " << expected_dim
+    MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << ", " << arg_name << " must be a " << expected_dim
                                         << "-dimension, but got a " << sparse_shape_size
                                         << "-dimension in SparseConcat.";
   }
@@ -53,7 +53,7 @@ std::vector<TypePtr> SparseConcatInferType(const PrimitivePtr &primitive,
   if (!input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>() &&
       !input_args[kSpInputIndicesStart]->isa<abstract::AbstractList>()) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name
-                                        << "the sp_input must be a list or tuple of sparse tensor. but got: "
+                                        << ", the sp_input must be a list or tuple of sparse tensor. but got: "
                                         << input_args[kSpInputIndicesStart]->ToString() << ".";
   }
   auto inputs_indices = input_args[kSpInputIndicesStart]->isa<abstract::AbstractTuple>()
@@ -111,7 +111,7 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[0]->BuildShape())[kShape];
   auto indices_element0_rank = indices_element0_shape.size();
   size_t indices_expect_rank = 2;
-  CheckSparseConcatShape(indices_element0_rank, indices_expect_rank, "shape");
+  CheckSparseConcatShape(indices_element0_rank, indices_expect_rank, "indices shape", prim_name);
 
   auto inputs_values = input_args[kSpInputValuesStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSpInputValuesStart]->cast<abstract::AbstractTuplePtr>()->elements()
@@ -119,7 +119,7 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
   auto values_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_values[0]->BuildShape())[kShape];
   auto values_element0_rank = values_element0_shape.size();
   size_t values_expect_rank = 1;
-  CheckSparseConcatShape(values_element0_rank, values_expect_rank, "shape");
+  CheckSparseConcatShape(values_element0_rank, values_expect_rank, "values shape", prim_name);
 
   auto inputs_shapes = input_args[kSpInputShapesStart]->isa<abstract::AbstractTuple>()
                          ? input_args[kSpInputShapesStart]->cast<abstract::AbstractTuplePtr>()->elements()
@@ -127,7 +127,7 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
   auto shapes_element0_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[0]->BuildShape())[kShape];
   auto shapes_element0_rank = shapes_element0_shape.size();
   size_t shapes_expect_rank = 1;
-  CheckSparseConcatShape(shapes_element0_rank, shapes_expect_rank, "shape");
+  CheckSparseConcatShape(shapes_element0_rank, shapes_expect_rank, "shape shape", prim_name);
   if (indices_element0_shape[1] != shapes_element0_shape[0]) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << prim_name << "the indices shape rank is "
                                         << indices_element0_shape[1] << "but the shape rank is "
@@ -143,7 +143,6 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
   out_indices_shape.push_back(indices_element0_shape[1]);
   std::vector<int64_t> out_values_shape = {0};
   auto out_shape_shape = shapes_element0_shape;
-  auto expand_nonconcat_dim = GetValue<bool>(primitive->GetAttr(kExpandNonconcatDim));
   for (unsigned int i = 0; i < inputs_indices.size(); i++) {
     auto indices_element_shape =
       CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_indices[i]->BuildShape())[kShape];
@@ -151,27 +150,23 @@ std::vector<abstract::ShapePtr> SparseConcatInferShape(const PrimitivePtr &primi
     auto shapes_element_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(inputs_shapes[i]->BuildShape())[kShape];
     out_indices_shape[0] += indices_element_shape[0];
     out_values_shape[0] += values_element_shape[0];
-    if (expand_nonconcat_dim != false) {
-      MS_EXCEPTION(mindspore::ValueError) << "expand_nonconcat_dim unsupported now.";
-    } else {
-      if ((out_indices_shape[1] != indices_element_shape[1]) || (out_shape_shape != shapes_element_shape)) {
-        MS_EXCEPTION(mindspore::ValueError)
-          << "For " << prim_name << "indices or shape rank is not fit. The No.0 indice shape rank is "
-          << out_indices_shape[1] << "dense shape rank is " << out_shape_shape << "The No." << i << "indices number is "
-          << indices_element_shape[1] << "dense shape rank is " << shapes_element_shape << ".";
-      }
-      if (indices_element_shape[0] != values_element_shape[0]) {
-        MS_EXCEPTION(mindspore::ValueError)
-          << "For " << prim_name << "The No." << i
-          << "indices element number is not equal with values element number. Indices number is "
-          << indices_element_shape[0] << "but values is " << values_element_shape[0] << ".";
-      }
-      // unknown shape handle, unsupported -2 now
-      if (indices_element_shape[0] == -1) {
-        out_indices_shape[0] = -1;
-        out_values_shape[0] = -1;
-        break;
-      }
+    if ((out_indices_shape[1] != indices_element_shape[1]) || (out_shape_shape != shapes_element_shape)) {
+      MS_EXCEPTION(mindspore::ValueError)
+        << "For " << prim_name << "indices or shape rank is not fit. The No.0 indice shape rank is "
+        << out_indices_shape[1] << "dense shape rank is " << out_shape_shape << "The No." << i << "indices number is "
+        << indices_element_shape[1] << "dense shape rank is " << shapes_element_shape << ".";
+    }
+    if (indices_element_shape[0] != values_element_shape[0]) {
+      MS_EXCEPTION(mindspore::ValueError)
+        << "For " << prim_name << "The No." << i
+        << "indices element number is not equal with values element number. Indices number is "
+        << indices_element_shape[0] << "but values is " << values_element_shape[0] << ".";
+    }
+    // unknown shape handle, unsupported -2 now
+    if (indices_element_shape[0] == -1) {
+      out_indices_shape[0] = -1;
+      out_values_shape[0] = -1;
+      break;
     }
   }
   std::vector<abstract::ShapePtr> out_shape = {};
@@ -188,7 +183,7 @@ AbstractBasePtr SparseConcatInfer(const abstract::AnalysisEnginePtr &, const Pri
   for (auto item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  const int64_t kInputNum = 4;
+  const int64_t kInputNum = 3;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, prim_name);
   auto infer_types = SparseConcatInferType(primitive, input_args);
   auto infer_shapes = SparseConcatInferShape(primitive, input_args);
@@ -200,13 +195,15 @@ AbstractBasePtr SparseConcatInfer(const abstract::AnalysisEnginePtr &, const Pri
   return std::make_shared<AbstractTuple>(ret);
 }
 
-void SparseConcat::set_expand_nonconcat_dim(const bool &expand_nonconcat_dim) {
-  (void)this->AddAttr(kExpandNonconcatDim, api::MakeValue(expand_nonconcat_dim));
+void SparseConcat::Init(int64_t concat_dim) { this->set_concat_dim(concat_dim); }
+
+void SparseConcat::set_concat_dim(const int64_t &concat_dim) {
+  (void)this->AddAttr(kConcatDim, api::MakeValue(concat_dim));
 }
 
-bool SparseConcat::get_expand_nonconcat_dim() const {
-  auto value_ptr = GetAttr(kExpandNonconcatDim);
-  return GetValue<bool>(value_ptr);
+int64_t SparseConcat::get_concat_dim() const {
+  auto value_ptr = GetAttr(kConcatDim);
+  return GetValue<int64_t>(value_ptr);
 }
 
 MIND_API_OPERATOR_IMPL(SparseConcat, BaseOperator);

@@ -38,17 +38,17 @@ class MIND_API SparseConcat : public BaseOperator {
         "sp_input_values",
         "sp_input_shapes",
       },
-      {"expand_nonconcat_dim"});
+      {"concat_dim"});
   }
   /// \brief Init.
   /// Refer to the parameters of python API @ref mindspore.ops.sparse_ops.SparseConcat for the more details.
-  void Init(bool expand_nonconcat_dim);
-  /// \brief Set expand_nonconcat_dim.
-  void set_expand_nonconcat_dim(const bool &expand_nonconcat_dim);
-  /// \brief Get expand_nonconcat_dim.
+  void Init(int64_t concat_dim);
+  /// \brief Set concat_dim.
+  void set_concat_dim(const int64_t &concat_dim);
+  /// \brief Get concat_dim.
   ///
-  /// \return bool expand_nonconcat_dim value.
-  bool get_expand_nonconcat_dim() const;
+  /// \return bool concat_dim value.
+  int64_t get_concat_dim() const;
 };
 abstract::AbstractBasePtr SparseConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                             const std::vector<abstract::AbstractBasePtr> &input_args);
