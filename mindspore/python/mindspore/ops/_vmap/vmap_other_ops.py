@@ -14,6 +14,7 @@
 # ============================================================================
 
 """other_ops vmap impl."""
+from __future__ import absolute_import
 
 from mindspore.ops import operations as P
 from ..primitive import Primitive
@@ -82,7 +83,7 @@ def get_partical_vmap_rule(prim, axis_size):
             else:
                 val, dim = val_bdim
                 if dim is not None:
-                    _raise_value_error("The source axis of args in `{}` must be None, "
+                    _raise_value_error("The source axis of args in {} must be None, "
                                        "but got {}.".format(prim_name, dim))
                 vals = vals + (val,)
 
