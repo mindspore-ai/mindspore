@@ -31,6 +31,7 @@ TensorArrayStackCpuKernelMod::TensorArrayStackCpuKernelMod()
 
 void TensorArrayStackCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
+  ResetResource();
   kernel_node_ = kernel_node;
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "element_shape");
