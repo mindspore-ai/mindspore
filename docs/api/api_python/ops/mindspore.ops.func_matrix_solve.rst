@@ -5,6 +5,12 @@ mindspore.ops.matrix_solve
 
     求解线性方程组。
 
+    .. math::
+        \begin{aligned}
+        &matrix[..., M, M] * x[..., M, K] = rhs[..., M, K]\\
+        &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
+        \end{aligned}
+
     **参数：**
 
     - **matrix** (Tensor) - 输入Tensor， shape 为 :math:`[..., M, M]`。
