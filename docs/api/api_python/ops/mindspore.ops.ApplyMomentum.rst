@@ -5,7 +5,7 @@
 
     使用动量算法的优化器。
 
-    更多详细信息，请参阅论文 `关于深度学习中初始化和动量的重要性 <https://dl.acm.org/doi/10.5555/3042817.3043064>`_ 。
+    更多详细信息，请参阅论文 `On the importance of initialization and momentum in deep learning <https://dl.acm.org/doi/10.5555/3042817.3043064>`_ 。
 
     输入的 `variable` 、 `accumulation` 和 `gradient` 的输入遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
@@ -13,8 +13,8 @@
 
     **参数：**
     
-    - **use_locking** (bool) - 是否启用锁，以保护 `variable` 和 `accumulation` 不被更新。默认值：False。
-    - **use_nesterov** (bool) - 是否启用涅斯捷罗夫动量。默认值：False。
+    - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
+    - **use_nesterov** (bool) - 是否使用nesterov动量。默认值：False。
     - **gradient_scale** (float) - 梯度的缩放比例。默认值：1.0。
 
     **输入：**

@@ -16,7 +16,7 @@
             var = var - \frac{l}{1 - \beta_1^{t+1}} * \frac{m_{t+1}}{v_{t+1} + \epsilon}
         \end{array}
 
-    :math:`t` 表示更新步长， :math:`m` 为一阶矩， :math:`m_{t}` 是上一步的 :math:`m_{t+1}` ， :math:`v` 为二阶矩， :math:`v_{t}` 是上一步的 :math:`v_{t+1}` ， :math:`l` 代表学习率 `lr` ， :math:`g` 代表 `grad` ， :math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`\beta_1^{t+1}` 代表 `beta1_power` ， :math:`var` 代表要更新的网络参数， :math:`\epsilon` 代表 `epsilon` 。
+    :math:`t` 表示更新步数， :math:`m` 为一阶矩， :math:`m_{t}` 是上一步的 :math:`m_{t+1}` ， :math:`v` 为二阶矩， :math:`v_{t}` 是上一步的 :math:`v_{t+1}` ， :math:`l` 代表学习率 `lr` ， :math:`g` 代表 `grad` ， :math:`\beta_1, \beta_2` 代表 `beta1` 和 `beta2` ， :math:`\beta_1^{t+1}` 代表 `beta1_power` ， :math:`var` 代表要更新的网络参数， :math:`\epsilon` 代表 `epsilon` 。
 
     `var` 、 `m` 、 `v` 和 `grad` 的输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 

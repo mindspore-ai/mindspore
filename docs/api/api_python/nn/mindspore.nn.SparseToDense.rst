@@ -3,7 +3,7 @@ mindspore.nn.SparseToDense
 
 .. py:class:: mindspore.nn.SparseToDense
 
-    将稀疏Tensor转换为稠密Tensor。
+    将稀疏Tensor(COO Tensor)转换为稠密Tensor。
 
     在Python中，为了方便使用，三个Tensor被收集到一个SparseTensor类中。MindSpore使用三个独立的稠密Tensor： `indices` 、 `values` 和 `dense_shape` 来表示稀疏Tensor。在调用 :class:`mindspore.ops.SparseToDense` 之前，可以单独的将 `indices` 、 `values` 和 `dense_shape` 传递给稀疏Tensor对象。
 

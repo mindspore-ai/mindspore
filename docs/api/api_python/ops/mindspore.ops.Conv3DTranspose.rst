@@ -21,19 +21,19 @@ mindspore.ops.Conv3DTranspose
 
     **参数：**
 
-    - **in_channel** (int) - 输入 `dout` 的空间维度。
-    - **out_channel** (int) - 输入 `weight` 的空间维度。
+    - **in_channel** (int) - 输入 `dout` 的通道数。
+    - **out_channel** (int) - 输入 `weight` 的通道数。
     - **kernel_size** (Union[int, tuple[int]]) - 指定三维卷积核的深度、高度和宽度。数据类型为int或包含三个int值的Tuple。为int时表示卷积核的深度、高度和宽度均为该值。包含三个int值的Tuple分别表示卷积核的深度、高度和宽度。
     - **mode** (int) - 指定不同的卷积模式。此值目前未被使用。默认值： 1。
     - **pad_mode** (str) - 指定填充模式。可选值为"same"、"valid"、"pad"。默认值: "valid"。
 
       - same: 填充输入。输出的深度、高度和宽度分别与对应输入整除 `stride` 后的值相同。
-        同一维度的padding将被尽可能均匀填充在两侧，额外的padding将被填充在尾侧。
+        同一维度的padding将被尽可能均匀填充在两侧，额外的padding将被填充在维度末端。
         若设置该模式，`pad` 的值必须为0。
 
       - valid: 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。如果设置此模式，则 `pad` 的值必须为0。
 
-      - pad: 在输入深度、高度和宽度各维度两侧进行自动填充。如果设置此模式， `pad` 的值必须大于或等于0。
+      - pad: 在输入深度、高度和宽度各维度两侧添加 `pad` 数量的填充。如果设置此模式， `pad` 的值必须大于或等于0。
       
     - **pad** (Union(int, tuple[int])) - 在输入各维度两侧填充的数量。如果 `pad` 是一个整数，则前部、后部、顶部，底部，左边和右边的填充都等于 `pad` 。如果 `pad` 是6个整数的Tuple，则前部、后部、顶部、底部、左边和右边的填充分别等于填充 `pad[0]` 、 `pad[1]` 、 `pad[2]` 、 `pad[3]` 、 `pad[4]` 和 `pad[5]` 。默认值：0。
     - **stride** (Union(int, tuple[int])) - 三维卷积核的移动步长。数据类型为整型或三个整型的Tuple。一个整数表示在深度、高度和宽度方向的移动步长均为该值。三个整数的Tuple分别表示在深度、高度和宽度方向的移动步长。默认值：1。
@@ -63,4 +63,4 @@ mindspore.ops.Conv3DTranspose
     - **ValueError** - `pad_mode` 未设定为"pad"且 `pad` 不等于(0, 0, 0, 0, 0, 0)。
     - **ValueError** - `data_format` 取值非"NCDHW"。
     - **TypeError** - `dout` 或 `weight` 的数据类型不是float16。
-    - **ValueError** - `bias` 不为None。 `dout` 或 `weight` 的轶不为5。
+    - **ValueError** - `bias` 不为None。 `dout` 或 `weight` 的秩不为5。

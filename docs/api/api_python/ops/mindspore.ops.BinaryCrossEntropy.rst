@@ -36,7 +36,7 @@ mindspore.ops.BinaryCrossEntropy
 
     **输出：**
 
-    Tensor或Scalar，如果 `reduction` 为'none'，则输出为Tensor，其shape与 `logits` 相同。否则，输出为Scalar。
+    Tensor，与 `logits` 有相同的数据类型。如果 `reduction` 为'none'，则shape与 `logits` 相同。否则，输出为Scalar Tensor。
 
     **异常：**
 

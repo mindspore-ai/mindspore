@@ -5,7 +5,7 @@ mindspore.ops.Adam
 
     通过Adam算法更新梯度。
 
-    Adam算法首次提出，参见 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_ 。
+    Adam算法详情请参考 `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_ 。
 
     有关更多详细信息，参见 :class:`mindspore.nn.Adam` 。
 

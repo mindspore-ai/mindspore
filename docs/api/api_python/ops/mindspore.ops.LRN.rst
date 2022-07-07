@@ -10,8 +10,8 @@ mindspore.ops.LRN
         \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
     其中 :math:`a_{c}` 表示特征图中 :math:`c` 对应的具体像素值；
-     :math:`n/2` 为参数 `depth_radius` ； :math:`k` 为参数 `bias` ；
-     :math:`\alpha` 为参数 `alpha` ； :math:`\beta` 为参数 `beta` 。
+    :math:`n/2` 为参数 `depth_radius` ； :math:`k` 为参数 `bias` ；
+    :math:`\alpha` 为参数 `alpha` ； :math:`\beta` 为参数 `beta` 。
 
     **参数：**
 

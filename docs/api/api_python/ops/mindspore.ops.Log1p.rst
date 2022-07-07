@@ -12,7 +12,7 @@ mindspore.ops.Log1p
 
     - **x** (Tensor) - 输入Tensor。数据类型为float16或float32。
       该值必须大于-1。
-      shape： :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度，其轶应小于8。
+      shape： :math:`(N,*)` 其中 :math:`*` 表示任何数量的附加维度，其秩应小于8。
 
     **输出：**
 

@@ -3,7 +3,7 @@ mindspore.ops.DynamicRNN
 
 .. py:class:: mindspore.ops.DynamicRNN(cell_type='LSTM', direction='UNIDIRECTIONAL', cell_depth=1, use_peephole=False, keep_prob=1.0, cell_clip=-1.0, num_proj=0, time_major=True, activation='tanh', forget_bias=0.0, is_training=True)
 
-    将循环神经网络应用到输入上。当前仅支持长短期记忆。
+    将循环神经网络应用到输入上。当前仅支持LSTM。
 
     .. math::
         \begin{array}{ll} \\
@@ -15,12 +15,12 @@ mindspore.ops.DynamicRNN
             h_{t+1} = o_{t+1} * \tanh(c_{t+1}) \\
         \end{array}
 
-    其中， 
-	:math:`h_{t+1}` 是在 `t+1` 时刻的隐藏状态。 
-	:math:`x_{t+1}` 是在 `t+1` 时刻的输入。
-	:math:`h_{t}` 是在 `t` 时刻的隐藏状态或在 `0` 时刻的初始隐藏状态。
-	:math:`\sigma` 是sigmoid函数， :math:`*` 是 `Hadamard` 积。
-	:math:`W, b` 是公式中输出和输入之间的可学习权重。 
+    其中，
+    :math:`h_{t+1}` 是在 `t+1` 时刻的隐藏状态。 
+    :math:`x_{t+1}` 是在 `t+1` 时刻的输入。
+    :math:`h_{t}` 是在 `t` 时刻的隐藏状态或在 `0` 时刻的初始隐藏状态。
+    :math:`\sigma` 是sigmoid函数， :math:`*` 是 `Hadamard` 积。
+    :math:`W, b` 是公式中输出和输入之间的可学习权重。 
 
     例如， :math:`W_{ix}和b_{ix}` 是把 :math:`x` 转换为 :math:`i` 的权重和偏置。
 
