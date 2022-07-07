@@ -69,7 +69,7 @@ abstract::TupleShapePtr ArgMaxWithValueInferShape(const PrimitivePtr &primitive,
 TuplePtr ArgMaxWithValueInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   TypePtr input_x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_x_type, valid_types, prim->name());
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", input_x_type, valid_types, prim->name());
   auto index_type = std::make_shared<TensorType>(kInt32);
   return std::make_shared<Tuple>(std::vector<TypePtr>{index_type, input_x_type});
 }
