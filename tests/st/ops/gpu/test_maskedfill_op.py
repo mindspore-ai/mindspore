@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -129,6 +130,40 @@ def test_maskedfill_float_value():
     Expectation: The result match to expect.
     """
     maskedfill_value(0.5)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_func_masked_fill_float():
+    """
+    Feature: Test func masked_fill.
+    Description: Test func masked_fill api with float value.
+    Expectation: The result match to expect.
+    """
+    inputs = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float16))
+    mask = Tensor(np.array([[True, True, False, True], [False, False, True, False]]).astype(np.bool))
+    value = 22
+    expect = np.array([[22, 22, 3, 22], [5, 6, 22, 8]]).astype(np.float16)
+    output = F.masked_fill(inputs, mask, value)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor_masked_fill_float():
+    """
+    Feature: Test Tensor masked_fill.
+    Description: Test Tensor masked_fill api with float value.
+    Expectation: The result match to expect.
+    """
+    inputs = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]).astype(np.float16))
+    mask = Tensor(np.array([[True, True, False, True], [False, False, True, False]]).astype(np.bool))
+    value = 22
+    output = inputs.masked_fill(mask, value)
+    expect = np.array([[22, 22, 3, 22], [5, 6, 22, 8]]).astype(np.float16)
+    assert (output.asnumpy() == expect).all()
 
 
 @pytest.mark.level0
