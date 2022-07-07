@@ -607,26 +607,28 @@ def _interpolate_output_shape(shape, scales, sizes, mode):
 
 def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_mode="align_corners", mode="linear"):
     r"""
-    Using the interpolate method specified by 'mode' resize the input tensor 'x'.
+    Using the interpolate method specified by `mode` resize the input tensor `x`.
 
     .. warning::
         - This is an experimental prototype that is subject to change.
-        - The 'roi' is reserved interface for 'crop_and_resize' coordinate transformation mode,
+        - The `roi` is reserved interface for 'crop_and_resize' coordinate transformation mode,
           which is not support now.
-        - The Ascend platforms is currently not supported when 'mode' is "linear".
+        - The Ascend platforms is currently not supported when `mode` is "linear".
         - The 'half_pixel' coordinate_transformation_mode is currently not supported on CPU device
           when mode is "bilinear".
 
     Args:
-        x (Tensor): a 3-D or 4-D tensor which to resize.
+        x (Tensor): a tensor which to resize. `x` is a 3-D tensor when `mode` is "linear". `x` is a 4-D tensor when
+            `mode` is "bilinear".
         roi (tuple[float], optional): a tuple of float. Only takes effect when attr coordinate_transformation_mode is
             'crop_and_resize'.
-        scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension. Its length is the
-            same as that of shape of `x`. Only one of 'scales' and 'sizes' can be specified.
-        sizes (tuple[int], optional): a tuple of int, describes the shape of the output tensor. Only one of 'scales'
-            and 'sizes' can be specified.  If 'size' is specified, then set 'scales' to 'None' in this operator's input
-            list. It is 1 int elements :math:`(new\_width,)` when 'mode' is "linear". It is 2 int elements
-            :math:`(new\_height, new\_width)` when 'mode' is "bilinear".
+        scales (tuple[float], optional): a tuple of float. Describe the scale along each dimension.
+            Its length is the same as that of shape of `x`. The numbers in `scales` must all be positive. Only one of
+            `scales` and `sizes` can be specified.
+        sizes (tuple[int], optional): a tuple of int, describes the shape of the output tensor. The numbers in `sizes`
+            must all be positive. Only one of `scales` and `sizes` can be specified.  If `sizes` is specified, then set
+            `scales` to 'None' in this operator's input list. It is 1 int elements :math:`(new\_width,)` when `mode`
+            is "linear". It is 2 int elements :math:`(new\_height, new\_width)` when `mode` is "bilinear".
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
         mode (string): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
@@ -640,15 +642,16 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
     Raises:
         TypeError: If `x` is not a Tensor.
         TypeError: If `scales` is not a float tuple.
-        TypeError: If `size` is not a int tuple.
+        ValueError: If not all numbers in `scales` are positive.
+        TypeError: If `sizes` is not a int tuple.
+        ValueError: If not all numbers in `sizes` are positive.
         TypeError: If `coordinate_transformation_mode` is not a string.
         TypeError: If `coordinate_transformation_mode` is not in the support list.
         TypeError: If `mode` is not a string.
         TypeError: If `mode` is not in the support list.
 
     Examples:
-        >>> x = Tensor(np.array([[[1, 2, 3],
-                                  [4, 5, 6]]]), mindspore.float32)
+        >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
         >>> output = ops.interpolate(x, None, None, (6,), "align_corners")
         >>> print(output)
         [[[1. 1.4 1.8 2.2 2.6 3.]
