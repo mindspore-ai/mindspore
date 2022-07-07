@@ -13,24 +13,21 @@ mindspore.dataset.WaitedDSCallback
 
     .. note:: 注意，第2个step或epoch开始时才会触发该调用。
 
-    **参数：**
-
-    - **step_size** (int, optional) - 每个step包含的数据行数。通常step_size与batch_size一致，默认值：1。
+    参数：
+        - **step_size** (int, optional) - 每个step包含的数据行数。通常step_size与batch_size一致，默认值：1。
 
     .. py:method:: sync_epoch_begin(train_run_context, ds_run_context)
 
         用于定义在数据epoch开始前，训练epoch结束后执行的回调方法。
 
-        **参数：**
-
-        - **train_run_context**：包含前一个epoch的反馈信息的网络训练运行信息。
-        - **ds_run_context**：数据处理管道运行信息。
+        参数：
+            - **train_run_context** - 包含前一个epoch的反馈信息的网络训练运行信息。
+            - **ds_run_context** - 数据处理管道运行信息。
 
     .. py:method:: sync_step_begin(train_run_context, ds_run_context)
 
         用于定义在数据step开始前，训练step结束后执行的回调方法。
 
-        **参数：**
-
-        - **train_run_context**：包含前一个step的反馈信息的网络训练运行信息。
-        - **ds_run_context**：数据处理管道运行信息。
+        参数：
+            - **train_run_context** - 包含前一个step的反馈信息的网络训练运行信息。
+            - **ds_run_context** - 数据处理管道运行信息。
