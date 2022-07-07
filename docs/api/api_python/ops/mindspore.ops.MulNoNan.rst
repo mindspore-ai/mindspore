@@ -27,5 +27,5 @@
 
     **异常：**
 
-    - **TypeError** - 如果 `x` 和 `y` 都不是bool类型的Tensor。
+    - **TypeError** - 如果 `x` 和 `y` 都不是Tensor。
     

@@ -7,7 +7,7 @@ mindspore.ops.bernoulli
 
     .. math::
 
-        out_{i} ~ Bernoulli(p_{i})
+        out_{i} \sim Bernoulli(p_{i})
 
     **参数：**
 

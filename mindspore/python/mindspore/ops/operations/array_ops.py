@@ -3117,31 +3117,6 @@ class Slice(Primitive):
     Slices a tensor in the specified shape.
 
     Refer to :func:`mindspore.ops.slice` for more detail.
-    Slice the tensor `input_x` in shape of `size` and starting at the location specified by `begin`,
-    The slice `begin` represents the offset in each dimension of `input_x`,
-    The slice `size` represents the size of the output tensor.
-
-    Note that `begin` is zero-based and `size` is one-based.
-
-    If `size[i]` is -1, all remaining elements in dimension i are included in the slice.
-    This is equivalent to setting :math:`size[i] = input_x.shape(i) - begin[i]`.
-
-    Inputs:
-        - **input_x** (Tensor): The target tensor.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
-        - **begin** (Union[tuple, list]): The beginning of the slice. Only constant value(>=0) is allowed.
-        - **size** (Union[tuple, list]): The size of the slice. Only constant value is allowed.
-
-    Outputs:
-        Tensor, the shape is : input `size`, the data type is the same as `input_x`.
-
-    .. warning::
-        This is an experimental prototype that is subject to change and/or deletion.
-
-    Raises:
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If `begin` or `size` is neither tuple nor list.
-        ValueError: If `input_x`, `begin` and `size` not be equal in size.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
