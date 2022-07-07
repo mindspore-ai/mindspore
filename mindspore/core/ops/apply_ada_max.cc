@@ -52,7 +52,12 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
   auto grad_shape = input_args[kInputIndex8]->BuildShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
   // beta1_power,lr,beta1,beta2,epsilon must be scalar
-  const int64_t kInputShape = 1;
+  size_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+  const int64_t kInputShape = batch_rank;
   (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape.size()), kLessEqual,
                                            kInputShape, prim_name);
   if (beta1_power_shape.size() == 1) {

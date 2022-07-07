@@ -28,6 +28,53 @@ from .._vmap.vmap_base import vmap_rules_getters, vmap_general_preprocess, get_u
     _bdim_at_front, _bdim_at_back, get_unary_grad_vmap_rule, _raise_value_error, _vmap_clone_prim
 
 
+@vmap_rules_getters.register(P.ApplyAdaMax)
+def get_apply_ada_max_rule(prim, axis_size):
+    """VmapRule for `ApplyAdaMax` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(var_bdim, m_bdim, v_bdim, beta1_power_bdim, lr_bdim, beta1_bdim, beta2_bdim,
+                  epsilon_bdim, grad_bdim, u_monad):
+        var, var_dim = var_bdim
+        m, m_dim = m_bdim
+        v, v_dim = v_bdim
+        lr, lr_dim = lr_bdim
+        beta1_power, beta1_power_dim = beta1_power_bdim
+        beta1, beta1_dim = beta1_bdim
+        beta2, beta2_dim = beta2_bdim
+        epsilon, epsilon_dim = epsilon_bdim
+        grad, grad_dim = grad_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [m_bdim, v_bdim, beta1_power_bdim, lr_bdim, beta1_bdim, beta2_bdim,
+                                               epsilon_bdim, grad_bdim]):
+                raise ValueError("The source axis of `var` is None, but the source "
+                                 "axis of `accum/lr/beta1/beta1_power/beta2/epsilon/grad` is not None. "
+                                 "The execution order of operator `{}` cannot be guaranteed.".format(prim_name))
+            var, m, v = prim(var, m, v, beta1_power, lr, beta1, beta2, epsilon, grad, u_monad)
+            return (var, None), (m, None), (v, None)
+        if var_dim != 0 or m_dim != var_dim or var_dim != v_dim:
+            raise ValueError("For `{}`, the source axis of `var` must be equal to `accum`, and not equal to 0, "
+                             "but got the source axis of `var`: {}, `accum`: {}.".format(prim_name, var_dim, m_dim))
+
+        lr = _bdim_at_front(lr, lr_dim, axis_size)
+        beta1_power = _bdim_at_front(beta1_power, beta1_power_dim, axis_size)
+        beta1 = _bdim_at_front(beta1, beta1_dim, axis_size)
+        beta2 = _bdim_at_front(beta2, beta2_dim, axis_size)
+        epsilon = _bdim_at_front(epsilon, epsilon_dim, axis_size)
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        var, m, v = batch_prim(var, m, v, beta1_power, lr, beta1, beta2, epsilon, grad, u_monad)
+        return (var, 0), (m, 0), (v, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(P.ApplyAdadelta)
 def get_apply_adadelta_rule(prim, axis_size):
     """VmapRule for `ApplyAdadelta` operation."""
