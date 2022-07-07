@@ -39,5 +39,6 @@ AbstractBasePtr ReduceMeanInfer(const abstract::AnalysisEnginePtr &, const Primi
 }
 
 REGISTER_PRIMITIVE_C(kNameReduceMean, ReduceMean);
+REGISTER_HOST_DEPENDS(kNameReduceMean, {1});
 }  // namespace ops
 }  // namespace mindspore

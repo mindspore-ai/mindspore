@@ -23,6 +23,7 @@
 #include <memory>
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/shared_ptr.h"
+#include "mindapi/base/shape_vector.h"
 #include "./op_name.h"
 
 namespace mindspore::ops {
@@ -63,5 +64,7 @@ api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
   }
   return api::MakeShared<T>(prim);
 }
+
+bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs);
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H
