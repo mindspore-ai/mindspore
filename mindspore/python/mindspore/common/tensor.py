@@ -2517,6 +2517,8 @@ class Tensor(Tensor_):
             [0. 1. 0. 0.]
         """
         self._init_check()
+        if isinstance(value, (float, int)):
+            value = tensor_operator_registry.get("scalar_to_tensor")(value, self.dtype)
         if not isinstance(mask, Tensor):
             raise TypeError("For 'Tensor.masked_fill', the type of the argument 'mask' must be Tensor, but "
                             "got {}.".format(type(mask)))
