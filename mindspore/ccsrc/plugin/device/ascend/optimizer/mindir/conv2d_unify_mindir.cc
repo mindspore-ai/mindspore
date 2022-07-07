@@ -75,8 +75,8 @@ bool NeedUpdate(const CNodePtr &conv2d, ShapeVector in_shape, ShapeVector out_sh
 bool IsPynative() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  return ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode ||
-         ms_context->get_param<int>(MS_CTX_ENABLE_PYNATIVE_INFER);
+  return (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) ||
+         (ms_context->get_param<int>(MS_CTX_ENABLE_PYNATIVE_INFER) != 0);
 }
 
 ValueNodePtr CreatePermValueNode(const FuncGraphPtr &func_graph, const std::vector<int64_t> &perm) {
