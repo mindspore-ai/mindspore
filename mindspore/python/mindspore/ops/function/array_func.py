@@ -1737,8 +1737,7 @@ def scatter_nd_mul(input_x, indices, updates, use_locking=False):
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_mul = ops.ScatterNdMul()
-        >>> output = scatter_nd_mul(input_x, indices, updates)
+        >>> output = ops.scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [ 1. 16. 18.  4. 35.  6.  7. 72.]
         >>> input_x = Parameter(Tensor(np.ones((4, 4, 4)), mindspore.int32))
