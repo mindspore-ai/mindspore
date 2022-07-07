@@ -616,6 +616,7 @@ class GraphSplitByPattern:
         self.enable_recompute = self.flags.get("enable_recompute_fusion", False)
         self.enable_stitch_fusion = self.flags.get("enable_stitch_fusion", False)
         self.enable_horizontal_fusion = self.flags.get("enable_horizontal_fusion", False)
+        self.reduce_fuse_depth = self.flags.get("reduce_fuse_depth", -1)
         self.reach_tab = self.ReachTable(len(graph.ops) + 1 if self.enable_recompute else len(graph.ops))
         self.area_map = {}
         _, outputs = graph.deduce_parameters()
@@ -870,8 +871,11 @@ class GraphSplitByPattern:
 class GraphSplitGpu(GraphSplitByPattern):
     """Graph splitter"""
     BROADCAST_FUSE_DEPTH = 20
-    REDUCE_FUSE_DEPTH = 20
     TRANSPOSE_FUSE_DEPTH = 6
+
+    def __init__(self, graph, flags):
+        super().__init__(graph, flags)
+        self.reduce_fuse_depth = 20 if self.reduce_fuse_depth < 0 else self.reduce_fuse_depth
 
     def get_default_mode(self, op):
         """Get default mode in GPU"""
@@ -911,7 +915,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             return fused, False
 
         def _reduce_pat_exclude(_, a, r):
-            if len(a.ops) > self.REDUCE_FUSE_DEPTH:
+            if len(a.ops) > self.reduce_fuse_depth:
                 return True
             return a.pattern > PrimLib.ELEMWISE or r > PrimLib.REDUCE or r == PrimLib.BROADCAST
 
@@ -1274,7 +1278,10 @@ class GraphSplitGpu(GraphSplitByPattern):
 class GraphSplitAscend(GraphSplitByPattern):
     """Graph splitter"""
     BROADCAST_FUSE_DEPTH = 6
-    REDUCE_FUSE_DEPTH = 10
+
+    def __init__(self, graph, flags):
+        super().__init__(graph, flags)
+        self.reduce_fuse_depth = 10 if self.reduce_fuse_depth < 0 else self.reduce_fuse_depth
 
     def get_default_mode(self, op):
         """Get default mode for Ascend"""
@@ -1326,7 +1333,7 @@ class GraphSplitAscend(GraphSplitByPattern):
             return fused, False
 
         def _reduce_pat_exclude(dom, a, r):
-            if len(a.ops) > self.REDUCE_FUSE_DEPTH:
+            if len(a.ops) > self.reduce_fuse_depth:
                 return True
             if r == PrimLib.BROADCAST and _likely_multicore(dom) and \
                     (dom.is_output or len(dom.ops) > self.BROADCAST_FUSE_DEPTH):

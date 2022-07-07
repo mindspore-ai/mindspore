@@ -130,6 +130,12 @@ class GraphKernelFlags {
   unsigned int opt_level{0};  // defaults 0 or 2
 
   /**
+   * Maximum number of dom ops to fuse with reduce. Valid value should be non-negative.
+   * If set negative, default value(20 on GPU/CPU, 10 on Ascend) will be used.
+   */
+  int reduce_fuse_depth{-1};
+
+  /**
    * Online tuning level, value from 0 to 3.
    * 0: Disable online tuning
    * 1-3: The higher level, the larger tuning space, and the more time it takes.
