@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/lamb_next_mv_rule.h"
 #include <memory>
+#include <utility>
 #include <algorithm>
 #include "include/common/utils/utils.h"
 #include "backend/common/optimizer/helper.h"
@@ -24,7 +25,7 @@
 namespace mindspore {
 namespace opt {
 bool LambNextMVRule::IsRuleMatched(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
-                                   std::vector<AnfNodePtr> *old_pattern_outputs) const {
+                                   std::vector<AnfNodePtr> *const old_pattern_outputs) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(equiv);
   auto real_div0 = GetAnfNodeByVar(equiv, real_div0_var_);

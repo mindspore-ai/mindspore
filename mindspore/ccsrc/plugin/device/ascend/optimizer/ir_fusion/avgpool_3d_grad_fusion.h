@@ -16,7 +16,6 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_AVGPOOL_3D_GRAD_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_AVGPOOL_3D_GRAD_FUSION_H_
-#include <vector>
 #include <memory>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
@@ -29,7 +28,7 @@ class AvgPool3DGradFusion : public PatternProcessPass {
   explicit AvgPool3DGradFusion(bool multigraph = true) : PatternProcessPass("avg_pool_3d_grad_fusion", multigraph) {}
   ~AvgPool3DGradFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

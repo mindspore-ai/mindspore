@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/input_to_output_registry.h"
-#include <utility>
 #include "include/common/utils/utils.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"

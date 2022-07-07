@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_REMOVE_RESHAPE_PAIR_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_REMOVE_RESHAPE_PAIR_H_
 
-#include <utility>
 #include "ir/anf.h"
 #include "backend/common/optimizer/pattern_engine.h"
 #include "backend/common/optimizer/helper.h"
@@ -30,7 +29,8 @@ class RemoveReshapePair : public PatternProcessPass {
   explicit RemoveReshapePair(bool multigraph = true) : PatternProcessPass("remove_reshape_pair", multigraph) {}
   ~RemoveReshapePair() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                           const EquivPtr &equiv) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

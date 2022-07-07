@@ -29,7 +29,7 @@ class RefreshParameterFormat : public Pass {
  public:
   explicit RefreshParameterFormat(size_t groups = 1) : Pass("refresh_parameter_format"), groups_(groups) {}
   ~RefreshParameterFormat() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   size_t groups_ = 1;

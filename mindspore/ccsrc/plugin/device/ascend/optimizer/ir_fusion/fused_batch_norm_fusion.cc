@@ -109,7 +109,7 @@ AnfNodePtr FusedBatchNormFusion::CreateBNTrainingReduce(const FuncGraphPtr &func
 
 void FusedBatchNormFusion::GetBNTrainingUpdateInputs(const EquivPtr &equiv,
                                                      const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
-                                                     std::vector<AnfNodePtr> *bn_training_update_inputs) const {
+                                                     std::vector<AnfNodePtr> *const bn_training_update_inputs) const {
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(bn_training_update_inputs);
   *bn_training_update_inputs = {
@@ -125,7 +125,7 @@ void FusedBatchNormFusion::GetBNTrainingUpdateInputs(const EquivPtr &equiv,
 }
 
 void FusedBatchNormFusion::GetBNTrainingUpdateAbstractList(const EquivPtr &equiv, const AnfNodePtr &bn,
-                                                           std::vector<AbstractBasePtr> *abstract_list) const {
+                                                           std::vector<AbstractBasePtr> *const abstract_list) const {
   MS_EXCEPTION_IF_NULL(equiv);
   MS_EXCEPTION_IF_NULL(bn);
   MS_EXCEPTION_IF_NULL(abstract_list);

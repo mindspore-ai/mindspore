@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,12 +314,12 @@ const AnfNodePtr AdamApplyOneWithDecayRule::Process(const FuncGraphPtr &graph, c
   fusion_node->set_scope(sub0->scope());
 
   auto iter_add0 = (*equiv).find(add0_var_);
-  if (iter_add0 == (*equiv).end()) {
+  if (iter_add0 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add0 var after matched."
                       << trace::DumpSourceLines(node);
   }
   auto iter_add1 = (*equiv).find(add1_var_);
-  if (iter_add1 == (*equiv).end()) {
+  if (iter_add1 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched."
                       << trace::DumpSourceLines(node);
   }

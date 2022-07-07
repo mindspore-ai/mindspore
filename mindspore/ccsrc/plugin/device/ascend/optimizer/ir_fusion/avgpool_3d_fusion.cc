@@ -162,7 +162,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, int64_t fn, int64
   std::vector<int64_t> assist_shape = {fn, fc, dd, dh, dw};  // NCDHW
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   MS_EXCEPTION_IF_NULL(tensor);
-  auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
+  auto tensor_data = static_cast<float16 *>(tensor->data_c());
   auto pad_d = pad_list[kDim0] + pad_list[kDim1];
   auto pad_h = pad_list[kDim2] + pad_list[kDim3];
   auto pad_w = pad_list[kDim4] + pad_list[kDim5];
@@ -217,7 +217,7 @@ AnfNodePtr ConstructFilterValueNode(const FuncGraphPtr &func_graph, float val, c
   TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
   tensor::DeviceInfo device_info{kOpFormat_FRACTAL_Z_3D, tensor_type, kOpFormat_FRACTAL_Z_3D};
   assist_tensor->set_device_info(device_info);
-  auto tensor_data = reinterpret_cast<float16 *>(assist_tensor->data_c());
+  auto tensor_data = static_cast<float16 *>(assist_tensor->data_c());
   for (int64_t i = 0; i < cnt; ++i) {
     for (int64_t j = 0; j < kC0; ++j) {
       for (int64_t k = 0; k < kC0; ++k) {
@@ -296,13 +296,14 @@ const AnfNodePtr AvgPool3DFusion::Process(const FuncGraphPtr &func_graph, const 
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3D->name()))};
-  (void)new_inputs.insert(new_inputs.end(), avg_pool_3d_node->inputs().begin() + 1, avg_pool_3d_node->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_node->inputs().cbegin() + 1,
+                          avg_pool_3d_node->inputs().cend());
   // assist node 1
   auto filter_node = ConstructFilter(func_graph, pad_list, fc, kd, kh, kw, ceil_mode, divisor_override);
   new_inputs.push_back(filter_node);
   MS_EXCEPTION_IF_NULL(filter_node);
   // assist node 2
-  if ((!IsZeroPads(pad_list) || ceil_mode) && !divisor_override) {
+  if ((!IsZeroPads(pad_list) || ceil_mode) && divisor_override == 0) {
     auto multiplier = ConstructMultiplier(func_graph, fn, fc, fd, fh, fw, dout, dh, dw, kd, kh, kw, sd, sh, sw,
                                           pad_list, count_include_pad);
     new_inputs.push_back(multiplier);

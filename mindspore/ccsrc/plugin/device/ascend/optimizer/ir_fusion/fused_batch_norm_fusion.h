@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,15 +43,15 @@ class FusedBatchNormFusion : public PatternProcessPass {
   }
   ~FusedBatchNormFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const override;
 
  protected:
   AnfNodePtr CreateBNTrainingReduce(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                     const EquivPtr &equiv) const;
   void GetBNTrainingUpdateInputs(const EquivPtr &equiv, const std::vector<AnfNodePtr> &bn_training_reduce_outputs,
-                                 std::vector<AnfNodePtr> *bn_training_update_inputs) const;
+                                 std::vector<AnfNodePtr> *const bn_training_update_inputs) const;
   void GetBNTrainingUpdateAbstractList(const EquivPtr &equiv, const AnfNodePtr &bn,
-                                       std::vector<AbstractBasePtr> *abstract_list) const;
+                                       std::vector<AbstractBasePtr> *const abstract_list) const;
   AnfNodePtr CreateBNTrainingUpdate(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
                                     const std::vector<AnfNodePtr> &bn_training_reduce_outputs) const;
   ValuePtr GetFactor(const EquivPtr &equiv) const;
