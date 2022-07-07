@@ -6934,7 +6934,7 @@ class Dropout(PrimitiveWithCheck):
 
 class Dropout2D(PrimitiveWithInfer):
     r"""
-    During training, randomly zeroes some of the channels of the input tensor with probability 1-`keep_prob`
+    During training, randomly zeroes some channels of the input tensor with probability 1-`keep_prob`
     from a Bernoulli distribution(For a 4-dimensional tensor with a shape of NCHW, the channel feature map refers
     to a 2-dimensional feature map with the shape of HW).
 
@@ -6967,7 +6967,7 @@ class Dropout2D(PrimitiveWithInfer):
 
 class Dropout3D(PrimitiveWithInfer):
     r"""
-    During training, randomly zeroes some of the channels of the input tensor
+    During training, randomly zeroes some channels of the input tensor
     with probability 1-`keep_prob` from a Bernoulli distribution(For a 5-dimensional tensor with a shape of NCDHW,
     the channel feature map refers to a 3-dimensional feature map with a shape of DHW).
 

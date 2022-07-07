@@ -280,13 +280,12 @@ def celu(x, alpha=1.0):
 
 
 def dropout2d(x, p=0.5):
-    """
+    r"""
     During training, randomly zeroes some channels of the input tensor with probability `p`
-    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math: `NCHW`,
-    the channel feature map refers
-    to a 2-dimensional feature map with the shape of :math: `HW`).
+    from a Bernoulli distribution(For a 4-dimensional tensor with a shape of :math:`NCHW`,
+    the channel feature map refers to a 2-dimensional feature map with the shape of :math:`HW`).
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `2D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
@@ -302,12 +301,12 @@ def dropout2d(x, p=0.5):
         x (Tensor): A `4D` tensor with shape :math:`(N, C, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `H` is the feature height, and `W` is the feature width. The data type must be int8,
             int16, int32, int64, float16, float32 or float64.
-        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
 
     Returns:
-        output (Tensor): With the same shape and data type as `x`.
-        mask (Tensor): With the same shape as `x` and the data type is bool.
+        Tensor, output, with the same shape and data type as `x`.\n
+        Tensor, mask, with the same shape as `x` and the data type is bool.
 
     Raises:
         TypeError: If `x` is not a Tensor.
@@ -330,13 +329,13 @@ def dropout2d(x, p=0.5):
 
 
 def dropout3d(x, p=0.5):
-    """
+    r"""
     During training, randomly zeroes some channels of the input tensor
     with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor
-    with a shape of :math: `NCDHW`,
-    the channel feature map refers to a 3-dimensional feature map with a shape of :math: `DHW`).
+    with a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional
+    feature map with a shape of :math:`DHW`).
 
-    For example, the :math:`j_th` channel of the :math:`i_th` sample in the batched input is a to-be-processed
+    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
     Each channel will be zeroed out independently on every forward call which based on Bernoulli distribution
     probability `p`.
@@ -347,12 +346,12 @@ def dropout3d(x, p=0.5):
         x (Tensor): A `5D` tensor with shape :math:`(N, C, D, H, W)`, where `N` is the batch size, `C` is the number
             of channels, `D` is the feature depth, `H` is the feature height, and `W` is the feature width.
             The data type must be int8, int16, int32, int64, float16, float32 or float64.
-        p (float): The keeping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
+        p (float): The dropping probability of a channel, between 0 and 1, e.g. `p` = 0.8,
             which means dropping out 80% of channels. Default: 0.5.
 
     Returns:
-        output (Tensor): With the same shape and data type as `x`.
-        mask (Tensor): With the same shape as `x` and the data type is bool.
+        Tensor, output, with the same shape and data type as `x`.\n
+        Tensor, mask, with the same shape as `x` and the data type is bool.
 
     Raises:
         TypeError: If `x` is not a Tensor.
