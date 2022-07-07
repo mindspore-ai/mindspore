@@ -17,27 +17,26 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <cmath>
 #include "include/common/utils/anfalgo.h"
 #include "mindspore/core/ops/core_ops.h"
 
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t ScaleGradInputSize = 3;
+constexpr size_t kScaleGradInputSize = 3;
+constexpr double kFloatMinimal = 0.0000001;
 
 AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
                           const AnfNodePtr &node) {
   auto new_node = graph->NewCNode(new_node_inputs);
   MS_EXCEPTION_IF_NULL(new_node);
-
   new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   new_node->set_scope(node->scope());
   new_node->set_abstract(node->abstract());
-
   auto types = {common::AnfAlgo::GetOutputInferDataType(node, 0)};
   auto shapes = {common::AnfAlgo::GetOutputInferShape(node, 0)};
   common::AnfAlgo::SetOutputInferTypeAndShape(types, shapes, new_node.get());
-
   return new_node;
 }
 
@@ -75,7 +74,7 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
   MS_EXCEPTION_IF_NULL(scale_grad_cnode);
   const auto ori_inputs = scale_grad_cnode->inputs();
   auto input_size = ori_inputs.size();
-  if (input_size < ScaleGradInputSize) {
+  if (input_size < kScaleGradInputSize) {
     MS_LOG(EXCEPTION) << "ScaleGrad inputs size is less than 3!";
   }
 
@@ -95,9 +94,9 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
                         << TypeIdToString(scale_type_id);
     }
 
-    if (scale_value == 1.0) {
+    if (std::fabs(static_cast<double>(scale_value) - 1.0) < kFloatMinimal) {
       std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-      make_tuple_inputs.insert(make_tuple_inputs.end(), ori_inputs.begin() + 1, ori_inputs.end() - 1);
+      (void)make_tuple_inputs.insert(make_tuple_inputs.cend(), ori_inputs.begin() + 1, ori_inputs.end() - 1);
       auto make_tuple = graph->NewCNode(make_tuple_inputs);
       MS_EXCEPTION_IF_NULL(make_tuple);
       return make_tuple;
@@ -125,7 +124,7 @@ const AnfNodePtr ScaleGradFission::Process(const FuncGraphPtr &graph, const AnfN
   }
 
   std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
-  make_tuple_inputs.insert(make_tuple_inputs.end(), outputs.begin(), outputs.end());
+  (void)make_tuple_inputs.insert(make_tuple_inputs.end(), outputs.cbegin(), outputs.cend());
   auto make_tuple = graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
   return make_tuple;

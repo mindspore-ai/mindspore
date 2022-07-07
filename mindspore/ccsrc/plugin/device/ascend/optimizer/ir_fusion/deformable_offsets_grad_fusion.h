@@ -27,7 +27,7 @@ class DeformableOffsetsGradFusion : public PatternProcessPass {
       : PatternProcessPass("deformable_offsets_fission", multigraph) {}
   ~DeformableOffsetsGradFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   ValueNodePtr CreateHelperNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const ShapeVector &offset_shape,

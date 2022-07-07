@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_IR_FUSION_INPUT_TO_OUTPUT_REGISTRY_H_
 #include <string>
 #include <vector>
-#include <utility>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
@@ -28,7 +27,7 @@ using PreCheckFunc = std::function<bool(const CNodePtr &node)>;
 class InputToOutputRegister {
  public:
   explicit InputToOutputRegister(
-    const std::string &op_name = "", const PreCheckFunc &pre_check_func = [](const CNodePtr &node) { return true; })
+    const std::string &op_name = "", const PreCheckFunc &pre_check_func = [](const CNodePtr &) { return true; })
       : op_name_(op_name), pre_check_func_(pre_check_func) {}
   virtual ~InputToOutputRegister() = default;
 

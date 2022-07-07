@@ -58,7 +58,7 @@ tensor::TensorPtr CreateTensor() {
   }
   auto elem_num = last_dim * kFloat16Len * 2;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()),
-                           reinterpret_cast<void *>(half_data.data()), elem_num);
+                           static_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
     return nullptr;
@@ -167,7 +167,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   }
   // Copy a new node to check supported.
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kTopKOpName))};
-  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   CNodePtr new_cnode = NewCNode(new_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
   new_cnode->set_abstract(cnode->abstract());
@@ -184,7 +184,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   MS_EXCEPTION_IF_NULL(value);
   auto tensor = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
-  auto *data = reinterpret_cast<int32_t *>(tensor->data_c());
+  auto *data = static_cast<int32_t *>(tensor->data_c());
   MS_EXCEPTION_IF_NULL(data);
   auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data));
   new_cnode->set_input(kTopkIndexK + 1, new_value_node);

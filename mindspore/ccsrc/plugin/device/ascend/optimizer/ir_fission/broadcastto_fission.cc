@@ -23,34 +23,14 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &input_node,
-                     const bool fir_flag) {
-  std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
-  BaseShapePtr shape;
-  if (fir_flag) {
-    (void)new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
-    shape = common::AnfAlgo::GetOutputDetailShape(input_node->inputs()[kIndex1], 0);
-  } else {
-    (void)new_cast_inputs.emplace_back(input_node);
-    shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
-  }
-  CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph);
-  new_cast->set_scope(input_node->scope());
-  new_cast->set_abstract(input_node->abstract());
-  common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
-  common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {shape}, new_cast.get());
-  return new_cast;
-}
-}  // namespace
 const BaseRef BroadcasttoFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto broadcastto_prim = std::make_shared<Primitive>(prim::kPrimBroadcastTo->name());
   return VectorRef({broadcastto_prim, Xs});
 }
 
-CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
-                            const std::vector<int64_t> &broad_shape) {
+CNodePtr BroadcasttoFission::AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
+                                                const std::vector<int64_t> &broad_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   auto input_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);

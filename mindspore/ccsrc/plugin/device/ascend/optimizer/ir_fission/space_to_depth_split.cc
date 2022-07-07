@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ tensor::TensorPtr CreateTensor(const AnfNodePtr &node) {
   }
   auto elem_num = LongToSize(dest_size) * kFloat16Len;
   auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(assist_tensor->data().nbytes()),
-                           reinterpret_cast<void *>(half_data.data()), elem_num);
+                           static_cast<void *>(half_data.data()), elem_num);
   if (ret_code != 0) {
     MS_LOG(ERROR)
       << "Failed to copy data into Tensor while creating assist input for SpaceToDepth op, memcpy_s errorno: "
@@ -117,7 +117,7 @@ const AnfNodePtr SpaceToDepthSplit::Process(const FuncGraphPtr &graph, const Anf
 
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(kSpaceToDepthOpName))};
   auto last_input_value = CreateValueNode(cnode);
-  (void)new_inputs.insert(new_inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
   (void)new_inputs.emplace_back(last_input_value);
   CNodePtr new_cnode = NewCNode(new_inputs, graph);
   MS_EXCEPTION_IF_NULL(new_cnode);
