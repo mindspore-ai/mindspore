@@ -18,6 +18,7 @@
 
 #include <string>
 #include "backend/common/optimizer/pass.h"
+#include "common/graph_kernel/graph_kernel_helper.h"
 #include "common/graph_kernel/inplace_assign_builder.h"
 namespace mindspore::graphkernel {
 /**
@@ -58,6 +59,9 @@ class TensorInplace : public InplaceAssignBuilder {
  public:
   explicit TensorInplace(const std::string &name = "tensor_inplace") : InplaceAssignBuilder(name) {}
   ~TensorInplace() override = default;
+  void SetTargetAttrs(const CNodePtr &cnode) override {
+    SetNodeAttrSafely("enable_auto_inplace", MakeValue(true), cnode);
+  }
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace mindspore::graphkernel

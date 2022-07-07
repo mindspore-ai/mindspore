@@ -28,7 +28,14 @@ bool SaveOutputShape::Run(const FuncGraphPtr &func_graph) {
     // the MakeTuple with kMetaTypeNone
     return false;
   }
-  auto output = func_graph->output()->cast<CNodePtr>()->input(1)->cast<CNodePtr>();
+
+  auto last_maketuple = func_graph->output()->cast<CNodePtr>();
+  const auto kMultiInputsNum = 3;
+  if (last_maketuple->inputs().size() >= kMultiInputsNum) {
+    // MakeTuple of multi inputs
+    return false;
+  }
+  auto output = last_maketuple->input(1)->cast<CNodePtr>();
   if (output == nullptr) {
     return false;
   }
