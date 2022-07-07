@@ -163,8 +163,8 @@ class PadV3HelperGpuKernel : public GpuKernelHelperBase {
         int64_t output_size = input_shape_5d_[kMaxDim - i];
         if (before >= output_size || after >= output_size) {
           MS_EXCEPTION(ValueError)
-            << "For 'PadV3' of 'reflect' mode, paddings must be less than the input dimension size: " << before << ", "
-            << after << " not less than " << output_size;
+            << "For 'PadV3' of 'reflect' mode, paddings must be less than the input dimension size: " << before
+            << ", but " << after << " not less than " << output_size;
         }
       }
       (void)paddings_3d_.emplace_back(std::make_pair(before, after));
