@@ -17,11 +17,13 @@
 #include "plugin/device/gpu/kernel/math/matrix_solve_gpu_kernel.h"
 #include <vector>
 #include "mindspore/core/ops/matrix_solve.h"
-#include "plugin/device/gpu/kernel/gpu_kernel_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/matrix_transpose_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
+using mindspore::utils::Complex;
 using KernelRunFunc = MatrixSolveGpuKernelMod::KernelRunFunc;
 constexpr size_t kShape3D = 3;
 inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, float *const matrix_array[], int *pivot_array,
@@ -32,13 +34,15 @@ inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, double *
                                           int *info_array, int batch_size) {
   return cublasDgetrfBatched(handle, m, matrix_array, m, pivot_array, info_array, batch_size);
 }
-inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, cuComplex *const matrix_array[],
+inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, Complex<float> *matrix_array[],
                                           int *pivot_array, int *info_array, int batch_size) {
-  return cublasCgetrfBatched(handle, m, matrix_array, m, pivot_array, info_array, batch_size);
+  return cublasCgetrfBatched(handle, m, reinterpret_cast<cuComplex **>(matrix_array), m, pivot_array, info_array,
+                             batch_size);
 }
-inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, cuDoubleComplex *const matrix_array[],
+inline cublasStatus_t cublasXgetrfBatched(cublasHandle_t handle, int m, Complex<double> *matrix_array[],
                                           int *pivot_array, int *info_array, int batch_size) {
-  return cublasZgetrfBatched(handle, m, matrix_array, m, pivot_array, info_array, batch_size);
+  return cublasZgetrfBatched(handle, m, reinterpret_cast<cuDoubleComplex **>(matrix_array), m, pivot_array, info_array,
+                             batch_size);
 }
 inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation_t trans, int m, int k,
                                           const float *const matrix_array[], const int *pivot_array,
@@ -51,14 +55,18 @@ inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation
   return cublasDgetrsBatched(handle, trans, m, k, matrix_array, m, pivot_array, rhs_array, m, info, batch_size);
 }
 inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation_t trans, int m, int k,
-                                          const cuComplex *const matrix_array[], const int *pivot_array,
-                                          cuComplex *const rhs_array[], int *info, int batch_size) {
-  return cublasCgetrsBatched(handle, trans, m, k, matrix_array, m, pivot_array, rhs_array, m, info, batch_size);
+                                          Complex<float> *matrix_array[], const int *pivot_array,
+                                          Complex<float> *rhs_array[], int *info, int batch_size) {
+  auto cu_matrix_array = reinterpret_cast<cuComplex **>(matrix_array);
+  auto cu_rhs_array = reinterpret_cast<cuComplex **>(rhs_array);
+  return cublasCgetrsBatched(handle, trans, m, k, cu_matrix_array, m, pivot_array, cu_rhs_array, m, info, batch_size);
 }
 inline cublasStatus_t cublasXgetrsBatched(cublasHandle_t handle, cublasOperation_t trans, int m, int k,
-                                          const cuDoubleComplex *const matrix_array[], const int *pivot_array,
-                                          cuDoubleComplex *const rhs_array[], int *info, int batch_size) {
-  return cublasZgetrsBatched(handle, trans, m, k, matrix_array, m, pivot_array, rhs_array, m, info, batch_size);
+                                          Complex<double> *matrix_array[], const int *pivot_array,
+                                          Complex<double> *rhs_array[], int *info, int batch_size) {
+  auto cu_matrix_array = reinterpret_cast<cuDoubleComplex **>(matrix_array);
+  auto cu_rhs_array = reinterpret_cast<cuDoubleComplex **>(rhs_array);
+  return cublasZgetrsBatched(handle, trans, m, k, cu_matrix_array, m, pivot_array, cu_rhs_array, m, info, batch_size);
 }
 }  // namespace
 bool MatrixSolveGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -112,8 +120,6 @@ int MatrixSolveGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
 
   workspace_size_list_.clear();
   workspace_size_list_ = {
-    kShape3D * sizeof(size_t),      // dev_shape
-    kShape3D * sizeof(size_t),      // dev_axis
     matrix_size * type_size,        // matrix column major
     rhs_size * type_size,           // rhs column major
     batch_num_ * m_ * sizeof(int),  // pivoting sequence
@@ -132,32 +138,27 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *matrix = GetDeviceAddress<T>(inputs, kIndex0);
   T *rhs = GetDeviceAddress<T>(inputs, kIndex1);
 
-  auto dev_shape = GetDeviceAddress<size_t>(workspace, kIndex0);
-  auto dev_axis = GetDeviceAddress<size_t>(workspace, kIndex1);
-  auto matrix_col_major = GetDeviceAddress<T>(workspace, kIndex2);
-  auto rhs_col_major = GetDeviceAddress<T>(workspace, kIndex3);
-  auto piv_array = GetDeviceAddress<int>(workspace, kIndex4);
-  auto info_array = GetDeviceAddress<int>(workspace, kIndex5);
-  auto matrix_device_array = GetDeviceAddress<T *>(workspace, kIndex6);
-  auto rhs_device_array = GetDeviceAddress<T *>(workspace, kIndex7);
+  auto matrix_col_major = GetDeviceAddress<T>(workspace, kIndex0);
+  auto rhs_col_major = GetDeviceAddress<T>(workspace, kIndex1);
+  auto piv_array = GetDeviceAddress<int>(workspace, kIndex2);
+  auto info_array = GetDeviceAddress<int>(workspace, kIndex3);
+  auto matrix_device_array = GetDeviceAddress<T *>(workspace, kIndex4);
+  auto rhs_device_array = GetDeviceAddress<T *>(workspace, kIndex5);
 
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 
   // 1. Convert matrix and rhs to column major
   // Transpose matrix if complex adjoint
   if (trans_) {
-    const std::vector<size_t> matrix_shape = {LongToSize(batch_num_), LongToSize(m_), LongToSize(m_)};
-    MatrixTransposeND(matrix, matrix_shape, {kDim0, kDim2, kDim1}, dev_shape, dev_axis, matrix_col_major, cuda_stream_,
-                      kernel_name_);
+    MatrixTranspose(matrix, LongToSize(batch_num_ * m_ * m_), SizeToInt(m_), SizeToInt(m_), matrix_col_major,
+                    device_id_, cuda_stream_);
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(matrix_col_major, matrix, inputs[kIndex0]->size, cudaMemcpyDeviceToDevice, cuda_stream_),
       "cudaMemcpyAsync dst failed");
   }
-  // Transpose rhs to column major
-  const std::vector<size_t> rhs_shape = {LongToSize(batch_num_), LongToSize(m_), LongToSize(k_)};
-  MatrixTransposeND(rhs, rhs_shape, {kDim0, kDim2, kDim1}, dev_shape, dev_axis, rhs_col_major, cuda_stream_,
-                    kernel_name_);
+  MatrixTranspose(rhs, LongToSize(batch_num_ * m_ * k_), SizeToInt(m_), SizeToInt(k_), rhs_col_major, device_id_,
+                  cuda_stream_);
 
   // 2. LU factorization
   // Prepare matrix_array
@@ -203,8 +204,8 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   // 4. Convert matrix and rhs to row major
   const std::vector<size_t> rhs_col_shape = {LongToSize(batch_num_), LongToSize(k_), LongToSize(m_)};
-  MatrixTransposeND(rhs_col_major, rhs_col_shape, {kDim0, kDim2, kDim1}, dev_shape, dev_axis, output, cuda_stream_,
-                    kernel_name_);
+  MatrixTranspose(rhs_col_major, LongToSize(batch_num_ * m_ * k_), SizeToInt(k_), SizeToInt(m_), output, device_id_,
+                  cuda_stream_);
 
   return true;
 }
@@ -219,12 +220,12 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MatrixSolveGpuKernelMod
        .AddInputAttr(kNumberTypeComplex64)
        .AddInputAttr(kNumberTypeComplex64)
        .AddOutputAttr(kNumberTypeComplex64),
-     &MatrixSolveGpuKernelMod::LaunchKernel<cuComplex>},
+     &MatrixSolveGpuKernelMod::LaunchKernel<Complex<float>>},
     {KernelAttr()
        .AddInputAttr(kNumberTypeComplex128)
        .AddInputAttr(kNumberTypeComplex128)
        .AddOutputAttr(kNumberTypeComplex128),
-     &MatrixSolveGpuKernelMod::LaunchKernel<cuDoubleComplex>},
+     &MatrixSolveGpuKernelMod::LaunchKernel<Complex<double>>},
   };
   return func_list;
 }

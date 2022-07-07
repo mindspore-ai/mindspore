@@ -181,19 +181,8 @@ struct Mul {
 
 struct Div {
   template <typename T>
-  __device__ __forceinline__ T operator()(const T &dividend, const T &divisor) {
-    const T zero = T(0);
-    if (divisor == zero) {
-      if (dividend == zero) {
-        return std::numeric_limits<T>::quiet_NaN();
-      }
-      if (std::numeric_limits<T>::has_infinity) {
-        return dividend > zero ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
-      } else {
-        return dividend > zero ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
-      }
-    }
-    return dividend / divisor;
+  __device__ __forceinline__ T operator()(const T &lhs, const T &rhs) {
+    return lhs / rhs;
   }
 };
 

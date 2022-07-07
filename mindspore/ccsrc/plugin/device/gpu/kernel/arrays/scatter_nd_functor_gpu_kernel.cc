@@ -45,25 +45,35 @@ bool ScatterNdFunctorGPUKernelMod::LaunchKernel(const std::vector<AddressPtr> &i
   T *updates = GetDeviceAddress<T>(inputs, kIndex2);
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
   const size_t indices_len = sizeof(S) * out_strides_.size();
+  const size_t work_shape_len = sizeof(S) * work_shape_.size();
   S *indices_stride = GetDeviceAddress<S>(workspace, kIndex0);
+  S *work_shape = GetDeviceAddress<S>(workspace, kIndex1);
 
   auto cuda_stream = reinterpret_cast<cudaStream_t>(stream_ptr_);
 
   // The out_strides_ used to be std::vector<S>, use int as default outside
   if constexpr (std::is_same_v<S, int64_t>) {
     std::vector<int64_t> long_out_stride;
+    std::vector<int64_t> long_work_shape;
     std::transform(out_strides_.begin(), out_strides_.end(), std::back_inserter(long_out_stride), IntToLong);
+    std::transform(work_shape_.begin(), work_shape_.end(), std::back_inserter(long_work_shape), IntToLong);
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(indices_stride, long_out_stride.data(), indices_len, cudaMemcpyHostToDevice, cuda_stream),
+      "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(work_shape, long_work_shape.data(), work_shape_len, cudaMemcpyHostToDevice, cuda_stream),
       "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   } else {
     CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
       cudaMemcpyAsync(indices_stride, out_strides_.data(), indices_len, cudaMemcpyHostToDevice, cuda_stream),
       "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(work_shape, work_shape_.data(), work_shape_len, cudaMemcpyHostToDevice, cuda_stream),
+      "For 'ScatterNdFunctorGPUKernelMod', cudaMemcpyAsync failed in ScatterNdFunctorGpuFwdKernel::LaunchKernel.")
   }
 
-  CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices, updates,
-                      input, device_id_, cuda_stream);
+  CalScatterNdFunctor(scatter_nd_functor_type_, unit_size_, num_units_, index_depth_, indices_stride, indices,
+                      work_shape, updates, input, device_id_, cuda_stream);
 
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(output, input, inputs[0]->size, cudaMemcpyDeviceToDevice, cuda_stream),
@@ -104,13 +114,9 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
 
   // Shape in new API is std::vector<int64_t>, need to adapt to old api
-  const auto input_shape_64 = inputs.at(kIndex0)->GetShapeVector();
-  const auto indices_shape_64 = inputs.at(kIndex1)->GetShapeVector();
-  const auto updates_shape_64 = inputs.at(kIndex2)->GetShapeVector();
-  std::vector<size_t> input_shape, indices_shape, updates_shape;
-  (void)std::transform(input_shape_64.begin(), input_shape_64.end(), std::back_inserter(input_shape), LongToSize);
-  (void)std::transform(indices_shape_64.begin(), indices_shape_64.end(), std::back_inserter(indices_shape), LongToSize);
-  (void)std::transform(updates_shape_64.begin(), updates_shape_64.end(), std::back_inserter(updates_shape), LongToSize);
+  std::vector<size_t> input_shape = LongVecToSizeVec(inputs.at(kIndex0)->GetShapeVector());
+  std::vector<size_t> indices_shape = LongVecToSizeVec(inputs.at(kIndex1)->GetShapeVector());
+  std::vector<size_t> updates_shape = LongVecToSizeVec(inputs.at(kIndex2)->GetShapeVector());
   auto index_depth = indices_shape.back();
 
   is_null_input_ = CHECK_SHAPE_NULL(input_shape, kernel_name_, "input") ||
@@ -145,8 +151,14 @@ int ScatterNdFunctorGPUKernelMod::Resize(const BaseOperatorPtr &base_operator,
   }
   reverse(out_strides_.begin(), out_strides_.end());
 
+  work_shape_.clear();
+  work_shape_ = std::vector<int32_t>(input_shape.begin(), input_shape.end());
+
   const auto index_size = abstract::TypeIdSize(inputs.at(kIndex1)->GetDtype());
-  workspace_size_list_ = {out_strides_.size() * index_size};
+  workspace_size_list_ = {
+    out_strides_.size() * index_size,
+    work_shape_.size() * index_size,
+  };
 
   return KRET_OK;
 }

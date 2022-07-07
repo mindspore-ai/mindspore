@@ -33,7 +33,6 @@ struct Add {
     return lhs + rhs;
   }
 };
-
 struct Sub {
   template <typename T>
   inline T operator()(const T &lhs, const T &rhs) const {
@@ -45,6 +44,25 @@ struct Update {
   template <typename T>
   inline T operator()(const T &lhs, const T &rhs) const {
     return rhs;
+  }
+};
+template <typename Op>
+struct NoCheck {
+  template <typename T>
+  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+    x[x_idx] = Op()(x[x_idx], v[v_idx]);
+  }
+};
+template <typename Op>
+struct Atomic {
+  template <typename T>
+  static inline void compute(T *x, const size_t x_idx, const T *v, const size_t v_idx) {
+    auto &atomic_ = reinterpret_cast<std::atomic<T> *>(x)[x_idx];
+    T expect = atomic_.load();
+    T result = T(0);
+    do {
+      result = Op()(expect, v[v_idx]);
+    } while (!atomic_.compare_exchange_weak(expect, result));
   }
 };
 template <typename T>
@@ -70,42 +88,55 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
     }
 
     static std::unordered_map<std::string, TypeComputeFunc> inplaceOpFuncMap = {
-      {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Add>},
-      {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Sub>},
-      {prim::kPrimInplaceUpdate->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Update>},
+      {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Add>>},
+      {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Sub>>},
+      {prim::kPrimInplaceUpdate->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<NoCheck<Update>>},
+    };
+    static std::unordered_map<std::string, TypeComputeFunc> inplaceOpAtomicFuncMap = {
+      {prim::kPrimInplaceAdd->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Atomic<Add>>},
+      {prim::kPrimInplaceSub->name(), &InplaceOpCpuTypeFunc<T>::InplaceOp<Atomic<Sub>>},
     };
     if (inplaceOpFuncMap.find(kernel_name_) == inplaceOpFuncMap.end()) {
       MS_LOG(EXCEPTION) << "For 'InplaceOp', only supports operators in " << Unorderedmap2Str(inplaceOpFuncMap)
                         << ", but got " << kernel_name_ << ".";
     }
-    compute_func_ = inplaceOpFuncMap.at(kernel_name_);
+
+    // Check if indices is unique
+    // InplaceUpdate does not suits atomic operations.
+    // If the order needs to be kept, implement a serial version of InplaceOp.
+    std::unordered_set<int64_t> indices_set(indices_.begin(), indices_.end());
+    if (kernel_name_ != prim::kPrimInplaceUpdate->name() && (indices_set.size() != indices_.size())) {
+      if (inplaceOpFuncMap.find(kernel_name_) == inplaceOpFuncMap.end()) {
+        MS_LOG(EXCEPTION) << "For 'InplaceOp', atomic operations only support operators in "
+                          << Unorderedmap2Str(inplaceOpFuncMap) << ", but got " << kernel_name_ << ".";
+      }
+      compute_func_ = inplaceOpAtomicFuncMap.at(kernel_name_);
+    } else {
+      compute_func_ = inplaceOpFuncMap.at(kernel_name_);
+    }
   }
 
   int Resize(
     const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
     const std::vector<KernelTensorPtr> &outputs,
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override {
-    auto x_shape = inputs.at(0)->GetShapeVector();
     auto v_shape = inputs.at(1)->GetShapeVector();
 
     // x_shape_.size() == v_shape.size() is checked at front end
     // x_shape_[1:] == v_shape[1:] is checked at front end
-    band_size_ = 1;
-    for (size_t i = 1; i < x_shape.size(); ++i) {
-      band_size_ *= x_shape[i];
-    }
+    band_size_ = std::accumulate(v_shape.begin() + 1, v_shape.end(), int64_t(1), std::multiplies{});
 
     // indices_.size() == v_shape[0] is checked at front end
-    output_size_ = band_size_ * v_shape[0];
+    v_size_ = band_size_ * v_shape[0];
 
     return KRET_OK;
   }
 
   template <typename Op>
-  void InplaceOp(const T *input1, const T *input2, T *out) {
+  void InplaceOp(T *x, const T *v) {
     const int64_t band_size = band_size_;
     const int64_t *indices = indices_.data();
-    auto task = [band_size, indices, input1, input2, out](size_t start, size_t end) {
+    auto task = [band_size, indices, x, v](size_t start, size_t end) {
       while (start < end) {
         const int64_t v_row = SizeToLong(start) / band_size;
         const int64_t x_row = indices[v_row];
@@ -116,34 +147,34 @@ class InplaceOpCpuTypeFunc : public CpuKernelFunc {
         size_t x_offset = x_row * band_size;
         size_t v_offset = v_row * band_size;
         for (size_t j = offset; j < up_bound; ++j) {
-          out[x_offset + j] = Op()(input1[x_offset + j], input2[v_offset + j]);
+          Op::compute(x, x_offset + j, v, v_offset + j);
         }
         start = v_row * band_size + up_bound;
       }
     };
-    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+    ParallelLaunchAutoSearch(task, v_size_, this, &parallel_search_info_);
   }
 
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
                const std::vector<AddressPtr> &outputs) override {
-    auto *input1 = reinterpret_cast<T *>(inputs[0]->addr);
-    const auto *input2 = reinterpret_cast<T *>(inputs[1]->addr);
+    auto *x = reinterpret_cast<T *>(inputs[0]->addr);
+    const auto *v = reinterpret_cast<T *>(inputs[1]->addr);
     auto *output = reinterpret_cast<T *>(outputs[0]->addr);
-    if (memcpy_s(output, outputs[0]->size, input1, inputs[0]->size) != EOK) {
+    if (memcpy_s(output, outputs[0]->size, x, inputs[0]->size) != EOK) {
       MS_LOG(ERROR) << "Function memcpy_s failed in 'InplaceOp'.";
       return false;
     }
-    compute_func_(this, input1, input2, output);
+    compute_func_(this, output, v);
     return true;
   }
 
  private:
   std::string kernel_name_;
   int64_t band_size_{1};
-  int64_t output_size_{1};
+  int64_t v_size_{1};
   std::vector<int64_t> indices_;
 
-  using TypeComputeFunc = std::function<void(InplaceOpCpuTypeFunc *, const T *in_x, const T *in_y, T *out)>;
+  using TypeComputeFunc = std::function<void(InplaceOpCpuTypeFunc *, T *x, const T *v)>;
   TypeComputeFunc compute_func_{nullptr};
 };
 

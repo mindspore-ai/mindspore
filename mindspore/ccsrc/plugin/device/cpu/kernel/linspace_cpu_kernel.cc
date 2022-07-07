@@ -63,12 +63,21 @@ template <typename T>
 bool LinSpaceCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &workspace,
                                         const std::vector<kernel::AddressPtr> &outputs) {
+  const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
+  // Deal wtih num equal to 1
+  if (num == 1) {
+    const auto input = inputs[kIndex0];
+    const auto output = outputs[kIndex0];
+    if (int ret = memcpy_s(output->addr, output->size, input->addr, input->size); ret != 0) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', it launch memcpy_s failed, ret = " << ret << ".";
+    }
+    return true;
+  }
+
   auto starts = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto stops = reinterpret_cast<T *>(inputs[kIndex1]->addr);
-  const int64_t num = *reinterpret_cast<int64_t *>(inputs[kIndex2]->addr);
 
   auto add_values = reinterpret_cast<T *>(workspace[kIndex0]->addr);
-
   auto output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
 
   for (int64_t i = 0; i < batch_num_; ++i) {
