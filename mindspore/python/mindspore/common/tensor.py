@@ -4385,7 +4385,7 @@ class Tensor(Tensor_):
 
     def xlogy(self, y):
         r"""
-        Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+        Computes the self tensor multiplied by the logarithm of input tensor element-wise.
         Returns zero when self tensor is zero. The data type of the self tensor should be
         `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
         `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
