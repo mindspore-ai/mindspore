@@ -8,9 +8,9 @@
     **参数：**
 
     - **dataset_files** (list[str]) - 云存储上MindRecord格式数据集文件的路径列表，每个文件的路径格式为s3://bucketName/objectKey。
-    - **server** (str) - 连接云存储的服务地址。可包含协议类型、域名、端口号。
-      假如为华为云OBS，服务地址为：<obs.cn-north-4.myhuaweicloud.com>。
-      假如为Minio，服务地址为：<https://your-endpoint:9000>。
+    - **server** (str) - 连接云存储的服务地址。
+      如果`server`的类型是华为云OBS，它的地址类似：<obs.cn-north-4.myhuaweicloud.com>（华为云华北四区域）。
+      如果`server`是本地启动的Minio服务，服务地址为：<https://127.0.0.1:9000>。
     - **ak** (str) - 访问密钥中的AK。
     - **sk** (str) - 访问密钥中的SK。
     - **sync_obs_path** (str) - 用于同步操作云存储上的路径，用户需要提前创建，目录路径的格式为s3://bucketName/objectKey。
