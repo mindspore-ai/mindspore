@@ -110,7 +110,8 @@ _hybrid_type = (
 
 # Unsupported python builtin type in JIT Fallback.
 _fallback_unsupported_python_builtin_type = (
-    compile, delattr, eval, exec, getattr, hasattr, input, issubclass, open, setattr, super, staticmethod, __import__,
+    compile, eval, exec, input, open, delattr, setattr, getattr, hasattr, super, staticmethod, classmethod, __import__,
+    memoryview, property,
 )
 
 
