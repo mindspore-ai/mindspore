@@ -825,8 +825,8 @@ void GraphScheduler::Optimize(const ActorSetPtr &actor_set) {
   auto optimizer = std::make_shared<ActorSetOptimizer>();
   MS_EXCEPTION_IF_NULL(optimizer);
   optimizer->AddPass(std::make_shared<InvalidDataArrowElimination>());
-  optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->AddPass(std::make_shared<MultiActorFusion>());
+  optimizer->AddPass(std::make_shared<BatchDataArrowFusion>());
   optimizer->Optimize(actor_set);
 }
 
