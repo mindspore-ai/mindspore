@@ -16,7 +16,6 @@
 
 package com.mindspore.flclient;
 
-import static com.mindspore.flclient.FLParameter.SLEEP_TIME;
 import static com.mindspore.flclient.LocalFLParameter.ALBERT;
 import static com.mindspore.flclient.LocalFLParameter.LENET;
 
@@ -47,7 +46,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.ArrayList;
 
@@ -72,7 +70,9 @@ public class FLLiteClient {
     private int minSecretNum;
     private byte[] prime;
     private int featureSize;
-    private int trainDataSize;
+    private int trainDataSize = 0;
+
+    private int evaDataSize = 0;
     private double dpEps = 100d;
     private double dpDelta = 0.01d;
     private FLParameter flParameter = FLParameter.getInstance();
@@ -86,6 +86,12 @@ public class FLLiteClient {
     private float signThrRatio = 0.6f;
     private float signGlobalLr = 1f;
     private int signDimOut = 0;
+
+    private float evaAcc = 0.0f;
+
+    public float getEvaAcc() {
+        return evaAcc;
+    }
 
     /**
      * Defining a constructor of teh class FLLiteClient.
@@ -216,15 +222,6 @@ public class FLLiteClient {
     }
 
     /**
-     * set the size of train date set.
-     *
-     * @param trainDataSize the size of train date set.
-     */
-    public void setTrainDataSize(int trainDataSize) {
-        this.trainDataSize = trainDataSize;
-    }
-
-    /**
      * Obtain the dpNormClipFactor.
      *
      * @return the dpNormClipFactor.
@@ -269,7 +266,7 @@ public class FLLiteClient {
         if (flParameter.isPkiVerify()) {
             pkiBean = PkiUtil.genPkiBean(flParameter.getClientID(), time);
         }
-        byte[] msg = startFLJob.getRequestStartFLJob(trainDataSize, iteration, time, pkiBean);
+        byte[] msg = startFLJob.getRequestStartFLJob(trainDataSize, evaDataSize, iteration, time, pkiBean);
         try {
             long start = Common.startTime("single startFLJob");
             LOGGER.info("[startFLJob] the request message length: " + msg.length);
@@ -391,7 +388,7 @@ public class FLLiteClient {
         String url = Common.generateUrl(flParameter.isUseElb(), flParameter.getServerNum(),
                 flParameter.getDomainName());
         UpdateModel updateModelBuf = UpdateModel.getInstance();
-        byte[] updateModelBuffer = updateModelBuf.getRequestUpdateFLJob(iteration, secureProtocol, trainDataSize);
+        byte[] updateModelBuffer = updateModelBuf.getRequestUpdateFLJob(iteration, secureProtocol, trainDataSize, evaAcc);
         if (updateModelBuf.getStatus() == FLClientStatus.FAILED) {
             LOGGER.info("[updateModel] catch error in build RequestUpdateFLJob");
             return FLClientStatus.FAILED;
@@ -626,23 +623,23 @@ public class FLLiteClient {
         status = FLClientStatus.SUCCESS;
         retCode = ResponseCode.SUCCEED;
 
-        float acc = 0;
+        evaAcc = 0;
         if (localFLParameter.getServerMod().equals(ServerMod.HYBRID_TRAINING.toString())) {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
             client.initSessionAndInputs(flParameter.getInferModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
             LOGGER.info("[evaluate] modelPath: " + flParameter.getInferModelPath());
-            acc = client.evalModel();
+            evaAcc = client.evalModel();
         } else {
             LOGGER.info("[evaluate] evaluateModel by " + localFLParameter.getServerMod());
             client.initSessionAndInputs(flParameter.getTrainModelPath(), localFLParameter.getMsConfig(), flParameter.getInputShape());
             LOGGER.info("[evaluate] modelPath: " + flParameter.getTrainModelPath());
-            acc = client.evalModel();
+            evaAcc = client.evalModel();
         }
-        if (Float.isNaN(acc)) {
+        if (Float.isNaN(evaAcc)) {
             failed("[evaluate] unsolved error code in <evalModel>: the return acc is NAN", ResponseCode.RequestError);
             return status;
         }
-        LOGGER.info("[evaluate] evaluate acc: " + acc);
+        LOGGER.info("[evaluate] evaluate acc: " + evaAcc);
         return status;
     }
 
@@ -669,26 +666,30 @@ public class FLLiteClient {
     }
 
     /**
-     * Set date path.
+     * initDataSets
      *
-     * @return date size.
+     * @return success true, failure false.
      */
-    public int setInput() {
+    public boolean initDataSets() {
         int dataSize = 0;
         if (Common.checkFLName(flParameter.getFlName())) {
             dataSize = deprecatedSetInput(flParameter.getTrainDataset());
-            return dataSize;
+            this.trainDataSize = dataSize;
+
+            return true;
         }
         retCode = ResponseCode.SUCCEED;
         LOGGER.info("==========set input===========");
 
         // train
-        dataSize = client.initDataSets(flParameter.getDataMap()).get(RunType.TRAINMODE);
-        if (dataSize <= 0) {
+        Map<RunType, Integer> dataInfo = client.initDataSets(flParameter.getDataMap());
+        trainDataSize = dataInfo.get(RunType.TRAINMODE);
+        if (trainDataSize <= 0) {
             retCode = ResponseCode.RequestError;
-            return -1;
+            return false;
         }
-        return dataSize;
+        evaDataSize = dataInfo.getOrDefault(RunType.EVALMODE, 0);
+        return true;
     }
 
     private int deprecatedSetBatchSize(int batchSize) {
