@@ -2841,3 +2841,57 @@ class ResizeBicubicGrad(Primitive):
         return {'shape': out_shape,
                 'dtype': original_image_dtype,
                 'value': None}
+
+
+class UpsampleNearest3DGrad(Primitive):
+    """
+    Computes gradients for UpsampleNearest3DGrad operation.
+
+    Args:
+        input_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the forward pass
+            input Tensor size.
+        output_size (Union[tuple[int], list[int]]): A list or tuple of int specifying the output volumetric size.
+            Default: None.
+        scales (Union[tuple[float], list[float]]): A list or tuple of float specifying the upsampling factors.
+            Default: None.
+
+    Inputs:
+        - **dy** (Tensor) - 5D tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`. With float16 or
+            float32 data type.
+
+    Outputs:
+        - **dx** (Tensor) - A 5-D tensor whose dtype and shape are the same as `input_x` and 'dy'.
+
+    Raises:
+        TypeError: If data type of `dy` is not float16, float32.
+        TypeError: If `input_size` is not provided.
+        ValueError: If size of `dy` is not a 5D tensor.
+        ValueError: If `output_size` is a list or tuple and if `output_size` length is not 3.
+        ValueError: If `scales` is a list or tuple and if `scales` length is not 3.
+        ValueError: If both `output_size` and `scales` are None.
+        ValueError: If both `output_size` and `scales` are non-empty lists.
+
+
+    Supported Platforms:
+        ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, input_size, output_size=None, scales=None):
+        self.init_prim_io_names(inputs=['dy'], outputs=['dx'])
+        if output_size is None:
+            output_size = []
+        if scales is None:
+            scales = []
+        validator.check_value_type('output_size', output_size, [list, tuple], self.name)
+        for item in output_size:
+            validator.check_value_type('output_size_item', item, int, self.name)
+        validator.check_value_type('scales', scales, [list, tuple], self.name)
+        for item in scales:
+            validator.check_value_type('scales_item', item, float, self.name)
+        validator.check_value_type('input_size', input_size, [list, tuple], self.name)
+        for item in input_size:
+            validator.check_value_type('input_size_item', item, int, self.name)
+        self.add_prim_attr('output_size', output_size)
+        self.add_prim_attr('scales', scales)
+        self.add_prim_attr('input_size', input_size)
