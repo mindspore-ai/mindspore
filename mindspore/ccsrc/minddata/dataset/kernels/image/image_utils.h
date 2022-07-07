@@ -20,6 +20,7 @@
 
 #include <memory>
 #include <random>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -75,13 +76,23 @@ int GetCVBorderType(BorderType type);
 /// \param[in] image Tensor of the image.
 /// \param[out] channels Channels of the image.
 /// \return The status code.
-Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels);
+Status ImageNumChannels(const std::shared_ptr<Tensor> &image, dsize_t *channels);
 
 /// \brief Get the size of input image.
 /// \param[in] image Tensor of the image.
 /// \param[out] size Size of the image as [height, width].
 /// \return The status code.
 Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *size);
+
+/// \brief Validate image Dtype, rank and channel.
+/// \param[in] image Image tensor to be validated.
+/// \param[in] op_name operator name.
+/// \param[in] valid_dtype Valid date type of the image tensor. Default: {}, means not to check date type.
+/// \param[in] valid_rank Valid dimension of the image tensor. Default: {}, means not to check dimension.
+/// \param[in] valid_channel Valid channel of the image tensor. Default: {}, means not to check channel.
+Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op_name,
+                     const std::set<uint8_t> &valid_dtype = {}, const std::set<dsize_t> &valid_rank = {},
+                     const std::set<dsize_t> &valid_channel = {});
 
 /// \brief Validate image dtype.
 /// \param[in] op_name operator name.

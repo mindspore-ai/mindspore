@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomColorAdjust op in DE
+Testing RandomColorAdjust in DE
 """
 import pytest
 import numpy as np
@@ -116,8 +116,8 @@ def util_test_random_color_adjust_op(brightness=(1, 1), contrast=(1, 1), saturat
 
 def test_random_color_adjust_op_brightness(plot=False):
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for brightness
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for brightness
     Expectation: The dataset is processed as expected
     """
 
@@ -128,8 +128,8 @@ def test_random_color_adjust_op_brightness(plot=False):
 
 def test_random_color_adjust_op_brightness_error():
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for brightness input in case of grayscale image
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for brightness input in case of grayscale image
     Expectation: Correct error is thrown and error message is printed as expected
     """
 
@@ -140,8 +140,8 @@ def test_random_color_adjust_op_brightness_error():
 
 def test_random_color_adjust_op_contrast(plot=False):
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for contrast
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for contrast
     Expectation: The dataset is processed as expected
     """
 
@@ -152,8 +152,8 @@ def test_random_color_adjust_op_contrast(plot=False):
 
 def test_random_color_adjust_op_contrast_error():
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for contrast input in case of grayscale image
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for contrast input in case of grayscale image
     Expectation: Correct error is thrown and error message is printed as expected
     """
 
@@ -164,8 +164,8 @@ def test_random_color_adjust_op_contrast_error():
 
 def test_random_color_adjust_op_saturation(plot=False):
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for saturation
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for saturation
     Expectation: The dataset is processed as expected
     """
     logger.info("test_random_color_adjust_op_saturation")
@@ -175,8 +175,8 @@ def test_random_color_adjust_op_saturation(plot=False):
 
 def test_random_color_adjust_op_saturation_error():
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for saturation input in case of grayscale image
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for saturation input in case of grayscale image
     Expectation: Correct error is thrown and error message is printed as expected
     """
 
@@ -187,8 +187,8 @@ def test_random_color_adjust_op_saturation_error():
 
 def test_random_color_adjust_op_hue(plot=False):
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for hue
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for hue
     Expectation: The dataset is processed as expected
     """
     logger.info("test_random_color_adjust_op_hue")
@@ -198,8 +198,8 @@ def test_random_color_adjust_op_hue(plot=False):
 
 def test_random_color_adjust_op_hue_error():
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op for hue input in case of grayscale image
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust for hue input in case of grayscale image
     Expectation: Correct error is thrown and error message is printed as expected
     """
 
@@ -210,8 +210,8 @@ def test_random_color_adjust_op_hue_error():
 
 def test_random_color_adjust_md5():
     """
-    Feature: RandomColorAdjust op
-    Description: Test RandomColorAdjust op with md5 check
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust with md5 check
     Expectation: Passes the md5 check test
     """
     logger.info("Test RandomColorAdjust with md5 check")
@@ -245,6 +245,40 @@ def test_random_color_adjust_md5():
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
+def test_random_color_adjust_eager():
+    """
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust with eager mode
+    Expectation: Test runs successfully
+    """
+    image = np.random.random((28, 28, 3)).astype(np.float32)
+    random_color_adjust = vision.RandomColorAdjust(contrast=0.5)
+    out = random_color_adjust(image)
+    assert out.shape == (28, 28, 3)
+
+
+def test_random_color_adjust_invalid_dtype():
+    """
+    Feature: RandomColorAdjust
+    Description: Test RandomColorAdjust with invalid image dtype
+    Expectation: RuntimeError raised
+    """
+    image = np.random.random((28, 28, 3)).astype(np.float64)
+
+    # test AdjustContrast
+    with pytest.raises(RuntimeError) as error_info:
+        adjust_contrast = vision.RandomColorAdjust(contrast=0.5)
+        _ = adjust_contrast(image)
+    assert "Expecting tensor in type of (uint8, uint16, float32)" in str(error_info.value)
+
+    # test AdjustSaturation
+    with pytest.raises(RuntimeError) as error_info:
+        image = np.random.random((28, 28, 3)).astype(np.float64)
+        adjust_saturation = vision.RandomColorAdjust(saturation=2.0)
+        _ = adjust_saturation(image)
+    assert "Expecting tensor in type of (uint8, uint16, float32)" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_random_color_adjust_op_brightness(plot=True)
     test_random_color_adjust_op_brightness_error()
@@ -255,3 +289,5 @@ if __name__ == "__main__":
     test_random_color_adjust_op_hue(plot=True)
     test_random_color_adjust_op_hue_error()
     test_random_color_adjust_md5()
+    test_random_color_adjust_eager()
+    test_random_color_adjust_invalid_dtype()

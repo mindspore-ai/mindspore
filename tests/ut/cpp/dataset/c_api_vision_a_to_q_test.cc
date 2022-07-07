@@ -1427,7 +1427,7 @@ TEST_F(MindDataTestPipeline, TestGetImageNumChannelsPipeline) {
   std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
   ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({2, 2, 3}), &input_tensor));
   auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  int channels = 0;
+  dsize_t channels = 0;
   ASSERT_OK(vision::GetImageNumChannels(input_tensor_ms, &channels));
   int expected = 3;
 
@@ -1444,7 +1444,7 @@ TEST_F(MindDataTestPipeline, TestGetImageNumChannelsInValidInput) {
   std::vector<int> input_vector = {3, 4, 2, 5, 1, 3, 4, 5, 2, 5, 7, 3};
   ASSERT_OK(Tensor::CreateFromVector(input_vector, TensorShape({12}), &input_tensor));
   auto input_tensor_ms = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(input_tensor));
-  int channels = 0;
+  dsize_t channels = 0;
   ASSERT_FALSE(vision::GetImageNumChannels(input_tensor_ms, &channels));
 }
 
