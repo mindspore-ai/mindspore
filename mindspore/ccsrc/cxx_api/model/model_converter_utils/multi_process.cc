@@ -72,7 +72,7 @@ Status MultiProcess::MainProcess(const ProcessFuncCall &parent_process, const Pr
   shmat_data_addr_ = shmat_addr_ + sizeof(MessageFlag) * kMsgStructNum;
   shmat_data_max_size_ =
     memory_size_ - (reinterpret_cast<uintptr_t>(shmat_data_addr_) - reinterpret_cast<uintptr_t>(shmat_addr_));
-  MS_LOG_INFO << "Shm addr " << (uintptr_t)shmat_addr_;
+  MS_LOG_INFO << "Shm addr " << reinterpret_cast<uintptr_t>(shmat_addr_);
   if (pid == 0) {
     ChildProcess(child_process);
     shared_memory.Detach();
@@ -185,7 +185,7 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
   return kSuccess;
 }
 
-Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) {
+Status MultiProcess::ReceiveMsg(const CreateBufferCall &create_buffer_call) const {
   uint64_t cur_offset = 0;
   uint8_t *msg_buffer = nullptr;
   uint64_t msg_len = 0;

@@ -25,7 +25,7 @@ class SharedMemory {
   Status Create(uint64_t memory_size);
   Status Attach();
   void Detach();
-  void Destroy();
+  void Destroy() const;
 
  private:
   friend class MultiProcess;
