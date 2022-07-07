@@ -78,7 +78,7 @@ class UpdateModelKernel : public RoundKernel {
   std::map<std::string, UploadData> ParseUploadCompressFeatureMap(
     const schema::RequestUpdateModel *update_model_req, size_t data_size,
     std::map<std::string, std::vector<float>> *weight_map);
-  bool VerifySignDSFeatureMap(const std::unordered_map<std::string, size_t> &model,
+  bool VerifySignDSFeatureMap(const std::unordered_map<std::string, Feature> &model,
                               const schema::RequestUpdateModel *update_model_req);
   bool VerifyUploadCompressFeatureMap(const schema::RequestUpdateModel *update_model_req);
   ResultCode CountForUpdateModel(const std::shared_ptr<FBBuilder> &fbb,

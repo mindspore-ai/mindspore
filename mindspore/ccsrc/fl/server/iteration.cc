@@ -607,31 +607,40 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
   if (is_iteration_valid) {
     // Store the model which is successfully aggregated for this iteration.
     const auto &model = Executor::GetInstance().GetModel();
-    std::unordered_map<std::string, size_t> feature_map;
+    std::unordered_map<std::string, Feature> feature_map;
     for (auto weight : model) {
       std::string weight_fullname = weight.first;
       if (weight.second == nullptr) {
         continue;
       }
-      size_t weight_size = weight.second->size;
-      feature_map[weight_fullname] = weight_size;
+      Feature feature;
+      feature.weight_size = weight.second->size;
+      float *data = reinterpret_cast<float *>(weight.second->addr);
+      std::vector<float> weight_data(data, data + weight.second->size / sizeof(float));
+      feature.weight_data = weight_data;
+      feature_map[weight_fullname] = feature;
     }
 
-    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map)) {
+    if (LocalMetaStore::GetInstance().verifyAggregationFeatureMap(feature_map, true)) {
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
       ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
       iteration_result_ = IterationResult::kSuccess;
       MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
     } else {
       MS_LOG(WARNING) << "Verify feature maps failed, iteration " << iteration_num_ << " will not be stored.";
+      const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
+      size_t latest_iter_num = iter_to_model.rbegin()->first;
+      const auto &latest_model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
+      ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, latest_model);
+      ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, latest_model);
     }
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
     const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
     size_t latest_iter_num = iter_to_model.rbegin()->first;
-    const auto &model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
-    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, model);
-    ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, model);
+    const auto &latest_model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
+    ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, latest_model);
+    ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, latest_model);
     iteration_result_ = IterationResult::kFail;
     MS_LOG(WARNING) << "Iteration " << iteration_num_ << " is invalid. Reason: " << reason;
   }
