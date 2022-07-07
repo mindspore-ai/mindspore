@@ -61,11 +61,14 @@ void RangeCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   auto start = reinterpret_cast<T *>(inputs[0]->addr)[0];
   auto limit = reinterpret_cast<T *>(inputs[1]->addr)[0];
   auto delta = reinterpret_cast<T *>(inputs[2]->addr)[0];
+  if (delta == 0) {
+    MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the delta can not be 0.";
+  }
 
   auto output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t max_index = outputs[0]->size / sizeof(T) - 1;
   size_t index = 0;
-  while (start < limit) {
+  while ((delta > 0 && start < limit) || (delta < 0 && start > limit)) {
     if (index > max_index) {
       MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", the output element number exceeds the maximum number.";
     }
