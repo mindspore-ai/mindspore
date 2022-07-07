@@ -5123,10 +5123,11 @@ class ScatterNdMul(_ScatterNdOp):
         ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.array_ops import ScatterNdMul
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_mul = ops.ScatterNdMul()
+        >>> scatter_nd_mul = ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [ 1. 16. 18.  4. 35.  6.  7. 72.]
