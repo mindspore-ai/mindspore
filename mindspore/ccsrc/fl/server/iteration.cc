@@ -629,12 +629,14 @@ void Iteration::Next(bool is_iteration_valid, const std::string &reason) {
       iteration_result_ = IterationResult::kSuccess;
       MS_LOG(INFO) << "Iteration " << iteration_num_ << " is successfully finished.";
     } else {
-      MS_LOG(WARNING) << "Verify feature maps failed, iteration " << iteration_num_ << " will not be stored.";
       const auto &iter_to_model = ModelStore::GetInstance().iteration_to_model();
       size_t latest_iter_num = iter_to_model.rbegin()->first;
       const auto &latest_model = ModelStore::GetInstance().GetModelByIterNum(latest_iter_num);
       ModelStore::GetInstance().StoreModelByIterNum(iteration_num_, latest_model);
       ModelStore::GetInstance().StoreCompressModelByIterNum(iteration_num_, latest_model);
+      iteration_result_ = IterationResult::kFail;
+      MS_LOG(WARNING) << "Verify feature maps failed, iteration " << iteration_num_
+                      << " is invalid. Use the previous iteration model instead.";
     }
   } else {
     // Store last iteration's model because this iteration is considered as invalid.
