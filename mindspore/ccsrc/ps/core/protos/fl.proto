@@ -88,6 +88,7 @@ message DeviceMeta {
   string fl_id = 2;
   uint64 data_size = 3;
   uint64 now_time = 4;
+  uint64 eval_data_size = 5;
 }
 
 message FLIdToDeviceMeta {
@@ -261,6 +262,8 @@ message EndLastIterResponse {
   uint64 participation_time_level1_num = 12;
   uint64 participation_time_level2_num = 13;
   uint64 participation_time_level3_num = 14;
+  float upload_accuracy = 15;
+  uint64 eval_data_size = 16;
 }
 
 message SyncAfterRecover {

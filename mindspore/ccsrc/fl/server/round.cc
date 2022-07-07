@@ -244,11 +244,19 @@ size_t Round::kernel_accept_client_num() const { return kernel_->accept_client_n
 
 size_t Round::kernel_reject_client_num() const { return kernel_->reject_client_num(); }
 
-void Round::InitkernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
+void Round::InitKernelClientVisitedNum() { kernel_->InitClientVisitedNum(); }
 
-void Round::InitkernelClientUploadLoss() { kernel_->InitClientUploadLoss(); }
+void Round::InitKernelClientUploadLoss() { kernel_->InitClientUploadLoss(); }
+
+void Round::InitKernelClientUploadAccuracy() { kernel_->InitClientUploadAccuracy(); }
+
+void Round::InitKernelEvalDataSize() { kernel_->InitEvalDataSize(); }
 
 float Round::kernel_upload_loss() const { return kernel_->upload_loss(); }
+
+float Round::kernel_upload_accuracy() const { return kernel_->upload_accuracy(); }
+
+size_t Round::kernel_eval_data_size() const { return kernel_->eval_data_size(); }
 
 std::vector<std::pair<uint64_t, uint32_t>> Round::GetUpdateModelCompleteInfo() const {
   if (name_ == kUpdateModel) {

@@ -42,6 +42,8 @@ void UpdateModelKernel::InitKernel(size_t threshold_count) {
   }
   InitClientVisitedNum();
   InitClientUploadLoss();
+  InitClientUploadAccuracy();
+  InitEvalDataSize();
   executor_ = &Executor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor_);
   if (!executor_->initialized()) {
@@ -155,8 +157,6 @@ bool UpdateModelKernel::Reset() {
   DistributedCountService::GetInstance().ResetCounter(kCountForAggregation);
   executor_->ResetAggregationStatus();
   DistributedMetadataStore::GetInstance().ResetMetadata(kCtxUpdateModelClientList);
-  size_t &total_data_size = LocalMetaStore::GetInstance().mutable_value<size_t>(kCtxFedAvgTotalDataSize);
-  total_data_size = 0;
   return true;
 }
 
@@ -379,6 +379,7 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
                                           const std::shared_ptr<FBBuilder> &fbb, const DeviceMeta &device_meta) {
   std::string update_model_fl_id = update_model_req->fl_id()->str();
   size_t data_size = device_meta.data_size();
+  size_t eval_data_size = device_meta.eval_data_size();
 
   std::map<std::string, std::vector<float>> weight_map;
   std::map<std::string, UploadData> feature_map;
@@ -422,7 +423,8 @@ ResultCode UpdateModelKernel::UpdateModel(const schema::RequestUpdateModel *upda
     MS_LOG(WARNING) << reason;
     return ResultCode::kFail;
   }
-  UpdateClientUploadLoss(update_model_req->upload_loss());
+  UpdateClientUploadLoss(update_model_req->upload_loss(), data_size);
+  UpdateClientUploadAccuracy(update_model_req->upload_accuracy(), eval_data_size);
   BuildUpdateModelRsp(fbb, schema::ResponseCode_SUCCEED, "success not ready",
                       std::to_string(LocalMetaStore::GetInstance().value<uint64_t>(kCtxIterationNextRequestTimestamp)));
   return ResultCode::kSuccess;

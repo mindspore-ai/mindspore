@@ -101,6 +101,7 @@ class Iteration {
   void set_metrics(const std::shared_ptr<IterationMetrics> &metrics);
   void set_loss(float loss);
   void set_accuracy(float accuracy);
+  void set_eval_data_size(float eval_data_size);
 
   // Return state of current training job instance.
   InstanceState instance_state() const;
@@ -173,7 +174,8 @@ class Iteration {
         iteration_fail_num_(0),
         is_date_rate_thread_running_(true),
         file_configuration_(nullptr),
-        instance_name_("") {
+        instance_name_(""),
+        eval_data_size_(0) {
     LocalMetaStore::GetInstance().set_curr_iter_num(iteration_num_);
   }
   ~Iteration();
@@ -229,6 +231,8 @@ class Iteration {
   void UpdateRoundClientNumMap(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
 
   void UpdateRoundClientUploadLoss(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
+
+  void UpdateRoundClientUploadAccuracy(const std::shared_ptr<std::vector<unsigned char>> &client_info_rsp_msg);
 
   void StartNewInstance();
 
@@ -325,6 +329,8 @@ class Iteration {
 
   // The instance name
   std::string instance_name_;
+
+  float eval_data_size_;
 };
 }  // namespace server
 }  // namespace fl

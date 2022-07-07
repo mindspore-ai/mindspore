@@ -69,7 +69,9 @@ table RequestFLJob{
   equip_ca_cert:string;
   root_cert:string;
   download_compress_types:[CompressType];
+  eval_data_size:int;
 }
+
 table ResponseFLJob {
   retcode:int;
   reason:string;
@@ -107,6 +109,7 @@ table RequestUpdateModel{
   timestamp:string;
   signature:[ubyte];
   upload_loss:float;
+  upload_accuracy:float;
   sign:int;
   index_array:[int];
   compress_feature_map:[CompressFeatureMap];
