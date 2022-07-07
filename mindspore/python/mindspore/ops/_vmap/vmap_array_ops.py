@@ -112,8 +112,15 @@ def get_argmin_vmap_rule(prim, axis_size):
 
 
 @constexpr
-def _get_prefix_expand_shape(indices_shape):
-    """Generate prefix and expand shape by indices shape."""
+def _get_prefix(indices_shape, axis_size, indices_dtype):
+    """
+    Generate prefix by indices shape, whose -1 axis value is the index value of axis 0.
+    eg. if the indices is Tensor([[[1, 2], [2, 3]],
+                                  [[2, 3], [3, 4]]])
+    we got the indices_shape (2, 2, 2),
+    the generated prefix is a Tensor([[[0], [0]],
+                                      [[1], [1]]])
+    """
     indices_end = len(indices_shape) - 1
     prefix_shape = ()
     expand_shape = ()
@@ -126,7 +133,9 @@ def _get_prefix_expand_shape(indices_shape):
             expand_shape = expand_shape + (element,)
         else:
             expand_shape = expand_shape + (1,)
-    return prefix_shape, expand_shape
+
+    prefix = np.broadcast_to(np.arange(axis_size).reshape(expand_shape), prefix_shape)
+    return Tensor(prefix, indices_dtype)
 
 
 @vmap_rules_getters.register(P.Transpose)
@@ -543,8 +552,7 @@ def get_scatter_op_vmap_rule(prim, axis_size):
                 indices = F.expand_dims(indices, -1)
 
             indices_shape = F.shape(indices)
-            prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
-            prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
+            prefix = _get_prefix(indices_shape, axis_size, F.dtype(indices))
             indices = concat((prefix, indices))
             out = scatter_func(ref, indices, updates, u_monad)
         else:
@@ -633,8 +641,7 @@ def get_tensor_scatter_op_vmap_rule(prim, axis_size):
         updates = _bdim_at_front(updates, updates_dim, axis_size)
 
         indices_shape = F.shape(indices)
-        prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
-        prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
+        prefix = _get_prefix(indices_shape, axis_size, F.dtype(indices))
         indices = concat((prefix, indices))
         out = tensor_scatter_func(input_x, indices, updates)
         return out, input_x_dim
@@ -1160,8 +1167,7 @@ def get_gather_nd_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         indices = _bdim_at_front(indices, indices_dim, axis_size)
         indices_shape = F.shape(indices)
-        prefix_shape, expand_shape = _get_prefix_expand_shape(indices_shape)
-        prefix = P.BroadcastTo(prefix_shape)(F.reshape(mnp.arange(axis_size), expand_shape))
+        prefix = _get_prefix(indices_shape, axis_size, F.dtype(indices))
         indices = concat((prefix, indices))
         out = gather_nd(x, indices)
         out = prim(x, indices)
