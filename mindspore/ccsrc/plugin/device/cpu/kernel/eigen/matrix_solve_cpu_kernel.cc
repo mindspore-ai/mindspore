@@ -99,11 +99,11 @@ bool MatrixSolveCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr>
     }
   };
 
+  ParallelLaunchAutoSearch(task, batch_num_, this, &parallel_search_info_);
+
   if (!invertible) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'matrix' is not invertible.";
   }
-
-  ParallelLaunchAutoSearch(task, batch_num_, this, &parallel_search_info_);
 
   return true;
 }
