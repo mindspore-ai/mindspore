@@ -35,7 +35,7 @@ class Context:
 
     Args:
         thread_num (int, optional): Set the number of threads at runtime. Default: None.
-        parallel_num (int, optional): Set the parallel number of operators at runtime. Default: None.
+        inter_op_parallel_num (int, optional): Set the parallel number of operators at runtime. Default: None.
         thread_affinity_mode (int, optional): Set the thread affinity to CPU cores. Default: None.
 
             - 0: no affinities.
@@ -48,36 +48,37 @@ class Context:
 
     Raises:
         TypeError: `thread_num` is not an int or None.
-        TypeError: `parallel_num` is not an int or None.
+        TypeError: `inter_op_parallel_num` is not an int or None.
         TypeError: `thread_affinity_mode` is not an int or None.
         TypeError: `thread_affinity_core_list` is not a list or None.
         TypeError: `thread_affinity_core_list` is a list, but the elements are not int or None.
         TypeError: `enable_parallel` is not a bool.
         ValueError: `thread_num` is less than 0.
-        ValueError: `parallel_num` is less than 0.
+        ValueError: `inter_op_parallel_num` is less than 0.
 
     Examples:
         >>> import mindspore_lite as mslite
-        >>> context = mslite.Context(thread_num=1, parallel_num=1, thread_afffinity_mode=1, enable_parallel=False)
+        >>> context = mslite.Context(thread_num=1, inter_op_parallel_num=1, thread_afffinity_mode=1,
+        ...                          enable_parallel=False)
         >>> print(context)
         thread_num: 1,
-        parallel_num: 1,
+        inter_op_parallel_num: 1,
         thread_affinity_mode: 1,
         thread_affinity_core_list: [],
         enable_parallel: False,
         device_list: 0, .
     """
 
-    def __init__(self, thread_num=None, parallel_num=None, thread_affinity_mode=None, thread_affinity_core_list=None, \
-                 enable_parallel=False):
+    def __init__(self, thread_num=None, inter_op_parallel_num=None, thread_affinity_mode=None, \
+                 thread_affinity_core_list=None, enable_parallel=False):
         if thread_num is not None:
             check_isinstance("thread_num", thread_num, int)
             if thread_num < 0:
                 raise ValueError(f"Context's init failed, thread_num must be positive.")
-        if parallel_num is not None:
-            check_isinstance("parallel_num", parallel_num, int)
-            if parallel_num < 0:
-                raise ValueError(f"Context's init failed, parallel_num must be positive.")
+        if inter_op_parallel_num is not None:
+            check_isinstance("inter_op_parallel_num", inter_op_parallel_num, int)
+            if inter_op_parallel_num < 0:
+                raise ValueError(f"Context's init failed, inter_op_parallel_num must be positive.")
         if thread_affinity_mode is not None:
             check_isinstance("thread_affinity_mode", thread_affinity_mode, int)
         check_list_of_element("thread_affinity_core_list", thread_affinity_core_list, int, enable_none=True)
@@ -86,8 +87,8 @@ class Context:
         self._context = _c_lite_wrapper.ContextBind()
         if thread_num is not None:
             self._context.set_thread_num(thread_num)
-        if parallel_num is not None:
-            self._context.set_inter_op_parallel_num(parallel_num)
+        if inter_op_parallel_num is not None:
+            self._context.set_inter_op_parallel_num(inter_op_parallel_num)
         if thread_affinity_mode is not None:
             self._context.set_thread_affinity_mode(thread_affinity_mode)
         self._context.set_thread_affinity_core_list(core_list)
@@ -95,7 +96,7 @@ class Context:
 
     def __str__(self):
         res = f"thread_num: {self._context.get_thread_num()},\n" \
-              f"parallel_num: {self._context.get_inter_op_parallel_num()},\n" \
+              f"inter_op_parallel_num: {self._context.get_inter_op_parallel_num()},\n" \
               f"thread_affinity_mode: {self._context.get_thread_affinity_mode()},\n" \
               f"thread_affinity_core_list: {self._context.get_thread_affinity_core_list()},\n" \
               f"enable_parallel: {self._context.get_enable_parallel()},\n" \
@@ -118,7 +119,7 @@ class Context:
             >>> context.append_device_info(mslite.CPUDeviceInfo())
             >>> print(context)
             thread_num: 2,
-            parallel_num: 1,
+            inter_op_parallel_num: 1,
             thread_affinity_mode: 0,
             thread_affinity_core_list: [],
             enable_parallel: False,
@@ -197,7 +198,7 @@ class GPUDeviceInfo(DeviceInfo):
         >>> context.append_device_info(mslite.CPUDeviceInfo(cpu_device_info))
         >>> print(context)
         thread_num: 2,
-        parallel_num: 1,
+        inter_op_parallel_num: 1,
         thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False,
@@ -276,7 +277,7 @@ class AscendDeviceInfo(DeviceInfo):
         >>> context.append_device_info(cpu_device_info)
         >>> print(context)
         thread_num: 2,
-        parallel_num: 1,
+        inter_op_parallel_num: 1,
         thread_affinity_mode: 0,
         thread_affinity_core_list: [],
         enable_parallel: False
