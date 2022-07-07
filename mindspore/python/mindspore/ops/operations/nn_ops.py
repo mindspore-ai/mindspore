@@ -4640,13 +4640,14 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **v** (Parameter) - the 2nd moment vector in the updating formula,
           the shape and data type value should be the same as `var`. Mean square gradients with the same type as `var`.
         - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
-          the data type value should be the same as `var`.
+          the data type should be float32.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.9`
+          the data type should be float32. The paper suggested value is :math:`0.9`
         - **beta2** (float) - The exponential decay rate for the 2nd moment estimations,
-          the data type value should be the same as `var`. The paper suggested value is :math:`0.999`
-        - **epsilon** (float) - Term added to the denominator to improve numerical stability.
-        - **decay** (float) - The weight decay value, must be a scalar tensor with float data type.
+          the data type should be float32. The paper suggested value is :math:`0.999`
+        - **epsilon** (float) - Term added to the denominator to improve numerical stability,
+          the data type should be float32.
+        - **decay** (float) - The weight decay value, must be a scalar tensor with float32 data type.
           Default: 0.0.
         - **gradient** (Tensor) - Gradient, has the same shape and data type as `var`.
     Outputs:
@@ -4685,11 +4686,11 @@ class AdamWeightDecay(PrimitiveWithInfer):
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('lr', dtype=sig.sig_dtype.T),
-        sig.make_sig('beta1', dtype=sig.sig_dtype.T),
-        sig.make_sig('beta2', dtype=sig.sig_dtype.T),
-        sig.make_sig('epsilon', dtype=sig.sig_dtype.T),
-        sig.make_sig('decay', dtype=sig.sig_dtype.T),
+        sig.make_sig('lr', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta1', dtype=sig.sig_dtype.T1),
+        sig.make_sig('beta2', dtype=sig.sig_dtype.T1),
+        sig.make_sig('epsilon', dtype=sig.sig_dtype.T1),
+        sig.make_sig('decay', dtype=sig.sig_dtype.T1),
         sig.make_sig('gradient', dtype=sig.sig_dtype.T)
     )
 
