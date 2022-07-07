@@ -18,7 +18,7 @@ mindspore.ops.unique_consecutive
 
     - `output` 为去重后的输出，与 `x` 具有相同的数据类型。
     - 如果 `return_idx` 为 True，则返回张量 `idx` ，shape与 `x` 相同，表示每个去重元素在输入中所在的连续序列的末尾位置的索引。
-    - 如果 `return_idx` 为 True，则返回张量 `counts` ，表示每个去重元素在输入中所在的连续序列的计数。
+    - 如果 `return_counts` 为 True，则返回张量 `counts` ，表示每个去重元素在输入中所在的连续序列的计数。
 
     **异常：**
 

@@ -29,7 +29,7 @@
 
     **输出：**
 
-    Tensor，值在[0, 1]范围内。它是一个shape为N的一维Tensor，其中N是 `img1` 的批次号。
+    Tensor，值在[0, 1]范围内。它是一个shape为N的一维Tensor，其中N是 `img1` 的batch size。
 
     **异常：**
 
