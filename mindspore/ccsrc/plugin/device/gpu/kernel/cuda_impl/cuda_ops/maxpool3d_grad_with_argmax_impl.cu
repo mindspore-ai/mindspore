@@ -33,8 +33,11 @@ __global__ void MaxPool3DGradWithArgmax(const T *dy, const S *index, const int64
 template <typename T, typename S>
 void CalMaxPool3DGradWithArgmax(const T *dy, const S *index, const int64_t x_dhw, const int64_t dy_dhw,
                                 const int64_t dy_ncdhw, T *dx, const uint32_t device_id, cudaStream_t cuda_stream) {
-  MaxPool3DGradWithArgmax<<<CUDA_BLOCKS(device_id, dy_ncdhw), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    dy, index, x_dhw, dy_dhw, dy_ncdhw, dx);
+  dim3 grid = CUDA_GRIDS_MAXSIZE(device_id);
+  int64_t thread_num = CUDA_THREADS(device_id);
+  int64_t size = std::min(static_cast<int64_t>(grid.x), dy_ncdhw);
+  size = (size + thread_num - 1) / thread_num;
+  MaxPool3DGradWithArgmax<<<size, thread_num, 0, cuda_stream>>>(dy, index, x_dhw, dy_dhw, dy_ncdhw, dx);
   return;
 }
 
