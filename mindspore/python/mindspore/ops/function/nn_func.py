@@ -1302,7 +1302,7 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
     Its default value is 1.0. :math:`N` is the batch size.
 
     Note:
-        For Ascend platform, the float64 data type of `logits` is not support now.
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean' for now.
 
     Args:
         logits (Tensor): Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
@@ -1321,7 +1321,6 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         TypeError: If dtype of `logits` or `labels` is neither float16 nor float32.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: The float64 data type of `logits` is support on Ascend platform.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
