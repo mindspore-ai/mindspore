@@ -172,3 +172,15 @@ def test_tensor_method_div():
     x = ms.Tensor(np.ones([5, 3], np.float32))
     y = ms.Tensor(np.ones([8, 5, 3], np.float32))
     _cell_graph_executor.compile(net, x, y)
+
+
+def test_asnumpy_ownership():
+    """
+    Feature: Tensor asnumpy() method.
+    Description: Ownership should be handled correctly in asnumpy().
+    Expectation: No 'use after free', no core dump.
+    """
+    t = init.initializer("zero", [41100, 16], dtype=ms.float32)
+    t = t.init_data()
+    t = t.asnumpy()
+    assert np.allclose(t, 0)
