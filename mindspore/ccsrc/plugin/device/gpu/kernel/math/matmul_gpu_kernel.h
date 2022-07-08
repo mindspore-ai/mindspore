@@ -55,6 +55,9 @@ class MatMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     S alpha = static_cast<S>(1.0f);
     S beta = static_cast<S>(0.0f);
     cudaDataType_t compute_type = (dtype_a_ == CUDA_R_64F) ? CUDA_R_64F : CUDA_R_32F;
+    if (dtype_a_ == CUDA_C_32F) {
+      compute_type = CUDA_C_32F;
+    }
 
     const int lda = (transpose_x1_ == CUBLAS_OP_T) ? SizeToInt(m_) : SizeToInt(k_);
     const int ldb = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
