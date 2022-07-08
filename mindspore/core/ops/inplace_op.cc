@@ -75,16 +75,20 @@ abstract::ShapePtr InplaceOpInferShape(const PrimitivePtr &primitive, const std:
 }
 
 TypePtr InplaceOpInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+  const auto prim_name = prim->name();
   if (std::any_of(input_args.begin(), input_args.end(), [](const AbstractBasePtr &a) { return a == nullptr; })) {
-    MS_LOG(EXCEPTION) << "For '" << prim->name()
+    MS_LOG(EXCEPTION) << "For '" << prim_name
                       << ", the input args used for infer shape and type is necessary, but missing it.";
   }
-  const std::set<TypePtr> valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args = {
     {"x", input_args[0]->BuildType()},
     {"v", input_args[1]->BuildType()},
   };
-  return CheckAndConvertUtils::CheckTensorTypeSame(args, valid_types, prim->name());
+  if (prim_name == prim::kPrimInplaceUpdate->name()) {
+    const std::set<TypePtr> update_valid_types = {kInt32, kFloat16, kFloat32, kFloat64};
+    return CheckAndConvertUtils::CheckTensorTypeSame(args, update_valid_types, prim_name);
+  }
+  return CheckAndConvertUtils::CheckTensorTypeSame(args, common_valid_types, prim_name);
 }
 }  // namespace
 void InplaceAdd::set_indices(std::vector<int64_t> indices) { AddAttr(kIndices, api::MakeValue(indices)); }

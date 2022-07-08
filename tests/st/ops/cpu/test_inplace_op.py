@@ -66,7 +66,8 @@ def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32,
+                                   np.uint64, np.int64, np.float16, np.float32, np.float64])
 def test_inplace_add(shape, indice_len, dtype):
     """
     Feature: test InplaceAdd
@@ -88,7 +89,7 @@ def test_inplace_add(shape, indice_len, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(10, 4, 3, 2), (5, 2, 4, 6)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_add_same_indice(shape, dtype):
     """
     Feature: test InplaceAdd with duplicate indices
@@ -110,7 +111,7 @@ def test_inplace_add_same_indice(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_add_1d(shape, indice, dtype):
     """
     Feature: test InplaceAdd
@@ -130,7 +131,8 @@ def test_inplace_add_1d(shape, indice, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32,
+                                   np.uint64, np.int64, np.float16, np.float32, np.float64])
 def test_inplace_sub(shape, indice_len, dtype):
     """
     Feature: test InplaceSub
@@ -152,7 +154,7 @@ def test_inplace_sub(shape, indice_len, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape', [(10, 4, 3, 2), (5, 2, 4, 6)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_sub_same_indice(shape, dtype):
     """
     Feature: test InplaceSub with duplicate indices
@@ -174,7 +176,7 @@ def test_inplace_sub_same_indice(shape, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_inplace_sub_1d(shape, indice, dtype):
     """
     Feature: test InplaceAdd
@@ -241,7 +243,7 @@ def test_vmap_inplace_update(shape, indice_len, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_vmap_inplace_add(shape, indice_len, dtype):
     """
     Feature: test vmap inplace operators
@@ -266,7 +268,7 @@ def test_vmap_inplace_add(shape, indice_len, dtype):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
+@pytest.mark.parametrize('dtype', [np.float32])
 def test_vmap_inplace_sub(shape, indice_len, dtype):
     """
     Feature: test vmap inplace operators
