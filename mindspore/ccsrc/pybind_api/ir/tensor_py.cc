@@ -188,10 +188,8 @@ class TensorDataNumpy : public TensorData {
   }
 
   /// py::array object.
-  py::array py_array() const {
-    // Use dummy owner to avoid copy data.
-    py::str dummyOwner;
-    return py::array(py::dtype(buffer_), buffer_.shape, buffer_.strides, buffer_.ptr, dummyOwner);
+  py::array py_array(const py::handle &owner = py::handle()) const {
+    return py::array(py::dtype(buffer_), buffer_.shape, buffer_.strides, buffer_.ptr, owner);
   }
 
  private:
@@ -385,14 +383,14 @@ py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
 }
 
 py::array TensorPy::AsNumpy(const Tensor &tensor) {
+  py::object self = py::cast(&tensor);
   auto data_numpy = dynamic_cast<const TensorDataNumpy *>(&tensor.data());
   if (data_numpy != nullptr) {
     // Return internal numpy array if tensor data is implemented base on it.
-    return data_numpy->py_array();
+    return data_numpy->py_array(self);
   }
   // Otherwise, create numpy array by buffer protocol.
   auto info = GetPyBufferInfo(tensor);
-  py::object self = py::cast(&tensor);
   return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
 }
 
