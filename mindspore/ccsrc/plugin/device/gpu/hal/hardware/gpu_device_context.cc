@@ -266,14 +266,6 @@ void GPUKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
   if (kernel_graph->is_dynamic_shape()) {
     profiler_inst->SetNetDynamicShapeStatus();
   }
-  if (!kernel_graph->is_from_single_op()) {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    if (kernel_graph->is_dynamic_shape() && (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode ||
-                                             kernel_graph->has_flag(kFlagPyNativeRunInGraph))) {
-      opt::DynamicShapeConvertPass(kernel_graph);
-    }
-  }
 }
 
 void GPUKernelExecutor::OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph) const {
