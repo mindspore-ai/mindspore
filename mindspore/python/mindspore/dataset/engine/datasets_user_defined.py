@@ -542,7 +542,7 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         ValueError: If `shard_id` is invalid (< 0 or >= `num_shards`).
 
     Note:
-        - Input `source` accept user defined Python function(PyFuncs), Do not add network computing operators from
+        - Input `source` accepts user-defined Python functions (PyFuncs), Do not add network computing operators from
           mindspore.nn and mindspore.ops or others into this `source`.
         - This dataset can take in a `sampler`. `sampler` and `shuffle` are mutually exclusive.
           The table below shows what input arguments are allowed and their expected behavior.

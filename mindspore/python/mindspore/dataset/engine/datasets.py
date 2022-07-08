@@ -811,8 +811,8 @@ class Dataset:
             offload (bool, optional): Flag to indicate whether offload is used (Default=None).
 
         Note:
-            - Input `operations` mainly accept c_transforms, py_transforms operator in mindspore.dataset part, plus user
-              defined Python function(PyFuncs).
+            - Input `operations` accepts TensorOperations defined in mindspore.dataset part, plus user-defined
+              Python functions (PyFuncs).
             - Do not add network computing operators from mindspore.nn and mindspore.ops or others into this
               `operations`.
 
