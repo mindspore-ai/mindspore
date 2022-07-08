@@ -69,26 +69,26 @@ class MaxPool3DWithArgmaxFwdGpuKernelMod : public NativeGpuKernelMod {
   bool is_null_input_{false};
   void *cuda_stream_{nullptr};
 
-  int64_t ksize_d_{0};
-  int64_t ksize_h_{0};
-  int64_t ksize_w_{0};
-  int64_t stride_d_{0};
-  int64_t stride_h_{0};
-  int64_t stride_w_{0};
-  int64_t pad_d_{0};
-  int64_t pad_h_{0};
-  int64_t pad_w_{0};
-  int64_t dilation_d_{0};
-  int64_t dilation_h_{0};
-  int64_t dilation_w_{0};
-  int64_t in_n_{0};
-  int64_t in_c_{0};
-  int64_t in_d_{0};
-  int64_t in_h_{0};
-  int64_t in_w_{0};
-  int64_t out_d_{0};
-  int64_t out_h_{0};
-  int64_t out_w_{0};
+  int ksize_d_{0};
+  int ksize_h_{0};
+  int ksize_w_{0};
+  int stride_d_{0};
+  int stride_h_{0};
+  int stride_w_{0};
+  int pad_d_{0};
+  int pad_h_{0};
+  int pad_w_{0};
+  int dilation_d_{0};
+  int dilation_h_{0};
+  int dilation_w_{0};
+  int in_n_{0};
+  int in_c_{0};
+  int in_d_{0};
+  int in_h_{0};
+  int in_w_{0};
+  int out_d_{0};
+  int out_h_{0};
+  int out_w_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
