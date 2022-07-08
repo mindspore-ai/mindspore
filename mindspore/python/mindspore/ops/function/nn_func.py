@@ -305,7 +305,8 @@ def dropout2d(x, p=0.5):
             which means dropping out 80% of channels. Default: 0.5.
 
     Returns:
-        Tensor, output, with the same shape and data type as `x`.\n
+        Tensor, output, with the same shape and data type as `x`.
+
         Tensor, mask, with the same shape as `x` and the data type is bool.
 
     Raises:
@@ -350,7 +351,8 @@ def dropout3d(x, p=0.5):
             which means dropping out 80% of channels. Default: 0.5.
 
     Returns:
-        Tensor, output, with the same shape and data type as `x`.\n
+        Tensor, output, with the same shape and data type as `x`.
+
         Tensor, mask, with the same shape as `x` and the data type is bool.
 
     Raises:
