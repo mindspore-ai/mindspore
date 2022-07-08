@@ -93,6 +93,22 @@ def get_bprop_tensor_scatter_sub(self):
     return bprop
 
 
+@bprop_getters.register(P.TensorScatterMul)
+def get_bprop_tensor_scatter_mul(self):
+    """Generate bprop for TensorScatterMul"""
+    gather_nd = P.GatherNd()
+    mul_func = P.TensorScatterMul()
+
+    def bprop(x, indices, update, out, dout):
+        gather_update = gather_nd(dout, indices)
+        gather_x = gather_nd(x, indices)
+        dx = mul_func(dout, indices, update)
+        d_update = gather_x * gather_update
+        return dx, zeros_like(indices), d_update
+
+    return bprop
+
+
 @bprop_getters.register(MatrixDiagV3)
 def get_bprop_matrix_diag_v3(self):
     """Generate bprop for MatrixDiagV3"""
@@ -163,7 +179,7 @@ def get_bprop_matrix_set_diag_v3(self):
 
             back = [max_diag_len]
             if index_max != index_min:
-                back = [index_max-index_min+1, max_diag_len]
+                back = [index_max - index_min + 1, max_diag_len]
             diagonal_shape = concat([pre_shape, back])
         x_cal = matrix_set_diag_v3(dout, zeros(diagonal_shape, dout.dtype), k)
 
@@ -193,6 +209,7 @@ def tensor_scatter_possible_replacement(x, indices, updates, out, dout):
 @bprop_getters.register(P.TensorScatterMax)
 def get_bprop_tensor_scatter_max(self):
     """Generate bprop for TensorScatterMax"""
+
     def bprop(x, indices, updates, out, dout):
         return tensor_scatter_possible_replacement(x, indices, updates, out, dout)
 
@@ -202,6 +219,7 @@ def get_bprop_tensor_scatter_max(self):
 @bprop_getters.register(P.TensorScatterMin)
 def get_bprop_tensor_scatter_min(self):
     """Generate bprop for TensorScatterMin"""
+
     def bprop(x, indices, updates, out, dout):
         return tensor_scatter_possible_replacement(x, indices, updates, out, dout)
 
@@ -403,7 +421,7 @@ def get_bprop_expand(self):
         for i in range(leading_dims):
             reduce_dims.append(i)
         for j in range(leading_dims, len(dx_shape)):
-            if x_shape[j-leading_dims] == 1 and dx_shape[j] != 1:
+            if x_shape[j - leading_dims] == 1 and dx_shape[j] != 1:
                 reduce_dims.append(j)
         if reduce_dims:
             dout = reducesum(dout, reduce_dims)
