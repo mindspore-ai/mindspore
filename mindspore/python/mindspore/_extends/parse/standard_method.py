@@ -1552,12 +1552,11 @@ def hardshrink(x, lambd=0.5):
         lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: 0.5.
 
     Returns:
-        Tensor, has the same shape and data type as input tensor `x`.
+        Tensor, has the same shape and data type as input tensor.
 
     Raises:
         TypeError: If `lambd` is not a float.
-        TypeError: If input `x` is not a tensor.
-        TypeError: If dtype of the input tensor `x` is neither float16 nor float32.
+        TypeError: If dtype of the input tensor is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
