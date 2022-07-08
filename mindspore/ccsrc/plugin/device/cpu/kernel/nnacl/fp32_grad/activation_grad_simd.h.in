@@ -1,0 +1,50 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_NNACL_FP32_GRAD_ACTIVATION_GRAD_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_GRAD_ACTIVATION_GRAD_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int ShrinkGrad@SIMD_INSTRUCTION@(int index, const float *src0, const float *src1,
+                                               int length, float *dst, float lambd) {
+    SIMD_F32 pos_lamdb_v = SIMD_MOV_F32(lambd);
+    SIMD_F32 neg_lamdb_v = SIMD_MOV_F32(-lambd);
+
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src0_t = SIMD_LD_F32(src0 + index);
+        SIMD_F32 src1_t = SIMD_LD_F32(src1 + index);
+        /* v0 = in > lamdb */
+        SIMD_MASK v0 = SIMD_CMPGT_F32(src1_t, pos_lamdb_v);
+        /* v1 = in < -lamdb */
+        SIMD_MASK v1 = SIMD_CMPLT_F32(src1_t, neg_lamdb_v);
+        /* out = (v0 | v1) & grad */
+        SIMD_ST_F32(dst + index, SIMD_AND_FP32(SIMD_OR_MASK(v0, v1), src0_t));
+    }
+    return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif

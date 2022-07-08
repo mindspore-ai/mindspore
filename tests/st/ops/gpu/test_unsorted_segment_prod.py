@@ -214,7 +214,7 @@ def test_dyn_ab(func, data_type, index_type):
 
     # test 3
     input_x = Tensor(np.random.randint(0, 100, size=[4, 5, 3]), data_type)
-    segment_ids = Tensor(np.random.randint(-1, 4, size=[4]), index_type)
+    segment_ids = Tensor(np.random.randint(0, 4, size=[4]), index_type)
     output = net(input_x, segment_ids)
     expected = unsorted_segment_arith_expected('prod', input_x, segment_ids, num_segments)
     assert (output.asnumpy() == expected).all()
@@ -252,7 +252,7 @@ def test_dyn_a(func, data_type, index_type):
 
     # test 3
     input_x = Tensor(np.random.randint(0, 100, size=[4, 5, 3]), data_type)
-    segment_ids = Tensor(np.random.randint(-1, 4, size=[4]), index_type)
+    segment_ids = Tensor(np.random.randint(0, 4, size=[4]), index_type)
     output = net(input_x, segment_ids)
     expected = unsorted_segment_arith_expected('prod', input_x, segment_ids, num_segments)
     assert (output.asnumpy() == expected).all()
@@ -290,7 +290,7 @@ def test_dyn_b(func, data_type, index_type):
 
     # test 3
     input_x = Tensor(np.random.randint(0, 100, size=[4, 5, 3]), data_type)
-    segment_ids = Tensor(np.random.randint(-1, 6, size=[4]), index_type)
+    segment_ids = Tensor(np.random.randint(0, 6, size=[4]), index_type)
     output = net(input_x, segment_ids)
     expected = unsorted_segment_arith_expected('prod', input_x, segment_ids, num_segments)
     assert (output.asnumpy() == expected).all()

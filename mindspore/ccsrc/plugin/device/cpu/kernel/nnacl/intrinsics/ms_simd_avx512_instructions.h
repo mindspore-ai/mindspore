@@ -90,6 +90,9 @@
 #define MS_GET_MIN512_F32(src) _mm512_reduce_min_ps(src)
 #define MS_GET_SUM512_F32(src) _mm512_reduce_add_ps(src)
 #define MS_AND512_MASK(src1, src2) _mm512_kand(src1, src2)
+#define MS_OR512_MASK(src1, src2) _mm512_kor(src1, src2)
+#define MS_AND512_FP32(src1, src2) _mm512_kand(src1, src2)
+#define MS_OR512_F32(src1, src2) _mm512_kor(src1, src2)
 
 static inline MS_FLOAT32X16 MS_POW512_F32(MS_FLOAT32X16 src1, MS_FLOAT32X16 src2) {
   MS_FLOAT32X16 dst;
