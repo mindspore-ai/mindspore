@@ -2735,6 +2735,10 @@ class Tensor(Tensor_):
         Returns:
             Initialized Tensor.
 
+        Raises:
+            TypeError: `indices` is neither int32 nor int64.
+            ValueError: The length of the shape of the tensor is less than the last dimension of `indices`.
+
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
