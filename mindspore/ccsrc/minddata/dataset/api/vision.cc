@@ -410,7 +410,7 @@ std::shared_ptr<TensorOperation> GaussianBlur::Parse() {
 
 #ifndef ENABLE_ANDROID
 // GetImageNumChannels Function.
-Status GetImageNumChannels(const mindspore::MSTensor &image, int *channels) {
+Status GetImageNumChannels(const mindspore::MSTensor &image, dsize_t *channels) {
   std::shared_ptr<dataset::Tensor> input;
   Status rc = Tensor::CreateFromMSTensor(image, &input);
   if (rc.IsError()) {
