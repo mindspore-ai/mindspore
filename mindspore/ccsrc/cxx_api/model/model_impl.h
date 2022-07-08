@@ -16,11 +16,8 @@
 #ifndef MINDSPORE_CCSRC_CXX_API_MODEL_MODEL_IMPL_H
 #define MINDSPORE_CCSRC_CXX_API_MODEL_MODEL_IMPL_H
 #include <functional>
-#include <map>
-#include <string>
 #include <vector>
 #include <memory>
-#include <utility>
 #include "include/api/context.h"
 #include "include/api/model.h"
 #include "include/api/graph.h"

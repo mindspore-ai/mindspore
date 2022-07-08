@@ -61,8 +61,7 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
   FirstGraphModeGuard guard(options_);
   auto om_data = model_converter_.LoadMindIR(kernel_graph);
   if (om_data.Data() == nullptr || om_data.DataSize() == 0) {
-    MS_LOG(ERROR) << "Load MindIR failed.";
-    return kMCFailed;
+    MS_LOG(EXCEPTION) << "Load MindIR failed.";
   }
   // load
   std::shared_ptr<Graph> graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(om_data, ModelType::kOM));
@@ -72,7 +71,7 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
   if (ret != kSuccess) {
     MS_LOG(EXCEPTION) << "Load failed.";
   }
-  graphs_[kernel_graph->graph_id()] = graph_cell;
+  graph_cells_[kernel_graph->graph_id()] = graph_cell;
   kernel_graphs_[kernel_graph->graph_id()] = kernel_graph;
   MS_LOG(INFO) << "Multi graph compile success, graph id " << kernel_graph->graph_id();
   return kernel_graph->graph_id();
@@ -81,8 +80,8 @@ GraphId MultiGraphAclSession::CompileGraphImpl(const AnfNodePtrList &lst, const 
 void MultiGraphAclSession::RunGraph(GraphId graph_id, const std::vector<MSTensor> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   MS_LOG(INFO) << "Start run graph " << graph_id;
-  auto iter = graphs_.find(graph_id);
-  if (iter == graphs_.end()) {
+  auto iter = graph_cells_.find(graph_id);
+  if (iter == graph_cells_.end()) {
     MS_LOG(EXCEPTION) << "Graph id " << graph_id << " not found.";
   }
   std::vector<MSTensor> out_tensors;

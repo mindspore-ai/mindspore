@@ -72,7 +72,7 @@ Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std:
 }
 
 Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs,
-                      const MSKernelCallBack &before, const MSKernelCallBack &after) {
+                      const MSKernelCallBack & /* before */, const MSKernelCallBack & /* after */) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
@@ -81,7 +81,7 @@ Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor>
 }
 
 Status Model::PredictWithPreprocess(const std::vector<std::vector<MSTensor>> &inputs, std::vector<MSTensor> *outputs,
-                                    const MSKernelCallBack &before, const MSKernelCallBack &after) {
+                                    const MSKernelCallBack & /* before */, const MSKernelCallBack & /* after */) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Failed because this model has not been built.";
     return kMCFailed;
@@ -168,7 +168,7 @@ bool Model::CheckModelSupport(enum DeviceType device_type, ModelType model_type)
   return check_model->CheckModelSupport(model_type);
 }
 
-Status Model::LoadConfig(const std::vector<char> &config_path) {
+Status Model::LoadConfig(const std::vector<char> & /* config_path */) {
   MS_LOG(ERROR) << "Unsupported Feature.";
   return kMCFailed;
 }

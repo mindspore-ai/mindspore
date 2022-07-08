@@ -40,7 +40,7 @@ class MultiGraphAclSession : public session::SessionBasic {
   VectorRef ConstructOutputRef(GraphId graph_id, std::deque<MSTensor> *out_tensors);
   VectorRef ConstructOutputRefByTupleNode(const CNodePtr &tuple_node, std::deque<MSTensor> *out_tensors);
 
-  std::map<GraphId, GraphCell> graphs_ = {};
+  std::map<GraphId, GraphCell> graph_cells_ = {};
   std::map<GraphId, KernelGraphPtr> kernel_graphs_ = {};
   std::shared_ptr<AclModelOptions> options_ = nullptr;
 };
