@@ -111,6 +111,7 @@ constexpr auto kBernoulli = "Bernoulli";
 // Math
 constexpr auto kCross = "Cross";
 constexpr auto kEditDistance = "EditDistance";
+constexpr auto kNextAfter = "NextAfter";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
 constexpr auto kFFTWithSize = "FFTWithSize";
 
@@ -852,6 +853,7 @@ GVAR_DEF(PrimitivePtr, kPrimTensorListStack, std::make_shared<Primitive>("Tensor
 GVAR_DEF(PrimitivePtr, kPrimTensorListSetItem, std::make_shared<Primitive>("TensorListSetItem"));
 
 // Maths
+GVAR_DEF(PrimitivePtr, kPrimNextAfter, std::make_shared<Primitive>(kNextAfter));
 GVAR_DEF(PrimitivePtr, kPrimCross, std::make_shared<Primitive>(kCross));
 GVAR_DEF(PrimitivePtr, kPrimEditDistance, std::make_shared<Primitive>(kEditDistance));
 GVAR_DEF(PrimitivePtr, kPrimBesselI0, std::make_shared<Primitive>("BesselI0"));
