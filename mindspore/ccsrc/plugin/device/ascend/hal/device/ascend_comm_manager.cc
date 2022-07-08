@@ -24,18 +24,18 @@
 
 namespace mindspore {
 namespace {
-#define HCCL_RUN_CHECK(op_name, group, op)                      \
-  do {                                                          \
-    auto hccl_result = static_cast<int64_t>(op);                \
-    if (hccl_result != 0) {                                     \
-      MS_LOG(ERROR) << op_name << " failed: #" << group << "#"; \
-      return false;                                             \
-    }                                                           \
+#define HCCL_RUN_CHECK(op_name, group, op)                          \
+  do {                                                              \
+    auto hccl_result = static_cast<int64_t>(op);                    \
+    if (hccl_result != 0) {                                         \
+      MS_LOG(ERROR) << (op_name) << " failed: #" << (group) << "#"; \
+      return false;                                                 \
+    }                                                               \
   } while (0)
 
 #define HCCL_GROUP_CHECK_EMPTY(group)                              \
   do {                                                             \
-    if (group.length() == 0) {                                     \
+    if ((group).length() == 0) {                                   \
       MS_LOG(ERROR) << "The length of group name should not be 0"; \
       return false;                                                \
     }                                                              \
@@ -43,7 +43,7 @@ namespace {
 
 #define HCCL_GROUP_CHECK_IS_WORLD(group)                                   \
   do {                                                                     \
-    if (group == kHcclWorldGroup) {                                        \
+    if ((group) == kHcclWorldGroup) {                                      \
       MS_LOG(ERROR) << "The group name should not be " << kHcclWorldGroup; \
       return false;                                                        \
     }                                                                      \

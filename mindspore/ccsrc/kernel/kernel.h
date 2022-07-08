@@ -138,6 +138,7 @@ class KernelPack {
  public:
   KernelPack() : json_(nullptr), kernel_(nullptr) {}
   KernelPack(const KernelPack &) = default;
+  KernelPack &operator=(const KernelPack &) = default;
   KernelJsonInfo kernel_json_info() const;
   bool LoadKernelMeta(const std::string &json_f);
   bool ReadFromJsonFile(const std::string &json_f, const std::string &processor);
@@ -253,8 +254,8 @@ class KernelMod {
   virtual std::vector<size_t> GenParameters() { return {}; }
   virtual void ReleaseResource() {}
   // Initialization for the kernel mod.
-  virtual bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                    const std::vector<KernelTensorPtr> &outputs) {
+  virtual bool Init(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> & /* inputs */,
+                    const std::vector<KernelTensorPtr> & /* outputs */) {
     return true;
   }
 
@@ -293,7 +294,7 @@ class KernelMod {
  protected:
   virtual void SyncData() {}
   virtual std::vector<KernelTensorPtr> GetOutputs() { return {}; }
-  bool IsValidShape(const ShapeVector &shape) {
+  bool IsValidShape(const ShapeVector &shape) const {
     if (std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; })) {
       return false;
     }

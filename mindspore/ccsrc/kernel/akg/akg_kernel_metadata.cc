@@ -28,6 +28,7 @@ void AkgMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr
   MS_EXCEPTION_IF_NULL(kernel_info_list);
 
   std::string op_name = common::AnfAlgo::GetCNodeName(kernel_node);
+  const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
   for (size_t i = 0; i < support_devices.size(); i++) {
     auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, OpImplyType::kAKG);
     if (op_info_ptr == nullptr) {

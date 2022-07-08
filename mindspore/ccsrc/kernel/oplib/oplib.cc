@@ -211,7 +211,7 @@ bool OpLib::RegOpFromLocalInfo() {
   return true;
 }
 
-bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType imply_type,
+bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpImplyType &imply_type,
                          const std::string &impl_path) {
   std::shared_ptr<OpInfo> op_info = std::make_shared<OpInfo>();
   MS_EXCEPTION_IF_NULL(op_info);
@@ -263,7 +263,7 @@ bool OpLib::DecodeOpInfo(const nlohmann::json &obj, const mindspore::kernel::OpI
   return true;
 }
 
-bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType imply_type,
+bool OpLib::DecodeAttr(const nlohmann::json &obj, const OpImplyType &imply_type,
                        const std::shared_ptr<OpInfo> &op_info) {
   MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
@@ -309,7 +309,7 @@ bool OpLib::DecodeDtypeFormat(const nlohmann::json &dtype_format, const std::sha
   return ret;
 }
 
-bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType imply_type, const OpIOType io_type,
+bool OpLib::DecodeInputOutput(const nlohmann::json &obj, const OpImplyType &imply_type, const OpIOType &io_type,
                               const std::shared_ptr<OpInfo> &op_info, const nlohmann::json &dtype_format) {
   MS_EXCEPTION_IF_NULL(op_info);
   bool ret = true;
@@ -396,7 +396,7 @@ std::shared_ptr<OpInfo> OpLib::FindOp(const std::string &op_name, OpImplyType im
       MS_LOG(DEBUG) << "Find static opinfo " << op_name;
       return op_info;
     }
-    op_info_list.emplace_back(op_info);
+    (void)op_info_list.emplace_back(op_info);
   }
   // If is_dynamic_shape is true, but op_info have no dynamic shape, use first opinfo
   if (!op_info_list.empty()) {

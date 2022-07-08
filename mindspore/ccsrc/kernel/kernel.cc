@@ -71,13 +71,13 @@ std::vector<TypeId> KernelTensor::GetListOrTupleDtype() const {
   if (type_ptr->isa<List>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     auto elements = tuple_ptr->elements();
-    std::transform(elements.begin(), elements.end(), std::back_inserter(types),
-                   [](const TypePtr &t) { return t->type_id(); });
+    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
+                         [](const TypePtr &t) { return t->type_id(); });
   } else if (type_ptr->isa<Tuple>()) {
     auto tuple_ptr = type_ptr->cast<TuplePtr>();
     auto elements = tuple_ptr->elements();
-    std::transform(elements.begin(), elements.end(), std::back_inserter(types),
-                   [](const TypePtr &t) { return t->type_id(); });
+    (void)std::transform(elements.begin(), elements.end(), std::back_inserter(types),
+                         [](const TypePtr &t) { return t->type_id(); });
   } else {
     types.push_back(TypeId::kTypeUnknown);
   }
@@ -141,10 +141,10 @@ void KernelTensor::SetDeviceShapeAdaptively(const std::vector<int64_t> &device_s
   tensor_info_.device_shape_adaptively = device_shape_adaptively;
 }
 
-int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+int KernelMod::Resize(const BaseOperatorPtr & /* base_operator */, const std::vector<KernelTensorPtr> &inputs,
                       const std::vector<KernelTensorPtr> &outputs,
-                      const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = KRET_OK;
+                      const std::map<uint32_t, tensor::TensorPtr> & /* inputsOnHost */) {
+  auto ret = KRET_OK;
   workspace_size_list_.clear();
   input_size_list_.clear();
   for (auto &input : inputs) {
@@ -188,7 +188,7 @@ int KernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<Ke
     }
     (void)output_size_list_.emplace_back(tensor_size);
   }
-  return ret;
+  return static_cast<int>(ret);
 }
 }  // namespace kernel
 }  // namespace mindspore
