@@ -45,7 +45,7 @@ TypePtr SoftMarginLossGradInferType(const PrimitivePtr &primitive, const std::ve
   auto op_name = primitive->name();
   (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual,
                                            kSoftMarginLossGradInputSize, op_name);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   (void)types.emplace("logits", input_args[kInputIndex0]->BuildType());
   (void)types.emplace("labels", input_args[kInputIndex1]->BuildType());
@@ -55,6 +55,18 @@ TypePtr SoftMarginLossGradInferType(const PrimitivePtr &primitive, const std::ve
                                                     op_name);
 }
 }  // namespace
+
+void SoftMarginLossGrad::set_reduction(const std::string &reduction) {
+  CheckAndConvertUtils::CheckString(kReduction, reduction, {"none", "sum", "mean"}, this->name());
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+
+std::string SoftMarginLossGrad::get_reduction() const {
+  auto value_ptr = GetAttr(kReduction);
+  return GetValue<std::string>(value_ptr);
+}
+
+void SoftMarginLossGrad::Init(const std::string &reduction) { this->set_reduction(reduction); }
 
 MIND_API_OPERATOR_IMPL(SoftMarginLossGrad, BaseOperator);
 AbstractBasePtr SoftMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
