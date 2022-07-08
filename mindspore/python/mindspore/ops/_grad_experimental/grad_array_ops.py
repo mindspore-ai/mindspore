@@ -103,6 +103,22 @@ def get_bprop_mvlgamma(self):
     return bprop
 
 
+@bprop_getters.register(P.TensorScatterDiv)
+def get_bprop_tensor_scatter_div(self):
+    """Generate bprop for TensorScatterDiv"""
+    gather_nd = P.GatherNd()
+    div_func = P.TensorScatterDiv()
+
+    def bprop(x, indices, update, out, dout):
+        gather_update = gather_nd(dout, indices)
+        gather_x = gather_nd(x, indices)
+        dx = div_func(dout, indices, update)
+        d_update = gather_x * gather_update
+        return dx, zeros_like(indices), d_update
+
+    return bprop
+
+
 @bprop_getters.register(P.TensorScatterSub)
 def get_bprop_tensor_scatter_sub(self):
     """Generate bprop for TensorScatterSub"""
