@@ -32,5 +32,6 @@
 
     **异常：**
 
+    - **TYpeError** - `input_x` 的数据类型非float16、float32或float64。
     - **TypeError** - `keep_dims` 不是bool。
     - **TypeError** - `axis` 不是int。
