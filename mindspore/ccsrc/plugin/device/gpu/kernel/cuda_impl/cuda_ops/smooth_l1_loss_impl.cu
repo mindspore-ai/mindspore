@@ -47,81 +47,96 @@ __global__ void SmoothL1LossNoReduce(const int64_t input_size, const float beta,
 
 template <typename T>
 __global__ void SmoothL1LossSum(const int64_t input_size, const float beta, const T *prediction, const T *target,
-                                T *loss) {
-  T tmp = 0;
+                                T *loss, double *tmp_loss) {
+  double tmp = 0;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    T value = fabsf(prediction[i] - target[i]);
+    double value = static_cast<double>(fabsf(prediction[i] - target[i]));
     if (value < beta) {
       tmp = 0.5 * value * value / beta;
     } else {
       tmp = value - (0.5 * beta);
     }
-    MsAtomicAdd(loss, tmp);
+    MsAtomicAdd(tmp_loss, tmp);
   }
 }
 
 template <>
 __global__ void SmoothL1LossSum(const int64_t input_size, const float beta, const half *prediction, const half *target,
-                                half *loss) {
+                                half *loss, double *tmp_loss) {
+  double tmp = 0;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    half tmp = 0;
-    half value = fabsf(prediction[i] - target[i]);
-    half h_beta = __float2half(beta);
-    if (value < h_beta) {
-      tmp = __float2half(0.5) * value * value / h_beta;
+    float value = __half2float(fabsf(prediction[i] - target[i]));
+    if (value < beta) {
+      tmp = 0.5 * value * value / beta;
     } else {
-      tmp = value - (__float2half(0.5) * h_beta);
+      tmp = value - 0.5 * beta;
     }
-    MsAtomicAdd(loss, tmp);
+    MsAtomicAdd(tmp_loss, tmp);
   }
 }
 
 template <typename T>
 __global__ void SmoothL1LossMean(const int64_t input_size, const float beta, const T *prediction, const T *target,
-                                 T *loss) {
-  T tmp = 0;
+                                 T *loss, double *tmp_loss) {
+  double tmp = 0;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    T value = fabsf(prediction[i] - target[i]);
+    double value = static_cast<double>(fabsf(prediction[i] - target[i]));
     if (value < beta) {
       tmp = 0.5 * value * value / beta;
     } else {
       tmp = value - (0.5 * beta);
     }
-    tmp /= (T)(input_size);
-    MsAtomicAdd(loss, tmp);
+    tmp /= static_cast<double>(input_size);
+    MsAtomicAdd(tmp_loss, tmp);
   }
 }
 
 template <>
 __global__ void SmoothL1LossMean(const int64_t input_size, const float beta, const half *prediction, const half *target,
-                                 half *loss) {
+                                 half *loss, double *tmp_loss) {
+  double tmp = 0;
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < input_size; i += blockDim.x * gridDim.x) {
-    half tmp = 0;
-    half value = fabsf(prediction[i] - target[i]);
-    half h_beta = __float2half(beta);
-    if (value < h_beta) {
-      tmp = __float2half(0.5) * value * value / h_beta;
+    float value = __half2float(fabsf(prediction[i] - target[i]));
+    if (value < beta) {
+      tmp = 0.5 * value * value / beta;
     } else {
-      tmp = value - (__float2half(0.5) * h_beta);
+      tmp = value - 0.5 * beta;
     }
-    tmp /= __float2half(static_cast<float>(input_size));
-    MsAtomicAdd(loss, tmp);
+    tmp /= static_cast<double>(input_size);
+    MsAtomicAdd(tmp_loss, tmp);
   }
 }
 
 template <typename T>
+__global__ void CastLoss(const double *tmp_loss, T *loss) {
+  loss[0] = static_cast<T>(tmp_loss[0]);
+}
+
+template <>
+__global__ void CastLoss(const double *tmp_loss, half *loss) {
+  float f_loss = static_cast<float>(tmp_loss[0]);
+  loss[0] = __half2float(f_loss);
+}
+
+template <typename T>
 void SmoothL1Loss(const SmoothL1LossReductionMode mode, const int64_t input_size, const float beta, const T *prediction,
-                  const T *target, T *loss, const uint32_t device_id, cudaStream_t stream) {
+                  const T *target, T *loss, double *tmp_loss, const uint32_t device_id, cudaStream_t stream) {
   switch (mode) {
-    case NONE:
+    case NONE: {
       return SmoothL1LossNoReduce<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
         input_size, beta, prediction, target, loss);
-    case SUM:
-      return SmoothL1LossSum<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
-        input_size, beta, prediction, target, loss);
-    case MEAN:
-      return SmoothL1LossMean<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
-        input_size, beta, prediction, target, loss);
+    }
+    case SUM: {
+      SmoothL1LossSum<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+        input_size, beta, prediction, target, loss, tmp_loss);
+      return CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+    }
+
+    case MEAN: {
+      SmoothL1LossMean<<<CUDA_BLOCKS(device_id, input_size), CUDA_THREADS(device_id), 0, stream>>>(
+        input_size, beta, prediction, target, loss, tmp_loss);
+      return CastLoss<<<CUDA_BLOCKS(device_id, 1), CUDA_THREADS(device_id), 0, stream>>>(tmp_loss, loss);
+    }
     default:
       break;
   }
@@ -243,7 +258,8 @@ void SmoothL1LossGrad(const SmoothL1LossReductionMode mode, const int64_t input_
 
 template CUDA_LIB_EXPORT void SmoothL1Loss<double>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                    const float beta, const double *prediction, const double *target,
-                                                   double *loss, const uint32_t device_id, cudaStream_t stream);
+                                                   double *loss, double *tmp_loss, const uint32_t device_id,
+                                                   cudaStream_t stream);
 template CUDA_LIB_EXPORT void SmoothL1LossGrad<double>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                        const float beta, const double *prediction, const double *target,
                                                        const double *dloss, double *dx, const uint32_t device_id,
@@ -251,7 +267,8 @@ template CUDA_LIB_EXPORT void SmoothL1LossGrad<double>(const SmoothL1LossReducti
 
 template CUDA_LIB_EXPORT void SmoothL1Loss<float>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                   const float beta, const float *prediction, const float *target,
-                                                  float *loss, const uint32_t device_id, cudaStream_t stream);
+                                                  float *loss, double *tmp_loss, const uint32_t device_id,
+                                                  cudaStream_t stream);
 template CUDA_LIB_EXPORT void SmoothL1LossGrad<float>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                       const float beta, const float *prediction, const float *target,
                                                       const float *dloss, float *dx, const uint32_t device_id,
@@ -259,7 +276,8 @@ template CUDA_LIB_EXPORT void SmoothL1LossGrad<float>(const SmoothL1LossReductio
 
 template CUDA_LIB_EXPORT void SmoothL1Loss<half>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                  const float beta, const half *prediction, const half *target,
-                                                 half *loss, const uint32_t device_id, cudaStream_t stream);
+                                                 half *loss, double *tmp_loss, const uint32_t device_id,
+                                                 cudaStream_t stream);
 template CUDA_LIB_EXPORT void SmoothL1LossGrad<half>(const SmoothL1LossReductionMode mode, const int64_t input_size,
                                                      const float beta, const half *prediction, const half *target,
                                                      const half *dloss, half *dx, const uint32_t device_id,
