@@ -1,7 +1,7 @@
 mindspore.ops.standard_normal
-============================
+=============================
 
-.. py:function:: mindspore.ops.standard_normal(seed=0, seed2=0)
+.. py:function:: mindspore.ops.standard_normal(shape, seed=0, seed2=0)
 
     根据标准正态（高斯）随机数分布生成随机数。
 
