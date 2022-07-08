@@ -27,7 +27,11 @@ class ReduceSumFission : public PatternProcessPass {
   explicit ReduceSumFission(bool multigraph = true) : PatternProcessPass("reduce_sum_fission", multigraph) {}
   ~ReduceSumFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  CNodePtr AddReduceSumNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node, const bool &keep_dims,
+                            const std::vector<int64_t> &axis, const BaseShapePtr &out_shape) const;
 };
 }  // namespace opt
 }  // namespace mindspore

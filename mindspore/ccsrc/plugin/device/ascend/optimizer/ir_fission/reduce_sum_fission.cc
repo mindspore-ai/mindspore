@@ -23,35 +23,15 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &input_node,
-                     const bool fir_flag) {
-  std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
-  BaseShapePtr shape;
-  if (fir_flag) {
-    new_cast_inputs.emplace_back(input_node->inputs()[kIndex1]);
-    shape = common::AnfAlgo::GetOutputDetailShape(input_node->inputs()[kIndex1], 0);
-  } else {
-    new_cast_inputs.emplace_back(input_node);
-    shape = common::AnfAlgo::GetOutputDetailShape(input_node, 0);
-  }
-  CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph);
-  new_cast->set_scope(input_node->scope());
-  new_cast->set_abstract(input_node->abstract());
-  common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
-  common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {shape}, new_cast.get());
-  return new_cast;
-}
-}  // namespace
-
 const BaseRef ReduceSumFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   auto reduce_sum_prim = std::make_shared<Primitive>(prim::kPrimReduceSum->name());
   return VectorRef({reduce_sum_prim, Xs});
 }
 
-CNodePtr AddReduceSumNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node, const bool &keep_dims,
-                          const std::vector<int64_t> &axis, const BaseShapePtr &out_shape) {
+CNodePtr ReduceSumFission::AddReduceSumNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
+                                            const bool &keep_dims, const std::vector<int64_t> &axis,
+                                            const BaseShapePtr &out_shape) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(input_node);
   auto input_type = common::AnfAlgo::GetOutputInferDataType(input_node, 0);

@@ -29,7 +29,7 @@ class TensorScatterFission : public PatternProcessPass {
   explicit TensorScatterFission(bool multigraph = true, const string &name = "tensor_scatter_fission")
       : PatternProcessPass(name, multigraph) {}
   ~TensorScatterFission() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  protected:
   virtual ValueNodePtr GetScatterNdPrimNode() const = 0;

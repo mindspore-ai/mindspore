@@ -539,6 +539,24 @@ ValueNodePtr CreateShapeValueNode(const FuncGraphPtr &func_graph, const std::vec
   return shape_value_node;
 }
 
+CNodePtr AddCastNode(const FuncGraphPtr &func_graph, const TypeId dst_type, const CNodePtr &node, const bool is_input) {
+  std::vector<AnfNodePtr> new_cast_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimCast->name()))};
+  BaseShapePtr shape;
+  if (is_input) {
+    (void)new_cast_inputs.emplace_back(node->inputs()[kIndex1]);
+    shape = common::AnfAlgo::GetOutputDetailShape(node->inputs()[kIndex1], 0);
+  } else {
+    (void)new_cast_inputs.emplace_back(node);
+    shape = common::AnfAlgo::GetOutputDetailShape(node, 0);
+  }
+  CNodePtr new_cast = NewCNode(new_cast_inputs, func_graph, {node});
+  new_cast->set_scope(node->scope());
+  new_cast->set_abstract(node->abstract());
+  common::AnfAlgo::SetNodeAttr(kAttrDstType, MakeValue(static_cast<size_t>(dst_type)), new_cast);
+  common::AnfAlgo::SetOutputTypeAndDetailShape({dst_type}, {shape}, new_cast.get());
+  return new_cast;
+}
+
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
   if (utils::isa<AnfNodePtr>(a) && utils::isa<AnfNodePtr>(b)) {
     auto a_node = utils::cast<AnfNodePtr>(a);

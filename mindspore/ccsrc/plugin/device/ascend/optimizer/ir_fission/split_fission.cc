@@ -35,7 +35,7 @@ void AddNewOutputs(const FuncGraphPtr &func_graph, const AnfNodePtr &new_splitv,
   MS_EXCEPTION_IF_NULL(inputs);
   std::vector<AnfNodePtr> new_splitv_output;
   CreateMultipleOutputsOfAnfNode(func_graph, new_splitv, LongToSize(outputs_num), &new_splitv_output);
-  (void)inputs->insert(inputs->end(), new_splitv_output.begin(), new_splitv_output.end());
+  (void)inputs->insert(inputs->cend(), new_splitv_output.cbegin(), new_splitv_output.cend());
 }
 
 AnfNodePtr CreateTupleGetItem(const FuncGraphPtr &func_graph, const AnfNodePtr &input, int64_t index) {

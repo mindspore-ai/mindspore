@@ -47,7 +47,7 @@ void DoRefresh(const CNodePtr &cnode) {
 
 bool RefreshParameterFormat::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
-    MS_LOG(ERROR) << "func_graph is nullptr.";
+    MS_LOG(WARNING) << "func_graph is nullptr.";
     return false;
   }
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());

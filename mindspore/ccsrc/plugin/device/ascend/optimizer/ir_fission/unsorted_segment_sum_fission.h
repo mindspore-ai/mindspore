@@ -30,7 +30,7 @@ class UnsortSegmentSumFission : public PatternProcessPass {
       : PatternProcessPass("unsorted_segment_sum_fission", multigraph) {}
   ~UnsortSegmentSumFission() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   CNodePtr CreatePadding(const FuncGraphPtr &graph, const CNodePtr &origin_node, const size_t &pad_dim_size) const;

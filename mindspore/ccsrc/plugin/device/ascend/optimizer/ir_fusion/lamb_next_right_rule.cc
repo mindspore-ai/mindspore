@@ -68,7 +68,7 @@ const AnfNodePtr LambNextRightRule::Process(const FuncGraphPtr &func_graph, cons
   MS_EXCEPTION_IF_NULL(new_node);
   // Set abstract of new node
   auto iter_add1 = (*equiv).find(add1_var_);
-  if (iter_add1 == (*equiv).end()) {
+  if (iter_add1 == (*equiv).cend()) {
     MS_LOG(EXCEPTION) << "The equiv map is expected to contains the add1 var after matched."
                       << trace::DumpSourceLines(node);
   }

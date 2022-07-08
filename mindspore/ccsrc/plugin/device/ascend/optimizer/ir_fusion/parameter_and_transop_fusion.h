@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ class ParameterTransOpFusion : public Pass {
  public:
   explicit ParameterTransOpFusion(size_t groups = 1) : Pass("Parameter_and_transop_fusion"), groups_(groups) {}
   ~ParameterTransOpFusion() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
   size_t groups_ = 1;

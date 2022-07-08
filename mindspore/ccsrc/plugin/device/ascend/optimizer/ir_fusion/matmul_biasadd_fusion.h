@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class MatmulBiasaddFusion : public PatternProcessPassWithSwitch {
   }
   ~MatmulBiasaddFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const override;
 
  protected:
   AnfNodePtr CreateMatmulWithBias(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const;
@@ -49,7 +49,7 @@ class MatmulAddFusion : public MatmulBiasaddFusion {
   explicit MatmulAddFusion(bool multigraph = true) : MatmulBiasaddFusion(multigraph, "matmul_add_fusion") {}
   ~MatmulAddFusion() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &equiv) const override;
 
  private:
   bool NeedFusion(const AnfNodePtr &add) const;

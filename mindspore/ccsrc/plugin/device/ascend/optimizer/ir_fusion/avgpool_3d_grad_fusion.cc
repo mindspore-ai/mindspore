@@ -119,7 +119,7 @@ AnfNodePtr ConstructMultiplier(const FuncGraphPtr &func_graph, const ShapeVector
   std::vector<int64_t> assist_shape = ori_shape;  // NCDHW
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat16, assist_shape);
   MS_EXCEPTION_IF_NULL(tensor);
-  auto tensor_data = reinterpret_cast<float16 *>(tensor->data_c());
+  auto tensor_data = static_cast<float16 *>(tensor->data_c());
   auto pad_d = pad_list[kDim0] + pad_list[kDim1];
   auto pad_h = pad_list[kDim2] + pad_list[kDim3];
   auto pad_w = pad_list[kDim4] + pad_list[kDim5];
@@ -209,8 +209,8 @@ const AnfNodePtr AvgPool3DGradFusion::Process(const FuncGraphPtr &func_graph, co
     return nullptr;
   }
   std::vector<AnfNodePtr> new_inputs{NewValueNode(std::make_shared<Primitive>(prim::kPrimAvgPool3DGrad->name()))};
-  (void)new_inputs.insert(new_inputs.end(), avg_pool_3d_grad_node->inputs().begin() + 1,
-                          avg_pool_3d_grad_node->inputs().end());
+  (void)new_inputs.insert(new_inputs.cend(), avg_pool_3d_grad_node->inputs().cbegin() + 1,
+                          avg_pool_3d_grad_node->inputs().cend());
   // assist node 1
   auto kd = kernel_size[kDim2];
   auto kh = kernel_size[kDim3];
