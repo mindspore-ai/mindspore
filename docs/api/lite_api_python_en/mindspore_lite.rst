@@ -16,7 +16,7 @@ Context
     mindspore_lite.AscendDeviceInfo
 
 Converter
---------
+---------
 
 .. class:: mindspore_lite.FmkType
 
