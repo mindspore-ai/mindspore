@@ -13,7 +13,6 @@ mindspore.dataset.transforms.Unique
 
     .. note:: 需要在 `batch` 操作之后调用该运算。
 
-    **异常：**
-
-    - **RuntimeError** - 当输入的Tensor具有两列。
+    异常：
+        - **RuntimeError** - 当输入的Tensor具有两列。
 

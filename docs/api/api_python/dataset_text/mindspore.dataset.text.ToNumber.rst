@@ -9,11 +9,9 @@ mindspore.dataset.text.ToNumber
     https://en.cppreference.com/w/cpp/string/basic_string/stof，
     https://en.cppreference.com/w/cpp/string/basic_string/stoul。
 
-    **参数：**
+    参数：
+        - **data_type** (mindspore.dtype) - 要转换为的数值类型，需要是在 :class:`mindspore.dtype` 定义的数值类型。
 
-    - **data_type** (mindspore.dtype) -  要转换为的数值类型，需要是在 :class:`mindspore.dtype` 定义的数值类型。
-
-    **异常：**
-
-    - **TypeError** - 参数 `data_type` 不是 :class:`mindspore.dtype` 类型。
-    - **RuntimeError** - 字符串类型转换失败，或类型转换时出现溢出。
+    异常：
+        - **TypeError** - 参数 `data_type` 不是 :class:`mindspore.dtype` 类型。
+        - **RuntimeError** - 字符串类型转换失败，或类型转换时出现溢出。

@@ -33,7 +33,7 @@ mindspore_lite.DataType
       ``DataType.FLOAT16``         16位浮点数
       ``DataType.FLOAT32``         32位浮点数
       ``DataType.FLOAT64``         64位浮点数
-      ``DataType.INVALID``         ``DataType``的最大阈值，用于防止无效类型，对应于C++中的 ``INT32_MAX``
+      ``DataType.INVALID``         ``DataType`` 的最大阈值，用于防止无效类型，对应于C++中的 ``INT32_MAX``
       ===========================  ================================================================
 
     * **用法**

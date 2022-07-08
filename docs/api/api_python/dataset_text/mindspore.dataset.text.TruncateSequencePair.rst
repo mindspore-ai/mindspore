@@ -7,10 +7,8 @@ mindspore.dataset.text.TruncateSequencePair
 
     TruncateSequencePair接收两个Tensor作为输入并返回两个Tensor作为输出。
 
-    **参数：**
+    参数：
+        - **max_length** (int) - 最大截断长度。
 
-    - **max_length** (int) - 最大截断长度。
-
-    **异常：**
-
-    - **TypeError** - 参数 `max_length` 的类型不是int。
+    异常：
+        - **TypeError** - 参数 `max_length` 的类型不是int。
