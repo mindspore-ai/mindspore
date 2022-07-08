@@ -415,7 +415,7 @@ abstract::AbstractTensorPtr MSANFModelParser::GetAbsTensorFromTensorProto(const 
 
   ShapeVector max_shape;
   for (int i = 0; i < tensor_proto.max_dims_size(); ++i) {
-    max_shape.emplace_back(tensor_proto.min_dims(i));
+    max_shape.emplace_back(tensor_proto.max_dims(i));
   }
 
   if (!tensor_proto.has_data_type()) {
