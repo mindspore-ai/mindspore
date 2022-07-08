@@ -94,7 +94,7 @@ static __forceinline__ __device__ half reflect_coordinates(half in, int twice_lo
       return __float2half(extra + min);
     }
   } else {
-    return static_cast<half>(0);
+    return static_cast<half>(0.0);
   }
 }
 

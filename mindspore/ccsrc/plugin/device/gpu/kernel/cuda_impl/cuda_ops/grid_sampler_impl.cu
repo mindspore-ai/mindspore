@@ -49,14 +49,14 @@ __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, cons
 
     if (interpolation_mode == GridSamplerInterpolationMode::BILINEAR) {
       // get NE, NW, SE, SW pixel values from (x, y)
-      size_t ix_nw = static_cast<size_t>(::floor(ix));
-      size_t iy_nw = static_cast<size_t>(::floor(iy));
-      size_t ix_ne = ix_nw + 1;
-      size_t iy_ne = iy_nw;
-      size_t ix_sw = ix_nw;
-      size_t iy_sw = iy_nw + 1;
-      size_t ix_se = ix_nw + 1;
-      size_t iy_se = iy_nw + 1;
+      int64_t ix_nw = static_cast<int64_t>(::floor(ix));
+      int64_t iy_nw = static_cast<int64_t>(::floor(iy));
+      int64_t ix_ne = ix_nw + 1;
+      int64_t iy_ne = iy_nw;
+      int64_t ix_sw = ix_nw;
+      int64_t iy_sw = iy_nw + 1;
+      int64_t ix_se = ix_nw + 1;
+      int64_t iy_se = iy_nw + 1;
 
       // get surfaces to each neighbor:
       ItmType nw = (ix_se - ix) * (iy_se - iy);
@@ -84,8 +84,8 @@ __global__ void GridSampler2DKernel(const size_t size, const T *input_addr, cons
         *out_ptr_NCHW = static_cast<T>(intermediate_value);
       }
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
-      size_t ix_nearest = static_cast<size_t>(::round(ix));
-      size_t iy_nearest = static_cast<size_t>(::round(iy));
+      int64_t ix_nearest = static_cast<int64_t>(::round(ix));
+      int64_t iy_nearest = static_cast<int64_t>(::round(iy));
 
       // assign nearest neighbor pixel value to output pixel
       auto inp_ptr_NC = input_addr + n * inp_sN;
@@ -200,37 +200,37 @@ __global__ void GridSampler3DKernel(const size_t size, const T *input_addr, cons
       // get corner pixel values from (x, y, z)
       // for 4d, we used north-east-south-west
       // for 5d, we add top-bottom
-      size_t ix_tnw = static_cast<size_t>(::floor(ix));
-      size_t iy_tnw = static_cast<size_t>(::floor(iy));
-      size_t iz_tnw = static_cast<size_t>(::floor(iz));
+      int64_t ix_tnw = static_cast<int64_t>(::floor(ix));
+      int64_t iy_tnw = static_cast<int64_t>(::floor(iy));
+      int64_t iz_tnw = static_cast<int64_t>(::floor(iz));
 
-      size_t ix_tne = ix_tnw + 1;
-      size_t iy_tne = iy_tnw;
-      size_t iz_tne = iz_tnw;
+      int64_t ix_tne = ix_tnw + 1;
+      int64_t iy_tne = iy_tnw;
+      int64_t iz_tne = iz_tnw;
 
-      size_t ix_tsw = ix_tnw;
-      size_t iy_tsw = iy_tnw + 1;
-      size_t iz_tsw = iz_tnw;
+      int64_t ix_tsw = ix_tnw;
+      int64_t iy_tsw = iy_tnw + 1;
+      int64_t iz_tsw = iz_tnw;
 
-      size_t ix_tse = ix_tnw + 1;
-      size_t iy_tse = iy_tnw + 1;
-      size_t iz_tse = iz_tnw;
+      int64_t ix_tse = ix_tnw + 1;
+      int64_t iy_tse = iy_tnw + 1;
+      int64_t iz_tse = iz_tnw;
 
-      size_t ix_bnw = ix_tnw;
-      size_t iy_bnw = iy_tnw;
-      size_t iz_bnw = iz_tnw + 1;
+      int64_t ix_bnw = ix_tnw;
+      int64_t iy_bnw = iy_tnw;
+      int64_t iz_bnw = iz_tnw + 1;
 
-      size_t ix_bne = ix_tnw + 1;
-      size_t iy_bne = iy_tnw;
-      size_t iz_bne = iz_tnw + 1;
+      int64_t ix_bne = ix_tnw + 1;
+      int64_t iy_bne = iy_tnw;
+      int64_t iz_bne = iz_tnw + 1;
 
-      size_t ix_bsw = ix_tnw;
-      size_t iy_bsw = iy_tnw + 1;
-      size_t iz_bsw = iz_tnw + 1;
+      int64_t ix_bsw = ix_tnw;
+      int64_t iy_bsw = iy_tnw + 1;
+      int64_t iz_bsw = iz_tnw + 1;
 
-      size_t ix_bse = ix_tnw + 1;
-      size_t iy_bse = iy_tnw + 1;
-      size_t iz_bse = iz_tnw + 1;
+      int64_t ix_bse = ix_tnw + 1;
+      int64_t iy_bse = iy_tnw + 1;
+      int64_t iz_bse = iz_tnw + 1;
 
       // get surfaces to each neighbor:
       ItmType tnw = (ix_bse - ix) * (iy_bse - iy) * (iz_bse - iz);
@@ -277,9 +277,9 @@ __global__ void GridSampler3DKernel(const size_t size, const T *input_addr, cons
         *out_ptr_NCDHW = static_cast<T>(intermediate_value);
       }
     } else if (interpolation_mode == GridSamplerInterpolationMode::NEAREST) {
-      size_t ix_nearest = static_cast<size_t>(::round(ix));
-      size_t iy_nearest = static_cast<size_t>(::round(iy));
-      size_t iz_nearest = static_cast<size_t>(::round(iz));
+      int64_t ix_nearest = static_cast<int64_t>(::round(ix));
+      int64_t iy_nearest = static_cast<int64_t>(::round(iy));
+      int64_t iz_nearest = static_cast<int64_t>(::round(iz));
 
       // assign nearest neighbor pixel value to output pixel
       auto inp_ptr_NC = input_addr + n * inp_sN;
