@@ -131,7 +131,7 @@ int DepthwiseConv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   // for depthwise conv2d, we only split channel && include split feature map, weight && bias
   // so just get the ratio from strategy
   int split_count = 0;
-  Strategys strategys = strategy.strategys;
+  Strategies strategys = strategy.strategys;
   MS_CHECK_GE(strategys.size(), kInputSizeTwo, RET_ERROR);
   MS_CHECK_GE(strategys[0].size(), kInputSizeFour, RET_ERROR);
   MS_CHECK_GE(strategys[1].size(), kInputSizeFour, RET_ERROR);

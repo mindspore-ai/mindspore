@@ -35,7 +35,7 @@ TEST_F(TestStrategy, GetInputNumber) {
   int32_t stage = 1;
   Dimensions dimension1 = {2, 4};
   Dimensions dimension2 = {2, 2};
-  Strategys inputs = {dimension1, dimension2};
+  Strategies inputs = {dimension1, dimension2};
 
   Strategy strategy(stage, inputs);
   int32_t number_test = strategy.GetInputNumber();
@@ -46,7 +46,7 @@ TEST_F(TestStrategy, GetInputStage) {
   int32_t stage = 1;
   Dimensions dimension1 = {2, 4};
   Dimensions dimension2 = {2, 2};
-  Strategys inputs = {dimension1, dimension2};
+  Strategies inputs = {dimension1, dimension2};
 
   Strategy strategy(stage, inputs);
   int32_t stage_test = strategy.GetInputStage();
@@ -57,10 +57,10 @@ TEST_F(TestStrategy, GetInputDim) {
   int32_t stage = 1;
   Dimensions dimension1 = {2, 4};
   Dimensions dimension2 = {2, 2};
-  Strategys inputs = {dimension1, dimension2};
+  Strategies inputs = {dimension1, dimension2};
 
   Strategy strategy(stage, inputs);
-  Strategys inputs_test = strategy.GetInputDim();
+  Strategies inputs_test = strategy.GetInputDim();
   ASSERT_EQ(inputs, inputs_test);
 }
 
@@ -68,10 +68,10 @@ TEST_F(TestStrategy, IsEqual) {
   int32_t stage1 = 0, stage2 = 0, stage3 = 1, stage4 = 0;
   Dimensions dimension1 = {8, 1};
   Dimensions dimension2 = {1, 8};
-  Strategys inputs1 = {dimension1};
-  Strategys inputs2 = {dimension1};
-  Strategys inputs3 = {dimension2};
-  Strategys inputs4 = {dimension1, dimension2};
+  Strategies inputs1 = {dimension1};
+  Strategies inputs2 = {dimension1};
+  Strategies inputs3 = {dimension2};
+  Strategies inputs4 = {dimension1, dimension2};
 
   StrategyPtr stra1 = std::make_shared<Strategy>(stage1, inputs1);
   StrategyPtr stra2 = std::make_shared<Strategy>(stage2, inputs2);

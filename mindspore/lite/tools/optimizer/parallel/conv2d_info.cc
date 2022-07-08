@@ -40,7 +40,7 @@ constexpr auto kAnfConvWeight = 2;
 constexpr auto kAnfConvBias = 3;
 int Conv2DInfo::CheckStrategy(const SplitStrategy &strategy) {
   int split_count = 0;
-  Strategys strategys = strategy.strategys;
+  Strategies strategys = strategy.strategys;
   MS_CHECK_GE(strategys.size(), kInputSizeTwo, RET_ERROR);
   MS_CHECK_GE(strategys[0].size(), kInputSizeFour, RET_ERROR);
   MS_CHECK_GE(strategys[1].size(), kInputSizeFour, RET_ERROR);
@@ -281,7 +281,7 @@ std::shared_ptr<ops::Conv2DFusion> Conv2DInfo::GetNewConvPrimitive(const api::Sh
   prim->set_pad_list(conv_prim->get_pad_list());
   prim->set_stride(conv_prim->get_stride());
   prim->set_activation_type(conv_prim->get_activation_type());
-  Strategys strategys = strategy_.strategys;
+  Strategies strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
   switch (split_mode_) {
     case SplitH: {
@@ -327,7 +327,7 @@ int Conv2DInfo::ConstructOutputCNodes(const api::SharedPtr<ops::Conv2DFusion> &c
                                       const std::vector<AnfNodePtr> &kernel_split_outputs,
                                       const std::vector<AnfNodePtr> &bias_split_outputs) {
   MS_ASSERT(conv_prim != nullptr);
-  Strategys strategys = strategy_.strategys;
+  Strategies strategys = strategy_.strategys;
   size_t dev_num = strategy_.dev_num;
   int cin_strategy_sum = std::accumulate(strategys[0][kAxisCIn].begin(), strategys[0][kAxisCIn].end(), 0);
   int cout_strategy_sum = std::accumulate(strategys[1][kAxisCOut].begin(), strategys[1][kAxisCOut].end(), 0);

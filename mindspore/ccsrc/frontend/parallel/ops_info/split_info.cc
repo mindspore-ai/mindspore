@@ -144,7 +144,7 @@ std::vector<StrategyPtr> SplitInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> SplitInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> SplitInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
@@ -157,8 +157,8 @@ std::shared_ptr<Strategys> SplitInfo::GenerateBatchStrategies() {
       input_strategy[0] = stage_device_size_;
     }
   }
-  Strategys strategy_v = {input_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {input_strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 Status SplitInfo::InferAsLossDivisor() {

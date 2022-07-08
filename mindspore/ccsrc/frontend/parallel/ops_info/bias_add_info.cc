@@ -30,7 +30,7 @@ Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   int64_t channel_a_strategy = sub_a_strategy.at(1);
@@ -43,7 +43,7 @@ Status BiasAddInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status BiasAddInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   dev_matrix_shape_ = sub_a_strategy;
   return SUCCESS;
@@ -57,7 +57,7 @@ void BiasAddInfo::ReComputeBatchSplitFlagList() {
 Status BiasAddInfo::InferTensorMap() {
   TensorMap sub_a_tensor_map;
   TensorMap sub_b_tensor_map;
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   size_t sub_a_strategy_size = sub_a_strategy.size();
   for (size_t i = 0; i < sub_a_strategy_size; ++i) {
@@ -88,7 +88,7 @@ std::vector<StrategyPtr> BiasAddInfo::GenerateOpStrategies(int64_t stage_id) {
   MS_LOG(INFO) << name_ << " : Generate strategies success.";
 
   for (auto &sp : sp_vector) {
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions input0_strategy = sp->GetInputDim()[0];
     tmp_strategy.push_back(input0_strategy);  // input0
 

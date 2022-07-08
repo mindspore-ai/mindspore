@@ -175,7 +175,7 @@ Status GatherInfo::GetAttrs() {
 // output's strategy: [a, b, ..., c] or [1, a, b, ..., c]
 // dev_matrix: [a, b, ..., c]
 // can not support repeated calculation
-Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
+Status GatherInfo::CheckManualSplit(const Strategies &strategy) {
   if (strategy.size() != 2) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be 2, but got " << strategy.size();
     return FAILED;
@@ -270,7 +270,7 @@ Status GatherInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
 
 // return true: axis is 0, and split the first dimension of parameter and the first dimension of indices
 // otherwise return false
-bool GatherInfo::ShardBatchAndAxis(const Strategys &strategy) const {
+bool GatherInfo::ShardBatchAndAxis(const Strategies &strategy) const {
   if (axis_ != 0) {
     return false;
   }
@@ -1015,7 +1015,7 @@ std::vector<StrategyPtr> GatherInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> GatherInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> GatherInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
@@ -1029,8 +1029,8 @@ std::shared_ptr<Strategys> GatherInfo::GenerateBatchStrategies() {
   for (size_t i = 1; i < inputs_shape_[1].size(); i++) {
     index_strategy.push_back(1);
   }
-  Strategys strategy_v = {param_strategy, index_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {param_strategy, index_strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 }  // namespace parallel
 }  // namespace mindspore

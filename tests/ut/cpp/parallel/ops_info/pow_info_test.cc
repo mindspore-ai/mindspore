@@ -63,7 +63,7 @@ void TestPowInfo::SetUp() {
 }
 
 TEST_F(TestPowInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy, nullptr);
@@ -74,7 +74,7 @@ TEST_F(TestPowInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestPowInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 8}, {2, 4, 8}};
+  Strategies str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy, nullptr);
@@ -95,7 +95,7 @@ TEST_F(TestPowInfo, InferSliceShape1) {
 }
 
 TEST_F(TestPowInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 8}, {2, 4, 8}};
+  Strategies str = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   pow->Init(strategy, nullptr);
@@ -116,7 +116,7 @@ TEST_F(TestPowInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestPowInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy, nullptr);
@@ -127,7 +127,7 @@ TEST_F(TestPowInfo, GetForwardOp1) {
 }
 
 TEST_F(TestPowInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   pow->Init(strategy, nullptr);
@@ -139,7 +139,7 @@ TEST_F(TestPowInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy1) {
-  Strategys inputs = {{2, 2, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 2, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy, nullptr);
@@ -147,7 +147,7 @@ TEST_F(TestPowInfo, CheckStrategy1) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 16}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy, nullptr);
@@ -155,7 +155,7 @@ TEST_F(TestPowInfo, CheckStrategy2) {
 }
 
 TEST_F(TestPowInfo, CheckStrategy3) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = pow->Init(strategy, nullptr);

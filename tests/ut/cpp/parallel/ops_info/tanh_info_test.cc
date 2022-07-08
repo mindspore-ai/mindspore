@@ -63,7 +63,7 @@ void TestTanhInfo::SetUp() {
 }
 
 TEST_F(TestTanhInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tanh->Init(strategy, nullptr);
@@ -74,7 +74,7 @@ TEST_F(TestTanhInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestTanhInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 1, 16}};
+  Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   tanh->Init(strategy, nullptr);
@@ -95,7 +95,7 @@ TEST_F(TestTanhInfo, InferSliceShape1) {
 }
 
 TEST_F(TestTanhInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 1, 16}};
+  Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   tanh->Init(strategy, nullptr);
@@ -116,7 +116,7 @@ TEST_F(TestTanhInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestTanhInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tanh->Init(strategy, nullptr);
@@ -127,7 +127,7 @@ TEST_F(TestTanhInfo, GetForwardOp1) {
 }
 
 TEST_F(TestTanhInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tanh->Init(strategy, nullptr);
@@ -140,7 +140,7 @@ TEST_F(TestTanhInfo, GetMirrorOPs1) {
 
 TEST_F(TestTanhInfo, CheckStrategy1) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tanh->Init(strategy, nullptr);
@@ -149,7 +149,7 @@ TEST_F(TestTanhInfo, CheckStrategy1) {
 
 TEST_F(TestTanhInfo, CheckStrategy2) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tanh->Init(strategy, nullptr);
@@ -158,7 +158,7 @@ TEST_F(TestTanhInfo, CheckStrategy2) {
 
 TEST_F(TestTanhInfo, CheckStrategy3) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tanh->Init(strategy, nullptr);

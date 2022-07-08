@@ -101,7 +101,7 @@ TEST_F(TestActivation, test_softmax_strategies) {
     ASSERT_NE(sp, nullptr);
     Cost cost = *(swc->cost_list[0]);
 
-    Strategys stra = sp->GetInputDim();
+    Strategies stra = sp->GetInputDim();
     ASSERT_GT(stra.size(), 0);
     Dimensions input0_stra = stra[0];
     ASSERT_GT(input0_stra.size(), 2);

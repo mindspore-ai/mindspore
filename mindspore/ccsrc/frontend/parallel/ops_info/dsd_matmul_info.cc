@@ -48,7 +48,7 @@ Status DSDMatmulInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
-  Strategys stras = strategy->GetInputDim();
+  Strategies stras = strategy->GetInputDim();
   if (stras.size() != DSD_MATMUL_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys size should be 3.";
     return FAILED;
@@ -89,7 +89,7 @@ Status DSDMatmulInfo::CheckStrategy(const StrategyPtr &strategy) {
  * device matrix use the strategy0.
  */
 Status DSDMatmulInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   input_strategy_ = input_strategy;
   dev_matrix_shape_ = input_strategy;
@@ -172,7 +172,7 @@ std::vector<StrategyPtr> DSDMatmulInfo::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions input_w1_strategy = sp->GetInputDim()[0];
     Dimensions input_w2_strategy = input_w1_strategy;
     Dimensions input_v_strategy = {input_w1_strategy[0], input_w1_strategy[1], 1, 1};

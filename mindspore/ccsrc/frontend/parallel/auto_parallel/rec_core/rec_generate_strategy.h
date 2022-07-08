@@ -34,38 +34,38 @@ void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std
                       const std::vector<std::vector<size_t>> &shared_tensors_ops);
 Dimensions PrepareMatMulStrategy(const std::shared_ptr<Graph> &graph, const size_t iter_graph, bool transpose_a,
                                  bool transpose_b, size_t iter_op_inputs);
-Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                        const size_t iter_graph, const size_t iter_ops);
-Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
-Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                              Dimensions basic_stra);
-Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         Dimensions basic_stra);
-Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
-Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
-                                     const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                     const size_t iter_ops);
-Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
+Strategies PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                         const size_t iter_graph, const size_t iter_ops);
+Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
+Strategies PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                               Dimensions basic_stra);
+Strategies PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                          Dimensions basic_stra);
+Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
+Strategies PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
+                                      const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                      const size_t iter_ops);
+Strategies PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
 Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const size_t incoming_op_index);
-Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             Dimensions s);
-Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
-                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                const size_t iter_ops);
-Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
+Strategies PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                              Dimensions s);
+Strategies MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
+                                 const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                 const size_t iter_ops);
+Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
 Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s,
                           size_t first_tensor_dim, size_t second_tensor_dim, bool broadcast_first_tensor);
-Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
-Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
-                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                   const size_t iter_ops);
-Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
-                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                const size_t iter_ops);
+Strategies CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s);
+Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
+                                    const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                    const size_t iter_ops);
+Strategies MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
+                                 const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                 const size_t iter_ops);
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
-Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                          const size_t iter_graph, const size_t iter_ops);
+Strategies PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                           const size_t iter_graph, const size_t iter_ops);
 void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                          const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const std::shared_ptr<std::vector<size_t>> &index_list);
@@ -97,8 +97,8 @@ Dimensions ModifyStrategyIfArgIncoming(const std::vector<std::shared_ptr<Operato
                                        const size_t incoming_op_index, Dimensions s);
 Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                              const size_t iter_ops, const size_t incoming_op_index);
-Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                         Dimensions basic_stra);
+Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                          Dimensions basic_stra);
 void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &graph,
                                                const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                                const std::vector<std::vector<std::string>> &input_tensor_names,

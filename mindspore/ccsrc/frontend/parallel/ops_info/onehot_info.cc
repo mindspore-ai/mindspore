@@ -70,7 +70,7 @@ Status OneHotInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status OneHotInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   if (axis_ == 0) {
@@ -235,11 +235,11 @@ std::vector<StrategyPtr> OneHotInfo::GenerateOpStrategies(int64_t stage_id) {
 
 Status OneHotInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
-std::shared_ptr<Strategys> OneHotInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> OneHotInfo::GenerateBatchStrategies() {
   Dimensions strategy = {stage_device_size_, 1};
   Dimensions empty_strategy;
-  Strategys strategy_v = {strategy, empty_strategy, empty_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {strategy, empty_strategy, empty_strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 Shapes OneHotInfo::InferParamStrategy(const Shapes &default_strategy) {

@@ -256,8 +256,8 @@ class ExpandDimsInfo : public ActivationOther {
 
  private:
   int64_t positive_axis_ = -1;
-  Strategys inputs_strategy_;
-  Strategys outputs_strategy_;
+  Strategies inputs_strategy_;
+  Strategies outputs_strategy_;
 };
 
 class SqueezeInfo : public ActivationOther {

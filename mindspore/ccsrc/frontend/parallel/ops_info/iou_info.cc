@@ -24,7 +24,7 @@ Status IOUInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   if (strategies[0][1] != 1 || strategies[1][1] != 1) {
     MS_LOG(ERROR) << name_ << ": Only supports shard the 0th dimension of each input tensor, but got strategy "
                   << StrategyToString(strategies);
@@ -34,7 +34,7 @@ Status IOUInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status IOUInfo::InferDevMatrixShape() {
-  Strategys strategise = strategy_->GetInputDim();
+  Strategies strategise = strategy_->GetInputDim();
   int64_t dev1 = strategise[0][0];
   int64_t dev0 = strategise[1][0];
 

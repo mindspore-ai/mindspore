@@ -29,7 +29,7 @@ Status CropAndResizeInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   auto x_strategy = strategies.at(0);
   auto boxes_strategy = strategies.at(1);
   auto index_strategy = strategies.at(2);

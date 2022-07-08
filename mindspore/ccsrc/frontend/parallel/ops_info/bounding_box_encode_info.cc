@@ -23,7 +23,7 @@ Status BoundingBoxEncodeInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   Dimensions input_a_strategy = strategies[0];
   Dimensions input_b_strategy = strategies[1];
   if (input_a_strategy != input_b_strategy) {
@@ -45,7 +45,7 @@ Status BoundingBoxEncodeInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status BoundingBoxEncodeInfo::InferDevMatrixShape() {
-  Strategys strategies = strategy_->GetInputDim();
+  Strategies strategies = strategy_->GetInputDim();
   Dimensions input_a_strategy = strategies.at(0);
 
   dev_matrix_shape_.clear();
@@ -106,7 +106,7 @@ Status BoundingBoxEncodeInfo::PrepareStrategy(int64_t stage_id, int64_t split_nu
 
   Dimensions input0_partitions = {split_num, 1};
   Dimensions input1_partitions = {split_num, 1};
-  Strategys strategies = {input0_partitions, input1_partitions};
+  Strategies strategies = {input0_partitions, input1_partitions};
   (*sp) = std::make_shared<Strategy>(stage_id, strategies);
   return SUCCESS;
 }

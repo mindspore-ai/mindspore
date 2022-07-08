@@ -33,9 +33,9 @@ Status VirtualOutputInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra.size() != 1) {
-    MS_LOG(ERROR) << name_ << ": Strategys size must be  1.";
+    MS_LOG(ERROR) << name_ << ": Strategies size must be  1.";
     return FAILED;
   }
   Dimensions strategy_first = stra.at(0);
@@ -53,7 +53,7 @@ Status VirtualOutputInfo::CheckStrategy(const StrategyPtr &strategy) {
 
 std::vector<StrategyPtr> VirtualOutputInfo::GenerateOpStrategies(int64_t stage_id) {
   StrategyPtr sp;
-  Strategys strategy;
+  Strategies strategy;
   bool full_batch = ParallelContext::GetInstance()->full_batch();
   size_t total_dev_num;
   if (full_batch) {

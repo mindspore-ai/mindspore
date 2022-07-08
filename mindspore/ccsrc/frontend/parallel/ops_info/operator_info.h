@@ -97,7 +97,7 @@ class OperatorInfo {
   virtual Status SetCostUnderStrategy(const StrategyPtr &strategy) = 0;
   Shapes GenerateParamStrategy(const Shapes &default_strategy);
 
-  virtual std::shared_ptr<Strategys> GenerateBatchStrategies();
+  virtual std::shared_ptr<Strategies> GenerateBatchStrategies();
   virtual void ReComputeBatchSplitFlagList();
   void ComputeBatchSplitFlagList();
 
@@ -242,7 +242,7 @@ class OperatorInfo {
   // The tensor map of Outputs[0] is used by default. If there are multiple outputs, need to identify which output
   // is used for grad and overload the function. If the output is a scalar, need to override the function too.
   virtual Status InferAsLossDivisor();
-  Status InferSliceShape(const Strategys &inputs_strategy, const Strategys &outputs_strategy,
+  Status InferSliceShape(const Strategies &inputs_strategy, const Strategies &outputs_strategy,
                          Shapes *inputs_slice_shape, Shapes *outputs_slice_shape);
   void BreakingTiesForPerferringDataParallel(const StrategyPtr &, const CostPtr &);
   int64_t GetIntAttr(const std::string &attr_name);
@@ -351,9 +351,9 @@ void AddCommOpParamFlag(const CNodePtr &comm_node);
 Operator CreateGetTensorSliceOp(const TensorLayout &tensor_layout);
 OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num);
 int64_t ComputeRepeatDeviceNumByTensorMap(const Shape &dev_matrix_shape, const Shape &tensor_map);
-std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
-                                                              const std::vector<bool> &split_flag_list);
-std::string StrategyToString(const Strategys &strategy);
+std::shared_ptr<Strategies> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
+                                                               const std::vector<bool> &split_flag_list);
+std::string StrategyToString(const Strategies &strategy);
 void PrintStrategy(const StrategyPtr &strategy);
 Status GenerateStrategiesForIndependentInputsBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_shape,
                                                   const Shapes &splittable_inputs,

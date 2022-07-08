@@ -27,7 +27,7 @@ Status InplaceAddInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy";
     return FAILED;
   }
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   auto x_strategy = strategies.at(0);
   auto input_v_strategy = strategies.at(1);
   if (x_strategy[0] != 1 || input_v_strategy[0] != 1) {

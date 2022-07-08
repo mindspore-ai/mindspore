@@ -60,7 +60,7 @@ class GetNextInfo : public OperatorInfo {
   int64_t output_num_ = 0;
   int64_t shard_num_ = 1;
   std::string shared_name_;
-  Strategys dataset_strategy_;
+  Strategies dataset_strategy_;
   Shape dev_matrix_shape_origin_;
 };
 }  // namespace parallel

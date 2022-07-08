@@ -85,14 +85,14 @@ std::vector<StrategyPtr> LinSpaceInfo::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> LinSpaceInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> LinSpaceInfo::GenerateBatchStrategies() {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
 
   int64_t dev_num = g_device_manager->stage_device_num();
-  Strategys strategies = {Dimensions{dev_num}};
-  return std::make_shared<Strategys>(strategies);
+  Strategies strategies = {Dimensions{dev_num}};
+  return std::make_shared<Strategies>(strategies);
 }
 
 int64_t LinSpaceInfo::GetSplitNum() {

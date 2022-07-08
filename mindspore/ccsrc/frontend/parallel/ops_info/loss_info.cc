@@ -32,7 +32,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::CheckStrategy(const mindspore::paralle
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   Dimensions label_strategy = stra.at(1);
   if (input_strategy != label_strategy) {
@@ -69,7 +69,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::GetAttrs() {
 }
 
 Status SoftmaxCrossEntropyWithLogitsInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   dev_matrix_shape_ = input_strategy;
   return SUCCESS;

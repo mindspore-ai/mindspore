@@ -97,7 +97,7 @@ void TestMatmulInfo::SetUp() {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -111,7 +111,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape1) {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
-  Strategys inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
+  Strategies inputs = {{2, 4, 8, 8}, {2, 4, 8, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -125,7 +125,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape2) {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
-  Strategys inputs = {{2, 4, 8, 16}, {1, 16}};
+  Strategies inputs = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy, nullptr);
@@ -139,7 +139,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape3) {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
-  Strategys inputs = {{2, 4, 8, 8}, {2, 8}};
+  Strategies inputs = {{2, 4, 8, 8}, {2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy, nullptr);
@@ -153,7 +153,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape4) {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
-  Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
+  Strategies inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy, nullptr);
@@ -167,7 +167,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape5) {
 /// Description: infer dev matrix
 /// Expectation: the dev matrix is right
 TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
-  Strategys inputs = {{8, 8}, {2, 4, 2, 8}};
+  Strategies inputs = {{8, 8}, {2, 4, 2, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy, nullptr);
@@ -181,7 +181,7 @@ TEST_F(TestMatmulInfo, InferDevMatrixShape6) {
 /// Description: infer tensor map
 /// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap1) {
-  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul1->Init(strategy, nullptr);
@@ -209,7 +209,7 @@ TEST_F(TestMatmulInfo, InferTensorMap1) {
 /// Description: infer tensor map
 /// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap2) {
-  Strategys str = {{2, 4, 8, 16}, {1, 16}};
+  Strategies str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul2->Init(strategy, nullptr);
@@ -237,7 +237,7 @@ TEST_F(TestMatmulInfo, InferTensorMap2) {
 /// Description: infer tensor map
 /// Expectation: the tensor map is right
 TEST_F(TestMatmulInfo, InferTensorMap3) {
-  Strategys str = {{8, 16}, {2, 4, 1, 16}};
+  Strategies str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy, nullptr);
@@ -265,7 +265,7 @@ TEST_F(TestMatmulInfo, InferTensorMap3) {
 /// Description: infer slice shape
 /// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul1->Init(strategy, nullptr);
@@ -293,7 +293,7 @@ TEST_F(TestMatmulInfo, InferSliceShape1) {
 /// Description: infer slice shape
 /// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape2) {
-  Strategys str = {{2, 4, 8, 16}, {1, 16}};
+  Strategies str = {{2, 4, 8, 16}, {1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul2->Init(strategy, nullptr);
@@ -321,7 +321,7 @@ TEST_F(TestMatmulInfo, InferSliceShape2) {
 /// Description: infer slice shape
 /// Expectation: the slice shape is right
 TEST_F(TestMatmulInfo, InferSliceShape3) {
-  Strategys str = {{8, 16}, {2, 4, 1, 16}};
+  Strategies str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy, nullptr);
@@ -349,7 +349,7 @@ TEST_F(TestMatmulInfo, InferSliceShape3) {
 /// Description: get tensor layout
 /// Expectation: the tensor layout is right
 TEST_F(TestMatmulInfo, GetTensorLayout3) {
-  Strategys str = {{8, 16}, {2, 4, 1, 16}};
+  Strategies str = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   matmul3->Init(strategy, nullptr);
@@ -377,7 +377,7 @@ TEST_F(TestMatmulInfo, GetTensorLayout3) {
 /// Description: infer forward op
 /// Expectation: the forward op is right
 TEST_F(TestMatmulInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -406,7 +406,7 @@ TEST_F(TestMatmulInfo, GetForwardOp1) {
 /// Description: infer forward op
 /// Expectation: the forward op is right
 TEST_F(TestMatmulInfo, GetForwardOp2) {
-  Strategys inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 8, 1}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -419,7 +419,7 @@ TEST_F(TestMatmulInfo, GetForwardOp2) {
 /// Description: infer virtual_div op
 /// Expectation: the virtual_div op is right
 TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -441,7 +441,7 @@ TEST_F(TestMatmulInfo, GetVirtualDivOp1) {
 /// Description: infer mirror op
 /// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -463,7 +463,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs1) {
 /// Description: infer mirror op
 /// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs2) {
-  Strategys inputs = {{2, 4, 1, 16}, {8, 16}};
+  Strategies inputs = {{2, 4, 1, 16}, {8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul2->Init(strategy, nullptr);
@@ -485,7 +485,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs2) {
 /// Description: infer mirror op
 /// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs3) {
-  Strategys inputs = {{8, 16}, {2, 4, 1, 16}};
+  Strategies inputs = {{8, 16}, {2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul3->Init(strategy, nullptr);
@@ -506,7 +506,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs3) {
 /// Description: infer mirror op
 /// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, GetMirrorOPs4) {
-  Strategys inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
+  Strategies inputs = {{2, 4, 1, 16}, {2, 4, 16, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   matmul1->Init(strategy, nullptr);
@@ -519,7 +519,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs4) {
 /// Description: init twice
 /// Expectation: the mirror op is right
 TEST_F(TestMatmulInfo, InitTwice) {
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   // init twice
@@ -544,7 +544,7 @@ TEST_F(TestMatmulInfo, InitTwice) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy1) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -556,7 +556,7 @@ TEST_F(TestMatmulInfo, CheckStrategy1) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy2) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{2, 4, 8, 16}, {4, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -568,7 +568,7 @@ TEST_F(TestMatmulInfo, CheckStrategy2) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy3) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -580,7 +580,7 @@ TEST_F(TestMatmulInfo, CheckStrategy3) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy4) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
+  Strategies inputs = {{2, 4, 8, 16}, {2, 3, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -592,7 +592,7 @@ TEST_F(TestMatmulInfo, CheckStrategy4) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy5) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{0, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -604,7 +604,7 @@ TEST_F(TestMatmulInfo, CheckStrategy5) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy6) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{-1, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -616,7 +616,7 @@ TEST_F(TestMatmulInfo, CheckStrategy6) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, CheckStrategy7) {
   // Success: {{2,4,8,16}, {2,4,16,1}}
-  Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul1->Init(strategy, nullptr);
@@ -628,7 +628,7 @@ TEST_F(TestMatmulInfo, CheckStrategy7) {
 /// Expectation: return FAILED
 TEST_F(TestMatmulInfo, InitFailed) {
   // matmul4 attr is wrong
-  Strategys inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{4, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = matmul4->Init(strategy, nullptr);

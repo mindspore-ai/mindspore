@@ -66,7 +66,7 @@ void TestTensorAddInfo::SetUp() {
 }
 
 TEST_F(TestTensorAddInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
+  Strategies inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tensor_add->Init(strategy, nullptr);
@@ -77,7 +77,7 @@ TEST_F(TestTensorAddInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestTensorAddInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 4}, {2, 4, 4}};
+  Strategies str = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   tensor_add->Init(strategy, nullptr);
@@ -101,7 +101,7 @@ TEST_F(TestTensorAddInfo, InferSliceShape1) {
 }
 
 TEST_F(TestTensorAddInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 4}, {2, 4, 4}};
+  Strategies str = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   tensor_add->Init(strategy, nullptr);
@@ -125,7 +125,7 @@ TEST_F(TestTensorAddInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestTensorAddInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
+  Strategies inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tensor_add->Init(strategy, nullptr);
@@ -136,7 +136,7 @@ TEST_F(TestTensorAddInfo, GetForwardOp1) {
 }
 
 TEST_F(TestTensorAddInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
+  Strategies inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tensor_add->Init(strategy, nullptr);
@@ -148,7 +148,7 @@ TEST_F(TestTensorAddInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestTensorAddInfo, CheckStrategy1) {
-  Strategys inputs = {{2, 4, 4}, {2, 6, 4}};
+  Strategies inputs = {{2, 4, 4}, {2, 6, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tensor_add->Init(strategy, nullptr);
@@ -156,7 +156,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy1) {
 }
 
 TEST_F(TestTensorAddInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tensor_add->Init(strategy, nullptr);
@@ -164,7 +164,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy2) {
 }
 
 TEST_F(TestTensorAddInfo, CheckStrategy3) {
-  Strategys inputs = {{2, 4, 6}};
+  Strategies inputs = {{2, 4, 6}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tensor_add->Init(strategy, nullptr);
@@ -172,7 +172,7 @@ TEST_F(TestTensorAddInfo, CheckStrategy3) {
 }
 
 TEST_F(TestTensorAddInfo, CheckStrategy4) {
-  Strategys inputs = {{2, 4, 4}, {2, 4, 4}};
+  Strategies inputs = {{2, 4, 4}, {2, 4, 4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = tensor_add->Init(strategy, nullptr);
@@ -224,7 +224,7 @@ TEST_F(TestTensorAddInfo, GenerateStrategies1) {
 }
 
 TEST_F(TestTensorAddInfo, mirror_ops) {
-  Strategys inputs = {{1, 8}, {4, 1}};
+  Strategies inputs = {{1, 8}, {4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   tensor_add1->Init(strategy, nullptr);

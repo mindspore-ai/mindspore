@@ -40,7 +40,7 @@ Status ROIAlignInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   auto features_strategy = strategies.at(0);
   auto rois_strategy = strategies.at(1);
   if (features_strategy[2] != 1 || features_strategy[3] != 1) {

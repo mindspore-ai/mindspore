@@ -68,7 +68,7 @@ void TestSoftmaxInfo::SetUp() {
 }
 
 TEST_F(TestSoftmaxInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   softmax->Init(strategy, nullptr);
@@ -79,7 +79,7 @@ TEST_F(TestSoftmaxInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestSoftmaxInfo, InferSliceShape1) {
-  Strategys str = {{2, 4, 1, 16}};
+  Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   softmax->Init(strategy, nullptr);
@@ -100,7 +100,7 @@ TEST_F(TestSoftmaxInfo, InferSliceShape1) {
 }
 
 TEST_F(TestSoftmaxInfo, GetTensorLayout1) {
-  Strategys str = {{2, 4, 1, 16}};
+  Strategies str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   softmax->Init(strategy, nullptr);
@@ -121,7 +121,7 @@ TEST_F(TestSoftmaxInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestSoftmaxInfo, GetForwardOp1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   softmax->Init(strategy, nullptr);
@@ -132,7 +132,7 @@ TEST_F(TestSoftmaxInfo, GetForwardOp1) {
 }
 
 TEST_F(TestSoftmaxInfo, GetMirrorOPs1) {
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   softmax->Init(strategy, nullptr);
@@ -145,7 +145,7 @@ TEST_F(TestSoftmaxInfo, GetMirrorOPs1) {
 
 TEST_F(TestSoftmaxInfo, CheckStrategy1) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
+  Strategies inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = softmax->Init(strategy, nullptr);
@@ -154,7 +154,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy1) {
 
 TEST_F(TestSoftmaxInfo, CheckStrategy2) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = softmax->Init(strategy, nullptr);
@@ -163,7 +163,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy2) {
 
 TEST_F(TestSoftmaxInfo, CheckStrategy3) {
   // Success: {{2,4,1,16}}
-  Strategys inputs = {{2, 4, 8, 16}};
+  Strategies inputs = {{2, 4, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = softmax->Init(strategy, nullptr);
@@ -172,7 +172,7 @@ TEST_F(TestSoftmaxInfo, CheckStrategy3) {
 
 TEST_F(TestSoftmaxInfo, InitFailed1) {
   // softmax2's axis is wrong
-  Strategys inputs = {{2, 4, 1, 16}};
+  Strategies inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = softmax2->Init(strategy, nullptr);
@@ -181,7 +181,7 @@ TEST_F(TestSoftmaxInfo, InitFailed1) {
 
 TEST_F(TestSoftmaxInfo, InitFailed2) {
   // dev num is wrong
-  Strategys inputs = {{2, 4, 1, 100}};
+  Strategies inputs = {{2, 4, 1, 100}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = softmax2->Init(strategy, nullptr);

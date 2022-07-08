@@ -68,7 +68,7 @@ void TestReshapeInfo::SetUp() {
 }
 
 TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy, nullptr);
@@ -79,7 +79,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
-  Strategys inputs = {{32, 1, 1, 1}};
+  Strategies inputs = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy, nullptr);
@@ -90,7 +90,7 @@ TEST_F(TestReshapeInfo, InferDevMatrixShape2) {
 }
 
 TEST_F(TestReshapeInfo, InferSliceShape1) {
-  Strategys str = {{4, 1, 1, 1}};
+  Strategies str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy, nullptr);
@@ -111,7 +111,7 @@ TEST_F(TestReshapeInfo, InferSliceShape1) {
 }
 
 TEST_F(TestReshapeInfo, InferSliceShape2) {
-  Strategys str = {{32, 1, 1, 1}};
+  Strategies str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy, nullptr);
@@ -132,7 +132,7 @@ TEST_F(TestReshapeInfo, InferSliceShape2) {
 }
 
 TEST_F(TestReshapeInfo, GetTensorLayout1) {
-  Strategys str = {{4, 1, 1, 1}};
+  Strategies str = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy, nullptr);
@@ -153,7 +153,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestReshapeInfo, GetTensorLayout2) {
-  Strategys str = {{32, 1, 1, 1}};
+  Strategies str = {{32, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reshape->Init(strategy, nullptr);
@@ -174,7 +174,7 @@ TEST_F(TestReshapeInfo, GetTensorLayout2) {
 }
 
 TEST_F(TestReshapeInfo, GetForwardOp1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy, nullptr);
@@ -185,7 +185,7 @@ TEST_F(TestReshapeInfo, GetForwardOp1) {
 }
 
 TEST_F(TestReshapeInfo, GetMirrorOPs1) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reshape->Init(strategy, nullptr);
@@ -197,7 +197,7 @@ TEST_F(TestReshapeInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy1) {
-  Strategys inputs = {{1, 4, 8}};
+  Strategies inputs = {{1, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy, nullptr);
@@ -205,7 +205,7 @@ TEST_F(TestReshapeInfo, CheckStrategy1) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy, nullptr);
@@ -213,7 +213,7 @@ TEST_F(TestReshapeInfo, CheckStrategy2) {
 }
 
 TEST_F(TestReshapeInfo, CheckStrategy3) {
-  Strategys inputs = {{4, 1, 1, 1}};
+  Strategies inputs = {{4, 1, 1, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reshape->Init(strategy, nullptr);

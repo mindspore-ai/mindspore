@@ -43,7 +43,7 @@ namespace parallel {
  *  Only bs and num_heads can be splited, thus the q[0] should at least be size_per_head,
  *  q[1] should at least be seq_len // 16. The strategy check can use bs/head from attrs.
  */
-Status MatmulDDSInfo::CheckStrategys(const Strategys &stras) {
+Status MatmulDDSInfo::CheckStrategys(const Strategies &stras) {
   if (stras.size() != MATMUL_DDS_INPUTS_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy. The strategys size should be 4.";
     return FAILED;
@@ -106,7 +106,7 @@ Status MatmulDDSInfo::CheckStrategy(const StrategyPtr &strategy) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy.";
     return FAILED;
   }
-  Strategys stras = strategy->GetInputDim();
+  Strategies stras = strategy->GetInputDim();
   if (CheckStrategys(stras) != SUCCESS) {
     return FAILED;
   }
@@ -117,7 +117,7 @@ Status MatmulDDSInfo::CheckStrategy(const StrategyPtr &strategy) {
  * device matrix is extended by the strategy0.
  */
 Status MatmulDDSInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   input_strategy_ = input_strategy;
   dev_matrix_shape_ = input_strategy;
@@ -288,7 +288,7 @@ std::vector<StrategyPtr> MatmulDDSInfo::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions q_strategy = sp->GetInputDim()[0];
     Dimensions k_strategy = q_strategy;
     Dimensions local_mask_strategy = {1, q_strategy[0], 1, 1};

@@ -68,7 +68,7 @@ void TestTransposeInfo::SetUp() {
 }
 
 TEST_F(TestTransposeInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{4, 8}};
+  Strategies inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy, nullptr);
@@ -79,7 +79,7 @@ TEST_F(TestTransposeInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestTransposeInfo, InferDevMatrixShape2) {
-  Strategys inputs = {{4, 1}};
+  Strategies inputs = {{4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy, nullptr);
@@ -90,7 +90,7 @@ TEST_F(TestTransposeInfo, InferDevMatrixShape2) {
 }
 
 TEST_F(TestTransposeInfo, InferSliceShape1) {
-  Strategys str = {{4, 8}};
+  Strategies str = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   transpose->Init(strategy, nullptr);
@@ -111,7 +111,7 @@ TEST_F(TestTransposeInfo, InferSliceShape1) {
 }
 
 TEST_F(TestTransposeInfo, GetTensorLayout1) {
-  Strategys str = {{4, 8}};
+  Strategies str = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   transpose->Init(strategy, nullptr);
@@ -132,7 +132,7 @@ TEST_F(TestTransposeInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestTransposeInfo, GetForwardOp1) {
-  Strategys inputs = {{4, 8}};
+  Strategies inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy, nullptr);
@@ -143,7 +143,7 @@ TEST_F(TestTransposeInfo, GetForwardOp1) {
 }
 
 TEST_F(TestTransposeInfo, GetMirrorOPs1) {
-  Strategys inputs = {{4, 8}};
+  Strategies inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   transpose->Init(strategy, nullptr);
@@ -155,7 +155,7 @@ TEST_F(TestTransposeInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy1) {
-  Strategys inputs = {{1, 4, 8}};
+  Strategies inputs = {{1, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy, nullptr);
@@ -163,7 +163,7 @@ TEST_F(TestTransposeInfo, CheckStrategy1) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy, nullptr);
@@ -171,7 +171,7 @@ TEST_F(TestTransposeInfo, CheckStrategy2) {
 }
 
 TEST_F(TestTransposeInfo, CheckStrategy3) {
-  Strategys inputs = {{4, 8}};
+  Strategies inputs = {{4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = transpose->Init(strategy, nullptr);

@@ -149,7 +149,7 @@ Status SliceInfo::InferMirrorOps() {
 }
 
 // Note: if the batch dimension is not fully fetched, the batch strategy may not work.
-std::shared_ptr<Strategys> SliceInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> SliceInfo::GenerateBatchStrategies() {
   split_flag_list_ = {true};
   return GenerateBatchStrategiesBySplitFlag(inputs_shape_, split_flag_list_);
 }

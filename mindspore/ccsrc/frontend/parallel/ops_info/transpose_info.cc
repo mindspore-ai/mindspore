@@ -30,7 +30,7 @@ namespace parallel {
 Status TransposeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 Status TransposeInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
   for (auto &iter : input_strategy_) {
     dev_matrix_shape_.push_back(iter);

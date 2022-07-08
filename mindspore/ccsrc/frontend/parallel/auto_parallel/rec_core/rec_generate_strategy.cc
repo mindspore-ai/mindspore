@@ -80,9 +80,9 @@ Dimensions PrepareMatMulStrategy(const std::shared_ptr<Graph> &graph, const size
   return s;
 }
 
-Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                        const size_t iter_graph, const size_t iter_ops) {
-  Strategys strategies;
+Strategies PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                         const size_t iter_graph, const size_t iter_ops) {
+  Strategies strategies;
   auto attrs = ops[iter_ops]->attrs();
   bool transpose_a = attrs[TRANSPOSE_A]->cast<BoolImmPtr>()->value();
   bool transpose_b = attrs[TRANSPOSE_B]->cast<BoolImmPtr>()->value();
@@ -94,8 +94,8 @@ Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<s
   return strategies;
 }
 
-Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
-  Strategys strategies;
+Strategies PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
+  Strategies strategies;
   strategies.push_back(*s);
   Dimensions s_biasadd;
   s_biasadd.push_back(s->at(1));
@@ -103,9 +103,9 @@ Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s) {
   return strategies;
 }
 
-Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                              Dimensions basic_stra) {
-  Strategys stra;
+Strategies PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                               Dimensions basic_stra) {
+  Strategies stra;
 
   auto begin = GetValue<std::vector<int64_t>>(ops[iter_ops]->input_value().at(1));
   auto end = GetValue<std::vector<int64_t>>(ops[iter_ops]->input_value().at(2));
@@ -128,9 +128,9 @@ Strategys PrepareStridedSlice(const std::vector<std::shared_ptr<OperatorInfo>> &
   return stra;
 }
 
-Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         Dimensions basic_stra) {
-  Strategys strategies;
+Strategies PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                          Dimensions basic_stra) {
+  Strategies strategies;
   strategies.push_back(basic_stra);
   std::vector<int64_t> axis_list;
   string axis_name = AXIS;
@@ -173,8 +173,8 @@ Strategys PrepareSoftMax(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
   return strategies;
 }
 
-Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
-  Strategys strategies;
+Strategies PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
+  Strategies strategies;
 
   // The Dimension size of the first input tensor of OneHot should be 2 even its Shape size is 1. Using the division of
   // the number of devices and the partition parts of the first dimension.
@@ -206,8 +206,8 @@ Strategys PrepareOneHot(const std::vector<std::shared_ptr<OperatorInfo>> &ops, c
   return strategies;
 }
 
-Strategys PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
-  Strategys strategies;
+Strategies PrepareGatherV2(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops, Dimensions s) {
+  Strategies strategies;
 
   auto output_shape = ops[iter_ops]->outputs_tensor_info()[0].shape();
   Dimensions index(output_shape.size() - 1, 0);
@@ -302,8 +302,8 @@ Dimensions PrepareGatherV2OutputStrategy(const std::vector<std::shared_ptr<Opera
   return strategie;
 }
 
-Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             Dimensions s) {
+Strategies PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                              Dimensions s) {
   int64_t axis = 0;
   auto iter = ops[iter_ops]->attrs().find(AXIS);
   if (iter != ops[iter_ops]->attrs().end()) {
@@ -323,15 +323,15 @@ Strategys PrepareL2Normalize(const std::vector<std::shared_ptr<OperatorInfo>> &o
 
   s[LongToSize(axis_index)] = 1;
 
-  Strategys strategies;
+  Strategies strategies;
   strategies.push_back(s);
   return strategies;
 }
 
-Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
-                                     const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                     const size_t iter_ops) {
-  Strategys strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
+Strategies PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
+                                      const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                      const size_t iter_ops) {
+  Strategies strategies = MakeRecSearchStrategy(graph, ops, iter_graph, iter_ops);
   if (strategies.size() < 1) {
     MS_LOG(EXCEPTION) << ops[iter_ops]->name() << ": get empty Strategy.";
   }
@@ -380,9 +380,9 @@ Strategys PrepareAxisRelatedStrategy(const std::shared_ptr<Graph> &graph,
   return strategies;
 }
 
-Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
-                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                const size_t iter_ops) {
+Strategies MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
+                                 const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                 const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -394,7 +394,7 @@ Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
   }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  Strategys strategies;
+  Strategies strategies;
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
       MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
@@ -437,9 +437,9 @@ Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
   return strategies;
 }
 
-Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
-                                   const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                   const size_t iter_ops) {
+Strategies MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
+                                    const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                    const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -448,7 +448,7 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
   }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  Strategys strategies;
+  Strategies strategies;
   size_t max_device_num = g_device_manager->DeviceNum();
   size_t target_tensor_batch = ops[iter_ops]->inputs_tensor_info()[0].shape()[0];
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
@@ -500,9 +500,9 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
   return strategies;
 }
 
-Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
-                                const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
-                                const size_t iter_ops) {
+Strategies MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
+                                 const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
+                                 const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -511,7 +511,7 @@ Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
   }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
-  Strategys strategies;
+  Strategies strategies;
   for (size_t iter_op_inputs = 0; iter_op_inputs < ops[iter_ops]->inputs_tensor_info().size(); iter_op_inputs++) {
     if (iter_op_inputs >= origin_strategy->GetInputDim().size()) {
       MS_LOG(EXCEPTION) << "Failure: Strategy's InputDim out of range.";
@@ -540,7 +540,7 @@ Strategys MakeFullBatchStrategy(const std::shared_ptr<Graph> &graph,
 
 void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op) {
   StrategyPtr origin_strategy = op->strategy();
-  Strategys strategies;
+  Strategies strategies;
 
   for (size_t iter_strategy = 0; iter_strategy < origin_strategy->GetInputDim().size(); iter_strategy++) {
     Dimensions s;
@@ -561,8 +561,8 @@ void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op) {
   op->SetSelectedStrategyAndCost(sp, op->selected_cost());
 }
 
-Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
-                          const size_t iter_graph, const size_t iter_ops) {
+Strategies PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
+                           const size_t iter_graph, const size_t iter_ops) {
   if (ops.empty()) {
     MS_LOG(EXCEPTION) << "Failure: Operators is empty.";
   }
@@ -593,7 +593,7 @@ void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
                                          const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                          const std::shared_ptr<std::vector<size_t>> &index_list) {
   for (size_t iter_ops = 0; iter_ops < (size_t)index_list->size(); iter_ops++) {
-    Strategys strategies;
+    Strategies strategies;
     size_t iter_graph = index_list->at(iter_ops);
     if (iter_graph != SIZE_MAX && ops[iter_ops]->type() != GET_NEXT) {
       strategies = PrepareStrategy(graph, ops, iter_graph, iter_ops);
@@ -618,7 +618,7 @@ void ModifyParamSharingOpsStrategy(const std::vector<std::shared_ptr<OperatorInf
             } else {
               continue;
             }
-            Strategys strategies;
+            Strategies strategies;
             Dimensions str1, str2;
             str1 = str_j;
             size_t num_device_used = 1;
@@ -1107,9 +1107,9 @@ Dimensions CopyIncomingOperatorInputStrategy(const std::vector<std::shared_ptr<O
   return s;
 }
 
-Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                                         Dimensions basic_stra) {
-  Strategys stra;
+Strategies GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                                          Dimensions basic_stra) {
+  Strategies stra;
   MS_EXCEPTION_IF_NULL(ops[iter_ops]);
 
   if (iter_ops >= ops.size()) {
@@ -1157,9 +1157,9 @@ Strategys GenerateStrategiesFromStrategy(const std::vector<std::shared_ptr<Opera
 }
 
 // Function to deal with ops with broadcasting, like TensorAdd/Sub/Mul/Div etc.
-Strategys CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         const Dimensions s) {
-  Strategys stra;
+Strategies CheckBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                          const Dimensions s) {
+  Strategies stra;
 
   size_t first_tensor_dim = ops[iter_ops]->inputs_tensor_info()[0].shape().size();
   size_t second_tensor_dim = ops[iter_ops]->inputs_tensor_info()[1].shape().size();
@@ -1256,10 +1256,10 @@ Dimensions ApplyBroadcast(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
 }
 
 // Check whether the operator can be divided by the current strategy.
-Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                         const Dimensions basic_stra) {
+Strategies CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
+                          const Dimensions basic_stra) {
   Dimensions s_empty = {};
-  Strategys stra;
+  Strategies stra;
 
   // For all the input tensors.
   for (size_t iter_op_inputs = 0; iter_op_inputs < (size_t)ops[iter_ops]->inputs_tensor_info().size();
@@ -1302,7 +1302,7 @@ void GenerateEliminatedOperatorStrategyForward(const std::shared_ptr<Graph> &gra
 
   for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
     size_t iter_ops = no_stra_op_list->at(iter_list - 1);
-    Strategys stra;
+    Strategies stra;
     Dimensions s;
     size_t incoming_op_index = FindIndexOfOperatorIncoming(input_tensor_names, iter_ops);
     if (incoming_op_index != SIZE_MAX) {
@@ -1405,7 +1405,7 @@ void GenerateEliminatedOperatorStrategyBackward(const std::vector<std::shared_pt
 
   for (size_t iter_list = no_stra_op_list->size(); iter_list > 0; iter_list--) {
     auto iter_ops = no_stra_op_list->at(iter_list - 1);
-    Strategys stra;
+    Strategies stra;
     Dimensions s = CopyOutgoingOperatorInputStrategy(ops, input_tensor_names, iter_ops);
     if (s.size() != 0 && ops[iter_ops]->type() == SQUEEZE) {
       s = ModifyStrategyIfSqueezeOutgoing(ops, iter_ops, s);
@@ -1444,7 +1444,7 @@ void GenerateRemainingOperatorStrategy(const std::shared_ptr<Graph> &graph,
 
   for (size_t iter_list = 0; iter_list < no_stra_op_list->size(); iter_list++) {
     auto iter_ops = no_stra_op_list->at(iter_list);
-    Strategys stra;
+    Strategies stra;
     Dimensions s;
 
     size_t max_dim_num = 0;

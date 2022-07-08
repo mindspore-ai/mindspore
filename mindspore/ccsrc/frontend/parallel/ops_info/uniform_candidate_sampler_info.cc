@@ -171,14 +171,14 @@ std::vector<StrategyPtr> UniformCandidateSamplerInfo::GenerateOpStrategies(int64
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> UniformCandidateSamplerInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> UniformCandidateSamplerInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
   CheckGlobalDeviceManager();
   Dimensions input_strategy(inputs_shape_[0].size(), 1);
-  Strategys strategy_v = {input_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {input_strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 ReplaceGraphPtr UniformCandidateSamplerInfo::replace_graph(const CNodePtr &cnode) {

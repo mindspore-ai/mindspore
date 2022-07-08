@@ -1250,7 +1250,7 @@ StrategyPtr ExtractStrategy(const ValuePtr &stra) {
   MS_LOG(INFO) << "Extract information: strategy " << stra->ToString();
   if (var->size() > 0) {
     std::vector<ValuePtr> elements = var->value();
-    Strategys strategy;
+    Strategies strategy;
     for (uint64_t index = 0; index < elements.size(); ++index) {
       Dimensions dim;
       if (elements[index]->isa<ValueSequence>()) {
@@ -1725,7 +1725,7 @@ StrategyPtr GenerateBatchParallelStrategy(const OperatorInfoPtr operator_, const
   MS_EXCEPTION_IF_NULL(operator_);
   MS_EXCEPTION_IF_NULL(prim);
   StrategyPtr strategyPtr;
-  std::shared_ptr<Strategys> strategy_v_ptr = operator_->GenerateBatchStrategies();
+  std::shared_ptr<Strategies> strategy_v_ptr = operator_->GenerateBatchStrategies();
   MS_EXCEPTION_IF_NULL(strategy_v_ptr);
   strategyPtr = NewStrategy(0, *strategy_v_ptr);
   std::vector<ValuePtr> elements;

@@ -73,7 +73,7 @@ Status UnsortedSegmentOpInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, {inputs_shape_.at(0), inputs_shape_.at(1)}) != SUCCESS) {
     return FAILED;
   }
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   Shape input_a_shape = inputs_shape_.at(0);
@@ -91,7 +91,7 @@ Status UnsortedSegmentOpInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status UnsortedSegmentOpInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   dev_matrix_shape_ = stra.at(0);
   return SUCCESS;
 }
@@ -173,7 +173,7 @@ std::vector<StrategyPtr> UnsortedSegmentOpInfo::GenerateOpStrategies(int64_t sta
     MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs() failed.";
   }
   for (auto &sp : sp_vector) {
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions first_input_strategy = sp->GetInputDim()[0];
     Dimensions second_input_strategy;
     for (size_t i = 0; i < inputs_shape_[1].size(); ++i) {
@@ -214,7 +214,7 @@ Status UnsortedSegmentOpInfo::SetCostUnderStrategy(const StrategyPtr &strategy) 
   return SetCostUnderStrategyBase(strategy);
 }
 
-std::shared_ptr<Strategys> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
   if (inputs_shape_.size() != UNSORTEDSEGMENTOP_INPUTS_SIZE) {
     MS_LOG(EXCEPTION) << name_ << ": inputs shape size must be " << UNSORTEDSEGMENTOP_INPUTS_SIZE << ", but is "
                       << inputs_shape_.size();
@@ -233,8 +233,8 @@ std::shared_ptr<Strategys> UnsortedSegmentOpInfo::GenerateBatchStrategies() {
   for (size_t i = 1; i < inputs_shape_[1].size(); i++) {
     strategy_b.push_back(1);
   }
-  Strategys strategy_v = {strategy_a, strategy_b};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {strategy_a, strategy_b};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 // When the index is splited, the graph should be replaced

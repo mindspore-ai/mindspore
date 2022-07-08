@@ -158,7 +158,7 @@ std::vector<StrategyPtr> ScatterUpdateInfo::GenerateOpStrategies(int64_t stage_i
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions first_input_strategy = sp->GetInputDim()[0];
     Dimensions indices_strategy(inputs_shape_[1].size(), 1);
     // updates_strategy = indices_strategy + input_strategy[1:]

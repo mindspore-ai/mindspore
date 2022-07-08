@@ -27,7 +27,7 @@ Status AddNInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   // The strategy for each input tensor must be equal
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   for (size_t i = 1; i < strategies.size(); ++i) {
     if (strategies[i] != strategies[0]) {
       return FAILED;
@@ -39,7 +39,7 @@ Status AddNInfo::CheckStrategy(const StrategyPtr &strategy) {
 Status AddNInfo::InferDevMatrixShape() {
   dev_matrix_shape_.clear();
 
-  Strategys strategies = strategy_->GetInputDim();
+  Strategies strategies = strategy_->GetInputDim();
   if (strategies.empty()) {
     return SUCCESS;
   }
@@ -59,7 +59,7 @@ Status AddNInfo::InferTensorMap() {
     sub_tensor_map.push_back(dev_size - i - 1);
   }
 
-  Strategys strategies = strategy_->GetInputDim();
+  Strategies strategies = strategy_->GetInputDim();
   for (size_t i = 0; i < strategies.size(); ++i) {
     inputs_tensor_map_.push_back(sub_tensor_map);
   }

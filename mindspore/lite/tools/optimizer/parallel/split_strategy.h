@@ -37,7 +37,7 @@ const std::vector<int64_t> kSplitDefaultRatio = {0, 0};
 // user's device to split, only split to cpu && gpu, no support npu
 const std::vector<std::string> kSplitDevTypes = {"cpu", "gpu"};
 
-using Strategys = std::vector<std::vector<std::vector<int64_t>>>;
+using Strategies = std::vector<std::vector<std::vector<int64_t>>>;
 
 constexpr auto kDeviceTypeNone = -1;
 // strategy format is NHWC-KHWC
@@ -71,7 +71,7 @@ enum SplitMode {
 };
 
 struct SplitStrategy {
-  Strategys strategys{};
+  Strategies strategys{};
   std::vector<std::string> dev_types{};
   size_t dev_num{0};
   SplitMode split_mode_{NoSplit};

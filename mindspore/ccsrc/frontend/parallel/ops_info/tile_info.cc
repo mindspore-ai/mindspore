@@ -179,7 +179,7 @@ void TileInfo::UpdateMultiples() {
 
 void TileInfo::ReplaceNodeInputOrAttrs() { UpdateMultiples(); }
 
-std::shared_ptr<Strategys> TileInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> TileInfo::GenerateBatchStrategies() {
   if (InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
