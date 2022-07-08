@@ -1426,23 +1426,6 @@ mindspore.Tensor
         - **TypeError** - 输入的参数类型有误。
         - **ValueError** - 指定维度的shape大于1。
 
-    .. py:method:: standard_laplace(seed=0, seed2=0)
-
-        创建一个Tensor，其shape与原Tensor相同，value服从标准Laplace分布（mean=0， lambda=1）的随机数。
-        其概率密度函数为：
-
-        .. math::
-            \text{f}(x) = \frac{1}{2}\exp(-|x|)
-
-        **参数：**
-
-        - **seed** (int) - 算子层的随机种子，用于生成随机数，必须是非负的。默认值：0。
-        - **seed2** (int) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数，必须是非负的。默认值：0。
-
-        **返回：**
-
-        Tensor，具有与原Tensor相同的维度。
-
     .. py:method:: std(axis=None, ddof=0, keepdims=False)
 
         计算指定维度的标准差。

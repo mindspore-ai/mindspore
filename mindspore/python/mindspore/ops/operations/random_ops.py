@@ -210,21 +210,8 @@ class StandardLaplace(PrimitiveWithInfer):
         """Initialize StandardLaplace"""
         self.init_prim_io_names(inputs=['shape'], outputs=['output'])
         self.add_prim_attr("side_effect_hidden", True)
-        Validator.check_value_type('seed', seed, [int], self.name)
-        Validator.check_value_type('seed2', seed2, [int], self.name)
-
-    def __infer__(self, shape):
-        shape_v = shape["value"]
-        if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
-        Validator.check_value_type("shape", shape_v, [tuple], self.name)
-        for i, shape_i in enumerate(shape_v):
-            Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        out = {
-            'shape': shape_v,
-            'dtype': mstype.float32,
-            'value': None}
-        return out
+        Validator.check_non_negative_int(seed, "seed", self.name)
+        Validator.check_non_negative_int(seed2, "seed2", self.name)
 
 
 class RandomGamma(Primitive):

@@ -2385,10 +2385,3 @@ def erfc(x):
     Refer to :func:`mindspore.ops.erfc` for more details.
     """
     return F.erfc(x)
-
-
-def standard_laplace(x, seed=0, seed2=0):
-    """
-    Constructs a tensor with random numbers according to the Standard Laplace distribution.
-    """
-    return F.standard_laplace(x.shape, seed=0, seed2=0)
