@@ -194,6 +194,33 @@ inline Status ValidateNonNegative(const std::string &op_name, const std::string 
   }
   return Status::OK();
 }
+
+inline std::string DataTypeSetToString(const std::set<uint8_t> &valid_dtype) {
+  std::string init;
+  std::string err_msg =
+    std::accumulate(valid_dtype.begin(), valid_dtype.end(), init, [](const std::string &str, uint8_t dtype) {
+      if (str.empty()) {
+        return DataType(DataType::Type(dtype)).ToString();
+      } else {
+        return str + ", " + DataType(DataType::Type(dtype)).ToString();
+      }
+    });
+  return "(" + err_msg + ")";
+}
+
+template <typename T>
+std::string NumberSetToString(const std::set<T> &valid_value) {
+  std::string init;
+  std::string err_msg =
+    std::accumulate(valid_value.begin(), valid_value.end(), init, [](const std::string &str, T value) {
+      if (str.empty()) {
+        return std::to_string(value);
+      } else {
+        return str + ", " + std::to_string(value);
+      }
+    });
+  return "(" + err_msg + ")";
+}
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_VALIDATORS_H_

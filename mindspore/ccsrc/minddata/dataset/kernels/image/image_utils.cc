@@ -92,7 +92,7 @@ Status GetConvertShape(ConvertMode convert_mode, const std::shared_ptr<CVTensor>
   return Status::OK();
 }
 
-Status ImageNumChannels(const std::shared_ptr<Tensor> &image, int *channels) {
+Status ImageNumChannels(const std::shared_ptr<Tensor> &image, dsize_t *channels) {
   if (image->Rank() < kMinImageRank) {
     RETURN_STATUS_UNEXPECTED(
       "GetImageNumChannels: invalid parameter, image should have at least two dimensions, but got: " +
@@ -119,6 +119,43 @@ Status ImageSize(const std::shared_ptr<Tensor> &image, std::vector<dsize_t> *siz
     const int32_t kWidthIndex = -2;
     (*size)[0] = image->shape()[kHeightIndex];
     (*size)[1] = image->shape()[kWidthIndex];
+  }
+  return Status::OK();
+}
+
+Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op_name,
+                     const std::set<uint8_t> &valid_dtype, const std::set<dsize_t> &valid_rank,
+                     const std::set<dsize_t> &valid_channel) {
+  // Validate image dtype
+  if (!valid_dtype.empty()) {
+    auto dtype = image->type();
+    if (valid_dtype.find(dtype.value()) == valid_dtype.end()) {
+      std::string err_msg = op_name + ": the data type of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in type of " + DataTypeSetToString(valid_dtype);
+      err_msg += ". But got type " + dtype.ToString() + ".";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  // Validate image rank
+  if (!valid_rank.empty()) {
+    auto rank = image->Rank();
+    if (valid_rank.find(rank) == valid_rank.end()) {
+      std::string err_msg = op_name + ": the dimension of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in dimension of " + NumberSetToString(valid_rank);
+      err_msg += ". But got dimension " + std::to_string(rank) + ".";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  // Validate image channel
+  if (!valid_channel.empty()) {
+    dsize_t channel = 1;
+    RETURN_IF_NOT_OK(ImageNumChannels(image, &channel));
+    if (valid_channel.find(channel) == valid_channel.end()) {
+      std::string err_msg = op_name + ": the channel of image tensor does not match the requirement of operator.";
+      err_msg += " Expecting tensor in channel of " + NumberSetToString(valid_channel);
+      err_msg += ". But got channel " + std::to_string(channel) + ".";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
   }
   return Status::OK();
 }
@@ -721,6 +758,7 @@ Status CopyTensorValue(const std::shared_ptr<Tensor> &source_tensor, std::shared
 
 Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "SwapRedBlue", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     CHECK_FAIL_RETURN_UNEXPECTED(
       input_cv->shape().Size() > kChannelIndexHWC,
@@ -815,11 +853,15 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
               float degree, InterpolationMode interpolation, bool expand, uint8_t fill_r, uint8_t fill_g,
               uint8_t fill_b) {
   try {
+    RETURN_IF_NOT_OK(ValidateImageRank("Rotate", input->Rank()));
+    dsize_t channel = 1;
+    RETURN_IF_NOT_OK(ImageNumChannels(input, &channel));
+    CHECK_FAIL_RETURN_UNEXPECTED(channel <= kMaxImageChannel || interpolation != InterpolationMode::kCubic,
+                                 "Rotate: interpolation can not be CUBIC when image channel is greater than 4.");
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Rotate: load image failed.");
     }
-    RETURN_IF_NOT_OK(ValidateImageRank("Rotate", input_cv->Rank()));
 
     cv::Mat input_img = input_cv->mat();
     if (input_img.cols > (MAX_INT_PRECISION * DOUBLING_FACTOR) ||
@@ -993,6 +1035,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, std::vector<float> mean,
                     std::vector<float> std, const std::string &dtype, bool is_hwc) {
+  RETURN_IF_NOT_OK(ValidateImageRank("NormalizePad", input->Rank()));
   int64_t channel_index = kChannelIndexCHW;
   if (is_hwc) {
     channel_index = kChannelIndexHWC;
@@ -1022,7 +1065,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == mean.size() + 1,
                                "NormalizePad: number of channels does not match the size of mean and std vectors, got "
                                "channels: " +
-                                 std::to_string((*output)->shape()[channel_index]) +
+                                 std::to_string((*output)->shape()[channel_index] - 1) +
                                  ", size of mean: " + std::to_string(mean.size()));
   if (dtype == "float16") {
     RETURN_IF_NOT_OK(Normalize_caller<float16>(input, output, mean, std, is_hwc, true));
@@ -1064,6 +1107,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
 
 Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustContrast", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
@@ -1080,10 +1124,10 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     }
     cv::Mat gray, output_img;
     cv::cvtColor(input_img, gray, CV_RGB2GRAY);
-    int mean_img = static_cast<int>(cv::mean(gray).val[0] + 0.5);
+    auto mean_img = cv::mean(gray).val[0];
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-    output_img = cv::Mat::zeros(input_img.rows, input_img.cols, CV_8UC1);
+    output_img = cv::Mat::zeros(input_img.rows, input_img.cols, input_img.depth());
     output_img = output_img + mean_img;
     cv::cvtColor(output_img, output_img, CV_GRAY2RGB);
     output_cv->mat() = output_img * (1.0 - alpha) + input_img * alpha;
@@ -1241,6 +1285,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustSaturation", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
@@ -1275,6 +1320,7 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
                              std::to_string(hue));
   }
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "AdjustHue", {3, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
@@ -1541,6 +1587,7 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
 
 Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "RgbaToRgb", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->shape().Size() != kDefaultImageChannel || input_cv->shape()[kChannelIndexHWC] != kMaxImageChannel) {
       std::string err_msg =
@@ -1562,6 +1609,7 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "RgbaToBgr", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->shape().Size() != kDefaultImageChannel || input_cv->shape()[kChannelIndexHWC] != kMaxImageChannel) {
       std::string err_msg =
@@ -1583,6 +1631,7 @@ Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 
 Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "RgbToBgr", {3, 4, 5, 6, 10, 11, 12}));
     auto input_type = input->type();
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     if (!input_cv->mat().data) {
@@ -1641,6 +1690,7 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 
 Status RgbToGray(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "RgbToGray", {3, 5, 11}));
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(std::move(input));
     if (input_cv->Rank() != kDefaultImageRank || input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("RgbToGray: image shape is not <H,W,C> or channel is not 3, got rank: " +
@@ -1680,8 +1730,15 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
 Status Affine(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::vector<float_t> &mat,
               InterpolationMode interpolation, uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   try {
+    RETURN_IF_NOT_OK(ValidateImageRank("Affine", input->Rank()));
+    dsize_t channel = 1;
+    RETURN_IF_NOT_OK(ImageNumChannels(input, &channel));
+    CHECK_FAIL_RETURN_UNEXPECTED(channel <= kMaxImageChannel || interpolation != InterpolationMode::kCubic,
+                                 "Affine: interpolation can not be CUBIC when image channel is greater than 4.");
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
-    RETURN_IF_NOT_OK(ValidateImageRank("Affine", input_cv->Rank()));
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("[Internal ERROR] Affine: load image failed.");
+    }
 
     cv::Mat affine_mat(mat);
     affine_mat = affine_mat.reshape(1, {2, 3});

@@ -98,14 +98,17 @@ def check_mix_up_batch_c(method):
 
 
 def check_normalize_param(mean, std):
+    """Check the parameters of Normalize and NormalizePad operations."""
     type_check(mean, (list, tuple), "mean")
     type_check(std, (list, tuple), "std")
     if len(mean) != len(std):
         raise ValueError("Length of mean and std must be equal.")
-    for mean_value in mean:
-        check_value(mean_value, [0, 255], "mean_value")
-    for std_value in std:
-        check_value_normalize_std(std_value, [0, 255], "std_value")
+    for i, mean_value in enumerate(mean):
+        type_check(mean_value, (int, float), "mean[{}]".format(i))
+        check_value(mean_value, [0, 255], "mean[{}]".format(i))
+    for j, std_value in enumerate(std):
+        type_check(std_value, (int, float), "std[{}]".format(j))
+        check_value_normalize_std(std_value, [0, 255], "std[{}]".format(j))
 
 
 def check_normalize_c_param(mean, std):

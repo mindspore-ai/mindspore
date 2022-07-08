@@ -13,11 +13,12 @@
 # limitations under the License.
 # ==============================================================================
 """
-Testing RandomRotation op in DE
+Testing RandomRotation in DE
 """
 import cv2
 import numpy as np
 from PIL import Image
+import pytest
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
@@ -35,7 +36,7 @@ GENERATE_GOLDEN = False
 
 def test_random_rotation_op_c(plot=False):
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation in Cpp transformations op
     Expectation: The dataset is processed as expected
     """
@@ -72,7 +73,7 @@ def test_random_rotation_op_c(plot=False):
 
 def test_random_rotation_op_c_area():
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation in Cpp transformations op with Interpolation AREA
     Expectation: Number of returned data rows is correct
     """
@@ -107,7 +108,7 @@ def test_random_rotation_op_c_area():
 
 def test_random_rotation_op_py(plot=False):
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation in Python transformations op
     Expectation: The dataset is processed as expected
     """
@@ -146,7 +147,7 @@ def test_random_rotation_op_py(plot=False):
 
 def test_random_rotation_op_py_ANTIALIAS():
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation in Python transformations op with resample=Inter.ANTIALIAS
     Expectation: The dataset is processed as expected
     """
@@ -171,7 +172,7 @@ def test_random_rotation_op_py_ANTIALIAS():
 
 def test_random_rotation_expand():
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation with expand
     Expectation: The dataset is processed as expected
     """
@@ -194,7 +195,7 @@ def test_random_rotation_expand():
 
 def test_random_rotation_md5():
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation with md5 check
     Expectation: The dataset is processed as expected
     """
@@ -237,7 +238,7 @@ def test_random_rotation_md5():
 
 def test_rotation_diff(plot=False):
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation difference between Python and Cpp transformations op
     Expectation: Both datasets are processed the same as expected
     """
@@ -288,7 +289,7 @@ def test_rotation_diff(plot=False):
 
 def test_random_rotation_op_exception():
     """
-    Feature: RandomRotation op
+    Feature: RandomRotation
     Description: Test RandomRotation in Python transformations op with resample=Inter.ANTIALIAS, but center is not None
     Expectation: ValueError
     """
@@ -305,6 +306,35 @@ def test_random_rotation_op_exception():
                in str(e)
 
 
+def test_random_rotation_with_channel_5():
+    """
+    Feature: RandomRotation
+    Description: Test RandomRotation with 5 channel image
+    Expectation: The image is processed as expected
+    """
+    logger.info("test_random_rotation_invalid_dim")
+
+    image = np.random.random((128, 64, 5)).astype(np.float32)
+    random_rotation = vision.RandomRotation((90, 90), resample=Inter.NEAREST, expand=True)
+    out = random_rotation(image)
+    assert out.shape == (64, 128, 5)
+
+
+def test_random_rotation_with_channel_5_and_invalid_resample():
+    """
+    Feature: RandomRotation
+    Description: Test RandomRotation with 5 channel image and Inter.BICUBIC
+    Expectation: RuntimeError is raised
+    """
+    logger.info("test_random_rotation_with_channel_5_and_invalid_resample")
+
+    image = np.random.random((128, 64, 5)).astype(np.float32)
+    with pytest.raises(RuntimeError) as error_info:
+        random_rotation = vision.RandomRotation((90, 90), resample=Inter.BICUBIC)
+        _ = random_rotation(image)
+    assert "interpolation can not be CUBIC when image channel is greater than 4" in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_random_rotation_op_c(plot=True)
     test_random_rotation_op_c_area()
@@ -314,3 +344,5 @@ if __name__ == "__main__":
     test_random_rotation_md5()
     test_rotation_diff(plot=True)
     test_random_rotation_op_exception()
+    test_random_rotation_with_channel_5()
+    test_random_rotation_with_channel_5_and_invalid_resample()
