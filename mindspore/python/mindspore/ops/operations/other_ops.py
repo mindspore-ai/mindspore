@@ -805,16 +805,20 @@ class ConfusionMatrix(PrimitiveWithInfer):
 class PopulationCount(Primitive):
     r"""
     Computes element-wise population count(a.k.a bitsum, bitcount).
-    For each entry in `input` , calculates the number of 1 bits in the binary representation of that entry.
+    For each entry in `input`, calculates the number of 1 bits in the binary representation of that entry.
 
     Inputs:
-        - **input** (Tensor) -  The data type must be int16 or uint16.
+        - **input** (Tensor) - Tensor of any dimension. The data type must be int16 or uint16 (Ascend).
+        The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU).
 
     Outputs:
-        Tensor, with the same shape as the input.
+        Tensor, with the same shape as the input, and the data type is uint8
 
     Raises:
         TypeError: If `input` is not a Tensor.
+        TypeError: If dtype of `input` is not int16, uint16 (Ascend).
+                   If dtype of `input` is not int8, int16, int32, int64, uint8, uint16,
+                   uint32, uint64 (CPU).
 
     Supported Platforms:
         ``Ascend`` ``CPU``
@@ -825,9 +829,6 @@ class PopulationCount(Primitive):
         >>> output = population_count(x_input)
         >>> print(output)
         [0 1 2]
-
-    def __call__(self, x_dtype):
-        return mstype.tensor_type(mstype.uint8)
     """
 
     @prim_attr_register
