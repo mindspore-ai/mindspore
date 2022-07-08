@@ -101,9 +101,10 @@ public class UpdateModel {
      * @param iteration      current iteration of federated learning task.
      * @param secureProtocol the object that defines encryption and decryption methods.
      * @param trainDataSize  the size of train date set.
+     * @param evaAcc  the evaluated Accuracy.
      * @return the flatBuffer builder of RequestUpdateModel in byte[] format.
      */
-    public byte[] getRequestUpdateFLJob(int iteration, SecureProtocol secureProtocol, int trainDataSize) {
+    public byte[] getRequestUpdateFLJob(int iteration, SecureProtocol secureProtocol, int trainDataSize, float evaAcc) {
         RequestUpdateModelBuilder builder = new RequestUpdateModelBuilder(localFLParameter.getEncryptLevel());
         boolean isPkiVerify = flParameter.isPkiVerify();
         Client client = ClientManager.getClient(flParameter.getFlName());
@@ -115,10 +116,11 @@ public class UpdateModel {
             byte[] signature = CipherClient.signTimeAndIter(dateTime, iteration);
             return builder.flName(flParameter.getFlName()).time(dateTime).id(localFLParameter.getFlID())
                     .featuresMap(secureProtocol, trainDataSize).iteration(iteration)
-                    .signData(signature).uploadLoss(uploadLoss).build();
+                    .signData(signature).uploadLoss(uploadLoss).evalAccuracy(evaAcc).build();
         }
         return builder.flName(flParameter.getFlName()).time("null").id(localFLParameter.getFlID())
-                .featuresMap(secureProtocol, trainDataSize).iteration(iteration).uploadLoss(uploadLoss).build();
+                .featuresMap(secureProtocol, trainDataSize).iteration(iteration).uploadLoss(uploadLoss)
+                .evalAccuracy(evaAcc).build();
     }
 
     /**
@@ -225,6 +227,8 @@ public class UpdateModel {
         private float uploadSparseRate = 0.0f;
         private EncryptLevel encryptLevel = EncryptLevel.NOT_ENCRYPT;
         private float uploadLossOffset = 0.0f;
+        // evaluate acc
+        private float evalAccuracy = 0.0f;
         private int nameVecOffset = 0;
 
         private RequestUpdateModelBuilder(EncryptLevel encryptLevel) {
@@ -488,6 +492,17 @@ public class UpdateModel {
         }
 
         /**
+         * Serialize the element evalAccuracy in RequestUpdateModel.
+         *
+         * @param evaluate Accuracy that client eval.
+         * @return the RequestUpdateModelBuilder object.
+         */
+        private RequestUpdateModelBuilder evalAccuracy(float evalAccuracy) {
+            this.evalAccuracy = evalAccuracy;
+            return this;
+        }
+
+        /**
          * Create a flatBuffer builder of RequestUpdateModel.
          *
          * @return the flatBuffer builder of RequestUpdateModel in byte[] format.
@@ -505,6 +520,9 @@ public class UpdateModel {
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
             RequestUpdateModel.addSignature(builder, this.signDataOffset);
             RequestUpdateModel.addUploadLoss(builder, this.uploadLossOffset);
+            if (evalAccuracy > 0.0f) {
+                RequestUpdateModel.addUploadAccuracy(builder, this.evalAccuracy);
+            }
             RequestUpdateModel.addSign(builder, this.sign);
             RequestUpdateModel.addIndexArray(builder, this.indexArrayOffset);
             int root = RequestUpdateModel.endRequestUpdateModel(builder);

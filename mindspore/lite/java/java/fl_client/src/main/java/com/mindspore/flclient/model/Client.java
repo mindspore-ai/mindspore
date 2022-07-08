@@ -409,7 +409,7 @@ public abstract class Client {
         }
 
         if (isSuccess) {
-            trainSession.export(modelName, 0, 0);
+            trainSession.export(modelName, 0, 1);
             return Status.SUCCESS;
         }
         return Status.FAILED;

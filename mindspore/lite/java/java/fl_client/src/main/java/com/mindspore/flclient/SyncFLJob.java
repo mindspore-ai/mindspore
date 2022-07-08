@@ -25,7 +25,6 @@ import static com.mindspore.flclient.LocalFLParameter.LENET;
 
 import com.mindspore.flclient.common.FLLoggerGenerater;
 import com.mindspore.flclient.model.AlInferBert;
-import com.mindspore.flclient.model.AlTrainBert;
 import com.mindspore.flclient.model.Client;
 import com.mindspore.flclient.model.ClientManager;
 import com.mindspore.flclient.model.RunType;
@@ -33,14 +32,8 @@ import com.mindspore.flclient.model.SessionUtil;
 import com.mindspore.flclient.model.Status;
 import com.mindspore.flclient.model.TrainLenet;
 import com.mindspore.flclient.pki.PkiUtil;
-import com.mindspore.lite.config.CpuBindMode;
-import mindspore.schema.ResponseGetModel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -127,14 +120,13 @@ public class SyncFLJob {
                 break;
             }
             LOGGER.info("flName: " + flParameter.getFlName());
-            int trainDataSize = flLiteClient.setInput();
-            if (trainDataSize <= 0) {
+            boolean initFlg = flLiteClient.initDataSets();
+            if (!initFlg) {
                 curStatus = FLClientStatus.FAILED;
                 failed("unsolved error code in <flLiteClient.setInput>: the return trainDataSize<=0, setInput",
                         flLiteClient);
                 break;
             }
-            flLiteClient.setTrainDataSize(trainDataSize);
 
             // startFLJob
             curStatus = flLiteClient.startFLJob();
@@ -148,6 +140,20 @@ public class SyncFLJob {
             }
             LOGGER.info("[startFLJob] startFLJob succeed, curIteration: " + flLiteClient.getIteration());
             updateTryTimePerIter(flLiteClient);
+
+            // evaluate model after start model, need upload evaluate Accuracy, so evaluate before updateModel and
+            // before local train
+            if (!checkEvalPath()) {
+                LOGGER.info("[evaluate] the data map set by user do not contain evaluation dataset, " +
+                        "don't evaluate the model after getting model from server");
+            } else {
+                curStatus = flLiteClient.evaluateModel();
+                if (curStatus != FLClientStatus.SUCCESS) {
+                    failed("[evaluate] evaluate", flLiteClient);
+                    break;
+                }
+                LOGGER.info("[evaluate] evaluate succeed");
+            }
 
             // Copy weights before training.
             Map<String, float[]> oldFeatureMap = flLiteClient.getFeatureMap();
@@ -203,19 +209,6 @@ public class SyncFLJob {
 
             // get the feature map after averaging and update dp_norm_clip
             flLiteClient.updateDpNormClip();
-
-            // evaluate model after getting model from server
-            if (!checkEvalPath()) {
-                LOGGER.info("[evaluate] the data map set by user do not contain evaluation dataset, " +
-                        "don't evaluate the model after getting model from server");
-            } else {
-                curStatus = flLiteClient.evaluateModel();
-                if (curStatus != FLClientStatus.SUCCESS) {
-                    failed("[evaluate] evaluate", flLiteClient);
-                    break;
-                }
-                LOGGER.info("[evaluate] evaluate succeed");
-            }
             LOGGER.info("========================================================the total response of "
                     + flLiteClient.getIteration() + ": " + curStatus +
                     "======================================================================");
