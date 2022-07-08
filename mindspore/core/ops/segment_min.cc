@@ -120,7 +120,7 @@ TypePtr SegmentMinInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SegmentMin, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SegmentMin, BaseOperator);
 AbstractBasePtr SegmentMinInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {

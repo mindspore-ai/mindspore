@@ -123,7 +123,7 @@ TypePtr SegmentProdInferType(const PrimitivePtr &primitive, const std::vector<Ab
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SegmentProd, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SegmentProd, BaseOperator);
 AbstractBasePtr SegmentProdInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {

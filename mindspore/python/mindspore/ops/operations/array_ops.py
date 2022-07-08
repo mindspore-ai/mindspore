@@ -7568,7 +7568,7 @@ class SegmentMax(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7618,7 +7618,7 @@ class SegmentMin(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7672,7 +7672,7 @@ class SegmentSum(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)
@@ -7873,7 +7873,7 @@ class SegmentMean(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [1, 2, 3], [7, 8, 9]], mstype.float64)
@@ -7927,7 +7927,7 @@ class SegmentProd(Primitive):
         ValueError: If the values of `segment_ids` are not sorted in ascending order.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float64)

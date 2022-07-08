@@ -120,7 +120,7 @@ TypePtr SegmentSumInferType(const PrimitivePtr &primitive, const std::vector<Abs
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(SegmentSum, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(SegmentSum, BaseOperator);
 AbstractBasePtr SegmentSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                 const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
