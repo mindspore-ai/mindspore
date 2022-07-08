@@ -15,18 +15,255 @@
 
 """Defines sparse operators with functional form."""
 
-from ..primitive import constexpr
+from ..primitive import constexpr, Primitive
 from ..operations.sparse_ops import DenseToCSRSparseMatrix, CSRSparseMatrixToSparseTensor, SparseConcat
-from ..operations.array_ops import GatherNd
+from ..operations.array_ops import GatherNd, Coalesce
+from ..operations import _csr_ops
 from ...common import CSRTensor, COOTensor, Tensor
 from ...common import dtype as mstype
 from ..composite.multitype_ops._constexpr_utils import raise_value_error, raise_type_error
 
-
+# utility functions and values
 gather_nd = GatherNd()
 dense_to_csr = DenseToCSRSparseMatrix()
 csr_sparse_matrix_to_sparse_tensor = CSRSparseMatrixToSparseTensor()
 batch_csr_pointers_empty = Tensor([0, -1], dtype=mstype.int32)
+coalesce_op = Coalesce()
+
+
+@constexpr
+def print_info(info):
+    """Print given error info"""
+    print(info)
+
+
+@constexpr
+def _make_tensor(data):
+    """Make Tensor"""
+    return Tensor(data)
+
+
+def is_scalar(tensor):
+    """Determine whether tensor input is a scalar tensor."""
+    if tensor.size != 1:
+        return False
+    return len(tensor.shape) <= 2
+
+
+def coalesce(x_indices, x_values, x_shape):
+    """
+    Returns the coalesced sparse tensor of the input.
+
+    Args:
+        - **x_indices** (Tensor) - A 2-D Tensor, represents the indices of the nonzero elements of the sparse tensor.
+          Supported data type is int64. It's elements should be non-negative. The shape is :math:`(y, x)`.
+        - **x_values** (Tensor) - A 1-D Tensor, represents the values corresponding to the indices in `x_indices`.
+          Supported data types are float16 and float32. The shape is :math:`(x,)`.
+        - **x_shape** (Tensor) - A 1-D Tensor, specifies the shape of the sparse tensor.
+          Supported data type is int64. The shape is :math:`(y,)`.
+
+    Returns:
+        - **y_indices** (Tensor) - A 2-D Tensor, represents the indices of the nonzero elements of the sparse tensor.
+          Data type is int64. It's elements are non-negative. The shape is :math:`(y, z)`.
+          `z` represents the number of different indices in `x_indices`.
+        - **y_values** (Tensor) - A 1-D Tensor, represents the values corresponding to the indices in `y_indices`.
+          Data type is the same as `x_values`'s. The shape is :math:`(z,)`.
+        - **y_shape** (Tensor) - A 1-D Tensor, specifies the shape of the sparse tensor.
+          Data type is int64. The shape is :math:`(y,)`.
+
+    Raises:
+        TypeError: If the data type of `x_values` is neither float32 nor float16.
+        TypeError: If any of the data types of `x_indices` and `x_shape` is not int64.
+        ValueError: If any of `x_values` and `x_shape` is not a 1-D tensor.
+        ValueError: If `x_indices` is not a 2-D tensor.
+        ValueError: If sizes of second dimension of `x_indices` and first dimension of `x_values` are not the same.
+        ValueError: If sizes of first dimension of `x_indices` and first dimension of `x_shape` are not the same.
+        ValueError: If any of the values of elements of `x_indices` is negative.
+        ValueError: If any of the values of elements of `x_indices` exceed the limit set by `x_shape`.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import mindspore.ops as ops
+        >>> from mindspore import Tensor
+        >>> x_indices = Tensor([[0, 0, 1], [1, 1, 2]], dtype=ms.int64)
+        >>> x_values = Tensor([1, 5, 4], dtype=ms.float32)
+        >>> x_shape = Tensor([3, 3], dtype=ms.int64)
+        >>> y_indices, y_values, y_shape = ops.coalesce(x_indices, x_values, x_shape)
+        >>> print(y_indices)
+        [[0 1]
+         [1 2]]
+        >>> print(y_values)
+        [6. 4.]
+        >>> print(y_shape)
+        [3 3]
+    """
+    return coalesce_op(x_indices, x_values, x_shape)
+
+
+coo2csr = _csr_ops.COO2CSR()
+
+
+coo_tensor_get_dense_shape = Primitive('COOTensorGetDenseShape')
+
+
+coo_tensor_get_indices = Primitive('COOTensorGetIndices')
+
+
+coo_tensor_get_values = Primitive('COOTensorGetValues')
+
+
+def csr_div(x, y):
+    """
+    Returns x / y where x is CSRTensor and y is Tensor.
+
+    Note:
+        This function returns the results of dense Tensor, represents the non-zero
+        values of the CSRTensor. If user expects a CSRTensor as output, please directly
+        use `/` operator instead. Only support dense tensor broadcast to sparse tensor
+        at the moment.
+
+    Args:
+        x (CSRTensor): Sparse CSR Tensor.
+        y (Tensor): Dense Tensor, its shape must be able to broadcast to x.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    if isinstance(y, (int, float, bool)):
+        y = _make_tensor(y)
+    if is_scalar(y):
+        if y.ndim > x.ndim:
+            raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
+        return (x.values / y).reshape(x.values.shape)
+    return _csr_ops.CSRDiv()(x.indptr, x.indices, x.values, x.shape, y)
+
+
+csr_gather = _csr_ops.CSRGather()
+
+
+def csr_mul(x, y):
+    """
+    Returns x * y where x is CSRTensor and y is Tensor.
+
+    Note:
+        This function returns the results of dense Tensor, represents the non-zero
+        values of the CSRTensor. If user expects a CSRTensor as output, please directly
+        use `*` operator instead. Only support dense tensor broadcast to sparse tensor
+        at the moment.
+
+    Args:
+        x (CSRTensor): Sparse CSR Tensor.
+        y (Tensor): Dense Tensor, its shape must be able to broadcast to x.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    if isinstance(y, (int, float, bool)):
+        y = _make_tensor(y)
+    if is_scalar(y):
+        if y.ndim > x.ndim:
+            raise_value_error("dense tensor cannot broadcast to the sparse tensor.")
+        return (x.values * y).reshape(x.values.shape)
+    return _csr_ops.CSRMul()(x.indptr, x.indices, x.values, x.shape, y)
+
+
+def csr_mv(csr_tensor, dense):
+    """
+    Sparse matrix-vector multiplication.
+
+    Args:
+        csr_tensor (CSRTensor): Sparse CSR Tensor.
+        dense (Tensor): Dense Tensor.
+
+    Returns:
+        Dense Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    return _csr_ops.CSRMV()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, dense)
+
+
+def csr_reduce_sum(csr_tensor, axis):
+    """
+    Reduces a dimension of a CSRTensor by summing all elements in the dimension.
+
+    Args:
+        csr_tensor (CSRTensor): Sparse CSR Tensor.
+        axis (int): Axis to be reduced.
+
+    Returns:
+        Dense Tensor, represents the non-zero values of the result.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+    """
+    return _csr_ops.CSRReduceSum()(csr_tensor.indptr, csr_tensor.indices, csr_tensor.values, csr_tensor.shape, axis)
+
+
+def csr_to_coo(tensor):
+    """
+    Converts a CSRTensor to COOTensor.
+
+    Note:
+        Only 2-D CSRTensor is supported for now.
+
+    Args:
+        tensor: A CSRTensor, must be 2-D.
+
+    Returns:
+        2D COOTensor, the input tensor stored in COO format.
+
+    Raises:
+        TypeError: If input is not a COOTensor.
+        ValueError: If input tensor is not 2-D.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> from mindspore import Tensor, CSRTensor
+        >>> indptr = Tensor([0, 1, 2]).astype("int32")
+        >>> indices = Tensor([0, 1]).astype("int32")
+        >>> values = Tensor([2, 1]).astype("float32")
+        >>> shape = (2, 4)
+        >>> x = CSRTensor(indptr, indices, values, shape)
+        >>> output = ops.csr_to_coo(x)
+        >>> print(output)
+    """
+    if not isinstance(tensor, CSRTensor):
+        raise_type_error("For functional operator csr_to_coo, input argument must be a CSRTensor.")
+    if len(tensor.shape) != 2:
+        raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
+    shape = tensor.shape
+    indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
+                                                            tensor.indptr, tensor.indices, tensor.values)
+    return COOTensor(indices, values, shape)
+
+
+# deprecated, will be removed once `csr_to_coo` supports all backends.
+csr2coo = _csr_ops.CSR2COO()
+
+
+csr_tensor_get_dense_shape = Primitive('CSRTensorGetDenseShape')
+
+
+csr_tensor_get_indices = Primitive('CSRTensorGetIndices')
+
+
+csr_tensor_get_indptr = Primitive('CSRTensorGetIndptr')
+
+
+csr_tensor_get_values = Primitive('CSRTensorGetValues')
 
 
 def dense_to_sparse_coo(tensor):
@@ -110,44 +347,32 @@ def dense_to_sparse_csr(tensor):
     return CSRTensor(indptr, indices, values, tensor.shape)
 
 
-def csr_to_coo(tensor):
-    """
-    Converts a CSRTensor to COOTensor.
+def make_sparse_tensor(indices, values, dense_shape):
+    """Call make_coo_tensor in this function."""
+    print_info("WARNING: 'SparseTensor' is deprecated from version 1.7 and will be removed in a future version. " +
+               "Please use 'COOTensor' instead.")
+    return make_coo_tensor(indices, values, dense_shape)
 
-    Note:
-        Only 2-D CSRTensor is supported for now.
 
-    Args:
-        tensor: A CSRTensor, must be 2-D.
+make_coo_tensor = Primitive('MakeCOOTensor')
 
-    Returns:
-        2D COOTensor, the input tensor stored in COO format.
 
-    Raises:
-        TypeError: If input is not a COOTensor.
-        ValueError: If input tensor is not 2-D.
+make_csr_tensor = Primitive('MakeCSRTensor')
 
-    Supported Platforms:
-        ``GPU``
 
-    Examples:
-        >>> from mindspore import Tensor, CSRTensor
-        >>> indptr = Tensor([0, 1, 2]).astype("int32")
-        >>> indices = Tensor([0, 1]).astype("int32")
-        >>> values = Tensor([2, 1]).astype("float32")
-        >>> shape = (2, 4)
-        >>> x = CSRTensor(indptr, indices, values, shape)
-        >>> output = ops.csr_to_coo(x)
-        >>> print(output)
-    """
-    if not isinstance(tensor, CSRTensor):
-        raise_type_error("For functional operator csr_to_coo, input argument must be a CSRTensor.")
-    if len(tensor.shape) != 2:
-        raise_value_error("Currently only support 2-D CSRTensor when converting to COOTensor.")
-    shape = tensor.shape
-    indices, values, _ = csr_sparse_matrix_to_sparse_tensor(Tensor(shape, dtype=mstype.int32), batch_csr_pointers_empty,
-                                                            tensor.indptr, tensor.indices, tensor.values)
-    return COOTensor(indices, values, shape)
+make_row_tensor = Primitive('MakeRowTensor')
+
+
+row_tensor_get_values = Primitive('RowTensorGetValues')
+
+
+row_tensor_get_indices = Primitive('RowTensorGetIndices')
+
+
+row_tensor_get_dense_shape = Primitive('RowTensorGetDenseShape')
+
+
+row_tensor_add = Primitive('RowTensorAdd')
 
 
 @constexpr
@@ -227,10 +452,33 @@ def sparse_concat(sp_input, concat_dim):
 
 
 __all__ = [
+    'coalesce',
+    'coo2csr',
+    'coo_tensor_get_dense_shape',
+    'coo_tensor_get_indices',
+    'coo_tensor_get_values',
+    'csr_div',
+    'csr_gather',
+    'csr_mul',
+    'csr_mv',
+    'csr_reduce_sum',
+    'csr_to_coo',
+    'csr2coo',
+    'csr_tensor_get_dense_shape',
+    'csr_tensor_get_indices',
+    'csr_tensor_get_indptr',
+    'csr_tensor_get_values',
     'dense_to_sparse_coo',
     'dense_to_sparse_csr',
-    'csr_to_coo',
-    'sparse_concat'
+    'make_sparse_tensor',
+    'make_coo_tensor',
+    'make_csr_tensor',
+    'make_row_tensor',
+    'row_tensor_get_values',
+    'row_tensor_get_indices',
+    'row_tensor_get_dense_shape',
+    'row_tensor_add',
+    'sparse_concat',
 ]
 
 __all__.sort()
