@@ -762,6 +762,8 @@ GVAR_DEF(PrimitivePtr, kPrimVirtualAssignAdd, std::make_shared<Primitive>("_Virt
 GVAR_DEF(PrimitivePtr, kPrimVirtualAccuGrad, std::make_shared<Primitive>("_VirtualAccuGrad"));
 GVAR_DEF(PrimitivePtr, kPrimMirrorMicroStep, std::make_shared<Primitive>("_MirrorMicroStepOperator"));
 GVAR_DEF(PrimitivePtr, kPrimApplyProximalAdagrad, std::make_shared<Primitive>("ApplyProximalAdagrad"));
+GVAR_DEF(PrimitivePtr, kPrimStreamSend, std::make_shared<Primitive>("StreamSend"));
+GVAR_DEF(PrimitivePtr, kPrimStreamRecv, std::make_shared<Primitive>("StreamRecv"));
 
 // Quant ops
 GVAR_DEF(PrimitivePtr, kPrimBatchNormFold, std::make_shared<Primitive>("BatchNormFold"));
