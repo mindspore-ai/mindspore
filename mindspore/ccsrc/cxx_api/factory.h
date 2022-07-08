@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include "include/api/context.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {

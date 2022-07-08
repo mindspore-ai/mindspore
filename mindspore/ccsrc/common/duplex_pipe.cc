@@ -141,7 +141,7 @@ std::string DuplexPipe::ReadWithStdin() {
   return buf;
 }
 
-DuplexPipe &DuplexPipe::operator<<(const std::string &buf) {
+const DuplexPipe &DuplexPipe::operator<<(const std::string &buf) const {
   Write(buf);
   return *this;
 }
@@ -197,7 +197,7 @@ void DuplexPipe::SignalHandler::SigPipeHandler(int sig) {
   }
 }
 
-void DuplexPipe::SignalHandler::SigChildHandler(int) {
+void DuplexPipe::SignalHandler::SigChildHandler(int /* sig */) {
   int status;
   if (child_pid_ != nullptr) {
     (void)waitpid(*child_pid_, &status, WNOHANG | WUNTRACED);

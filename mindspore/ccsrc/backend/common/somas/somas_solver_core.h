@@ -50,7 +50,7 @@ class SomasSolverCore {
 
   Status MemoryAllocationSolver();
   Status Verify();
-  bool Verify(const size_t &);
+  bool Verify(const size_t &upperbound);
   void VerifySolution(const bool verify) { verify_ = verify; }
   void SortTensors();
   void BuildBlocks();
@@ -84,7 +84,7 @@ class SomasSolverCore {
   size_t FindSolutions();
   size_t Search(const std::shared_ptr<FootPrint> &pFootprint);
   void AppendLifelongTensors();
-  void Destroy(std::shared_ptr<FootPrint> &);
+  void Destroy(std::shared_ptr<FootPrint> *pFootprint) const;
 };
 }  // namespace somas
 }  // namespace mindspore

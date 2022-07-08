@@ -21,8 +21,7 @@ namespace mindspore {
 std::shared_ptr<AclEnvGuard> AclEnvGuard::global_acl_env_ = nullptr;
 std::mutex AclEnvGuard::global_acl_env_mutex_;
 
-AclEnvGuard::AclEnvGuard() {
-  errno_ = aclInit(nullptr);
+AclEnvGuard::AclEnvGuard() : errno_(aclInit(nullptr)) {
   if (errno_ != ACL_ERROR_NONE && errno_ != ACL_ERROR_REPEAT_INITIALIZE) {
     MS_LOG(ERROR) << "Execute aclInit Failed";
     return;

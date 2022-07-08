@@ -21,8 +21,12 @@ namespace somas {
 SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_id, size_t real_size,
                          LifeLongType lifelong_value)
     : lifelong_value_(lifelong_value),
+      between_streams_(false),
+      contiguous_(false),
       type_(kUnknown),
       offset_(0),
+      num_constraints_(0),
+      ref_overlap_(false),
       id_(id),
       source_node_id_(source_node_id),
       source_stream_id_(source_stream_id),
@@ -30,13 +34,7 @@ SomasTensor::SomasTensor(size_t id, size_t source_node_id, size_t source_stream_
   const size_t alignment = 512;
   const size_t alignment_complement = 31;
   aligned_size_ = (real_size > 0) ? ((real_size + alignment + alignment_complement) / alignment) * alignment : 0;
-
   solver_tensor_desc_ = std::make_shared<SomasSolverTensorDesc>(id_, aligned_size_, offset_, false);
-
-  ref_overlap_ = false;
-  between_streams_ = false;
-  contiguous_ = false;
-  num_constraints_ = 0;
 }
 
 SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {

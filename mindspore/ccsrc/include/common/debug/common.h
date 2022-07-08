@@ -49,7 +49,8 @@ class COMMON_EXPORT Common {
   static std::string AddId(const std::string &filename, const std::string &suffix);
   static bool SaveStringToFile(const std::string filename, const std::string string_info);
   static bool FileExists(const std::string &filepath);
-  static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value);
+  static bool CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path,
+                                      std::string *const value);
   static std::string GetCompilerCachePath();
   static std::string GetUserDefineCachePath();
   static bool GetDebugTerminate();

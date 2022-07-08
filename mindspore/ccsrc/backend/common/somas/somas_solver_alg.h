@@ -43,24 +43,26 @@ namespace mindspore {
 namespace somas {
 class Interval {
  public:
-  Interval() { m_a_ = m_b_ = 0; }
-  explicit Interval(const SomasSolverTensorDescPtr &t) {
-    m_a_ = t->offset_;
-    m_b_ = m_a_ + t->size_;
-  }
-  Interval(const size_t &a, const size_t &b) {
-    m_a_ = a;
-    m_b_ = b;
+  Interval() : m_a_(0), m_b_(0) {}
+  explicit Interval(const SomasSolverTensorDescPtr &t) : m_a_(t->offset_), m_b_(t->offset_ + t->size_) {}
+  Interval(const size_t &a, const size_t &b) : m_a_(a), m_b_(b) {}
+  Interval(const Interval &in) {
+    if (this == &in) {
+      return;
+    }
+    m_a_ = in.m_a_;
+    m_b_ = in.m_b_;
   }
   ~Interval() = default;
 
   bool intersect(const Interval &i) const { return (in(i.m_a_) || in(i.m_b_)); }
   bool in(const size_t &a) const { return ((a > m_a_) && (a < m_b_)); }
   Interval intersection(const Interval &i) {
-    if (m_a_ < i.m_a_)
+    if (m_a_ < i.m_a_) {
       return Interval(m_a_, i.m_b_);
-    else
+    } else {
       return Interval(i.m_a_, m_b_);
+    }
   }
   void merge(const Interval &i) {
     m_a_ = std::min(m_a_, i.m_a_);
@@ -102,6 +104,17 @@ class BlockTensor {
         offsets_(),
         m_size_(0) {}
   ~BlockTensor() = default;
+  BlockTensor(const BlockTensor &bt) {
+    if (this == &bt) {
+      return;
+    }
+    m_bre_allocate_ = bt.m_bre_allocate_;
+    m_current_sol_ = 0;
+    m_start_tensor_ = bt.m_start_tensor_;
+    offsets_candidates_ = bt.offsets_candidates_;
+    offsets_ = bt.offsets_;
+    m_size_ = bt.m_size_;
+  }
 
   BlockTensor &operator=(const BlockTensor &bt) {
     if (this == &bt) {

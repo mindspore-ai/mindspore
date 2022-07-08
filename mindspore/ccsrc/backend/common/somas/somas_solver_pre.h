@@ -71,7 +71,7 @@ class DynamicBitSet {
   inline size_t GetIndex(size_t index) const { return index / bit_width_; }
 
   inline uint64_t GetBitMask(size_t index) const {
-    return (((uint64_t)0x1) << ((bit_width_ - 1) - (index % bit_width_)));
+    return ((static_cast<uint64_t>(0x1)) << ((bit_width_ - 1) - (index % bit_width_)));
   }
 
   inline void Reset(uint64_t val) {
@@ -84,10 +84,7 @@ class DynamicBitSet {
  public:
   size_t bit_size_;
   std::vector<uint64_t> bit_;
-  explicit DynamicBitSet(size_t count) {
-    bit_size_ = (count + bit_width_ - 1) / bit_width_;
-    Reset(0x0);
-  }
+  explicit DynamicBitSet(size_t count) : bit_size_((count + bit_width_ - 1) / bit_width_) { Reset(0x0); }
 
   ~DynamicBitSet() = default;
 
@@ -104,17 +101,17 @@ class DynamicBitSet {
 
   size_t CountOnesNum() const {
     size_t ret = 0;
-    static char ones_num_in_hex[] = "\0\1\1\2\1\2\2\3\1\2\2\3\2\3\3\4";
+    static unsigned char ones_num_in_hex[] = "\0\1\1\2\1\2\2\3\1\2\2\3\2\3\3\4";
     for (size_t i = 0; i < bit_size_; i++) {
       auto value = bit_[i];
       if (value == 0) {
         continue;
       }
-      char *char_value = reinterpret_cast<char *>(&value);
+      auto *char_value = reinterpret_cast<unsigned char *>(&value);
       for (size_t j = 0; j < bit_width_ / CHAR_BIT; j++) {
-        ret += ones_num_in_hex[char_value[j] & 0xF];
+        ret += ones_num_in_hex[static_cast<int>(char_value[j] & 0xF)];
         char_value[j] >>= 4;
-        ret += ones_num_in_hex[char_value[j] & 0xF];
+        ret += ones_num_in_hex[static_cast<int>(char_value[j] & 0xF)];
       }
     }
     return ret;
@@ -149,12 +146,14 @@ struct SomasSolverTensorDesc {
   SomasSolverTensorDesc() = default;
 
   SomasSolverTensorDesc(size_t index, size_t size, size_t offset, bool blifelong)
-      : index_(index), size_(size), offset_(offset), lifelong_(blifelong) {
-    constraints_ = 0;
-    right_ = nullptr;
-    left_ = nullptr;
-    blocked_ = false;
-  }
+      : index_(index),
+        size_(size),
+        offset_(offset),
+        lifelong_(blifelong),
+        constraints_(0),
+        right_(nullptr),
+        left_(nullptr),
+        blocked_(false) {}
 
   void Update(size_t index, size_t size, size_t offset, bool blifelong, size_t constraints) {
     index_ = index;
@@ -185,7 +184,7 @@ class SomasSolverPre {
 
   size_t GetMaxOffset() const { return max_offset_; }
 
-  Status Solving(const session::KernelGraph *graph, TensorsDescMap *tensors,
+  Status Solving(const session::KernelGraph *graph, TensorsDescMap *ptensors,
                  const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
                  bool bVerifySolution,  // true -> Check continuous and non overlapping constraints solution
                  bool ball = true,      // true -> run full set of heuristics, false -> run single heuristic specified
@@ -193,9 +192,9 @@ class SomasSolverPre {
                  AlgorithmType algorithm = kManyObjects);
 
   void Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-           const std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
+           const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v);
 
-  Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2);
+  Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const;
   Status AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors);
   Status AddContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v, vector<TensorsDescMap> *vecTensorsMap,
                                       const TensorsDescMap *pTensors);
@@ -203,10 +202,10 @@ class SomasSolverPre {
  private:
   size_t max_offset_;
   void SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-                      const vector<vector<size_t>> &continuous_v);
+                      const vector<vector<size_t>> &continuous_v) const;
   void SolverOutputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors) const;
-  vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol);
-  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph);
+  vector<TensorsDescMap> CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) const;
+  void TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints, const session::KernelGraph *graph) const;
 };
 using SomasSolverPrePtr = std::shared_ptr<SomasSolverPre>;
 }  // namespace somas

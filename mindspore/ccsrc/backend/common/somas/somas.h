@@ -157,14 +157,14 @@ class Somas {
   SomasParameterPtr GetSomasParameter(const AnfNodePtr &node, size_t index);
   SomasParameterPtr CreateSomasParameter(const AnfNodePtr &node, size_t index);
   void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
-  void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
+  void InitAtomicCleanInputs(bool enable_fusion_clear, const CNodePtr &kernel);
   void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &target_tensor,
-                                 const std::vector<TensorConflictInfo> &tensor_conflict_info,
+                                 const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
                                  const std::vector<size_t> &destination_node_list,
                                  const vector<DynamicBitSet> &nodes_dependency,
                                  std::vector<DynamicBitSet> *tensor_relation) const;
   void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &target_tensors_list,
-                                   const std::vector<TensorConflictInfo> &tensor_conflict_info,
+                                   const std::vector<TensorConflictInfo> &tensor_conflict_info_list,
                                    const std::vector<size_t> &destination_node_list,
                                    const vector<DynamicBitSet> &nodes_dependency,
                                    std::vector<DynamicBitSet> *tensor_relation) const;
