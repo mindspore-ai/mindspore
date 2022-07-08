@@ -473,7 +473,7 @@ void DataDumper::DumpKernelInput(const CNodePtr &kernel, void *args, NotNull<aic
   auto input_size = common::AnfAlgo::GetInputTensorNum(kernel);
   uint64_t offset = 0;
   for (size_t i = 0; i < input_size; ++i) {
-    auto real_index = AnfAlgo::GetRealInputIndex(kernel, i);
+    auto real_index = AnfAlgo::GetInputIndexInGraph(kernel, i);
     if (common::AnfAlgo::IsNoneInput(kernel, real_index)) {
       continue;
     }
