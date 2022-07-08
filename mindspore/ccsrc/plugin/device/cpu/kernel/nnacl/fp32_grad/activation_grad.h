@@ -41,7 +41,6 @@ int EluGrad(const float *src0, const float *src1, size_t length, float *dst, flo
 int GeluGrad(const float *src0, const float *src1, size_t length, float *dst);
 int SoftplusGrad(const float *src, const float *src1, int length, float *dst);
 int HShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd);
-int SoftShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd);
 #ifdef __cplusplus
 }
 #endif
