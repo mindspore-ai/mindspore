@@ -122,15 +122,15 @@ bool BroadcastToCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
     return true;
   }
 
-  const auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
-  auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+  const void *input_addr = inputs[0]->addr;
+  void *output_addr = outputs[0]->addr;
   int status = static_cast<int>(NNACL_OK);
   if constexpr (std::is_same_v<T, bool>) {
-    status = BROADCAST_TO(bool, input_addr, &shape_info_, output_addr);
+    status = BroadcastToSize8(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, int>) {
-    status = BROADCAST_TO(int, input_addr, &shape_info_, output_addr);
+    status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
   } else if constexpr (std::is_same_v<T, float>) {
-    status = BROADCAST_TO(float, input_addr, &shape_info_, output_addr);
+    status = BroadcastToSize32(input_addr, &shape_info_, output_addr);
   } else {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', not supported data type, the dtype of input must be bool, int, or float.";
