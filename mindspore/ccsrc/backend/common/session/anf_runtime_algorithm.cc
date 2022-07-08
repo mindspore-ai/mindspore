@@ -54,13 +54,13 @@ constexpr size_t kReturnDataIndex = 1;
 constexpr size_t kSwitchTrueBranchIndex = 2;
 
 // ops pair that dynamic input order is differ from the fixed shape ops
-// pair: <real_input->ori_input, ori_input->real_input>
+// pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
   {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
   {kConv2DBackpropInputOpName, {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
   {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
 
-// pair: <real_input->ori_input, ori_input->real_input>
+// pair: <input_index_in_kernel->input_index_in_graph, input_index_in_graph->input_index_in_kernel>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
   {kConv2DBackpropInputOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
   {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},
@@ -836,16 +836,17 @@ bool AnfRuntimeAlgorithm::IsFeatureMapInput(const AnfNodePtr &node, size_t input
   return IsFeatureMapOutput(input_node);
 }
 
-size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_node, const size_t cur_index) {
+size_t AnfRuntimeAlgorithm::GetInputIndexInGraph(const mindspore::AnfNodePtr &anf_node,
+                                                 const size_t input_index_in_kernel) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t ret = cur_index;
+  size_t ret = input_index_in_kernel;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
     if (common::AnfAlgo::IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
       if (find_dynamic != spec_dynamic_node_list.cend()) {
         auto dyn_index_converter = find_dynamic->second;
-        ret = dyn_index_converter.first[cur_index];
+        ret = dyn_index_converter.first[input_index_in_kernel];
         MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
         return ret;
       }
@@ -853,7 +854,7 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
       if (op_info != nullptr) {
         auto real_input_index = op_info->real_input_index();
         if (!real_input_index.first.empty()) {
-          ret = real_input_index.first[cur_index];
+          ret = real_input_index.first[input_index_in_kernel];
           return ret;
         }
       }
@@ -861,14 +862,14 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.cend()) {
       auto index_converter = find->second;
-      ret = index_converter.first[cur_index];
+      ret = index_converter.first[input_index_in_kernel];
       MS_LOG(DEBUG) << "Real input index change to " << ret << ", node name:" << node_name;
     }
     auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
     if (op_info != nullptr) {
       auto real_input_index = op_info->real_input_index();
       if (!real_input_index.first.empty()) {
-        ret = real_input_index.first[cur_index];
+        ret = real_input_index.first[input_index_in_kernel];
         return ret;
       }
     }
@@ -876,16 +877,17 @@ size_t AnfRuntimeAlgorithm::GetRealInputIndex(const mindspore::AnfNodePtr &anf_n
   return ret;
 }
 
-size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &anf_node, const size_t cur_index) {
+size_t AnfRuntimeAlgorithm::GetInputIndexInKernel(const mindspore::AnfNodePtr &anf_node,
+                                                  const size_t input_index_in_graph) {
   MS_EXCEPTION_IF_NULL(anf_node);
-  size_t ret = cur_index;
+  size_t ret = input_index_in_graph;
   auto node_name = common::AnfAlgo::GetCNodeName(anf_node);
   if (AnfAlgo::GetKernelType(anf_node) == TBE_KERNEL) {
     if (common::AnfAlgo::IsDynamicShape(anf_node)) {
       auto find_dynamic = spec_dynamic_node_list.find(node_name);
       if (find_dynamic != spec_dynamic_node_list.cend()) {
         auto dyn_index_converter = find_dynamic->second;
-        ret = dyn_index_converter.second[cur_index];
+        ret = dyn_index_converter.second[input_index_in_graph];
         MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
         return ret;
       }
@@ -893,7 +895,7 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
       if (op_info != nullptr) {
         auto real_input_index = op_info->real_input_index();
         if (!real_input_index.second.empty()) {
-          ret = real_input_index.second[cur_index];
+          ret = real_input_index.second[input_index_in_graph];
           return ret;
         }
       }
@@ -901,14 +903,14 @@ size_t AnfRuntimeAlgorithm::GetOriginalInputIndex(const mindspore::AnfNodePtr &a
     auto find = spec_node_list.find(node_name);
     if (find != spec_node_list.cend()) {
       auto index_converter = find->second;
-      ret = index_converter.second[cur_index];
+      ret = index_converter.second[input_index_in_graph];
       MS_LOG(DEBUG) << "Get original input index " << ret << ", node name:" << node_name;
     }
     auto op_info = kernel::OpLib::FindOp(node_name, kernel::kTBE);
     if (op_info != nullptr) {
       auto real_input_index = op_info->real_input_index();
       if (!real_input_index.second.empty()) {
-        ret = real_input_index.second[cur_index];
+        ret = real_input_index.second[input_index_in_graph];
         return ret;
       }
     }
@@ -1200,7 +1202,7 @@ void AnfRuntimeAlgorithm::CacheAddrForGraph(const KernelGraphPtr &kernel_graph) 
     // And hard code here should be removed after new Transdata programme is implemented in the foreseeable future.
     if (common::AnfAlgo::HasNodeAttr(kAttrNopOp, kernel)) {
       for (size_t idx = 0; idx < common::AnfAlgo::GetOutputTensorNum(kernel); idx += 1) {
-        auto real_input = GetRealInputIndex(kernel, idx);
+        auto real_input = GetInputIndexInGraph(kernel, idx);
         auto device_address = GetPrevNodeMutableOutputAddr(kernel, real_input);
         SetOutputAddr(device_address, idx, kernel.get());
       }
@@ -1232,7 +1234,7 @@ void AnfRuntimeAlgorithm::CacheAddrForKernel(const AnfNodePtr &node, kernel::Ker
     if (common::AnfAlgo::IsNoneInput(node, i)) {
       continue;
     }
-    auto real_input = GetRealInputIndex(node, i);
+    auto real_input = GetInputIndexInGraph(node, i);
     auto device_address = GetPrevNodeOutputAddr(node, real_input, skip_nop_node);
     MS_EXCEPTION_IF_NULL(device_address);
     kernel::AddressPtr input = std::make_shared<kernel::Address>();
