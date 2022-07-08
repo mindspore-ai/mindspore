@@ -132,9 +132,8 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
   size_t inputs_shape_size = inputs_shape.size();
   Strategys stra = strategy->GetInputDim();
   if (strategy_size != inputs_shape_size) {
-    FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
-                                  << ", strategy size: " << strategy_size
-                                  << " is not equal to inputs size: " << inputs_shape_size;
+    MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy size: " << strategy_size
+                  << " is not equal to inputs size: " << inputs_shape_size;
     return FAILED;
   }
 
@@ -144,24 +143,23 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
     size_t strategy_len = sub_strategy.size();
     size_t inputs_len = sub_input_shape.size();
     if (strategy_len != inputs_len) {
-      FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
-                                    << ", strategy len: " << strategy_len
-                                    << " is not equal to inputs len: " << inputs_len << ", index: " << i;
+      MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy len: " << strategy_len
+                    << " is not equal to inputs len: " << inputs_len << ", index: " << i;
       return FAILED;
     }
 
     for (size_t j = 0; j < strategy_len; ++j) {
       int64_t strategy_value = sub_strategy.at(j);
       if (strategy_value < MIN_SLICE_NUM) {
-        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
-                                      << ", the value of strategy must be larger than 0, but get " << strategy_value;
+        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
+                      << ", the value of strategy must be larger than 0, but get " << strategy_value;
         return FAILED;
       }
 
       int64_t shape_value = sub_input_shape.at(j);
       if ((shape_value % strategy_value) != 0) {
-        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape "
-                                      << shape_value << " cannot be divisible by strategy value " << strategy_value;
+        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", shape " << shape_value
+                      << " cannot be divisible by strategy value " << strategy_value;
         return FAILED;
       }
 
@@ -171,8 +169,8 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
                        << ": The device num is not the power of 2, thus do not check the strategy as power of 2";
           return SUCCESS;
         }
-        FILTER_LOG(is_auto_parallel_) << name_ << ": The strategy is " << StrategyToString(stra)
-                                      << ", the value of strategy must be the power of 2, but get " << strategy_value;
+        MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra)
+                      << ", the value of strategy must be the power of 2, but get " << strategy_value;
         return FAILED;
       }
     }

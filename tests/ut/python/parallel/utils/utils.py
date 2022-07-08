@@ -109,6 +109,26 @@ class ParallelValidator:
         inputs = cnode_info_dict[node_name]['inputs']
         return inputs == expect_inputs
 
+    def check_node_inputs_fuzzy_match(self, node_name: str, expect_inputs: [tuple, list], graph_id=0) -> bool:
+        """Verify node inputs fuzzy match"""
+        if not isinstance(expect_inputs, (tuple, list)):
+            raise TypeError("Type of expect_inputs must be list or tuple, but got {}".format(type(expect_inputs)))
+
+        cnode_info_dict = self._get_graph_cnode_info(graph_id)
+        expect_inputs = list(expect_inputs)
+        if node_name not in cnode_info_dict.keys():
+            return False
+        inputs = cnode_info_dict[node_name]['inputs']
+        expect_len = len(expect_inputs)
+        inputs_len = len(inputs)
+        if expect_len != inputs_len:
+            return False
+
+        for i in range(inputs_len):
+            if inputs[i].find(expect_inputs[i]) == -1:
+                return False
+        return True
+
     def check_graph_structure(self, nodes_dict: dict, graph_id=0) -> bool:
         if not isinstance(nodes_dict, dict):
             raise TypeError("Type of nodes_dict must be dict, but got {}".format(type(nodes_dict)))

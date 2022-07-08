@@ -155,7 +155,7 @@ Status GatherInfo::GetAttrs() {
   }
 
   if (manual_split_ && (axis_ != 0)) {
-    MS_LOG(ERROR) << name_ << ": The axis or offset must be 0 if manual split, bug got " << axis_;
+    MS_LOG(ERROR) << name_ << ": The axis must be 0 if manual split, bug got " << axis_;
     return FAILED;
   }
 
@@ -170,6 +170,11 @@ Status GatherInfo::GetAttrs() {
   return SUCCESS;
 }
 
+// parameter's dim >= 1, indices' dim == 1 or 2, axis == 0
+// parameter's strategy: [a, b, ..., c], indices' strategy: [a] or [1, a]
+// output's strategy: [a, b, ..., c] or [1, a, b, ..., c]
+// dev_matrix: [a, b, ..., c]
+// can not support repeated calculation
 Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
   if (strategy.size() != 2) {
     MS_LOG(ERROR) << name_ << ": The size of strategy must be 2, but got " << strategy.size();
@@ -177,36 +182,43 @@ Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
   }
   Dimensions param_strategy = strategy[0];
   Dimensions indices_strategy = strategy[1];
-  if (param_strategy.size() != 2 || indices_strategy.size() != 2) {
-    MS_LOG(ERROR) << name_ << ": The size of param strategy or indices strategy must be 2";
+
+  if (indices_strategy.size() > 2) {
+    MS_LOG(ERROR) << name_ << ": The size of indices strategy must be 1 or 2, but got " << indices_strategy.size();
     return FAILED;
   }
 
-  if (indices_strategy[0] != 1) {
-    MS_LOG(ERROR) << name_ << ": The indices_strategy[0] must be 1, bug got " << indices_strategy[0];
+  auto product_i = std::accumulate(indices_strategy.begin(), indices_strategy.end(), 1, std::multiplies<int64_t>());
+  size_t indices_split_dim = indices_strategy.size() - 1;  // only the last dim of indices can be split
+  if (product_i != indices_strategy[indices_split_dim]) {
+    MS_LOG(ERROR) << name_ << ": Only the last dim of indices can be split, but got " << indices_strategy;
     return FAILED;
   }
 
-  if (param_strategy[0] != indices_strategy[1]) {
-    MS_LOG(ERROR) << name_ << ": The param_strategy[0] must be equal to indices_strategy[1]";
+  if (param_strategy[0] != indices_strategy[indices_split_dim]) {
+    MS_LOG(ERROR) << name_ << ": The param_strategy[0] " << param_strategy[0]
+                  << " must be equal to indices_strategy[-1] " << indices_strategy[indices_split_dim];
     return FAILED;
   }
 
-  if (indices_strategy[1] != SizeToLong(param_split_shapes_.size())) {
-    MS_LOG(ERROR) << name_ << ": The indices_strategy[1] must be equal to manual split size";
+  if (indices_strategy[indices_split_dim] != SizeToLong(param_split_shapes_.size())) {
+    MS_LOG(ERROR) << name_ << ": The indices_strategy[-1] " << indices_strategy[indices_split_dim]
+                  << "must be equal to manual split size " << param_split_shapes_.size();
     return FAILED;
   }
 
-  int64_t min_param_slice_row = inputs_shape_[1][1] / indices_strategy[1];
+  int64_t min_param_slice_row = inputs_shape_[1][indices_split_dim] / indices_strategy[indices_split_dim];
   bool invalid = std::any_of(param_split_shapes_.begin(), param_split_shapes_.end(),
                              [&min_param_slice_row](int64_t v) { return v < min_param_slice_row; });
   if (invalid) {
-    MS_LOG(ERROR) << name_ << ": The split value must be larger than or equal to indices slice's column num";
+    MS_LOG(ERROR) << name_ << ": The split value " << param_split_shapes_
+                  << " must be larger than or equal to indices field slice size " << min_param_slice_row;
     return FAILED;
   }
 
-  if (inputs_shape_[0][0] < inputs_shape_[1][1]) {
-    MS_LOG(ERROR) << name_ << ": The param's row smaller than indices' column";
+  if (inputs_shape_[0][0] < inputs_shape_[1][indices_split_dim]) {
+    MS_LOG(ERROR) << name_ << ": The param's row size " << inputs_shape_[0][0]
+                  << " is smaller than indices' field size " << inputs_shape_[1][indices_split_dim];
     return FAILED;
   }
 
@@ -220,7 +232,8 @@ Status GatherInfo::CheckManualSplit(const Strategys &strategy) {
   int64_t split_shape_sum = std::accumulate(param_split_shapes_.begin(), param_split_shapes_.end(), 0,
                                             [](int64_t s, int64_t shape) { return s + shape; });
   if (split_shape_sum != inputs_shape_[0][0]) {
-    MS_LOG(ERROR) << name_ << ": Sum of split shapes must be equal to param_shape[0]";
+    MS_LOG(ERROR) << name_ << ": Sum of split shapes " << split_shape_sum << " must be equal to param_shape[0] "
+                  << inputs_shape_[0][0];
     return FAILED;
   }
   return SUCCESS;
@@ -232,20 +245,22 @@ Status GatherInfo::CheckSplitAxisStrategy(const StrategyPtr &strategy) {
   // param_strategy(axis) != 1, index can't be split
   auto product_i = std::accumulate(index_strategy.begin(), index_strategy.end(), 1, std::multiplies<int64_t>());
   if ((param_strategy.at(LongToSize(axis_)) != 1) && (product_i != 1)) {
-    MS_LOG(DEBUG) << name_ << ": param is split at dim (axis)" << axis_ << " ,index can't be split.";
+    FILTER_LOG(is_auto_parallel_) << name_ << ": param is split at dim (axis)" << axis_ << " ,index can't be split.";
     return FAILED;
   }
 
   // param_strategy(axis) != 1, and axis != 0, don't support repeated calc
   auto product_p = std::accumulate(param_strategy.begin(), param_strategy.end(), 1, std::multiplies<int64_t>());
   if ((product_p != stage_device_size_) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ != 0)) {
-    MS_LOG(DEBUG) << name_ << ": Invalid strategy. Don't support repeated calc.";
+    FILTER_LOG(is_auto_parallel_) << name_ << ": Invalid strategy. Don't support repeated calc.";
     return FAILED;
   }
 
   if ((product_p != stage_device_size_) && (param_strategy.at(LongToSize(axis_)) != 1) && (axis_ == 0)) {
     if ((param_strategy.size() == 2) && (param_strategy[1] != 1)) {
-      MS_LOG(DEBUG) << name_ << ": axis(0) is split, and param_strategy[1] != 1, don't support repeated calc.";
+      FILTER_LOG(is_auto_parallel_) << name_
+                                    << ": axis(0) is split, and param_strategy[1] != 1, don't support"
+                                       " repeated calc.";
       return FAILED;
     }
     MS_LOG(INFO) << name_ << ": split axis(0) and repeat calculation";
@@ -326,6 +341,14 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
+  if (manual_split_) {
+    if (CheckManualSplit(strategy->GetInputDim()) != SUCCESS) {
+      return FAILED;
+    }
+    // when using manual_split, no need to check belowings.
+    return SUCCESS;
+  }
+
   // only support 1-dim and 2-dim param
   if (inputs_shape_.at(0).size() != 1 && inputs_shape_.at(0).size() != 2) {
     MS_LOG(ERROR) << name_ << ": Don't support param dim " << inputs_shape_.at(0).size();
@@ -334,7 +357,7 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
 
   // don't support scalar index
   if (inputs_shape_.at(1).size() == 0) {
-    MS_LOG(DEBUG) << name_ << ": Don't support scalar index.";
+    MS_LOG(ERROR) << name_ << ": Don't support scalar index.";
     return FAILED;
   }
 
@@ -349,17 +372,9 @@ Status GatherInfo::CheckStrategy(const StrategyPtr &strategy) {
     axis_split_forward_allreduce_ = false;
   }
 
-  if (manual_split_) {
-    if (CheckManualSplit(strategy->GetInputDim()) != SUCCESS) {
-      return FAILED;
-    }
-    // when using manual_split, no need to check belowings.
-    return SUCCESS;
-  }
-
   // axis != 0, param_shape(0)%(param_strategy(0)*param_strategy(axis)) must be 0
   if (axis_ != 0 && param_shape.at(0) % (param_strategy.at(0) * param_strategy.at(LongToSize(axis_))) != 0) {
-    MS_LOG(DEBUG) << name_ << ": param_shape(0) can't be divided by (param_strategy(0)*param_strategy(axis)).";
+    MS_LOG(ERROR) << name_ << ": param_shape(0) can't be divided by (param_strategy(0)*param_strategy(axis)).";
     return FAILED;
   }
 
@@ -436,11 +451,6 @@ Status GatherInfo::CheckOutputStrategy(const StrategyPtr &out_strategy) {
 }
 
 Status GatherInfo::InferMirrorOps() {
-  // There is no mirror operators for manual split
-  if (manual_split_) {
-    return SUCCESS;
-  }
-
   mirror_ops_.clear();
   Shape input_a_tensor_map = inputs_tensor_map_.at(0);
   std::vector<Group> input_a_group;
@@ -608,14 +618,28 @@ void GatherInfo::InferOutputsTensorMap() {
   (void)outputs_tensor_map_.emplace_back(std::move(tensor_map_out));
 }
 
+void GatherInfo::InferTensorMapForManualSplit() {
+  Shape param_map;
+  size_t size = inputs_shape_[0].size();
+  for (size_t i = 0; i < size; ++i) {
+    param_map.push_back((int64_t)(size - i - 1));
+  }
+
+  size_t indices_size = inputs_shape_[1].size();
+  Shape indices_map(indices_size, MAP_NONE);
+  indices_map[indices_size - 1] = param_map[0];
+
+  Shape out_map = param_map;
+  (void)out_map.insert(out_map.begin(), indices_size - 1, MAP_NONE);
+
+  (void)inputs_tensor_map_.emplace_back(std::move(param_map));
+  (void)inputs_tensor_map_.emplace_back(std::move(indices_map));
+  (void)outputs_tensor_map_.emplace_back(std::move(out_map));
+}
+
 Status GatherInfo::InferTensorMap() {
   if (manual_split_) {
-    Shape param_map = {1, 0};
-    Shape indices_map = {MAP_NONE, 1};
-    Shape out_map = {MAP_NONE, 1, 0};
-    (void)inputs_tensor_map_.emplace_back(std::move(param_map));
-    (void)inputs_tensor_map_.emplace_back(std::move(indices_map));
-    (void)outputs_tensor_map_.emplace_back(std::move(out_map));
+    InferTensorMapForManualSplit();
     return SUCCESS;
   }
 
@@ -647,7 +671,16 @@ Status GatherInfo::InferTensorInfo() {
   // infer tensor layout
   TensorLayout input_tensor_layout, input_index_layout, output_tensor_layout;
   if (manual_split_) {
-    input_shape[0] = param_split_shapes_[LongToSize(rank / dev_matrix_shape_[1])];
+    int64_t bias_size = 1;
+    if (dev_matrix_shape_.size() > 1) {
+      bias_size =
+        std::accumulate(dev_matrix_shape_.begin() + 1, dev_matrix_shape_.end(), 1, std::multiplies<int64_t>());
+    }
+    if (bias_size == 0) {
+      MS_LOG(ERROR) << name_ << ": Invalid device matrix " << dev_matrix_shape_;
+      return FAILED;
+    }
+    input_shape[0] = param_split_shapes_[LongToSize(rank / bias_size)];
     input_shape[0] = input_shape[0] * dev_matrix_shape_[0];
   }
   if ((input_tensor_layout.InitFromVector(dev_matrix_shape_, inputs_tensor_map_.at(0), input_shape) != SUCCESS) ||
@@ -744,11 +777,12 @@ Status GatherInfo::InferOffset() {
 
   MS_EXCEPTION_IF_NULL(strategy_);
   auto param_strategy = strategy_->GetInputDim()[0];
-  if (param_strategy.size() != 2) {
-    MS_LOG(ERROR) << "The size of param strategy must be 2";
-    return FAILED;
+
+  int64_t bias_size = 1;
+  if (param_strategy.size() > 1) {
+    bias_size = std::accumulate(param_strategy.begin() + 1, param_strategy.end(), 1, std::multiplies<int64_t>());
   }
-  size_t index = rank / LongToSize(param_strategy[1]);
+  size_t index = rank / LongToSize(bias_size);
   if (index < index_offsets_.size()) {
     index_offset_ = index_offsets_[index];
     MS_LOG(INFO) << name_ << ": Device rank " << rank << ", Index Offset: " << index_offset_;
@@ -834,7 +868,7 @@ Status GatherInfo::InferForwardCommunication() {
 Status GatherInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   GenerateGraph gen_g = GenerateGraph(attrs_);
   if (gen_g.Init(cnode) != SUCCESS) {
-    MS_LOG(ERROR) << "GenerateGraph Init failed";
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
     return FAILED;
   }
   if (manual_split_ && target_ != CPU) {
@@ -952,14 +986,14 @@ Status GatherInfo::Init(const StrategyPtr &in_strategy, const StrategyPtr &out_s
 
 Status GatherInfo::InitForCostModel(const StrategyPtr &in_strategy, const StrategyPtr &out_strategy) {
   if (InitForCostModelWithAutoRepeatCalc(in_strategy, out_strategy) != SUCCESS) {
-    MS_LOG(DEBUG) << name_ << ": Init for cost model failed.";
+    FILTER_LOG(is_auto_parallel_) << name_ << ": Init for cost model failed.";
     return FAILED;
   }
   auto param_strategy = strategy_->GetInputDim().at(0);
   // cost model set axis and strategy
-  auto gatherv2_2cost = std::dynamic_pointer_cast<GatherV2PCost>(operator_cost());
-  gatherv2_2cost->set_axis(axis_);
-  gatherv2_2cost->set_strategy(param_strategy);
+  auto gather_cost = std::dynamic_pointer_cast<GatherCost>(operator_cost());
+  gather_cost->set_axis(axis_);
+  gather_cost->set_strategy(param_strategy);
   MS_LOG(INFO) << name_ << ": Init for cost model success.";
   return SUCCESS;
 }
