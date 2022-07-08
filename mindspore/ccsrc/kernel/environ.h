@@ -66,7 +66,7 @@ class Environ {
 
   void Clear() {
     // Foreach values to free the value addr.
-    for (auto &value : values_) {
+    for (const auto &value : values_) {
       MS_EXCEPTION_IF_NULL(value.second);
       const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {value.second->device_name_, value.second->device_id_});

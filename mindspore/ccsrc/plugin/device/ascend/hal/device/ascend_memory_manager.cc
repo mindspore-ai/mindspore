@@ -40,13 +40,13 @@ void AscendMemoryManager::Finalize() {
   (void)AscendMemAdapter::GetInstance().DeInitialize();
 }
 
-void AscendMemoryManager::ResetDynamicMemory() { (void)AscendMemAdapter::GetInstance().ResetDynamicMemory(); }
+void AscendMemoryManager::ResetDynamicMemory() { AscendMemAdapter::GetInstance().ResetDynamicMemory(); }
 
 void AscendMemoryManager::ClearGlobalIdleMem() { AscendMemoryPool::GetInstance().ResetIdleMemBuf(); }
 
-uint64_t AscendMemoryManager::GetMsMaxMemSize() { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
+uint64_t AscendMemoryManager::GetMsMaxMemSize() const { return AscendMemAdapter::GetInstance().MaxHbmSizeForMs(); }
 
-uint64_t AscendMemoryManager::GetMsUsedHbmSize() { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
+uint64_t AscendMemoryManager::GetMsUsedHbmSize() const { return AscendMemAdapter::GetInstance().GetMsUsedHbmSize(); }
 
 void *AscendMemoryManager::MallocMemFromMemPool(size_t size, bool from_persistent_mem) {
   auto align_size = GetCommonAlignSize(size);
@@ -129,7 +129,7 @@ uint8_t *AscendMemoryManager::MallocCommunicationMemFromMemPool(size_t size) {
                     << ", memory statistics:" << AscendMemAdapter::GetInstance().DevMemStatistics();
 }
 
-bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
+bool AscendMemoryManager::MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t /* total_size */,
                                                          std::vector<size_t> size_list) {
   auto device_ptr_list = MallocContinuousMemFromMemPool(size_list);
   if (device_ptr_list.empty()) {

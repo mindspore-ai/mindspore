@@ -200,7 +200,7 @@ class ArithmeticCpuTypeFunc : public DeprecatedCpuKernelFunc {
         {prim::kPrimAddV2->name(), &ArithmeticCpuTypeFunc<T>::AddV2}};
     }
     if (arithmeticMathFuncMap.find(kernel_name_) == arithmeticMathFuncMap.end()) {
-      MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Unorderedmap2Str(arithmeticMathFuncMap)
+      MS_LOG(EXCEPTION) << "For 'Arithmetic', only supports operators in " << Map2Str(arithmeticMathFuncMap)
                         << ", but got " << kernel_name_ << "for " << dtype_desc << ", but got " << kernel_name_ << ".";
     }
     compute_func_ = arithmeticMathFuncMap.at(kernel_name_);

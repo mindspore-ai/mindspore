@@ -93,8 +93,8 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
       {prim::kPrimLess->name(), &ArithLogicCpuTypeFunc<T>::Less},
       {prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
-      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
-                        << Unorderedmap2Str(arithmetic_logic_func_map) << ", but got " << kernel_name_;
+      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
+                        << ", but got " << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
   }
@@ -176,8 +176,8 @@ class ArithComplexLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
     static const std::unordered_map<std::string, ComplexTypeComputeFunc> arithmetic_logic_func_map{
       {prim::kPrimEqual->name(), &ArithComplexLogicCpuTypeFunc<T>::Equal}};
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
-      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in "
-                        << Unorderedmap2Str(arithmetic_logic_func_map) << ", but got " << kernel_name_;
+      MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
+                        << ", but got " << kernel_name_;
     }
     compute_func_ = arithmetic_logic_func_map.at(kernel_name_);
   }

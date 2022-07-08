@@ -41,39 +41,37 @@
 #include "debug/tensor_load.h"
 #endif
 
-namespace {
-const std::unordered_map<mindspore::TypeId, std::string> type_id_name_map = {
-  {mindspore::kNumberTypeBool, "bool"},       {mindspore::kNumberTypeInt8, "int8"},
-  {mindspore::kNumberTypeInt16, "int16"},     {mindspore::kNumberTypeInt32, "int32"},
-  {mindspore::kNumberTypeInt64, "int64"},     {mindspore::kNumberTypeFloat16, "float16"},
-  {mindspore::kNumberTypeFloat32, "float32"}, {mindspore::kNumberTypeUInt8, "uint8"},
-  {mindspore::kNumberTypeUInt16, "uint16"},   {mindspore::kNumberTypeUInt32, "uint32"},
-  {mindspore::kNumberTypeUInt64, "uint64"}};
-const std::set<std::pair<std::string, std::string>> use_trans_data = {
-  std::make_pair("float16", mindspore::kOpFormat_NC1HWC0), std::make_pair("float32", mindspore::kOpFormat_NC1HWC0),
-  std::make_pair("bool", mindspore::kOpFormat_NC1HWC0),    std::make_pair("float32", mindspore::kOpFormat_FRAC_Z),
-  std::make_pair("float16", mindspore::kOpFormat_FRAC_Z),  std::make_pair("float16", mindspore::kOpFormat_FRAC_NZ),
-  std::make_pair("float32", mindspore::kOpFormat_FRAC_NZ), std::make_pair("int32", mindspore::kOpFormat_FRAC_NZ),
-  std::make_pair("float16", mindspore::kOpFormat_NHWC),    std::make_pair("float32", mindspore::kOpFormat_NHWC),
-  std::make_pair("int8", mindspore::kOpFormat_NHWC),       std::make_pair("int16", mindspore::kOpFormat_NHWC),
-  std::make_pair("int32", mindspore::kOpFormat_NHWC),      std::make_pair("int64", mindspore::kOpFormat_NHWC),
-  std::make_pair("uint8", mindspore::kOpFormat_NHWC),      std::make_pair("uint16", mindspore::kOpFormat_NHWC),
-  std::make_pair("uint32", mindspore::kOpFormat_NHWC),     std::make_pair("uint64", mindspore::kOpFormat_NHWC),
-  std::make_pair("float16", mindspore::kOpFormat_HWCN),    std::make_pair("float32", mindspore::kOpFormat_HWCN),
-  std::make_pair("int8", mindspore::kOpFormat_HWCN),       std::make_pair("int16", mindspore::kOpFormat_HWCN),
-  std::make_pair("int32", mindspore::kOpFormat_HWCN),      std::make_pair("int64", mindspore::kOpFormat_HWCN),
-  std::make_pair("uint8", mindspore::kOpFormat_HWCN),      std::make_pair("uint16", mindspore::kOpFormat_HWCN),
-  std::make_pair("uint32", mindspore::kOpFormat_HWCN),     std::make_pair("uint64", mindspore::kOpFormat_HWCN)};
-}  // namespace
-
 namespace mindspore {
 namespace device {
 namespace ascend {
 const int FLOAT_LEN = sizeof(float);
 const int FLOAT16_LEN = 2;
-const std::set<std::string> kOpNeedTransFormat = {
-  kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
-  kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
+
+bool IsUseTransDataTypeFormat(const std::pair<std::string, std::string> &type_format) {
+  static const std::set<std::pair<std::string, std::string>> use_trans_data = {
+    std::make_pair("float16", mindspore::kOpFormat_NC1HWC0), std::make_pair("float32", mindspore::kOpFormat_NC1HWC0),
+    std::make_pair("bool", mindspore::kOpFormat_NC1HWC0),    std::make_pair("float32", mindspore::kOpFormat_FRAC_Z),
+    std::make_pair("float16", mindspore::kOpFormat_FRAC_Z),  std::make_pair("float16", mindspore::kOpFormat_FRAC_NZ),
+    std::make_pair("float32", mindspore::kOpFormat_FRAC_NZ), std::make_pair("int32", mindspore::kOpFormat_FRAC_NZ),
+    std::make_pair("float16", mindspore::kOpFormat_NHWC),    std::make_pair("float32", mindspore::kOpFormat_NHWC),
+    std::make_pair("int8", mindspore::kOpFormat_NHWC),       std::make_pair("int16", mindspore::kOpFormat_NHWC),
+    std::make_pair("int32", mindspore::kOpFormat_NHWC),      std::make_pair("int64", mindspore::kOpFormat_NHWC),
+    std::make_pair("uint8", mindspore::kOpFormat_NHWC),      std::make_pair("uint16", mindspore::kOpFormat_NHWC),
+    std::make_pair("uint32", mindspore::kOpFormat_NHWC),     std::make_pair("uint64", mindspore::kOpFormat_NHWC),
+    std::make_pair("float16", mindspore::kOpFormat_HWCN),    std::make_pair("float32", mindspore::kOpFormat_HWCN),
+    std::make_pair("int8", mindspore::kOpFormat_HWCN),       std::make_pair("int16", mindspore::kOpFormat_HWCN),
+    std::make_pair("int32", mindspore::kOpFormat_HWCN),      std::make_pair("int64", mindspore::kOpFormat_HWCN),
+    std::make_pair("uint8", mindspore::kOpFormat_HWCN),      std::make_pair("uint16", mindspore::kOpFormat_HWCN),
+    std::make_pair("uint32", mindspore::kOpFormat_HWCN),     std::make_pair("uint64", mindspore::kOpFormat_HWCN)};
+  return use_trans_data.find(type_format) != use_trans_data.end();
+}
+
+bool IsOpNeedTransFormat(const std::string &format) {
+  static const std::set<std::string> op_need_trans_format = {
+    kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
+    kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
+  return op_need_trans_format.find(format) != op_need_trans_format.end();
+}
 
 void SyncMemory(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind) {
   if (size == 0) {
@@ -184,9 +182,11 @@ void AscendDeviceAddress::BindDevice() const {
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name_, device_id_});
     auto ascend_device_context = dynamic_cast<AscendDeviceContext *>(device_context);
     MS_EXCEPTION_IF_NULL(ascend_device_context);
-    ascend_device_context->device_res_manager_->BindDeviceToCurrentThread();
+    if (!ascend_device_context->device_res_manager_->BindDeviceToCurrentThread()) {
+      MS_LOG(WARNING) << "Bind device to current thread failed.";
+    }
   } else {
-    MS_LOG(WARNING) << "device name is null.";
+    MS_LOG(WARNING) << "Device name is null.";
   }
 }
 
@@ -231,7 +231,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
-    host_shape.emplace_back(1);
+    (void)host_shape.emplace_back(1);
   }
   if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW) {
     if (type_id_ == type) {
@@ -251,8 +251,7 @@ bool AscendDeviceAddress::SyncDeviceToHost(const ShapeVector &shape, size_t size
       }
     }
   } else {
-    auto iter = kOpNeedTransFormat.find(format_);
-    if (iter != kOpNeedTransFormat.end()) {
+    if (IsOpNeedTransFormat(format_)) {
       sync_ok = SyncDeviceToHostAndConvertFormat(shape, size, type, host_ptr);
     } else {
       MS_LOG(INFO) << "Can not find format transfer function for :" << format_;
@@ -317,7 +316,6 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormatBasedOnTransData(const
   if (output_addr_vec.size() != 1) {
     launch_transdata_->FreeLaunchDeviceMem();
     MS_LOG(EXCEPTION) << "Launch transdata outputs should have only one output";
-    return false;
   }
   if (type_id_ == type) {
     SyncMemory(host_ptr, output_addr_vec[0], size, ACL_MEMCPY_DEVICE_TO_HOST);
@@ -341,10 +339,17 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
                                                            mindspore::TypeId type, void *host_ptr) const {
   MS_LOG(INFO) << "SyncDeviceToHostAndConvertFormat, Device(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
+  static const std::unordered_map<mindspore::TypeId, std::string> type_id_name_map = {
+    {mindspore::kNumberTypeBool, "bool"},       {mindspore::kNumberTypeInt8, "int8"},
+    {mindspore::kNumberTypeInt16, "int16"},     {mindspore::kNumberTypeInt32, "int32"},
+    {mindspore::kNumberTypeInt64, "int64"},     {mindspore::kNumberTypeFloat16, "float16"},
+    {mindspore::kNumberTypeFloat32, "float32"}, {mindspore::kNumberTypeUInt8, "uint8"},
+    {mindspore::kNumberTypeUInt16, "uint16"},   {mindspore::kNumberTypeUInt32, "uint32"},
+    {mindspore::kNumberTypeUInt64, "uint64"}};
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
-    host_shape.emplace_back(1);
+    (void)host_shape.emplace_back(1);
   }
   auto device_shape = GetDeviceShape(&host_shape);
   auto ms_context = MsContext::GetInstance();
@@ -352,7 +357,7 @@ bool AscendDeviceAddress::SyncDeviceToHostAndConvertFormat(const ShapeVector &sh
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
       type_id_name_map.find(type_id_) != type_id_name_map.end()) {
     std::pair<std::string, std::string> type_format = std::make_pair(type_id_name_map.at(type_id_), format_);
-    if (use_trans_data.find(type_format) != use_trans_data.end()) {
+    if (IsUseTransDataTypeFormat(type_format)) {
       sync_ok = SyncDeviceToHostAndConvertFormatBasedOnTransData(host_shape, size, type, host_ptr);
       return sync_ok;
     }
@@ -400,7 +405,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
   bool sync_ok = false;
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
-    host_shape.emplace_back(1);
+    (void)host_shape.emplace_back(1);
   }
   if (format_ == kOpFormat_NCHW || format_ == kOpFormat_DEFAULT || format_ == kOpFormat_NCDHW || format_ == format) {
     if (type_id_ == type) {
@@ -420,8 +425,7 @@ bool AscendDeviceAddress::SyncHostToDevice(const ShapeVector &shape, size_t size
       SyncMemory(ptr_, host_tmp.data(), size_, ACL_MEMCPY_HOST_TO_DEVICE);
     }
   } else {
-    auto iter = kOpNeedTransFormat.find(format_);
-    if (iter != kOpNeedTransFormat.end()) {
+    if (IsOpNeedTransFormat(format_)) {
       sync_ok = ConvertFormatAndSyncHostToDevice(shape, size, type, host_ptr);
     } else {
       MS_LOG(INFO) << "Can not find format transfer function for :" << format_;
@@ -468,7 +472,7 @@ bool AscendDeviceAddress::SyncDeviceToDeviceWithDiffFormatType(const DeviceSync 
     MS_LOG(WARNING) << "Host shape of source device address is empty, emplace back shape [1],  device address size: "
                     << src_device_address->GetSize()
                     << ", device address type: " << TypeIdLabel(src_device_address->type_id());
-    host_shape.emplace_back(1);
+    (void)host_shape.emplace_back(1);
   }
   auto host_tensor = std::make_shared<tensor::Tensor>(src_device_address->type_id(), host_shape);
   auto host_tensor_size = LongToSize(host_tensor->data().nbytes());
@@ -501,8 +505,8 @@ bool AscendDeviceAddress::SyncDeviceToDevice(const DeviceSync *src_device_addr) 
   }
 }
 
-bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector &shape, size_t size, TypeId type, const void *src_ptr,
-                                              const std::string &format) const {
+bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector & /* shape */, size_t size, TypeId type,
+                                              const void *src_ptr, const std::string &format) const {
   MS_LOG(INFO) << "AsyncDeviceToDevice, dst(format:" << format_ << ", type_id:" << TypeIdLabel(type_id_)
                << ", size:" << size_ << "), src(format:" << format << ", type_id:" << TypeIdLabel(type)
                << ", size:" << size << ")";
@@ -524,8 +528,8 @@ bool AscendDeviceAddress::AsyncDeviceToDevice(const ShapeVector &shape, size_t s
   return sync_ok;
 }
 
-bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, TypeId, const void *host_ptr,
-                                            void *stream) const {
+bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
+                                            const void *host_ptr, void *stream) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
   MS_ERROR_IF_NULL(stream);
@@ -538,8 +542,8 @@ bool AscendDeviceAddress::AsyncHostToDevice(const ShapeVector &, size_t size, Ty
   return true;
 }
 
-bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector &, size_t size, TypeId, void *host_ptr,
-                                            void *stream) const {
+bool AscendDeviceAddress::AsyncDeviceToHost(const ShapeVector & /* shape */, size_t size, TypeId /* type */,
+                                            void *host_ptr, void *stream) const {
   MS_ERROR_IF_NULL(host_ptr);
   MS_ERROR_IF_NULL(ptr_);
   MS_ERROR_IF_NULL(stream);
@@ -559,7 +563,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
                << ", size:" << size_ << "), Host(type_id:" << TypeIdLabel(type) << ", size:" << size << ")";
   ShapeVector host_shape = shape;
   if (host_shape.empty()) {
-    host_shape.emplace_back(1);
+    (void)host_shape.emplace_back(1);
   }
   auto node_index = GetNodeIndex();
   std::vector<int64_t> device_shape;
@@ -620,6 +624,8 @@ AscendDeviceAddress::~AscendDeviceAddress() {
     ClearDeviceMemory();
   } catch (const std::exception &e) {
     MS_LOG(ERROR) << "AscendDeviceAddress destructor failed: " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AscendDeviceAddress destructor failed.";
   }
 }
 
@@ -647,7 +653,7 @@ bool AscendDeviceAddress::DumpMemToFile(const std::string &filepath, const std::
     }
     mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
     MS_EXCEPTION_IF_NULL(out_tensor);
-    size_t host_size = out_tensor->data().nbytes();
+    size_t host_size = LongToSize(out_tensor->data().nbytes());
     ret = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
     if (!ret) {
       MS_LOG(ERROR) << "Copy device mem to host failed";
@@ -703,7 +709,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   }
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(host_type, host_shape);
   MS_EXCEPTION_IF_NULL(out_tensor);
-  size_t host_size = out_tensor->data().nbytes();
+  size_t host_size = LongToSize(out_tensor->data().nbytes());
   bool ret_sync = false;
   if (trans_flag) {
     ret_sync = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());
@@ -718,7 +724,7 @@ bool AscendDeviceAddress::LoadMemToHost(const std::string &tensor_name, int exec
   tensor_data->SetTensor(out_tensor);
   tensor_data->SetDataPtr(static_cast<char *>(out_tensor->data_c()));
   tensor_data->SetByteSize(LongToSize(out_tensor->data().nbytes()));
-  tensor_data->SetType((unsigned int)host_type);
+  tensor_data->SetType(static_cast<unsigned int>(host_type));
   tensor_data->SetShape(out_tensor->shape());
   tensor_data->SetRootGraphId(root_graph_id);
   std::string tensor_format = trans_flag ? host_fmt : format_;

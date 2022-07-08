@@ -47,17 +47,10 @@ constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
 constexpr unsigned int AUTODIFF_COMPILE_OVERTIME = 600;
 
-const std::vector<std::string> support_devices = {"aicore", "aicpu", "cuda"};
-
 // an enum to indicate a vector or matrix alignment direction.
 // real_data: [1,2,3] left_align: [1,2,3,0] right_align:[0,1,2,3]
 namespace MatrixDiag {
 enum Alignment { RIGHT = 0, LEFT = 1 };
-static const mindspore::HashMap<std::string, std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment>> AlignmentMap{
-  {"RIGHT_LEFT", {MatrixDiag::RIGHT, MatrixDiag::LEFT}},
-  {"LEFT_RIGHT", {MatrixDiag::LEFT, MatrixDiag::RIGHT}},
-  {"RIGHT_RIGHT", {MatrixDiag::RIGHT, MatrixDiag::RIGHT}},
-  {"LEFT_LEFT", {MatrixDiag::LEFT, MatrixDiag::LEFT}}};
 }  // namespace MatrixDiag
 
 struct KernelMetaInfo {
@@ -142,8 +135,8 @@ bool CheckCache(const std::string &kernel_name);
 KernelPackPtr SearchCache(const std::string &kernel_name, const std::string &processor);
 KernelPackPtr InsertCache(const std::string &kernel_name, const std::string &processor);
 TypeId DtypeToTypeId(const std::string &dtypes);
-std::string Dtype2ShortType(const std::string &dtypes);
-size_t GetDtypeNbyte(const std::string &dtypes);
+std::string Dtype2ShortType(const std::string &dtype);
+size_t GetDtypeNbyte(const std::string &dtype);
 bool GetShapeSize(const ShapeVector &shape, const TypePtr &type_ptr, int64_t *size_i);
 bool ParseMetadata(const CNodePtr &kernel_node, const std::shared_ptr<const OpInfo> &op_info_ptr, Processor processor,
                    std::vector<std::shared_ptr<KernelBuildInfo>> *const kernel_info_list);
@@ -226,23 +219,8 @@ inline std::string Vector2Str(const std::vector<T> &inputs) {
   return "";
 }
 
-template <typename T>
-inline std::string Map2Str(const std::map<std::string, T> value) {
-  std::stringstream ss;
-  ss << "(";
-  for (auto it = value.begin(); it != value.end(); it++) {
-    if (it == value.begin()) {
-      ss << it->first;
-    } else {
-      ss << ", " << it->first;
-    }
-  }
-  ss << ")";
-  return ss.str();
-}
-
-template <typename T>
-inline std::string Unorderedmap2Str(const std::unordered_map<std::string, T> value) {
+template <template <typename, typename, typename...> typename M, typename T>
+inline std::string Map2Str(const M<std::string, T> value) {
   std::stringstream ss;
   ss << "(";
   for (auto it = value.begin(); it != value.end(); it++) {
@@ -313,7 +291,7 @@ class KernelAttr {
 };
 std::ostream &operator<<(std::ostream &os, KernelAttr kernel_attr);
 
-std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr, const std::vector<KernelAttr> &attr_list);
+std::pair<bool, size_t> MatchKernelAttr(const KernelAttr &kernel_attr, const std::vector<KernelAttr> &kernel_attr_list);
 KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
 KernelAttr GetKernelAttrFromNode(const AnfNodePtr &kernel_node);
 
