@@ -120,6 +120,10 @@ void DataDumper::LoadDumpInfo() {
     if (!KernelNeedDump(kernel)) {
       continue;
     }
+    if (common::AnfAlgo::IsNonTaskOp(kernel)) {
+      MS_LOG(INFO) << "[DataDump] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
+      continue;
+    }
     MS_LOG(INFO) << "[DataDump] LoadDumpInfo kernel:" << kernel->UniqueName();
     dump_kernel_names_.emplace_back(kernel->UniqueName());
     DumpJsonParser::GetInstance().MatchKernel(kernel->fullname_with_scope());
@@ -263,10 +267,6 @@ void DataDumper::ConstructDumpTask(NotNull<const CNodePtr &> kernel, NotNull<aic
   dump_task->set_end_graph(false);
   auto iter = runtime_info_map_.find(kernel->UniqueName());
   if (iter == runtime_info_map_.end()) {
-    if (common::AnfAlgo::IsNonTaskOp(kernel.get())) {
-      MS_LOG(INFO) << "[DataDump] kernel [" << kernel->UniqueName() << "] is a non-task node, skip dump.";
-      return;
-    }
     MS_LOG(EXCEPTION) << "[DataDump] kernel name not found in runtime_info_map, kernel name: " << kernel->UniqueName();
   }
   MS_EXCEPTION_IF_NULL(iter->second);

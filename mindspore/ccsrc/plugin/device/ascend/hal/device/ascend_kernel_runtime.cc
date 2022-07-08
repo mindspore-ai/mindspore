@@ -170,8 +170,16 @@ void AscendKernelRuntime::ClearGraphModelMap() {
     MS_LOG(INFO) << "[DataDump] Unload data dumper:" << iter.first;
     auto &data_dumper = iter.second;
     MS_EXCEPTION_IF_NULL(data_dumper);
-    data_dumper->UnloadDumpInfo();
-    data_dumper->OpDebugUnregister();
+    try {
+      data_dumper->UnloadDumpInfo();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "UnloadDumpInfo failed: " << e.what();
+    }
+    try {
+      data_dumper->OpDebugUnregister();
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "OpDebugUnregister failed: " << e.what();
+    }
   }
   graph_data_dumper_.clear();
   // tell users which dump kernel name not used
