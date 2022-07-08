@@ -100,7 +100,8 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("env_config_path", MsCtxParam::MS_CTX_ENV_CONFIG_PATH)
                            .value("graph_kernel_flags", MsCtxParam::MS_CTX_GRAPH_KERNEL_FLAGS)
                            .value("grad_for_scalar", MsCtxParam::MS_CTX_GRAD_FOR_SCALAR)
-                           .value("pynative_synchronize", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);
+                           .value("pynative_synchronize", MsCtxParam::MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE)
+                           .value("disable_format_transform", MsCtxParam::MS_CTX_DISABLE_FORMAT_TRANSFORM);
                          (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
                            .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
                            .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
