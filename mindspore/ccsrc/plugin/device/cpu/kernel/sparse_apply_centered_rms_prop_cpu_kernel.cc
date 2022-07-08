@@ -125,6 +125,12 @@ int SparseApplyCenteredRMSPropCpuKernelMod::Resize(const BaseOperatorPtr &base_o
     }
     var_outer_dim_size_ *= var_shape[i];
   }
+
+  if (var_shape.size() != grad_shape.size()) {
+    MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, rank(grad) should be same as rank(var), but got rank(grad): "
+                      << grad_shape.size() << ", rank(var): " << var_shape.size() << ".";
+  }
+
   if (indices_shape.size() != 1) {
     MS_LOG(EXCEPTION) << "For SparseApplyCenteredRMSProp, indices must be 1D, but got " << indices_shape.size() << "D.";
   }

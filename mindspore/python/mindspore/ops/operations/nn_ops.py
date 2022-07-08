@@ -8943,7 +8943,7 @@ class SparseApplyCenteredRMSProp(Primitive):
           Must have the same type as `var`.
         - **epsilon** (Union[Number, Tensor]) - Ridge term. Must be a float number or a scalar tensor.
           Must have the same type as `var`.
-        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if var.shape > 1.
+        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if rank(var) > 1.
         - **indices** (Tensor) - Gradient indices. Must be one of the following types: int32, int64.
           and indices.shape[0] = grad.shape[0].
 
@@ -9988,7 +9988,7 @@ class SparseApplyAdagradDA(Primitive):
           shape and dtype as `var`.
         - **grad_square_accum** (Parameter) - The dict of mutable tensor grad_square_accum.
           Must have the same shape and dtype as `var`.
-        - **grad** (Tensor) - A tensor for gradient. Must have the same shape and dtype as `var`.
+        - **grad** (Tensor) - A tensor of the same type as `var` and grad.shape[1:] = var.shape[1:] if rank(var) > 1.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
           following types: int32, int64 and indices.shape[0] = grad.shape[0].

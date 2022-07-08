@@ -50,15 +50,34 @@ abstract::ShapePtr SparseApplyAdagradDAInferShape(const PrimitivePtr &primitive,
   std::map<std::string, ShapeVector> same_shape_args_map;
   (void)same_shape_args_map.insert({"shape of grad_accum", grad_accum_shape});
   (void)same_shape_args_map.insert({"shape of grad_square_accum", grad_square_accum_shape});
-  (void)same_shape_args_map.insert({"shape of grad", grad_shape});
   for (auto &elem : same_shape_args_map) {
     CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
   }
 
-  const int64_t kDim = 1;
-  (void)CheckAndConvertUtils::CheckInteger("indices dim", indices_shape.size(), kEqual, kDim, prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("dimension of var", var_shape.size(), kGreaterEqual, kDim, prim_name);
-  (void)CheckAndConvertUtils::Check("indices shape", indices_shape[0], kEqual, var_shape[0], prim_name);
+  // Var dimension must be equal or greater than 1.
+  (void)CheckAndConvertUtils::CheckInteger("var dimension", var_shape.size(), kGreaterEqual, 1, prim_name);
+
+  if (var_shape.size() != grad_shape.size()) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', rank(grad) should be same as rank(var), but got rank(grad): " << grad_shape.size()
+                             << ", rank(var): " << var_shape.size() << ".";
+  }
+
+  for (size_t i = 1; i < var_shape.size(); ++i) {
+    if (var_shape[i] != grad_shape[i]) {
+      MS_EXCEPTION(ValueError) << "For '" << prim_name << "', the shape of var and grad must equal in dimension " << i
+                               << ".";
+    }
+  }
+
+  // Indices must be rank 1.
+  (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
+  if (indices_shape[0] != grad_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For '" << prim_name
+                             << "', grad.shape[0] must be equal to indices.shape[0], but got grad_shape[0]: "
+                             << grad_shape[0] << " indices_shape[0]: " << indices_shape[0] << ".";
+  }
+
   return std::make_shared<abstract::Shape>(var_shape);
 }
 
