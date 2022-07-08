@@ -30,7 +30,7 @@ namespace distributed {
 namespace rpc {
 class TCPClient {
  public:
-  TCPClient() = default;
+  explicit TCPClient(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
   ~TCPClient() = default;
 
   // Build or destroy the TCP client.
@@ -70,6 +70,8 @@ class TCPClient {
 
   // The received message from the meta server by calling the method `ReceiveSync`.
   MessageBase *received_message_{nullptr};
+
+  bool enable_ssl_;
 
   DISABLE_COPY_AND_ASSIGN(TCPClient);
 };

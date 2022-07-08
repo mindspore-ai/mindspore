@@ -39,7 +39,8 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context);
 
 class TCPComm {
  public:
-  TCPComm() : server_fd_(-1), recv_event_loop_(nullptr), send_event_loop_(nullptr) {}
+  explicit TCPComm(bool enable_ssl = false)
+      : server_fd_(-1), recv_event_loop_(nullptr), send_event_loop_(nullptr), enable_ssl_(enable_ssl) {}
   TCPComm(const TCPComm &) = delete;
   TCPComm &operator=(const TCPComm &) = delete;
   ~TCPComm() = default;
@@ -114,6 +115,8 @@ class TCPComm {
 
   // The mutex for connection operations.
   std::shared_ptr<std::mutex> conn_mutex_;
+
+  bool enable_ssl_;
 
   friend void OnAccept(int server, uint32_t events, void *arg);
   friend int DoConnect(const std::string &to, Connection *conn, ConnectionCallBack event_callback,

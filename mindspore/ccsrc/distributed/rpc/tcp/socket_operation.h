@@ -39,6 +39,8 @@ class SocketOperation {
   SocketOperation() = default;
   virtual ~SocketOperation() {}
 
+  virtual bool Initialize() { return true; }
+
   // Lookup the local IP address of the first available network interface.
   static std::string GetLocalIP();
 
