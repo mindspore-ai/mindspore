@@ -21,6 +21,7 @@
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cuh"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
@@ -51,6 +52,7 @@ class CumSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    device_id_ = MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID);
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     kernel_node_ = kernel_node;
