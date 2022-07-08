@@ -12,7 +12,7 @@ mindspore.nn.probability.dpn.VAE
 
     - **encoder** (Cell) - 定义为编码器的深度神经网络 (DNN) 模型。
     - **decoder** (Cell) - 定义为解码器的深度神经网络 (DNN) 模型。
-    - **hidden_size** (int) - 编码器输出 Tensor 的大小。
+    - **hidden_size** (int) - 编码器输出 Tensor 的隐藏大小。
     - **latent_size** (int) - 潜在空间的大小。
 
     **输入：**
@@ -30,7 +30,7 @@ mindspore.nn.probability.dpn.VAE
         **参数：** 
 
         - **generate_nums** （int）- 要生成的样本数。
-        - **shape** （tuple）- 样本的 shape，它必须是 (generate_nums, C, H, W) 或 (-1, C, H, W)。
+        - **shape** （tuple）- 样本的 shape，它必须是 :math:`(generate_nums, C, H, W)` 或 :math:`(-1, C, H, W)`。
 
         **返回：**
 
@@ -42,7 +42,7 @@ mindspore.nn.probability.dpn.VAE
 
         **参数：** 
 
-        - **x** (Tensor) - 要重构的输入 Tensor，shape 为 (N, C, H, W)。
+        - **x** (Tensor) - 要重构的输入 Tensor，shape 为 :math:`(N, C, H, W)`。
 
         **返回：**
 

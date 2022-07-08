@@ -32,8 +32,8 @@ mindspore.nn.probability.transforms.TransformToBNN
 
         **参数：**
 
-        - **get_dense_args** - 从 DNN 全连接层获得的参数。默认值：lambda dp：{"in_channels"：dp.in_channels，"out_channels"：dp.out_channels，"has_bias"：dp.has_bias}。
-        - **get_conv_args** - 从 DNN 卷积层获得的参数。默认值：lambda dp：{"in_channels"：dp.in_channels，"out_channels"：dp.out_channels，"pad_mode"：dp.pad_mode，"kernel_size"：dp.kernel_size，"stride”：dp.stride，"has_bias"： dp.has_bias}。 
+        - **get_dense_args** - 从 DNN 全连接层获得的参数。默认值：lambda dp: {"in_channels": dp.in_channels, "has_bias": dp.has_bias, "out_channels": dp.out_channels, "activation": dp.activation}。
+        - **get_conv_args** - 从 DNN 卷积层获得的参数。默认值：lambda dp: {"in_channels": dp.in_channels, "out_channels": dp.out_channels, "pad_mode": dp.pad_mode, "kernel_size": dp.kernel_size, "stride": dp.stride, "has_bias": dp.has_bias, "padding": dp.padding, "dilation": dp.dilation, "group": dp.group}。 
         - **add_dense_args** (dict) - 添加到 BNN 全连接层的新参数。请注意， `add_dense_args` 中的参数不得与 `get_dense_args` 中的参数重复。默认值：None。
         - **add_conv_args** (dict) - 添加到 BNN 卷积层的新参数。请注意， `add_conv_args` 中的参数不得与 `get_conv_args` 中的参数重复。默认值：None。
 

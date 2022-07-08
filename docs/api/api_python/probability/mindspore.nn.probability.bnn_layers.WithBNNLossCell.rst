@@ -3,7 +3,7 @@ mindspore.nn.probability.bnn_layers.WithBNNLossCell
 
 .. py:class:: mindspore.nn.probability.bnn_layers.WithBNNLossCell(backbone, loss_fn, dnn_factor=1, bnn_factor=1)
 
-    为 BNN 生成一个合适的 WithLossCell，用损失函数包裹贝叶斯网络。
+    为 BNN 生成一个合适的 WithLossCell，用损失函数包装贝叶斯网络。
 
     **参数：**
 
@@ -24,8 +24,8 @@ mindspore.nn.probability.bnn_layers.WithBNNLossCell
     .. py:method:: backbone_network
         :property:
 
-        返回骨干网。
+        返回backbone_network。
 
         **返回：**
 
-        Cell，骨干网。
+        Cell，backbone_network。

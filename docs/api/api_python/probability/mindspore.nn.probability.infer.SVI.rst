@@ -3,9 +3,9 @@ mindspore.nn.probability.infer.SVI
 
 .. py:class:: mindspore.nn.probability.infer.SVI(net_with_loss, optimizer)
 
-    随机变分推理（SVI）。
+    随机变分推断（Stochastic Variational Inference）。
 
-    变分推理将推理问题转换为优化。隐藏变量上的一些分布由一组自由参数索引，这些参数经过优化以使分布最接近感兴趣的后验。有关更多详细信息，请参阅
+    变分推断将推理问题转换为优化问题。隐藏变量上的一些分布由一组自由参数索引，这些参数经过优化,使分布成为最接近正确的后验分布。更多详细信息，请参阅
     `变分推理：统计学家评论 <https://arxiv.org/abs/1601.00670>`_。
 
     **参数：**
@@ -17,7 +17,7 @@ mindspore.nn.probability.infer.SVI
 
         **返回：**
 
-        numpy.dtype，训练后的损失。
+        numpy.dtype，训练损失。
 
     .. py:method:: run(train_dataset, epochs=10)
      
