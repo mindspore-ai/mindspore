@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/soft_shrink_cpu_kernel.h"
 #include "mindspore/core/ops/soft_shrink.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,31 +26,16 @@ template <typename T>
 bool SoftShrinkCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                           const std::vector<kernel::AddressPtr> &,
                                           const std::vector<kernel::AddressPtr> &outputs) {
-  /* float optimize */
-  if (std::is_same_v<T, float>) {
-    float *input = reinterpret_cast<float *>(inputs.at(kIndex0)->addr);
-    float *output = reinterpret_cast<float *>(outputs.at(kIndex0)->addr);
-
-    auto task = [input, output, this](size_t start, size_t end) {
-      auto input_tmp = input + start;
-      auto output_tmp = output + start;
-      (void)SoftShrink(input_tmp, (end - start), output_tmp, this->lambd_);
-    };
-    ParallelLaunchAutoSearch(task, size_, this, &parallel_search_info_);
-    return true;
-  }
-
-  /* common soft shrink */
   T *input_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   T *output_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  T pos_lamdb = static_cast<T>(lambd_);
-  T neg_lambd = static_cast<T>(-1 * pos_lamdb);
-  auto task = [input_addr, output_addr, pos_lamdb, neg_lambd](size_t start, size_t end) {
+  float lambd_value = lambd_;
+
+  auto task = [input_addr, output_addr, lambd_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
-      if (input_addr[i] > pos_lamdb) {
-        output_addr[i] = input_addr[i] - pos_lamdb;
-      } else if (input_addr[i] < neg_lambd) {
-        output_addr[i] = input_addr[i] + pos_lamdb;
+      if (input_addr[i] > lambd_value) {
+        output_addr[i] = input_addr[i] - lambd_value;
+      } else if (input_addr[i] < (-lambd_value)) {
+        output_addr[i] = input_addr[i] + lambd_value;
       } else {
         output_addr[i] = 0;
       }

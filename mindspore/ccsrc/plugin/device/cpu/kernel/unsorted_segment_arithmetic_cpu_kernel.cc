@@ -65,10 +65,6 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
           MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
           return false;
         }
-        if (output_index < 0) {
-          /* segment_ids is less than 0, drop it */
-          continue;
-        }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;
         for (size_t comp = 0; comp < comp_size_; comp++) {
@@ -81,10 +77,6 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
         if (output_index >= num_segments_) {
           MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
           return false;
-        }
-        if (output_index < 0) {
-          /* segment_ids is less than 0, drop it */
-          continue;
         }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;

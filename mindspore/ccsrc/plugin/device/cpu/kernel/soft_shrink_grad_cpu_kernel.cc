@@ -16,7 +16,6 @@
 
 #include "plugin/device/cpu/kernel/soft_shrink_grad_cpu_kernel.h"
 #include "mindspore/core/ops/grad/soft_shrink_grad.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32_grad/activation_grad.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,27 +26,11 @@ template <typename T>
 bool SoftShrinkGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                               const std::vector<kernel::AddressPtr> &,
                                               const std::vector<kernel::AddressPtr> &outputs) {
-  /* float optimize */
-  if (std::is_same_v<T, float>) {
-    float *src0 = reinterpret_cast<float *>(inputs.at(kIndex0)->addr);
-    float *src1 = reinterpret_cast<float *>(inputs.at(kIndex1)->addr);
-    float *out = reinterpret_cast<float *>(outputs.at(kIndex0)->addr);
-
-    auto task = [src0, src1, out, this](size_t start, size_t end) {
-      auto src0_tmp = src0 + start;
-      auto src1_tmp = src1 + start;
-      auto out_tmp = out + start;
-      (void)SoftShrinkGrad(src0_tmp, src1_tmp, (end - start), out_tmp, this->lambd_);
-    };
-    ParallelLaunchAutoSearch(task, size_, this, &parallel_search_info_);
-    return true;
-  }
-
-  /* common soft shrink grad */
   T *dy_addr = reinterpret_cast<T *>(inputs.at(kIndex0)->addr);
   T *x_addr = reinterpret_cast<T *>(inputs.at(kIndex1)->addr);
   T *dx_addr = reinterpret_cast<T *>(outputs.at(kIndex0)->addr);
-  T lambd_value = static_cast<T>(lambd_);
+
+  float lambd_value = lambd_;
   auto task = [dy_addr, x_addr, dx_addr, lambd_value](size_t start, size_t end) {
     for (size_t i = start; i < end; i++) {
       dx_addr[i] = (x_addr[i] >= -lambd_value && x_addr[i] <= lambd_value) ? 0 : dy_addr[i];

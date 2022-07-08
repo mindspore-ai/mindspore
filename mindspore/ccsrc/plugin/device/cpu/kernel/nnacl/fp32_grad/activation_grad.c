@@ -21,7 +21,6 @@
 #include "nnacl/fp32_grad/activation_grad.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/intrinsics/ms_simd_instructions.h"
-#include "nnacl/activation_grad_simd.h"
 
 int ReluGrad(const float *src0, const float *src1, size_t length, float *dst) {
   size_t i = 0;
@@ -161,17 +160,6 @@ int HShrinkGrad(const float *src0, const float *src1, int length, float *dst, fl
 
   for (; i < length; ++i) {
     dst[i] = src1[i] >= neg_lambd && src1[i] <= lambd ? 0 : src0[i];
-  }
-  return NNACL_OK;
-}
-
-int SoftShrinkGrad(const float *src0, const float *src1, int length, float *dst, float lambd) {
-  int i = 0;
-  const float neg_lambd = -1 * lambd;
-  SIMD_RUN_NO_SCALAR(ShrinkGrad, i, src0, src1, length, dst, lambd);
-
-  for (; i < length; ++i) {
-    dst[i] = (src1[i] >= neg_lambd && src1[i] <= lambd) ? 0 : src0[i];
   }
   return NNACL_OK;
 }
