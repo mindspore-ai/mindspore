@@ -356,6 +356,23 @@ std::vector<int64_t> CheckAndConvertUtils::CheckPositiveVector(const std::string
   return arg_value;
 }
 
+std::vector<float> CheckAndConvertUtils::CheckPositiveVector(const std::string &arg_name,
+                                                             const std::vector<float> &arg_value,
+                                                             const std::string &prim_name) {
+  std::ostringstream buffer;
+  buffer << "For primitive[" << prim_name << "], the attribute[" << arg_name
+         << "] should be a vector with all positive item. but got [";
+  if (std::any_of(arg_value.begin(), arg_value.end(), [](float item) { return item < 0.0f; })) {
+    for (auto item : arg_value) {
+      buffer << item << ", ";
+    }
+    buffer << "].";
+    MS_EXCEPTION(ValueError) << buffer.str();
+  }
+
+  return arg_value;
+}
+
 std::string CheckAndConvertUtils::CheckString(const std::string &arg_name, const std::string &arg_value,
                                               const std::set<std::string> &check_list, const std::string &prim_name) {
   if (check_list.find(arg_value) != check_list.end()) {
