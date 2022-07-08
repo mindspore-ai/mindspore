@@ -61,7 +61,6 @@ __global__ void FusedDropoutForwardKernel(const T *input, T *mask, T *output, si
   size_t idx = (blockIdx.x * blockDim.x + threadIdx.x) * kDropoutTileSize;
   curandStatePhilox4_32_10_t state;
   curand_init(seed, idx, seed_offset, &state);
-
   for (size_t i = idx; i < num_count; i += inc) {
     float4 rand = curand_uniform4(&state);
     rand.x = rand.x < keep_prob;
@@ -84,10 +83,73 @@ __global__ void FusedDropoutForwardKernel(const T *input, T *mask, T *output, si
 }
 
 template <typename T>
+__global__ void FusedDropoutForwardOnlyMaskKernel(T *mask, size_t num_count, float keep_prob, uint64_t seed,
+                                                  uint64_t seed_offset) {
+  T scale = (T)(1.f / keep_prob);
+  size_t inc = blockDim.x * gridDim.x * kDropoutTileSize;
+  size_t idx = (blockIdx.x * blockDim.x + threadIdx.x) * kDropoutTileSize;
+  curandStatePhilox4_32_10_t state;
+  curand_init(seed, idx, seed_offset, &state);
+  for (size_t i = idx; i < num_count; i += inc) {
+    float4 rand = curand_uniform4(&state);
+    rand.x = rand.x < keep_prob;
+    rand.y = rand.y < keep_prob;
+    rand.z = rand.z < keep_prob;
+    rand.w = rand.w < keep_prob;
+    T mask_tile[kDropoutTileSize];
+    for (size_t j = 0; j < kDropoutTileSize; ++j) {
+      mask_tile[j] = (T)((&rand.x)[j]);
+    }
+    *reinterpret_cast<TArray<T> *>(&mask[i]) = *reinterpret_cast<TArray<T> *>(&mask_tile[0]);
+    __syncthreads();
+  }
+}
+
+template <typename T>
+__global__ void FusedDropoutOnlyOutputKernel(const T *input, T *output, size_t num_count, float keep_prob,
+                                             uint64_t seed, uint64_t seed_offset) {
+  T scale = (T)(1.f / keep_prob);
+  size_t inc = blockDim.x * gridDim.x * kDropoutTileSize;
+  size_t idx = (blockIdx.x * blockDim.x + threadIdx.x) * kDropoutTileSize;
+  curandStatePhilox4_32_10_t state;
+  curand_init(seed, idx, seed_offset, &state);
+  for (size_t i = idx; i < num_count; i += inc) {
+    float4 rand = curand_uniform4(&state);
+    rand.x = rand.x < keep_prob;
+    rand.y = rand.y < keep_prob;
+    rand.z = rand.z < keep_prob;
+    rand.w = rand.w < keep_prob;
+    T input_tile[kDropoutTileSize];
+    T output_tile[kDropoutTileSize];
+    TArray<T> *temp = reinterpret_cast<TArray<T> *>(&input_tile);
+    *temp = *reinterpret_cast<const TArray<T> *>(&input[i]);
+    for (size_t j = 0; j < kDropoutTileSize; ++j) {
+      output_tile[j] = input_tile[j] * (T)((&rand.x)[j]) * scale;
+    }
+    *reinterpret_cast<TArray<T> *>(&output[i]) = *reinterpret_cast<TArray<T> *>(&output_tile[0]);
+    __syncthreads();
+  }
+}
+
+template <typename T>
 void FusedDropoutForward(const T *input, T *mask, T *output, size_t num_count, float drop_prob, uint64_t seed,
                          uint64_t seed_offset, cudaStream_t cuda_stream) {
   FusedDropoutForwardKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, mask, output, num_count,
                                                                                     drop_prob, seed, seed_offset);
+}
+
+template <typename T>
+void FusedDropoutForwardOnlyMask(T *mask, size_t num_count, float drop_prob, uint64_t seed, uint64_t seed_offset,
+                                 cudaStream_t cuda_stream) {
+  FusedDropoutForwardOnlyMaskKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(mask, num_count, drop_prob,
+                                                                                            seed, seed_offset);
+}
+
+template <typename T>
+void FusedDropoutForwardOnlyOutput(const T *input, T *output, size_t num_count, float drop_prob, uint64_t seed,
+                                   uint64_t seed_offset, cudaStream_t cuda_stream) {
+  FusedDropoutOnlyOutputKernel<<<GET_BLOCKS(num_count), GET_THREADS, 0, cuda_stream>>>(input, output, num_count,
+                                                                                       drop_prob, seed, seed_offset);
 }
 
 template CUDA_LIB_EXPORT void DropoutForward<float>(const float *input, float *mask, float *output, float *mask_f,
@@ -105,3 +167,15 @@ template CUDA_LIB_EXPORT void FusedDropoutForward<float>(const float *input, flo
 template CUDA_LIB_EXPORT void FusedDropoutForward<half>(const half *input, half *mask, half *output, size_t num_count,
                                                         float drop_prob, uint64_t seed, uint64_t seed_offset,
                                                         cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask<float>(float *mask, size_t num_count, float drop_prob,
+                                                                 uint64_t seed, uint64_t seed_offset,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyMask<half>(half *mask, size_t num_count, float drop_prob,
+                                                                uint64_t seed, uint64_t seed_offset,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput<float>(const float *input, float *output, size_t num_count,
+                                                                   float drop_prob, uint64_t seed, uint64_t seed_offset,
+                                                                   cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void FusedDropoutForwardOnlyOutput<half>(const half *input, half *output, size_t num_count,
+                                                                  float drop_prob, uint64_t seed, uint64_t seed_offset,
+                                                                  cudaStream_t cuda_stream);

@@ -43,8 +43,16 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     T *mask = GetDeviceAddress<T>(outputs, 1);
 
     if (use_fused_dropout_) {
-      FusedDropoutForward(input, mask, output, num_count_, keep_prob_, seed_, seed_offset_,
-                          reinterpret_cast<cudaStream_t>(stream_ptr));
+      if (only_use_first_output_) {
+        FusedDropoutForwardOnlyOutput(input, output, num_count_, keep_prob_, seed_, seed_offset_,
+                                      reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else if (only_use_second_output_) {
+        FusedDropoutForwardOnlyMask(mask, num_count_, keep_prob_, seed_, seed_offset_,
+                                    reinterpret_cast<cudaStream_t>(stream_ptr));
+      } else {
+        FusedDropoutForward(input, mask, output, num_count_, keep_prob_, seed_, seed_offset_,
+                            reinterpret_cast<cudaStream_t>(stream_ptr));
+      }
       seed_offset_ += num_count_;
       return true;
     }
@@ -92,6 +100,11 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
       if (num_count_ % kDropoutTileSize == 0) {
         use_fused_dropout_ = true;
+        if (kernel_node->HasAttr(kAttrOnlyUseFirstOutput)) {
+          only_use_first_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseFirstOutput));
+        } else if (kernel_node->HasAttr(kAttrOnlyUseSecondOutput)) {
+          only_use_second_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseSecondOutput));
+        }
       } else {
         CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
                                      "Failed to create generator");
@@ -112,6 +125,9 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_name_ = "Dropout";
     num_count_ = 0;
     keep_prob_ = 0.0;
+    use_fused_dropout_ = false;
+    only_use_first_output_ = false;
+    only_use_second_output_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
@@ -123,9 +139,19 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   void InitSizeLists() override {
     size_t input_size = num_count_ * sizeof(T);
     input_size_list_.push_back(input_size);
-    output_size_list_.push_back(input_size);                     // output size: the same with input size
-    output_size_list_.push_back(input_size);                     // mask size: the same with input size
-    workspace_size_list_.push_back(num_count_ * sizeof(float));  // temp mask_f for curandGen
+    if (only_use_second_output_) {
+      output_size_list_.push_back(1);
+    } else {
+      output_size_list_.push_back(input_size);  // output size: the same with input size
+    }
+    if (only_use_first_output_) {
+      output_size_list_.push_back(1);
+    } else {
+      output_size_list_.push_back(input_size);  // mask size: the same with input size
+    }
+    if (!use_fused_dropout_) {
+      workspace_size_list_.push_back(num_count_ * sizeof(float));  // temp mask_f for curandGen
+    }
   }
 
  private:
@@ -138,6 +164,8 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   uint64_t seed_{0};
   uint64_t seed_offset_{0};
   bool use_fused_dropout_{false};
+  bool only_use_first_output_{false};
+  bool only_use_second_output_{false};
   curandGenerator_t mask_generator_{nullptr};
 };
 }  // namespace kernel

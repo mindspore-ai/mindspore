@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import mindspore.context as context
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 
+
 class Net(nn.Cell):
     def __init__(self, keep_prob):
         super(Net, self).__init__()
@@ -34,6 +35,11 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dropout():
+    """"
+    Feature: Test dropout
+    Description: Test gpu dropout operator
+    Expectation: The results are as expected
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_shape = [32, 16, 2, 5]
     x = np.ones(x_shape).astype(np.float32)
@@ -48,12 +54,12 @@ def test_dropout():
     assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
     output_sum = np.sum(output_np)
     x_sum = np.sum(x)
-    assert abs(output_sum - x_sum)/x_sum < 0.1
+    assert abs(output_sum - x_sum) / x_sum < 0.1
     # check mask
     mask_np = mask.asnumpy()
     mask_sum = np.sum(mask_np)
     assert np.count_nonzero(mask_np) == nonzero_count
-    assert abs(mask_sum - nonzero_count)/nonzero_count < 0.1
+    assert abs(mask_sum - nonzero_count) / nonzero_count < 0.1
 
 
 class DropoutDynamic(nn.Cell):
@@ -71,6 +77,11 @@ class DropoutDynamic(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_dropout_dynamic():
+    """"
+    Feature: Test dropout dynamic
+    Description: Test gpu dropout supports dynamic shape
+    Expectation: The results are as expected
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_1 = np.ones([32, 16, 2, 5]).astype(np.float32)
     x_2 = np.ones([32, 16, 2, 5, 6]).astype(np.float32)
@@ -83,10 +94,10 @@ def test_dropout_dynamic():
     assert (elem_count_1 * (keep_prob - 0.1)) < nonzero_count_1 < (elem_count_1 * (keep_prob + 0.1))
     output_sum_1 = np.sum(output_1.asnumpy())
     x_sum_1 = np.sum(x_1)
-    assert abs(output_sum_1 - x_sum_1)/x_sum_1 < 0.1
+    assert abs(output_sum_1 - x_sum_1) / x_sum_1 < 0.1
     mask_sum_1 = np.sum(mask_1.asnumpy())
     assert np.count_nonzero(mask_1.asnumpy()) == nonzero_count_1
-    assert abs(mask_sum_1 - nonzero_count_1)/nonzero_count_1 < 0.1
+    assert abs(mask_sum_1 - nonzero_count_1) / nonzero_count_1 < 0.1
 
     output_2, mask_2 = net(Tensor(x_2))
     elem_count_2 = x_2.size
@@ -94,7 +105,51 @@ def test_dropout_dynamic():
     assert (elem_count_2 * (keep_prob - 0.1)) < nonzero_count_2 < (elem_count_2 * (keep_prob + 0.1))
     output_sum_2 = np.sum(output_2.asnumpy())
     x_sum_2 = np.sum(x_2)
-    assert abs(output_sum_2 - x_sum_2)/x_sum_2 < 0.1
+    assert abs(output_sum_2 - x_sum_2) / x_sum_2 < 0.1
     mask_sum_2 = np.sum(mask_2.asnumpy())
     assert np.count_nonzero(mask_2.asnumpy()) == nonzero_count_2
-    assert abs(mask_sum_2 - nonzero_count_2)/nonzero_count_2 < 0.1
+    assert abs(mask_sum_2 - nonzero_count_2) / nonzero_count_2 < 0.1
+
+
+class NetFilter(nn.Cell):
+    def __init__(self, keep_prob, use_first_output):
+        super(NetFilter, self).__init__()
+        self.drop = P.Dropout(keep_prob)
+        self.add = P.Add()
+        self.use_first_output = use_first_output
+
+    def construct(self, x_):
+        output, mask = self.drop(x_)
+        if self.use_first_output:
+            return self.add(output, x_)
+        return self.add(mask, x_)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dropout_attrs():
+    """"
+    Feature: Test dropout gpu optimization
+    Description: Test only use first or second output of dropout
+    Expectation: The results are as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_shape = [32, 16, 2, 5]
+    x = np.ones(x_shape).astype(np.float32)
+    x_sum = np.sum(x)
+    keep_prob = 0.4
+    tx = Tensor(x)
+
+    # only use first output
+    dropout = NetFilter(keep_prob, True)
+    output = dropout(tx)
+    output_np = output.asnumpy()
+    output_sum = np.sum(output_np)
+    assert abs(output_sum - x_sum) / x_sum < 1.1
+
+    # only use second output
+    dropout1 = NetFilter(keep_prob, False)
+    mask = dropout1(tx)
+    mask_sum = np.sum(mask.asnumpy())
+    assert abs(mask_sum - x_sum) / x_sum < (keep_prob + 0.1)
