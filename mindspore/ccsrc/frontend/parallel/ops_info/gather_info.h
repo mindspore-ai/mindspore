@@ -32,7 +32,7 @@ class GatherInfo : public OperatorInfo {
  public:
   GatherInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs, const std::string &replace_op_name = GATHERV2)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()),
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherCost>()),
         axis_(0),
         bias_(0),
         index_offset_(0),
@@ -57,10 +57,12 @@ class GatherInfo : public OperatorInfo {
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
-  void InferInputsTensorMap();
-  void InferOutputsTensorMap();
   Status GetAttrs() override;
 
+ private:
+  void InferInputsTensorMap();
+  void InferOutputsTensorMap();
+  void InferTensorMapForManualSplit();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
   Status CheckManualSplit(const Strategys &strategy);
   Status CheckSplitAxisStrategy(const StrategyPtr &strategy);

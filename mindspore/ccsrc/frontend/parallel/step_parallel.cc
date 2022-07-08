@@ -2837,12 +2837,8 @@ CommInfo GetCommInfo() {
 }
 
 Status ParallelInit() {
-  static bool parallel_init_flag = false;
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   int32_t split_stage_num = ParallelContext::GetInstance()->pipeline_stage_split_num();
-  if (parallel_init_flag && split_stage_num == 1) {
-    return SUCCESS;
-  }
 
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();
   if (split_stage_num <= 0) {
@@ -2892,7 +2888,6 @@ Status ParallelInit() {
     return FAILED;
   }
 
-  parallel_init_flag = true;
   MS_LOG(INFO) << "The parallel context: device_num: " << device_num << ", global_rank: " << global_rank
                << ", communication_backend: " << comm_info.communication_backend
                << ", gradients_mean: " << ParallelContext::GetInstance()->gradients_mean()
