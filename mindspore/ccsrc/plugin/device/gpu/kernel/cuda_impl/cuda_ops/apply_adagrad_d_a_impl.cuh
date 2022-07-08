@@ -19,9 +19,9 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-template <typename T, typename S>
+template <typename T, typename T1, typename T2, typename T3, typename T4>
 CUDA_LIB_EXPORT void ApplyAdagradDA(const size_t batch_size, const size_t size, T *var, T *accum, T *squared_accum,
-                                    const T *grad, const T *lr, const T *l1, const T *l2, const S *global_step,
+                                    const T *grad, const T1 *lr, const T2 *l1, const T3 *l2, const T4 *global_step,
                                     T *output_var, T *output_accum, T *output_squared_accum,
                                     const uint32_t &device_id, cudaStream_t cuda_stream);
 
