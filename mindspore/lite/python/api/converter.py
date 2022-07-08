@@ -39,7 +39,7 @@ class FmkType(Enum):
 
 
 class Converter:
-    """
+    r"""
     Converter is used to convert third-party models.
 
     Note:
@@ -49,8 +49,8 @@ class Converter:
         fmk_type (FmkType): Input model framework type. Options: FmkType.TF | FmkType.CAFFE | FmkType.ONNX |
             FmkType.MINDIR | FmkType.TFLITE | FmkType.PYTORCH.
         model_file (str): Path of the input model. e.g. "/home/user/model.prototxt". Options:
-            TF: "*.pb" | CAFFE: "*.prototxt" | ONNX: "*.onnx" | MINDIR: "*.mindir" | TFLITE: "*.tflite" |
-            PYTORCH "*.pt" or "*.pth".
+            TF: "\*.pb" | CAFFE: "\*.prototxt" | ONNX: "\*.onnx" | MINDIR: "\*.mindir" | TFLITE: "\*.tflite" |
+            PYTORCH "\*.pt" or "\*.pth".
         output_file (str): Path of the output model. The suffix .ms can be automatically generated.
             e.g. "/home/user/model.prototxt", it will generate the model named model.prototxt.ms in /home/user/
         weight_file (str, optional): Input model weight file. Required only when fmk_type is FmkType.CAFFE.
