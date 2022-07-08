@@ -90,27 +90,27 @@ int Col2ImFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
   }
   auto input_shape = inputs[kIndex0]->GetShapeVector();
   auto output_shape = outputs[kIndex0]->GetShapeVector();
-  batch_size_ = input_shape[kIndex0];
-  channels_ = input_shape[kIndex1];
-  out_height_ = output_shape[kIndex2];
-  out_width_ = output_shape[kIndex3];
+  batch_size_ = static_cast<uint32_t>(input_shape[kIndex0]);
+  channels_ = static_cast<uint32_t>(input_shape[kIndex1]);
+  out_height_ = static_cast<uint32_t>(output_shape[kIndex2]);
+  out_width_ = static_cast<uint32_t>(output_shape[kIndex3]);
   auto kernel_size = GetValue<std::vector<int64_t>>(base_operator->GetAttr("kernel_size"));
   auto dilation = GetValue<std::vector<int64_t>>(base_operator->GetAttr("dilation"));
   auto padding = GetValue<std::vector<int64_t>>(base_operator->GetAttr("padding"));
   auto stride = GetValue<std::vector<int64_t>>(base_operator->GetAttr("stride"));
-  pad_height_ = padding[kIndex0];
-  pad_width_ = padding[kIndex1];
-  kernel_height_ = kernel_size[kIndex0];
-  kernel_width_ = kernel_size[kIndex1];
-  stride_height_ = stride[kIndex0];
-  stride_width_ = stride[kIndex1];
-  dilation_height_ = dilation[kIndex0];
-  dilation_width_ = dilation[kIndex1];
-  in_height_ =
+  pad_height_ = static_cast<uint32_t>(padding[kIndex0]);
+  pad_width_ = static_cast<uint32_t>(padding[kIndex1]);
+  kernel_height_ = static_cast<uint32_t>(kernel_size[kIndex0]);
+  kernel_width_ = static_cast<uint32_t>(kernel_size[kIndex1]);
+  stride_height_ = static_cast<uint32_t>(stride[kIndex0]);
+  stride_width_ = static_cast<uint32_t>(stride[kIndex1]);
+  dilation_height_ = static_cast<uint32_t>(dilation[kIndex0]);
+  dilation_width_ = static_cast<uint32_t>(dilation[kIndex1]);
+  in_height_ = static_cast<uint32_t>(
     (out_height_ + kPaddingDirection * pad_height_ - (dilation_height_ * (kernel_height_ - 1) + 1)) / stride_height_ +
-    1;
-  in_width_ =
-    (out_width_ + kPaddingDirection * pad_width_ - (dilation_width_ * (kernel_width_ - 1) + 1)) / stride_width_ + 1;
+    1);
+  in_width_ = static_cast<uint32_t>(
+    (out_width_ + kPaddingDirection * pad_width_ - (dilation_width_ * (kernel_width_ - 1) + 1)) / stride_width_ + 1);
   return KRET_OK;
 }
 
