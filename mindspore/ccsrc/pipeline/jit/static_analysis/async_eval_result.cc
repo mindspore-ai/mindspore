@@ -38,7 +38,7 @@ void AnalysisSchedule::Schedule() {
   MS_LOG(DEBUG) << "Success to exit.";
 }
 
-void AnalysisSchedule::Yield(const AsyncInferTask *async_infer_task) {
+void AnalysisSchedule::Yield(AsyncInferTask *async_infer_task) {
   MS_EXCEPTION_IF_NULL(async_infer_task);
   {
     std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
@@ -94,14 +94,25 @@ void AnalysisSchedule::Wait() {
   EnterWaiting();
   if (infer_thread_count_.load() > 0) {
     py::gil_scoped_release infer_gil_release;
+    MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " waiting.";
     std::unique_lock<std::mutex> lock(infer_thread_lock_);
     infer_thread_cv_.wait(lock, [this] { return infer_thread_count_.load() <= 0; });
   }
+  MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " active.";
   if (infer_thread_count_.load() < 0) {
     MS_LOG(ERROR) << "There is something wrong. thread count: " << infer_thread_count_;
   }
-  MS_LOG(INFO) << "Infer finished.";
+  MS_LOG(DEBUG) << "Infer finished.";
   StaticAnalysisException::Instance().CheckException();
+}
+
+void AnalysisSchedule::WaitForRun() {
+  // Control the order to run.
+  AsyncAbstractPtr control_run_order = std::make_shared<AsyncAbstract>();
+  control_run_order->set_result(std::make_shared<AbstractScalar>(1));
+  AsyncInferTaskPtr async_task = AsyncInferTask::MakeShared(control_run_order);
+  AnalysisSchedule::GetInstance().Add2Schedule(async_task);
+  (void)async_task->GetResult();
 }
 
 void AnalysisSchedule::Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr) {
@@ -155,14 +166,10 @@ void AnalysisSchedule::SetNextReady() {
 }
 
 AbstractBasePtr AsyncAbstract::GetResult() {
-  auto ret = TryGetResult();
-  if (ret != nullptr) {
-    return ret;
-  }
   auto async_task = AsyncInferTask::MakeShared(shared_from_this());
   MS_LOG(DEBUG) << GetInferThread() << " is waiting for async: " << async_task.get();
   AnalysisSchedule::GetInstance().Add2Schedule(async_task);
-  ret = async_task->GetResult();
+  auto ret = async_task->GetResult();
   MS_LOG(DEBUG) << GetInferThread() << " success to get async result: " << async_task.get() << " " << ret->ToString();
   return ret;
 }
