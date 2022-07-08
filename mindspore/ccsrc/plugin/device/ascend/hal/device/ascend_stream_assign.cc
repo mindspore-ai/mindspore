@@ -1525,6 +1525,64 @@ bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGr
   return true;
 }
 
+void AscendStreamAssign::InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
+                                               uint32_t cur_event_id, uint32_t graph_id) {
+  std::set<std::string> ending_nodes = {kStreamActiveOpName, kLabelGotoOpName};
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
+    if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
+      continue;
+    }
+    auto node_name = common::AnfAlgo::GetCNodeName(*iter);
+    auto cnode = (*iter)->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    CNodePtr recv_cnode = CreateRecvApplyKernel(root_graph, cur_event_id, AnfAlgo::GetStreamId(cnode));
+    // insert StreamRecv node before the last node in the graph if the node is <StreamActive, LabelGoto> or insert
+    // StreamRecv node after the last node, at the same time, the next node of the last not in the graph is LabelSet.
+    if (ending_nodes.find(node_name) != ending_nodes.end()) {
+      MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " before node: " << (*iter)->fullname_with_scope();
+      cnodes->insert(iter, recv_cnode);
+      break;
+    } else if ((iter < cnodes->end() - 1) && common::AnfAlgo::GetCNodeName(*(iter + 1)) == kLabelSetOpName) {
+      MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " after node: " << (*iter)->fullname_with_scope();
+      cnodes->insert(iter + 1, recv_cnode);
+      break;
+    } else {
+      MS_LOG(EXCEPTION) << "The last node of graph " << graph_id
+                        << " is not in the set <StreamActive, LabelGoto>, whereas is " << (*iter)->fullname_with_scope()
+                        << ", and check whether the next node exists and is LabelSet.";
+    }
+  }
+}
+
+void AscendStreamAssign::InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> &root_graph,
+                                                  std::vector<CNodePtr> *cnodes, uint32_t cur_event_id,
+                                                  uint32_t graph_id) {
+  uint32_t stream_id = UINT32_MAX;
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
+    if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
+      continue;
+    }
+    if (IsHcom(*iter) || IsPrimitiveCNode(*iter, prim::kPrimStreamSend) ||
+        IsPrimitiveCNode(*iter, prim::kPrimStreamRecv)) {
+      continue;
+    }
+    stream_id = AnfAlgo::GetStreamId(*iter);
+  }
+  if (stream_id == UINT32_MAX) {
+    MS_LOG(EXCEPTION) << "Can not find compute node in graph " << graph_id;
+  }
+
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); iter--) {
+    if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
+      continue;
+    }
+    CNodePtr recv_cnode = CreateRecvApplyKernel(root_graph, cur_event_id, stream_id);
+    MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " after node: " << (*iter)->fullname_with_scope();
+    cnodes->insert(iter + 1, recv_cnode);
+    break;
+  }
+}
+
 void AscendStreamAssign::GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph, uint32_t graph_id) {
   if (ExistStreamSendAfterLastHcomNode(root_graph, graph_id)) {
     return;
@@ -1545,32 +1603,12 @@ void AscendStreamAssign::GraphLoopSync(const NotNull<KernelGraphPtr> &root_graph
       break;
     }
   }
-
-  std::set<std::string> ending_nodes = {kStreamActiveOpName, kLabelGotoOpName};
-  // insert StreamRecv node before the last node in the graph if the node is <StreamActive, LabelGoto> or insert
-  // StreamRecv node after the last node, at the same time, the next node of the last not in the graph is LabelSet.
-  for (auto iter = cnodes.end() - 1; iter >= cnodes.begin(); --iter) {
-    if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
-      continue;
-    }
-    auto node_name = common::AnfAlgo::GetCNodeName(*iter);
-    auto cnode = (*iter)->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    CNodePtr recv_cnode = CreateRecvApplyKernel(root_graph, cur_event_id, AnfAlgo::GetStreamId(cnode));
-    if (ending_nodes.find(node_name) != ending_nodes.end()) {
-      MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " before node: " << (*iter)->fullname_with_scope();
-      iter = cnodes.insert(iter, recv_cnode);
-      break;
-    } else if ((iter < cnodes.end() - 1) && common::AnfAlgo::GetCNodeName(*(iter + 1)) == kLabelSetOpName) {
-      MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << "after node: " << (*iter)->fullname_with_scope();
-      iter = cnodes.insert(iter + 1, recv_cnode);
-      break;
-    } else {
-      MS_LOG(EXCEPTION) << "The last node of graph " << graph_id
-                        << " is not in the set <StreamActive, LabelGoto>, whereas is " << (*iter)->fullname_with_scope()
-                        << ", and check whether the next node exists and is LabelSet.";
-    }
+  if (KernelAdjust::NeedLoopSink()) {
+    InsertRecvForLoopSink(root_graph, &cnodes, cur_event_id, graph_id);
+  } else {
+    InsertRecvForNotLoopSink(root_graph, &cnodes, cur_event_id, graph_id);
   }
+
   root_graph->set_execution_order(cnodes);
 }
 
@@ -1588,9 +1626,6 @@ void AscendStreamAssign::GetAllGraphID(const NotNull<KernelGraphPtr> &graph_ptr,
 // Solution: In the above scenario, insert 'send' after the last communication operator, and insert 'recv' before the
 //  `active` operator in the calculation stream to ensure loop synchronization.
 void AscendStreamAssign::InsertEventForIndependentHcom(const NotNull<KernelGraphPtr> &graph_ptr) {
-  if (!KernelAdjust::NeedLoopSink()) {
-    return;
-  }
   std::vector<uint32_t> graphs_id;
   GetAllGraphID(graph_ptr, &graphs_id);
   for (auto graph_id : graphs_id) {
@@ -2401,9 +2436,9 @@ bool AscendStreamAssign::IsNopNodeTarget(const AnfNodePtr &nop_node, const CNode
 // scenario-1: node -> target user
 // scenario-2: node -> reshape -> target user
 // scenario-3: node -> reshape ->reshape ->target user
-// scenario-3: node -> depend -> target user
-// scenario-4: node -> reshape -> depend ->target user
-// scenario-5: execution order(node,hcom user,common user)
+// scenario-4: node -> depend -> target user
+// scenario-5: node -> reshape -> depend ->target user
+// scenario-6: execution order(node,hcom user,common user)
 //             exclude_hcom(true): return hcom user
 //             exclude_hcom(false): return common user
 vector<CNodePtr>::iterator AscendStreamAssign::FindFirstUserInExecutionOrder(vector<CNodePtr>::iterator begin,

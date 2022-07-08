@@ -126,6 +126,10 @@ class AscendStreamAssign {
   void InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr);
   void InsertEventHcomDependHcomAtSameGroup(const NotNull<KernelGraphPtr> &graph_ptr,
                                             std::pair<std::string, std::map<uint32_t, std::set<uint32_t>>> group_item);
+  void InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
+                             uint32_t cur_event_id, uint32_t graph_id);
+  void InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
+                                uint32_t cur_event_id, uint32_t graph_id);
   std::vector<std::pair<uint32_t, vector<size_t>>> GetStreamIDHcomMap(std::vector<CNodePtr> cnode_ptr_list,
                                                                       const std::string group, size_t graph_id);
 
