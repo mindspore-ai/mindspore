@@ -228,3 +228,4 @@ from .sspaddmm import _sspaddmm_aicpu
 from .cholesky_solve import _cholesky_solve_aicpu
 from .sparse_apply_adagrad_da import _sparse_apply_adagrad_da_aicpu
 from .addcdiv import _addcdiv_aicpu
+from .unique_consecutive import _unique_consecutive_aicpu
