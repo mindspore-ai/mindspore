@@ -107,6 +107,7 @@
 #include "backend/common/pass/eliminate_redundant_op.h"
 #include "backend/common/pass/common_subexpression_elimination.h"
 #include "plugin/device/ascend/optimizer/format_type/merge_cast_to_op.h"
+#include "plugin/device/ascend/optimizer/format_type/remove_host_kernel.h"
 #include "plugin/device/ascend/optimizer/format_type/check_consistency.h"
 #include "plugin/device/ascend/optimizer/format_type/eliminate_graph_output_transdata.h"
 #include "plugin/device/ascend/optimizer/buffer_fusion/ub_pattern_fusion.h"
@@ -365,6 +366,7 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
   AddAscendIRFusionPass(ir_fusion_pm.get());
 
@@ -457,6 +459,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
   ir_fusion_pm->AddPass(std::make_shared<RenormSplit>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  ir_fusion_pm->AddPass(std::make_shared<RemoveHostKernel>());
   AddAscendIRFusionRulesPass(ir_fusion_pm.get());
 
   optimizer->AddPassManager(ir_fusion_pm);
