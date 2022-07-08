@@ -108,6 +108,7 @@ void PynativeProfiler::OpDataProducerBegin(AscendKernelRuntime *runtime_instance
   } else {
     op_info.thread_index = thread_op_info_map_[thread_id].thread_index;
   }
+  std::unique_lock<std::shared_mutex> lock(op_map_mutex_);
   thread_op_info_map_[thread_id] = op_info;
 }
 
@@ -142,6 +143,7 @@ void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dyna
   double_t start_t = static_cast<double_t>(start_timestamp) / milli_second_ratio;
   op_info.start_timestamp = start_t;
 
+  std::unique_lock<std::shared_mutex> lock(op_map_mutex_);
   pynative_op_info_.push_back(op_info);
 }
 

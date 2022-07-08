@@ -70,6 +70,7 @@ class MS_CORE_API PynativeProfiler : public Profiler {
   const uint64_t kUSecondInSecond = 1000000;
   const uint64_t milli_second_ratio = 1000;
   std::map<std::thread::id, PynativeOpInfo> thread_op_info_map_;
+  std::shared_mutex op_map_mutex_;
 };
 }  // namespace ascend
 }  // namespace profiler
