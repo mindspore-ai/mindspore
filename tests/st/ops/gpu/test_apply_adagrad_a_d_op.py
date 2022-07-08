@@ -144,6 +144,7 @@ def ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float():
     """
     Feature: ApplyAdagradDA GPU kernel
@@ -173,6 +174,7 @@ def test_apply_adagrad_da_float():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float16():
     """
     Feature: ApplyAdagradDA GPU kernel
@@ -204,6 +206,7 @@ def test_apply_adagrad_da_float16():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float16_vmap():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -234,6 +237,7 @@ def test_apply_adagrad_da_float16_vmap():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float_vmap():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -263,6 +267,7 @@ def test_apply_adagrad_da_float_vmap():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float16_vmap2():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -293,6 +298,7 @@ def test_apply_adagrad_da_float16_vmap2():
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_gpu_training
+@pytest.mark.skip
 def test_apply_adagrad_da_float_vmap2():
     """
     Feature: ApplyAdagradDA vmap test on GPU

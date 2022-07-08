@@ -43,6 +43,7 @@ class ApplyAdagradDANet(nn.Cell):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.env_onecard
+@pytest.mark.skip
 def test_apply_adagrad_da():
     """
     Feature: ApplyAdagradDAD

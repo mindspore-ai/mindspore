@@ -8697,7 +8697,7 @@ class ApplyAdagradDA(Primitive):
                       conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> class ApplyAdagradDANet(nn.Cell):
