@@ -14,11 +14,14 @@
 # ============================================================================
 
 import numpy as np
-import mindspore.context as context
+import pytest
+
+from mindspore import context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -32,23 +35,61 @@ class Net(nn.Cell):
         return self.trunc(x0)
 
 
-def test32_net():
-    x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3]), mstype.float32)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test16_net():
+    x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3, -0.4]), mstype.float16)
     uniq = Net()
     output = uniq(x)
-    print("x:\n", output)
-    expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1]
-    print("expected_x:\n", expect_x_result)
+    expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1, -0]
 
     assert (output.asnumpy() == expect_x_result).all()
 
 
-def test16_net():
-    x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3]), mstype.float16)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test32_net():
+    x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3, -0.4]), mstype.float32)
     uniq = Net()
     output = uniq(x)
-    print("x:\n", output)
-    expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1]
-    print("expected_x:\n", expect_x_result)
+    expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1, -0]
+
+    assert (output.asnumpy() == expect_x_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def testint8_net():
+    x = Tensor(np.array([1, -2, 5, 2, 0, -1, 2, -1, -0]), mstype.int8)
+    uniq = Net()
+    output = uniq(x)
+    expect_x_result = [1, -2, 5, 2, 0, -1, 2, -1, -0]
+
+    assert (output.asnumpy() == expect_x_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def testuint8_net():
+    x = Tensor(np.array([1, 5, 2, 0]), mstype.uint8)
+    uniq = Net()
+    output = uniq(x)
+    expect_x_result = [1, 5, 2, 0]
+
+    assert (output.asnumpy() == expect_x_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def testint32_net():
+    x = Tensor(np.array([1, -2, 5, 2, 0, -1, 2, -1, -0]), mstype.int32)
+    uniq = Net()
+    output = uniq(x)
+    expect_x_result = [1, -2, 5, 2, 0, -1, 2, -1, -0]
 
     assert (output.asnumpy() == expect_x_result).all()
