@@ -81,25 +81,6 @@ Status DefaultInferSession::CompileGraph(FuncGraphPtr graph) {
 
     kernel_graphs_.push_back(kernel_seg_graph);
   }
-  // std::vector<KernelGraphPtr> all_out_graph;
-  // kernel_graph_ = session_basic_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
-
-  // auto &kernel_nodes = kernel_graph_->execution_order();
-  // for (const auto &kernel_node : kernel_nodes) {
-  //   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  //   std::shared_ptr<kernel::CpuKernelMod> cpu_kernel_mod =
-  //     kernel::Factory<kernel::CpuKernelMod>::Instance().Create(kernel_name);
-  //   auto args = kernel::AbstractArgsFromCNode(kernel_node);
-  //   auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
-  //   if (!ret) {
-  //     MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
-  //   }
-  //   if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-  //       kernel::KRET_RESIZE_FAILED) {
-  //     MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
-  //   }
-  //   AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
-  // }
   return kSuccess;
 }
 

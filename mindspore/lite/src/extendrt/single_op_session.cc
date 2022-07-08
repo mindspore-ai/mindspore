@@ -58,13 +58,6 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
     auto args = kernel::AbstractArgsFromCNode(kernel_node);
     auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
     MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
-    // if (!ret) {
-    //   MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
-    // }
-    // if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-    //     kernel::KRET_RESIZE_FAILED) {
-    //   MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
-    // }
 
     std::vector<size_t> input_size_list;
     std::vector<size_t> output_size_list;
@@ -123,7 +116,6 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
     for (size_t i = 0; i < input_num; ++i) {
       auto device_address = AnfAlgo::GetPrevNodeMutableOutputAddr(kernel_node, i).get();
       MS_EXCEPTION_IF_NULL(device_address);
-      //   AddRuntimeAddress(device_address, inputs);
       kernel::AddressPtr input = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(input);
       if (device_address->ptr_ == nullptr) {
@@ -139,7 +131,6 @@ Status SingleOpInferSession::RunGraph(const std::vector<tensor::TensorPtr> &inpu
     for (size_t i = 0; i < output_num; ++i) {
       auto device_address = AnfAlgo::GetMutableOutputAddr(kernel_node, i).get();
       MS_EXCEPTION_IF_NULL(device_address);
-      // AddRuntimeAddress(device_address, outputs);
       kernel::AddressPtr output = std::make_shared<kernel::Address>();
       MS_EXCEPTION_IF_NULL(output);
       if (device_address->ptr_ == nullptr) {
