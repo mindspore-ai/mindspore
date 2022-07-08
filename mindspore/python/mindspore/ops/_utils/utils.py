@@ -51,6 +51,8 @@ def get_broadcast_shape(x_shape, y_shape, prim_name, shape_type="", arg_name1="x
     y_len = len(y_shape)
     length = x_len if x_len < y_len else y_len
     broadcast_shape_back = []
+    if is_dim_unknown(x_shape) or is_dim_unknown(y_shape):
+        return [-2]
 
     for i in range(-length, 0):
         if x_shape[i] == 1:
