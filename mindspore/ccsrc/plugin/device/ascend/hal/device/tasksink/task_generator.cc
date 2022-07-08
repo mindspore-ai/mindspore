@@ -184,7 +184,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
       input->addr = device_address->ptr_;
       input->size = device_address->size_;
 
-      auto prenode_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node_ptr, i);
+      auto prenode_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node_ptr, real_input_index);
       MS_EXCEPTION_IF_NULL(prenode_with_index.first);
       if (AnfUtils::IsRealCNodeKernel(prenode_with_index.first)) {
         if (common::AnfAlgo::IsNonTaskOp(prenode_with_index.first->cast<CNodePtr>())) {
