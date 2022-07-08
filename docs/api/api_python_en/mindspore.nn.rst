@@ -150,6 +150,8 @@ Dropout Layer
     :template: classtemplate.rst
 
     mindspore.nn.Dropout
+    mindspore.nn.Dropout2d
+    mindspore.nn.Dropout3d
 
 Normalization Layer
 -------------------
