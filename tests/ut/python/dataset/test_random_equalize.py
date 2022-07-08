@@ -18,7 +18,7 @@ Testing RandomEqualize op in DE
 import numpy as np
 
 import mindspore.dataset as ds
-from mindspore.dataset.vision import Decode, RandomEqualize, Equalize
+from mindspore.dataset.vision import Decode, Resize, RandomEqualize, Equalize
 from mindspore import log as logger
 from util import helper_random_op_pipeline, visualize_list, visualize_image, diff_mse
 
@@ -110,8 +110,74 @@ def test_random_equalize_invalid_prob():
             operations=random_equalize_op, input_columns=['image'])
     except ValueError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(
-            e)
+        assert "Input prob is not within the required interval of [0.0, 1.0]." in str(e)
+
+
+def test_random_equalize_four_channel():
+    """
+    Feature: RandomEqualize
+    Description: test with four channel images
+    Expectation: raise errors as expected
+    """
+    logger.info("test_random_equalize_four_channel")
+
+    c_op = RandomEqualize()
+
+    try:
+        data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        data_set = data_set.map(operations=[Decode(), Resize((224, 224)),
+                                            lambda img: np.array(img[128, 98, 4])], input_columns=["image"])
+
+        data_set = data_set.map(operations=c_op, input_columns="image")
+
+    except RuntimeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "image shape is incorrect, expected num of channels is 1 or 3." in str(e)
+
+
+def test_random_equalize_four_dim():
+    """
+    Feature: RandomEqualize
+    Description: test with four dimension images
+    Expectation: raise errors as expected
+    """
+    logger.info("test_random_equalize_four_dim")
+
+    c_op = RandomEqualize()
+
+    try:
+        data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        data_set = data_set.map(operations=[Decode(), Resize((224, 224)),
+                                            lambda img: np.array(img[2, 200, 10, 32])], input_columns=["image"])
+
+        data_set = data_set.map(operations=c_op, input_columns="image")
+
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "image shape is not <H,W,C> or <H,W> " in str(e)
+
+
+def test_random_equalize_invalid_input():
+    """
+    Feature: RandomEqualize
+    Description: test with images in uint32 type
+    Expectation: raise errors as expected
+    """
+    logger.info("test_random_equalize_invalid_input")
+
+    c_op = RandomEqualize()
+
+    try:
+        data_set = ds.ImageFolderDataset(dataset_dir=data_dir, shuffle=False)
+        data_set = data_set.map(
+            operations=[Decode(), Resize((224, 224)),
+                        lambda img: np.array(img[2, 32, 3], dtype=float32)],
+            input_columns=["image"])
+        data_set = data_set.map(operations=c_op, input_columns="image")
+
+    except TypeError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "Input Tensor type should be uint8, got type is non-uint8." in str(e)
 
 
 if __name__ == "__main__":
@@ -119,3 +185,6 @@ if __name__ == "__main__":
     test_random_equalize_eager()
     test_random_equalize_comp(plot=True)
     test_random_equalize_invalid_prob()
+    test_random_equalize_four_channel()
+    test_random_equalize_four_dim()
+    test_random_equalize_invalid_input()
