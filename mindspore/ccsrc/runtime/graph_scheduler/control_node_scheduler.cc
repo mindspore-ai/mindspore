@@ -216,8 +216,8 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompile
   // Initialize the parameter in the control node, first get all the front parameters in the control node, then find
   // the corresponding backend parameter from the map, and insert it into the host data source actor.
   const auto &control_node_parameters = parser->control_node_parameters();
-  for (const auto &parameter : control_node_parameters) {
-    if (IsPersistentDeviceTensor(parameter.first)) {
+  for (const auto &parameter_with_index : control_node_parameters) {
+    if (IsPersistentDeviceTensor(parameter_with_index.first)) {
       continue;
     }
     if (control_node_ds_actor == nullptr) {
@@ -230,22 +230,24 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompile
     }
 
     auto &node_map = control_node_ds_actor->data_node_position_map_;
-    if (node_map.find(parameter.first) != node_map.end()) {
+    if (node_map.find(parameter_with_index) != node_map.end()) {
       continue;
     }
-    const auto &backend_parameter_with_context =
-      parser->FetchBackendParameterWithContextByFrontParameter({parameter.first, 0});
-    const auto &backend_node = backend_parameter_with_context.first;
-    const auto &device_context = backend_parameter_with_context.second;
-    MS_EXCEPTION_IF_NULL(backend_node);
-    auto iter =
-      find(control_node_ds_actor->data_nodes_.begin(), control_node_ds_actor->data_nodes_.end(), backend_node);
-    if (iter != control_node_ds_actor->data_nodes_.end()) {
-      (void)node_map.emplace(parameter.first, iter - control_node_ds_actor->data_nodes_.begin());
+    const auto &node_with_index_with_context =
+      parser->FetchBackendParameterWithContextByFrontParameter(parameter_with_index);
+    const auto &node_with_index = node_with_index_with_context.first;
+    const auto &device_context = node_with_index_with_context.second;
+    MS_EXCEPTION_IF_NULL(node_with_index.first);
+    auto iter = find(control_node_ds_actor->data_node_with_indexs_.begin(),
+                     control_node_ds_actor->data_node_with_indexs_.end(), node_with_index);
+    if (iter != control_node_ds_actor->data_node_with_indexs_.end()) {
+      (void)node_map.emplace(parameter_with_index, iter - control_node_ds_actor->data_node_with_indexs_.begin());
+      MS_LOG(DEBUG) << "Insert front node:" << parameter_with_index.first->DebugString()
+                    << " index:" << parameter_with_index.second << " to host queue data source actor.";
     } else {
-      if (parameter.first->kernel_info() == nullptr) {
+      if (parameter_with_index.first->kernel_info() == nullptr) {
         // Create kernel info for control node parameters.
-        const auto &backend_kernel_info = static_cast<device::KernelInfo *>(backend_node->kernel_info());
+        const auto &backend_kernel_info = static_cast<device::KernelInfo *>(node_with_index.first->kernel_info());
         MS_EXCEPTION_IF_NULL(backend_kernel_info);
         const auto &backend_build_info = backend_kernel_info->GetMutableSelectKernelBuildInfo();
         MS_EXCEPTION_IF_NULL(backend_build_info);
@@ -256,23 +258,24 @@ void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompile
 
         auto kernel_info = std::make_shared<device::KernelInfo>();
         kernel_info->set_select_kernel_build_info(builder->Build());
-        parameter.first->set_kernel_info(kernel_info);
+        parameter_with_index.first->set_kernel_info(kernel_info);
       }
 
       // Create device tensor.
-      const auto &device_address = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+      const auto &device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
       MS_EXCEPTION_IF_NULL(device_address);
       auto new_address = device_context->device_res_manager_->CreateDeviceAddress(
         nullptr, device_address->GetSize(), device_address->format(), device_address->type_id(),
         device_address->host_shape());
       MS_EXCEPTION_IF_NULL(new_address);
-      MS_LOG(INFO) << "Create new address for node that has no corresponding backend node:"
-                   << common::AnfAlgo::GetNodeDebugString(parameter.first) << " addr:" << new_address
-                   << " size:" << device_address->GetSize() << ", type id:" << device_address->type_id();
-      AnfAlgo::SetOutputAddr(new_address, 0, parameter.first.get());
+      MS_LOG(DEBUG) << "Create new address for node that has no corresponding backend node:"
+                    << parameter_with_index.first->DebugString() << " index:" << parameter_with_index.second
+                    << " addr:" << new_address << " size:" << device_address->GetSize()
+                    << ", type id:" << device_address->type_id();
+      AnfAlgo::SetOutputAddr(new_address, parameter_with_index.second, parameter_with_index.first.get());
 
-      (void)node_map.emplace(parameter.first, control_node_ds_actor->data_nodes_.size());
-      (void)control_node_ds_actor->data_nodes_.emplace_back(parameter.first);
+      (void)node_map.emplace(parameter_with_index, control_node_ds_actor->data_node_with_indexs_.size());
+      (void)control_node_ds_actor->data_node_with_indexs_.emplace_back(parameter_with_index);
       (void)control_node_ds_actor->device_contexts_.emplace_back(device_context);
     }
   }
@@ -597,7 +600,7 @@ void ControlNodeScheduler::BuildStackActorForControlNode(const GraphCompilerInfo
 void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerInfo &graph_compiler_info) {
   MS_EXCEPTION_IF_NULL(actor_set);
   MS_EXCEPTION_IF_NULL(actor_set->control_actors_);
-
+  MS_LOG(DEBUG) << "Control node scheduler link start.";
   // Link data arrows and partial arrows between control actors.
   LinkArrowForControlActor(actor_set->control_actors_.get(), graph_compiler_info);
 
@@ -622,6 +625,7 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
   LinkControlArrowForLoopCountActor(actor_set, graph_compiler_info);
 
   LinkControlArrowForCustomActor(actor_set, graph_compiler_info);
+  MS_LOG(DEBUG) << "Control node scheduler link end.";
 }
 
 void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
@@ -1581,18 +1585,16 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
   for (size_t i = 0; i < to_actor->formal_parameters_.size(); ++i) {
     const auto &formal_parameter = to_actor->formal_parameters_[i];
     MS_EXCEPTION_IF_NULL(formal_parameter.first);
-    const auto &iter = host_ds_actor->data_node_position_map_.find(formal_parameter.first);
+    MS_LOG(DEBUG) << "Formal parameter:" << formal_parameter.first->DebugString()
+                  << " index:" << formal_parameter.second;
+    const auto &iter = host_ds_actor->data_node_position_map_.find(formal_parameter);
     if (iter != host_ds_actor->data_node_position_map_.end()) {
-      // If tuple parameter exists in control node cases, fetch the correct parameter
-      // by add the kernel index (formal_parameter.second) to the iter.
-      if (iter->second + formal_parameter.second >= host_ds_actor->data_nodes().size()) {
-        MS_LOG(EXCEPTION) << "Index exceeds data_node.size()";
-      }
-      const auto &parameter = host_ds_actor->data_nodes()[iter->second + formal_parameter.second];
-      SchedulerHelper::AddDataArrow(host_ds_actor, to_actor, 0, i, parameter);
+      const auto &parameter_with_index = host_ds_actor->data_nodes()[iter->second];
+      SchedulerHelper::AddDataArrow(host_ds_actor, to_actor, parameter_with_index.second, i,
+                                    parameter_with_index.first);
     } else {
-      MS_LOG(INFO) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
-                   << " for actor:" << to_actor->GetAID();
+      MS_LOG(WARNING) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                      << " index:" << formal_parameter.second << " for actor:" << to_actor->GetAID();
     }
   }
 }

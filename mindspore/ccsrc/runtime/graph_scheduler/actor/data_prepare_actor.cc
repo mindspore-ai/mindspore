@@ -527,11 +527,12 @@ void DataPrepareActor::PrepareDataForHostTensorQueue(const std::vector<std::vect
       // Synchronize dynamic shape info of the input tensor to the parameter node of graph.
       UpdateDynamicShape(input_node, input_tensor);
 
-      auto tensor_position = host_data_source_actor_->FetchNodePosition(input_node);
+      auto tensor_position = host_data_source_actor_->FetchNodePosition({input_node, 0});
       if (tensor_position >= host_tensors.size()) {
         std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
         SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
       }
+      MS_LOG(DEBUG) << "Set tensor position:" << tensor_position << " for input data.";
       host_tensors[tensor_position] = input_tensor;
 
       UpdateDeviceAddressForDataNode(input_node, input_tensor, graph, device_context);
@@ -571,7 +572,7 @@ void DataPrepareActor::PrepareDataForStepMode(const std::vector<std::vector<Tens
       UpdateDynamicShape(input_node, input_tensor);
 
       if ((host_data_source_actor_ != nullptr) && (host_tensor_queue_ != nullptr)) {
-        auto tensor_position = host_data_source_actor_->FetchNodePosition(input_node);
+        auto tensor_position = host_data_source_actor_->FetchNodePosition({input_node, 0});
         if (tensor_position >= host_tensors.size()) {
           std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
@@ -956,7 +957,7 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
       continue;
     }
 
-    auto tensor_position = host_data_source_actor_->FetchNodePosition(input_node);
+    auto tensor_position = host_data_source_actor_->FetchNodePosition(control_node_parameters[i]);
     if (tensor_position >= host_tensors->size()) {
       std::string error_info = "The position of tensor is out of range: " + std::to_string(tensor_position);
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
@@ -964,6 +965,7 @@ void DataPrepareActor::PrepareHostTensorQueueForControlNode(const std::vector<Te
     if ((*host_tensors)[tensor_position] != nullptr) {
       continue;
     }
+    MS_LOG(DEBUG) << "Set tensor position:" << tensor_position << " for input data.";
     (*host_tensors)[tensor_position] = input_tensor;
     // Avoid the device `ptr_` being hold by the input tensor and the output tensor, the input tensor address cannot be
     // directly set to the input control node, which may be a passthrough node. The device 'ptr_' is re-malloced and

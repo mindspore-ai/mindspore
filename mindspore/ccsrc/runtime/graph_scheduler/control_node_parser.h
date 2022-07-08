@@ -68,14 +68,14 @@ constexpr size_t kMakeTensorInputStartPos = 1;
 constexpr size_t kMakeCSRTensorInputNum = 4;
 constexpr size_t kMakeCOOTensorInputNum = 3;
 
-using NodeWithContext = std::pair<AnfNodePtr, DeviceContext *>;
+using NodeWithIndexToContext = std::pair<KernelWithIndex, DeviceContext *>;
 struct NodeWithContextCmp {
-  bool operator()(const NodeWithContext &node1, const NodeWithContext &node2) const {
+  bool operator()(const NodeWithIndexToContext &node1, const NodeWithIndexToContext &node2) const {
     return node1.second->GetDeviceType() < node2.second->GetDeviceType();
   }
 };
 
-using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithContext, NodeWithContextCmp>>;
+using FrontToBackendNodeWithContext = std::map<KernelWithIndex, std::set<NodeWithIndexToContext, NodeWithContextCmp>>;
 using FrontToBackendKernelWithContext = std::map<KernelWithIndex, std::pair<KernelWithIndex, DeviceContext *>>;
 using FuncGraphToKernelGraphGroup = mindspore::HashMap<FuncGraphPtr, std::vector<std::vector<KernelGraphPtr>>>;
 using HostParameterToWeight = std::map<AnfNodePtr, std::set<AnfNodePtr>>;
@@ -167,7 +167,8 @@ class ControlNodeParser {
   KernelWithIndex FetchBackendNodeByFrontNode(const KernelWithIndex &node_with_index);
   FuncGraphPtr FetchFuncGraphByKernelGraph(const KernelGraph *const graph);
   std::string FetchGroupNameByKernelGraph(const KernelGraphPtr &graph);
-  NodeWithContext FetchBackendParameterWithContextByFrontParameter(const KernelWithIndex &front_parameter_with_index);
+  NodeWithIndexToContext FetchBackendParameterWithContextByFrontParameter(
+    const KernelWithIndex &front_parameter_with_index);
 
  private:
   friend class GraphScheduler;

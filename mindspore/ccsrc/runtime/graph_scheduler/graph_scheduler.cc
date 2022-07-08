@@ -835,7 +835,7 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
   std::vector<DataSourceActorPtr> data_source_actors;
   HostQueueDSActorPtr host_queue_ds_actor = nullptr;
   size_t data_node_position = 0;
-  mindspore::HashMap<AnfNodePtr, size_t> front_node_position_temp_map;
+  std::map<KernelWithIndex, size_t> front_node_position_temp_map;
 
   for (size_t i = 0; i < graph_compiler_info.graphs_.size(); ++i) {
     const auto &graph = graph_compiler_info.graphs_[i];
@@ -854,8 +854,9 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
         if (graph_compiler_info.control_node_parser_->IsInited()) {
           auto node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input_node);
           if (node_with_index.first != nullptr && node_with_index.first->isa<Parameter>() &&
-              find(root_parameters.begin(), root_parameters.end(), node_with_index.first) == root_parameters.end())
+              find(root_parameters.begin(), root_parameters.end(), node_with_index.first) == root_parameters.end()) {
             continue;
+          }
         }
 
         if (host_queue_ds_actor == nullptr) {
@@ -867,20 +868,27 @@ std::vector<DataSourceActorPtr> GraphScheduler::BuildDataSourceActor(const Graph
           (void)data_source_actors.emplace_back(host_queue_ds_actor);
         }
 
-        const auto &front_node = AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph);
+        KernelWithIndex front_node_with_index = graph->GetElementInTupleBackendFrontIndexMap(input_node);
+        if (front_node_with_index.first == nullptr) {
+          front_node_with_index = {AnfAlgo::FetchFrontNodeByBackendNode(input_node, *graph), 0};
+          MS_LOG(DEBUG) << "Init backend input node:" << input_node->DebugString() << " for host data source actor.";
+        }
+        MS_EXCEPTION_IF_NULL(front_node_with_index.first);
         // In the scenario where multiple backend nodes correspond to the same front node, only the first backend node
         // is saved in the host queue data source actor.
-        if (front_node_position_temp_map.count(front_node) > 0) {
-          (void)host_queue_ds_actor->data_node_position_map_.emplace(input_node,
-                                                                     front_node_position_temp_map[front_node]);
+        if (front_node_position_temp_map.count(front_node_with_index) > 0) {
+          (void)host_queue_ds_actor->data_node_position_map_.emplace(
+            KernelWithIndex(input_node, 0), front_node_position_temp_map[front_node_with_index]);
           continue;
         }
-        (void)host_queue_ds_actor->data_nodes_.emplace_back(input_node);
+        (void)host_queue_ds_actor->data_node_with_indexs_.emplace_back(input_node, 0);
         (void)host_queue_ds_actor->device_contexts_.emplace_back(device_context);
-        (void)host_queue_ds_actor->data_node_position_map_.emplace(input_node, data_node_position);
+        (void)host_queue_ds_actor->data_node_position_map_.emplace(KernelWithIndex(input_node, 0), data_node_position);
         // In control flow, need to rely on the front node to find the location of the corresponding real parameter.
-        (void)host_queue_ds_actor->data_node_position_map_.emplace(front_node, data_node_position);
-        (void)front_node_position_temp_map.emplace(front_node, data_node_position);
+        (void)host_queue_ds_actor->data_node_position_map_.emplace(front_node_with_index, data_node_position);
+        MS_LOG(DEBUG) << "Insert data source parameter:" << front_node_with_index.first->DebugString()
+                      << " index:" << front_node_with_index.second << " position:" << data_node_position;
+        (void)front_node_position_temp_map.emplace(front_node_with_index, data_node_position);
         data_node_position++;
       }
     }
@@ -1379,7 +1387,7 @@ void GraphScheduler::LinkDataArrowForBaseActor(AbstractActor *const from_actor, 
   auto to_input_index = to_kernel_with_input_idx.second;
 
   // Get the position of from kernel in the data source actor.
-  auto position = from_actor->FetchNodePosition(from_kernel);
+  auto position = from_actor->FetchNodePosition({from_kernel, 0});
   if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
     MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
   }
@@ -1401,8 +1409,8 @@ void GraphScheduler::LinkDataArrowForHostDSActor(AbstractActor *const from_actor
 
   KernelWithIndex real_from_kernel_with_output_idx = from_kernel_with_output_idx;
   // Get the position and real kernel by from kernel in the data source actor.
-  auto position = host_ds_actor->FetchNodePosition(from_kernel_with_output_idx.first);
-  real_from_kernel_with_output_idx.first = host_ds_actor->FetchNode(position);
+  auto position = host_ds_actor->FetchNodePosition({from_kernel_with_output_idx.first, 0});
+  real_from_kernel_with_output_idx.first = host_ds_actor->FetchNode(position).first;
 
   LinkDataArrowForBaseActor(from_actor, to_actor, real_from_kernel_with_output_idx, to_kernel_with_input_idx, graph);
 }
@@ -1457,7 +1465,7 @@ void GraphScheduler::LinkDataArrowForCopyActor(AbstractActor *const from_actor, 
     InsertActor(copy_actor);
 
     // Set the member device_contexts_ of the copy actor.
-    auto position = from_actor->FetchNodePosition(from_kernel);
+    auto position = from_actor->FetchNodePosition({from_kernel, 0});
     if ((from_actor->device_contexts_.size() <= position) || (to_actor->device_contexts_.size() <= 0)) {
       MS_LOG(EXCEPTION) << "The device contexts size is wrong.";
     }
@@ -2039,8 +2047,8 @@ void GraphScheduler::LinkOutputResultArrowForOutputActor(OutputActor *to_actor,
         if (kernel_type == KernelTransformType::kHostDataSourceActor) {
           auto host_queue_ds_actor = dynamic_cast<HostQueueDataSourceActor *>(from_actor);
           MS_EXCEPTION_IF_NULL(host_queue_ds_actor);
-          auto position = host_queue_ds_actor->FetchNodePosition(output_with_index.first);
-          real_from_kernel = host_queue_ds_actor->FetchNode(position);
+          auto position = host_queue_ds_actor->FetchNodePosition({output_with_index.first, 0});
+          real_from_kernel = host_queue_ds_actor->FetchNode(position).first;
           UpdateRefCount(output_with_index.first, output_with_index.second, true);
         }
         SchedulerHelper::AddResultArrow(from_actor, to_actor, real_from_kernel, output_with_index.second,
@@ -2208,23 +2216,28 @@ void GraphScheduler::PersistDeviceTensorForRootGraphControlNode(const GraphCompi
     // graph using the different root graph parameters. So can not use the device tensor of sub kernel graph parameter
     // directly and choose the first backend parameter in sub kernel graphs to create new device tensor to make sure
     // that the device tensor of root graph parameters are different.
-    const auto &backend_parameter_with_context =
+    const auto &node_with_index_with_context =
       parser->FetchBackendParameterWithContextByFrontParameter({root_graph_parameter, 0});
-    if (backend_parameter_with_context.first == nullptr) {
+    if (node_with_index_with_context.first.first == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot find backend node for weight parameter:" << root_graph_parameter->DebugString();
     }
-    const auto &backend_node = backend_parameter_with_context.first;
-    const auto &device_context = backend_parameter_with_context.second;
+    const auto &backend_node = node_with_index_with_context.first.first;
+    const auto &index = node_with_index_with_context.first.second;
+    const auto &device_context = node_with_index_with_context.second;
     MS_EXCEPTION_IF_NULL(backend_node);
     MS_EXCEPTION_IF_NULL(device_context);
-    auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, 0, false);
+    if (index != 0) {
+      MS_LOG(EXCEPTION) << "Device tensor store does not support tuple type, node:" << backend_node->DebugString()
+                        << " index:" << index;
+    }
+    auto sub_device_tensor = AnfAlgo::GetMutableOutputAddr(backend_node, index, false);
     MS_EXCEPTION_IF_NULL(sub_device_tensor);
 
     auto new_device_tensor = device_context->device_res_manager_->CreateDeviceAddress(
       nullptr, sub_device_tensor->GetSize(), sub_device_tensor->format(), sub_device_tensor->type_id(),
       sub_device_tensor->host_shape());
     MS_EXCEPTION_IF_NULL(new_device_tensor);
-    new_device_tensor->SetNodeIndex(backend_node, 0);
+    new_device_tensor->SetNodeIndex(backend_node, index);
     new_device_tensor->set_is_ptr_persisted(sub_device_tensor->is_ptr_persisted());
     new_device_tensor->set_from_persistent_mem(true);
     SchedulerHelper::AddDeviceTensorStore(root_graph_parameter.get(), new_device_tensor);

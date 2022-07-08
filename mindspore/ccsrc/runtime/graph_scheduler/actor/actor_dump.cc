@@ -185,10 +185,10 @@ void DumpDSActor(const DataSourceActor *actor, std::ofstream &ofs) {
     ofs << "\t\tdata_nodes:" << host_queue_ds_actor->data_nodes().size() << "\n";
     for (size_t i = 0; i < host_queue_ds_actor->data_nodes().size(); ++i) {
       const auto &data_node = host_queue_ds_actor->data_nodes()[i];
-      MS_EXCEPTION_IF_NULL(data_node);
-      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_node, 0, false);
+      MS_EXCEPTION_IF_NULL(data_node.first);
+      const auto &device_tensor = AnfAlgo::GetMutableOutputAddr(data_node.first, data_node.second, false);
       MS_EXCEPTION_IF_NULL(device_tensor);
-      ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node->fullname_with_scope()
+      ofs << "\t\t\tnode_order_number:" << i << "\tnode_name:" << data_node.first->fullname_with_scope()
           << "\tptr:" << device_tensor->GetPtr() << "\tsize:" << device_tensor->GetSize()
           << "\toriginal_ref_count:" << device_tensor->original_ref_count()
           << "\tdynamic_ref_count:" << device_tensor->dynamic_ref_count() << "\n ";
