@@ -26,6 +26,7 @@
 #include <unordered_map>
 
 #include "ir/anf.h"
+#include "ir/cell.h"
 #include "utils/hash_set.h"
 #include "frontend/operator/cc_implementations.h"
 #include "frontend/operator/ops.h"
@@ -1287,29 +1288,14 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
   return eng->ForwardConfig(old_conf, fn_conf);
 }
 
-EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
-                                                  const AnfNodeConfigPtr &out_conf) {
-  // args_spec_list: same as StaticGetter
-  if (args_spec_list.size() < 2) {
-    MS_LOG(EXCEPTION) << "Size of args_spec_list is less than 2";
-  }
-  MS_EXCEPTION_IF_NULL(out_conf);
-  // An external type.
-  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
-  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
-  auto data_value = args_spec_list[0]->BuildValue();
+EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, const ValuePtr &attr_value,
+                                                  const ValuePtr &data_value, const AnfNodeConfigPtr &out_conf) {
   MS_EXCEPTION_IF_NULL(data_value);
-  if (!data_value->isa<parse::NameSpace>()) {
-    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
-                            << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
-  }
-
-  auto item_value = args_spec_list[1]->BuildValue();
-  MS_EXCEPTION_IF_NULL(item_value);
+  MS_EXCEPTION_IF_NULL(attr_value);
+  ValuePtr item_value = attr_value;
   if (item_value->isa<StringImm>()) {
     item_value = std::make_shared<parse::Symbol>(item_value->cast<StringImmPtr>()->value());
   }
-
   if (!item_value->isa<parse::Symbol>()) {
     MS_LOG(EXCEPTION) << "The value of the attribute could not be inferred: " << item_value->ToString();
   }
@@ -1336,6 +1322,28 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
   MS_EXCEPTION_IF_NULL(eng);
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_node, out_conf->context(), out_conf->func_graph());
   return eng->ForwardConfig(out_conf, fn_conf);
+}
+
+EvalResultPtr GetEvaluatedValueForNameSpace(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
+                                            const AnfNodeConfigPtr &out_conf) {
+  // args_spec_list: same as StaticGetter
+  if (args_spec_list.size() < 2) {
+    MS_LOG(EXCEPTION) << "Size of args_spec_list is less than 2";
+  }
+  MS_EXCEPTION_IF_NULL(out_conf);
+  // An external type.
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  MS_EXCEPTION_IF_NULL(args_spec_list[1]);
+  auto data_value = args_spec_list[0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(data_value);
+  if (!data_value->isa<parse::NameSpace>()) {
+    MS_EXCEPTION(TypeError) << "Not supported to get attribute for " << data_value->ToString()
+                            << "\nThe first argument should be a NameSpace, but got " << args_spec_list[0]->ToString();
+  }
+
+  auto item_value = args_spec_list[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(item_value);
+  return GetEvaluatedValueForNameSpaceString(nullptr, item_value, data_value, out_conf);
 }
 
 EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
@@ -1367,6 +1375,31 @@ EvalResultPtr GetEvaluatedValueForMsClassAttrOrMethod(const AnalysisEnginePtr &e
   return eng->ForwardConfig(out_conf, fn_conf);
 }
 
+EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
+                                                   const FuncGraphPtr &func_value, const ConfigPtr &data_conf,
+                                                   const AnfNodeConfigPtr &out_conf) {
+  MS_EXCEPTION_IF_NULL(item_value);
+  MS_EXCEPTION_IF_NULL(func_value);
+  if (!item_value->isa<StringImm>()) {
+    MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
+  }
+  auto python_obj = func_value->python_obj();
+  MS_EXCEPTION_IF_NULL(python_obj);
+  auto wrapper_obj = dyn_cast<parse::PyObjectWrapper>(python_obj);
+  MS_EXCEPTION_IF_NULL(wrapper_obj);
+  py::object real_python_obj = wrapper_obj->obj();
+  MS_LOG(DEBUG) << "item_value: " << item_value->ToString() << ", func_value: " << func_value->ToString()
+                << ", real_python_obj: " << py::str(real_python_obj);
+  if (py::isinstance<Cell>(real_python_obj)) {
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    py::object ns_obj =
+      python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL, real_python_obj);
+    auto ns = std::make_shared<parse::NameSpace>(parse::RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, ns_obj);
+    return GetEvaluatedValueForNameSpaceString(nullptr, item_value, ns, out_conf);
+  }
+  return nullptr;
+}
+
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine, const ValuePtr &item_value,
                                                           const TypePtr &data_type, const ConfigPtr &data_conf,
                                                           const AnfNodeConfigPtr &out_conf) {
@@ -1376,7 +1409,6 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   if (!item_value->isa<StringImm>()) {
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
   }
-
   std::string item_name = item_value->cast<StringImmPtr>()->value();
   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD;
   Any require = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
@@ -1444,7 +1476,6 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   MS_EXCEPTION_IF_NULL(data_args);
   MS_EXCEPTION_IF_NULL(item_args);
   MS_LOG(DEBUG) << "StaticGetter, data: " << data_args->ToString() << ", item: " << item_args->ToString();
-  TypePtr data_type = data_args->BuildType();
   ValuePtr item_value = item_args->BuildValue();
 
   ScopePtr scope = kDefaultScope;
@@ -1461,11 +1492,20 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   if (class_value != nullptr) {
     return GetEvaluatedValueForMsClassAttrOrMethod(engine, item_value, class_value, data_conf, out_conf);
   }
+  auto data_func_graph = dyn_cast<FuncGraphAbstractClosure>(data_args);
+  if (data_func_graph != nullptr) {
+    auto res =
+      GetEvaluatedValueForCellAttrOrMethod(engine, item_value, data_func_graph->func_graph(), data_conf, out_conf);
+    if (res != nullptr) {
+      return res;
+    }
+  }
   // Try to search method map, if not found, the data_type should be External type.
+  TypePtr data_type = data_args->BuildType();
   if (pipeline::Resource::IsTypeInBuiltInMap(data_type->type_id())) {
     return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, item_value, data_type, data_conf, out_conf);
   }
-  return GetEvaluatedValueForNameSpaceString(engine, args_spec_list, out_conf);
+  return GetEvaluatedValueForNameSpace(engine, args_spec_list, out_conf);
 }
 }  // namespace
 
