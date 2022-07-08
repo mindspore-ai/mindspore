@@ -160,7 +160,9 @@ int NormalizeTensorRT::RunAsTrtOps(TensorRTContext *ctx) {
 }
 
 bool NormalizeTensorRT::RunOptPlugin() {
-  if (out_tensors_.size() == 1 && in_tensors_.size() == INPUT_SIZE3 && axis_ == in_tensors_[0].Shape().size() - 1 &&
+  auto precision_mode = runtime_->GetRuntimePrecisionMode();
+  if (precision_mode == RuntimePrecisionMode::RuntimePrecisionMode_FP32 && out_tensors_.size() == 1 &&
+      in_tensors_.size() == INPUT_SIZE3 && axis_ == in_tensors_[0].Shape().size() - 1 &&
       in_tensors_[0].Shape()[axis_] < GET_THREADS) {
     // insufficient shared memory
     int dim_sum = std::accumulate(in_tensors_[0].Shape().begin(), in_tensors_[0].Shape().begin() + axis_, 1,

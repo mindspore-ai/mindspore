@@ -34,10 +34,11 @@ class ActivationTensorRT : public TensorRTOp {
   int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
-  static nvinfer1::ILayer *AddActivation(TensorRTContext *ctx, schema::ActivationType activation_type, float alpha,
-                                         float min_value, float max_value, nvinfer1::ITensor *trt_in_tensor,
-                                         uint32_t device_id = 0,
-                                         schema::QuantType quant_type = schema::QuantType_QUANT_NONE);
+  static nvinfer1::ILayer *AddActivation(
+    TensorRTContext *ctx, schema::ActivationType activation_type, float alpha, float min_value, float max_value,
+    nvinfer1::ITensor *trt_in_tensor, uint32_t device_id = 0,
+    schema::QuantType quant_type = schema::QuantType_QUANT_NONE,
+    RuntimePrecisionMode runtime_precision_mode = RuntimePrecisionMode::RuntimePrecisionMode_FP32);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_DELEGATE_TENSORRT_OP_ACTIVATION_TENSORRT_H_
