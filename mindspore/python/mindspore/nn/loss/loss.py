@@ -458,12 +458,12 @@ class SmoothL1Loss(LossBase):
     .. math::
         L =
         \begin{cases}
-            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum'.}
         \end{cases}
 
     .. note::
-        For Ascend platform, the float64 data type of `logits` is not support now.
+        For Ascend platform, the 'reduction' is not support set to 'sum' or 'mean'.
         SmoothL1Loss can be regarded as modified version of L1Loss or a combination of L1Loss and L2Loss.
         L1Loss computes the element-wise absolute difference between two input tensors while L2Loss computes the
         squared difference between two input tensors. L2Loss often leads to faster convergence but it is less
@@ -476,8 +476,7 @@ class SmoothL1Loss(LossBase):
                          Default: "none".
 
     Inputs:
-        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16,
-          float32 and float64.
+        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be float16 or float32.
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
@@ -492,7 +491,6 @@ class SmoothL1Loss(LossBase):
         TypeError: If dtype of `logits` is not the same as `labels`.
         ValueError: If `beta` is less than or equal to 0.
         ValueError: If shape of `logits` is not the same as `labels`.
-        ValueError: The float64 data type of `logits` is support on Ascend platform.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -509,11 +507,17 @@ class SmoothL1Loss(LossBase):
     def __init__(self, beta=1.0, reduction='none'):
         """Initialize SmoothL1Loss."""
         super(SmoothL1Loss, self).__init__(reduction)
+        target = context.get_context("device_target")
+        if reduction != 'none' and target.lower() == "ascend":
+            raise ValueError(f"Currently Ascend device_target only support `reduction`='none', "
+                             f"but got {reduction}")
         self.beta = beta
         self.reduction = reduction
         self.smooth_l1_loss = P.SmoothL1Loss(self.beta, self.reduction)
 
     def construct(self, logits, labels):
+        _check_is_tensor('logits', logits, self.cls_name)
+        _check_is_tensor('labels', labels, self.cls_name)
         return self.smooth_l1_loss(logits, labels)
 
 
