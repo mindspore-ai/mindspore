@@ -627,7 +627,8 @@ def _check_target_specific_cfgs(device, arg_key):
         'variable_memory_max_size': ['Ascend'],
         'auto_tune_mode': ['Ascend'],
         'max_device_memory': ['Ascend', 'GPU'],
-        'mempool_block_size': ['GPU', 'Ascend']
+        'mempool_block_size': ['GPU', 'Ascend'],
+        'disable_format_transform': ['GPU']
     }
     # configs not in map device_cfgs are supposed to be suitable for all devices
     if not arg_key in device_cfgs:
@@ -649,7 +650,7 @@ def _check_target_specific_cfgs(device, arg_key):
                  enable_graph_kernel=bool, reserve_class_name_in_scope=bool, check_bprop=bool,
                  max_device_memory=str, print_file_path=str, max_call_depth=int, env_config_path=str,
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
-                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str)
+                 grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -716,6 +717,8 @@ def set_context(**kwargs):
     |                         |  runtime_num_threads         |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
+    |                         +------------------------------+----------------------------+
+    |                         |  disable_format_transform    |  GPU                       |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -848,6 +851,9 @@ def set_context(**kwargs):
         runtime_num_threads(int): The thread pool number of cpu kernel and actor used in runtime,
             which must bigger than 0. Default value is 30, if you run many processes at
             the same time, you should set the value smaller to avoid thread contention.
+        disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
+            When the network training performance of fp16 is worse than fp32,
+            `disable_format_transform` can be set to True to try to improve training performance. Default: False.
     Raises:
         ValueError: If input key is not an attribute in context.
 
@@ -874,6 +880,7 @@ def set_context(**kwargs):
         >>> ms.set_context(enable_compile_cache=True, compile_cache_path="./cache.ms")
         >>> ms.set_context(pynative_synchronize=True)
         >>> ms.set_context(runtime_num_threads=10)
+        >>> ms.set_context(disable_format_transform=True)
     """
     ctx = _context()
     # set device target first

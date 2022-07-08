@@ -100,6 +100,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, false);
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
+  set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
 
   uint32_t kDefaultRuntimeNumThreads = 30;
   uint32_t cpu_core_num = std::thread::hardware_concurrency() - 1;
