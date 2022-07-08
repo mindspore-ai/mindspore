@@ -431,7 +431,9 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   }
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
-  if (ascend_instance->GetNetDynamicShapeStatus() && ascend_instance->GetProfilingEnableFlag()) {
+  if ((ascend_instance->GetNetDynamicShapeStatus() ||
+       ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
+      ascend_instance->GetProfilingEnableFlag()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, device_id, kernel_type);
   }
 
