@@ -3537,7 +3537,7 @@ def split(input_x, axis=0, output_num=1):
     return split_(input_x)
 
 
-def max(input_x, axis=0, keep_dims=False):
+def max(x, axis=0, keep_dims=False):
     """
     Calculates the maximum value with the corresponding index.
 
@@ -3549,12 +3549,12 @@ def max(input_x, axis=0, keep_dims=False):
 
     .. warning::
         - If there are multiple maximum values, the index of the first maximum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Also see: class: `mindspore.ops.ArgMaxWithValue`.
 
     Args:
-        input_x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
@@ -3567,7 +3567,7 @@ def max(input_x, axis=0, keep_dims=False):
         - index (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - output_x (Tensor) - The maximum value of input tensor, with the same shape as index.
+        - values (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -3577,16 +3577,16 @@ def max(input_x, axis=0, keep_dims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> index, output = ops.max(input_x)
-        >>> print(index, output)
+        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> index, values = ops.max(x)
+        >>> print(index, values)
         3 0.7
-        >>> index, output = ops.max(input_x, keep_dims=True)
-        >>> print(index, output)
+        >>> index, values = ops.max(x, keep_dims=True)
+        >>> print(index, values)
         [3] [0.7]
     """
     argmax_with_value_op = P.ArgMaxWithValue(axis, keep_dims)
-    return argmax_with_value_op(input_x)
+    return argmax_with_value_op(x)
 
 
 __all__ = [

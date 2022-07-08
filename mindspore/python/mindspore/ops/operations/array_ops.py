@@ -2118,7 +2118,7 @@ class ArgMaxWithValue(Primitive):
 
     .. warning::
         - If there are multiple maximum values, the index of the first maximum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Also see: func: `mindspore.ops.max`.
 
@@ -2128,7 +2128,7 @@ class ArgMaxWithValue(Primitive):
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
 
     Outputs:
@@ -2138,10 +2138,10 @@ class ArgMaxWithValue(Primitive):
         - **index** (Tensor) - The index for the maximum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - **output_x** (Tensor) - The maximum value of input tensor, with the same shape as index.
+        - **values** (Tensor) - The maximum value of input tensor, with the same shape as index.
 
     Raises:
-        TypeError: If data type `input_x` is not float16, float32 and float64.
+        TypeError: If data type `x` is not float16, float32 and float64.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
@@ -2149,19 +2149,19 @@ class ArgMaxWithValue(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> index, output = ops.ArgMaxWithValue()(input_x)
-        >>> print(index, output)
+        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> index, values = ops.ArgMaxWithValue()(x)
+        >>> print(index, values)
         3 0.7
-        >>> index, output = ops.ArgMaxWithValue(keep_dims=True)(input_x)
-        >>> print(index, output)
+        >>> index, values = ops.ArgMaxWithValue(keep_dims=True)(x)
+        >>> print(index, values)
         [3] [0.7]
     """
 
     @prim_attr_register
     def __init__(self, axis=0, keep_dims=False):
         """Initialize ArgMaxWithValue"""
-        self.init_prim_io_names(inputs=['input_x'], outputs=['index', 'output_x'])
+        self.init_prim_io_names(inputs=['x'], outputs=['index', 'values'])
         validator.check_value_type("axis", axis, [int], self.name)
         validator.check_value_type('keep_dims', keep_dims, [bool], self.name)
         self.axis = axis
@@ -2181,7 +2181,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
 
     .. warning::
         - If there are multiple minimum values, the index of the first minimum value is used.
-        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "input_x".
+        - The value range of "axis" is [-dims, dims - 1]. "dims" is the dimension length of "x".
 
     Args:
         axis (int): The dimension to reduce. Default: 0.
@@ -2189,7 +2189,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
                           the output will reduce dimension if false. Default: False.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        - **x** (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` .
 
     Outputs:
@@ -2199,7 +2199,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - values (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
@@ -2209,11 +2209,11 @@ class ArgMinWithValue(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
-        >>> output = ops.ArgMinWithValue()(input_x)
+        >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
+        >>> output = ops.ArgMinWithValue()(x)
         >>> print(output)
         (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
-        >>> output = ops.ArgMinWithValue(keep_dims=True)(input_x)
+        >>> output = ops.ArgMinWithValue(keep_dims=True)(x)
         >>> print(output)
         (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
     """
@@ -2234,7 +2234,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         return ouput_shape, ouput_shape
 
     def infer_dtype(self, x_dtype):
-        validator.check_subclass("input_x", x_dtype, mstype.tensor, self.name)
+        validator.check_subclass("x", x_dtype, mstype.tensor, self.name)
         return mstype.tensor_type(mstype.int32), x_dtype
 
 
