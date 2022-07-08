@@ -223,6 +223,7 @@ class Model:
         self._current_step_num = 0
         self.epoch_iter = 0
         self.enable_recovery = False
+        self._backbone_is_train = True
 
     def _check_for_graph_cell(self, kwargs):
         """Check for graph cell"""
@@ -444,11 +445,23 @@ class Model:
 
         network.set_train(is_train)
         network.phase = phase
+        self._backbone_is_train = is_train
 
         if self._parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
             network.set_auto_parallel()
 
         return dataset_helper, network
+
+
+    def _check_network_mode(self, network, is_train):
+        """
+        Change network mode if modes of backbone network and current network are not matching.
+        """
+        if self._backbone_is_train != is_train:
+            network.set_train(is_train)
+            self._backbone_is_train = is_train
+        return network
+
 
     def _warmup_dataset(self, epoch, train_dataset, sink_size=-1):
         """
@@ -683,6 +696,7 @@ class Model:
                 self._current_step_num = int((cb_params.cur_step_num - 1) % cb_params.batch_num + 1)
                 cb_params.train_dataset_element = inputs
                 list_callback.on_train_step_begin(run_context)
+                train_network = self._check_network_mode(train_network, True)
                 outputs = train_network(*inputs)
                 cb_params.net_outputs = outputs
                 # In disaster recovery scenarios, need not to execute callbacks if this step executes failed.
@@ -885,6 +899,7 @@ class Model:
 
                 cb_params.train_dataset_element = next_element
                 list_callback.on_train_step_begin(run_context)
+                self._check_network_mode(self._train_network, True)
                 outputs = self._train_network(*next_element)
                 cb_params.net_outputs = outputs
                 if self._loss_scale_manager and self._loss_scale_manager.get_drop_overflow_update():
@@ -1290,6 +1305,7 @@ class Model:
         for inputs in dataset_helper:
             cb_params.cur_step_num += 1
             list_callback.on_eval_step_begin(run_context)
+            eval_network = self._check_network_mode(eval_network, False)
             outputs = eval_network(*inputs)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
@@ -1332,6 +1348,7 @@ class Model:
             cb_params.cur_step_num += 1
             list_callback.on_eval_step_begin(run_context)
             next_element = _transfer_tensor_to_tuple(next_element)
+            self._check_network_mode(self._eval_network, False)
             outputs = self._eval_network(*next_element)
             cb_params.net_outputs = outputs
             list_callback.on_eval_step_end(run_context)
@@ -1455,7 +1472,7 @@ class Model:
             >>> model = ms.Model(Net())
             >>> result = model.predict(input_data)
         """
-        self._predict_network.set_train(False)
+        self._check_network_mode(self._predict_network, False)
         check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
         _parallel_predict_check()
         result = self._predict_network(*predict_data)
@@ -1564,6 +1581,7 @@ class Model:
         train_dataset.__model_hash__ = hash(self)
         return train_network.parameter_layout_dict
 
+
     def infer_predict_layout(self, *predict_data):
         """
         Generate parameter layout for the predict network in 'AUTO_PARALLEL' or 'SEMI_AUTO_PARALLEL' mode.
@@ -1610,7 +1628,7 @@ class Model:
         predict_net = self._predict_network
         # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
         predict_net.set_auto_parallel()
-        predict_net.set_train(False)
+        predict_net = self._check_network_mode(predict_net, False)
         predict_net.compile(*predict_data)
         return predict_net.parameter_layout_dict
 
