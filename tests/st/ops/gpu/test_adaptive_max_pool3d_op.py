@@ -23,6 +23,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from mindspore.ops.functional import vmap
+import mindspore.numpy as ms_np
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -49,6 +50,40 @@ class DynamicShapeNet(nn.Cell):
         unique_indices, _ = self.unique(indices)
         x = self.gather(x, unique_indices, self.axis)
         return self.net(x, output_size)
+
+
+class RankDynamicNet(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.adaptive_max_pool3d = AdaptiveMaxPool3D()
+        self.reduce = P.ReduceSum(keep_dims=False)
+
+    def construct(self, x, output_size):
+        rand_axis = ms_np.randint(1, 3, (2,))
+        axis = ms_np.unique(rand_axis)
+        in_x = self.reduce(x, axis)
+        out = self.adaptive_max_pool3d(in_x, output_size)
+        return out, in_x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_rank_dynamic():
+    """
+    Feature: test rank dynamic shape.
+    Description: test AdaptiveMaxPool3D op rank dynamic shape.
+    Expectation: expect correct result.
+    """
+    input_x = Tensor(np.random.randn(8, 3, 5, 8, 5, 6).astype(np.float32))
+    output_size = Tensor(np.array([2, 2, 2]).astype(np.int32))
+    dyn_net = RankDynamicNet()
+    dyn_output, in_x = dyn_net(input_x, output_size)
+
+    net = Net()
+    output = net(in_x, output_size)
+    assert (dyn_output[0].asnumpy() == output[0].asnumpy()).all()
+    assert (dyn_output[1].asnumpy() == output[1].asnumpy()).all()
 
 
 @pytest.mark.level0
