@@ -26,7 +26,7 @@ mindspore.ops.index_fill
     - **TypeError** - `value` 的类型不是bool、int、float或者Tensor。
     - **TypeError** - 当 `value` 是Tensor时， `value` 的数据类型和 `x` 的数据类型不相同。
     - **ValueError** - 当 `dim` 是Tensor时， `dim` 的维度不等于0。
-    - **ValueError** - index` 的维度大于1。
+    - **ValueError** - `index` 的维度大于1。
     - **ValueError** - 当 `value` 是Tensor时， `value` 的维度不等于0。
     - **RuntimeError** - `dim` 值超出范围[-x.ndim, x.ndim - 1]。
     - **RuntimeError** - `index` 存在值超出范围[-x.shape[dim], x.shape[dim]-1]。
