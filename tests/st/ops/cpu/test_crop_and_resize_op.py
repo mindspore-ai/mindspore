@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""test crop resize op"""
+
 import numpy as np
 import pytest
 
@@ -23,8 +26,7 @@ from mindspore import nn
 class NetCropAndResize(nn.Cell):
     def __init__(self, method_="bilinear", extrapolation_value_=0.0):
         super(NetCropAndResize, self).__init__()
-        self.op = P.CropAndResize(
-            method=method_, extrapolation_value=extrapolation_value_)
+        self.op = P.CropAndResize(method=method_, extrapolation_value=extrapolation_value_)
 
     def construct(self, image, boxes, box_index, channel):
         return self.op(image, boxes, box_index, channel)
@@ -41,17 +43,14 @@ def test_crop_and_resize_int8_bilinear(datatype=np.int8):
     channels = 2
     crop_size = (5, 3)
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0, total_values).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0, total_values).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("bilinear", 0.5)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[-111.0, -110.0], [-119.5, -118.5], [-128.0, -127.0]],
                                  [[28.5, 29.5], [20.0, 21.0], [11.5, 12.5]],
@@ -63,7 +62,7 @@ def test_crop_and_resize_int8_bilinear(datatype=np.int8):
                                  [[-93.5, -92.5], [-63.75, -62.75], [0.5, 0.5]],
                                  [[3.75, 4.75], [-110.5, -109.5], [0.5, 0.5]],
                                  [[69.0, 70.0], [98.75, 99.75], [0.5, 0.5]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -79,17 +78,14 @@ def test_crop_and_resize_int16_nearest(datatype=np.int16):
     channels = 2
     crop_size = (5, 3)
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0, total_values).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0, total_values).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("nearest", 0.5)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[1170.0, 1171.0], [1160.0, 1161.0], [1152.0, 1153.0]],
                                  [[1314.0, 1315.0], [1304.0, 1305.0], [1296.0, 1297.0]],
@@ -101,7 +97,7 @@ def test_crop_and_resize_int16_nearest(datatype=np.int16):
                                  [[432.0, 433.0], [462.0, 463.0], [0.5, 0.5]],
                                  [[612.0, 613.0], [642.0, 643.0], [0.5, 0.5]],
                                  [[828.0, 829.0], [858.0, 859.0], [0.5, 0.5]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -118,17 +114,14 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
     crop_size = (5, 3)
     offset = 8795
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0, 0.5, 0.5, 0.0], [0, 0, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("bilinear_v2", 0.369)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[10008.199, 10009.199], [10008.2, 10009.2], [10008.199, 10009.2]],
                                  [[10130.6, 10131.6], [10130.6, 10131.6], [10130.601, 10131.6]],
@@ -139,11 +132,11 @@ def test_crop_and_resize_int32_bilinear_v2(datatype=np.int32):
                                  [[9056.667, 9057.667], [9078, 9079], [9099.333, 9100.333]],
                                  [[9236.667, 9237.667], [9258, 9259], [9279.333, 9280.333]],
                                  [[9416.667, 9417.667], [9438, 9439], [9459.333, 9460.333]],
-                                 [[9596.667, 9597.667], [9618, 9619], [9639.333, 9640.334]]]]).astype(
-                                     np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+                                 [[9596.667, 9597.667], [9618, 9619], [9639.333, 9640.334]]]]).astype(np.float32)
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -157,17 +150,14 @@ def test_crop_and_resize_float16_nearest(datatype=np.float16):
     crop_size = (5, 3)
     offset = 0
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("nearest", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[7380.0, 7380.0, 7384.0], [7352.0, 7352.0, 7352.0],
                                   [7320.0, 7320.0, 7320.0]],
@@ -185,7 +175,7 @@ def test_crop_and_resize_float16_nearest(datatype=np.float16):
                                  [[3372.0, 3372.0, 3374.0], [3468.0, 3468.0, 3470.0], [0.0, 0.0, 0.0]],
                                  [[4452.0, 4452.0, 4456.0], [4548.0, 4548.0, 4552.0],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -202,17 +192,14 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
     crop_size = (5, 3)
     offset = 5000
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("bilinear", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[488861.53, 488862.53, 488863.53],
                                   [488670.28, 488671.28, 488672.28],
@@ -234,7 +221,7 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
                                   [0.0, 0.0, 0.0]],
                                  [[299412.5, 299413.5, 299414.5], [300043.625, 300044.625, 300045.625],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -251,17 +238,14 @@ def test_crop_and_resize_float64_nearest(datatype=np.float64):
     crop_size = (5, 3)
     offset = 7549
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("nearest", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[12160.0, 12161.0, 12162.0], [12142.0, 12143.0, 12144.0],
                                   [12124.0, 12125.0, 12126.0]],
@@ -279,7 +263,7 @@ def test_crop_and_resize_float64_nearest(datatype=np.float64):
                                  [[9655.0, 9656.0, 9657.0], [9715.0, 9716.0, 9717.0], [0.0, 0.0, 0.0]],
                                  [[10330.0, 10331.0, 10332.0], [10390.0, 10391.0, 10392.0],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -296,17 +280,14 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
     crop_size = (5, 3)
     offset = 7549
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("bilinear_v2", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[12324.999, 12326, 12327], [12325, 12326, 12327],
                                   [12325, 12326, 12327.001]],
@@ -324,7 +305,7 @@ def test_crop_and_resize_int64_bilinearv2(datatype=np.int64):
                                  [[9531.999, 9533.001, 9534], [9574, 9575, 9576], [9616, 9617, 9618.001]],
                                  [[10102, 10103, 10104], [10144, 10145, 10146],
                                   [10186, 10187, 10188]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
 
@@ -341,17 +322,14 @@ def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
     crop_size = (5, 3)
     offset = 0
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("nearest", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[84.0, 85.0], [82.0, 83.0], [80.0, 81.0]],
                                  [[94.0, 95.0], [92.0, 93.0], [90.0, 91.0]],
@@ -363,9 +341,10 @@ def test_crop_and_resize_uint8_nearest(datatype=np.uint8):
                                  [[20.0, 21.0], [28.0, 29.0], [0.0, 0.0]],
                                  [[30.0, 31.0], [38.0, 39.0], [0.0, 0.0]],
                                  [[50.0, 51.0], [58.0, 59.0], [0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -379,17 +358,14 @@ def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):
     crop_size = (5, 3)
     offset = 0
     total_values = batch_size * image_height * image_width * channels
-    input_data = np.arange(0 + offset, total_values + offset).reshape(
-        (batch_size, image_height, image_width, channels))
-    input_boxes = np.array(
-        [[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
+    input_data = np.arange(0 + offset, total_values + offset).reshape((batch_size, image_height, image_width, channels))
+    input_boxes = np.array([[0.23, 0.5, 0.75, 0.0], [0, 0.1, 0.75, 1.75]]).astype(np.float32)
     input_box_index = np.array([1, 0]).astype(np.int32)
     input_data_tensor = Tensor(input_data.astype(datatype))
     input_boxes_tensor = Tensor(input_boxes)
     input_box_index_tensor = Tensor(input_box_index)
     net = NetCropAndResize("bilinear", 0.0)
-    output = net(input_data_tensor, input_boxes_tensor,
-                 input_box_index_tensor, crop_size)
+    output = net(input_data_tensor, input_boxes_tensor, input_box_index_tensor, crop_size)
     output_ms = output.asnumpy()
     expected_output = np.array([[[[5557.7998046875, 5558.7998046875, 5559.7998046875],
                                   [5536.0498046875, 5537.0498046875, 5538.0498046875],
@@ -418,6 +394,6 @@ def test_crop_and_resize_uint16_bilinear(datatype=np.uint16):
                                  [[3316.199951171875, 3317.199951171875, 3318.199951171875],
                                   [3387.97509765625, 3388.97509765625, 3389.97509765625],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 1.0e-6
+    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
     diff = output_ms - expected_output
     assert np.all(abs(diff) < error)
