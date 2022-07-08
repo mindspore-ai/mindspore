@@ -103,6 +103,10 @@ int SparseApplyAdagradDACpuKernelMod::Resize(const BaseOperatorPtr &base_operato
   } else {
     var_first_dim_size_ = var_shape[0];
   }
+  if (var_shape.size() != grad_shape.size()) {
+    MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, rank(grad) should be same as rank(var), but got rank(grad): "
+                      << grad_shape.size() << ", rank(var): " << var_shape.size() << ".";
+  }
   if (!IsSameShape(var_shape, grad_accum_shape)) {
     MS_LOG(EXCEPTION) << "For SparseApplyAdagradDA, var and grad_accum should have the same shape.";
   }
