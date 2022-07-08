@@ -191,7 +191,7 @@ def get_bprop_reshape(self):
 
     def bprop(x, shp, out, dout):
         shapex = shape_op(x)
-        if -1 in shapex:
+        if is_shape_unknown(shapex):
             shapex = dyn_shape_op(x)
         return reshape(dout, shapex), zeros_like(shp)
 
@@ -276,7 +276,7 @@ def get_bprop_tile(self):
 
     def bprop(x, multiples, out, dout):
         shapex = shape_op(x)
-        if -1 in shapex:
+        if is_shape_unknown(shapex):
             shapex = dyn_shape_op(x)
         # if shapex or multiples not tuple, it should be dynamic shape.
         if isinstance(multiples, tuple) and isinstance(shapex, tuple):
@@ -483,7 +483,7 @@ def get_bprop_gather_v2(self):
         # Example: out_shape:(3,2,3) axis 1 -> (1,0,2)
         perm_1 = generate_shape_index(out_shp, ind_shp, axis)
         values_transpose = transpose(dout, perm_1)
-        if -1 in shape_op(x):
+        if is_shape_unknown(shape_op(x)):
             params_grad = unsorted_segment_sum(values_transpose, indices, dyn_shape_op(x)[axis])
         else:
             params_grad = unsorted_segment_sum(values_transpose, indices, shape_op(x)[axis])
@@ -714,7 +714,7 @@ def get_bprop_strided_slice(self):
 
     def bprop(x, begin, end, strides, out, dout):
         x_shape = shape_op(x)
-        if -1 in x_shape:
+        if is_shape_unknown(x_shape):
             x_shape = dyn_shape_op(x)
         dx = input_grad(dout, x_shape, begin, end, strides)
         return dx, zeros_like(begin), zeros_like(end), zeros_like(strides)

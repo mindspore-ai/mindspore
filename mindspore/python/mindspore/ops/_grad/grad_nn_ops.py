@@ -25,7 +25,7 @@ from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ..operations import _rl_inner_ops as rl_ops
 from ... import context
-from .._utils.utils import range_op, get_1d_shape
+from .._utils.utils import range_op, get_1d_shape, is_shape_unknown
 
 
 @bprop_getters.register(P.BiasAdd)
@@ -83,9 +83,9 @@ def get_bprop_conv2d(self):
     def bprop(x, w, out, dout):
         x_shape = get_shape(x)
         w_shape = get_shape(w)
-        if -1 in x_shape:
+        if is_shape_unknown(x_shape):
             x_shape = get_dyn_shape(x)
-        if -1 in w_shape:
+        if is_shape_unknown(w_shape):
             w_shape = get_dyn_shape(w)
         dx = input_grad(dout, w, x_shape)
 
@@ -1201,7 +1201,7 @@ def get_bprop_conv2d_backprop_input(self):
 
     def bprop(x, w, f_sizes, out, dout):
         w_shape = get_shape(w)
-        if -1 in w_shape:
+        if is_shape_unknown(w_shape):
             w_shape = get_dyn_shape(w)
         dx = input_grad(dout, w)
         dw = filter_grad(x, dout, w_shape)

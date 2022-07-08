@@ -35,9 +35,9 @@ abstract::AbstractBasePtr TensorShapeInfer(const abstract::AnalysisEnginePtr &, 
   }
   MS_EXCEPTION_IF_NULL(input->shape());
   auto shape = input->shape()->shape();
-  bool has_dyn_shape =
-    std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == abstract::Shape::SHP_ANY; });
+
   ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
+  bool has_dyn_shape = -std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim < 0; });
   if (has_dyn_shape) {
     auto elem = std::make_shared<abstract::AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64));
     auto min_value = MakeValue(input->shape()->min_shape());

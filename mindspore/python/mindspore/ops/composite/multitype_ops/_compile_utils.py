@@ -857,6 +857,7 @@ def tensor_setitem_by_tensor_with_tensor(data, index, value_tensor):
     tensor_dtype = const_utils.get_index_tensor_dtype(index_dtype)
     if tensor_dtype == const_utils.INT_:
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value_tensor)
+
     if is_shape_unknown(F.shape(data)):
         const_utils.raise_unimplemented_error(
             "Not supported to take the subscript of dynamic shape tensor using Boolean type")
@@ -1034,6 +1035,7 @@ def tensor_setitem_by_number_with_tensor(data, index, value):
     if is_shape_unknown(data_shape):
         index = Tensor(np.array([index]), mstype.int32)
         return _tensor_setitem_by_int_tensor_with_tensor(data, index, value)
+
     index = const_utils.int_to_index(index, data_shape)
     value_shape = const_utils.tuple_slice(F.shape(index), None, -1)
     value = _broadcast(value_shape, value.astype(F.dtype(data)))
@@ -1055,6 +1057,7 @@ def tensor_setitem_by_ellipsis_with_tensor(data, value):
     data_shape = F.shape(data)
     data_dtype = F.dtype(data)
     value = value.astype(data_dtype)
+
     if is_shape_unknown(data_shape):
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
@@ -1084,6 +1087,7 @@ def tensor_setitem_by_bool(data, index, value):
         value = const_utils.make_tensor(value, mstype.int32)
     elif isinstance(value, float):
         value = const_utils.make_tensor(value, mstype.float32)
+
     if is_shape_unknown(data_shape) and index:
         data_shape = F.dyn_shape(data)
         data = dynamic_broadcast_to(value, data_shape)
