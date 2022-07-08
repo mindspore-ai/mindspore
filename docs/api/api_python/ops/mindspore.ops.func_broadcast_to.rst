@@ -14,9 +14,9 @@ mindspore.ops.broadcast_to
 
     **返回：**
 
-    Tensor，形状与目标 `shape` 相同，数据类型与 `x` 相同。
+    Tensor，shape与目标 `shape` 相同，数据类型与 `x` 相同。
 
     **异常：**
 
     - **TypeError** - `shape` 不是tuple。
-    - **ValueError** - 目标 `shape` 和输入形状不兼容，或者目标 `shape` 中的-1维度位于一个无效位置。
+    - **ValueError** - 输入shape 无法广播到目标 `shape` ，或者目标 `shape` 中的-1维度位于一个无效位置。

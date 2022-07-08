@@ -20,7 +20,7 @@ mindspore.ops.ApproximateEqual
 
     **输入：**
 
-    - **x** (Tensor) - 输入Tensor，需为以下数据类型：float16，float32。shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其轶应小于8。
+    - **x** (Tensor) - 输入Tensor，需为以下数据类型：float16，float32。shape: :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。其秩应小于8。
     - **y** (Tensor) - 输入Tensor，shape与数据类型与 `x` 相同。
 
     **输出：**

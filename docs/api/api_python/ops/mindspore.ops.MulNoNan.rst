@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.MulNoNan
 
-    根据矩阵乘法计算输入 `x` 和 `y` 。如果 `y` 为零，无论 `x` 取何值，它都将返回0。
+    逐元素计算输入乘积。如果 `y` 为零，无论 `x` 取何值，它都将返回0。
 
     `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。输入必须是两个Tensor或一个Tensor和一个Scalar。当输入是两个Tensor时，它们的shape可以被广播。当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
 

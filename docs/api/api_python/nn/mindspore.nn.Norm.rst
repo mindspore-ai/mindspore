@@ -19,7 +19,7 @@ mindspore.nn.Norm
 
     **输出：**
 
-    Tensor，输出为Tensor，如果'keep_dims'为True，则将保留'axis'指定的维度且为1；否则，将移除'axis'中指定的维度。数据类型与 `x` 相同。
+    Tensor，如果'keep_dims'为True，则将保留'axis'指定的维度且为1；否则，将移除'axis'中指定的维度。数据类型与 `x` 相同。
 
     **异常：**
 

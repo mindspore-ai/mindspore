@@ -7,7 +7,7 @@ mindspore.ops.InplaceUpdate
 
     **参数：**
 
-    - **indices** (Union[int, tuple]) - 指定将 `x` 的哪些行更新为  `v` 。可以为int或Tuple，取值范围[0, len(`x`)]。
+    - **indices** (Union[int, tuple]) - 指定将 `x` 的哪些行更新为  `v` 。可以为int或Tuple，取值范围[0, len(`x`))。
 
     **输入：**
 

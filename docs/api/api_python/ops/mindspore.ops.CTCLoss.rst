@@ -35,4 +35,3 @@ mindspore.ops.CTCLoss
     - **TypeError** - `x` 的数据类型不是float16、float32或float64。
     - **TypeError** - `labels_indices` 的数据类型不是int64。
     - **TypeError** - `labels_values` 或 `sequence_length` 的数据类型不是int32。
-    

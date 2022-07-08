@@ -51,4 +51,4 @@ mindspore.ops.Conv2D
     - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
     - **ValueError** - `pad` 是一个长度不等于4的tuple。
     - **ValueError** - `pad_mode` 不等于"pad"，`pad` 不等于(0, 0, 0, 0)。
-    - **ValueError** - `data_format` 既不是"NCW"，也不是"NHWC"。
+    - **ValueError** - `data_format` 既不是"NCHW"，也不是"NHWC"。

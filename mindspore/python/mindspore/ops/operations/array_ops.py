@@ -2414,7 +2414,8 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)` ,
+          the value must be non-negative tensor. The data type must be int32.
         - **num_segments** (int) - Set :math:`z` as num_segments.
 
     Outputs:

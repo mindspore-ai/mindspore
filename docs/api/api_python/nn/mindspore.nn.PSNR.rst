@@ -17,12 +17,12 @@ mindspore.nn.PSNR
 
     **输入：**
 
-    - **img1** (Tensor) - 格式为'NCHW'的第一批图像。shape和数据类型必须与 `img2` 相同。
-    - **img2** (Tensor) - 格式为'NCHW'的第二批图像。shape和数据类型必须与 `img1` 相同。
+    - **img1** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img2` 相同。
+    - **img2** (Tensor) - 格式为'NCHW'的输入图像。shape和数据类型必须与 `img1` 相同。
 
     **输出：**
 
-    Tensor，使用数据类型mindspore.float32。shape为N的一维Tensor，其中N是 `img1` 的批次大小。
+    Tensor，使用数据类型mindspore.float32。shape为N的一维Tensor，其中N是 `img1` 的batch size。
 
     **异常：**
 

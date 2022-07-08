@@ -3,7 +3,7 @@ mindspore.ops.ApplyProximalAdagrad
 
 .. py:class:: mindspore.ops.ApplyProximalAdagrad(use_locking=False)
 
-    更新Proximal Adagrad算法的参数。
+    根据Proximal Adagrad算法更新网络参数。
     请参阅论文 `Efficient Learning using Forward-Backward Splitting <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ 。
 
     .. math::
@@ -22,7 +22,7 @@ mindspore.ops.ApplyProximalAdagrad
     **输入：**
 
     - **var** (Parameter) - 公式中的"var"。数据类型需为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
-    - **accum** (Parameter) - 公式中的"accum"。与 `var` 的shape与数据类型相同。
+    - **accum** (Parameter) - 公式中的"accum"。与 `var` 的shape和数据类型相同。
     - **lr** (Union[Number, Tensor]) - 学习率，必须为标量，数据类型为float16或float32。
     - **l1** (Union[Number, Tensor]) - l1正则化强度，必须为标量，数据类型为float16或float32。
     - **l2** (Union[Number, Tensor]) - l2正则化强度，必须为标量，数据类型为float16或float32。
