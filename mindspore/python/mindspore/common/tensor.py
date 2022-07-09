@@ -1183,65 +1183,6 @@ class Tensor(Tensor_):
             tensor_operator_registry.get('__sub__')(input_x, input_y)
         ), tolerance)
 
-    def matrix_determinant(self):
-        r"""
-        Computes the determinant of one or more square matrices.
-
-        `x` refer to self tensor.
-
-        Returns:
-
-            Tensor, The shape is :math:`x\_shape[:-2]`, the dtype is same as 'x'.
-
-        Raises:
-            TypeError: If self tensor is not a Tensor.
-            TypeError: If dtype of self tensor not float32, float64, complex64 or complex128.
-            ValueError: If the last two dimensions of self tensor is not same size.
-            ValueError: If the dimension of self tensor is less than 2.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-            >>> output = input_x.matrix_determinant()
-            >>> print(output)
-            [-16.5 21. ]
-        """
-        self._init_check()
-        return tensor_operator_registry.get('matrix_determinant')(self)
-
-    def log_matrix_determinant(self):
-        r"""
-        Computes the sign and the log of the absolute value of the determinant of one or more square matrices.
-
-        `x` refer to self tensor.
-
-        Returns:
-
-            Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.\n
-            Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
-            the dtype is same as `x`.
-
-        Raises:
-            TypeError: If self tensor is not a Tensor.
-            TypeError: If dtype of self tensor not float32, float64, complex64 or complex128.
-            ValueError: If the last two dimensions of self tensor is not same size.
-            ValueError: If the dimension of self tensor is less than 2.
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
-
-        Examples:
-            >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-            >>> output = input_x.log_matrix_determinant()
-            >>> print(output)
-            (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2],
-            dtype=Float32, value= [ 2.80336046e+00,  3.04452229e+00]))
-        """
-        self._init_check()
-        return tensor_operator_registry.get('log_matrix_determinant')(self)
-
     def isclose(self, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         """
         Returns a boolean Tensor where two Tensors are element-wise equal within a tolerance.

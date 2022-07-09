@@ -141,8 +141,6 @@ Element-by-Element Operations
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
-    mindspore.ops.log_matrix_determinant
-    mindspore.ops.matrix_determinant
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
