@@ -11,6 +11,9 @@ mindspore.ops.matrix_solve
         &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
         \end{aligned}
 
+    .. warning::
+        - 当平台为GPU时，如果 `matrix` 中的矩阵不可逆，将产生错误或者返回一个未知结果。
+
     **参数：**
 
     - **matrix** (Tensor) - 输入Tensor， shape 为 :math:`[..., M, M]`。
@@ -30,3 +33,4 @@ mindspore.ops.matrix_solve
     - **ValueError** - `rhs` 的维度与 `matrix` 的维度不相等。
     - **ValueError** - `matrix` 最内侧的两个维度不相等。
     - **ValueError** - `rhs` 最内侧的两个维度和 `matrix` 不能匹配。
+    - **ValueError** - `matrix` 中的矩阵不可逆。
