@@ -109,7 +109,8 @@ TypePtr UniqueConsecutiveInferType(const PrimitivePtr &primitive, const std::vec
   const std::set valid_types = {kInt32, kInt64, kFloat16, kFloat, kFloat64};
   auto input_type =
     CheckAndConvertUtils::CheckTypeValid("input", input_args[kInputIndex0]->BuildType(), valid_types, name);
-  std::vector<TypePtr> ret_type_vec = {input_type, kInt32, kInt32};
+  std::vector<TypePtr> ret_type_vec = {input_type, std::make_shared<TensorType>(kInt32),
+                                       std::make_shared<TensorType>(kInt32)};
   return std::make_shared<Tuple>(ret_type_vec);
 }
 }  // namespace
