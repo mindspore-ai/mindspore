@@ -319,6 +319,8 @@ public abstract class Client {
     }
 
     private Optional<LiteSession> initSession(String modelPath, MSConfig msConfig, boolean isDynamicInferModel) {
+        // free prev session to avoid memory leak
+        free();
         if (modelPath == null) {
             logger.severe("modelPath cannot be empty");
             return Optional.empty();

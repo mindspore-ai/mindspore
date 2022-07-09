@@ -661,6 +661,7 @@ public class FLLiteClient {
             status = deprecatedEvaluateLoop();
         } else {
             status = evaluateLoop();
+            client.free();
         }
         return status;
     }
