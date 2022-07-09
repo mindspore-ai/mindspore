@@ -30,7 +30,6 @@ from .._c_expression import Tensor as Tensor_
 from .._checkparam import Rel
 from .._checkparam import Validator as validator
 
-
 __all__ = ['Tensor', 'RowTensor', 'SparseTensor', 'COOTensor', 'CSRTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
             np.uint8, np.uint16, np.uint32, np.uint64, np.float16,
@@ -1219,7 +1218,7 @@ class Tensor(Tensor_):
         `x` refer to self tensor.
 
         Returns:
-            Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.\n
+            Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
 
             Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
             the dtype is same as `x`.
@@ -1235,10 +1234,12 @@ class Tensor(Tensor_):
 
         Examples:
             >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-            >>> output = input_x.log_matrix_determinant()
+            >>> output, abs  = input_x.log_matrix_determinant()
+            >>> sign, output = op(input_x)
+            >>> print(sign)
             >>> print(output)
-            (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2],
-            dtype=Float32, value= [ 2.80336046e+00,  3.04452229e+00]))
+            [-1.   1.]
+            [2.80336046e+00    3.04452229e+00]
         """
         self._init_check()
         return tensor_operator_registry.get('log_matrix_determinant')(self)

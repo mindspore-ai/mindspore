@@ -1766,7 +1766,6 @@ class InplaceUpdateV2(Primitive):
         return output
 
 
-
 class InplaceUpdate(PrimitiveWithInfer):
     r"""
     Updates specified rows with values in `v`.
@@ -2494,7 +2493,7 @@ class Histogram(Primitive):
     """
 
     @prim_attr_register
-    def __init__(self, bins=100, min=0.0, max=0.0): # pylint: disable=W0622
+    def __init__(self, bins=100, min=0.0, max=0.0):  # pylint: disable=W0622
         """Initialize Histogram."""
         self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type("bins", bins, [int], self.name)
@@ -5353,10 +5352,11 @@ class LogMatrixDeterminant(Primitive):
         >>> from mindspore.ops.operations.math_ops import LogMatrixDeterminant
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
         >>> op = LogMatrixDeterminant()
-        >>> output = op(input_x)
+        >>> sign, output = op(input_x)
+        >>> print(sign)
         >>> print(output)
-        (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2], dtype=Float32,
-        value= [ 2.80336046e+00,  3.04452229e+00]))
+        [-1.   1.]
+        [2.80336046e+00    3.04452229e+00]
     """
 
     @prim_attr_register
@@ -6351,6 +6351,7 @@ class STFT(Primitive):
         >>> print(output.shape)
         (2, 33, 446)
     """
+
     @prim_attr_register
     def __init__(self, n_fft, hop_length, win_length, normalized, onesided, return_complex):
         """Initialize STFT."""
@@ -6510,6 +6511,7 @@ class FFTWithSize(Primitive):
           [[2.0000002  0.99999976 2.0000005 ]
           [3.0000007  0.999999   6.000002  ]]
     """
+
     @prim_attr_register
     def __init__(self, signal_ndim, inverse, real, norm="backward", onesided=True, signal_sizes=()):
         """Initialize FFTWithSize."""
