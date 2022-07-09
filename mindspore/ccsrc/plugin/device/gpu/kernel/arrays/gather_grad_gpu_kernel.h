@@ -36,8 +36,8 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       return true;
     }
     VARIABLE_NOT_USED(workspace);
-    T *index_addr = GetDeviceAddress<T>(inputs, 0);
-    S *grad_addr = GetDeviceAddress<S>(inputs, 1);
+    T *index_addr = GetDeviceAddress<T>(inputs, index_idx_);
+    S *grad_addr = GetDeviceAddress<S>(inputs, grad_idx_);
     S *output_addr = GetDeviceAddress<S>(outputs, 0);
 
     GatherGrad(index_addr, grad_addr, output_addr, dims_[0], dims_[1], dims_[2], dims_[3],
@@ -49,11 +49,20 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 2) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2, but got " << input_num;
+    constexpr size_t kStaticSize = 2;
+    constexpr size_t kDynamicSize = 3;
+    if (input_num == kStaticSize) {
+      index_idx_ = 0;
+      grad_idx_ = 1;
+    } else if (input_num == kDynamicSize) {
+      index_idx_ = 1;
+      constexpr size_t kDynamicGradIdx = 2;
+      grad_idx_ = kDynamicGradIdx;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the number of inputs must be 2 or 3, but got " << input_num;
     }
-    index_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    grad_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
+    index_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, index_idx_);
+    grad_shapes_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, grad_idx_);
     output_shapes_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
     is_null_input_ = CHECK_SHAPE_NULL(index_shapes_, kernel_name, "index") ||
                      CHECK_SHAPE_NULL(grad_shapes_, kernel_name, "grad") ||
@@ -81,6 +90,12 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     Reshape();
     InitSizeLists();
     return true;
+  }
+  void ResetResource() noexcept override {
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
@@ -127,6 +142,8 @@ class GatherGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
   size_t dims_[4] = {};
   int axis_;
   bool is_null_input_;
+  size_t index_idx_{0};
+  size_t grad_idx_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore

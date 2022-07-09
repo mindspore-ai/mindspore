@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_GRAD_CPU_KERNEL_H_
 
 #include <vector>
+#include <map>
 #include <memory>
 #include <utility>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
@@ -25,32 +26,39 @@
 
 namespace mindspore {
 namespace kernel {
-class GatherDGradCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class GatherDGradCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<GatherDGradCpuKernelMod> {
  public:
   GatherDGradCpuKernelMod() = default;
   ~GatherDGradCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
-
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
-    return kernel_func_(this, inputs, outputs);
+    return kernel_func_(this, inputs, workspace, outputs);
   }
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
-  template <typename I, typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &outputs);
-  using GatherDGradFunc = std::function<bool(GatherDGradCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                             const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, GatherDGradFunc>> func_list_;
-  GatherDGradFunc kernel_func_;
+  template <typename T, typename I>
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<kernel::AddressPtr> &outputs);
 
-  ShapeVector input_shape_;
-  ShapeVector index_shape_;
-  ShapeVector output_shape_;
-  int32_t axis_{1};
+  std::vector<size_t> index_shape_;
+  std::vector<size_t> grad_shape_;
+  std::vector<size_t> output_shape_;
+  int64_t axis_{0};
+  size_t index_idx_{0};
+  size_t grad_idx_{0};
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHERDGRAD_CPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_GATHER_D_GRAD_CPU_KERNEL_H_
