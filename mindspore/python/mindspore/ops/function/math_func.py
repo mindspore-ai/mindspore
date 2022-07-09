@@ -272,6 +272,87 @@ def add(x, y):
     return tensor_add(x, y)
 
 
+def addcdiv(input_data, x1, x2, value):
+    r"""
+    Performs the element-wise division of tensor x1 by tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    .. math::
+        y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
+
+    Args:
+        input_data (Tensor) - The tensor to be added.
+        x1 (Tensor) - The numerator tensor.
+        x2 (Tensor) - The denominator tensor.
+        value (Tensor) - The multiplier for tensor x1/x2.
+
+    Returns:
+        Tensor, has the same shape and dtype as x1/x2.
+
+    Raises:
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
+        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `x1/x2`.
+        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1/x2)`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_data = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
+        >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
+        >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
+        >>> value = Tensor([1], mindspore.float32)
+        >>> y = ops.addcdiv(input_data, x1, x2, value)
+        >>> print(y)
+        [1.25      1.6666667 2.5       5.       ]
+    """
+    return _get_cache_prim(P.Addcdiv)()(input_data, x1, x2, value)
+
+
+def addcmul(input_data, x1, x2, value):
+    r"""
+    Performs the element-wise product of tensor x1 and tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    .. math::
+        output[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
+
+    Args:
+        input_data (Tensor) - The tensor to be added.
+        x1 (Tensor) - The tensor to be multiplied.
+        x2 (Tensor) - The tensor to be multiplied.
+        value (Tensor) - The multiplier for tensor x1*x2.
+
+    Returns:
+        Tensor, has the same shape and dtype as x1*x2.
+
+    Raises:
+        TypeError: If dtype of `x1`, `x2`, `value`, `input_data` is not tensor.
+        TypeError: If dtype of `input_data` is not one of: float32, float16, int32.
+        TypeError: If dtype of `x1` or `x2` is not one of: float32, float16, int32.
+        TypeError: If dtype of `value` is not one of: float32, float16, int32.
+        ValueError: If `x1` could not be broadcast to a tensor with shape of `x2`.
+        ValueError: If `value` could not be broadcast to tensors with shapes of `x1` * `x2`.
+        ValueError: If `input_data` could not be broadcast to tensors with shapes of `value*(x1*x2)`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> input_data = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+        >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
+        >>> value = Tensor([1], mindspore.float32)
+        >>> y = ops.addcmul(input_data, x1, x2, value)
+        >>> print(y)
+        [[ 2.  3.  4.]
+         [ 3.  5.  7.]
+         [ 4.  7. 10.]]
+    """
+    return _get_cache_prim(P.Addcmul)()(input_data, x1, x2, value)
+
+
 def exp2(x):
     """
     Computes the base two exponential function of input.
@@ -4270,9 +4351,10 @@ def _check_matmul_shapes(shape1, shape2, prim_name=None):
     shape_out = deque()
     for items in zip_longest(reversed(shape1[:-2]), reversed(shape2[:-2]), fillvalue=1):
         max_size = max(items)
-        if any(item not in (1, max_size) for item in items):
-            raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
-                             f"shape2 {shape2}.")
+        for item in items:
+            if item not in (1, max_size):
+                raise ValueError(f"{msg_prefix} operands could not be broadcast together with shape1 {shape1} and "
+                                 f"shape2 {shape2}.")
         shape_out.appendleft(max_size)
     return tuple(shape_out)
 
@@ -4685,12 +4767,120 @@ def kron(x, y):
     return result
 
 
+def all(x, axis=(), keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by the "logicalAND" of all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        x (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default : False.
+
+    Returns:
+        Tensor, the dtype is bool.
+
+        - If axis is (), and keep_dims is False,
+          the output is a 0-D tensor representing the "logical and" of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is False,
+          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[True, False], [True, True]]))
+        >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
+        >>> output = ops.all(x, keep_dims=True)
+        >>> print(output)
+        [[False]]
+        >>> print(output.shape)
+        (1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = ops.all(x, axis=0)
+        >>> print(output)
+        [True False]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = ops.all(x, axis=1)
+        >>> print(output)
+        [False True]
+    """
+
+    return _get_cache_prim(P.ReduceAll)(keep_dims)(x, axis)
+
+
+def any(x, axis=(), keep_dims=False):
+    r"""
+    Reduces a dimension of a tensor by the "logical OR" of all elements in the dimension, by default. And also can
+    reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
+    controlling `keep_dims`.
+
+    Args:
+        x (Tensor[bool]) - The input tensor. The dtype of the tensor to be reduced is bool.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
+          Only constant value is allowed. Must be in the range [-rank(x), rank(x)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                         If false, don't keep these dimensions. Default : False.
+
+    Returns:
+        Tensor, the dtype is bool.
+
+        - If axis is (), and keep_dims is False,
+          the output is a 0-D tensor representing the "logical or" of all elements in the input tensor.
+        - If axis is int, set as 2, and keep_dims is False,
+          the shape of output is :math:`(x_1, x_3, ..., x_R)`.
+        - If axis is tuple(int), set as (2, 3), and keep_dims is False,
+          the shape of output is :math:`(x_1, x_4, ..., x_R)`.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `axis` is not one of the following: int, tuple or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[True, False], [True, True]]))
+        >>> # case 1: Reduces a dimension by the "logical OR" of all elements in the dimension.
+        >>> output = ops.any(x, keep_dims=True)
+        >>> print(output)
+        [[ True]]
+        >>> print(output.shape)
+        (1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = ops.any(x, axis=0)
+        >>> print(output)
+        [True True]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = ops.any(x, axis=1)
+        >>> print(output)
+        [True True]
+    """
+
+    return _get_cache_prim(P.ReduceAny)(keep_dims)(x, axis)
+
+
 __all__ = [
     'addn',
     'absolute',
     'abs',
     'tensor_add',
     'add',
+    'addcdiv',
+    'addcmul',
     'argmin',
     'neg_tensor',
     'neg',
@@ -4806,6 +4996,8 @@ __all__ = [
     'reduce_max',
     'reduce_mean',
     'reduce_prod',
+    'all',
+    'any',
     'sparse_segment_mean',
     'log2',
     'xlogy',
