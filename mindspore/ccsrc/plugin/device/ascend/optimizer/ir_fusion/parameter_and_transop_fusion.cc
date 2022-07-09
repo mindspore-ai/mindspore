@@ -79,6 +79,7 @@ kernel::KernelBuildInfoPtr GetKernelBuildInfo(const CNodePtr &cast, const string
   return builder.Build();
 }
 }  // namespace
+
 bool ParameterTransOpFusion::Run(const FuncGraphPtr &func_graph) {
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Func graph is nullptr";

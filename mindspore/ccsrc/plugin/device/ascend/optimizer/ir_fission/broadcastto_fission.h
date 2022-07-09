@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BROADCASTTO_FISSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FISSION_BROADCASTTO_FISSION_H_
 
+#include <vector>
 #include <string>
 #include "backend/common/optimizer/optimizer.h"
 
@@ -27,6 +28,10 @@ class BroadcasttoFission : public PatternProcessPass {
   ~BroadcasttoFission() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  CNodePtr AddBroadCastToNode(const FuncGraphPtr &func_graph, const CNodePtr &input_node,
+                              const std::vector<int64_t> &broad_shape) const;
 };
 }  // namespace opt
 }  // namespace mindspore

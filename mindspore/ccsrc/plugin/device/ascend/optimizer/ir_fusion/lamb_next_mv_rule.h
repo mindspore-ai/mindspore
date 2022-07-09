@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 #include "utils/hash_map.h"
 #include "ir/anf.h"
@@ -55,12 +54,13 @@ class LambNextMVRule : public MultipleOutputPatternProcessPass {
   ~LambNextMVRule() override = default;
   const BaseRef DefinePattern() const override = 0;
   BaseRef DefineAnotherPattern() const override = 0;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                           const EquivPtr &equiv) const override;
   bool IsShareNodes(const EquivPtr &equiv1, const EquivPtr &equiv2) const override;
 
  protected:
   bool IsRuleMatched(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &equiv,
-                     std::vector<AnfNodePtr> *old_pattern_outputs) const;
+                     std::vector<AnfNodePtr> *const old_pattern_outputs) const;
   AnfNodePtr CreateLambNextMVNode(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &old_pattern_outputs,
                                   const EquivPtr &equiv) const;
 
