@@ -59,6 +59,7 @@ class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     auto input_shapes = Convert2SizeTClipNeg(input_shape_signed);
     auto ids_shapes = Convert2SizeTClipNeg(ids_shape_signed);
     auto output_shapes = Convert2SizeTClipNeg(output_shape_signed);
+    ResetResource();
     is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
                      CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
                      CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
