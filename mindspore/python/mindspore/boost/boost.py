@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """boost"""
+from __future__ import absolute_import
+
 import threading
 from mindspore.nn.optim import SGD
 from .less_batch_normalization import LessBN
@@ -251,30 +253,30 @@ class AutoBoost:
             network (Cell): The training network.
             optimizer (Cell): Optimizer for updating the weights.
         """
-        if self.boost_config["dim_reduce"]:
+        if self.boost_config.get("dim_reduce"):
             self.local_pca_mat_path = _get_local_pca_mat_path(self.weight_load_dir, self.pca_mat_path,
                                                               self.n_components, self.device_number, network)
             optimizer = SGD(network.trainable_params(), learning_rate=1)
             setattr(optimizer, "dim_reduce", True)
             return network, optimizer
 
-        if self.boost_config["less_bn"]:
+        if self.boost_config.get("less_bn"):
             network = LessBN(network, fn_flag=self._fn_flag)
             optimizer_process = OptimizerProcess(optimizer)
             group_params = self._param_processer.assign_parameter_group(network.trainable_params(),
                                                                         self.gradient_groups)
             optimizer_process.origin_params = \
-                self._param_processer.generate_group_params(group_params, optimizer_process.origin_params)
+                ParameterProcess.generate_group_params(group_params, optimizer_process.origin_params)
             if self._gc_flag:
                 optimizer_process.add_grad_centralization(network)
             optimizer = optimizer_process.generate_new_optimizer()
 
-        if self.boost_config["grad_freeze"]:
+        if self.boost_config.get("grad_freeze"):
             freeze_processer = GradientFreeze(self._param_groups, self._freeze_type,
                                               self._freeze_p, self._total_steps)
             network, optimizer = freeze_processer.freeze_generate(network, optimizer)
 
-        if self.boost_config["adasum"]:
+        if self.boost_config.get("adasum"):
             setattr(optimizer, "adasum", True)
         return network, optimizer
 
@@ -285,38 +287,47 @@ class AutoBoost:
         Args:
             network (Cell): The inference network.
         """
-        if self.boost_config["dim_reduce"]:
+        if self.boost_config.get("dim_reduce"):
             return network
-        if self.boost_config["less_bn"]:
+        if self.boost_config.get("less_bn"):
             network = LessBN(network)
 
         return network
 
     def set_fn_flag(self, fn_flag):
+        """set fn flag"""
         self._fn_flag = fn_flag
 
     def set_gc_flag(self, gc_flag):
+        """set gc flag"""
         self._gc_flag = gc_flag
 
     def set_param_groups(self, param_groups):
+        """set param groups"""
         self._param_groups = param_groups
 
     def set_freeze_type(self, freeze_type):
+        """set freeze type"""
         self._freeze_type = freeze_type
 
     def set_freeze_p(self, freeze_p):
+        """set freeze p"""
         self._freeze_p = freeze_p
 
     def set_total_steps(self, total_steps):
+        """set total steps"""
         self._total_steps = total_steps
 
     def set_device_number(self, device_number):
+        """set device number"""
         self.device_number = device_number
 
     def set_grad_accumulation_step(self, grad_accumulation_step):
+        """set grad accumulation step"""
         self.grad_accumulation_step = grad_accumulation_step
 
     def set_gradient_split_groups(self, gradient_groups):
+        """set gradient split groups"""
         if not isinstance(gradient_groups, (list, int)):
             raise ValueError(f"gradient_groups `{gradient_groups}` is not in (list, int)")
         if isinstance(gradient_groups, int):
@@ -324,32 +335,40 @@ class AutoBoost:
         self.gradient_groups = gradient_groups
 
     def set_rho(self, rho):
+        """set rho"""
         self.rho = rho
 
     def set_gamma(self, gamma):
+        """set gamma"""
         self.gamma = gamma
 
     def set_alpha(self, alpha):
+        """set alpha"""
         self.alpha = alpha
 
     def set_sigma(self, sigma):
+        """set sigma"""
         self.sigma = sigma
 
     def set_n_components(self, n_components):
+        """set n components"""
         self.n_components = n_components
 
     def set_pca_mat_path(self, pca_mat_path):
+        """set pca_mat path"""
         self.pca_mat_path = pca_mat_path
 
     def set_weight_load_dir(self, weight_load_dir):
+        """set weight load dir"""
         self.weight_load_dir = weight_load_dir
 
     def set_timeout(self, timeout):
+        """set timeout"""
         self.timeout = timeout
 
     def _get_configuration(self, level, boost_config_dict):
         """Get configuration."""
-        level_config = _boost_config_level[level]
+        level_config = _boost_config_level.get(level)
         if not boost_config_dict:
             return level_config
 

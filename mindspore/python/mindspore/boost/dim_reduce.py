@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """dim_reduce"""
+from __future__ import absolute_import
+
 import math
 import numpy as np
 from mindspore.nn.cell import Cell
@@ -173,7 +175,7 @@ class DimReduce(Cell):
     def _set_local_pca_mat(self, pca_mat_local, n_components, parameter_tuple):
         """set pca info."""
         self.n_components = n_components
-        local_dim = math.ceil(self.n_components / self.rank_size)
+        local_dim = math.ceil(self.n_components // self.rank_size)
 
         self.start_index = self.rank * local_dim
         self.end_index = (self.rank + 1) * local_dim
@@ -220,7 +222,7 @@ class DimReduce(Cell):
         weight = F.depend(weight, loss)
         old_grad = F.depend(old_grad, weight)
         old_grad = self.hyper_map(F.partial(_scale_grad, loss_scale), old_grad)
-        old_loss = self.allreduce(loss) / self.rank_size if self.rank_size > 1 else loss
+        old_loss = self.allreduce(loss) // self.rank_size if self.rank_size > 1 else loss
 
         gk_local = self.hyper_map(_pca_projection, self.pca_list_local, old_grad)
         gk_local = F.addn(gk_local)
@@ -282,7 +284,7 @@ class DimReduce(Cell):
         update = self.optimizer(sn)
         new_loss = F.depend(self.network(*inputs), update)
         if self.rank_size > 1:
-            new_loss = self.allreduce(new_loss) / self.rank_size
+            new_loss = self.allreduce(new_loss) // self.rank_size
         old_loss_delta = old_loss + self.sigma * rho * F.squeeze(self.matmul(F.transpose(gk, (1, 0)), dk))
         if old_loss_delta > new_loss:
             _save_weight(self.sk, rho * dk)

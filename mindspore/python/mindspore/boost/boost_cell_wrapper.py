@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Boost Mode Cell Wrapper."""
+from __future__ import absolute_import
+
 import numpy as np
 from mindspore.nn.wrap import TrainOneStepCell
 import mindspore.context as context
@@ -37,6 +39,7 @@ from .base import _load_local_pca_mat
 
 __all__ = ["BoostTrainOneStepCell", "BoostTrainOneStepWithLossScaleCell"]
 
+
 _get_delta_weight = C.MultitypeFuncGraph("_get_delta_weight")
 
 
@@ -60,11 +63,13 @@ reciprocal = P.Reciprocal()
 
 @_grad_scale.register("Tensor", "Tensor")
 def tensor_grad_scale(scale, grad):
+    """grad scale function for tensor"""
     return grad * F.cast(reciprocal(scale), F.dtype(grad))
 
 
 @_grad_scale.register("Tensor", "RowTensor")
 def tensor_grad_scale_row_tensor(scale, grad):
+    """grad scale function for row tensor"""
     return RowTensor(grad.indices,
                      grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
                      grad.dense_shape)
@@ -162,6 +167,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
                                      self.auto_boost.boost_config.get("grad_accumulation", False)
         self.max_accumulation_step = 1
         if self.use_grad_accumulation:
+
             self.max_accumulation_step = self.auto_boost.grad_accumulation_step
             if self.max_accumulation_step <= 1:
                 self.max_accumulation_step = 1
@@ -172,20 +178,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
 
         self.enable_dim_reduce = self.check_dim_reduce_enable()
         if self.enable_dim_reduce:
-            local_pca_mat_path = self.auto_boost.local_pca_mat_path
-            rho = self.auto_boost.rho
-            gamma = self.auto_boost.gamma
-            alpha = self.auto_boost.alpha
-            sigma = self.auto_boost.sigma
-            _rank = _get_global_rank()
-            _rank_size = 1 if self.parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-            _device_number = self.auto_boost.device_number
-            n_components = self.auto_boost.n_components
-            timeout = self.auto_boost.timeout
-            pca_mat = _load_local_pca_mat(local_pca_mat_path, timeout)
-            self.weights_clone = ParameterTuple(self.weights).clone(prefix="weights_clone", init="same")
-            self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho, gamma,
-                                        alpha, sigma, _rank, _rank_size)
+            self.__init_dim_reduce()
 
         self.freeze_nets = None
         self.step = Parameter(Tensor(0, dtype=mstype.int32))
@@ -203,28 +196,7 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         self.enable_adasum = self.check_adasum_enable()
         self.sync_tensor = Parameter(Tensor(0, dtype=mstype.int32))
         if self.enable_adasum:
-            _rank = _get_global_rank()
-            _rank_size = get_group_size()
-            _device_number = self.auto_boost.device_number
-            self.device_number = _device_number
-            group_number = _rank_size // _device_number
-
-            self.server_rank = _rank % _device_number
-            parameter_rank_number = len(self.weights) // _device_number
-            self.start = [x * parameter_rank_number for x in range(_device_number)]
-            self.end = [(x + 1) * parameter_rank_number for x in range(_device_number)]
-            self.end[-1] = len(self.weights)
-
-            current_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
-            self.grad_clone = ParameterTuple(current_weights).clone(prefix="delta_weight")
-            self.adasum = AdaSum(_rank, _device_number, group_number, self.grad_clone)
-
-            self.degree = int(self.degree / group_number)
-            group_list = [list(range(x * self.degree, (x + 1) * self.degree)) for x in range(group_number)]
-            current_index = _rank // _device_number
-            server_group_name = "allreduce_" + str(current_index)
-            create_group(server_group_name, group_list[current_index])
-            self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=server_group_name)
+            self.__init_adasum()
 
     def construct(self, *inputs):
         if self.freeze:
@@ -347,6 +319,47 @@ class BoostTrainOneStepCell(TrainOneStepCell):
         if not getattr(self.optimizer, "dim_reduce", None):
             return False
         return True
+
+    def __init_dim_reduce(self):
+        """dim reduce algorithm init method."""
+        local_pca_mat_path = self.auto_boost.local_pca_mat_path
+        rho = self.auto_boost.rho
+        gamma = self.auto_boost.gamma
+        alpha = self.auto_boost.alpha
+        sigma = self.auto_boost.sigma
+        _rank = _get_global_rank()
+        _rank_size = 1 if self.parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
+        n_components = self.auto_boost.n_components
+        timeout = self.auto_boost.timeout
+        pca_mat = _load_local_pca_mat(local_pca_mat_path, timeout)
+        self.weights_clone = ParameterTuple(self.weights).clone(prefix="weights_clone", init="same")
+        self.dim_reduce = DimReduce(self.network, self.optimizer, self.weights, pca_mat, n_components, rho, gamma,
+                                    alpha, sigma, _rank, _rank_size)
+
+    def __init_adasum(self):
+        """adasum algorithm init method."""
+        _rank = _get_global_rank()
+        _rank_size = get_group_size()
+        _device_number = self.auto_boost.device_number
+        self.device_number = _device_number
+        group_number = _rank_size // _device_number
+
+        self.server_rank = _rank % _device_number
+        parameter_rank_number = len(self.weights) // _device_number
+        self.start = [x * parameter_rank_number for x in range(_device_number)]
+        self.end = [(x + 1) * parameter_rank_number for x in range(_device_number)]
+        self.end[-1] = len(self.weights)
+
+        current_weights = self.weights[self.start[self.server_rank]: self.end[self.server_rank]]
+        self.grad_clone = ParameterTuple(current_weights).clone(prefix="delta_weight")
+        self.adasum = AdaSum(_rank, _device_number, group_number, self.grad_clone)
+
+        self.degree = int(self.degree // group_number)
+        group_list = [list(range(x * self.degree, (x + 1) * self.degree)) for x in range(group_number)]
+        current_index = _rank // _device_number
+        server_group_name = "allreduce_" + str(current_index)
+        create_group(server_group_name, group_list[current_index])
+        self.grad_reducer = DistributedGradReducer(self.weights, self.mean, self.degree, group=server_group_name)
 
 
 class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
@@ -483,17 +496,22 @@ class BoostTrainOneStepWithLossScaleCell(BoostTrainOneStepCell):
             overflow = self._process_loss_scale(cond)
             # if there is no overflow, do optimize
             if not overflow:
-                if self.use_grad_accumulation:
-                    loss = self.gradient_accumulation_process(loss, grads, scaling_sens_filled, *inputs)
-                else:
-                    if self.enable_dim_reduce:
-                        loss = F.depend(loss, self.dim_reduce(loss, grads, scaling_sens_filled, self.weights,
-                                                              self.weights_clone, *inputs))
-                    elif self.enable_adasum:
-                        loss = F.depend(loss, self.adasum_process(loss, grads))
-                    else:
-                        loss = F.depend(loss, self.optimizer(grads))
+                loss = self.__multi_update(loss, grads, scaling_sens_filled, *inputs)
         return loss, cond, scaling_sens
+
+    def __multi_update(self, loss, grads, scaling_sens_filled, *inputs):
+        """enable multi-algorithm's process"""
+        if self.use_grad_accumulation:
+            loss = self.gradient_accumulation_process(loss, grads, scaling_sens_filled, *inputs)
+        else:
+            if self.enable_dim_reduce:
+                loss = F.depend(loss, self.dim_reduce(loss, grads, scaling_sens_filled, self.weights,
+                                                      self.weights_clone, *inputs))
+            elif self.enable_adasum:
+                loss = F.depend(loss, self.adasum_process(loss, grads))
+            else:
+                loss = F.depend(loss, self.optimizer(grads))
+        return loss
 
     def _get_dynamic_overflow_status(self, param):
         """

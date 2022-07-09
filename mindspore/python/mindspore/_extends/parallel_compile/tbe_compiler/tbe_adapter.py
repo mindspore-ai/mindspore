@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """tbe adapter to adapt te/topi/auto-tune python api """
+from __future__ import absolute_import
 import json
 import os
 import shutil
@@ -36,8 +37,6 @@ from te_fusion.parallel_compilation import init_multi_process_env, start_ga_mult
 from .tbe_helper import get_soc_info, assemble_op_args, get_compute_op_list, get_options_info, get_fuzz_build_info, \
     adjust_custom_op_info, pack_op_args, get_module_name, get_real_op_debug_level, LocalLock
 from .tbe_job import TbeJob, JobStatus
-
-PLATFORM_FLAG = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
 
 
 def _tune_init(job: TbeJob):
@@ -154,6 +153,7 @@ def __creating_default_custom_path(auto_tiling_mode, base_custom_path):
     """
     Create default custom path
     """
+    platform_flag = ["Ascend310", "Ascend910", "Hi3796CV300ES", "Ascend710", "Ascend610", "Hi3796CV300CS", "SD3403"]
     base_custom_path = __directory_creation(base_custom_path, "data")
     tune_flag = []
     if "RL" in auto_tiling_mode:
@@ -163,7 +163,7 @@ def __creating_default_custom_path(auto_tiling_mode, base_custom_path):
 
     for tune_path in tune_flag:
         real_path = __directory_creation(base_custom_path, tune_path)
-        for soc_version in PLATFORM_FLAG:
+        for soc_version in platform_flag:
             final_path = __directory_creation(real_path, soc_version)
             final_path = __directory_creation(final_path, "custom")
     return True
@@ -618,7 +618,7 @@ def rl_tune_fusion_op(job: TbeJob):
     finally:
         pass
     l1_size = job.content["l1_size"]
-    base_kernel = job.content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_kernel_name + ".o"
+    base_kernel = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", op_kernel_name + ".o")
     compute_op_list = get_compute_op_list(job.content)
     op_module_names_str = ""
     op_type_set = set()
