@@ -68,7 +68,7 @@ def check_config_info(config_info_name, config_info, enable_none=True):
         raise TypeError(f"{config_info_name} must be dict, but got {format(type(config_info))}.")
     for key in config_info:
         if not isinstance(key, str):
-            raise TypeError(f"{config_info_name} key {key} must be str, but got {type(key)}.")
+            raise TypeError(f"{config_info_name} key must be str, but got {type(key)} at key {key}.")
         if not isinstance(config_info[key], str):
             raise TypeError(f"{config_info_name} val must be str, but got "
                             f"{type(config_info[key])} at key {key}.")
