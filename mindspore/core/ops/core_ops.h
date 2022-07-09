@@ -186,6 +186,8 @@ constexpr auto kScatterNdMin = "ScatterNdMin";
 constexpr auto kCSRSparseMatrixToSparseTensor = "CSRSparseMatrixToSparseTensor";
 constexpr auto kSlice = "Slice";
 constexpr auto kAffineGrid = "AffineGrid";
+constexpr auto kGatherDGrad = "GatherDGrad";
+constexpr auto kGatherDGradV2 = "GatherDGradV2";
 
 // NN
 constexpr auto kAdaptiveMaxPool3D = "AdaptiveMaxPool3D";
@@ -381,6 +383,8 @@ GVAR_DEF(PrimitivePtr, kPrimConjugateTranspose, std::make_shared<Primitive>(kCon
 GVAR_DEF(PrimitivePtr, kPrimTransposeNOD, std::make_shared<Primitive>("TransposeNOD"));
 GVAR_DEF(PrimitivePtr, kPrimGatherV2, std::make_shared<Primitive>("GatherV2"));
 GVAR_DEF(PrimitivePtr, kPrimGatherD, std::make_shared<Primitive>("GatherD"));
+GVAR_DEF(PrimitivePtr, kPrimGatherDGrad, std::make_shared<Primitive>(kGatherDGrad));
+GVAR_DEF(PrimitivePtr, kPrimGatherDGradV2, std::make_shared<Primitive>(kGatherDGradV2));
 GVAR_DEF(PrimitivePtr, kPrimGather, std::make_shared<Primitive>("Gather"));
 GVAR_DEF(PrimitivePtr, kPrimGatherNd, std::make_shared<Primitive>("GatherNd"));
 GVAR_DEF(PrimitivePtr, kPrimSparseGatherV2, std::make_shared<Primitive>("SparseGatherV2"));
