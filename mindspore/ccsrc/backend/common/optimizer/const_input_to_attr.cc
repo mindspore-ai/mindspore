@@ -39,6 +39,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimReshape->name(), {1});
   Register(prim::kPrimReduceMax->name(), {1});
   Register(prim::kPrimReduceMin->name(), {1});
+  Register(prim::kPrimReduceProd->name(), {1});
   Register(prim::kPrimReduceSum->name(), {1});
   Register(prim::kPrimArgminV2->name(), {1});
   Register(prim::kPrimReduceMean->name(), {1});
