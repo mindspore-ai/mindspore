@@ -283,6 +283,19 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
   return tensor;
 }
 
+AnfNodePtr CreateTensorMoveOp(const FuncGraphPtr &graph, const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(node);
+  auto prim = std::make_shared<Primitive>(kTensorMoveOpName);
+  std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim), node};
+  auto new_node = graph->NewCNode(new_node_inputs);
+  MS_EXCEPTION_IF_NULL(new_node);
+  new_node->set_abstract(node->abstract());
+  new_node->set_scope(node->scope());
+  common::AnfAlgo::SetNodeAttr(kAttrDatadumpOriginalNames, MakeValue<std::vector<std::string>>({}), new_node);
+  return new_node;
+}
+
 bool IsAllNopNode(const session::KernelGraph *const graph) {
   MS_EXCEPTION_IF_NULL(graph);
   auto execution_order = graph->execution_order();
