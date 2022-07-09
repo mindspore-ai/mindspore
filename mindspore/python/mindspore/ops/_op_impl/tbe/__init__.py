@@ -159,6 +159,7 @@ from .scatter_nd_sub_ds import _scatter_nd_sub_ds_tbe
 from .scatter_non_aliasing_add import _scatter_non_aliasing_add_tbe
 from .scatter_non_aliasing_add_ds import _scatter_non_aliasing_add_ds_tbe
 from .reduce_mean import _reduce_mean_tbe
+from .reduce_mean_ds import _reduce_mean_ds_tbe
 from .tile import _tile_tbe
 from .tile_ds import _tile_ds_tbe
 from .atomic_addr_clean import _atomic_addr_clean_tbe
@@ -226,7 +227,9 @@ from .logical_not_ds import _logical_not_ds_tbe
 from .logical_or import _logical_or_tbe
 from .logical_or_ds import _logical_or_ds_tbe
 from .reduce_max import _reduce_max_tbe
+from .reduce_max_ds import _reduce_max_ds_tbe
 from .reduce_min import _reduce_min_tbe
+from .reduce_min_ds import _reduce_min_ds_tbe
 from .reduce_sum import _reduce_sum_tbe
 from .reduce_sum_ds import _reduce_sum_ds_tbe
 from .reduce_std import _reduce_std_tbe
@@ -421,6 +424,7 @@ from .cum_sum import _cum_sum_tbe
 from .apply_rms_prop import _apply_rms_prop_tbe
 from .cumprod import _cumprop_tbe
 from .reduce_prod import _reduce_prod_tbe
+from .reduce_prod_ds import _reduce_prod_ds_tbe
 from .reciprocal_grad import _reciprocal_grad_tbe
 from .reciprocal_grad_ds import _reciprocal_grad_ds_tbe
 from .sqrt_grad import _sqrt_grad_tbe

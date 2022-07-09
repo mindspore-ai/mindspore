@@ -206,13 +206,13 @@ Reduction Operators
 
    * - functional
      - Description
-   * - mindspore.ops.reduce_max
+   * - mindspore.ops.amax
      - Refer to :class:`mindspore.ops.ReduceMax`.
-   * - mindspore.ops.reduce_mean
+   * - mindspore.ops.mean
      - Refer to :class:`mindspore.ops.ReduceMean`.
-   * - mindspore.ops.reduce_min
+   * - mindspore.ops.amin
      - Refer to :class:`mindspore.ops.ReduceMin`.
-   * - mindspore.ops.reduce_prod
+   * - mindspore.ops.prod
      - Refer to :class:`mindspore.ops.ReduceProd`.
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
@@ -460,7 +460,7 @@ Debugging Operators
      - Description
    * - mindspore.ops.print\_
      - Refer to :class:`mindspore.ops.Print`.
-   
+
 
 Other Operators
 ---------------
