@@ -34,5 +34,8 @@ DECLARE_OP_USE_OUTPUT(RandomChoiceWithMask)
 
 DECLARE_OP_ADAPTER(TruncatedNormal)
 DECLARE_OP_USE_OUTPUT(TruncatedNormal)
+
+DECLARE_OP_ADAPTER(RandomStandardNormal)
+DECLARE_OP_USE_OUTPUT(RandomStandardNormal)
 }  // namespace mindspore::transform
 #endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_RANDOM_OPS_DECLARE_H_
