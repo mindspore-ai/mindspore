@@ -25,9 +25,9 @@
 
 namespace mindspore {
 namespace kernel {
-class SparseApplyFtrlCpuKernelTest : public UT::Common {
+class FusedSparseFtrlCpuKernelTest : public UT::Common {
  public:
-  SparseApplyFtrlCpuKernelTest() : sparse_ftrl_(std::make_shared<SparseApplyFtrlCpuKernelMod>()) {}
+  FusedSparseFtrlCpuKernelTest() : sparse_ftrl_(std::make_shared<FusedSparseFtrlCpuKernelMod>()) {}
 
   void SetUp() override {
     sparse_ftrl_->lr_ = 0.001;
@@ -104,10 +104,13 @@ class SparseApplyFtrlCpuKernelTest : public UT::Common {
   std::vector<AddressPtr> outputs_;
   std::vector<KernelTensorPtr> kernel_tensor_inputs_;
   std::vector<KernelTensorPtr> kernel_tensor_outputs_;
-  std::shared_ptr<SparseApplyFtrlCpuKernelMod> sparse_ftrl_;
+  std::shared_ptr<FusedSparseFtrlCpuKernelMod> sparse_ftrl_;
 };
 
-TEST_F(SparseApplyFtrlCpuKernelTest, dense_test) {
+/// Feature: FusedSparseFtrl
+/// Description: Run FusedSparseFtrl
+/// Expectation: pass
+TEST_F(FusedSparseFtrlCpuKernelTest, dense_test) {
   for (size_t i = 0; i < 3 * 3 * 3; ++i) {
     var_.push_back(1.0);
     accum_.push_back(1.0);
@@ -136,7 +139,10 @@ TEST_F(SparseApplyFtrlCpuKernelTest, dense_test) {
   }
 }
 
-TEST_F(SparseApplyFtrlCpuKernelTest, sparse_test1) {
+/// Feature: FusedSparseFtrl
+/// Description: Run FusedSparseFtrl
+/// Expectation: pass
+TEST_F(FusedSparseFtrlCpuKernelTest, sparse_test1) {
   for (size_t i = 0; i < 3 * 3 * 3; ++i) {
     var_.push_back(1.0);
     accum_.push_back(1.0);
@@ -173,7 +179,10 @@ TEST_F(SparseApplyFtrlCpuKernelTest, sparse_test1) {
   }
 }
 
-TEST_F(SparseApplyFtrlCpuKernelTest, sparse_test2) {
+/// Feature: FusedSparseFtrl
+/// Description: Run FusedSparseFtrl
+/// Expectation: pass
+TEST_F(FusedSparseFtrlCpuKernelTest, sparse_test2) {
   for (size_t i = 0; i < 3 * 3 * 3; ++i) {
     var_.push_back(1.0);
     accum_.push_back(1.0);

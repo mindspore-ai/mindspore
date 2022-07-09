@@ -6707,7 +6707,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         RuntimeError: If the data type of all of inputs except `indices` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> class SparseApplyFtrlNet(nn.Cell):
