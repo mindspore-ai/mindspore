@@ -722,6 +722,21 @@ def get_bprop_strided_slice(self):
     return bprop
 
 
+@bprop_getters.register(G.StridedSliceGrad)
+def get_bprop_strided_slice_grad(self):
+    """Generate bprop for StridedSliceGrad"""
+    strided_slice = P.StridedSlice(begin_mask=self.begin_mask,
+                                   end_mask=self.end_mask,
+                                   ellipsis_mask=self.ellipsis_mask,
+                                   new_axis_mask=self.new_axis_mask,
+                                   shrink_axis_mask=self.shrink_axis_mask)
+    def bprop(dy, shapex, begin, end, strides, out, dout):
+        return strided_slice(dout, begin, end, strides), zeros_like(shapex), zeros_like(begin), zeros_like(end), \
+            zeros_like(strides)
+
+    return bprop
+
+
 @bprop_getters.register(P.Eye)
 def get_bprop_eye(self):
     """Generate bprop for Eye"""
