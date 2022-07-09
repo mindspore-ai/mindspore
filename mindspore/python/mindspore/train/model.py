@@ -294,8 +294,10 @@ class Model:
             raise ValueError("The argument 'optimizer' can not be None when set 'loss_scale_manager'.")
 
         net_inputs = network.get_inputs()
+        loss_inputs = [None]
         if self._loss_fn:
-            loss_inputs = [self._loss_fn.get_inputs()]
+            if self._loss_fn.get_inputs():
+                loss_inputs = [*self._loss_fn.get_inputs()]
             loss_inputs.pop(0)
             if net_inputs:
                 net_inputs = [*net_inputs, *loss_inputs]
@@ -349,7 +351,9 @@ class Model:
                                  f" `loss_fn`.")
 
             net_inputs = self._network.get_inputs()
-            loss_inputs = [self._loss_fn.get_inputs()]
+            loss_inputs = [None]
+            if self._loss_fn.get_inputs():
+                loss_inputs = [*self._loss_fn.get_inputs()]
             loss_inputs.pop(0)
             if net_inputs:
                 net_inputs = [*net_inputs, *loss_inputs]
