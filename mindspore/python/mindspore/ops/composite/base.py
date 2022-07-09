@@ -373,6 +373,7 @@ class GradOperation(GradOperation_):
             dynamic_shape_inputs = None
             if isinstance(fn, ms.nn.Cell):
                 dynamic_shape_inputs = fn.get_inputs()
+                fn.grad_ops_label = True
             if self.get_by_list:
                 @ms_function(input_signature=dynamic_shape_inputs)
                 def after_grad(*args):
