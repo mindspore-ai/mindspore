@@ -44,6 +44,8 @@ _reduce_sum_default = P.ReduceSum()
 _reduce_sum_keepdims = P.ReduceSum(True)
 _mean_keepdims = P.ReduceMean(True)
 _csr_mm = _csr_ops.CSRMM()
+_addcdiv = P.Addcdiv()
+_addcmul = P.Addcmul()
 
 itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
                 mstype.float16: 2, mstype.int16: 2, mstype.uint16: 2,
@@ -107,6 +109,40 @@ def prod(x, axis=(), keep_dims=False):
         6.0
     """
     return F.reduce_prod(x, axis, keep_dims)
+
+
+def addcdiv(input_data, x1, x2, value):
+    """
+    Performs the element-wise division of tensor x1 by tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    Args:
+        input_data (Tensor): The tensor to be added.
+        x1 (Tensor): The numerator tensor.
+        x2 (Tensor): The denominator tensor.
+        value (Tensor): The multiplier for tensor x1/x2.
+
+    Returns:
+        Tensor, has the same shape and dtype as x1/x2.
+    """
+    return _addcdiv(input_data, x1, x2, value)
+
+
+def addcmul(input_data, x1, x2, value):
+    """
+    Performs the element-wise product of tensor x1 and tensor x2,
+    multiply the result by the scalar value and add it to input_data.
+
+    Args:
+        input_data (Tensor): The tensor to be added.
+        x1 (Tensor): The tensor to be multiplied.
+        x2 (Tensor): The tensor to be multiplied.
+        value (Tensor): The multiplier for tensor x1*x2.
+
+    Returns:
+        Tensor, has the same shape and dtype as x1*x2.
+    """
+    return _addcmul(input_data, x1, x2, value)
 
 
 def all_(x, axis=(), keep_dims=False):

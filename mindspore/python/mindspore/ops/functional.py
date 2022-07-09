@@ -794,6 +794,8 @@ shape_mul = Primitive("shape_mul")
 # a primitive to compare between tuple.
 stop_gradient = Primitive("stop_gradient")
 
+tensor_operator_registry.register('addcdiv', P.Addcdiv)
+tensor_operator_registry.register('addcmul', P.Addcmul)
 tensor_operator_registry.register('all', P.ReduceAll)
 tensor_operator_registry.register('any', P.ReduceAny)
 tensor_operator_registry.register('abs', P.Abs)

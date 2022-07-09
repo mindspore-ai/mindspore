@@ -149,6 +149,8 @@ BuiltInTypeMap &GetMethodMap() {
      }},
     {kObjectTypeTensorType,
      {
+       {"addcdiv", std::string("addcdiv")},                                // C.addcdiv
+       {"addcmul", std::string("addcmul")},                                // C.addcmul
        {"all", std::string("all_")},                                       // C.reduce_all
        {"any", std::string("any_")},                                       // C.reduce_any
        {"__add__", std::string("add")},                                    // C.add
