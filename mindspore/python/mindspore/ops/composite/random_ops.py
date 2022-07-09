@@ -277,57 +277,6 @@ def gamma(shape, alpha, beta, seed=None):
 
 
 @_function_forbid_reuse
-def random_gamma(shape, alpha, seed=None):
-    """
-    Outputs random values from the Gamma distribution(s) described by alpha.
-
-    Args:
-        shape (Tensor): The shape of random tensor to be generated.
-        Must be one of the following types: int32, int64. 1-D integer tensor.
-        alpha (Tensor): The alpha α distribution parameter.
-        A Tensor. Must be one of the following types: half, float32, float64.
-        seed (int): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
-
-    Returns:
-        Tensor. The shape should be equal to the concat shape between the input `shape` and the broadcast
-        of `alpha`.
-        The dtype is the same type as alpha.
-
-    Raises:
-        TypeError: If `shape` is not a Tensor.
-        TypeError: If `alpha` is not a Tensor.
-        TypeError: If `seed` is not an int.
-        TypeError: If dtype of `alpha` is not half, float32 or float64.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> from mindspore import Tensor, ops
-        >>> import mindspore
-        >>> # case 1: alpha_shape is (2, 2)
-        >>> shape = Tensor(np.array([3, 1, 2]), mindspore.int32)
-        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
-        >>> output = ops.random_gamma(shape, alpha, seed=5)
-        >>> result = output.shape
-        >>> print(result)
-        (3, 1, 2, 2, 2)
-        >>> # case 2: alpha_shape is (2), so shape is (7, 5, 2)
-        >>> shape = Tensor(np.array([7, 5]), mindspore.int32)
-        >>> alpha = Tensor(np.array([0.5, 1.5]), mindspore.float32)
-        >>> output = ops.random_gamma(shape, alpha, seed=5)
-        >>> result = output.shape
-        >>> print(result)
-        (7, 5, 2)
-    """
-    seed1, seed2 = _get_seed(seed, "random_gamma")
-    random_gamma_v = P.RandomGamma(seed1, seed2)
-    value = random_gamma_v(shape, alpha)
-    return value
-
-
-@_function_forbid_reuse
 def poisson(shape, mean, seed=None):
     r"""
     Generates random numbers according to the Poisson random number distribution.

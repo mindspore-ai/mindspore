@@ -308,6 +308,7 @@ from .random_func import (
     random_categorical,
     uniform,
     standard_normal,
+    random_gamma,
 )
 
 __all__ = []
