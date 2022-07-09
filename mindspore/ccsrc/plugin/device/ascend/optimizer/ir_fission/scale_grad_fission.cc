@@ -25,7 +25,7 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kScaleGradInputSize = 3;
-constexpr double kFloatMinimal = 0.0000001;
+constexpr double kFloatMinimal = 1e-7;
 
 AnfNodePtr CreateNodeBase(const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &new_node_inputs,
                           const AnfNodePtr &node) {
