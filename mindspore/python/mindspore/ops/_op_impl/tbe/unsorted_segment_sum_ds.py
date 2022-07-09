@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,17 +23,19 @@ unsorted_segment_sum_ds_op_info = TBERegOp("UnsortedSegmentSum") \
     .compute_cost(10) \
     .kernel_name("unsorted_segment_sum") \
     .partial_flag(True) \
+    .need_check_supported(True) \
+    .dynamic_compile_static(True) \
     .dynamic_shape(True) \
     .input(0, "x", False, "required", "all") \
-    .input(1, "segment_ids", False, "required", "all") \
-    .input(2, "num_segments", False, "required", "all") \
+    .input(1, "segment_ids", False, "required", "all", "optional") \
+    .input(2, "num_segments", False, "required", "all", "optional") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
+    .is_dynamic_format(True) \
+    .dtype_format(DataType.None_None, DataType.None_None, DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 
 @op_info_register(unsorted_segment_sum_ds_op_info)
 def _unsorted_segment_sum_ds_tbe():
-    """UnsortedSegmentSumUnknown TBE register"""
+    """UnsortedSegmentSumD TBE register"""
     return
