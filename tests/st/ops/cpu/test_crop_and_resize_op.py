@@ -221,9 +221,7 @@ def test_crop_and_resize_float32_bilinear(datatype=np.float32):
                                   [0.0, 0.0, 0.0]],
                                  [[299412.5, 299413.5, 299414.5], [300043.625, 300044.625, 300045.625],
                                   [0.0, 0.0, 0.0]]]]).astype(np.float32)
-    error = np.ones(shape=[2, *crop_size, channels]) * 0.01
-    diff = output_ms - expected_output
-    assert np.all(abs(diff) < error)
+    assert np.allclose(output_ms, expected_output)
 
 
 @pytest.mark.level0
