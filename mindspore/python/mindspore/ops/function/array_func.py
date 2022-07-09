@@ -3654,7 +3654,6 @@ __all__ = [
     'select',
     'nonzero',
     'matrix_diag',
-    'matrix_diag_part',
     'diag',
     'meshgrid',
     'adaptive_max_pool2d',

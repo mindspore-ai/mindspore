@@ -90,7 +90,6 @@ from .array_func import (
     select,
     one_hot,
     matrix_diag,
-    matrix_diag_part,
     diag,
     masked_select,
     meshgrid,
