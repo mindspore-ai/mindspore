@@ -2185,6 +2185,8 @@ def matrix_solve(matrix, rhs, adjoint=False):
         &adjoint(matrix[..., M, M]) * x[..., M, K] = rhs[..., M, K]
         \end{aligned}
 
+    .. warning::
+        On GPU, if the matrix is irreversible, an error may be reported or an unknown result may be returned.
 
     Args:
         matrix (Tensor): The shape of tensor is :math:`[..., M, M]`.
@@ -2203,6 +2205,7 @@ def matrix_solve(matrix, rhs, adjoint=False):
         ValueError: If the dimension of `matrix` is not the same as `rhs`.
         ValueError: If the inner-most 2 dimension of `matrix` is not the same.
         ValueError: If the inner-most 2 dimension of `rhs` does not match `matrix`.
+        ValueError: If the `matrix` is irreversible.
 
     Supported Platforms:
         ``GPU`` ``CPU``
