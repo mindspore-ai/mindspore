@@ -568,6 +568,19 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
             is "linear". It is 2 int elements :math:`(new\_height, new\_width)` when `mode` is "bilinear".
         coordinate_transformation_mode (string): Default is 'align_corners'. Describes how to transform the coordinate
             in the resized tensor to the coordinate in the original tensor. Other optional: 'half_pixel', 'asymmetric'.
+            For example, we want to resize the original tensor along axis x. Let's denote `new_i` as the i-th coordinate
+            of the resized tensor along axis x, `old_i` as the coordinate of the original tensor along axis x,
+            `new_length` as the length of the resized tensor along axis x, `old_length` as the length of the original
+            tensor along axis x. We compute the `old_i` via the following formula:
+
+            .. code-block::
+
+                old_i = new_length != 1 ? new_i * (old_length - 1) / (new_length - 1) : 0  # if set to 'align_corners'
+
+                old_i = new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0  # if set to 'half_pixel'
+
+                old_i = new_length != 0 ? new_i * old_length / new_length : 0  # if set to 'asymmetric'
+
         mode (string): The method used to interpolate: 'linear' | 'bilinear'. Default is 'linear'.
 
     Returns:
@@ -578,14 +591,15 @@ def interpolate(x, roi=None, scales=None, sizes=None, coordinate_transformation_
 
     Raises:
         TypeError: If `x` is not a Tensor.
+        TypeError: If the data type of `x` is not supported.
         TypeError: If `scales` is not a float tuple.
         ValueError: If not all numbers in `scales` are positive.
-        TypeError: If `sizes` is not a int tuple.
+        TypeError: If `sizes` is not an int tuple.
         ValueError: If not all numbers in `sizes` are positive.
         TypeError: If `coordinate_transformation_mode` is not a string.
-        TypeError: If `coordinate_transformation_mode` is not in the support list.
+        ValueError: If `coordinate_transformation_mode` is not in the support list.
         TypeError: If `mode` is not a string.
-        TypeError: If `mode` is not in the support list.
+        ValueError: If `mode` is not in the support list.
 
     Examples:
         >>> x = Tensor([[[1, 2, 3], [4, 5, 6]]], mindspore.float32)
