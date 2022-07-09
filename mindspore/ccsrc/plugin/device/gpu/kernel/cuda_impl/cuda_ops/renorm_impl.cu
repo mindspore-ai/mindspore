@@ -16,6 +16,10 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/renorm_impl.cuh"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/util.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void CalNormValFun1(const T *input, size_t input_elements, size_t inner_size, size_t axis_size, int p,
@@ -25,6 +29,30 @@ __global__ void CalNormValFun1(const T *input, size_t input_elements, size_t inn
     auto norm_index = index / inner_size;
     norm_index = norm_index % axis_size;
     float pow_value = pow(abs(static_cast<float>(input[index])), static_cast<float>(p));
+    MsAtomicAdd(&norm_value[norm_index], pow_value);
+  }
+}
+
+template <>
+__global__ void CalNormValFun1(const Complex<float> *input, size_t input_elements, size_t inner_size,
+                               size_t axis_size, int p, float *norm_value) {
+  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (input_elements);
+       index += blockDim.x * gridDim.x) {
+    auto norm_index = index / inner_size;
+    norm_index = norm_index % axis_size;
+    float pow_value = pow(static_cast<float>(abs(input[index])), static_cast<float>(p));
+    MsAtomicAdd(&norm_value[norm_index], pow_value);
+  }
+}
+
+template <>
+__global__ void CalNormValFun1(const Complex<double> *input, size_t input_elements, size_t inner_size,
+                               size_t axis_size, int p, float *norm_value) {
+  for (size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < (input_elements);
+       index += blockDim.x * gridDim.x) {
+    auto norm_index = index / inner_size;
+    norm_index = norm_index % axis_size;
+    float pow_value = pow(static_cast<float>(abs(input[index])), static_cast<float>(p));
     MsAtomicAdd(&norm_value[norm_index], pow_value);
   }
 }
@@ -83,6 +111,30 @@ template <>
 void CalRenorm<double>(const double *input, size_t input_elements, size_t inner_size, size_t axis_size, int p,
                        float *norm_value, double *output, const uint32_t &device_id, cudaStream_t cuda_stream,
                        float max_norm) {
+  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, input_elements, inner_size, axis_size, p, norm_value);
+  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    norm_value, p, axis_size, max_norm);
+  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, inner_size, axis_size, input_elements, output, norm_value);
+}
+
+template <>
+void CalRenorm<Complex<float>>(const Complex<float> *input, size_t input_elements, size_t inner_size, size_t axis_size,
+                               int p, float *norm_value, Complex<float> *output, const uint32_t &device_id,
+                               cudaStream_t cuda_stream, float max_norm) {
+  CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, input_elements, inner_size, axis_size, p, norm_value);
+  CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    norm_value, p, axis_size, max_norm);
+  CalNormValFun3<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
+    input, inner_size, axis_size, input_elements, output, norm_value);
+}
+
+template <>
+void CalRenorm<Complex<double>>(const Complex<double> *input, size_t input_elements, size_t inner_size,
+                                size_t axis_size, int p, float *norm_value, Complex<double> *output,
+                                const uint32_t &device_id, cudaStream_t cuda_stream, float max_norm) {
   CalNormValFun1<<<CUDA_BLOCKS(device_id, input_elements), CUDA_THREADS(device_id), 0, cuda_stream>>>(
     input, input_elements, inner_size, axis_size, p, norm_value);
   CalNormValFun2<<<CUDA_BLOCKS(device_id, axis_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(

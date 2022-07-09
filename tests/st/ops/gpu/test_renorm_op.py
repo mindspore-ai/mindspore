@@ -241,3 +241,26 @@ def test_renorm_vmap_cpu_nested():
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     vmap_nested_case()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_renorm_op2_complex64(data_type=np.complex64):
+    """
+    Feature: test Renorm using complex64.
+    Description: inputs with batch.
+    Expectation: the result match with expect.
+    """
+    error = 1e-6
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_x = np.array([[1+2j, 2+3j], [3+4j, 4+5j]]).astype(data_type)
+    benchmark_output = np.array([[0.91287088+1.82574177j, 1.36082768+2.04124165j],
+                                 [2.73861265+3.65148354j, 2.72165537+3.40206909j]]).astype(data_type)
+
+    re_norm = ReNormNet(p=2, axis=1, maxnorm=5.0)
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    output = re_norm(Tensor(input_x))
+    np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
