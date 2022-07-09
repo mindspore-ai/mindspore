@@ -149,7 +149,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::enable_parallel_predict_, "enableParallelPredict", "Enable model parallel : true | false",
             false);
     AddFlag(&BenchmarkFlags::parallel_num_, "parallelNum", "parallel num of parallel predict", 2);
-    AddFlag(&BenchmarkFlags::parallel_task_num_, "parallelTaskNum", "parallel task num of parallel predict", 2);
+    AddFlag(&BenchmarkFlags::parallel_task_num_, "parallelTaskNum",
+            "parallel task num of parallel predict, unlimited number of tasks when the value is -1", 2);
     AddFlag(&BenchmarkFlags::workers_num_, "workersNum", "works num of parallel predict", 2);
     AddFlag(&BenchmarkFlags::core_list_str_, "cpuCoreList", "The core id of the bundled core, e.g. 0,1,2,3", "");
     AddFlag(&BenchmarkFlags::inter_op_parallel_num_, "interOpParallelNum", "parallel number of operators in predict",
