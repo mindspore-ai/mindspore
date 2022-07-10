@@ -96,3 +96,4 @@ def get_partical_vmap_rule(prim, axis_size):
 get_assign_vmap_rule = vmap_rules_getters.register(P.Assign)(get_assign_vmap_rule)
 get_unsupported_dynamic_vmap_rule = \
     vmap_rules_getters.register(P.StandardLaplace)(get_unsupported_dynamic_vmap_rule)
+get_unsupported_dynamic_vmap_rule = vmap_rules_getters.register(P.StandardNormal)(get_unsupported_dynamic_vmap_rule)
