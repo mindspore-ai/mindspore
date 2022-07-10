@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,28 +27,24 @@ namespace ops {
 namespace {
 abstract::TupleShapePtr CumminInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
-  auto y_shape = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  auto y_rank = x_shape.size();
-  const int64_t min_dim = 0;
-  (void)CheckAndConvertUtils::CheckInteger("the rank of input", SizeToLong(x_shape.size()), kGreaterThan, min_dim,
-                                           prim_name);
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto x_rank = x_shape.size();
+  constexpr int64_t min_dim = 0;
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", SizeToLong(x_shape.size()), kGreaterThan, min_dim, prim_name);
   int64_t axis = GetValue<int64_t>(primitive->GetAttr("axis"));
-  CheckAndConvertUtils::CheckInRange<int64_t>("axis", axis, kIncludeBoth, {-y_rank, y_rank - 1}, prim_name);
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{y_shape, y_shape});
+  CheckAndConvertUtils::CheckInRange<int64_t>(kAxis, axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
 }
 
-TuplePtr CumminInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  auto prim_name = prim->name();
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  const std::set<TypePtr> valid_types = {kFloat32, kFloat16, kInt32, kInt8, kUInt8};
-  auto x_type = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, prim_name);
-  TypePtr argmin_type = kInt32;
-  return std::make_shared<Tuple>(std::vector{x_type, argmin_type});
+TuplePtr CumminInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  auto prim_name = primitive->name();
+  const std::set<TypePtr> valid_types = common_valid_types;
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
+  TypePtr indices_type = kInt32;
+  return std::make_shared<Tuple>(std::vector{x_type, indices_type});
 }
 }  // namespace
 
@@ -64,9 +60,9 @@ MIND_API_OPERATOR_IMPL(Cummin, BaseOperator);
 
 AbstractBasePtr CumminInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_args.size()), kEqual, 1, prim_name);
   MS_EXCEPTION_IF_NULL(primitive);
+  constexpr int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto type = CumminInferType(primitive, input_args);
   auto shape = CumminInferShape(primitive, input_args);
   return abstract::MakeAbstract(shape, type);

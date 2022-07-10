@@ -16,24 +16,28 @@
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/index_fill_impl.cuh"
 
-template <typename DataType>
-__global__ void IndexFillKernel(DataType *out_ptr, const int *index_ptr, int64_t index_size, int64_t dim_size,
-                                int64_t inner_size, const DataType *value_ptr, bool *out_bound_ptr, int64_t stride1,
-                                int64_t stride2) {
-  for (size_t tid = blockIdx.x * blockDim.x + threadIdx.x; tid < index_size; tid += blockDim.x * gridDim.x) {
+template <typename DataType, typename Int>
+__global__ void IndexFillKernel(const int *__restrict__ index_ptr, const DataType *__restrict__ value_ptr,
+                                bool *__restrict__ out_bound_ptr, DataType *__restrict__ out_ptr, Int dim_size,
+                                Int inner_size, Int outer_inner_size, Int index_num) {
+  DataType fill_value = *value_ptr;
+  Int start_idx = static_cast<Int>(blockIdx.x * blockDim.x + threadIdx.x);
+  Int step = static_cast<Int>(blockDim.x * gridDim.x);
+  for (Int tid = start_idx; tid < index_num; tid += step) {
+    Int index_idx = tid / outer_inner_size;
+    Int outer_inner_idx = tid % outer_inner_size;
     // Each index must be [-dim_size, dim_size)
-    int64_t index = static_cast<int64_t>(index_ptr[tid / stride1]);
-    if (index < -dim_size || index >= dim_size) {
+    Int dim_idx = static_cast<Int>(index_ptr[index_idx]);
+    if (dim_idx < -dim_size || dim_idx >= dim_size) {
       *out_bound_ptr = true;
       break;
-    } else if (index < 0) {
-      index += dim_size;
+    } else if (dim_idx < 0) {
+      dim_idx += dim_size;
     }
-    size_t offset = tid % stride1;
-    size_t inner_idx = offset % inner_size;
-    size_t outer_idx = offset / inner_size;
-    size_t out_idx = outer_idx * stride2 + index * inner_size + inner_idx;
-    out_ptr[out_idx] = *value_ptr;
+    Int inner_idx = outer_inner_idx % inner_size;
+    Int outer_idx = (outer_inner_idx - inner_idx) * dim_size;
+    Int out_idx = outer_idx + dim_idx * inner_size + inner_idx;
+    out_ptr[out_idx] = fill_value;
   }
 }
 
@@ -41,11 +45,20 @@ template <typename DataType>
 void IndexFill(DataType *out_ptr, const int *index_ptr, int64_t index_size, int64_t outer_size, int64_t dim_size,
                int64_t inner_size, const DataType *value_ptr, bool *out_bound_ptr, const uint32_t &device_id,
                cudaStream_t cuda_stream) {
-  int64_t stride1 = outer_size * inner_size;
-  int64_t stride2 = dim_size * inner_size;
-  int64_t real_index_size = index_size * (outer_size * inner_size);
-  IndexFillKernel<<<CUDA_BLOCKS(device_id, real_index_size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-    out_ptr, index_ptr, real_index_size, dim_size, inner_size, value_ptr, out_bound_ptr, stride1, stride2);
+  int64_t outer_inner_size = outer_size * inner_size;
+  int64_t index_num = outer_inner_size * index_size;
+  int64_t element_num = outer_inner_size * dim_size;
+  int64_t max_int32_value = std::numeric_limits<int>::max();
+  auto grids = CUDA_BLOCKS(device_id, index_num);
+  auto blocks = CUDA_THREADS(device_id);
+  if (index_num <= max_int32_value && element_num <= max_int32_value) {
+    IndexFillKernel<DataType, int><<<grids, blocks, 0, cuda_stream>>>(
+      index_ptr, value_ptr, out_bound_ptr, out_ptr, static_cast<int>(dim_size), static_cast<int>(inner_size),
+      static_cast<int>(outer_inner_size), static_cast<int>(index_num));
+  } else {
+    IndexFillKernel<DataType, int64_t><<<grids, blocks, 0, cuda_stream>>>(
+      index_ptr, value_ptr, out_bound_ptr, out_ptr, dim_size, inner_size, outer_inner_size, index_num);
+  }
 }
 
 template CUDA_LIB_EXPORT void IndexFill<bool>(bool *out_ptr, const int *index_ptr, int64_t index_size,
