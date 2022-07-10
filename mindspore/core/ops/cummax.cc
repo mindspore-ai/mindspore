@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,31 +25,26 @@
 namespace mindspore {
 namespace ops {
 namespace {
-constexpr char AXIS[] = "axis";
 abstract::TupleShapePtr CummaxInferShape(const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[0]->BuildShape();
-  auto x_shape_value = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape)[kShape];
-  auto axis = GetValue<int64_t>(primitive->GetAttr(AXIS));
-  if (x_shape_value.size() <= 0) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', input tensor's shape size must be greater than 0, but got: " << x_shape_value.size()
-                             << ".";
-  }
-  if (axis >= static_cast<int64_t>(x_shape_value.size()) || axis < -static_cast<int64_t>(x_shape_value.size())) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the value of 'axis' must be in the range of ["
-                             << -static_cast<int64_t>(x_shape_value.size()) << ","
-                             << static_cast<int64_t>(x_shape_value.size()) << "], but got 'axis': " << axis << ".";
-  }
-  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape, x_shape});
+  auto prim_name = primitive->name();
+  auto x_shape_ptr = input_args[kInputIndex0]->BuildShape();
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(x_shape_ptr)[kShape];
+  auto x_rank = SizeToLong(x_shape.size());
+  constexpr int64_t min_dim = 0;
+  (void)CheckAndConvertUtils::CheckInteger("rank of 'x'", x_rank, kGreaterThan, min_dim, prim_name);
+  auto axis = GetValue<int64_t>(primitive->GetAttr(kAxis));
+  CheckAndConvertUtils::CheckInRange<int64_t>(kAxis, axis, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{x_shape_ptr, x_shape_ptr});
 }
 
 TuplePtr CummaxInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  auto op_name = primitive->name();
-  const std::set<TypePtr> valid_types = {kInt8, kInt32, kInt64, kUInt8, kUInt32, kFloat16, kFloat32};
-  auto y_type = CheckAndConvertUtils::CheckTensorTypeValid("x", input_args[0]->BuildType(), valid_types, op_name);
+  auto prim_name = primitive->name();
+  const std::set<TypePtr> valid_types = common_valid_types;
+  auto x_type = input_args[kInputIndex0]->BuildType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, prim_name);
   auto indices_type = kInt64;
-  return std::make_shared<Tuple>(std::vector<TypePtr>{y_type, indices_type});
+  return std::make_shared<Tuple>(std::vector{x_type, indices_type});
 }
 }  // namespace
 
@@ -66,7 +61,7 @@ MIND_API_OPERATOR_IMPL(Cummax, BaseOperator);
 AbstractBasePtr CummaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
+  constexpr int64_t input_num = 1;
   CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
   auto types = CummaxInferType(primitive, input_args);
   auto shapes = CummaxInferShape(primitive, input_args);

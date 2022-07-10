@@ -17,7 +17,7 @@
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/non_zero_impl.cuh"
 #include <cub/cub.cuh>
 
-constexpr size_t kNonZeroMaxDim = 7;
+constexpr size_t kNonZeroMaxDim = 10;
 
 struct TensorShape {
   size_t data[kNonZeroMaxDim];
