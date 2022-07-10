@@ -416,6 +416,11 @@ if(MSLITE_ENABLE_GRAPH_KERNEL)
     set(LITE_SRC ${LITE_SRC} ${GRAPH_KERNEL_SRC})
 endif()
 
+if(NOT MSLITE_ENABLE_COREML)
+    set(LITE_SRC ${LITE_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/delegate/coreml/stub/coreml_delegate_stub.cc)
+endif()
+
 add_subdirectory(runtime/kernel/cpu)
 
 add_library(lite_src_mid OBJECT ${LITE_SRC})
