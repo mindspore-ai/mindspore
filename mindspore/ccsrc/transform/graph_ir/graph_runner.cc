@@ -54,7 +54,7 @@ std::shared_ptr<::ge::Session> GraphRunner::NewSession(const SessionOptions &ses
   }
 #endif
 
-  MS_LOG(WARNING) << "no GE client, return nullptr!";
+  MS_LOG(DEBUG) << "no GE client, return nullptr!";
   return nullptr;
 }
 
