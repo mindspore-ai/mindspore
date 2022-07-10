@@ -16,8 +16,10 @@
 
 #include "plugin/device/cpu/kernel/eye_cpu_kernel.h"
 #include <algorithm>
+#include <memory>
 #include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "mindspore/core/ops/eye.h"
 
 namespace mindspore {
 namespace kernel {
@@ -25,26 +27,39 @@ namespace {
 constexpr size_t kEyeInputsNum = 3;
 constexpr size_t kEyeOutputsNum = 1;
 }  // namespace
-void EyeCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  num_n_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_rows");
-  num_m_ = common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "num_columns");
+bool EyeCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                           const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
+  auto kernel_ptr = std::make_shared<ops::Eye>(base_operator->GetPrim());
+  if (!kernel_ptr) {
+    MS_LOG(ERROR) << "cast Eye ops failed!";
+    return false;
+  }
+  num_n_ = kernel_ptr->get_num_rows();
+  num_m_ = kernel_ptr->get_num_columns();
   if (num_n_ < 1) {
     MS_EXCEPTION(ValueError) << "For Eye, n is " << num_n_ << ", but n should be greater than 0.";
   }
   if (num_m_ < 1) {
     MS_EXCEPTION(ValueError) << "For Eye, m is " << num_m_ << ", but m should be greater than 0.";
   }
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Eye does not support this kernel data type: " << kernel_attr;
+  return MatchKernelFunc(base_operator, inputs, outputs);
+}
+
+int EyeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                            const std::vector<KernelTensorPtr> &outputs,
+                            const std::map<uint32_t, tensor::TensorPtr> &others) {
+  int ret = 0;
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
+    MS_LOG(WARNING) << kernel_name_ << " reinit failed.";
+    return ret;
   }
-  kernel_func_ = func_list_[index].second;
+  return 0;
 }
 
 template <typename T>
-bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &,
+bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> &workspace,
                                    const std::vector<kernel::AddressPtr> &outputs) {
   int64_t num_min = (num_n_ > num_m_) ? num_m_ : num_n_;
   size_t data_num = outputs[0]->size;
@@ -59,27 +74,23 @@ bool EyeCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &, cons
   return true;
 }
 
-std::vector<std::pair<KernelAttr, EyeCpuKernelMod::EyeFunc>> EyeCpuKernelMod::func_list_ = {
-  {KernelAttr().AddOutputAttr(kNumberTypeFloat16), &EyeCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddOutputAttr(kNumberTypeFloat32), &EyeCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddOutputAttr(kNumberTypeFloat64), &EyeCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddOutputAttr(kNumberTypeInt8), &EyeCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeInt16), &EyeCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeInt32), &EyeCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeInt64), &EyeCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeUInt8), &EyeCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeUInt16), &EyeCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeUInt32), &EyeCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeUInt64), &EyeCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddOutputAttr(kNumberTypeComplex64), &EyeCpuKernelMod::LaunchKernel<std::complex<float>>},
-  {KernelAttr().AddOutputAttr(kNumberTypeComplex128), &EyeCpuKernelMod::LaunchKernel<std::complex<double>>},
-  {KernelAttr().AddOutputAttr(kNumberTypeBool), &EyeCpuKernelMod::LaunchKernel<bool>}};
-
-std::vector<KernelAttr> EyeCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                 [](const std::pair<KernelAttr, EyeFunc> &item) { return item.first; });
-  return support_list;
+const std::vector<std::pair<KernelAttr, EyeCpuKernelMod::KernelRunFunc>> &EyeCpuKernelMod::GetFuncList() const {
+  static const std::vector<std::pair<KernelAttr, EyeCpuKernelMod::KernelRunFunc>> func_list = {
+    {KernelAttr().AddOutputAttr(kNumberTypeFloat16), &EyeCpuKernelMod::LaunchKernel<float16>},
+    {KernelAttr().AddOutputAttr(kNumberTypeFloat32), &EyeCpuKernelMod::LaunchKernel<float>},
+    {KernelAttr().AddOutputAttr(kNumberTypeFloat64), &EyeCpuKernelMod::LaunchKernel<double>},
+    {KernelAttr().AddOutputAttr(kNumberTypeInt8), &EyeCpuKernelMod::LaunchKernel<int8_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeInt16), &EyeCpuKernelMod::LaunchKernel<int16_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeInt32), &EyeCpuKernelMod::LaunchKernel<int32_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeInt64), &EyeCpuKernelMod::LaunchKernel<int64_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeUInt8), &EyeCpuKernelMod::LaunchKernel<uint8_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeUInt16), &EyeCpuKernelMod::LaunchKernel<uint16_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeUInt32), &EyeCpuKernelMod::LaunchKernel<uint32_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeUInt64), &EyeCpuKernelMod::LaunchKernel<uint64_t>},
+    {KernelAttr().AddOutputAttr(kNumberTypeComplex64), &EyeCpuKernelMod::LaunchKernel<std::complex<float>>},
+    {KernelAttr().AddOutputAttr(kNumberTypeComplex128), &EyeCpuKernelMod::LaunchKernel<std::complex<double>>},
+    {KernelAttr().AddOutputAttr(kNumberTypeBool), &EyeCpuKernelMod::LaunchKernel<bool>}};
+  return func_list;
 }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Eye, EyeCpuKernelMod);

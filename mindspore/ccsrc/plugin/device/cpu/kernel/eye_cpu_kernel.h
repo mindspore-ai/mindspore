@@ -17,8 +17,9 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_ZEROSLIKE_CPU_KERNEL_H_
 
 #include <complex>
-#include <vector>
+#include <map>
 #include <utility>
+#include <vector>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
@@ -27,28 +28,31 @@ namespace kernel {
 using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
-class EyeCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class EyeCpuKernelMod : public NativeCpuKernelMod, public MatchKernelHelper<EyeCpuKernelMod> {
  public:
   EyeCpuKernelMod() = default;
   ~EyeCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return kernel_func_(this, inputs, workspace, outputs);
   }
 
-  std::vector<KernelAttr> GetOpSupport() override;
+  const std::vector<std::pair<KernelAttr, KernelRunFunc>> &GetFuncList() const override;
+
+ protected:
+  std::vector<KernelAttr> GetOpSupport() override { return OpSupport(); }
 
  private:
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
-  using EyeFunc = std::function<bool(EyeCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                     const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
-  static std::vector<std::pair<KernelAttr, EyeFunc>> func_list_;
-  EyeFunc kernel_func_;
-
   int64_t num_n_ = 0;
   int64_t num_m_ = 0;
 };
