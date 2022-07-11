@@ -29,9 +29,12 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int kMaxPool2DGradGradDim = 2;
+constexpr int kMaxPool3DGradGradDim = 3;
+
 class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
  public:
-  MaxPoolGradGradCpuKernelMod() = default;
+  explicit MaxPoolGradGradCpuKernelMod(const int &dim) : dim_(dim) {}
   ~MaxPoolGradGradCpuKernelMod() override {
     if (param_ != nullptr) {
       free(param_);
@@ -56,14 +59,33 @@ class MaxPoolGradGradCpuKernelMod : public NativeCpuKernelMod {
  private:
   void CheckInputVaild();
   void CalPad();
-  void InitWorkspace();
+
   std::vector<int64_t> kernels_;
   std::vector<int64_t> strides_;
   PadMode pad_mode_;
   std::vector<int64_t> in_shapes_;
   std::vector<int64_t> out_shapes_;
-
   PoolingParameter *param_ = nullptr;
+
+  int dim_ = 0;
+  size_t depth_index_ = 0;
+  size_t height_index_ = 0;
+  size_t width_index_ = 0;
+  size_t input_batch_stride_ = 0;
+  size_t output_batch_stride_ = 0;
+  size_t output_elements_ = 0;
+};
+
+class MaxPool2DGradGradCpuKernelMod : public MaxPoolGradGradCpuKernelMod {
+ public:
+  MaxPool2DGradGradCpuKernelMod() : MaxPoolGradGradCpuKernelMod(kMaxPool2DGradGradDim) {}
+  ~MaxPool2DGradGradCpuKernelMod() = default;
+};
+
+class MaxPool3DGradGradCpuKernelMod : public MaxPoolGradGradCpuKernelMod {
+ public:
+  MaxPool3DGradGradCpuKernelMod() : MaxPoolGradGradCpuKernelMod(kMaxPool3DGradGradDim) {}
+  ~MaxPool3DGradGradCpuKernelMod() = default;
 };
 }  // namespace kernel
 }  // namespace mindspore

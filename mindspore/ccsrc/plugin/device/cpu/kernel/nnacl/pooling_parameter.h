@@ -54,4 +54,14 @@ typedef struct PoolingParameter {
   bool quantize_;
 } PoolingParameter;
 
+typedef struct Pooling3DParameter {
+  PoolingParameter pooling_parameter_;
+  int window_d_;
+  int stride_d_;
+  int input_d_;
+  int output_d_;
+  int pad_f_;  // front
+  int pad_b_;  // back
+} Pooling3DParameter;
+
 #endif  // MINDSPORE_NNACL_POOLING_PARAMETER_H_
