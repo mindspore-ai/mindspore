@@ -1384,7 +1384,9 @@ EvalResultPtr GetEvaluatedValueForCellAttrOrMethod(const AnalysisEnginePtr &engi
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << item_value->ToString();
   }
   auto python_obj = func_value->python_obj();
-  MS_EXCEPTION_IF_NULL(python_obj);
+  if (python_obj == nullptr) {
+    return nullptr;
+  }
   auto wrapper_obj = dyn_cast<parse::PyObjectWrapper>(python_obj);
   MS_EXCEPTION_IF_NULL(wrapper_obj);
   py::object real_python_obj = wrapper_obj->obj();
