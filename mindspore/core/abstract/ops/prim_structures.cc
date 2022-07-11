@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,8 +192,14 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
                                      const AbstractBasePtrList &args_spec_list) {
   // Inputs: a dict and a scalar whose value is a string.
   const std::string op_name = primitive->name();
-  constexpr int args_spec_size = 2;
-  CheckArgsSize(op_name, args_spec_list, args_spec_size);
+  // dict[key] mean the size of args_spec_list is 2.
+  // dict.get('key', default=None) mean the size of args_spec_list is 3.
+  constexpr int subscript_args_size = 2;
+  constexpr int dict_get_arg_size = 3;
+  if (args_spec_list.size() != subscript_args_size && args_spec_list.size() != dict_get_arg_size) {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', the number of input should be " << subscript_args_size << " or "
+                      << dict_get_arg_size << ", but got " << args_spec_list.size();
+  }
   AbstractDictionaryPtr dict = CheckArg<AbstractDictionary>(op_name, args_spec_list, 0);
   AbstractScalarPtr key = CheckArg<AbstractScalar>(op_name, args_spec_list, 1);
 
@@ -207,7 +213,14 @@ AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitiveP
   auto it = std::find_if(dict_elems.begin(), dict_elems.end(),
                          [key_str](const AbstractAttribute &item) { return item.first == key_str; });
   if (it == dict_elems.end()) {
-    MS_EXCEPTION(KeyError) << "The key " << key_str << " does not exist in the dict:" << args_spec_list[0]->ToString();
+    // For dict[key], if key is not exist, will raise a KeyError exception.
+    if (args_spec_list.size() == subscript_args_size) {
+      MS_EXCEPTION(KeyError) << "The key " << key_str
+                             << " does not exist in the dict:" << args_spec_list[0]->ToString();
+    }
+    // For dict.get('key', default=None), if key is not exist, will return the default value.
+    constexpr int default_value_index = 2;
+    return args_spec_list[default_value_index];
   }
   return it->second;
 }
