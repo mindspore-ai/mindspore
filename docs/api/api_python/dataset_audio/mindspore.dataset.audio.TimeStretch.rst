@@ -7,21 +7,19 @@ mindspore.dataset.audio.TimeStretch
 
     .. note:: 待处理音频维度需为(..., freq, time, complex=2)，其中第0维代表实部，第1维代表虚部。
 
-    **参数：**
+    参数：
+        - **hop_length** (int, 可选) - STFT窗之间每跳的长度，即连续帧之间的样本数，默认值：None，表示取 `n_freq - 1`。
+        - **n_freq** (int, 可选) - STFT中的滤波器组数，默认值：201。
+        - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例，默认值：None，表示保持原始速率。
 
-    - **hop_length** (int, 可选) - STFT窗之间每跳的长度，即连续帧之间的样本数，默认值：None，表示取 `n_freq - 1`。
-    - **n_freq** (int, 可选) - STFT中的滤波器组数，默认值：201。
-    - **fixed_rate** (float, 可选) - 频谱在时域加快或减缓的比例，默认值：None，表示保持原始速率。
-
-    **异常：**
-
-    - **TypeError** - 当 `hop_length` 的类型不为int。
-    - **ValueError** - 当 `hop_length` 不为正数。
-    - **TypeError** - 当 `n_freq` 的类型不为int。
-    - **ValueError** - 当 `n_freq` 不为正数。
-    - **TypeError** - 当 `fixed_rate` 的类型不为float。
-    - **ValueError** - 当 `fixed_rate` 不为正数。
-    - **RuntimeError** - 当输入音频的shape不为<..., freq, num_frame, complex=2>。
+    异常：
+        - **TypeError** - 当 `hop_length` 的类型不为int。
+        - **ValueError** - 当 `hop_length` 不为正数。
+        - **TypeError** - 当 `n_freq` 的类型不为int。
+        - **ValueError** - 当 `n_freq` 不为正数。
+        - **TypeError** - 当 `fixed_rate` 的类型不为float。
+        - **ValueError** - 当 `fixed_rate` 不为正数。
+        - **RuntimeError** - 当输入音频的shape不为<..., freq, num_frame, complex=2>。
 
     .. image:: time_stretch_rate1.5.png
 

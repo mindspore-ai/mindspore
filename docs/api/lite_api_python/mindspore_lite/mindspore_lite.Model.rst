@@ -109,5 +109,5 @@ mindspore_lite.Model
         - **TypeError** - `dims` 不是list类型。
         - **TypeError** - `dims` 是list类型，但元素不是list类型。
         - **TypeError** - `dims` 是list类型，元素是list类型，但元素的元素不是int类型。
-        - **ValueError** -  `inputs` 的size不等于`dims` 的size。
-        - **ValueError** -  `inputs` 的元素的size不等于`dims` 的元素的size。
+        - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
+        - **ValueError** -  `inputs` 的元素的size不等于 `dims` 的元素的size。
