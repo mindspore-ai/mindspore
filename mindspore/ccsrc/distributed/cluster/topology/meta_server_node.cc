@@ -20,6 +20,7 @@
 #include <vector>
 #include "utils/ms_exception.h"
 #include "proto/topology.pb.h"
+#include "ps/ps_context.h"
 #include "distributed/rpc/tcp/constants.h"
 #include "distributed/recovery/recovery_context.h"
 #include "distributed/recovery/file_configuration.h"
@@ -102,7 +103,8 @@ bool MetaServerNode::Finalize(bool force) {
 }
 
 bool MetaServerNode::InitTCPServer() {
-  tcp_server_ = std::make_unique<rpc::TCPServer>();
+  bool enable_ssl = ps::PSContext::instance()->enable_ssl();
+  tcp_server_ = std::make_unique<rpc::TCPServer>(enable_ssl);
   MS_EXCEPTION_IF_NULL(tcp_server_);
   RETURN_IF_FALSE_WITH_LOG(tcp_server_->Initialize(meta_server_addr_.GetUrl()), "Failed to init the tcp server.");
   tcp_server_->SetMessageHandler(std::bind(&MetaServerNode::HandleMessage, this, std::placeholders::_1));

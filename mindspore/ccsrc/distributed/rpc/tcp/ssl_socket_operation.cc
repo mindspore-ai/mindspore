@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+#include "ps/core/communicator/ssl_client.h"
+#include "ps/core/communicator/ssl_wrapper.h"
 #include "distributed/rpc/tcp/ssl_socket_operation.h"
 
 namespace mindspore {
@@ -21,6 +23,10 @@ namespace distributed {
 namespace rpc {
 constexpr int SSL_HANDSHAKE_OK = 1;
 
+bool SSLSocketOperation::Initialize() {
+  ps::core::SSLWrapper::GetInstance().InitSSL();
+  return true;
+}
 ssize_t SSLSocketOperation::ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) { return 0; }
 
 int SSLSocketOperation::Receive(Connection *connection, char *recvBuf, size_t totalRecvLen, size_t *recvLen) {
@@ -169,8 +175,7 @@ void SSLSocketOperation::NewConnEventHandler(int fd, uint32_t events, void *cont
 
   // Initialize the ssl.
   if (ssl_ == nullptr) {
-    ssl_ctx_ = SSL_CTX_new(SSLv23_server_method());
-    ssl_ = SSL_new(ssl_ctx_);
+    ssl_ = SSL_new(ps::core::SSLWrapper::GetInstance().GetSSLCtx());
     if (ssl_ == nullptr) {
       MS_LOG(ERROR) << "Failed to call SSL_new for server fd: " << fd;
       conn->state = ConnectionState::kDisconnecting;
@@ -192,8 +197,7 @@ void SSLSocketOperation::ConnEstablishedEventHandler(int fd, uint32_t events, vo
 
   // Initialize the ssl.
   if (ssl_ == nullptr) {
-    ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
-    ssl_ = SSL_new(ssl_ctx_);
+    ssl_ = SSL_new(ps::core::SSLClient::GetInstance().GetSSLCtx());
     if (ssl_ == nullptr) {
       MS_LOG(ERROR) << "Failed to call SSL_new for client fd: " << fd;
       conn->state = ConnectionState::kDisconnecting;
@@ -227,6 +231,9 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
 
   // Failed to handshake.
   int err = SSL_get_error(ssl_, retval);
+  auto err_msg = ERR_reason_error_string(err);
+  MS_LOG(ERROR) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
+                << ", err info: " << err_msg;
   if (err == SSL_ERROR_WANT_WRITE) {
     (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
   } else if (err == SSL_ERROR_WANT_READ) {
@@ -234,6 +241,10 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
   } else {
     MS_LOG(ERROR) << "ssl handshake info -- retval:" << retval << ", error:" << err << ", errno:" << errno
                   << ", conn:" << conn->send_to.c_str();
+    uint64_t error = 0;
+    while ((error = ERR_get_error())) {
+      MS_LOG(ERROR) << "ssl handshake errno: " << error << ", err info: " << ERR_reason_error_string(error);
+    }
     conn->error_code = err;
     conn->state = ConnectionState::kDisconnecting;
   }
