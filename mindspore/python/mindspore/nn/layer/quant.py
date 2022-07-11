@@ -31,9 +31,6 @@ from .activation import get_activation
 from ..cell import Cell
 from ... import nn
 from ...ops.operations import _quant_ops as Q
-from .combined import Conv2dBnAct
-from .conv import Conv2d
-from .basic import Dense
 
 __all__ = [
     'FakeQuantWithMinMaxObserver',
@@ -774,46 +771,6 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.assign_sub_var = P.AssignSub()
         self.reshape = P.Reshape()
 
-    @classmethod
-    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig):
-        """
-        A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`
-
-        Examples:
-            >>> from mindspore import nn
-            >>> ic = 10
-            >>> oc = 100
-            >>> kernel_size = 3
-            >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
-            >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted,
-            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
-            >>> conv_bn_quant = nn.Conv2dBnFoldQuantOneConv.from_float(conv_bn_op, quant_config)
-        """
-
-        kwargs = {'in_channels': convbn.conv.in_channels,
-                  'out_channels': convbn.conv.out_channels,
-                  'kernel_size': convbn.conv.kernel_size,
-                  'stride': convbn.conv.stride,
-                  'pad_mode': convbn.conv.pad_mode,
-                  'padding': convbn.conv.padding,
-                  'dilation': convbn.conv.dilation,
-                  'group': convbn.conv.group,
-                  'has_bias': convbn.conv.has_bias,
-                  'bias_init': convbn.conv.bias_init,
-                  'weight_init': convbn.conv.weight_init,
-                  'quant_config': quant_config,
-                  'fake': True,
-                  }
-        if hasattr(convbn, 'batchnorm'):
-            kwargs['eps'] = convbn.batchnorm.eps
-            kwargs['momentum'] = convbn.batchnorm.momentum
-            kwargs['beta_init'] = convbn.batchnorm.beta_init
-            kwargs['gamma_init'] = convbn.batchnorm.gamma_init
-            kwargs['mean_init'] = convbn.batchnorm.moving_mean_init
-            kwargs['var_init'] = convbn.batchnorm.moving_var_init
-        return cls(**kwargs)
-
     def extend_repr(self):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
@@ -1041,48 +998,6 @@ class Conv2dBnFoldQuant(Cell):
         self.one = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
 
-    @classmethod
-    def from_float(cls, convbn: Conv2dBnAct, quant_config: QuantConfig, extra_args: dict):
-        """
-        A class method to create `Conv2dBnFoldQuantOneConv` from a `Conv2dBnAct`
-
-        Examples:
-            >>> from mindspore import nn
-            >>> ic = 10
-            >>> oc = 100
-            >>> kernel_size = 3
-            >>> conv_bn_op = nn.Conv2dBnAct(ic, oc, kernel_size)
-            >>> # when apply QAT on `conv_bn_op`, QAT need to create a quant Conv2dBnAct whose weight is fake-quanted
-            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
-            >>> extra_args = {"freeze_bn": 100000}
-            >>> conv_bn_quant = nn.Conv2dBnFoldQuant.from_float(conv_bn_op, quant_config)
-        """
-
-        kwargs = {'in_channels': convbn.conv.in_channels,
-                  'out_channels': convbn.conv.out_channels,
-                  'kernel_size': convbn.conv.kernel_size,
-                  'stride': convbn.conv.stride,
-                  'pad_mode': convbn.conv.pad_mode,
-                  'padding': convbn.conv.padding,
-                  'dilation': convbn.conv.dilation,
-                  'group': convbn.conv.group,
-                  'has_bias': convbn.conv.has_bias,
-                  'bias_init': convbn.conv.bias_init,
-                  'weight_init': convbn.conv.weight_init,
-                  'quant_config': quant_config,
-                  'fake': True,
-                  }
-        if hasattr(convbn, 'batchnorm'):
-            kwargs['eps'] = convbn.batchnorm.eps
-            kwargs['momentum'] = convbn.batchnorm.momentum
-            kwargs['beta_init'] = convbn.batchnorm.beta_init
-            kwargs['gamma_init'] = convbn.batchnorm.gamma_init
-            kwargs['mean_init'] = convbn.batchnorm.moving_mean_init
-            kwargs['var_init'] = convbn.batchnorm.moving_var_init
-        kwargs = {**kwargs, **extra_args}
-        return cls(**kwargs)
-
     def extend_repr(self):
         """Display instance object as string."""
         s = 'in_channels={}, out_channels={}, kernel_size={}, stride={}, ' \
@@ -1258,8 +1173,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
         channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
-                                                     num_channels=out_channels,
-                                                     quant_dtype=quant_dtype)
+                                                     num_channels=out_channels)
         self.batchnorm = BatchNorm2d(out_channels, eps=eps, momentum=momentum)
 
     def construct(self, x):
@@ -1404,37 +1318,6 @@ class Conv2dQuant(Cell):
         self.fake_quant_weight = quant_config.weight(channel_axis=channel_axis,
                                                      num_channels=out_channels)
 
-    @classmethod
-    def from_float(cls, conv: Conv2d, quant_config: QuantConfig):
-        """
-        A class method to create `Conv2dQuant` from a `Conv2d`
-
-        Examples:
-            >>> from mindspore import nn
-            >>> ic = 10
-            >>> oc = 100
-            >>> kernel_size = 3
-            >>> conv_op = nn.Conv2d(ic, oc, kernel_size)
-            >>> # when apply QAT on `conv_op`, QAT need to create a quant conv2d whose weight is fake-quanted
-            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
-            >>> conv_quant = nn.Conv2dQuant.from_float(conv_op, quant_config)
-        """
-        conv_quant = cls(
-            conv.in_channels,
-            conv.out_channels,
-            kernel_size=conv.kernel_size,
-            stride=conv.stride,
-            pad_mode=conv.pad_mode,
-            padding=conv.padding,
-            dilation=conv.dilation,
-            group=conv.group,
-            has_bias=conv.has_bias,
-            bias_init=conv.bias_init,
-            weight_init=conv.weight_init,
-            quant_config=quant_config)
-        return conv_quant
-
     def construct(self, x):
         weight = self.fake_quant_weight(self.weight)
         out = self.conv(x, weight)
@@ -1555,31 +1438,6 @@ class DenseQuant(Cell):
         self.activation_flag = self.activation is not None
         self.fake_quant_weight = quant_config.weight(channel_axis=0,
                                                      num_channels=out_channels)
-
-    @classmethod
-    def from_float(cls, dense: Dense, quant_config: QuantConfig):
-        """
-        A class method to create `DenseQuant` from a `Dense`
-
-        Examples:
-            >>> from mindspore import nn
-            >>> ic = 10
-            >>> oc = 100
-            >>> dense_op = nn.Dense(ic, oc)
-            >>> # when apply QAT on `dense_op`, QAT need to create a quant dense whose weight is fake-quanted
-            >>> quant_config: QuantConfig = QuantConfig(weight=FakeQuantWithMinMaxObserver.partial_init(),
-            >>>                                         activation=FakeQuantWithMinMaxObserver.partial_init())
-            >>> dense_quant = nn.DenseQuant.from_float(dense_op, quant_config)
-        """
-        dense_quant = cls(
-            dense.in_channels,
-            dense.out_channels,
-            dense.weight,
-            dense.bias,
-            dense.has_bias,
-            dense.activation,
-            quant_config=quant_config)
-        return dense_quant
 
     def construct(self, x):
         """Use operators to construct the Dense layer.
