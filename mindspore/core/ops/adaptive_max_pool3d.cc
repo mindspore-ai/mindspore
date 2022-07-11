@@ -26,12 +26,20 @@ namespace {
 constexpr int64_t kInputDims4 = 4;
 constexpr int64_t kInputDims5 = 5;
 constexpr int64_t kOutputSizeNumElem = 3;
+constexpr int64_t kDynamicRankValue = -2;
+constexpr size_t kDynamicRankLen = 1;
 
 abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitive,
                                                     const std::vector<AbstractBasePtr> &input_args) {
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
   auto output_size_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
   const int64_t input_num_dims = SizeToLong(x_shape.size());
+  std::shared_ptr<mindspore::abstract::Shape> out_shape_ptr;
+  if (x_shape.size() == kDynamicRankLen && x_shape[0] == kDynamicRankValue) {
+    ShapeVector out_shape = {kDynamicRankValue};
+    out_shape_ptr = std::make_shared<abstract::Shape>(out_shape);
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{out_shape_ptr, out_shape_ptr});
+  }
   const int64_t output_size_dim = SizeToLong(output_size_shape.size());
   CheckAndConvertUtils::CheckInRange("x_dim", input_num_dims, kIncludeBoth, {kInputDims4, kInputDims5},
                                      kNameAdaptiveMaxPool3D);
@@ -40,7 +48,6 @@ abstract::TupleShapePtr AdaptiveMaxPool3DInferShape(const PrimitivePtr &primitiv
                                            kNameAdaptiveMaxPool3D);
 
   auto output_size = input_args[1];
-  std::shared_ptr<mindspore::abstract::Shape> out_shape_ptr;
   auto output_size_value = output_size->BuildValue();
   MS_EXCEPTION_IF_NULL(output_size_value);
   if (output_size->isa<abstract::AbstractTensor>() && !output_size_value->isa<None>() &&
