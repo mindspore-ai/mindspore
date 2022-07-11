@@ -245,23 +245,6 @@ AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr 
   return std::make_shared<AbstractTuple>(args_list);
 }
 
-AbstractBasePtr InferImplDropout(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name();
-  CheckArgsSize(op_name, args_spec_list, 1);
-  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
-  MS_EXCEPTION_IF_NULL(x);
-  MS_EXCEPTION_IF_NULL(x->shape());
-  ShapeVector shape = x->shape()->shape();
-  ShapeVector min_shape = x->shape()->min_shape();
-  ShapeVector max_shape = x->shape()->max_shape();
-  CheckMinMaxShape(shape, &min_shape, &max_shape);
-  auto output_shape =
-    std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
-  AbstractBasePtrList ret = {output_shape, output_shape};
-  return std::make_shared<AbstractTuple>(ret);
-}
-
 AbstractBasePtr InferImplSparseApplyFtrl(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const AbstractBasePtrList &args_spec_list) {
   CheckRequiredArgsSize(primitive->name(), args_spec_list, 5);
