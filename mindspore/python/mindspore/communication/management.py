@@ -285,7 +285,6 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     Examples:
         >>> import mindspore as ms
         >>> from mindspore.communication.management import init, get_group_size
-        >>> ms.set_context(device_target="Ascend")
         >>> ms.set_auto_parallel_context(device_num=8)
         >>> init()
         >>> group_size = get_group_size()
