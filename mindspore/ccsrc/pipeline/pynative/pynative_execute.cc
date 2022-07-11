@@ -522,7 +522,6 @@ void PlantTensorTupleToVector(const py::tuple &tuple_inputs, const PrimitivePtr 
     MS_EXCEPTION_IF_NULL(tensor);
     (void)input_tensors->emplace_back(tensor);
   }
-  op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{SizeToLong(tuple_inputs.size())}));
 }
 
 void ConvertValueTupleToTensor(const py::object &input_object, std::vector<tensor::TensorPtr> *input_tensors) {
@@ -560,10 +559,13 @@ void ConvertCSRTensorToTensorList(const py::object &input_object, const Primitiv
 }
 
 void ConvertMultiPyObjectToTensor(const py::object &input_object, const PrimitivePtr &op_prim,
-                                  std::vector<tensor::TensorPtr> *input_tensors, int64_t *const tensor_mask) {
+                                  std::vector<tensor::TensorPtr> *input_tensors, int64_t *const tensor_mask,
+                                  size_t index, std::map<size_t, int64_t> *dyn_input_map) {
   MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(tensor_mask);
+  MS_EXCEPTION_IF_NULL(dyn_input_map);
+  size_t old_size = input_tensors->size();
 
   if (!py::isinstance<py::tuple>(input_object)) {
     MS_LOG(EXCEPTION) << "The input should be a tuple!";
@@ -579,17 +581,50 @@ void ConvertMultiPyObjectToTensor(const py::object &input_object, const Primitiv
   }
   if (py::isinstance<tensor::Tensor>(tuple_inputs[0])) {
     PlantTensorTupleToVector(tuple_inputs, op_prim, input_tensors);
+    size_t cur_input_size = input_tensors->size() - old_size;
+    if (input_tensors->size() <= old_size) {
+      MS_LOG(EXCEPTION) << "For op " << op_prim->name() << "No." << index << " input size error, input size is "
+                        << cur_input_size;
+    }
+    dyn_input_map->insert(std::pair<size_t, int64_t>{index, cur_input_size});
   } else {
     ConvertValueTupleToTensor(input_object, input_tensors);
     *tensor_mask = kValueNodeTensorMask;
   }
 }
 
+void SetDynInputAttr(const PrimitivePtr &op_prim, const std::map<size_t, int64_t> &dyn_input_map) {
+  MS_EXCEPTION_IF_NULL(op_prim);
+  std::vector<int64_t> dyn_input_list = {};
+  for (auto iter = dyn_input_map.begin(); iter != dyn_input_map.end(); ++iter) {
+    size_t current_list_size = dyn_input_list.size();
+    size_t dyn_input_position = iter->first;
+    if (current_list_size < dyn_input_position + 1) {
+      for (size_t j = current_list_size; j < dyn_input_position; j++) {
+        dyn_input_list.push_back(-1);
+      }
+      dyn_input_list.push_back(SizeToLong(iter->second));
+    } else {
+      if (dyn_input_list[dyn_input_position] != -1) {
+        MS_LOG(INFO) << "op: " << op_prim->instance_name()
+                     << "attr kAttrDynInputSizes is setting a unexpected value, the value is " << dyn_input_list
+                     << " and will add value: " << iter->second << "in position: " << dyn_input_position;
+      }
+      dyn_input_list[dyn_input_position] = SizeToLong(iter->second);
+    }
+  }
+  if (dyn_input_list.size() != 0) {
+    op_prim->set_attr(kAttrDynInputSizes, MakeValue(std::vector<int64_t>{dyn_input_list}));
+  }
+}
+
 void ConvertPyObjectToTensor(const OpExecInfoPtr &op_run_info, size_t index, const PrimitivePtr &op_prim,
-                             std::vector<tensor::TensorPtr> *input_tensors, int64_t *const tensor_mask) {
+                             std::vector<tensor::TensorPtr> *input_tensors, int64_t *const tensor_mask,
+                             std::map<size_t, int64_t> *dyn_input_map) {
   MS_EXCEPTION_IF_NULL(op_prim);
   MS_EXCEPTION_IF_NULL(input_tensors);
   MS_EXCEPTION_IF_NULL(tensor_mask);
+  MS_EXCEPTION_IF_NULL(dyn_input_map);
   const py::object &input_object = op_run_info->op_inputs[index];
   tensor::TensorPtr tensor_ptr = nullptr;
   if (py::isinstance<tensor::Tensor>(input_object)) {
@@ -616,10 +651,10 @@ void ConvertPyObjectToTensor(const OpExecInfoPtr &op_run_info, size_t index, con
     for (size_t i = 0; i < tuple_inputs.size(); ++i) {
       tuple_inputs[i] = list_inputs[i];
     }
-    ConvertMultiPyObjectToTensor(tuple_inputs, op_prim, input_tensors, tensor_mask);
+    ConvertMultiPyObjectToTensor(tuple_inputs, op_prim, input_tensors, tensor_mask, index, dyn_input_map);
     return;
   } else if (py::isinstance<py::tuple>(input_object)) {
-    ConvertMultiPyObjectToTensor(input_object, op_prim, input_tensors, tensor_mask);
+    ConvertMultiPyObjectToTensor(input_object, op_prim, input_tensors, tensor_mask, index, dyn_input_map);
     return;
   } else if (py::isinstance<tensor::CSRTensor>(input_object)) {
     ConvertCSRTensorToTensorList(input_object, op_prim, input_tensors);
@@ -681,6 +716,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     MS_LOG(EXCEPTION) << "The op input size " << input_num << ", but the size of input mask "
                       << op_run_info->inputs_mask.size();
   }
+  std::map<size_t, int64_t> dyn_input_map = {};
   for (size_t index = 0; index < input_num; ++index) {
     // convert const input to attr
     if (need_convert_input_to_attr && RunOpConvertConstInputToAttr(op_run_info, index, op_prim, input_to_attr)) {
@@ -688,12 +724,13 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     }
     // convert const and tuple input to tensor
     int64_t tensor_mask = op_run_info->inputs_mask[index];
-    ConvertPyObjectToTensor(op_run_info, index, op_prim, input_tensors, &tensor_mask);
+    ConvertPyObjectToTensor(op_run_info, index, op_prim, input_tensors, &tensor_mask, &dyn_input_map);
     // Mark tensors, common tensor data : 0, weight param: 1, valuenode(float_, int_): 2
     op_run_info->inputs_mask[index] = tensor_mask;
     std::vector<int64_t> new_mask(input_tensors->size() - tensors_mask->size(), tensor_mask);
     tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
   }
+  SetDynInputAttr(op_prim, dyn_input_map);
   op_prim->EndRecordAddAttr();
 }
 
