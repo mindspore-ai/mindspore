@@ -75,6 +75,10 @@ class PrimOp : public Node {
   // rectify abstract before calling PrimitiveC's inference function.
   virtual void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *) {}
 
+  // set abstracts from attrs.
+  void SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
+                              AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec);
+
   std::string op_;
   ComputeType compute_type_;
 };
@@ -242,6 +246,24 @@ class StandardNormalOp : public OpaqueOp {
   std::vector<DShape> InferShape(const NodePtrList &, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
   DFormat InferFormat(const NodePtrList &, const DAttrs &) override { return kOpFormat_DEFAULT; }
+};
+
+class StridedSliceOp : public OpaqueOp {
+ public:
+  explicit StridedSliceOp(const std::string &op) : OpaqueOp(op) {}
+  ~StridedSliceOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) override;
+};
+
+class MatMulOp : public OpaqueOp {
+ public:
+  explicit MatMulOp(const std::string &op) : OpaqueOp(op) {}
+  ~MatMulOp() = default;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) override;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif

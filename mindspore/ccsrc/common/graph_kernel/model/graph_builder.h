@@ -40,7 +40,13 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) const {
     return Emit("Select", {cond, lhs, rhs});
   }
-
+  NodePtr MatMul(const NodePtr &lhs, const NodePtr &rhs, const TypeId &type_id, const bool &transpose_a = false,
+                 const bool &transpose_b = false) const {
+    return Emit("MatMul", {lhs, rhs},
+                {{"transpose_a", MakeValue(transpose_a)},
+                 {"transpose_b", MakeValue(transpose_a)},
+                 {"dst_type", TypeIdToType(type_id)}});
+  }
   NodePtr Neg(const NodePtr &input) const { return Emit("Neg", {input}); }
   NodePtr Exp(const NodePtr &input) const { return Emit("Exp", {input}); }
   NodePtr Abs(const NodePtr &input) const { return Emit("Abs", {input}); }
@@ -49,7 +55,11 @@ class GraphBuilder : public LiteGraph::GraphBuilderBase {
   NodePtr Tanh(const NodePtr &input) const { return Emit("Tanh", {input}); }
   NodePtr IsInf(const NodePtr &input) const { return Emit("IsInf", {input}); }
   NodePtr IsNan(const NodePtr &input) const { return Emit("IsNan", {input}); }
-
+  NodePtr StridedSlice(const NodePtr &input, const std::vector<int64_t> &begin, const std::vector<int64_t> &end,
+                       const std::vector<int64_t> &strides) const {
+    return Emit("StridedSlice", {input},
+                {{"begin", MakeValue(begin)}, {"end", MakeValue(end)}, {"strides", MakeValue(strides)}});
+  }
   NodePtr Cast(const NodePtr &input, const TypeId &type_id) const {
     return Emit("Cast", {input}, {{"dst_type", TypeIdToType(type_id)}});
   }
