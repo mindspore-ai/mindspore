@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ops/dropout.h"
 
 #include <set>
 #include <vector>
 #include <memory>
 
-#include "ops/dropout.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "abstract/param_validator.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,7 +39,22 @@ float Dropout::get_keep_prob() const {
   auto value_ptr = this->GetAttr(kKeepProb);
   return GetValue<float>(value_ptr);
 }
-
 REGISTER_PRIMITIVE_C(kNameDropout, Dropout);
+AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const std::vector<abstract::AbstractBasePtr> &args_spec_list) {
+  auto op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  ShapeVector shape = x->shape()->shape();
+  ShapeVector min_shape = x->shape()->min_shape();
+  ShapeVector max_shape = x->shape()->max_shape();
+  CheckAndConvertUtils::CheckMinMaxShape(shape, &min_shape, &max_shape);
+  auto output_shape = std::make_shared<abstract::AbstractTensor>(
+    x->element(), std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
+  AbstractBasePtrList ret = {output_shape, output_shape};
+  return std::make_shared<abstract::AbstractTuple>(ret);
+}
 }  // namespace ops
 }  // namespace mindspore
