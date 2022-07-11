@@ -406,7 +406,7 @@ public class StartFLJob {
             featureMaps.add(feature);
             featureSize += feature.dataLength();
             updateFeatureName.add(featureName);
-            LOGGER.fine("[startFLJob] weightFullname: " + feature.weightFullname() + ", " +
+            LOGGER.fine("[startFLJob] weightFullname: " + featureName + ", " +
                     "weightLength: " + feature.dataLength());
         }
         Status tag;
@@ -442,7 +442,13 @@ public class StartFLJob {
             }
         } else if (localFLParameter.getServerMod().equals(ServerMod.FEDERATED_LEARNING.toString())) {
             LOGGER.info("[startFLJob] parseResponseFeatures by " + localFLParameter.getServerMod());
-            status = normalFeatures(flJob);
+            String trainModelPath = flParameter.getTrainModelPath();
+            String inferModelPath = flParameter.getInferModelPath();
+            if (!inferModelPath.equals("null") && !inferModelPath.equals(trainModelPath)) {
+                status = hybridFeatures(flJob);
+            } else {
+                status = normalFeatures(flJob);
+            }
             if (status == FLClientStatus.FAILED) {
                 return status;
             }
