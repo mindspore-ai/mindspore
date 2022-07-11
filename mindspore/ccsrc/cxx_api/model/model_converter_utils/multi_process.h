@@ -41,7 +41,7 @@ class MultiProcess {
 
   Status MainProcess(const ProcessFuncCall &parent_process, const ProcessFuncCall &child_process);
   Status SendMsg(const void *buffer, uint64_t msg_len);
-  Status ReceiveMsg(const CreateBufferCall &create_buffer_call);
+  Status ReceiveMsg(const CreateBufferCall &create_buffer_call) const;
 
  private:
   uint8_t *shmat_addr_ = nullptr;

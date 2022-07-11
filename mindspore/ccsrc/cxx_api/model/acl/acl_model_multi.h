@@ -20,7 +20,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <string>
 #include <map>
 
 namespace mindspore {

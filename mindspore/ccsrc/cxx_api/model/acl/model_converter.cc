@@ -79,7 +79,7 @@ bool CreateSessionAndGraphRunner() {
 }
 }  // namespace
 
-transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) {
+transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const {
   MS_EXCEPTION_IF_NULL(anf_graph);
   auto converter = transform::NewConverter(anf_graph);
   std::string net_id = "0";
@@ -88,9 +88,9 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 
   transform::SetTraining(converter, false);
 
-  (void)transform::BuildGraph(converter, GetParams(anf_graph));
+  transform::BuildGraph(converter, GetParams(anf_graph));
 
-  (void)transform::GenerateCheckpointGraph(converter);
+  transform::GenerateCheckpointGraph(converter);
   auto err_code = transform::ErrCode(converter);
   if (err_code != 0) {
     transform::ClearGraph();
@@ -152,7 +152,7 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
   return Buffer(model.data.get(), model.length);
 }
 
-Status ModelConverter::SaveModel(const ge::ModelBufferData &model) {
+Status ModelConverter::SaveModel(const ge::ModelBufferData &model) const {
 #ifdef BUILD_LITE
   std::string file_path;
   auto option = options_.lock();

@@ -33,7 +33,7 @@ class MS_API AclModelOptions {
   ~AclModelOptions() = default;
   std::string GenAclOptionsKey() const;
   uint32_t GetDeviceID() const { return device_id_; }
-  void RenameInput(const std::vector<std::string> &);
+  void RenameInput(const std::vector<std::string> &input_names);
 
   // return tuple<init_options, build_options>
   std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> GenAclOptions() const;
