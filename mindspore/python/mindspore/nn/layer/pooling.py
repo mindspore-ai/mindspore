@@ -753,7 +753,6 @@ class AdaptiveMaxPool3d(Cell):
             `ouput_size` can be a tuple with 3 elements, or a single D for :math:`(D, D, D)`. :math:`D`,
             :math:`H` and :math:`W` can be int or None which means the output size is the same as that of
             the input.
-
         return_indices (bool): If `return_indices` is True, the indices of max value would be output.
             Default: False.
 

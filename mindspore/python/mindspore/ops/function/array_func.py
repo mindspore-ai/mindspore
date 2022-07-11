@@ -71,7 +71,6 @@ tensor_scatter_max_ = P.TensorScatterMax()
 scalar_to_array_ = P.ScalarToArray()
 scalar_to_tensor_ = P.ScalarToTensor()
 tuple_to_array_ = P.TupleToArray()
-masked_fill_ = P.MaskedFill()
 masked_select_ = P.MaskedSelect()
 matrix_band_part_ = P.array_ops.MatrixBandPart()
 ger_ = P.Ger()
@@ -3494,6 +3493,9 @@ def masked_fill(input_x, mask, value):
         >>> print(output)
         [0.5 0.5 3.  0.5]
     """
+    if isinstance(value, (float, int)) and isinstance(input_x, Tensor):
+        value = scalar_to_tensor_(value, input_x.dtype)
+    masked_fill_ = _get_cache_prim(P.MaskedFill)()
     return masked_fill_(input_x, mask, value)
 
 
