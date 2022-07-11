@@ -451,17 +451,17 @@ public class SyncFLJob {
     private static void createWeightNameList(String trainWeightName, String inferWeightName, String nameRegex,
                                              FLParameter flParameter) {
         if ((trainWeightName == null) || ("null".equals(trainWeightName)) || (trainWeightName.isEmpty())) {
-            LOGGER.info("the trainWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING);
+            LOGGER.info("the trainWeightName is null or empty");
         } else {
             flParameter.setHybridWeightName(Arrays.asList(trainWeightName.split(nameRegex)), RunType.TRAINMODE);
             LOGGER.info("the trainWeightName: " + Arrays.toString(trainWeightName.split(nameRegex)));
         }
 
         if ((inferWeightName == null) || ("null".equals(inferWeightName)) || (inferWeightName.isEmpty())) {
-            LOGGER.info("the inferWeightName is null or empty, only need in " + ServerMod.HYBRID_TRAINING);
+            LOGGER.info("the inferWeightName is null or empty");
         } else {
             flParameter.setHybridWeightName(Arrays.asList(inferWeightName.split(nameRegex)), RunType.INFERMODE);
-            LOGGER.info("the trainWeightName: " + Arrays.toString(inferWeightName.split(nameRegex)));
+            LOGGER.info("the inferWeightName: " + Arrays.toString(inferWeightName.split(nameRegex)));
         }
     }
 
