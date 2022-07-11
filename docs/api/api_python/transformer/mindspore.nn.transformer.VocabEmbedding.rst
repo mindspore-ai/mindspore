@@ -21,7 +21,7 @@
     Tuple，表示一个包含(`output`, `embedding_table`)的元组。
 
     - **output** (Tensor) - shape为(batch_size, seq_length, embedding_size)嵌入向量查找结果。
-    - **weight** (Tensor) - shape为(vocab_size, embedding_size)的嵌入表。
+    - **embedding_table** (Tensor) - shape为(vocab_size, embedding_size)的嵌入表。
 
     **异常：**
 
