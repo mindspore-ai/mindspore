@@ -99,7 +99,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kFractionalAvgPoolGrad = prim::kPrimFractionalAvgPoolGrad->name();
   static const auto &kTransposeNOD = prim::kPrimTransposeNOD->name();
   static const auto &kResizeLinear1D = prim::kPrimResizeLinear1D->name();
-  static const auto &kSparseSegmentMean = prim::kPrimSparseSegmentMean->name();
   static const auto &kSegmentMax = prim::kPrimSegmentMax->name();
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
   static const auto &kSegmentSum = prim::kPrimSegmentSum->name();
@@ -158,7 +157,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kRandomGamma, ShapeSet{0, 1}},
                                          {kDynamicBroadcastTo, ShapeSet{1}},
                                          {kNonDeterministicInts, ShapeSet{0}},
-                                         {prim::kPrimReduceSum->name(), ShapeSet{1}},
                                          {prim::kPrimReduceMean->name(), ShapeSet{1}},
                                          {prim::kPrimReduceMax->name(), ShapeSet{1}},
                                          {prim::kPrimReduceMin->name(), ShapeSet{1}},
@@ -169,7 +167,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kTruncatedNormal, ShapeSet{0}},
                                          {kRaggedRange, ShapeSet{0, 1, 2}},
                                          {kTransposeNOD, ShapeSet{1}},
-                                         {kSparseSegmentMean, ShapeSet{2}},
                                          {kResizeLinear1D, ShapeSet{1}},
                                          {kBlackmanWindow, ShapeSet{0}},
                                          {kExpand, ShapeSet{1}},
