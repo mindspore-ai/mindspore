@@ -22,6 +22,7 @@
 #include <memory>
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
+#include "mindspore/core/ir/anf.h"
 
 namespace mindspore {
 namespace ops {
@@ -29,17 +30,47 @@ constexpr auto kNameMaxPoolGradGrad = "MaxPoolGradGrad";
 class MIND_API MaxPoolGradGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolGradGrad);
+  /// \brief Constructor.
   MaxPoolGradGrad() : BaseOperator(kNameMaxPoolGradGrad) {
     InitIOName({"orig_input", "orig_output", "grad"}, {"output"});
   }
+
+  /// \brief Constructor.
+  explicit MaxPoolGradGrad(const std::string k_name) : BaseOperator(k_name) {
+    InitIOName({"orig_input", "orig_output", "grad"}, {"output"});
+  }
+
+  /// \brief Method to set kernel_size attribute.
+  ///
+  /// \param[in] kernel_size Define the size of kernel used to take the maximum value. The length of kernel_size is the
+  /// same as the dimension of the input.
   void set_kernel_size(const std::vector<int64_t> &kernel_size);
+
+  /// \brief Method to get kernel_size attribute.
+  ///
+  /// \return The kernel_size vector.
   std::vector<int64_t> get_kernel_size() const;
 
-  void set_pad_mode(const PadMode &pad_mode);
-  PadMode get_pad_mode() const;
-
+  /// \brief Method to set strides attribute.
+  ///
+  /// \param[in] strides Define the distance of kernel moving. The length of strides is the same as the dimension of the
+  /// input.
   void set_strides(const std::vector<int64_t> &strides);
+
+  /// \brief Method to get strides attribute.
+  ///
+  /// \return The strides vector.
   std::vector<int64_t> get_strides() const;
+
+  /// \brief Method to set pad_mode attribute.
+  ///
+  /// \param[in] pad_mode: The optional value for pad mode, is SAME or VALID.
+  void set_pad_mode(const PadMode &pad_mode);
+
+  /// \brief Method to get pad_mode attribute.
+  ///
+  /// \return The pad mode of max pool operator.
+  PadMode get_pad_mode() const;
 };
 
 abstract::AbstractBasePtr MaxPoolGradGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
