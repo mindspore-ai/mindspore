@@ -65,7 +65,7 @@ Status RangeInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status RangeInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   dev_matrix_shape_ = stra[0];
   split_num_ = stra[0][0];
   return SUCCESS;

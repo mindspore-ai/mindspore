@@ -53,9 +53,9 @@ Shapes ArithmeticBase::InferExpandShape() {
   return input_shapes;
 }
 
-Strategys ExpandStrategy(const StrategyPtr &strategy) {
-  Strategys expand_strategy;
-  Strategys stra = strategy->GetInputDim();
+Strategies ExpandStrategy(const StrategyPtr &strategy) {
+  Strategies expand_strategy;
+  Strategies stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   size_t input_a_size = sub_a_strategy.size();
@@ -77,7 +77,7 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
   Shapes input_shapes = InferExpandShape();
-  Strategys expand_strategy = ExpandStrategy(strategy);
+  Strategies expand_strategy = ExpandStrategy(strategy);
   Dimensions sub_a_strategy = expand_strategy.at(0);
   Dimensions sub_b_strategy = expand_strategy.at(1);
   Shape input_a_shape = input_shapes.at(0);
@@ -93,7 +93,7 @@ Status ArithmeticBase::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status ArithmeticBase::InferDevMatrixShape() {
-  Strategys expand_strategy = ExpandStrategy(strategy_);
+  Strategies expand_strategy = ExpandStrategy(strategy_);
   Dimensions sub_a_strategy = expand_strategy.at(0);
   Dimensions sub_b_strategy = expand_strategy.at(1);
   Shape dev_shape;
@@ -150,10 +150,10 @@ void ArithmeticBase::ReComputeBatchSplitFlagList() {
 
 Status ArithmeticBase::InferTensorMap() {
   Shape tensor_map_index;
-  Strategys expand_strategy = ExpandStrategy(strategy_);
+  Strategies expand_strategy = ExpandStrategy(strategy_);
   Dimensions sub_a_expand_strategy = expand_strategy.at(0);
   Dimensions sub_b_expand_strategy = expand_strategy.at(1);
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   for (size_t i = 0; i < sub_a_expand_strategy.size(); ++i) {
@@ -251,7 +251,7 @@ Status LerpInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   // validate strategy of weight
-  Strategys expand_strategy = ExpandStrategy(strategy);
+  Strategies expand_strategy = ExpandStrategy(strategy);
   Dimensions expand_begin_strategy = expand_strategy.at(0);
   Dimensions expand_end_strategy = expand_strategy.at(1);
   Dimensions expand_cmp_strategy;
@@ -286,7 +286,7 @@ Status LerpInfo::InferDevMatrixShape() {
   }
 
   dev_matrix_shape_.clear();
-  Strategys expand_strategy = ExpandStrategy(strategy_);
+  Strategies expand_strategy = ExpandStrategy(strategy_);
   Dimensions expand_start_strategy = expand_strategy.at(0);
   Dimensions expand_end_strategy = expand_strategy.at(1);
   auto strategies = strategy_->GetInputDim();
@@ -316,9 +316,9 @@ Status LerpInfo::InferTensorMap() {
     return FAILED;
   }
   // Generate tensor map for 'weight'
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions weight_strategy = stra.at(2);
-  Strategys expand_strategy = ExpandStrategy(strategy_);
+  Strategies expand_strategy = ExpandStrategy(strategy_);
   Dimensions expand_start_strategy = expand_strategy.at(0);
   Dimensions expand_weight_strategy = ExpandShape(expand_start_strategy, weight_strategy);
   Shape dev_shape = dev_matrix_shape_;

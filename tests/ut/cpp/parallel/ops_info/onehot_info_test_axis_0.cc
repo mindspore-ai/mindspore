@@ -64,7 +64,7 @@ void TestOneHotInfo2::SetUp() {
 }
 
 TEST_F(TestOneHotInfo2, InferDevMatrixShape1) {
-  Strategys inputs = {{1, 8}, {}, {}};
+  Strategies inputs = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -76,7 +76,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape1) {
 }
 
 TEST_F(TestOneHotInfo2, InferDevMatrixShape2) {
-  Strategys inputs = {{1, 4}, {}, {}};
+  Strategies inputs = {{1, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -88,7 +88,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape2) {
 }
 
 TEST_F(TestOneHotInfo2, InferDevMatrixShape3) {
-  Strategys inputs = {{2, 4}, {}, {}};
+  Strategies inputs = {{2, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -100,7 +100,7 @@ TEST_F(TestOneHotInfo2, InferDevMatrixShape3) {
 }
 
 TEST_F(TestOneHotInfo2, InferTensorMap2) {
-  Strategys str = {{1, 8}, {}, {}};
+  Strategies str = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -122,7 +122,7 @@ TEST_F(TestOneHotInfo2, InferTensorMap2) {
 }
 
 TEST_F(TestOneHotInfo2, InferSliceShape1) {
-  Strategys str = {{1, 8}, {}, {}};
+  Strategies str = {{1, 8}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -144,7 +144,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape1) {
 }
 
 TEST_F(TestOneHotInfo2, InferSliceShape2) {
-  Strategys str = {{2, 4}, {}, {}};
+  Strategies str = {{2, 4}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy, nullptr);
@@ -166,7 +166,7 @@ TEST_F(TestOneHotInfo2, InferSliceShape2) {
 }
 
 TEST_F(TestOneHotInfo2, InferSliceShape3) {
-  Strategys str = {{2, 2}, {}, {}};
+  Strategies str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info2->Init(strategy, nullptr);

@@ -29,7 +29,7 @@ Status TmpIdentityInfo::CheckStrategy(const mindspore::parallel::StrategyPtr &st
 }
 
 Status TmpIdentityInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   dev_matrix_shape_ = input_strategy;
   return SUCCESS;

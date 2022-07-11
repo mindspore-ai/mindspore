@@ -39,7 +39,7 @@ Status DropoutDoMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra.size() != 1) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy size " << stra.size() << ", it must be 1";
     return FAILED;
@@ -61,7 +61,7 @@ Status DropoutDoMaskInfo::InferDevMatrixShape() {
     return FAILED;
   }
 
-  Strategys strategy = strategy_->GetInputDim();
+  Strategies strategy = strategy_->GetInputDim();
   if (strategy.empty()) {
     MS_LOG(ERROR) << name_ << ": The strategy is empty";
     return FAILED;
@@ -110,11 +110,11 @@ std::vector<StrategyPtr> DropoutDoMaskInfo::GenerateOpStrategies(int64_t stage_i
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> DropoutDoMaskInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> DropoutDoMaskInfo::GenerateBatchStrategies() {
   Dimensions strategy(inputs_shape_[0].size() - 1, 1);
   (void)strategy.insert(strategy.begin(), stage_device_size_);
-  Strategys strategy_v = {strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 size_t GetNonMonadInputSize(const CNodePtr &cnode) {

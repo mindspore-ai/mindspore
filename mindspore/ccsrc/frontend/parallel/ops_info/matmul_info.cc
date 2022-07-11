@@ -152,7 +152,7 @@ Status MatMul::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions mat_a_strategy = stra.at(0);
   Dimensions mat_b_strategy = stra.at(1);
 
@@ -209,7 +209,7 @@ Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
     return FAILED;
   }
 
-  Strategys in_stra = strategy_->GetInputDim();
+  Strategies in_stra = strategy_->GetInputDim();
   Dimensions x_strategy = in_stra.at(0);
   Dimensions w_strategy = in_stra.at(1);
 
@@ -222,7 +222,7 @@ Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
     in_shard_c = w_strategy[1];
   }
 
-  Strategys out_stra = out_strategy->GetInputDim();
+  Strategies out_stra = out_strategy->GetInputDim();
   Dimensions output_strategy = out_stra[0];
 
   int64_t out_shard_a_or_ab = output_strategy[0];
@@ -248,7 +248,7 @@ Status MatMul::CheckOutputStrategy(const StrategyPtr &out_strategy) {
 }
 
 Status MatMulBase::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions mat_a_strategy = stra.at(0);
   Dimensions mat_b_strategy = stra.at(1);
 
@@ -460,7 +460,7 @@ std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys replace_strategy;
+    Strategies replace_strategy;
     Dimensions tmp_strategy = sp->GetInputDim()[0];
     Dimensions mat_a_strategy = tmp_strategy;
     mat_a_strategy.pop_back();
@@ -483,11 +483,11 @@ std::vector<StrategyPtr> MatMulBase::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
-std::shared_ptr<Strategys> BatchMatMulInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> BatchMatMulInfo::GenerateBatchStrategies() {
   Dimensions batch_strategy(inputs_shape_[1].size() - 1, 1);
   (void)batch_strategy.insert(batch_strategy.begin(), stage_device_size_);
-  Strategys strategy_v = {batch_strategy, batch_strategy};
-  return std::make_shared<Strategys>(strategy_v);
+  Strategies strategy_v = {batch_strategy, batch_strategy};
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 Status MatMulBase::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }

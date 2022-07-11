@@ -139,7 +139,7 @@ std::vector<StrategyPtr> GatherNdInfo::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions indices_strategy = sp->GetInputDim()[0];
     Dimensions input_strategy(inputs_shape_[0].size(), 1);
     tmp_strategy.push_back(input_strategy);

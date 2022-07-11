@@ -37,7 +37,7 @@ Status ReshapeInfo::CheckStrategy(const StrategyPtr &strategy) { return CheckStr
  * only support batch parallel reshape operator in ReID (batch parallel degree can be smaller than device number)
  */
 Status ReshapeInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   input_strategy_ = stra.at(0);
   dev_matrix_shape_ = stra.at(0);
   return SUCCESS;
@@ -195,8 +195,8 @@ Status ReshapeInfo::InferTensorMap() {
  * the output tensor strategy is the same as input tensor strategy
  * only support batch parallel reshape operator in ReID (batch parallel degree can be smaller than device number)
  */
-Strategys ReshapeInfo::GetOutputsStrategy() {
-  Strategys outputs_strategy;
+Strategies ReshapeInfo::GetOutputsStrategy() {
+  Strategies outputs_strategy;
   Dimensions strategy;
   for (size_t j = 0; j < outputs_shape_[0].size(); ++j) {
     strategy.push_back(1);
@@ -269,8 +269,8 @@ Status ReshapeInfo::InferTensorInfo() {
   }
 
   Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
-  Strategys outputs_strategy = GetOutputsStrategy();
+  Strategies inputs_strategy = strategy_->GetInputDim();
+  Strategies outputs_strategy = GetOutputsStrategy();
   if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
     return FAILED;
   }
@@ -460,7 +460,7 @@ Status ReshapeInfo::GenerateStrategyCosts(const std::vector<std::shared_ptr<Stra
       MS_LOG(ERROR) << "Infer strategy by tensor_info failed";
       return FAILED;
     }
-    Strategys stra_inputs = {stra};
+    Strategies stra_inputs = {stra};
     StrategyPtr reshape_stra = std::make_shared<Strategy>(pre_stra_cost->strategy_ptr->GetInputStage(), stra_inputs);
     if (is_next_reshape) {
       SetOutputLayout(pre_out_tensor_info.tensor_layout());

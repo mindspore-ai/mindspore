@@ -141,7 +141,7 @@ std::vector<StrategyPtr> BroadcastToInfo::GenerateOpStrategies(int64_t stage_id)
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions first_input_strategy = sp->GetInputDim()[0];
     for (size_t i = 0; i < inputs_shape_.size(); ++i) {
       tmp_strategy.push_back(first_input_strategy);

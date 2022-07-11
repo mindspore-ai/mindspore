@@ -91,7 +91,7 @@ struct OutStrategyValueRegister {
 } out_regist;
 }  // namespace
 
-std::string StrategyToString(const Strategys &strategy) {
+std::string StrategyToString(const Strategies &strategy) {
   std::string strategy_str = "";
   strategy_str += "(";
   for (size_t i = 0; i < strategy.size(); ++i) {
@@ -130,7 +130,7 @@ Status OperatorInfo::CheckStrategyValue(const StrategyPtr &strategy, const Shape
 
   size_t strategy_size = strategy->GetInputNumber();
   size_t inputs_shape_size = inputs_shape.size();
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (strategy_size != inputs_shape_size) {
     MS_LOG(ERROR) << name_ << ": The strategy is " << StrategyToString(stra) << ", strategy size: " << strategy_size
                   << " is not equal to inputs size: " << inputs_shape_size;
@@ -790,7 +790,7 @@ Shape GetSliceShape(const Shape &tensor_shape, const Dimensions &strategy) {
   return slice_shape;
 }
 
-Status InferSliceShapeByStrategy(const Strategys &strategys, const Shapes &shapes, Shapes *slice_shapes) {
+Status InferSliceShapeByStrategy(const Strategies &strategys, const Shapes &shapes, Shapes *slice_shapes) {
   if (slice_shapes == nullptr) {
     MS_LOG(ERROR) << "The slice_shapes is null.";
     return FAILED;
@@ -829,7 +829,7 @@ Status InferSliceShapeByStrategy(const Strategys &strategys, const Shapes &shape
   return SUCCESS;
 }
 
-Status OperatorInfo::InferSliceShape(const Strategys &inputs_strategy, const Strategys &outputs_strategy,
+Status OperatorInfo::InferSliceShape(const Strategies &inputs_strategy, const Strategies &outputs_strategy,
                                      Shapes *inputs_slice_shape, Shapes *outputs_slice_shape) {
   if (inputs_slice_shape == nullptr || outputs_slice_shape == nullptr) {
     MS_LOG(ERROR) << name_ << ": The slice_shape is null.";
@@ -1061,8 +1061,8 @@ void OperatorInfo::ReplaceSuccEdges(const std::shared_ptr<OperatorInfo> &op,
   succ_edges_ = update_pre_edges;
 }
 
-std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
-                                                              const std::vector<bool> &split_flag_list) {
+std::shared_ptr<Strategies> GenerateBatchStrategiesBySplitFlag(const Shapes &shapes,
+                                                               const std::vector<bool> &split_flag_list) {
   if (shapes.size() != split_flag_list.size()) {
     MS_LOG(ERROR) << "Split_flag_list do not have the same size as inputs shape, " << split_flag_list.size() << " : "
                   << shapes.size();
@@ -1070,7 +1070,7 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
   }
   CheckGlobalDeviceManager();
   int64_t dev_num = g_device_manager->stage_device_num();
-  Strategys strategy_v;
+  Strategies strategy_v;
   for (size_t i = 0; i != shapes.size(); i++) {
     if (shapes[i].empty()) {
       MS_LOG(INFO) << "Elements of shapes is empty.";
@@ -1084,7 +1084,7 @@ std::shared_ptr<Strategys> GenerateBatchStrategiesBySplitFlag(const Shapes &shap
       strategy_v.push_back(element);
     }
   }
-  return std::make_shared<Strategys>(strategy_v);
+  return std::make_shared<Strategies>(strategy_v);
 }
 
 void OperatorInfo::ReComputeBatchSplitFlagList() {
@@ -1122,12 +1122,12 @@ Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &input
       return FAILED;
     }
   }
-  Strategys stras(inputs_partitions);
+  Strategies stras(inputs_partitions);
   (*sp) = std::make_shared<Strategy>(stage_id, stras);
   return SUCCESS;
 }
 
-std::shared_ptr<Strategys> OperatorInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> OperatorInfo::GenerateBatchStrategies() {
   if (inputs_shape_.empty() && InferAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Infer attrs failed";
   }
@@ -1212,7 +1212,7 @@ Status GenerateStrategiesForBroadcastLeft(int64_t stage_id, const Shapes &inputs
 
   // second, get the correct strategy for input0
   for (auto &sp : *sp_vector) {
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions input0_strategy = sp->GetInputDim()[0];
     size_t size_diff = inputs_shape[1].size() - inputs_shape[0].size();
 
@@ -1261,7 +1261,7 @@ Status GenerateStrategiesForBroadcastRight(int64_t stage_id, const Shapes &input
 
   // second, get the correct strategy for input1
   for (auto &sp : *sp_vector) {
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     tmp_strategy.push_back(sp->GetInputDim()[0]);  // input0
 
     Dimensions input1_strategy = sp->GetInputDim()[1];
@@ -1503,7 +1503,7 @@ Status GenerateStrategiesForDependentInputs(int64_t stage_id, const Shapes &inpu
                        [stage_id, &indices_mp, &splittable_inputs](const StrategyPtr &sp) {
                          auto sp_strategies = sp->GetInputDim();
                          auto sp_sub_strategy = sp_strategies.at(0);
-                         Strategys strategies(splittable_inputs);
+                         Strategies strategies(splittable_inputs);
                          for (size_t i = 0; i < strategies.size(); ++i) {
                            for (size_t j = 0; j < strategies[i].size(); ++j) {
                              if (splittable_inputs[i][j] == 0) {

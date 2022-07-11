@@ -61,7 +61,7 @@ Status LayerNormInfo::GetAttrs() {
 
 Status LayerNormInfo::CheckStrategy(const StrategyPtr &strategy) {
   MS_EXCEPTION_IF_NULL(strategy);
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra.size() != LAYER_NORM_INPUT_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy size " << stra.size();
     return FAILED;
@@ -116,7 +116,7 @@ Status LayerNormInfo::InferDevMatrixShape() {
     MS_LOG(ERROR) << name_ << ": The strategy is null";
     return FAILED;
   }
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   if (stra.empty()) {
     MS_LOG(ERROR) << name_ << ": The strategy is empty";
     return FAILED;
@@ -187,7 +187,7 @@ Status LayerNormInfo::GenerateGammaAndBetaStrategies(const std::vector<StrategyP
       MS_LOG(ERROR) << name_ << ": Invalid strategy";
       return FAILED;
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions input_strategy = sp->GetInputDim()[0];
     Dimensions gamma_strategy = input_strategy;
     (void)gamma_strategy.erase(gamma_strategy.begin(),

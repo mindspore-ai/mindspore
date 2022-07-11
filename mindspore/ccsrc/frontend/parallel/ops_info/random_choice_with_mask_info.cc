@@ -36,7 +36,7 @@ Status RandomChoiceWithMaskInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys strategies = strategy->GetInputDim();
+  Strategies strategies = strategy->GetInputDim();
   Dimensions input_strategy = strategies[0];
   auto is_shard = [](int64_t val) -> bool { return val != 1; };
   if (std::any_of(input_strategy.begin(), input_strategy.end(), is_shard)) {
@@ -66,7 +66,7 @@ Status RandomChoiceWithMaskInfo::InferTensorMap() {
 
 std::vector<StrategyPtr> RandomChoiceWithMaskInfo::GenerateOpStrategies(int64_t stage_id) {
   Dimensions input_partitions(inputs_shape_[0].size(), 1);
-  Strategys strategies = {input_partitions};
+  Strategies strategies = {input_partitions};
   std::vector<StrategyPtr> sp_vector;
   (void)sp_vector.emplace_back(std::make_shared<Strategy>(stage_id, strategies));
   return sp_vector;

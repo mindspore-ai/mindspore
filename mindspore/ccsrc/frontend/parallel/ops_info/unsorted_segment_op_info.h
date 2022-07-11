@@ -47,7 +47,7 @@ class UnsortedSegmentOpInfo : public OperatorInfo {
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
 
  protected:
   std::string reduce_method_;

@@ -33,7 +33,7 @@ namespace parallel {
 Status ReduceMethod::CheckStrategy(const StrategyPtr &strategy) { return CheckStrategyValue(strategy, inputs_shape_); }
 
 Status ReduceMethod::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   dev_matrix_shape_ = input_strategy;
@@ -400,10 +400,10 @@ Status ReduceMethod::InferTensorInfo() {
 
   // infer slice shape
   Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
+  Strategies inputs_strategy = strategy_->GetInputDim();
   Dimensions output_strategy = InferOutputStrategy();
 
-  Strategys outputs_strategy = {output_strategy};
+  Strategies outputs_strategy = {output_strategy};
   if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
     return FAILED;
   }
@@ -478,7 +478,7 @@ Status ArgMaxWithValueInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<int64_t> dim_list = reduce_dim();
   MS_ASSERT(dim_list.size() == 1);
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   MS_ASSERT(stra.size() == 1);
   Shape input_strategy = stra.at(0);
   MS_ASSERT(dim_list.at(0) < input_strategy.size());
@@ -510,10 +510,10 @@ Status ArgMaxWithValueInfo::InferTensorInfo() {
 
   // infer slice shape
   Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
+  Strategies inputs_strategy = strategy_->GetInputDim();
   Dimensions output_strategy = InferOutputStrategy();
 
-  Strategys outputs_strategy = {output_strategy, output_strategy};
+  Strategies outputs_strategy = {output_strategy, output_strategy};
   if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
     return FAILED;
   }
@@ -627,7 +627,7 @@ Status ArgmaxInfo::CheckStrategy(const StrategyPtr &strategy) {
   std::vector<int64_t> dim_list = reduce_dim();
   MS_ASSERT(dim_list.size() == 1);
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   MS_ASSERT(stra.size() == 1);
   Shape input_strategy = stra.at(0);
   MS_ASSERT(dim_list.at(0) < input_strategy.size());
@@ -689,7 +689,7 @@ Status SquareSumAllInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   Shape input_a_shape = inputs_shape_.at(0);
@@ -707,7 +707,7 @@ Status SquareSumAllInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status SquareSumAllInfo::InferDevMatrixShape() {
-  Strategys strategy = strategy_->GetInputDim();
+  Strategies strategy = strategy_->GetInputDim();
   Dimensions sub_a_strategy = strategy.at(0);
   Shape dev_shape;
   for (size_t i = 0; i < sub_a_strategy.size(); ++i) {
@@ -736,10 +736,10 @@ Status SquareSumAllInfo::InferTensorInfo() {
 
   // infer slice shape
   Shapes inputs_slice_shape, outputs_slice_shape;
-  Strategys inputs_strategy = strategy_->GetInputDim();
+  Strategies inputs_strategy = strategy_->GetInputDim();
   Dimensions output_strategy = InferOutputStrategy();
 
-  Strategys outputs_strategy = {output_strategy, output_strategy};
+  Strategies outputs_strategy = {output_strategy, output_strategy};
   if (InferSliceShape(inputs_strategy, outputs_strategy, &inputs_slice_shape, &outputs_slice_shape) != SUCCESS) {
     return FAILED;
   }

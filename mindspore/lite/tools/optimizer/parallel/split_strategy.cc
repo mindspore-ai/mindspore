@@ -76,7 +76,7 @@ std::unordered_map<std::string, opt::SplitStrategy> ParserSplitStrategy(const st
     default:
       return split_strategys;
   }
-  opt::Strategys strategys = {split_feature_map, split_weight};
+  opt::Strategies strategys = {split_feature_map, split_weight};
   for (const auto &supported_parallel_op : kParallelOpNames) {
     split_strategys[supported_parallel_op.second] = {strategys, kSplitDevTypes, kSplitDevTypes.size(), split_mode};
   }

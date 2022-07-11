@@ -117,7 +117,7 @@ Status TensorDotInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra.size() != 2) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy size " << stra.size();
     return FAILED;
@@ -148,7 +148,7 @@ Status TensorDotInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status TensorDotInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_a_strategy = stra.at(0);
   Dimensions input_b_strategy = stra.at(1);
 
@@ -306,7 +306,7 @@ Status TensorDotInfo::InferTensorMap() {
   return SUCCESS;
 }
 
-std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
+std::shared_ptr<Strategies> TensorDotInfo::GenerateBatchStrategies() {
   if (GetAttrs() != SUCCESS) {
     MS_LOG(EXCEPTION) << name_ << ": Get attr failed";
   }
@@ -339,8 +339,8 @@ std::shared_ptr<Strategys> TensorDotInfo::GenerateBatchStrategies() {
     MS_LOG(EXCEPTION) << name_ << ": Now do not support TUPLE_TYPE";
   }
 
-  Strategys strategy = {input_a_strategy, input_b_strategy};
-  return std::make_shared<Strategys>(strategy);
+  Strategies strategy = {input_a_strategy, input_b_strategy};
+  return std::make_shared<Strategies>(strategy);
 }
 
 std::vector<StrategyPtr> TensorDotInfo::GenerateOpStrategies(int64_t) {

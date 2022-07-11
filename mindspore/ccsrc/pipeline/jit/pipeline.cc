@@ -523,7 +523,7 @@ py::list GraphExecutorPy::GetParallelParameterNameList(const std::string &phase)
   return mindspore::parallel::GetParallelParameterNameListFromGraph(graph);
 }
 
-void GraphExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
+void GraphExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategies &strategy) {
   MS_LOG(DEBUG) << "SetCNodeStrategy!";
   stra_dict_[phase_][py::str(name)] = strategy;
 }

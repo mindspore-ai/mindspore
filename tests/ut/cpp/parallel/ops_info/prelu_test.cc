@@ -64,7 +64,7 @@ void TestPReLUInfo::SetUp() {
 }
 
 TEST_F(TestPReLUInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{2, 1, 8, 16}, {1}};
+  Strategies inputs = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   prelu->Init(strategy, nullptr);
@@ -75,7 +75,7 @@ TEST_F(TestPReLUInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestPReLUInfo, InferSliceShape1) {
-  Strategys str = {{2, 1, 8, 16}, {1}};
+  Strategies str = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu->Init(strategy, nullptr);
@@ -98,7 +98,7 @@ TEST_F(TestPReLUInfo, InferSliceShape1) {
 }
 
 TEST_F(TestPReLUInfo, GetTensorLayout1) {
-  Strategys str = {{2, 1, 8, 16}, {1}};
+  Strategies str = {{2, 1, 8, 16}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu->Init(strategy, nullptr);
@@ -122,7 +122,7 @@ TEST_F(TestPReLUInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestPReLUInfo, GetMirrorOPs1) {
-  Strategys str = {{2, 1, 2, 2}, {1}};
+  Strategies str = {{2, 1, 2, 2}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
   prelu->Init(strategy, nullptr);
   MirrorOps mirror_ops = prelu->mirror_ops();
@@ -139,14 +139,14 @@ TEST_F(TestPReLUInfo, GetMirrorOPs1) {
 
 TEST_F(TestPReLUInfo, CheckStrategy1) {
   // Success: {{2,1,8,16},{1}}
-  Strategys inputs = {{2, 1, 8, 16}};
+  Strategies inputs = {{2, 1, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8, 16}, {4}};
+  Strategies inputs = {{2, 4, 8, 16}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);
@@ -169,7 +169,7 @@ TEST_F(TestPReLUInfo, AutoStrategy1) {
 }
 
 TEST_F(TestPReLUInfo, InferDevMatrixShape_2d1) {
-  Strategys inputs = {{128, 1}, {1}};
+  Strategies inputs = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   prelu_2d->Init(strategy, nullptr);
@@ -180,7 +180,7 @@ TEST_F(TestPReLUInfo, InferDevMatrixShape_2d1) {
 }
 
 TEST_F(TestPReLUInfo, InferSliceShape_2d1) {
-  Strategys str = {{128, 1}, {1}};
+  Strategies str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu_2d->Init(strategy, nullptr);
@@ -203,7 +203,7 @@ TEST_F(TestPReLUInfo, InferSliceShape_2d1) {
 }
 
 TEST_F(TestPReLUInfo, GetTensorLayout_2d1) {
-  Strategys str = {{128, 1}, {1}};
+  Strategies str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   prelu_2d->Init(strategy, nullptr);
@@ -227,7 +227,7 @@ TEST_F(TestPReLUInfo, GetTensorLayout_2d1) {
 }
 
 TEST_F(TestPReLUInfo, GetMirrorOPs_2d1) {
-  Strategys str = {{128, 1}, {1}};
+  Strategies str = {{128, 1}, {1}};
   StrategyPtr strategy = NewStrategy(0, str);
   prelu_2d->Init(strategy, nullptr);
   MirrorOps mirror_ops = prelu_2d->mirror_ops();
@@ -244,14 +244,14 @@ TEST_F(TestPReLUInfo, GetMirrorOPs_2d1) {
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d1) {
   // Success: {{2,1,8,16},{1}}
-  Strategys inputs = {{128, 1}};
+  Strategies inputs = {{128, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy, nullptr);
   ASSERT_EQ(ret, FAILED);
 }
 
 TEST_F(TestPReLUInfo, CheckStrategy_2d2) {
-  Strategys inputs = {{128, 4}, {4}};
+  Strategies inputs = {{128, 4}, {4}};
   StrategyPtr strategy = NewStrategy(0, inputs);
   Status ret = prelu_2d->Init(strategy, nullptr);
   ASSERT_EQ(ret, SUCCESS);

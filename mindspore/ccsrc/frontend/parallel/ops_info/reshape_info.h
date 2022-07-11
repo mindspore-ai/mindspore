@@ -87,7 +87,7 @@ class ReshapeInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorLayout(TensorLayouts *inputs_layout, TensorLayouts *outputs_layout);
   Status GetAttrs() override;
-  Strategys GetOutputsStrategy();
+  Strategies GetOutputsStrategy();
 
  private:
   Status GetParameterInput();

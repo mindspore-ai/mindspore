@@ -37,7 +37,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
   }
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra[1].size() != PRELU_SECOND_INPUT_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid strategy size.";
     return FAILED;
@@ -53,7 +53,7 @@ Status PReLUInfo::CheckStrategy(const StrategyPtr &strategy) {
  * device matrix is same with the strategy matrix
  */
 Status PReLUInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   input_strategy_ = input_strategy;
   dev_matrix_shape_ = input_strategy;

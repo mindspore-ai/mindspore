@@ -50,7 +50,7 @@ class MatmulDDSInfo : public OperatorInfo {
   Status GetAttrs() override;
   Status InferAsLossDivisor() override { return SUCCESS; }
   Status ComputeReplaceGraph(const CNodePtr &cnode);
-  Status CheckStrategys(const Strategys &stras);
+  Status CheckStrategys(const Strategies &stras);
 
  private:
   Dimensions input_strategy_;

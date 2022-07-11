@@ -38,7 +38,7 @@ Status ReLUV2Info::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   Dimensions input_strategy = stra.at(0);
   if (input_strategy[1] != 1) {
     MS_LOG(ERROR) << name_ << "The second dimension is not splitable.";
@@ -65,7 +65,7 @@ std::vector<StrategyPtr> ReLUV2Info::GenerateOpStrategies(int64_t stage_id) {
 }
 
 Status ReLUV2Info::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   Dimensions input_strategy = stra.at(0);
 
   dev_matrix_shape_ = input_strategy;

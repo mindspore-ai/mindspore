@@ -62,7 +62,7 @@ void TestConstructOperator::SetUp() {
 
   MatMulInfoPtr matmul = std::make_shared<MatMulInfo>("matmul_info", inputs_shape_1, outputs_shape_1, attr_1);
 
-  Strategys str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
+  Strategies str = {{2, 4, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
   matmul->Init(strategy, nullptr);
   Shape tensor_shape = {512, 1024};

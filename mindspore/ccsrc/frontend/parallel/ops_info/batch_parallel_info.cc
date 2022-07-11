@@ -32,7 +32,7 @@ Status BatchParallelInfo::CheckStrategy(const StrategyPtr &strategy) {
   }
 
   size_t strategy_size = strategy->GetInputNumber();
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   for (size_t i = 0; i < strategy_size; ++i) {
     Shape sub_strategy = stra.at(i);
     size_t strategy_len = sub_strategy.size();
@@ -122,7 +122,7 @@ Status BatchParallelInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 
 std::vector<StrategyPtr> BatchParallelInfo::GenerateOpStrategies(int64_t stage_id) {
   StrategyPtr sp;
-  Strategys strategy;
+  Strategies strategy;
   ComputeBatchSplitFlagList();
 
   for (size_t i = 0; i < inputs_shape_.size(); i++) {
@@ -181,7 +181,7 @@ Status CheckValidInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra[0][1] != 1) {
     MS_LOG(ERROR) << name_ << ": The second dimension of the first input can not be split, but got " << stra[0][1];
     return FAILED;
@@ -195,7 +195,7 @@ Status CheckValidInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status CheckValidInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   dev_matrix_shape_.push_back(stra[0][0]);
   return SUCCESS;
 }

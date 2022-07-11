@@ -45,7 +45,7 @@ class GatherInfo : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   const std::vector<int64_t> &param_split_shapes() const { return param_split_shapes_; }
   const std::vector<int64_t> &index_offsets() const { return index_offsets_; }
 
@@ -64,7 +64,7 @@ class GatherInfo : public OperatorInfo {
   void InferOutputsTensorMap();
   void InferTensorMapForManualSplit();
   Status ComputeReplaceGraph(const CNodePtr &cnode);
-  Status CheckManualSplit(const Strategys &strategy);
+  Status CheckManualSplit(const Strategies &strategy);
   Status CheckSplitAxisStrategy(const StrategyPtr &strategy);
   void SetAttribute(const StrategyPtr &strategy);
   Status GetManualSplitAttr();
@@ -73,7 +73,7 @@ class GatherInfo : public OperatorInfo {
   Status InferBias();
   Status InferOffset();
   Status InferGroup();
-  bool ShardBatchAndAxis(const Strategys &strategy) const;
+  bool ShardBatchAndAxis(const Strategies &strategy) const;
   Shape InferOutputsTensorMapSplitAxis();
 
   int64_t axis_;

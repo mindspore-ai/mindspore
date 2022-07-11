@@ -31,13 +31,13 @@ namespace parallel {
 #define MIN_SLICE_NUM 1
 
 using Dimensions = Shape;
-using Strategys = std::vector<Dimensions>;
+using Strategies = std::vector<Dimensions>;
 class Strategy;
 using StrategyPtr = std::shared_ptr<Strategy>;
 
 class Strategy {
  public:
-  Strategy(int64_t stage, Strategys inputs)
+  Strategy(int64_t stage, Strategies inputs)
       : stage_(stage), inputs_(std::move(inputs)), internal_size_(0), internal_stragies_() {}
 
   Strategy(const Strategy &another_stra) : stage_(another_stra.GetInputStage()) {
@@ -52,14 +52,14 @@ class Strategy {
 
   ~Strategy() = default;
   size_t GetInputNumber() const { return inputs_.size(); }
-  Strategys GetInputDim() const { return inputs_; }
+  Strategies GetInputDim() const { return inputs_; }
   int64_t GetInputStage() const { return stage_; }
   void ExpandInputDimFromOneToTwo() {
     if (inputs_.size() == 1) {
       inputs_.push_back(inputs_[0]);
     }
   }
-  void ResetInputs(const Strategys &input) { inputs_ = input; }
+  void ResetInputs(const Strategies &input) { inputs_ = input; }
   std::vector<StrategyPtr> GetInternalStrategies() const { return internal_stragies_; }
   size_t GetInternalSize() const { return internal_size_; }
 
@@ -103,12 +103,12 @@ class Strategy {
   const int64_t stage_;
 
   // The size of Dimensions must be equal to inputs_ tensor dimension.
-  Strategys inputs_;
+  Strategies inputs_;
   size_t internal_size_ = 0;
   std::vector<StrategyPtr> internal_stragies_;
 };
 
-inline StrategyPtr NewStrategy(const int64_t stage, const Strategys &inputs) {
+inline StrategyPtr NewStrategy(const int64_t stage, const Strategies &inputs) {
   return std::make_shared<Strategy>(stage, inputs);
 }
 }  // namespace parallel

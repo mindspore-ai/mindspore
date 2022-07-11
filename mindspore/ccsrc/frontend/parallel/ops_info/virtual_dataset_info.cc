@@ -35,7 +35,7 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
     return FAILED;
   }
 
-  Strategys stra = strategy->GetInputDim();
+  Strategies stra = strategy->GetInputDim();
   if (stra.size() < 1) {
     MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
     return FAILED;
@@ -84,7 +84,7 @@ Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
 }
 
 Status VirtualDatasetInfo::InferDevMatrixShape() {
-  Strategys stra = strategy_->GetInputDim();
+  Strategies stra = strategy_->GetInputDim();
   dev_matrix_shape_ = stra[max_size_strategy_dim_];
   return SUCCESS;
 }
@@ -162,7 +162,7 @@ Status VirtualDatasetInfo::SetCostUnderStrategy(const StrategyPtr &strategy) {
 std::vector<StrategyPtr> VirtualDatasetInfo::GenerateOpStrategies(int64_t stage_id) {
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   StrategyPtr sp;
-  Strategys strategy;
+  Strategies strategy;
   if (!ParallelContext::GetInstance()->dataset_strategy().empty()) {
     strategy = ParallelContext::GetInstance()->dataset_strategy();
   } else {

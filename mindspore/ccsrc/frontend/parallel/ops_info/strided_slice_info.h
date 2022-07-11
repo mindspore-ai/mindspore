@@ -39,7 +39,7 @@ class StridedSliceInfo : public OperatorInfo {
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   void ComputeBeginMask(int64_t begin_mask_);
   void ComputeEndMask(int64_t end_mask_);
   void ComputeEllipsisMask(int64_t ellipsis_mask_);

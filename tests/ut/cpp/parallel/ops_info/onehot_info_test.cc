@@ -64,7 +64,7 @@ void TestOneHotInfo::SetUp() {
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{8, 1}, {}, {}};
+  Strategies inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -76,7 +76,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
-  Strategys inputs = {{4, 1}, {}, {}};
+  Strategies inputs = {{4, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -88,7 +88,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape2) {
 }
 
 TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
-  Strategys inputs = {{4, 2}, {}, {}};
+  Strategies inputs = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -100,7 +100,7 @@ TEST_F(TestOneHotInfo, InferDevMatrixShape3) {
 }
 
 TEST_F(TestOneHotInfo, InferTensorMap2) {
-  Strategys str = {{8, 1}, {}, {}};
+  Strategies str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -122,7 +122,7 @@ TEST_F(TestOneHotInfo, InferTensorMap2) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape1) {
-  Strategys str = {{8, 1}, {}, {}};
+  Strategies str = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -144,7 +144,7 @@ TEST_F(TestOneHotInfo, InferSliceShape1) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape2) {
-  Strategys str = {{4, 2}, {}, {}};
+  Strategies str = {{4, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -166,7 +166,7 @@ TEST_F(TestOneHotInfo, InferSliceShape2) {
 }
 
 TEST_F(TestOneHotInfo, InferSliceShape3) {
-  Strategys str = {{2, 2}, {}, {}};
+  Strategies str = {{2, 2}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -188,7 +188,7 @@ TEST_F(TestOneHotInfo, InferSliceShape3) {
 }
 
 TEST_F(TestOneHotInfo, GetMirrorOPs1) {
-  Strategys inputs = {{8, 1}, {}, {}};
+  Strategies inputs = {{8, 1}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status status = onehot_info->Init(strategy, nullptr);
@@ -199,7 +199,7 @@ TEST_F(TestOneHotInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestOneHotInfo, CheckStrategy1) {
-  Strategys inputs = {{16}, {}, {}};
+  Strategies inputs = {{16}, {}, {}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = onehot_info->Init(strategy, nullptr);

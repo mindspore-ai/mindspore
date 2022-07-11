@@ -44,7 +44,7 @@ class UniformCandidateSamplerInfo : public OperatorInfo {
   ~UniformCandidateSamplerInfo() override = default;
 
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   Status SetCostUnderStrategy(const StrategyPtr &) override;
   Status InferAsLossDivisor() override;
   ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;

@@ -237,9 +237,9 @@ TEST_F(TestStepParallel, ExtractStrategy) {
   std::vector<ValuePtr> elements = {val1, val2};
   ValueTuplePtr strategy_tuple = std::make_shared<ValueTuple>(elements);
   attrs["in_strategy"] = strategy_tuple;
-  Strategys strategy_expect = {v1, v2};
+  Strategies strategy_expect = {v1, v2};
   StrategyPtr strategy = ExtractStrategy(attrs["in_strategy"]);
-  Strategys strategy_test = strategy->GetInputDim();
+  Strategies strategy_test = strategy->GetInputDim();
 
   ASSERT_EQ(strategy_expect, strategy_test);
 }
@@ -380,7 +380,7 @@ TEST_F(TestStepParallel, OperatorInstance) {
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
   // create  strategy
-  Strategys strategy = {{2, 2}, {2, 4}};
+  Strategies strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
   // create  shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};
@@ -557,7 +557,7 @@ TEST_F(TestStepParallel, GetTensorInLayout) {
   prim->set_attr("transpose_b", transpose_b);
   auto attrs = prim->attrs();
   // create  strategy
-  Strategys strategy = {{2, 2}, {2, 4}};
+  Strategies strategy = {{2, 2}, {2, 4}};
   StrategyPtr strategyPtr = parallel::NewStrategy(0, strategy);
   // create  shape
   Shapes inputs_shape = std::vector<Shape>{{64, 32}, {32, 64}};

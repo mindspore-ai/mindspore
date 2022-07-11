@@ -86,7 +86,7 @@ class BatchMatMulInfo : public MatMul {
       : MatMul(name, inputs_shape, outputs_shape, attrs) {}
   ~BatchMatMulInfo() override = default;
 
-  std::shared_ptr<Strategys> GenerateBatchStrategies() override;
+  std::shared_ptr<Strategies> GenerateBatchStrategies() override;
 };
 }  // namespace parallel
 }  // namespace mindspore

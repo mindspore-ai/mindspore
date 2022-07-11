@@ -68,7 +68,7 @@ void TestReduceSumInfo::SetUp() {
 }
 
 TEST_F(TestReduceSumInfo, InferDevMatrixShape1) {
-  Strategys inputs = {{4, 8, 1}};
+  Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reduce_sum->Init(strategy, nullptr);
@@ -79,7 +79,7 @@ TEST_F(TestReduceSumInfo, InferDevMatrixShape1) {
 }
 
 TEST_F(TestReduceSumInfo, InferSliceShape1) {
-  Strategys str = {{4, 8, 1}};
+  Strategies str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reduce_sum->Init(strategy, nullptr);
@@ -100,7 +100,7 @@ TEST_F(TestReduceSumInfo, InferSliceShape1) {
 }
 
 TEST_F(TestReduceSumInfo, GetTensorLayout1) {
-  Strategys str = {{4, 8, 1}};
+  Strategies str = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, str);
 
   reduce_sum->Init(strategy, nullptr);
@@ -121,7 +121,7 @@ TEST_F(TestReduceSumInfo, GetTensorLayout1) {
 }
 
 TEST_F(TestReduceSumInfo, GetForwardOp1) {
-  Strategys inputs = {{4, 8, 1}};
+  Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reduce_sum->Init(strategy, nullptr);
@@ -132,7 +132,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp1) {
 }
 
 TEST_F(TestReduceSumInfo, GetForwardOp2) {
-  Strategys inputs = {{4, 4, 2}};
+  Strategies inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reduce_sum->Init(strategy, nullptr);
@@ -156,7 +156,7 @@ TEST_F(TestReduceSumInfo, GetForwardOp2) {
 }
 
 TEST_F(TestReduceSumInfo, GetMirrorOPs1) {
-  Strategys inputs = {{4, 8, 1}};
+  Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reduce_sum->Init(strategy, nullptr);
@@ -168,7 +168,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs1) {
 }
 
 TEST_F(TestReduceSumInfo, GetMirrorOPs2) {
-  Strategys inputs = {{4, 4, 1}};
+  Strategies inputs = {{4, 4, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   reduce_sum->Init(strategy, nullptr);
@@ -187,7 +187,7 @@ TEST_F(TestReduceSumInfo, GetMirrorOPs2) {
 }
 
 TEST_F(TestReduceSumInfo, CheckStrategy1) {
-  Strategys inputs = {{2, 2, 8, 16}};
+  Strategies inputs = {{2, 2, 8, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reduce_sum->Init(strategy, nullptr);
@@ -195,7 +195,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy1) {
 }
 
 TEST_F(TestReduceSumInfo, CheckStrategy2) {
-  Strategys inputs = {{2, 4, 8}, {2, 4, 8}};
+  Strategies inputs = {{2, 4, 8}, {2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reduce_sum->Init(strategy, nullptr);
@@ -203,7 +203,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy2) {
 }
 
 TEST_F(TestReduceSumInfo, CheckStrategy3) {
-  Strategys inputs = {{4, 4, 2}};
+  Strategies inputs = {{4, 4, 2}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reduce_sum->Init(strategy, nullptr);
@@ -211,7 +211,7 @@ TEST_F(TestReduceSumInfo, CheckStrategy3) {
 }
 
 TEST_F(TestReduceSumInfo, CheckStrategy4) {
-  Strategys inputs = {{4, 8, 1}};
+  Strategies inputs = {{4, 8, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
   Status ret = reduce_sum->Init(strategy, nullptr);

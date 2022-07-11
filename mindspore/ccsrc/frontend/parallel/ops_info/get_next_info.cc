@@ -105,7 +105,7 @@ Status GetNextInfo::InferDevMatrixShape() {
 }
 
 Status GetNextInfo::CheckStrategy(const StrategyPtr &strategy) {
-  Strategys stras = strategy->GetInputDim();
+  Strategies stras = strategy->GetInputDim();
   for (Dimensions stra : stras) {
     if (stra.size() != 0) {
       MS_LOG(ERROR) << name_ << " : Invalid strategy.";
@@ -219,7 +219,7 @@ void GetNextInfo::InferReplaceOps() {
 Status GetNextInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> GetNextInfo::GenerateOpStrategies(int64_t stage_id) {
-  Strategys stra;
+  Strategies stra;
   StrategyPtr sp = std::make_shared<Strategy>(stage_id, stra);
   std::vector<StrategyPtr> sp_vector;
   sp_vector.push_back(sp);

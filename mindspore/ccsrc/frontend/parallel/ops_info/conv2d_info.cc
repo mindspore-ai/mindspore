@@ -936,7 +936,7 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
   auto search_mode = parallel_context->strategy_search_mode();
   // generate data parallel strategy when the search mode is not sharding propagation
   if (parallel_mode == parallel::kAutoParallel && search_mode != parallel::kShardingPropagation) {
-    Strategys strategy = {{stage_device_size_, 1, 1, 1}, {1, 1, 1, 1}};
+    Strategies strategy = {{stage_device_size_, 1, 1, 1}, {1, 1, 1, 1}};
     StrategyPtr data_parallel_sp = std::make_shared<Strategy>(stage_id, strategy);
     sp_vector.push_back(data_parallel_sp);
     return sp_vector;
@@ -960,7 +960,7 @@ std::vector<StrategyPtr> Conv2DInfo::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys replace_strategy;
+    Strategies replace_strategy;
     Dimensions tmp_strategy = sp->GetInputDim()[0];
     if (tmp_strategy.size() != 5) {
       MS_LOG(EXCEPTION) << name_ << ": The size of first tmp strategy must be 5, but got " << tmp_strategy.size();

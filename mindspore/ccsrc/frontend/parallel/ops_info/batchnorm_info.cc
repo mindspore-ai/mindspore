@@ -315,7 +315,7 @@ std::vector<StrategyPtr> BatchNormInfo::GenerateOpStrategies(int64_t stage_id) {
     if ((sp == nullptr) || sp->GetInputDim().empty()) {
       MS_LOG(EXCEPTION) << name_ << ": The strategy is null or empty";
     }
-    Strategys tmp_strategy;
+    Strategies tmp_strategy;
     Dimensions first_input_strategy = sp->GetInputDim()[0];
     if (first_input_strategy.size() < 2) {
       MS_LOG(EXCEPTION) << name_ << ": The size of first input strategy can not smaller than 2, but got "
