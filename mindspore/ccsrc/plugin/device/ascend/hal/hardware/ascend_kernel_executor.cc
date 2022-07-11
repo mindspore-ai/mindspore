@@ -204,9 +204,10 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
     } else {
       PreprocessBeforeRunSingleOpGraph(graph);
       AscendStreamAssign::GetInstance().AssignStream(NOT_NULL(graph));
-      CreateKernel(graph->execution_order());
+      const auto &kernels = graph->execution_order();
+      CreateKernel(kernels);
       MS_EXCEPTION_IF_NULL(res_manager_->runtime_instance_);
-      res_manager_->runtime_instance_->SetKernelModRtStream(NOT_NULL(graph));
+      res_manager_->runtime_instance_->SetKernelModRtStream(kernels);
     }
   } catch (const std::exception &e) {
     ReportErrorMessage();

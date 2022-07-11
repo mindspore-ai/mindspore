@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_DUPLEX_PIPE_H_
 #define MINDSPORE_CCSRC_INCLUDE_COMMON_DUPLEX_PIPE_H_
 
-#include <unistd.h>
 #include <csignal>
 #include <string>
 #include <memory>

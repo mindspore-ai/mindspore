@@ -34,7 +34,7 @@ class AscendMemoryManager : public MemoryManager {
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size, bool from_persistent_mem) override;
   void FreeMemFromMemPool(void *device_ptr) override;
-  uint64_t GetMsMaxMemSize();
+  uint64_t GetMsMaxMemSize() const;
   void MallocSomasDynamicMem(const session::KernelGraph &graph) override;
   uint8_t *MallocCommunicationMemFromMemPool(size_t size) override;
   bool MallocContinuousMemFromMemPool(const DeviceAddressPtrList &addr_list, size_t total_size,
@@ -46,7 +46,7 @@ class AscendMemoryManager : public MemoryManager {
   void SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) override;
   void SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) override;
   size_t GetAvailableMemSize() override;
-  uint64_t GetMsUsedHbmSize();
+  uint64_t GetMsUsedHbmSize() const;
 
  protected:
   uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) override;

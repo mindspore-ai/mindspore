@@ -46,7 +46,7 @@ class AscendKernelRuntime : public KernelRuntime {
   bool GenTask(const session::KernelGraph &graph);
   void GenKernelEvents(const session::KernelGraph &graph) override;
   void SetKernelModStream(const std::vector<CNodePtr> &kernels, std::vector<size_t> *last_stream_nodes);
-  void SetKernelModRtStream(const NotNull<KernelGraphPtr> &graph_ptr);
+  void SetKernelModRtStream(const std::vector<CNodePtr> &kernels);
   void ProcessBoundaryEvent(const std::vector<CNodePtr> &kernels,
                             std::map<AnfNodePtr, std::vector<std::function<void()>>> *kernel_run_events,
                             const std::vector<size_t> &last_stream_nodes);
@@ -89,7 +89,7 @@ class AscendKernelRuntime : public KernelRuntime {
 
  private:
   bool InitDevice();
-  bool SetRtDevice(uint32_t device_id);
+  void SetRtDevice(uint32_t device_id);
   bool ResetDevice(uint32_t device_id);
   static bool HcclInit();
   static bool NeedDestroyHccl();

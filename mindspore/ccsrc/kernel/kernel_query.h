@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_KERNEL_QUERY_H_
 
 #include <vector>
-#include <string>
 #include <memory>
 #include "kernel/kernel.h"
 #include "kernel/kernel_build_info.h"

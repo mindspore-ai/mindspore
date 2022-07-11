@@ -101,12 +101,12 @@ bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {
   return AscendMemAdapter::GetInstance().FreeStaticDevMem(addr);
 }
 
-void AscendMemoryPool::ResetIdleMemBuf() {
+void AscendMemoryPool::ResetIdleMemBuf() const {
   auto fn = [this](const MemStatusManagerPtr &mem_mng) {
     if (mem_mng->mem_block_list_.empty()) {
       return;
     }
-    for (auto &it : mem_mng->idle_mem_buf_map_) {
+    for (const auto &it : mem_mng->idle_mem_buf_map_) {
       MS_EXCEPTION_IF_NULL(it.second);
       (void)rtMemset(it.second->device_addr_, it.first, 0, it.first);
     }

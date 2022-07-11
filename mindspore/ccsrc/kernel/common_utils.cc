@@ -43,17 +43,7 @@ namespace {
 constexpr char kAxis[] = "axis";
 constexpr char kTypeInt32[] = "Int32";
 constexpr auto kStridedSliceMaxDims = 8;
-const std::unordered_map<std::string, std::string> dtype_shortdtype_map_ = {
-  {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},
-  {"int64", "i64"},   {"uint8", "u8"},    {"uint16", "u16"},  {"uint32", "u32"}, {"uint64", "u64"}, {"bool", "bool"},
-};
-
-const std::unordered_map<std::string, size_t> dtype_nbyte_map = {
-  {"float16", sizeof(float) / 2},  {"float32", sizeof(float)},  {"float64", sizeof(float) * 2},
-  {"int8", sizeof(int) / 4},       {"int16", sizeof(int) / 2},  {"int32", sizeof(int)},
-  {"int64", sizeof(int) * 2},      {"uint8", sizeof(int) / 4},  {"uint16", sizeof(int) / 2},
-  {"uint32", sizeof(int)},         {"uint64", sizeof(int) * 2}, {"bool", sizeof(char)},
-  {"complex64", sizeof(float) * 2}};
+constexpr auto kQuad = 4;
 
 // Define all patterns here for different schedule
 const std::unordered_map<FusionType, std::string> fusion_type_name_maps = {
@@ -139,8 +129,14 @@ KernelTensorPtr CreateKernelTensor(const abstract::AbstractBasePtr &cur_abstract
 }
 }  // namespace
 std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> GetAlignments(const std::string &alignment) {
-  auto alignment_iter = MatrixDiag::AlignmentMap.find(alignment);
-  if (alignment_iter == MatrixDiag::AlignmentMap.end()) {
+  static const mindspore::HashMap<std::string, std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment>> AlignmentMap{
+    {"RIGHT_LEFT", {MatrixDiag::RIGHT, MatrixDiag::LEFT}},
+    {"LEFT_RIGHT", {MatrixDiag::LEFT, MatrixDiag::RIGHT}},
+    {"RIGHT_RIGHT", {MatrixDiag::RIGHT, MatrixDiag::RIGHT}},
+    {"LEFT_LEFT", {MatrixDiag::LEFT, MatrixDiag::LEFT}}};
+
+  auto alignment_iter = AlignmentMap.find(alignment);
+  if (alignment_iter == AlignmentMap.end()) {
     MS_LOG(EXCEPTION) << "For  current kernel, input alignment is invalid: " << alignment
                       << ". please limit it to {RIGHT_LEFT, LEFT_RIGHT, RIGHT_RIGHT, LEFT_LEFT}";
   }
@@ -284,8 +280,13 @@ TypeId DtypeToTypeId(const std::string &dtypes) {
 }
 
 std::string Dtype2ShortType(const std::string &dtype) {
-  auto iter = dtype_shortdtype_map_.find(dtype);
-  if (iter != dtype_shortdtype_map_.end()) {
+  static const std::unordered_map<std::string, std::string> dtype_shortdtype_map = {
+    {"float16", "f16"}, {"float32", "f32"}, {"float64", "f64"}, {"int8", "i8"},    {"int16", "i16"},  {"int32", "i32"},
+    {"int64", "i64"},   {"uint8", "u8"},    {"uint16", "u16"},  {"uint32", "u32"}, {"uint64", "u64"}, {"bool", "bool"},
+  };
+
+  auto iter = dtype_shortdtype_map.find(dtype);
+  if (iter != dtype_shortdtype_map.end()) {
     return iter->second;
   } else {
     MS_EXCEPTION(ArgumentError) << "Illegal input dtype:" << dtype;
@@ -293,6 +294,13 @@ std::string Dtype2ShortType(const std::string &dtype) {
 }
 
 size_t GetDtypeNbyte(const std::string &dtype) {
+  static const std::unordered_map<std::string, size_t> dtype_nbyte_map = {
+    {"float16", sizeof(float) / 2},  {"float32", sizeof(float)},     {"float64", sizeof(float) * 2},
+    {"int8", sizeof(int) / kQuad},   {"int16", sizeof(int) / 2},     {"int32", sizeof(int)},
+    {"int64", sizeof(int) * 2},      {"uint8", sizeof(int) / kQuad}, {"uint16", sizeof(int) / 2},
+    {"uint32", sizeof(int)},         {"uint64", sizeof(int) * 2},    {"bool", sizeof(char)},
+    {"complex64", sizeof(float) * 2}};
+
   auto iter = dtype_nbyte_map.find(dtype);
   if (iter != dtype_nbyte_map.end()) {
     return iter->second;
@@ -520,9 +528,15 @@ void SaveJsonInfo(const std::string &json_name, const std::string &info, const s
 }
 
 Processor GetProcessor(const string &processor) {
-  if (processor == kProcessorAiCore) return Processor::AICORE;
-  if (processor == kProcessorAiCpu) return Processor::AICPU;
-  if (processor == kProcessorCuda) return Processor::CUDA;
+  if (processor == kProcessorAiCore) {
+    return Processor::AICORE;
+  }
+  if (processor == kProcessorAiCpu) {
+    return Processor::AICPU;
+  }
+  if (processor == kProcessorCuda) {
+    return Processor::CUDA;
+  }
   MS_LOG(DEBUG) << "Unknown processor type.";
   return Processor::UNKNOWN;
 }
@@ -614,7 +628,7 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
   GetValidKernelNodes(func_graph, node_list);
 
   auto parameters = func_graph->parameters();
-  input_list->insert(input_list->begin(), parameters.begin(), parameters.end());
+  input_list->insert(input_list->cbegin(), parameters.begin(), parameters.end());
 
   GetFuncGraphOutputNodes(func_graph, output_list);
 }
@@ -1199,7 +1213,7 @@ KernelArgs AbstractArgsFromCNode(const CNodePtr &cnode) {
   static auto primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   if (primc_fns.find(kernel_name) != primc_fns.end()) {
     primc_ptr = primc_fns[kernel_name]();
-    primc_ptr->SetAttrs(prim->attrs());
+    (void)primc_ptr->SetAttrs(prim->attrs());
   }
   MS_EXCEPTION_IF_NULL(primc_ptr);
 
@@ -1327,8 +1341,8 @@ void UpdateNodeShape(const CNodePtr &cnode) {
   for (size_t i = 0; i < output_num; ++i) {
     MS_EXCEPTION_IF_NULL(output_tensor[i]);
     auto out_shape = output_tensor[i]->GetShapeVector();
-    shapes.emplace_back(std::move(out_shape));
-    type_ids.emplace_back(output_tensor[i]->GetDtype());
+    (void)shapes.emplace_back(std::move(out_shape));
+    (void)type_ids.emplace_back(output_tensor[i]->GetDtype());
   }
   common::AnfAlgo::SetOutputInferTypeAndShape(type_ids, shapes, cnode.get());
 }
@@ -1337,7 +1351,7 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
   const auto &out_in_ref = from_kernel_attr.GetOutInRefMap();
   bool all_out_in_ref = from_kernel_attr.GetAllOutInRef();
   for (const auto &ref : out_in_ref) {
-    to_kernel_attr->AddOutInRef(ref.first, ref.second);
+    (void)to_kernel_attr->AddOutInRef(ref.first, ref.second);
   }
   to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }

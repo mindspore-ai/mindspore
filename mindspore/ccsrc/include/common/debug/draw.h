@@ -19,7 +19,6 @@
 #include <fstream>
 #include <memory>
 #include <string>
-#include <vector>
 #include "ir/anf.h"
 #include "utils/any.h"
 #include "include/common/debug/common.h"

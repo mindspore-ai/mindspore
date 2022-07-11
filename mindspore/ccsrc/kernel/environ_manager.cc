@@ -53,7 +53,7 @@ EnvironPtr EnvironMgr::Get(int64_t handle) {
 
 void EnvironMgr::Clear() {
   mutex.lock();
-  for (auto &env : envs_) {
+  for (const auto &env : envs_) {
     MS_EXCEPTION_IF_NULL(env.second);
     env.second->Clear();
   }
