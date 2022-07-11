@@ -1347,6 +1347,7 @@ class Threshold(Cell):
         >>> m = nn.Threshold(0.1, 20)
         >>> inputs = mindspore.Tensor([0.1, 0.2, 0.3], mindspore.float32)
         >>> outputs = m(inputs)
+        >>> print(outputs)
         [ 20.0     0.2      0.3]
     """
 
