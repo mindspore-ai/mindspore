@@ -808,7 +808,7 @@ class Optimizer(Cell):
                 F.assign(param_group[root][i], next_params[i])
         return new_param_group
 
-    def get_distributed_optimizer_list(self, optimizer_type, *args, **kwargs):
+    def _get_distributed_optimizer_list(self, optimizer_type, *args, **kwargs):
         """
         Get the distributed optimizers list in distributed training mode.
         """

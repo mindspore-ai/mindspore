@@ -417,9 +417,9 @@ class LazyAdam(Optimizer):
     def _init_distributed_opts(self, use_locking, use_nesterov):
         self.use_dist_optimizer = self.use_distibuted_optimizer()
         self.dense_lazyadam_opts, self.use_dense_opt_flags =\
-        self.get_distributed_optimizer_list("adam", use_locking, use_nesterov)
+        self._get_distributed_optimizer_list("adam", use_locking, use_nesterov)
         self.sparse_lazyadam_opts, self.use_sparse_opt_flags =\
-        self.get_distributed_optimizer_list("fused_sparse_lazy_adam", use_locking, use_nesterov)
+        self._get_distributed_optimizer_list("fused_sparse_lazy_adam", use_locking, use_nesterov)
 
 
 def create_distributed_adam(*args, **kwargs):
