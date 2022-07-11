@@ -28,7 +28,7 @@ namespace distributed {
 namespace rpc {
 class TCPServer {
  public:
-  TCPServer() = default;
+  explicit TCPServer(bool enable_ssl = false) : enable_ssl_(enable_ssl) {}
   ~TCPServer() = default;
 
   // Init the tcp server using the specified url.
@@ -55,6 +55,8 @@ class TCPServer {
 
   std::string ip_{""};
   uint32_t port_{0};
+
+  bool enable_ssl_;
 
   DISABLE_COPY_AND_ASSIGN(TCPServer);
 };

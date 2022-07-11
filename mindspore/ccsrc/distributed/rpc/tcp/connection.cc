@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "distributed/rpc/tcp/tcp_socket_operation.h"
+#include "distributed/rpc/tcp/ssl_socket_operation.h"
 #include "distributed/rpc/tcp/connection_pool.h"
 
 namespace mindspore {
@@ -171,8 +172,15 @@ void Connection::InitSocketOperation() {
   if (socket_operation != nullptr) {
     return;
   }
-  socket_operation = new (std::nothrow) TCPSocketOperation();
+  if (!enable_ssl) {
+    socket_operation = new (std::nothrow) TCPSocketOperation();
+  } else {
+    socket_operation = new (std::nothrow) SSLSocketOperation();
+  }
   MS_EXCEPTION_IF_NULL(socket_operation);
+  if (!socket_operation->Initialize()) {
+    MS_LOG(EXCEPTION) << "Failed to initialize the socket operation.";
+  }
 }
 
 bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, uint32_t error) {

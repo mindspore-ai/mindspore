@@ -138,6 +138,8 @@ struct Connection {
   // Specific operations for the socket in this connection.
   SocketOperation *socket_operation;
 
+  bool enable_ssl{false};
+
   // The state of this connection(eg. kInit/kConnecting/..)
   ConnectionState state{kInit};
 

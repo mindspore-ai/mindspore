@@ -26,6 +26,7 @@ namespace distributed {
 namespace rpc {
 class SSLSocketOperation : public SocketOperation {
  public:
+  bool Initialize() override;
   ssize_t ReceivePeek(Connection *connection, char *recvBuf, uint32_t recvLen) override;
   int Receive(Connection *connection, char *recvBuf, size_t totRecvLen, size_t *recvLen) override;
   int ReceiveMessage(Connection *connection, struct msghdr *recvMsg, size_t totalRecvLen, size_t *recvLen) override;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "ps/core/communicator/ssl_client.h"
 #include "distributed/rpc/tcp/tcp_client.h"
 
 namespace mindspore {
@@ -22,7 +23,10 @@ namespace rpc {
 bool TCPClient::Initialize() {
   bool rt = false;
   if (tcp_comm_ == nullptr) {
-    tcp_comm_ = std::make_unique<TCPComm>();
+    if (enable_ssl_) {
+      ps::core::SSLClient::GetInstance().GetSSLCtx();
+    }
+    tcp_comm_ = std::make_unique<TCPComm>(enable_ssl_);
     MS_EXCEPTION_IF_NULL(tcp_comm_);
 
     // This message handler is used to accept and maintain the received message from the tcp server.
