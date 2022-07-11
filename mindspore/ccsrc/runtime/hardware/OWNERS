@@ -1,0 +1,12 @@
+approvers:
+- cristoval
+- limingqi107
+- wilfchen
+- zhoufeng54
+- laiyongqiang
+- guoqi1024
+- baochong
+- kingxian
+
+options:
+    no_parent_owners: true

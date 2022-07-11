@@ -1,0 +1,15 @@
+approvers:
+- cristoval
+- limingqi107
+- wilfchen
+- guoqi1024
+- baochong
+- kingxian
+
+reviewers:
+- ZPaC
+- gaoyong10
+- zyli2020
+
+options:
+    no_parent_owners: true
