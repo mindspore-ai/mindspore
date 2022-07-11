@@ -9,12 +9,10 @@ mindspore.dataset.vision.MixUpBatch
 
     请注意，在调用此处理之前，您需要将标注制作成 one-hot 格式并进行batch操作。
 
-    **参数：**
+    参数：
+        - **alpha** (float, 可选) - β分布的超参数，该值必须为正，默认值：1.0。
 
-    - **alpha**  (float, 可选) - β分布的超参数，该值必须为正，默认值：1.0。
-
-    **异常：**
-
-    - **TypeError** - 如果 `alpha` 不是float类型。
-    - **ValueError** - 如果 `alpha` 不是正数。
-    - **RuntimeError** - 如果输入图像的shape不是 <N, H, W, C> 或 <N, C, H, W>。
+    异常：
+        - **TypeError** - 如果 `alpha` 不是float类型。
+        - **ValueError** - 如果 `alpha` 不是正数。
+        - **RuntimeError** - 如果输入图像的shape不是 <N, H, W, C> 或 <N, C, H, W>。

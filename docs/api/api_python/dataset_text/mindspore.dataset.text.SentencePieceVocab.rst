@@ -41,7 +41,7 @@
               - SentencePieceModel.CHAR：引用基于字符的SentencePiece模型类型。
               - SentencePieceModel.WORD：引用基于单词的SentencePiece模型类型。
 
-           - **params** (dict) - 表示没有传入参数的字典（参数派生自SentencePiece库）。
+            - **params** (dict) - 表示没有传入参数的字典（参数派生自SentencePiece库）。
 
         返回：
             SentencePieceVocab，表示从文件中构建的Vocab对象。

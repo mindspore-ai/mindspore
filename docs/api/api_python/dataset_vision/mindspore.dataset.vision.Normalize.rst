@@ -9,16 +9,14 @@ mindspore.dataset.vision.Normalize
 
     .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
 
-    **参数：**
+    参数：
+        - **mean** (sequence) - 图像每个通道的均值组成的列表或元组。平均值必须在 [0.0, 255.0] 范围内。
+        - **std** (sequence) - 图像每个通道的标准差组成的列表或元组。标准差值必须在 (0.0, 255.0] 范围内。
+        - **is_hwc** (bool, 可选) - 表示输入图像是否为HWC格式，True为HWC格式，False为CHW格式。默认值：True。
 
-    - **mean**  (sequence) - 图像每个通道的均值组成的列表或元组。平均值必须在 [0.0, 255.0] 范围内。
-    - **std**  (sequence) - 图像每个通道的标准差组成的列表或元组。标准差值必须在 (0.0, 255.0] 范围内。
-    - **is_hwc** (bool, 可选) - 表示输入图像是否为HWC格式，True为HWC格式，False为CHW格式。默认值：True。
-
-    **异常：**
-
-    - **TypeError** - 如果 `mean` 不是sequence类型。
-    - **TypeError** - 如果 `std` 不是sequence类型。
-    - **TypeError** - 如果 `is_hwc` 不是bool类型。
-    - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
-    - **ValueError** - 如果 `mean` 不在范围内 (0.0, 255.0]。
+    异常：
+        - **TypeError** - 如果 `mean` 不是sequence类型。
+        - **TypeError** - 如果 `std` 不是sequence类型。
+        - **TypeError** - 如果 `is_hwc` 不是bool类型。
+        - **ValueError** - 如果 `mean` 不在 [0.0, 255.0] 范围内。
+        - **ValueError** - 如果 `mean` 不在范围内 (0.0, 255.0]。

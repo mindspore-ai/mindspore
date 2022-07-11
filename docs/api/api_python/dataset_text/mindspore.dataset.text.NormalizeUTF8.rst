@@ -18,7 +18,7 @@ mindspore.dataset.text.NormalizeUTF8
           - NormalizeForm.NFD，对输入字符串进行D形式规范化。
           - NormalizeForm.NFKD，对输入字符串进行KD形式规范化。
 
-      有关规范化详细信息，请参阅 http://unicode.org/reports/tr15/。
+          有关规范化详细信息，请参阅 http://unicode.org/reports/tr15/。
 
     异常：
         - **TypeError** - 参数 `normalize_form` 的类型不是 :class:`mindspore.dataset.text.NormalizeForm` 。

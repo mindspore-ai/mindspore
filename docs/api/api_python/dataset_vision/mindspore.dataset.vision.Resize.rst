@@ -5,22 +5,20 @@ mindspore.dataset.vision.Resize
 
     对输入图像使用给定的 :class:`mindspore.dataset.vision.Inter` 插值方式去调整为给定的尺寸大小。
 
-    **参数：**
+    参数：
+        - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，将调整图像的较短边长度为 `size`，且保持图像的宽高比不变；若输入是2元素组成的序列，其输入格式需要是 (高度, 宽度) 。
+        - **interpolation** (Inter, 可选) - 图像插值方式。它可以是 [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC] 中的任何一个，默认值：Inter.LINEAR。
 
-    - **size** (Union[int, Sequence[int]]) - 图像的输出尺寸大小。若输入整型，将调整图像的较短边长度为 `size`，且保持图像的宽高比不变；若输入是2元素组成的序列，其输入格式需要是 (高度, 宽度) 。
-    - **interpolation** (Inter, 可选) - 图像插值方式。它可以是 [Inter.LINEAR, Inter.NEAREST, Inter.BICUBIC, Inter.PILCUBIC] 中的任何一个，默认值：Inter.LINEAR。
+          - Inter.BILINEAR，双线性插值。
+          - Inter.LINEAR，双线性插值，同 Inter.BILINEAR 。
+          - Inter.NEAREST，最近邻插值。
+          - Inter.BICUBIC，双三次插值。
+          - Inter.AREA，像素区域插值。
+          - Inter.PILCUBIC，双三次插值，实现同Pillow，仅当输入为numpy.ndarray格式的3通道图像时有效。
+          - Inter.ANTIALIAS，抗锯齿插值。
 
-      - Inter.BILINEAR，双线性插值。
-      - Inter.LINEAR，双线性插值，同 Inter.BILINEAR 。
-      - Inter.NEAREST，最近邻插值。
-      - Inter.BICUBIC，双三次插值。
-      - Inter.AREA，像素区域插值。
-      - Inter.PILCUBIC，双三次插值，实现同Pillow，仅当输入为numpy.ndarray格式的3通道图像时有效。
-      - Inter.ANTIALIAS，抗锯齿插值。
-
-    **异常：**
-
-    - **TypeError** - 当 `size` 的类型不为int或Sequence[int]。
-    - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
-    - **ValueError** - 当 `size` 不为正数。
-    - **RuntimeError** - 如果输入的Tensor不是 <H, W> 或 <H, W, C> 格式。
+    异常：
+        - **TypeError** - 当 `size` 的类型不为int或Sequence[int]。
+        - **TypeError** - 当 `interpolation` 的类型不为 :class:`mindspore.dataset.vision.Inter` 。
+        - **ValueError** - 当 `size` 不为正数。
+        - **RuntimeError** - 如果输入的Tensor不是 <H, W> 或 <H, W, C> 格式。
