@@ -42,8 +42,8 @@ MPICollective::~MPICollective() {
 }
 
 void MPICollective::DestroyHcclComm() {
-  for (auto &it : group_comm_) {
-    CHECK_RET(static_cast<int32_t>(HcclCommDestroy(it.second)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),
+  for (auto iter = group_comm_.cbegin(); iter != group_comm_.cend(); ++iter) {
+    CHECK_RET(static_cast<int32_t>(HcclCommDestroy(iter->second)), static_cast<int32_t>(::HcclResult::HCCL_SUCCESS),
               "HcclCommDestroy failed");
   }
   group_comm_.clear();
@@ -73,7 +73,7 @@ int MPICollective::GetWorldRankIdFromGroup(const std::string &name, const int ra
   CHECK_RET(world_map_.count(name), 1, ("Failed to get MPI world rank from group by group name " + name));
   CHECK_RET(static_cast<int>(world_map_[name].size()) > rank_id && rank_id >= 0, 1,
             ("The rank_id " + std::to_string(rank_id) + "is not in the range of group " + name));
-  return world_map_[name][rank_id];
+  return static_cast<int>(world_map_[name][rank_id]);
 }
 
 int MPICollective::GetGroupRankIdFromWorld(const std::string &name, const int rank_id) {

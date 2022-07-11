@@ -18,8 +18,6 @@
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_TASK_H_
 
 #include <memory>
-#include <utility>
-#include <vector>
 #include <string>
 #include "plugin/device/ascend/hal/device/ge_runtime/model_context.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"

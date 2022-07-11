@@ -129,7 +129,7 @@ bool IsAtomicNode(const CNodePtr &kernel_node) {
   }
   if (common::AnfAlgo::IsDynamicShape(kernel_node)) {
     if (parameters_indexes.at(0) == 1) {
-      (void)parameters_indexes.erase(parameters_indexes.begin());
+      (void)parameters_indexes.erase(parameters_indexes.cbegin());
     } else {
       parameters_indexes.pop_back();
     }
@@ -243,7 +243,7 @@ CNodePtr NewAtomicOp(const CNodePtr &pre_node, const std::vector<AnfNodePtr> &fu
   auto new_value_node = NewValueNode(clear_zero_prim);
   MS_EXCEPTION_IF_NULL(new_value_node);
   std::vector<AnfNodePtr> inputs = {new_value_node};
-  (void)inputs.insert(inputs.end(), fusion_clear_inputs.begin(), fusion_clear_inputs.end());
+  (void)inputs.insert(inputs.cend(), fusion_clear_inputs.cbegin(), fusion_clear_inputs.cend());
   auto func_graph = pre_node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -337,7 +337,7 @@ void ProcessAtomicFusion(const std::vector<CNodePtr> &kernels, CleanOpsMap *clea
         if (fusion_clear_inputs.empty()) {
           first_node = anf_node;
         }
-        (void)clean_size_list.insert(clean_size_list.end(), clean_sizes.begin(), clean_sizes.end());
+        (void)clean_size_list.insert(clean_size_list.cend(), clean_sizes.cbegin(), clean_sizes.cend());
         (void)fusion_clear_inputs.emplace_back(anf_node);
         MS_LOG(DEBUG) << "The fusion_clear_inputs size: " << fusion_clear_inputs.size()
                       << ", clean_size_list: " << clean_size_list.size();
