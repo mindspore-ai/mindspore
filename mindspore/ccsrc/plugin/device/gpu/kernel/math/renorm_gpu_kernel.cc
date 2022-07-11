@@ -22,6 +22,7 @@
 #include <set>
 #include "abstract/utils.h"
 #include "kernel/common_utils.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 #include "mindspore/core/ops/renorm.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/renorm_impl.cuh"
 
@@ -60,13 +61,19 @@ bool RenormGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
   return true;
 }
 
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 std::vector<std::pair<KernelAttr, RenormGpuKernelMod::RenormFunc>> RenormGpuKernelMod::func_list_ = {
   {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
    &RenormGpuKernelMod::LaunchKernel<half>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
    &RenormGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &RenormGpuKernelMod::LaunchKernel<double>}};
+   &RenormGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &RenormGpuKernelMod::LaunchKernel<Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &RenormGpuKernelMod::LaunchKernel<Complex<double>>}};
 
 std::vector<KernelAttr> RenormGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
@@ -94,12 +101,12 @@ int RenormGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::
 void RenormGpuKernelMod::InitParams() {
   auto shape_size = input_shape_.size();
   MS_EXCEPTION_IF_ZERO("input shape", shape_size);
+  if (dim_ >= SizeToLong(shape_size) || dim_ < -SizeToLong(shape_size)) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's op attribute 'dim' must be in range [" << -shape_size
+                      << ", " << shape_size << "), but got " << dim_;
+  }
   if (dim_ < 0) {
     dim_ += shape_size;
-    if (dim_ < 0) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's op attribute 'dim' must be in range [" << -shape_size
-                        << ", " << shape_size << "), but got " << dim_;
-    }
   }
   for (size_t i = 0; i < shape_size; ++i) {
     if (SizeToLong(i) == dim_) {
