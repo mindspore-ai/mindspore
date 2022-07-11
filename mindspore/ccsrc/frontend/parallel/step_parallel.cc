@@ -2193,7 +2193,6 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph, size_t max_depth) {
 
   // return -> make_tuple
   if (current_prim->name() == MAKE_TUPLE) {
-    MS_LOG(WARNING) << "The loss have make_tuple, it is not supported";
     return loss_node_info;
   }
 
@@ -2667,7 +2666,6 @@ std::vector<AnfNodePtr> FindRootForwardCNode(const FuncGraphPtr &graph, const An
   std::vector<AnfNodePtr> root_forward_nodes;
   auto loss_cnode = FindLossCNode(graph, 0).loss_node;
   if (loss_cnode == nullptr) {
-    MS_LOG(WARNING) << "Can not find the loss cnode";
     return root_forward_nodes;
   }
 
