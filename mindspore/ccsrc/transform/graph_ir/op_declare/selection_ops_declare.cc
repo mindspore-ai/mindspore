@@ -39,12 +39,10 @@ ATTR_MAP(CumprodD) = {{"exclusive", ATTR_DESC(exclusive, AnyTraits<bool>())},
 OUTPUT_MAP(CumprodD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(CumprodD, kNameCumProd, ADPT_DESC(CumprodD))
 
-INPUT_MAP(SliceD) = {{1, INPUT_DESC(x)}};
-INPUT_ATTR_MAP(SliceD) = {{2, ATTR_DESC(offsets, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
-                          {3, ATTR_DESC(size, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
-ATTR_MAP(SliceD) = EMPTY_ATTR_MAP;
-OUTPUT_MAP(SliceD) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(SliceD, kNameSlice, ADPT_DESC(SliceD))
+INPUT_MAP(Slice) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(offsets)}, {3, INPUT_DESC(size)}};
+ATTR_MAP(Slice) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Slice) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Slice, kNameSlice, ADPT_DESC(Slice))
 
 // TopK
 INPUT_MAP(TopK) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(k)}};
