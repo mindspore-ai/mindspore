@@ -1407,23 +1407,23 @@ def scatter_nd(indices, updates, shape):
     The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
     empty tensor.
 
-    `updates` is a tensor of rank :math:`Q-1+P-N`,
-    its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
+    `updates` is a tensor of rank :math:`Q-1+P-N`, and
+    its shape is :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
 
     If `indices` contains duplicates, the duplicate `updates` are summed.
 
-    The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
-    with two matrices of new values:
+    The following figure shows the calculation process of inserting two new value matrices into the first dimension
+    with rank-3:
 
     .. image:: ScatterNd.png
 
     Args:
-        indices (Tensor): The index of scattering in the new tensor with int32 or int64 data type.
+        indices (Tensor): Define the index of scattering in the new tensor with int32 or int64 data type.
             The rank of `indices` must be at least 2 and `indices.shape[-1] <= len(shape)`.
-        updates (Tensor): The source Tensor to be scattered.
+        updates (Tensor): Define the source Tensor to be updated.
             It has shape `indices.shape[:-1] + shape[indices.shape[-1]:]`.
         shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
-            The tuple can not be empty, and the elements in `shape` must be greater than or equal to 1.
+            `shape` can not be empty, and the elements in `shape` must be greater than or equal to 1.
 
     Returns:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
