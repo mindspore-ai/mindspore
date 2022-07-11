@@ -211,5 +211,6 @@ AbstractBasePtr ReduceSumInfer(const abstract::AnalysisEnginePtr &, const Primit
 }
 
 REGISTER_PRIMITIVE_C(kNameReduceSum, ReduceSum);
+REGISTER_HOST_DEPENDS(kNameReduceSum, {1});
 }  // namespace ops
 }  // namespace mindspore
