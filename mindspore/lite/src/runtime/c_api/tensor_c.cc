@@ -67,6 +67,7 @@ MSTensorHandle MSTensorClone(MSTensorHandle tensor) {
     return nullptr;
   }
   clone_impl->set_from_session(false);
+  clone_impl->set_own_data(true);
   return clone_impl;
 }
 

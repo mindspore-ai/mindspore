@@ -38,7 +38,9 @@ TEST_F(TensorCTest, common_test) {
   ASSERT_EQ(MSTensorGetElementNum(tensor), 6);
   ASSERT_EQ(MSTensorGetDataSize(tensor), 6 * sizeof(int32_t));
   ASSERT_EQ(MSTensorGetData(tensor), nullptr);
-  ASSERT_TRUE(MSTensorGetMutableData(tensor) != nullptr);
+  auto mutable_data_ptr = MSTensorGetMutableData(tensor);
+  ASSERT_TRUE(mutable_data_ptr != nullptr);
+  free(mutable_data_ptr);
 
   MSTensorSetName(tensor, "name002");
   ASSERT_STREQ(MSTensorGetName(tensor), "name002");

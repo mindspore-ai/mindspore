@@ -207,11 +207,13 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocWeightBiasData() {
       return RET_ERROR;
     }
   }
-  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, batch_flag * div_flag * sizeof(float));
-  bias_data_ = malloc(batch_flag * div_flag * sizeof(float));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, batch_flag * div_flag * sizeof(float));
+    bias_data_ = malloc(batch_flag * div_flag * sizeof(float));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
 

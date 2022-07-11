@@ -200,11 +200,13 @@ int DeconvolutionDepthwiseCPUKernel::MallocWeightBiasData() {
       return RET_ERROR;
     }
   }
-  CHECK_LESS_RETURN(MAX_MALLOC_SIZE, C4NUM * OC4 * sizeof(float));
-  bias_data_ = malloc(C4NUM * OC4 * sizeof(float));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "Malloc buffer failed.";
-    return RET_ERROR;
+    CHECK_LESS_RETURN(MAX_MALLOC_SIZE, C4NUM * OC4 * sizeof(float));
+    bias_data_ = malloc(C4NUM * OC4 * sizeof(float));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, C4NUM * OC4 * sizeof(float));
   conv_param_->thread_num_ = MSMIN(thread_count_, OC4);

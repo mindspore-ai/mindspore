@@ -58,7 +58,7 @@ TEST_F(GraphTest, UserSetGraphOutput1) {
   auto in_data = in->MutableData();
   char *bin_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.bin", &size);
   memcpy(in_data, bin_buf, in->Size());
-
+  delete[] bin_buf;
   /* set output data */
   std::map<string, void *> out_datas;
   auto outputs = session->GetOutputs();
@@ -141,7 +141,7 @@ TEST_F(GraphTest, UserSetGraphOutput2) {
   auto in_data = in.MutableData();
   char *bin_buf = lite::ReadFile("./mindrtParallel/mindrt_parallel_model.bin", &size);
   memcpy(in_data, bin_buf, in.DataSize());
-
+  delete[] bin_buf;
   /* set output data */
   std::vector<void *> out_datas;
   auto outputs = model->GetOutputs();
@@ -156,6 +156,7 @@ TEST_F(GraphTest, UserSetGraphOutput2) {
   /* run graph */
   Status predict_ret = model->Predict(inputs, &outputs);
   ASSERT_EQ(predict_ret == kSuccess, true);
+  delete[] model_buf;
   delete model;
 
   /* output data control by users */
