@@ -55,6 +55,9 @@ bool RunOpInsertTransData::InsertTransdataForOutput(const FuncGraphPtr &graph) {
   bool has_changed = false;
   auto output = graph->output();
   MS_EXCEPTION_IF_NULL(output);
+  if (!output->isa<CNode>()) {
+    return changed;
+  }
   auto cnode = output->cast<CNodePtr>();
   auto inputs_num = common::AnfAlgo::GetInputNum(cnode);
   if (common::AnfAlgo::CheckPrimitiveType(cnode, prim::kPrimMakeTuple)) {

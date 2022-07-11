@@ -1010,8 +1010,13 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
     ParseControlNodes(graph_compiler_info);
     actor_set = runtime::GraphScheduler::GetInstance().Transform(graph_compiler_info);
     MS_EXCEPTION_IF_NULL(actor_set);
-    // Multithreading can cause spikes in memory usage and performance fluctuations
-    actor_set->is_multi_thread_execution_ = false;
+    constexpr auto kKernelActorThreshold = 5000;
+    // Turning off multithreading may cause stack overflow in control flow scenarios.
+    if (control_nodes_.size() == 1 && actor_set->kernel_actors_.size() < kKernelActorThreshold) {
+      // Multithreading can cause spikes in memory usage and performance fluctuations.
+      actor_set->is_multi_thread_execution_ = false;
+      MS_LOG(INFO) << "Actor Multithreading is turned off!";
+    }
     runtime::GraphScheduler::GetInstance().Schedule(actor_set);
 
     for (auto &graph : graphs) {
@@ -1027,6 +1032,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
   }
 
   std::vector<std::vector<tensor::TensorPtr>> input_tensors = GetRunGraphInputs(graph_compiler_info, args);
+  pynative::GraphAdapter::HandleHeterogeneousTensors(input_tensors, device_contexts);
 
   // Release GIL and run actor DAG.
   mindspore::ScopedLongRunning long_running;
@@ -1449,6 +1455,10 @@ void MindRTBackend::CompileSingleOpGraphs(const std::vector<std::shared_ptr<runt
 
   auto device_context = task_context->device_context();
   graph_compiler_->BuildSingleOpGraphs(graphs, device_context);
+  for (const auto &graph_compile_info : graph_compiler_infos) {
+    MS_EXCEPTION_IF_NULL(graph_compile_info);
+    graph_compile_info->input_tensors_.clear();
+  }
 }
 
 void MindRTBackend::OpRunCallback(const std::shared_ptr<runtime::OpTaskContext> &context) {

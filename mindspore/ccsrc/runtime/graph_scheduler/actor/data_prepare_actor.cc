@@ -336,7 +336,8 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
   // Update device address data in data source actor process.
   if (device_address->is_ptr_persisted() ||
       (tensor_address != nullptr && (tensor_address->GetDeviceType() != device_address->GetDeviceType() ||
-                                     tensor_address->format() != device_address->format()))) {
+                                     tensor_address->format() != device_address->format() ||
+                                     tensor_address->type_id() != device_address->type_id()))) {
     return;
   }
   if (tensor_address != nullptr) {

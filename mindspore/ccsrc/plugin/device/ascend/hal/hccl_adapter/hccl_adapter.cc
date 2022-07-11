@@ -321,10 +321,12 @@ std::string HcclAdapter::GetHcclType(const AnfNodePtr &node) {
 }
 
 HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root,
-                                      aclrtStream stream) const {
+                                      aclrtStream stream, const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_broadcast_);
-  return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm_, stream);
+  auto hccl_comm = GetHcomm(group);
+  MS_EXCEPTION_IF_NULL(hccl_comm);
+  return launch_hccl_broadcast_(buf, count, dataType, root, hccl_comm, stream);
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
