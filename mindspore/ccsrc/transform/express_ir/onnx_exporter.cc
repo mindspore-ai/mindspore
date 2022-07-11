@@ -2629,7 +2629,6 @@ void OnnxExporter::ExportPrimOnesLike(const FuncGraphPtr &, const CNodePtr &node
       break;
     default:
       MS_LOG(EXCEPTION) << "Unsupported dtype: " << elem_type;
-      break;
   }
 }
 
