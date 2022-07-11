@@ -5641,7 +5641,7 @@ def bitwise_and(x1, x2, dtype=None):
         Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -5673,7 +5673,7 @@ def bitwise_or(x1, x2, dtype=None):
         Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -5705,7 +5705,7 @@ def bitwise_xor(x1, x2, dtype=None):
         Tensor or scalar, this is a scalar if both x1 and x2 are scalars.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
