@@ -89,7 +89,7 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     output_size_list_.emplace_back(unit_byte_size);
     workspace_size_list_.emplace_back(thread_num_ * unit_byte_size);
   }
-  is_broadcast_ = !(input_post_weight_shape_ == input_label_shape_ && input_weight_shape_ == input_label_shape_);
+  is_broadcast_ = input_post_weight_shape_ != input_label_shape_ || input_weight_shape_ != input_label_shape_;
   return KRET_OK;
 }
 

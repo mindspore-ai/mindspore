@@ -2151,7 +2151,7 @@ def log_matrix_determinant(x):
 
     Returns:
 
-        Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.\n
+        Tensor, The signs of the log determinants. The shape is :math:`x\_shape[:-2]`, the dtype is same as `x`.
 
         Tensor, The absolute values of the log determinants. The shape is :math:`x\_shape[:-2]`,
         the dtype is same as `x`.
@@ -2167,10 +2167,11 @@ def log_matrix_determinant(x):
 
     Examples:
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-        >>> output = ops.log_matrix_determinant(input_x)
+        >>> sign, output = op(input_x)
+        >>> print(sign)
         >>> print(output)
-        (Tensor(shape=[2], dtype=Float32, value= [-1.00000000e+00,  1.00000000e+00]), Tensor(shape=[2], dtype=Float32,
-        value= [ 2.80336046e+00,  3.04452229e+00]))
+        [-1.   1.]
+        [2.80336046e+00    3.04452229e+00]
     """
     return log_matrix_determinant_(x)
 
