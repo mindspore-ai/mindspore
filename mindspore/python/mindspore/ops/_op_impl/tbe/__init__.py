@@ -33,6 +33,8 @@ from .acosh_grad_ds import _acosh_grad_ds_tbe
 from .adam_apply_one_with_decay import _adam_apply_one_with_decay_tbe
 from .apply_centered_rms_prop import _apply_centered_rms_prop_tbe
 from .apply_centered_rms_prop_ds import _apply_centered_rms_prop_ds_tbe
+from .add import _add_tbe
+from .add_ds import _add_ds_tbe
 from .add_n import _add_n_tbe
 from .add_n_ds import _add_n_ds_tbe
 from .addcdiv import _addcdiv_tbe
@@ -137,8 +139,6 @@ from .sigmoid_cross_entropy_with_logits_ds import _sigmoid_cross_entropy_with_lo
 from .sigmoid_cross_entropy_with_logits_grad import _sigmoid_cross_entropy_with_logits_grad_tbe
 from .sparse_apply_adadelta import _sparse_apply_adadelta_tbe
 from .sigmoid_cross_entropy_with_logits_grad_ds import _sigmoid_cross_entropy_with_logits_grad_ds_tbe
-from .tensor_add import _tensor_add_tbe
-from .tensor_add_ds import _tensor_add_ds_tbe
 from .trans_data import _trans_data_tbe
 from .trans_data_ds import _trans_data_ds_tbe
 from .trans_data_rnn import _trans_data_rnn_tbe
