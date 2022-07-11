@@ -27,6 +27,7 @@
 namespace {
 constexpr int kNumPrintOfOutData = 50;
 constexpr int kNumWorkers = 2;
+constexpr int kElementsNum = 1001;
 constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
 }  // namespace
 std::string RealPath(const char *path) {
@@ -177,12 +178,13 @@ int QuickStart(int argc, const char **argv) {
   // Get Output
   auto outputs = model_runner->GetOutputs();
   for (auto &output : outputs) {
-    size_t size = output.DataSize();
+    size_t size = kElementsNum * sizeof(float);
     if (size == 0 || size > MAX_MALLOC_SIZE) {
       std::cerr << "malloc size is wrong" << std::endl;
       return -1;
     }
     auto out_data = malloc(size);
+    output.SetShape({1, kElementsNum});
     output.SetData(out_data);
   }
 
