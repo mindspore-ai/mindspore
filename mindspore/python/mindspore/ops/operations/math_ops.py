@@ -3324,10 +3324,10 @@ class Xdivy(Primitive):
         [ 1.   2.  -0.5]
     """
 
-    # Let x/y using diff sig_dtype to disable implicit conversion
+    # Let x/y using same sig_dtype to enable implicit conversion for compatibility
     __mindspore_signature__ = (
         sig.make_sig('x', dtype=sig.sig_dtype.T),
-        sig.make_sig('y', dtype=sig.sig_dtype.T1)
+        sig.make_sig('y', dtype=sig.sig_dtype.T)
     )
 
     @prim_attr_register
