@@ -147,6 +147,9 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
 
   T *output = GetDeviceAddress<T>(outputs, kIndex0);
 
+  CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasSetStream(blas_handle_, cuda_stream_),
+                                       "For MatrixSolveGpuKernelMod cublasSetStream Fail");
+
   // 1. Convert matrix and rhs to column major
   // Transpose matrix if complex adjoint
   if (trans_) {
@@ -181,6 +184,9 @@ bool MatrixSolveGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
                                      "For 'MatrixSolveGpuKernelMod', it launch cudaStreamSynchronized failed");
   if (std::any_of(infos.begin(), infos.end(), [](int info) { return info < 0; })) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'matrix' has illegal value.";
+  }
+  if (std::any_of(infos.begin(), infos.end(), [](int info) { return info > 0; })) {
     MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input 'matrix' is not invertible.";
   }
 
