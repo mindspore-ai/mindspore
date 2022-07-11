@@ -304,7 +304,7 @@ def test_index_add_function():
 @pytest.mark.env_onecard
 def test_index_add_dynamic():
     """
-    Feature: test IndexAdd dynamic shape.
+    Feature: test IndexAdd dynamic shape with set_inputs.
     Description: input y is dynamic shape.
     Expectation: the result match with numpy result
     """
