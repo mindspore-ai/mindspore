@@ -43,17 +43,17 @@ class ProtoExporter {
 
  private:
   void InitModelInfo();
-  void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const CNodePtr &cnode, irpb::NodeProto *node_proto);
-  std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+  void GetOpNodeTypeAndAttrs(const FuncGraphPtr & /* func_graph */, const CNodePtr &cnode, irpb::NodeProto *node_proto);
+  std::string GetOpNodeInputId(const FuncGraphPtr & /* func_graph */, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr) const;
-  void SetValueToProtoBasicTypes(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
-  void SetValueToProto(const ValuePtr &attr_value, irpb::ValueProto *value_proto);
-  void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto);
+  void SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto);
+  void SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto);
+  void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto) const;
   void SetSequenceToProto(const ValueSequencePtr &val, irpb::ValueProto *value_proto);
   void SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::ValueProto *value_proto);
   void SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *type_proto);
-  void SetNodeOutputType(const TypePtr &node, const BaseShapePtr &shape, irpb::TypeProto *type_proto);
+  void SetNodeOutputType(const TypePtr &type, const BaseShapePtr &shape, irpb::TypeProto *type_proto);
 
   void ExportParameters(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto);
   void ExportCNodes(const FuncGraphPtr &func_graph, irpb::GraphProto *graph_proto,
@@ -70,46 +70,31 @@ class ProtoExporter {
   irpb::ModelProto model_;
 };
 
+static std::map<TypeId, irpb::DataType> number_data_type_map = {{kNumberTypeBool, irpb::DT_BOOL},
+                                                                {kNumberTypeInt8, irpb::DT_INT8},
+                                                                {kNumberTypeInt16, irpb::DT_INT16},
+                                                                {kNumberTypeInt32, irpb::DT_INT32},
+                                                                {kNumberTypeInt64, irpb::DT_INT64},
+                                                                {kNumberTypeUInt8, irpb::DT_UINT8},
+                                                                {kNumberTypeUInt16, irpb::DT_UINT16},
+                                                                {kNumberTypeUInt32, irpb::DT_UINT32},
+                                                                {kNumberTypeUInt64, irpb::DT_UINT64},
+                                                                {kNumberTypeFloat16, irpb::DT_FLOAT16},
+                                                                {kNumberTypeFloat32, irpb::DT_FLOAT32},
+                                                                {kNumberTypeFloat64, irpb::DT_FLOAT64},
+                                                                {kNumberTypeInt, irpb::DT_BASE_INT},
+                                                                {kNumberTypeUInt, irpb::DT_BASE_UINT},
+                                                                {kNumberTypeFloat, irpb::DT_BASE_FLOAT},
+                                                                {kNumberTypeComplex64, irpb::DT_COMPLEX64},
+                                                                {kNumberTypeComplex128, irpb::DT_COMPLEX128},
+                                                                {kObjectTypeString, irpb::DT_STRING}};
+
 static irpb::DataType GetNumberDataType(const TypePtr &type) {
-  switch (type->type_id()) {
-    case kNumberTypeBool:
-      return irpb::DT_BOOL;
-    case kNumberTypeInt8:
-      return irpb::DT_INT8;
-    case kNumberTypeInt16:
-      return irpb::DT_INT16;
-    case kNumberTypeInt32:
-      return irpb::DT_INT32;
-    case kNumberTypeInt64:
-      return irpb::DT_INT64;
-    case kNumberTypeUInt8:
-      return irpb::DT_UINT8;
-    case kNumberTypeUInt16:
-      return irpb::DT_UINT16;
-    case kNumberTypeUInt32:
-      return irpb::DT_UINT32;
-    case kNumberTypeUInt64:
-      return irpb::DT_UINT64;
-    case kNumberTypeFloat16:
-      return irpb::DT_FLOAT16;
-    case kNumberTypeFloat32:
-      return irpb::DT_FLOAT32;
-    case kNumberTypeFloat64:
-      return irpb::DT_FLOAT64;
-    case kNumberTypeInt:
-      return irpb::DT_BASE_INT;
-    case kNumberTypeUInt:
-      return irpb::DT_BASE_UINT;
-    case kNumberTypeFloat:
-      return irpb::DT_BASE_FLOAT;
-    case kNumberTypeComplex64:
-      return irpb::DT_COMPLEX64;
-    case kNumberTypeComplex128:
-      return irpb::DT_COMPLEX128;
-    case kObjectTypeString:
-      return irpb::DT_STRING;
-    default:
-      MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
+  auto iter = number_data_type_map.find(type->type_id());
+  if (iter != number_data_type_map.end()) {
+    return (*iter).second;
+  } else {
+    MS_LOG(EXCEPTION) << "Unexpected type " << type->type_name();
   }
 }
 
@@ -258,7 +243,7 @@ void ProtoExporter::SetValueToProto(const ValuePtr &val, irpb::ValueProto *value
   }
 }
 
-void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto) {
+void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto) const {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
@@ -345,7 +330,8 @@ void ProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val, irpb::Va
   }
 }
 
-void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const CNodePtr &cnode, irpb::NodeProto *node_proto) {
+void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr & /* func_graph */, const CNodePtr &cnode,
+                                          irpb::NodeProto *node_proto) {
   const auto &inputs = cnode->inputs();
   AnfNodePtr op_node = inputs[0];
 
@@ -380,7 +366,7 @@ void ProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const CNodePtr &
   node_proto->set_scope(op_node->scope()->name());
 }
 
-std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodePtr &node,
+std::string ProtoExporter::GetOpNodeInputId(const FuncGraphPtr & /* func_graph */, const AnfNodePtr &node,
                                             const std::map<AnfNodePtr, size_t> &apply_map,
                                             std::map<AnfNodePtr, size_t> *const_map_ptr) const {
   if (node == nullptr || const_map_ptr == nullptr) {

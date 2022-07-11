@@ -36,7 +36,7 @@ bool WorstFit(const pair<size_t, size_t> &a, const pair<size_t, size_t> &b) {
   return a.second > b.second || (a.second == b.second && a.first < b.first);
 }
 size_t SharedObjects(FootPrint *p) { return p->Next()->getOffset(); }
-size_t SingleObject(FootPrint *p) { return SIZE_MAX; }
+size_t SingleObject(FootPrint *) { return SIZE_MAX; }
 
 bool (*g_pBranching[kNumFittingTypes])(const pair<size_t, size_t> &a, const pair<size_t, size_t> &b) = {
   BestFit, SmallestFit
@@ -77,8 +77,6 @@ bool FootPrint::findFirst(vector<Interval> *interval_v, const BlockTensor &block
   bool bfound = false;
   auto fit_func = g_pBranching[m_branching_strategy_];
   pair<size_t, size_t> fit_ret;
-
-  size_t gap;
   Interval a;
 
   size_t block_size;
@@ -91,18 +89,23 @@ bool FootPrint::findFirst(vector<Interval> *interval_v, const BlockTensor &block
   Interval top(m_offset_, m_offset_);
   a.lb() = m_offset_;
 
+  auto update_fit = [block_size, &fit_func](Interval a, bool &bfound, pair<size_t, size_t> &fit_ret) {
+    size_t gap;
+    gap = a.ub() - a.lb() - block_size;
+    auto fit_update = pair<size_t, size_t>(a.lb(), gap);
+    if (!bfound) {
+      bfound = true;
+      fit_ret = fit_update;
+    } else if (fit_func(fit_update, fit_ret)) {
+      fit_ret = fit_update;
+    }
+  };
+
   for (auto &b : *interval_v) {
     if (top.ub() < b.lb()) {
       a.ub() = b.lb();
       if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
-        gap = a.ub() - a.lb() - block_size;
-        auto fit_update = pair<size_t, size_t>(a.lb(), gap);
-        if (!bfound) {
-          bfound = true;
-          fit_ret = fit_update;
-        } else if (fit_func(fit_update, fit_ret)) {
-          fit_ret = fit_update;
-        }
+        update_fit(a, bfound, fit_ret);
       }
       top = b;
     } else if (top.ub() < b.ub()) {
@@ -113,14 +116,7 @@ bool FootPrint::findFirst(vector<Interval> *interval_v, const BlockTensor &block
 
   a.ub() = algorithm[m_algorithm_](this);
   if (a.contains(block_size) && a.lb() + block.m_size_ <= algorithm[m_algorithm_](this)) {
-    gap = a.ub() - a.lb() - block_size;
-    auto fit_update = pair<size_t, size_t>(a.lb(), gap);
-    if (!bfound) {
-      bfound = true;
-      fit_ret = fit_update;
-    } else if (fit_func(fit_update, fit_ret)) {
-      fit_ret = fit_update;
-    }
+    update_fit(a, bfound, fit_ret);
   }
 
   if (bfound) {

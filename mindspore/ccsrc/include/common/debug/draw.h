@@ -39,7 +39,7 @@ class Graphviz {
   virtual void End() {}
 
   virtual std::string Shape(const AnfNodePtr &node);
-  std::string Color(const AnfNodePtr &node);
+  std::string Color(const AnfNodePtr &node) const;
   std::ostringstream &buffer() { return buffer_; }
   std::ostringstream buffer_;
 
@@ -56,7 +56,7 @@ class BaseDigraph : public Graphviz {
   ~BaseDigraph() override = default;
 
   virtual void Node(const AnfNodePtr &node, int id) = 0;
-  virtual void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) = 0;
+  virtual void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) = 0;
 
   void Start() override;
   void End() override;
@@ -79,7 +79,7 @@ class Digraph : public BaseDigraph {
   ~Digraph() override;
 
   void Node(const AnfNodePtr &node, int id) override;
-  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) override;
 };
 
 class ModelDigraph : public BaseDigraph {
@@ -90,7 +90,7 @@ class ModelDigraph : public BaseDigraph {
 
   std::string Shape(const AnfNodePtr &node) override;
   void Node(const AnfNodePtr &node, int id) override;
-  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int idx_start) override;
+  void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) override;
 };
 
 // API to draw

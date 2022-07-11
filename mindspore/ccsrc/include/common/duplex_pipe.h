@@ -58,7 +58,7 @@ class COMMON_EXPORT DuplexPipe : public std::enable_shared_from_this<mindspore::
   void WriteWithStdout(const std::string &buf, bool flush);
   std::string ReadWithStdin();
 
-  DuplexPipe &operator<<(const std::string &buf);
+  const DuplexPipe &operator<<(const std::string &buf) const;
   DuplexPipe &operator>>(std::string &buf);
 
  private:
@@ -116,7 +116,7 @@ class COMMON_EXPORT DuplexPipe : public std::enable_shared_from_this<mindspore::
    private:
     static void SigAlarmHandler(int sig);
     static void SigPipeHandler(int sig);
-    static void SigChildHandler(int sig);
+    static void SigChildHandler(int /* sig */);
 
     inline static std::weak_ptr<DuplexPipe> dp_;
     inline static pid_t *child_pid_;

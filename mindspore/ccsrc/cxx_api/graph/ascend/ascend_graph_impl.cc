@@ -322,9 +322,8 @@ Status AscendGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MST
   return kSuccess;
 }
 
-AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
+AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) : device_id_(device_id) {
   MS_LOG(INFO) << "Start to init device " << device_id;
-  device_id_ = device_id;
   RegAllOp();
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
@@ -370,29 +369,34 @@ AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
 
 AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
   MS_LOG(INFO) << "Start finalize device " << device_id_;
-  session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+  try {
+    session::ExecutorManager::Instance().Clear();
+    device::KernelRuntimeManager::Instance().ClearRuntimeResource();
 
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(ERROR) << "Get Context failed!";
-    return;
-  }
-
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
-    PythonEnvGuard guard;
-    if (!context::CloseTsd(ms_context)) {
-      MS_LOG(ERROR) << "CloseTsd failed!";
+    auto ms_context = MsContext::GetInstance();
+    if (ms_context == nullptr) {
+      MS_LOG(ERROR) << "Get Context failed!";
       return;
     }
-  } else {
-    auto ret = rtDeviceReset(static_cast<int32_t>(device_id_));
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(ERROR) << "Device " << device_id_ << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
-      return;
-    }
-  }
 
+    if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
+      PythonEnvGuard guard;
+      if (!context::CloseTsd(ms_context)) {
+        MS_LOG(ERROR) << "CloseTsd failed!";
+        return;
+      }
+    } else {
+      auto ret = rtDeviceReset(static_cast<int32_t>(device_id_));
+      if (ret != RT_ERROR_NONE) {
+        MS_LOG(ERROR) << "Device " << device_id_ << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
+        return;
+      }
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "AscendGraphImpl MsEnvGuard destructor run failed, error message : " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "AscendGraphImpl MsEnvGuard destructor run failed, unknown error occurred.";
+  }
   MS_LOG(INFO) << "End finalize device " << device_id_;
 }
 
@@ -431,10 +435,7 @@ bool AscendGraphImpl::CheckDeviceSupport(mindspore::DeviceType device_type) {
 std::map<uint32_t, std::weak_ptr<AscendGraphImpl::MsEnvGuard>> AscendGraphImpl::MsEnvGuard::global_ms_env_;
 std::mutex AscendGraphImpl::MsEnvGuard::global_ms_env_mutex_;
 
-PythonEnvGuard::PythonEnvGuard() {
-  origin_init_status_ = PythonIsInited();
-  InitPython();
-}
+PythonEnvGuard::PythonEnvGuard() : origin_init_status_(PythonIsInited()) { InitPython(); }
 
 PythonEnvGuard::~PythonEnvGuard() {
   // finalize when init by this

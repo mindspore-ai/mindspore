@@ -234,7 +234,7 @@ std::string Graphviz::Shape(const AnfNodePtr &node) {
   return "plaintext";
 }
 
-std::string Graphviz::Color(const AnfNodePtr &node) {
+std::string Graphviz::Color(const AnfNodePtr &node) const {
   if (node == nullptr) {
     return "";
   }

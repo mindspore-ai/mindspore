@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace somas {
 constexpr auto kSolNumThresholdMultiThread = 8;
-Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) {
+Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const {
   auto tensors = *pTensors;
   if (tensors[index1] == nullptr) {
     MS_LOG(WARNING) << "NULL tensor received in continuous constraint (tensor index " << index1 << ")";
@@ -39,12 +39,14 @@ Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t ind
     return FAILED;
   }
 
-  if (tensors[index1]->right_)
+  if (tensors[index1]->right_) {
     MS_LOG(WARNING) << "Warning:tensor " << index1
                     << " already has a right tensor (id: " << tensors[index1]->right_->index_;
-  if (tensors[index2]->left_)
+  }
+  if (tensors[index2]->left_) {
     MS_LOG(WARNING) << "Warning:tensor " << index2
                     << " already has a left tensor (id: " << tensors[index2]->left_->index_;
+  }
   return SUCCESS;
 }
 Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) {
@@ -83,7 +85,7 @@ Status SomasSolverPre::AddContiguousInfoInMultiMaps(const vector<vector<size_t>>
   }
   return SUCCESS;
 }
-vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) {
+vector<TensorsDescMap> SomasSolverPre::CreateTensorsMaps(const TensorsDescMap &tensors, size_t total_sol) const {
   vector<TensorsDescMap> vecTensorsMap(total_sol);
   vecTensorsMap[0] = tensors;
   for (auto &pairT : tensors) {
@@ -209,7 +211,7 @@ void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap
 }
 
 void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstraints,
-                                       const session::KernelGraph *graph) {
+                                       const session::KernelGraph *graph) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_tensor_relation.ir..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -229,7 +231,7 @@ void SomasSolverPre::TensorRelationLog(const std::vector<DynamicBitSet> *pConstr
 }
 
 void SomasSolverPre::SolverInputLog(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-                                    const vector<vector<size_t>> &continuous_v) {
+                                    const vector<vector<size_t>> &continuous_v) const {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas_solver_input..";
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -266,12 +268,13 @@ void SomasSolverPre::SolverOutputLog(const session::KernelGraph *graph, const Te
   for (auto &t : tensors) {
     SomasSolverTensorDescPtr tensor = t.second;
     int continuous = 0;
-    if (tensor->left_ == nullptr && tensor->right_ != nullptr)
+    if (tensor->left_ == nullptr && tensor->right_ != nullptr) {
       continuous = contiguous_left;
-    else if (tensor->left_ != nullptr && tensor->right_ != nullptr)
+    } else if (tensor->left_ != nullptr && tensor->right_ != nullptr) {
       continuous = contiguous_mid;
-    else if (tensor->left_ != nullptr && tensor->right_ == nullptr)
+    } else if (tensor->left_ != nullptr && tensor->right_ == nullptr) {
       continuous = contiguous_right;
+    }
     const size_t alignment = 512;
     bool size_aligned = tensor->size_ % alignment == 0;
     bool offset_aligned = tensor->offset_ % alignment == 0;
