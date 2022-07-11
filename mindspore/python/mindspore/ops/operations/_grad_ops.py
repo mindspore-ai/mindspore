@@ -2441,6 +2441,44 @@ class LRNGrad(PrimitiveWithInfer):
         return x
 
 
+class MvlgammaGrad(Primitive):
+    r"""
+    Computes gradients for Mvlgamma.
+
+    The following tex shows the mathematical calculation process of Mvlgamma:
+
+    .. math::
+
+        \log (\Gamma_{p}(a))=C+\sum_{i=1}^{p} \log (\Gamma(a-\frac{i-1}{2}))
+
+    where :math:`C = \log(\pi) \times \frac{p(p-1)}{4}` and :math:`\Gamma(\cdot)` is the Gamma function.
+
+    Args:
+        p(int): The number of dimensions. And the value of `p` must be greater than or equal to 1.
+
+    Inputs:
+        - **y_grad** (Tensor) - The input gradient.
+        - **x** (Tensor) - The input of Mvlgamma with data type of float32 or float64.
+
+    Outputs:
+        Tensor, has the same shape and type as `x`.
+
+    Raises:
+        TypeError: If dtype of `y_grad or `x` is neither float32 nor float64.
+        TypeError: If `p` is not an int.
+        ValueError: If p is not greater than or equal to 1.
+        ValueError: If all elements of `x` are not greater than (p-1)/2.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, p):
+        self.init_prim_io_names(inputs=['y_grad', 'x'], outputs=['x_grad'])
+        self.p = validator.check_value_type('p', p, [int], self.name)
+
+
 class MaskedSelectGrad(PrimitiveWithInfer):
     """Computes gradient for MaskedSelect."""
 
@@ -2493,6 +2531,47 @@ class CdistGrad(Primitive):
     def __init__(self, p=2.0):
         validator.check_value_type("p", p, [float], self.name)
         self.init_prim_io_names(inputs=['grad', 'input_x', 'input_y', 'cdist'], outputs=['output'])
+
+
+class MultilabelMarginLossGrad(Primitive):
+    """
+    Compute the gradients of MultilabelMarginLoss operation.
+
+    Args:
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **y_grad** (Tensor) - The gradients of loss to output of MultilabelMarginLoss function, with
+          the same shape and data type as forward output `y`.
+        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
+          label targets padded by -1.
+        - **is_target** (Tensor) - Forward output tensor for backward input, with the same shape and
+          data type as `target`.
+
+    Outputs:
+        The shape of output :math:`(C)` or :math:`(N, C)`, with the same shape and data type as `x`.
+
+    Raises:
+        TypeError: If `x` or `target` or `y_grad` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `target` is not int32.
+        TypeError: If dtype of `y_grad` is not the same as `x`.
+        ValueError: If length of shape of `x` is neither 1 nor 2.
+        ValueError: If shape of `x` is not the same as `target`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+        ValueError: If shape of `y_grad` is not the same as forward output `y`.
+
+    Supported Platforms:
+        ``Ascend``
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        """Initialize MultilabelMarginLossGrad"""
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'is_target'], outputs=['x_grad'])
 
 
 class HShrinkGrad(Primitive):
@@ -2568,6 +2647,55 @@ class ParallelResizeBilinearGrad(PrimitiveWithInfer):
                 'value': None}
 
 
+class MultiMarginLossGrad(Primitive):
+    """
+    Compute the gradients of MultiMarginLoss operation
+
+    Args:
+        p (int): Optional. The norm degree for pairwise distance.Should be 1 or 2. Default: 1.
+        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **y_grad** (Tensor) - If it's not a scalar, the shape of 'y_grad' :math:`(N, C)`.
+          Data type only support float32 or float16,float64.
+        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float32, float16 or float64. Default: None.
+
+    Outputs:
+        The shape of output :math:`(N, C)`. Data type only support float32 or float16, float64.
+        Has the same data type with 'x'.
+
+    Raises:
+        TypeError: If dtype of `p` and `target` is not int.
+        TypeError: If dtype of `margin` is not float.
+        TypeError: If dtype of `reduction` is not str.
+        TypeError: If dtype of `x` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `x` is not the same.
+        ValueError: If 'p' is not 1 or 2.
+        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
+        ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
+        ValueError: IF rank of `weight` is not 1.
+        ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
+
+    Supported Platforms:
+        ``Ascend``  ``CPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, p=1, margin=1.0, reduction="mean"):
+        """Initialize MultiMarginLossGrad"""
+        self.p = validator.check_value_type('p', p, [int], self.name)
+        validator.check_int(p, {1, 2}, Rel.IN, 'p', self.name)
+        self.margin = validator.check_value_type('margin', margin, [float], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.init_prim_io_names(inputs=['y_grad', 'x', 'target', 'weight'], outputs=['x_grad'])
+
+
 class GridSampler3DGrad(Primitive):
     """
     Computes gradients for GridSampler3D operation.
@@ -2638,6 +2766,44 @@ class FractionalMaxPool3DGradWithFixedKsize(Primitive):
     def __init__(self, data_format="NCDHW"):
         self.init_prim_io_names(inputs=["origin_input", "out_backprop", "argmax"], outputs=["y"])
         self.data_format = validator.check_string(data_format, ['NCDHW', "NDHWC"], 'data_format', self.name)
+
+
+class MaxUnpool2DGrad(Primitive):
+    r"""
+    Gradients for MaxUnpool2D operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCHW"):
+        """Initialize MaxUnpool2DGrad."""
+        self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
+        validator.check_value_type("ksize", ksize, [int, tuple], self.name)
+        validator.check_value_type("strides", strides, [int, tuple], self.name)
+        validator.check_value_type("pads", pads, [int, tuple], self.name)
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+        validator.check_int(len(ksize), 4, Rel.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 4, Rel.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 4, Rel.EQ, "pads rank", self.name)
+
+
+class MaxUnpool3DGrad(Primitive):
+    r"""
+    Gradients for MaxUnpool3D operation.
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCDHW"):
+        """Initialize MaxUnpool3DGrad."""
+        self.init_prim_io_names(inputs=['x', 'grads', 'argmax'], outputs=['y'])
+        validator.check_value_type("ksize", ksize, [int, tuple], self.name)
+        validator.check_value_type("strides", strides, [int, tuple], self.name)
+        validator.check_value_type("pads", pads, [int, tuple], self.name)
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
+        validator.check_int(len(ksize), 5, Rel.EQ, "ksize rank", self.name)
+        validator.check_int(len(strides), 5, Rel.EQ, "strides rank", self.name)
+        validator.check_int(len(pads), 5, Rel.EQ, "pads rank", self.name)
 
 
 class FractionalAvgPoolGrad(Primitive):

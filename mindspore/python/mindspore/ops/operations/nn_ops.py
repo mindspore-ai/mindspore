@@ -29,7 +29,8 @@ from ...common._decorator import deprecated
 from ..primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register
 
 
-def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False, ret_four=False):
+def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=False,
+                                 ret_four=False, strict_positive=True):
     """
     Checks whether an argument is a positive int or tuple with 2 or 4(when allow_four is True) positive int elements.
     """
@@ -54,8 +55,11 @@ def _check_positive_int_or_tuple(arg_name, arg_value, prim_name, allow_four=Fals
     validator.check_value_type(arg_name, arg_value, (int, tuple), prim_name)
     ret_value = _get_return_value()
     for item in ret_value:
-        if isinstance(item, int) and not isinstance(item, bool) and item > 0:
-            continue
+        if isinstance(item, int) and not isinstance(item, bool):
+            if item > 0:
+                continue
+            if not strict_positive and item == 0:
+                continue
         _raise_message()
     return ret_value
 
@@ -2036,6 +2040,199 @@ class MaxPool3D(PrimitiveWithInfer):
         return x_dtype
 
 
+class MaxUnpool2D(Primitive):
+    r"""
+    Computes a partial inverse of MaxUnpool2D.
+
+    MaxUnpool2D is not fully invertible, since the non-maximal values are lost.
+
+    MaxUnpool2D takes in as input the output of MaxUnpool2D including the indices of the maximal values
+    and computes a partial inverse in which all non-maximal values are set to zero. Typically the input
+    is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape :math:`(N, C, H_{out}, W_{out})`,
+    the operation is as follows.
+
+    .. math::
+        \begin{array}{ll} \\
+        H_{out} = (H{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        \end{array}
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width of the kernel, or a tuple
+            of two int numbers that represent height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the height and width of movement are both strides, or a tuple of two int numbers that
+            represent height and width of movement respectively.
+            If strides is 0 or (0, 0), then strides equal to ksize. Default: 0.
+        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
+            the paddings of height and width are the same, equal to pads. If `pads` is a tuple of two
+            integers, the padding of height and width equal to pads[0] and pads[1] correspondingly.
+        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
+            If output_shape == (), then the shape of output computed by kszie, strides and pads.
+            If output_shape != (), then output_shape must be :math:`(N, C, H, W)` or
+            :math:`(N, H, W, C)` and output_shape must belong to
+            :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
+            (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
+        data_format (str) : The optional value for data format.
+            Currently support 'NCHW' and 'NHWC'. Default: 'NCHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor to invert.
+          Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(N, H_{in}, W_{in}, C)`.
+        - **argmax** (Tensor) - Max values' index represented by the argmax.
+          Tensor of shape must be same with input 'x'.
+          Values of argmax must belong to :math:`[0, H_{in} \times W_{in} - 1]`.
+          Data type must be in int32 or int64.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(N, H_{out}, W_{out}, C)`.
+        Has the same data type with `x`.
+
+    Raises:
+        TypeError: If data type of `x` or `argmax` is not supported.
+        TypeError: If `ksize`, `strides` or `pads` is neither int nor tuple.
+        ValueError: If numbers in `strides` (also support 0 and (0, 0)) or `ksize` is not positive.
+        ValueError: If numbers in `pads` is negative.
+        ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 2.
+        ValueError: If `data_format` is not a str or is neither `NCHW` nor `NHWC`.
+        ValueError: If `output_shape` whose length is neither 0 or 4.
+        ValueError: If `output_shape` is not close to output size
+                    computed by attr `ksize, strides, pads`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
+        >>> argmax = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
+        >>> maxunpool2d = P.MaxUnpool2D(ksize=1, strides=1, pads=0)
+        >>> output = maxunpool2d(x, argmax)
+        >>> print(output.asnumpy())
+        [[[[0. 1.]
+            [8. 9.]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCHW"):
+        """Initialize MaxUnpool2D."""
+        self.init_prim_io_names(inputs=['x', 'argmax'], outputs=['y'])
+        self.ksize = _check_positive_int_or_tuple('ksize', ksize, self.name, ret_four=True)
+        if strides in (0, (0, 0)):
+            strides = ksize
+        self.strides = _check_positive_int_or_tuple('strides', strides, self.name, ret_four=True)
+        self.pads = _check_positive_int_or_tuple('pads', pads, self.name, ret_four=True, strict_positive=False)
+        self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'data_format', self.name)
+
+        if data_format == "NHWC":
+            self.ksize = (self.ksize[0], self.ksize[2], self.ksize[3], self.ksize[1])
+            self.strides = (self.strides[0], self.strides[2], self.strides[3], self.strides[1])
+            self.pads = (self.pads[0], self.pads[2], self.pads[3], self.pads[1])
+
+        self.add_prim_attr('ksize', self.ksize)
+        self.add_prim_attr('strides', self.strides)
+        self.add_prim_attr('pads', self.pads)
+
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        self.output_shape = output_shape
+
+
+class MaxUnpool3D(Primitive):
+    r"""
+    Computes a partial inverse of MaxUnpool3D.
+
+    MaxUnpool3D is not fully invertible, since the non-maximal values are lost.
+
+    MaxUnpool3D takes in as input the output of MaxUnpool3D including the indices of the maximal
+    values and computes a partial inverse in which all non-maximal values are set to zero.
+    Typically the input is of shape :math:`(N, C, D_{in}, H_{in}, W_{in})`, the output is of
+    shape :math:`(N, C, D_{out}, H_{out}, W_{out})`, the operation is as follows.
+
+    .. math::
+        \begin{array}{ll} \\
+        D_{out} = (D{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
+        \end{array}
+
+    Args:
+        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width of the kernel, or a tuple
+            of three int numbers that represent depth, height and width respectively.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of three int numbers that
+            represent depth, height and width of movement respectively.
+            If strides is 0 or (0, 0, 0), then strides equal to ksize. Default: 0.
+        pads (Union[int, tuple[int]]): The pad value to be filled. Default: 0. If `pads` is an integer,
+            the paddings of depth, height and width are the same, equal to pads. If `pads` is a tuple of three integers,
+            the padding of depth, height and width equal to pads[0], pads[1] and pads[2] correspondingly.
+        output_shape (tuple[int]) : The target output size is an optional input. Default: ().
+            If output_shape == (), then the shape of output computed by kszie, strides and pads.
+            If output_shape != (), then output_shape must be :math:`(N, C, D, H, W)` or
+            :math:`(N, D, H, W, C)` and output_shape must belong to
+            :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
+            (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]`.
+        data_format (str) : The optional value for data format. Currently support 'NCDHW' and 'NDHWC'. Default: 'NCDHW'.
+
+    Inputs:
+        - **x** (Tensor) - The input Tensor to invert.
+          Tensor of shape :math:`(N, C, D_{in}, H_{in}, W_{in})` or :math:`(N, D_{in}, H_{in}, W_{in}, C)`.
+        - **argmax** (Tensor) - Max values' index represented by the argmax.
+          Tensor of shape must be same with input 'x'.
+          Values of argmax must belong to :math:`[0, D_{in} \times H_{in} \times W_{in} - 1]`.
+          Data type must be in int32 or int64.
+
+    Outputs:
+        Tensor, with shape :math:`(N, C, D_{out}, H_{out}, W_{out})` or :math:`(N, D_{out}, H_{out}, W_{out}, C)`.
+        Has the same data type with `x`.
+
+    Raises:
+        TypeError: If data type of `x` or `argmax` is not supported.
+        TypeError: If `ksize`, `strides` or `pads` is neither int nor tuple.
+        ValueError: If numbers in `strides` (also support 0 and (0, 0, 0)) or `ksize` is not positive.
+        ValueError: If numbers in `pads` is negative.
+        ValueError: If `ksize`, `strides` or `pads` is a tuple whose length is not equal to 3.
+        ValueError: If `data_format` is not a str or is neither `NCDHW` nor `NDHWC`.
+        ValueError: If `output_shape` whose length is neither 0 or 5.
+        ValueError: If `output_shape` is not close to output size
+                    computed by attr `ksize, strides, pads`.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[[[[0, 1], [8, 9]]]]]).astype(np.float32))
+        >>> argmax = Tensor(np.array([[[[[0, 1], [2, 3]]]]]).astype(np.int64))
+        >>> maxunpool3d = P.MaxUnpool3D(ksize=1, strides=1, pads=0)
+        >>> output = maxunpool3d(x, argmax)
+        >>> print(output.asnumpy())
+        [[[[[0. 1.]
+            [8. 9.]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, ksize, strides=0, pads=0, output_shape=(), data_format="NCDHW"):
+        """Initialize MaxUnpool3D."""
+        self.init_prim_io_names(inputs=['x', 'argmax'], outputs=['y'])
+        self.ksize = _check_3d_int_or_tuple('ksize', ksize, self.name, ret_five=True)
+        if strides in (0, (0, 0, 0)):
+            strides = ksize
+        self.strides = _check_3d_int_or_tuple('strides', strides, self.name, ret_five=True)
+        self.pads = _check_3d_int_or_tuple('pads', pads, self.name, ret_five=True, greater_zero=False)
+        self.data_format = validator.check_string(data_format, ['NCDHW', 'NDHWC'], 'data_format', self.name)
+        if data_format == "NDHWC":
+            self.ksize = (self.ksize[0], self.ksize[2], self.ksize[3], self.ksize[4], self.ksize[1])
+            self.strides = (self.strides[0], self.strides[2], self.strides[3], self.strides[4], self.strides[1])
+            self.pads = (self.pads[0], self.pads[2], self.pads[3], self.pads[4], self.pads[1])
+
+        self.add_prim_attr('ksize', self.ksize)
+        self.add_prim_attr('strides', self.strides)
+        self.add_prim_attr('pads', self.pads)
+
+        validator.check_value_type("output_shape", output_shape, [tuple], self.name)
+        self.output_shape = output_shape
+
+
 class AvgPool(_Pool):
     r"""
     Average pooling operation.
@@ -2839,6 +3036,77 @@ class SmoothL1Loss(Primitive):
         if reduction != 'none' and target.lower() == "ascend":
             raise ValueError(f"Currently Ascend device_target only support `reduction`='none', "
                              f"but got {reduction}")
+
+
+class MultiMarginLoss(Primitive):
+    r"""
+    Creates a criterion that optimizes a multi-class classification hinge
+    loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`) and
+    output :math:`y` (which is a 1D tensor of target class indices,
+    :math:`0 \leq y \leq \text{x.size}(1)-1`):
+
+    For each mini-batch sample, the loss in terms of the 1D input :math:`x` and scalar
+    output :math:`y` is:
+
+    .. math::
+        \text{loss}(x, y) = \frac{\sum_i \max(0, w[y] * (\text{margin} - x[y] + x[i]))^p)}{\text{x.size}(0)}
+
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`
+    and :math:`i \neq y`.
+
+    Optionally, you can give non-equal weighting on the classes by passing
+    a 1D input `weight` tensor w into the constructor.
+
+    Args:
+        p (int): Optional. The norm degree for pairwise distance. Should be 1 or 2. Default: 1.
+        margin (float): Optional. A parameter to change pairwise distance. Default: 1.0.
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - Input x, with shape :math:`(N, C)`. Data type only support float32, float16 or float64.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N,)`. Data type only support int64. The
+          value of target should be non-negative, less than C.
+        - **weight** (Tensor, optional) - The rescaling weight to each class with shape :math:`(C,)`. Data type only
+          support float32, float16 or float64. Default: None.
+
+    Outputs:
+        Tensor, When `reduction` is 'none', the shape is :math:`(N,)`.
+        Otherwise, it is a scalar. Has the same data type with `x`.
+
+    Raises:
+        TypeError: If dtype of `p` or `target` is not int.
+        TypeError: If dtype of `margin` is not float.
+        TypeError: If dtype of `reduction` is not str.
+        TypeError: If dtype of `x` is not float16, float or float64.
+        TypeError: If dtype of `weight` and `x` is not the same.
+        ValueError: If 'p' is not 1 or 2.
+        ValueError: If 'reduction' is not one of {'none','sum','mean'}.
+        ValueError: If shape[0] of `x` is not equal to shape[0] of `target`.
+        ValueError: If shape[1] of `x` is not equal to shape[0] of `weight`.
+        ValueError: IF rank of `weight` is not 1.
+        ValueError: If rank of `x` is not 2 or rank of 'target' is not 1.
+
+    Supported Platforms:
+        ``Ascend``  ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.ones(shape=[3, 3]), mindspore.float32)
+        >>> target = Tensor(np.array([1, 2, 1]), mindspore.int64)
+        >>> weight = Tensor(np.array([1, 1, 1]), mindspore.float32)
+        >>> loss = ops.MultiMarginLoss()
+        >>> output = loss(x, target, weight)
+        >>> print(output)
+        0.6666667
+    """
+
+    @prim_attr_register
+    def __init__(self, p=1, margin=1.0, reduction="mean"):
+        """Initialize MultiMarginLoss"""
+        self.p = validator.check_value_type('p', p, [int], self.name)
+        validator.check_int(p, {1, 2}, Rel.IN, 'p', self.name)
+        self.margin = validator.check_value_type('margin', margin, [float], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.init_prim_io_names(inputs=['x', 'target', 'weight'], outputs=['y'])
 
 
 class SoftMarginLoss(Primitive):
@@ -9106,6 +9374,73 @@ class ApplyKerasMomentum(Primitive):
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.name)
 
 
+class MultilabelMarginLoss(Primitive):
+    r"""
+    MultilabelMarginLoss operation.
+
+    Creates a criterion that optimizes a multi-class multi-classification
+    hinge loss (margin-based loss) between input :math:`x` (a 2D mini-batch `Tensor`)
+    and output :math:`y` (which is a 2D `Tensor` of target class indices).
+    For each sample in the mini-batch:
+
+    .. math::
+        \text{loss}(x, y) = \sum_{ij}\frac{\max(0, 1 - (x[y[j]] - x[i]))}{\text{x.size}(0)}
+
+    where :math:`x \in \left\{0, \; \cdots , \; \text{x.size}(0) - 1\right\}`, \
+    :math:`y \in \left\{0, \; \cdots , \; \text{y.size}(0) - 1\right\}`, \
+    :math:`0 \leq y[j] \leq \text{x.size}(0)-1`, \
+    and :math:`i \neq y[j]` for all :math:`i` and :math:`j`.
+
+    :math:`y` and :math:`x` must have the same size.
+
+    The criterion only considers a contiguous block of non-negative targets that
+    starts at the front.
+
+    This allows for different samples to have variable amounts of target classes.
+
+    Args:
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - Predict data. Tensor of shape :math:`(C)` or :math:`(N, C)`, where :math:`N`
+          is the batch size and :math:`C` is the number of classes. Data type must be float16 or float32.
+        - **target** (Tensor) - Ground truth data, with the same shape as `x`, data type must be int32 and
+          label targets padded by -1.
+
+    Outputs:
+        - **y** (Union[Tensor, Scalar]) - The loss of MultilabelMarginLoss. If `reduction` is "none", its shape
+          is :math:`(N)`. Otherwise, a scalar value will be returned.
+        - **is_target** (Tensor) - Output tensor for backward input, with the same shape as `target`,
+          data type must be int32.
+
+    Raises:
+        TypeError: If `x` or `target` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If dtype of `target` is not int32.
+        ValueError: If length of shape of `x` is neither 1 nor 2.
+        ValueError: If shape of `x` is not the same as `target`.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+       >>> loss = ops.MultilabelMarginLoss()
+       >>> x = Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.2, 0.3, 0.5, 0.7]]), mindspore.float32)
+       >>> target = Tensor(np.array([[1, 2, 0, 3], [2, 3, -1, 1]]), mindspore.int32)
+       >>> output = loss(x, target)
+       >>> print(output)
+       (Tensor(shape=[], dtype=Float32, value= 0.325), Tensor(shape=[2, 4], dtype=Int32, value=
+       [[1, 1, 1, 1], [0, 0, 1, 1]]))
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction='mean'):
+        """Initialize MultilabelMarginLoss"""
+        self.init_prim_io_names(inputs=['x', 'target'], outputs=['y', 'is_target'])
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+
+
 class ApplyAdamWithAmsgrad(Primitive):
     r"""
     Update var according to the Adam algorithm.
@@ -9669,6 +10004,87 @@ class PSROIPooling(Primitive):
         self.add_prim_attr('spatial_scale', self.spatial_scale)
         self.add_prim_attr('group_size', self.group_size)
         self.add_prim_attr('output_dim', self.output_dim)
+
+
+class TripletMarginLoss(Primitive):
+    r"""
+    TripletMarginLoss operation.
+
+    Creates a criterion that measures the triplet loss given an input
+    tensors :math:`x1`, :math:`x2`, :math:`x3` and a margin with a value greater than :math:`0`.
+    This is used for measuring a relative similarity between samples. A triplet
+    is composed by `a`, `p` and `n` (i.e., `anchor`, `positive examples` and `negative
+    examples` respectively). The shapes of all input tensors should be
+    :math:`(N, D)`.
+
+    The distance swap is described in detail in the paper `Learning shallow
+    convolutional feature descriptors with triplet losses` by
+    V. Balntas, E. Riba et al.
+
+    The loss function for each sample in the mini-batch is:
+
+    .. math::
+        L(a, p, n) = \max \{d(a_i, p_i) - d(a_i, n_i) + {\rm margin}, 0\}
+
+    where
+
+    .. math::
+        d(x_i, y_i) = \left\lVert {\bf x}_i - {\bf y}_i \right\rVert_p
+
+    Args:
+        p (int): The norm degree for pairwise distance. Default: 2.
+        eps (float): Default: 1e-06.
+        swap (bool): The distance swap is described in detail in the paper
+            `Learning shallow convolutional feature descriptors with triplet losses` by
+            V. Balntas, E. Riba et al. Default: "False".
+        reduction (str): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **x** (Tensor) - A sample randomly selected from the training set. Data type must be BasicType.
+        - **positive** (Tensor) - A sample belonging to the same category as x, with the same type and shape as `x`.
+        - **negative** (Tensor) - A sample belonging to the different class from x, with the same type and shape as `x`.
+        - **margin** (Tensor) - Make a margin between the positive pair and the negative pair.
+
+    Outputs:
+        Union[Tensor, Scalar], if `reduction` is "none", its shape is :math:`(N)`.
+        Otherwise, a scalar value will be returned.
+
+    Raises:
+        TypeError: If `x` or `positive` or 'negative' or 'margin' is not a Tensor.
+        TypeError: If dtype of `x` or `positive` or `negative` is not BasicType.
+        TypeError: If dtype of `x`, `positive` and `negative` is not the same.
+        TypeError: If `margin` is not float32.
+        TypeError: If `p` is not an int.
+        TypeError: If `eps` is not a float.
+        TypeError: If `swap` is not a bool.
+        ValueError: If dimensions of input `x`, `positive` and `negative` are less than or equal to 1 at the same time.
+        ValueError: If the dimension of input `x` or `positive` or `negative` is bigger than or equal to 8.
+        ValueError: If length of shape of `margin` is not 0.
+        ValueError: If shape of `x`, `positive` and `negative` cannot broadcast.
+        ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> loss = ops.TripletMarginLoss()
+        >>> x = Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]), mindspore.float32)
+        >>> positive = Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]), mindspore.float32)
+        >>> negative = Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]), mindspore.float32)
+        >>> margin = Tensor(1.0, mindspore.float32)
+        >>> output = loss(x, positive, negative, margin)
+        >>> print(output)
+        0.8881968
+    """
+
+    @prim_attr_register
+    def __init__(self, p=2, swap=False, eps=1e-6, reduction="mean"):
+        """Initialize TripletMarginLoss"""
+        self.init_prim_io_names(inputs=['x', 'positive', 'negative', 'margin'], outputs=['y'])
+        validator.check_value_type("p", p, [int], self.name)
+        validator.check_value_type("swap", swap, [bool], self.name)
+        validator.check_value_type("eps", eps, [float], self.name)
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
 
 
 class DeformableOffsets(Primitive):

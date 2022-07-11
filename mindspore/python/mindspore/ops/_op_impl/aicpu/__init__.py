@@ -41,6 +41,7 @@ from .identity import _identity_aicpu
 from .identity_n import _identity_n_aicpu
 from .edit_distance import _edit_distance_aicpu
 from .unique_with_pad import _unique_with_pad_aicpu
+from .bartlett_window import _bartlett_window_aicpu
 from .add_n import _add_n_aicpu
 from .sub_and_filter import _sub_and_filter_aicpu
 from .pad_and_shift import _pad_and_shift_aicpu
@@ -94,6 +95,8 @@ from .uniform_candidate_sampler import _uniform_candidate_sampler_aicpu
 from .log_uniform_candidate_sampler import _log_uniform_candidate_sampler_aicpu
 from .compute_accidental_hits import _compute_accidental_hits_aicpu
 from .ctcloss import _ctcloss_aicpu
+from .multi_margin_loss import _multi_margin_loss_aicpu
+from .multi_margin_loss_grad import _multi_margin_loss_grad_aicpu
 from .reverse_sequence import _reverse_sequence_aicpu
 from .matrix_inverse import _matrix_inverse_aicpu
 from .matrix_determinant import _matrix_determinant_aicpu
@@ -107,6 +110,8 @@ from .rnnt_loss import _rnnt_loss_aicpu
 from .random_categorical import _random_categorical_aicpu
 from .tanh import _tanh_aicpu
 from .tanh_grad import _tanh_grad_aicpu
+from .mvlgamma import _mvlgamma_aicpu
+from .mvlgamma_grad import _mvlgamma_grad_aicpu
 from .cast import _cast_aicpu
 from .coalesce import _coalesce_aicpu
 from .list_diff import _list_diff_aicpu
@@ -150,6 +155,7 @@ from .trans_data import _trans_data_aicpu
 from .stack_push_pop import _stack_init_aicpu
 from .stack_push_pop import _stack_push_aicpu
 from .stack_push_pop import _stack_pop_aicpu
+from .triplet_margin_loss import _triplet_margin_loss_aicpu
 from .asinh import _asinh_aicpu
 from .asinh_grad import _asinh_grad_aicpu
 from .stack_push_pop import _stack_destroy_aicpu
@@ -167,6 +173,7 @@ from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .resize_nearest_neighbor_v2 import _resize_nearest_neighbor_v2_aicpu
 from .resize_nearest_neighbor_v2_grad import _resize_nearest_neighbor_v2_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
+from .multilabel_margin_loss_grad import _multilabel_margin_loss_grad_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
 from .square import _square_aicpu
 from .squared_difference import _squared_difference_aicpu
@@ -227,6 +234,10 @@ from .avgpool_v1 import _avgpool_v1_aicpu
 from .avgpool_grad_v1 import _avgpool_grad_v1_aicpu
 from .maxpool_v1 import _maxpool_v1_aicpu
 from .maxpool_grad_v1 import _maxpool_grad_v1_aicpu
+from .max_unpool2d import _max_unpool2d_aicpu
+from .max_unpool2d_grad import _max_unpool2d_grad_aicpu
+from .max_unpool3d import _max_unpool3d_aicpu
+from .max_unpool3d_grad import _max_unpool3d_grad_aicpu
 from .dense_to_csr_sparse_matrix import _dense_to_csr_sparse_matrix_aicpu
 from .adjust_saturation import _adjust_saturation_aicpu
 from .grid_sampler_2d import _grid_sampler_2d_aicpu

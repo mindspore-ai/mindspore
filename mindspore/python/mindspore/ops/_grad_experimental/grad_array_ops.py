@@ -27,6 +27,7 @@ from ..operations.array_ops import MatrixDiagV3
 from ..operations.array_ops import MatrixDiagPartV3
 from ..operations.array_ops import ResizeNearestNeighborV2
 from ..operations.array_ops import MatrixSetDiagV3
+from ..operations.array_ops import Mvlgamma
 from ..operations.array_ops import Triu
 from ..operations.array_ops import IdentityN
 from ..operations.array_ops import CheckNumerics
@@ -86,6 +87,18 @@ def get_bprop_masked_select(self):
         else:
             dvalue = F.cast(dvalue, F.dtype(value))
         return dinput, zeros_like(mask), dvalue
+
+    return bprop
+
+
+@bprop_getters.register(Mvlgamma)
+def get_bprop_mvlgamma(self):
+    """Grad definition for Mvlgamma"""
+    input_grad = G.MvlgammaGrad(p=self.p)
+
+    def bprop(x, out, dout):
+        dx = input_grad(dout, x)
+        return (dx,)
 
     return bprop
 

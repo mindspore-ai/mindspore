@@ -84,6 +84,13 @@ from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
+from mindspore.ops.operations.nn_ops import MaxUnpool2D
+from mindspore.ops.operations.nn_ops import MaxUnpool3D
+from mindspore.nn.loss.loss import MultiMarginLoss
+from mindspore.nn.loss.loss import MultilabelMarginLoss
+from mindspore.nn.loss.loss import TripletMarginLoss
+from mindspore.ops.operations.array_ops import Mvlgamma
+from mindspore.ops.operations.other_ops import BartlettWindow
 from mindspore.ops.operations.nn_ops import NthElement
 from mindspore.ops.operations.nn_ops import SparseApplyAdagradDA
 from mindspore.ops.operations.nn_ops import PSROIPooling
@@ -2351,6 +2358,16 @@ test_case_nn_ops = [
         'block': P.AvgPool3D(kernel_size=3, strides=2, pad_mode="PAD", pad=1),
         'desc_inputs': [[10, 3, 28, 31, 24]],
         'desc_bprop': [[10, 3, 14, 16, 12]]}),
+    ('MaxUnpool2D', {
+        'block': MaxUnpool2D(ksize=(4, 4), strides=(2, 2), pads=(2, 2)),
+        'desc_inputs': [([4, 3, 6, 6], {'dtype': np.float32}),
+                        ([4, 3, 6, 6], {'dtype': np.int64})],
+        'desc_bprop': [([4, 3, 10, 10], {'dtype': np.float32})]}),
+    ('MaxUnpool3D', {
+        'block': MaxUnpool3D(ksize=(4, 4, 4), strides=(2, 2, 2), pads=(2, 2, 2)),
+        'desc_inputs': [([4, 3, 6, 6, 5], {'dtype': np.float32}),
+                        ([4, 3, 6, 6, 5], {'dtype': np.int64})],
+        'desc_bprop': [([4, 3, 10, 10, 8], {'dtype': np.float32})]}),
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(kernel_size=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
@@ -2729,6 +2746,11 @@ test_case_nn_ops = [
         'block': CTCGreedyDecoderNet(),
         'desc_inputs': [[2, 2, 3], Tensor(np.array([2, 2]).astype(np.int32))],
         'skip': ['backward']}),
+    ('MultiMarginLoss', {
+        'block': MultiMarginLoss(reduction="mean"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([0, 0]).astype(np.int64))],
+        'desc_bprop': [[1]]}),
     ('L2Loss_1', {
         'block': P.L2Loss(),
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4]), mstype.float32)],
@@ -2867,6 +2889,13 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]), mstype.float16),
                         Tensor(np.array([[-4, -3, -2], [1, 2, 4]]), mstype.float16)],
         'skip': ['backward']}),
+    ('TripletMarginLoss', {
+        'block': TripletMarginLoss(reduction="none"),
+        'desc_inputs': [Tensor(np.array([[0.3, 0.7], [0.5, 0.5]]).astype(np.float32)),
+                        Tensor(np.array([[0.4, 0.6], [0.4, 0.6]]).astype(np.float32)),
+                        Tensor(np.array([[0.2, 0.9], [0.3, 0.7]]).astype(np.float32)),
+                        Tensor(1.0, mstype.float32)],
+        'skip': ['backward']}),
     ('ApplyAdagradDA', {
         'block': ApplyAdagradDANet(),
         'desc_inputs': [Tensor(np.array([[0.3, 0.4], [0.1, 0.2]]).astype(np.float32)),
@@ -2909,6 +2938,12 @@ test_case_nn_ops = [
                         Tensor(np.array([[0.3, 0.2], [0.4, 0.1]]).astype(np.float32)),
                         Tensor(0.99, mstype.float32)],
         'skip': ['backward']}),
+    ('MultilabelMarginLoss', {
+        'block': MultilabelMarginLoss(reduction="none"),
+        'desc_inputs': [Tensor(np.array([[0.1, 0.2, 0.4, 0.8], [0.1, 0.2, 0.3, 0.4]]).astype(np.float32)),
+                        Tensor(np.array([[2, 1, -1, 1], [1, -1, 2, 1]]).astype(np.int32))],
+        'desc_bprop': [Tensor(np.array([1, 2]).astype(np.float32)),
+                       Tensor(np.array([[1, 1, 2, 1], [1, 1, 2, 1]]).astype(np.int32))]}),
     ('GridSampler3D', {
         'block': GridSampler3D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=False),
         'desc_inputs': [Tensor(np.arange(32).reshape((2, 2, 2, 2, 2)).astype(np.float32)),
@@ -2936,7 +2971,6 @@ test_case_nn_ops = [
                         Tensor(1, mstype.int64)],
         'skip': ['backward']}),
 ]
-
 test_case_array_ops = [
     ('LeftShift', {
         'block': LeftShift(),
@@ -3110,6 +3144,11 @@ test_case_array_ops = [
         'block': P.Rint(),
         'desc_inputs': [(Tensor(np.array([-1.6, -0.1, 1.5, 2.0]).astype(np.float32)))],
         'skip': ['backward']}),
+    ('Mvlgamma', {
+        'block': Mvlgamma(p=1),
+        'desc_inputs': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))],
+        'desc_bprop': [Tensor(np.array([[3, 4, 5], [4, 2, 6]]).astype(np.float32))]
+        }),
     ('ConcatV2_0', {
         'block': NetForConcat1(),
         'desc_inputs': [
@@ -3449,6 +3488,7 @@ test_case_array_ops = [
     }),
 ]
 
+
 test_case_image_ops = [
     ('AdjustHue', {
         'block': AdjustHue(),
@@ -3539,6 +3579,10 @@ test_case_other_ops = [
         'desc_inputs': (Tensor(np.array([640, 480, 3], np.int32)),
                         Tensor(np.array([[[0.38, 0.17, 0.95, 0.40]]], np.float32)),
                         Tensor(np.array([0.8], np.float32))),
+        'skip': ['backward']}),
+    ('BartlettWindow', {
+        'block': BartlettWindow(periodic=True, dtype=mstype.float32),
+        'desc_inputs': (Tensor(np.array([10], np.int32))),
         'skip': ['backward']}),
     ('GatherNd', {
         'block': P.GatherNd(),

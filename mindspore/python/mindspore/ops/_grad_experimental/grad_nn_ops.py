@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,16 @@ from .._grad.grad_base import bprop_getters
 from .. import operations as P
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations import _grad_ops as G
+from ..operations.nn_ops import MaxUnpool2D
+from ..operations.nn_ops import MaxUnpool3D
 from ..operations.nn_ops import FractionalMaxPool
 from ..operations._grad_ops import FractionalMaxPoolGrad
 from ..operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from ..operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from ..operations.nn_ops import FractionalAvgPool
 from ..operations._grad_ops import FractionalAvgPoolGrad
+from ..operations.nn_ops import MultiMarginLoss
+from ..operations.nn_ops import MultilabelMarginLoss
 from ..operations.nn_ops import NthElement
 from ..operations.nn_ops import PSROIPooling
 from ..operations._grad_ops import PSROIPoolingGrad
@@ -92,6 +96,18 @@ def get_bprop_hshrink(self):
     return bprop
 
 
+@bprop_getters.register(MultilabelMarginLoss)
+def get_bprop_multilabel_margin_loss(self):
+    """Grad definition for `MultilabelMarginLoss` operation."""
+    input_grad = G.MultilabelMarginLossGrad(reduction=self.reduction)
+
+    def bprop(x, target, out, dout):
+        dx = input_grad(dout[0], x, target, out[1])
+        return dx, zeros_like(target)
+
+    return bprop
+
+
 @bprop_getters.register(P.CeLU)
 def get_bprop_celu(self):
     """Grad definition for `CeLU` operation."""
@@ -104,6 +120,18 @@ def get_bprop_celu(self):
         lesser = less(x, 0.0)
         dx = dout * (greater * 1.0 + lesser * (out / alpha + 1.0))
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(MultiMarginLoss)
+def get_bprop_multi_margin_loss(self):
+    """Grad definition for `MultiMarginLoss` operation."""
+    input_grad = G.MultiMarginLossGrad(p=self.p, margin=self.margin, reduction=self.reduction)
+
+    def bprop(x, target, weight, out, dout):
+        dx = input_grad(dout, x, target, weight)
+        return dx, zeros_like(target), zeros_like(weight)
 
     return bprop
 
@@ -127,6 +155,42 @@ def get_bprop_relu(self):
     def bprop(x, out, dout):
         dx = input_grad(dout, out)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(MaxUnpool2D)
+def get_bprop_maxunpool2d(self):
+    """Grad definition for `MaxUnpool2D` operation."""
+    maxunpool2d_grad = G.MaxUnpool2DGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        pads=self.pads,
+        output_shape=self.output_shape,
+        data_format=self.data_format)
+
+    def bprop(x, argmax, out, dout):
+        dx = maxunpool2d_grad(x, dout, argmax)
+        dargmax = zeros_like(argmax)
+        return (dx, dargmax)
+
+    return bprop
+
+
+@bprop_getters.register(MaxUnpool3D)
+def get_bprop_maxunpool3d(self):
+    """Grad definition for `MaxUnpool3D` operation."""
+    maxunpool3d_grad = G.MaxUnpool3DGrad(
+        ksize=self.ksize,
+        strides=self.strides,
+        pads=self.pads,
+        output_shape=self.output_shape,
+        data_format=self.data_format)
+
+    def bprop(x, argmax, out, dout):
+        dx = maxunpool3d_grad(x, dout, argmax)
+        dargmax = zeros_like(argmax)
+        return (dx, dargmax)
 
     return bprop
 
