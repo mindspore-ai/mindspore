@@ -168,7 +168,6 @@ Status ModelImpl::Build() {
     return static_cast<StatusCode>(ret);
   }
   session_.swap(session);
-  model->Free();
   MS_LOG(DEBUG) << "Build model success.";
   return kSuccess;
 }
