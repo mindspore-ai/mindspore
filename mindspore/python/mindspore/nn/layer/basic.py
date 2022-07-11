@@ -191,13 +191,6 @@ class Dropout2d(Cell):
 
     Refer to :func:`mindspore.ops.dropout2d` for more details.
 
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
-        TypeError: If the data type of `p` is not float.
-        ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not 4D.
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -238,7 +231,7 @@ class Dropout3d(Cell):
     During training, randomly zeroes some channels of the input tensor
     with probability `p` from a Bernoulli distribution(For a 5-dimensional tensor with
     a shape of :math:`NCDHW`, the channel feature map refers to a 3-dimensional feature
-    map with a shape of :math:'DHW').
+    map with a shape of :math:`DHW`).
 
     For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
     `3D` tensor input[i,j].
@@ -248,13 +241,6 @@ class Dropout3d(Cell):
     `Dropout3d` can improve the independence between channel feature maps.
 
     Refer to :func:`mindspore.ops.dropout3d` for more details.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int8, int16, int32, int64, float16, float32 or float64.
-        TypeError: If the data type of `p` is not float.
-        ValueError: If `p` is out of the range `[0.0, 1.0]`.
-        ValueError: If `x` shape is not `5D`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
