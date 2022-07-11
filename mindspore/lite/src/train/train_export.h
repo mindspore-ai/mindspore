@@ -47,7 +47,7 @@ class TrainExport {
   virtual ~TrainExport();
   int ExportNet(const std::vector<mindspore::kernel::LiteKernel *> &kernels,
                 const std::vector<mindspore::lite::Tensor *> &tensors, const std::vector<std::string> &output_names,
-                const Model *model, QuantizationType quant_type);
+                const Model *model, QuantizationType quant_type, const Model *bb_model = nullptr);
   int ExportInit(const std::string model_name, std::string version);
   int SaveToFile();
   void set_connect(const std::unordered_map<size_t, size_t> &map) { connect_ = map; }
@@ -84,6 +84,9 @@ class TrainExport {
   std::unique_ptr<schema::TensorT> CreateTransformConst(size_t last_id);
   int AddTransform();
   bool NeedQuantization(const mindspore::lite::Tensor *tensor, const int tensor_quant_type);
+  int FindSchemaTensorByName(const std::vector<uint32_t> &search_indices, const std::string &search_name,
+                             size_t *target_index);
+  int KeepGraphInputsInOrder(const Model *model);
   int ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
                    const std::vector<std::pair<size_t, tensor_info>> &map_index,
                    const std::vector<std::string> &output_names, const std::set<size_t> &out_set);
