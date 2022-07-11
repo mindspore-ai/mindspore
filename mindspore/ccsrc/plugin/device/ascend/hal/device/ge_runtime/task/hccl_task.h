@@ -58,7 +58,7 @@ class HcclTask::StreamGuard {
  public:
   StreamGuard(rtModel_t model, rtStream_t stream) : model_(model), stream_(stream) {}
   ~StreamGuard();
-  rtStream_t GetStream() const { return stream_; }
+  const rtStream_t GetStream() const { return stream_; }
 
  private:
   rtModel_t model_;

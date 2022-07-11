@@ -88,17 +88,18 @@ void UpdateKernelInfo(const std::vector<AnfNodePtr> &node_list) {
       std::vector<std::shared_ptr<kernel::KernelBuildInfo>> kernel_info_list;
       kernel::KernelQuery(cnode, &kernel_info_list, KernelType::AKG_KERNEL);
 
-      for (size_t index = 0; index < kernel_info_list.size(); ++index)
+      for (auto &kernel_info : kernel_info_list) {
         // only math the first input
-        if (kernel_info_list[index]->GetInputDeviceType(0) == fix_precision_type &&
-            kernel_info_list[index]->GetInputFormat(0) == AnfAlgo::GetPrevNodeOutputFormat(cnode, 0) &&
+        if (kernel_info->GetInputDeviceType(0) == fix_precision_type &&
+            kernel_info->GetInputFormat(0) == AnfAlgo::GetPrevNodeOutputFormat(cnode, 0) &&
             AnfAlgo::GetInputDeviceDataType(cnode, 0) != fix_precision_type) {
-          auto selected_kernel_info_ptr = kernel_info_list[index];
+          auto selected_kernel_info_ptr = kernel_info;
           ResetKernelBuildInfo(cnode);
           AnfAlgo::SetSelectKernelBuildInfo(selected_kernel_info_ptr, cnode.get());
           SetTensorDeviceInfo(cnode);
           break;
         }
+      }
     }
   }
 }
@@ -108,7 +109,7 @@ bool CanConvertDefaultShapeToNZ(const ShapeVector &shape) {
     if (i > 2) {
       break;
     }
-    if (shape[shape.size() - i] != 1 && shape[shape.size() - i] % kCubeSize != 0) {
+    if (SizeToLong(shape[shape.size() - i]) != 1 && SizeToLong(shape[shape.size() - i] % kCubeSize != 0)) {
       return false;
     }
   }

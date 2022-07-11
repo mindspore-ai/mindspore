@@ -77,17 +77,17 @@ class HcclAdapter {
   HcclResult HcclBroadcast(void *buf, uint64_t count, HcclDataType dataType, uint32_t root, aclrtStream stream,
                            const std::string &group = "") const;
   HcclResult HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                           aclrtStream stream, const std::string &group = "") const;
-  HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, aclrtStream stream,
-                           const std::string &group = "") const;
+                           const aclrtStream stream, const std::string &group = "") const;
+  HcclResult HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
+                           const aclrtStream stream, const std::string &group = "") const;
   HcclResult HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType, HcclReduceOp op,
-                               aclrtStream stream, const std::string &group = "") const;
-  HcclResult HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank, aclrtStream stream,
-                      const std::string &group = "") const;
-  HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, aclrtStream stream,
+                               const aclrtStream stream, const std::string &group = "") const;
+  HcclResult HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
+                      const aclrtStream stream, const std::string &group = "") const;
+  HcclResult HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank, const aclrtStream stream,
                       const std::string &group = "") const;
   HcclResult HcclAllToAll(void *send_buf, void *recv_buf, hccl::HcclAllToAllVParams params, HcclDataType dataType,
-                          aclrtStream stream, const std::string &group) const;
+                          const aclrtStream stream, const std::string &group) const;
 
   // for enqueue op
   HcclResult HcclExecEnqueueOp(const ::HcomOperation &op_info, const HExecCallBack &callback) const;
@@ -109,7 +109,7 @@ class HcclAdapter {
     }
   }
 
-  bool InitKernelInfoStore(const std::map<std::string, std::string>);
+  bool InitKernelInfoStore(const std::map<std::string, std::string> options);
   bool FinalizeKernelInfoStore();
 
   bool InitHcclComm(std::string_view rank_id, std::string_view rank_file);

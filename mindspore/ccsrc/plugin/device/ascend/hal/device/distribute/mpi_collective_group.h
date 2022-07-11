@@ -18,7 +18,6 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_DISTRIBUTE_MPI_COLLECTIVE_INIT_H
 
 #include <mpi.h>
-#include <unistd.h>
 #include <map>
 #include <tuple>
 #include <string>
@@ -68,7 +67,7 @@ class MPICollective {
 #define CHECK_RET(expression, result, message)                                         \
   {                                                                                    \
     auto ret = (expression);                                                           \
-    if (ret != result) {                                                               \
+    if (ret != (result)) {                                                             \
       std::ostringstream oss;                                                          \
       oss << "Error in file " << __FILE__ << " | Error on line " << __LINE__           \
           << " | Ascend collective Error: " << (message) << " | Error Number " << ret; \

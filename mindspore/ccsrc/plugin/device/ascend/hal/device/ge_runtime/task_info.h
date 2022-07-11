@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_INFO_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_GE_RUNTIME_TASK_INFO_H_
 
-#include <stdint.h>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace mindspore::ge::model_runner {

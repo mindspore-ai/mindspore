@@ -38,7 +38,7 @@ class AicpuTask : public TaskRepeater<AicpuTaskInfo> {
  private:
   static void ReleaseRtMem(void **ptr) noexcept;
   void SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num);
-  void SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_t io_addr_offset);
+  void SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_t io_addr_offset) const;
   void SetNodeDef(uint32_t node_def_len_offset, uint32_t node_def_addr_offset);
 
   std::shared_ptr<AicpuTaskInfo> task_info_;
