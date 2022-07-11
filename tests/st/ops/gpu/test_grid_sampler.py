@@ -128,3 +128,67 @@ def test_gridsampler3d():
     run_net3d(np.float16)
     run_net3d(np.float32)
     run_net3d(np.float64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gridsampler2d_neg_input():
+    """
+    Feature: GridSampler2D op.
+    Description: test data type is float32 in GPU.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_np = np.array([[[[1.3315865, 0.715279], [-1.5454003, -0.00838385]],
+                          [[0.621336, -0.72008556], [0.26551157, 0.10854852]]],
+                         [[[0.00429143, -0.17460021], [0.4330262, 1.2030374]],
+                          [[-0.96506566, 1.028274], [0.22863013, 0.44513762]]]])
+    grid_np = np.array([[[[-1.1366022, 0.13513687]], [[1.484537, -1.0798049]]],
+                        [[[-1.9777282, -1.7433723]], [[0.26607016, 2.3849673]]]])
+    in_tensor = Tensor(input_np, ms.float32)
+    grid = Tensor(grid_np, ms.float32)
+    expect_out = np.array([[[[-0.2807212], [0.5203627]],
+                            [[0.3907371], [-0.52385944]]],
+                           [[[0.00137821], [0.28305963]],
+                            [[-0.30993438], [0.11245471]]]], np.float32)
+    error_out = np.ones(shape=expect_out.shape) * 1.0e-6
+
+    net = Net2D('bilinear', 'zeros', True)
+    output = net(in_tensor, grid)
+    diff_out = output.asnumpy() - expect_out
+    assert np.all(np.abs(diff_out) < error_out)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gridsampler3d_neg_input():
+    """
+    Feature: GridSampler3D op.
+    Description: test data type is float32 in GPU.
+    Expectation: success.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    input_np = np.array([[[[[1.7640524, 0.4001572], [0.978738, 2.2408931]],
+                           [[1.867558, -0.9772779], [0.95008844, -0.1513572]]],
+                          [[[-0.10321885, 0.41059852], [0.14404356, 1.4542735]],
+                           [[0.7610377, 0.12167501], [0.44386324, 0.33367434]]]],
+                         [[[[1.4940791, -0.20515826], [0.3130677, -0.85409576]],
+                           [[-2.5529897, 0.6536186], [0.8644362, -0.742165]]],
+                          [[[2.2697546, -1.4543657], [0.04575852, -0.18718386]],
+                           [[1.5327792, 1.4693588], [0.15494743, 0.37816253]]]]])
+    grid_np = np.array([[[[[-0.88778573, -1.9807965, -0.34791216]]],
+                         [[[0.15634897, 1.2302907, 1.2023798]]]],
+                        [[[[-0.3873268, -0.30230275, -1.048553]]],
+                         [[[-1.420018, -1.7062702, 1.9507754]]]]])
+    in_tensor = Tensor(input_np, ms.float32)
+    grid = Tensor(grid_np, ms.float32)
+    expect_out = np.array([[[[[0.8633592]], [[0.24914137]]], [[[0.0949388]], [[0.30234334]]]],
+                           [[[[0.6033937]], [[-0.68442094]]], [[[0.70853865]], [[0.41091672]]]]], np.float32)
+    error_out = np.ones(shape=expect_out.shape) * 1.0e-6
+
+    net = Net3D('bilinear', 'zeros', True)
+    output = net(in_tensor, grid)
+    diff_out = output.asnumpy() - expect_out
+    assert np.all(np.abs(diff_out) < error_out)
