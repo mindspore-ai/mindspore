@@ -1401,31 +1401,32 @@ def scatter_nd(indices, updates, shape):
     Scatters a tensor into a new tensor depending on the specified indices.
 
     Creates an empty tensor with the given `shape`, and set values by scattering the update tensor
-    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q` where :math:`Q \ge 2`.
+    depending on indices. The empty tensor has rank :math:`P` and `indices` has rank :math:`Q`.
 
-    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)` where :math:`N \le P`.
+    The `shape` is :math:`(s_0, s_1, ..., s_{P-1})`, where :math:`P \ge 1`.
+
+    `indices` has shape :math:`(i_0, i_1, ..., i_{Q-2}, N)`, where :math:`Q \ge 2` and :math:`N \le P`.
 
     The last dimension of `indices` (with length :math:`N` ) indicates slices along the :math:`N` th dimension of the
     empty tensor.
 
-    `updates` is a tensor of rank :math:`Q-1+P-N`,
-    its shape is: :math:`(i_0, i_1, ..., i_{Q-2}, shape_N, ..., shape_{P-1})`.
+    `updates` is a tensor of rank :math:`Q-1+P-N`, and
+    its shape is :math:`(i_0, i_1, ..., i_{Q-2}, s_N, s_{N+1}, ..., s_{P-1})`.
 
-    The following figure shows the calculation process of inserting two slices in the first dimension of a rank-3
-    with two matrices of new values:
+    If `indices` contains duplicates, the duplicate `updates` are summed.
+
+    The following figure shows the calculation process of inserting two new value matrices into the first dimension
+    with rank-3:
 
     .. image:: ScatterNd.png
 
     Args:
-        indices (Tensor): The index of scattering in the new tensor with int32 or int64 data type.
-            The rank of indices must be at least 2 and :math:`indices\_shape[-1] \le len(shape)`.
-        updates (Tensor): The source Tensor to be scattered.
-            It has shape :math:`indices\_shape[:-1] + shape[indices\_shape[-1]:]`.
+        indices (Tensor): Define the index of scattering in the new tensor with int32 or int64 data type.
+            The rank of `indices` must be at least 2 and `indices.shape[-1] <= len(shape)`.
+        updates (Tensor): Define the source Tensor to be updated.
+            It has shape `indices.shape[:-1] + shape[indices.shape[-1]:]`.
         shape (tuple[int]): Define the shape of the output tensor, has the same data type as indices.
-            The shape of `shape` is :math:`(x_1, x_2, ..., x_R)`, and the length of 'shape' is greater than
-            or equal to 2. In other words, the shape of `shape` is at least :math:`(x_1, x_2)`.
-            And the value of any element in `shape` must be greater than or equal to 1.
-            In other words, :math:`x_1 \ge 1`, :math:`x_2 \ge 1`.
+            `shape` can not be empty, and the elements in `shape` must be greater than or equal to 1.
 
     Returns:
         Tensor, the new tensor, has the same type as `update` and the same shape as `shape`.
