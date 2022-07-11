@@ -293,7 +293,7 @@ T GridSampler3DGradCpuKernelMod::reflect_coordinates_set_grad(T x, int64_t twice
     *grad_x = static_cast<T>(kZero);
     return static_cast<T>(kZero);
   }
-  size_t grad_x_mult_;
+  int64_t grad_x_mult_;
   T min = static_cast<T>(twice_low) / kTwo;
   T span = static_cast<T>(twice_high - twice_low) / kTwo;
   x = x - min;
