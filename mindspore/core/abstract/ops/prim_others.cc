@@ -208,15 +208,24 @@ AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (dependant_value != kAnyValue) {
     return args_spec_list[0];
   }
+  auto depends = args_spec_list[0];
 
-  auto depends = args_spec_list[0]->Broaden();  // Avoid eliminating the dependent node.
+  if (depends->isa<AbstractRefTensor>()) {
+    auto abs_ref = depends->cast<AbstractRefPtr>();
+    auto tensor_abs = abs_ref->ref();
+    MS_EXCEPTION_IF_NULL(tensor_abs);
+    return std::make_shared<AbstractRefTensor>(tensor_abs->Broaden()->cast<AbstractTensorPtr>(),
+                                               abs_ref->ref_key_value());
+  }
+
+  auto depends_abs = depends->Broaden();  // Avoid eliminating the dependent node.
   if (!MsContext::GetInstance()->get_param<bool>(MS_CTX_GRAD_FOR_SCALAR)) {
     // For scalar, need to set value to kAnyValue, because broaden scalar will not change the value.
-    if (depends->isa<AbstractScalar>()) {
-      depends->set_value(kAnyValue);
+    if (depends_abs->isa<AbstractScalar>()) {
+      depends_abs->set_value(kAnyValue);
     }
   }
-  return depends;
+  return depends_abs;
 }
 
 AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
