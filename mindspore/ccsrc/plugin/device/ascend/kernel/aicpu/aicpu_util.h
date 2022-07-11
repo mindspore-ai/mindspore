@@ -63,6 +63,7 @@ constexpr auto kHistogram = "Histogram";
 constexpr auto kIdentity = "Identity";
 constexpr auto kIdentityN = "IdentityN";
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
+constexpr auto kGatherDGradV2 = "GatherDGradV2";
 constexpr auto kResizeNearestNeighborV2 = "ResizeNearestNeighborV2";
 constexpr auto kResizeNearestNeighborV2Grad = "ResizeNearestNeighborV2Grad";
 constexpr auto kUpdateCache = "UpdateCache";
@@ -110,7 +111,8 @@ const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
                                               kPriorityReplayBufferPush,
                                               kPriorityReplayBufferSample,
                                               kPriorityReplayBufferUpdate,
-                                              kPriorityReplayBufferDestroy};
+                                              kPriorityReplayBufferDestroy,
+                                              kGatherDGradV2};
 const std::set<std::string> kDynamicInputOps{
   kPrint,           kPack,           kMeshgrid,      kStackInitOpName,          kStackDestroyOpName,
   kStackPushOpName, kStackPopOpName, kDynamicStitch, kPriorityReplayBufferPush, kPriorityReplayBufferSample,
