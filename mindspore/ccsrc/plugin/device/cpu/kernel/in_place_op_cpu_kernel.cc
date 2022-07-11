@@ -184,33 +184,43 @@ std::shared_ptr<CpuKernelFunc> InplaceOpCpuFunc() {
 }
 using InplaceOpCpuFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 using OpFuncList = std::vector<std::pair<KernelAttr, InplaceOpCpuFuncCreator>>;
+
+#define DTYPE_REGISTER(INPUT_X, INPUT_V, OUTPUT, T) \
+  { KernelAttr().AddInputAttr(INPUT_X).AddInputAttr(INPUT_V).AddOutputAttr(OUTPUT), InplaceOpCpuFunc<T> }
+
 static const mindspore::HashMap<std::string, OpFuncList> kernel_attr_list = {
   {ops::kNameInplaceAdd,
    {
-     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      InplaceOpCpuFunc<int32_t>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      InplaceOpCpuFunc<float>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      InplaceOpCpuFunc<float16>},
+     DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeFloat64, kNumberTypeFloat64, double),
+     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, float),
+     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
+     DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
+     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
+     DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
+     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt16, int16_t),
+     DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
+     DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt8, kNumberTypeInt8, int8_t),
+     DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
    }},
   {ops::kNameInplaceSub,
    {
-     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      InplaceOpCpuFunc<int32_t>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      InplaceOpCpuFunc<float>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      InplaceOpCpuFunc<float16>},
+     DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeFloat64, kNumberTypeFloat64, double),
+     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, float),
+     DTYPE_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t),
+     DTYPE_REGISTER(kNumberTypeUInt64, kNumberTypeUInt64, kNumberTypeUInt64, uint64_t),
+     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
+     DTYPE_REGISTER(kNumberTypeUInt32, kNumberTypeUInt32, kNumberTypeUInt32, uint32_t),
+     DTYPE_REGISTER(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt16, int16_t),
+     DTYPE_REGISTER(kNumberTypeUInt16, kNumberTypeUInt16, kNumberTypeUInt16, uint16_t),
+     DTYPE_REGISTER(kNumberTypeInt8, kNumberTypeInt8, kNumberTypeInt8, int8_t),
+     DTYPE_REGISTER(kNumberTypeUInt8, kNumberTypeUInt8, kNumberTypeUInt8, uint8_t),
    }},
   {ops::kNameInplaceUpdate,
    {
-     {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-      InplaceOpCpuFunc<int32_t>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-      InplaceOpCpuFunc<float>},
-     {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-      InplaceOpCpuFunc<float16>},
+     DTYPE_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t),
+     DTYPE_REGISTER(kNumberTypeFloat64, kNumberTypeFloat64, kNumberTypeFloat64, double),
+     DTYPE_REGISTER(kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, float),
+     DTYPE_REGISTER(kNumberTypeFloat16, kNumberTypeFloat16, kNumberTypeFloat16, float16),
    }},
 };
 }  // namespace
