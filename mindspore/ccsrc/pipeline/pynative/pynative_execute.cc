@@ -1894,8 +1894,7 @@ void ForwardExecutor::DoSignatureCast(const PrimitivePyPtr &prim,
       is_same_type = (prim::type_map.find(arg_type_id) == prim::type_map.end() || arg_type_id == it->second);
     }
     if (sig == SignatureEnumRW::kRWWrite && arg_type_id != kTypeUnknown && !is_same_type) {
-      prim::RaiseExceptionForConvertRefDtype(prim->name(), TypeIdToMsTypeStr(arg_type_id),
-                                             TypeIdToMsTypeStr(it->second));
+      prim::RaiseExceptionForConvertRefDtype(prim, TypeIdToMsTypeStr(arg_type_id), TypeIdToMsTypeStr(it->second), i);
     }
     if (is_same_type) {
       continue;

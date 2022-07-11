@@ -200,9 +200,8 @@ AnfNodePtr DoCast(const AnfNodePtr &param, const TypeId &type_id, const FuncGrap
   return graph->NewCNodeAfter(param, {cast_node, param, dtype_node});
 }
 
-void DoAutoCast(const std::string &func_name, const std::vector<Signature> &signature,
-                const std::vector<TypePtr> &input_types, const FuncGraphPtr &graph,
-                const std::set<size_t> &write_indices, std::vector<AnfNodePtr> *op_inputs) {
+void DoAutoCast(const ValuePtr &func, const std::vector<Signature> &signature, const std::vector<TypePtr> &input_types,
+                const FuncGraphPtr &graph, const std::set<size_t> &write_indices, std::vector<AnfNodePtr> *op_inputs) {
   std::vector<SignatureEnumDType> dtypes;
   (void)std::transform(signature.begin(), signature.end(), std::back_inserter(dtypes),
                        [](const Signature &sig) { return sig.dtype; });
@@ -234,7 +233,7 @@ void DoAutoCast(const std::string &func_name, const std::vector<Signature> &sign
         if (it_name_map == type_name_map.end()) {
           continue;
         }
-        RaiseExceptionForConvertRefDtype(func_name, it_map->second, it_name_map->second);
+        RaiseExceptionForConvertRefDtype(func, it_map->second, it_name_map->second, i);
       }
       continue;
     }
@@ -345,7 +344,7 @@ AnfNodePtr BuildNewCNode(const FuncGraphPtr &func_graph, const std::string &func
   }
   // process default
   ProcessDefault(func_name, args_spec_list.size(), signature, has_var, &op_inputs);
-  DoAutoCast(func_name, signature, input_types, func_graph, write_indices, &op_inputs);
+  DoAutoCast(function, signature, input_types, func_graph, write_indices, &op_inputs);
   return func_graph->NewCNodeInOrder(op_inputs);
 }
 }  // namespace
@@ -368,10 +367,24 @@ FuncGraphPtr DoSignatureMetaFuncGraph::GenerateFuncGraph(const AbstractBasePtrLi
   return func_graph;
 }
 
-void RaiseExceptionForConvertRefDtype(const std::string &, const std::string &ref_type,
-                                      const std::string &target_type) {
-  MS_LOG(EXCEPTION) << "Data type conversion of 'Parameter' is not supported, so data type " << ref_type
-                    << " cannot be converted to data type " << target_type << " automatically.\n"
+void RaiseExceptionForConvertRefDtype(const ValuePtr &func, const std::string &ref_type, const std::string &target_type,
+                                      size_t index) {
+  std::ostringstream buffer;
+  if (func->isa<Primitive>()) {
+    auto prim = func->cast<PrimitivePtr>();
+    auto args_names_value = prim->GetAttr("input_names");
+    if (args_names_value != nullptr) {
+      auto args_names = GetValue<std::vector<std::string>>(args_names_value);
+      if (index < args_names.size()) {
+        buffer << " the argument[" << args_names[index] << "]'s data type of primitive[" << prim->name() << "] is ";
+      }
+    }
+  }
+  if (buffer.str().empty()) {
+    buffer << " so data type ";
+  }
+  MS_LOG(EXCEPTION) << "Data type conversion of 'Parameter' is not supported," << buffer.str() << ref_type
+                    << ", which cannot be converted to data type " << target_type << " automatically.\n"
                     << "For more details, please refer at "
                     << "https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_implicit.html.";
 }
