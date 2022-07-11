@@ -40,7 +40,7 @@ class AscendStreamMng {
 
   uint32_t ApplyNewEvent() { return cur_event_num_++; }
 
-  rtEvent_t ApplyRtEvent() {
+  rtEvent_t ApplyRtEvent() const {
     auto rt_resource = std::make_shared<rtEvent_t>();
     auto ret = rtEventCreate(rt_resource.get());
     if (ret != RT_ERROR_NONE) {
@@ -51,7 +51,7 @@ class AscendStreamMng {
   }
 
   void DeleteEvent() {
-    if (!cur_event_num_) {
+    if (cur_event_num_ == 0) {
       MS_LOG(WARNING) << "total event num is 0, no event to delete";
     } else {
       --cur_event_num_;
@@ -59,7 +59,7 @@ class AscendStreamMng {
   }
 
   void DeleteStream() {
-    if (!cur_stream_num_) {
+    if (cur_stream_num_ == 0) {
       MS_LOG(WARNING) << " total stream num is 0, no stream to delete";
     } else {
       --cur_stream_num_;
@@ -68,8 +68,8 @@ class AscendStreamMng {
 
   uint32_t cur_stream_num() const { return cur_stream_num_; }
 
-  uint32_t GetCurAllocStreamId() {
-    if (!cur_stream_num_) {
+  uint32_t GetCurAllocStreamId() const {
+    if (cur_stream_num_ == 0) {
       MS_LOG(EXCEPTION) << "stream nums is 0, no stream id should be get";
     }
     return cur_stream_num_ - 1;
