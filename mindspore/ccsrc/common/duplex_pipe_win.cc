@@ -33,7 +33,9 @@ void DuplexPipe::WriteWithStdout(const std::string &buf, bool flush) {
 
 std::string DuplexPipe::ReadWithStdin() { DP_EXCEPTION << "Not support for Windows by now."; }
 
-DuplexPipe &DuplexPipe::operator<<(const std::string &buf) { DP_EXCEPTION << "Not support for Windows by now."; }
+const DuplexPipe &DuplexPipe::operator<<(const std::string &buf) const {
+  DP_EXCEPTION << "Not support for Windows by now.";
+}
 
 DuplexPipe &DuplexPipe::operator>>(std::string &buf) { DP_EXCEPTION << "Not support for Windows by now."; }
 

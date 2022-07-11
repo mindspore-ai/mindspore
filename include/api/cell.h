@@ -53,9 +53,9 @@ class MS_API GraphCell final : public Cell<GraphCell> {
   GraphCell() = default;
   ~GraphCell() override = default;
 
-  explicit GraphCell(const Graph &);
-  explicit GraphCell(Graph &&);
-  explicit GraphCell(const std::shared_ptr<Graph> &);
+  explicit GraphCell(const Graph &graph);
+  explicit GraphCell(Graph &&graph);
+  explicit GraphCell(const std::shared_ptr<Graph> &graph);
 
   void SetContext(const std::shared_ptr<Context> &context);
   const std::shared_ptr<Graph> &GetGraph() const { return graph_; }
@@ -76,7 +76,7 @@ class MS_API InputAndOutput {
   InputAndOutput();
   ~InputAndOutput() = default;
 
-  InputAndOutput(const std::shared_ptr<CellBase> &, const std::vector<InputAndOutput> &, int32_t index);
+  InputAndOutput(const std::shared_ptr<CellBase> &cell, const std::vector<InputAndOutput> &prev, int32_t index);
 
   int32_t GetIndex() const { return index_; }
   void SetIndex(int32_t index) { index_ = index; }
