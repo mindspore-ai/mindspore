@@ -77,6 +77,9 @@ class MS_API Converter {
   void SetNoFusion(bool no_fusion);
   bool GetNoFusion();
 
+  void SetDevice(const std::string &device);
+  std::string GetDevice();
+
   Status Convert();
   void *Convert(size_t *data_size);
 

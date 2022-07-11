@@ -13,8 +13,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_compile_definitions(USE_GLOG)
     string(REPLACE "-fno-rtti" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     string(REPLACE "-fno-rtti" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    string(REPLACE "-fno-exceptions" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
-    string(REPLACE "-fno-exceptions" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
     remove_definitions(-DBUILD_LITE_INFERENCE)
     set(MINDIR_MODEL_SRC
@@ -30,10 +28,16 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
             ${MINDIR_KERNEL_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/inner_kernel.cc)
 
+    set(MSLITE_KERNEL_PLUGIN
+            ${MSLITE_KERNEL_PLUGIN}
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
+
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
             # ${MINDIR_MODEL_SRC}
             # ${MINDIR_KERNEL_SRC}
+            ${MSLITE_KERNEL_PLUGIN}
             ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
@@ -92,6 +96,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         # ${CCSRC_DIR}/backend/common/optimizer/pattern_engine.cc
         # ${CCSRC_DIR}/backend/common/optimizer/visit.cc
         # ${CCSRC_DIR}/backend/common/optimizer/common_backend_optimization.cc
+        ${CCSRC_DIR}/runtime/device/auto_mem_offload.cc
         ${CCSRC_DIR}/runtime/device/ms_device_shape_transfer.cc
         ${CCSRC_DIR}/runtime/device/kernel_info.cc
         ${CCSRC_DIR}/runtime/device/convert_tensor_utils.cc
@@ -168,8 +173,6 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(MSLITE_ENABLE_ACL)
         include_directories(${TOP_DIR}/graphengine/inc/external)
         add_subdirectory(kernel/ascend)
-        link_directories(${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-        target_link_libraries(mindspore-extendrt ascend_kernel_mid)
     endif()
 
     if(SUPPORT_CUDA)

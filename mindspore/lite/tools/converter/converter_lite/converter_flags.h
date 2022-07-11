@@ -79,6 +79,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string encryptionStr = "false";
   bool encryption = false;
 #endif
+  std::string device;
 };
 }  // namespace converter
 }  // namespace mindspore

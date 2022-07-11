@@ -51,7 +51,9 @@ int RunBenchmark(int argc, const char **argv) {
   if (api_type == nullptr || std::string(api_type) == "NEW") {
     benchmark = new (std::nothrow) BenchmarkUnifiedApi(&flags);
   } else if (std::string(api_type) == "C") {
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
     benchmark = new (std::nothrow) tools::BenchmarkCApi(&flags);
+#endif
   } else {
     BENCHMARK_LOG_ERROR("Invalid MSLITE_API_TYPE, (OLD/NEW/C, default:OLD)");
     return RET_ERROR;

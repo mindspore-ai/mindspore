@@ -84,6 +84,7 @@ Flags::Flags() {
           "false");
   AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::noFusionStr, "NoFusion", "Avoid fusion optimization true|false", "false");
+  AddFlag(&Flags::device, "device", "Set the target device Ascend", "");
 }
 
 int Flags::InitInputOutputDataType() {

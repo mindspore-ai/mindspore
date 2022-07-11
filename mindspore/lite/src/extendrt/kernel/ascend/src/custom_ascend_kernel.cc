@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "extendrt/kernel/ascend/custom_ascend_kernel.h"
+#include "extendrt/kernel/ascend/src/custom_ascend_kernel.h"
+
 #include <utility>
 #include "include/registry/register_kernel.h"
 #include "include/api/types.h"
@@ -198,45 +199,6 @@ bool CustomAscendKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
   return true;
 }
 
-// std::shared_ptr<kernel::Kernel> CustomCreateKernel(const std::vector<mindspore::MSTensor> &inputs,
-//                                                    const std::vector<mindspore::MSTensor> &outputs,
-//                                                    const schema::Primitive *primitive, const mindspore::Context *ctx)
-//                                                    {
-//   if (primitive == nullptr) {
-//     MS_LOG(ERROR) << "Primitive is nullptr.";
-//     return nullptr;
-//   }
-//   if (primitive->value_type() != schema::PrimitiveType_Custom) {
-//     MS_LOG(ERROR) << "Primitive type is not PrimitiveType_Custom";
-//     return nullptr;
-//   }
-//
-//   auto kernel = std::make_shared<CustomAscendKernel>(inputs, outputs, primitive, ctx);
-//   if (kernel == nullptr) {
-//     MS_LOG(ERROR) << "New custom kernel is nullptr";
-//     return nullptr;
-//   }
-//   return kernel;
-// }
-
 MS_KERNEL_FACTORY_REG(KernelMod, CustomAscend, CustomAscendKernelMod);
 }  // namespace acl
 }  // namespace mindspore::kernel
-namespace mindspore {
-namespace registry {
-namespace {
-const auto kFloat32 = DataType::kNumberTypeFloat32;
-const auto kFloat16 = DataType::kNumberTypeFloat16;
-const auto kInt32 = DataType::kNumberTypeInt32;
-const auto kInt8 = DataType::kNumberTypeInt8;
-const auto kUInt8 = DataType::kNumberTypeUInt8;
-const auto kBool = DataType::kNumberTypeBool;
-}  // namespace
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kFloat32, ACL, kernel::acl::CustomCreateKernel)
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kFloat16, ACL, kernel::acl::CustomCreateKernel)
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kInt32, ACL, kernel::acl::CustomCreateKernel)
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kInt8, ACL, kernel::acl::CustomCreateKernel)
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kUInt8, ACL, kernel::acl::CustomCreateKernel)
-// REGISTER_CUSTOM_KERNEL(ASCEND, ACL, kBool, ACL, kernel::acl::CustomCreateKernel)
-}  // namespace registry
-}  // namespace mindspore

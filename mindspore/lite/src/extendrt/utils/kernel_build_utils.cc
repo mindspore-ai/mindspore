@@ -35,8 +35,9 @@ using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
 constexpr auto kParamDynamic = "dynamic";
-constexpr auto kCustomAscendInputNum = 3;
+constexpr auto kInputNum = 3;
 constexpr auto kNameCustomAscend = "CustomAscend";
+constexpr auto kNameTranspose = "Transpose";
 constexpr auto kCustomTypeAscend = "acl_build";
 
 bool IsInputNotCNode(const CNodePtr &kernel_node, size_t input_index) {
@@ -71,8 +72,8 @@ void GetInputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *input_type
     if (IsInputNotCNode(kernel_node, input_index)) {
       input_no_cnode_indexes->emplace_back(input_index);
       dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, input_index);
-      // } else {
-      //   dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
+    } else {
+      dtype = AnfAlgo::GetPrevNodeOutputDeviceDataType(kernel_node, input_index);
     }
     input_types->emplace_back(dtype);
   }
@@ -546,11 +547,11 @@ void SetKernelInfo(const CNodePtr &kernel_node) {
 
 void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::KernelTensorPtr> &inputs) {
   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  if (kernel_name == kNameCustomAscend) {
+  if (kernel_name == kNameCustomAscend || kernel_name == kNameTranspose) {
     auto node_input_size = kernel_node->inputs().size();
-    if (node_input_size < kCustomAscendInputNum) {
-      MS_LOG(ERROR) << "Input num of custom ascend kernel should larger than " << (kCustomAscendInputNum - 1)
-                    << ", real num is " << node_input_size;
+    if (node_input_size < kInputNum) {
+      MS_LOG(ERROR) << "Input num of custom ascend kernel should larger than " << (kInputNum - 1) << ", real num is "
+                    << node_input_size;
       return;
     }
     if (node_input_size != inputs.size() + 1) {
@@ -558,17 +559,17 @@ void CopyInputWeights(const CNodePtr &kernel_node, const std::vector<kernel::Ker
                     << " is not equal to kernel tensor size[" << (inputs.size() + 1) << "].";
       return;
     }
-    auto om_input = kernel_node->input(node_input_size - 1);
-    if (!om_input->isa<Parameter>()) {
+    auto weight_input = kernel_node->input(node_input_size - 1);
+    if (!weight_input->isa<Parameter>()) {
       MS_LOG(ERROR) << "Om input is not parameter.";
       return;
     }
-    ParameterPtr om_param = om_input->cast<ParameterPtr>();
-    if (om_param == nullptr || !om_param->has_default()) {
-      MS_LOG(ERROR) << "Om param is invalid, val= " << om_param;
+    ParameterPtr weight_param = weight_input->cast<ParameterPtr>();
+    if (weight_param == nullptr || !weight_param->has_default()) {
+      MS_LOG(ERROR) << "Om param is invalid, val= " << weight_param;
       return;
     }
-    auto tensor = std::static_pointer_cast<tensor::Tensor>(om_param->default_param());
+    auto tensor = std::static_pointer_cast<tensor::Tensor>(weight_param->default_param());
     if (tensor == nullptr) {
       MS_LOG(ERROR) << "Tensor is nullptr.";
       return;

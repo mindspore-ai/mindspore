@@ -5,22 +5,17 @@ include_directories(${TOP_DIR}/mindspore/lite/src)
 find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 
 file(GLOB_RECURSE ASCEND_SRC ${CMAKE_CURRENT_SOURCE_DIR}
-        "custom_ascend_kernel.cc"
+        "src/*.cc"
+        "api/*.cc"
         "model/*.cc"
         )
 
-add_library(ascend_kernel_mid OBJECT ${ASCEND_SRC})
+add_library(ascend_kernel_plugin SHARED ${ASCEND_SRC})
+add_dependencies(ascend_kernel_plugin fbs_inner_src)
 
-add_dependencies(ascend_kernel_mid fbs_inner_src)
-if("${MSLITE_REGISTRY_DEVICE}" STREQUAL "SD3403" AND PLATFORM_ARM64)
-    find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_retr libacl_retr.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_cblas libacl_cblas.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(acl_runtime libruntime.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(ascend_kernel_mid ${ge_graph} ${acl} ${acl_retr} ${acl_cblas} ${acl_runtime})
-else()
-    target_link_libraries(ascend_kernel_mid ${ge_graph} ${ge_compiler}
-        ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform}
-        ${libcompress} ${libopskernel} ${libaicore_utils} ${libaicpu_engine_common} ${acl})
-endif()
+find_library(ge_graph libgraph.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(acl libascendcl.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(acl_retr libacl_retr.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(acl_cblas libacl_cblas.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+find_library(acl_runtime libruntime.so ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
+target_link_libraries(ascend_kernel_plugin ${ge_graph} ${acl} ${acl_retr} ${acl_cblas} ${acl_runtime})

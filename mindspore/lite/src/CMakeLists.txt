@@ -679,7 +679,7 @@ if(ENABLE_MODEL_OBF)
     target_link_libraries(mindspore-lite_static ${OBF_LIB_DIR}/libmsdeobfuscator-lite.so)
 endif()
 
-if(MSLITE_ENABLE_ACL)
+if(MSLITE_ENABLE_ACL AND (NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE))
     target_link_libraries(mindspore-lite ascend_kernel_mid)
     target_link_libraries(mindspore-lite_static ascend_kernel_mid)
 endif()

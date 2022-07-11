@@ -21,6 +21,7 @@ set(TURBO_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/libjpeg-turbo)
 set(GLOG_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/glog)
 set(SECUREC_DIR ${RUNTIME_PKG_NAME}/runtime/third_party/securec)
 set(MINDSPORE_LITE_LIB_NAME libmindspore-lite)
+set(MINDSPORE_LITE_EXTENDRT_LIB_NAME libmindspore-extendrt)
 set(MINDSPORE_CORE_LIB_NAME libmindspore_core)
 set(BENCHMARK_NAME benchmark)
 set(MSLITE_NNIE_LIB_NAME libmslite_nnie)
@@ -403,10 +404,22 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+                RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+    else()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch64/libmsdeobfuscator-lite.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -530,46 +543,9 @@ if(PLATFORM_ARM64)
                     install(TARGETS mindspore_core DESTINATION ${CONVERTER_ROOT_DIR}/lib
                             COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
-                if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud" AND MSLITE_ENABLE_RUNTIME_CONVERT)
-                    file(GLOB DATA_ENGINE_LIB_LIST ${LITE_ACL_DIR}/_c_dataengine/*.so)
-                    file(GLOB DATA_RECORD_LIB_LIST ${LITE_ACL_DIR}/_c_mindrecord/*.so)
-                    install(FILES ${DATA_ENGINE_LIB_LIST}
-                            DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${DATA_RECORD_LIB_LIST}
-                            DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicuuc.so.69.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicuuc.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicudata.so.69.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicudata.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${icu4c_LIBPATH}/libicui18n.so.69.1
-                            DESTINATION ${RUNTIME_LIB_DIR} RENAME libicui18n.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.36.1 DESTINATION ${RUNTIME_LIB_DIR}
-                            RENAME libmindspore_grpc++.so.1 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.15.0.0 DESTINATION
-                            ${RUNTIME_LIB_DIR} RENAME libmindspore_grpc.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.15.0.0 DESTINATION
-                            ${RUNTIME_LIB_DIR} RENAME libmindspore_gpr.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.15.0.0 DESTINATION
-                            ${RUNTIME_LIB_DIR} RENAME libmindspore_upb.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.15.0.0 DESTINATION ${RUNTIME_LIB_DIR}
-                            RENAME libmindspore_address_sorting.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                    ## Public header files for minddata
-                    install(
-                            FILES ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
-                            ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
-                            DESTINATION ${RUNTIME_INC_DIR}/dataset COMPONENT ${RUNTIME_COMPONENT_NAME})
+                if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+                    install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                            COMPONENT ${RUNTIME_COMPONENT_NAME})
                 endif()
             endif()
 
@@ -669,10 +645,22 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_types_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
+                RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+    else()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+    endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/lib/android-aarch32/libmsdeobfuscator-lite.so
                 DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
@@ -835,14 +823,21 @@ else()
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "ops*" EXCLUDE)
     install(DIRECTORY ${TOP_DIR}/include/c_api/ DESTINATION ${RUNTIME_INC_DIR}/c_api
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/${MINDSPORE_LITE_EXTENDRT_LIB_NAME}.so
+                DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0 DESTINATION ${RUNTIME_LIB_DIR}
                 RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        if(MSLITE_ENABLE_ACL)
+            install(FILES ${TOP_DIR}/mindspore/lite/build/src/extendrt/kernel/ascend/libascend_kernel_plugin.so
+                    DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
+        endif()
+    else()
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.so DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
+        install(FILES ${TOP_DIR}/mindspore/lite/build/src/${MINDSPORE_LITE_LIB_NAME}.a DESTINATION ${RUNTIME_LIB_DIR}
+                COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
     if(ENABLE_MODEL_OBF)
         install(FILES ${TOP_DIR}/mindspore/lite/tools/obfuscator/bin/linux-x64/msobfuscator
@@ -918,46 +913,9 @@ else()
                         RENAME libmindspore_glog.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
                 install(TARGETS mindspore_core DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
-            if(MSLITE_MINDDATA_IMPLEMENT STREQUAL "cloud" AND MSLITE_ENABLE_RUNTIME_CONVERT)
-                file(GLOB DATA_ENGINE_LIB_LIST ${LITE_ACL_DIR}/_c_dataengine/*.so)
-                file(GLOB DATA_RECORD_LIB_LIST ${LITE_ACL_DIR}/_c_mindrecord/*.so)
-                install(FILES ${DATA_ENGINE_LIB_LIST}
-                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${DATA_RECORD_LIB_LIST}
-                        DESTINATION ${RUNTIME_LIB_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${jpeg_turbo_LIBPATH}/libjpeg.so.62.3.0
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libjpeg.so.62 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${jpeg_turbo_LIBPATH}/libturbojpeg.so.0.2.0
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libturbojpeg.so.0 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.8.0.0
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libtinyxml2.so.8 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${icu4c_LIBPATH}/libicuuc.so.69.1
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libicuuc.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${icu4c_LIBPATH}/libicudata.so.69.1
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libicudata.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${icu4c_LIBPATH}/libicui18n.so.69.1
-                        DESTINATION ${RUNTIME_LIB_DIR} RENAME libicui18n.so.69 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${grpc_LIBPATH}/libmindspore_grpc++.so.1.36.1 DESTINATION ${RUNTIME_LIB_DIR}
-                        RENAME libmindspore_grpc++.so.1 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${grpc_LIBPATH}/libmindspore_grpc.so.15.0.0 DESTINATION
-                        ${RUNTIME_LIB_DIR} RENAME libmindspore_grpc.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${grpc_LIBPATH}/libmindspore_gpr.so.15.0.0 DESTINATION
-                        ${RUNTIME_LIB_DIR} RENAME libmindspore_gpr.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${grpc_LIBPATH}/libmindspore_upb.so.15.0.0 DESTINATION
-                        ${RUNTIME_LIB_DIR} RENAME libmindspore_upb.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                install(FILES ${grpc_LIBPATH}/libmindspore_address_sorting.so.15.0.0 DESTINATION ${RUNTIME_LIB_DIR}
-                        RENAME libmindspore_address_sorting.so.15 COMPONENT ${RUNTIME_COMPONENT_NAME})
-                ## Public header files for minddata
-                install(
-                        FILES ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/config.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/constants.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/execute.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/text.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/transforms.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_lite.h
-                        ${TOP_DIR}/mindspore/ccsrc/minddata/dataset/include/dataset/vision_ascend.h
-                        DESTINATION ${RUNTIME_INC_DIR}/dataset COMPONENT ${RUNTIME_COMPONENT_NAME})
+            if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+                install(FILES ${LITE_ACL_DIR}/libascend_pass_plugin.so DESTINATION ${CONVERTER_ROOT_DIR}/lib
+                        COMPONENT ${RUNTIME_COMPONENT_NAME})
             endif()
         endif()
 
