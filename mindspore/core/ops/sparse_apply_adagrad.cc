@@ -43,22 +43,27 @@ abstract::TupleShapePtr SparseApplyAdagradInferShape(const PrimitivePtr &primiti
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
   auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
-  // Args var,accum and grad shape must be same
-  std::map<std::string, ShapeVector> same_shape_args_map;
-  same_shape_args_map.insert({"accum shape", accum_shape});
-  same_shape_args_map.insert({"grad shape", grad_shape});
-  for (auto &elem : same_shape_args_map) {
-    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
-  }
+
+  (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "accum_shape", accum_shape, prim_name);
+
   // Indices must be rank 1
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
   // Grad dimension must be equal or greater than 1
   (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, 1, prim_name);
+
   // Indices size must equal with grad first dimension size
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the indices size must be equal to grad first dimension size. But got indices size: "
                              << indices_shape[0] << ", grad first dimension size: " << grad_shape[0] << ".";
+  }
+  if (grad_shape.size() > 1) {
+    auto var_indexed_shape = var_shape;
+    auto grad_indexed_shape = grad_shape;
+    var_indexed_shape.erase(var_indexed_shape.begin());
+    grad_indexed_shape.erase(grad_indexed_shape.begin());
+    (void)CheckAndConvertUtils::CheckValue("var_shape[1:]", var_indexed_shape, kEqual, "grad_shape[1:]",
+                                           grad_indexed_shape, prim_name);
   }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
 }
