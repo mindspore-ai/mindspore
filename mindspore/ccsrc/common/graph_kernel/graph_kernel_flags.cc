@@ -270,7 +270,7 @@ void GraphKernelFlags::RegisterFlags(std::map<std::string, std::string> *flag_ma
   reg.AddFlag("enable_debug_mode", &enable_debug_mode);
 
   // Integer flags
-  reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth);
+  reg.AddFlag("reduce_fuse_depth", &reduce_fuse_depth, -1);
   reg.AddFlag("online_tuning", &online_tuning);
   reg.AddFlag("fusion_ops_level", &fusion_ops_level, is_ascend ? OpLevel_0 : OpLevel_MAX);
   reg.AddFlag("parallel_ops_level", &parallel_ops_level);
