@@ -51,6 +51,7 @@ class PassRegistryTest : public mindspore::CommonTest {
     }
     ConverterParameters converter_parameters;
     func_graph_ = model_parser->Parse(converter_parameters);
+    delete model_parser;
   }
   api::FuncGraphPtr func_graph_ = nullptr;
 };

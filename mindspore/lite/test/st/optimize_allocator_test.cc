@@ -30,9 +30,9 @@ class SessionMock : public LiteSession {
 };
 }  // namespace lite
 
-class OptAllocator : public mindspore::CommonTest {
+class OptimizeAllocator : public mindspore::CommonTest {
  public:
-  OptAllocator() = default;
+  OptimizeAllocator() = default;
 };
 
 void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
@@ -120,7 +120,7 @@ void CreateModel1(mindspore::schema::MetaGraphT *meta_graph) {
   meta_graph->outputIndex = {3};
 }
 
-TEST_F(OptAllocator, RuntimeAllocator1) {
+TEST_F(OptimizeAllocator, RuntimeAllocator1) {
   auto meta_graph = std::make_shared<mindspore::schema::MetaGraphT>();
   CreateModel1(meta_graph.get());
 

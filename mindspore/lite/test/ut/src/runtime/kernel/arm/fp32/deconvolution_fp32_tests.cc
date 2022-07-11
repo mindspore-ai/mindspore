@@ -263,14 +263,14 @@ TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_2) {
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,  -0.50162584,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964};
   float bias[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-  float __attribute__((aligned(32))) out[28] = {0};
+  float __attribute__((aligned(32))) out[32] = {0};
 
   float no[] = {-9.389655,  -5.83877,   7.5724425,  -1.4675674, -5.456284,  0.7406984,   16.965645, 10.888806,
                 -6.1621623, -0.6315082, -9.140878,  9.266748,   13.644127,  8.206812,    7.091153,  -0.50162584,
                 -0.8614793, -4.404605,  10.917422,  0.11158327, -5.2733865, -0.96367484, -4.731118, -7.576815,
                 2.0889723,  6.6916203,  -5.3981733, 11.997365,  -9.254076,  -5.5964484,  -5.981469, -0.51114964};
   PostConvFuncFp32C8(in, out, bias, 16, 2, 16, ActType_No);
-  ASSERT_EQ(0, CompareOutputData(out, no, 28, 0.0001));
+  ASSERT_EQ(0, CompareOutputData(out, no, 32, 0.0001));
 }
 
 TEST_F(TestDeConvolutionFp32, PostConvFuncC8Test8_4) {
@@ -474,7 +474,9 @@ int DeConvTestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
 TEST_F(TestDeConvolutionFp32, DeConvTest1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
-  auto *deconv_param = new ConvParameter();
+  auto deconv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(deconv_param, nullptr);
+  memset(deconv_param, 0, sizeof(ConvParameter));
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 1;
   deconv_param->op_parameter_.is_zero_shape_ = false;
@@ -542,7 +544,9 @@ int DeConvTestInit2(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
 TEST_F(TestDeConvolutionFp32, DeConvTest2) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
-  auto deconv_param = new ConvParameter();
+  auto deconv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(deconv_param, nullptr);
+  memset(deconv_param, 0, sizeof(ConvParameter));
   float *correct;
   int total_size = DeConvTestInit2(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
@@ -621,7 +625,9 @@ int DeConvTestInit3(std::vector<lite::Tensor *> *inputs_, std::vector<lite::Tens
 TEST_F(TestDeConvolutionFp32, DeConvTest3) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
-  auto deconv_param = new ConvParameter();
+  auto deconv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(deconv_param, nullptr);
+  memset(deconv_param, 0, sizeof(ConvParameter));
   float *correct;
   int total_size = DeConvTestInit3(&inputs_, &outputs_, deconv_param, &correct);
   auto *ctx = new lite::InnerContext;
