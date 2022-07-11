@@ -27,6 +27,13 @@
 namespace mindspore {
 namespace ops {
 namespace {
+void AttrTest(bool a, bool b) {
+  if (a && b) {
+    MS_EXCEPTION(ValueError) << "The half_pixel_centers must be false when align_corners is true "
+                             << ", but half_pixel_centers got True";
+  }
+}
+
 abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
   const int64_t shape0_dim = 4;
@@ -34,7 +41,6 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   constexpr int64_t indexid3 = 3;
   constexpr int64_t calnum2 = 2;
   constexpr int64_t calnum3 = 3;
-  constexpr int64_t calnum4 = 4;
   if (!input_args[0]->isa<abstract::AbstractTensor>()) {
     MS_EXCEPTION(TypeError) << "For '" << primitive->name() << "', images only support tensor!";
   }
@@ -86,11 +92,7 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
   bool align_corners = GetValue<bool>(align_corners_ptr);
   auto half_pixel_centers_ptr = primitive->GetAttr("half_pixel_centers");
   bool half_pixel_centers = GetValue<bool>(half_pixel_centers_ptr);
-  if (align_corners && half_pixel_centers) {
-    MS_EXCEPTION(ValueError) << "For '" << primitive->name()
-                             << "', the half_pixel_centers must be false when align_corners is true "
-                             << ", but half_pixel_centers got True";
-  }
+  AttrTest(align_corners, half_pixel_centers);
   if (!input_args[1]->BuildValue()->isa<AnyValue>() && !input_args[1]->BuildValue()->isa<None>()) {
     auto input1_shape_ptr = reinterpret_cast<int32_t *>(input1_shape_tensor->data_c());
     if (input1_shape_ptr[0] <= 0 || input1_shape_ptr[1] <= 0) {
@@ -99,15 +101,11 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     }
     std::vector<int64_t> output_shape;
     auto shape_m = 1;
-    for (auto i = 0; i < calnum4; ++i) {
-      if (i > 0 && i < calnum3) {
-        output_shape.push_back(input1_shape_ptr[i - 1]);
-        shape_m *= input1_shape_ptr[i - 1];
-      } else {
-        output_shape.push_back(shape0_v[i]);
-        shape_m *= shape0_v[i];
-      }
-    }
+    output_shape.push_back(shape0_v[0]);
+    output_shape.push_back(input1_shape_ptr[0]);
+    output_shape.push_back(input1_shape_ptr[1]);
+    output_shape.push_back(shape0_v[calnum3]);
+    shape_m = shape0_v[0] * input1_shape_ptr[0] * input1_shape_ptr[1] * shape0_v[calnum3];
     if (shape_m > kMaxLen) {
       MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                                << "', the number of elements of output must be less than max length: " << kMaxLen
@@ -116,6 +114,18 @@ abstract::ShapePtr ResizeBicubicInferShape(const PrimitivePtr &primitive,
     }
     return std::make_shared<abstract::Shape>(output_shape);
   } else {
+    auto prim_name = primitive->name();
+    auto x_shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, 0);
+    auto x_shape = x_shape_ptr->shape();
+    if (x_shape_ptr->IsDynamic()) {
+      auto x_min_shape = x_shape_ptr->min_shape();
+      auto x_max_shape = x_shape_ptr->max_shape();
+      x_min_shape[1] = 0;
+      x_min_shape[calnum2] = 0;
+      x_max_shape[1] = static_cast<int64_t>(std::sqrt(kMaxLen / (x_max_shape[0] * x_max_shape[calnum3])));
+      x_max_shape[calnum2] = static_cast<int64_t>(std::sqrt(kMaxLen / (x_max_shape[0] * x_max_shape[calnum3])));
+      return std::make_shared<abstract::Shape>(x_shape, x_min_shape, x_max_shape);
+    }
     ShapeVector shape_out = {shape0_v[0], abstract::Shape::SHP_ANY, abstract::Shape::SHP_ANY, shape0_v[indexid3]};
     const int64_t kMaxShapeLen = static_cast<int64_t>(std::sqrt(kMaxLen / (shape0_v[0] * shape0_v[indexid3])));
     ShapeVector shape_min = {shape0_v[0], 0, 0, shape0_v[indexid3]};
@@ -132,10 +142,14 @@ TypePtr ResizeBicubicInferType(const PrimitivePtr &primitive, const std::vector<
   const std::set<TypePtr> valid1_types = {kInt32};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("images", input_args[0]->BuildType(), valid0_types, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("size", input_args[1]->BuildType(), valid1_types, prim_name);
+  string inputFp64 = "Float64";
+  if (input_args[0]->BuildType()->ToString().find(inputFp64) != string::npos) {
+    return kFloat64;
+  }
   return kFloat32;
 }
 }  // namespace
-MIND_API_BASE_IMPL(ResizeBicubic, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ResizeBicubic, BaseOperator);
 void ResizeBicubic::set_align_corners(const bool align_corners) {
   (void)this->AddAttr("align_corners", api::MakeValue(align_corners));
 }

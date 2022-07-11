@@ -770,7 +770,7 @@ class ResizeBicubic(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> class NetResizeBicubic(nn.Cell):
