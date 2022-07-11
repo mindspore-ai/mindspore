@@ -41,17 +41,20 @@ struct ShapeFusionMatrix {
     }
   }
 
-  void Append(const ShapeFusionMatrix &other) {
-    for (auto row : other.shape_matrix) {
-      shape_matrix.push_back(row);
-    }
-  }
-
-  void Gather(const std::vector<int> &indices) {
+  int Gather(const std::vector<int> &indices) {
     auto src_matrix = shape_matrix;
     shape_matrix.clear();
     for (auto idx : indices) {
+      idx = idx >= 0 ? idx : idx + src_matrix.size();
+      MS_CHECK_TRUE_RET(idx >= 0 && idx < static_cast<int>(src_matrix.size()), RET_ERROR);
       shape_matrix.push_back(src_matrix.at(idx));
+    }
+    return RET_OK;
+  }
+
+  void Append(const ShapeFusionMatrix &other) {
+    for (auto row : other.shape_matrix) {
+      shape_matrix.push_back(row);
     }
   }
 
