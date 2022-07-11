@@ -188,7 +188,8 @@ class GraphCompiler {
 
   // The implementation of compiling graph in Graph Mode, including optimizing graph,
   // setting operator info, creating kernel and transforming kernel graph to ActorSet.
-  GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context) const;
+  GraphId CompileGraphImpl(const KernelGraphPtr &graph, const DeviceContext *device_context,
+                           bool run_in_pynative = true) const;
 
  private:
   DISABLE_COPY_AND_ASSIGN(GraphCompiler);
