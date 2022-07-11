@@ -48,26 +48,50 @@ abstract::ShapePtr RandomStandardNormalInferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  ShapeVector shape;
-  abstract::ShapePtr output_shape;
   auto shape_value = input_args[kInputIndex0]->BuildValue();
-  if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
-    shape = shape_value->isa<ValueTuple>()
-              ? CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, prim_name)
-              : CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
-    output_shape = std::make_shared<abstract::Shape>(shape);
+  MS_EXCEPTION_IF_NULL(shape_value);
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+    std::vector<int64_t> out_shape = CheckAndConvertUtils::CheckIntOrTupleInt("input[shape]", shape_value, prim_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, prim_name);
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+    if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
+      ShapeVector input_shape = CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, prim_name);
+      return std::make_shared<abstract::Shape>(input_shape);
+    } else {
+      constexpr int dynamic_rank_value = -2;
+      ShapeVector shape = {dynamic_rank_value};
+      ShapeVector min_shape = {0};
+      ShapeVector max_shape = {abstract::Shape::SHP_ANY};
+      return std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    }
   } else {
-    constexpr int dynamic_rank_value = -2;
-    shape = {dynamic_rank_value};  // unknown dimension.
-    ShapeVector min_shape = {0};
-    ShapeVector max_shape = {abstract::Shape::SHP_ANY};
-    output_shape = std::make_shared<abstract::Shape>(shape, min_shape, max_shape);
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
+                            << input_args[kInputIndex0]->ToString() << ".";
   }
-  return output_shape;
 }
 
 TypePtr RandomStandardNormalInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  if (input_args[kInputIndex0]->isa<abstract::AbstractTuple>()) {
+    auto elements = input_args[kInputIndex0]->cast<abstract::AbstractTuplePtr>()->elements();
+    const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
+    for (size_t i = 0; i < elements.size(); ++i) {
+      auto input_dtype = elements[i]->BuildType();
+      (void)CheckAndConvertUtils::CheckTypeValid("shape", input_dtype, valid_shape_types, prim_name);
+    }
+  } else if (input_args[kInputIndex0]->isa<abstract::AbstractTensor>()) {
+    const std::set<TypePtr> valid_shape_types = {kInt32, kInt64};
+    auto input_dtype = input_args[kInputIndex0]->BuildType();
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("shape", input_dtype, valid_shape_types, prim_name);
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', input must be a Int, a tuple, or a Tensor with all Int elements, but got: "
+                            << input_args[kInputIndex0]->ToString() << ".";
+  }
   return std::make_shared<TensorType>(kFloat32);
 }
 }  // namespace
