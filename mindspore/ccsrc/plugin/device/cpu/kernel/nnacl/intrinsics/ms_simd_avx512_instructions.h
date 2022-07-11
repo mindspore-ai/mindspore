@@ -62,6 +62,8 @@
 #define MS_SIN512_F32 _mm512_sin_ps
 #define MS_ERF512_F32 _mm512_erf_ps
 #define MS_ABS512_F32 _mm512_abs_ps
+#define MS_ABS512_EPI32 _mm512_abs_epi32
+
 #define MS_ROUND512_F32(src) \
   _mm512_add_round_ps(src, _mm512_set1_ps(0.0f), _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC)
 #define MS_FLOOR512_F32 _mm512_floor_ps

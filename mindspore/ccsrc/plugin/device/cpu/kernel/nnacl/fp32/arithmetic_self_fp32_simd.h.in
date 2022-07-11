@@ -33,6 +33,13 @@ static inline int ElementAbs@SIMD_INSTRUCTION@(int index, const float *input, fl
   }
   return index;
 }
+
+static inline int ElementAbsInt@SIMD_INSTRUCTION@(int index, const int *input, int *output, const int element_size) {
+  for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_EPI32(output + index, SIMD_ABS_EPI32(SIMD_LD_EPI32(input + index)));
+  }
+  return index;
+}
 #endif
 
 static inline int ElementSquare@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
@@ -89,6 +96,13 @@ static inline int ElementCeil@SIMD_INSTRUCTION@(int index, const float *input, f
 static inline int ElementNegative@SIMD_INSTRUCTION@(int index, const float *input, float *output, const int element_size) {
   for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
     SIMD_ST_F32(output + index, SIMD_MUL_N_F32(SIMD_LD_F32(input + index), -1.0f));
+  }
+  return index;
+}
+
+static inline int ElementNegativeInt@SIMD_INSTRUCTION@(int index, const int *input, int *output, const int element_size) {
+  for (int block_max_size = element_size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_ST_EPI32(output + index, SIMD_MUL_N_EPI32(SIMD_LD_EPI32(input + index), -1));
   }
   return index;
 }
