@@ -159,8 +159,6 @@ from .math_func import (
     same_type_shape,
     gcd,
     log,
-    log_matrix_determinant,
-    matrix_determinant,
     linspace,
     matrix_solve,
     maximum,

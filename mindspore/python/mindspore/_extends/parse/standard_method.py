@@ -580,7 +580,6 @@ def index_fill(x, dim, index, value):
     return F.index_fill(x, dim, index, value)
 
 
-
 def copy(x):
     """
     Returns a copy of the tensor.
@@ -2063,16 +2062,6 @@ def str_bool(x):
     if x == "":
         return False
     return True
-
-
-def matrix_determinant(x):
-    """Computes the determinant of one or more square matrices."""
-    return F.matrix_determinant(x)
-
-
-def log_matrix_determinant(x):
-    """Computes the sign and the log of the absolute value of the determinant of one or more square matrices."""
-    return F.log_matrix_determinant(x)
 
 
 def lerp(start, end, weight):
