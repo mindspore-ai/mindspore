@@ -31,6 +31,7 @@ from .init_data_set_queue import _init_data_set_queue_aicpu
 from .embedding_lookup import _embedding_lookup_aicpu
 from .log import _log_aicpu
 from .padding import _padding_aicpu
+from .geqrf import _geqrf_aicpu
 from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_aicpu

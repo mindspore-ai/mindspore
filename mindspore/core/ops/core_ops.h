@@ -1041,6 +1041,7 @@ GVAR_DEF(PrimitivePtr, kPrimKLDivLossGrad, std::make_shared<Primitive>("KLDivLos
 GVAR_DEF(PrimitivePtr, kPrimFFTWithSize, std::make_shared<Primitive>(kFFTWithSize));
 
 // linalg
+GVAR_DEF(PrimitivePtr, kPrimGeqrf, std::make_shared<Primitive>("Geqrf"));
 GVAR_DEF(PrimitivePtr, kPrimSvd, std::make_shared<Primitive>("Svd"));
 
 // Image

@@ -19,6 +19,51 @@ from ..._checkparam import Validator
 from ..primitive import Primitive, prim_attr_register
 
 
+class Geqrf(Primitive):
+    r"""
+    Geqrf is a low-level function for computing QR decompositions. This function returns two tensors
+    (y, tau).
+
+
+    Computes a QR decomposition of `x`. Both `Q` and `R` matrices are stored in the same output tensor `y`.
+    The elements of `R` are stored on and above the diagonal.
+    Elementary reflectors (or Householder vectors) implicitly defining matrix `Q` are stored below the diagonal.
+
+
+    Inputs:
+        - **x** (Tensor) - Tensor of shape :math:`(m, n)`, input must be a two-dimensional matrix,
+          with dtype of float32, float64.
+
+    Outputs:
+        - **y** (Tensor) - Tensor of shape :math:`(m, n)`, has the same dtype as the `x`.
+        - **tau** (Tensor) - Tensor of shape :math:`(p,)` and :math:`p = min(m, n)`, has the same dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If the dtype of `x` is neither float32, float64.
+        ValueError: If `x` dimension is not equal to 2
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations import linalg_ops as linalg
+        >>> input_x = Tensor(np.array([[-2.0, -1.0], [1.0, 2.0]]).astype(np.float32))
+        >>> geqrf = linalg.Geqrf()
+        >>> y, tau = geqrf(input_x)
+        >>> print(y)
+        [[ 2.236068   1.7888544]
+         [-0.236068   1.3416407]]
+        >>> print(tau)
+        [1.8944271 0.       ]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Geqrf"""
+        self.init_prim_io_names(inputs=['x'], outputs=['y', 'tau'])
+
+
 class Svd(Primitive):
     """
     Refer to :func:`mindspore.ops.svd` for more detail.
