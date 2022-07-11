@@ -228,8 +228,7 @@ REGISTER_PYBIND_DEFINE(AscendProfiler_, ([](const py::module *m) {
                                 py::arg("profiling_options"), "init")
                            .def("start", &AscendProfiler::Start, "start")
                            .def("stop", &AscendProfiler::Stop, "stop")
-                           .def("finalize", &AscendProfiler::Finalize, "finalize")
-                           .def("dynamic_status", &AscendProfiler::GetNetDynamicShapeStatus, "dynamic_status");
+                           .def("finalize", &AscendProfiler::Finalize, "finalize");
                        }));
 }  // namespace ascend
 }  // namespace profiler

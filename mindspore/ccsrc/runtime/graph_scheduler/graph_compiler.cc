@@ -30,6 +30,7 @@
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "kernel/common_utils.h"
+#include "profiler/device/profiling.h"
 #include "backend/common/optimizer/helper.h"
 #ifdef ENABLE_D
 #include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
@@ -749,6 +750,11 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (kernel_graph->is_dynamic_shape()) {
     opt::DynamicShapeConvertPass(graph);
+  }
+  auto profiler_manage_inst = profiler::ProfilerManager::GetInstance();
+  MS_EXCEPTION_IF_NULL(profiler_manage_inst);
+  if (kernel_graph->is_dynamic_shape()) {
+    profiler_manage_inst->SetNetDynamicShapeStatus();
   }
 
   // Adjust kernel graph before run graph.

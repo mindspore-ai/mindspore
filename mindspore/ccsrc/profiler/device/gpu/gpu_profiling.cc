@@ -553,7 +553,6 @@ void GPUProfiler::ClearInst() {
   step_start_end_info_vector_.clear();
   all_kernel_info_.clear();
   is_init_ = false;
-  is_dynamic_shape_net_ = false;
   enable_flag_ = false;
   sync_enable_flag_ = true;
   init_flag_ = false;
@@ -799,8 +798,7 @@ REGISTER_PYBIND_DEFINE(GPUProfiler_, ([](const py::module *m) {
                            .def("step_profiling_enable", &GPUProfiler::StepProfilingEnable, py::arg("enable_flag"),
                                 "enable or disable step profiling")
                            .def("sync_enable", &GPUProfiler::SyncEnable, py::arg("enable_flag"),
-                                "enable or disable synchronization profiling")
-                           .def("dynamic_status", &GPUProfiler::GetNetDynamicShapeStatus, "dynamic_status");
+                                "enable or disable synchronization profiling");
                        }));
 }  // namespace gpu
 }  // namespace profiler

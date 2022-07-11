@@ -191,5 +191,11 @@ std::string ProfilerManager::GetProfilingOptions() const {
 #endif
   return "";
 }
+
+REGISTER_PYBIND_DEFINE(ProfilerManager_, ([](const py::module *m) {
+                         (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
+                           .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
+                           .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");
+                       }));
 }  // namespace profiler
 }  // namespace mindspore

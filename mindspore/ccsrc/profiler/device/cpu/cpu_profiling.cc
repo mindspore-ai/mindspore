@@ -210,8 +210,7 @@ REGISTER_PYBIND_DEFINE(CPUProfiler_, ([](const py::module *m) {
                            .def("init", &CPUProfiler::Init, py::arg("profile_data_path"), "init")
                            .def("stop", &CPUProfiler::Stop, "stop")
                            .def("step_profiling_enable", &CPUProfiler::StepProfilingEnable, py::arg("enable_flag"),
-                                "enable or disable step profiling")
-                           .def("dynamic_status", &CPUProfiler::GetNetDynamicShapeStatus, "dynamic_status");
+                                "enable or disable step profiling");
                        }));
 }  // namespace cpu
 }  // namespace profiler
