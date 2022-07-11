@@ -16,10 +16,12 @@
 import numpy as np
 import pytest
 
+import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _grad_ops as G
 
 
 def soft_shrink_op_np_bencmark(input_x, lambd):
@@ -69,3 +71,62 @@ def test_soft_shrink(dtype, data_shape, lambd):
     soft_shrink_net = SoftShrinkNet(lambd)
     output = soft_shrink_net(input_tensor)
     np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_soft_shrink_dy_shape():
+    """
+    Feature: test_soft_shrink_dy_shape.
+    Description: test cases for dynamic shape.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    lambd = 0.5
+
+    np.random.seed(1)
+    in_np = np.random.rand(3, 5, 2).astype(np.float32)
+    in_tensor = Tensor(in_np)
+    in_t_ds = Tensor(shape=[3, 5, None], dtype=mindspore.float32)
+
+    net = SoftShrinkNet(lambd)
+    net.set_inputs(in_t_ds)
+
+    output_ms = net(in_tensor)
+    output_np = soft_shrink_op_np_bencmark(in_tensor, 0.5)
+
+    np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
+
+
+class ShapeSoftShrinkGradNet(nn.Cell):
+    def __init__(self):
+        super(ShapeSoftShrinkGradNet, self).__init__()
+        self.soft_shrink_grad_op = G.SoftShrinkGrad()
+
+    def construct(self, in_x, grad):
+        return self.soft_shrink_grad_op(in_x, grad)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_soft_shrink_grad_ds_shape():
+    """
+    Feature: test_soft_shrink_dy_shape.
+    Description: test cases for dynamic shape.
+    Expectation: raise TypeError.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    soft_shrink_net = ShapeSoftShrinkGradNet()
+
+    x = Tensor(np.random.randn(10, 20).astype(np.float32))
+    grad = Tensor(np.random.randn(10, 20).astype(np.float32))
+    static_output = soft_shrink_net(x, grad)
+
+    x_ds = Tensor(shape=[None, 20], dtype=mindspore.float32)
+    grad_ds = Tensor(shape=[None, 20], dtype=mindspore.float32)
+    soft_shrink_net.set_inputs(x_ds, grad_ds)
+    dynamic_output = soft_shrink_net(x, grad)
+
+    np.testing.assert_allclose(static_output.asnumpy(), dynamic_output.asnumpy(), rtol=1e-3)
