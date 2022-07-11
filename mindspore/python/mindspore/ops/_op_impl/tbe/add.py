@@ -13,17 +13,16 @@
 # limitations under the License.
 # ============================================================================
 
-"""TensorAdd op"""
+"""Add op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-tensor_add_op_info = TBERegOp("Add") \
+add_op_info = TBERegOp("Add") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("add.so") \
     .compute_cost(10) \
     .kernel_name("add") \
     .partial_flag(True) \
-    .dynamic_shape(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
@@ -37,7 +36,7 @@ tensor_add_op_info = TBERegOp("Add") \
     .get_op_info()
 
 
-@op_info_register(tensor_add_op_info)
-def _tensor_add_ds_tbe():
+@op_info_register(add_op_info)
+def _add_tbe():
     """Add TBE register"""
     return

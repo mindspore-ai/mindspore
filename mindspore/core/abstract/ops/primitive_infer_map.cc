@@ -52,9 +52,12 @@
 #include "ops/tensor_scatter_arithmetic.h"
 #include "ops/max_pool.h"
 #include "ops/grad/max_pool_grad.h"
+#include "ops/dropout.h"
 
 namespace mindspore {
 namespace abstract {
+using ops::InferImplDropout;
+
 PrimShapeDependMap &GetHostDependsMap() {
   // Registration directly by the host_depends map will be deprecated and
   // should be registered by the REGISTER_HOST_DEPENDS
