@@ -113,6 +113,8 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSegmentMean = prim::kPrimSegmentMean->name();
   static const auto &kSegmentProd = prim::kPrimSegmentProd->name();
   static const auto &kStandardNormal = prim::kPrimStandardNormal->name();
+  static const auto &kStandardLaplace = prim::kPrimStandardLaplace->name();
+
   // Common host depends.
   static PrimShapeDependMap host_depends{{kExtractGlimpse, ShapeSet{1}},
                                          {kSegmentMax, ShapeSet{1}},
@@ -174,7 +176,8 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
                                          {kBartlettWindow, ShapeSet{0}},
                                          {kResizeNearestNeighborGrad, ShapeSet{1}},
-                                         {kStandardNormal, ShapeSet{0}}};
+                                         {kStandardNormal, ShapeSet{0}},
+                                         {kStandardLaplace, ShapeSet{0}}};
   return host_depends;
 }
 std::set<int64_t> GetDependsFormMap(const std::string &prim_name, size_t input_num) {

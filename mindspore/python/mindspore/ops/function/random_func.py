@@ -98,7 +98,8 @@ def standard_laplace(shape, seed=0, seed2=0):
         \text{f}(x) = \frac{1}{2}\exp(-|x|),
 
     Args:
-        shape (tuple): The shape of random tensor to be generated. Only constant value is allowed.
+        shape (Union[tuple, Tensor]): The shape of random tensor to be generated. Only constant value is allowed
+          when the input type is tuple. And the operator supports dynamic shape only when the input type is Tensor.
         seed (int): Random seed. Default: 0.
         seed2 (int): Random seed2. Default: 0.
 

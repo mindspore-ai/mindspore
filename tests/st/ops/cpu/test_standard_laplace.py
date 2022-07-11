@@ -14,12 +14,11 @@
 # ============================================================================
 
 import pytest
+import numpy as np
 
 import mindspore.context as context
-import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore import dtype as mstype
-from mindspore.common.initializer import One, Normal
+import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
@@ -100,25 +99,28 @@ def test_standard_laplace_functional():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_standard_laplace_tensor():
+def test_standard_laplace_dynamic_shape():
     """
-    Feature: Tensor interface of StandardLaplace CPU operation
-    Description: input the shape and random seed, test the output value and shape
-    Expectation: the value and shape of output tensor match the predefined values
+    Feature: Dynamic shape inference of StandardLaplace CPU operation
+    Description: input a dynamic shape, test the output shape
+    Expectation: the shape of output match the input shape Tensor
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    seed = 10
-    seed2 = 10
-    tensor1 = Tensor(shape=(5, 6, 8), dtype=mstype.float32, init=One())
-    output = tensor1.standard_laplace(seed, seed2)
-    assert output.shape == (5, 6, 8)
-    output_numpy_flatten_1 = output.asnumpy().flatten()
+    class DynamicShapeStandardLaplaceNet(nn.Cell):
+        def __init__(self, axis=0):
+            super().__init__()
+            self.unique = P.Unique()
+            self.gather = P.Gather()
+            self.get_shape = P.TensorShape()
+            self.random_op = P.StandardLaplace()
+            self.axis = axis
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    seed = 0
-    seed2 = 10
-    tensor2 = Tensor(shape=(5, 6, 8), dtype=mstype.float32, init=Normal())
-    output = tensor2.standard_laplace(seed, seed2)
-    assert output.shape == (5, 6, 8)
-    output_numpy_flatten_2 = output.asnumpy().flatten()
-    assert (output_numpy_flatten_1 == output_numpy_flatten_2).all()
+        def construct(self, x, indices):
+            unique_indices, _ = self.unique(indices)
+            res = self.gather(x, unique_indices, self.axis)
+            dshape = self.get_shape(res)
+            return self.random_op(dshape), dshape
+    net = DynamicShapeStandardLaplaceNet()
+    input_x = Tensor(np.random.randint(1, 10, size=10))
+    indices_x = Tensor(np.random.randint(1, 10, size=7))
+    out, dshape = net(input_x, indices_x)
+    assert out.shape == tuple(dshape.asnumpy())

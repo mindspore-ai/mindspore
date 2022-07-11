@@ -4360,41 +4360,6 @@ class Tensor(Tensor_):
         """
         return tensor_operator_registry.get('split')(axis, output_num)(self)
 
-    def standard_laplace(self, seed=0, seed2=0):
-        r"""
-        Construct a tensor with random numbers according to the Laplace random number distribution (mean=0, lambda=1).
-        It is defined as:
-
-        .. math::
-            \text{f}(x) = \frac{1}{2}\exp(-|x|),
-
-        Args:
-            seed (int): Random seed. Default: 0.
-            seed2 (int): Random seed2. Default: 0.
-
-        Returns:
-            Tensor, has the same dtype and shape as self tensor.
-
-        Raises:
-            TypeError: If neither seed nor seed2 is an int.
-            TypeError: If shape is not a tuple.
-            ValueError: If shape is not a constant value.
-
-        Supported Platforms:
-            ``Ascend`` ``CPU``
-
-        Examples:
-            >>> from mindspore import Tensor
-            >>> x = Tensor([1, 2, 3, 4])
-            >>> output = x.standard_laplace()
-            >>> print(output.shape)
-            (1, 2, 3, 4)
-        """
-        self._init_check()
-        validator.check_is_int(seed, 'seed')
-        validator.check_is_int(seed2, 'seed2')
-        return tensor_operator_registry.get('standard_laplace')(seed=seed, seed2=seed2)(self.shape)
-
     def xlogy(self, y):
         r"""
         Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.

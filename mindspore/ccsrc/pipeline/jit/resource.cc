@@ -264,7 +264,6 @@ BuiltInTypeMap &GetMethodMap() {
        {"xlogy", std::string("xlogy")},                                    // P.Xlogy()
        {"erf", std::string("erf")},                                        // P.Erf()
        {"erfc", std::string("erfc")},                                      // P.Erfc()
-       {"standard_laplace", std::string("standard_laplace")},              // P.StandardLaplace()
        {"arg_min_with_value", std::string("arg_min_with_value")},          // P.ArgMinWithValue
      }},
     {kObjectTypeRowTensorType,

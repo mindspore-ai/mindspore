@@ -16,7 +16,7 @@ mindspore.ops.StandardLaplace
 
     **输入：**
     
-    - **shape** (tuple) - 待生成的Tensor的shape，只支持常量值。
+    - **shape** (Union[tuple, Tensor]) - 待生成的Tensor的shape。当为tuple类型时，只支持常量值；当为Tensor类型时，支持动态Shape。
 
     **输出：**
     
