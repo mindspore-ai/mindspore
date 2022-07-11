@@ -17,7 +17,7 @@ mindspore.ops.gamma
     Tensor。shape是输入 `shape` 、 `alpha` 、 `beta` 广播后的shape。数据类型为float32。
 
     **异常：**
-    
+
     - **TypeError** – `shape` 不是tuple。
     - **TypeError** – `alpha` 或 `beta` 不是Tensor。
     - **TypeError** – `seed` 的数据类型不是int。
