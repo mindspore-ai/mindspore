@@ -954,7 +954,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 reduce_axis = [op.attrs["axis"]]
             else:
                 raise Exception("For '{}', can not find the attr 'reduce_axis' or 'axis'".format(op.prim))
-            if len(op.inputs[0].shape) - 1 in reduce_axis:
+            if op.inputs and len(op.inputs[0].shape) - 1 in reduce_axis:
                 reduce_size = prod_reduce(lambda x, y: x * y, (op.inputs[0].shape[i] for i in reduce_axis))
                 return reduce_size >= 1024
             return True
@@ -968,7 +968,7 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return []
             is_all_reduce = tensor_size(dom.ops[0].output) == 1
             # excluded large size all reduce
-            if is_all_reduce and tensor_size(dom.ops[0].inputs[0]) > 1024 * 12:
+            if is_all_reduce and dom.ops[0].inputs and tensor_size(dom.ops[0].inputs[0]) > 1024 * 12:
                 return []
 
             fused = []
