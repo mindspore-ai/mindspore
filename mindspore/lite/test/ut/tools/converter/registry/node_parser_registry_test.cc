@@ -61,6 +61,7 @@ class NodeParserRegistryTest : public CommonTest {
     converter_parameters.fmk = kFmkTypeTf;
     converter_parameters.model_file = "./tf_add.pb";
     func_graph_ = model_parser->Parse(converter_parameters);
+    delete model_parser;
   }
   api::FuncGraphPtr func_graph_ = nullptr;
 };

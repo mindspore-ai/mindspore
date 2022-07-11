@@ -43,6 +43,13 @@
 
 namespace mindspore {
 namespace lite {
+namespace {
+void FreeGradients(const std::vector<lite::Tensor *> &gradients) {
+  for (auto &gradient : gradients) {
+    delete gradient;
+  }
+}  // namespace
+}  // namespace
 const char *kGradName = "Gradients";
 const char *kOptimizerName = "optimizer";
 
@@ -919,12 +926,14 @@ int TrainSession::ApplyGradients(const std::vector<lite::Tensor *> &gradients) {
   if (current_gradients.size() != gradients.size()) {
     MS_LOG(ERROR) << "gradients vector has wrong size " << gradients.size() << " instead of "
                   << current_gradients.size();
+    FreeGradients(current_gradients);
     return RET_ERROR;
   }
   for (size_t ix = 0; ix < gradients.size(); ix++) {
     auto gradient = gradients[ix];
     if (gradient == nullptr) {
       MS_LOG(ERROR) << "gradient tensor is null.";
+      FreeGradients(current_gradients);
       return RET_ERROR;
     }
     bool found = false;
@@ -939,6 +948,7 @@ int TrainSession::ApplyGradients(const std::vector<lite::Tensor *> &gradients) {
         } else {
           MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " has wrong size " << gradient->Size()
                         << " instead of " << current_gradient->Size();
+          FreeGradients(current_gradients);
           return RET_ERROR;
         }
         break;
@@ -946,9 +956,11 @@ int TrainSession::ApplyGradients(const std::vector<lite::Tensor *> &gradients) {
     }
     if (!found) {
       MS_LOG(ERROR) << "gradient tensor " << gradient->tensor_name() << " not found";
+      FreeGradients(current_gradients);
       return RET_ERROR;
     }
   }
+  FreeGradients(current_gradients);
   for (auto kernel : this->train_kernels_) {
     if (IsOptimizer(kernel)) {
       auto optimizer = static_cast<kernel::OptimizerKernel *>(kernel->kernel());
@@ -962,9 +974,6 @@ int TrainSession::ApplyGradients(const std::vector<lite::Tensor *> &gradients) {
         return ret;
       }
     }
-  }
-  for (size_t ix = 0; ix < current_gradients.size(); ix++) {
-    delete current_gradients[ix];
   }
   return RET_OK;
 }

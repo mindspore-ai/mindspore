@@ -275,6 +275,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   auto *in_quant_arg = new LiteQuantParam();
   in_quant_arg->zeroPoint = -19, in_quant_arg->scale = 0.31228156;
   in_t->AddQuantParam(*in_quant_arg);
+  delete in_quant_arg;
   inputs_->push_back(in_t);
 
   auto *weight_t = new Tensor(kNumberTypeInt8, {3, 3, 3, 2}, mindspore::NHWC, lite::Category::CONST_TENSOR);
@@ -286,6 +287,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   auto *w_quant_arg = new LiteQuantParam();
   w_quant_arg->zeroPoint = 83, w_quant_arg->scale = 0.023649725490196;
   weight_t->AddQuantParam(*w_quant_arg);
+  delete w_quant_arg;
   inputs_->push_back(weight_t);
 
   auto *out_t = new Tensor(kNumberTypeInt8, {1, 7, 3, 2}, mindspore::NHWC, lite::Category::VAR);
@@ -293,6 +295,7 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
   auto *out_quant_arg = new LiteQuantParam();
   out_quant_arg->zeroPoint = 31, out_quant_arg->scale = 0.3439215686275;
   out_t->AddQuantParam(*out_quant_arg);
+  delete out_quant_arg;
   outputs_->push_back(out_t);
 
   *correct = reinterpret_cast<int8_t *>(malloc(out_t->ElementsNum() * sizeof(int8_t)));
@@ -310,7 +313,9 @@ int DeConvInt8TestInit1(std::vector<lite::Tensor *> *inputs_, std::vector<lite::
 TEST_F(TestDeconvInt8, DeConvInt8Test1) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
-  auto deconv_param = new ConvParameter();
+  auto deconv_param = static_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(deconv_param, nullptr);
+  memset(deconv_param, 0, sizeof(ConvParameter));
   auto *ctx = new lite::InnerContext;
   deconv_param->op_parameter_.thread_num_ = 1;
   deconv_param->op_parameter_.is_zero_shape_ = false;

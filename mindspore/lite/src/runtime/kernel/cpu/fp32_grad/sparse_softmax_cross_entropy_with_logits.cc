@@ -181,15 +181,17 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Prepare() {
   }
   auto *in0 = in_tensors_.front();
   if (in0 == nullptr) {
-    MS_LOG(ERROR) << "sparse softmax etropy loss in0 have no data";
+    MS_LOG(ERROR) << "sparse softmax entropy loss in0 have no data";
     return RET_ERROR;
   }
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   set_workspace_size((data_size + static_cast<size_t>(dims.at(0))) * sizeof(float));
-  sm_params_ = new (std::nothrow) SoftmaxParameter();
   if (sm_params_ == nullptr) {
-    MS_LOG(ERROR) << "new softmax param failed.";
-    return RET_ERROR;
+    sm_params_ = new (std::nothrow) SoftmaxParameter();
+    if (sm_params_ == nullptr) {
+      MS_LOG(ERROR) << "new softmax param failed.";
+      return RET_ERROR;
+    }
   }
   sm_params_->n_dim_ = 2;
   sm_params_->element_size_ = static_cast<int>(data_size);

@@ -18,6 +18,9 @@
 #include "src/runtime/kernel_registry.h"
 #include "src/runtime/runtime_pass.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/instance_norm_parameter.h"
+#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/transpose.h"
 
 namespace mindspore {
 namespace lite {
@@ -42,7 +45,9 @@ void Nc4hw4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::vector
   tensors->push_back(conv_out_tensor);
   std::vector<lite::Tensor *> conv_in = {conv_in_tensor, conv_weight};
   std::vector<lite::Tensor *> conv_out = {conv_out_tensor};
-  ConvParameter *conv_param = new ConvParameter();
+  auto *conv_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv_param, nullptr);
+  memset(conv_param, 0, sizeof(ConvParameter));
   conv_param->op_parameter_.type_ = schema::PrimitiveType_Conv2DFusion;
   conv_param->group_ = 1;
   OpParameter *op_conv = reinterpret_cast<OpParameter *>(conv_param);
@@ -55,39 +60,48 @@ void Nc4hw4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::vector
   tensors->push_back(trans_param_tensor);
   lite::Tensor *trans_out_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(trans_param_tensor);
-  OpParameter *trans_param = new OpParameter();
-  trans_param->type_ = schema::PrimitiveType_Transpose;
+  auto *trans_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  ASSERT_NE(trans_param, nullptr);
+  memset(trans_param, 0, sizeof(TransposeParameter));
+  trans_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   kernel::KernelKey trans_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
   kernel::KernelExec *trans_kernel = nullptr;
   std::vector<lite::Tensor *> trans_in = {conv_out_tensor, trans_param_tensor};
   std::vector<lite::Tensor *> trans_out = {trans_out_tensor};
-  reg->GetKernelExec(trans_in, trans_out, ctx, nullptr, trans_desc, trans_param, &trans_kernel, nullptr);
+  reg->GetKernelExec(trans_in, trans_out, ctx, nullptr, trans_desc, reinterpret_cast<OpParameter *>(trans_param),
+                     &trans_kernel, nullptr);
   kernels->push_back(trans_kernel);
 
   lite::Tensor *in_param_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(in_param_tensor);
   lite::Tensor *in_out_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(in_out_tensor);
-  OpParameter *in_param = new OpParameter();
-  in_param->type_ = schema::PrimitiveType_InstanceNorm;
+  auto *in_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  ASSERT_NE(in_param, nullptr);
+  memset(in_param, 0, sizeof(InstanceNormParameter));
+  in_param->op_parameter_.type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_InstanceNorm};
   kernel::KernelExec *in_kernel = nullptr;
   std::vector<lite::Tensor *> in_in = {trans_out_tensor, in_param_tensor};
   std::vector<lite::Tensor *> in_out = {in_out_tensor};
-  reg->GetKernelExec(in_in, in_out, ctx, nullptr, in_desc, in_param, &in_kernel, nullptr);
+  reg->GetKernelExec(in_in, in_out, ctx, nullptr, in_desc, reinterpret_cast<OpParameter *>(in_param), &in_kernel,
+                     nullptr);
   kernels->push_back(in_kernel);
 
   lite::Tensor *trans2_param_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(trans_param_tensor);
   lite::Tensor *trans2_out_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(trans_param_tensor);
-  OpParameter *trans2_param = new OpParameter();
-  trans2_param->type_ = schema::PrimitiveType_Transpose;
+  auto *trans2_param = reinterpret_cast<TransposeParameter *>(malloc(sizeof(TransposeParameter)));
+  ASSERT_NE(trans2_param, nullptr);
+  memset(trans2_param, 0, sizeof(TransposeParameter));
+  trans2_param->op_parameter_.type_ = schema::PrimitiveType_Transpose;
   kernel::KernelKey trans2_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Transpose};
   kernel::KernelExec *trans2_kernel = nullptr;
   std::vector<lite::Tensor *> trans2_in = {in_out_tensor, trans2_param_tensor};
   std::vector<lite::Tensor *> trans2_out = {trans2_out_tensor};
-  reg->GetKernelExec(trans2_in, trans2_out, ctx, nullptr, trans2_desc, trans2_param, &trans2_kernel, nullptr);
+  reg->GetKernelExec(trans2_in, trans2_out, ctx, nullptr, trans2_desc, reinterpret_cast<OpParameter *>(trans2_param),
+                     &trans2_kernel, nullptr);
   kernels->push_back(trans2_kernel);
 
   lite::Tensor *conv2_weight = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
@@ -96,7 +110,9 @@ void Nc4hw4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::vector
   tensors->push_back(conv2_out_tensor);
   std::vector<lite::Tensor *> conv2_in = {trans2_out_tensor, conv_weight};
   std::vector<lite::Tensor *> conv2_out = {conv2_out_tensor};
-  ConvParameter *conv2_param = new ConvParameter();
+  auto *conv2_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv2_param, nullptr);
+  memset(conv2_param, 0, sizeof(ConvParameter));
   conv2_param->op_parameter_.type_ = schema::PrimitiveType_Conv2DFusion;
   conv2_param->group_ = 1;
   OpParameter *op2_conv = reinterpret_cast<OpParameter *>(conv2_param);
@@ -128,7 +144,9 @@ void ConvNormC4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::ve
   tensors->push_back(conv1_out_tensor);
   std::vector<lite::Tensor *> conv1_in = {conv1_in_tensor, conv1_weight};
   std::vector<lite::Tensor *> conv1_out = {conv1_out_tensor};
-  ConvParameter *conv1_param = new ConvParameter();
+  auto *conv1_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv1_param, nullptr);
+  memset(conv1_param, 0, sizeof(ConvParameter));
   conv1_param->op_parameter_.type_ = schema::PrimitiveType_Conv2DFusion;
   conv1_param->group_ = 1;
   OpParameter *op1_conv = reinterpret_cast<OpParameter *>(conv1_param);
@@ -141,13 +159,16 @@ void ConvNormC4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::ve
   tensors->push_back(in_param_tensor);
   lite::Tensor *in_out_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(in_out_tensor);
-  OpParameter *in_param = new OpParameter();
-  in_param->type_ = schema::PrimitiveType_InstanceNorm;
+  auto *in_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  ASSERT_NE(in_param, nullptr);
+  memset(in_param, 0, sizeof(InstanceNormParameter));
+  in_param->op_parameter_.type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_InstanceNorm};
   kernel::KernelExec *in_kernel = nullptr;
   std::vector<lite::Tensor *> in_in = {conv1_out_tensor, in_param_tensor};
   std::vector<lite::Tensor *> in_out = {in_out_tensor};
-  reg->GetKernelExec(in_in, in_out, ctx, nullptr, in_desc, in_param, &in_kernel, nullptr);
+  reg->GetKernelExec(in_in, in_out, ctx, nullptr, in_desc, reinterpret_cast<OpParameter *>(in_param), &in_kernel,
+                     nullptr);
   kernels->push_back(in_kernel);
 
   lite::Tensor *conv2_weight = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
@@ -157,7 +178,9 @@ void ConvNormC4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::ve
 
   std::vector<lite::Tensor *> conv2_in = {in_out_tensor, conv2_weight};
   std::vector<lite::Tensor *> conv2_out = {conv2_out_tensor};
-  ConvParameter *conv2_param = new ConvParameter();
+  auto *conv2_param = reinterpret_cast<ConvParameter *>(malloc(sizeof(ConvParameter)));
+  ASSERT_NE(conv2_param, nullptr);
+  memset(conv2_param, 0, sizeof(ConvParameter));
   conv2_param->op_parameter_.type_ = schema::PrimitiveType_Conv2DFusion;
   conv2_param->group_ = 1;
   OpParameter *op2_conv = reinterpret_cast<OpParameter *>(conv2_param);
@@ -170,24 +193,31 @@ void ConvNormC4PassConstruct(std::vector<kernel::KernelExec *> *kernels, std::ve
   tensors->push_back(act_out_tensor);
   std::vector<lite::Tensor *> act_in = {conv2_out_tensor};
   std::vector<lite::Tensor *> act_out = {act_out_tensor};
-  OpParameter *act_param = new OpParameter();
+  auto *act_param = reinterpret_cast<ActivationParameter *>(malloc(sizeof(ActivationParameter)));
+  ASSERT_NE(act_param, nullptr);
+  memset(act_param, 0, sizeof(ActivationParameter));
+  act_param->op_parameter_.type_ = schema::PrimitiveType_Activation;
   act_param->type_ = schema::PrimitiveType_Activation;
   kernel::KernelKey act_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_Activation};
   kernel::KernelExec *act_kernel = nullptr;
-  reg->GetKernelExec(act_in, act_out, ctx, nullptr, act_desc, act_param, &act_kernel, nullptr);
+  reg->GetKernelExec(act_in, act_out, ctx, nullptr, act_desc, reinterpret_cast<OpParameter *>(act_param), &act_kernel,
+                     nullptr);
   kernels->push_back(act_kernel);
 
   lite::Tensor *in2_param_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(in2_param_tensor);
   lite::Tensor *in2_out_tensor = new lite::Tensor(kNumberTypeFloat32, {1, 1, 1, 1}, NHWC);
   tensors->push_back(in2_out_tensor);
-  OpParameter *in2_param = new OpParameter();
-  in2_param->type_ = schema::PrimitiveType_InstanceNorm;
+  auto *in2_param = reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
+  ASSERT_NE(in2_param, nullptr);
+  memset(in2_param, 0, sizeof(InstanceNormParameter));
+  in2_param->op_parameter_.type_ = schema::PrimitiveType_InstanceNorm;
   kernel::KernelKey in2_desc{kernel::kCPU, kNumberTypeFloat32, NHWC, schema::PrimitiveType_InstanceNorm};
   kernel::KernelExec *in2_kernel = nullptr;
   std::vector<lite::Tensor *> in2_in = {act_out_tensor, in2_param_tensor};
   std::vector<lite::Tensor *> in2_out = {in2_out_tensor};
-  reg->GetKernelExec(in2_in, in2_out, ctx, nullptr, in2_desc, in2_param, &in2_kernel, nullptr);
+  reg->GetKernelExec(in2_in, in2_out, ctx, nullptr, in2_desc, reinterpret_cast<OpParameter *>(in2_param), &in2_kernel,
+                     nullptr);
   kernels->push_back(in2_kernel);
 
   conv1_kernel->set_out_kernels({in_kernel});
