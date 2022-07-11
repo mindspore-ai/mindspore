@@ -28,19 +28,26 @@ using KernelRunFunc = UnsortedSegmentArithmeticCpuKernelMod::KernelRunFunc;
   KernelAttr().AddInputAttr(T_DT).AddInputAttr(S_DT).AddInputAttr(DT).AddOutputAttr(T_DT), \
     &UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel<T, S>
 
-template <typename T, typename S>
-bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                         const std::vector<kernel::AddressPtr> &,
-                                                         const std::vector<kernel::AddressPtr> &outputs) {
+template <typename T>
+T GetInitValue(std::string kernel_name) {
   static const std::map<std::string, T> UnsortedSegmentArithmeticInitValueMap{
     {prim::kPrimUnsortedSegmentMax->name(), std::numeric_limits<T>::lowest()},
     {prim::kPrimUnsortedSegmentMin->name(), std::numeric_limits<T>::max()}};
 
-  if (UnsortedSegmentArithmeticInitValueMap.find(kernel_name_) == UnsortedSegmentArithmeticInitValueMap.end()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the current operator does not support this operation.";
-    return false;
+  if (UnsortedSegmentArithmeticInitValueMap.find(kernel_name) == UnsortedSegmentArithmeticInitValueMap.end()) {
+    MS_LOG(ERROR) << "For '" << kernel_name << "', the current operator does not support this operation.";
+    return 0;
   }
-  T init_value = UnsortedSegmentArithmeticInitValueMap.at(kernel_name_);
+
+  T init_value = UnsortedSegmentArithmeticInitValueMap.at(kernel_name);
+  return init_value;
+}
+
+template <typename T, typename S>
+bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                                         const std::vector<kernel::AddressPtr> &,
+                                                         const std::vector<kernel::AddressPtr> &outputs) {
+  T init_value = GetInitValue<T>(kernel_name_);
 
   T *input_src_addr = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   S *ids_src_addr = reinterpret_cast<S *>(inputs[kIndex1]->addr);
@@ -65,6 +72,10 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
           MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
           return false;
         }
+        if (output_index < 0) {
+          /* segment_ids is less than 0, drop it */
+          continue;
+        }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;
         for (size_t comp = 0; comp < comp_size_; comp++) {
@@ -77,6 +88,10 @@ bool UnsortedSegmentArithmeticCpuKernelMod::LaunchKernel(const std::vector<kerne
         if (output_index >= num_segments_) {
           MS_LOG(ERROR) << "For '" << kernel_name_ << "', segment_ids value should be [0, num_segments)";
           return false;
+        }
+        if (output_index < 0) {
+          /* segment_ids is less than 0, drop it */
+          continue;
         }
         T *cur_input = input_addr + loop * comp_size_;
         T *cur_output = output_addr + output_index * comp_size_;
