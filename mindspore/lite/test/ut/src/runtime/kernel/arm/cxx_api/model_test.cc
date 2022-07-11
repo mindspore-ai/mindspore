@@ -174,24 +174,25 @@ TEST_F(TestCxxApiLiteModel, test_getgrads_SUCCESS) {
 
   ASSERT_TRUE(Serialization::Load("./nets/conv_train_model.ms", ModelType::kMindIR, &graph) == kSuccess);
   ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
-  auto graients = model.GetGradients();
-  ASSERT_EQ(graients.size(), 2);
+  auto gradients = model.GetGradients();
+  ASSERT_EQ(gradients.size(), 2);
   float pi = 3.141592647;
-  for (size_t ix = 0; ix < graients.size(); ix++) {
-    static_cast<float *>(graients[ix].MutableData())[0] = static_cast<float>(ix) + pi;
+  for (size_t ix = 0; ix < gradients.size(); ix++) {
+    static_cast<float *>(gradients[ix].MutableData())[0] = static_cast<float>(ix) + pi;
   }
-  ASSERT_TRUE(model.ApplyGradients(graients) == kSuccess);
-  if (!graients.empty()) {
-    auto &param = graients.at(0);
+  ASSERT_TRUE(model.ApplyGradients(gradients) == kSuccess);
+
+  if (!gradients.empty()) {
+    auto &param = gradients.at(0);
     param.SetShape({20, 20});
   }
+  ASSERT_TRUE(model.ApplyGradients(gradients) != kSuccess);
 
-  ASSERT_TRUE(model.ApplyGradients(graients) != kSuccess);
-  if (!graients.empty()) {
-    auto &param = graients.at(0);
+  if (!gradients.empty()) {
+    auto &param = gradients.at(0);
     param.SetTensorName("failed_name");
   }
-  ASSERT_TRUE(model.ApplyGradients(graients) != kSuccess);
+  ASSERT_TRUE(model.ApplyGradients(gradients) != kSuccess);
 }
 
 TEST_F(TestCxxApiLiteModel, test_fp32_SUCCESS) {
@@ -238,13 +239,16 @@ TEST_F(TestCxxApiLiteModel, set_weights_FAILURE) {
   ASSERT_TRUE(model.Build(GraphCell(graph), context, train_cfg) == kSuccess);
   std::vector<mindspore::MSTensor> changes;
   ASSERT_TRUE(model.UpdateWeights(changes) != kSuccess);
-  changes.push_back(
-    *MSTensor::CreateTensor("fc4.weight", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0));
+  auto tensor =
+    MSTensor::CreateTensor("fc4.weight", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0);
+  changes.push_back(*tensor);
   ASSERT_TRUE(model.UpdateWeights(changes) != kSuccess);
+  delete (tensor);
   changes.clear();
-  changes.push_back(
-    *MSTensor::CreateTensor("fc3.bias", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0));
+  tensor = MSTensor::CreateTensor("fc3.bias", mindspore::DataType::kNumberTypeFloat32, {NUM_OF_CLASSES}, nullptr, 0);
+  changes.push_back(*tensor);
   ASSERT_TRUE(model.UpdateWeights(changes) == kSuccess);
+  delete (tensor);
 }
 
 TEST_F(TestCxxApiLiteModel, set_get_lr_SUCCESS) {

@@ -86,6 +86,7 @@ class FullconnectionCPUKernel : public LiteKernel {
   ~FullconnectionCPUKernel() {
     if (matmul_base_ != nullptr) {
       op_parameter_ = nullptr;  // op_parameter will be freed in LiteKernel
+      matmul_base_->ws_allocated_ = this->ws_allocated_;
       delete matmul_base_;
       matmul_base_ = nullptr;
     }

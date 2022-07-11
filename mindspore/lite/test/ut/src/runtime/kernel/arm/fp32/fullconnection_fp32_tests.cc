@@ -90,14 +90,17 @@ TEST_F(TestFcFp32, FcTest2) {
   size_t buffer_size;
   auto in_data = mindspore::lite::ReadFile("./matmul/FcFp32_input1.bin", &buffer_size);
   std::vector<char> in(in_data, in_data + buffer_size);
+  delete[](in_data);
   inputs.push_back(
     CreateTensor<char>(kNumberTypeFloat32, {20, 4, 2, 10}, in, mindspore::NCHW, lite::Category::CONST_TENSOR));
   auto w_data = mindspore::lite::ReadFile("./matmul/FcFp32_weight1.bin", &buffer_size);
   std::vector<char> weight(w_data, w_data + buffer_size);
+  delete[](w_data);
   inputs.push_back(
     CreateTensor<char>(kNumberTypeFloat32, {30, 80}, weight, mindspore::NCHW, lite::Category::CONST_TENSOR));
   auto bias_data = mindspore::lite::ReadFile("./matmul/FcFp32_bias1.bin", &buffer_size);
   std::vector<char> bias(bias_data, bias_data + buffer_size);
+  delete[](bias_data);
   inputs.push_back(CreateTensor<char>(kNumberTypeFloat32, {30}, bias, mindspore::NCHW, lite::Category::CONST_TENSOR));
 
   std::vector<lite::Tensor *> outputs;
@@ -130,6 +133,7 @@ TEST_F(TestFcFp32, FcTest2) {
 
   auto out_data = mindspore::lite::ReadFile("./matmul/FcFp32_output1.bin", &buffer_size);
   std::vector<char> except_result(out_data, out_data + buffer_size);
+  delete[](out_data);
   ASSERT_EQ(0, CompareOutputData(static_cast<float *>(outputs[0]->data()),
                                  reinterpret_cast<float *>(except_result.data()), outputs[0]->ElementsNum(), 0.000001));
   delete kernel;

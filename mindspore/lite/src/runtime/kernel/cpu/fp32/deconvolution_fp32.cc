@@ -68,11 +68,12 @@ int DeConvolutionCPUKernel::MallocWeightBiasData() {
       return RET_ERROR;
     }
   }
-
-  bias_data_ = MallocAlignedData(C32NUM, output_aligned_size * sizeof(float));
   if (bias_data_ == nullptr) {
-    MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
-    return RET_ERROR;
+    bias_data_ = MallocAlignedData(C32NUM, output_aligned_size * sizeof(float));
+    if (bias_data_ == nullptr) {
+      MS_LOG(ERROR) << "deconv malloc bias_data_ error!";
+      return RET_ERROR;
+    }
   }
   memset(bias_data_, 0, output_aligned_size * sizeof(float));
   return RET_OK;

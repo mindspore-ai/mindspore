@@ -67,5 +67,6 @@ TEST_F(ModelParserRegistryTest, TestRegistry) {
   ++iter;
   bool is_return = opt::CheckPrimitiveType(*iter, prim::kPrimReturn);
   ASSERT_EQ(is_return, true);
+  delete model_parser;
 }
 }  // namespace mindspore
