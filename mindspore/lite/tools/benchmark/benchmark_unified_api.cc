@@ -917,7 +917,7 @@ void BenchmarkUnifiedApi::ModelParallelRunnerWarmUp(int index) {
 }
 
 void BenchmarkUnifiedApi::ModelParallelRunnerRun(int task_num, int parallel_idx) {
-  for (int i = 0; i < task_num; i++) {
+  for (int i = 0; i < task_num || task_num == -1; i++) {
     while (!runner_run_start_) {
       continue;
     }
