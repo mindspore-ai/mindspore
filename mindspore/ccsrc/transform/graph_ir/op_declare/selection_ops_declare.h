@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,9 +57,8 @@ DECLARE_OP_USE_OUTPUT(StridedSlice)
 DECLARE_OP_ADAPTER(StridedSliceV2)
 DECLARE_OP_USE_OUTPUT(StridedSliceV2)
 
-DECLARE_OP_ADAPTER(UnsortedSegmentSumD)
-DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentSumD)
-DECLARE_OP_USE_OUTPUT(UnsortedSegmentSumD)
+DECLARE_OP_ADAPTER(UnsortedSegmentSum)
+DECLARE_OP_USE_OUTPUT(UnsortedSegmentSum)
 
 DECLARE_OP_ADAPTER(UnsortedSegmentProdD)
 DECLARE_OP_USE_INPUT_ATTR(UnsortedSegmentProdD)
