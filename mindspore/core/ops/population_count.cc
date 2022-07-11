@@ -24,6 +24,7 @@
 #include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,10 +40,20 @@ abstract::ShapePtr PopulationCountInferShape(const PrimitivePtr &primitive,
 TypePtr PopulationCountInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim->name());
-  std::set<TypePtr> check_list = {kInt8, kInt16, kUInt8, kUInt16};
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
   auto input_type = input_args[0]->BuildType();
-  CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());
-  return input_type;
+  if (is_cpu) {
+    std::set<TypePtr> check_list = {kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64};
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());
+  }
+  if (is_ascend) {
+    std::set<TypePtr> check_list = {kInt16, kUInt16};
+    CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());
+  }
+  return kUInt8;
 }
 }  // namespace
 
