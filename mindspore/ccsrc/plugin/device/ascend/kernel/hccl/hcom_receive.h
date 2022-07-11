@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel.h"
 
 namespace mindspore {

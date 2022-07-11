@@ -322,7 +322,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   op_info.outputPtr = outputs[0]->addr;
   op_info.dataType = static_cast<HcclDataType>(data_type);
   op_info.opType = static_cast<HcclReduceOp>(op_type_);
-  op_info.root = IntToUint(root_id_);
+  op_info.root = root_id_;
   op_info.count = hccl_count_;
 
   auto callback = [this](HcclResult status) {

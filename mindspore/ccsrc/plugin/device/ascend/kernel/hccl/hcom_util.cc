@@ -158,7 +158,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
       }
       size_t actual_input_size = input_size;
       if (common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
-          common::AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion)) {
+          common::AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion) != 0) {
         actual_input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
       }
       block_size = static_cast<uint64_t>(actual_input_size / LongToSize(rank_size));
@@ -219,7 +219,7 @@ bool HcomUtil::GetHcomRootId(const AnfNodePtr &anf_node, uint32_t *root_id) {
   auto primitive = common::AnfAlgo::GetCNodePrimitive(anf_node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (primitive->GetAttr(kAttrRootRank) != nullptr) {
-    *root_id = (uint32_t)GetValue<int64_t>(primitive->GetAttr(kAttrRootRank));
+    *root_id = static_cast<uint32_t>(GetValue<int64_t>(primitive->GetAttr(kAttrRootRank)));
   } else {
     MS_LOG(ERROR) << "HcomUtil::Get HCOM_ATTR_ROOT_INDEX fail, not support!";
     return false;
