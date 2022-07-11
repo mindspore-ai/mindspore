@@ -518,6 +518,10 @@ class Assert(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, summarize=3):
         """Initialize Assert"""
+        if security.enable_security():
+            raise ValueError(
+                'The Assert is not supported, please without `-s on` and recompile source.')
+        self.add_prim_attr("side_effect_io", True)
         self.summarize = validator.check_value_type("summarize", summarize, [int], self.name)
 
     def infer_shape(self, condition, inputs):
