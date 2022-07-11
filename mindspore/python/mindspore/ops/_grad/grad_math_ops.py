@@ -596,6 +596,19 @@ def get_bprop_rsqrt(self):
     return bprop
 
 
+@bprop_getters.register(G.RsqrtGrad)
+def get_bprop_rsqrt_grad(self):
+    """Grad definition for `RsqrtGrad` operation."""
+    rsqrt_grad = G.RsqrtGrad()
+
+    def bprop(y, grad, out, dout):
+        dy = -1.5 * grad * y * y * dout
+        dgrad = rsqrt_grad(y, dout)
+        return dy, dgrad
+
+    return bprop
+
+
 @bprop_getters.register(P.Reciprocal)
 def get_bprop_reciprocal(self):
     """Grad definition for `Reciprocal` operation."""

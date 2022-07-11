@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
+import numpy as np
 from mindspore.ops.primitive import constexpr
 from mindspore.ops.operations import nn_ops as nps
 from .grad_base import bprop_getters
@@ -35,6 +36,45 @@ def get_bprop_bias_add(self):
 
     def bprop(x, w, out, dout):
         return dout, bias_grad(dout)
+
+    return bprop
+
+
+@constexpr
+def bias_add_gradgrad_helper(shape, bias_shape, data_format):
+    """Helper function of BiasGradGrad to calculate expanded shape."""
+    shape = np.array(shape).astype(np.int)
+    bias_shape = np.array(bias_shape).astype(np.int)
+    if data_format == "NCHW":
+        expanded_shape = np.concatenate([
+            np.ones_like(shape[:1]),
+            bias_shape,
+            np.ones_like(shape[2:])
+        ], axis=0)
+        tile_mults = np.concatenate([shape[:1], [1], shape[2:]], axis=0)
+    else:
+        expanded_shape = np.concatenate([
+            np.ones_like(shape[:-1]),
+            bias_shape
+        ], axis=0)
+        tile_mults = np.concatenate([shape[:-1], [1]], axis=0)
+    return tuple(expanded_shape), tuple(tile_mults)
+
+
+@bprop_getters.register(G.BiasAddGrad)
+def get_bprop_bias_add_grad(self):
+    """Grad definition for `BiasAddGrad` operation."""
+
+    data_format = self.data_format
+
+    def bprop(dy, out, dout):
+        reshape = P.Reshape()
+        tile = P.Tile()
+
+        expanded_shape, tile_mults = bias_add_gradgrad_helper(dy.shape, dout.shape, data_format)
+        expanded_grad = reshape(dout, expanded_shape)
+        tiled_grad = tile(expanded_grad, tile_mults)
+        return (tiled_grad,)
 
     return bprop
 
