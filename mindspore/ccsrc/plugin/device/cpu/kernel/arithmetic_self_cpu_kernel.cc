@@ -551,13 +551,17 @@ bool ArithmeticSelfCpuKernelFunc::RunFunc(const std::vector<kernel::AddressPtr> 
     LaunchKernelComplex<std::complex<double>>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt8) {
     LaunchKernel<int8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16) {
+  } else if (dtype_ == kNumberTypeInt16) {
+    LaunchKernel<int16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeInt32) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt8) {
     LaunchKernel<uint8_t>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeUInt32 || dtype_ == kNumberTypeUInt16) {
+  } else if (dtype_ == kNumberTypeUInt16) {
+    LaunchKernel<uint16_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeUInt32) {
     LaunchKernel<uint32_t>(inputs, outputs);
   } else if (dtype_ == kNumberTypeUInt64) {
     LaunchKernel<uint64_t>(inputs, outputs);
