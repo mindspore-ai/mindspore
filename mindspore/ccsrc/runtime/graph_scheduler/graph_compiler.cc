@@ -566,7 +566,7 @@ GraphId GraphCompiler::CompileGraph(const GraphSegmentPtr &segment, const AnfNod
     graph->set_run_mode(run_mode);
   }
 
-  GraphId graph_id;
+  GraphId graph_id = 0;
   if (run_in_pynative) {
     MS_EXCEPTION_IF_NULL(session_);
     // Graph kernel does not support pynative mode now, print a warning here.
@@ -687,6 +687,7 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
   MS_EXCEPTION_IF_NULL(device_context);
   const auto &ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
+  MS_EXCEPTION_IF_NULL(session_);
 
 #ifdef ENABLE_DUMP_IR
   bool save_graphs = ms_context->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
@@ -744,7 +745,6 @@ GraphId GraphCompiler::CompileGraphImpl(const KernelGraphPtr &graph, const Devic
 
   graph->set_is_all_nop_node(opt::IsAllNopNode(graph.get()));
 
-  MS_EXCEPTION_IF_NULL(session_);
   SetSummaryNodesRefCount(graph.get());
 #ifdef ENABLE_DUMP_IR
   // Dump .pb graph after graph optimization.
