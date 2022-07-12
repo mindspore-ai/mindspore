@@ -346,6 +346,49 @@ void TrainExport::PrepareRemap(int offset) {
   }
 }
 
+int TrainExport::FindSchemaTensorByName(const std::vector<uint32_t> &search_indices, const std::string &search_name,
+                                        size_t *target_index) {
+  MS_CHECK_TRUE_MSG(target_index != nullptr, RET_ERROR, "input param target_index is nullptr.");
+  auto total_size = meta_graph_->allTensors.size();
+  for (auto index : search_indices) {
+    MS_CHECK_TRUE_MSG(index < total_size, RET_ERROR, "index is out of range.");
+    if (meta_graph_->allTensors[index]->name == search_name) {
+      *target_index = index;
+      return RET_OK;
+    }
+  }
+  return RET_NO_CHANGE;
+}
+
+int TrainExport::KeepGraphInputsInOrder(const Model *model) {
+  MS_CHECK_TRUE_MSG(model != nullptr, RET_ERROR, "input param model is nullptr.");
+  MS_CHECK_TRUE_MSG(meta_graph_->inputIndex.size() <= model->graph_.input_indices_.size(), RET_ERROR,
+                    "export model input indices size is large than origin input indices size.");
+  std::vector<uint32_t> origin_inputs_order;
+  for (auto index : model->graph_.input_indices_) {
+    MS_CHECK_TRUE_MSG(index < model->graph_.all_tensors_.size(), RET_ERROR, "input index out of range.");
+    auto ori_input_tensor = model->graph_.all_tensors_[index];
+    size_t meta_graph_input_index;
+    auto status =
+      FindSchemaTensorByName(meta_graph_->inputIndex, ori_input_tensor->name()->str(), &meta_graph_input_index);
+    if (status == RET_NO_CHANGE) {
+      MS_LOG(DEBUG) << "can't find tensor: " << ori_input_tensor->name()->str() << " in exported graph.";
+      continue;
+    } else if (status != RET_OK) {
+      MS_LOG(ERROR) << "find schema tensor failed.";
+      return RET_ERROR;
+    }
+    MS_CHECK_TRUE_MSG(status != RET_ERROR, RET_ERROR, "find graph input tensor failed.");
+    origin_inputs_order.emplace_back(meta_graph_input_index);
+  }
+  meta_graph_->inputIndex = origin_inputs_order;
+  if (!meta_graph_->subGraph.empty()) {
+    MS_CHECK_TRUE_MSG(meta_graph_->subGraph[0]->inputIndices.size() == origin_inputs_order.size(), RET_ERROR,
+                      "metagraph's subgraph input indices size is invalid.");
+    meta_graph_->subGraph[0]->inputIndices = origin_inputs_order;
+  }
+  return RET_OK;
+}
 int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::lite::Tensor *> &tensors, int offset,
                               const std::vector<std::pair<size_t, tensor_info>> &map_index,
                               const std::vector<std::string> &output_names, const std::set<size_t> &out_set) {
@@ -394,7 +437,7 @@ int TrainExport::ExportTensor(const Model *model, const std::vector<mindspore::l
 int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &kernels,
                            const std::vector<mindspore::lite::Tensor *> &tensors,
                            const std::vector<std::string> &output_names, const Model *model,
-                           QuantizationType quant_type) {
+                           QuantizationType quant_type, const Model *bb_model) {
   std::vector<std::pair<size_t, tensor_info>> map_index;
   std::set<size_t> out_set;
   if (meta_graph_ == nullptr) {
@@ -456,6 +499,12 @@ int TrainExport::ExportNet(const std::vector<mindspore::kernel::KernelExec *> &k
   auto status = ExportTensor(model, tensors, offset, map_index, output_names, out_set);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "ExportTensor failed.";
+    return RET_ERROR;
+  }
+  auto origin_input_model = bb_model == nullptr ? model : bb_model;
+  status = KeepGraphInputsInOrder(origin_input_model);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "keep graph inputs in order failed.";
     return RET_ERROR;
   }
   TagQuantizedNodes();  // do another loop to mark QUANT_WEIGHT_NODES
