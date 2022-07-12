@@ -2509,7 +2509,9 @@ class BatchDataset(UnionBaseDataset):
         """
         Per iterator bootstrap callback.
         """
-        if self.python_multiprocessing:
+        if self.python_multiprocessing and platform.system().lower() == 'windows':
+            logger.warning("Python multiprocessing is not supported on Windows platform.")
+        if self.python_multiprocessing and platform.system().lower() != 'windows':
             if self.per_batch_map is None:
                 logger.warning("per_batch_map is None so python_multiprocessing is ignored for batch.")
                 return
@@ -3371,6 +3373,9 @@ class MapDataset(UnionBaseDataset):
         """
         Per iterator bootstrap callback.
         """
+        if self.python_multiprocessing and platform.system().lower() == 'windows':
+            logger.warning("Python multiprocessing is not supported on Windows platform.")
+            return
         if self.python_multiprocessing:
             iter_specific_operations = []
             callable_list = []
