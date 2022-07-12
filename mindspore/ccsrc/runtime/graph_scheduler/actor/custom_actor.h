@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include "runtime/graph_scheduler/actor/abstract_actor.h"
 #include "runtime/hardware/device_context.h"
 #include "ir/anf.h"
@@ -43,6 +44,7 @@ class CustomActor : public AbstractActor {
 
  protected:
   void Run(OpContext<DeviceTensor> *const context) override;
+  void Init() override;
 
  private:
   friend class GraphScheduler;
@@ -52,6 +54,8 @@ class CustomActor : public AbstractActor {
   AnfNodeWeakPtr kernel_;
   AnfUtils::CustomActorCallback custom_func_ = {};
   GraphExecutionStrategy strategy_{GraphExecutionStrategy::kPipeline};
+  // The device tensors for launch.
+  std::vector<DeviceTensor *> input_device_tensors_;
 };
 
 using CustomActorPtr = std::shared_ptr<CustomActor>;
