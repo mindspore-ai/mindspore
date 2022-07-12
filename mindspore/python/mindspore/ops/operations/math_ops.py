@@ -554,8 +554,6 @@ class _Reduce(PrimitiveWithInfer):
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
         else:
             out_shape = _infer_shape_reduce(input_shp, axis_v, self.keep_dims, self.name)
-            output_max_shape = out_shape
-            output_min_shape = out_shape
 
         value = None
         if input_x['value'] is not None:

@@ -694,21 +694,18 @@ class Reshape(PrimitiveWithInfer):
     @staticmethod
     def _update_shape_range(out, x, shape_v, neg_index, dim_prod):
         """ update min and max shape of output when input shape is dynamic"""
-        x_min_shape = x['shape']
-        x_max_shape = x['shape']
-        if 'max_shape' in x:
+        if 'max_shape' in x and 'min_shape' in x:
             x_max_shape = x['max_shape']
-        if 'min_shape' in x:
             x_min_shape = x['min_shape']
-        max_arr_prod = np.prod(x_max_shape)
-        min_arr_prod = np.prod(x_min_shape)
-        max_shape = list(shape_v)
-        min_shape = list(shape_v)
-        if neg_index != -1:
-            max_shape[neg_index] = int(max_arr_prod / dim_prod)
-            min_shape[neg_index] = int(min_arr_prod / dim_prod)
-        out['max_shape'] = tuple(max_shape)
-        out['min_shape'] = tuple(min_shape)
+            max_arr_prod = np.prod(x_max_shape)
+            min_arr_prod = np.prod(x_min_shape)
+            max_shape = list(shape_v)
+            min_shape = list(shape_v)
+            if neg_index != -1:
+                max_shape[neg_index] = int(max_arr_prod / dim_prod)
+                min_shape[neg_index] = int(min_arr_prod / dim_prod)
+            out['max_shape'] = tuple(max_shape)
+            out['min_shape'] = tuple(min_shape)
         return out
 
     def _update_shape_and_value(self, out, x, shape_v, dim_prod, neg_index):
@@ -1596,10 +1593,8 @@ class Fill(PrimitiveWithInfer):
                 'dtype': x['dtype'],
             }
             if ('min_value' in dims and 'max_value' in dims):
-                min_ret_shape = dims['min_shape']
-                max_ret_shape = dims['max_shape']
-                out['min_shape'] = min_ret_shape
-                out['max_shape'] = max_ret_shape
+                out['min_shape'] = dims['min_value']
+                out['max_shape'] = dims['max_value']
         return out
 
 
@@ -2352,21 +2347,19 @@ class Tile(PrimitiveWithInfer):
                 return {
                     'shape': out_shape,
                     'dtype': x['dtype'],
-                    'value': None,
-                    'max_shape': [1] * rank,
-                    'min_shape': [1] * rank
+                    'value': None
                 }
             out_shape, value = self._get_shape_and_range(x, multiples)
             max_shape = out_shape.get('max_shape', None)
             min_shape = out_shape.get('min_shape', None)
             shape = out_shape.get('shape', None)
-            return {
-                'shape': shape,
-                'dtype': x['dtype'],
-                'value': value,
-                'max_shape': max_shape,
-                'min_shape': min_shape
-            }
+            out = {'shape': shape,
+                   'dtype': x['dtype'],
+                   'value': value}
+            if is_shape_known(max_shape) or is_shape_known(min_shape):
+                out['max_shape'] = max_shape
+                out['min_shape'] = min_shape
+            return out
 
         validator.check_value_type(
             "multiples", multiples_v, [tuple], self.name)
@@ -2450,6 +2443,8 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         out = {'shape': shp,
                'dtype': mstype.tensor_type(x_type.element_type()),
                'value': None}
+        max_output_incoming = []
+        min_output_incoming = []
         if "max_value" in num_segments and "min_value" in num_segments:
             output_max_shape = list(num_segments['max_value'])
             output_min_shape = list(num_segments['min_value'])
@@ -2462,7 +2457,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
         if 'max_shape' in x and 'min_shape' in x:
             max_output_incoming = x['max_shape']
             min_output_incoming = x['min_shape']
-        else:
+        elif is_shape_known(x_shp):
             max_output_incoming = x_shp
             min_output_incoming = x_shp
         output_max_shape += max_output_incoming[segment_ids_shp_len:]
@@ -2812,12 +2807,11 @@ def _get_stack_shape(value, x_shape, x_type, axis, prim_name):
 
     out = {}
     if is_shape_unknown(out_shape):
-        if 'min_shape' in value:
+        if 'min_shape' in value and 'max_shape' in value:
             x_min_shp = value['min_shape']
             ret_min_shp = x_min_shp[0].copy()
             ret_min_shp.insert(axis, n)
             out['min_shape'] = ret_min_shp
-        if 'max_shape' in value:
             x_max_shp = value['max_shape']
             ret_max_shp = x_max_shp[0].copy()
             ret_max_shp.insert(axis, n)
@@ -3575,9 +3569,6 @@ class StridedSlice(PrimitiveWithInfer):
             if max_shape is not None and min_shape is not None:
                 rets['min_shape'] = ret_min_shape
                 rets['max_shape'] = ret_max_shape
-
-            if is_shape_known(x_shape):
-                return self._compute_max_min_shape(rets, x_shape, ret_shape)
 
             return rets
 

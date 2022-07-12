@@ -54,7 +54,7 @@ abstract::ShapePtr OneHotInferShape(const PrimitivePtr &primitive, const std::ve
   }
 
   (void)CheckAndConvertUtils::CheckInteger("depth value", depth_value, kGreaterEqual, 0, op_name);
-  if (min_shape.size() == 0 || max_shape.size() == 0) {
+  if (min_shape.empty() || max_shape.empty()) {
     if (axis >= 0) {
       (void)in_shape.insert(in_shape.begin() + axis, depth_value);
     } else {

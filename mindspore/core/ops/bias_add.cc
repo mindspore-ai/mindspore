@@ -74,8 +74,7 @@ abstract::ShapePtr BiasAddInferShape(const PrimitivePtr &primitive, const std::v
                              << bias_shape[0] << ", input_x[" << input_shape_channel
                              << "] or input_x[1] shape: " << x_channel << ".";
   }
-  CheckAndConvertUtils::CheckMinMaxShape(input_shape, &min_shape, &max_shape);
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
+  if (!min_shape.empty() && !max_shape.empty()) {
     return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);
   }
   return std::make_shared<abstract::Shape>(input_shape);

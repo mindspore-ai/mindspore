@@ -1901,10 +1901,10 @@ RangePair ShapeRangeTransfer::FRAC_NZRange(const RangePair &ori_range, const Typ
     (void)std::copy(ori_range.begin(), ori_range.end() - kDims2, std::back_inserter(dst_range));
   }
   const std::pair<int64_t, int64_t> c0 = {cube, cube};
-  const std::pair<int64_t, int64_t> w1 = {(ori_range[ori_size - 1].first - 1) / cube + 1,
-                                          (ori_range[ori_size - 1].second - 1) / cube + 1};
-  const std::pair<int64_t, int64_t> h1 = {(ori_range[ori_size - kDims2].first - 1) / kNiSize + 1,
-                                          (ori_range[ori_size - kDims2].second - 1) / kNiSize + 1};
+  auto tmp_max = CalMaxShape(ori_range[ori_size - 1].second, (ori_range[ori_size - 1].second - 1) / cube + 1);
+  const std::pair<int64_t, int64_t> w1 = {(ori_range[ori_size - 1].first - 1) / cube + 1, tmp_max};
+  tmp_max = CalMaxShape(ori_range[ori_size - kDims2].second, (ori_range[ori_size - kDims2].second - 1) / kNiSize + 1);
+  const std::pair<int64_t, int64_t> h1 = {(ori_range[ori_size - kDims2].first - 1) / kNiSize + 1, tmp_max};
   const std::pair<int64_t, int64_t> co = {kNiSize, kNiSize};
   dst_range.push_back(w1);
   dst_range.push_back(h1);

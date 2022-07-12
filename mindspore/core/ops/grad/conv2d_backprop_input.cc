@@ -111,29 +111,32 @@ abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
       auto shape_max_value = abstract_tensor->get_max_value();
       auto shape_min_value = abstract_tensor->get_min_value();
       if (shape_max_value == nullptr || shape_min_value == nullptr) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name
-                          << "', max value or min value of x size can not be empty when its value is dynamic.";
-      }
-
-      auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
-      auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
-
-      auto x_size_len = LongToSize(shape_shape[0]);
-      if (shape_max.size() != x_size_len || shape_min.size() != x_size_len) {
-        MS_LOG(EXCEPTION) << "For " << prim_name
-                          << ", x size's min and max value must be equal to x size len, but got min value: "
-                          << shape_min.size() << ", max value: " << shape_max.size() << ", x size len: " << x_size_len
-                          << ".";
-      }
-
-      for (size_t i = 0; i < x_size_len; i++) {
-        if (shape_min[i] == shape_max[i]) {
-          out_shape.push_back(shape_min[i]);
-        } else {
+        auto x_size_len = LongToSize(shape_shape[0]);
+        for (size_t i = 0; i < x_size_len; i++) {
           out_shape.push_back(abstract::Shape::SHP_ANY);
         }
+        ret_shape = std::make_shared<abstract::Shape>(out_shape);
+      } else {
+        auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
+        auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
+
+        auto x_size_len = LongToSize(shape_shape[0]);
+        if (shape_max.size() != x_size_len || shape_min.size() != x_size_len) {
+          MS_LOG(EXCEPTION) << "For " << prim_name
+                            << ", x size's min and max value must be equal to x size len, but got min value: "
+                            << shape_min.size() << ", max value: " << shape_max.size() << ", x size len: " << x_size_len
+                            << ".";
+        }
+
+        for (size_t i = 0; i < x_size_len; i++) {
+          if (shape_min[i] == shape_max[i]) {
+            out_shape.push_back(shape_min[i]);
+          } else {
+            out_shape.push_back(abstract::Shape::SHP_ANY);
+          }
+        }
+        ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
       }
-      ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
     }
   } else if (input_size->isa<abstract::AbstractTuple>()) {
     // check tensor, tuple or int to raise error.

@@ -106,6 +106,10 @@ abstract::ShapePtr SpaceToBatchNDInferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(out_shape);
   }
 
+  if (input_shape_ptr->max_shape().empty() || input_shape_ptr->min_shape().empty()) {
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
   ShapeVector max_out_shape =
     SpaceToBatchNDInferShapeImpl(prim_name, block_shapes, paddings, input_shape_ptr->max_shape());
   ShapeVector min_out_shape =
