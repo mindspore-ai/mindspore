@@ -3889,18 +3889,19 @@ class Tensor(Tensor_):
 
         Examples:
             >>> import numpy as np
-            >>> from mindspore import Tensor
+            >>> from mindspore import Tensor, context
+            >>> context.set_context(device_target="CPU")
             >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
             >>> s, u, v = a.svd(full_matrices=True, compute_uv=True)
             >>> print(s)
-            [7.0652833 1.0400811]
+            [7.0652843 1.040081 ]
             >>> print(u)
-            [[-0.30821884 -0.48819494 0.8164968 ]
-            [ 0.9061333 0.1107057 0.40824825]
-            [-0.28969547 0.86568475 0.408248 ]]
+            [[ 0.30821905 -0.48819482 0.81649697]
+             [-0.90613353  0.11070572 0.40824813]
+             [ 0.2896955   0.8656849  0.4082479 ]]
             >>> print(v)
-            [[-0.6386359 0.7695091]
-            [-0.7695091 -0.6386359]]
+            [[ 0.63863593 0.769509  ]
+             [ 0.769509  -0.63863593]]
         """
         svd_op = tensor_operator_registry.get("svd")
         if compute_uv:
