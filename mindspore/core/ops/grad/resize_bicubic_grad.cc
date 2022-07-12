@@ -61,7 +61,7 @@ TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vec
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr arg) { return arg == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
   }
-  const std::set<TypePtr> valid0_types = {kFloat32};
+  const std::set<TypePtr> valid0_types = {kFloat32, kFloat64};
   const std::set<TypePtr> valid1_types = {kFloat32, kFloat64};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("grads_type", input_args[0]->BuildType(), valid0_types,
                                                    primitive->name());
@@ -70,7 +70,7 @@ TypePtr ResizeBicubicGradInferType(const PrimitivePtr &primitive, const std::vec
   return input_args[1]->BuildType();
 }
 }  // namespace
-MIND_API_BASE_IMPL(ResizeBicubicGrad, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(ResizeBicubicGrad, BaseOperator);
 void ResizeBicubicGrad::set_align_corners(const bool align_corners) {
   (void)this->AddAttr("align_corners", api::MakeValue(align_corners));
 }

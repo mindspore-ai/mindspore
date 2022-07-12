@@ -3059,7 +3059,7 @@ class ResizeBicubicGrad(Primitive):
         ValueError: If `size` dim is not 4.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
     """
     @prim_attr_register
     def __init__(self, align_corners=False, half_pixel_centers=False):
