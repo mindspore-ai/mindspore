@@ -225,8 +225,7 @@ Status AutoAugmentOp::ApplyAugment(const std::shared_ptr<Tensor> &input, std::sh
     PosterizeOp posterize(static_cast<int>(magnitude));
     RETURN_IF_NOT_OK(posterize.Compute(input, output));
   } else if (op_name == "Solarize") {
-    SolarizeOp solarize({static_cast<uint8_t>(magnitude), 255});
-    RETURN_IF_NOT_OK(solarize.Compute(input, output));
+    RETURN_IF_NOT_OK(Solarize(input, output, {magnitude, magnitude}));
   } else if (op_name == "AutoContrast") {
     RETURN_IF_NOT_OK(AutoContrast(input, output, 0.0, {}));
   } else if (op_name == "Equalize") {

@@ -23,16 +23,15 @@
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/status.h"
-#include "minddata/dataset/kernels/image/solarize_op.h"
 #include "minddata/dataset/util/random.h"
+#include "minddata/dataset/util/status.h"
 
 namespace mindspore {
 namespace dataset {
-class RandomSolarizeOp : public SolarizeOp {
+class RandomSolarizeOp : public TensorOp {
  public:
   // Pick a random threshold value to solarize the image with
-  explicit RandomSolarizeOp(const std::vector<uint8_t> &threshold = {0, 255}) : SolarizeOp(threshold) {
+  explicit RandomSolarizeOp(const std::vector<uint8_t> &threshold) : threshold_(threshold) {
     rnd_.seed(GetSeed());
     is_deterministic_ = false;
   }
@@ -44,9 +43,9 @@ class RandomSolarizeOp : public SolarizeOp {
   std::string Name() const override { return kRandomSolarizeOp; }
 
  private:
+  std::vector<uint8_t> threshold_;
   std::mt19937 rnd_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_RANDOM_SOLARIZE_OP_H

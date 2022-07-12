@@ -1889,6 +1889,46 @@ Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::share
   }
 }
 
+Status Solarize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                const std::vector<float> &threshold) {
+  try {
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    cv::Mat input_img = input_cv->mat();
+    if (!input_cv->mat().data) {
+      RETURN_STATUS_UNEXPECTED("Solarize: load image failed.");
+    }
+
+    std::shared_ptr<CVTensor> mask_mat_tensor;
+    std::shared_ptr<CVTensor> output_cv_tensor;
+    RETURN_IF_NOT_OK(CVTensor::CreateFromMat(input_img, input_cv->Rank(), &mask_mat_tensor));
+
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv_tensor));
+    RETURN_UNEXPECTED_IF_NULL(mask_mat_tensor);
+    RETURN_UNEXPECTED_IF_NULL(output_cv_tensor);
+
+    auto threshold_min = threshold[0], threshold_max = threshold[1];
+
+    if (threshold_min == threshold_max) {
+      mask_mat_tensor->mat().setTo(0, ~(input_cv->mat() >= threshold_min));
+    } else {
+      mask_mat_tensor->mat().setTo(0, ~((input_cv->mat() >= threshold_min) & (input_cv->mat() <= threshold_max)));
+    }
+
+    // solarize desired portion
+    const float max_size = 255.f;
+    output_cv_tensor->mat() = cv::Scalar::all(max_size) - mask_mat_tensor->mat();
+    input_cv->mat().copyTo(output_cv_tensor->mat(), mask_mat_tensor->mat() == 0);
+    input_cv->mat().copyTo(output_cv_tensor->mat(), input_cv->mat() < threshold_min);
+
+    *output = std::static_pointer_cast<Tensor>(output_cv_tensor);
+  }
+
+  catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Solarize: " + std::string(e.what()));
+  }
+  return Status::OK();
+}
+
 Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);

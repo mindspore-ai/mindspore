@@ -30,7 +30,7 @@ namespace mindspore {
 namespace dataset {
 class SolarizeOp : public TensorOp {
  public:
-  explicit SolarizeOp(std::vector<uint8_t> threshold = {0, 255}) : threshold_(std::move(threshold)) {}
+  explicit SolarizeOp(const std::vector<float> &threshold) : threshold_(threshold) {}
 
   ~SolarizeOp() override = default;
 
@@ -39,9 +39,8 @@ class SolarizeOp : public TensorOp {
   std::string Name() const override { return kSolarizeOp; }
 
  protected:
-  std::vector<uint8_t> threshold_;
+  std::vector<float> threshold_;
 };
 }  // namespace dataset
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_IMAGE_SOLARIZE_OP_H
