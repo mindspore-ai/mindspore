@@ -80,6 +80,7 @@ zeros_like_ = P.ZerosLike()
 cast_ = P.Cast()
 tensor_select_ = P.Select()
 index_fill_ = IndexFill()
+unsorted_segment_sum_ = P.UnsortedSegmentSum()
 
 
 @constexpr
@@ -3738,6 +3739,62 @@ def min(x, axis=0, keep_dims=False):
     argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
     return argmin_with_value_op(x)
 
+
+def unsorted_segment_sum(input_x, segment_ids, num_segments):
+    r"""
+    Computes the sum of a tensor along segments.
+
+    Calculates a tensor such that :math:`\text{output}[i] = \sum_{segment\_ids[j] == i} \text{data}[j, \ldots]`, where
+    :math:`j` is a tuple describing the index of element in data.  `segment_ids` selects which elements in data to sum
+    up. Segment_ids does not need to be sorted, and it does not need to cover all values in the entire valid value
+    range.
+
+    The following figure shows the calculation process of UnsortedSegmentSum:
+
+    .. image:: UnsortedSegmentSum.png
+
+    Note:
+        - If the segment_id i is absent in the segment_ids, then output[i] will be filled with 0.
+        - On Ascend, if the value of segment_id is less than 0 or greater than the length of the input data shape, an
+          execution error will occur.
+
+    If the sum of the given segment_ids :math:`i` is empty, then :math:`\text{output}[i] = 0`. If the given segment_ids
+    is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
+
+    Args:
+        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+        - **segment_ids** (Tensor) - Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        - **num_segments** (int) - Set :math:`z` as num_segments.
+
+    Returns:
+        Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
+
+    Raises:
+        TypeError: If `num_segments` is not an int.
+        ValueError: If length of shape of `segment_ids` is less than 1.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> import mindspore.ops as ops
+        >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
+        >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
+        >>> num_segments = 4
+        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> print(output)
+        [3. 3. 4. 0.]
+        >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
+        >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
+        >>> num_segments = 6
+        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> print(output)
+        [3. 3. 4. 2. 5. 0.]
+    """
+    return unsorted_segment_sum_(input_x, segment_ids, num_segments)
+
+
 __all__ = [
     'unique',
     'unique_with_pad',
@@ -3816,5 +3873,6 @@ __all__ = [
     "index_fill",
     'max',
     'min',
+    'unsorted_segment_sum',
 ]
 __all__.sort()

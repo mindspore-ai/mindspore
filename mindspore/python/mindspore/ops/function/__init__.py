@@ -97,6 +97,7 @@ from .array_func import (
     affine_grid,
     fills,
     broadcast_to,
+    unsorted_segment_sum,
     adaptive_max_pool2d,
     col2im,
     split,

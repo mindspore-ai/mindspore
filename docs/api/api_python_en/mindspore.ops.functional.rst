@@ -378,6 +378,7 @@ Array Operation
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
     mindspore.ops.gumbel_softmax
+    mindspore.ops.unsorted_segment_sum
 
 .. list-table::
    :widths: 50 50
