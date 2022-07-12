@@ -2028,10 +2028,11 @@ class Tensor(Tensor_):
             tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
             tensor.
 
-            - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
-            output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
-            :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-            - value (Tensor) - The minimum value of input tensor, with the same shape as index.
+            - **index** (Tensor) - The index for the minimum value of the input tensor.
+              If `keep_dims` is true, the shape of
+              output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
+              :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
+            - **value** (Tensor) - The minimum value of input tensor, with the same shape as index.
 
         Raises:
             TypeError: If `keep_dims` is not a bool.
@@ -2044,10 +2045,10 @@ class Tensor(Tensor_):
             >>> x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
             >>> output = x.arg_min_with_value()
             >>> print(output)
-            (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0))
+            0 0.0
             >>> output = x.arg_min_with_value(keep_dims=True)
             >>> print(output)
-            (Tensor(shape=[1], dtype=Int32, value= [0]), Tensor(shape=[1], dtype=Float32, value= [ 0.00000000e+00]))
+            [0] [0.0]
         """
         self._init_check()
         return tensor_operator_registry.get('arg_min_with_value')(self, axis, keep_dims)

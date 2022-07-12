@@ -586,9 +586,9 @@ class Adam(Optimizer):
     def _init_distributed_opts(self, use_locking, use_nesterov):
         self.use_dist_optimizer = self.use_distibuted_optimizer()
         self.dense_adam_opts, self.use_dense_opt_flags = \
-            self.get_distributed_optimizer_list("adam", use_locking, use_nesterov)
+            self._get_distributed_optimizer_list("adam", use_locking, use_nesterov)
         self.sparse_adam_opts, self.use_sparse_opt_flags = \
-            self.get_distributed_optimizer_list("fused_sparse_adam", use_locking, use_nesterov)
+            self._get_distributed_optimizer_list("fused_sparse_adam", use_locking, use_nesterov)
 
 
 class AdamWeightDecay(Optimizer):
