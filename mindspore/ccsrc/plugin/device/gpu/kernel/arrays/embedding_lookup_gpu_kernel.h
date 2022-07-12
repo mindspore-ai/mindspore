@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
+template <typename T, typename S, typename G>
 class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
   EmbeddingLookupKernelMod() { ResetResource(); }
@@ -41,17 +41,17 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
     S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     if (is_dynamic_shape_) {
-      int64_t *offset_device_address = GetDeviceAddress<int64_t>(inputs, 2);  // only get this if in dynamic mode
+      G *offset_device_address = GetDeviceAddress<G>(inputs, 2);  // only get this if in dynamic mode
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
-                                 cudaMemcpyAsync(&offset_, offset_device_address, sizeof(int64_t),
-                                                 cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_ptr)),
+                                 cudaMemcpyAsync(&offset_, offset_device_address, sizeof(G), cudaMemcpyDeviceToHost,
+                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync offset_ failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(),
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaDeviceSyncFailed - EmbeddingLookup - in dynamic mode");
     }
     auto input_dim1 = input_shapes_[0];
-    CalEmbeddingLookup(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1, offset_,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalEmbeddingLookup(input_addr, indices_addr, output_addr, dims_[0], dims_[1], dims_[2], input_dim1,
+                       static_cast<int64_t>(offset_), reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
@@ -81,7 +81,7 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
                         << input_shapes_.size();
     }
     if (!is_dynamic_shape_) {
-      offset_ = GetAttr<int64_t>(kernel_node, "offset");
+      offset_ = static_cast<G>(GetAttr<int64_t>(kernel_node, "offset"));
     }
     Reshape();
     InitSizeLists();
@@ -107,7 +107,7 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
     size = GetSize(indices_shapes_);
     input_size_list_.push_back(size);
     if (is_dynamic_shape_) {
-      input_size_list_.push_back(sizeof(int64_t));
+      input_size_list_.push_back(sizeof(G));
     }
     size = GetSize(output_shapes_);
     output_size_list_.push_back(size);
@@ -148,7 +148,7 @@ class EmbeddingLookupKernelMod : public DeprecatedNativeGpuKernelMod {
   std::vector<int64_t> indices_shapes_;
   std::vector<int64_t> output_shapes_;
   size_t dims_[3] = {};
-  int64_t offset_;
+  G offset_;
   bool is_dynamic_shape_;
   bool is_null_input_;
 };
