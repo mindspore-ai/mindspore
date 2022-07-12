@@ -23,6 +23,7 @@ typedef struct ActivationParameter {
   float alpha_;
   float min_val_;
   float max_val_;
+  bool approximate_;
 } ActivationParameter;
 
 #endif  // MINDSPORE_NNACL_ACTIVATION_PARAMETER_H_

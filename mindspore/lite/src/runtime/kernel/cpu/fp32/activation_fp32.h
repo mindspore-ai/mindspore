@@ -33,6 +33,7 @@ class ActivationCPUKernel : public LiteKernel {
     alpha_ = (reinterpret_cast<ActivationParameter *>(param))->alpha_;
     min_val_ = (reinterpret_cast<ActivationParameter *>(param))->min_val_;
     max_val_ = (reinterpret_cast<ActivationParameter *>(param))->max_val_;
+    approximate_ = (reinterpret_cast<ActivationParameter *>(param))->approximate_;
   }
   ~ActivationCPUKernel() override = default;
 
@@ -50,6 +51,7 @@ class ActivationCPUKernel : public LiteKernel {
   float alpha_;
   float min_val_;
   float max_val_;
+  bool approximate_;
 };
 }  // namespace mindspore::kernel
 
