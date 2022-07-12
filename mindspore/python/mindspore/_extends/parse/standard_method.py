@@ -108,7 +108,7 @@ def prod(x, axis=(), keep_dims=False):
         >>> print(output)
         6.0
     """
-    return F.reduce_prod(x, axis, keep_dims)
+    return F.prod(x, axis, keep_dims)
 
 
 def addcdiv(input_data, x1, x2, value):
