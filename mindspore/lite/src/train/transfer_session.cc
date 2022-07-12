@@ -221,9 +221,11 @@ int TransferSession::Export(const std::string &filename, ModelType model_type, Q
       MS_LOG(ERROR) << "FindExportKernels failed.";
       return RET_ERROR;
     }
-    status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type);
+    status = texport.ExportNet(export_kernels, tensors_, out_put_tensor_name, model_.get(), quant_type,
+                               backbone_session_->model_);
   } else {
-    status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_.get(), quant_type);
+    status = texport.ExportNet(inference_kernels_, tensors_, GetOutputTensorNames(), model_.get(), quant_type,
+                               backbone_session_->model_);
   }
   if (status != RET_OK) {
     MS_LOG(ERROR) << "cannot serialize head";
