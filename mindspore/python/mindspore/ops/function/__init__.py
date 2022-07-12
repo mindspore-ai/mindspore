@@ -253,7 +253,6 @@ from .nn_func import (
     hardswish,
     softsign,
     selu,
-    pdist,
     pad,
     nll_loss,
     smooth_l1_loss,

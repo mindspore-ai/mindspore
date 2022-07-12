@@ -1660,7 +1660,6 @@ __all__ = [
     'hardswish',
     'softsign',
     'selu',
-    'pdist',
     'pad',
     'cross_entropy',
     'grid_sample',
