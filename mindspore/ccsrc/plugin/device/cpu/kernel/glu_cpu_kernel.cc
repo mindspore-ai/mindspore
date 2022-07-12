@@ -34,8 +34,7 @@ bool GLUCpuKernelMod::SplitWithDimZero(T *input_data_ptr, T *output_data_ptr) {
   int64_t copy_num = shape_value_ / value_shape_vec_[0];
   T *input_copy_ptr = input_data_ptr;
   if (value_shape_vec_[0] % kEvenNum != 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', x.shape[0] must be even, but got "
-                  << value_shape_vec_[0] << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', x.shape[0] must be even, but got " << value_shape_vec_[0] << ".";
     return false;
   }
   int64_t size_split = value_shape_vec_[0] / kEvenNum;
@@ -44,7 +43,7 @@ bool GLUCpuKernelMod::SplitWithDimZero(T *input_data_ptr, T *output_data_ptr) {
   auto task = [&](size_t start, size_t end) {
     for (size_t k = start; k < end; k++) {
       T val = *(input_copy_ptr + k);
-      *(output_data_ptr + k) = (*(input_data_ptr + k)) * (exp(val) / (T(1) + exp(val)));
+      *(output_data_ptr + k) = (*(input_data_ptr + k)) * (T(1) / (T(1) + exp(-val)));
     }
   };
   if (copy_size_per < kParallelDataNum) {
@@ -64,7 +63,8 @@ bool GLUCpuKernelMod::SplitCompute(T *input_data_ptr, T *output_data_ptr) {
   }
   int64_t midfix = value_shape_vec_[split_dim_];
   if (midfix % kEvenNum != 0) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', x.shape[" << split_dim_ << "] must be even, but got " << midfix << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', x.shape[" << split_dim_ << "] must be even, but got " << midfix
+                  << ".";
     return false;
   }
   int64_t size_split = midfix / kEvenNum;
@@ -84,7 +84,7 @@ bool GLUCpuKernelMod::SplitCompute(T *input_data_ptr, T *output_data_ptr) {
       auto sharder_output = output_data_ptr + (i)*copy_num;
       for (int64_t k = 0; k < copy_num; k++) {
         T val = *(sharder_input_data + k);
-        *(sharder_output + k) = (*(sharder_input_copy + k)) * (exp(val) / (T(1) + exp(val)));
+        *(sharder_output + k) = (*(sharder_input_copy + k)) * (T(1) / (T(1) + exp(-val)));
       }
     }
   };

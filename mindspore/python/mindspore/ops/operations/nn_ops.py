@@ -10352,13 +10352,14 @@ class GLU(Primitive):
 
     .. math ::
         \begin{array}{ll} \\
-            \text{GLU}(a, b) = a \otimes \sigma(b) 
+            \text{GLU}(a, b) = a \otimes \sigma(b)
         \end{array}
     where `input` is split in half along `dim` to form `a` and `b`,
     σ is the sigmoid function and ⊗ is the element-wise product between matrices.
 
     Args:
-        axis (int): Dimension on which to split the input. The value of `axis` must be in the range [-rank(`x`), rank(`x`)). Default: -1.
+        axis (int): Dimension on which to split the input.
+            The value of `axis` must be in the range [-rank(`x`), rank(`x`)). Default: -1.
 
     Inputs:
         - **x** (Tensor) - Input tensor. `x.shape[axis]` must be even.
@@ -10395,7 +10396,6 @@ class GLU(Primitive):
     def __init__(self, axis=-1):
         """Initialize GLU"""
         validator.check_value_type("axis", axis, [int], self.name)
-        self.add_prim_attr("cust_aicpu", "Glu")
 
 
 class FractionalMaxPoolWithFixedKsize(Primitive):

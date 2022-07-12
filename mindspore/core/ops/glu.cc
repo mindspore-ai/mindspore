@@ -34,7 +34,6 @@ int64_t GLU::get_axis() const {
   return GetValue<int64_t>(value_ptr);
 }
 namespace {
-
 abstract::ShapePtr GLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   constexpr int64_t kEvenNum = 2;

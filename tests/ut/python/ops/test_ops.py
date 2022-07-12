@@ -2648,7 +2648,11 @@ test_case_nn_ops = [
     ('GLU', {
         'block': GLU(),
         'desc_inputs': [[2, 3, 4]],
-        'desc_bprop': [[2, 3, 4]]}),
+        'desc_bprop': [[2, 3, 2]]}),
+    ('GluGrad', {
+        'block': G.GluGrad(axis=1),
+        'desc_inputs': [[2, 1, 4], [2, 2, 4]],
+        'skip': ['backward']}),
     ('Sigmoid', {
         'block': P.Sigmoid(),
         'desc_inputs': [[1, 3, 4, 4]],
