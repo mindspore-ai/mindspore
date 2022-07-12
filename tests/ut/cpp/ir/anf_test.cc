@@ -155,4 +155,25 @@ TEST_F(TestAnf, test_TensorWithSubData) {
   assert(t2->data().is_sub_data());
   assert(!t2->data().has_sub_data());
 }
+
+/// Feature: Compression tensor
+/// Description: test Tensor API.
+/// Expectation: Tensor API work as expected.
+TEST_F(TestAnf, test_CompressionTensor) {
+  ShapeVector shape{1, 224, 224, 3};
+  auto data_size = 50;
+  auto tensor_int8 = std::make_shared<Tensor>(kNumberTypeInt8, shape, data_size, kFSE);
+  ASSERT_EQ(tensor_int8->data_type(), kNumberTypeInt8);
+  ASSERT_EQ(tensor_int8->shape(), shape);
+  ASSERT_EQ(tensor_int8->DataSize(), data_size);
+  ASSERT_EQ(tensor_int8->Size(), data_size);
+  ASSERT_EQ(tensor_int8->compression_type(), kFSE);
+
+  auto tensor_int16 = std::make_shared<Tensor>(kNumberTypeInt16, shape, data_size, kBitPacking);
+  ASSERT_EQ(tensor_int16->data_type(), kNumberTypeInt16);
+  ASSERT_EQ(tensor_int16->shape(), shape);
+  ASSERT_EQ(tensor_int16->DataSize(), data_size);
+  ASSERT_EQ(tensor_int16->Size(), data_size);
+  ASSERT_EQ(tensor_int16->compression_type(), kBitPacking);
+}
 }  // namespace mindspore

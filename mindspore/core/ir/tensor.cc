@@ -479,6 +479,15 @@ class TensorChunkData : public TensorDataImpl<T> {
   bool has_sub_data() const override { return true; }
 };
 
+// Tensor compression data.
+template <typename T>
+class CompressionTensorData : public TensorDataImpl<T> {
+ public:
+  explicit CompressionTensorData(size_t size) : TensorDataImpl<T>(ShapeVector{static_cast<int64_t>(size)}) {}
+
+  ~CompressionTensorData() override = default;
+};
+
 // TensorSubData is the base class to provide tensor data as a segment from an owner tensor data.
 class TensorSubData : public TensorData {
  public:
@@ -630,6 +639,49 @@ TensorDataPtr MakeChunkData(TypeId data_type, size_t size) {
   MS_LOG(EXCEPTION) << "Cannot construct chunk data because of unsupported data type: " << data_type << ".";
 }
 
+template <typename... Args>
+TensorDataPtr MakeCompressionTensorData(TypeId data_type, size_t size) {
+  switch (data_type) {
+    case kNumberTypeBool:
+      return std::make_shared<CompressionTensorData<bool>>(size);
+    case kNumberTypeUInt8:
+      return std::make_shared<CompressionTensorData<uint8_t>>(size);
+    case kNumberTypeInt8:
+      return std::make_shared<CompressionTensorData<int8_t>>(size);
+    case kNumberTypeInt16:
+      return std::make_shared<CompressionTensorData<int16_t>>(size);
+    case kNumberTypeInt32:
+      return std::make_shared<CompressionTensorData<int32_t>>(size);
+    case kNumberTypeInt64:
+      return std::make_shared<CompressionTensorData<int64_t>>(size);
+    case kNumberTypeUInt16:
+      return std::make_shared<CompressionTensorData<uint16_t>>(size);
+    case kNumberTypeUInt32:
+      return std::make_shared<CompressionTensorData<uint32_t>>(size);
+    case kNumberTypeUInt64:
+      return std::make_shared<CompressionTensorData<uint64_t>>(size);
+    case kNumberTypeFloat16:
+      return std::make_shared<CompressionTensorData<float16>>(size);
+    case kNumberTypeFloat:
+      return std::make_shared<CompressionTensorData<float>>(size);
+    case kNumberTypeFloat32:
+      return std::make_shared<CompressionTensorData<float>>(size);
+    case kNumberTypeFloat64:
+      return std::make_shared<CompressionTensorData<double>>(size);
+    case kNumberTypeComplex64:
+      return std::make_shared<CompressionTensorData<ComplexStorage<float>>>(size);
+    case kNumberTypeComplex128:
+      return std::make_shared<CompressionTensorData<ComplexStorage<double>>>(size);
+    case kObjectTypeString:
+      return std::make_shared<CompressionTensorData<uint8_t>>(size);
+    case kObjectTypeTensorType:
+      return std::make_shared<CompressionTensorData<int>>(size);
+    default:
+      break;
+  }
+  MS_LOG(EXCEPTION) << "Cannot construct compression data because of unsupported data type: " << data_type << ".";
+}
+
 template <typename T>
 TensorDataPtr MakeSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
   const size_t data_bytes = data->nbytes();
@@ -704,7 +756,8 @@ Tensor::Tensor(const Tensor &tensor)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
-      user_data_(tensor.user_data_) {}
+      user_data_(tensor.user_data_),
+      compression_type_(tensor.compression_type_) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
     : MetaTensor(data_type, tensor.shape_),
@@ -724,7 +777,8 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       padding_type_(tensor.padding_type()),
       device_event_(tensor.device_event_),
       lazy_callback_(tensor.lazy_callback_),
-      user_data_(tensor.user_data_) {}
+      user_data_(tensor.user_data_),
+      compression_type_(tensor.compression_type_) {}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
     : MetaTensor(data_type, shape), data_(std::move(data)), id_(MakeId()) {}
@@ -770,6 +824,12 @@ Tensor::Tensor(bool input, const TypePtr &data_type)
 
 Tensor::Tensor(TypeId data_type, size_t data_size)
     : Tensor(data_type, ShapeVector{static_cast<int64_t>(data_size)}, MakeChunkData(data_type, data_size)) {}
+
+Tensor::Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
+               TensorCompressionType compression_type)
+    : Tensor(origin_data_type, shape, MakeCompressionTensorData(kNumberTypeInt8, compression_data_size)) {
+  compression_type_ = compression_type;
+}
 
 bool Tensor::operator==(const Tensor &tensor) const {
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_ == tensor.data_));

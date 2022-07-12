@@ -47,6 +47,9 @@ enum TensorSyncStatus {
   kNeedSyncDeviceToHost,
   kNeedSyncDeviceToHostImmediately
 };
+
+enum TensorCompressionType { kNoCompression = 0, kIndexing = 1, kSparse = 2, kFSE = 3, kBitPacking = 4 };
+
 // A sub namespace in ME to support tensor related definition.
 namespace tensor {
 // Tensor data interface.
@@ -248,6 +251,15 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \param[in] data_type [TypeId] Data type of the tensor.
   /// \param[in] data_size The tensor chunk data size in number of elements.
   Tensor(TypeId data_type, size_t data_size);
+
+  /// \brief Create a Tensor which shape and size may be inconsistent, such as Tensor with compression data.
+  ///
+  /// \param[in] origin_data_type [TypeId] Data type of the origin tensor.
+  /// \param[in] shape The shape represented by ShapeVector of the tensor.
+  /// \param[in] compression_data_size The compression data buffer size.
+  /// \param[in] TensorCompressionType The tensor compression type.
+  Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
+         TensorCompressionType compression_type);
 
   /// Destructor of Tensor.
   ~Tensor() override = default;
@@ -653,6 +665,11 @@ class MS_CORE_API Tensor final : public MetaTensor {
   /// \return fusion size for the given flat tensors.
   static size_t GetFusionSize(const TensorPtrList &flat_tensors);
 
+  /// \brief Get the tensor compression type.
+  ///
+  /// \return tensor compression type.
+  TensorCompressionType compression_type() const { return compression_type_; }
+
  private:
   void ExecuteLazyTask() const;
 
@@ -678,6 +695,7 @@ class MS_CORE_API Tensor final : public MetaTensor {
   std::shared_ptr<DeviceEvent> device_event_{nullptr};
   std::function<void(void)> lazy_callback_{nullptr};
   UserData user_data_;
+  TensorCompressionType compression_type_{kNoCompression};
 };
 
 // CSRTensor entity class
