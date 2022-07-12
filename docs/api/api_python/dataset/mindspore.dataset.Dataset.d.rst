@@ -183,7 +183,7 @@
     - **offload** (bool, 可选) - 是否进行异构硬件加速，详情请阅读 `数据准备异构加速 <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.8/dataset/dataset_offload.html>`_ 。默认值：None。
 
     .. note::
-        - `operations` 参数主要接收 `mindspore.dataset` 模块中c_transforms、py_transforms算子，以及用户定义的Python函数(PyFuncs)。
+        - `operations` 参数接收 `TensorOperation` 类型的数据处理操作，以及用户定义的Python函数(PyFuncs)。
         - 不要将 `mindspore.nn` 和 `mindspore.ops` 或其他的网络计算算子添加到 `operations` 中。
 
     **返回：**
