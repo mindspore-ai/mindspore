@@ -20,7 +20,6 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <utility>
 #include "include/api/status.h"
 #include "include/api/graph.h"
 #include "cxx_api/graph/graph_impl.h"
@@ -48,7 +47,7 @@ class AscendGraphImpl : public GraphCell::GraphImpl {
   Status CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr);
   Status CheckModelInputs(const std::vector<tensor::TensorPtr> &inputs) const;
   std::vector<tensor::TensorPtr> RunGraph(const std::vector<tensor::TensorPtr> &inputs);
-  Status ExecuteModel(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
+  Status ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply);
 
   std::shared_ptr<session::SessionBasic> session_impl_;
   uint32_t graph_id_;

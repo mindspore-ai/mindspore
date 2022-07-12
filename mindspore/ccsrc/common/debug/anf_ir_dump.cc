@@ -456,7 +456,7 @@ void DumpPrimalDebugInfos(const CNodePtr &node, const std::shared_ptr<SubGraphIR
   auto primal_debug_infos = node->primal_debug_infos();
   if (!primal_debug_infos.empty()) {
     std::string lines;
-    for (auto &primal_debug_info : primal_debug_infos) {
+    for (const auto &primal_debug_info : primal_debug_infos) {
       auto debug_info_str = trace::GetDebugInfo(primal_debug_info, "      # ", kSourceLineTipDiscard);
       if (!debug_info_str.empty()) {
         lines += debug_info_str + "\n";

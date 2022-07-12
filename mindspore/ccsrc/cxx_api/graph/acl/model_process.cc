@@ -82,7 +82,7 @@ static std::string ShapeToString(const std::vector<int64_t> &shape) {
 }
 
 Status ModelProcess::ConstructTensors(const std::vector<AclTensorInfo> &acl_tensor_list,
-                                      std::vector<MSTensor> *tensor_list) {
+                                      std::vector<MSTensor> *tensor_list) const {
   MS_EXCEPTION_IF_NULL(tensor_list);
   std::vector<std::string> names;
   std::vector<std::vector<int64_t>> shapes;
@@ -328,10 +328,10 @@ Status ModelProcess::UnLoad() {
   return kSuccess;
 }
 
-size_t ModelProcess::GetDynamicDims(const std::vector<AclTensorInfo> &inputs) {
+size_t ModelProcess::GetDynamicDims(const std::vector<AclTensorInfo> &inputs) const {
   size_t max_num = 0;
   for (auto input : inputs) {
-    size_t cur_num = std::count(input.dims.begin(), input.dims.end(), -1);
+    size_t cur_num = LongToSize(std::count(input.dims.begin(), input.dims.end(), -1));
     if (cur_num > max_num) {
       max_num = cur_num;
     }
@@ -345,7 +345,7 @@ Status ModelProcess::SetBatchSize(const std::vector<MSTensor> &inputs) {
   for (size_t i = 0; i < inputs.size(); i++) {
     input_infos_[i].buffer_size = inputs[i].DataSize();
   }
-  auto *p = reinterpret_cast<const float *>(inputs[inputs.size() - 1].Data().get());
+  auto *p = static_cast<const float *>(inputs[inputs.size() - 1].Data().get());
   MS_EXCEPTION_IF_NULL(p);
   size_t dynamicBatchSize = FloatToSize(p[0]);
   ret = aclmdlGetInputIndexByName(model_desc_, ACL_DYNAMIC_TENSOR_NAME, &index);

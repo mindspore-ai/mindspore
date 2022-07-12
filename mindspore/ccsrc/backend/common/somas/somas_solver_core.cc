@@ -146,7 +146,9 @@ bool SomasSolverCore::Verify(const size_t &upperbound) {
     for (auto t2_ : tensors_) {
       t1 = t1_.second;
       t2 = t2_.second;
-      if (t1->index_ == t2->index_) continue;
+      if (t1->index_ == t2->index_) {
+        continue;
+      }
       bool blifelong = (t1->lifelong_ || t2->lifelong_) && (t1->index_ != t2->index_);
       if (t2->right_ == t1) {  // continuous constraint
         // t1 must be continuous to t2
@@ -187,13 +189,17 @@ void SomasSolverCore::BuildBlocks() {
   uint64_t tensors_block_count = 0;
   for (auto tensor : tensors_) {
     SomasSolverTensorDescPtr pTensor = tensor.second;
-    if (pTensor->blocked_) continue;
+    if (pTensor->blocked_) {
+      continue;
+    }
     if (pTensor->lifelong_) {
       lifelong_memory_ += pTensor->size_;
       continue;
     }
     // move to the left
-    while (pTensor->left_) pTensor = pTensor->left_;
+    while (pTensor->left_) {
+      pTensor = pTensor->left_;
+    }
 
     // set start tensor
     BlockTensor bTensor;
@@ -213,8 +219,9 @@ void SomasSolverCore::BuildBlocks() {
     this->block_tensors_.emplace_back(bTensor);
   }
 
-  if (tensors_block_count != tensors_.size())
+  if (tensors_block_count != tensors_.size()) {
     MS_LOG(INFO) << static_cast<int>(tensors_.size() - tensors_block_count) << " lifelong tensors found";
+  }
 }
 
 void SomasSolverCore::Clean() {
@@ -283,7 +290,9 @@ void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heur
 
 void SomasSolverCore::RestoreSolution(uint32_t sol_id) {
   for (auto block : block_tensors_) {
-    if (block.offsets_.count(sol_id) == 0) MS_ASSERT(0);
+    if (block.offsets_.count(sol_id) == 0) {
+      MS_ASSERT(0);
+    }
     size_t bestOffset = block.offsets_[sol_id];
     size_t offset = bestOffset;
     SomasSolverTensorDescPtr pTensor = block.m_start_tensor_;
@@ -329,12 +338,12 @@ void SomasSolverCore::AppendLifelongTensors() {
   MS_LOG(DEBUG) << "Appending lifelong tensors to solution";
   size_t offset = upperbound_;
   std::map<size_t, SomasSolverTensorDescPtr> lifelongTensors;
-  for (auto &t : tensors_) {
+  for (const auto &t : tensors_) {
     if (t.second->lifelong_) {
       (void)lifelongTensors.emplace(t.first, t.second);
     }
   }
-  for (auto &t : lifelongTensors) {
+  for (const auto &t : lifelongTensors) {
     auto &pTensor = t.second;
     pTensor->offset_ = offset;
     offset += pTensor->size_;
@@ -352,18 +361,18 @@ size_t SomasSolverCore::FindSolutions() {
   pFootprint->setAlgorithm(static_cast<uint32_t>(algorithm_));
   Search(pFootprint);
   AppendLifelongTensors();
-  Destroy(pFootprint);
+  Destroy(&pFootprint);
   return upperbound_;
 }
 
-void SomasSolverCore::Destroy(std::shared_ptr<FootPrint> &pFootprint) {
-  while (pFootprint != nullptr) {
-    if (pFootprint->Next() != nullptr) {
-      std::shared_ptr<FootPrint> &p = pFootprint;
-      pFootprint = pFootprint->Next();
+void SomasSolverCore::Destroy(std::shared_ptr<FootPrint> *pFootprint) const {
+  while ((*pFootprint) != nullptr) {
+    if ((*pFootprint)->Next() != nullptr) {
+      std::shared_ptr<FootPrint> &p = (*pFootprint);
+      (*pFootprint) = (*pFootprint)->Next();
       p = nullptr;
     } else {
-      pFootprint = nullptr;
+      (*pFootprint) = nullptr;
     }
   }
 }
