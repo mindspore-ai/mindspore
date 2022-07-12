@@ -81,8 +81,7 @@ Status ModelImpl::Build(const void *model_data, size_t data_size, ModelType mode
     return kLiteNullptr;
   }
 
-  auto ret =
-    session->LoadModelAndCompileByBuf(static_cast<const char *>(model_data), model_type, data_size, ms_context);
+  auto ret = session->LoadModelAndCompileByBuf(static_cast<const char *>(model_data), model_type, data_size);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     return kLiteError;
@@ -106,7 +105,7 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
     return kLiteNullptr;
   }
 
-  auto ret = session->LoadModelAndCompileByPath(model_path, model_type, ms_context);
+  auto ret = session->LoadModelAndCompileByPath(model_path, model_type);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init session failed";
     return kLiteError;

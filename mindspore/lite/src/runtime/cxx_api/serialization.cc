@@ -63,8 +63,9 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
 
   size_t lite_buf_size = 0;
   char *lite_buf = nullptr;
-  auto buf_model_type = lite::LiteSession::LoadModelByBuff(reinterpret_cast<const char *>(model_data), data_size,
-                                                           &lite_buf, &lite_buf_size, model_type);
+  lite::LiteSession session;
+  auto buf_model_type = session.LoadModelByBuff(reinterpret_cast<const char *>(model_data), data_size, &lite_buf,
+                                                &lite_buf_size, model_type);
   if (buf_model_type == mindspore::ModelType::kUnknownType || lite_buf == nullptr) {
     MS_LOG(ERROR) << "Invalid model_buf";
     return kLiteNullptr;
@@ -114,7 +115,8 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
   }
 
   size_t model_size;
-  auto model_buf = lite::LiteSession::LoadModelByPath(filename, model_type, &model_size);
+  lite::LiteSession session;
+  auto model_buf = session.LoadModelByPath(filename, model_type, &model_size);
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Read model file failed";
     return kLiteNullptr;
