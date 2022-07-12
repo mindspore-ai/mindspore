@@ -1,4 +1,4 @@
-# Copyright 2019-2021 Huawei Technologies Co., Ltd
+# Copyright 2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
+
 class SqueezeNet(nn.Cell):
     def __init__(self):
         super(SqueezeNet, self).__init__()
@@ -29,77 +30,22 @@ class SqueezeNet(nn.Cell):
         return self.squeeze(tensor)
 
 
-def squeeze(nptype):
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_type",
+                         [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
+                          np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
+def test_squeeze(data_type):
+    """
+    Feature: Test Squeeze GPU.
+    Description: The input data type contains common valid types including bool
+    Expectation: match to np benchmark.
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     np.random.seed(0)
-    x = np.random.randn(1, 16, 1, 1).astype(nptype)
+    x = np.random.randn(1, 16, 1, 1).astype(data_type)
     net = SqueezeNet()
     output = net(Tensor(x))
     assert np.all(output.asnumpy() == x.squeeze())
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_bool():
-    squeeze(np.bool)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_uint8():
-    squeeze(np.uint8)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_uint16():
-    squeeze(np.uint16)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_uint32():
-    squeeze(np.uint32)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_int8():
-    squeeze(np.int8)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_int16():
-    squeeze(np.int16)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_int32():
-    squeeze(np.int32)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_int64():
-    squeeze(np.int64)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_float16():
-    squeeze(np.float16)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_float32():
-    squeeze(np.float32)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_squeeze_float64():
-    squeeze(np.float64)
