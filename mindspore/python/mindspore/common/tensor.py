@@ -550,6 +550,72 @@ class Tensor(Tensor_):
         self._init_check()
         Tensor_._flush_from_cache(self)
 
+    def addcdiv(self, x1, x2, value):
+        r"""
+        Performs the element-wise division of tensor x1 by tensor x2,
+        multiply the result by the scalar value and add it to input_data.
+
+        .. math::
+            y[i] = input\_data[i] + value[i] * (x1[i] / x2[i])
+
+        Args:
+            x1 (Tensor) - The numerator tensor.
+            x2 (Tensor) - The denominator tensor.
+            value (Tensor) - The multiplier for tensor x1/x2.
+
+        Returns:
+            Tensor, has the same shape and dtype as x1/x2.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 1, 1, 1]), mindspore.float32)
+            >>> x1 = Tensor(np.array([1, 2, 3, 4]), mindspore.float32)
+            >>> x2 = Tensor(np.array([4, 3, 2, 1]), mindspore.float32)
+            >>> value = Tensor([1], mindspore.float32)
+            >>> y = x.addcdiv(x1, x2, value)
+            >>> print(y)
+            [1.25      1.6666667 2.5       5.       ]
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('addcdiv')()(self, x1, x2, value)
+
+    def addcmul(self, x1, x2, value):
+        r"""
+        Performs the element-wise product of tensor x1 and tensor x2,
+        multiply the result by the scalar value and add it to input_data.
+
+        .. math::
+            y[i] = input\_data[i] + value[i] * (x1[i] * x2[i])
+
+        Args:
+            x1 (Tensor) - The tensor to be multiplied.
+            x2 (Tensor) - The tensor to be multiplied.
+            value (Tensor) - The multiplier for tensor x1*x2.
+
+        Returns:
+            Tensor, has the same shape and dtype as x1*x2.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1, 1, 1]), mindspore.float32)
+            >>> x1 = Tensor(np.array([[1], [2], [3]]), mindspore.float32)
+            >>> x2 = Tensor(np.array([[1, 2, 3]]), mindspore.float32)
+            >>> value = Tensor([1], mindspore.float32)
+            >>> y = x.addcmul(x1, x2, value)
+            >>> print(y)
+            [[ 2.  3.  4.]
+            [ 3.  5.  7.]
+            [ 4.  7. 10.]]
+        """
+
+        self._init_check()
+        return tensor_operator_registry.get('addcmul')()(self, x1, x2, value)
+
     def all(self, axis=(), keep_dims=False):
         """
         Check all tensor elements along a given axis evaluate to True.
