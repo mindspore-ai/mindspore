@@ -35,7 +35,7 @@ std::unordered_map<std::string, VectorRef> CLEPattern::DefinePatterns() const {
 
 bool IsLinearActivation(const api::SharedPtr<ops::Conv2DFusion> &conv2d) {
   std::set<ActivationType> liner_activations = {RELU, NO_ACTIVATION};
-  auto value_ptr = conv2d->GetAttr(ops::kActivation);
+  auto value_ptr = conv2d->GetAttr(ops::kActivationType);
   if (value_ptr == nullptr || liner_activations.find(conv2d->get_activation_type()) != liner_activations.end()) {
     return true;
   }
@@ -58,13 +58,13 @@ bool IsConvNode(const BaseRef &n, ConvNode node) {
     if (conv == nullptr) {
       return false;
     }
-
+    if (!IsLinearActivation(conv)) {
+      return false;
+    }
     if (node == COMMON_CONV) {
       return conv->get_group() == 1;
     } else if (node == DEPTHWISE_CONV) {
-      bool ret = IsLinearActivation(conv) && conv->GetAttr(ops::kIsDepthWise) != nullptr &&
-                 GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
-      return ret;
+      return conv->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
     } else {
       MS_LOG(ERROR) << "Not supported conv node type.";
       return false;
