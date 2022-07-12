@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 """
-This file contains contains basic classes that help users do flexible dataset loading.
+This file contains basic classes that help users do flexible dataset loading.
 You can define your own dataset loading class, and use GeneratorDataset to help load data.
 You can refer to the
 `tutorial <https://www.mindspore.cn/tutorials/zh-CN/master/advanced/dataset/custom.html>`_
@@ -215,7 +215,7 @@ class SamplerFn:
                                        "and the recommended shm size is at least 5 GB.")
                 worker.daemon = True
                 # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
-                # which may cause deadlock. Therefore, the subprocess startup is performed in che initialization phase.
+                # which may cause deadlock. Therefore, the subprocess startup is performed in the initialization phase.
                 # In this phase, the main process is not locked.
                 worker.start()
                 self.pids.append(worker.pid)
@@ -652,7 +652,9 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
                 " to replace it with python implemented operator like numpy etc. Here decrease 'num_parallel_workers' "
                 "into 1.")
 
-        self.python_multiprocessing = python_multiprocessing
+        if python_multiprocessing and platform.system().lower() == 'windows':
+            logger.warning("Python multiprocessing is not supported on Windows platform.")
+        self.python_multiprocessing = python_multiprocessing if platform.system().lower() != 'windows' else False
 
         self.column_names = to_list(column_names)
 
