@@ -22,6 +22,8 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
+#include "runtime/dev.h"
+#include "common/util/platform_info.h"
 
 namespace mindspore {
 namespace device {
@@ -54,6 +56,34 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
                      [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
+}
+
+std::string GetSocVersion() {
+  constexpr int kSocVersionLen = 50;
+  char soc_version[kSocVersionLen] = {0};
+  auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(WARNING) << "Call rtGetSocVersion failed, ret = " << ret;
+    return "Ascend910";
+  }
+  return soc_version;
+}
+
+void PlatformInfoInitialization() {
+  auto soc_version = GetSocVersion();
+  fe::PlatformInfo platform_info;
+  fe::OptionalInfo opti_compilation_info;
+  fe::PlatformInfoManager &inst = fe::PlatformInfoManager::Instance();
+  if (inst.InitializePlatformInfo() != 0) {
+    MS_LOG(WARNING) << "Initialize PlatformInfo failed.";
+    return;
+  }
+  if (inst.GetPlatformInfo(soc_version, platform_info, opti_compilation_info) != 0) {
+    MS_LOG(WARNING) << "GetPlatformInfo failed.";
+    return;
+  }
+  opti_compilation_info.soc_version = soc_version;
+  inst.SetOptionalCompilationInfo(opti_compilation_info);
 }
 
 void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
