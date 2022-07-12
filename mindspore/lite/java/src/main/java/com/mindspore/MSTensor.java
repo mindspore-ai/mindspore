@@ -134,7 +134,20 @@ public class MSTensor {
         if (data == null) {
             return false;
         }
-        return this.setData(this.tensorPtr, data, data.length);
+        return this.setByteData(this.tensorPtr, data, data.length);
+    }
+
+    /**
+     * Set the input data of MSTensor.
+     *
+     * @param data Input data of float[] type.
+     * @return whether set data success.
+     */
+    public boolean setData(float[] data) {
+        if (data == null) {
+            return false;
+        }
+        return this.setFloatData(this.tensorPtr, data, data.length);
     }
 
     /**
@@ -205,7 +218,9 @@ public class MSTensor {
 
     private native float[] getFloatData(long tensorPtr);
 
-    private native boolean setData(long tensorPtr, byte[] data, long dataLen);
+    private native boolean setByteData(long tensorPtr, byte[] data, long dataLen);
+
+    private native boolean setFloatData(long tensorPtr, float[] data, long dataLen);
 
     private native boolean setShape(long tensorPtr, int[] tensorShape);
 
