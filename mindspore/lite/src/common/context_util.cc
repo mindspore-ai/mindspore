@@ -67,6 +67,7 @@ std::shared_ptr<mindspore::KirinNPUDeviceInfo> NPUDeviceInfoFromNPUDeviceContext
   }
   auto npu_info = std::make_shared<mindspore::KirinNPUDeviceInfo>();
   MS_CHECK_TRUE_RET(npu_info != nullptr, nullptr);
+  npu_info->SetEnableFP16(npu_context.device_info_.npu_device_info_.enable_float16_);
   npu_info->SetFrequency(npu_context.device_info_.npu_device_info_.frequency_);
   PassBasicProperties(npu_info, npu_context);
   return npu_info;

@@ -459,6 +459,7 @@ int BenchmarkUnifiedApi::InitMSContext(const std::shared_ptr<mindspore::Context>
 
   if (flags_->device_ == "NPU") {
     std::shared_ptr<KirinNPUDeviceInfo> npu_device_info = std::make_shared<KirinNPUDeviceInfo>();
+    npu_device_info->SetEnableFP16(flags_->enable_fp16_);
     npu_device_info->SetFrequency(kFrequencyDefault);
     device_list.push_back(npu_device_info);
   }

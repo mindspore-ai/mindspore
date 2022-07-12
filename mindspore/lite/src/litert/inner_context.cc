@@ -205,6 +205,16 @@ bool InnerContext::IsGpuFloat16Enabled() const {
 #endif
 }
 
+bool InnerContext::IsNpuFloat16Enabled() const {
+  if (!IsDeviceTypeEnabled(DT_NPU)) {
+    return false;
+  }
+  if (!device_and_pkg_support_fp16_) {
+    return false;
+  }
+  return GetDeviceInfo(DT_NPU).npu_device_info_.enable_float16_;
+}
+
 bool InnerContext::IsGLTextureEnabled() const {
 #ifdef GPU_OPENCL
   if (!IsDeviceTypeEnabled(DT_GPU)) {
@@ -241,6 +251,8 @@ bool InnerContext::IsCpuBindModeInvalid() const {
                                                     device.device_info_.cpu_device_info_.cpu_bind_mode_ > MID_CPU);
          });
 }
+
+int InnerContext::GetDelegateMode() const { return delegate_mode_; }
 
 std::set<std::string> InnerContext::GetProviders() const {
   std::set<std::string> providers;

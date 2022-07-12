@@ -20,6 +20,8 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <string>
+#include <utility>
 #include "schema/model_generated.h"
 #include "include/api/kernel.h"
 #include "include/api/delegate_api.h"
@@ -84,6 +86,11 @@ class MS_API DelegateModel {
     kernels_->insert(BeginKernelIterator() + insert_index, graph_kernel);
     return BeginKernelIterator() + insert_index + 1;
   }
+
+  /// \brief Get the nodes of DelegateModel.
+  ///
+  /// \return The pointer to nodes vector of DelegateModel.
+  std::vector<kernel::Kernel *> *nodes() { return kernels_; }
 
   /// \brief Get the input tensors of DelegateModel.
   ///

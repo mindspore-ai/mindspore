@@ -78,3 +78,5 @@
 "mindspore/mindspore/core/mindrt/include/async/try.h"                                              "runtime/explicit"
 "mindspore/mindspore/core/mindrt/include/async/failure.h"                                          "runtime/explicit"
 "mindspore/mindspore/core/mindrt/include/async/defer.h"                                            "runtime/explicit"
+"mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.h"                        "build/include_order"
+"mindspore/mindspore/lite/src/litert/delegate/nnapi/nnapi_implementation.cc"                       "build/include_order"

@@ -521,6 +521,13 @@ if(SUPPORT_NPU)
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
 endif()
+
+if(SUPPORT_NNAPI)
+    add_compile_definitions(SUPPORT_NNAPI)
+    add_subdirectory(litert/delegate/nnapi)
+    target_link_libraries(mindspore-lite nnapi_kernel_mid)
+endif()
+
 if(PLATFORM_ARM32 OR PLATFORM_ARM64 AND NOT TARGET_HIMIX
         AND NOT TARGET_MIX210 AND NOT TARGET_OHOS_LITE AND NOT MACHINE_LINUX_ARM64)
     target_link_libraries(mindspore-lite log)

@@ -25,13 +25,14 @@ constexpr static int kDefaultInterOpParallelNum = 1;
 constexpr static int kCoreNumThreshold = 32;
 
 void ContextUtils::SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
-                                  const std::vector<int32_t> &affinity_core_list,
+                                  const std::vector<int32_t> &affinity_core_list, int delegate_mode,
                                   const std::shared_ptr<Delegate> &delegate, lite::InnerContext *inner_context,
                                   bool float_mode) {
   inner_context->thread_num_ = thread_num;
   inner_context->inter_op_parallel_num_ = inter_op_parallel_num;
   inner_context->enable_parallel_ = enable_parallel;
   inner_context->affinity_core_list_ = affinity_core_list;
+  inner_context->delegate_mode_ = delegate_mode;
   inner_context->delegate = delegate;
   inner_context->float_mode = float_mode;
 }
@@ -61,9 +62,9 @@ Status ContextUtils::AddGpuDevice(bool enable_fp16, uint32_t device_id, int rank
   return kSuccess;
 }
 
-Status ContextUtils::AddNpuDevice(int frequency, lite::InnerContext *inner_context) {
+Status ContextUtils::AddNpuDevice(bool enable_fp16, int frequency, lite::InnerContext *inner_context) {
   lite::DeviceInfo device_info;
-  device_info.npu_device_info_ = {frequency};
+  device_info.npu_device_info_ = {enable_fp16, frequency};
   inner_context->device_list_.push_back({lite::DT_NPU, device_info});
   return kSuccess;
 }
@@ -118,8 +119,8 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
     return nullptr;
   }
   SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
-                 context->GetThreadAffinityCoreList(), context->GetDelegate(), inner_context.get(),
-                 context->GetMultiModalHW());
+                 context->GetThreadAffinityCoreList(), static_cast<int>(context->GetBuiltInDelegate()),
+                 context->GetDelegate(), inner_context.get(), context->GetMultiModalHW());
   inner_context->device_list_.clear();
   Status ret = kLiteError;
   for (auto &device : device_list) {
@@ -142,7 +143,7 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(Context *context) {
                      gpu_context->GetProviderDevice(), gpu_context->GetAllocator(), inner_context.get());
     } else if (device->GetDeviceType() == kKirinNPU) {
       auto npu_context = device->Cast<KirinNPUDeviceInfo>();
-      ret = AddNpuDevice(npu_context->GetFrequency(), inner_context.get());
+      ret = AddNpuDevice(npu_context->GetEnableFP16(), npu_context->GetFrequency(), inner_context.get());
     } else if (device->GetDeviceType() == kAscend) {
       ret = AddAscendDevice(inner_context.get(), device.get());
     }
@@ -166,7 +167,7 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(const ContextC *contex
     return nullptr;
   }
   SetContextAttr(context_c->thread_num, 1, context_c->enable_parallel, context_c->affinity_core_list,
-                 context_c->delegate, inner_context.get());
+                 context_c->delegate_mode, context_c->delegate, inner_context.get());
   inner_context->device_list_.clear();
   Status ret = kLiteError;
   for (auto &device_info_c : device_list) {
@@ -182,7 +183,7 @@ std::shared_ptr<lite::InnerContext> ContextUtils::Convert(const ContextC *contex
       ret = AddGpuDevice(device_info_c->enable_fp16, 0, 0, 0, false, nullptr, nullptr, device_info_c->provider,
                          device_info_c->provider_device, device_info_c->allocator, inner_context.get());
     } else if (device_info_c->device_type == kMSDeviceTypeKirinNPU) {
-      ret = AddNpuDevice(device_info_c->frequency, inner_context.get());
+      ret = AddNpuDevice(device_info_c->enable_fp16, device_info_c->frequency, inner_context.get());
     }
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Add device failed!";

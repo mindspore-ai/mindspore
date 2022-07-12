@@ -42,6 +42,7 @@ struct Context::Data {
   int32_t thread_num = 0;  // defaults are automatically adjusted based on computer performance
   bool enable_parallel_ = false;
   std::vector<int32_t> affinity_core_list_;
+  DelegateMode delegate_mode_ = kNoDelegate;
   std::shared_ptr<Delegate> delegate = nullptr;
   bool float_mode = false;
 };

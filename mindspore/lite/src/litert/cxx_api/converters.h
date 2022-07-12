@@ -34,8 +34,9 @@ class ContextUtils {
 
  private:
   static void SetContextAttr(int32_t thread_num, int32_t inter_op_parallel_num, bool enable_parallel,
-                             const std::vector<int32_t> &affinity_core_list, const std::shared_ptr<Delegate> &delegate,
-                             lite::InnerContext *inner_context, bool float_mode = false);
+                             const std::vector<int32_t> &affinity_core_list, int delegate_mode,
+                             const std::shared_ptr<Delegate> &delegate, lite::InnerContext *inner_context,
+                             bool float_mode = false);
   static Status AddCpuDevice(const std::shared_ptr<Allocator> &allocator, int affinity_mode, bool enable_fp16,
                              const std::string &provider, const std::string &provider_device,
                              lite::InnerContext *inner_context);
@@ -43,7 +44,7 @@ class ContextUtils {
                              void *gl_context, void *gl_display, const std::string &provider,
                              const std::string &provider_device, const std::shared_ptr<Allocator> &allocator,
                              lite::InnerContext *inner_context);
-  static Status AddNpuDevice(int frequency, lite::InnerContext *inner_context);
+  static Status AddNpuDevice(bool enable_fp16, int frequency, lite::InnerContext *inner_context);
   static Status AddAscendDevice(lite::InnerContext *inner_context, DeviceInfoContext *device);
   static bool IsAffinityModeValid(int affinity_mode) {
     return affinity_mode >= lite::NO_BIND && affinity_mode <= lite::MID_CPU;
