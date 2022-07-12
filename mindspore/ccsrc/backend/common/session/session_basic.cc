@@ -81,6 +81,7 @@ MS_REG_SESSION(kSessionBasic, SessionBasic);
 namespace {
 const int kSummaryGetItem = 2;
 const size_t max_depth = 128;
+constexpr int64_t kInvalidShape = -2;
 
 bool RecursiveCheck(const FuncGraphManagerPtr &manager, const std::pair<AnfNodePtr, int64_t> &kernel, size_t *idx) {
   auto node = kernel.first;
@@ -1438,6 +1439,11 @@ void SessionBasic::GetParameterIndex(const KernelGraph *graph, const std::vector
       // Dynamic shape feed mode, shape is dynamic but max shape is ()
       if (!is_dynamic || !param_shape.empty()) {
         if (!is_parallel_forward_ms_function && input_shape.size() != param_shape.size()) {
+          // Infer shape is -2, which indicates that the shape cannot be infer currently
+          if (param_shape.size() == 1 && param_shape[0] == kInvalidShape) {
+            parameter_index->emplace(param, index++);
+            continue;
+          }
           MS_LOG(EXCEPTION) << "Shape size of input tensor(" << input_shape << ") and parameter(" << param_shape
                             << ") are different, input index: " << index << ", parameter: " << param->DebugString();
         }
