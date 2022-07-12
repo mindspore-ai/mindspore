@@ -32,7 +32,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/session_basic.h"
 #include "frontend/operator/ops.h"
-#include "profiler/device/cpu/cpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #include "utils/shape_utils.h"
 #include "utils/profile.h"
 #include "utils/trace_base.h"

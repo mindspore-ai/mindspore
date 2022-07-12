@@ -232,8 +232,8 @@ class Profiler:
         profiler_manager = c_expression.ProfilerManager
         self._profiler_manager = profiler_manager.get_instance()
         if self._device_target:
-            cpu_profiler = c_expression.CPUProfiler
-            self._cpu_profiler = cpu_profiler.get_instance()
+            cpu_profiler = c_expression.Profiler
+            self._cpu_profiler = cpu_profiler.get_instance("CPU")
             self._cpu_profiler.init(self._output_path)
 
         if self._device_target and self._device_target == DeviceTarget.CPU.value:
@@ -264,8 +264,8 @@ class Profiler:
             raise RuntimeError("Pynative model is not supported on GPU currently.")
         self._parse_parameter_for_gpu(kwargs)
 
-        gpu_profiler = c_expression.GPUProfiler
-        self._gpu_profiler = gpu_profiler.get_instance()
+        gpu_profiler = c_expression.Profiler
+        self._gpu_profiler = gpu_profiler.get_instance("GPU")
         self._gpu_profiler.init(self._output_path)
         if GlobalComm.WORLD_COMM_GROUP == "nccl_world_group":
             self._dev_id = str(get_rank())
@@ -289,7 +289,7 @@ class Profiler:
             logger.critical(msg)
             raise ValueError(msg)
         # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-        self._ascend_profiler = c_expression.AscendProfiler.get_instance()
+        self._ascend_profiler = c_expression.Profiler.get_instance("Ascend")
         self._ascend_profiler.init(self._output_path, int(self._dev_id), self._ascend_profiling_options)
         base_profiling_container_path = os.path.join(self._output_path, "container")
         container_path = os.path.join(base_profiling_container_path, self._dev_id)
@@ -415,6 +415,7 @@ class Profiler:
 
     def _ascend_pynative_analyse(self):
         """Collect and analyse ascend pynative model performance data."""
+        self._ascend_profiler.finalize()
         op_intermediate_parser = OPIntermediateParser(self._output_path, self._rank_id)
         op_intermediate_parser.parser_pynative_op_type()
         op_intermediate_parser.parser_pynative_op_intermediate_detail()
@@ -697,8 +698,8 @@ class Profiler:
 
     def _ascend_pynative_start(self):
         """Ascend pynative mode start profiling."""
-        pynative_profiler = c_expression.PynativeProfiler
-        self._pynative_profiler = pynative_profiler.get_instance()
+        pynative_profiler = c_expression.Profiler
+        self._pynative_profiler = pynative_profiler.get_instance("PyNative")
         self._pynative_profiler.init(self._output_path)
         self._ascend_profiler.start()
 

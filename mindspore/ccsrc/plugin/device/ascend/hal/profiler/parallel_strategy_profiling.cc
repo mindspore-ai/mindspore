@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#include "profiler/device/ascend/parallel_strategy_profiling.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 #include <vector>
 #include "sys/stat.h"
 
 #include "include/common/debug/dump_proto.h"
 #include "include/common/utils/parallel_context.h"
-#include "profiler/device/ascend/options.h"
-#include "profiler/device/ascend/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/options.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include "proto/profiling_parallel.pb.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
@@ -29,7 +29,7 @@
 
 #include "google/protobuf/util/json_util.h"
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
 #include "ps/ps_context.h"
 #include "ps/util.h"
 #endif
@@ -43,14 +43,14 @@ bool profiling_parallel_strategy_enabled = true;
 irpb::ProfilingParallel cache_profiling_parallel_pb;
 
 bool IsProfilingParallelStrategyEnabled() {
-  auto ascend_profiler = AscendProfiler::GetInstance();
+  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   if (!profiling_parallel_strategy_enabled || !ascend_profiler->IsInitialized()) {
     MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
 
-#if ((defined ENABLE_CPU) && (!defined _WIN32))
+#ifdef WITH_BACKEND
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
     MS_LOG(INFO) << "Current is ps server or ps scheduler, profiling parallel "
                     "strategy is disabled.";
@@ -146,9 +146,9 @@ void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph) {
 
   cache_profiling_parallel_pb = GetProfilingParallel(func_graph);
 
-  auto ascend_profiler = AscendProfiler::GetInstance();
+  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
-  if (!ascend_profiler->GetProfilingEnableFlag()) {
+  if (!ascend_profiler->GetEnableFlag()) {
     MS_LOG(INFO) << "Profiling parallel strategy has not started.";
     return;
   }

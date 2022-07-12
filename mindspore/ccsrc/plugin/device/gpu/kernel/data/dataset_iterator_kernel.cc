@@ -25,7 +25,7 @@
 #include "kernel/common_utils.h"
 
 #ifndef ENABLE_SECURITY
-#include "profiler/device/gpu/gpu_profiling.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 #endif
 #include "runtime/data_queue/data_queue_mgr.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"

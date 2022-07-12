@@ -15,10 +15,10 @@
 
 #include <string>
 #include <climits>
-#include "profiler/device/ascend/options.h"
+#include "plugin/device/ascend/hal/profiler/options.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/common.h"
-#include "profiler/device/ascend/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 
 constexpr char kOutputPath[] = "output";
 
@@ -26,7 +26,7 @@ namespace mindspore {
 namespace profiler {
 namespace ascend {
 std::string GetOutputPath() {
-  auto ascend_profiler = AscendProfiler::GetInstance();
+  auto ascend_profiler = Profiler::GetInstance(kAscendDevice);
   MS_EXCEPTION_IF_NULL(ascend_profiler);
   const std::string options_str = ascend_profiler->GetProfilingOptions();
   nlohmann::json options_json;

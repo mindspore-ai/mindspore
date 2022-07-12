@@ -37,8 +37,8 @@
 #include "ir/dtype.h"
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #ifndef ENABLE_SECURITY
-#include "profiler/device/gpu/gpu_profiling.h"
-#include "profiler/device/gpu/gpu_profiling_utils.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 #endif
 #include "utils/shape_utils.h"
 #ifndef ENABLE_SECURITY

@@ -38,7 +38,7 @@
 #endif
 #include "include/common/thread_pool.h"
 #ifndef ENABLE_SECURITY
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 
 using mindspore::profiler::ascend::MemoryProfiling;
 using mindspore::profiler::ascend::NodeMemory;

@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_OPTIONS_H
-#define MINDSPORE_OPTIONS_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_OPTIONS_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_OPTIONS_H
 
 #include <string>
 
@@ -28,4 +28,4 @@ nlohmann::json GetContextProfilingOption();
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
-#endif  // MINDSPORE_OPTIONS_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_OPTIONS_H

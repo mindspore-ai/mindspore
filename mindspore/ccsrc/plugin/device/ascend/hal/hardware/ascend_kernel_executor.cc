@@ -36,11 +36,11 @@
 #include "include/common/debug/dump_proto.h"
 #include "debug/data_dump/e2e_dump.h"
 #include "debug/debugger/debugger_utils.h"
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "utils/anf_utils.h"
-#include "profiler/device/ascend/pynative_profiling.h"
-#include "profiler/device/ascend/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/pynative_profiling.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -432,7 +432,7 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
   MS_EXCEPTION_IF_NULL(profiler_manage_instance);
   if ((profiler_manage_instance->GetNetDynamicShapeStatus() ||
        ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
-      ascend_instance->GetProfilingEnableFlag()) {
+      ascend_instance->GetEnableFlag()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, device_id, kernel_type);
   }
 

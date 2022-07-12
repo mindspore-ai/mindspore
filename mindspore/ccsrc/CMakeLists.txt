@@ -183,9 +183,8 @@ ms_protobuf_generate(DISTRIBUTED_CLUSTER_TOPOLOGY_SRCS DISTRIBUTED_CLUSTER_TOPOL
 list(APPEND MINDSPORE_PROTO_LIST ${DISTRIBUTED_CLUSTER_TOPOLOGY_SRCS})
 
 if(NOT ENABLE_SECURITY)
-    include_directories("${CMAKE_BINARY_DIR}/profiler/device/ascend")
     file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-      "profiler/device/ascend/memory_profiling.proto")
+      "plugin/device/ascend/hal/profiler/memory_profiling.proto")
     ms_protobuf_generate_py(PROFILER_MEM_PROTO_PY PROFILER_MEM_PROTO_HDRS_PY PROFILER_MEM_PROTO_PYS
       ${PROFILER_PROTO_LIST})
     list(APPEND MINDSPORE_PROTO_LIST ${PROFILER_MEM_PROTO_PY})
@@ -333,14 +332,17 @@ set(BACKEND_SUB_COMP
         plugin/device/ascend/hal/device
         plugin/device/ascend/hal/hardware
         plugin/device/ascend/hal/hccl_adapter
+        plugin/device/ascend/hal/profiler
         plugin/device/ascend/kernel
         plugin/device/ascend/optimizer
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware
+        plugin/device/cpu/hal/profiler
         plugin/device/cpu/kernel
         plugin/device/cpu/optimizer
         plugin/device/gpu/hal/device
         plugin/device/gpu/hal/hardware
+        plugin/device/gpu/hal/profiler
         plugin/device/gpu/kernel
         plugin/device/gpu/optimizer
         )

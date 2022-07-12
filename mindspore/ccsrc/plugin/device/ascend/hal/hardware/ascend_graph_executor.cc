@@ -24,7 +24,7 @@
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #ifndef ENABLE_SECURITY
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 

@@ -21,23 +21,28 @@
 
 #include "include/common/utils/utils.h"
 #include "profiler/device/profiling.h"
-#include "profiler/device/ascend/pynative_profiling.h"
+#include "plugin/device/ascend/hal/profiler/pynative_profiling.h"
 #include "include/common/pybind_api/api_register.h"
 #include "mindspore/core/utils/file_utils.h"
 
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-std::shared_ptr<PynativeProfiler> PynativeProfiler::profiler_inst_ = std::make_shared<PynativeProfiler>();
+namespace {
+constexpr auto kPyNativeName = "PyNative";
 
-std::shared_ptr<PynativeProfiler> &PynativeProfiler::GetInstance() {
-  MS_EXCEPTION_IF_NULL(profiler_inst_);
-  return profiler_inst_;
+PROFILER_REG(kPyNativeName, PynativeProfiler);
+}  // namespace
+
+std::shared_ptr<PynativeProfiler> PynativeProfiler::GetInstance() {
+  auto instance = Profiler::GetInstance(kPyNativeName);
+  MS_EXCEPTION_IF_NULL(instance);
+  return std::dynamic_pointer_cast<PynativeProfiler>(instance);
 }
 
-void PynativeProfiler::Init(const std::string &profileDataPath) {
+void PynativeProfiler::Init(const std::string &profiling_path, uint32_t, const std::string &) {
   MS_LOG(INFO) << "Initialize pynatiave Ascend Profiling";
-  profile_data_path_ = profileDataPath;
+  profile_data_path_ = profiling_path;
   enable_flag_ = true;
   std::string device_id = common::GetEnv("RANK_ID");
   if (device_id.empty()) {
@@ -137,7 +142,7 @@ void PynativeProfiler::OpDataProducerEnd(std::thread::id thread_id, bool is_dyna
   op_info.start->ElapsedTime(&cost_time, op_info.end.get());
 
   op_info.duration = cost_time;
-  int64_t milli_second_ratio = 1000;
+  constexpr int64_t milli_second_ratio = 1000;
   int64_t end_timestamp = GetRealTimeStamp();
   int64_t start_timestamp = end_timestamp - static_cast<int64_t>(cost_time * milli_second_ratio);
   double_t start_t = static_cast<double_t>(start_timestamp) / milli_second_ratio;
@@ -177,13 +182,6 @@ void PynativeProfiler::WriteOpDetail(const std::string &out_path_dir) {
 }
 
 int PynativeProfiler::NewThreadIndex() { return thread_op_info_map_.size() + 1; }
-
-REGISTER_PYBIND_DEFINE(PynativeProfiler_, ([](const py::module *m) {
-                         (void)py::class_<PynativeProfiler, std::shared_ptr<PynativeProfiler>>(*m, "PynativeProfiler")
-                           .def_static("get_instance", &PynativeProfiler::GetInstance, "PynativeProfiler get_instance.")
-                           .def("init", &PynativeProfiler::Init, py::arg("profile_data_path"), "init")
-                           .def("stop", &PynativeProfiler::Stop, "stop");
-                       }));
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

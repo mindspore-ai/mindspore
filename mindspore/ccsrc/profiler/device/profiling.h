@@ -70,21 +70,28 @@ class ProfilerManager {
   void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
 
  private:
-  static std::shared_ptr<ProfilerManager> profiler_manager_inst_;
+  inline static std::shared_ptr<ProfilerManager> profiler_manager_inst_ = std::make_shared<ProfilerManager>();
   bool is_dynamic_shape_net_ = 0;
 };
 
 class Profiler {
  public:
+  static std::shared_ptr<Profiler> GetInstance(const std::string &name) noexcept;
+  static bool Register(const std::string &name, const std::shared_ptr<Profiler> &instance);
+
   Profiler() = default;
   virtual ~Profiler() = default;
 
-  virtual void Init(const std::string &profileDataPath) = 0;
+  virtual void Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) = 0;
+  virtual void Finalize() = 0;
+  bool IsInitialized() const { return init_flag_; }
+  virtual void Start() = 0;
   virtual void Stop() = 0;
   virtual void StepProfilingEnable(const bool enable_flag) = 0;
   virtual void OpDataProducerEnd() = 0;
   void RecordOneStepStartEndInfo();
   bool GetEnableFlag() const { return enable_flag_; }
+  std::string GetProfilingOptions() const { return profiling_options_; }
   std::string ProfileDataPath() const { return profile_data_path_; }
   void RecordOneStepStartEndInfo(std::string op_name);
   std::pair<double, double> GetSingleOpLaunchTime() { return single_op_launch_start_time_end_time_; }
@@ -112,8 +119,15 @@ class Profiler {
   std::shared_mutex op_map_mutex_;
   std::mutex record_mutex_;
   bool init_flag_ = false;
+  std::string profiling_options_;
+
+ private:
+  inline static std::map<std::string, std::shared_ptr<Profiler>> instance_map_ = {};
 };
 }  // namespace profiler
 }  // namespace mindspore
+
+#define PROFILER_REG(NAME, CLAZZ) \
+  static bool g_Profiler_##NAME##_reg_result = mindspore::profiler::Profiler::Register(NAME, std::make_shared<CLAZZ>())
 
 #endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_PROFILING_H

@@ -208,7 +208,7 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/distributed/rpc/tcp/*.cc"
         "../../../mindspore/ccsrc/distributed/cluster/topology/*.cc"
         "../../../mindspore/ccsrc/distributed/embedding_cache/*.cc"
-        "../../../mindspore/ccsrc/profiler/device/ascend/*.cc"
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/*.cc"
         "../../../mindspore/ccsrc/profiler/device/profiling.cc"
         "../../../mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.c"
         "../../../mindspore/ccsrc/kernel/kernel.cc"
@@ -252,12 +252,15 @@ list(REMOVE_ITEM MINDSPORE_SRC_LIST
 
 if(ENABLE_SECURITY)
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/profiling.cc")
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/memory_profiling.cc")
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/ascend_profiling.cc")
-    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/options.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/memory_profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/ascend_profiling.cc")
+    list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/options.cc")
     list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc")
 endif()
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/profiler/device/ascend/parallel_strategy_profiling.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+        "../../../mindspore/ccsrc/plugin/device/ascend/hal/profiler/parallel_strategy_profiling.cc")
 
 add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})

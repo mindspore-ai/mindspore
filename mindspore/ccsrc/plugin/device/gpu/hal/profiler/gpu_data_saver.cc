@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "profiler/device/gpu/gpu_data_saver.h"
+#include "plugin/device/gpu/hal/profiler/gpu_data_saver.h"
 #include <fstream>
 #include <numeric>
 #include "sys/stat.h"

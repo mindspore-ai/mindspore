@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_PROFILING_H
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_PROFILING_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_PROFILING_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_PROFILING_H
 #include <algorithm>
 #include <cstdio>
 #include <map>
@@ -25,16 +25,13 @@
 #include <utility>
 #include <vector>
 #include "profiler/device/profiling.h"
-#if ENABLE_GPU
-#include "profiler/device/gpu/gpu_profiling.h"
-#endif
 #include "actor/actormgr.h"
 #include "backend/common/session/kernel_graph.h"
 
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-const float kNanosecondToMillisecond = 1000000;
+constexpr float kNanosecondToMillisecond = 1000000;
 struct CurKernelInputInfo {
   uint32_t input_id;
   std::string shape;
@@ -46,13 +43,16 @@ struct CurKernelInfo {
 };
 class CPUProfiler : public Profiler {
  public:
-  static std::shared_ptr<CPUProfiler> &GetInstance();
+  static std::shared_ptr<CPUProfiler> GetInstance();
+
   CPUProfiler() = default;
   ~CPUProfiler() = default;
   CPUProfiler(const CPUProfiler &) = delete;
   CPUProfiler &operator=(const CPUProfiler &) = delete;
 
-  void Init(const std::string &profileDataPath) override;
+  void Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) override;
+  void Finalize() override {}
+  void Start() override {}
   void Stop() override;
   void StepProfilingEnable(const bool enable_flag) override;
   void OpDataProducerBegin(const std::string op_name, const uint32_t pid);
@@ -70,7 +70,6 @@ class CPUProfiler : public Profiler {
   void SaveProfileData() override;
   void ClearInst() override;
 
-  static std::shared_ptr<CPUProfiler> profiler_inst_;
   uint64_t base_time_;
   std::string op_name_;
   uint32_t pid_;
@@ -83,4 +82,4 @@ class CPUProfiler : public Profiler {
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_PROFILING_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_PROFILING_H
