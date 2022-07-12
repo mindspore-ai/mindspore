@@ -382,7 +382,8 @@ def _vmap_clone_prim(prim):
 
     return cloned
 
-_ops_vmap_clone_prim_dict = {"ApplyAdadelta": P.ApplyAdadelta,
+_ops_vmap_clone_prim_dict = {"ApplyAdaMax": P.ApplyAdaMax,
+                             "ApplyAdadelta": P.ApplyAdadelta,
                              "ApplyFtrl": P.ApplyFtrl,
                              "ApplyProximalAdagrad": P.ApplyProximalAdagrad,
                              "ApplyAdamWithAmsgrad": P.ApplyAdamWithAmsgrad,

@@ -58,7 +58,10 @@ class ApplyAdaMaxCpuKernelMod : public NativeCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
                                                      .AddOutputAttr(kNumberTypeFloat32)
-                                                     .AddOutputAttr(kNumberTypeFloat32),
+                                                     .AddOutputAttr(kNumberTypeFloat32)
+                                                     .AddOutInRef(0, 0)
+                                                     .AddOutInRef(1, 1)
+                                                     .AddOutInRef(2, 2),
                                                    KernelAttr()
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddInputAttr(kNumberTypeFloat16)
@@ -71,13 +74,18 @@ class ApplyAdaMaxCpuKernelMod : public NativeCpuKernelMod {
                                                      .AddInputAttr(kNumberTypeFloat16)
                                                      .AddOutputAttr(kNumberTypeFloat16)
                                                      .AddOutputAttr(kNumberTypeFloat16)
-                                                     .AddOutputAttr(kNumberTypeFloat16)};
+                                                     .AddOutputAttr(kNumberTypeFloat16)
+                                                     .AddOutInRef(0, 0)
+                                                     .AddOutInRef(1, 1)
+                                                     .AddOutInRef(2, 2)};
     return support_list;
   }
 
  private:
   TypeId dtype_{kTypeUnknown};
-
+  int64_t batch_size_{1};
+  int64_t batch_rank_{0};
+  int64_t input_elements_;
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
 };

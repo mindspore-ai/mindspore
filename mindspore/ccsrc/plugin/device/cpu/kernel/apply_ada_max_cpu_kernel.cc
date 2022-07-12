@@ -16,11 +16,13 @@
 
 #include <cmath>
 #include <map>
+#include <functional>
 #include "plugin/device/cpu/kernel/apply_ada_max_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 #include "utils/ms_utils.h"
+#include "kernel/common_utils.h"
 
 namespace {
 const size_t kZero = 0;
@@ -48,15 +50,44 @@ bool ApplyAdaMaxCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const s
                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
   dtype_ = inputs[0]->GetDtype();
+  batch_rank_ = base_operator->get_batch_rank();
   return true;
 }
 
 int ApplyAdaMaxCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                     const std::vector<KernelTensorPtr> &outputs,
                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
-  int ret = 0;
-  if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != 0) {
     return ret;
+  }
+  std::vector<int64_t> var_shape = inputs[kIndexVar]->GetShapeVector();
+  std::vector<int64_t> lr_shape = inputs[kIndexLr]->GetShapeVector();
+
+  if (batch_rank_ < 0 || lr_shape.size() != static_cast<size_t>(batch_rank_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape size of 'lr' must be equal to 'batch_rank', "
+                     "but got the shape of 'lr': "
+                  << Vector2Str(lr_shape) << " and 'batch_rank': " << batch_rank_;
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (var_shape.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'var' must be at least 1-D, but got scalar or None.";
+    return KRET_RESIZE_FAILED;
+  }
+
+  if (!lr_shape.empty()) {
+    batch_size_ = std::accumulate(lr_shape.begin(), lr_shape.end(), 1, std::multiplies<int64_t>());
+  }
+
+  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), 1, std::multiplies<int64_t>());
+  if (batch_size_ > 0) {
+    input_elements_ = input_elements_ / batch_size_;
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', batch size must be greater than 0, but got " << batch_size_;
+    return KRET_RESIZE_FAILED;
   }
   return ret;
 }
@@ -99,50 +130,42 @@ void ApplyAdaMaxCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs
   T *var = reinterpret_cast<T *>(inputs[kIndexVar]->addr);
   T *m = reinterpret_cast<T *>(inputs[kIndexM]->addr);
   T *v = reinterpret_cast<T *>(inputs[kIndexV]->addr);
-  T beta1_power = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta1Power]->addr)[kScalarIndex]);
-  T lr = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexLr]->addr)[kScalarIndex]);
-  T beta1 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta1]->addr)[kScalarIndex]);
-  T beta2 = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexBeta2]->addr)[kScalarIndex]);
-  T epsilon = static_cast<T>(reinterpret_cast<float *>(inputs[kIndexEpsilon]->addr)[kScalarIndex]);
+  T *beta1_power = reinterpret_cast<T *>(inputs[kIndexBeta1Power]->addr);
+  T *lr = reinterpret_cast<T *>(inputs[kIndexLr]->addr);
+  T *beta1 = reinterpret_cast<T *>(inputs[kIndexBeta1]->addr);
+  T *beta2 = reinterpret_cast<T *>(inputs[kIndexBeta2]->addr);
+  T *epsilon = reinterpret_cast<T *>(inputs[kIndexEpsilon]->addr);
   T *grad = reinterpret_cast<T *>(inputs[kIndexGrad]->addr);
 
   auto one = static_cast<T>(1);
-  if (beta1_power == one) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be set 1.";
+  if (beta1_power[kScalarIndex] == one) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the 'beta1_power' can't be 1.";
   }
 
   // multithreading
-  size_t length = inputs[kZero]->size / sizeof(T);
-  auto task = [this, &var, &m, &v, &beta1_power, &lr, &beta1, &beta2, &epsilon, &grad](size_t start, size_t end) {
-    T one = static_cast<T>(1.0);
-    for (size_t i = start; i < end; i++) {
-      m[i] = static_cast<T>(beta1 * m[i] + (one - beta1) * grad[i]);
-      auto zero = static_cast<T>(0);
-      auto grad_abs = (grad[i] > zero) ? grad[i] : -grad[i];
-      v[i] = std::max(beta2 * v[i], grad_abs);
-      var[i] = var[i] - (lr / (one - beta1_power)) * (m[i] / (v[i] + epsilon));
-    }
-  };
-  CPUKernelUtils::ParallelForAutoSearch(task, length, &parallel_search_info_);
-
-  // Copy result to output tensor
-  auto output_var = reinterpret_cast<T *>(outputs[kZero]->addr);
-  auto output_m = reinterpret_cast<T *>(outputs[kOne]->addr);
-  auto output_v = reinterpret_cast<T *>(outputs[kTwo]->addr);
-  auto ret = memcpy_s(output_var, outputs[kZero]->size, var, inputs[kZero]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(output_m, outputs[kOne]->size, m, inputs[kOne]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
-  }
-  ret = memcpy_s(output_v, outputs[kTwo]->size, v, inputs[kTwo]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', launch kernel error: memcpy failed. Error no: " << ret;
+  for (int64_t b = 0; b < batch_size_; b++) {
+    auto task = [this, &var, &m, &v, &beta1_power, &lr, &beta1, &beta2, &epsilon, &grad](size_t start, size_t end) {
+      T one = static_cast<T>(1.0);
+      for (size_t i = start; i < end; i++) {
+        m[i] = static_cast<T>(beta1[kScalarIndex] * m[i] + (one - beta1[kScalarIndex]) * grad[i]);
+        auto zero = static_cast<T>(0);
+        auto grad_abs = (grad[i] > zero) ? grad[i] : -grad[i];
+        v[i] = std::max(beta2[kScalarIndex] * v[i], grad_abs);
+        var[i] =
+          var[i] - (lr[kScalarIndex] / (one - beta1_power[kScalarIndex])) * (m[i] / (v[i] + epsilon[kScalarIndex]));
+      }
+    };
+    CPUKernelUtils::ParallelForAutoSearch(task, input_elements_, &parallel_search_info_);
+    var = var + input_elements_;
+    m = m + input_elements_;
+    v = v + input_elements_;
+    grad = grad + input_elements_;
+    lr++;
+    beta1++;
+    beta1_power++;
+    beta2++;
+    epsilon++;
   }
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyAdaMax, ApplyAdaMaxCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
