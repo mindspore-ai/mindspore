@@ -26,6 +26,8 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
+#include "backend/common/session/kernel_graph.h"
+#include "kernel/kernel.h"
 #include "toolchain/prof_common.h"
 #include "toolchain/prof_reporter.h"
 
@@ -61,6 +63,7 @@ class ProfilingReporter {
   ~ProfilingReporter() = default;
 
   void ReportTasks();
+  void NodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type);
   void ReportStepPoint(const vector<std::shared_ptr<StepPointDesc>> &points);
 
  private:
