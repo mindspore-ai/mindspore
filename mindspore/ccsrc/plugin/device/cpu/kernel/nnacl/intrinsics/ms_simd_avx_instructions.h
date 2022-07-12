@@ -72,11 +72,15 @@
 #define MS_CMP256_F32(src1, src2, src3) _mm256_cmp_ps(src1, src2, src3)
 #define MS_CMPGT256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 30)
 #define MS_CMPLE256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 18)
+#define MS_CMPLT256_F32(src1, src2) _mm256_cmp_ps(src1, src2, 17)
 #define MS_CMPGT256_EPI32(src1, src2) _mm256_cmpgt_epi32(src1, src2)
 #define MS_BLEND256_F32(src1, src2, src3) _mm256_blendv_ps(src1, src2, src3)
 #define MS_BLEND256_EPI32(src1, src2, src3) _mm256_blendv_epi8(src1, src2, src3)
 #define MS_CAST256_F32_S32(src) _mm256_castsi256_ps(src)
 #define MS_AND256_MASK(src1, src2) _mm256_and_ps(src1, src2)
+#define MS_OR256_MASK(src1, src2) _mm256_or_ps(src1, src2)
+#define MS_OR256_F32(src1, src2) _mm256_or_ps(src1, src2)
+#define MS_AND256_MASK_F32(src1, src2) _mm256_and_ps(src1, src2)
 
 static inline MS_FLOAT32X8 MS_POW256_F32(MS_FLOAT32X8 src1, MS_FLOAT32X8 src2) {
   MS_FLOAT32X8 dst;

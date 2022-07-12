@@ -89,6 +89,7 @@
 #define MS_BLENDQ_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
 #define MS_BLENDQ_EPI32(src1, src2, src3) _mm_blendv_epi8(src1, src2, src3)
 #define MS_CMPLE128_F32(src1, src2) _mm_cmple_ps(src1, src2)
+#define MS_CMPLT128_F32(src1, src2) _mm_cmplt_ps(src1, src2)
 #define MS_CMPGT128_F32(src1, src2) _mm_cmpgt_ps(src1, src2)
 #define MS_CMPGT128_EPI32(src1, src2) _mm_cmpgt_epi32(src1, src2)
 #define MS_BLEND128_F32(src1, src2, src3) _mm_blendv_ps(src1, src2, src3)
@@ -96,6 +97,9 @@
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 #define MS_AND128_MASK(src1, src2) _mm_and_ps(src1, src2)
+#define MS_OR128_MASK(src1, src2) _mm_or_ps(src1, src2)
+#define MS_OR128_F32(src1, src2) _mm_or_ps(src1, src2)
+#define MS_AND128_MASK_F32(src1, src2) _mm_and_ps(src1, src2)
 
 static inline MS_FLOAT32X4 MS_POW128_F32(MS_FLOAT32X4 src1, MS_FLOAT32X4 src2) {
   MS_FLOAT32X4 dst;

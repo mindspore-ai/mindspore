@@ -40,6 +40,7 @@ int Elu(const float *src, int length, float *dst, float alpha);
 void Celu(const float *src, int length, float *dst, float alpha);
 float TanhOpt(float src);
 int HShrink(const float *src, int length, float *dst, float lambd);
+int SoftShrink(const float *src, int length, float *dst, float lambd);
 #ifdef __cplusplus
 }
 #endif
