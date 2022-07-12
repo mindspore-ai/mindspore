@@ -17,6 +17,7 @@
 #include "include/api/data_type.h"
 #include "tools/converter/cxx_api/converter_para.h"
 #include "tools/converter/converter_context.h"
+#include "tools/converter/converter.h"
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
@@ -223,7 +224,7 @@ bool Converter::GetNoFusion() {
 
 Status Converter::Convert() {
   if (data_ != nullptr) {
-    auto ret = lite::RunConverter(data_);
+    auto ret = lite::RunConverter(data_, nullptr, nullptr, false);
     data_->decrypt_key.clear();  // clear key
     data_->encrypt_key.clear();  // clear key
     if (ret != kSuccess) {
@@ -233,5 +234,20 @@ Status Converter::Convert() {
   } else {
     return kLiteError;
   }
+}
+
+void *Converter::Convert(size_t *data_size) {
+  void *model_data = nullptr;
+  if (data_ != nullptr) {
+    auto ret = lite::RunConverter(data_, &model_data, data_size, true);
+    data_->decrypt_key.clear();  // clear key
+    data_->encrypt_key.clear();  // clear key
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "Convert model failed, ret=" << ret;
+    }
+  } else {
+    MS_LOG(ERROR) << "Convert model failed, data is null.";
+  }
+  return model_data;
 }
 }  // namespace mindspore

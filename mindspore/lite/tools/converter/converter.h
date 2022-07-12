@@ -42,6 +42,9 @@ constexpr auto kComputeRate = "computeRate";
 constexpr auto kSplitDevice0 = "device0";
 constexpr auto kSplitDevice1 = "device1";
 
+int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data = nullptr, size_t *data_size = nullptr,
+                 bool not_save = false);
+
 class ConverterImpl {
  public:
   ConverterImpl() = default;

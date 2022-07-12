@@ -57,6 +57,6 @@ void ConverterPyBind(const py::module &m) {
     .def("get_train_model", &Converter::GetTrainModel)
     .def("set_no_fusion", &Converter::SetNoFusion)
     .def("get_no_fusion", &Converter::GetNoFusion)
-    .def("converter", &Converter::Convert);
+    .def("converter", py::overload_cast<>(&Converter::Convert));
 }
 }  // namespace mindspore::lite

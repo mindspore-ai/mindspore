@@ -72,7 +72,7 @@ class MS_API Converter {
   bool GetNoFusion();
 
   Status Convert();
-  uint8_t *ConvertToBuff();
+  void *Convert(size_t *data_size);
 
  private:
   std::shared_ptr<ConverterPara> data_;
