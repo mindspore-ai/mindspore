@@ -283,3 +283,53 @@ def test_converter_42():
                                  output_file="mobilenetv2.tflite")
     converter.converter()
     assert "config_file:" in str(converter)
+
+
+def test_converter_43():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = 2
+        config_info = {"device": "3"}
+        converter.set_config_info(section, config_info)
+    assert "section must be str" in str(raise_info.value)
+
+
+def test_converter_44():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = "acl_param"
+        config_info = {2: "3"}
+        converter.set_config_info(section, config_info)
+    assert "config_info key must be str" in str(raise_info.value)
+
+
+def test_converter_45():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = "acl_param"
+        config_info = {"device_id": 3}
+        converter.set_config_info(section, config_info)
+    assert "config_info val must be str" in str(raise_info.value)
+
+
+def test_converter_46():
+    with pytest.raises(TypeError) as raise_info:
+        converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                     output_file="mobilenetv2.tflite")
+        section = "acl_param"
+        config_info = ["device_id", 3]
+        converter.set_config_info(section, config_info)
+    assert "config_info must be dict" in str(raise_info.value)
+
+
+def test_converter_47():
+    converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
+                                 output_file="mobilenetv2.tflite")
+    section = "acl_param"
+    config_info = {"device_id": "3"}
+    converter.set_config_info(section, config_info)
+    converter.get_config_info()
+    assert "config_info: {'acl_param': {'device_id': '3'}" in str(converter)

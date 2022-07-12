@@ -57,28 +57,6 @@ class Converter:
             e.g. "/home/user/model.caffemodel". Default: "".
         config_file (str, optional): Configuration for post-training, offline split op to parallel,
             disable op fusion ability and set plugin so path. e.g. "/home/user/model.cfg". Default: "".
-        section (str, optional): The category of the configuration parameter.
-            Set the individual parameters of the configFile together with config_info.
-            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: "".
-            For the configuration parameters related to post training quantization, please refer to
-            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
-            For the configuration parameters related to extension, please refer to
-            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
-
-            - "common_quant_param": Common quantization parameter. One of configuration for quantization.
-            - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
-              One of configuration for quantization.
-            - "full_quant_param": Full quantization parameter. One of configuration for quantization.
-            - "data_preprocess_param": Data preprocess parameter. One of configuration for quantization.
-            - "registry": Extension configuration parameter. One of configuration for extension.
-
-        config_info (dict{str, str}, optional): List of configuration parameters.
-            Set the individual parameters of the configFile together with section.
-            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
-            For the configuration parameters related to post training quantization, please refer to
-            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
-            For the configuration parameters related to extension, please refer to
-            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
         weight_fp16 (bool, optional): Serialize const tensor in Float16 data type,
             only effective for const tensor in Float32 data type. Default: False.
         input_shape (dict{str, list[int]}, optional): Set the dimension of the model input,
@@ -109,8 +87,6 @@ class Converter:
         TypeError: `output_file` is not a str.
         TypeError: `weight_file` is not a str.
         TypeError: `config_file` is not a str.
-        TypeError: `section` is not a str.
-        TypeError: `config_info` is not a dict.
         TypeError: `config_info` is a dict, but the keys are not str.
         TypeError: `config_info` is a dict, but the values are not str.
         TypeError: `weight_fp16` is not a bool.
@@ -155,18 +131,15 @@ class Converter:
         no_fusion: False.
     """
 
-    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", section="", config_info=None,
-                 weight_fp16=False, input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
-                 output_data_type=DataType.FLOAT32, export_mindir=False,
-                 decrypt_key="", decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="",
-                 infer=False, train_model=False, no_fusion=False):
+    def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
+                 input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
+                 output_data_type=DataType.FLOAT32, export_mindir=False, decrypt_key="", decrypt_mode="AES-GCM",
+                 enable_encryption=False, encrypt_key="", infer=False, train_model=False, no_fusion=False):
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)
         check_isinstance("output_file", output_file, str)
         check_isinstance("weight_file", weight_file, str)
         check_isinstance("config_file", config_file, str)
-        check_isinstance("section", section, str)
-        check_config_info("config_info", config_info, enable_none=True)
         check_isinstance("weight_fp16", weight_fp16, bool)
         check_input_shape("input_shape", input_shape, enable_none=True)
         check_isinstance("input_format", input_format, Format)
@@ -193,7 +166,6 @@ class Converter:
         if decrypt_mode not in ["AES-GCM", "AES-CBC"]:
             raise ValueError(f"Converter's init failed, decrypt_mode must be AES-GCM or AES-CBC.")
         input_shape_ = {} if input_shape is None else input_shape
-        config_info_ = {} if config_info is None else config_info
 
         fmk_type_py_cxx_map = {
             FmkType.TF: _c_lite_wrapper.FmkType.kFmkTypeTf,
@@ -209,8 +181,6 @@ class Converter:
             self._converter.set_config_file(config_file)
         if weight_fp16:
             self._converter.set_weight_fp16(weight_fp16)
-        if section != "" and config_info is not None:
-            self._converter.set_config_info(section, config_info_)
         if input_shape is not None:
             self._converter.set_input_shape(input_shape_)
         if input_format != Format.NHWC:
@@ -254,6 +224,67 @@ class Converter:
               f"no_fusion: {self._converter.get_no_fusion()}."
         return res
 
+    def set_config_info(self, section, config_info):
+        """
+        Set config info for converter.
+
+        Args:
+
+            section (str): The category of the configuration parameter.
+            Set the individual parameters of the configFile together with config_info.
+            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: "".
+            For the configuration parameters related to post training quantization, please refer to
+            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            For the configuration parameters related to extension, please refer to
+            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+
+            - "common_quant_param": Common quantization parameter. One of configuration for quantization.
+            - "mixed_bit_weight_quant_param": Mixed bit weight quantization parameter.
+              One of configuration for quantization.
+            - "full_quant_param": Full quantization parameter. One of configuration for quantization.
+            - "data_preprocess_param": Data preprocess parameter. One of configuration for quantization.
+            - "registry": Extension configuration parameter. One of configuration for extension.
+
+            config_info (dict{str, str}): List of configuration parameters.
+            Set the individual parameters of the configFile together with section.
+            e.g. for section = "common_quant_param", config_info = {"quant_type":"WEIGHT_QUANT"}. Default: None.
+            For the configuration parameters related to post training quantization, please refer to
+            `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_.
+            For the configuration parameters related to extension, please refer to
+            `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_.
+
+        Raises:
+            TypeError: `section` is not a str.
+            TypeError: `config_info` is not a dict.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
+            >>> section = "common_quant_param"
+            >>> config_info = {"quant_type":"WEIGHT_QUANT"}
+            >>> converter.set_config_file(section, config_info)
+        """
+        check_isinstance("section", section, str)
+        check_config_info("config_info", config_info, enable_none=True)
+        if section != "" and config_info is not None:
+            self._converter.set_config_info(section, config_info)
+
+    def get_config_info(self):
+        """
+        Get config info of converter.
+
+        Returns:
+            dict{str, dict{str, str}, the config info which has been set in converter.
+
+        Examples:
+            >>> import mindspore_lite as mslite
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
+            >>> config_info = converter.get_config_info()
+            >>> print(config_info)
+            {'common_quant_param': {'quant_type': 'WEIGHT_QUANT'}}
+        """
+        return self._converter.get_config_info()
+
     def converter(self):
         """
         Perform conversion, and convert the third-party model to the mindspire model.
@@ -263,7 +294,7 @@ class Converter:
 
         Examples:
             >>> import mindspore_lite as mslite
-            >>> converter = mslite.Converter(mslite.FmkType.kFmkTypeTflite, "mobilenetv2.tflite", "mobilenetv2.tflite")
+            >>> converter = mslite.Converter(mslite.FmkType.TFLITE, "mobilenetv2.tflite", "mobilenetv2.tflite")
             >>> converter.converter()
         """
         ret = self._converter.converter()
