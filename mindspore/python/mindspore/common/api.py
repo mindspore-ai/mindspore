@@ -504,8 +504,8 @@ def ms_function(fn=None, input_signature=None, hash_args=None, jit_config=None):
         ...         return fn(a)
         ...     return inner_fn(x)
         ...
-        ... inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
-        ... for i in range(10):
+        >>> inputs = Tensor(np.ones([10, 10, 10]).astype(np.float32))
+        >>> for i in range(10):
         ...     closure_fn(inputs, func)
     """
 
