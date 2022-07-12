@@ -12,7 +12,7 @@ mindspore.nn.probability.bnn_layers.DenseLocalReparam
     .. math::
         \text{outputs} = \text{activation}(\text{inputs} * \text{weight} + \text{bias}),
 
-    此公式中，activation 为激活函数（若`activation` 参数传入），是与创建层的输入具有相同数据类型的权重矩阵。weight 是从权重的后验分布采样的权重矩阵。bias 是与由层创建的输入具有相同数据类型的偏置向量（仅当 `has_bias` 为 True 时），从 bias 的后验分布中采样。
+    此公式中，activation 为激活函数（若 `activation` 参数传入），是与创建层的输入具有相同数据类型的权重矩阵。weight 是从权重的后验分布采样的权重矩阵。bias 是与由层创建的输入具有相同数据类型的偏置向量（仅当 `has_bias` 为 True 时），从 bias 的后验分布中采样。
 
     **参数：**
 
