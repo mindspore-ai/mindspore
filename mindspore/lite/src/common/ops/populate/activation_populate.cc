@@ -43,6 +43,7 @@ OpParameter *PopulateRelu6Parameter(const void *prim) {
   param->alpha_ = value->alpha();
   param->min_val_ = value->min_val();
   param->max_val_ = value->max_val();
+  param->approximate_ = value->approximate();
   return reinterpret_cast<OpParameter *>(param);
 }
 

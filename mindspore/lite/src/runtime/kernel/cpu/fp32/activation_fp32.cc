@@ -145,7 +145,7 @@ int ActivationCPUKernel::DoActivationFp32(int task_id) {
   } else if (type_ == schema::ActivationType_HARD_TANH) {
     ret = HardTanh(input_addr + stride * task_id, count, output_addr + stride * task_id, min_val_, max_val_);
   } else if (type_ == schema::ActivationType_GELU) {
-    ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id, true);
+    ret = Gelu(input_addr + stride * task_id, count, output_addr + stride * task_id, approximate_);
   } else if (type_ == schema::ActivationType_SOFTPLUS) {
     ret = Softplus(input_addr + stride * task_id, count, output_addr + stride * task_id);
   } else if (type_ == schema::ActivationType_ELU) {
