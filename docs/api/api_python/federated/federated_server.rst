@@ -8,7 +8,7 @@ Federated-Server
     .. note::
         设置属性时，必须输入属性名称。
 
-    某些配置需要在特定角色上设置，有关详细信息，请参见下表：
+    在特定角色的上需要设置不同配置，详细信息参见下表：
 
     +-------------------------+---------------------------------+-----------------------------+
     | 功能分类                |  配置参数                       |  联邦学习角色               |
@@ -127,13 +127,12 @@ Federated-Server
     - **client_batch_size** (int) - 客户端训练数据batch数。默认值：32。
     - **client_learning_rate** (float) - 客户端训练学习率。默认值：0.001。
     - **worker_step_num_per_iteration** (int) - 端云联邦中，云侧训练进程在与服务器通信之前的独立训练步数。默认值：65。
-    - **encrypt_type** (str) - 用于联邦学习的安全策略，可以是'NOT_ENCRYPT'、'DP_ENCRYPT'、
-      'PW_ENCRYPT'、'STABLE_PW_ENCRYPT'或'SIGNDS'。如果是'DP_ENCRYPT'，则将对客户端应用差分隐私模式，
-      隐私保护效果将由上面所述的dp_eps、dp_delta、dp_norm_clip确定。如果'PW_ENCRYPT'，则将应用成对（pairwise，PW）安全聚合
-      来保护客户端模型在跨设备场景中不被窃取。如果'STABLE_PW_ENCRYPT'，则将应用成对安全聚合来保护客户端模型在云云联邦场景中
-      免受窃取。如果'SIGNDS'，则将在于客户端上使用SignDS策略。SignDS的介绍可以参照：
-      `SignDS-FL: Local Differentially Private Federated Learning with Sign-based Dimension Selection <https://dl.acm.org/doi/abs/10.1145/3517820>`_。
-      默认值：'NOT_ENCRYPT'。
+    - **encrypt_type** (str) - 用于联邦学习的安全策略，支持['NOT_ENCRYPT'、'DP_ENCRYPT'、'PW_ENCRYPT'、'STABLE_PW_ENCRYPT', 'SIGNDS']。 默认值：'NOT_ENCRYPT'。
+                               如果是'DP_ENCRYPT'，则将对客户端应用差分隐私模式，隐私保护效果将由dp_eps、dp_delta、dp_norm_clip确定；
+                               如果是'PW_ENCRYPT'，则将应用成对（pairwise，PW）安全聚合来保护客户端模型在跨设备场景中不被窃取；
+                               如果是'STABLE_PW_ENCRYPT'，则将应用成对安全聚合来保护客户端模型在云云联邦场景中免受窃取；
+                               如果是'SIGNDS'，则将在于客户端上使用SignDS策略。
+                               SignDS的介绍可以参照：`SignDS-FL: Local Differentially Private Federated Learning with Sign-based Dimension Selection <https://dl.acm.org/doi/abs/10.1145/3517820>`_。
     - **share_secrets_ratio** (float) - PW：参与秘密分享的客户端比例。默认值：1.0。
     - **cipher_time_window** (int) - PW：每个加密轮次的时间窗口持续时间，以毫秒为单位。默认值：300000。
     - **reconstruct_secrets_threshold** (int) - PW：秘密重建的阈值。默认值：2000。
@@ -145,18 +144,18 @@ Federated-Server
     - **sign_thr_ratio** (float) - SignDS：预期Top-k维度的阈值。建议取值范围在[0.5, 1]内。默认值：0.6。
     - **sign_global_lr** (float) - SignDS：分配给选定维的常量值。适度增大该值会提高收敛速度，但有可能让模型梯度爆炸。取值必须大于0。默认值：1。
     - **sign_dim_out** (int) - SignDS：输出维度的数量。建议取值范围在[0, 50]内。默认值：0。
-    - **config_file_path** (str) - 用于集群容灾恢复的配置文件路径、认证相关参数以及文件路径、评价指标文件路径和运维相关文件路径。默认值：""。
+    - **config_file_path** (str) - 用于集群容灾恢复的配置文件路径、认证相关参数以及文件路径、评价指标文件路径和运维相关文件路径。默认值：''。
     - **scheduler_manage_port** (int) - 用于扩容/缩容的调度器管理端口。默认值：11202。
     - **enable_ssl** (bool) - 设置联邦学习开启SSL安全通信。默认值：False。
-    - **client_password** (str) - 解密客户端证书中存储的秘钥的密码。默认值：""。
-    - **server_password** (str) - 解密服务器证书中存储的秘钥的密码。默认值：""。
+    - **client_password** (str) - 解密客户端证书中存储的秘钥的密码。默认值：''。
+    - **server_password** (str) - 解密服务器证书中存储的秘钥的密码。默认值：''。
     - **pki_verify** (bool) - 如果为True，则将打开服务器和客户端之间的身份验证。
-      您还应从https://pki.consumer.huawei.com/ca/下载Root CA证书、Root CA G2证书和移动设备CRL证书。
+      还应从`CBG PKI Download Management <https://pki.consumer.huawei.com/ca/>`_ 下载Root CA证书、Root CA G2证书和移动设备CRL证书。
       需要注意的是，只有当客户端是具有HUKS服务的Android环境时，pki_verify可以为True。默认值：False。
     - **root_first_ca_path** (str) - Root CA证书的文件路径。当pki_verify为True时，需要设置该值。默认值：""。
     - **root_second_ca_path** (str) - Root CA G2证书的文件路径。当pki_verify为True时，需要设置该值。默认值：""。
     - **equip_crl_path** (str) - 移动设备CRL证书的文件路径。当pki_verify为True时，需要设置该值。默认值：""。
-    - **replay_attack_time_diff** (int) - 证书时间戳验证的最大可容忍错误（毫秒）。默认值：600000。
+    - **replay_attack_time_diff** (int) - 证书时间戳验证的最大可容忍错误时间（毫秒）。默认值：600000。
     - **http_url_prefix** (str) - 设置联邦学习端云通信的http路径。默认值：""。
     - **global_iteration_time_window** (int) - 一次迭代的全局时间窗口，轮次（ms）。默认值：3600000。
     - **checkpoint_dir** (str) - server读取和保存模型文件的目录。若没有设置则不读取和保存模型文件。默认值：""。
@@ -182,9 +181,8 @@ Federated-Server
 
     **返回：**
 
-    根据key返回属性值。
+    Object，表示给定属性key的值。
 
     **异常：**
 
     - **ValueError** - 如果输入key不是联邦学习模式context中的属性。
-

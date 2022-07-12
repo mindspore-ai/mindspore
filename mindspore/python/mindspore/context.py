@@ -1186,14 +1186,18 @@ def set_fl_context(**kwargs):
         client_learning_rate (float): Client training learning rate. Default: 0.001.
         worker_step_num_per_iteration (int): The worker's standalone training step number before communicating with
                                              server. Default: 65.
-        encrypt_type (str): Secure schema for federated learning, which can be 'NOT_ENCRYPT', 'DP_ENCRYPT',
-            'PW_ENCRYPT', 'STABLE_PW_ENCRYPT' or 'SIGNDS'. If 'DP_ENCRYPT', differential privacy schema would be applied
-            for clients and the privacy protection effect would be determined by dp_eps, dp_delta and dp_norm_clip
-            as described above. If 'PW_ENCRYPT', pairwise secure aggregation would be applied to protect clients'
-            model from stealing in cross-device scenario. If 'STABLE_PW_ENCRYPT', pairwise secure aggregation would
-            be applied to protect clients' model from stealing in cross-silo scenario. If 'SIGNDS', SignDS schema would
-            be applied for clients. Default: 'NOT_ENCRYPT'.
-        share_secrets_ratio (float): The ratio for computing the threshold count of share secrets. Default: 1.0.
+        encrypt_type (str): Secure schema for federated learning, the value must be in ['NOT_ENCRYPT',
+                            'DP_ENCRYPT', 'PW_ENCRYPT', 'STABLE_PW_ENCRYPT', 'SIGNDS'].
+                            Default: 'NOT_ENCRYPT'.
+                            If 'DP_ENCRYPT', differential privacy schema would be applied for clients and
+                            the privacy protection effect would be determined by dp_eps, dp_delta and
+                            dp_norm_clip as described above.
+                            If 'PW_ENCRYPT', pairwise secure aggregation would be applied to protect
+                            clients' model from stealing in cross-device scenario.
+                            If 'STABLE_PW_ENCRYPT', pairwise secure aggregation would be applied to protect
+                            clients' model from stealing in cross-silo scenario.
+                            If 'SIGNDS', SignDS schema would be applied for clients.
+        share_secrets_ratio (float): The percentage of clients sharing secrets. Default: 1.0.
         cipher_time_window (int): The time window duration for each cipher round in millisecond. Default: 300000.
         reconstruct_secrets_threshold (int): The threshold count of reconstruct threshold. Default: 2000.
         dp_eps (float): Epsilon budget of differential privacy mechanism. The smaller the dp_eps, the better the
