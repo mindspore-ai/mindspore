@@ -14,6 +14,8 @@
 # ============================================================================
 
 import argparse
+import os
+import ast
 import subprocess
 
 parser = argparse.ArgumentParser(description="Run test_cross_silo_femnist.py case")
@@ -33,6 +35,8 @@ parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--dataset_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
+parser.add_argument("--server_domain", type=str, default="127.0.0.1:8080")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -51,6 +55,8 @@ config_file_path = args.config_file_path
 dataset_path = args.dataset_path
 encrypt_type = args.encrypt_type
 sync_type = args.sync_type
+server_domain = args.server_domain
+enable_ssl = args.enable_ssl
 
 if local_worker_num == -1:
     local_worker_num = worker_num
@@ -58,6 +64,7 @@ if local_worker_num == -1:
 assert local_worker_num <= worker_num, "The local worker number should not be bigger than total worker number."
 
 for i in range(local_worker_num):
+    os.environ["MS_NODE_ID"] = "fl-worker-{}".format(str(i))
     cmd_worker = "execute_path=$(pwd) && self_path=$(dirname \"${script_self}\") && "
     cmd_worker += "rm -rf ${execute_path}/worker_" + str(i) + "/ &&"
     cmd_worker += "mkdir ${execute_path}/worker_" + str(i) + "/ &&"
@@ -80,6 +87,8 @@ for i in range(local_worker_num):
     cmd_worker += " --encrypt_type=" + str(encrypt_type)
     cmd_worker += " --user_id=" + str(i)
     cmd_worker += " --sync_type=" + sync_type
+    cmd_worker += " --server_domain=" + str(server_domain)
+    cmd_worker += " --enable_ssl=" + str(enable_ssl)
     cmd_worker += " > worker.log 2>&1 &"
 
     subprocess.call(['bash', '-c', cmd_worker])

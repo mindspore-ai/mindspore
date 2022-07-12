@@ -86,6 +86,7 @@ _set_ps_context_func_map = {
     "instance_name": ps_context().set_instance_name,
     "participation_time_level": ps_context().set_participation_time_level,
     "continuous_failure_times": ps_context().set_continuous_failure_times,
+    "server_domain": ps_context().set_server_domain,
 }
 
 _get_ps_context_func_map = {
@@ -140,6 +141,7 @@ _get_ps_context_func_map = {
     "instance_name": ps_context().instance_name,
     "participation_time_level": ps_context().participation_time_level,
     "continuous_failure_times": ps_context().continuous_failure_times,
+    "server_domain": ps_context().server_domain,
 }
 
 _check_positive_int_keys = ["server_num", "scheduler_port", "fl_server_port",

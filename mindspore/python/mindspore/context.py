@@ -1140,6 +1140,8 @@ def set_fl_context(**kwargs):
             with rounds(ms). Default: 3600000.
         checkpoint_dir (string): The Server model checkpoint directory. If no checkpoint dir is set,
             the startup script directory is used by default. Default: "".
+        server_domain (string): The Server cluster http server domain.
+            Default: "".
     Raises:
         ValueError: If input key is not the attribute in federated learning mode context.
 

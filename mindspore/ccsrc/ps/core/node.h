@@ -88,6 +88,7 @@ class BACKEND_EXPORT Node {
   uint64_t AddMessageTrack(const uint32_t &expected_response);
   bool CheckMessageTrack(const uint64_t &request_id);
   void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);
+  void NotifyMessageArrival(uint64_t request_id);
   void set_message_callback(const uint64_t &request_id, const MessageCallback &callback);
   void ProcessSendDataResp(const std::shared_ptr<MessageMeta> &meta, const Protos &protos, const void *data,
                            size_t size);

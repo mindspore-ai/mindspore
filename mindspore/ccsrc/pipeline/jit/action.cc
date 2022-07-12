@@ -57,6 +57,7 @@
 #include "ps/scheduler.h"
 #include "ps/worker.h"
 #include "fl/worker/fl_worker.h"
+#include "fl/worker/fl_cloud_worker.h"
 #include "fl/server/server.h"
 #include "distributed/cluster/cluster_context.h"
 #endif
@@ -1069,10 +1070,10 @@ bool StartPSWorkerAction(const ResourcePtr &) {
   ps::Worker::GetInstance().Run();
   return true;
 }
-bool StartFLWorkerAction(const ResourcePtr &) {
-  fl::worker::FLWorker::GetInstance().Run();
-  return true;
-}
+
+bool StartFLWorkerAction(const ResourcePtr &) { return fl::worker::FLWorker::GetInstance().Run(); }
+
+bool StartFLCloudWorkerAction(const ResourcePtr &) { return fl::worker::FLCloudWorker::GetInstance().Run(); }
 
 bool StartPSServerAction(const ResourcePtr &res) {
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
@@ -1452,7 +1453,9 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource) {
       MS_LOG(INFO) << "This worker is initialized. No need to add worker action.";
     } else {
       std::string server_mode = ps::PSContext::instance()->server_mode();
-      if (server_mode == ps::kServerModeFL || server_mode == ps::kServerModeHybrid) {
+      if (server_mode == ps::kServerModeFL) {
+        (void)actions.emplace_back(std::make_pair("worker", StartFLCloudWorkerAction));
+      } else if (server_mode == ps::kServerModeHybrid) {
         (void)actions.emplace_back(std::make_pair("worker", StartFLWorkerAction));
       } else {
         (void)actions.emplace_back(std::make_pair("worker", StartPSWorkerAction));

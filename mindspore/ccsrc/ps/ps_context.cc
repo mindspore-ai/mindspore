@@ -583,5 +583,9 @@ void PSContext::set_continuous_failure_times(uint32_t continuous_failure_times) 
 }
 
 uint32_t PSContext::continuous_failure_times() { return continuous_failure_times_; }
+
+void PSContext::set_server_domain(const std::string &server_domain) { server_domain_ = server_domain; }
+
+const std::string &PSContext::server_domain() { return server_domain_; }
 }  // namespace ps
 }  // namespace mindspore
