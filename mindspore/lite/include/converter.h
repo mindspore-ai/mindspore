@@ -35,6 +35,9 @@ class MS_API Converter {
   void SetConfigFile(const std::string &config_file);
   std::string GetConfigFile() const;
 
+  void SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config);
+  std::map<std::string, std::map<std::string, std::string>> GetConfigInfo() const;
+
   void SetWeightFp16(bool weight_fp16);
   bool GetWeightFp16() const;
 

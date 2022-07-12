@@ -139,8 +139,8 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
 
   param->aclModelOptionCfgParam.om_file_path = param->output_file;
 
-  if (!param->config_file.empty()) {
-    auto ret = InitConfigFile(param);
+  if (!param->config_file.empty() || !param->config_param.empty()) {
+    auto ret = InitConfigParam(param);
     if (ret != RET_OK) {
       std::cerr << "Init config file failed." << std::endl;
       return nullptr;
@@ -295,11 +295,16 @@ int PreInference(const schema::MetaGraphT &meta_graph, bool train_model) {
   return RET_OK;
 }
 
-int ConverterImpl::InitConfigFile(const std::shared_ptr<ConverterPara> &param) {
+int ConverterImpl::InitConfigParam(const std::shared_ptr<ConverterPara> &param) {
   lite::ConfigFileParser config_parser;
-  auto ret = config_parser.ParseConfigFile(param->config_file);
+  auto ret = RET_OK;
+  if (!param->config_file.empty()) {
+    ret = config_parser.ParseConfigFile(param->config_file);
+  } else {
+    ret = config_parser.ParseConfigParam(&param->config_param);
+  }
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse config file failed.";
+    MS_LOG(ERROR) << "Parse config param failed.";
     return ret;
   }
   ret = lite::PreprocessParser::ParsePreprocess(config_parser.GetDataPreProcessString(), &param->dataPreProcessParam);
@@ -335,8 +340,9 @@ int ConverterImpl::InitConfigFile(const std::shared_ptr<ConverterPara> &param) {
     MS_LOG(ERROR) << "Parse acl option param failed.";
     return ret;
   }
-  (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
-
+  if (!param->config_file.empty()) {
+    (void)CheckOfflineParallelConfig(param->config_file, &param->parallel_split_config);
+  }
   lite::MicroParamParser micro_param_parser;
   ret = micro_param_parser.ParseMicroParam(config_parser.GetMicroParamString(), &param->microParam);
   if (ret != RET_OK) {
@@ -497,6 +503,7 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::common_log_init();
 
+  param->aclModelOptionCfgParam.offline = !not_save;
   ConverterImpl converter_impl;
   auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();
