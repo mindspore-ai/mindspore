@@ -126,12 +126,7 @@ public class Main {
             System.err.println("outputs size is wrong.");
             return;
         }
-        MSTensor output = outputs.get(0);
-        int outputElementNums = output.elementsNum();
-        float[] outputRandomData = generateArray(outputElementNums);
-        ByteBuffer outputData = floatArrayToByteBuffer(outputRandomData);
-        output.setData(outputData);
-
+        List<MSTensor> outputs = new ArrayList<>();
 
         // runner do predict
         ret = runner.predict(inputs,outputs);

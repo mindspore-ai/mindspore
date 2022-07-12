@@ -226,6 +226,26 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_MSTensor_size(JNIEnv *env,
   return ms_tensor_ptr->DataSize();
 }
 
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setShape(JNIEnv *env, jobject thiz, jlong tensor_ptr,
+                                                                           jintArray tensor_shape) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return static_cast<jboolean>(false);
+  }
+
+  auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+  auto size = static_cast<int>(env->GetArrayLength(tensor_shape));
+  std::vector<int64_t> c_shape(size);
+  jint *shape_pointer = env->GetIntArrayElements(tensor_shape, nullptr);
+  for (int i = 0; i < size; i++) {
+    c_shape[i] = static_cast<int64_t>(shape_pointer[i]);
+  }
+  env->ReleaseIntArrayElements(tensor_shape, shape_pointer, JNI_ABORT);
+  ms_tensor_ptr->SetShape(c_shape);
+  return static_cast<jboolean>(true);
+}
+
 extern "C" JNIEXPORT jint JNICALL Java_com_mindspore_MSTensor_elementsNum(JNIEnv *env, jobject thiz, jlong tensor_ptr) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
