@@ -71,10 +71,10 @@ def test_random_gamma_functional(dtype):
     """
 
     ms.set_context(mode=ms.GRAPH_MODE, device_target='CPU')
-    shape = Tensor(np.array([3, 2]), ms.int32)
+    shape = Tensor(np.array([10, 10]), ms.int32)
     alpha = Tensor(np.array([[3, 4], [5, 6]]), dtype)
     output = F.random_gamma(shape=shape, alpha=alpha, seed=2)
-    expect = np.array([3, 2, 2, 2])
+    expect = np.array([10, 10, 2, 2])
 
     print(output)
     assert (output.shape == expect).all()

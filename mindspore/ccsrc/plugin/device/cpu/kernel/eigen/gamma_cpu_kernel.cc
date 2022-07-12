@@ -44,10 +44,23 @@ bool GammaCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::ve
   alpha_shape_ = inputs[1]->GetShapeVector();
   alpha_dtype_ = inputs[1]->GetDtype();
   shape_dtype_ = inputs[0]->GetDtype();
+  shape_shape_ = inputs[0]->GetShapeVector();
 
   is_need_retrieve_output_shape_ = true;
 
   return true;
+}
+
+template <typename T>
+void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
+  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->addr);
+
+  for (int64_t i = 0; i < shape_shape_[0]; i++) {
+    output_shape_.emplace_back(static_cast<int64_t>(shape_value[i]));
+  }
+  for (size_t i = 0; i < alpha_shape_.size(); i++) {
+    output_shape_.emplace_back(alpha_shape_[i]);
+  }
 }
 
 int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -62,9 +75,6 @@ int GammaCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::v
     return ret;
   }
 
-  shape_shape_ = inputs[0]->GetShapeVector();
-  alpha_shape_ = inputs[1]->GetShapeVector();
-
   return KRET_OK;
 }
 
@@ -74,7 +84,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
   const auto *alpha_flat = reinterpret_cast<T *>(inputs[1]->addr);
   auto *samples_flat = reinterpret_cast<T *>(outputs[0]->addr);
 
-  int64_t num_samples = std::accumulate(output_shape_.begin(), output_shape_.end(), 0);
+  int64_t num_samples = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
   if (num_samples == 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of output is zero.";
   }
@@ -92,11 +102,16 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
 
   static constexpr int kReservedSamplesPerOutput = 256;
 
-  int64 num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 0);
+  int64 num_alphas = std::accumulate(alpha_shape_.begin(), alpha_shape_.end(), 1, std::multiplies<int64_t>());
+  if (num_alphas == 0) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "' the sizes of alpha is zero.";
+  }
+  int64_t sample_shape_per_al = num_samples / num_alphas;
 
-  PhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples * num_alphas, kReservedSamplesPerOutput);
+  PhiloxRandom rng = generator_.ReserveRandomOutputs(num_samples, kReservedSamplesPerOutput);
 
-  auto DoWork = [num_samples, num_alphas, &rng, samples_flat, alpha_flat](int64 start_output, int64 limit_output) {
+  auto DoWork = [sample_shape_per_al, num_alphas, &rng, samples_flat, alpha_flat](int64 start_output,
+                                                                                  int64 limit_output) {
     using Eigen::numext::exp;
     using Eigen::numext::log;
     using Eigen::numext::pow;
@@ -107,7 +122,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
     typename Uniform::ResultType uniform_res;
 
     for (int64 output_idx = start_output; output_idx < limit_output;) {
-      int64 alpha_idx = output_idx / num_samples;
+      int64 alpha_idx = output_idx / sample_shape_per_al;
       T *const samples_alpha_offset = samples_flat + alpha_idx;
       const double alpha_value = static_cast<double>(alpha_flat[alpha_idx]);
 
@@ -115,8 +130,8 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
       if (alpha_value == static_cast<double>(1.0)) {
         //        ENABLE_FLOAT_EQUALITY_WARNING
         // Sample from an exponential distribution.
-        for (int64 sample_idx = output_idx % num_samples; sample_idx < num_samples && output_idx < limit_output;
-             sample_idx++, output_idx++) {
+        for (int64 sample_idx = output_idx % sample_shape_per_al;
+             sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
           PhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
           int16 uniform_remaining = 0;
@@ -132,8 +147,8 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
         const double cut = 1.0 / 3 / sqrt(su);
 
         // Compute the rest of the samples for the current alpha value.
-        for (int64 sample_idx = output_idx % num_samples; sample_idx < num_samples && output_idx < limit_output;
-             sample_idx++, output_idx++) {
+        for (int64 sample_idx = output_idx % sample_shape_per_al;
+             sample_idx < sample_shape_per_al && output_idx < limit_output; sample_idx++, output_idx++) {
           PhiloxRandom gen = rng;
           gen.Skip(kReservedSamplesPerOutput * output_idx);
           int16 norm_remaining = 0;
@@ -171,19 +186,7 @@ void GammaCpuKernelMod::Generate(const std::vector<AddressPtr> &inputs, const st
     }
   };
 #undef UNIFORM
-  ParallelLaunchAutoSearch(DoWork, num_alphas * num_samples, this, &parallel_search_info_);
-}
-
-template <typename T>
-void GammaCpuKernelMod::InferShape(const std::vector<AddressPtr> &inputs) {
-  const auto *shape_value = reinterpret_cast<T *>(inputs[0]->addr);
-
-  for (int64_t i = 0; i < shape_shape_[0]; i++) {
-    output_shape_.emplace_back(static_cast<int64_t>(shape_value[i]));
-  }
-  for (size_t i = 0; i < alpha_shape_.size(); i++) {
-    output_shape_.emplace_back(alpha_shape_[i]);
-  }
+  ParallelLaunchAutoSearch(DoWork, num_alphas * sample_shape_per_al, this, &parallel_search_info_);
 }
 
 bool GammaCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

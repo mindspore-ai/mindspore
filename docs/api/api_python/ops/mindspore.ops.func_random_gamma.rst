@@ -1,7 +1,7 @@
-mindspore.ops.gamma
+mindspore.ops.random_gamma
 ====================
 
-.. py:function:: mindspore.ops.gamma(shape, alpha, seed=None)
+.. py:function:: mindspore.ops.random_gamma(shape, alpha, seed=None)
 
     根据伽马分布产生成随机数。
 
