@@ -515,6 +515,8 @@ class _Reduce(PrimitiveWithCheck):
                 'ReduceMin': np.min,
                 'ReduceProd': np.prod,
                 'ReduceMean': np.mean,
+                'ReduceAll': np.all,
+                'ReduceAny': np.any,
             }
             np_reduce_func = prim_map.get(self.name, None)
 
