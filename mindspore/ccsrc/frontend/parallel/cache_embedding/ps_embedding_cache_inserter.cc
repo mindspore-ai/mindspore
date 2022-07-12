@@ -343,6 +343,10 @@ FuncGraphPtr PsEmbeddingCacheInserter::ConstructUpdateEmbeddingSubGraph(const Pa
   ShapeVector update_values_shape = {-1, emb_dim};
   ShapeVector update_values_min_shape = {1, emb_dim};
   ShapeVector update_values_max_shape = {1, emb_dim};
+  if (emb_dim < 0) {
+    update_values_max_shape.clear();
+    update_values_min_shape.clear();
+  }
   update_values->set_abstract(std::make_shared<abstract::AbstractTensor>(
     kFloat32,
     std::make_shared<abstract::Shape>(update_values_shape, update_values_min_shape, update_values_max_shape)));

@@ -222,13 +222,10 @@ class MapCacheIdx(PrimitiveWithCheck):
         if 'max_shape' in indices:
             out['max_shape'] = (indices['max_shape'], indices['max_shape'],
                                 indices['max_shape'], indices['max_shape'])
-        else:
-            out['max_shape'] = (indices['shape'], indices['shape'],
-                                indices['shape'], indices['shape'])
+
         if 'min_shape' in indices:
             out['min_shape'] = (indices['min_shape'], 0, 0, 0)
-        else:
-            out['min_shape'] = (0, 0, 0, 0)
+
         return out
 
 

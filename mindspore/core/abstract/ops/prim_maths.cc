@@ -290,8 +290,6 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector x_max_shape = x->shape()->max_shape();
   ShapeVector y_min_shape = y->shape()->min_shape();
   ShapeVector y_max_shape = y->shape()->max_shape();
-  CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn = std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });
@@ -309,8 +307,10 @@ AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &p
   ShapeVector ret_max_shape;
   auto make_shape = [&transpose_a, &transpose_b](ShapeVector &output, const ShapeVector xshp,
                                                  const ShapeVector yshp) -> void {
-    output.push_back(xshp[(transpose_a ? 1 : 0)]);
-    output.push_back(yshp[(transpose_b ? 0 : 1)]);
+    if (!xshp.empty() && !yshp.empty()) {
+      output.push_back(xshp[(transpose_a ? 1 : 0)]);
+      output.push_back(yshp[(transpose_b ? 0 : 1)]);
+    }
     return;
   };
   make_shape(ret_shape, x_shp, y_shp);
@@ -357,8 +357,6 @@ AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitiveP
   ShapeVector x_max_shape = x->shape()->max_shape();
   ShapeVector y_min_shape = y->shape()->min_shape();
   ShapeVector y_max_shape = y->shape()->max_shape();
-  CheckMinMaxShape(x_shp, &x_min_shape, &x_max_shape);
-  CheckMinMaxShape(y_shp, &y_min_shape, &y_max_shape);
   // Additional check for dynamic shape
   // Last infer will be real shape values
   bool x_not_dyn = std::all_of(x_shp.begin(), x_shp.end(), [](int64_t value) { return value != Shape::SHP_ANY; });

@@ -50,7 +50,6 @@ AbstractBasePtr InferImplDropout(const abstract::AnalysisEnginePtr &, const Prim
   ShapeVector shape = x->shape()->shape();
   ShapeVector min_shape = x->shape()->min_shape();
   ShapeVector max_shape = x->shape()->max_shape();
-  CheckAndConvertUtils::CheckMinMaxShape(shape, &min_shape, &max_shape);
   auto output_shape = std::make_shared<abstract::AbstractTensor>(
     x->element(), std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
   AbstractBasePtrList ret = {output_shape, output_shape};

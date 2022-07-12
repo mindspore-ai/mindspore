@@ -190,13 +190,14 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
 
-  bool is_input_dynamic = std::any_of(shape->shape().begin(), shape->shape().end(), [](int64_t s) { return s < 0; });
+  bool is_input_dynamic = IsDynamic(shape->shape());
 
   ShapeVector ids_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape = {1};
-  ShapeVector max_shape = shape->max_shape();
-  if (max_shape.empty() && !is_input_dynamic) {
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  if (!is_input_dynamic) {
     max_shape = shape->shape();
+    min_shape.push_back(1);
   }
 
   auto ids =
@@ -275,11 +276,13 @@ AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const Prim
   auto shape = input->shape();
   MS_EXCEPTION_IF_NULL(shape);
   ShapeVector out_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape = {1};
-  ShapeVector max_shape = shape->max_shape();
-  if (max_shape.empty()) {
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  if (!IsDynamic(shape->shape())) {
     max_shape = shape->shape();
+    min_shape.push_back(1);
   }
+
   auto out =
     std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(out_shape, min_shape, max_shape));
   AbstractBasePtrList elements = {out};
@@ -300,13 +303,7 @@ AbstractBasePtr InferImplUniqueConsecutive(const AnalysisEnginePtr &, const Prim
   if (return_idx) {
     ShapeVector idx_shape = shape->shape();
     ShapeVector idx_min_shape = shape->min_shape();
-    if (idx_min_shape.empty()) {
-      idx_min_shape = shape->shape();
-    }
     ShapeVector idx_max_shape = shape->max_shape();
-    if (idx_max_shape.empty()) {
-      idx_max_shape = shape->shape();
-    }
     auto idx = std::make_shared<AbstractTensor>(idx_type, idx_shape);
     idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
     (void)elements.emplace_back(idx);
@@ -345,10 +342,12 @@ AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitiveP
     MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
   }
   ShapeVector ids_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape = {1};
-  ShapeVector max_shape = shape->max_shape();
-  if (max_shape.empty()) {
-    max_shape = shape->shape();
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  ShapeVector input_shape = shape->shape();
+  if (!IsDynamic(input_shape)) {
+    max_shape = input_shape;
+    min_shape.push_back(1);
   }
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
 }
@@ -415,9 +414,8 @@ AbstractBasePtr InferImplUnsortedSegmentSum(const AnalysisEnginePtr &, const Pri
   ShapeVector max_shape;
   min_shape.emplace_back(num_segments_value);
   max_shape.emplace_back(num_segments_value);
-  bool x_any_shape = std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
-  bool ids_any_shape =
-    std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  bool x_any_shape = IsDynamic(x_shape);
+  bool ids_any_shape = IsDynamic(segment_ids_shape);
   if (!x_any_shape && !ids_any_shape) {  // only validate when shapes fully known
     for (size_t i = 0; i < segment_ids_shape.size(); i++) {
       if (x_shape[i] != segment_ids_shape[i]) {
@@ -468,9 +466,8 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
   ShapeVector max_shape;
   min_shape.emplace_back(num_segments_value);
   max_shape.emplace_back(num_segments_value);
-  bool x_any_shape = std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
-  bool ids_any_shape =
-    std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  bool x_any_shape = IsDynamic(x_shape);
+  bool ids_any_shape = IsDynamic(segment_ids_shape);
   if (!x_any_shape && !ids_any_shape) {
     if (x_shape[0] != segment_ids_shape[0]) {
       MS_LOG(EXCEPTION) << "Length of segment_ids must match first value of x shape UnsortedSegmentMax";
@@ -520,9 +517,8 @@ AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const Pri
   ShapeVector max_shape;
   min_shape.emplace_back(num_segments_value);
   max_shape.emplace_back(num_segments_value);
-  bool x_any_shape = std::any_of(x_shape.begin(), x_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
-  bool ids_any_shape =
-    std::any_of(segment_ids_shape.begin(), segment_ids_shape.end(), [](int64_t dim) { return dim == Shape::SHP_ANY; });
+  bool x_any_shape = IsDynamic(x_shape);
+  bool ids_any_shape = IsDynamic(segment_ids_shape);
   if (!x_any_shape && !ids_any_shape) {  // only validate when shapes fully known
     if (x_shape[0] != segment_ids_shape[0]) {
       MS_LOG(EXCEPTION) << "Length of segment_ids must match first value of x shape UnsortedSegmentMin";
@@ -548,7 +544,6 @@ AbstractBasePtr InferImplScatterAdd(const AnalysisEnginePtr &, const PrimitivePt
   ShapeVector shape = x->shape()->shape();
   ShapeVector min_shape = x->shape()->min_shape();
   ShapeVector max_shape = x->shape()->max_shape();
-  CheckMinMaxShape(shape, &min_shape, &max_shape);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
@@ -563,7 +558,6 @@ AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePt
   ShapeVector shape = x->shape()->shape();
   ShapeVector min_shape = x->shape()->min_shape();
   ShapeVector max_shape = x->shape()->max_shape();
-  CheckMinMaxShape(shape, &min_shape, &max_shape);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
@@ -577,7 +571,6 @@ AbstractBasePtr InferImplScatterElements(const AnalysisEnginePtr &, const Primit
   ShapeVector shape = x->shape()->shape();
   ShapeVector min_shape = x->shape()->min_shape();
   ShapeVector max_shape = x->shape()->max_shape();
-  CheckMinMaxShape(shape, &min_shape, &max_shape);
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
 }
 
@@ -593,18 +586,9 @@ AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitiveP
   auto indices_shp = indices->shape();
   MS_EXCEPTION_IF_NULL(indices_shp);
 
-  ShapeVector shape;
-  ShapeVector min_shape;
-  ShapeVector max_shape;
-  if (!indices_shp->max_shape().empty()) {
-    max_shape = indices_shp->max_shape();
-  } else {
-    max_shape = indices_shp->shape();
-  }
-  for (size_t i = 0; i < max_shape.size(); i++) {
-    shape.emplace_back(Shape::SHP_ANY);
-    min_shape.emplace_back(1);
-  }
+  ShapeVector shape(indices_shp->shape().size(), -1);
+  ShapeVector min_shape = indices_shp->min_shape();
+  ShapeVector max_shape = indices_shp->max_shape();
 
   auto cache_idx = std::make_shared<AbstractTensor>(hash_map->element(), indices->shape());
   auto old_emb_idx =
@@ -639,12 +623,11 @@ AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const Primiti
   auto swap_cache_idx_max_shape = swap_cache_idx_shp->max_shape();
   ShapeVector max_shape;
   ShapeVector min_shape;
-  if (!swap_cache_idx_max_shape.empty()) {
+  if (!swap_cache_idx_max_shape.empty() && cache_table_shape[1] > 0) {
     max_shape.emplace_back(swap_cache_idx_max_shape[0]);
     max_shape.emplace_back(cache_table_shape[1]);
-  } else {
-    max_shape = shape;
   }
+
   for (size_t i = 0; i < max_shape.size(); ++i) {
     min_shape.emplace_back(1);
   }
@@ -673,18 +656,10 @@ AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const Primitive
   auto input_x_shp = input_x->shape();
   MS_EXCEPTION_IF_NULL(input_x_shp);
 
-  ShapeVector shape;
-  ShapeVector min_shape;
-  ShapeVector max_shape;
-  if (!input_x_shp->max_shape().empty()) {
-    max_shape = input_x_shp->max_shape();
-  } else {
-    max_shape = input_x_shp->shape();
-  }
-  for (size_t i = 0; i < max_shape.size(); i++) {
-    shape.emplace_back(Shape::SHP_ANY);
-    min_shape.emplace_back(1);
-  }
+  ShapeVector shape(input_x_shp->shape().size(), -1);
+  ShapeVector min_shape = input_x_shp->min_shape();
+  ShapeVector max_shape = input_x_shp->max_shape();
+
   auto filter_res =
     std::make_shared<AbstractTensor>(input_x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
   auto filter_idx =
@@ -836,14 +811,10 @@ AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const Primit
   if (!indices_max_shape.empty()) {
     max_shape.insert(max_shape.end(), indices_max_shape.begin(), indices_max_shape.end());
     max_shape.insert(max_shape.end(), params_shape.begin() + 1, params_shape.end());
-  } else {
-    max_shape = shape;
   }
   if (!indices_min_shape.empty()) {
     min_shape.insert(min_shape.end(), indices_min_shape.begin(), indices_min_shape.end());
     min_shape.insert(min_shape.end(), params_shape.begin() + 1, params_shape.end());
-  } else {
-    min_shape = shape;
   }
 
   AbstractTensorPtr ret =
@@ -869,12 +840,13 @@ AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr
   ShapeVector min_shp;
   ShapeVector x_max_shp = input->shape()->max_shape();
   ShapeVector x_min_shp = input->shape()->min_shape();
-  CheckMinMaxShape(input_shp, &x_min_shp, &x_max_shp);
   for (size_t i = 0; i < perm_vec.size(); i++) {
     auto idx = static_cast<size_t>(perm_vec[i]);
     result_shp.push_back(input_shp[idx]);
-    max_shp.push_back(x_max_shp[idx]);
-    min_shp.push_back(x_min_shp[idx]);
+    if (!x_max_shp.empty() && !x_min_shp.empty()) {
+      max_shp.push_back(x_max_shp[idx]);
+      min_shp.push_back(x_min_shp[idx]);
+    }
   }
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
 }
@@ -988,6 +960,11 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
                       << ", and out_shape: " << shape;
   }
 
+  if (IsDynamic(min_shape) || IsDynamic(max_shape)) {
+    min_shape.clear();
+    max_shape.clear();
+  }
+
   AbstractTensorPtr ret =
     std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
   return ret;
@@ -1009,13 +986,7 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   ShapeVector x_shape = input_x->shape()->shape();
   ShapeVector x_shape_min = input_x->shape()->min_shape();
-  if (x_shape_min.empty()) {
-    x_shape_min = x_shape;
-  }
   ShapeVector x_shape_max = input_x->shape()->max_shape();
-  if (x_shape_max.empty()) {
-    x_shape_max = x_shape;
-  }
   int64_t rank = SizeToLong(x_shape.size());
 
   ValuePtr axis = primitive->GetAttr("axis");
@@ -1031,15 +1002,16 @@ AbstractBasePtr InferImplSplit(const AnalysisEnginePtr &, const PrimitivePtr &pr
   if (output_shape[pos] != Shape::SHP_ANY) {
     output_shape[pos] = static_cast<int>(x_shape[pos] / output_num_value);
   }
-  ShapeVector output_shape_min = x_shape_min;
-  output_shape_min[pos] = static_cast<int>(x_shape_min[pos] / output_num_value);
-  ShapeVector output_shape_max = x_shape_max;
-  output_shape_max[pos] = static_cast<int>(x_shape_max[pos] / output_num_value);
+
+  if (!x_shape_min.empty() && !x_shape_max.empty()) {
+    x_shape_min[pos] = static_cast<int>(x_shape_min[pos] / output_num_value);
+    x_shape_max[pos] = static_cast<int>(x_shape_max[pos] / output_num_value);
+  }
 
   AbstractBasePtrList output_list;
   for (int64_t i = 0; i < output_num_value; ++i) {
     auto output = input_x->Broaden();
-    output->set_shape(std::make_shared<Shape>(output_shape, output_shape_min, output_shape_max));
+    output->set_shape(std::make_shared<Shape>(output_shape, x_shape_min, x_shape_max));
     output_list.push_back(output);
   }
   return std::make_shared<AbstractTuple>(output_list);
@@ -1085,17 +1057,15 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
 
   ShapeVector lengths_shape = lengths->shape()->shape();
   ShapeVector lengths_shape_min = lengths->shape()->min_shape();
-  if (lengths_shape_min.empty()) {
-    lengths_shape_min = lengths_shape;
-  }
+
   ShapeVector lengths_shape_max = lengths->shape()->max_shape();
-  if (lengths_shape_max.empty()) {
-    lengths_shape_max = lengths_shape;
+
+  if (!lengths_shape_max.empty() && !lengths_shape_min.empty()) {
+    lengths_shape_min.push_back(maxlen_value);
+    lengths_shape_max.push_back(maxlen_value);
   }
 
   lengths_shape.push_back(maxlen_value);
-  lengths_shape_min.push_back(maxlen_value);
-  lengths_shape_max.push_back(maxlen_value);
 
   ShapePtr output_shape = std::make_shared<Shape>(lengths_shape, lengths_shape_min, lengths_shape_max);
   return std::make_shared<AbstractTensor>(kBool, output_shape);
@@ -1209,6 +1179,11 @@ AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &p
   shape[axis_value] = all_shp;
   min_shape[axis_value] = min_all_shp;
   max_shape[axis_value] = max_all_shp;
+  if (IsDynamic(min_shape) || IsDynamic(max_shape)) {
+    min_shape.clear();
+    max_shape.clear();
+  }
+
   ret->set_shape(std::make_shared<Shape>(shape, min_shape, max_shape));
   return ret;
 }
@@ -1371,11 +1346,12 @@ AbstractBasePtr InferImplMaskedSelect(const AnalysisEnginePtr &, const Primitive
   auto mask_shape = mask->shape();
   auto broadcast_shape = BroadcastShape(x_shape->shape(), mask_shape->shape());
   ShapeVector y_shape = {Shape::SHP_ANY};
-  ShapeVector min_shape = {1};
-  int64_t max_size = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
-  ShapeVector max_shape = {max_size};
-  if (max_shape.empty()) {
-    max_shape = x_shape->shape();
+  ShapeVector min_shape;
+  ShapeVector max_shape;
+  if (!IsDynamic(x_shape->shape())) {
+    int64_t max_size = std::accumulate(broadcast_shape.begin(), broadcast_shape.end(), 1, std::multiplies<int64_t>());
+    max_shape = {max_size};
+    min_shape = {1};
   }
   return std::make_shared<AbstractTensor>(x->element(), std::make_shared<Shape>(y_shape, min_shape, max_shape));
 }

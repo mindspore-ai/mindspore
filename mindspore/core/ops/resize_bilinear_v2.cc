@@ -112,55 +112,12 @@ abstract::ShapePtr ResizeBilinearV2InferShape(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckInteger("the dimension of size", SizeToLong(size_value.size()), kEqual, size_size,
                                            prim_name);
   std::vector<int64_t> output_shape;
-  std::vector<int64_t> min_shape;
-  std::vector<int64_t> max_shape;
   output_shape.push_back(x_shape[0]);
   output_shape.push_back(x_shape[1]);
   output_shape.push_back(size_value[0]);
   output_shape.push_back(size_value[1]);
-  // static shape:
-  if (!x_shape_ptr->IsDynamic() && !(size_value[0] < 0)) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-  // dynamic shape:
-  auto x_min_shape = x_shape_ptr->min_shape();
-  auto x_max_shape = x_shape_ptr->max_shape();
-  // The dynamic shape has no min_shape and max_shape
-  if ((x_shape_ptr->IsDynamic() && x_min_shape.empty()) || (size_value[0] < 0 && min_size.empty())) {
-    return std::make_shared<abstract::Shape>(output_shape);
-  }
-  // Get min_shape and max_shape of output_shape
-  if (x_shape_ptr->IsDynamic()) {
-    (void)CheckAndConvertUtils::CheckInteger("the dimension of min_shape", SizeToLong(x_min_shape.size()), kEqual,
-                                             SizeToLong(x_shape.size()), prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("the dimension of max_shape", SizeToLong(x_max_shape.size()), kEqual,
-                                             SizeToLong(x_shape.size()), prim_name);
-    min_shape.push_back(x_min_shape[0]);
-    min_shape.push_back(x_min_shape[1]);
-    max_shape.push_back(x_max_shape[0]);
-    max_shape.push_back(x_max_shape[1]);
-  } else {
-    min_shape.push_back(x_shape[0]);
-    min_shape.push_back(x_shape[1]);
-    max_shape.push_back(x_shape[0]);
-    max_shape.push_back(x_shape[1]);
-  }
-  if (size_value[0] < 0) {
-    (void)CheckAndConvertUtils::CheckInteger("the dimension of min_size", SizeToLong(min_size.size()), kEqual,
-                                             size_size, prim_name);
-    (void)CheckAndConvertUtils::CheckInteger("the dimension of max_size", SizeToLong(max_size.size()), kEqual,
-                                             size_size, prim_name);
-    min_shape.push_back(min_size[0]);
-    min_shape.push_back(min_size[1]);
-    max_shape.push_back(max_size[0]);
-    max_shape.push_back(max_size[1]);
-  } else {
-    min_shape.push_back(size_value[0]);
-    min_shape.push_back(size_value[1]);
-    max_shape.push_back(size_value[0]);
-    max_shape.push_back(size_value[1]);
-  }
-  return std::make_shared<abstract::Shape>(output_shape, min_shape, max_shape);
+
+  return std::make_shared<abstract::Shape>(output_shape);
 }
 
 TypePtr ResizeBilinearV2InferType(const PrimitivePtr &primitive,

@@ -82,7 +82,7 @@ abstract::ShapePtr TileInferShape(const PrimitivePtr &primitive, const std::vect
   }
 
   auto infer_shape = GetInferShape(primitive, input_shape, multiples_v);
-  if (max_shape.empty() && min_shape.empty()) {
+  if (max_shape.empty() || min_shape.empty()) {
     return std::make_shared<abstract::Shape>(infer_shape);
   }
   auto infer_shape_min = GetInferShape(primitive, min_shape, multiples_v);
