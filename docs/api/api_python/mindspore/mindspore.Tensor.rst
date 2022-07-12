@@ -380,6 +380,32 @@ mindspore.Tensor
         - **TypeError** - axis不是int类型。
         - **ValueError** - axis的取值不在[-self.ndim - 1, self.ndim + 1)。
 
+    .. py:method:: erf()
+
+        逐元素计算原Tensor的高斯误差函数。
+        更多细节参考 :func:`mindspore.ops.erf`。
+
+        **返回：**
+
+        Tensor，具有与原Tensor相同的数据类型和shape。
+
+        **异常：**
+
+        - **TypeError** - 原Tensor的数据类型既不是float16也不是float32。
+
+    .. py:method:: erfc()
+
+        逐元素计算原Tensor的互补误差函数。
+        更多细节参考 :func:`mindspore.ops.erfc`。
+
+        **返回：**
+
+        Tensor，具有与原Tensor相同的数据类型和shape。
+
+        **异常：**
+
+        - **TypeError** - 原Tensor的数据类型既不是float16也不是float32。
+
     .. py:method:: fill(value)
 
         用标量值填充数组。
@@ -1682,3 +1708,28 @@ mindspore.Tensor
 
         Tensor，具有与入参 `shape` 相同的维度。
 
+    .. py:method:: xlogy(y)
+
+        计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
+        `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或
+        `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
+        后面为了使表达清晰，使用 `x` 代替原Tensor。
+
+        .. math::
+            out_i = x_{i}\ln{y_{i}}
+
+        `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。输入必须是两个Tensor或一个Tensor和一个Scalar。当输入是两个Tensor时，它们的数据类型不能同时是bool的，它们的shape可以广播。当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
+
+        **参数：**
+
+        - **y** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时，则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
+
+        **返回：**
+
+        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。
+
+        **异常：**
+
+        - **TypeError** - 如果 `x` 和 `y` 不是数值型、bool或Tensor。
+        - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32或float64。
+        - **ValueError** - 如果 `x` 不能广播到与 `y` 的shape一致。
