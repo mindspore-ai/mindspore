@@ -35,7 +35,6 @@ using abstract::AbstractTensor;
 using abstract::AbstractTuple;
 
 namespace {
-constexpr size_t kNopNodeInputSize = 2;
 constexpr size_t kNopNodeRealInputIndex = 1;
 
 const PrimitiveSet expand_prims{
@@ -294,9 +293,6 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
     return VisitKernelWithReturnType(cnode->input(kRealInputIndexInDepend), index, skip_nop_node, return_types);
   }
   if (IsNopNode(cnode) && skip_nop_node) {
-    if (cnode->size() != kNopNodeInputSize) {
-      MS_LOG(EXCEPTION) << "Invalid nop node " << cnode->DebugString() << trace::DumpSourceLines(cnode);
-    }
     return VisitKernelWithReturnType(cnode->input(kNopNodeRealInputIndex), 0, skip_nop_node, return_types);
   }
   return KernelWithIndex(anf_node, index);
@@ -1613,17 +1609,6 @@ AnfNodePtr AnfAlgo::GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> 
 }
 
 bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  auto target = GetCNodeTarget(node);
-  if (target == kCPUDevice) {
-    return false;
-  }
-  if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice &&
-      context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
-    return false;
-  }
-
   static mindspore::HashSet<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
                                                       prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
                                                       kFlattenGradOpName,         prim::kPrimReformat->name()};
@@ -1648,9 +1633,6 @@ bool AnfAlgo::IsNopNode(const AnfNodePtr &node) {
     return false;
   }
 
-  if (cnode->size() != kNopNodeInputSize) {
-    return false;
-  }
   return true;
 }
 

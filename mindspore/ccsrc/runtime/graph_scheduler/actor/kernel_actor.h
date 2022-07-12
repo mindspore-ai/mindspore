@@ -65,7 +65,8 @@ class KernelActor : public DebugAwareActor {
         real_input_num_(0),
         strategy_(strategy),
         modifiable_ref_input_indexes_(modifiable_ref_input_indexes),
-        modifiable_ref_output_indexes_(modifiable_ref_output_indexes) {
+        modifiable_ref_output_indexes_(modifiable_ref_output_indexes),
+        is_launch_skipped_(false) {
     (void)device_contexts_.emplace_back(device_context);
   }
   ~KernelActor() override = default;
@@ -85,6 +86,7 @@ class KernelActor : public DebugAwareActor {
   const std::set<size_t> &modifiable_ref_input_indexes() const { return modifiable_ref_input_indexes_; }
   const std::set<size_t> &modifiable_ref_output_indexes() const { return modifiable_ref_output_indexes_; }
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
+  bool is_launch_skipped() const { return is_launch_skipped_; }
 
  protected:
   void Init() override;
@@ -153,6 +155,9 @@ class KernelActor : public DebugAwareActor {
 
   // Cache output data by output index to modify the output data effectively.
   std::vector<std::vector<OpData<DeviceTensor> *>> output_data_by_output_index_;
+
+  // Whether skip the kernel launch.
+  bool is_launch_skipped_;
 };
 
 using KernelActorPtr = std::shared_ptr<KernelActor>;

@@ -458,6 +458,20 @@ void KernelActor::PreLaunchKernel(OpContext<DeviceTensor> *) {
 }
 
 bool KernelActor::LaunchKernel() {
+  // Check the skipped launch condition.
+  if (is_launch_skipped_) {
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.inputs_.size() >= 1), "The inputs size is wrong.");
+    MS_EXCEPTION_IF_CHECK_FAIL((launch_info_.outputs_.size() == 1), "The outputs size is wrong.");
+    MS_EXCEPTION_IF_NULL(launch_info_.inputs_[0]);
+    MS_EXCEPTION_IF_NULL(launch_info_.outputs_[0]);
+    if (launch_info_.inputs_[0]->addr == launch_info_.outputs_[0]->addr) {
+      return true;
+    } else {
+      MS_LOG(ERROR) << "Input address and output address are not equal of skipped launch actor: " << GetAID().Name();
+      return false;
+    }
+  }
+
   MS_EXCEPTION_IF_NULL(device_contexts_[0]);
   return device_contexts_[0]->kernel_executor_->LaunchKernel(kernel_, launch_info_.inputs_, launch_info_.workspaces_,
                                                              launch_info_.outputs_);
