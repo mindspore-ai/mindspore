@@ -26,6 +26,7 @@ from .parameter import Parameter, ParameterTuple
 from .seed import set_seed, get_seed
 from .tensor import Tensor, RowTensor, SparseTensor, COOTensor, CSRTensor
 from .mutable import mutable
+from .jit_config import JitConfig
 
 # symbols from dtype
 __all__ = [
@@ -61,5 +62,5 @@ __all__.extend([
     "set_seed", "get_seed",  # random seed
     "set_dump",
     "ms_memory_recycle",
-    "mutable"
+    "mutable", "JitConfig",
 ])
