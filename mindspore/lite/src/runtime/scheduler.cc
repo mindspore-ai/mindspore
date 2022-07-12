@@ -599,9 +599,16 @@ int Scheduler::ReplaceDelegateKernels(std::vector<kernel::KernelExec *> *dst_ker
       dst_kernels->push_back(kernel_exec);
     }
   }
-  // Release the cpu kernel that has been replace by delegate subgraph
+  // Release the cpu kernel that has been replace by delegate subgraph, as well as their tensor data
   for (auto kernel : src_kernels) {
     if (delegate_support[kernel] == true) {
+      auto inputs = kernel->in_tensors();
+      for (auto *tensor : inputs) {
+        MS_ASSERT(tensor != nullptr);
+        if (tensor->IsConst()) {
+          tensor->FreeData();
+        }
+      }
       delete kernel;
     }
   }
