@@ -1097,6 +1097,81 @@ def concat(input_x, axis=0):
     return _concat(input_x)
 
 
+def stack(input_x, axis=0):
+    r"""
+    Stacks a list of tensors in specified axis.
+
+    Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
+
+    Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
+    If :math:`0 \le axis`, the shape of the output tensor is
+    :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
+
+    Args:
+        input_x (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
+        axis (int): Dimension to stack. Default: 0.
+            Negative values wrap around. The range is [-(R+1), R+1).
+
+    Returns:
+        Tensor. A stacked Tensor with the same type as `input_x`.
+
+    Raises:
+        TypeError: If the data types of elements in `input_x` are not the same.
+        ValueError: If the length of `input_x` is not greater than 1;
+                    or if axis is out of the range [-(R+1), R+1);
+                    or if the shapes of elements in input_x are not the same.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x1 = Tensor(np.array([0, 1]).astype(np.float32))
+        >>> input_x2 = Tensor(np.array([2, 3]).astype(np.float32))
+        >>> output = ops.stack((input_x1, input_x2), 0)
+        >>> print(output)
+        [[0. 1.]
+         [2. 3.]]
+    """
+    _stack = _get_cache_prim(P.Stack)(axis)
+    return _stack(input_x)
+
+
+def unstack(input_x, axis=0):
+    r"""
+    Unstacks tensor in specified axis.
+
+    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
+
+    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
+    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
+
+    This is the opposite of pack.
+
+    Args:
+        input_x (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+            A tensor to be unstacked and the rank of the tensor must be greater than 0.
+        axis (int): Dimension along which to unpack. Default: 0.
+            Negative values wrap around. The range is [-R, R).
+
+    Returns:
+        A tuple of tensors, the shape of each objects is the same.
+
+    Raises:
+        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[1, 1, 1, 1], [2, 2, 2, 2]]))
+        >>> output = ops.unstack(input_x, 0)
+        >>> print(output)
+        (Tensor(shape=[4], dtype=Int64, value= [1, 1, 1, 1]), Tensor(shape=[4], dtype=Int64, value= [2, 2, 2, 2]))
+    """
+    _unstack = _get_cache_prim(P.Unstack)(axis)
+    return _unstack(input_x)
+
+
 def expand_dims(input_x, axis):
     """
     Adds an additional dimension to `input_x` at the given axis.
@@ -3678,6 +3753,8 @@ __all__ = [
     'tensor_slice',
     'slice',
     'concat',
+    'stack',
+    'unstack',
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',

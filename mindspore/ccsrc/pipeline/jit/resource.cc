@@ -151,6 +151,7 @@ BuiltInTypeMap &GetMethodMap() {
     {kObjectTypeTensorType,
      {
        {"all", std::string("all_")},                                       // C.reduce_all
+       {"atan2", std::string("atan2")},                                    // P.Atan2
        {"any", std::string("any_")},                                       // C.reduce_any
        {"__add__", std::string("add")},                                    // C.add
        {"__sub__", std::string("sub")},                                    // C.sub
@@ -207,6 +208,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"copy", std::string("copy")},                                      // copy()
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
        {"lerp", std::string("lerp")},                                      // lerp()
+       {"log1p", std::string("log1p")},                                    // P.Log1p()
        {"log_matrix_determinant", std::string("log_matrix_determinant")},  // log_matrix_determinant()
        {"matrix_determinant", std::string("matrix_determinant")},          // log_matrix_determinant()
        {"max", std::string("max")},                                        // P.reduce_max()
