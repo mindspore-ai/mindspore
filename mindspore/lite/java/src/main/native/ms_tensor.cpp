@@ -163,8 +163,9 @@ extern "C" JNIEXPORT jfloatArray JNICALL Java_com_mindspore_MSTensor_getFloatDat
   return ret;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setData(JNIEnv *env, jobject thiz, jlong tensor_ptr,
-                                                                          jbyteArray data, jlong data_len) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setByteData(JNIEnv *env, jobject thiz,
+                                                                              jlong tensor_ptr, jbyteArray data,
+                                                                              jlong data_len) {
   auto *pointer = reinterpret_cast<void *>(tensor_ptr);
   if (pointer == nullptr) {
     MS_LOGE("Tensor pointer from java is nullptr");
@@ -184,6 +185,28 @@ extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setData(JNIEnv
   auto *local_data = ms_tensor_ptr->MutableData();
   memcpy(local_data, data_arr, data_len);
   env->ReleaseByteArrayElements(data, data_arr, JNI_ABORT);
+  return static_cast<jboolean>(true);
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_com_mindspore_MSTensor_setFloatData(JNIEnv *env, jobject thiz,
+                                                                               jlong tensor_ptr, jfloatArray data,
+                                                                               jlong data_len) {
+  auto *pointer = reinterpret_cast<void *>(tensor_ptr);
+  if (pointer == nullptr) {
+    MS_LOGE("Tensor pointer from java is nullptr");
+    return static_cast<jboolean>(false);
+  }
+  auto *ms_tensor_ptr = static_cast<mindspore::MSTensor *>(pointer);
+  if (data_len != ms_tensor_ptr->ElementNum()) {
+#ifdef ENABLE_ARM32
+    MS_LOGE("data_len(%lld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->DataSize());
+#else
+    MS_LOGE("data_len(%ld) not equal to Size of ms_tensor(%zu)", data_len, ms_tensor_ptr->DataSize());
+#endif
+    return static_cast<jboolean>(false);
+  }
+  auto *local_data = reinterpret_cast<jfloat *>(ms_tensor_ptr->MutableData());
+  env->GetFloatArrayRegion(data, 0, static_cast<jsize>(data_len), local_data);
   return static_cast<jboolean>(true);
 }
 
