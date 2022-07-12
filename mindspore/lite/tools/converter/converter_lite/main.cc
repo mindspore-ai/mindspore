@@ -43,7 +43,9 @@ int main(int argc, const char **argv) {
 #endif
     mindspore::converter::Flags flags;
     auto ret = flags.Init(argc, argv);
-    if (ret != mindspore::kSuccess) {
+    if (static_cast<uint32_t>(ret) == mindspore::kLiteSuccessExit) {
+      return mindspore::kSuccess;
+    } else if (ret != mindspore::kSuccess) {
       MS_LOG(ERROR) << "Flags Init failed. Ret: " << ret;
       std::cout << "Flags Init failed. Ret: " << ret << std::endl;
       return ret;
