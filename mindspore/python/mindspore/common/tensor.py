@@ -653,7 +653,7 @@ class Tensor(Tensor_):
         Refer to :func:`mindspore.ops.bitwise_and` for more detail.
 
         Args:
-            x (Tensor): The input tensor.
+            x (Tensor): The input tensor with int16, int32 or uint16 data type.
 
         Returns:
             Tensor, has the same type as the `x`.
@@ -680,7 +680,7 @@ class Tensor(Tensor_):
         Refer to :func:`mindspore.ops.bitwise_or` for more detail.
 
         Args:
-            x (Tensor): The input tensor.
+            x (Tensor): The input tensor with int16, int32 or uint16 data type.
 
         Returns:
             Tensor, has the same type as the `x`.
@@ -707,7 +707,7 @@ class Tensor(Tensor_):
         Refer to :func:`mindspore.ops.bitwise_xor` for more detail.
 
         Args:
-            x (Tensor): The input tensor.
+            x (Tensor): The input tensor with int16, int32 or uint16 data type.
 
         Returns:
             Tensor, has the same type as the `x`.
@@ -831,7 +831,10 @@ class Tensor(Tensor_):
         """
         Ger product of `self` and `x`. Calculate the outer product of two arrays. If `self` is a 1D
         Tensor of shape :math:`(m,)` and `x` is a 1D Tensor of shape :math:`(n,)`, then `output` must be a Tensor of
-        shape :math:`(m * n)`.
+        shape :math:`(m, n)`.
+
+        Note:
+            Currently Ascend does not support float64 data input.
 
         Refer to :func:`mindspore.ops.ger` for more detail.
 

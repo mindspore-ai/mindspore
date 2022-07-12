@@ -180,7 +180,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint16、int16或int32的Tensor。
 
         **返回：**
 
@@ -194,7 +194,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint16、int16或int32的Tensor。
 
         **返回：**
 
@@ -208,7 +208,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint8、uint16、unint32、uint64、int8、int16、int32或int64的Tensor。
+        - **x** (Tensor) - 输入Tensor，是一个数据类型为uint16、int16或int32的Tensor。
 
         **返回：**
 
