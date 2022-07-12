@@ -231,6 +231,7 @@ from .math_func import (
     sparse_segment_mean,
     log2,
     approximate_equal,
+    xlogy
 )
 from .nn_func import (
     adaptive_avg_pool2d,

@@ -150,6 +150,7 @@ Element-by-Element Operations
     mindspore.ops.sub
     mindspore.ops.svd
     mindspore.ops.tan
+    mindspore.ops.xlogy
 
 .. list-table::
    :widths: 50 50
