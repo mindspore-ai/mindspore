@@ -1666,7 +1666,7 @@ class Cell(Cell_):
         Set jit config for cell.
 
         Args:
-            jit_config (JitConfig): Jit config for compile.
+            jit_config (JitConfig): Jit config for compile. For details, please refer to :class:`mindspore.JitConfig`.
         """
         if self._jit_config_dict:
             logger.warning("For Cell, jit config can only be set once, ignore this setting.")
