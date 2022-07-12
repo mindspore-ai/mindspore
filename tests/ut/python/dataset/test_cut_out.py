@@ -214,10 +214,10 @@ def test_cut_out_comp_hwc(plot=False):
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
     if plot:
-        visualize_list(image_list_1, image_list_2, visualize_mode=2)
+        visualize_list(image_list_2, image_list_1, visualize_mode=2)
 
 
-def test_cut_out_comp_chw():
+def test_cut_out_comp_chw(plot=False):
     """
     Feature: CutOut op
     Description: Test CutOut with CHW input, Decode(to_pil=True) & ToTensor versus Decode(to_pil=False) & HWC2CHW
@@ -232,7 +232,7 @@ def test_cut_out_comp_chw():
     transforms_1 = [
         vision.Decode(),
         vision.HWC2CHW(),
-        vision.CutOut(200, is_hwc=False)
+        vision.CutOut(500, num_patches=3, is_hwc=False)
     ]
     transform_1 = mindspore.dataset.transforms.Compose(transforms_1)
     data1 = data1.map(operations=transform_1, input_columns=["image"])
@@ -243,7 +243,7 @@ def test_cut_out_comp_chw():
     transforms_2 = [
         vision.Decode(True),
         vision.ToTensor(),
-        vision.CutOut(200, is_hwc=False)
+        vision.CutOut(500, num_patches=5, is_hwc=False)
     ]
 
     data2 = data2.map(operations=transforms_2, input_columns=["image"])
@@ -253,8 +253,8 @@ def test_cut_out_comp_chw():
     for item1, item2 in zip(data1.create_dict_iterator(num_epochs=1, output_numpy=True),
                             data2.create_dict_iterator(num_epochs=1, output_numpy=True)):
         num_iter += 1
-        image_1 = item1["image"]
-        image_2 = item2["image"]
+        image_1 = (item1["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
+        image_2 = (item2["image"].transpose(1, 2, 0) * 255).astype(np.uint8)
         if image_1.shape != image_2.shape:
             raise RuntimeError("image_1.shape != image_2.shape: " + str(image_1.shape) + " " + str(image_2.shape))
         image_list_1.append(image_1)
@@ -265,6 +265,9 @@ def test_cut_out_comp_chw():
 
         logger.info("dtype of image_1: {}".format(image_1.dtype))
         logger.info("dtype of image_2: {}".format(image_2.dtype))
+
+    if plot:
+        visualize_list(image_list_1, image_list_2, visualize_mode=1)
 
 
 def test_cutout_4channel_chw():
@@ -307,7 +310,7 @@ if __name__ == "__main__":
     test_cut_out_op_multicut(plot=True)
     test_cut_out_md5()
     test_cut_out_comp_hwc(plot=True)
-    test_cut_out_comp_chw()
+    test_cut_out_comp_chw(plot=True)
     test_cutout_4channel_chw()
     test_cutout_4channel_hwc()
     test_cut_out_validation()
