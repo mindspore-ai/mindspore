@@ -3820,24 +3820,24 @@ def logsumexp(x, axis, keep_dims=False):
     return x_logsumexp + x_max
 
 
-def amin(x, axis, keep_dims=False):
+def amin(x, axis=(), keep_dims=False):
     r"""
     Reduces a dimension of a tensor by the minimum value in the dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Raises:
-        TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3854,23 +3854,23 @@ def amin(x, axis, keep_dims=False):
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
         >>> output = ops.amin(x)
         >>> print(output)
-        [[[1.]]]
+        1.0
         >>> print(output.shape)
-        (1, 1, 1)
+        ()
         >>> # case 2: Reduces a dimension along axis 0.
-        >>> output = opops.amin(x, 0)
+        >>> output = ops.amin(x, 0, True)
         >>> print(output)
         [[[1. 1. 1. 1. 1. 1.]
           [2. 2. 2. 2. 2. 2.]
           [3. 3. 3. 3. 3. 3.]]]
         >>> # case 3: Reduces a dimension along axis 1.
-        >>> output = ops.amin(x, 1)
+        >>> output = ops.amin(x, 1, True)
         >>> print(output)
         [[[1. 1. 1. 1. 1. 1.]]
          [[4. 4. 4. 4. 4. 4.]]
          [[7. 7. 7. 7. 7. 7.]]]
         >>> # case 4: Reduces a dimension along axis 2.
-        >>> output = ops.amin(x, 2)
+        >>> output = ops.amin(x, 2, True)
         >>> print(output)
         [[[1.]
           [2.]
@@ -3885,24 +3885,24 @@ def amin(x, axis, keep_dims=False):
     return _get_cache_prim(P.ReduceMin)(keep_dims)(x, axis)
 
 
-def amax(x, axis, keep_dims=False):
+def amax(x, axis=(), keep_dims=False):
     r"""
     Reduces a dimension of a tensor by the maximum value in this dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Raises:
-        TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3919,23 +3919,23 @@ def amax(x, axis, keep_dims=False):
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
         >>> output = ops.amax(x)
         >>> print(output)
-        [[[9.]]]
+        9.0
         >>> print(output.shape)
-        (1, 1, 1)
+        ()
         >>> # case 2: Reduces a dimension along axis 0.
-        >>> output = ops.amax(x, 0)
+        >>> output = ops.amax(x, 0, True)
         >>> print(output)
         [[[7. 7. 7. 7. 7. 7.]
           [8. 8. 8. 8. 8. 8.]
           [9. 9. 9. 9. 9. 9.]]]
         >>> # case 3: Reduces a dimension along axis 1.
-        >>> output = ops.amax(x, 1)
+        >>> output = ops.amax(x, 1, True)
         >>> print(output)
         [[[3. 3. 3. 3. 3. 3.]]
          [[6. 6. 6. 6. 6. 6.]]
          [[9. 9. 9. 9. 9. 9.]]]
         >>> # case 4: Reduces a dimension along axis 2.
-        >>> output = ops.amax(x, 2)
+        >>> output = ops.amax(x, 2, True)
         >>> print(output)
         [[[1.]
           [2.]
@@ -3950,24 +3950,24 @@ def amax(x, axis, keep_dims=False):
     return _get_cache_prim(P.ReduceMax)(keep_dims)(x, axis)
 
 
-def mean(x, axis, keep_dims=False):
+def mean(x, axis=(), keep_dims=False):
     r"""
     Reduces a dimension of a tensor by averaging all elements in the dimension, by default. And also can reduce
     a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Raises:
-        TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3985,23 +3985,23 @@ def mean(x, axis, keep_dims=False):
         ... mindspore.float32)
         >>> output = ops.mean(x)
         >>> print(output)
-        [[[5.]]]
+        5.0
         >>> print(output.shape)
         (1, 1, 1)
         >>> # case 2: Reduces a dimension along the axis 0
-        >>> output = ops.mean(x, 0)
+        >>> output = ops.mean(x, 0, True)
         >>> print(output)
         [[[4. 4. 4. 4. 4. 4.]
           [5. 5. 5. 5. 5. 5.]
           [6. 6. 6. 6. 6. 6.]]]
         >>> # case 3: Reduces a dimension along the axis 1
-        >>> output = ops.mean(x, 1)
+        >>> output = ops.mean(x, 1, True)
         >>> print(output)
         [[[2. 2. 2. 2. 2. 2.]]
          [[5. 5. 5. 5. 5. 5.]]
          [[8. 8. 8. 8. 8. 8.]]]
         >>> # case 4: Reduces a dimension along the axis 2
-        >>> output = ops.mean(x, 2)
+        >>> output = ops.mean(x, 2, True)
         >>> print(output)
         [[[ 2.]
           [ 2.]
@@ -4017,24 +4017,24 @@ def mean(x, axis, keep_dims=False):
     return _get_cache_prim(P.ReduceMean)(keep_dims)(x, axis)
 
 
-def prod(x, axis, keep_dims=False):
+def prod(x, axis=(), keep_dims=False):
     r"""
     Reduces a dimension of a tensor by multiplying all elements in the dimension, by default. And also can
     reduce a dimension of `x` along the axis. Determine whether the dimensions of the output and input are the same by
     controlling `keep_dims`.
 
     Args:
-        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
-                          If false, don't keep these dimensions. Default: False.
         x (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
           :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
         axis (Union[int, tuple(int), list(int)]): The dimensions to reduce. Default: (), reduce all dimensions.
           Only constant value is allowed. Must be in the range [-rank(`x`), rank(`x`)).
+        keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
+                          If false, don't keep these dimensions. Default: False.
 
     Raises:
-        TypeError: If `keep_dims` is not a bool.
         TypeError: If `x` is not a Tensor.
         TypeError: If `axis` is not one of the following: int, tuple or list.
+        TypeError: If `keep_dims` is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4051,23 +4051,23 @@ def prod(x, axis, keep_dims=False):
         ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mindspore.float32)
         >>> output = ops.prod(x)
         >>> print(output)
-        [[[2.2833798e+33]]]
+        2.2833798e+33
         >>> print(output.shape)
         (1, 1, 1)
         >>> # case 2: Reduces a dimension along axis 0.
-        >>> output = ops.prod(x, 0)
+        >>> output = ops.prod(x, 0, True)
         >>> print(output)
         [[[ 28.  28.  28.  28.  28.  28.]
           [ 80.  80.  80.  80.  80.  80.]
           [162. 162. 162. 162. 162. 162.]]]
         >>> # case 3: Reduces a dimension along axis 1.
-        >>> output = ops.prod(x, 1)
+        >>> output = ops.prod(x, 1, True)
         >>> print(output)
         [[[  6.   6.   6.   6.   6.   6.]]
          [[120. 120. 120. 120. 120. 120.]]
          [[504. 504. 504. 504. 504. 504.]]]
         >>> # case 4: Reduces a dimension along axis 2.
-        >>> output = ops.prod(x, 2)
+        >>> output = ops.prod(x, 2, True)
         >>> print(output)
         [[[1.00000e+00]
           [6.40000e+01]
