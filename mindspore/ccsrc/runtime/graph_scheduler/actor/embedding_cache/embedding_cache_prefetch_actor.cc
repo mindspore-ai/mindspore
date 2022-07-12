@@ -31,6 +31,10 @@ using mindspore::session::KernelGraph;
 const ShapeVector kOneDimensionalShape = {1};
 const ShapeVector kTwoDimensionalShape = {1, 1};
 
+const size_t kInputIndexZero = 0;
+const size_t kInputIndexOne = 1;
+const size_t kInputIndexTwo = 2;
+
 // Maximum number of threads for concurrent accelerated cache processing.
 constexpr size_t kMaxThreadNum = 16;
 // Maximum number of feature ids processed per thread.
@@ -60,11 +64,14 @@ ParameterPtr NewParameter(const KernelGraphPtr &graph, TypePtr type, const Shape
   return param;
 }
 
-ValueNodePtr NewValueNode(int64_t value) {
-  auto tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(0), kInt32);
+ValueNodePtr NewValueNode(int64_t value, const DeviceContext *device_context, size_t stream_id) {
+  MS_EXCEPTION_IF_NULL(device_context);
+
+  auto tensor = std::make_shared<tensor::Tensor>(static_cast<int64_t>(value), kInt32);
   auto value_node = NewValueNode(tensor);
   value_node->set_abstract(tensor->ToAbstract());
 
+  // Create kernel build info.
   auto kernel_build_info_builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
   std::vector<std::string> formats = {kOpFormat_DEFAULT};
   std::vector<TypeId> types = {kInt32->type_id()};
@@ -75,6 +82,28 @@ ValueNodePtr NewValueNode(int64_t value) {
   MS_EXCEPTION_IF_NULL(kernel_info);
   value_node->set_kernel_info(kernel_info);
   AnfAlgo::SetSelectKernelBuildInfo(kernel_build_info_builder->Build(), value_node.get());
+
+  // Create device address.
+  size_t output_idx = 0;
+  size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(value_node, output_idx);
+  TypeId output_type_id = AnfAlgo::GetOutputDeviceDataType(value_node, output_idx);
+  std::string output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
+
+  MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
+  auto value_addr = device_context->device_res_manager_->AllocateMemory(tensor_size);
+  MS_EXCEPTION_IF_NULL(value_addr);
+  auto address = device_context->device_res_manager_->CreateDeviceAddress(
+    value_addr, tensor_size, output_format, output_type_id, trans::GetRuntimePaddingShape(value_node, output_idx));
+  MS_EXCEPTION_IF_NULL(address);
+
+  // Sync tensor value.
+  MS_EXCEPTION_IF_CHECK_FAIL(address->AsyncHostToDevice({}, tensor_size, output_type_id, tensor->data_c(),
+                                                        device_context->device_res_manager_->GetStream(stream_id)),
+                             "Async memcpy host to device failed.");
+  MS_EXCEPTION_IF_CHECK_FAIL(device_context->device_res_manager_->SyncStream(stream_id), "Synchronize stream failed.");
+
+  address->set_from_persistent_mem(true);
+  AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
 
   return value_node;
 }
@@ -261,16 +290,16 @@ void EmbeddingCachePrefetchActor::BuildEmbeddingCacheLookupKernel() {
   // 1. Create parameter nodes which are inputs of embedding cache look up kernel(operator name: 'Gather').
   ParameterPtr input_param = NewParameter(graph, kFloat32, kTwoDimensionalShape);
   ParameterPtr input_indices = NewParameter(graph, kInt32, kOneDimensionalShape);
-  ValueNodePtr axis_value_node = NewValueNode(0);
+  ValueNodePtr offset_value_node = NewValueNode(0, device_context_, stream_id_);
 
-  // 2. Create a CNode for operator Gather.
-  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kGatherV2OpName);
+  // 2. Create a CNode for operator EmbeddingLookup.
+  PrimitivePtr emb_lookup_primitive = std::make_shared<Primitive>(kEmbeddingLookupOpName);
   emb_lookup_primitive->set_attr(kAttrInputIsDynamicShape, MakeValue(true));
   emb_lookup_primitive->set_attr(kAttrOutputIsDynamicShape, MakeValue(true));
   emb_lookup_primitive->set_attr(kAttrStream, MakeValue(stream_id_));
 
   std::vector<AnfNodePtr> emb_lookup_input_nodes{NewValueNode(emb_lookup_primitive), input_param, input_indices,
-                                                 axis_value_node};
+                                                 offset_value_node};
   embedding_cache_lookup_node_ = graph->NewCNode(emb_lookup_input_nodes);
   MS_EXCEPTION_IF_NULL(embedding_cache_lookup_node_);
   auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, kTwoDimensionalShape);
@@ -319,17 +348,22 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
   MS_ERROR_IF_NULL(embedding_cache_lookup_node_);
 
   // 1. Update parameter nodes' shape.
-  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, 0);
+  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexZero);
   MS_ERROR_IF_NULL(input_param_node);
   const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
   auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
   input_param_node->set_abstract(input_param_abstract);
 
-  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, 1);
+  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexOne);
   MS_ERROR_IF_NULL(input_indices_node);
   const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
   auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
   input_indices_node->set_abstract(input_indices_abstract);
+
+  auto input_offset_node = common::AnfAlgo::GetInputNode(embedding_cache_lookup_node_, kInputIndexTwo);
+  MS_ERROR_IF_NULL(input_offset_node);
+  auto offset_address = AnfAlgo::GetMutableOutputAddr(input_offset_node, 0);
+  MS_ERROR_IF_NULL(offset_address);
 
   // 2. Infer shape for embedding cache look up kernel(operator name: 'Gather') which is dynamic shape kernel.
   if (!InferOpShape(embedding_cache_lookup_node_)) {
@@ -340,7 +374,8 @@ bool EmbeddingCachePrefetchActor::LookupDeviceCache(void *indices, void *embeddi
   // 3. Do embedding cache look up on device.
   AddressPtrList kernel_inputs = {
     std::make_shared<Address>(embedding_cache, cache_size * embedding_size * sizeof(float)),
-    std::make_shared<Address>(indices, indices_num * sizeof(int))};
+    std::make_shared<Address>(indices, indices_num * sizeof(int)),
+    std::make_shared<Address>(offset_address->GetMutablePtr(), offset_address->GetSize())};
   AddressPtrList kernel_outputs = {std::make_shared<Address>(outputs, indices_num * embedding_size * sizeof(float))};
 
   MS_ERROR_IF_NULL(device_context_);
@@ -362,19 +397,19 @@ bool EmbeddingCachePrefetchActor::UpdateDeviceCache(void *indices, void *update_
   MS_ERROR_IF_NULL(embedding_cache_update_node_);
 
   // 1. Update parameter nodes' shape.
-  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 0);
+  auto input_param_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexZero);
   MS_ERROR_IF_NULL(input_param_node);
   const ShapeVector input_param_shape = {SizeToLong(cache_size), SizeToLong(embedding_size)};
   auto input_param_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, input_param_shape);
   input_param_node->set_abstract(input_param_abstract);
 
-  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 1);
+  auto input_indices_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexOne);
   MS_ERROR_IF_NULL(input_indices_node);
   const ShapeVector input_indices_shape = {SizeToLong(indices_num)};
   auto input_indices_abstract = std::make_shared<abstract::AbstractTensor>(kInt32, input_indices_shape);
   input_indices_node->set_abstract(input_indices_abstract);
 
-  auto update_values_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, 2);
+  auto update_values_node = common::AnfAlgo::GetInputNode(embedding_cache_update_node_, kInputIndexTwo);
   MS_ERROR_IF_NULL(update_values_node);
   const ShapeVector update_values_shape = {SizeToLong(indices_num), SizeToLong(embedding_size)};
   auto update_values_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, update_values_shape);
