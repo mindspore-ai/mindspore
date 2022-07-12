@@ -19,12 +19,13 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
+#include <utility>
 #include <unordered_map>
 #include "ir/dtype.h"
 #include "kernel/kernel.h"
 
-namespace mindspore {
-namespace kernel {
+namespace mindspore::kernel {
 enum OpImplyType { kAKG = 0, kTBE = 1, kAICPU = 2, kCPU = 3, kGPU };
 enum OpIOType { kInput = 0, kOutput };
 constexpr auto kIgnored = "ignored";
@@ -143,7 +144,8 @@ class OpInfo {
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr() const { return inputs_ptr_; }
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr() const { return outputs_ptr_; }
   const std::unordered_map<size_t, size_t> &ref_infos() const { return ref_infos_; }
-
+  const std::vector<size_t> &input_to_attr_index() const { return input_to_attr_index_; }
+  std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>> &real_input_index() { return real_input_index_; }
   void set_dynamic_shape(bool dynamic_shape) { dynamic_shape_ = dynamic_shape; }
   void set_dynamic_compile_static_(bool dynamic_compile_static) { dynamic_compile_static_ = dynamic_compile_static; }
   void set_op_name(const std::string &op_name) { op_name_ = op_name; }
@@ -159,6 +161,12 @@ class OpInfo {
   void set_processor(const std::string &processor) { processor_ = processor; }
   void set_need_check_supported(bool need_check_supported) { need_check_supported_ = need_check_supported; }
   void set_is_dynamic_format(bool is_dynamic_format) { is_dynamic_format_ = is_dynamic_format; }
+  void set_input_to_attr_index(const std::vector<size_t> &input_to_attr_index) {
+    input_to_attr_index_ = input_to_attr_index;
+  }
+  void set_real_input_index(const std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>> &real_input_index) {
+    real_input_index_ = real_input_index;
+  }
   void add_attrs_ptr(const std::shared_ptr<OpAttr> &attr) { attrs_ptr_.push_back(attr); }
   void add_inputs_ptr(const std::shared_ptr<OpIOInfo> &input) { inputs_ptr_.push_back(input); }
   void add_outputs_ptr(const std::shared_ptr<OpIOInfo> &output) { outputs_ptr_.push_back(output); }
@@ -190,6 +198,8 @@ class OpInfo {
   bool is_dynamic_format_ = false;
   OpPattern op_pattern_ = kCommonPattern;
   std::string processor_;
+  std::vector<size_t> input_to_attr_index_{};
+  std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>> real_input_index_{{}, {}};
   std::vector<std::shared_ptr<OpAttr>> attrs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> inputs_ptr_;
   std::vector<std::shared_ptr<OpIOInfo>> outputs_ptr_;
@@ -199,6 +209,5 @@ class OpInfo {
 using OpAttrPtr = std::shared_ptr<OpAttr>;
 using OpIOInfoPtr = std::shared_ptr<OpIOInfo>;
 using OpInfoPtr = std::shared_ptr<OpInfo>;
-}  // namespace kernel
-}  // namespace mindspore
+}  // namespace mindspore::kernel
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_OPLIB_OPINFO_H_
