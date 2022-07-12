@@ -19,6 +19,7 @@ mindspore.mutable
         - 目前运行时暂时不支持处理标量数据流，所以我们目前只支持Tensor、tuple[Tensor]、list[Tensor]或dict[Tensor]作为输入，主要解决重复编译的问题。
         - Tensor默认就是可变的，当 `input_data` 为Tensor时，我们不做任何处理直接返回原Tensor。
         - 当前暂时只支持在网络外部使用该接口。
+        - 当前该接口只在图模式下生效。
 
     **返回：**
 
