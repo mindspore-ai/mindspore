@@ -1607,6 +1607,7 @@ class Dataset:
         runtime_getter = self._init_tree_getters()
         self.runtime_context = runtime_getter[1]
         output_shapes = runtime_getter[0].GetOutputShapes(estimate)
+        self.runtime_context.Terminate()
         del self.runtime_context
 
         if estimate:
@@ -1632,7 +1633,7 @@ class Dataset:
             # of runtime_context. We found this hang problem only occur on output_types and output_shapes.
             self.runtime_context = runtime_getter[1]
             self.saved_output_types = runtime_getter[0].GetOutputTypes()
-
+            self.runtime_context.Terminate()
             del self.runtime_context
         return self.saved_output_types
 
@@ -2878,6 +2879,12 @@ class _MPWorker(multiprocessing.Process):
             # Process has been closed already
             return
         return
+
+    def is_alive(self):
+        try:
+            return super().is_alive()
+        except ValueError:
+            return False
 
 
 class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
