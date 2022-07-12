@@ -5612,7 +5612,9 @@ class ApplyAdadelta(Primitive):
 class ApplyAdagrad(Primitive):
     r"""
     Updates relevant entries according to the adagrad scheme.
-    It has been proposed in Adaptive Subgradient Methods for Online Learning and Stochastic Optimization.
+    The Adagrad algorithm was proposed in
+    `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization
+    <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_.
     This module can adaptively assign different learning rates for each parameter in view of the uneven number
     of samples for different parameters.
 
@@ -6424,6 +6426,8 @@ class ApplyGradientDescent(Primitive):
 class ApplyProximalGradientDescent(Primitive):
     r"""
     Updates relevant entries according to the FOBOS(Forward Backward Splitting) algorithm.
+    Refer to the paper `Efficient Learning using Forward-Backward Splitting
+    <http://papers.nips.cc//paper/3793-efficient-learning-using-forward-backward-splitting.pdf>`_ for more detail。
 
     .. math::
         \begin{array}{ll} \\
@@ -8639,6 +8643,9 @@ class HShrink(Primitive):
 class ApplyAdagradDA(Primitive):
     r"""
     Update `var` according to the proximal adagrad scheme.
+    The Adagrad algorithm was proposed in
+    `Adaptive Subgradient Methods for Online Learning and Stochastic Optimization
+    <http://www.jmlr.org/papers/volume12/duchi11a/duchi11a.pdf>`_.
 
     .. math::
         \begin{array}{ll} \\

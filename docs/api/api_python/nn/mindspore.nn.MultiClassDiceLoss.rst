@@ -3,7 +3,7 @@ mindspore.nn.MultiClassDiceLoss
 
 .. py:class:: mindspore.nn.MultiClassDiceLoss(weights=None, ignore_indiex=None, activation='softmax')
 
-    当有多个分类时，标签通过one-hot编码转换为多个二分类。每个通道切面，可以看做是一个二分类问题，所以多分类DiceLoss损失函数，可以通过计算每个类别的二分类的 :class:`mindspore.nn.DiceLoss` 损失，最后再求平均值得到。
+    对于多标签问题，可以将标签通过one-hot编码转换为多个二分类标签。每个通道可以看做是一个二分类问题，所以损失可以通过先计算每个类别的二分类的 :class:`mindspore.nn.DiceLoss` 损失，再计算各二分类损失的平均值得到。
 
     **参数：**
 

@@ -20,7 +20,7 @@
     **输入：**
 
     - **input_x** (Tensor) - shape： :math:`(x_1, x_2, ..., x_R)` 。
-    - **segment_ids** (Tensor) - 将形状设置为 :math:`(x_1, x_2, ..., x_N)` ，其中0<N<=R。
+    - **segment_ids** (Tensor) - shape为 :math:`(x_1)` 的1维张量，值必须是非负数。数据类型支持int32。
     - **num_segments** (int) - 分段数量 :math:`z` 。
 
     **输出：**

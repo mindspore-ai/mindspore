@@ -5,7 +5,7 @@ mindspore.nn.MatrixSetDiag
 
     将输入的对角矩阵的对角线值置换为输入的对角线值。
 
-    假设 `x` 有 :math:`k+1` 个维度 :math:`[I,J,K,...,M,N]' ， `diagonal` 有 :math:`k` 个维度 :math:`[I, J, K, ..., min(M, N)]` ，则输出秩为 :math:`k+1` ，维度为 :math:`[I, J, K, ..., M, N]` 的Tensor，其中：
+    假设 `x` 有 :math:`k+1` 个维度 :math:`[I,J,K,...,M,N]` ， `diagonal` 有 :math:`k` 个维度 :math:`[I, J, K, ..., min(M, N)]` ，则输出秩为 :math:`k+1` ，维度为 :math:`[I, J, K, ..., M, N]` 的Tensor，其中：
 
     .. math::
         output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n]\ for\ m == n
@@ -26,6 +26,6 @@ mindspore.nn.MatrixSetDiag
 
     - **TypeError** - `x` 或 `diagonal` 的数据类型不是float32、float16、int32、int8或uint8。
     - **ValueError** - `x` 的shape长度小于2。
-    - **ValueError** - :math:`x_shape[-2] < x_shape[-1]` 且 :math:`x_shape[:-1] != diagonal_shape` 。
-    - **ValueError** - :math:`x_shape[-2] >= x_shape[-1]` 且 :math:`x_shape[:-2] + x_shape[-1:] != diagonal_shape` 。 
+    - **ValueError** - :math:`x\_shape[-2] < x\_shape[-1]` 且 :math:`x\_shape[:-1] != diagonal\_shape` 。
+    - **ValueError** - :math:`x\_shape[-2] >= x\_shape[-1]` 且 :math:`x\_shape[:-2] + x\_shape[-1:] != diagonal\_shape` 。 
     

@@ -10,7 +10,7 @@
     .. math::
         \text{output} = x * \tan(\log(1 + \exp(\text{x})))
 
-    更多详细信息请参见 `自正则化非单调神经激活函数 <https://arxiv.org/abs/1908.08681>`_ 。
+    更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
 
     **输入：**
 

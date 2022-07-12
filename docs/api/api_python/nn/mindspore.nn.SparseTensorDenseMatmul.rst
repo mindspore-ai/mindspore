@@ -3,12 +3,12 @@ mindspore.nn.SparseTensorDenseMatmul
 
 .. py:class:: mindspore.nn.SparseTensorDenseMatmul(adjoint_st=False, adjoint_dt=False)
 
-    稀疏矩阵 `a` 乘以密集矩阵 `b` 。稀疏矩阵和密集矩阵的秩必须等于2。
+    稀疏矩阵 `a` 乘以稠密矩阵 `b` 。稀疏矩阵和稠密矩阵的秩必须等于2。
 
     **参数：**
 
     - **adjoint_st** (bool) - 如果为True，则在乘法之前转置稀疏Tensor。默认值：False。
-    - **adjoint_dt** (bool) - 如果为True，则在乘法之前转置密集Tensor。默认值：False。
+    - **adjoint_dt** (bool) - 如果为True，则在乘法之前转置稠密Tensor。默认值：False。
 
     **输入：**
 
