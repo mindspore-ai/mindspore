@@ -1300,8 +1300,7 @@ class Tensor(Tensor_):
 
         Examples:
             >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
-            >>> output, abs  = input_x.log_matrix_determinant()
-            >>> sign, output = op(input_x)
+            >>> sign, output  = input_x.log_matrix_determinant()
             >>> print(sign)
             >>> print(output)
             [-1.   1.]
