@@ -64,6 +64,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
 #include "utils/anf_utils.h"
 #include "profiler/device/ascend/pynative_profiling.h"
+#include "profiler/device/ascend/ascend_profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
@@ -839,6 +840,11 @@ bool AscendDeviceContext::GetKernelRealInputs(const CNodePtr &kernel, const vect
 bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<AddressPtr> &inputs,
                                        const vector<AddressPtr> &workspace, const vector<AddressPtr> &outputs,
                                        bool is_dynamic_shape) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto graph_id = AnfAlgo::GetGraphId(kernel.get());
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  KernelType kernel_type = AnfAlgo::GetKernelType(kernel);
   MS_EXCEPTION_IF_NULL(kernel);
   MS_LOG(DEBUG) << "Launch kernel: " << kernel->fullname_with_scope();
   BindDeviceToCurrentThread();
@@ -852,8 +858,6 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
   auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
   MS_EXCEPTION_IF_NULL(kernel_mod);
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
   if (!is_dynamic_shape || !(common::AnfAlgo::GetBooleanAttr(kernel, kAttrMSFunction))) {
     std::lock_guard<std::mutex> locker(launch_mutex_);
     // launch atomic clean
@@ -893,7 +897,11 @@ bool AscendDeviceContext::LaunchKernel(const CNodePtr &kernel, const vector<Addr
       }
     }
   }
-
+  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
+  MS_EXCEPTION_IF_NULL(ascend_instance);
+  if (ascend_instance->GetProfilingEnableFlag()) {
+    ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, device_id, kernel_type);
+  }
   return PySyncRuning();
 }
 

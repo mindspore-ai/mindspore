@@ -18,6 +18,7 @@
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
 #include "kernel/ascend_kernel_mod.h"
+#include "backend/common/session/kernel_graph.h"
 #include "include/common/utils/utils.h"
 
 namespace mindspore {
@@ -52,6 +53,13 @@ static std::map<string, uint32_t> OpFormat2Index{{kOpFormat_DEFAULT, 1},
                                                  {kOpFormat_FRACTAL_Z_3D, 19},
                                                  {kOpFormat_DHWNC, 20},
                                                  {kOpFormat_DHWCN, 21}};
+
+void ProfilingReporter::NodeReport(const CNodePtr &node, uint32_t stream_id, uint32_t task_id, KernelType kernel_type) {
+  ReportTask(node, stream_id, task_id, kernel_type);
+  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_INPUT);
+  ReportNode(node, stream_id, task_id, MSPROF_GE_TENSOR_TYPE_OUTPUT);
+  MS_LOG(INFO) << "Profiling report one node data finish.";
+}
 
 bool ProfilingReporter::CheckStreamTaskValid() const {
   if (cnode_list_.size() != stream_ids_.size() || cnode_list_.size() != task_ids_.size()) {

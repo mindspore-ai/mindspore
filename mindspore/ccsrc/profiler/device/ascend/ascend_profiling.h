@@ -17,7 +17,10 @@
 #define MINDSPORE_CCSRC_PROFILER_DEVICE_ASCEND_PROFILING_H
 #include <string>
 #include <memory>
+#include <map>
 #include "profiler/device/profiling.h"
+#include "backend/common/session/kernel_graph.h"
+#include "kernel/kernel.h"
 #include "acl/acl_prof.h"
 
 namespace mindspore {
@@ -43,6 +46,9 @@ class AscendProfiler : public Profiler {
   void Finalize() const;
   bool IsInitialized() const { return init_flag_; }
   void ReportErrorMessage() const;
+  void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, KernelType kernel_type);
+  std::map<std::thread::id, uint32_t> last_tid;
+  std::map<std::thread::id, uint32_t> last_streamid;
 
  protected:
   void SaveProfileData() { return; }
@@ -52,6 +58,8 @@ class AscendProfiler : public Profiler {
   static std::shared_ptr<AscendProfiler> ascend_profiler_;
   std::string profiling_options_;
   uint32_t device_id_ = 0;
+  uint32_t aicpu_kernel_type_ = 2;
+  uint32_t max_op_taskid_limit_ = 65536;
   aclprofConfig *acl_config_{nullptr};
 };
 }  // namespace ascend
