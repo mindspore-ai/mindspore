@@ -2406,7 +2406,7 @@ CNodePtr SessionBasic::ConstructOutput(const AnfNodePtrList &outputs, const std:
     }
     MS_LOG(EXCEPTION) << "Can't find the node in the equiv map!";
   };
-  output_args.push_back(NewValueNode(prim::kPrimMakeTuple));
+  output_args.push_back(mindspore::NewValueNode(std::make_shared<Primitive>(prim::kPrimMakeTuple->name())));
   (void)std::transform(outputs.begin(), outputs.end(), std::back_inserter(output_args),
                        [&](const AnfNodePtr &out) -> AnfNodePtr { return FindEqu(out); });
   auto output_node = graph->NewCNode(output_args);
