@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops._primitive_cache import _get_cache_prim
 
 
 # pylint: disable=W0235
@@ -40,7 +41,7 @@ def test_ms_function_run_in_pynative():
 
     @ms_function
     def pow_function(x, y):
-        _pow = P.Pow()
+        _pow = _get_cache_prim(P.Pow)()
         return _pow(x, y)
 
     class Pow(nn.Cell):
@@ -72,7 +73,7 @@ def test_run_pynative_and_then_run_graph():
             super(Pow, self).__init__()
 
         def construct(self, x1, x2):
-            _pow = P.Pow()
+            _pow = _get_cache_prim(P.Pow)()
             return _pow(x1, x2)
 
     context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
@@ -104,8 +105,8 @@ def test_continuous_cache():
 
         def construct(self, x, y):
             y = y + 1
-            add = P.Add()
-            sub = P.Sub()
+            add = _get_cache_prim(P.Add)()
+            sub = _get_cache_prim(P.Sub)()
             z = add(x, y)
             out = sub(z, x)
             return out
