@@ -203,7 +203,7 @@ class Momentum(Optimizer):
         self.opt = P.ApplyMomentum(use_nesterov=self.use_nesterov)
 
         self.distributed_opts, self.use_distributed_opt_flags =\
-        self.get_distributed_optimizer_list("momentum", use_nesterov=self.use_nesterov)
+        self._get_distributed_optimizer_list("momentum", use_nesterov=self.use_nesterov)
         self.use_dist_optimizer = self.use_distibuted_optimizer()
 
     @ms_function
