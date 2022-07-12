@@ -15,15 +15,19 @@
 """
 test assign sub
 """
-import numpy as np
-
+import mindspore as ms
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-from mindspore import Tensor
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
-import mindspore as ms
+from mindspore.common.dtype import pytype_to_dtype
+from mindspore import Tensor
+
+import pytest
+import numpy as np
+
+
 
 class AssignW(nn.Cell):
     def __init__(self):
@@ -39,7 +43,6 @@ class AssignOp(nn.Cell):
     def __init__(self):
         super(AssignOp, self).__init__()
         self.b = Parameter(initializer('ones', [5]), name='b')
-
 
     def construct(self, w):
         self.b = w
@@ -70,3 +73,27 @@ def test_scatter_nd_update():
     x = Tensor(np.ones([5]).astype(np.float16))
     idx = Tensor(np.ones([1]).astype(np.int32))
     net(idx, x)
+
+
+def test_signature_error_info():
+    '''
+    Feature: Do signature error info.
+    Description:  Do signature error info.
+    Expectation: RuntimeError
+    '''
+    class NetScatterDiv(nn.Cell):
+        def __init__(self):
+            super(NetScatterDiv, self).__init__()
+            self.b = Parameter(initializer(1, [5, 3], pytype_to_dtype(np.int8)), name='input')
+            self.scatter = P.ScatterDiv(False)
+
+        def construct(self, idx, x):
+            return self.scatter(self.b, idx, x)
+
+    net = NetScatterDiv()
+    with pytest.raises(RuntimeError) as ex:
+        net(Tensor(np.random.randint(1, size=(5, 8, 2)).astype(np.int32)),
+            Tensor(np.random.randint(1, 256, size=(5, 8, 2, 3)).astype(np.float32)))
+    assert "Data type conversion of \'Parameter\' is not supported, " \
+           "the argument[x]'s data type of primitive[ScatterDiv] is int8, " \
+           "which cannot be converted to data type float32 automatically." in str(ex.value)
