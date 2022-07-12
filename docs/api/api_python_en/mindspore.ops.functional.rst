@@ -354,7 +354,6 @@ Array Operation
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
-    mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.transpose
     mindspore.ops.unsorted_segment_min
