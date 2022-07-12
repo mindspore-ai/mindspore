@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_
 
 #include <vector>
+#include "ir/anf.h"
 #include "tools/converter/quantizer/fse_bit_stream.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
+
 namespace mindspore::lite::quant {
 constexpr int MAX_SYMS = 65534;
 constexpr int MAX_TABLE_LOG = 16;
@@ -35,7 +37,8 @@ class FSEEncoder {
  public:
   FSEEncoder() = default;
   ~FSEEncoder() = default;
-  int Compress(schema::TensorT *tensor_input);
+
+  int Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param);
 
  private:
   int FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log, uint32_t *delta_bit_count,
@@ -55,10 +58,10 @@ class FSEEncoder {
 
   int NormalizeFrequency(FSEQuant *q, int *table_log);
 
-  int SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log);
+  int SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log);
 
-  int SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant, int table_log,
-                          uint8_t *out8, size_t max_size, size_t *offset);
+  int SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size, uint8_t *out8,
+                          size_t *out_size);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_FSE_ENCODER_H_

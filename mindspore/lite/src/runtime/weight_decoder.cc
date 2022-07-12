@@ -489,11 +489,11 @@ int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite:
   MS_ASSERT(src_tensor.handler() != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
 #ifndef WEIGHT_DECODE_CLIP
-  if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_FSE) {
+  if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_FSE) {
     return quant::FSEDecoder::DeCompress(src_tensor, dst_tensor);
-  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_INDEXING) {
+  } else if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_INDEXING) {
     return IndexingDecompress(src_tensor, dst_tensor);
-  } else if (src_tensor.handler()->weightQunatCompressType() == schema::WeightQunatCompressType_SPARSE) {
+  } else if (src_tensor.handler()->weightQuantCompressType() == schema::WeightQuantCompressType_SPARSE) {
     return SparseDecompress(src_tensor, dst_tensor);
   }
   if (!NeedBitUppackCheck(src_tensor)) {
@@ -502,7 +502,7 @@ int WeightDecoder::DecompressTensor(const SchemaTensorWrapper &src_tensor, lite:
     return WeightDecoder::UnPack(src_tensor, dst_tensor);
   }
 #else
-  if (src_tensor.handler()->weightQunatCompressType() != schema::WeightQunatCompressType_NONE) {
+  if (src_tensor.handler()->weightQuantCompressType() != schema::WeightQuantCompressType_NONE) {
     MS_LOG(ERROR) << unsupport_weight_decode_log;
     return RET_ERROR;
   }

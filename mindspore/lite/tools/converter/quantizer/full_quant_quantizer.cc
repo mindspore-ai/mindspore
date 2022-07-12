@@ -29,14 +29,12 @@
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_adapter.h"
-#include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "src/common/utils.h"
 #include "tools/common/node_util.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/bias_correction_strategy.h"
-#include "tools/lite_exporter/anf_exporter.h"
 
 using std::string;
 using std::vector;

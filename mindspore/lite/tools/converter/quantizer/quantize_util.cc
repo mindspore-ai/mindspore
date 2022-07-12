@@ -555,15 +555,6 @@ int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
   MixedBitWeightQuantizer quantizer(init_scale);
   auto ret =
     quantizer.DoQuantization(static_cast<float *>(weight->data_c()), weight->shape_c(), 0, &quant_params, &quant_data);
-  if (ret == RET_NO_CHANGE) {
-    const int quant_min = QuantMin(k8Bit, false, false);  // -128
-    const int quant_max = QuantMax(k8Bit);                // 127
-    MS_LOG(WARNING)
-      << parameter_node->fullname_with_scope()
-      << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
-    return FixedBitQuantFilter<int8_t>(parameter_node, weight, primitive, QuantType_QUANT_WEIGHT, quant_max, quant_min,
-                                       k8Bit, FIXED_BIT_PER_CHANNEL, kNumberTypeInt8, index, preferred_dim, symmetric);
-  }
   if (ret != RET_OK) {
     return ret;
   }

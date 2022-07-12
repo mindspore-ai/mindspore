@@ -294,6 +294,10 @@ int FetchFromDefaultParam(const ParameterPtr &param_node, const converter::FmkTy
       }
     }
   }
+  if (tensor_info != nullptr && tensor_info->compression_type() == kFSE) {
+    data_info->compress_type_ = tensor_info->compression_type();
+    data_info->data_type_ = kNumberTypeFloat32;
+  }
 
   data_info->format_ = NHWC;
   return RET_OK;

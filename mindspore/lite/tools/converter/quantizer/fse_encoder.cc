@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@
 #include <cstdint>
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include "mindspore/core/ir/dtype/type_id.h"
 #include "src/common/log_adapter.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
 #include "include/errorcode.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/common/statistic_utils.h"
+#include "ir/tensor.h"
 
 namespace mindspore::lite::quant {
 namespace {
@@ -32,6 +35,7 @@ constexpr int kFseTableExtendSize = 3;
 constexpr int kFrenqTableExtendSize = 2;
 constexpr int kAlignSize = 8;
 constexpr float kUpRoundOffSet = 0.5;
+constexpr size_t kMaxModelBufferSize = static_cast<size_t>(1024) * 1024 * 1024 * 2;  // 2G
 }  // namespace
 
 int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_count, int table_log,
@@ -88,24 +92,26 @@ int FSEEncoder::FSECreateStatesForEncoding(uint32_t *frequency, int frequency_co
   return RET_OK;
 }
 
-int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
-  CHECK_NULL_RETURN(tensor_input);
+int ConvertTensor2Quant(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param, FSEQuant *quants) {
+  CHECK_NULL_RETURN(weight);
   CHECK_NULL_RETURN(quants);
-  std::vector<int16_t> dequants;
-  for (size_t i = 0; i < tensor_input->data.size() / sizeof(int16_t); ++i) {
-    auto data = static_cast<int16_t>(reinterpret_cast<int16_t *>(tensor_input->data.data())[i]);
-    dequants.push_back(data);
-  }
+  auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+  CHECK_NULL_RETURN(tensor_info);
 
-  int qmin = *min_element(dequants.begin(), dequants.end());
-  int qmax = *max_element(dequants.begin(), dequants.end());
+  auto data_c = static_cast<int16_t *>(tensor_info->data_c());
+  auto data_size = tensor_info->DataSize();
+
+  auto min_max = GetMinMaxValue(static_cast<int16_t *>(tensor_info->data_c()), data_size);
+  int qmin = min_max.first;
+  int qmax = min_max.second;
   int uncompressed_frequency_count = qmax - qmin + 1;
+
   std::vector<int> uncompressed_frequency(uncompressed_frequency_count);
   for (int i = 0; i < uncompressed_frequency_count; i++) {
     uncompressed_frequency[i] = 0;
   }
-  for (size_t i = 0; i < tensor_input->data.size() / sizeof(int16_t); i++) {
-    auto data = static_cast<int16_t>(reinterpret_cast<int16_t *>(tensor_input->data.data())[i]);
+  for (size_t i = 0; i < data_size; i++) {
+    auto data = static_cast<int16_t>(data_c[i]);
     int q = data - qmin;
     uncompressed_frequency[q] += 1;
   }
@@ -115,27 +121,27 @@ int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
   for (int i = 0; i < uncompressed_frequency_count; i++) {
     if (uncompressed_frequency[i] != 0) {
       if (sym >= MAX_SYMS) {
-        return 1;  // too many symbols!
+        return RET_ERROR;  // too many symbols!
       }
       uncompressed_freqs_to_compressed_sym[i] = sym;
       quants->frequency[sym] = uncompressed_frequency[i];
       // real = varCorr * (q - zp) * scale + meanCorr
-      quants->centroids[sym] = tensor_input->quantParams.front()->varCorr *
-                                 (i + qmin - tensor_input->quantParams.front()->zeroPoint) *
-                                 (tensor_input->quantParams.front()->scale) +
-                               tensor_input->quantParams.front()->meanCorr;
+      quants->centroids[sym] =
+        q_param.front().varCorr * static_cast<float>(i + qmin - q_param.front().zeroPoint) * (q_param.front().scale) +
+        q_param.front().meanCorr;
       sym++;
     }
   }
+  MS_LOG(INFO) << "uncompressed frequency count:" << uncompressed_frequency_count << " sym:" << sym;
   quants->size = sym;
-  quants->symbol_table_count = tensor_input->data.size() / sizeof(int16_t);
+  quants->symbol_table_count = data_size;
   quants->symbol_table = static_cast<uint16_t *>(malloc(quants->symbol_table_count * sizeof(uint16_t)));
   if (quants->symbol_table == nullptr) {
     MS_LOG(ERROR) << "malloc memory failed.";
     return RET_ERROR;
   }
   for (int i = 0; i < quants->symbol_table_count; i++) {
-    auto data = static_cast<int16_t>(reinterpret_cast<int16_t *>(tensor_input->data.data())[i]);
+    auto data = static_cast<int16_t>(data_c[i]);
     int q = data - qmin;
     sym = uncompressed_freqs_to_compressed_sym[q];
     quants->symbol_table[i] = sym;
@@ -143,11 +149,11 @@ int ConvertTensor2Quant(schema::TensorT *tensor_input, FSEQuant *quants) {
   return RET_OK;
 }
 
-int FSEEncoder::Compress(schema::TensorT *tensor_input) {
+int FSEEncoder::Compress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &q_param) {
   MS_ASSERT(tensor_input);
   int table_log = 0;
   FSEQuant fse_quant;
-  auto ret = ConvertTensor2Quant(tensor_input, &fse_quant);
+  auto ret = ConvertTensor2Quant(weight, q_param, &fse_quant);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Convert tensor 2 quant failed.";
     return ret;
@@ -173,7 +179,7 @@ int FSEEncoder::Compress(schema::TensorT *tensor_input) {
   }
   bs.Flush();
   // Serializing to out:
-  ret = SerializingToOut(tensor_input, &bs, fse_quant, table_log);
+  ret = SerializingToTensor(weight, &bs, fse_quant, table_log);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Serializing To Out failed.";
     free(fse_quant.symbol_table);
@@ -297,17 +303,16 @@ int FSEEncoder::FSEEncode(FSEBitStream *bs, const uint16_t *data, int data_count
   return ret;
 }
 
-int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant,
-                                    int table_log, uint8_t *out8, size_t max_size, size_t *out_size) {
-  MSLITE_CHECK_PTR(tensor_input);
+int FSEEncoder::SerializingToBuffer(FSEBitStream *bs, const FSEQuant &fse_quant, int table_log, size_t max_size,
+                                    uint8_t *out8, size_t *out_size) {
   MSLITE_CHECK_PTR(bs);
   MSLITE_CHECK_PTR(out_size);
-  CHECK_MALLOC_RES(out8, RET_ERROR);
+  MSLITE_CHECK_PTR(out8);
   size_t offset = 0;
   *(reinterpret_cast<uint16_t *>(&out8[offset])) = (uint16_t)fse_quant.size;
   offset += sizeof(uint16_t);
   if (offset + sizeof(uint16_t) > max_size) {
-    MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+    MS_LOG(ERROR) << " offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
@@ -315,7 +320,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   offset += sizeof(uint16_t);
   int chunksc = bs->GetCurrChunkIndex() + sizeof(uint16_t);
   if (offset + sizeof(uint32_t) > max_size) {
-    MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+    MS_LOG(ERROR) << " offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
@@ -323,7 +328,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   offset += sizeof(uint32_t);
   for (int j = 0; j < fse_quant.size; j++) {
     if (offset + sizeof(uint32_t) > max_size) {
-      MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+      MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
@@ -332,7 +337,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   }
   while (offset % kAlignSize != 0) {
     if (offset + sizeof(uint16_t) > max_size) {
-      MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+      MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
@@ -341,7 +346,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   }
   for (int j = 0; j < fse_quant.size; j++) {
     if (offset + sizeof(float) > max_size) {
-      MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+      MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
@@ -350,7 +355,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   }
   while (offset % kAlignSize != 0) {
     if (offset + sizeof(uint16_t) > max_size) {
-      MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+      MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
@@ -359,7 +364,7 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
   }
   for (int j = 0; j < bs->GetCurrChunkIndex() + 1; j++) {
     if (offset + sizeof(uint64_t) > max_size) {
-      MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+      MS_LOG(ERROR) << " offset over max size"
                     << " offset:" << offset << " max_size:" << max_size;
       return RET_ERROR;
     }
@@ -367,67 +372,58 @@ int FSEEncoder::SerializingToTensor(schema::TensorT *tensor_input, FSEBitStream 
     offset += sizeof(uint64_t);
   }
   if (offset + sizeof(uint64_t) > max_size) {
-    MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+    MS_LOG(ERROR) << " offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
   *(reinterpret_cast<uint64_t *>(&out8[offset])) = (uint64_t)bs->GetCurrChunk();
   offset += sizeof(uint64_t);
   if (offset + sizeof(uint8_t) > max_size) {
-    MS_LOG(ERROR) << tensor_input->name << " offset over max size"
+    MS_LOG(ERROR) << " offset over max size"
                   << " offset:" << offset << " max_size:" << max_size;
     return RET_ERROR;
   }
   *(reinterpret_cast<uint8_t *>(&out8[offset])) = (uint8_t)bs->GetCurrBitCount();
   offset += sizeof(uint8_t);
   if (offset > max_size) {
-    MS_LOG(ERROR) << tensor_input->name << " too many symbol.";
+    MS_LOG(ERROR) << " too many symbol.";
     return RET_ERROR;
   }
   *out_size = offset;
   return RET_OK;
 }
 
-int FSEEncoder::SerializingToOut(schema::TensorT *tensor_input, FSEBitStream *bs, const FSEQuant &fse_quant,
-                                 int table_log) {
-  MSLITE_CHECK_PTR(tensor_input);
+int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs, const FSEQuant &fse_quant,
+                                    int table_log) {
+  MSLITE_CHECK_PTR(weight);
   MSLITE_CHECK_PTR(bs);
-  const int extend_size = 2;
-  auto max_size = tensor_input->data.size() * extend_size;
+  auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+  CHECK_NULL_RETURN(tensor_info);
+
+  auto max_size = tensor_info->Size();
+  if (max_size == 0 || max_size > kMaxModelBufferSize) {
+    MS_LOG(ERROR) << weight->name() << " malloc size:" << max_size << " is invalid.";
+  }
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   MSLITE_CHECK_PTR(out8);
   size_t out_size = 0;
-  auto ret = SerializingToTensor(tensor_input, bs, fse_quant, table_log, out8, max_size, &out_size);
+  auto ret = SerializingToBuffer(bs, fse_quant, table_log, max_size, out8, &out_size);
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Store data to tensor failed. You can try to use 8bit fixed quantization.";
+    MS_LOG(ERROR) << weight->name() << " Store data to new_tensor failed. You can try to use 8bit fixed quantization.";
     free(out8);
     return ret;
   }
-  tensor_input->data.resize(out_size);
-  if (tensor_input->data.data() == nullptr) {
-    MS_LOG(ERROR) << "the pointer is null.";
+
+  auto new_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt8, tensor_info->shape(), out_size, kFSE);
+  ret = memcpy_s(new_tensor->data_c(), tensor_info->DataSize(), out8, out_size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << weight->name() << " memcpy failed.";
     free(out8);
     return RET_ERROR;
   }
-  if (memcpy_s(tensor_input->data.data(), out_size, out8, out_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy failed.";
-    free(out8);
-    return RET_ERROR;
-  }
-  tensor_input->quantParams.clear();
-  tensor_input->weightQunatCompressType = schema::WeightQunatCompressType_FSE;
-  tensor_input->dataType = TypeId::kNumberTypeFloat32;
   free(out8);
-  int total_size = 1;
-  ret = GetElementNumFromShape(tensor_input->dims, &total_size);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get element num from shape failed.";
-    return ret;
-  }
-  total_size *= sizeof(float);
-  MS_ASSERT(out_size > 0);
-  MS_LOG(INFO) << tensor_input->name << " Origin size:" << total_size << " Compressed size:" << out_size
-               << " Compression ratio:" << 1.0 * total_size / out_size;
+  weight->set_default_param(new_tensor);
+  weight->set_abstract(new_tensor->ToAbstract());
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

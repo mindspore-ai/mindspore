@@ -240,8 +240,8 @@ bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   }
   tensor->data.resize(new_data_str.size());
 
-  tensor->weightQunatCompressType = schema::WeightQunatCompressType_INDEXING;
-  MS_LOG(DEBUG) << "set WeightQunatCompressType_INDEXING";
+  tensor->weightQuantCompressType = schema::WeightQuantCompressType_INDEXING;
+  MS_LOG(DEBUG) << "set WeightQuantCompressType_INDEXING";
   return true;
 }
 
@@ -313,8 +313,8 @@ bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_
   }
   tensor->data.resize(new_data_str.size());
 
-  tensor->weightQunatCompressType = schema::WeightQunatCompressType_SPARSE;
-  MS_LOG(INFO) << "set WeightQunatCompressType_SPARSITY";
+  tensor->weightQuantCompressType = schema::WeightQuantCompressType_SPARSE;
+  MS_LOG(INFO) << "set WeightQuantCompressType_SPARSITY";
   return true;
 }
 
@@ -353,7 +353,7 @@ size_t CalCoorBestBit(const std::vector<T> &quant_data, size_t elem_cnt,
 
 template <typename T>
 bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
-  if (tensor->weightQunatCompressType != schema::WeightQunatCompressType_NONE) {
+  if (tensor->weightQuantCompressType != schema::WeightQuantCompressType_NONE) {
     MS_LOG(INFO) << tensor->name << " is shared weight.";
     return true;
   }
