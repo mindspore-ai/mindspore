@@ -26,7 +26,6 @@
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
-#include "kernel/common_utils.h"
 #include "kernel/oplib/oplib.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 
@@ -119,6 +118,33 @@ std::vector<std::pair<AnfNodePtr, std::pair<size_t, size_t>>> GetInputIndex(cons
                                 << input->func_graph()->ToString() << "] found no related kernel info.";
   }
   return input_index;
+}
+
+std::vector<std::pair<AnfNodePtr, size_t>> GetOutputIndex(const std::vector<AnfNodePtr> &node_list,
+                                                          const std::vector<AnfNodePtr> &input_list,
+                                                          const std::vector<AnfNodePtr> &output_list) {
+  std::vector<std::pair<AnfNodePtr, size_t>> output_index;
+  for (size_t i = 0; i < output_list.size(); ++i) {
+    bool found = false;
+    auto const &output = output_list[i];
+    MS_EXCEPTION_IF_NULL(output);
+    auto pree_node = AnfUtils::VisitKernel(output, 0);
+    auto pos = std::find(std::begin(node_list), std::end(node_list), pree_node.first);
+    if (pos != std::end(node_list)) {
+      (void)output_index.emplace_back(pree_node);
+      continue;
+    }
+    auto ret = std::find(std::begin(input_list), std::end(input_list), pree_node.first);
+    if (ret != std::end(input_list)) {
+      (void)output_index.emplace_back(std::make_pair(pree_node.first, 0));
+      found = true;
+    }
+    if (!found) {
+      MS_EXCEPTION(ArgumentError) << "Output [" << i << "][" << output->DebugString(kDebugStrDepth) << "] of ["
+                                  << output->func_graph()->ToString() << "] found no related kernel info.";
+    }
+  }
+  return output_index;
 }
 
 class OpInfoExtractor {
@@ -894,7 +920,7 @@ void AkgKernelJsonGenerator::GenParallelJson(const std::vector<AnfNodePtr> &anf_
   std::string fusion_type;
   std::vector<std::vector<int>> type_info;
 
-  auto output_index = kernel::GetOutputIndex(anf_nodes, input_list, output_list);
+  auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
   for (size_t i = 0; i < output_index.size(); ++i) {
     auto [tmp_output, tmp_output_index] = output_index[i];
     bool found = std::any_of(input_list.cbegin(), input_list.cend(),
@@ -956,7 +982,7 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
                                                          const nlohmann::json &inputs_json,
                                                          const std::map<AnfNodePtr, nlohmann::json> &node_json_map) {
   nlohmann::json outputs_json;
-  auto output_index = kernel::GetOutputIndex(anf_nodes, input_list, output_list);
+  auto output_index = GetOutputIndex(anf_nodes, input_list, output_list);
   for (size_t i = 0; i < output_index.size(); ++i) {
     auto tmp_output = output_index[i];
     bool found = false;
