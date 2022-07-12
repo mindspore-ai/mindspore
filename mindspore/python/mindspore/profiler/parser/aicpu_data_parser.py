@@ -176,7 +176,7 @@ class DataPreProcessParser:
             if ai_cpu.task_id < self._task_id_threshold:
                 node_type_name = f'{ai_cpu.stream_id}_{ai_cpu.task_id}'
                 if self._op_task_dict:
-                    node_type_name = self._op_task_dict[node_type_name].split('/')[-1]
+                    node_type_name = self._op_task_dict.get(node_type_name, node_type_name).split('/')[-1]
                 exe_time = (float(ai_cpu.run_end) - float(ai_cpu.run_start)) / self._ms_unit
                 total_time = ai_cpu.total_time / self._ms_unit
                 result_list.append([serial_number, node_type_name, total_time, ai_cpu.dispatch_time / self._ms_unit,
