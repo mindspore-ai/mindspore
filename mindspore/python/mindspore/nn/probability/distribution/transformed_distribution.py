@@ -51,7 +51,7 @@ class TransformedDistribution(Distribution):
         please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
         TypeError: When the input `bijector` is not a Bijector instance.
