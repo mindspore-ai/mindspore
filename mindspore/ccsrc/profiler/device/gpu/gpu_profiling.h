@@ -143,8 +143,6 @@ class MS_CORE_API GPUProfiler : public Profiler {
   std::string ProfileDataPath() const { return profile_data_path_; }
   bool IsInitialized() { return is_init_; }
   void RecordFrameWorkInfo(const CNodePtr &kernel);
-  bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
-  void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
   CurKernelInputInfo cur_kernel_input_info_;
   CurKernelInfo cur_kernel_info_;
   std::vector<CurKernelInfo> all_kernel_info_;
@@ -191,7 +189,6 @@ class MS_CORE_API GPUProfiler : public Profiler {
   std::map<std::string, std::shared_ptr<ProfilingOp>> profiling_op_;
   ProfilingTraceInfo step_trace_op_name_;
   bool is_init_ = false;
-  bool is_dynamic_shape_net_ = 0;
 };
 }  // namespace gpu
 }  // namespace profiler

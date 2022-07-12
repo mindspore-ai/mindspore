@@ -44,6 +44,7 @@
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;
+using mindspore::profiler::ProfilerManager;
 using mindspore::profiler::ascend::MemoryProfiling;
 #endif
 
@@ -185,11 +186,6 @@ void AscendKernelExecutor::PreprocessBeforeRunGraph(const KernelGraphPtr &graph)
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Status record: start preprocess before run graph. graph id: " << graph->graph_id();
   PROF_START(preprocess_before_run_graph);
-  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_instance);
-  if (graph->is_dynamic_shape()) {
-    ascend_instance->SetNetDynamicShapeStatus();
-  }
   SetErrorManagerContext();
   try {
     if (graph->is_graph_run_mode()) {
@@ -431,8 +427,10 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<Add
     }
   }
   auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
+  auto profiler_manage_instance = profiler::ProfilerManager::GetInstance();
   MS_EXCEPTION_IF_NULL(ascend_instance);
-  if ((ascend_instance->GetNetDynamicShapeStatus() ||
+  MS_EXCEPTION_IF_NULL(profiler_manage_instance);
+  if ((profiler_manage_instance->GetNetDynamicShapeStatus() ||
        ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) &&
       ascend_instance->GetProfilingEnableFlag()) {
     ascend_instance->GetNodeTaskIdStreamId(kernel, graph_id, device_id, kernel_type);

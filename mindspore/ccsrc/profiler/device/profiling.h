@@ -66,9 +66,12 @@ class ProfilerManager {
   bool GetProfilingEnableFlag() const;
   void RecordOneStepStartEndInfo() const;
   std::string GetProfilingOptions() const;
+  bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
+  void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
 
  private:
   static std::shared_ptr<ProfilerManager> profiler_manager_inst_;
+  bool is_dynamic_shape_net_ = 0;
 };
 
 class Profiler {

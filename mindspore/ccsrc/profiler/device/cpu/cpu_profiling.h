@@ -62,8 +62,6 @@ class CPUProfiler : public Profiler {
   float SetRuntimeEnd(const std::string op_name, const uint64_t stop_timestamp);
   void SetRuntimeStart(const std::string op_name, const uint64_t start_timestamp);
   void RecordFrameWorkInfo(const CNodePtr &kernel);
-  bool GetNetDynamicShapeStatus() const { return is_dynamic_shape_net_; }
-  void SetNetDynamicShapeStatus() { is_dynamic_shape_net_ = true; }
   std::vector<CurKernelInfo> all_kernel_info_;
   std::mutex kernel_mutex_;
 
@@ -73,7 +71,6 @@ class CPUProfiler : public Profiler {
   void ClearInst() override;
 
   static std::shared_ptr<CPUProfiler> profiler_inst_;
-  bool is_dynamic_shape_net_ = 0;
   uint64_t base_time_;
   std::string op_name_;
   uint32_t pid_;
