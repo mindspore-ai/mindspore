@@ -2284,7 +2284,7 @@ class Tensor(Tensor_):
             ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            ``GPU``
 
         Examples:
             >>> import numpy as np
@@ -2327,7 +2327,7 @@ class Tensor(Tensor_):
             ValueError: If length of shape of `input_x` is less than the last dimension of shape of `indices`.
 
         Supported Platforms:
-            ``GPU`` ``CPU``
+            ``GPU``
 
         Examples:
             >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
