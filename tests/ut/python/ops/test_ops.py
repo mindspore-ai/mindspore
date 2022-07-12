@@ -102,6 +102,7 @@ from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
+from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
@@ -3931,6 +3932,14 @@ test_case_other_ops = [
     ('BlackmanWindow', {
         'block': BlackmanWindow(periodic=True, dtype=mstype.float32),
         'desc_inputs': [Tensor(np.array(5).astype(np.int32))],
+        'skip': ['backward']}),
+    ('SparseMatrixNNZ', {
+        'block': SparseMatrixNNZ(),
+        'desc_inputs': [Tensor(np.array([2, 4]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([5.3, 2.4]).astype(np.float32))],
         'skip': ['backward']}),
 ]
 
