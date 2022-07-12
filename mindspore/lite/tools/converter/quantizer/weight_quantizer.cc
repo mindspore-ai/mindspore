@@ -22,6 +22,7 @@
 #include <set>
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
+#include "tools/converter/quantizer/fse_encoder.h"
 
 namespace mindspore::lite::quant {
 WeightQuantizer::~WeightQuantizer() {}
@@ -117,6 +118,29 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
       status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
                                    preferred_dim, symmetric);
+      if (status == RET_OK) {
+        FSEEncoder fse_encoder;
+        auto quant_param_holder = GetCNodeQuantHolder(primitive);
+        auto tensor_quant_params = quant_param_holder->get_input_quant_params();
+        MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
+        auto quant_params = tensor_quant_params.at(idx - 1);
+        status = fse_encoder.Compress(parameter, quant_params);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "fse encode compress failed." << status;
+          return RET_ERROR;
+        }
+      }
+      // rollback to 8 bit.
+      if (status == RET_ERROR || status == RET_NO_CHANGE) {
+        const int quant_min = QuantMin(k8Bit, false, false);  // -128
+        const int quant_max = QuantMax(k8Bit);                // 127
+        MS_LOG(WARNING)
+          << parameter->fullname_with_scope()
+          << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
+        status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
+                                             quant_max, quant_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
+                                             preferred_dim, symmetric);
+      }
     } else if (type_id_ == kNumberTypeInt8) {
       status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                            q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,

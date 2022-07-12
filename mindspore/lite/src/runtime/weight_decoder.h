@@ -32,6 +32,7 @@
 #include "src/runtime/lite_model.h"
 
 static constexpr int kPerTensor = 1;
+static constexpr int kBitNumMix = 0;
 static constexpr int kBitNum1 = 1;
 static constexpr int kBitNum8 = 8;
 static constexpr int kBitNum16 = 16;

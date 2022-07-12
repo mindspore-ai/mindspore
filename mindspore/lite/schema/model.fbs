@@ -38,11 +38,12 @@ table QuantParam {
     multiplier: int = 1; // calculate fixed point multiplier method
 }
 
-enum WeightQunatCompressType: int {
+enum WeightQuantCompressType: int {
     NONE,
     INDEXING,
     SPARSE,
-    FSE
+    FSE,
+    BITPACKING
 }
 
 table ExternalData {
@@ -66,7 +67,7 @@ table Tensor {
     quantClusters: [float];
     name: string;
     enableHuffmanCode: bool = false;
-    weightQunatCompressType: WeightQunatCompressType = NONE;
+    weightQuantCompressType: WeightQuantCompressType = NONE;
     externalData: [ExternalData];
 }
 

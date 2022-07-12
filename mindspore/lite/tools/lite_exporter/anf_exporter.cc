@@ -127,28 +127,17 @@ int AnfExporter::SetPostTrainOutputTensorType(const std::unique_ptr<schema::Meta
 static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_ptr<schema::CNodeT> &dst_node) {
   if (!tensor_input->quantParams.empty() && tensor_input->quantParams.front()->inited) {
     int bit_num = tensor_input->quantParams.at(0)->numBits;
-    // Pack Repetition
-    auto repetition_packed = false;
     MS_LOG(DEBUG) << dst_node->name;
-    if (dst_node->quantType == schema::QuantType_QUANT_WEIGHT) {
-      if (bit_num == 0) {
-        if (tensor_input->data.empty() || tensor_input->dims.size() <= 1) {
-          return RET_OK;
-        }
-        quant::FSEEncoder fse_encoder;
-        auto status = fse_encoder.Compress(tensor_input);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "fse encode compress failed." << status;
-          return RET_ERROR;
-        }
-      } else if (bit_num <= kBitNum8) {
-        repetition_packed = quant::PackRepetition<int8_t>(bit_num, tensor_input);
-      } else {
-        repetition_packed = quant::PackRepetition<int16_t>(bit_num, tensor_input);
-      }
+    if (dst_node->quantType != schema::QuantType_QUANT_WEIGHT) {
+      return RET_OK;
     }
-    if (!tensor_input->data.empty() && bit_num != kBitNum8 && bit_num != kBitNum16 && !repetition_packed &&
-        dst_node->quantType != schema::QuantType_QUANT_NONE) {
+    if (bit_num == kBitNumMix) {
+      tensor_input->quantParams.clear();
+    } else if (bit_num == kBitNum8) {
+      (void)quant::PackRepetition<int8_t>(bit_num, tensor_input);
+    } else if (bit_num == kBitNum16) {
+      (void)quant::PackRepetition<int16_t>(bit_num, tensor_input);
+    } else {
       auto status = quant::DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "do bit pack failed. " << status;
@@ -251,6 +240,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
   schema_tensor->dataType = data_info.data_type_;
   schema_tensor->data = data_info.data_;
   schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
+  schema_tensor->weightQuantCompressType = static_cast<WeightQuantCompressType>(data_info.compress_type_);
   schema_tensor->nodeType = NodeType_CNode;
   auto key = std::make_pair(input, 0);
   node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());
@@ -788,7 +778,8 @@ int AnfExporter::ConvertInputParameter(const CNodePtr &cnode, size_t index, cons
     schema_tensor->nodeType = NodeType_CNode;
   }
   schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
-
+  schema_tensor->weightQuantCompressType =
+    static_cast<mindspore::schema::WeightQuantCompressType>(data_info.compress_type_);
   node_id_map_[key] = meta_graphT->allTensors.size();
   op_node->inputIndex.emplace_back(meta_graphT->allTensors.size());
   meta_graphT->allTensors.emplace_back(std::move(schema_tensor));
