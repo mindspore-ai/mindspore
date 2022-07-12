@@ -18,6 +18,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore import Tensor
 
 
@@ -34,7 +35,7 @@ class RandomGammaTEST(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
-@pytest.mark.parametrize("dtype", [np.float64, np.float32, np.float16])
+@pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
 def test_random_gamma_op(dtype):
     """
     Feature: RandomGamma cpu kernel
@@ -52,6 +53,38 @@ def test_random_gamma_op(dtype):
     print(output)
     assert (output.shape == expect).all()
 
+    gamma = P.RandomGamma(seed=3)
+    output_2 = gamma(shape, alpha)
+    print(output_2)
+    assert (output_2.shape == expect).all()
 
-if __name__ == '__main__':
-    test_random_gamma_op(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
+def test_random_gamma_functional(dtype):
+    """
+    Feature: Functional interface of RandomGamma cpu kernel
+    Description: test the random gamma alpha is a tensor.
+    Expectation: match to tensorflow benchmark.
+    """
+
+    ms.set_context(mode=ms.GRAPH_MODE, device_target='CPU')
+    shape = Tensor(np.array([10, 10]), ms.int32)
+    alpha = Tensor(np.array([[3, 4], [5, 6]]), dtype)
+    output = F.random_gamma(shape=shape, alpha=alpha, seed=2)
+    expect = np.array([10, 10, 2, 2])
+
+    print(output)
+    assert (output.shape == expect).all()
+
+    ms.set_context(mode=ms.PYNATIVE_MODE, device_target='CPU')
+    shape = Tensor(np.array([4, 2]), ms.int32)
+    alpha = Tensor(np.array([[3, 4], [5, 6]]), ms.float32)
+    beta = Tensor(np.array([1, 2]), ms.float32)
+    output = F.random_gamma(shape=shape, alpha=alpha, beta=beta, seed=1)
+    expect = np.array([4, 2, 2, 2])
+
+    print(output)
+    assert (output.shape == expect).all()

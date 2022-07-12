@@ -305,6 +305,7 @@ Randomly Generating Operators
     :template: classtemplate.rst
 
     mindspore.ops.gamma
+    mindspore.ops.random_gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.standard_laplace

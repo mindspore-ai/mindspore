@@ -334,8 +334,8 @@ class Gamma(PrimitiveWithInfer):
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> beta = Tensor(np.array([1.0]), mstype.float32)
-        >>> random_gamma = ops.RandomGamma(seed=3)
-        >>> output = random_gamma(shape, alpha, beta)
+        >>> gamma = ops.Gamma(seed=3)
+        >>> output = gamma(shape, alpha, beta)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)

@@ -272,6 +272,7 @@ from .sparse_func import (
 from .random_func import (
     standard_laplace,
     standard_normal,
+    random_gamma,
 )
 
 __all__ = []
