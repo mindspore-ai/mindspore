@@ -1421,6 +1421,37 @@ Status ValidateCutOutImage(const std::shared_ptr<Tensor> &input, bool is_hwc, in
   return Status::OK();
 }
 
+uchar *GetPtr(const std::shared_ptr<Tensor> &tensor) {
+  switch (tensor->type().value()) {
+    case DataType::DE_BOOL:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<bool>()));
+    case DataType::DE_INT8:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<int8_t>()));
+    case DataType::DE_UINT8:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<uint8_t>()));
+    case DataType::DE_INT16:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<int16_t>()));
+    case DataType::DE_UINT16:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<uint16_t>()));
+    case DataType::DE_INT32:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<int32_t>()));
+    case DataType::DE_UINT32:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<uint32_t>()));
+    case DataType::DE_INT64:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<int64_t>()));
+    case DataType::DE_UINT64:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<uint64_t>()));
+    case DataType::DE_FLOAT16:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<float16>()));
+    case DataType::DE_FLOAT32:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<float>()));
+    case DataType::DE_FLOAT64:
+      return reinterpret_cast<uchar *>(&(*tensor->begin<double>()));
+    default:
+      return nullptr;
+  }
+}
+
 Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t box_height,
              int32_t box_width, int32_t num_patches, bool bounded, bool random_color, std::mt19937 *rnd,
              std::vector<uint8_t> fill_colors, bool is_hwc) {
@@ -1433,6 +1464,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     uint64_t num_channels = input_cv->shape()[channel_index];
     int64_t image_h = input_cv->shape()[height_index];
     int64_t image_w = input_cv->shape()[width_index];
+    uint8_t type_size = input_cv->type().SizeInBytes();
     // for random color
     std::normal_distribution<double> normal_distribution(0, 1);
     std::uniform_int_distribution<int> height_distribution_bound(0, image_h - box_height);
@@ -1462,19 +1494,23 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       h_start = (h_start < 0) ? 0 : h_start;
       w_start = (w_start < 0) ? 0 : w_start;
 
-      for (int x = h_start; x < max_height; x++) {
-        for (int y = w_start; y < max_width; y++) {
-          for (int c = 0; c < num_channels; c++) {
-            uint8_t fill_value = fill_colors[c];
-            if (random_color) {
-              // fill each box with a random value
-              fill_value = static_cast<int32_t>(normal_distribution(*rnd));
-            }
-            if (num_channels == 1) {
-              input_cv->SetItemAt<uint8_t>({x, y}, fill_value);
-            } else {
-              std::vector<dsize_t> index = is_hwc ? std::vector<dsize_t>{x, y, c} : std::vector<dsize_t>{c, x, y};
-              input_cv->SetItemAt<uint8_t>(index, fill_value);
+      if (is_hwc) {
+        uchar *buffer = GetPtr(input_cv);
+        int64_t num_bytes = type_size * num_channels * (max_width - w_start);
+        for (int x = h_start; x < max_height; x++) {
+          auto ret = memset_s(buffer + (x * image_w + w_start) * num_channels * type_size, num_bytes, 0, num_bytes);
+          if (ret != 0) {
+            RETURN_STATUS_UNEXPECTED("CutOut: memset_s failed for HWC scenario.");
+          }
+        }
+      } else {
+        int64_t num_bytes = type_size * (max_width - w_start);
+        for (int c = 0; c < num_channels; c++) {
+          uchar *buffer = GetPtr(input_cv) + (type_size * c * image_h * image_w);
+          for (int x = h_start; x < max_height; x++) {
+            auto ret = memset_s(buffer + (x * image_w + w_start) * type_size, num_bytes, 0, num_bytes);
+            if (ret != 0) {
+              RETURN_STATUS_UNEXPECTED("CutOut: memset_s failed for CHW scenario.");
             }
           }
         }
