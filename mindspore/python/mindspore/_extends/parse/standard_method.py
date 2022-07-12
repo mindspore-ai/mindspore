@@ -182,6 +182,14 @@ def any_(x, axis=(), keep_dims=False):
     return reduce_any(x, axis)
 
 
+def atan2(x, y):
+    r"""
+    Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+    Refer to :func:`mindspore.ops.atan2` for more details.
+    """
+    return F.atan2(x, y)
+
+
 def size_(x):
     """
     Return the number of elements in tensor `x`.
@@ -2141,6 +2149,14 @@ def str_bool(x):
 def matrix_determinant(x):
     """Computes the determinant of one or more square matrices."""
     return F.matrix_determinant(x)
+
+
+def log1p(x):
+    r"""
+    Returns the natural logarithm of one plus the input tensor element-wise.
+    Refer to :func:`mindspore.ops.log1p` for more detail.
+    """
+    return F.log1p(x)
 
 
 def log_matrix_determinant(x):

@@ -140,6 +140,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.invert
     mindspore.ops.lerp
     mindspore.ops.log
+    mindspore.ops.log1p
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
@@ -364,6 +365,7 @@ Array操作
     mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
+    mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_max
@@ -380,6 +382,7 @@ Array操作
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
     mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unstack
 
 .. list-table::
    :widths: 50 50
@@ -399,8 +402,6 @@ Array操作
      - Refer to :class:`mindspore.ops.Sort`.
    * - mindspore.ops.squeeze
      - Refer to :class:`mindspore.ops.Squeeze`.
-   * - mindspore.ops.stack
-     - Refer to :class:`mindspore.ops.Stack`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_update

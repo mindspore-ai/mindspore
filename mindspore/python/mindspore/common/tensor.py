@@ -682,6 +682,43 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('any')(keep_dims)(self, axis)
 
+    def atan2(self, y):
+        r"""
+        Returns arctangent of x/y element-wise.
+
+        It returns :math:`\theta\ \in\ [-\pi, \pi]`
+        such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
+
+        Args of `x` and `y` comply with the implicit type conversion rules to make the data types consistent.
+        If they have different data types, the lower precision data type will be converted to
+        the relatively highest precision data type.
+
+        Args:
+            x (Tensor): The input tensor.
+                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+            y (Tensor): The input tensor. It has the same shape with `x`.
+
+        Returns:
+            Tensor, the shape is the same as the one after broadcasting,and the data type is same as `x`.
+
+        Raises:
+            TypeError: If `x` or `y` is not a Tensor.
+            RuntimeError: If the data type of `x` and `y` conversion of Parameter is required
+                          when data type conversion of Parameter is not supported.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU`` ``GPU``
+
+        Examples:
+            >>> x = Tensor(np.array([0, 1]), mindspore.float32)
+            >>> y = Tensor(np.array([1, 1]), mindspore.float32)
+            >>> output = x.atan2(y)
+            >>> print(output)
+            [0.        0.7853982]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('atan2')(self, y)
+
     def view(self, *shape):
         """
         Reshape the tensor according to the input shape. It's the same as :func:`mindspore.Tensor.reshape`,
@@ -1276,6 +1313,37 @@ class Tensor(Tensor_):
         """
         self._init_check()
         return tensor_operator_registry.get('matrix_determinant')(self)
+
+    def log1p(self):
+        r"""
+        Returns the natural logarithm of one plus the input tensor element-wise.
+
+        .. math::
+            out_i = {log_e}(x_i + 1)
+
+        Args:
+            - **x** (Tensor) - The input tensor. With float16 or float32 data type.
+              The value must be greater than -1.
+              :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+
+        Returns:
+            Tensor, has the same shape as the `x`.
+
+        Raises:
+            TypeError: If `x` is not a Tensor.
+            TypeError: If dtype of `x` is neither float16 nor float32.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+            >>> output = x.log1p()
+            >>> print(output)
+            [0.6931472 1.0986123 1.609438 ]
+        """
+        self._init_check()
+        return tensor_operator_registry.get('log1p')(self)
 
     def log_matrix_determinant(self):
         r"""

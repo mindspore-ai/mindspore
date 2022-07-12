@@ -101,6 +101,7 @@ class UnravelIndex(Primitive):
         [[0 2]
          [1 2]]
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize Shape"""
@@ -2874,27 +2875,7 @@ class Stack(PrimitiveWithInfer):
     r"""
     Stacks a list of tensors in specified axis.
 
-    Stacks the list of input tensors with the same rank `R`, output is a tensor of rank `(R+1)`.
-
-    Given input tensors of shape :math:`(x_1, x_2, ..., x_R)`. Set the number of input tensors as `N`.
-    If :math:`0 \le axis`, the shape of the output tensor is
-    :math:`(x_1, x_2, ..., x_{axis}, N, x_{axis+1}, ..., x_R)`.
-
-    Args:
-        axis (int): Dimension to stack. Default: 0.
-                    Negative values wrap around. The range is [-(R+1), R+1).
-
-    Inputs:
-        - **input_x** (Union[tuple, list]) - A Tuple or list of Tensor objects with the same shape and type.
-
-    Outputs:
-        Tensor. A stacked Tensor with the same type as `input_x`.
-
-    Raises:
-        TypeError: If the data types of elements in `input_x` are not the same.
-        ValueError: If the length of `input_x` is not greater than 1;
-                    or if axis is out of the range [-(R+1), R+1);
-                    or if the shapes of elements in input_x are not the same.
+    Refer to :func:`mindspore.ops.stack` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -3018,26 +2999,7 @@ class Unstack(Primitive):
     r"""
     Unstacks tensor in specified axis.
 
-    Unstacks a tensor of rank `R` along axis dimension, output tensors will have rank `(R-1)`.
-
-    Given a tensor of shape :math:`(x_1, x_2, ..., x_R)`. If :math:`0 \le axis`,
-    the shape of tensor in output is :math:`(x_1, x_2, ..., x_{axis}, x_{axis+2}, ..., x_R)`.
-
-    This is the opposite of pack.
-
-    Args:
-        axis (int): Dimension along which to unpack. Default: 0.
-                    Negative values wrap around. The range is [-R, R).
-
-    Inputs:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-          A tensor to be unstacked and the rank of the tensor must be greater than 0.
-
-    Outputs:
-        A tuple of tensors, the shape of each objects is the same.
-
-    Raises:
-        ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
+    Refer to :func:`mindspore.ops.unstack` for more detail.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -6280,6 +6242,7 @@ class IdentityN(Primitive):
         >>> print(output)
         (Tensor(shape=[4], dtype=Int64, value= [1, 2, 3, 4]), Tensor(shape=[4], dtype=Int64, value= [4, 3, 1, 1]))
     """
+
     @prim_attr_register
     def __init__(self):
         """Initialize IdentityN"""

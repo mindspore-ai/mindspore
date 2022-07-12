@@ -114,7 +114,6 @@ tanh_ = P.Tanh()
 asinh_ = P.Asinh()
 acosh_ = P.Acosh()
 atanh_ = P.Atanh()
-atan2_ = P.Atan2()
 bitwise_and_ = P.BitwiseAnd()
 bitwise_or_ = P.BitwiseOr()
 bitwise_xor_ = P.BitwiseXor()
@@ -1615,7 +1614,8 @@ def atan2(x, y):
         >>> print(output)
         [0.        0.7853982]
     """
-    return atan2_(x, y)
+    _atan2 = _get_cache_prim(P.Atan2)()
+    return _atan2(x, y)
 
 
 def bitwise_and(x, y):
@@ -4684,6 +4684,38 @@ def log10(x):
     return output
 
 
+def log1p(x):
+    r"""
+    Returns the natural logarithm of one plus the input tensor element-wise.
+
+    .. math::
+        out_i = {log_e}(x_i + 1)
+
+    Args:
+        - **x** (Tensor) - The input tensor. With float16 or float32 data type.
+          The value must be greater than -1.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+
+    Returns:
+        Tensor, has the same shape as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is neither float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
+        >>> output = ops.log1p(x)
+        >>> print(output)
+        [0.6931472 1.0986123 1.609438 ]
+    """
+    _log1p = _get_cache_prim(P.Log1p)()
+    return _log1p(x)
+
+
 def kron(x, y):
     """
     Computes the Kronecker product, denoted by ⊗, of `x` and `y`.
@@ -5006,6 +5038,7 @@ __all__ = [
     'log2',
     'xlogy',
     'log10',
+    'log1p',
     'approximate_equal',
     'frac',
     'kron'
