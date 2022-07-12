@@ -142,6 +142,7 @@ class Cell(Cell_):
         self._dynamic_shape_inputs = None
         self.saved_dynamic_shape = None
         self._jit_config_dict = dict()
+        self.grad_ops_label = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -438,7 +439,8 @@ class Cell(Cell_):
 
         if len(inputs) < positional_args:
             raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument, "
-                            f"but got {len(inputs)}.")
+                            f"but got {len(inputs)}. When using set_inputs, please make sure that all networks"
+                            f"and loss functions are configured with set_inputs.")
 
         if len(inputs) > positional_args + default_args:
             raise TypeError(f"For 'Cell', the function construct need {positional_args} positional argument and "
@@ -881,27 +883,27 @@ class Cell(Cell_):
             >>> from mindspore import nn, ops, Tensor, Model
             >>> from mindspore import dataset as ds
             >>> import numpy as np
-
+            >>>
             >>> def get_data(num, w=2.0, b=3.0):
             ...     for _ in range(num):
             ...     x = np.random.uniform(-10.0, 10.0)
             ...     noise = np.random.normal(0, 1)
             ...     y = x * w + b + noise
             ...     yield np.array([x]).astype(np.float32), np.array([y]).astype(np.float32)
-
+            >>>
             >>> def create_dataset(num_data, batch_size=16):
             ...     dataset = ds.GeneratorDataset(list(get_data(num_data)), column_names=['data', 'label'])
             ...     dataset = dataset.batch(batch_size)
             ...     return dataset
-
+            >>>
             >>> class NetAddN(nn.Cell):
             ...     def __init__(self):
             ...         super(NetAddN, self).__init__()
             ...         self.addn = ops.AddN()
-
+            ...
             ...     def construct(self, *Z):
             ...         return self.addn(Z)
-
+            >>>
             >>> ds_train = create_dataset(num_data=160)
             >>> net = NetAddN()
             >>> loss = nn.MAELoss()
@@ -914,6 +916,9 @@ class Cell(Cell_):
         NOTE:
             This is an experimental interface that is subject to change or deletion.
         """
+        if self.grad_ops_label:
+            logger.warning(f'For Cell, set_inputs must be set before the gradient function of the network is'
+                           f'generated.')
         self._dynamic_shape_inputs = inputs
         self._check_construct_args(*inputs)
         for ele in self._dynamic_shape_inputs:
