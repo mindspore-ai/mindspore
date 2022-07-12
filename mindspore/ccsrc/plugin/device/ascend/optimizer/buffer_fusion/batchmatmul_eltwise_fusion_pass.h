@@ -37,9 +37,9 @@ class BatchMatmulEltwiseFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  bool MatchPattern1(const CNodePtr &eltwise1, mindspore::HashSet<AnfNodePtr> *record);
-  bool MatchPattern2(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record);
-  bool MatchPattern3(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record);
+  bool MatchPattern1(const CNodePtr &eltwise1, mindspore::HashSet<AnfNodePtr> *record) const;
+  bool MatchPattern2(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record) const;
+  bool MatchPattern3(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record) const;
 };
 }  // namespace opt
 }  // namespace mindspore

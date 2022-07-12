@@ -25,7 +25,7 @@ namespace kernel {
 constexpr size_t kInputIndex_0 = 0;
 constexpr size_t kChannelN = 0;
 constexpr size_t kChannelC = 1;
-constexpr size_t kAlignmented16 = 16;
+constexpr int64_t kAlignmented16 = 16;
 // 1. all shape no scalar and same
 // 2. part scalar : no_scalar (shape size > xxx && alig xxx)
 // 3. all no_scalar and not same (broad cast xxx dim)

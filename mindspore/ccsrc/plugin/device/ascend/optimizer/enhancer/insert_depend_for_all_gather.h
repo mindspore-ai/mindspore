@@ -16,9 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_DEPEND_FOR_ALL_GATHER_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_INSERT_DEPEND_FOR_ALL_GATHER_H_
-#include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 
 #include "backend/common/optimizer/pass.h"

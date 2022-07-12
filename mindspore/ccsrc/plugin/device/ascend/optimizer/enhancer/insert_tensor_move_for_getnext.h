@@ -27,7 +27,7 @@ class InsertTensorMoveForGetNext : public PatternProcessPass {
       : PatternProcessPass("insert_tensor_move_for_getnext", multigraph) {}
   ~InsertTensorMoveForGetNext() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

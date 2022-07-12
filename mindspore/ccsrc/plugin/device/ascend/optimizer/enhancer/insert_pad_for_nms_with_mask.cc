@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/optimizer/enhancer/insert_pad_for_nms_with_mask.h"
 #include <memory>
+#include <vector>
 #include "backend/common/optimizer/helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -26,8 +27,8 @@ namespace mindspore {
 namespace opt {
 namespace {
 constexpr size_t kShapeSize = 2;
-constexpr size_t kShapeValue5 = 5;
-constexpr size_t kShapeValue8 = 8;
+constexpr int64_t kShapeValue5 = 5;
+constexpr int64_t kShapeValue8 = 8;
 }  // namespace
 const BaseRef InsertPadForNMSWithMask::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();

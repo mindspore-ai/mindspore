@@ -44,7 +44,7 @@ constexpr auto ATTR_NAME_WEIGHTS = "value";
 constexpr auto PARAM_DYNAMIC = "dynamic";
 constexpr auto EXT_ATTR_ATOMIC_WORKSPACE_INFO = "sub_node_workspace_info";
 
-std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) {
+std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) const {
   static const std::map<std::string, std::string> kOpTypeMap = {
     {"SparseApplyFtrl", "SparseApplyFtrlD"},
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
@@ -201,7 +201,7 @@ void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ::ge::Op
   (void)::ge::AttrUtils::SetStr(*(*op_desc), COMPILE_INFO_JSON, op_compile_info_);
 }
 
-void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) {
+void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*op_desc);
   auto kernel_mod = dynamic_cast<kernel::AscendKernelMod *>(AnfAlgo::GetKernelMod(node));
@@ -253,7 +253,7 @@ void OpTilingCalculateAdapter::ConvertAtomicCompileInfo(const CNodePtr &node, ::
 
 ::ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const std::string &name,
                                                       const tensor::TensorPtr &tensor_data,
-                                                      ::ge::ComputeGraphPtr *ge_graph, size_t index) {
+                                                      ::ge::ComputeGraphPtr *ge_graph, size_t index) const {
   MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(*ge_graph);
   MS_EXCEPTION_IF_NULL(tensor_data);
@@ -401,7 +401,7 @@ void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {
   return ge_node;
 }
 
-::ge::Operator OpTilingCalculateAdapter::GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) {
+::ge::Operator OpTilingCalculateAdapter::GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) const {
   MS_EXCEPTION_IF_NULL(ge_node);
   return ::ge::OpDescUtils::CreateOperatorFromNode(ge_node);
 }

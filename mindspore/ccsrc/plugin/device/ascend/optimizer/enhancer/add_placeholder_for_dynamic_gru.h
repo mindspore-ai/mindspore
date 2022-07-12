@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_PLACEHOLDER_FOR_DYNAMIC_GRU_H_
 
 #include <memory>
-#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
@@ -30,7 +29,7 @@ class InsertPlaceholderForDynamicGRUV2 : public PatternProcessPass {
       : PatternProcessPass("add_placeholder_for_dynamic_gru", multigraph) {}
   ~InsertPlaceholderForDynamicGRUV2() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
