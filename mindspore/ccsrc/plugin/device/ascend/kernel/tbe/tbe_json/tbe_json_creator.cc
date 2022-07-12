@@ -267,7 +267,7 @@ void TbeJsonCreator::GenFusionOpName(nlohmann::json *kernel_json, std::string pr
   (*kernel_json)[kJFusionOpName] = json_name_;
 }
 
-void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) {
+void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) const {
   for (auto &desc_json : (*desc_jsons)) {
     if (desc_json.is_array()) {
       for (auto &desc_item : desc_json) {
@@ -294,7 +294,7 @@ size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) {
   return std::hash<std::string>()(op_lists.dump());
 }
 
-void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) {
+void TbeJsonCreator::AddOpNameForComputeNode(nlohmann::json *kernel_json) const {
   auto op_name = GetJsonValue<std::string>((*kernel_json), kJFusionOpName);
   for (auto &node_json : (*kernel_json).at(kJOpList)) {
     // compute node
@@ -374,7 +374,7 @@ void TbeJsonCreator::GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json
   }
 }
 
-void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
+void TbeJsonCreator::GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   auto cnode = anf_node->cast<CNodePtr>();
@@ -440,7 +440,7 @@ void TbeJsonCreator::GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx
   (*output_desc)[kJOutputIndex] = desc_output_idx;
 }
 
-void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) {
+void TbeJsonCreator::GenDesJsonCommon(nlohmann::json *output_desc) const {
   MS_EXCEPTION_IF_NULL(output_desc);
   (*output_desc)[kJL1AddrOffset] = 0;
   (*output_desc)[kJL1FusionType] = -1;
@@ -510,7 +510,7 @@ void ParseConstValue(const mindspore::ValuePtr &value, nlohmann::json *json_obj)
 }
 
 void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index,
-                                        nlohmann::json *input_desc) {
+                                        nlohmann::json *input_desc) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(input_desc);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(anf_node->kernel_info());
@@ -548,10 +548,10 @@ void TbeJsonCreator::GenInputConstValue(const AnfNodePtr &anf_node, size_t real_
 }
 
 void TbeJsonCreator::AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
-                                            nlohmann::json *attrs_json) {
+                                            nlohmann::json *attrs_json) const {
   tbe::TbeAdapter::CastAttrJsonPrePass(anf_node, attrs_ptr, attrs_json);
 }
-void TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {
+void TbeJsonCreator::GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const {
   MS_EXCEPTION_IF_NULL(anf_node);
   MS_EXCEPTION_IF_NULL(compute_json);
   auto op_desc = AnfAlgo::GetOutputDataDesc(anf_node);

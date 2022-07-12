@@ -37,7 +37,7 @@ class OpTilingCalculateAdapter {
   OpTilingCalculateAdapter() = default;
   ~OpTilingCalculateAdapter() = default;
 
-  ::ge::Operator GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node);
+  ::ge::Operator GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) const;
 
   ::ge::NodePtr AnfNodeToGeNodeAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
                                        const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
@@ -55,11 +55,11 @@ class OpTilingCalculateAdapter {
   std::vector<std::tuple<std::size_t, ::ge::NodePtr>> ConvertDepends(
     const CNodePtr &node, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map, ::ge::OpDescPtr *op_desc,
     ::ge::ComputeGraphPtr *ge_graph);
-  void ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc);
+  void ConvertAtomicCompileInfo(const CNodePtr &node, ::ge::OpDescPtr *op_desc) const;
   ::ge::NodePtr NewConstantOp(const CNodePtr &node, const std::string &name, const tensor::TensorPtr &tensor_data,
-                              ::ge::ComputeGraphPtr *ge_graph, size_t index);
+                              ::ge::ComputeGraphPtr *ge_graph, size_t index) const;
   void AddEdge(const ::ge::NodePtr &ge_node, const std::vector<std::tuple<std::size_t, ::ge::NodePtr>> &constant_ops);
-  std::string GetRealOpType(const std::string &op_type);
+  std::string GetRealOpType(const std::string &op_type) const;
   std::map<std::string, std::string> GetConvertAttr(const std::string &op_type);
   std::string GetInputName(const CNodePtr &node, size_t index);
   std::string GetOutputName(const CNodePtr &node, size_t index);

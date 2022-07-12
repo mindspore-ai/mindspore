@@ -15,7 +15,6 @@
  */
 
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include <sys/syscall.h>
 #include <unistd.h>
 #include <algorithm>
 #include <map>
@@ -23,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
@@ -238,7 +238,7 @@ std::vector<std::string> GetTuneOpsList(const std::string &d) {
 }
 }  // namespace
 
-void TbeKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = EXCEPTION) {
+void TbeKernelCompileManager::PrintProcessLog(const nlohmann::json &json, int adjust_log_level = EXCEPTION) const {
   auto all_logs = GetJsonValue<std::vector<nlohmann::json>>(json, kProcessInfo);
   auto job_id = GetJsonValue<int>(json, kJobId);
   auto json_name = GetJsonValue<std::string>(json, kFusionOpName);
@@ -266,7 +266,7 @@ void TbeKernelCompileManager::PrintCompileResult(const nlohmann::json &json) {
   }
 }
 
-void TbeKernelCompileManager::ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *target_status) {
+void TbeKernelCompileManager::ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *target_status) const {
   MS_EXCEPTION_IF_NULL(target_status);
   if (GetJsonValue<std::string>(json, kStatus) == kSuccess) {
     nlohmann::json query_result;
@@ -302,7 +302,7 @@ nlohmann::json TbeKernelCompileManager::TurnStrToJson(const std::string &string)
 }
 
 void TbeKernelCompileManager::JsonAssemble(const std::string &job_type, const nlohmann::json &src_json,
-                                           nlohmann::json *dst_json) {
+                                           nlohmann::json *dst_json) const {
   MS_EXCEPTION_IF_NULL(src_json);
   MS_EXCEPTION_IF_NULL(dst_json);
   static size_t job_id = 0;
@@ -339,7 +339,7 @@ void TbeKernelCompileManager::JsonAssemble(const std::string &job_type, const nl
 }
 
 void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph,
-                                             std::vector<CNodePtr> *tbe_nodes) {
+                                             std::vector<CNodePtr> *tbe_nodes) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(tbe_nodes);
   auto all_nodes = kernel_graph->execution_order();
@@ -357,11 +357,11 @@ void TbeKernelCompileManager::GetAllTbeNodes(const std::shared_ptr<session::Kern
   }
 }
 
-std::string TbeKernelCompileManager::DispatchCompileTask(const nlohmann::json &kernel_json) {
+std::string TbeKernelCompileManager::DispatchCompileTask(const nlohmann::json &kernel_json) const {
   return AscendKernelBuildClient::Instance().DispatchToServer(kernel_json.dump());
 }
 
-void TbeKernelCompileManager::SavePreBuildResult(int32_t task_id, const std::string &pre_build_result) {
+void TbeKernelCompileManager::SavePreBuildResult(int task_id, const std::string &pre_build_result) {
   MS_LOG(DEBUG) << "Find pre-build task_id: " << task_id << ", result:" << pre_build_result;
   auto task_iter = task_map_.find(task_id);
   if (task_iter == task_map_.end()) {

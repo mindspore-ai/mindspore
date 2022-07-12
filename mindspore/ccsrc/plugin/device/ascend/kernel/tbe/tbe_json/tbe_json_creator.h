@@ -75,22 +75,22 @@ class TbeJsonCreator {
  protected:
   bool GenComputeJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
   virtual bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) { return false; }
-  void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
-  void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
+  void GenOutputDataDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const;
+  void GenComputeCommonJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) const;
   virtual void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) {}
   void GenAttrsDescJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json);
-  void GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr, nlohmann::json *attrs_json);
+  void GenAttrsJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
   void AttrsJsonPreProcessing(const AnfNodePtr &anf_node, std::vector<OpAttrPtr> *attrs_ptr,
-                              nlohmann::json *attrs_json);
+                              nlohmann::json *attrs_json) const;
   virtual bool AttrsJsonPostProcessing(const AnfNodePtr &anf_node, const OpInfoPtr &op_info_ptr,
                                        nlohmann::json *attrs_json);
   virtual void GenDescJson(const AnfNodePtr &anf_node, size_t node_out_idx, size_t desc_output_idx,
                            nlohmann::json *output_desc);
-  void GenDesJsonCommon(nlohmann::json *output_desc);
-  void GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc);
+  void GenDesJsonCommon(nlohmann::json *output_desc) const;
+  void GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc) const;
   size_t GenJsonHash(nlohmann::json tbe_json);
-  void DeleteDescName(nlohmann::json *desc_json);
-  void AddOpNameForComputeNode(nlohmann::json *kernel_json);
+  void DeleteDescName(nlohmann::json *desc_jsons) const;
+  void AddOpNameForComputeNode(nlohmann::json *kernel_json) const;
   void GenFusionOpName(nlohmann::json *kernel_json, std::string prefix = "");
 
  private:

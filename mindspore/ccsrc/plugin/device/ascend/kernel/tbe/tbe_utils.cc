@@ -37,7 +37,6 @@
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_creator.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
-#include "securec/include/securec.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "kernel/common_utils.h"
@@ -121,9 +120,10 @@ std::string GetOpDebugLevel() {
   auto env_level = common::GetEnv(kCOMPILER_OP_LEVEL);
   if (!env_level.empty()) {
     if (!TbeUtils::IsOneOf(value_ranges, std::stoul(env_level.c_str()))) {
-      MS_LOG(WARNING) << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
-                      << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
-                         "Get more detail info at https://www.mindspore.cn/docs/zh-CN/master/note/env_var_list.html";
+      MS_LOG(WARNING)
+        << "Invalid environment variable '" << kCOMPILER_OP_LEVEL << "': " << env_level
+        << ", the value should be in [0, 1, 2, 3, 4], now using the default value 3."
+           "Get more detail info at https://www.mindspore.cn/tutorials/experts/zh-CN/master/env/env_var_list.html";
     } else {
       op_debug_level = env_level;
     }
@@ -505,7 +505,7 @@ std::string TbeUtils::GetSocVersion() {
   return version;
 }
 
-KernelPackPtr KernelMeta::LoadFromFile(const std::string &kernel_name) {
+KernelPackPtr KernelMeta::LoadFromFile(const std::string &kernel_name) const {
   auto config_path = TbeUtils::GetOpDebugPath();
   std::string cce_json = config_path + kCceKernelMeta + kernel_name + kJsonSuffix;
   auto ret = std::make_shared<KernelPack>();

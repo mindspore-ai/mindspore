@@ -36,7 +36,8 @@ namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
 bool NeedInsertTransData(const ShapeVector &origin_shape, const std::string &format) {
-  bool shape_check = origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % kCubeSize != 0);
+  bool shape_check =
+    origin_shape.size() > 1 || (origin_shape.size() == 1 && origin_shape[0] % SizeToLong(kCubeSize) != 0);
   return kCommonFormatSet.find(format) == kCommonFormatSet.end() && (shape_check || format == kOpFormat_ND_RNN_BIAS);
 }
 
@@ -228,8 +229,6 @@ AnfNodePtr InsertTransOpForMultipleOutput(const FuncGraphPtr &func_graph, const 
 
 AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select, size_t insert_index, bool is_insert_input) {
-  AnfNodePtr trans_node = nullptr;
-  CNodePtr trans_data = nullptr;
   MS_EXCEPTION_IF_NULL(node);
   // Init
   AnfNodePtr input_node = is_insert_input ? common::AnfAlgo::GetInputNode(node->cast<CNodePtr>(), insert_index) : node;
@@ -239,6 +238,17 @@ AnfNodePtr AddTransOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePt
                                              : AnfAlgo::GetOutputReshapeType(node, insert_index);
   return AddTransOpNodeToGraphWithFormat(func_graph, input_node, node, kernel_select, input_format, dst_format,
                                          reshape_type);
+}
+
+abstract::ShapePtr GetPadShape(const ShapeVector &padding_shape, const ShapeVector &out_shape_min,
+                               const ShapeVector &out_shape_max, const std::string &dst_format,
+                               const std::string &reshape_type, const AnfNodePtr &node, bool is_dynamic_shape) {
+  if (!is_dynamic_shape || out_shape_min.empty() || out_shape_max.empty()) {
+    return std::make_shared<abstract::Shape>(padding_shape);
+  }
+  auto pad_shape_min = trans::PaddingShape(out_shape_min, dst_format, reshape_type, node);
+  auto pad_shape_max = trans::PaddingShape(out_shape_max, dst_format, reshape_type, node);
+  return std::make_shared<abstract::Shape>(padding_shape, pad_shape_min, pad_shape_max);
 }
 
 AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
@@ -284,19 +294,13 @@ AnfNodePtr AddTransOpNodeToGraphWithFormat(const FuncGraphPtr &func_graph, const
     // if need padding & default to special format
     // ori_shape -> reshape[padding shape] -> transdata[device shape]
 
-    abstract::ShapePtr pad_shape_ptr;
     auto padding_shape = trans::PaddingShape(out_shape, dst_format, reshape_type, node);
     std::vector<int> padding_axis;
     if (std::count(padding_shape.begin(), padding_shape.end(), -1) > 1) {
       padding_axis = trans::StringToAxisVector(out_shape, dst_format, reshape_type, node);
     }
-    if (is_dynamic_shape && !out_shape_min.empty() && !out_shape_max.empty()) {
-      auto pad_shape_min = trans::PaddingShape(out_shape_min, dst_format, reshape_type, node);
-      auto pad_shape_max = trans::PaddingShape(out_shape_max, dst_format, reshape_type, node);
-      pad_shape_ptr = std::make_shared<abstract::Shape>(padding_shape, pad_shape_min, pad_shape_max);
-    } else {
-      pad_shape_ptr = std::make_shared<abstract::Shape>(padding_shape);
-    }
+    abstract::ShapePtr pad_shape_ptr =
+      GetPadShape(padding_shape, out_shape_min, out_shape_max, dst_format, reshape_type, node, is_dynamic_shape);
     auto reshape_node = CreateReshapeNode(func_graph, input_node, orig_node, kernel_select, pad_shape_ptr,
                                           is_dynamic_shape, padding_axis);
     trans_data = NewTransOpNode(func_graph, reshape_node, orig_node, kernel_select, need_padding, trans_opname);

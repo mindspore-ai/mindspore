@@ -35,7 +35,7 @@ class ConcatOutputsForAllGather : public PatternProcessPass {
         kernel_select_(std::make_shared<KernelSelect>()) {}
   ~ConcatOutputsForAllGather() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
