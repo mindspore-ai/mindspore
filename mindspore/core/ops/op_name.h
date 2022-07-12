@@ -314,6 +314,7 @@ constexpr auto kLrPower = "lr_power";
 constexpr auto kArgmaxType = "argmax_type";
 constexpr auto kNumSample = "num_samples";
 constexpr auto kMergeRepeated = "merge_repeated";
+constexpr auto kDim = "dim";
 
 enum Index : size_t {
   kInputIndex0 = 0,

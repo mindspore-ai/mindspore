@@ -537,6 +537,38 @@ def get_bprop_gather_d_grad(self):
 
     return bprop
 
+
+@bprop_getters.register(G.GatherDGradV2)
+def get_bprop_gather_d_grad_v2(self):
+    """Generate bprop for GatherDGradV2"""
+    op = P.Gather()
+    dim = self.dim
+    def bprop(index, x, out, dout):
+        index_shp = shape_op(index)
+        dim_before_axis = 1
+        x_shp = shape_op(x)
+        for i in range(dim):
+            dim_before_axis *= x_shp[i]
+        dim_at_axis_index = index_shp[dim]
+        dim_at_axis_output = x_shp[dim]
+        dim_after_axis = 1
+        for i in range(dim+1, len(x_shp)):
+            dim_after_axis *= x_shp[i]
+        element = dim_before_axis * dim_at_axis_index * dim_after_axis
+        id_ = range_op(0, element, 1, index.dtype)
+        i = id_ // (dim_at_axis_index * dim_after_axis)
+        k = id_ % dim_after_axis
+        j = P.Cast()(index < 0, index.dtype)
+        j_read = dim_at_axis_index * j + index
+        j_read = P.Reshape()(j_read, (-1,))
+        read_id = i*dim_at_axis_output*dim_after_axis + j_read * dim_after_axis + k
+        dout = P.Reshape()(dout, (-1,))
+        dx = op(dout, read_id, 0)
+        dx = P.Reshape()(dx, shape_op(x))
+        return zeros_like(index), dx
+
+    return bprop
+
 @bprop_getters.register(P.SparseGatherV2)
 def get_bprop_sparse_gather_v2(self):
     """Generate bprop for SparseGatherV2"""

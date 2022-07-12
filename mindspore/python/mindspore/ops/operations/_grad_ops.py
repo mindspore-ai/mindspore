@@ -1889,7 +1889,7 @@ class EluGrad(Primitive):
         self.init_prim_io_names(inputs=['y_backprop', 'x'], outputs=['output'])
 
 
-class GatherDGrad(PrimitiveWithInfer):
+class GatherDGrad(Primitive):
     """Performs grad of GatherD operation."""
 
     @prim_attr_register
@@ -1901,11 +1901,17 @@ class GatherDGrad(PrimitiveWithInfer):
         self.out_shape = shape
         self.init_prim_io_names(inputs=['index', 'grad'], outputs=['output'])
 
-    def infer_shape(self, index_shape, grad_shape):
-        return self.out_shape
 
-    def infer_dtype(self, index_dtype, grad_dtype):
-        return grad_dtype
+class GatherDGradV2(Primitive):
+    """Performs grad of GatherD operation."""
+
+    @prim_attr_register
+    def __init__(self, dim=0):
+        """Initialize GatherDGradV2"""
+        validator.check_is_int(dim, int)
+        self.add_prim_attr("dim", dim)
+        self.dim = dim
+        self.init_prim_io_names(inputs=['x', 'index', 'grad'], outputs=['output'])
 
 
 class ResizeBilinearGrad(Primitive):
