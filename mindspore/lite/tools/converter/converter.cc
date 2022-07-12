@@ -149,8 +149,6 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
   }
 
   param->aclModelOptionCfgParam.om_file_path = param->output_file;
-  param->aclModelOptionCfgParam.offline = true;
-
   if (!param->config_file.empty() || !param->config_param.empty()) {
     auto ret = InitConfigParam(param);
     if (ret != RET_OK) {
@@ -531,6 +529,7 @@ std::string ConverterImpl::GetStrFromConfigFile(const std::string &file, const s
 int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data, size_t *data_size, bool not_save) {
   mindspore::common_log_init();
 
+  param->aclModelOptionCfgParam.offline = !not_save;
   ConverterImpl converter_impl;
   auto meta_graph = converter_impl.Convert(param);
   NotSupportOp::GetInstance()->PrintOps();
