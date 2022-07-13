@@ -6497,7 +6497,7 @@ class TensorScatterMax(_TensorScatterOp):
     Refer to :func:`mindspore.ops.tensor_scatter_max` for more detail.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -6533,7 +6533,7 @@ class TensorScatterMin(_TensorScatterOp):
     Refer to :func:`mindspore.ops.tensor_scatter_min` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
@@ -6568,6 +6568,7 @@ class TensorScatterSub(_TensorScatterOp):
     index, the result of the update will be to subtract these values respectively. This operation is almost
     equivalent to using :class:`mindspore.ops.ScatterNdSub` , except that the updates are applied on output `Tensor`
     instead of input `Parameter`.
+
     Refer to :func:`mindspore.ops.tensor_scatter_sub` for more detail.
 
     Supported Platforms:
