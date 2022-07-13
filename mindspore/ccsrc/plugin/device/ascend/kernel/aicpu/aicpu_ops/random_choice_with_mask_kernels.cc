@@ -274,7 +274,7 @@ uint32_t RandomChoiceWithMaskKernel::ParseKernelParam() {
 
 extern "C" {
 __attribute__((visibility("default"))) uint32_t RandomChoiceWithMask(void *param) {
-  aicpu::RandomChoiceWithMaskKernel randomChoiceWithMaskKernel;
-  return randomChoiceWithMaskKernel.Compute(param);
+  aicpu::RandomChoiceWithMaskKernel random_choice_with_mask_kernel;
+  return random_choice_with_mask_kernel.Compute(param);
 }
 }
