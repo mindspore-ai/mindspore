@@ -130,3 +130,33 @@ def test_soft_shrink_grad_ds_shape():
     dynamic_output = soft_shrink_net(x, grad)
 
     np.testing.assert_allclose(static_output.asnumpy(), dynamic_output.asnumpy(), rtol=1e-3)
+
+
+def softshrink_grad_op_np_bencmark(grad, input_x, lambd=0.5):
+    result = np.zeros_like(grad, dtype=grad.dtype)
+    for index, _ in np.ndenumerate(grad):
+        if input_x[index] > lambd or input_x[index] < (-1 * lambd):
+            result[index] = grad[index]
+        else:
+            result[index] = 0
+    return result
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
+def test_softshrink_grad(data_shape):
+    """
+    Feature: SoftShrinkGrad cpu kernel
+    Description: test the rightness of SoftShrinkGrad cpu kernel
+    Expectation: the output is same as softshrink_grad_op_np_bencmark output
+    """
+    grad_data = np.random.random(data_shape).astype(np.float32)
+    input_data = np.random.uniform(
+        low=-1, high=1, size=data_shape).astype(np.float32)
+    benchmark_output = softshrink_grad_op_np_bencmark(
+        grad_data, input_data)
+    hshrink_grad = ShapeSoftShrinkGradNet()
+    output = hshrink_grad(Tensor(grad_data), Tensor(input_data))
+    assert np.allclose(output.asnumpy(), benchmark_output)
