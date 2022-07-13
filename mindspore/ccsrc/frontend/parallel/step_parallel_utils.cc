@@ -833,6 +833,35 @@ std::vector<Shapes> ExtractShape(const CNodePtr &node) {
   return shape_all;
 }
 
+void AddNodeFusionInfo(const CNodePtr &node, const CNodePtr &comm_node, const std::string &backward_comm_name,
+                       int32_t fusion_id) {
+  if (fusion_id <= 0) {
+    return;
+  }
+  if (GetValueNode<PrimitivePtr>(comm_node->input(0))->HasAttr(GROUP)) {
+    auto comm_group = GetValue<std::string>(GetValueNode<PrimitivePtr>(comm_node->input(0))->GetAttr(GROUP));
+    std::string fusion_key = backward_comm_name + "_" + comm_group + "_" + std::to_string(fusion_id);
+    if (!IsPrimitiveCNode(node, prim::kPrimLoad)) {
+      node->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+      node->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+      return;
+    }
+    auto func_graph = node->func_graph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    auto user_set = manager->node_users()[node];
+    for (auto &pair : user_set) {
+      if (!IsPrimitiveCNode(pair.first)) {
+        continue;
+      }
+      auto next_cnode = pair.first->cast<CNodePtr>();
+      next_cnode->AddPrimalAttr(kRelatedFusionKey, MakeValue<std::string>(fusion_key));
+      next_cnode->AddPrimalAttr(kRelatedNodeId, MakeValue<std::string>(node->UniqueId()));
+    }
+  }
+}
+
 OperatorInfoPtr CreateOperatorInfo(const CNodePtr &cnode) {
   auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim);

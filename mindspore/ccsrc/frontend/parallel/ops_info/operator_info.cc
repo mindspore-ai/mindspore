@@ -408,7 +408,7 @@ Operator CreateCastOp(TypePtr type) {
   return op_cast;
 }
 
-void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
+int32_t AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
   MS_EXCEPTION_IF_NULL(comm_node);
   MS_EXCEPTION_IF_NULL(param_node);
   ParameterPtr param;
@@ -424,7 +424,7 @@ void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node
   auto param_info = param->param_info();
   if (!param_info) {
     MS_LOG(WARNING) << param->ToString() << "does not have parameter info.";
-    return;
+    return 0;
   }
   int32_t fusion_type = param_info->comm_fusion();
   attrs[FUSION] = MakeValue<int64_t>(fusion_type);
@@ -437,6 +437,7 @@ void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node
     prim->set_instance_name(PARALLEL_OPTIMIZER_ALLGATHER);
   }
   MS_LOG(INFO) << "Set comm fusion:" << param->param_info()->name() << "'s fusion type is " << fusion_type;
+  return fusion_type;
 }
 
 void AddCommOpMeanFlag(const CNodePtr &comm_node) {
