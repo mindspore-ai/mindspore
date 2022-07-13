@@ -2218,10 +2218,10 @@ class ArgMinWithValue(Primitive):
         tuple (Tensor), tuple of 2 tensors, containing the corresponding index and the minimum value of the input
         tensor.
 
-        - index (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
+        - **index** (Tensor) - The index for the minimum value of the input tensor. If `keep_dims` is true, the shape of
           output tensors is :math:`(x_1, x_2, ..., x_{axis-1}, 1, x_{axis+1}, ..., x_N)`. Otherwise, the shape is
           :math:`(x_1, x_2, ..., x_{axis-1}, x_{axis+1}, ..., x_N)` .
-        - values (Tensor) - The minimum value of input tensor, with the same shape as index.
+        - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
         TypeError: If `keep_dims` is not a bool.
