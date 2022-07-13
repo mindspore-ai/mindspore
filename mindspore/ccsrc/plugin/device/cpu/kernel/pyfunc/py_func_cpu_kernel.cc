@@ -19,7 +19,6 @@
 #include <memory>
 #include <vector>
 #include "Eigen/Core"
-#include "Eigen/src/Core/arch/CUDA/Half.h"
 #include "abstract/utils.h"
 #include "plugin/device/cpu/hal/device/cpu_common.h"
 #include "include/common/utils/python_adapter.h"

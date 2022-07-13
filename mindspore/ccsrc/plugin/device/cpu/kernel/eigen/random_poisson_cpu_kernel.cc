@@ -48,7 +48,7 @@ static EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE uint64_t PCG_XSH_RS_state(uint64_t 
 }  // namespace
 
 template <typename T>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, double rate) {
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, uint64_t m_stream, double rate) {
   using Eigen::numext::exp;
   using Eigen::numext::log;
   using Eigen::numext::pow;
@@ -63,7 +63,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, dou
     // Keep trying until we surpass e^(-rate). This will take
     // expected time proportional to rate.
     while (true) {
-      double u = Eigen::internal::RandomToTypeUniform<double>(state);
+      double u = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
       prod = prod * u;
       if (prod <= exp_neg_rate && x <= static_cast<double>(Eigen::NumTraits<T>::highest())) {
         result = static_cast<T>(x);
@@ -83,9 +83,9 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE T RandomToTypePoisson(uint64_t *state, dou
     const double inv_alpha = static_cast<double>(1.1239) + static_cast<double>(1.1328) / (b - static_cast<double>(3.4));
 
     while (true) {
-      double u = Eigen::internal::RandomToTypeUniform<double>(state);
+      double u = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
       u -= static_cast<double>(0.5);
-      double v = Eigen::internal::RandomToTypeUniform<double>(state);
+      double v = Eigen::internal::RandomToTypeUniform<double>(state, m_stream);
       double u_shifted = static_cast<double>(0.5) - Eigen::numext::abs(u);
       double k =
         Eigen::numext::floor((static_cast<double>(2) * a / u_shifted + b) * u + rate + static_cast<double>(0.43));
@@ -130,13 +130,16 @@ class PoissonRandomGenerator {
   }
   void setRate(double rate) { m_rate = rate; }
   T gen() const {
-    T result = RandomToTypePoisson<T>(&m_state, m_rate);
+    T result = RandomToTypePoisson<T>(&m_state, m_stream, m_rate);
     return result;
   }
 
  private:
   double m_rate;
   mutable uint64_t m_state;
+  // Adapt Eigen 3.4.0 new api for stream random number generator.
+  // Here's no parallel computing, so we set stream to any fixed value.
+  static constexpr uint64_t m_stream = 0;
 };
 
 bool AddrAlignedCheck(const void *addr, uint64_t alignment = 16) {
