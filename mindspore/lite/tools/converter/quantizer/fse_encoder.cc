@@ -403,6 +403,7 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
   auto max_size = tensor_info->Size();
   if (max_size == 0 || max_size > kMaxModelBufferSize) {
     MS_LOG(ERROR) << weight->name() << " malloc size:" << max_size << " is invalid.";
+    return RET_ERROR;
   }
   auto *out8 = static_cast<uint8_t *>(malloc(max_size));
   MSLITE_CHECK_PTR(out8);
