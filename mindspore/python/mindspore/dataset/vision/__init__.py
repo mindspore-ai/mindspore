@@ -31,8 +31,8 @@ Note: Legacy c_transforms and py_transforms are deprecated but can still be impo
     import mindspore.dataset.vision.c_transforms as c_vision
     import mindspore.dataset.vision.py_transforms as py_vision
 
-See `Image Data Processing and Augmentation Tutorial
-<https://www.mindspore.cn/tutorials/en/r1.8/advanced/dataset/augment_image_data.html>`_ for more details.
+See `Image Data Processing and Augmentation
+<https://www.mindspore.cn/tutorials/en/r1.8/advanced/dataset/augment_image_data.html>`_ tutorial for more details.
 
 Descriptions of common data processing terms are as follows:
 
