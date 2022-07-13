@@ -83,11 +83,6 @@ void InferImplReduceFuncCalShape(const PrimitivePtr &primitive, ShapeVector *sha
   return;
 }
 
-bool CheckShapeValid(const std::vector<AbstractBasePtr> &input_args, const uint64_t input_num_ascend) {
-  return input_args.size() == input_num_ascend && input_args[1] && input_args[1]->isa<abstract::AbstractTensor>() &&
-         input_args[1]->BuildValue() && input_args[1]->BuildValue()->isa<AnyValue>();
-}
-
 abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape("ArgminV2", input_args, 0);
@@ -96,77 +91,47 @@ abstract::ShapePtr ArgminV2InferShape(const PrimitivePtr &primitive, const std::
   auto input_min_shape = shape_ptr->min_shape();
   auto input_max_shape = shape_ptr->max_shape();
   ShapeVector out_shape = {};
-  ShapeVector out_min_shape = {};
-  ShapeVector out_max_shape = {};
-  int64_t max_v;
-  if (shape_ptr->IsDynamic()) {
-    max_v = *max_element(input_max_shape.begin(), input_max_shape.end());
-  } else {
-    max_v = *max_element(input_shape.begin(), input_shape.end());
-  }
-  const uint64_t input_num_ascend = 2;
-  if (CheckShapeValid(input_args, input_num_ascend)) {
-    auto axis_tensor = input_args[1]->cast<abstract::AbstractTensorPtr>();
+  ValuePtr axis_value;
+  ValuePtr axis_ptr = input_args[1]->BuildValue();
+  MS_EXCEPTION_IF_NULL(axis_ptr);
+  if (axis_ptr->isa<tensor::Tensor>() && input_args[1]) {
+    auto axis_type = input_args[1]->BuildType();
+    MS_EXCEPTION_IF_NULL(axis_type);
+    auto axis_type_id = axis_type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(axis_type_id);
+    auto axis_tensor = axis_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(axis_tensor);
-    auto axis_tensor_shape = axis_tensor->shape();
-    MS_EXCEPTION_IF_NULL(axis_tensor_shape);
-    auto axis_shape = axis_tensor_shape->shape();
-    if (axis_shape.size() == 1 && axis_shape[0] == -1) {
-      int64_t dynamic_shape_index = -2;
-      out_shape.push_back(dynamic_shape_index);
-      out_min_shape = input_min_shape;
-      out_max_shape = input_max_shape;
+    size_t data_size = axis_tensor->DataSize();
+    std::vector<ValuePtr> value_list;
+    auto element = axis_type_id->element();
+    MS_EXCEPTION_IF_NULL(element);
+    if (element->type_id() == kNumberTypeInt32) {
+      auto shape_data = reinterpret_cast<int *>(axis_tensor->data_c());
+      MS_EXCEPTION_IF_NULL(shape_data);
+      for (size_t i = 0; i < data_size; i++) {
+        value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data)));
+        ++shape_data;
+      }
     } else {
-      for (size_t i = 0; i < input_shape.size() - axis_shape.size(); ++i) {
-        out_shape.push_back(-1);
-        out_min_shape.push_back(1);
-        out_max_shape.push_back(max_v);
+      auto shape_data2 = reinterpret_cast<int64_t *>(axis_tensor->data_c());
+      for (size_t i = 0; i < data_size; i++) {
+        value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data2)));
+        ++shape_data2;
       }
     }
-    return std::make_shared<abstract::Shape>(out_shape, out_min_shape, out_max_shape);
+    axis_value = std::make_shared<ValueTuple>(value_list);
   } else {
-    ValuePtr axis_value;
-    ValuePtr axis_ptr = input_args[1]->BuildValue();
-    MS_EXCEPTION_IF_NULL(axis_ptr);
-    if (axis_ptr->isa<tensor::Tensor>() && input_args[1]) {
-      auto axis_type = input_args[1]->BuildType();
-      MS_EXCEPTION_IF_NULL(axis_type);
-      auto axis_type_id = axis_type->cast<TensorTypePtr>();
-      MS_EXCEPTION_IF_NULL(axis_type_id);
-      auto axis_tensor = axis_ptr->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(axis_tensor);
-      size_t data_size = axis_tensor->DataSize();
-      std::vector<ValuePtr> value_list;
-      auto element = axis_type_id->element();
-      MS_EXCEPTION_IF_NULL(element);
-      if (element->type_id() == kNumberTypeInt32) {
-        auto shape_data = reinterpret_cast<int *>(axis_tensor->data_c());
-        MS_EXCEPTION_IF_NULL(shape_data);
-        for (size_t i = 0; i < data_size; i++) {
-          value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data)));
-          ++shape_data;
-        }
-      } else {
-        auto shape_data2 = reinterpret_cast<int64_t *>(axis_tensor->data_c());
-        for (size_t i = 0; i < data_size; i++) {
-          value_list.push_back(MakeValue(static_cast<int64_t>(*shape_data2)));
-          ++shape_data2;
-        }
-      }
-      axis_value = std::make_shared<ValueTuple>(value_list);
-    } else {
-      axis_value = axis_ptr;
-    }
-    InferImplReduceFuncCalShape(primitive, &out_shape, input_shape, axis_value);
-    if (!input_min_shape.empty() && !input_max_shape.empty()) {
-      ShapeVector shape_min = {};
-      ShapeVector shape_max = {};
-      InferImplReduceFuncCalShape(primitive, &shape_min, input_min_shape, axis_value);
-      InferImplReduceFuncCalShape(primitive, &shape_max, input_max_shape, axis_value);
-      return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
-    }
-    return std::make_shared<abstract::Shape>(out_shape);
+    axis_value = axis_ptr;
   }
+  InferImplReduceFuncCalShape(primitive, &out_shape, input_shape, axis_value);
+  if (!input_min_shape.empty() && !input_max_shape.empty()) {
+    ShapeVector shape_min = {};
+    ShapeVector shape_max = {};
+    InferImplReduceFuncCalShape(primitive, &shape_min, input_min_shape, axis_value);
+    InferImplReduceFuncCalShape(primitive, &shape_max, input_max_shape, axis_value);
+    return std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
+  }
+  return std::make_shared<abstract::Shape>(out_shape);
 }
 
 TypePtr ArgminV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
