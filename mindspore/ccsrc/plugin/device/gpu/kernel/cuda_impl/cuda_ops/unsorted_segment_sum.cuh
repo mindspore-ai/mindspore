@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 
 template<typename T, typename S>
 CUDA_LIB_EXPORT void UnsortedSegmentSum(size_t input_dim0, size_t input_dim1, size_t output_dim0, size_t output_dim1,
-                                        T* input_addr, S* ids, T* output_addr, cudaStream_t stream);
+                                        T *input_addr, S *ids, T *output_addr, cudaStream_t stream,
+                                        const uint32_t &device_id);
 
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UNSORT_SEGMENT_SUM_CUH_

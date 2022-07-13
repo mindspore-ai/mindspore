@@ -17,107 +17,57 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_UNSORTED_SEGMENT_SUM_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_UNSORTED_SEGMENT_SUM_GPU_KERNEL_H_
 
+#include <utility>
+#include <map>
 #include <vector>
+#include <algorithm>
+#include "mindspore/core/abstract/utils.h"
+#include "mindspore/ccsrc/kernel/common_utils.h"
 #include "plugin/device/gpu/kernel/gpu_kernel.h"
 #include "plugin/device/gpu/kernel/gpu_kernel_factory.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/unsorted_segment_sum.cuh"
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
-class UnsortedSegmentSumGpuKernelMod : public DeprecatedNativeGpuKernelMod {
+class UnsortedSegmentSumGpuKernelMod : public NativeGpuKernelMod {
  public:
-  UnsortedSegmentSumGpuKernelMod() { ResetResource(); }
-  ~UnsortedSegmentSumGpuKernelMod() override = default;
+  UnsortedSegmentSumGpuKernelMod() {}
+  ~UnsortedSegmentSumGpuKernelMod() {}
 
-  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs,
+             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) override;
+
+  bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    if (is_null_input_) {
-      return true;
-    }
-    T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    S *indices_addr = GetDeviceAddress<S>(inputs, 1);
-    T *output_addr = GetDeviceAddress<T>(outputs, 0);
-
-    CHECK_CUDA_RET_WITH_EXCEPT(
-      kernel_node_, cudaMemsetAsync(output_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
-      "cudaMemSet Failed");
-    UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_addr, indices_addr, output_addr,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
-    return true;
-  }
-
-  bool Init(const CNodePtr &kernel_node) override {
-    auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-    kernel_node_ = kernel_node;
-
-    ResetResource();
-    auto input_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 0);
-    auto ids_shape_signed = AnfAlgo::GetInputDeviceShapeAdaptively(kernel_node, 1);
-    auto output_shape_signed = AnfAlgo::GetOutputDeviceShapeAdaptively(kernel_node, 0);
-    if (AnfAlgo::IsShapesDynamic({input_shape_signed, ids_shape_signed, output_shape_signed})) {
-      return true;
-    }
-    auto input_shapes = Convert2SizeTClipNeg(input_shape_signed);
-    auto ids_shapes = Convert2SizeTClipNeg(ids_shape_signed);
-    auto output_shapes = Convert2SizeTClipNeg(output_shape_signed);
-    is_null_input_ = CHECK_SHAPE_NULL(input_shapes, kernel_name, "input") ||
-                     CHECK_SHAPE_NULL(ids_shapes, kernel_name, "segment_ids") ||
-                     CHECK_SHAPE_NULL(output_shapes, kernel_name, "output");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
-    }
-
-    size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num == 3) {
-      MS_LOG(INFO) << "UnsortedSegmentSum Kernel Input count is 3 - dynamic mode";
-    } else {
-      MS_LOG(INFO) << "UnsortedSegmentSum Kernel Input count is 2";
-    }
-
-    auto axis = ids_shapes.size();
-    for (size_t i = 0; i < input_shapes.size(); i++) {
-      if (i < axis) {
-        input_dim0_ *= static_cast<size_t>(input_shapes[i]);
-      } else {
-        input_dim1_ *= static_cast<size_t>(input_shapes[i]);
-      }
-    }
-
-    output_dim0_ = static_cast<size_t>(output_shapes[0]);
-    for (size_t j = 1; j < output_shapes.size(); j++) {
-      output_dim1_ *= static_cast<size_t>(output_shapes[j]);
-    }
-
-    InitSizeLists();
-    return true;
-  }
-
-  void ResetResource() noexcept override {
-    input_dim0_ = 1;
-    input_dim1_ = 1;
-    output_dim0_ = 1;
-    output_dim1_ = 1;
-    is_null_input_ = false;
-    input_size_list_.clear();
-    output_size_list_.clear();
-    workspace_size_list_.clear();
+    return kernel_func_(this, inputs, workspace, outputs, stream_ptr);
   }
 
  protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(input_dim0_ * input_dim1_ * sizeof(T));
-    input_size_list_.push_back(input_dim0_ * sizeof(S));
-    output_size_list_.push_back(output_dim0_ * output_dim1_ * sizeof(T));
-  }
+  std::vector<KernelAttr> GetOpSupport() override;
+  template <typename T, typename S>
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs, void *stream_ptr);
+  using UnsortedSegmentSumFunc =
+    std::function<bool(UnsortedSegmentSumGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &, void *)>;
+  UnsortedSegmentSumFunc kernel_func_;
+  static std::vector<std::pair<KernelAttr, UnsortedSegmentSumFunc>> func_list_;
 
  private:
-  size_t input_dim0_;
-  size_t input_dim1_;
-  size_t output_dim0_;
-  size_t output_dim1_;
-  bool is_null_input_;
+  void ResetResource();
+  void InitSizeLists();
+
+ private:
+  size_t input_dim0_ = 1;
+  size_t input_dim1_ = 1;
+  size_t output_dim0_ = 1;
+  size_t output_dim1_ = 1;
+  size_t data_unit_size_ = 0; /* size of T */
+  size_t ids_unit_size_ = 0;  /* size of S */
 };
 }  // namespace kernel
 }  // namespace mindspore

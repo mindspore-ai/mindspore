@@ -29,9 +29,6 @@
 
     **异常：**
     
-    - **TypeError** - `num_segments` 不是int类型或Tensor的dtype不是int32或int64。
-    - **ValueError** - `segment_ids` 的维度小于1。
-    - **ValueError** - `segment_ids` 的维度大于`input_x`的维度。
-    - **ValueError** - `num_segments` int类型的值小于0或Tensor类型的元素小于0。
-    - **ValueError** - `num_segments` 是长度不等于0的Tensor。
+    - **TypeError** - `num_segments` 不是int类型。
+    - **ValueError** - `segment_ids` 的维度不等于1。
 
