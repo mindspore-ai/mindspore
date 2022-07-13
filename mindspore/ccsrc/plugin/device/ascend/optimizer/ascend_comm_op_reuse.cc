@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace ascend {
 namespace {
 template <class T>
 std::string VecToString(const std::vector<T> &vec) {
@@ -234,9 +233,9 @@ void AscendCommOpReuse::AnalyseCommOpReuse() {
 KernelGraphPtr AscendCommOpReuse::CreateCommSubGraph(const CNodePtr &comm_op) {
   MS_EXCEPTION_IF_NULL(comm_op);
   MS_EXCEPTION_IF_ZERO("input size of comm_op " + comm_op->DebugString(), comm_op->size());
-  MS_EXCEPTION_IF_NULL(create_new_kernel_graph_);
   // create sub graph
-  auto graph = create_new_kernel_graph_();
+  auto graph = std::make_shared<session::KernelGraph>();
+  graph->set_graph_id(comm_subgraph_sum_++);
   MS_EXCEPTION_IF_NULL(graph);
   auto sub_graph_inputs = graph->MutableInputs();
   MS_EXCEPTION_IF_NULL(sub_graph_inputs);
@@ -300,6 +299,5 @@ void AscendCommOpReuse::ReplaceCommOpToCallNode() {
     origin_comm_op->set_inputs(new_call_op_args);
   }
 }
-}  // namespace ascend
 }  // namespace opt
 }  // namespace mindspore

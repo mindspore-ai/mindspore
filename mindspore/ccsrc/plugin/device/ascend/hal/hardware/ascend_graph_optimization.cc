@@ -19,6 +19,7 @@
 #include <string>
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
+#include "plugin/device/ascend/optimizer/ascend_comm_op_reuse.h"
 #include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
@@ -106,6 +107,7 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   CheckControlFlowDynamicShape(graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  CommOpReuse(graph);
   if (context_ptr->get_param<bool>(MS_CTX_IS_MULTI_GRAPH_SINK)) {
     HandleControlFlow(NOT_NULL(graph));
   }
@@ -172,6 +174,30 @@ void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) cons
   MS_LOG(INFO) << "Status record: start post optimization. graph id: " << graph->graph_id();
   graph->SetOptimizerFlag();
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();
+}
+
+void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  auto max_comm_op_reuse_num_env = common::GetEnv("MS_COMM_COMPILER_OPT");
+  if (!graph->is_graph_run_mode() || max_comm_op_reuse_num_env.empty()) {
+    return;
+  }
+  MS_LOG(INFO) << "Status record: start comm op reuse. graph id: " << graph->graph_id();
+  const uint32_t max_comm_op_reuse_num = IntToUint(std::stoi(max_comm_op_reuse_num_env));
+  MS_LOG(INFO) << "MAX_COMM_OP_REUSE_NUM: " << max_comm_op_reuse_num;
+  opt::AscendCommOpReuse comm_io_reuse(graph, max_comm_op_reuse_num);
+  comm_io_reuse.Run();
+  MS_LOG(INFO) << "Status record: end comm op reuse. graph id: " << graph->graph_id();
+
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "hwopt_comm_reuse_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+  }
+#endif
 }
 
 void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) {
