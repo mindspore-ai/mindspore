@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
-from mindspore import context
+from mindspore import context, ms_function
 from mindspore import Tensor, nn
 from mindspore.common.parameter import Parameter
 from mindspore.ops import composite as C
@@ -254,3 +254,30 @@ def test_single_for_05():
 
     assert graph_forward_res == Tensor([6], mstype.int32)
     assert graph_backward_res == (Tensor([1], mstype.int32),)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_for():
+    """
+    Feature: The else branches of for loops aren't supported.
+    Description: The else branches of for loops aren't supported.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_for(x, y):
+        for _ in range(3):
+            y += x
+            break
+        else:
+            y = x + 6
+        return y
+
+    with pytest.raises(RuntimeError, match="The 'for...else...' statement is not supported now."):
+        input_x = Tensor([0], mstype.int32)
+        input_y = Tensor([2], mstype.int32)
+        res = control_flow_for(input_x, input_y)
+        print("res:", res)
