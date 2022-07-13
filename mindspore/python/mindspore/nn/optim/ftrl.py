@@ -323,7 +323,7 @@ class FTRL(Optimizer):
         self._target = value
 
     def _init_distributed_opts(self, use_locking, learning_rate, l1, l2, lr_power):
-        self.use_dist_optimizer = self.use_distibuted_optimizer()
+        self.use_dist_optimizer = self._use_distibuted_optimizer()
         self.distributed_opts, self.use_distributed_opt_flags =\
         self._get_distributed_optimizer_list("ftrl", use_locking=use_locking)
         self.distributed_sparse_opts, self.use_distributed_sparse_opt_flags =\

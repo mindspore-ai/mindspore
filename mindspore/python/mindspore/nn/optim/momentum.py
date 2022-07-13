@@ -204,7 +204,7 @@ class Momentum(Optimizer):
 
         self.distributed_opts, self.use_distributed_opt_flags =\
         self._get_distributed_optimizer_list("momentum", use_nesterov=self.use_nesterov)
-        self.use_dist_optimizer = self.use_distibuted_optimizer()
+        self.use_dist_optimizer = self._use_distibuted_optimizer()
 
     @ms_function
     def construct(self, gradients):
