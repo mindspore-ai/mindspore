@@ -311,6 +311,7 @@ constexpr auto kArgmaxType = "argmax_type";
 constexpr auto kNumSample = "num_samples";
 constexpr auto kMergeRepeated = "merge_repeated";
 constexpr auto kCount = "count";
+constexpr auto kDim = "dim";
 
 enum Index : size_t {
   kInputIndex0 = 0,
