@@ -53,6 +53,7 @@ class AscendGraphOptimization {
   void PostOptimization(const KernelGraphPtr &graph);
 
   // Graph Optimized level-3 interface
+  void CommOpReuse(const KernelGraphPtr &graph);
   void IRFusionOptimization(const KernelGraphPtr &graph);
   void UpdateRefOutputMap(const KernelGraphPtr &graph);
   void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager,

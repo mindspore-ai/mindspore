@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_COMM_OP_REUSE_H_
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_COMM_OP_REUSE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_ASCEND_COMM_OP_REUSE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_ASCEND_COMM_OP_REUSE_H_
 
 #include <functional>
 #include <map>
@@ -27,14 +27,10 @@
 
 namespace mindspore {
 namespace opt {
-namespace ascend {
 class AscendCommOpReuse {
  public:
-  AscendCommOpReuse(const KernelGraphPtr &root_graph, std::function<KernelGraphPtr()> create_new_kernel_graph,
-                    const uint32_t &max_comm_op_reuse_num)
-      : root_graph_(root_graph),
-        create_new_kernel_graph_(create_new_kernel_graph),
-        max_comm_op_reuse_num_(max_comm_op_reuse_num) {}
+  AscendCommOpReuse(const KernelGraphPtr &root_graph, const uint32_t &max_comm_op_reuse_num)
+      : root_graph_(root_graph), max_comm_op_reuse_num_(max_comm_op_reuse_num) {}
   void Run();
 
  private:
@@ -50,12 +46,11 @@ class AscendCommOpReuse {
   KernelGraphPtr root_graph_ = {};
   std::vector<std::pair<CNodePtr, KernelGraphPtr>> all_comm_ops_ = {};  // use vector to keep order
   std::map<CNodePtr, KernelGraphPtr> reused_comm_sub_graphs_ = {};      // origin comm op to reused comm sub graph
-  std::function<KernelGraphPtr()> create_new_kernel_graph_ = {};
   const uint32_t max_comm_op_reuse_num_;
+  uint32_t comm_subgraph_sum_ = 50000;
   uint32_t total_comm_op_reuse_num_ = 0;
 };
-}  // namespace ascend
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_ASCEND_COMM_OP_REUSE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_OPTIMIZER_ASCEND_COMM_OP_REUSE_H_
