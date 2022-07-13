@@ -15,9 +15,10 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HOST_DYNAMIC_BROADCAST_GRADIENT_ARGS_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HOST_DYNAMIC_BROADCAST_GRADIENT_ARGS_KERNEL_H_
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
+
 #include "plugin/device/ascend/kernel/host/host_kernel_mod.h"
 
 namespace mindspore {
@@ -30,7 +31,7 @@ class DynamicBroadcastGradientArgsKernelMod : public HostKernelMod {
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
-  void Execute();
+  void Execute() const;
 };
 MS_HOST_REG_KERNEL(DynamicBroadcastGradientArgs, DynamicBroadcastGradientArgsKernelMod);
 }  // namespace kernel
