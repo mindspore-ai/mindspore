@@ -74,6 +74,10 @@ int Normalize(cv::Mat *image, const std::map<int, double> &mean, const std::map<
   }
   std::vector<double> mean_vec;
   std::vector<double> var_vec;
+  if (image->channels() < 0) {
+    MS_LOG(ERROR) << "image channels should not be negative.";
+    return RET_ERROR;
+  }
   size_t img_channel_size = image->channels();
   if (mean.empty()) {
     mean_vec = std::vector<double>(img_channel_size, 0.0);

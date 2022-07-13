@@ -747,7 +747,7 @@ STATUS GetShapeVectorFromStringTensor(const api::TensorPtr &tensor_info, ShapeVe
       (*offset)++;
       break;
     }
-    shape_size_str.push_back(tensor_data[*offset]);
+    shape_size_str.push_back(static_cast<char>(tensor_data[*offset]));
   }
   if (*offset == 0) {
     MS_LOG(ERROR) << "string tensor's dim size not found.";
@@ -768,7 +768,7 @@ STATUS GetShapeVectorFromStringTensor(const api::TensorPtr &tensor_info, ShapeVe
       shape_vector->push_back(std::stoi(shape_str));
       shape_str.clear();
     } else {
-      shape_str.push_back(tensor_data[*offset]);
+      shape_str.push_back(static_cast<char>(tensor_data[*offset]));
     }
     if (cnt == shape_size) {
       (*offset)++;
