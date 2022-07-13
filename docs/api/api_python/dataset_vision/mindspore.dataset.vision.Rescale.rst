@@ -7,12 +7,10 @@ mindspore.dataset.vision.Rescale
 
     .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
 
-    **参数：**
+    参数：
+        - **rescale** (float) - 缩放因子。
+        - **shift** (float) - 平移因子。
 
-    - **rescale** (float) - 缩放因子。
-    - **shift** (float) - 平移因子。
-
-    **异常：**
-
-    - **TypeError** - 当 `rescale` 的类型不为float。
-    - **TypeError** - 当 `shift` 的类型不为float。
+    异常：
+        - **TypeError** - 当 `rescale` 的类型不为float。
+        - **TypeError** - 当 `shift` 的类型不为float。

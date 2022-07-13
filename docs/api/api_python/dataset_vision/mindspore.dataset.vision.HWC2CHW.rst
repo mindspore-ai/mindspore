@@ -8,6 +8,5 @@ mindspore.dataset.vision.HWC2CHW
 
     .. note:: 此操作支持通过 Offload 在 Ascend 或 GPU 平台上运行。
 
-    **异常：**
-
-    - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。
+    异常：
+        - **RuntimeError** - 如果输入图像的shape不是 <H, W> 或 <H, W, C>。

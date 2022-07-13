@@ -34,14 +34,14 @@ mindspore.dataset.text.JiebaTokenizer
             - **user_dict** (Union[str, dict]) - 有两种输入方式。可以通过指定jieba字典格式的文件路径加载。
               要求的jieba字典格式为：[word，freq]，如：
 
-          .. code-block::
+              .. code-block::
 
-              word1 freq1
-              word2 None
-              word3 freq3
+                  word1 freq1
+                  word2 None
+                  word3 freq3
 
-          在提供的jieba字典文件中，只有有效的词对才会被添加到字典中，无效的输入行将被忽略，且不返回错误或警告状态。
-          同时用户也可以通过Python dict定义要添加的词汇，要求的Python字典格式为：{word1:freq1, word2:freq2,...}。   
+              在提供的jieba字典文件中，只有有效的词对才会被添加到字典中，无效的输入行将被忽略，且不返回错误或警告状态。
+              同时用户也可以通过Python dict定义要添加的词汇，要求的Python字典格式为：{word1:freq1, word2:freq2,...}。
 
     .. py:method:: add_word(word, freq=None)
 

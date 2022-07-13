@@ -7,13 +7,11 @@ mindspore.dataset.vision.UniformAugment
     
     序列中的所有数据处理操作要求具有相同的输入和输出类型，以便后一个操作能够处理前一个操作的输出数据。
 
-    **参数：**
+    参数：
+        - **transforms** (Sequence) - 数据处理操作序列。
+        - **num_ops** (int，可选) - 均匀采样的数据处理操作数，默认值：2。
 
-    - **transforms** (Sequence) - 数据处理操作序列。
-    - **num_ops** (int，可选) - 均匀采样的数据处理操作数，默认值：2。
-
-    **异常：**
-
-    - **TypeError** - 当 `transforms` 的类型不为数据处理操作序列。
-    - **TypeError** - 当 `num_ops` 的类型不为int。
-    - **ValueError** - 当 `num_ops` 不为正数。
+    异常：
+        - **TypeError** - 当 `transforms` 的类型不为数据处理操作序列。
+        - **TypeError** - 当 `num_ops` 的类型不为int。
+        - **ValueError** - 当 `num_ops` 不为正数。
