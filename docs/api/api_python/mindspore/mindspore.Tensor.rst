@@ -887,6 +887,7 @@ mindspore.Tensor
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
     .. py:method:: log_matrix_determinant()
+
         计算一个或多个平方矩阵行列式绝对值的对数的符号和绝对值的对数。
 
         `x` 指的当前 Tensor。
@@ -1322,6 +1323,7 @@ mindspore.Tensor
         - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
     .. py:method:: scatter_mul(indices, updates)
+
         根据指定的索引，通过乘法进行计算，将结果赋值到输出Tensor中。更新后的结果是通过算子output返回，而不是直接原地更新当前Tensor。
 
         `indices` 的最后一个轴是每个索引向量的深度。对于每个索引向量， `updates` 中必须有相应的值。 `updates` 的shape应该等于 `input_x[indices]` 的shape。其中 `input_x` 指当前Tensor。 有关更多详细信息，请参见使用用例。
@@ -1878,7 +1880,7 @@ mindspore.Tensor
         计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
         `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或
         `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
-        后面为了使表达清晰，使用`x` 代替原Tensor。
+        后面为了使表达清晰，使用 `x` 代替原Tensor。
 
         .. math::
             out_i = x_{i}\ln{y_{i}}
