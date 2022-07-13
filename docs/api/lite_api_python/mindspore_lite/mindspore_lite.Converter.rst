@@ -59,6 +59,18 @@ mindspore_lite.Converter
     - **RuntimeError** - 当 `model_file` 不是""时， `model_file` 文件路径不存在。
     - **RuntimeError** - 当 `config_file` 不是""时， `config_file` 文件路径不存在。
 
+    .. py:method:: converter()
+
+        执行转换，将第三方模型转换为MindSpore模型。
+
+        **异常：**
+
+        - **RuntimeError** - 转换模型失败。
+
+    .. py:method:: get_config_info()
+
+        获取转换的配置信息。
+
     .. py:method:: set_config_info(section, config_info)
 
         设置转换时的配置信息。
@@ -83,15 +95,3 @@ mindspore_lite.Converter
 
         - **TypeError** - `section` 不是str类型。
         - **TypeError** - `config_info` 不是dict类型。
-
-    .. py:method:: get_config_info()
-
-        获取转换的配置信息。
-
-    .. py:method:: converter()
-
-        执行转换，将第三方模型转换为MindSpore模型。
-
-        **异常：**
-
-        - **RuntimeError** - 转换模型失败。
