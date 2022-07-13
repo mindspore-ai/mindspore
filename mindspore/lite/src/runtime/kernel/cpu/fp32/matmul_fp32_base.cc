@@ -618,7 +618,9 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if (params_->batch >= op_parameter_->thread_num_ || params_->col_ == 1) {
+  if ((a_batch_ >= op_parameter_->thread_num_ &&
+       (b_batch_ == a_batch_ || params_->row_ == 1 || !SupportMulBatchCuttingByRow())) ||
+      params_->col_ == 1) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByBatch;
@@ -636,8 +638,7 @@ int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
       }
     }
     return RET_OK;
-  }
-  if (CheckThreadCuttingByRow()) {
+  } else if ((a_batch_ >= op_parameter_->thread_num_ && b_batch_ == 1) || CheckThreadCuttingByRow()) {
     parallel_fun_ = &MatmulFp32BaseCPUKernel::ParallelRunByRow;
     GetThreadCuttingInfoByRow();
   } else {

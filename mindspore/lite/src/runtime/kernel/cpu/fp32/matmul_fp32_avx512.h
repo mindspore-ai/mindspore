@@ -34,6 +34,7 @@ class MatmulFp32AVX512CPUKernel : public MatmulFp32BaseCPUKernel {
   int ParallelRunByRow(int task_id) const override;
   int ParallelRunByOC(int task_id) const override;
   bool CheckThreadCuttingByRow() override;
+  bool SupportMulBatchCuttingByRow() { return true; }
 };
 }  // namespace mindspore::kernel
 #endif
