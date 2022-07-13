@@ -78,6 +78,22 @@ NodeBase ExtractAbstract(const AbstractBasePtr &abs) {
   return node;
 }
 
+void PrimOp::SetAbastractsFromAttrs(const PrimitivePtr &primitive, const mindspore::HashSet<size_t> &convert_input_list,
+                                    AbstractBasePtrList *inputs_abstract, std::vector<std::string> input_names_vec) {
+  for (size_t index = 0; index < input_names_vec.size(); ++index) {
+    // if convert input list find the index it means the input has been converted to the attr
+    if (convert_input_list.find(index) != convert_input_list.end()) {
+      AbstractBasePtr rectify_abs = nullptr;
+      auto input_name = input_names_vec[index];
+      auto attr = primitive->GetAttr(input_name);
+      if (attr != nullptr) {
+        rectify_abs = attr->ToAbstract();
+        inputs_abstract->push_back(rectify_abs);
+      }
+    }
+  }
+}
+
 NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &attrs) {
   auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
   const auto iter = op_primc_fns.find(op_);
@@ -535,5 +551,24 @@ void ComplexOp::Check(const NodePtrList &inputs, const DAttrs &) {
 std::vector<DShape> StandardNormalOp::InferShape(const NodePtrList &, const DAttrs &attrs) {
   CHECK_ATTR(attrs, "shape");
   return {GetListInt(attrs.find("shape")->second)};
+}
+
+void StridedSliceOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
+  primitive->AddAttr("new_axis_mask", MakeValue((int64_t(0))));
+  primitive->AddAttr("shrink_axis_mask", MakeValue((int64_t(0))));
+  primitive->AddAttr("end_mask", MakeValue((int64_t(0))));
+  primitive->AddAttr("begin_mask", MakeValue((int64_t(0))));
+  primitive->AddAttr("ellipsis_mask", MakeValue((int64_t(0))));
+  const mindspore::HashSet<size_t> &convert_input_list{1, 2, 3};
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  SetAbastractsFromAttrs(primitive, convert_input_list, inputs_abstract, input_names_vec);
+}
+
+void MatMulOp::RectifyAbstract(const PrimitivePtr &primitive, AbstractBasePtrList *inputs_abstract) {
+  if (primitive->HasAttr("dst_type")) {
+    auto out_type = primitive->GetAttr("dst_type");
+    primitive->AddAttr("cast_type", out_type);
+  }
 }
 }  // namespace mindspore::graphkernel::inner

@@ -106,13 +106,13 @@ OP_REGISTER("Argmin", ArgReduceOp);
 OP_REGISTER("_opaque", OpaqueOp);  // default opaque node
 OP_REGISTER("Transpose", TransposeOp);
 OP_REGISTER("LayoutTransform", LayoutTransformOp);
-OP_REGISTER("MatMul", OpaqueOp);
+OP_REGISTER("MatMul", MatMulOp);
 OP_REGISTER("PadAkg", PadAkgOp);
 OP_REGISTER("UnPadAkg", UnPadAkgOp);
 OP_REGISTER("BatchMatMul", OpaqueOp);
 OP_REGISTER("CumSum", OpaqueOp);
 OP_REGISTER("OneHot", OpaqueOp);
-OP_REGISTER("StridedSlice", OpaqueOp);
+OP_REGISTER("StridedSlice", StridedSliceOp);
 OP_REGISTER("TensorScatterAdd", OpaqueOp);
 OP_REGISTER("Gather", OpaqueOp);
 OP_REGISTER("GatherNd", OpaqueOp);
