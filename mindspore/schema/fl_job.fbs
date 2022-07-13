@@ -109,13 +109,13 @@ table RequestUpdateModel{
   timestamp:string;
   signature:[ubyte];
   upload_loss:float;
-  upload_accuracy:float;
   sign:int;
   index_array:[int];
   compress_feature_map:[CompressFeatureMap];
   upload_compress_type:CompressType;
   upload_sparse_rate:float;
   name_vec:[string];
+  upload_accuracy:float;
 }
 
 table ResponseUpdateModel{
