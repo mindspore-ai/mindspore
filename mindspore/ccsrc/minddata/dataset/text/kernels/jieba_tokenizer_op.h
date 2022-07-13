@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ class JiebaTokenizerOp : public TokenizerOp {
     out << Name() << ": " << jieba_mode_ << "hmm_model_path_ " << hmm_model_path_ << "mp_dict_path_" << mp_dict_path_;
   }
 
-  Status Tokenize(std::string_view str, std::vector<std::string> *splits, std::vector<uint32_t> *offsets_start,
+  Status Tokenize(std::string_view sentence_v, std::vector<std::string> *words, std::vector<uint32_t> *offsets_start,
                   std::vector<uint32_t> *offsets_limit) override;
 
   // @word the word to be added to the JiebaTokenizer.

@@ -39,7 +39,7 @@ class SkipFirstEpochSamplerRT : public SequentialSamplerRT {
   ///     function always returns -1
   /// \param[in] num_rows The total number of rows in the dataset
   /// \return int64_t Calculated number of samples (always -1)
-  int64_t CalculateNumSamples(int64_t num_rows) override;
+  int64_t CalculateNumSamples(const int64_t num_rows) override;
 
   // Printer for debugging purposes.
   // @param out - output stream to write to

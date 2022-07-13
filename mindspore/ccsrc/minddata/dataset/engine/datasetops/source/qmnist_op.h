@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class QMnistOp : public MnistOp {
   // @param row_id_type row_id - id for this tensor row.
   // @param TensorRow row - image & label read into this tensor row.
   // @return Status - The status code returned.
-  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
+  Status LoadTensorRow(row_id_type row_id, TensorRow *trow) override;
 
   // Get needed files in the folder_path_.
   // @return Status - The status code returned.

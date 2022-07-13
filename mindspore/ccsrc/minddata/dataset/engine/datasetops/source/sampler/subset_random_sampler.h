@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ class SubsetRandomSamplerRT : public SubsetSamplerRT {
   /// \param samples_per_tensor The number of ids we draw on each call to GetNextSample().
   /// When samples_per_tensor=0, GetNextSample() will draw all the sample ids and return them at once.
   SubsetRandomSamplerRT(const std::vector<int64_t> &indices, int64_t num_samples,
-                        std::int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
+                        int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   /// Destructor.
   ~SubsetRandomSamplerRT() = default;

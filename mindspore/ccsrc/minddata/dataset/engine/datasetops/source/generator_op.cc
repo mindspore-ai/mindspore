@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ void GeneratorOp::Print(std::ostream &out, bool show_all) const {
 }
 // hand shake with Sampler, allow Sampler to call RandomAccessOp's functions to get NumRows
 Status GeneratorOp::InitSampler() {
-  if (sampler_ != nullptr) return sampler_->HandshakeRandomAccessOp(this);
+  if (sampler_ != nullptr) {
+    return sampler_->HandshakeRandomAccessOp(this);
+  }
   return Status::OK();
 }
 
@@ -220,7 +222,9 @@ Status GeneratorOp::operator()() {
         }
       }
     }
-    if (!new_row.empty()) RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+    if (!new_row.empty()) {
+      RETURN_IF_NOT_OK(out_connector_->Add(std::move(new_row)));
+    }
 
     if (eoe) {
       // Push out EOE upon StopIteration exception from generator

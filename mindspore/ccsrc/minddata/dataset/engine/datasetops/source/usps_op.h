@@ -84,7 +84,7 @@ class USPSOp : public NonMappableLeafOp {
   // Function to count the number of samples in one data file.
   // @param const std::string &data_file - path to the data file.
   // @return int64_t - the count result.
-  int64_t CountRows(const std::string &data_file);
+  int64_t CountRows(const std::string &data_file) const;
 
   // Reads a data file and loads the data into multiple TensorRows.
   // @param data_file - the data file to read.
@@ -119,7 +119,7 @@ class USPSOp : public NonMappableLeafOp {
   // @param labels_buffer - label destination.
   // @return Status - the status code returned.
   Status ParseLine(std::string *line, const std::unique_ptr<unsigned char[]> &images_buffer,
-                   const std::unique_ptr<uint32_t[]> &labels_buffer);
+                   const std::unique_ptr<uint32_t[]> &labels_buffer) const;
 
   // Private function for computing the assignment of the column name map.
   // @return Status - the error code returned.

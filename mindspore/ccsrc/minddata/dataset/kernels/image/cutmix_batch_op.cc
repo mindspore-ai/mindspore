@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,9 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   CHECK_FAIL_RETURN_UNEXPECTED(
     images.size() <= static_cast<size_t>(std::numeric_limits<int64_t>::max()),
     "The size of \"images\" must not be more than \"INT64_MAX\", but got: " + std::to_string(images.size()));
-  for (int64_t idx = 0; idx < static_cast<int64_t>(images.size()); idx++) rand_indx.push_back(idx);
+  for (int64_t idx = 0; idx < static_cast<int64_t>(images.size()); idx++) {
+    rand_indx.push_back(idx);
+  }
   std::shuffle(rand_indx.begin(), rand_indx.end(), rnd_);
   std::gamma_distribution<float> gamma_distribution(alpha_, 1);
   std::uniform_real_distribution<double> uniform_distribution(0.0, 1.0);

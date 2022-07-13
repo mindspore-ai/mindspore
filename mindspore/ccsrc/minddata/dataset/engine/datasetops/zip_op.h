@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ class ZipOp : public PipelineOp {
   // @note - we need to drain eoe signals from all children connectors.
   // @details - when this function is called, then we encountered eoe at child iterator
   // we have to drain rows from other child iterators until we hit eoe from all other child iterators
-  Status drainPipeline(int32_t skip_child);
+  Status drainPipeline(int32_t skip_child) const;
 
   // Merges 1 row from each childIterator together
   // \param[in] new_zip_row - input and output, will be a non-empty row if all rows from childConnectors are non-empty
@@ -84,7 +84,7 @@ class ZipOp : public PipelineOp {
   //       1    a     T
   //       \    |     /
   //         1, a, T
-  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child);
+  Status getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) const;
 
   // Computing the assignment of the column name map.
   // @return - Status

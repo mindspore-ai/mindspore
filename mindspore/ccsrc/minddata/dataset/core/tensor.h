@@ -330,7 +330,9 @@ class Tensor {
 
   /// \return the number of bytes this tensor is needs
   dsize_t SizeInBytes() const {
-    if (data_end_ == nullptr) return type_.SizeInBytes() * shape_.NumOfElements();
+    if (data_end_ == nullptr) {
+      return type_.SizeInBytes() * shape_.NumOfElements();
+    }
     return data_end_ - data_;
   }
 
@@ -479,7 +481,7 @@ class Tensor {
     using pointer = T *;
     using reference = T &;
 
-    explicit TensorIterator(uchar *ptr = nullptr) { ptr_ = reinterpret_cast<T *>(ptr); }
+    explicit TensorIterator(uchar *ptr = nullptr) : ptr_(reinterpret_cast<T *>(ptr)) {}
 
     TensorIterator(const TensorIterator<T> &raw_iterator) { ptr_ = raw_iterator.ptr_; }
 
@@ -498,9 +500,9 @@ class Tensor {
       return *this;
     }
 
-    bool operator==(const TensorIterator<T> &rhs) { return ptr_ == rhs.ptr_; }
+    bool operator==(const TensorIterator<T> &rhs) const { return ptr_ == rhs.ptr_; }
 
-    bool operator!=(const TensorIterator<T> &rhs) { return !(*this == rhs); }
+    bool operator!=(const TensorIterator<T> &rhs) const { return !(*this == rhs); }
 
     operator bool() const { return ptr_ != nullptr; }
 
@@ -829,7 +831,9 @@ inline Status Tensor::CreateFromVector<std::string>(const std::vector<std::strin
     num_bytes -= kOffsetSize;
     // insert actual string
     int ret_code = memcpy_s((*out)->data_ + offset, num_bytes, common::SafeCStr(str), str.length() + 1);
-    if (ret_code != 0) MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    if (ret_code != 0) {
+      MS_LOG(ERROR) << "Cannot copy string into Tensor";
+    }
     //  next string will be stored right after the current one.
     offset = offset + str.length() + 1;
     // total bytes are reduced by the length of the string

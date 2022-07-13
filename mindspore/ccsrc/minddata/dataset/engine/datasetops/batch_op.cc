@@ -441,7 +441,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
 }
 #endif
 
-Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
+Status BatchOp::PadColumns(const std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map) {
   RETURN_UNEXPECTED_IF_NULL(table);  // placeholder for now, might need this in the future
   CHECK_FAIL_RETURN_UNEXPECTED(
@@ -449,7 +449,7 @@ Status BatchOp::PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &
     "Invalid parameter, size of column_name_id_map must be equal to num of data columns. map size: " +
       std::to_string(column_name_id_map.size()) + ", column nums: " + std::to_string((*table)->front().size()));
   std::vector<std::shared_ptr<Tensor>> pad_vals(column_name_id_map.size(),
-                                                0);  // value to pad each column's tensor with, default 0
+                                                nullptr);  // value to pad each column's tensor with, default 0
   std::set<int32_t> pad_cols;
   // padded_shape provided by user, maximum shapes of current batch of tensors
   std::vector<std::vector<dsize_t>> pad_shapes(column_name_id_map.size()), max_shapes(column_name_id_map.size());
@@ -650,7 +650,9 @@ Status BatchOp::GetNextRowPullMode(TensorRow *const row) {
     }
   }
   RETURN_UNEXPECTED_IF_NULL(table);
-  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));  // do padding if needed
+  if (pad_) {
+    RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));
+  }  // do padding if needed
   if (!table->empty()) {
     RETURN_IF_NOT_OK(BatchRows(&table, row, table->size()));
     batch_cnt_++;

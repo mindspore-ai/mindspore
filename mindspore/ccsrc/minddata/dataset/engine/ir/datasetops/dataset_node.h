@@ -21,7 +21,6 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "minddata/dataset/core/config_manager.h"
@@ -306,7 +305,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   int32_t NumWorkers() const { return num_workers_; }
 
   /// \brief Getter of the connector queue size
-  int32_t ConnectorQueueSize() { return connector_que_size_; }
+  int32_t ConnectorQueueSize() const { return connector_que_size_; }
 
   /// \brief Getter of dataset cache
   std::shared_ptr<DatasetCache> GetDatasetCache() { return cache_; }

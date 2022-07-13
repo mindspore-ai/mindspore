@@ -2995,9 +2995,9 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             try:
                 if p.exitcode is None:
                     p.terminate()
-            except Exception:  # pylint: disable=W0703
+            except Exception:  # pylint: disable=broad-except
                 # process has been closed already
-                continue
+                pass
         for p in processes:
             if p._closed is False:  # pylint: disable=W0212
                 # We don't use w.join because join can only used in main process or join will raise an error.

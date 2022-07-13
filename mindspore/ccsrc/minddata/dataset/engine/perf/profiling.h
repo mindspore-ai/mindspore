@@ -99,7 +99,7 @@ typedef struct TracingRecord_s {
   int32_t value;
   uint64_t ts;
 
-  std::string ToString() {
+  std::string ToString() const {
     return std::to_string(type) + " " + std::to_string(extra_info) + " " + std::to_string(batch_num) + " " +
            std::to_string(value) + " " + std::to_string(ts);
   }
@@ -155,7 +155,7 @@ class ProfilingManager {
   /// This method should be called once, calling it for another tree without resetting the ProfilingManager would fail.
   /// \param tree_adapter pointer the adapter that owns the ExecutionTree
   /// \return Status the status code returned
-  Status RegisterTree(TreeAdapter *tree_adapter);
+  Status RegisterTree(const TreeAdapter *tree_adapter);
 
   /// Reset the ProfilingManager. This method is sued when we want to profile another tree in the same process.
   /// \return Status the status code returned
@@ -505,7 +505,7 @@ class ProfilingManager {
   /// \brief API to initialize profiling manager
   /// \param for_autotune flag to indicate if Profiler is initialized for autotuning or profiling purposes
   /// \return Status object with the error code
-  Status Init(bool for_autotune = false);
+  Status Init(const bool for_autotune = false);
 
   /// \brief API to signal the profiling nodes to start collecting data
   /// \return Status object with the error code
@@ -521,15 +521,15 @@ class ProfilingManager {
 
   /// \brief Helper to get the rank id. Currently being used for appending rank id to files
   /// \return String The rank id
-  std::string GetRankID();
+  std::string GetRankID() const;
 
   /// Get number of epochs that have been already profiled
   /// \return number of epochs
-  int32_t GetNumOfProfiledEpochs() { return static_cast<int32_t>(epoch_end_step_.size()) - 1; }
+  int32_t GetNumOfProfiledEpochs() const { return static_cast<int32_t>(epoch_end_step_.size()) - 1; }
 
   // Get number of steps taken in pipeline
   /// \return number of steps
-  Status GetNumberOfProfiledSteps(int32_t *size);
+  Status GetNumberOfProfiledSteps(int32_t *steps);
 
   /// Determine if the Profiler is being used for autotuning.
   /// \return boolean

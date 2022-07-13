@@ -94,11 +94,11 @@ class AutoTune {
 
   /// Fetches connector size for steps or epoch based on mode
   /// \return status code
-  Status GetConnectorSize(std::vector<int32_t> *sizes);
+  Status GetConnectorSize(std::vector<int32_t> *sizes) const;
 
   /// Fetches connector capacity for steps or epoch based on mode
   /// \return status code
-  Status GetConnectorCapacity(std::vector<int32_t> *capacities);
+  Status GetConnectorCapacity(std::vector<int32_t> *capacities) const;
 
   /// Computes current connector queue util percentage
   /// \param[out] usage_avg_last double return avg util percentage for connector queue
@@ -109,7 +109,7 @@ class AutoTune {
 
   /// Fetches Connector Queue empty frequency for steps or epoch based on mode
   /// \return status code
-  Status GetEmptyQueueFrequency(float *empty_freq);
+  Status GetEmptyQueueFrequency(float *empty_freq) const;
 
   /// Check if the dataset pipeline is the bottleneck
   /// \param[out] isBottleneck bool
@@ -118,7 +118,7 @@ class AutoTune {
 
   /// Returns true if the pipeline is sink or non-sink
   /// \return bool
-  bool IsSink();
+  bool IsSink() const;
 
   const int32_t TO_PERCENT = 100;
   // system specifics
@@ -215,7 +215,7 @@ class AutoTune {
   /// \param items vector of T
   /// \return double the calculated mean
   template <typename T>
-  double Mean(const std::vector<T> &items);
+  double Mean(const std::vector<T> &items) const;
 
   /// Get and update current epoch and step counts
   /// \return Status Code

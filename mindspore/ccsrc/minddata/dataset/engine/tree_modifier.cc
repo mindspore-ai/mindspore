@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,6 @@ Status ChangeNumWorkersRequest::ApplyChange(DatasetOp *op) {
   return Status::OK();
 }
 
-TreeModifier::TreeModifier(TreeAdapter *adapter) : TreeModifier(adapter->tree_.get()) {}
+TreeModifier::TreeModifier(const TreeAdapter *adapter) : TreeModifier(adapter->tree_.get()) {}
 }  // namespace dataset
 }  // namespace mindspore

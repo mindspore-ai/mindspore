@@ -88,7 +88,7 @@ class TextFileOp : public NonMappableLeafOp {
   // @param tensor_table - the tensor table to put the parsed data in.
   // @param row - the id of the row filled in the tensor table.
   // @return Status - the error code returned.
-  Status LoadTensor(const std::string &line, TensorRow *out_row);
+  Status LoadTensor(const std::string &line, TensorRow *out_row) const;
 
   // Reads a text file and loads the data into multiple TensorRows.
   // @param file - the file to read.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ class MnistOp : public MappableLeafOp {
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
+  Status LoadTensorRow(row_id_type row_id, TensorRow *trow) override;
 
   // Check image file stream.
   // @param const std::string *file_name - image file name

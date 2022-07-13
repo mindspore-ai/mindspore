@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ Status TextFileOp::Init() {
   return Status::OK();
 }
 
-Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) {
+Status TextFileOp::LoadTensor(const std::string &line, TensorRow *out_row) const {
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
   (*out_row)[0] = std::move(tensor);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,9 @@ std::shared_ptr<SamplerObj> DistributedSamplerObj::SamplerCopy() {
     std::make_shared<DistributedSamplerObj>(num_shards_, shard_id_, shuffle_, num_samples_, seed_, offset_, even_dist_);
   for (const auto &child : children_) {
     Status rc = sampler->AddChildSampler(child);
-    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Error in copying the sampler. Message: " << rc;
+    }
   }
   return sampler;
 }

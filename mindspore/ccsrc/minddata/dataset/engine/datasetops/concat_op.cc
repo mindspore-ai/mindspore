@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,9 @@ bool ConcatOp::IgnoreSample() {
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
-    bool is_not_mappable = static_cast<bool>(children_flag_and_nums_[cur_child_].first);
-    is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[cur_child_].second);
+    const bool is_not_mappable = static_cast<const bool>(children_flag_and_nums_[cur_child_].first);
+    const bool second_ne_zero = static_cast<const bool>(!children_flag_and_nums_[cur_child_].second);
+    is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
   bool ret = true;
   if (sample_number_ % num_shard_ == shard_index_ && is_not_mappable_or_second_ne_zero) {
@@ -161,13 +162,16 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
-    bool is_not_mappable = static_cast<bool>(children_flag_and_nums_[cur_child_].first);
-    is_not_mappable_or_second_ne_zero = is_not_mappable || (!children_flag_and_nums_[cur_child_].second);
+    const bool is_not_mappable = static_cast<const bool>(children_flag_and_nums_[cur_child_].first);
+    const bool second_ne_zero = static_cast<const bool>(!children_flag_and_nums_[cur_child_].second);
+    is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
   RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row));
 
   if (!row->eoe() && !row->eof()) {
-    if (!verified_) RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+    if (!verified_) {
+      RETURN_IF_NOT_OK(Verify(cur_child_, *row));
+    }
 
     if (IgnoreSample()) {
       RETURN_IF_NOT_OK(GetNextRow(row));

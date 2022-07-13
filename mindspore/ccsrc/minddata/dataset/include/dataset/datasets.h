@@ -828,7 +828,7 @@ class MS_API ConcatDataset : public Dataset {
   /// \brief Constructor of ConcatDataset.
   /// \note Concat the datasets in the input.
   /// \param[in] input List of shared pointers to the dataset that should be concatenated together.
-  explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &input);
+  explicit ConcatDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Destructor of ConcatDataset.
   ~ConcatDataset() override = default;
@@ -973,7 +973,7 @@ class MS_API ZipDataset : public Dataset {
   /// \brief Constructor of ZipDataset.
   /// \note Applies zip to the dataset.
   /// \param[in] inputs A list of shared pointers to the datasets that we want to zip.
-  explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &inputs);
+  explicit ZipDataset(const std::vector<std::shared_ptr<Dataset>> &datasets);
 
   /// \brief Destructor of ZipDataset.
   ~ZipDataset() override = default;

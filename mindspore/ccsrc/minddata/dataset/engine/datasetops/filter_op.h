@@ -105,7 +105,7 @@ class FilterOp : public ParallelOp<TensorRow, TensorRow> {
   // exist in column_name_id_map_.
   // @param input_columns The vector of input column names used in the current thread.
   // @return Status The status code returned
-  Status ValidateInColumns(const std::vector<std::string> &input_columns);
+  Status ValidateInColumns(const std::vector<std::string> &input_columns) const;
 };
 
 }  // namespace dataset

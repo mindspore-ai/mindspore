@@ -40,7 +40,13 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
       create_data_info_queue_(create_data_info_queue),
       data_info_queue_ptr_(nullptr),
       first_fetch_flag_(false),
-      first_push_flag_(false) {
+      first_push_flag_(false)
+#ifdef ENABLE_TDTQUE
+      ,
+      ascend_keep_waiting_(true),
+      tdtInstancePtr(std::make_shared<TdtPlugin>(channel_name_, device_id_))
+#endif
+{
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   dynamic_shape_ = cfg->dynamic_shape();
 
@@ -681,7 +687,9 @@ Status DeviceQueueOp::SendDataToCPU() {
         MS_LOG(DEBUG) << "Feature size is " << tensor->SizeInBytes() << ".";
       }
       total_batch++;
-      if (stop_send_) break;
+      if (stop_send_) {
+        break;
+      }
     }
   }
 

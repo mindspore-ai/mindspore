@@ -160,7 +160,9 @@ Status MindRecordOp::WorkerEntry(int32_t worker_id) {
         {
           std::unique_lock<std::mutex> lock(ended_worker_mutex_);
           ended_worker_++;
-          if (ended_worker_ == num_workers_) shard_reader_->Close();
+          if (ended_worker_ == num_workers_) {
+            shard_reader_->Close();
+          }
         }
         return Status::OK();  // empty key is a quit signal for workers
       }

@@ -50,7 +50,7 @@ Status MixUpBatchOp::ComputeLabels(const TensorRow &input, std::shared_ptr<Tenso
   }
   std::shuffle(rand_indx->begin(), rand_indx->end(), rnd_);
 
-  RETURN_IF_NOT_OK(TypeCast(std::move(input.at(1)), out_labels, DataType(DataType::DE_FLOAT32)));
+  RETURN_IF_NOT_OK(TypeCast(input.at(1), out_labels, DataType(DataType::DE_FLOAT32)));
 
   int64_t row_labels = label_shape.size() == kMaxLabelShapeSize ? label_shape[1] : 1;
   int64_t num_classes = label_shape.size() == kMaxLabelShapeSize ? label_shape[dimension_two] : label_shape[1];

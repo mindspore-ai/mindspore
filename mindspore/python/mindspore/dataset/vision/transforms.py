@@ -50,6 +50,8 @@ Examples:
     >>> image_folder_dataset = image_folder_dataset.map(operations=onehot_op,
     ...                                                 input_columns="label")
 """
+
+# pylint: disable=too-few-public-methods
 import numbers
 import random
 import numpy as np

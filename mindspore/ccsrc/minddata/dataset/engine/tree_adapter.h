@@ -51,13 +51,13 @@ class TreeAdapter {
   // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
   enum UsageFlag { kDeIterator = 0, kDeGetter = 1, kDeReset = 2 };
 
-  explicit TreeAdapter(UsageFlag flag = kDeIterator);
+  explicit TreeAdapter(UsageFlag usage = kDeIterator);
 
   ~TreeAdapter() = default;
 
   // This function performs syntax checking, semantics checking, optimizes, and then builds
   // the Execution tree.
-  Status Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs = -1, int64_t step = 0);
+  Status Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs = -1, int64_t step = 0);
 
   // Return the root node of the IR after cloned from the parsed IR tree
   std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
@@ -94,7 +94,9 @@ class TreeAdapter {
   Status SetProfilingManagerPtr(std::shared_ptr<ProfilingManager> profiling_manager,
                                 std::shared_ptr<Tracing> tracing_node = nullptr) {
     profiling_manager_ = profiling_manager;
-    if (tracing_node != nullptr) tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(tracing_node);
+    if (tracing_node != nullptr) {
+      tracing_ = std::dynamic_pointer_cast<DatasetIteratorTracing>(tracing_node);
+    }
     return Status::OK();
   }
 

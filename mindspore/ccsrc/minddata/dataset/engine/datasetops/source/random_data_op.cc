@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,9 @@ void RandomDataOp::GenerateSchema() {
       std::make_unique<ColDescriptor>(col_name, DataType(newType), TensorImpl::kFlexible, rank, new_shape.get());
 
     Status rc = data_schema_->AddColumn(*new_col);
-    if (rc.IsError()) MS_LOG(ERROR) << "[Internal ERROR] Failed to generate a schema. Message:" << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << "[Internal ERROR] Failed to generate a schema. Message:" << rc;
+    }
   }
 }
 

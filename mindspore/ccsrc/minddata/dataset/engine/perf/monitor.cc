@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@
 namespace mindspore {
 namespace dataset {
 
-Monitor::Monitor(ProfilingManager *profiling_manager) : profiling_manager_(profiling_manager) {
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  sampling_interval_ = cfg->monitor_sampling_interval();
-  tree_ = profiling_manager_->tree_;
-}
+Monitor::Monitor(ProfilingManager *profiling_manager) : Monitor(profiling_manager, GlobalContext::config_manager()) {}
+
+Monitor::Monitor(ProfilingManager *profiling_manager, std::shared_ptr<ConfigManager> cfg)
+    : profiling_manager_(profiling_manager),
+      sampling_interval_(cfg->monitor_sampling_interval()),
+      tree_(profiling_manager_->tree_) {}
 
 Monitor::~Monitor() {
   // just set the pointer to nullptr, it's not be released here

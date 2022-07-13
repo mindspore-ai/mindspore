@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ Status FilterOp::EofReceived(int32_t) { return Status::OK(); }
 Status FilterOp::EoeReceived(int32_t) { return Status::OK(); }
 
 // Validating if each of the input_columns exists in the column_name_id_map_.
-Status FilterOp::ValidateInColumns(const std::vector<std::string> &input_columns) {
+Status FilterOp::ValidateInColumns(const std::vector<std::string> &input_columns) const {
   for (const auto &inCol : input_columns) {
     bool found = column_name_id_map_.find(inCol) != column_name_id_map_.end() ? true : false;
     if (!found) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ ZipOp::ZipOp() : PipelineOp(0) {}
 ZipOp::~ZipOp() {}
 
 // fetches next zipped (merged) row
-Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) {
+Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) const {
   *new_zip_row = {};
   // iterate over all iterators and generate a row
   for (int32_t i = 0; i < child_.size(); ++i) {
@@ -47,9 +47,11 @@ Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child
 }
 
 // drain end of epoch messages from iterator for this epoch
-Status ZipOp::drainPipeline(int32_t skip_child) {
+Status ZipOp::drainPipeline(int32_t skip_child) const {
   for (int32_t con = 0; con < child_.size(); ++con) {
-    if (con == skip_child) continue;
+    if (con == skip_child) {
+      continue;
+    }
     MS_LOG(DEBUG) << "Zip operator draining child at " << con << ".";
     TensorRow row;
     while (!row.eoe()) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,11 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_MAPPABLE_LEAF_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_MAPPABLE_LEAF_OP_H_
 
-#include <deque>
 #include <memory>
-#include <queue>
 #include <string>
 #include <algorithm>
 #include <map>
 #include <set>
-#include <utility>
-#include <vector>
 #include "minddata/dataset/core/tensor.h"
 
 #include "minddata/dataset/engine/data_schema.h"
@@ -95,7 +91,7 @@ class MappableLeafOp : public ParallelOp<std::unique_ptr<IOBlock>, TensorRow>, p
   /// Worker thread pulls a number of IOBlock from IOBlock Queue, make a row and push it to Connector
   /// \param int32_t workerId - id of each worker
   /// \return Status The status code returned
-  Status WorkerEntry(int32_t workerId) override;
+  Status WorkerEntry(int32_t worker_id) override;
 
   /// Virtual function to Load a tensor row at location row_id
   /// \param row_id_type row_id - id for this tensor row

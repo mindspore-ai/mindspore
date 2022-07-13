@@ -28,18 +28,27 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit) {
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+ExecutionTree::ExecutionTree() : ExecutionTree(GlobalContext::config_manager()) {}
+
+ExecutionTree::ExecutionTree(std::shared_ptr<ConfigManager> cfg)
+    : rank_id_(cfg->rank_id()),
+      numa_enable_(cfg->numa_enable()),
+      handle_(nullptr),
+      id_count_(0),
+      tree_state_(kDeTStateInit),
+      prepare_flags_(0) {
   tg_ = std::make_unique<TaskGroup>();
   root_ = nullptr;
-  prepare_flags_ = 0;
   unique_id_ = Services::GetUniqueID();
-#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
-  std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
-  rank_id_ = cfg->rank_id();
-  numa_enable_ = cfg->numa_enable();
-  handle_ = nullptr;
-#endif
 }
+#else
+ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit), prepare_flags_(0) {
+  tg_ = std::make_unique<TaskGroup>();
+  root_ = nullptr;
+  unique_id_ = Services::GetUniqueID();
+}
+#endif
 
 // Destructor
 ExecutionTree::~ExecutionTree() {

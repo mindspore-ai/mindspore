@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,8 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore::dataset {
 
@@ -37,12 +36,12 @@ class PythonIteratorConsumer : public IteratorConsumer {
   /// Returns the next row in a vector format
   /// \param[out] out std::vector of Tensors
   /// \return Status error code
-  Status GetNextAsList(py::list *out);
+  Status GetNextAsList(const py::list *out);
 
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor
   /// \return Status error code
-  Status GetNextAsDict(py::dict *out);
+  Status GetNextAsDict(const py::dict *out);
 };
 
 class PythonBuildVocabConsumer : public BuildVocabConsumer {

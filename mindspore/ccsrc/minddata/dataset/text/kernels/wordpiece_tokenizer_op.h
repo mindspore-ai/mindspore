@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class WordpieceTokenizerOp : public TokenizerOp {
 
  protected:
   Status AddSubword(const std::string &input_token, const int &start, const int &end,
-                    std::vector<std::string> *out_token) const;
+                    std::vector<std::string> *out_tokens) const;
   Status FoundNoToken(const std::string &input_token, const uint32_t &basic_start, std::vector<std::string> *out_tokens,
                       std::vector<uint32_t> *offsets_start, std::vector<uint32_t> *offsets_limit) const;
   Status LookupWord(const std::string &input_token, const RuneStrArray &runes, const int start, bool *out_found,

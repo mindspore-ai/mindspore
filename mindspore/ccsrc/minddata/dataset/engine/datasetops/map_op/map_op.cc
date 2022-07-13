@@ -218,7 +218,7 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
 
   // From the current row, select the Tensor that need to be passed to TensorOp
   (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process),
-                       [&in_row](const auto &it) { return std::move(in_row[it]); });
+                       [&in_row](const auto &it) { return in_row[it]; });
   to_process.setId(in_row.getId());
   std::vector<std::string> cur_row_path = in_row.getPath();
   if (cur_row_path.size() > 0) {
@@ -228,7 +228,7 @@ Status MapOp::WorkerCompute(const TensorRow &in_row, TensorRow *out_row,
     to_process.setPath(to_process_path);
   }
   job_input_table.push_back(std::move(to_process));
-  original_table.push_back(std::move(in_row));
+  original_table.push_back(in_row);
 
   // Variable to keep the result after executing the job.
   std::vector<TensorRow> result_table;

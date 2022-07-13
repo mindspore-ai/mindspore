@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <utility>
 #include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 
 #include "minddata/dataset/core/tensor.h"
@@ -38,10 +39,11 @@ Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output
 
   dsize_t total = length1 + length2;
   while (total > max_length_) {
-    if (outLength1 > outLength2)
+    if (outLength1 > outLength2) {
       outLength1--;
-    else
+    } else {
       outLength2--;
+    }
     total--;
   }
   std::shared_ptr<Tensor> outSeq1;

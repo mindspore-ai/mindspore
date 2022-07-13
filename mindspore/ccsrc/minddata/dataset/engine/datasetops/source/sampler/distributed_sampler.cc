@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,10 +100,10 @@ Status DistributedSamplerRT::GetNextSample(TensorRow *out) {
       std::to_string(cnt_) + ", samples_per_tensor(num_samples): " + std::to_string(samples_per_tensor_));
   } else if (cnt_ == samples_per_tensor_ && (non_empty_ || !even_dist_)) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
-    if (!samples_per_tensor_) {
+    if (samples_per_tensor_ == 0) {
       non_empty_ = false;
     }
-  } else if (!samples_per_tensor_ && !non_empty_) {
+  } else if (samples_per_tensor_ == 0 && !non_empty_) {
     // If the Tensor is empty, we add samples with subscript 0 in the current dataset.
     // This step is to make up for the solution that the code default Tensor is not empty before.
     // We will remove this value in the concat phase

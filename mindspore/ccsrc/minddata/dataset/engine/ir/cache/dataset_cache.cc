@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,9 +45,15 @@ Status DatasetCache::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetC
       std::optional<std::string> hostname = json_cache["hostname"];
       hostname_c = std::vector<char>(hostname->begin(), hostname->end());
     }
-    if (json_cache.find("port") != json_cache.end()) port = json_cache["port"];
-    if (json_cache.find("num_connections") != json_cache.end()) num_connections = json_cache["num_connections"];
-    if (json_cache.find("cache_prefetch_size") != json_cache.end()) prefetch_sz = json_cache["cache_prefetch_size"];
+    if (json_cache.find("port") != json_cache.end()) {
+      port = json_cache["port"];
+    }
+    if (json_cache.find("num_connections") != json_cache.end()) {
+      num_connections = json_cache["num_connections"];
+    }
+    if (json_cache.find("cache_prefetch_size") != json_cache.end()) {
+      prefetch_sz = json_cache["cache_prefetch_size"];
+    }
     *cache = std::make_shared<DatasetCacheImpl>(id, mem_sz, spill, hostname_c, port, num_connections, prefetch_sz);
   }
   return Status::OK();
