@@ -49,7 +49,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.avg_pool2d
     mindspore.ops.interpolate
     mindspore.ops.pad
-    mindspore.ops.pdist
     mindspore.ops.deformable_conv2d
 
 激活函数
