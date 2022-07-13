@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/sparse_apply_adagrad.h"
+#include "ops/sparse_apply_adagrad_v2.h"
 
 #include <algorithm>
 #include <set>
@@ -27,8 +27,8 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::TupleShapePtr SparseApplyAdagradInferShape(const PrimitivePtr &primitive,
-                                                     const std::vector<AbstractBasePtr> &input_args) {
+abstract::TupleShapePtr SparseApplyAdagradV2InferShape(const PrimitivePtr &primitive,
+                                                       const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = primitive->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -39,37 +39,38 @@ abstract::TupleShapePtr SparseApplyAdagradInferShape(const PrimitivePtr &primiti
   // Get input shape
   auto var_shape_ptr = input_args[0]->BuildShape();
   auto accum_shape_ptr = input_args[1]->BuildShape();
+  auto grad_shape_ptr = input_args[2]->BuildShape();
+  auto indices_shape_ptr = input_args[3]->BuildShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
 
-  (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "accum_shape", accum_shape, prim_name);
-
+  if (var_shape_ptr->IsDynamic() || accum_shape_ptr->IsDynamic() || grad_shape_ptr->IsDynamic() ||
+      indices_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
+  }
+  // Args var,accum and grad shape must be same
+  std::map<std::string, ShapeVector> same_shape_args_map;
+  same_shape_args_map.insert({"accum shape", accum_shape});
+  same_shape_args_map.insert({"grad shape", grad_shape});
+  for (auto &elem : same_shape_args_map) {
+    CheckAndConvertUtils::Check(elem.first, elem.second, kEqual, var_shape, prim_name);
+  }
   // Indices must be rank 1
   (void)CheckAndConvertUtils::CheckInteger("indices dimension", indices_shape.size(), kEqual, 1, prim_name);
   // Grad dimension must be equal or greater than 1
   (void)CheckAndConvertUtils::CheckInteger("grad dimension", grad_shape.size(), kGreaterEqual, 1, prim_name);
-
   // Indices size must equal with grad first dimension size
   if (indices_shape[0] != grad_shape[0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the indices size must be equal to grad first dimension size. But got indices size: "
                              << indices_shape[0] << ", grad first dimension size: " << grad_shape[0] << ".";
   }
-
-  if (grad_shape.size() > 1) {
-    auto var_indexed_shape = var_shape;
-    auto grad_indexed_shape = grad_shape;
-    var_indexed_shape.erase(var_indexed_shape.begin());
-    grad_indexed_shape.erase(grad_indexed_shape.begin());
-    (void)CheckAndConvertUtils::CheckValue("var_shape[1:]", var_indexed_shape, kEqual, "grad_shape[1:]",
-                                           grad_indexed_shape, prim_name);
-  }
   return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
 }
 
-TuplePtr SparseApplyAdagradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TuplePtr SparseApplyAdagradV2InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -95,39 +96,45 @@ TuplePtr SparseApplyAdagradInferType(const PrimitivePtr &prim, const std::vector
 }
 }  // namespace
 
-void SparseApplyAdagrad::Init(float lr, bool update_slots, bool use_locking) {
+void SparseApplyAdagradV2::Init(float lr, float epsilon, bool update_slots, bool use_locking) {
   set_lr(lr);
+  set_epsilon(epsilon);
   set_update_slots(update_slots);
   set_use_locking(use_locking);
 }
 
-void SparseApplyAdagrad::set_lr(float lr) { (void)AddAttr(kAttrLr, api::MakeValue(lr)); }
+void SparseApplyAdagradV2::set_lr(float lr) { (void)AddAttr(kAttrLr, api::MakeValue(lr)); }
 
-float SparseApplyAdagrad::get_lr() const { return GetValue<float>(GetAttr(kAttrLr)); }
+float SparseApplyAdagradV2::get_lr() const { return GetValue<float>(GetAttr(kAttrLr)); }
 
-void SparseApplyAdagrad::set_update_slots(bool update_slots) {
+void SparseApplyAdagradV2::set_epsilon(float epsilon) { (void)AddAttr(kAttrEpsilon, api::MakeValue(epsilon)); }
+
+float SparseApplyAdagradV2::get_epsilon() const { return GetValue<float>(GetAttr(kAttrEpsilon)); }
+
+void SparseApplyAdagradV2::set_update_slots(bool update_slots) {
   (void)AddAttr(kAttrUpdateSlots, api::MakeValue(update_slots));
 }
 
-bool SparseApplyAdagrad::get_update_slots() const { return GetValue<bool>(GetAttr(kAttrUpdateSlots)); }
+bool SparseApplyAdagradV2::get_update_slots() const { return GetValue<bool>(GetAttr(kAttrUpdateSlots)); }
 
-void SparseApplyAdagrad::set_use_locking(bool use_locking) {
+void SparseApplyAdagradV2::set_use_locking(bool use_locking) {
   (void)AddAttr(kAttrUseLocking, api::MakeValue(use_locking));
 }
 
-bool SparseApplyAdagrad::get_use_locking() const { return GetValue<bool>(GetAttr(kAttrUseLocking)); }
+bool SparseApplyAdagradV2::get_use_locking() const { return GetValue<bool>(GetAttr(kAttrUseLocking)); }
 
-AbstractBasePtr SparseApplyAdagradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args) {
+AbstractBasePtr SparseApplyAdagradV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   const int64_t input_num = 4;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
-  auto infer_type = SparseApplyAdagradInferType(primitive, input_args);
-  auto infer_shape = SparseApplyAdagradInferShape(primitive, input_args);
+  auto infer_type = SparseApplyAdagradV2InferType(primitive, input_args);
+  auto infer_shape = SparseApplyAdagradV2InferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
-MIND_API_OPERATOR_IMPL(SparseApplyAdagrad, BaseOperator);
-REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyAdagrad, prim::kPrimSparseApplyAdagrad, SparseApplyAdagradInfer, nullptr, true);
+MIND_API_OPERATOR_IMPL(SparseApplyAdagradV2, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(SparseApplyAdagradV2, prim::kPrimSparseApplyAdagradV2, SparseApplyAdagradV2Infer, nullptr,
+                             true);
 }  // namespace ops
 }  // namespace mindspore
