@@ -74,9 +74,16 @@ bool UpdateModelKernel::VerifyUpdateModelRequest(const schema::RequestUpdateMode
     MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->compress_feature_map(), false);
   }
   MS_ERROR_IF_NULL_W_RET_VAL(update_model_req->timestamp(), false);
+
+  std::string fl_id = update_model_req->fl_id()->str();
   float upload_loss = update_model_req->upload_loss();
   if (std::isnan(upload_loss) || std::isinf(upload_loss)) {
-    MS_LOG(WARNING) << "The upload loss is nan or inf, client fl id is " << update_model_req->fl_id()->str();
+    MS_LOG(WARNING) << "The upload loss is nan or inf, client fl id is " << fl_id;
+    return false;
+  }
+  float upload_accuracy = update_model_req->upload_accuracy();
+  if (std::isnan(upload_accuracy) || std::isinf(upload_accuracy)) {
+    MS_LOG(WARNING) << "The upload accuracy is nan or inf, client fl id is " << fl_id;
     return false;
   }
   return true;
