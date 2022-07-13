@@ -115,7 +115,5 @@ std::vector<KernelAttr> PopulationCountCpuKernelMod::GetOpSupport() {
 
   return support_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, PopulationCount, PopulationCountCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

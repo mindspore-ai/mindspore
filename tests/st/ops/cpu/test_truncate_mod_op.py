@@ -34,6 +34,7 @@ class TruncateMod(nn.Cell):
         return res
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -85,6 +86,7 @@ def test_truncatemod_output_diff_types():
     assert out.shape == exp.shape
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -105,6 +107,7 @@ def test_truncatemod_output_broadcasting():
     assert out.shape == exp.shape
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -125,6 +128,7 @@ def test_truncatemod_output_broadcasting_scalar():
     assert out.shape == exp.shape
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -141,6 +145,7 @@ def test_truncatemod_dtype_not_supported():
         _ = TruncateMod()(input_x, input_y).asnumpy()
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

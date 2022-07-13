@@ -2169,7 +2169,7 @@ def truncate_div(x, y):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2209,7 +2209,7 @@ def truncate_mod(x, y):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -2582,7 +2582,7 @@ def approximate_equal(x, y, tolerance=1e-5):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> from mindspore.ops.function.math_func import approximate_equal

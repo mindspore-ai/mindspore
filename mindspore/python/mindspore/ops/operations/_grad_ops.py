@@ -2532,7 +2532,7 @@ class GridSampler3DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU````GPU``
+        ``CPU``
     """
 
     @prim_attr_register
@@ -2768,7 +2768,7 @@ class GridSampler2DGrad(Primitive):
         ValueError: If the shape of `grad` is inconsistent with the shape of the output result of forward calculation.
 
     Supported Platforms:
-        ``CPU````GPU``
+        ``CPU``
     """
 
     @prim_attr_register
