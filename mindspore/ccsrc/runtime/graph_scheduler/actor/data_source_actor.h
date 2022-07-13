@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 #include <memory>
 #include <queue>
 #include <utility>
@@ -124,9 +125,9 @@ class HostQueueDataSourceActor : public DataSourceActor {
   // Copy data from data source to the device tensor buffer of actor after memory alloc finished.
   void OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) override;
 
-  size_t FetchNodePosition(const AnfNodePtr &node) const override;
-  AnfNodePtr FetchNode(size_t node_position) const;
-  const std::vector<AnfNodePtr> &data_nodes() const { return data_nodes_; }
+  size_t FetchNodePosition(const KernelWithIndex &node) const override;
+  KernelWithIndex FetchNode(size_t node_position) const;
+  const std::vector<KernelWithIndex> &data_nodes() const { return data_node_with_indexs_; }
 
   void ReleaseDataNodeAddress() override;
 
@@ -142,10 +143,10 @@ class HostQueueDataSourceActor : public DataSourceActor {
 
   HostTensorQueuePtr host_queue_;
   // Input data nodes fetch data from host queue.
-  std::vector<AnfNodePtr> data_nodes_;
+  std::vector<KernelWithIndex> data_node_with_indexs_;
 
   // The location of the data node in the data source actor.
-  mindspore::HashMap<AnfNodePtr, size_t> data_node_position_map_;
+  std::map<KernelWithIndex, size_t> data_node_position_map_;
 };
 
 using DataSourceActorPtr = std::shared_ptr<DataSourceActor>;

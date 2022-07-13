@@ -154,25 +154,11 @@ std::vector<tensor::TensorPtr> GetTensorWithoutValueMask(const OpRunInfo &op_run
   return tensors_without_value_node;
 }
 
-void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs, size_t index = 0) {
+void PushInputTensor(const BaseRef &arg, std::vector<tensor::TensorPtr> *inputs) {
   MS_EXCEPTION_IF_NULL(inputs);
   if (utils::isa<tensor::TensorPtr>(arg)) {
     auto value = utils::cast<tensor::TensorPtr>(arg);
     inputs->push_back(value);
-  } else if (utils::isa<tensor::CSRTensorPtr>(arg)) {
-    auto csr = utils::cast<tensor::CSRTensorPtr>(arg);
-    MS_EXCEPTION_IF_NULL(csr);
-    auto csr_values = csr->GetTensorAt(index);
-    MS_EXCEPTION_IF_NULL(csr_values);
-    inputs->push_back(csr_values);
-    MS_LOG(INFO) << "For CSRTensor, push index: " << index;
-  } else if (utils::isa<tensor::COOTensorPtr>(arg)) {
-    auto coo = utils::cast<tensor::COOTensorPtr>(arg);
-    MS_EXCEPTION_IF_NULL(coo);
-    auto coo_values = coo->GetTensorAt(index);
-    MS_EXCEPTION_IF_NULL(coo_values);
-    inputs->push_back(coo_values);
-    MS_LOG(INFO) << "For COOTensor, push index: " << index;
   } else if (utils::isa<ValuePtr>(arg)) {
     auto value = utils::cast<ValuePtr>(arg);
     MS_EXCEPTION_IF_NULL(value);
@@ -267,29 +253,29 @@ void FlattenValue(const BaseRef &arg, ValuePtrList *flatted_value) {
 }
 
 // Insert the front_node related tensor in the input_tensor.
-void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const KernelWithIndex &front_node,
-                std::vector<tensor::TensorPtr> *input_tensor) {
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node.first);
+void PushTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
+                std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
+  const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   if (iter == parameters.end()) {
-    (void)((*input_tensor).emplace_back(nullptr));
+    (void)((*input_tensors).emplace_back(nullptr));
     return;
   }
   auto position = iter - parameters.begin();
-  PushInputTensor(args[position], input_tensor, front_node.second);
+  PushInputTensor(args[position], input_tensors);
 }
 
 void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &parameters, const AnfNodePtr &front_node,
-                     size_t index, std::vector<tensor::TensorPtr> *input_tensor) {
-  MS_EXCEPTION_IF_NULL(input_tensor);
+                     size_t index, std::vector<tensor::TensorPtr> *input_tensors) {
+  MS_EXCEPTION_IF_NULL(input_tensors);
   const auto &iter = std::find(parameters.begin(), parameters.end(), front_node);
   const size_t position = iter - parameters.begin();
   // If the parameter is not found in the parameters of the root graph, it means that it is the input of the subgraph,
   // and there is no need to input a tensor.
   if (position >= args.size()) {
-    MS_LOG(INFO) << "Position out of args range, position value is " << position << " and args size is " << args.size()
-                 << ".";
-    (void)input_tensor->emplace_back(nullptr);
+    MS_LOG(DEBUG) << "Position out of args range, position value is " << position << " and args size is " << args.size()
+                  << ".";
+    (void)input_tensors->emplace_back(nullptr);
     return;
   }
   ValuePtrList flatted_value_tuple_value;
@@ -301,7 +287,7 @@ void PushTupleTensor(const VectorRef &args, const std::vector<AnfNodePtr> &param
   auto input = flatted_value_tuple_value[index];
   MS_EXCEPTION_IF_NULL(input);
   auto tensor_input = input->cast<tensor::TensorPtr>();
-  input_tensor->push_back(tensor_input);
+  input_tensors->push_back(tensor_input);
 }
 
 void UpdateOutputAbstract(const KernelGraphPtr &kernel_graph, OpRunInfo *op_run_info) {
@@ -431,33 +417,42 @@ bool EnablePyNativeSyncRunning() {
 std::vector<std::vector<tensor::TensorPtr>> GetRunGraphInputs(const GraphCompilerInfo &graph_compiler_info,
                                                               const VectorRef &args) {
   const auto &origin_parameters = graph_compiler_info.origin_parameters_order_;
-  std::vector<std::vector<tensor::TensorPtr>> input_tensors;
+  std::vector<std::vector<tensor::TensorPtr>> input_tensor_lists;
   for (const auto &kernel_graph : graph_compiler_info.graphs_) {
-    std::vector<tensor::TensorPtr> input_tensor;
+    std::vector<tensor::TensorPtr> input_tensors;
     MS_EXCEPTION_IF_NULL(kernel_graph);
     for (const auto &input_node : kernel_graph->input_nodes()) {
       auto element_pair = kernel_graph->GetElementInTupleBackendFrontIndexMap(input_node);
       if (element_pair.first) {
-        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensor);
+        PushTupleTensor(args, origin_parameters, element_pair.first, element_pair.second, &input_tensors);
       } else {
         const auto &front_node = kernel_graph->GetFrontAnfByBackendAnf(input_node);
-        PushTensor(args, origin_parameters, {front_node, 0}, &input_tensor);
+        PushTensor(args, origin_parameters, front_node, &input_tensors);
       }
     }
-    (void)input_tensors.emplace_back(input_tensor);
+    (void)input_tensor_lists.emplace_back(input_tensors);
   }
 
   // Input tensors of the control node.
-  std::vector<tensor::TensorPtr> input_tensor;
+  std::vector<tensor::TensorPtr> input_tensors;
   MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   // Get inputs of control node which come from the host actor.
   const auto &control_node_parameters = graph_compiler_info.control_node_parser_->control_node_parameters();
-  for (const auto &parameter : control_node_parameters) {
-    PushTensor(args, origin_parameters, parameter, &input_tensor);
+  for (const auto &parameter_with_index : control_node_parameters) {
+    const auto &parameter = parameter_with_index.first;
+    MS_EXCEPTION_IF_NULL(parameter);
+    const auto &abs = parameter->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    if (abs->isa<abstract::AbstractTuple>()) {
+      MS_LOG(DEBUG) << "Fetch input tensor for tuple parameter:" << parameter->DebugString() << " in control flow.";
+      PushTupleTensor(args, origin_parameters, parameter, parameter_with_index.second, &input_tensors);
+    } else {
+      PushTensor(args, origin_parameters, parameter, &input_tensors);
+    }
   }
-  (void)input_tensors.emplace_back(input_tensor);
+  (void)input_tensor_lists.emplace_back(input_tensors);
 
-  return input_tensors;
+  return input_tensor_lists;
 }
 }  // namespace
 

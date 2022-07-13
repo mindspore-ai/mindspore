@@ -277,10 +277,12 @@ void ControlActor::IncreaseDynamicRefCounts(OpContext<DeviceTensor> *const conte
   // Increase dynamic ref count by the output data.
   for (size_t i = 0; i < output_data_.size(); ++i) {
     MS_EXCEPTION_IF_NULL(output_data_[i].first);
-    std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i) +
-                             " to actor:" + output_data_[i].first->op_id_.Name() +
-                             " index:" + std::to_string(output_data_[i].first->index_);
-    MS_EXCEPTION_IF_CHECK_FAIL((output_data_[i].first->data_ != nullptr), error_info);
+    if (output_data_[i].first->data_ == nullptr) {
+      std::string error_info = GetAID().Name() + " fetches data null, data index:" + std::to_string(i) +
+                               " to actor:" + output_data_[i].first->op_id_.Name() +
+                               " index:" + std::to_string(output_data_[i].first->index_);
+      SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
+    }
     IncreaseDynamicRefCount(output_data_[i].first.get());
   }
 

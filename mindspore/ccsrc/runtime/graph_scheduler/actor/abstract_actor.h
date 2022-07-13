@@ -72,7 +72,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
                       OpContext<DeviceTensor> *const context);
 
   // Get the position of node in the actor.
-  virtual size_t FetchNodePosition(const AnfNodePtr &node) const { return 0; }
+  virtual size_t FetchNodePosition(const KernelWithIndex &node) const { return 0; }
 
   // Get the member.
   KernelTransformType type() const { return type_; }

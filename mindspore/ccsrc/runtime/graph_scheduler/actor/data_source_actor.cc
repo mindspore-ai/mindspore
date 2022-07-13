@@ -65,7 +65,7 @@ void DataSourceActor::UpdateOutputData(OpData<DeviceTensor> *const output_data, 
   }
   const auto &output_device_tensors = buffers_.front();
 
-  auto position = FetchNodePosition(output_node);
+  auto position = FetchNodePosition({output_node, data_arrow->from_output_index_});
   // Host data souruce actor uses the node position, device data source actor uses the output index.
   auto output_position = (position != 0) ? position : data_arrow->from_output_index_;
   if (output_position >= output_device_tensors.size()) {
@@ -190,8 +190,9 @@ void DeviceQueueDataSourceActor::SendRecorderInfo(OpContext<DeviceTensor> *const
 void HostQueueDataSourceActor::FillDataBuffer() {
   // Construct device tensors.
   std::vector<DeviceTensor *> device_tensors;
-  for (auto &data_node : data_nodes_) {
-    auto device_address = AnfAlgo::GetMutableOutputAddr(data_node, 0, false);
+  for (auto &node_with_index : data_node_with_indexs_) {
+    MS_LOG(DEBUG) << "Node:" << node_with_index.first->DebugString() << " index:" << node_with_index.second;
+    auto device_address = AnfAlgo::GetMutableOutputAddr(node_with_index.first, node_with_index.second, false);
     MS_EXCEPTION_IF_NULL(device_address);
     (void)device_tensors.emplace_back(device_address.get());
   }
@@ -282,9 +283,10 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
     }
 
     // Sync data from host_tensor to device_tensor.
-    if (!device_tensor->SyncHostToDevice(trans::GetRuntimePaddingShape(data_nodes_[i], 0),
-                                         LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
-                                         host_tensor->data_c(), host_tensor->device_info().host_format_)) {
+    if (!device_tensor->SyncHostToDevice(
+          trans::GetRuntimePaddingShape(data_node_with_indexs_[i].first, data_node_with_indexs_[i].second),
+          LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(), host_tensor->data_c(),
+          host_tensor->device_info().host_format_)) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
     }
   }
@@ -293,20 +295,21 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
   PostRun(context);
 }
 
-size_t HostQueueDataSourceActor::FetchNodePosition(const AnfNodePtr &data_node) const {
-  MS_EXCEPTION_IF_NULL(data_node);
+size_t HostQueueDataSourceActor::FetchNodePosition(const KernelWithIndex &data_node) const {
+  MS_EXCEPTION_IF_NULL(data_node.first);
   const auto &iter = data_node_position_map_.find(data_node);
   if (iter == data_node_position_map_.end()) {
-    MS_LOG(EXCEPTION) << "Data node: " << data_node->DebugString() << " is not exist.";
+    MS_LOG(EXCEPTION) << "Data node: " << data_node.first->DebugString() << " index:" << data_node.second
+                      << " is not exist.";
   }
   return iter->second;
 }
 
-AnfNodePtr HostQueueDataSourceActor::FetchNode(size_t node_position) const {
-  if (node_position >= data_nodes_.size()) {
+KernelWithIndex HostQueueDataSourceActor::FetchNode(size_t node_position) const {
+  if (node_position >= data_node_with_indexs_.size()) {
     MS_LOG(EXCEPTION) << "The position of node is out of range: " << node_position;
   }
-  return data_nodes_[node_position];
+  return data_node_with_indexs_[node_position];
 }
 
 bool HostQueueDataSourceActor::IsSameDeviceType() const {
@@ -319,11 +322,11 @@ bool HostQueueDataSourceActor::IsSameDeviceType() const {
 }
 
 void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
-  for (auto &data_node : data_nodes_) {
-    if (!AnfAlgo::OutputAddrExist(data_node, 0)) {
+  for (auto &data_node_with_index : data_node_with_indexs_) {
+    if (!AnfAlgo::OutputAddrExist(data_node_with_index.first, data_node_with_index.second)) {
       continue;
     }
-    auto old_address = AnfAlgo::GetMutableOutputAddr(data_node, 0);
+    auto old_address = AnfAlgo::GetMutableOutputAddr(data_node_with_index.first, data_node_with_index.second);
     MS_EXCEPTION_IF_NULL(old_address);
     if (old_address->GetPtr() == nullptr) {
       // The Address memory is already freed.
@@ -341,7 +344,7 @@ void HostQueueDataSourceActor::ReleaseDataNodeAddress() {
       new_address->ResetRefCount();
       auto [node, index] = old_address->GetNodeIndex();
       new_address->SetNodeIndex(node, index);
-      AnfAlgo::SetOutputAddr(new_address, 0, data_node.get());
+      AnfAlgo::SetOutputAddr(new_address, data_node_with_index.second, data_node_with_index.first.get());
     }
   }
 }
