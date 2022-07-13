@@ -43,14 +43,14 @@ STATUS NHWC2NCHW(T *src_data, T *dst_data, std::vector<int32_t> shape) {
     MS_LOG(ERROR) << "The dim should be 4.";
     return RET_ERROR;
   }
-  size_t batch = shape.at(0);
-  size_t plane = shape.at(kAxis1) * shape.at(kAxis2);
-  size_t channel = shape.at(kAxis3);
-  for (size_t b = 0; b < batch; b++) {
-    for (size_t p = 0; p < plane; p++) {
-      for (size_t c = 0; c < channel; c++) {
-        size_t src_idx = b * plane * channel + p * channel + c;
-        size_t dst_idx = b * channel * plane + c * plane + p;
+  int32_t batch = shape.at(0);
+  int32_t plane = shape.at(kAxis1) * shape.at(kAxis2);
+  int32_t channel = shape.at(kAxis3);
+  for (int32_t b = 0; b < batch; b++) {
+    for (int32_t p = 0; p < plane; p++) {
+      for (int32_t c = 0; c < channel; c++) {
+        int32_t src_idx = b * plane * channel + p * channel + c;
+        int32_t dst_idx = b * channel * plane + c * plane + p;
         dst_data[dst_idx] = src_data[src_idx];
       }
     }
@@ -64,14 +64,14 @@ STATUS NCHW2NHWC(T *src_data, T *dst_data, std::vector<int32_t> shape) {
     MS_LOG(ERROR) << "The dim should be 4.";
     return RET_ERROR;
   }
-  size_t batch = shape.at(0);
-  size_t channel = shape.at(1);
-  size_t plane = shape.at(kAxis2) * shape.at(kAxis3);
-  for (size_t b = 0; b < batch; b++) {
-    for (size_t c = 0; c < channel; c++) {
-      for (size_t p = 0; p < plane; p++) {
-        size_t src_idx = b * channel * plane + c * plane + p;
-        size_t dst_idx = b * plane * channel + p * channel + c;
+  int32_t batch = shape.at(0);
+  int32_t channel = shape.at(1);
+  int32_t plane = shape.at(kAxis2) * shape.at(kAxis3);
+  for (int32_t b = 0; b < batch; b++) {
+    for (int32_t c = 0; c < channel; c++) {
+      for (int32_t p = 0; p < plane; p++) {
+        int32_t src_idx = b * channel * plane + c * plane + p;
+        int32_t dst_idx = b * plane * channel + p * channel + c;
         dst_data[dst_idx] = src_data[src_idx];
       }
     }
