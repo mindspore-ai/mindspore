@@ -328,8 +328,8 @@ TEST_F(MindDataTestPipeline, TestRotateParamCheck) {
 
   // Case 1: Size of center is not 2
   // Create objects for the tensor ops
-  auto rotate1 = std::make_shared<vision::Rotate>(
-    90.0, InterpolationMode::kNearestNeighbour, false, std::vector<float>{0.});
+  auto rotate1 =
+    std::make_shared<vision::Rotate>(90.0, InterpolationMode::kNearestNeighbour, false, std::vector<float>{0.});
   auto ds2 = ds->Map({rotate1});
   EXPECT_NE(ds2, nullptr);
   // Create an iterator over the result of the above dataset
@@ -339,8 +339,8 @@ TEST_F(MindDataTestPipeline, TestRotateParamCheck) {
 
   // Case 2: Size of fill_value is not 1 or 3
   // Create objects for the tensor ops
-  auto rotate2 = std::make_shared<vision::Rotate>(
-    -30, InterpolationMode::kNearestNeighbour, false, std::vector<float>{1.0, 1.0}, std::vector<uint8_t>{2, 2});
+  auto rotate2 = std::make_shared<vision::Rotate>(-30, InterpolationMode::kNearestNeighbour, false,
+                                                  std::vector<float>{1.0, 1.0}, std::vector<uint8_t>{2, 2});
   auto ds3 = ds->Map({rotate2});
   EXPECT_NE(ds3, nullptr);
   // Create an iterator over the result of the above dataset
@@ -363,8 +363,8 @@ TEST_F(MindDataTestPipeline, TestRotatePass) {
   // Create objects for the tensor ops
   auto resize = std::make_shared<vision::Resize>(std::vector<int32_t>{50, 25});
 
-  auto rotate = std::make_shared<vision::Rotate>(
-    90, InterpolationMode::kLinear, true, std::vector<float>{-1, -1}, std::vector<uint8_t>{255, 255, 255});
+  auto rotate = std::make_shared<vision::Rotate>(90, InterpolationMode::kLinear, true, std::vector<float>{-1, -1},
+                                                 std::vector<uint8_t>{255, 255, 255});
 
   // Resize the image to 50 * 25
   ds = ds->Map({resize});
@@ -712,4 +712,83 @@ TEST_F(MindDataTestPipeline, TestRandomAdjustSharpnessInvalidDegree) {
 
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: ToTensor op
+/// Description: Test ToTensor op with default float32 type
+/// Expectation: Tensor type is changed to float32 and all rows iterated correctly
+TEST_F(MindDataTestPipeline, TestToTensorOpDefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpDefault.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto to_tensor_op = vision::ToTensor();
+  ds = ds->Map({to_tensor_op}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image type: " << image.DataType();
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+  iter->Stop();
+}
+
+/// Feature: ToTensor op
+/// Description: Test ToTensor op with float64 type
+/// Expectation: Tensor type is changed to float64 and all rows iterated correctly
+TEST_F(MindDataTestPipeline, TestToTensorOpFloat64) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpFloat64.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto to_tensor_op = vision::ToTensor("float64");
+  ds = ds->Map({to_tensor_op}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  iter->GetNextRow(&row);
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image type: " << image.DataType();
+    iter->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+  iter->Stop();
+}
+
+/// Feature: ToTensor op
+/// Description: Test ToTensor op with default float64 type
+/// Expectation: Tensor type is changed to float64 and all rows iterated correctly
+TEST_F(MindDataTestPipeline, TestToTensorOpInvalidInput) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToTensorOpInvalidInput.";
+
+  std::string MindDataPath = "data/dataset";
+  std::string folder_path = MindDataPath + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto type_cast = transforms::TypeCast(mindspore::DataType::kNumberTypeUInt32);
+  auto to_tensor_op = vision::ToTensor("float64");
+  ds = ds->Map({type_cast, to_tensor_op}, {"image"});
+  EXPECT_NE(ds, nullptr);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
 }

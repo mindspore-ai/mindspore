@@ -361,6 +361,7 @@ class MS_API OneHot final : public TensorTransform {
  public:
   /// \brief Constructor.
   /// \param[in] num_classes number of classes.
+  /// \param[in] smoothing_rate smoothing rate default(0.0).
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -371,7 +372,7 @@ class MS_API OneHot final : public TensorTransform {
   ///     dataset = dataset->Map({one_hot_op},    // operations
   ///                            {"column"});     // input columns
   /// \endcode
-  explicit OneHot(int32_t num_classes);
+  explicit OneHot(int32_t num_classes, double smoothing_rate = 0.0);
 
   /// \brief Destructor
   ~OneHot() = default;

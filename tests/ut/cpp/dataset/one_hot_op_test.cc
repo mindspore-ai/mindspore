@@ -21,7 +21,7 @@ using namespace mindspore::dataset;
 
 class MindDataTestOneHotOp : public UT::Common {
  protected:
-    MindDataTestOneHotOp() {}
+  MindDataTestOneHotOp() {}
 };
 
 /// Feature: OneHot op
