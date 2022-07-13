@@ -7797,6 +7797,78 @@ class FillDiagonal(Primitive):
         self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
 
 
+class HammingWindow(Primitive):
+    r"""
+    Computes the hamming window function with input window length.
+
+    .. math::
+
+        w[n] = \alpha - \beta\ \cos \left( \frac{2 \pi n}{N - 1} \right),
+
+    where :math:`N` is the full window size.
+
+    Args:
+        periodic (bool): a flag determines whether the returned window trims off the last
+            duplicate value from the symmetric window. If True, returns a window to be used
+            as periodic function, in above formula, :math:`N = \text{length} + 1`.
+            If False, return a symmetric window, :math:`N = \text{length}`. Default: True.
+        alpha (float): The coefficient :math:`\alpha` in the equation above, default to 0.54.
+        beta (float): The coefficient :math:`\beta` in the equation above, default to 0.46.
+        dtype (:class:`mindspore.dtype`): An optional data type of `mindspore.dtype.float16`,
+            `mindspore.dtype.float32` and `mindspore.dtype.float64`. Default: `mindspore.dtype.float32`.
+
+    Inputs:
+        - **length** (Tensor) - a positive integer tensor controlling the returned window size, must be 1D.
+
+    Outputs:
+        Tensor, A 1-D tensor containing the window, whose shape is :math:`\text{length}`.
+
+    Raises:
+        TypeError: If `length` is not a Tensor.
+        TypeError: If dtype of `length` is not integer data type.
+        TypeError: If `periodic` is not a bool.
+        TypeError: If `alpha` is not a float.
+        TypeError: If `beta` is not a float.
+        TypeError: If `dtype` is not mindspore.float16, mindspore.float32 or mindspore.float64.
+        ValueError: If dimension of `length` is not 1.
+        ValueError: If data of `length` is negative.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> # case 1: periodic=True.
+        >>> length = Tensor(np.array([6]).astype(np.int32))
+        >>> hamming_window = HammingWindow(periodic=True)
+        >>> y = hamming_window(length)
+        >>> print(y)
+        [0.08000001 0.31       0.77000004 1.         0.77000004 0.31      ]
+        >>> # case 2: periodic=False.
+        >>> length = Tensor(np.array([7]).astype(np.int32))
+        >>> hamming_window = HammingWindow(periodic=False)
+        >>> y = hamming_window(length)
+        >>> print(y)
+        [0.08000001 0.31       0.77000004 1.         0.77000004 0.31       0.08000001]
+    """
+
+    @prim_attr_register
+    def __init__(self, periodic=True, alpha=0.54, beta=0.46, dtype=mstype.float32):
+        """Initialize HammingWindow"""
+        validator.check_value_type("periodic", periodic, [bool], self.name)
+        validator.check_value_type("alpha", alpha, [float], self.name)
+        validator.check_value_type("beta", beta, [float], self.name)
+        validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
+        valid_values = (mstype.float16, mstype.float32, mstype.float64)
+        validator.check_type_name("dtype", dtype, valid_values, self.name)
+        self.init_prim_io_names(inputs=['length'], outputs=['y'])
+        if dtype == mstype.float16:
+            self.add_prim_attr('dtype', 1)
+        elif dtype == mstype.float32:
+            self.add_prim_attr('dtype', 0)
+        else:
+            self.add_prim_attr('dtype', 11)
+
+
 class AffineGrid(Primitive):
     r"""
     Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.

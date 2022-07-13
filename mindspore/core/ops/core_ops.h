@@ -539,6 +539,7 @@ GVAR_DEF(PrimitivePtr, kPrimTril, std::make_shared<Primitive>(kTril));
 GVAR_DEF(PrimitivePtr, kPrimEye, std::make_shared<Primitive>(kEye));
 GVAR_DEF(PrimitivePtr, kPrimTriu, std::make_shared<Primitive>(kTriu));
 GVAR_DEF(PrimitivePtr, kPrimMeshgrid, std::make_shared<Primitive>(kMeshgrid));
+GVAR_DEF(PrimitivePtr, kPrimHammingWindow, std::make_shared<Primitive>("HammingWindow"));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMax, std::make_shared<Primitive>(kSegmentMax));
 GVAR_DEF(PrimitivePtr, kPrimSegmentMin, std::make_shared<Primitive>(kSegmentMin));
 GVAR_DEF(PrimitivePtr, kPrimSegmentSum, std::make_shared<Primitive>(kSegmentSum));
