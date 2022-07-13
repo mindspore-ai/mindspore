@@ -64,7 +64,7 @@
 #include "include/common/utils/config_manager.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #ifdef ENABLE_TDTQUE
-#include "minddata/dataset/engine/tdt/tdt_handle.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_handle.h"
 using mindspore::dataset::TdtHandle;
 #endif
 #ifdef ENABLE_DUMP_IR

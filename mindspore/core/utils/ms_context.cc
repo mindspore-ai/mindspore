@@ -100,6 +100,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<bool>(MS_CTX_ENABLE_PYNATIVE_OP_GRAPH_CACHE, true);
   set_param<bool>(MS_CTX_ENABLE_MEM_SCHEDULER, false);
   set_param<bool>(MS_CTX_ENABLE_RECOVERY, false);
+  set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, false);
   set_param<bool>(MS_CTX_DISABLE_FORMAT_TRANSFORM, false);
 
   uint32_t kDefaultRuntimeNumThreads = 30;
@@ -126,6 +127,10 @@ bool MsContext::set_backend_policy(const std::string &policy) {
   auto enable_ge = mindspore::common::GetEnv("MS_ENABLE_GE");
   if (enable_ge == "1") {
     policy_new = "ge";
+    // set MS_CTX_ENABLE_GE_HETEROGENOUS true if ge heterogeneous mode
+    int32_t is_heterogeneous = 0;
+    (void)rtGetIsHeterogenous(&is_heterogeneous);
+    set_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS, is_heterogeneous == 1);
   }
 #endif
   if (policy_map_.find(policy_new) == policy_map_.end()) {
@@ -139,6 +144,9 @@ bool MsContext::set_backend_policy(const std::string &policy) {
 
 #ifdef ENABLE_TDTQUE
 void MsContext::CreateTensorPrintThread(const PrintThreadCrt &ctr) {
+  if (get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    return;
+  }
   uint32_t device_id = get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string kReceivePrefix = "TF_RECEIVE_";
   std::string channel_name = "_npu_log";
@@ -164,6 +172,9 @@ static void JoinAclPrintThread(std::thread *thread) {
 }
 
 void MsContext::DestroyTensorPrintThread() {
+  if (get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    return;
+  }
   // if TdtHandle::DestroyHandle called at taskmanger, all acl_handle_ will be set to nullptr;
   // but not joined the print thread, so add a protect to join the thread.
   if (acl_handle_ == nullptr) {

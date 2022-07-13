@@ -120,11 +120,6 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
   DatasetGraphParam param(queue_name, size, batch_size, ge_types, shapes, input_indexes);
   ConfigManager::GetInstance().set_dataset_param(param);
 
-  if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
-    MS_LOG(ERROR) << "Build dateset graph failed.";
-    return false;
-  }
-
   auto env_ge = common::GetEnv("MS_ENABLE_GE");
   auto env_training = common::GetEnv("MS_GE_TRAIN");
   bool training = false;
@@ -136,14 +131,23 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
   } else {
     (void)setenv("GE_TRAIN", "0", 1);
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
 
-  if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
-    return false;
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    if (transform::CompileDatasetGraph(param, phase) != transform::SUCCESS) {
+      MS_LOG(ERROR) << "Build dateset graph failed.";
+      return false;
+    }
+
+    if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
+      MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
+      return false;
+    }
+
+    MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
+    DoExecNonInputGraph(phase);
   }
-
-  MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
-  DoExecNonInputGraph(phase);
 
   return true;
 }

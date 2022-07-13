@@ -34,7 +34,9 @@
 
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/util/queue.h"
-#include "minddata/dataset/engine/tdt/tdt_plugin.h"
+#include "minddata/dataset/engine/device_queue_impl/device_queue_base.h"
+#include "minddata/dataset/engine/device_queue_impl/tdt/tdt_plugin.h"
+#include "minddata/dataset/engine/device_queue_impl/host_queue/host_queue_plugin.h"
 #endif
 
 #ifdef ENABLE_GPUQUE
@@ -193,7 +195,7 @@ class DeviceQueueOp : public PipelineOp {
   bool dynamic_shape_{false};
 
 #ifdef ENABLE_TDTQUE
-  std::shared_ptr<TdtPlugin> tdtInstancePtr;
+  std::shared_ptr<DeviceQueueBase> tdtInstancePtr;
 #endif
 #ifdef ENABLE_DUMP_IR
   std::shared_ptr<MDChannelInfo> md_channel_info_;

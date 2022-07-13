@@ -195,6 +195,11 @@ FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph) {
     DumpIR("anf_graph.ir", anf_graph, true);
   }
 #endif
+  // if queue name is not empty, set datasink mode
+  string queue_name = ConfigManager::GetInstance().dataset_param().queue_name();
+  if (queue_name != "") {
+    ConfigManager::GetInstance().set_dataset_mode(DatasetMode::DS_SINK_MODE);
+  }
 
   if (!AddDFGraph(anf_graph)) {
     MS_LOG(ERROR) << "GenConvertor failed";
@@ -369,12 +374,8 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
   for (const auto &[output_node, i] : outputs) {
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-    std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(output_node, i));
-    size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-    size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     auto device_address_ptr =
-      std::make_shared<cpu::CPUDeviceAddress>(device_context_->device_res_manager_->AllocateMemory(tensor_size),
-                                              tensor_size, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
+      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, i, output_node.get());
   }
@@ -638,6 +639,12 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(INFO) << "Use AICPU, make sure aicpu lib is set in OPTION_EXEC_EXTERN_PLUGIN_PATH.";
   }
 
+  auto env_op_precision = common::GetEnv("MS_GE_OP_PRECISION");
+  if (!env_op_precision.empty()) {
+    (*ge_options)["ge.exec.op_precision_mode"] = env_op_precision;
+    MS_LOG(INFO) << "Use MS_GE_OP_PRECISION, op precision mode path:" << env_op_precision;
+  }
+
   auto proto_lib_path = common::GetEnv("OPTION_PROTO_LIB_PATH");
   if (!proto_lib_path.empty()) {
     char real_path[PATH_MAX] = {0};
@@ -657,6 +664,11 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
 
   // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
+
+  // ge heterogeneous mode
+  if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
+    (*ge_options)["ge.socVersion"] = "Ascend310P3";
+  }
 }
 
 void GeDeviceContext::SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options) {
