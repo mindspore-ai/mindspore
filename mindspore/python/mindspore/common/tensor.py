@@ -1379,7 +1379,7 @@ class Tensor(Tensor_):
         Flips all bits of this Tensor element-wise.
 
         .. math::
-            out_i = ~x_{i}
+            out_i = \sim x_{i}
 
         Returns:
             Tensor, has the same shape as as self Tensor.
@@ -3758,13 +3758,13 @@ class Tensor(Tensor_):
         return tensor_operator_registry.get('concatenate')(axis)(repeated_subs)
 
     def bernoulli(self, p=0.5, seed=-1):
-        """
+        r"""
         Randomly set the elements of output to 0 or 1 with the probability of P which follows the Bernoulli
         distribution.
 
         .. math::
 
-            out_{i} ~ Bernoulli(p_{i})
+            out_{i} \sim Bernoulli(p_{i})
 
         Args:
             p (Union[Tensor, float], optional): The shape of p need to be broadcast. The elements of p represent the

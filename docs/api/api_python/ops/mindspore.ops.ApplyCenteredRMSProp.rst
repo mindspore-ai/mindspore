@@ -18,9 +18,9 @@
         \end{array}
 
     其中 :math:`w` 代表 `var` ， :math:`w` 将更新。
-    :math:`g_{t+1}` 代表 `mean_gradient` ， :math:`g_{t}` 是 :math:`g_{t+1}` 的最后时刻。
-    :math:`s_{t+1}` 代表 `mean_square` ， :math:`s_{t}` 是 :math:`s_{t+1}` 的最后时刻，
-    :math:`m_{t+1}`代表 `moment` ， :math:`m_{t}` 是 :math:`m_{t+1}` 的最后时刻。
+    :math:`g_{t+1}` 代表 `mean_gradient` ， :math:`g_{t}` 是上一步的 :math:`g_{t+1}` 。
+    :math:`s_{t+1}` 代表 `mean_square` ， :math:`s_{t}` 是上一步的 :math:`s_{t+1}` ，
+    :math:`m_{t+1}`代表 `moment` ， :math:`m_{t}` 是上一步的 :math:`m_{t+1}` 。
     :math:`\rho` 代表 `decay` 。 :math:`\beta` 是动量，代表 `momentum` 。
     :math:`\epsilon` 是一个添加在分母上的较小值，以避免被零除，表示 `epsilon` 。
     :math:`\eta` 代表 `learning_rate` 。 :math:`\nabla Q_{i}(w)` 代表 `grad` 。
@@ -29,7 +29,7 @@
         `ApplyCenteredRMSProp` 和 `ApplyRMSProp` 的区别在于前者使用居中RMSProp算法，而居中RMSProp算法使用居中第二矩阵的估计（即，归一化的方差），而不是使用（不确定的）第二矩阵的正则RMSProp。这通常有助于训练，但在计算和内存方面消耗更大。
 
     .. warning::
-        在此算法的密集实现中， `mean_gradient` 、 `mean_square` 和 `moment` 将更新，即使 `grad` 为零。但在这种稀疏实现中， `mean_gradient` 、 `mean_square` 和 `moment` 不会在 `grad` 为零的迭代中更新。
+        在此算法的密集实现中， `mean_gradient` 、 `mean_square` 和 `moment` 在 `grad` 为零时仍将被更新。但在稀疏实现中， `mean_gradient` 、 `mean_square` 和 `moment` 不会在 `grad` 为零的迭代中被更新。
 
     **参数：**
 
