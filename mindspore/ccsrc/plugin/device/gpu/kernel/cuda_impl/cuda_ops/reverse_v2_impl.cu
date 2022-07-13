@@ -16,6 +16,11 @@
 #include <cuda_runtime.h>
 #include "reverse_v2_impl.cuh"
 #include "include/cuda_fp16.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
+
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
 template <typename T>
 __global__ void ReverseV2(const T* input, T* output, const size_t* input_shape, const int64_t* strides,
                           const int64_t* axis, size_t input_size, size_t axis_size) {
@@ -39,6 +44,16 @@ void CalReverseV2(const T* input, T* output, const size_t* input_shape, const in
                                                                      input_size, axis_size);
   return;
 }
+
+template CUDA_LIB_EXPORT void CalReverseV2<Complex<float>>(const Complex<float>* input, Complex<float>* output,
+                                                 const size_t* input_shape, const int64_t* strides,
+                                                 const int64_t* axis, size_t input_size,
+                                                 size_t axis_size, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT void CalReverseV2<Complex<double>>(const Complex<double>* input, Complex<double>* output,
+                                                 const size_t* input_shape, const int64_t* strides,
+                                                 const int64_t* axis, size_t input_size,
+                                                 size_t axis_size, cudaStream_t cuda_stream);
 
 template CUDA_LIB_EXPORT void CalReverseV2<half>(const half* input, half* output, const size_t* input_shape,
                                                  const int64_t* strides, const int64_t* axis, size_t input_size,

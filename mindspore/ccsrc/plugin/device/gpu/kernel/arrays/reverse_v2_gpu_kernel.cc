@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 #include "plugin/device/gpu/kernel/arrays/reverse_v2_gpu_kernel.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+MS_REG_GPU_KERNEL_ONE(ReverseV2, KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+                      ReverseV2GpuKernelMod, Complex<float>)
+
+MS_REG_GPU_KERNEL_ONE(ReverseV2, KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+                      ReverseV2GpuKernelMod, Complex<double>)
+
 MS_REG_GPU_KERNEL_ONE(ReverseV2, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
                       ReverseV2GpuKernelMod, half)
 

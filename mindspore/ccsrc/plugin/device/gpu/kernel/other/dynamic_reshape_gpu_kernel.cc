@@ -19,9 +19,21 @@
 #include <functional>
 #include "kernel/common_utils.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
+
+MS_REG_GPU_KERNEL_TWO(
+  DynamicReshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex64),
+  DynamicReshapeKernelMod, Complex<float>, int)
+MS_REG_GPU_KERNEL_TWO(
+  DynamicReshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeComplex128),
+  DynamicReshapeKernelMod, Complex<double>, int)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat64),
@@ -38,6 +50,14 @@ MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
   DynamicReshapeKernelMod, int64_t, int)
+MS_REG_GPU_KERNEL_TWO(
+  DynamicReshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex64),
+  DynamicReshapeKernelMod, Complex<float>, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  DynamicReshape,
+  KernelAttr().AddInputAttr(kNumberTypeComplex128).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeComplex128),
+  DynamicReshapeKernelMod, Complex<double>, int64_t)
 MS_REG_GPU_KERNEL_TWO(
   DynamicReshape,
   KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat64),
