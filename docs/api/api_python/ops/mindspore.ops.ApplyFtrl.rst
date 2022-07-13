@@ -9,7 +9,7 @@
 
     **参数：**
 
-    - **use_locking** (bool) - 是否启用锁保护。如果为True，则 `var` 和 `accum` 将受到锁的保护。否则计算结果是未定义的。默认值：False。
+    - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
 
     **输入：**
 

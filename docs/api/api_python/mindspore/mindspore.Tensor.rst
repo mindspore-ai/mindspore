@@ -165,7 +165,7 @@ mindspore.Tensor
 
         .. math::
 
-            out_{i} ~ Bernoulli(p_{i})
+            out_{i} \sim Bernoulli(p_{i})
 
         **参数：**
 
@@ -739,7 +739,7 @@ mindspore.Tensor
 
         **参数：**
 
-        - **v** (Tensor) - 用来更新的值。
+        - **v** (Tensor) - 用来更新的值。有相同的数据类型和除第一维外相同的shape。第一维的大小应该与 `indices` 大小相同。
         - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。
 
         **返回：**
@@ -774,7 +774,7 @@ mindspore.Tensor
         按位翻转当前Tensor。
 
         .. math::
-            out_i = ~x_{i}
+            out_i = \sim x_{i}
 
         其中 `x` 表示当前Tensor。
 
@@ -1600,6 +1600,9 @@ mindspore.Tensor
     .. py:method:: tan()
 
         返回每个元素的正切值。
+        .. math::
+
+            out_i = tan(x_i)
 
         **返回：**
 
