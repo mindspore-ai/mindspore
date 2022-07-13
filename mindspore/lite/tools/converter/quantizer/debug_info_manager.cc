@@ -73,6 +73,7 @@ void DebugInfoManager::AddQuantParamExtend(const mindspore::lite::LiteGraph::Nod
     quant_param_extend.node_type = schema::EnumNamePrimitiveType(static_cast<PrimitiveType>(node->node_type_));
     std::vector<int> dims;
     int element_num = 1;
+    MS_CHECK_PTR_IF_NULL(tensor->dims());
     for (size_t j = 0; j < tensor->dims()->size(); j++) {
       auto dim = tensor->dims()->data()[j];
       dims.push_back(dim);
@@ -486,7 +487,11 @@ MSKernelCallBack DebugInfoManager::GetQuantBeforeCallBack(
       if (debug_mode == quant::FAST && (origin_outputs_.find(tensor.Name()) == origin_outputs_.end())) {
         continue;
       }
-      MS_LOG(INFO) << "Get input " << tensor.Name() << " statistics info.";
+      MS_LOG(DEBUG) << "Get input " << tensor.Name() << " statistics info.";
+      if (op_parameters.find(call_param.node_name) == op_parameters.end()) {
+        MS_LOG(ERROR) << tensor.Name() << " op_parameters find node name " << call_param.node_name << " failed.";
+        return false;
+      }
       auto is_const = static_cast<mindspore::lite::Tensor *>(lite_tensor)->category() == CONST_TENSOR ||
                       static_cast<mindspore::lite::Tensor *>(lite_tensor)->category() == CONST_SCALAR;
       if (is_const) {
@@ -562,6 +567,10 @@ MSKernelCallBack DebugInfoManager::GetAfterCallBack(const std::map<std::string, 
         MS_LOG(INFO) << " Get output " << tensor.Name() << " statistics info.";
         auto lite_tensor = quant::MSTensorToLiteTensor(tensor);
         auto lite_inputs = quant::MSTensorToLiteTensors(inputs);
+        if (op_parameters.find(call_param.node_name) == op_parameters.end()) {
+          MS_LOG(ERROR) << tensor.Name() << " op_parameters find node name " << call_param.node_name << " failed.";
+          return false;
+        }
         AddComparedInfo(call_param, lite_inputs, op_parameters.at(call_param.node_name), false, i, lite_tensor,
                         debug_mode);
       }

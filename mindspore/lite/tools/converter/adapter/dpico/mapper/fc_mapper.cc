@@ -41,7 +41,7 @@ STATUS SetNumOutput(const api::CNodePtr &cnode, const api::PrimitivePtr &prim, m
   }
   auto output_shape = output_shapes.at(0);
   if (prim->GetAttr(kNumOutput) != nullptr) {
-    uint32_t num_output = api::GetValue<int64_t>(prim->GetAttr(kNumOutput));
+    uint32_t num_output = static_cast<size_t>(api::GetValue<int64_t>(prim->GetAttr(kNumOutput)));
     if (output_shape.back() != num_output) {
       MS_LOG(ERROR) << "num output attr isn't matched with fc output shape.";
       return RET_ERROR;
