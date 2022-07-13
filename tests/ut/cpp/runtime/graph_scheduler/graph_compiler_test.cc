@@ -168,7 +168,7 @@ TEST_F(GraphCompilerTest, CompileGraph) {
  auto device_context = std::make_shared<TestADeviceContext>(device_context_key);
  auto graph_id = compiler->CompileGraph(segment, outputs, device_context.get(), device::RunMode::kKernelMode, false);
  const auto &kernel_graph = compiler->Fetch(graph_id);
- ASSERT_EQ(3, kernel_graph->execution_order().size());
+ ASSERT_EQ(2, kernel_graph->execution_order().size());
 }
 }  // namespace runtime
 }  // namespace mindspore
