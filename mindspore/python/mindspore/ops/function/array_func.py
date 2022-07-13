@@ -2362,12 +2362,14 @@ def tensor_scatter_min(input_x, indices, updates):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]).astype('float32'))
-        >>> indices = Tensor(np.array([[0, 0], [0, 0]]).astype('int32'))
-        >>> updates = Tensor(np.array([1.0, 2.2]).astype('float32'))
-        >>> output = x.tensor_scatter_min(indices, updates)
+        >>> from mindspore import ops
+        >>> input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
+        >>> indices = Tensor(np.array([[0, 0], [0, 0]]), mindspore.int32)
+        >>> updates = Tensor(np.array([1.0, 2.2]), mindspore.float32)
+        >>> output = ops.tensor_scatter_min(input_x, indices, updates)
         >>> print(output)
         [[ -0.1  0.3  3.6]
         [ 0.4  0.5 -3.2]]
