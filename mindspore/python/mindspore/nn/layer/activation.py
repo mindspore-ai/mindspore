@@ -505,7 +505,7 @@ class RReLU(Cell):
          [ 2.          0.        ]]
     """
 
-    def __init__(self, lower=1/8, upper=1/3):
+    def __init__(self, lower=1 / 8, upper=1 / 3):
         super(RReLU, self).__init__()
         validator.check_value_type('upper', upper, [float, int], self.cls_name)
         validator.check_value_type('lower', lower, [float, int], self.cls_name)
@@ -553,7 +553,7 @@ class SeLU(Cell):
     def __init__(self):
         """Initialize SeLU"""
         super(SeLU).__init__()
-        self.selu = P.Selu()
+        self.selu = P.SeLU()
 
     def construct(self, input_x):
         return self.selu(input_x)
