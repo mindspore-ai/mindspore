@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,9 +68,9 @@ class BufferSample(PrimitiveWithInfer):
         >>> shapes = [(4,), (2,), (1,), (4,)]
         >>> types = [ms.float32, ms.int32, ms.int32, ms.float32]
         >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
-                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
-                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
-                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        ...           Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+        ...           Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+        ...           Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
         >>> buffer_sample = ops.BufferSample(capacity, batch_size, shapes, types)
         >>> output = buffer_sample(buffer, count, head)
         >>> print(output)
@@ -177,15 +177,15 @@ class BufferAppend(PrimitiveWithInfer):
         >>> count = Parameter(Tensor(5, ms.int32), name="count")
         >>> head = Parameter(Tensor(0, ms.int32), name="head")
         >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
-                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
-                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
-                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        ...           Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+        ...           Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+        ...           Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
         >>> exp = [Tensor(np.array([2, 2, 2, 2]), ms.float32), Tensor(np.array([0, 0]), ms.int32),
-                   Tensor(np.array([0]), ms.int32), Tensor(np.array([3, 3, 3, 3]), ms.float32)]
+        ...        Tensor(np.array([0]), ms.int32), Tensor(np.array([3, 3, 3, 3]), ms.float32)]
         >>> batch_exp = [Tensor(np.array([[2, 2, 2, 2], [2, 2, 2, 2]]), ms.float32),
-                         Tensor(np.array([[0, 0], [0, 0]), ms.int32),
-                         Tensor(np.array([[0], [0]]), ms.int32),
-                         Tensor(np.array([[3, 3, 3, 3], [3, 3, 3, 3]]), ms.float32)]
+        ...              Tensor(np.array([[0, 0], [0, 0]), ms.int32),
+        ...              Tensor(np.array([[0], [0]]), ms.int32),
+        ...              Tensor(np.array([[3, 3, 3, 3], [3, 3, 3, 3]]), ms.float32)]
         >>> buffer_append = ops.BufferAppend(capacity, shapes, types)
         >>> buffer_append(buffer, exp, count, head)
         >>> buffer_append(buffer, batch_exp, count, head)
@@ -274,9 +274,9 @@ class BufferGetItem(PrimitiveWithInfer):
         >>> count = Parameter(Tensor(5, ms.int32), name="count")
         >>> head = Parameter(Tensor(0, ms.int32), name="head")
         >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
-                      Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
-                      Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
-                      Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
+        ...           Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
+        ...           Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
+        ...           Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="state_")]
         >>> buffer_get = ops.BufferGetItem(capacity, shapes, types)
         >>> output = buffer_get(buffer, count, head, index)
         >>> print(output)
