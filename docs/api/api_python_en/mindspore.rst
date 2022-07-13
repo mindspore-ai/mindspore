@@ -257,6 +257,7 @@ JIT
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.JitConfig
     mindspore.ms_function
     mindspore.ms_class
     mindspore.mutable

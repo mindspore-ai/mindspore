@@ -22,12 +22,16 @@ class JitConfig:
     Note:
         This is an experimental function that is subject to change or deletion.
 
-    jit_level (str): Option for argument `level` for Optimization of lift graph.
-        Supports ["O0", "O1", "O2"]. Default: "O1".
-        - "O0": Basic optimization.
-        - "O1": Manual optimization.
-        - "O2": Manual optimization and graph computation fusion.
-    task_sink (bool): Determines whether to pass the data through dataset channel. Default: True.
+    Args:
+        jit_level (str): Option for argument `level` for Optimization of lift graph.
+            Supports ["O0", "O1", "O2"]. Default: "O1".
+
+            - "O0": Basic optimization.
+            - "O1": Manual optimization.
+            - "O2": Manual optimization and graph computation fusion.
+
+        task_sink (bool): Determines whether to pass the data through dataset channel. Default: True.
+        **kwargs (dict): A dictionary of keyword arguments that the class needs.
     """
     def __init__(self, jit_level="O1", task_sink=True, **kwargs):
         if jit_level not in ["O0", "O1", "O2"]:
