@@ -17,19 +17,19 @@ import numpy as np
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
-import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops.functional import vmap
-from mindspore.ops.operations import _inner_ops as inner
+from mindspore.ops.operations._inner_ops import Cummin
+from mindspore.ops.operations.array_ops import Cummax
 
 
 class Net(nn.Cell):
     def __init__(self, op, axis):
         super(Net, self).__init__()
         if op == "Cummin":
-            self.op = inner.Cummin(axis)
+            self.op = Cummin(axis)
         elif op == "Cummax":
-            self.op = ops.Cummax(axis)
+            self.op = Cummax(axis)
         else:
             raise ValueError("op value error.")
 

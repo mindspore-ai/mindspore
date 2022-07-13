@@ -335,7 +335,6 @@ Array操作
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
-    mindspore.ops.matrix_diag
     mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
@@ -434,7 +433,6 @@ Parameter操作算子
     mindspore.ops.scatter_max
     mindspore.ops.scatter_nd_add
     mindspore.ops.scatter_nd_div
-    mindspore.ops.scatter_nd_max
     mindspore.ops.scatter_nd_min
     mindspore.ops.scatter_nd_mul
     mindspore.ops.scatter_nd_sub
