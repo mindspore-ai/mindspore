@@ -363,6 +363,7 @@ Array操作
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
+    mindspore.ops.unsorted_segment_sum
 
 .. list-table::
    :widths: 50 50

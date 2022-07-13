@@ -360,6 +360,7 @@ constexpr const char kNameStringLength[] = "StringLength";
 constexpr const char kNameGetShape[] = "GetShape";
 constexpr const char kNameKlDivLossGrad[] = "KLDivLossGrad";
 constexpr const char kNameRandomStandardNormal[] = "RandomStandardNormal";
+constexpr const char kNameUnsortedSegmentSum[] = "UnsortedSegmentSum";
 
 class OpAdapterDesc;
 
