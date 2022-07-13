@@ -589,7 +589,14 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
     }
     if (not_save) {
       flatbuffers::FlatBufferBuilder builder(kFlatbuffersBuilderInitSize);
-      *model_data = static_cast<void *>(MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, data_size));
+      auto packed_buffer = MetaGraphSerializer::GetMetaGraphPackedBuff(&builder, *meta_graph, data_size);
+      auto buffer = malloc(*data_size);
+      if (buffer == nullptr) {
+        MS_LOG(ERROR) << "malloc failed.";
+        return RET_ERROR;
+      }
+      (void)memcpy_s(buffer, *data_size, packed_buffer, *data_size);
+      *model_data = buffer;
     } else {
       status = MetaGraphSerializer::Save(*meta_graph, param->output_file, encKey, keyLen, param->encrypt_mode);
     }
