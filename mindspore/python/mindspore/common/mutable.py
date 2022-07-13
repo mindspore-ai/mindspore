@@ -69,6 +69,7 @@ def mutable(input_data):
         - Tensor is mutable by default, when the `input_data` is Tensor, we just return the origin Tensor and nothing
           is done.
         - Currently we only support to use this api outside the network temporarily.
+        - Currently this api only works in GRAPH mode.
 
     Returns:
         The origin input data which has been set mutable.
