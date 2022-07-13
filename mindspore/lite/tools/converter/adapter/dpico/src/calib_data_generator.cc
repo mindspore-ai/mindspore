@@ -324,7 +324,7 @@ int CalibDataGenerator::Run(const api::AnfNodePtrList &graph_inputs, const api::
           return RET_ERROR;
         }
         dump_op_info.dump_op_name = tuple_get_item_cnode->input(1)->fullname_with_scope();
-        dump_op_info.output_index = GetTupleGetItemOutIndex(tuple_get_item_cnode);
+        dump_op_info.output_index = static_cast<int32_t>(GetTupleGetItemOutIndex(tuple_get_item_cnode));
       }
     }
     if (image_lists.find(dump_op_info.dump_op_name) == image_lists.end()) {

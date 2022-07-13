@@ -56,9 +56,9 @@ Status DpicoPassThroughInterface::Infer(std::vector<mindspore::MSTensor> *inputs
 
   // get param value
   std::map<std::string, const flatbuffers::Vector<uint8_t> *> custom_attrs;
-  uint32_t num_output = 0;
-  uint32_t block_height = 0;
-  uint32_t block_width = 0;
+  int64_t num_output = 0;
+  int64_t block_height = 0;
+  int64_t block_width = 0;
   if (param->attr() == nullptr) {
     MS_LOG(ERROR) << "param->attr() is nullptr";
     return kLiteError;

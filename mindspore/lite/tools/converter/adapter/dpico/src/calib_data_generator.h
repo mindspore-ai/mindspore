@@ -85,7 +85,7 @@ class CalibDataGenerator {
       shape_size *= static_cast<size_t>(op_attr.shape.at(i));
     }
     ifs.seekg(0, std::ios::end);
-    size_t file_size = ifs.tellg();
+    size_t file_size = static_cast<size_t>(ifs.tellg());
     if (file_size != shape_size * sizeof(T)) {
       MS_LOG(ERROR) << "file size " << file_size << " is not equal to shape size " << shape_size;
       return RET_ERROR;
