@@ -116,8 +116,8 @@ TEST_F(MindDataTestPipeline, TestComposeFail2) {
 
   // Compose: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  auto compose = std::make_shared<transforms::Compose>(
-    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
+  auto compose =
+    std::make_shared<transforms::Compose>(std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({compose}, {"image"});
@@ -1361,7 +1361,7 @@ TEST_F(MindDataTestPipeline, TestMaskFail2) {
 }
 
 /// Feature: OneHot op
-/// Description: Test OneHot op basic usage
+/// Description: Test OneHot op basic usage with default smoothing value
 /// Expectation: Output is equal to the expected output
 TEST_F(MindDataTestPipeline, TestOneHotSuccess1) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess1.";
@@ -1454,6 +1454,52 @@ TEST_F(MindDataTestPipeline, TestOneHotSuccess2) {
 
   // Create a Map operation on ds
   ds = ds->Map({mixup_batch_op}, {"image", "label"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: OneHot op
+/// Description: Test OneHot op with non-default smoothing rate value
+/// Expectation: Rows in the dataset are iterated without failure
+TEST_F(MindDataTestPipeline, TestOneHotSuccess3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestOneHotSuccess3.";
+  // Create a Cifar10 Dataset
+  std::string folder_path = datasets_root_path_ + "/testCifar10Data/";
+  std::shared_ptr<Dataset> ds = Cifar10(folder_path, "all", std::make_shared<RandomSampler>(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Batch operation on ds
+  int32_t batch_size = 5;
+  ds = ds->Batch(batch_size);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Create OneHot op with non-default smoothing_rate
+  std::shared_ptr<TensorTransform> one_hot_op = std::make_shared<transforms::OneHot>(10, 0.2);
+
+  // Create a Map operation on ds
+  ds = ds->Map({one_hot_op}, {"label"});
   EXPECT_NE(ds, nullptr);
 
   // Create an iterator over the result of the above dataset
@@ -1936,8 +1982,8 @@ TEST_F(MindDataTestPipeline, TestRandomApplyFail2) {
 
   // RandomApply: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  auto random_apply = std::make_shared<transforms::RandomApply>(
-    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
+  auto random_apply =
+    std::make_shared<transforms::RandomApply>(std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({random_apply}, {"image"});
@@ -2081,8 +2127,8 @@ TEST_F(MindDataTestPipeline, TestRandomChoiceFail2) {
 
   // RandomChoice: transform ops must not be null
   std::shared_ptr<TensorTransform> decode_op = std::make_shared<vision::Decode>();
-  auto random_choice = std::make_shared<transforms::RandomApply>(
-    std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
+  auto random_choice =
+    std::make_shared<transforms::RandomApply>(std::vector<std::shared_ptr<TensorTransform>>{decode_op, nullptr});
 
   // Create a Map operation on ds
   ds = ds->Map({random_choice}, {"image"});

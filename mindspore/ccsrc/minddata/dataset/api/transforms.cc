@@ -147,13 +147,18 @@ std::shared_ptr<TensorOperation> Mask::Parse() {
 
 // Constructor to OneHot
 struct OneHot::Data {
-  explicit Data(int32_t num_classes) : num_classes_(num_classes) {}
+  explicit Data(int32_t num_classes, double smoothing_rate)
+      : num_classes_(num_classes), smoothing_rate_(smoothing_rate) {}
   int32_t num_classes_;
+  double smoothing_rate_;
 };
 
-OneHot::OneHot(int32_t num_classes) : data_(std::make_shared<Data>(num_classes)) {}
+OneHot::OneHot(int32_t num_classes, double smoothing_rate)
+    : data_(std::make_shared<Data>(num_classes, smoothing_rate)) {}
 
-std::shared_ptr<TensorOperation> OneHot::Parse() { return std::make_shared<OneHotOperation>(data_->num_classes_); }
+std::shared_ptr<TensorOperation> OneHot::Parse() {
+  return std::make_shared<OneHotOperation>(data_->num_classes_, data_->smoothing_rate_);
+}
 
 // Constructor to PadEnd
 struct PadEnd::Data {

@@ -265,14 +265,16 @@ class MS_API CutOut final : public TensorTransform {
   /// \brief Constructor.
   /// \param[in] length Integer representing the side length of each square patch.
   /// \param[in] num_patches Integer representing the number of patches to be cut out of an image.
+  /// \param[in] is_hwc A boolean to indicate whether the input image is in HWC format (true) or CHW
+  ///     format (false) (default = true).
   /// \par Example
   /// \code
   ///     /* dataset is an instance of Dataset object */
   ///     dataset = dataset->Map({std::make_shared<vision::Decode>(),
-  ///                             std::make_shared<vision::CutOut>(1, 4)}, // operations
-  ///                            {"image"});                               // input columns
+  ///                             std::make_shared<vision::CutOut>(1, 4, true)}, // operations
+  ///                            {"image"});                                     // input columns
   /// \endcode
-  explicit CutOut(int32_t length, int32_t num_patches = 1);
+  explicit CutOut(int32_t length, int32_t num_patches = 1, bool is_hwc = true);
 
   /// \brief Destructor.
   ~CutOut() = default;
@@ -404,6 +406,8 @@ class MS_API NormalizePad final : public TensorTransform {
   ///     The standard deviation values must be in range (0.0, 255.0].
   /// \param[in] dtype The output datatype of Tensor.
   ///     The standard deviation values must be "float32" or "float16"（default = "float32"）.
+  /// \param[in] is_hwc A boolean to indicate whether the input image is in HWC format (true) or CHW
+  ///     format (false) (default = true).
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -414,10 +418,12 @@ class MS_API NormalizePad final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, normalize_pad_op},  // operations
   ///                            {"image"});                     // input columns
   /// \endcode
-  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype = "float32")
-      : NormalizePad(mean, std, StringToChar(dtype)) {}
+  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype = "float32",
+               bool is_hwc = true)
+      : NormalizePad(mean, std, StringToChar(dtype), is_hwc) {}
 
-  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::vector<char> &dtype);
+  NormalizePad(const std::vector<float> &mean, const std::vector<float> &std, const std::vector<char> &dtype,
+               bool is_hwc = true);
 
   /// \brief Destructor.
   ~NormalizePad() = default;
@@ -1587,6 +1593,36 @@ class MS_API SwapRedBlue final : public TensorTransform {
   /// \brief The function to convert a TensorTransform object into a TensorOperation object.
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
+};
+
+/// \brief Rescale to divide by 255 and convert from HWC format to CHW format with required datatype.
+/// \brief Default datatype is "float32".
+class MS_API ToTensor final : public TensorTransform {
+ public:
+  /// \brief Constructor.
+  /// \param[in] output_type The type of the output tensor (default="float32").
+  /// \par Example
+  /// \code
+  ///     /* Define operations */
+  ///     auto to_tensor_op = vision::ToTensor();
+  ///
+  ///     /* dataset is an instance of Dataset object */
+  ///     dataset = dataset->Map({ToTensor},  // operations
+  ///                            {"image"});  // input columns
+  /// \endcode
+  explicit ToTensor(std::string output_type = "float32");
+
+  /// \brief Destructor.
+  ~ToTensor() = default;
+
+ protected:
+  /// \brief The function to convert a TensorTransform object into a TensorOperation object.
+  /// \return Shared pointer to TensorOperation object.
+  std::shared_ptr<TensorOperation> Parse() override;
+
+ private:
+  struct Data;
+  std::shared_ptr<Data> data_;
 };
 
 /// \brief Randomly perform transformations, as selected from input transform list, on the input tensor.

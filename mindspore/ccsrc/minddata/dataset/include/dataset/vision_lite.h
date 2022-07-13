@@ -238,6 +238,9 @@ class MS_API Normalize final : public TensorTransform {
   ///     The mean values must be in range [0.0, 255.0].
   /// \param[in] std A vector of standard deviations for each channel, with respect to channel order.
   ///     The standard deviation values must be in range (0.0, 255.0].
+  /// \param[in] is_hwc A boolean to indicate whether the input image is in HWC format (true) or CHW
+  ///     format (false) (Lite only supports true) (default = true).
+
   /// \par Example
   /// \code
   ///     /* Define operations */
@@ -248,7 +251,7 @@ class MS_API Normalize final : public TensorTransform {
   ///     dataset = dataset->Map({decode_op, normalize_op},  // operations
   ///                            {"image"});                 // input columns
   /// \endcode
-  Normalize(const std::vector<float> &mean, const std::vector<float> &std);
+  Normalize(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc = true);
 
   /// \brief Destructor.
   ~Normalize() = default;

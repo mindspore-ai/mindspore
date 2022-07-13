@@ -76,6 +76,7 @@
 #include "minddata/dataset/kernels/ir/vision/rotate_ir.h"
 #include "minddata/dataset/kernels/ir/vision/slice_patches_ir.h"
 #include "minddata/dataset/kernels/ir/vision/swap_red_blue_ir.h"
+#include "minddata/dataset/kernels/ir/vision/to_tensor_ir.h"
 #include "minddata/dataset/kernels/ir/vision/uniform_aug_ir.h"
 #include "minddata/dataset/kernels/ir/vision/vertical_flip_ir.h"
 #include "minddata/dataset/util/log_adapter.h"
@@ -266,15 +267,18 @@ std::shared_ptr<TensorOperation> CutMixBatch::Parse() {
 
 // CutOutOp.
 struct CutOut::Data {
-  Data(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
+  Data(int32_t length, int32_t num_patches, bool is_hwc)
+      : length_(length), num_patches_(num_patches), is_hwc_(is_hwc) {}
   int32_t length_;
   int32_t num_patches_;
+  bool is_hwc_;
 };
 
-CutOut::CutOut(int32_t length, int32_t num_patches) : data_(std::make_shared<Data>(length, num_patches)) {}
+CutOut::CutOut(int32_t length, int32_t num_patches, bool is_hwc)
+    : data_(std::make_shared<Data>(length, num_patches, is_hwc)) {}
 
 std::shared_ptr<TensorOperation> CutOut::Parse() {
-  return std::make_shared<CutOutOperation>(data_->length_, data_->num_patches_, true);
+  return std::make_shared<CutOutOperation>(data_->length_, data_->num_patches_, data_->is_hwc_);
 }
 #endif  // not ENABLE_ANDROID
 
@@ -460,25 +464,33 @@ std::shared_ptr<TensorOperation> MixUpBatch::Parse() { return std::make_shared<M
 
 // Normalize Transform Operation.
 struct Normalize::Data {
-  Data(const std::vector<float> &mean, const std::vector<float> &std) : mean_(mean), std_(std) {}
+  Data(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
+      : mean_(mean), std_(std), is_hwc_(is_hwc) {}
   std::vector<float> mean_;
   std::vector<float> std_;
+  bool is_hwc_;
 };
 
-Normalize::Normalize(const std::vector<float> &mean, const std::vector<float> &std)
-    : data_(std::make_shared<Data>(mean, std)) {}
+Normalize::Normalize(const std::vector<float> &mean, const std::vector<float> &std, bool is_hwc)
+    : data_(std::make_shared<Data>(mean, std, is_hwc)) {}
 
 std::shared_ptr<TensorOperation> Normalize::Parse() {
-  return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, true);
+  return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, data_->is_hwc_);
 }
 
 std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
+#ifdef ENABLE_ANDROID
+  if (data_->is_hwc_ == false) {
+    MS_LOG(ERROR) << "Normalize op on Lite does not support 'is_hwc' = false.";
+    return nullptr;
+  }
+#endif
   if (env == MapTargetDevice::kAscend310) {
 #ifdef ENABLE_ACL
     return std::make_shared<DvppNormalizeOperation>(data_->mean_, data_->std_);
 #endif  // ENABLE_ACL
   } else if (env == MapTargetDevice::kCpu) {
-    return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, true);
+    return std::make_shared<NormalizeOperation>(data_->mean_, data_->std_, data_->is_hwc_);
   }
   MS_LOG(ERROR) << "Unsupported MapTargetDevice, only supported kCpu and kAscend310.";
   return nullptr;
@@ -487,19 +499,20 @@ std::shared_ptr<TensorOperation> Normalize::Parse(const MapTargetDevice &env) {
 #ifndef ENABLE_ANDROID
 // NormalizePad Transform Operation.
 struct NormalizePad::Data {
-  Data(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype)
-      : mean_(mean), std_(std), dtype_(dtype) {}
+  Data(const std::vector<float> &mean, const std::vector<float> &std, const std::string &dtype, bool is_hwc)
+      : mean_(mean), std_(std), dtype_(dtype), is_hwc_(is_hwc) {}
   std::vector<float> mean_;
   std::vector<float> std_;
   std::string dtype_;
+  bool is_hwc_;
 };
 
 NormalizePad::NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
-                           const std::vector<char> &dtype)
-    : data_(std::make_shared<Data>(mean, std, CharToString(dtype))) {}
+                           const std::vector<char> &dtype, bool is_hwc)
+    : data_(std::make_shared<Data>(mean, std, CharToString(dtype), is_hwc)) {}
 
 std::shared_ptr<TensorOperation> NormalizePad::Parse() {
-  return std::make_shared<NormalizePadOperation>(data_->mean_, data_->std_, data_->dtype_, true);
+  return std::make_shared<NormalizePadOperation>(data_->mean_, data_->std_, data_->dtype_, data_->is_hwc_);
 }
 
 // Pad Transform Operation.
@@ -1119,8 +1132,17 @@ std::shared_ptr<TensorOperation> SlicePatches::Parse() {
 
 // SwapRedBlue Transform Operation.
 SwapRedBlue::SwapRedBlue() = default;
-
 std::shared_ptr<TensorOperation> SwapRedBlue::Parse() { return std::make_shared<SwapRedBlueOperation>(); }
+
+// ToTensor Transform Operation.
+struct ToTensor::Data {
+  explicit Data(std::string &output_type) : output_type_(output_type) {}
+  std::string output_type_;
+};
+
+ToTensor::ToTensor(std::string output_type) : data_(std::make_shared<Data>(output_type)) {}
+
+std::shared_ptr<TensorOperation> ToTensor::Parse() { return std::make_shared<ToTensorOperation>(data_->output_type_); }
 
 // UniformAug Transform Operation.
 struct UniformAugment::Data {

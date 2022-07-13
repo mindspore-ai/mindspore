@@ -677,10 +677,10 @@ TEST_F(MindDataTestPipeline, TestCutMixBatchFail4) {
 }
 
 /// Feature: CutOut op
-/// Description: Test CutOut op basic usage
+/// Description: Test CutOut op basic usage with default HWC parameter
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestCutOut) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOut.";
+TEST_F(MindDataTestPipeline, TestCutOutDefaultHWC) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutDefaultHWC.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -724,6 +724,152 @@ TEST_F(MindDataTestPipeline, TestCutOut) {
   }
 
   EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CutOut op
+/// Description: Test CutOut op with HWC true and HWC input
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestCutOutHWCTrueValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCTrueValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> cut_out = std::make_shared<vision::CutOut>(30, 5, true);
+
+  // Create a Map operation on ds
+  ds = ds->Map({cut_out});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CutOut op
+/// Description: Test CutOut op with HWC false and HWC input
+/// Expectation: Error is caught for mismatched input image format (HWC)
+TEST_F(MindDataTestPipeline, TestCutOutHWCFalseInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCFalseInvalid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorTransform> cut_out = std::make_shared<vision::CutOut>(30, 5, false);
+
+  // Create a Map operation on ds
+  ds = ds->Map({cut_out});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CutOut op
+/// Description: Test CutOut op with HWC true and CHW input
+/// Expectation: Error is caught for mismatched input image format (CHW)
+TEST_F(MindDataTestPipeline, TestCutOutHWCTrueInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCTrueInvalid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto cut_out = std::make_shared<vision::CutOut>(30, 5, true);
+  // Op to convert input image format to CHW
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, cut_out});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: CutOut op
+/// Description: Test CutOut op with HWC false and CHW input
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestCutOutHWCFalseValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutHWCFalseValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto cut_out = std::make_shared<vision::CutOut>(30, 5, false);
+  // Op to convert input image format to CHW
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, cut_out});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
 
   // Manually terminate the pipeline
   iter->Stop();
@@ -1059,10 +1205,10 @@ TEST_F(MindDataTestPipeline, TestMixUpBatchSuccess2) {
 }
 
 /// Feature: Normalize op
-/// Description: Test Normalize op basic usage
+/// Description: Test Normalize op basic usage with default HWC parameter
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestNormalize) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize.";
+TEST_F(MindDataTestPipeline, TestNormalizeDefaultHWC) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeDefaultHWC.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -1075,8 +1221,8 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  auto normalize = std::make_shared<vision::Normalize>(
-    std::vector<float>{121.0, 115.0, 0.0}, std::vector<float>{70.0, 68.0, 71.0});
+  auto normalize =
+    std::make_shared<vision::Normalize>(std::vector<float>{121.0, 115.0, 0.0}, std::vector<float>{70.0, 68.0, 71.0});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -1111,11 +1257,157 @@ TEST_F(MindDataTestPipeline, TestNormalize) {
   iter->Stop();
 }
 
-/// Feature: NormalizePad op
-/// Description: Test NormalizePad op basic usage
+/// Feature: Normalize op
+/// Description: Test Normalize HWC true and HWC input
 /// Expectation: Output is equal to the expected output
-TEST_F(MindDataTestPipeline, TestNormalizePad) {
-  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePad.";
+TEST_F(MindDataTestPipeline, TestNormalizeHWCTrueValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeHWCTrueValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto normalize = std::make_shared<vision::Normalize>(std::vector<float>{121.0, 115.0, 0.0},
+                                                       std::vector<float>{70.0, 68.0, 71.0}, true);
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: Normalize op
+/// Description: Test Normalize op with HWC false and HWC input
+/// Expectation: Error is caught for mismatched input image format (HWC)
+TEST_F(MindDataTestPipeline, TestNormalizeHWCFalseInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalize.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto normalize = std::make_shared<vision::Normalize>(std::vector<float>{121.0, 115.0, 0.0},
+                                                       std::vector<float>{70.0, 68.0, 71.0}, false);
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: Normalize op
+/// Description: Test Normalize op with HWC true and CHW input
+/// Expectation: Error is caught for mismatched input image format (CHW)
+TEST_F(MindDataTestPipeline, TestNormalizeHWCTrueInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeHWCTrueInvalid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto normalize = std::make_shared<vision::Normalize>(std::vector<float>{121.0, 115.0, 0.0},
+                                                       std::vector<float>{70.0, 68.0, 71.0}, true);
+
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, normalize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: Normalize op
+/// Description: Test Normalize op with CHW true and CHW input
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestNormalizeHWCFalseValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizeHWCFalseValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  auto normalize = std::make_shared<vision::Normalize>(std::vector<float>{121.0, 115.0, 0.0},
+                                                       std::vector<float>{70.0, 68.0, 71.0}, false);
+
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, normalize});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op basic usage with default HWC parameter
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestNormalizePadDefault) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadDefault.";
 
   // Create an ImageFolder Dataset
   std::string folder_path = datasets_root_path_ + "/testPK/data/";
@@ -1128,8 +1420,8 @@ TEST_F(MindDataTestPipeline, TestNormalizePad) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  auto normalizepad = std::make_shared<vision::NormalizePad>(
-    std::vector<float>{121.0, 115.0, 100.0}, std::vector<float>{70.0, 68.0, 71.0}, "float32");
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float32");
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
@@ -1161,6 +1453,220 @@ TEST_F(MindDataTestPipeline, TestNormalizePad) {
   iter->Stop();
 }
 
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with HWC true and HWC input
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestNormalizePadHWCTrueValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadHWCTrueValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float32", true);
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[2], 4);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with HWC false and HWC input
+/// Expectation: Error is caught for mismatched input image format (HWC)
+TEST_F(MindDataTestPipeline, TestNormalizePadHWCFalseInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadHWCFalseInvalid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float16", false);
+  // Note: No need to check for output after calling API class constructor
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with HWC true and CHW input
+/// Expectation: Error is caught for mismatched input image format (CHW)
+TEST_F(MindDataTestPipeline, TestNormalizePadHWCTrueInvalid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadHWCTrueInvalid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float32", true);
+  // Note: No need to check for output after calling API class constructor
+
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_ERROR(iter->GetNextRow(&row));
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with HWC false and CHW input
+/// Expectation: Output is equal to the expected output
+TEST_F(MindDataTestPipeline, TestNormalizePadHWCFalseValid) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadHWCFalseValid.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float32", false);
+  // Note: No need to check for output after calling API class constructor
+
+  auto HWC2CHW = std::make_shared<vision::HWC2CHW>();
+
+  // Create a Map operation on ds
+  ds = ds->Map({HWC2CHW, normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  ASSERT_OK(iter->GetNextRow(&row));
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image.Shape();
+    EXPECT_EQ(image.Shape()[2], 4032);
+
+    ASSERT_OK(iter->GetNextRow(&row));
+  }
+
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with invalid float64 dtype
+/// Expectation: Error is caught for invalid dtype provided
+TEST_F(MindDataTestPipeline, TestNormalizePadInvalidDTypeFloat64) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadInvalidDTypeFloat64.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Pass invalid dtype ("float64") to NormalizePad.
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "float64", false);
+  EXPECT_NE(normalizepad, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // Catch a nullptr from the iterator object.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+/// Feature: NormalizePad op
+/// Description: Test NormalizePad op with invalid int32 dtype
+/// Expectation: Error is caught for invalid dtype provided
+TEST_F(MindDataTestPipeline, TestNormalizePadInvalidDTypeInt32) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadInvalidDTypeInt32.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, std::make_shared<RandomSampler>(false, 2));
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  // Pass invalid dtype ("int32") to NormalizePad.
+  auto normalizepad = std::make_shared<vision::NormalizePad>(std::vector<float>{121.0, 115.0, 100.0},
+                                                             std::vector<float>{70.0, 68.0, 71.0}, "int32", false);
+  EXPECT_NE(normalizepad, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset.
+  // Catch a nullptr from the iterator object.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
 /// Feature: Pad op
 /// Description: Test Pad op basic usage
 /// Expectation: Output is equal to the expected output
@@ -1178,12 +1684,11 @@ TEST_F(MindDataTestPipeline, TestPad) {
   EXPECT_NE(ds, nullptr);
 
   // Create objects for the tensor ops
-  auto pad_op1 = std::make_shared<vision::Pad>(
-    std::vector<int32_t>{1, 2, 3, 4}, std::vector<uint8_t>{0}, BorderType::kSymmetric);
-  auto pad_op2 = std::make_shared<vision::Pad>(
-    std::vector<int32_t>{1}, std::vector<uint8_t>{1, 1, 1}, BorderType::kEdge);
-  auto pad_op3 = std::make_shared<vision::Pad>(
-    std::vector<int32_t>{1, 4});
+  auto pad_op1 =
+    std::make_shared<vision::Pad>(std::vector<int32_t>{1, 2, 3, 4}, std::vector<uint8_t>{0}, BorderType::kSymmetric);
+  auto pad_op2 =
+    std::make_shared<vision::Pad>(std::vector<int32_t>{1}, std::vector<uint8_t>{1, 1, 1}, BorderType::kEdge);
+  auto pad_op3 = std::make_shared<vision::Pad>(std::vector<int32_t>{1, 4});
   // Note: No need to check for output after calling API class constructor
 
   // Create a Map operation on ds
