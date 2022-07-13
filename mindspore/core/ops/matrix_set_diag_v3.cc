@@ -61,7 +61,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
   auto diagonal_rank = SizeToLong(diagonal_shape.size());
   auto max_length_ptr = primitive->GetAttr("max_length");
   MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t max_value = GetValue<int64_t>(max_length_ptr);
+  auto max_value = GetValue<int64_t>(max_length_ptr);
   TrueValueCalAndCheck(input_args, max_value);
   if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
       input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
@@ -74,7 +74,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
     auto k_tensor = k_value_ptr->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(k_tensor);
     auto k_val = reinterpret_cast<int *>(k_tensor->data_c());
-    size_t k_val_size = LongToSize(k_tensor->DataSize());
+    size_t k_val_size = k_tensor->DataSize();
     CheckAndConvertUtils::CheckInRange<int64_t>("k size", SizeToLong(k_val_size), kIncludeBoth, {kNumber1, kNumber2},
                                                 prim_name);
     int64_t max_diag_len = 0;
@@ -100,7 +100,7 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
                                  << " meaning the value of k must be in (" << -row << ", " << col << ") in this case"
                                  << ", but got " << k_val[1] << ".";
       }
-      if (!(k_val[0] <= k_val[1])) {
+      if (k_val[0] > k_val[1]) {
         MS_EXCEPTION(ValueError) << "For " << prim_name << ", k[0] can not be greater than k[1].";
       }
       if (SizeToLong(diagonal_rank) != rank) {
@@ -129,17 +129,16 @@ abstract::ShapePtr MatrixSetDiagV3InferShape(const PrimitivePtr &primitive,
                                << " in this case.";
     }
     return std::make_shared<abstract::Shape>(x_shape);
-  } else {
-    ShapeVector out_shape;
-    ShapeVector infer_shape_min;
-    ShapeVector infer_shape_max;
-    (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
-    for (int64_t i = 0; i < rank; i++) {
-      out_shape.push_back(-1);
-      infer_shape_min.push_back(0);
-    }
-    return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
   }
+  ShapeVector out_shape;
+  ShapeVector infer_shape_min;
+  ShapeVector infer_shape_max;
+  (void)infer_shape_max.insert(infer_shape_max.end(), x_shape.begin(), x_shape.end());
+  for (int64_t i = 0; i < rank; i++) {
+    out_shape.push_back(-1);
+    infer_shape_min.push_back(0);
+  }
+  return std::make_shared<abstract::Shape>(out_shape, infer_shape_min, infer_shape_max);
 }
 
 TypePtr MatrixSetDiagV3InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
