@@ -146,6 +146,7 @@ mindspore
 .. mscnautosummary::
     :toctree: mindspore
 
+    mindspore.JitConfig
     mindspore.ms_function
     mindspore.ms_class
     mindspore.mutable
