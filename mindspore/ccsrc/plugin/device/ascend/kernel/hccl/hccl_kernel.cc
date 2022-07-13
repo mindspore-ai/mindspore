@@ -27,7 +27,6 @@
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace {
 static std::map<std::string, std::string> kMsOpNameToHcomHcclType = {
@@ -337,7 +336,6 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
   if (hccl_ret != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << cnode->DebugString();
-    return false;
   }
 
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
