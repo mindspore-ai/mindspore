@@ -467,13 +467,13 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         ...         self.var = Parameter(Tensor(np.ones([2, 2]), mstype.float16), name="var")
         ...         self.m = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="m")
         ...         self.v = Parameter(Tensor(np.ones([2, 2]), mstype.float32), name="v")
-        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad):
-        ...         out = self.opt(self.var, self.m, self.v, lr, beta1, beta2, epsilon, decay, grad)
+        ...     def construct(self, lr, beta1, beta2, epsilon, decay, grad, norm):
+        ...         out = self.opt(self.var, self.m, self.v, lr, beta1, beta2, epsilon, decay, grad, norm)
         ...         return out
         >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> gradient = Tensor(np.ones([2, 2]), mstype.float16)
-        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient)
+        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient, norm)
     """
 
     @prim_attr_register
@@ -607,7 +607,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
         >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> gradient = Tensor(np.ones(param_shape), mstype.float32)
-        >>> net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
+        >>> output = net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
     """
 
     @prim_attr_register
