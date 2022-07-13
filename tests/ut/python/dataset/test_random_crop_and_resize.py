@@ -49,11 +49,17 @@ def test_random_crop_and_resize_callable_numpy():
     img = decode_op(img)
     assert img.shape == (2268, 4032, 3)
 
-    # test one tensor
+    # test one tensor with interpolation=Inter.AREA
     random_crop_and_resize_op1 = vision.RandomResizedCrop(size=(256, 512), scale=(2, 2), ratio=(1, 3),
                                                           interpolation=Inter.AREA)
     img1 = random_crop_and_resize_op1(img)
     assert img1.shape == (256, 512, 3)
+
+    # test one tensor with interpolation=Inter.PILCUBIC
+    random_crop_and_resize_op1 = vision.RandomResizedCrop(size=(128, 512), scale=(3, 3), ratio=(1, 4),
+                                                          interpolation=Inter.PILCUBIC)
+    img1 = random_crop_and_resize_op1(img)
+    assert img1.shape == (128, 512, 3)
 
 
 def test_random_crop_and_resize_callable_pil():
@@ -481,13 +487,19 @@ def test_random_crop_and_resize_07():
 def test_random_crop_and_resize_eager_error_01():
     """
     Feature: RandomCropAndResize op
-    Description: Test RandomCropAndResize in eager mode with PIL input and C++ only interpolation AREA
+    Description: Test RandomCropAndResize in eager mode with PIL input and C++ only interpolation AREA and PILCUBIC
     Expectation: Correct error is thrown as expected
     """
     img = Image.open("../data/dataset/apple.jpg").convert("RGB")
     with pytest.raises(TypeError) as error_info:
         random_crop_and_resize_op = vision.RandomResizedCrop(size=(100, 200), scale=[1.0, 2.0],
                                                              interpolation=Inter.AREA)
+        _ = random_crop_and_resize_op(img)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        random_crop_and_resize_op = vision.RandomResizedCrop(size=(100, 200), scale=[1.0, 2.0],
+                                                             interpolation=Inter.PILCUBIC)
         _ = random_crop_and_resize_op(img)
     assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
 

@@ -15,6 +15,8 @@
 """
 Testing Resize op in DE
 """
+import cv2
+from PIL import Image
 import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
@@ -34,7 +36,8 @@ def test_resize_op(plot=False):
     Description: Test Resize op basic usage
     Expectation: The dataset is processed as expected
     """
-    def test_resize_op_parameters(test_name, size, plot):
+
+    def test_resize_op_parameters(test_name, size, interpolation, plot):
         """
         Test resize_op
         """
@@ -43,7 +46,7 @@ def test_resize_op(plot=False):
 
         # define map operations
         decode_op = vision.Decode()
-        resize_op = vision.Resize(size)
+        resize_op = vision.Resize(size, interpolation)
 
         # apply map operations on images
         data1 = data1.map(operations=decode_op, input_columns=["image"])
@@ -59,10 +62,13 @@ def test_resize_op(plot=False):
         if plot:
             visualize_list(image_original, image_resized)
 
-    test_resize_op_parameters("Test single int for size", 10, plot=plot)
-    test_resize_op_parameters("Test tuple for size", (10, 15), plot=plot)
+    test_resize_op_parameters("Test single int for size", 100, Inter.LINEAR, plot=plot)
+    test_resize_op_parameters("Test tuple for size", (100, 300), Inter.BILINEAR, plot=plot)
+    test_resize_op_parameters("Test single int for size", 200, Inter.AREA, plot=plot)
+    test_resize_op_parameters("Test single int for size", 400, Inter.PILCUBIC, plot=plot)
 
-def test_resize_op_ANTIALIAS():
+
+def test_resize_op_antialias():
     """
     Feature: Resize op
     Description: Test Resize op basic usage where image interpolation mode is Inter.ANTIALIAS
@@ -82,6 +88,7 @@ def test_resize_op_ANTIALIAS():
     for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
         num_iter += 1
     logger.info("use Resize by Inter.ANTIALIAS process {} images.".format(num_iter))
+    assert num_iter == 3
 
 
 def run_test_resize_md5(test_name, size, filename, seed, expected_size, to_pil=True, plot=False):
@@ -146,6 +153,7 @@ def test_resize_op_invalid_input():
     Description: Test Resize op with invalid input
     Expectation: Correct error is raised as expected
     """
+
     def test_invalid_input(test_name, size, interpolation, error, error_msg):
         logger.info("Test Resize with bad input: {0}".format(test_name))
         with pytest.raises(error) as error_info:
@@ -158,12 +166,51 @@ def test_resize_op_invalid_input():
                        "Size should be a single integer or a list/tuple (h, w) of length 2.")
     test_invalid_input("invalid size parameter type in a tuple", (2.3, 3), Inter.LINEAR, TypeError,
                        "Argument size at dim 0 with value 2.3 is not of type [<class 'int'>]")
-    test_invalid_input("invalid Interpolation value", (2.3, 3), None, KeyError, "None")
+    test_invalid_input("invalid interpolation value", (2.3, 3), None, KeyError, "None")
+
+
+def test_resize_op_exception_c_interpolation():
+    """
+    Feature: Resize
+    Description: Test Resize with unsupported interpolation values for NumPy input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_resize_op_exception_c_interpolation")
+
+    image = cv2.imread("../data/dataset/apple.jpg")
+
+    with pytest.raises(TypeError) as error_info:
+        resize_op = vision.Resize(size=(100, 200), interpolation=Inter.ANTIALIAS)
+        _ = resize_op(image)
+    assert "Current Interpolation is not supported with NumPy input." in str(error_info.value)
+
+
+def test_resize_op_exception_py_interpolation():
+    """
+    Feature: Resize
+    Description: Test Resize with unsupported interpolation values for PIL input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_resize_op_exception_py_interpolation")
+
+    image = Image.open("../data/dataset/apple.jpg").convert("RGB")
+
+    with pytest.raises(TypeError) as error_info:
+        resize_op = vision.Resize(size=123, interpolation=Inter.PILCUBIC)
+        _ = resize_op(image)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        resize_op = vision.Resize(size=456, interpolation=Inter.AREA)
+        _ = resize_op(image)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
 
 
 if __name__ == "__main__":
     test_resize_op(plot=True)
-    test_resize_op_ANTIALIAS()
+    test_resize_op_antialias()
     test_resize_md5_c(plot=False)
     test_resize_md5_py(plot=False)
     test_resize_op_invalid_input()
+    test_resize_op_exception_c_interpolation()
+    test_resize_op_exception_py_interpolation()
