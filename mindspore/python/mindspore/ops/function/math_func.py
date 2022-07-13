@@ -3804,8 +3804,7 @@ def logsumexp(x, axis, keep_dims=False):
 
     Examples:
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> op = ops.logsumexp(x, 1, keep_dims=True)
-        >>> output = op(x)
+        >>> output = ops.logsumexp(x, 1, keep_dims=True)
         >>> print(output.shape)
         (3, 1, 5, 6)
     """
