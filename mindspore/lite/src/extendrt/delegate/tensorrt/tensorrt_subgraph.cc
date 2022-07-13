@@ -352,10 +352,9 @@ int TensorRTSubGraph::MarkOutputs() {
             }
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
             out_trt_tensor = transpose_layer_out->getOutput(0);
-            out_trt_tensor->setName((out_tensor.Name() + "_transpose2NHWC_output").c_str());
           }
-
-          // ctx_->RegisterOutputTensor(out_tensor.Name(), out_trt_tensor->getName());
+          out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
+          out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
           out_trt_tensor->setName(out_tensor.Name().c_str());
           ctx_->network()->markOutput(*out_trt_tensor);
           for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
