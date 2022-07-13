@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
 
 import numpy as np
 import pytest
-
-import mindspore.context as context
 import mindspore.nn as nn
+import mindspore.context as context
+from mindspore.ops import operations as P
 from mindspore import Tensor
 from mindspore.ops import composite as C
 
@@ -29,8 +29,18 @@ def smoothl1loss(beta, reduction):
     prediction = np.random.randn(20).astype(np.float32)
     target = np.random.randn(20).astype(np.float32)
 
-    net = nn.SmoothL1Loss(beta, reduction)
-    return net(Tensor(prediction), Tensor(target))
+    return P.SmoothL1Loss(beta, reduction)(Tensor(prediction), Tensor(target))
+
+
+class SmoothL1LossForwardNet(nn.Cell):
+    """SmoothL1LossForwardNet."""
+
+    def __init__(self, beta=1.0, reduction='none'):
+        super(SmoothL1LossForwardNet, self).__init__()
+        self.smooth_l1_loss = P.SmoothL1Loss(beta, reduction)
+
+    def construct(self, loss, expect):
+        return self.smooth_l1_loss(loss, expect)
 
 
 def verify_forward(reduction, loss, expect):
@@ -141,7 +151,7 @@ def smoothl1loss_grad_2(beta, reduction):
     prediction = np.array([1, 2, 3, 4, 5, 6], dtype=np.float32)
     target = np.array([100, 2, 7, 32, 34, 1], dtype=np.float32)
 
-    net = nn.SmoothL1Loss(beta, reduction)
+    net = SmoothL1LossForwardNet(beta, reduction)
     grad = Grad(net)
     return grad(Tensor(prediction), Tensor(target), 9.)
 

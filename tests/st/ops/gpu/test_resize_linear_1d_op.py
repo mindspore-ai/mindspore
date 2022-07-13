@@ -94,7 +94,7 @@ def test_resize_linear_1d_half_pixel_functional_interface(dtype):
     """
     x = Tensor(np.array([[[1, 2, 3],
                           [4, 5, 6]]], dtype=dtype))
-    output = F.interpolate(x, None, None, (6,), 'half_pixel')
+    output = F.interpolate(x, None, None, (6,), 'half_pixel', 'linear')
     expect = np.array([[[1., 1.25, 1.75, 2.25, 2.75, 3.],
                         [4., 4.25, 4.75, 5.25, 5.75, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
@@ -112,7 +112,7 @@ def test_resize_linear_1d_align_corners_functional_interface(dtype):
     """
     x = Tensor(np.array([[[1, 2, 3],
                           [4, 5, 6]]], dtype=dtype))
-    output = F.interpolate(x, None, (1., 1., 2.), None, 'align_corners')
+    output = F.interpolate(x, None, (1., 1., 2.), None, 'align_corners', 'linear')
     expect = np.array([[[1., 1.4, 1.8, 2.2, 2.6, 3.],
                         [4., 4.4, 4.8, 5.2, 5.6, 6.]]]).astype(dtype)
     assert np.allclose(output.asnumpy(), expect)
