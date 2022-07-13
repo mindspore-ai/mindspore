@@ -44,6 +44,8 @@ constexpr auto kReduce = "reduce";
 constexpr auto kDynamicShape = "dynamic_shape";
 constexpr auto kDynamicCompileStatic = "dynamic_compile_static";
 constexpr auto kDtypeFormat = "dtype_format";
+constexpr auto kInputToAttrIndex = "input_to_attr_index";
+constexpr auto kRealInputIndex = "real_input_index";
 constexpr auto kAttr = "attr";
 constexpr auto kIputs = "inputs";
 constexpr auto kOutputs = "outputs";
@@ -137,6 +139,21 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
 
   if (obj.find(kIsDynamicFormat) != obj.end()) {
     op_info->set_is_dynamic_format(obj.at(kIsDynamicFormat));
+  }
+
+  if (obj.find(kInputToAttrIndex) != obj.end()) {
+    op_info->set_input_to_attr_index(obj.at(kInputToAttrIndex));
+  }
+
+  if (obj.find(kRealInputIndex) != obj.end()) {
+    std::vector<size_t> real_input_index = obj.at(kRealInputIndex);
+    std::map<size_t, size_t> real_index;
+    std::map<size_t, size_t> ori_index;
+    for (size_t i = 0; i < real_input_index.size(); ++i) {
+      real_index.emplace(std::pair{i, real_input_index.at(i)});
+      ori_index.emplace(std::pair{real_input_index.at(i), i});
+    }
+    op_info->set_real_input_index(std::pair{real_index, ori_index});
   }
 
   if (obj.find(kOpPattern) != obj.end()) {
