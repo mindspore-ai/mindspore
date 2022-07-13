@@ -21,8 +21,7 @@
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite {
-char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size,
-                     const std::shared_ptr<mindspore::Context> &context) {
+char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size, mindspore::Context *context) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "Invalid input model buffer.";
     return nullptr;
