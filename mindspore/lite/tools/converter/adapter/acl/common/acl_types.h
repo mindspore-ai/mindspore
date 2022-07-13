@@ -26,6 +26,7 @@ namespace mindspore {
 namespace lite {
 namespace acl {
 struct AclModelOptionCfg {
+  bool offline;
   int32_t device_id = 0;
   DataType output_type;
   std::vector<size_t> dynamic_batch_size;
