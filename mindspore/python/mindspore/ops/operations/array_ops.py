@@ -52,7 +52,7 @@ class _ScatterOp(PrimitiveWithInfer):
     def _check_scatter_shape(self, x_shape, indices_shape, updates_shape, prim_name):
         if indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
             raise ValueError(f"For '{prim_name}', "
-                             f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                             f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
     @prim_attr_register
@@ -127,7 +127,7 @@ class _ScatterOpDynamic(PrimitiveWithCheck):
             pass
         elif indices_shape != [-1] and updates_shape and updates_shape != indices_shape + x_shape[1:]:
             raise ValueError(f"For '{prim_name}', "
-                             f"updates_shape = indices_shape + x_shape[1:], but got x_shape: {x_shape}, "
+                             f"updates_shape = indices_shape + input_x_shape[1:], but got input_x_shape: {x_shape}, "
                              f"indices_shape: {indices_shape}, updates_shape: {updates_shape}.")
 
     @prim_attr_register
