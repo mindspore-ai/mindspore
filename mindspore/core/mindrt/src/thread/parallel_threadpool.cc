@@ -22,7 +22,6 @@
 
 namespace mindspore {
 constexpr int kActorParallelThreshold = 5;
-std::mutex ParallelThreadPool::create_thread_pool_muntex_;
 
 void ParallelWorker::CreateThread() { thread_ = std::thread(&ParallelWorker::Run, this); }
 
