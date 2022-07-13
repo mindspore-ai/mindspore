@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_GRIDSAMPLER_GRAD_GPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_GRIDSAMPLER_GRAD_GPU_KERNEL_H_
 
+#include <map>
 #include <vector>
 #include <string>
 #include <functional>
@@ -64,7 +65,22 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     kernel_name_ = kernel_ptr->name();
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
+    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
+    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
+    align_corners_ = kernel_ptr->get_align_corners();
+    return true;
+  }
 
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != 0) {
+      return ret;
+    }
+    if (input_size_list_.size() != kGridSamplerGradInputNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal " << kGridSamplerGradInputNum << ".";
+      return KRET_RESIZE_FAILED;
+    }
     auto convert_int64_shape_to_sizet_shape = [=](std::vector<int64_t> int64_shape) -> std::vector<size_t> {
       std::vector<size_t> size_t_shape;
       (void)std::transform(int64_shape.begin(), int64_shape.end(), std::back_inserter(size_t_shape), LongToSize);
@@ -75,13 +91,30 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     grid_shape_ = convert_int64_shape_to_sizet_shape(inputs[kIndex2]->GetShapeVector());
     dinput_shape_ = convert_int64_shape_to_sizet_shape(outputs[kIndex0]->GetShapeVector());
     dgrid_shape_ = convert_int64_shape_to_sizet_shape(outputs[kIndex1]->GetShapeVector());
-    is_null_input_ =
-      CHECK_SHAPE_NULL(grad_shape_, kernel_name_, "grad") || CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") ||
-      CHECK_SHAPE_NULL(grid_shape_, kernel_name_, "grid") || CHECK_SHAPE_NULL(dinput_shape_, kernel_name_, "dinput") ||
-      CHECK_SHAPE_NULL(dgrid_shape_, kernel_name_, "dgrid");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
+
+    if (grad_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'grad' must be at 4-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (input_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'input' must be at 4-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (grid_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'grid' must be at 4-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (dinput_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dinput' must be at 4-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (dgrid_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dgrid' must be at 4-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
     }
 
     size_t stride_tmp = 1;
@@ -100,11 +133,7 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2];
     dinput_size_ = GetTensorSize(dinput_shape_);
     dgrid_size_ = GetTensorSize(dgrid_shape_);
-    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
-    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
-    align_corners_ = kernel_ptr->get_align_corners();
-    InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   void ResetResource() noexcept {
@@ -128,15 +157,6 @@ class GridSampler2DGradKernelMod : public NativeGpuKernelMod {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.push_back(GetTensorSize(grad_shape_) * sizeof(T));
-    input_size_list_.push_back(GetTensorSize(input_shape_) * sizeof(T));
-    input_size_list_.push_back(GetTensorSize(grid_shape_) * sizeof(T));
-    output_size_list_.push_back(GetTensorSize(dinput_shape_) * sizeof(T));
-    output_size_list_.push_back(GetTensorSize(dgrid_shape_) * sizeof(T));
   }
 
  private:
@@ -193,6 +213,22 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     kernel_name_ = kernel_ptr->name();
     CHECK_KERNEL_INPUTS_NUM(inputs.size(), kGridSamplerGradInputNum, kernel_name_);
     CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kGridSamplerGradOutputNum, kernel_name_);
+    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
+    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
+    align_corners_ = kernel_ptr->get_align_corners();
+    return true;
+  }
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) {
+    int ret = KernelMod::Resize(base_operator, inputs, outputs);
+    if (ret != 0) {
+      return ret;
+    }
+    if (input_size_list_.size() != kGridSamplerGradInputNum) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "' input size must be equal " << kGridSamplerGradInputNum << ".";
+      return KRET_RESIZE_FAILED;
+    }
 
     auto convert_int64_shape_to_sizet_shape = [=](std::vector<int64_t> int64_shape) -> std::vector<size_t> {
       std::vector<size_t> size_t_shape;
@@ -204,13 +240,30 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     grid_shape_ = convert_int64_shape_to_sizet_shape(inputs[kIndex2]->GetShapeVector());
     dinput_shape_ = convert_int64_shape_to_sizet_shape(outputs[kIndex0]->GetShapeVector());
     dgrid_shape_ = convert_int64_shape_to_sizet_shape(outputs[kIndex1]->GetShapeVector());
-    is_null_input_ =
-      CHECK_SHAPE_NULL(grad_shape_, kernel_name_, "grad") || CHECK_SHAPE_NULL(input_shape_, kernel_name_, "input") ||
-      CHECK_SHAPE_NULL(grid_shape_, kernel_name_, "grid") || CHECK_SHAPE_NULL(dinput_shape_, kernel_name_, "dinput") ||
-      CHECK_SHAPE_NULL(dgrid_shape_, kernel_name_, "dgrid");
-    if (is_null_input_) {
-      InitSizeLists();
-      return true;
+
+    if (grad_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'grad' must be at 5-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (input_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'input' must be at 5-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (grid_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'grid' must be at 5-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (dinput_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dinput' must be at 5-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
+    }
+
+    if (dgrid_shape_.empty()) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'dgrid' must be at 5-D, but got scalar or None.";
+      return KRET_RESIZE_FAILED;
     }
 
     size_t stride_tmp = 1;
@@ -229,11 +282,7 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     size_ = input_shape_[kIndex0] * grid_shape_[kIndex1] * grid_shape_[kIndex2] * grid_shape_[kIndex3];
     dinput_size_ = GetTensorSize(dinput_shape_);
     dgrid_size_ = GetTensorSize(dgrid_shape_);
-    interpolation_mode_ = kGridSamplerInterpolationMap[kernel_ptr->get_interpolation_mode()];
-    padding_mode_ = kGridSamplerPaddingMap[kernel_ptr->get_padding_mode()];
-    align_corners_ = kernel_ptr->get_align_corners();
-    InitSizeLists();
-    return true;
+    return KRET_OK;
   }
 
   void ResetResource() noexcept {
@@ -257,15 +306,6 @@ class GridSampler3DGradKernelMod : public NativeGpuKernelMod {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() {
-    input_size_list_.push_back(GetTensorSize(grad_shape_) * sizeof(T));
-    input_size_list_.push_back(GetTensorSize(input_shape_) * sizeof(T));
-    input_size_list_.push_back(GetTensorSize(grid_shape_) * sizeof(T));
-    output_size_list_.push_back(GetTensorSize(dinput_shape_) * sizeof(T));
-    output_size_list_.push_back(GetTensorSize(dgrid_shape_) * sizeof(T));
   }
 
  private:

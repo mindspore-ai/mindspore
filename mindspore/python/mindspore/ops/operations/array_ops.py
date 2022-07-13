@@ -7573,3 +7573,16 @@ class TopK(Primitive):
         self.add_prim_attr("sorted", self.sorted)
         self.init_prim_io_names(inputs=['input', 'k'],
                                 outputs=['values', 'indices'])
+
+
+class PopulationCount(Primitive):
+    r"""
+    Computes element-wise population count(a.k.a bitsum, bitcount).
+
+    Refer to :func:`mindspore.ops.population_count` for more detail.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize PopulationCount"""
+        self.init_prim_io_names(inputs=['input'], outputs=['output'])

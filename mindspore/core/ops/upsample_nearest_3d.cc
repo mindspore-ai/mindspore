@@ -29,6 +29,7 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
   auto op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto input_shape_ptr = input_args[kInputIndex0]->BuildShape();
   const size_t kDimSize5 = 5;
   if (input_shape.size() != kDimSize5) {
     MS_EXCEPTION(TypeError) << "input_shape of UpsampleNearest3D must be 5, but got" << input_shape.size();
@@ -62,6 +63,10 @@ abstract::ShapePtr UpsampleNearest3DInferShape(const PrimitivePtr &primitive,
     output_shape[kInputIndex3] = output_size[kInputIndex1];
     output_shape[kInputIndex4] = output_size[kInputIndex2];
   }
+  if (input_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(output_shape);
+  }
+
   for (size_t i = 0; i < output_shape.size(); i++) {
     (void)CheckAndConvertUtils::CheckInteger("output shape", output_shape[i], kGreaterThan, 0, op_name);
   }

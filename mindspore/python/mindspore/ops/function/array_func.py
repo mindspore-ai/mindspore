@@ -81,6 +81,7 @@ cast_ = P.Cast()
 tensor_select_ = P.Select()
 index_fill_ = IndexFill()
 unsorted_segment_sum_ = P.UnsortedSegmentSum()
+population_count_ = P.PopulationCount()
 
 
 @constexpr
@@ -3316,6 +3317,36 @@ def index_fill(x, dim, index, value):
     return index_fill_(x, dim, index, value)
 
 
+def population_count(input_x):
+    r"""
+    Computes element-wise population count(a.k.a bitsum, bitcount).
+    For each entry in `input_x`, calculates the number of 1 bits in the binary representation of that entry.
+
+    Args:
+        input_x (Tensor): Tensor of any dimension. The data type must be int16 or uint16 (Ascend).
+            The data type must be int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU and GPU).
+
+    Returns:
+        Tensor, with the same shape as the input, and the data type is uint8.
+
+    Raises:
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If dtype of `input_x` is not int16, uint16 (Ascend).
+                   If dtype of `input_x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64 (CPU).
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x_input = Tensor([0, 1, 3], mindspore.int16)
+        >>> population_count = ops.PopulationCount()
+        >>> output = population_count(x_input)
+        >>> print(output)
+        [0 1 2]
+    """
+    return population_count_(input_x)
+
+
 ##############################
 # Type Conversion Functions.
 ##############################
@@ -4031,5 +4062,6 @@ __all__ = [
     'unsorted_segment_sum',
     'min',
     'top_k',
+    'population_count',
 ]
 __all__.sort()

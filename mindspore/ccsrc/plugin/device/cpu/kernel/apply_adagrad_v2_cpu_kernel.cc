@@ -17,6 +17,7 @@
 #include "plugin/device/cpu/kernel/apply_adagrad_v2_cpu_kernel.h"
 
 #include <algorithm>
+#include <map>
 #include <utility>
 #include <thread>
 #include <vector>
@@ -37,7 +38,6 @@ constexpr size_t kGradIndex = 3;
 bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                       const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
-  CheckParam(inputs, outputs);
 
   auto kernel_ptr = std::dynamic_pointer_cast<ops::ApplyAdagradV2>(base_operator);
   if (kernel_ptr == nullptr) {
@@ -57,8 +57,8 @@ bool ApplyAdagradV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
   return true;
 }
 
-void ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) const {
+int ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &inputs,
+                                           const std::vector<KernelTensorPtr> &outputs) const {
   // inputs: var, accum, lr, gradient
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyAdagradV2InputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyAdagradV2OutputsNum, kernel_name_);
@@ -71,18 +71,37 @@ void ApplyAdagradV2CpuKernelMod::CheckParam(const std::vector<KernelTensorPtr> &
                       << "', the shape of 'accum' and 'var' should be the same, "
                          "but got shape of 'accum': "
                       << accum_shape << " and shape of 'var': " << var_shape;
+    return KRET_RESIZE_FAILED;
   }
   if (var_shape != grad_shape) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the shape of 'grad' and 'var' should be same, "
                          "but got the shape of 'grad': "
                       << grad_shape << " and shape of'var': " << var_shape;
+    return KRET_RESIZE_FAILED;
   }
   if (lr_dtype != kNumberTypeFloat16 && lr_dtype != kNumberTypeFloat32) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_
                       << "', the 'lr' should be float16 or float32, but got 'lr': " << inputs[kLRIndex]
                       << ", with type " << lr_dtype << " .";
+    return KRET_RESIZE_FAILED;
   }
+  return KRET_OK;
+}
+
+int ApplyAdagradV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                       const std::vector<KernelTensorPtr> &outputs,
+                                       const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+
+  ret = CheckParam(inputs, outputs);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  return ret;
 }
 
 template <typename T>
