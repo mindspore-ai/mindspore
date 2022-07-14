@@ -505,7 +505,7 @@ def range(start, limit, delta):
         >>> delta = Tensor(4, mstype.int32)
         >>> output = ops.range(start, limit, delta)
         >>> print(output)
-        [0, 4, 8]
+        [0 4 8]
     """
     return range_(start, limit, delta)
 

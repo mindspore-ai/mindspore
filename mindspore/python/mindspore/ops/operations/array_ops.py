@@ -6302,7 +6302,7 @@ class Range(PrimitiveWithCheck):
         >>> delta = Tensor(4, mstype.int32)
         >>> output = ops.Range()(start, limit, delta)
         >>> print(output)
-        [0, 4, 8]
+        [0 4 8]
     """
 
     @prim_attr_register
