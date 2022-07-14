@@ -25,7 +25,6 @@ unique_consecutive_op_info = AiCPURegOp("UniqueConsecutive") \
     .attr("return_idx", "bool") \
     .attr("return_counts", "bool") \
     .attr("axis", "int") \
-    .attr("cust_aicpu", "str") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.I64_Default, DataType.I64_Default, DataType.I32_Default, DataType.I32_Default) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.I32_Default, DataType.I32_Default) \

@@ -94,8 +94,10 @@ constexpr auto kMaxPoolV1 = "MaxPoolV1";
 constexpr auto kMaxPoolGradV1 = "MaxPoolGradV1";
 constexpr auto kAvgPoolV1 = "AvgPoolV1";
 constexpr auto kAvgPoolGradV1 = "AvgPoolGradV1";
-const std::set<std::string> kCpuKernelOps{kIdentity,     kMaskedSelect,   kMaskedSelectGrad,   kDynamicStitch,
-                                          kSearchSorted, kResizeBilinear, kResizeBilinearGrad, kTensorScatterElements};
+constexpr auto kUniqueConsecutive = "UniqueConsecutive";
+const std::set<std::string> kCpuKernelOps{kIdentity,           kMaskedSelect,          kMaskedSelectGrad,
+                                          kDynamicStitch,      kSearchSorted,          kResizeBilinear,
+                                          kResizeBilinearGrad, kTensorScatterElements, kUniqueConsecutive};
 const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable,      kSubAndFilter, kPadAndShift, kDropout3D,
                                             kDropout2D,   kNonMaxSuppressionV3, kGetNext,      kInitData,    kPrint};
 const std::set<std::string> kCpuKernelBaseOps{kRandomChoiceWithMask,
