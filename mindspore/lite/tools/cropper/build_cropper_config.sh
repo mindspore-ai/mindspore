@@ -176,6 +176,7 @@ getCommonFile() {
     mindspore/lite/src/expression/ops_utils.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.h
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.h
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core.h
     mindspore/core/utils/log_adapter.h
     mindspore/core/ir/api_tensor_impl.h
     mindspore/lite/src/runtime/cxx_api/tensor/tensor_impl.h
@@ -227,6 +228,13 @@ getCommonFile() {
     mindspore/lite/src/expression/ops_utils.cc
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensor_c_utils.c
     mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/tensorlist_c_utils.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_x86.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_sse.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_avx.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_avx512.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_arm64_fp32.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_arm64_fp16.c
+    mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/experimental/ms_core_arm32.c
   )
   all_files=("${src_files[@]}" "${regist_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}"
     "${others_files_c[@]}" "${assembly_files[@]}" "${mindrt_files[@]}"

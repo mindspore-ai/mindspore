@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_EXP_H_
-#define MINDSPORE_NNACL_KERNEL_EXP_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
-#include "nnacl/kernel.h"
+#ifdef ENABLE_AVX512
+#include "nnacl/experimental/ms_core.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
-
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format);
-
-#ifdef __cplusplus
+void InitAvx512Core(CoreFuncs *funcs_) {
+  funcs_->pack = C16NUM;
+  funcs_->byte = sizeof(float);
 }
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_EXP_H_

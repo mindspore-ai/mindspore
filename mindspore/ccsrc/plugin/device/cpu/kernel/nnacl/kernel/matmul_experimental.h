@@ -13,25 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_KERNEL_EXP_H_
-#define MINDSPORE_NNACL_KERNEL_EXP_H_
 
-#include "nnacl/op_base.h"
-#include "nnacl/tensor_c.h"
+#ifndef MINDSPORE_NNACL_EXPERIMENT_MATMUL_EXPERIMENTAL_H_
+#define MINDSPORE_NNACL_EXPERIMENT_MATMUL_EXPERIMENTAL_H_
+
 #include "nnacl/kernel.h"
+#include "nnacl/experimental/ms_core.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
+typedef struct MatmulExpStru {
+  KernelBase *base;
+  size_t deep;
+  size_t row;
+  size_t col;
+  size_t thread_num;
+  uint8_t *a_ptr;
+  uint8_t *b_ptr;
+  uint8_t *c_ptr;
+  uint8_t *bias;
+  uint8_t *tmp_ptr;
+  float min;
+  float max;
+  size_t row_unit;
+  size_t row_tile;
+} MatmulExpStru;
 
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
-                      FormatC format);
+void ExperimentalMatmul(uint8_t *a_ptr, uint8_t *b_ptr, uint8_t *bias, uint8_t *c_ptr, MatmulExpStru *matmul);
 
 #ifdef __cplusplus
 }
 #endif
-#endif  // MINDSPORE_NNACL_KERNEL_EXP_H_
+#endif  // MINDSPORE_NNACL_EXPERIMENT_MATMUL_EXPERIMENTAL_H_

@@ -19,14 +19,6 @@
 #include "nnacl/exp_parameter.h"
 #include "nnacl/tensor_c.h"
 #include "nnacl/op_base.h"
-#include "nnacl/fp32/exp_fp32.h"
-#ifdef ENABLE_FP16
-#include "nnacl/fp16/exp_fp16.h"
-#endif
-
-typedef struct ExpStru {
-  KernelBase base;
-} ExpStru;
 
 int exp_resize(struct KernelBase *self) {
   ExpStru *exp = (ExpStru *)self;
@@ -65,14 +57,8 @@ int exp_do_compute(void *param, int task_id, float lhs_scale, float rhs_scale) {
   ExpStru *exp_stru = (ExpStru *)param;
   ExpParameter *exp_param = (ExpParameter *)exp_stru->base.param;
 
-  int ret = NNACL_ERR;
-  if (exp_stru->base.out[0].data_type_ == kNumberTypeFloat32) {
-    ret = ExpFusionFp32(exp_stru->base.in[0].data_, exp_stru->base.out[0].data_, exp_param, task_id);
-#ifdef ENABLE_FP16
-  } else if (exp_stru->base.out[0].data_type_ == kNumberTypeFloat16) {
-    ret = ExpFusionFp16(exp_stru->base.in[0].data_, exp_stru->base.out[0].data_, exp_param, task_id);
-#endif
-  }
+  int ret =
+    exp_stru->base.funcs->ExpFusion(exp_stru->base.in[0].data_, exp_stru->base.out[0].data_, exp_param, task_id);
 
   return ret;
 }
@@ -81,7 +67,8 @@ int exp_compute(struct KernelBase *self) {
   return self->env->parallelLaunch(self->env->threadPool, exp_do_compute, self, self->param->thread_num_);
 }
 
-KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
+KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                      FormatC format) {
   ExpStru *exp = (ExpStru *)malloc(sizeof(ExpStru));
   exp->base.param = param;
   exp->base.in = in;
@@ -93,6 +80,7 @@ KernelBase *CreateExp(OpParameter *param, TensorC *in, size_t insize, TensorC *o
   exp->base.resize = exp_resize;
   exp->base.release = exp_release;
   exp->base.compute = exp_compute;
+  exp->base.funcs = GetCoreFuncs(data_type == kNumberTypeFloat16);
 
   return (KernelBase *)exp;
 }

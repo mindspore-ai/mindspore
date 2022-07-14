@@ -1249,8 +1249,8 @@ void UnPackC4Uint(const void *src, void *dst, size_t plane, size_t channel) {
     size_t c_div = c / C4NUM;
     size_t c_mod = c % C4NUM;
     for (size_t p = 0; p < plane; p++) {
-      int src_offset = c_div * plane * C4NUM + plane * C4NUM + c_mod;
-      int dst_offset = p * channel + c;
+      int src_offset = c_div * plane * C4NUM + p * C4NUM + c_mod;
+      int dst_offset = c * plane + p;
       fp32_dst[dst_offset] = fp32_src[src_offset];
     }
   }

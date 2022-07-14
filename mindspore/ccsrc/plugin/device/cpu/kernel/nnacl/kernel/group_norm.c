@@ -100,7 +100,8 @@ static int groupnorm_compute(struct KernelBase *self) {
   return self->env->parallelLaunch(self->env->threadPool, groupnorm_do_compute, self, self->param->thread_num_);
 }
 
-KernelBase *CreateGroupNorm(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize) {
+KernelBase *CreateGroupNorm(OpParameter *param, TensorC *in, size_t insize, TensorC *out, size_t outsize, int data_type,
+                            FormatC format) {
   GroupNormStru *groupnorm = (GroupNormStru *)malloc(sizeof(GroupNormStru));
   if (groupnorm == NULL) {
     return NULL;

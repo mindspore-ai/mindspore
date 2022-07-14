@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_NNACL_EXPERIMENT_FP16_FUNCS_H_
-#define MINDSPORE_NNACL_EXPERIMENT_FP16_FUNCS_H_
 
-#include "nnacl/kernel.h"
+#ifdef ENABLE_AVX
+#include "nnacl/experimental/ms_core.h"
+void InitOptMatmulTileAvx(int *row_tile, int *col_tile) {
+  *row_tile = C6NUM;
+  *col_tile = C16NUM;
+}
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void InitFp16Funcs(CoreFuncs *funcs_);
-
-#ifdef __cplusplus
+void InitAvxCore(CoreFuncs *funcs_) {
+  funcs_->pack = C8NUM;
+  funcs_->byte = sizeof(float);
+  funcs_->OptMatmulTile = InitOptMatmulTileAvx;
 }
 #endif
-#endif  // MINDSPORE_NNACL_EXPERIMENT_FP32_FUNCS_H_
