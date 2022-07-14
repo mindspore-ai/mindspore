@@ -38,63 +38,50 @@ int ConfigFileParser::ParseConfigFile(const std::string &config_file_path) {
     MS_LOG(ERROR) << "Parse config file failed.";
     return ret;
   }
-  ret = ParseConfigParam(&maps);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Parse config param failed.";
-    return ret;
-  }
-  return RET_OK;
-}
-
-int ConfigFileParser::ParseConfigParam(std::map<std::string, std::map<std::string, std::string>> *maps) {
-  if (maps == nullptr) {
-    MS_LOG(ERROR) << "Maps is nullptr.";
-    return RET_ERROR;
-  }
-  auto ret = ParseDataPreProcessString(*maps);
-  (void)maps->erase(kDataPreprocessParam);
+  ret = ParseDataPreProcessString(maps);
+  (void)maps.erase(kDataPreprocessParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseDataPreProcessString failed.";
     return ret;
   }
-  ret = ParseCommonQuantString(*maps);
-  (void)maps->erase(kCommonQuantParam);
+  ret = ParseCommonQuantString(maps);
+  (void)maps.erase(kCommonQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseCommonQuantString failed.";
     return ret;
   }
-  ret = ParseMixedBitQuantString(*maps);
-  (void)maps->erase(kMixedBitWeightQuantParam);
+  ret = ParseMixedBitQuantString(maps);
+  (void)maps.erase(kMixedBitWeightQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseMixedBitQuantString failed.";
     return ret;
   }
-  ret = ParseFullQuantString(*maps);
-  (void)maps->erase(kFullQuantParam);
+  ret = ParseFullQuantString(maps);
+  (void)maps.erase(kFullQuantParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseFullQuantString failed.";
     return ret;
   }
-  ret = ParseRegistryInfoString(*maps);
-  (void)maps->erase(kRegistry);
+  ret = ParseRegistryInfoString(maps);
+  (void)maps.erase(kRegistry);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseExtendedintegrationString failed.";
     return ret;
   }
-  ret = ParseAclOptionCfgString(*maps);
-  (void)maps->erase(kAclOptionParam);
+  ret = ParseAclOptionCfgString(maps);
+  (void)maps.erase(kAclOptionParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseAclOptionCfgString failed.";
     return ret;
   }
-  ret = ParseMicroParamString(*maps);
-  (void)maps->erase(kMicroParam);
+  ret = ParseMicroParamString(maps);
+  (void)maps.erase(kMicroParam);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseMicroParamString failed.";
     return ret;
   }
 
-  for (const auto &config_info : *maps) {
+  for (const auto &config_info : maps) {
     ConverterInnerContext::GetInstance()->SetExternalUsedConfigInfos(config_info.first, config_info.second);
   }
   return RET_OK;

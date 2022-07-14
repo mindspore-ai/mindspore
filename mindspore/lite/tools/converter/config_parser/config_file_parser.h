@@ -87,7 +87,6 @@ struct MicroParamString {
 class ConfigFileParser {
  public:
   int ParseConfigFile(const std::string &config_file_path);
-  int ParseConfigParam(std::map<std::string, std::map<std::string, std::string>> *maps);
 
   DataPreProcessString GetDataPreProcessString() const { return this->data_pre_process_string_; }
   CommonQuantString GetCommonQuantString() const { return this->common_quant_string_; }
