@@ -30,12 +30,11 @@ constexpr size_t kL1Index = 2;
 constexpr size_t kL2Index = 3;
 constexpr size_t kDeltaIndex = 4;
 constexpr size_t kOutputIndex = 0;
-
 }  // namespace
 
 bool ApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr &base_operator,
-                                            const std::vector<KernelTensorPtr> &inputs,
-                                            const std::vector<KernelTensorPtr> &outputs) {
+                                                    const std::vector<KernelTensorPtr> &inputs,
+                                                    const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
@@ -50,14 +49,13 @@ bool ApplyProximalGradientDescentGpuKernelMod::Init(const BaseOperatorPtr &base_
     MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
     return false;
   }
-
   return true;
 }
 
 int ApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
-                                             const std::vector<KernelTensorPtr> &inputs,
-                                             const std::vector<KernelTensorPtr> &outputs,
-                                             const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+                                                     const std::vector<KernelTensorPtr> &inputs,
+                                                     const std::vector<KernelTensorPtr> &outputs,
+                                                     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
   if (ret != 0) {
     return ret;
@@ -108,38 +106,49 @@ int ApplyProximalGradientDescentGpuKernelMod::Resize(const BaseOperatorPtr &base
   return ret;
 }
 
-// bool ApplyProximalGradientDescentGpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-//                                               const std::vector<kernel::AddressPtr> &workspace,
-//                                               const std::vector<kernel::AddressPtr> &outputs,
-//                                               void *stream_ptr) {
-//   kernel_func_(this, inputs,workspace, outputs);
-//   return true;
-// }
-
 template <typename T>
-bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs) {
+bool ApplyProximalGradientDescentGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                                            const std::vector<AddressPtr> &workspace,
+                                                            const std::vector<AddressPtr> &outputs) {
   auto var = reinterpret_cast<T *>(inputs[kVarIndex]->addr);
   auto alpha = reinterpret_cast<T *>(inputs[kAlphaIndex]->addr);
   auto l1 = reinterpret_cast<T *>(inputs[kL1Index]->addr);
   auto l2 = reinterpret_cast<T *>(inputs[kL2Index]->addr);
   auto delta = reinterpret_cast<T *>(inputs[kDeltaIndex]->addr);
   auto output = reinterpret_cast<T *>(outputs[kOutputIndex]->addr);
-  // T *output = GetDeviceAddress<T>(outputs, 0);
 
   CalApplyProximalGradientDescent(input_elements_, var, alpha, l1, l2, delta, output, device_id_,
-                          reinterpret_cast<cudaStream_t>(cuda_stream_));
+                                  reinterpret_cast<cudaStream_t>(cuda_stream_));
 
   return true;
 }
 
 std::vector<std::pair<KernelAttr, ApplyProximalGradientDescentGpuKernelMod::KernelFunc>>
   ApplyProximalGradientDescentGpuKernelMod::func_list_ = {
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32)
-                 .AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16)
-                 .AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),  
-                 &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<half>}};
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32),
+     &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<float>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddInputAttr(kNumberTypeFloat16)
+       .AddOutputAttr(kNumberTypeFloat16),
+     &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<half>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64),
+     &ApplyProximalGradientDescentGpuKernelMod::LaunchKernel<double>}};
 
 std::vector<KernelAttr> ApplyProximalGradientDescentGpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

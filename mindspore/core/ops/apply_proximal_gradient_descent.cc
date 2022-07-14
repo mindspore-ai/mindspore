@@ -80,7 +80,7 @@ TypePtr ApplyProximalGradientDescentInferType(const PrimitivePtr &prim,
   auto l1_type = input_args[kInputIndex2]->BuildType();
   auto l2_type = input_args[kInputIndex3]->BuildType();
   auto delta_type = input_args[kInputIndex4]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // var, delta must have the same type as var
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));

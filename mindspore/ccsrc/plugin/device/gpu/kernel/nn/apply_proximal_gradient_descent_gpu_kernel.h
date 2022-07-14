@@ -42,9 +42,9 @@ class ApplyProximalGradientDescentGpuKernelMod : public NativeGpuKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override{
-      cuda_stream_ = stream_ptr;
-      return kernel_func_(this, inputs, workspace, outputs);
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
+    cuda_stream_ = stream_ptr;
+    return kernel_func_(this, inputs, workspace, outputs);
   }
 
  protected:
@@ -52,9 +52,11 @@ class ApplyProximalGradientDescentGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace, const std::vector<AddressPtr> &outputs);
-  using KernelFunc = std::function<bool(ApplyProximalGradientDescentGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                                        const std::vector<kernel::AddressPtr> &,const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                    const std::vector<AddressPtr> &outputs);
+  using KernelFunc =
+    std::function<bool(ApplyProximalGradientDescentGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   KernelFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, KernelFunc>> func_list_;
 
