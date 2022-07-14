@@ -19,14 +19,14 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
-import mindspore.ops as ops
+from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.functional import vmap
 
 
 class IndexFillNet(nn.Cell):
     def __init__(self):
         super(IndexFillNet, self).__init__()
-        self.index_fill = ops.index_fill
+        self.index_fill = IndexFill()
 
     def construct(self, x, dim, index, value):
         out = self.index_fill(x, dim, index, value)

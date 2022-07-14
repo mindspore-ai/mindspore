@@ -1764,7 +1764,6 @@ class InplaceUpdateV2(Primitive):
         return output
 
 
-
 class InplaceUpdate(PrimitiveWithInfer):
     r"""
     Updates specified rows with values in `v`.
@@ -5763,14 +5762,18 @@ class IsClose(Primitive):
     Refer to :func:`mindspore.ops.isclose` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.operations.math_ops import IsClose
         >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
         >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
-        >>> output = ops.IsClose()(input, other)
+        >>> isclose = IsClose()
+        >>> output = isclose(input, other)
         >>> print(output)
-            [True False False False True]
+        [ True False False False  True]
     """
 
     @prim_attr_register

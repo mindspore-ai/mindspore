@@ -1190,10 +1190,6 @@ class Tensor(Tensor_):
         """
         Returns a boolean Tensor where two Tensors are element-wise equal within a tolerance.
 
-        Note:
-            On Ascend, input arrays containing inf or NaN are not supported. Therefore, when the input is NaN or inf,
-            the result is uncertain. And `equal_nan` must be True on Ascend.
-
         Args:
             x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
             rtol (float, optional): Relative tolerance. Default: 1e-05.
@@ -1211,17 +1207,16 @@ class Tensor(Tensor_):
             TypeError: If the dtype of self Tensor is not same as the `x2`.
             ValueError: If self Tensor and `x2` can not be broadcast.
             ValueError: If either of `atol` and `rtol` is less than zero.
-            ValueError: If `equal_nan` is False on Ascend platform.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``CPU``
 
         Examples:
             >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
             >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
-            >>> output = ops.isclose(input, other)
+            >>> output = input.isclose(other)
             >>> print(output)
-                [True False False False True]
+            [ True False False False  True]
         """
         self._init_check()
         return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)
@@ -1999,29 +1994,6 @@ class Tensor(Tensor_):
         if dtype is not None and original_dtype != dtype:
             return tensor_operator_registry.get('cumsum')()(x, axis).astype(dtype, copy=False)
         return tensor_operator_registry.get('cumsum')()(x, axis)
-
-    def cummin(self, axis):
-        """
-        Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-        is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-        each maximum value.
-        """
-        return tensor_operator_registry.get('cummin')(self, axis)
-
-    def cummax(self, axis):
-        """
-        Computes the cumulative max and indice of input tensor along dim.Returns a tuple (values,indices) where 'values'
-        is the cumulative maximum value of input elements in the dimension 'dim'and 'indices' is the index position for
-        each maximum value.
-        """
-        return tensor_operator_registry.get('cummax')(self, axis)
-
-    def index_fill(self, dim, index, value):
-        """
-        Fills the elements under the dim dimension of the self tensor with the input value
-        by selecting the indices in the order given in index.
-        """
-        return tensor_operator_registry.get('index_fill')(self, dim, index, value)
 
     def inplace_update(self, v, indices):
         """

@@ -59,7 +59,6 @@ from .array_func import (
     scatter_nd_sub,
     scatter_nd_mul,
     scatter_nd_div,
-    scatter_nd_max,
     scatter_nd_min,
     gather,
     gather_d,
@@ -99,7 +98,6 @@ from .array_func import (
     adaptive_max_pool2d,
     col2im,
     split,
-    index_fill,
     max,
 )
 from .parameter_func import (
@@ -223,13 +221,10 @@ from .math_func import (
     gumbel_softmax,
     matmul,
     baddbmm,
-    cummin,
-    cummax,
     amin,
     amax,
     mean,
     prod,
-    sparse_segment_mean,
     log2,
     approximate_equal,
     xlogy
