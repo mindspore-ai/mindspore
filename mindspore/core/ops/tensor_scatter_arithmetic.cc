@@ -105,6 +105,15 @@ TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
   if (prim_name == prim::kPrimTensorScatterUpdate->name()) {
     return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_bool, prim_name);
   }
+
+  /* tensor scatter div grad need div
+   * div do not support int8 and uint8 currently */
+  if (prim_name == prim::kPrimTensorScatterDiv->name()) {
+    const std::set<TypePtr> tensor_scatter_div_data_type = {kInt16,  kInt32,   kInt64,   kUInt16, kUInt32,
+                                                            kUInt64, kFloat16, kFloat32, kFloat64};
+    return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, tensor_scatter_div_data_type, prim_name);
+  }
+
   return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types, prim_name);
 }
 }  // namespace
