@@ -339,7 +339,7 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
     }
 
     mindspore::HashMap<AID *, size_t> tmp_stack_controls;
-    for (auto stack_iter = control_iter->second.begin(); stack_iter != control_iter->second.end(); stack_iter++) {
+    for (auto stack_iter = control_iter->second.begin(); stack_iter != control_iter->second.end(); ++stack_iter) {
       if (stack_iter->second == 0) {
         MS_LOG(ERROR) << "Input stack control aid:" << stack_iter->first << " is null in actor:" << GetAID();
         return;

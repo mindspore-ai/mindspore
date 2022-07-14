@@ -126,7 +126,7 @@ std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
     for (const auto &input : cnode->inputs()) {
       MS_EXCEPTION_IF_NULL(input);
       const auto &result = FetchAllMonadNodeByNode(input);
-      results.insert(results.end(), result.begin(), result.end());
+      (void)results.insert(results.end(), result.begin(), result.end());
     }
   }
   return results;
@@ -204,11 +204,10 @@ std::vector<SwitchActorPtr> ControlNodeScheduler::BuildSwitchActor(const GraphCo
   return switch_actors;
 }
 
-void ControlNodeScheduler::BuildDataSourceActorForControlNode(const GraphCompilerInfo &graph_compiler_info,
-                                                              const HostTensorQueuePtr &host_queue,
-                                                              const HostQueueDSActorPtr &host_queue_ds_actor,
-                                                              const AID &memory_manager_aid,
-                                                              std::vector<DataSourceActorPtr> *data_source_actors) {
+void ControlNodeScheduler::BuildDataSourceActorForControlNode(
+  const GraphCompilerInfo &graph_compiler_info, const HostTensorQueuePtr &host_queue,
+  const HostQueueDSActorPtr &host_queue_ds_actor, const AID &memory_manager_aid,
+  std::vector<DataSourceActorPtr> *data_source_actors) const {
   HostQueueDSActorPtr control_node_ds_actor = host_queue_ds_actor;
   const auto parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
@@ -631,7 +630,7 @@ void ControlNodeScheduler::Link(ActorSet *const actor_set, const GraphCompilerIn
 }
 
 void ControlNodeScheduler::LinkControlArrowForCustomActor(ActorSet *const actor_set,
-                                                          const GraphCompilerInfo &graph_compiler_info) {
+                                                          const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
@@ -700,7 +699,7 @@ void ControlNodeScheduler::ClearActorData(const ControlActorSet *control_actor_s
 }
 
 void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const control_actor_set,
-                                                    const GraphCompilerInfo &graph_compiler_info) {
+                                                    const GraphCompilerInfo &graph_compiler_info) const {
   if (control_actor_set == nullptr) {
     return;
   }
@@ -777,7 +776,7 @@ void ControlNodeScheduler::LinkArrowForControlActor(ControlActorSet *const contr
 }
 
 void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor, ControlActor *const to_actor,
-                                                   const GraphCompilerInfo &graph_compiler_info) {
+                                                   const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(stack_actor);
   MS_EXCEPTION_IF_NULL(to_actor);
   MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
@@ -819,7 +818,7 @@ void ControlNodeScheduler::LinkArrowFromStackActor(StackActor *const stack_actor
 void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_actor,
                                                       const KernelWithIndex &from_node_with_index,
                                                       const KernelWithIndex &to_node_with_index,
-                                                      const GraphCompilerInfo &graph_compiler_info) {
+                                                      const GraphCompilerInfo &graph_compiler_info) const {
   MS_LOG(DEBUG) << "Link arrow by formal parameter, from node:" << from_node_with_index.first->DebugString()
                 << " from index:" << from_node_with_index.second << " to actor:" << to_actor->GetAID()
                 << " to index:" << to_node_with_index.second;
@@ -872,7 +871,7 @@ void ControlNodeScheduler::LinkArrowbyFormalParameter(ControlActor *const to_act
 }
 
 void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, ControlActor *const to_actor,
-                                                size_t from_index, size_t to_index) {
+                                                size_t from_index, size_t to_index) const {
   MS_EXCEPTION_IF_NULL(value_node);
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -907,7 +906,7 @@ void ControlNodeScheduler::LinkArrowByValueNode(const AnfNodePtr &value_node, Co
 void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, ControlActor *const to_actor,
                                                 const KernelWithIndex &from_node_with_index,
                                                 const KernelWithIndex &to_node_with_index,
-                                                const ControlNodeParserPtr &parser) {
+                                                const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(parser);
   MS_LOG(DEBUG) << "Link arrow by parameter:" << parameter->DebugString() << " indx:" << from_node_with_index.second
                 << " for actor:" << to_actor->GetAID();
@@ -949,7 +948,7 @@ void ControlNodeScheduler::LinkArrowByParameter(const AnfNodePtr &parameter, Con
 void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, ControlActor *const to_actor,
                                                const KernelWithIndex &from_node_with_index,
                                                const KernelWithIndex &to_node_with_index,
-                                               const ControlNodeParserPtr &parser) {
+                                               const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(parser);
   MS_EXCEPTION_IF_NULL(call_node);
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1005,7 +1004,7 @@ void ControlNodeScheduler::LinkArrowByCallNode(const AnfNodePtr &call_node, Cont
 void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlActor *const to_actor,
                                              const KernelWithIndex &from_node_with_index,
                                              const KernelWithIndex &to_node_with_index,
-                                             const GraphCompilerInfo &graph_compiler_info) {
+                                             const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(kernel);
   MS_EXCEPTION_IF_NULL(to_actor);
   const auto &from_node = from_node_with_index.first;
@@ -1041,7 +1040,7 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
 }
 
 void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor_set,
-                                                           const GraphCompilerInfo &graph_compiler_info) {
+                                                           const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto control_actor_set = actor_set->control_actors_.get();
   MS_EXCEPTION_IF_NULL(control_actor_set);
@@ -1130,7 +1129,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
 }
 
 void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const actor_set,
-                                                            const GraphCompilerInfo &graph_compiler_info) {
+                                                            const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto control_actor_set = actor_set->control_actors_.get();
   MS_EXCEPTION_IF_NULL(control_actor_set);
@@ -1186,7 +1185,7 @@ void ControlNodeScheduler::LinkControlArrowForEntranceActor(ActorSet *const acto
 }
 
 void ControlNodeScheduler::LinkControlArrowForLoopCountActor(const ActorSet *actor_set,
-                                                             const GraphCompilerInfo &graph_compiler_info) {
+                                                             const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   auto loop_count_actor = actor_set->loop_count_actor_;
   MS_EXCEPTION_IF_NULL(loop_count_actor);
@@ -1211,7 +1210,7 @@ void ControlNodeScheduler::LinkControlArrowForLoopCountActor(const ActorSet *act
 }
 
 void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_set,
-                                                          const GraphCompilerInfo &graph_compiler_info) {
+                                                          const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
 
@@ -1277,7 +1276,7 @@ void ControlNodeScheduler::LinkControlArrowForKernelActor(ActorSet *const actor_
 }
 
 void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, const AnfNodePtr &from_node,
-                                                       const ControlNodeParserPtr &parser) {
+                                                       const ControlNodeParserPtr &parser) const {
   MS_LOG(DEBUG) << "Link auto monad control arrow from node:" << from_node->DebugString()
                 << " to actor:" << to_actor->GetAID();
   MS_EXCEPTION_IF_NULL(to_actor);
@@ -1355,7 +1354,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
                 << " to actor:" << to_actor->GetAID() << " end";
 }
 
-void ControlNodeScheduler::LinkControlArrowByKernelGraphGroup(const GraphCompilerInfo &graph_compiler_info) {
+void ControlNodeScheduler::LinkControlArrowByKernelGraphGroup(const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
 
@@ -1376,7 +1375,7 @@ void ControlNodeScheduler::LinkControlArrowByKernelGraphGroup(const GraphCompile
   }
 }
 
-void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set) {
+void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *const control_actor_set) const {
   MS_EXCEPTION_IF_NULL(control_actor_set);
 
   // Connect the branch id arrows from the entrance actor to the exit actor for each funcgraph.
@@ -1419,7 +1418,7 @@ void ControlNodeScheduler::LinkBranchIDArrowForControlActor(ControlActorSet *con
   }
 }
 
-void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info) {
+void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &graph_compiler_info) const {
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
 
@@ -1447,7 +1446,7 @@ void ControlNodeScheduler::LinkDataArrowForKernelActor(const GraphCompilerInfo &
 }
 
 void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set,
-                                                       const GraphCompilerInfo &graph_compiler_info) {
+                                                       const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(actor_set);
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
@@ -1508,7 +1507,7 @@ void ControlNodeScheduler::LinkDataArrowForCustomActor(const ActorSet *actor_set
 }
 
 void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &graph, ControlActor *const entrance_actor,
-                                                      const ControlNodeParserPtr &parser) {
+                                                      const ControlNodeParserPtr &parser) const {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(parser);
   MS_LOG(DEBUG) << "Link data arrow by kernel graph:" << graph->ToString();
@@ -1592,7 +1591,7 @@ void ControlNodeScheduler::LinkDataArrowByKernelGraph(const KernelGraphPtr &grap
 }
 
 void ControlNodeScheduler::LinkDataArrowForOutputActor(ActorSet *const actor_set,
-                                                       const GraphCompilerInfo &graph_compiler_info) {
+                                                       const GraphCompilerInfo &graph_compiler_info) const {
   auto &to_actor = actor_set->output_actor_;
   MS_EXCEPTION_IF_NULL(to_actor);
 
@@ -1625,7 +1624,7 @@ void ControlNodeScheduler::LinkDataArrowForOutputActor(ActorSet *const actor_set
   actor_set->output_actor_->device_contexts_ = iter->second;
 }
 
-void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info) {
+void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompilerInfo &graph_compiler_info) const {
   MS_EXCEPTION_IF_NULL(graph_compiler_info.control_node_parser_);
   const auto &root_graph = graph_compiler_info.control_node_parser_->root_func_graph_;
   MS_EXCEPTION_IF_NULL(root_graph);

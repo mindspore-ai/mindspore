@@ -197,7 +197,7 @@ class ControlNodeParser {
   // Recursively get all the real parameters corresponding to the formal parameters.
   void ParseAllRealParameterByFormalParameter(const KernelWithIndex &formal_parameter,
                                               const FormalToRealParameter &formal_to_real_parameters,
-                                              std::set<KernelWithIndex> *total_real_parameters,
+                                              std::set<KernelWithIndex> *const total_real_parameters,
                                               std::set<KernelWithIndex> *invalid_real_parameter);
   // Get all the call nodes without a recursion call relation.
   void ParseUnRecursionCallNode();
