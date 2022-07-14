@@ -314,6 +314,7 @@ from .l2_loss_ds import _l2_loss_ds_tbe
 from .l2_normalize import _l2_normalize_tbe
 from .l2_normalize_grad import _l2_normalize_grad_tbe
 from .square_sum_v1 import _square_sum_v1_tbe
+from .square_sum_v1_ds import _square_sum_v1_ds_tbe
 from .square_sum_v2 import _square_sum_v2_tbe
 from .confusion_transpose_d import _confusion_transpose_d_tbe
 from .confusion_softmax_grad import _confusion_softmax_grad_tbe
