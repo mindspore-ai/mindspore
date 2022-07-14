@@ -166,7 +166,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
     } else {
       if (common::AnfAlgo::GetCNodeName(anf_node) == kAllGatherOpName) {
         if (common::AnfAlgo::HasNodeAttr(kAttrFusion, cnode) &&
-            common::AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion) &&
+            common::AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion) != 0 &&
             common::AnfAlgo::GetInputTensorNum(anf_node) > 1) {
           block_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
         } else {
