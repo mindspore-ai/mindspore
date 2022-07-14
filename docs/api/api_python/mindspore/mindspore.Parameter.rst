@@ -86,6 +86,11 @@
 
         如果 `self` 是没有数据的Parameter，则默认返回为None；在调用 `init_data` 方法对Parameter初始化数据后，当前Parameter会被记录在此属性中。
 
+    .. py:method:: key
+        :property:
+
+        用于获取当前Parameter的唯一key值。
+
     .. py:method:: layerwise_parallel
         :property:
 
