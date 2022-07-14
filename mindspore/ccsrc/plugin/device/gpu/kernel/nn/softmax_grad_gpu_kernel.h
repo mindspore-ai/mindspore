@@ -113,7 +113,6 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (output_num != 1) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << output_num;
     }
-
     auto temp_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     std::vector<size_t> input_shape(temp_shape.begin(), temp_shape.end());
     auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
@@ -142,9 +141,22 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                         << shape_size_;
     }
     auto kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-
-    algo_ = CUDNN_SOFTMAX_LOG;
-    InitSizeByAxis(input_shape, axis);
+    if (kernel_name == "LogSoftmaxGrad") {
+      algo_ = CUDNN_SOFTMAX_LOG;
+      auto axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+      InitSizeByAxis(input_shape, axis);
+    } else {
+      algo_ = CUDNN_SOFTMAX_ACCURATE;
+      std::vector<int> axis;
+      std::vector<int64_t> axis_me = GetAttr<std::vector<int64_t>>(kernel_node, "axis");
+      (void)std::transform(axis_me.begin(), axis_me.end(), std::back_inserter(axis),
+                           [](const int64_t &value) { return static_cast<int>(value); });
+      if (axis.size() < 1) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'axis' cannot be equal to 0, but got "
+                          << axis.size();
+      }
+      InitSizeByAxis(input_shape, axis[0]);
+    }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_,
@@ -157,6 +169,27 @@ class SoftmaxGradGpuKernelMod : public DeprecatedNativeGpuKernelMod {
 
   void DestroyResource() noexcept override {
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_), "destroy output_descriptor failed");
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    y_desc_ = nullptr;
+    algo_ = CUDNN_SOFTMAX_ACCURATE;
+    mode_ = CUDNN_SOFTMAX_MODE_INSTANCE;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    is_null_input_ = false;
+    input_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    axis_ = 0;
+    shape_size_ = 0;
+    batch_size_ = 0;
+    channel_size_ = 0;
+    height_ = 0;
+    width_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
