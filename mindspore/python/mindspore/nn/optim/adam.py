@@ -584,7 +584,7 @@ class Adam(Optimizer):
         self._set_base_target(value)
 
     def _init_distributed_opts(self, use_locking, use_nesterov):
-        self.use_dist_optimizer = self.use_distibuted_optimizer()
+        self.use_dist_optimizer = self._use_distibuted_optimizer()
         self.dense_adam_opts, self.use_dense_opt_flags = \
             self._get_distributed_optimizer_list("adam", use_locking, use_nesterov)
         self.sparse_adam_opts, self.use_sparse_opt_flags = \
