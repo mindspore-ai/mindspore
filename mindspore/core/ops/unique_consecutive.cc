@@ -29,6 +29,7 @@ namespace mindspore {
 namespace ops {
 namespace {
 constexpr int64_t kUniqueConsecutiveInputNum = 1;
+// For aicpu, if axis is 1000, that represents None.
 constexpr int64_t kAxisIsNone = 1000;
 abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive,
                                                    const std::vector<AbstractBasePtr> &input_args) {
@@ -61,8 +62,8 @@ abstract::BaseShapePtr UniqueConsecutiveInferShape(const PrimitivePtr &primitive
     int64_t axis = GetValue<int64_t>(axis_ptr);
     int64_t ndims = SizeToLong(input_shape_vec.size());
     if (axis >= ndims || axis < -ndims) {
-      MS_LOG(EXCEPTION) << "node:" << op_name << " axis must be in the range [-" << ndims << "," << ndims << ")"
-                        << "but got" << axis << ".";
+      MS_LOG(EXCEPTION) << "For " << op_name << ", the axis must be in the range [-" << ndims << "," << ndims << ")"
+                        << "but got " << axis << ".";
     }
     if (axis < 0) {
       axis = axis + ndims;
