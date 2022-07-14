@@ -176,6 +176,9 @@ class LinSpaceValue : public AnfVisitor {
     }
     auto input_val_ptr = inputs[kIndex3]->cast<ValueNodePtr>();
     MS_EXCEPTION_IF_NULL(input_val_ptr);
+    if (input_val_ptr->abstract()->isa<abstract::AbstractTensor>()) {
+      return nullptr;
+    }
     auto input_num = GetValue<int64_t>(input_val_ptr->value());
     input_num = IntToSize(input_num);
     if (input_num != 1) {
