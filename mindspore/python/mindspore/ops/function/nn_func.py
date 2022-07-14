@@ -479,7 +479,7 @@ def hardswish(x):
     Examples:
         >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> output = ops.hardswish(x)
-        >>> print(result)
+        >>> print(output)
         [-0.3333  -0.3333  0  1.666  0.6665]
     """
     return hardswish_(x)
