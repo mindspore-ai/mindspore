@@ -830,7 +830,7 @@ def reshape(input_x, input_shape):
 
     Args:
         input_x (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        input_shape (tuple[int]): The input tuple is constructed by multiple
+        input_shape (Union[tuple[int], tensor[int]]): Constructed by multiple
             integers, i.e., :math:`(y_1, y_2, ..., y_S)`. Only constant value is allowed.
 
     Returns:
