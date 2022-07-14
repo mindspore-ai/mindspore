@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,19 +21,17 @@
 #include <utility>
 
 #include "minddata/dataset/engine/gnn/edge.h"
-#include "minddata/dataset/util/random.h"
 
 namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-LocalNode::LocalNode(NodeIdType id, NodeType type, WeightType weight)
-    : Node(id, type, weight), rnd_(GetRandomDevice()) {
-  rnd_.seed(GetSeed());
-}
+LocalNode::LocalNode(NodeIdType id, NodeType type, WeightType weight) : Node(id, type, weight) {}
 
 Status LocalNode::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
-  auto itr = features_.find(feature_type);
+  auto itr = std::find_if(
+    features_.begin(), features_.end(),
+    [feature_type](std::pair<FeatureType, std::shared_ptr<Feature>> item) { return item.first == feature_type; });
   if (itr != features_.end()) {
     *out_feature = itr->second;
     return Status::OK();
@@ -68,10 +66,10 @@ Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType
 }
 
 Status LocalNode::GetRandomSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors, int32_t samples_num,
-                                            std::vector<NodeIdType> *out) {
+                                            std::vector<NodeIdType> *out, std::mt19937 *rnd) {
   std::vector<NodeIdType> shuffled_id(neighbors.size());
   std::iota(shuffled_id.begin(), shuffled_id.end(), 0);
-  std::shuffle(shuffled_id.begin(), shuffled_id.end(), rnd_);
+  std::shuffle(shuffled_id.begin(), shuffled_id.end(), *rnd);
   int32_t num = std::min(samples_num, static_cast<int32_t>(neighbors.size()));
   for (int32_t i = 0; i < num; ++i) {
     out->emplace_back(neighbors[shuffled_id[i]]->id());
@@ -81,29 +79,29 @@ Status LocalNode::GetRandomSampledNeighbors(const std::vector<std::shared_ptr<No
 
 Status LocalNode::GetWeightSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors,
                                             const std::vector<WeightType> &weights, int32_t samples_num,
-                                            std::vector<NodeIdType> *out) {
+                                            std::vector<NodeIdType> *out, std::mt19937 *rnd) {
   CHECK_FAIL_RETURN_UNEXPECTED(neighbors.size() == weights.size(),
                                "The number of neighbors does not match the weight.");
   std::discrete_distribution<NodeIdType> discrete_dist(weights.begin(), weights.end());
   for (int32_t i = 0; i < samples_num; ++i) {
-    NodeIdType index = discrete_dist(rnd_);
+    NodeIdType index = discrete_dist(*rnd);
     out->emplace_back(neighbors[index]->id());
   }
   return Status::OK();
 }
 
 Status LocalNode::GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num, SamplingStrategy strategy,
-                                      std::vector<NodeIdType> *out_neighbors) {
+                                      std::vector<NodeIdType> *out_neighbors, std::mt19937 *rnd) {
   std::vector<NodeIdType> neighbors;
   neighbors.reserve(samples_num);
   auto itr = neighbor_nodes_.find(neighbor_type);
   if (itr != neighbor_nodes_.end()) {
     if (strategy == SamplingStrategy::kRandom) {
       while (neighbors.size() < samples_num) {
-        RETURN_IF_NOT_OK(GetRandomSampledNeighbors(itr->second.first, samples_num - neighbors.size(), &neighbors));
+        RETURN_IF_NOT_OK(GetRandomSampledNeighbors(itr->second.first, samples_num - neighbors.size(), &neighbors, rnd));
       }
     } else if (strategy == SamplingStrategy::kEdgeWeight) {
-      RETURN_IF_NOT_OK(GetWeightSampledNeighbors(itr->second.first, itr->second.second, samples_num, &neighbors));
+      RETURN_IF_NOT_OK(GetWeightSampledNeighbors(itr->second.first, itr->second.second, samples_num, &neighbors, rnd));
     } else {
       RETURN_STATUS_UNEXPECTED("Invalid strategy");
     }
@@ -151,11 +149,13 @@ Status LocalNode::GetEdgeByAdjNodeId(const NodeIdType &adj_node_id, EdgeIdType *
 }
 
 Status LocalNode::UpdateFeature(const std::shared_ptr<Feature> &feature) {
-  auto itr = features_.find(feature->type());
+  auto itr = std::find_if(
+    features_.begin(), features_.end(),
+    [feature](std::pair<FeatureType, std::shared_ptr<Feature>> item) { return item.first == feature->type(); });
   if (itr != features_.end()) {
     RETURN_STATUS_UNEXPECTED("Feature already exists");
   } else {
-    features_[feature->type()] = feature;
+    features_.emplace_back(std::make_pair(feature->type(), feature));
     return Status::OK();
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -26,6 +27,7 @@
 #include "minddata/dataset/engine/gnn/graph_data_service_impl.h"
 #include "minddata/dataset/engine/gnn/grpc_async_server.h"
 #endif
+#include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
@@ -37,11 +39,18 @@ class GraphDataImpl;
 class GraphDataServer {
  public:
   enum ServerState { kGdsUninit = 0, kGdsInitializing, kGdsRunning, kGdsStopped };
-  GraphDataServer(const std::string &dataset_file, int32_t num_workers, const std::string &hostname, int32_t port,
-                  int32_t client_num, bool auto_shutdown);
+  GraphDataServer(const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                  const std::string &hostname, int32_t port, int32_t client_num, bool auto_shutdown);
+
   ~GraphDataServer() = default;
 
   Status Init();
+
+  Status Init(int32_t num_nodes, const std::shared_ptr<Tensor> &edge,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &node_feat,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &edge_feat,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &graph_feat,
+              const std::shared_ptr<Tensor> &node_type, const std::shared_ptr<Tensor> &edge_type);
 
   Status Stop();
 
@@ -62,11 +71,19 @@ class GraphDataServer {
   void set_state(enum ServerState state) { state_ = state; }
 
   Status InitGraphDataImpl();
+
 #if !defined(_WIN32) && !defined(_WIN64)
+  Status InitNumpyGraphDataImpl(int32_t num_nodes, std::shared_ptr<Tensor> edge,
+                                std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> node_feat,
+                                std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> edge_feat,
+                                std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> graph_feat,
+                                std::shared_ptr<Tensor> node_type, std::shared_ptr<Tensor> edge_type);
+
   Status StartAsyncRpcService();
 #endif
   Status JudgeAutoShutdownServer();
 
+  std::string data_format_;
   std::string dataset_file_;
   int32_t num_workers_;  // The number of worker threads
   int32_t client_num_;

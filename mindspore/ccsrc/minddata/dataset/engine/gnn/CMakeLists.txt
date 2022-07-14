@@ -5,6 +5,7 @@ set(DATASET_ENGINE_GNN_SRC_FILES
     graph_data_client.cc
     graph_data_server.cc
     graph_loader.cc
+    graph_loader_array.cc
     graph_feature_parser.cc
     local_node.cc
     local_edge.cc

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,11 @@ using StochasticIndex = std::pair<std::vector<int32_t>, std::vector<float>>;
 class GraphDataImpl : public GraphData {
  public:
   // Constructor
+  // @param std::string data_format - support mindrecord or array
   // @param std::string dataset_file -
   // @param int32_t num_workers - number of parallel threads
-  GraphDataImpl(const std::string &dataset_file, int32_t num_workers, bool server_mode = false);
+  GraphDataImpl(const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                bool server_mode = false);
 
   ~GraphDataImpl() override;
 
@@ -119,7 +121,7 @@ class GraphDataImpl : public GraphData {
   // Get the feature of a node
   // @param std::shared_ptr<Tensor> nodes - List of nodes
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //     does not exist.
   // @param TensorRow *out - Returned features
   // @return Status The status code returned
   Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
@@ -131,7 +133,7 @@ class GraphDataImpl : public GraphData {
   // Get the feature of a edge
   // @param std::shared_ptr<Tensor> edges - List of edges
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //     does not exist.
   // @param Tensor *out - Returned features
   // @return Status The status code returned
   Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
@@ -139,6 +141,13 @@ class GraphDataImpl : public GraphData {
 
   Status GetEdgeFeatureSharedMemory(const std::shared_ptr<Tensor> &edges, FeatureType type,
                                     std::shared_ptr<Tensor> *out);
+
+  // Get the feature in graph level
+  // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
+  //     does not exist.
+  // @param Tensor *out - Returned features
+  // @return Status The status code returned
+  Status GetGraphFeature(const std::vector<FeatureType> &feature_types, TensorRow *out) override;
 
   // Get meta information of graph
   // @param MetaInfo *meta_info - Returned meta information
@@ -158,7 +167,17 @@ class GraphDataImpl : public GraphData {
     return &default_edge_feature_map_;
   }
 
+  const std::unordered_map<FeatureType, std::shared_ptr<Feature>> *GetAllGraphFeatures() const {
+    return &graph_feature_map_;
+  }
+
   Status Init() override;
+
+  Status Init(int32_t num_nodes, const std::shared_ptr<Tensor> &edge,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &node_feat,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &edge_feat,
+              const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &graph_feat,
+              const std::shared_ptr<Tensor> &node_type, const std::shared_ptr<Tensor> &edge_type) override;
 
   Status Stop() override { return Status::OK(); }
 
@@ -172,6 +191,7 @@ class GraphDataImpl : public GraphData {
 
  private:
   friend class GraphLoader;
+  friend class GraphLoaderFromArray;
   class RandomWalkBase {
    public:
     explicit RandomWalkBase(GraphDataImpl *graph);
@@ -210,10 +230,6 @@ class GraphDataImpl : public GraphData {
     int32_t num_walks_;    // Number of walks per source. Default is 1
     int32_t num_workers_;  // The number of worker threads. Default is 1
   };
-
-  // Load graph data from mindrecord file
-  // @return Status The status code returned
-  Status LoadNodeAndEdge();
 
   // Create Tensor By Vector
   // @param std::vector<std::vector<T>> &data -
@@ -269,6 +285,7 @@ class GraphDataImpl : public GraphData {
 
   Status CheckNeighborType(NodeType neighbor_type);
 
+  std::string data_format_;
   std::string dataset_file_;
   int32_t num_workers_;  // The number of worker threads
   std::mt19937 rnd_;
@@ -287,6 +304,7 @@ class GraphDataImpl : public GraphData {
   std::unordered_map<NodeType, std::unordered_set<FeatureType>> node_feature_map_;
   std::unordered_map<EdgeType, std::unordered_set<FeatureType>> edge_feature_map_;
 
+  std::unordered_map<FeatureType, std::shared_ptr<Feature>> graph_feature_map_;
   std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_node_feature_map_;
   std::unordered_map<FeatureType, std::shared_ptr<Feature>> default_edge_feature_map_;
 };

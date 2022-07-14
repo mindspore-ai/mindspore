@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ class GraphDataClient : public GraphData {
   // Get the feature of a node
   // @param std::shared_ptr<Tensor> nodes - List of nodes
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //     does not exist.
   // @param TensorRow *out - Returned features
   // @return Status The status code returned
   Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
@@ -134,11 +134,18 @@ class GraphDataClient : public GraphData {
   // Get the feature of a edge
   // @param std::shared_ptr<Tensor> edges - List of edges
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //     does not exist.
   // @param Tensor *out - Returned features
   // @return Status The status code returned
   Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
                         TensorRow *out) override;
+
+  // Get the feature in graph level
+  // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
+  //     does not exist.
+  // @param Tensor *out - Returned features
+  // @return Status The status code returned
+  Status GetGraphFeature(const std::vector<FeatureType> &feature_types, TensorRow *out) override;
 
   // Return meta information to python layer
   Status GraphInfo(py::dict *out) override;
@@ -154,6 +161,8 @@ class GraphDataClient : public GraphData {
   Status GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Tensor> *out_feature);
 
   Status GetEdgeDefaultFeature(FeatureType feature_type, std::shared_ptr<Tensor> *out_feature);
+
+  Status GetStoredGraphFeature(FeatureType feature_type, std::shared_ptr<Tensor> *out_feature);
 
   Status GetGraphData(const GnnGraphDataRequestPb &request, GnnGraphDataResponsePb *response);
 
@@ -186,6 +195,7 @@ class GraphDataClient : public GraphData {
   std::unique_ptr<GraphSharedMemory> graph_shared_memory_;
   std::unordered_map<FeatureType, std::shared_ptr<Tensor>> default_node_feature_map_;
   std::unordered_map<FeatureType, std::shared_ptr<Tensor>> default_edge_feature_map_;
+  std::unordered_map<FeatureType, std::shared_ptr<Tensor>> graph_feature_map_;
 #endif
   bool registered_;
 };

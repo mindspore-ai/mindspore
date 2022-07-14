@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "minddata/dataset/engine/gnn/edge.h"
 #include "minddata/dataset/engine/gnn/feature.h"
@@ -35,10 +36,9 @@ class LocalEdge : public Edge {
   // @param EdgeIdType id - edge id
   // @param EdgeType type - edge type
   // @param WeightType weight - edge weight
-  // @param std::shared_ptr<Node> src_node - source node
-  // @param std::shared_ptr<Node> dst_node - destination node
-  LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node,
-            std::shared_ptr<Node> dst_node);
+  // @param NodeIdType src_id - source node id
+  // @param NodeIdType dst_id - destination node id
+  LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, NodeIdType src_id, NodeIdType dst_id);
 
   ~LocalEdge() = default;
 
@@ -54,7 +54,7 @@ class LocalEdge : public Edge {
   Status UpdateFeature(const std::shared_ptr<Feature> &feature) override;
 
  private:
-  std::unordered_map<FeatureType, std::shared_ptr<Feature>> features_;
+  std::vector<std::pair<FeatureType, std::shared_ptr<Feature>>> features_;
 };
 }  // namespace gnn
 }  // namespace dataset

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,17 +45,24 @@ GraphDataServiceImpl::GraphDataServiceImpl(GraphDataServer *server, GraphDataImp
 
 Status GraphDataServiceImpl::FillDefaultFeature(GnnClientRegisterResponsePb *response) {
   const auto default_node_features = graph_data_impl_->GetAllDefaultNodeFeatures();
-  for (const auto feature : *default_node_features) {
+  for (const auto &feature : *default_node_features) {
     GnnFeatureInfoPb *feature_info = response->add_default_node_feature();
     feature_info->set_type(feature.first);
     RETURN_IF_NOT_OK(TensorToPb(feature.second->Value(), feature_info->mutable_feature()));
   }
   const auto default_edge_features = graph_data_impl_->GetAllDefaultEdgeFeatures();
-  for (const auto feature : *default_edge_features) {
+  for (const auto &feature : *default_edge_features) {
     GnnFeatureInfoPb *feature_info = response->add_default_edge_feature();
     feature_info->set_type(feature.first);
     RETURN_IF_NOT_OK(TensorToPb(feature.second->Value(), feature_info->mutable_feature()));
   }
+  const auto graph_features = graph_data_impl_->GetAllGraphFeatures();
+  for (const auto &feature : *graph_features) {
+    GnnFeatureInfoPb *feature_info = response->add_graph_feature();
+    feature_info->set_type(feature.first);
+    RETURN_IF_NOT_OK(TensorToPb(feature.second->Value(), feature_info->mutable_feature()));
+  }
+
   return Status::OK();
 }
 

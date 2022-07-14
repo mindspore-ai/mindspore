@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/gnn/feature.h"
+#include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore {
@@ -74,10 +75,10 @@ class Node {
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
   // @return Status The status code returned
   virtual Status GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num, SamplingStrategy strategy,
-                                     std::vector<NodeIdType> *out_neighbors) = 0;
+                                     std::vector<NodeIdType> *out_neighbors, std::mt19937 *rnd) = 0;
 
   // Add neighbor of node
-  // @param std::shared_ptr<Node> node -
+  // @param std::shared_ptr<Node> node
   // @return Status The status code returned
   virtual Status AddNeighbor(const std::shared_ptr<Node> &node, const WeightType &weight) = 0;
 
