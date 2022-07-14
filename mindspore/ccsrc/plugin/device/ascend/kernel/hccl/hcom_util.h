@@ -58,7 +58,7 @@ static map<HcclDataType, uint32_t> kConstOpHcomDataTypeSizeMap = {
 
 class HcomUtil {
  public:
-  static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
+  static bool GetKernelInputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_intput_shape_list);
   static bool GetKernelOutputShape(const AnfNodePtr &anf_node, vector<ShapeVector> *hccl_kernel_shape_list);
   static ::HcclDataType ConvertHcclType(TypeId type_id);
   static bool GetHcomDataType(const AnfNodePtr &anf_node, vector<HcclDataType> *data_type_list);

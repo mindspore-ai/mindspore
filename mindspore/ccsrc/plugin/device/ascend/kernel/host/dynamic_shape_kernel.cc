@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void TensorShapeKernelMod::Execute() {
+void TensorShapeKernelMod::Execute() const {
   MS_LOG(INFO) << "Execute TensorShapeKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -64,47 +64,13 @@ void TensorShapeKernelMod::Execute() {
     if (!ret) {
       MS_LOG(EXCEPTION) << "Sync stream error!";
     }
-    output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
-                                  output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
-                                  output_tensor_for_sync->device_info().host_format_);
+    if (!output_addr->SyncHostToDevice(output_shape, LongToSize(output_tensor_for_sync->data().nbytes()),
+                                       output_tensor_for_sync->data_type(), output_tensor_for_sync->data_c(),
+                                       output_tensor_for_sync->device_info().host_format_)) {
+      MS_LOG(EXCEPTION) << "TensorShapeKernel SyncHostToDevice failed";
+    }
   }
 
-  MS_LOG(INFO) << "Execute TensorShapeKernel End";
-}
-
-void TensorShapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  MS_LOG(INFO) << "Execute TensorShapeKernel Start";
-  auto node = anf_node_.lock();
-  MS_EXCEPTION_IF_NULL(node);
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto input_num = common::AnfAlgo::GetInputTensorNum(cnode);
-  if (input_num != 1) {
-    MS_LOG(EXCEPTION) << "Op [" << cnode->DebugString() << "] has invalid input num, should be 1, but got " << input_num
-                      << trace::DumpSourceLines(cnode);
-  }
-
-  auto prev_output_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(cnode, 0);
-  std::vector<int64_t> output_shape = {SizeToLong(prev_output_shape.size())};
-
-  auto output_type = TypeId::kNumberTypeInt64;
-
-  auto output_tensor_for_sync = std::make_shared<tensor::Tensor>(output_type, output_shape);
-  MS_EXCEPTION_IF_NULL(output_tensor_for_sync);
-  auto data_ptr = static_cast<int64_t *>(output_tensor_for_sync->data_c());
-  for (size_t i = 0; i < prev_output_shape.size(); ++i) {
-    MS_LOG(INFO) << "DEBUG prev_output_shape[" << i << "]:" << prev_output_shape[i];
-    *(data_ptr + i) = prev_output_shape[i];
-  }
-
-  if (outputs.empty()) {
-    MS_LOG(EXCEPTION) << "Output address of DynamicShape is empty";
-  }
-  auto status = rtMemcpyAsync(outputs[0]->addr, outputs[0]->size, output_tensor_for_sync->data_c(),
-                              LongToSize(output_tensor_for_sync->data().nbytes()), RT_MEMCPY_HOST_TO_DEVICE, stream_);
-  if (status != RT_ERROR_NONE) {
-    MS_LOG(EXCEPTION) << "Execute TensorShapeKernel rtMemcpyAsync failed!";
-  }
   MS_LOG(INFO) << "Execute TensorShapeKernel End";
 }
 

@@ -27,7 +27,6 @@
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
-using HcclCollectiveGroup = mindspore::device::ascend::collective::HcclCollectiveGroup;
 
 namespace {
 std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
@@ -322,7 +321,7 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   op_info.outputPtr = outputs[0]->addr;
   op_info.dataType = static_cast<HcclDataType>(data_type);
   op_info.opType = static_cast<HcclReduceOp>(op_type_);
-  op_info.root = IntToUint(root_id_);
+  op_info.root = root_id_;
   op_info.count = hccl_count_;
 
   auto callback = [this](HcclResult status) {
@@ -337,7 +336,6 @@ bool HcclKernel::Launch(const std::vector<AddressPtr> &inputs, const std::vector
   auto hccl_ret = hccl::HcclAdapter::GetInstance().HcclExecEnqueueOp(op_info, callback);
   if (hccl_ret != HCCL_SUCCESS) {
     MS_LOG(EXCEPTION) << "Call EnqueueHcomOperation failed, node info: " << cnode->DebugString();
-    return false;
   }
 
   std::unique_lock<std::mutex> ulock(hccl_mutex_);
