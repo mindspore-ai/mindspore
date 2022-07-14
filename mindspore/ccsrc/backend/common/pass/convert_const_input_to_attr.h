@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,6 @@ class ConvertConstInputToAttr : public PatternProcessPass {
       : PatternProcessPass("convert_const_input_to_attr", multigraph) {}
   ~ConvertConstInputToAttr() override = default;
   const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &node, const EquivPtr &) const override;
-
- private:
-  mindspore::HashMap<std::string, mindspore::HashSet<size_t>> op_input_attr_map_;
 };
 }  // namespace opt
 }  // namespace mindspore
