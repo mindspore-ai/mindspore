@@ -75,6 +75,7 @@ Neural Network
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
+    mindspore.ops.PSROIPooling
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
 
