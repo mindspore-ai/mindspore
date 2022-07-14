@@ -19,6 +19,8 @@ accumulation and so on.
 Note:
     This feature is a beta feature, and we are still improving its functionality.
 """
+from __future__ import absolute_import
+
 from .boost import AutoBoost
 from .base import OptimizerProcess, ParameterProcess
 from .boost_cell_wrapper import BoostTrainOneStepCell, BoostTrainOneStepWithLossScaleCell

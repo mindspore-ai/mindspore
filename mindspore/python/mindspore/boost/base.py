@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """base process"""
+from __future__ import absolute_import
+
 import os
 import time
 import math
@@ -82,7 +84,8 @@ class OptimizerProcess:
             self.learning_rate = opt.init_learning_rate
         self.origin_params = opt.init_params["params"]
 
-    def build_params_dict(self, network):
+    @staticmethod
+    def build_params_dict(network):
         r"""
         Build the parameter's dict of the network.
 
@@ -96,7 +99,8 @@ class OptimizerProcess:
                 params_dict[id(par)] = cell
         return params_dict
 
-    def build_gc_params_group(self, params_dict, parameters):
+    @staticmethod
+    def build_gc_params_group(params_dict, parameters):
         r"""
         Build the parameter's group with grad centralization.
 
@@ -139,11 +143,12 @@ class OptimizerProcess:
         Args:
             network (Cell): The training network.
         """
-        params_dict = self.build_params_dict(network)
+        params_dict = OptimizerProcess.build_params_dict(network)
 
-        parameters = self.origin_params
-        if parameters is not None and not isinstance(parameters, list):
-            parameters = list(parameters)
+        if self.origin_params is not None and not isinstance(self.origin_params, list):
+            parameters = list(self.origin_params)
+        else:
+            parameters = self.origin_params
 
         if not parameters:
             raise ValueError("Optimizer got an empty parameter list.")
@@ -155,7 +160,7 @@ class OptimizerProcess:
             logger.warning("Only group parameters support gradient centralization.")
             return
 
-        self.origin_params = self.build_gc_params_group(params_dict, parameters)
+        self.origin_params = OptimizerProcess.build_gc_params_group(params_dict, parameters)
 
     def generate_new_optimizer(self):
         """Generate new optimizer."""
@@ -199,35 +204,13 @@ class ParameterProcess:
         >>> size, in_features, out_features = 16, 16, 10
         >>> network = Net(in_features, out_features)
         >>> new_parameter = network.trainable_params()[:1]
-        >>> parameter_process = ParameterProcess()
-        >>> group_params = parameter_process.generate_group_params(new_parameter, network.trainable_params())
+        >>> group_params = ParameterProcess.generate_group_params(new_parameter, network.trainable_params())
     """
     def __init__(self):
         self._parameter_indices = 1
 
-    def assign_parameter_group(self, parameters, split_point=None):
-        r"""
-        Assign parameter group.
-
-        Args:
-            parameters (list): The network's parameter list.
-            split_point (list): The gradient split point of this network. default: None.
-        """
-        if not isinstance(parameters, (list, tuple)) or not parameters:
-            return parameters
-
-        parameter_len = len(parameters)
-        if split_point:
-            split_parameter_index = split_point
-        else:
-            split_parameter_index = [parameter_len // 2]
-        for i in range(parameter_len):
-            if i in split_parameter_index:
-                self._parameter_indices += 1
-            parameters[i].comm_fusion = self._parameter_indices
-        return parameters
-
-    def generate_group_params(self, parameters, origin_params):
+    @staticmethod
+    def generate_group_params(parameters, origin_params):
         r"""
         Generate group parameters.
 
@@ -284,6 +267,28 @@ class ParameterProcess:
             else:
                 group_params.append({"params": params_value})
         return group_params
+
+    def assign_parameter_group(self, parameters, split_point=None):
+        r"""
+        Assign parameter group.
+
+        Args:
+            parameters (list): The network's parameter list.
+            split_point (list): The gradient split point of this network. default: None.
+        """
+        if not isinstance(parameters, (list, tuple)) or not parameters:
+            return parameters
+
+        parameter_len = len(parameters)
+        if split_point:
+            split_parameter_index = split_point
+        else:
+            split_parameter_index = [parameter_len // 2]
+        for i in range(parameter_len):
+            if i in split_parameter_index:
+                self._parameter_indices += 1
+            parameters[i].comm_fusion = self._parameter_indices
+        return parameters
 
 
 def _get_local_pca_mat_path(weight_load_dir, pca_mat_path, n_component, device_number, network):
@@ -393,8 +398,7 @@ def _randomized_svd(data, n_component, n_oversample=10, n_iter=1):
         n_oversample (int): oversample num
         n_iter (int): iteration count
     """
-    mean = np.mean(data, axis=0)
-    data -= mean
+    data -= np.mean(data, axis=0)
     n_random = n_component + n_oversample
     n_samples, n_features = data.shape
     transpose = n_samples < n_features
@@ -485,7 +489,7 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
     """
     parallel_mode = auto_parallel_context().get_parallel_mode()
     rank_size = 1 if parallel_mode == ParallelMode.STAND_ALONE else get_group_size()
-    local_dim = math.ceil(n_component / rank_size)
+    local_dim = math.ceil(n_component // rank_size)
     for rank_id in range(rank_size):
         start_index = rank_id * local_dim
         end_index = (rank_id + 1) * local_dim
@@ -494,7 +498,7 @@ def _save_local_pca_mat(pca_mat, full_pca_mat_path, n_component):
         p_local = np.zeros([local_dim, pca_mat.shape[1]])
         if pca_start_index != pca_end_index:
             p_local[0: pca_end_index - pca_start_index, :] = pca_mat[pca_start_index: pca_end_index, :]
-        local_pca_mat_path = full_pca_mat_path[:-4] + "_rank_" + str(rank_id) + ".npy"
+        local_pca_mat_path = "{}_rank_{}.npy".format(full_pca_mat_path[:-4], str(rank_id))
         np.save(local_pca_mat_path, p_local)
     save_pca_end_path = os.path.join(os.path.dirname(full_pca_mat_path), "save_pca_end.txt")
     os.mknod(save_pca_end_path)

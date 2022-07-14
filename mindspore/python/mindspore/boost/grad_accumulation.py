@@ -13,6 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """grad accumulation"""
+from __future__ import absolute_import
+from __future__ import division
+
 from mindspore.nn.cell import Cell
 from mindspore.common import Parameter, Tensor
 from mindspore.common import dtype as mstype
@@ -38,6 +41,7 @@ gradient_clear_op = C.MultitypeFuncGraph("gradient_clear_op")
 
 @gradient_clear_op.register("Tensor")
 def clear_grad(cumulative_grad):
+    """Clear grad."""
     zero_grad = P.ZerosLike()(cumulative_grad)
     return F.assign(cumulative_grad, zero_grad)
 

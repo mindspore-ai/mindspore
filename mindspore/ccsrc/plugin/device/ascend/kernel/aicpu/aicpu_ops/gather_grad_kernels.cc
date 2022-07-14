@@ -35,9 +35,8 @@ constexpr auto kDim2 = 2;
 constexpr auto kDim3 = 3;
 
 template <typename T, typename S>
-static uint32_t GatherGrad(const T *index, const S *grad, S *output, const int64_t dim_before_axis,
-                           const int64_t dim_at_axis_index, const int64_t dim_at_axis_output,
-                           const int64_t dim_after_axis) {
+static uint32_t GatherGrad(const T *index, const S *grad, S *output, int64_t dim_before_axis, int64_t dim_at_axis_index,
+                           int64_t dim_at_axis_output, int64_t dim_after_axis) {
   if (dim_after_axis == 0) {
     AICPU_LOGE("dim_after_axis cannot be 0.");
     return AICPU_KERNEL_STATE_FAILED;

@@ -14,6 +14,7 @@
 # ============================================================================
 """tbe job manager"""
 
+from __future__ import absolute_import
 import json
 import traceback
 from enum import Enum
@@ -469,23 +470,28 @@ class DummyLogger:
 
     @staticmethod
     def debug(msg, *args, **kwargs):
-        pass
+        """debug method."""
+        return None
 
     @staticmethod
     def info(msg, *args, **kwargs):
-        pass
+        """info method."""
+        return None
 
     @staticmethod
     def warning(msg, *args, **kwargs):
-        pass
+        """warning method."""
+        return None
 
     @staticmethod
     def error(msg, *args, **kwargs):
-        pass
+        """error method."""
+        return None
 
     @staticmethod
     def exception(msg, *args, **kwargs):
-        pass
+        """exception method."""
+        return None
 
 
 def get_job(jobs, source_id, job_id):

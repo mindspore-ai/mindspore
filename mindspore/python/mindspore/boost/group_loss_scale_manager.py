@@ -13,6 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """Group Loss Scale Manager"""
+from __future__ import absolute_import
+from __future__ import division
+
 from mindspore.nn.cell import Cell
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
@@ -111,7 +114,8 @@ class GroupLossScaleManager(Cell):
             init_loss_scale (float): The initialized loss scale.
         """
         self.loss_scale_number = loss_scale_number
-        self.layer_loss_scale = tuple([P._DynamicLossScale(layer=x) for x in range(loss_scale_number + 1)]) # pylint: disable=W0212
+        # pylint: disable=W0212
+        self.layer_loss_scale = tuple([P._DynamicLossScale(layer=x) for x in range(loss_scale_number + 1)])
         self.dynamic_loss_scale = ParameterTuple(Parameter(Tensor(1, mstype.float32),
                                                            name='layer_loss_scale_{}'.format(x), requires_grad=False)
                                                  for x in range(loss_scale_number + 2))
