@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """adasum"""
+from __future__ import absolute_import
+
 import copy
 import hashlib
 import math
@@ -25,9 +27,6 @@ from mindspore.ops.operations._inner_ops import Send, Receive
 
 
 __all__ = ["AdaSum"]
-
-
-MAX_NUM_HASH = 2 ** 31
 
 
 _update_parameters = C.MultitypeFuncGraph("update_parameters")
@@ -165,6 +164,31 @@ class AdaSum(Cell):
         self._generate_communication_op()
         self.hyper_map = C.HyperMap()
 
+    @staticmethod
+    def _hash(step, target, weights_index):
+        target = "tag" + str(step) + str(target) + str(weights_index)
+        target_hash = hashlib.sha1(target.encode()).hexdigest()
+        max_num_hash = 2 ** 31
+        hash_res = int(int(target_hash, 16) % max_num_hash)
+        return hash_res
+
+    def construct(self, delta_weights, parameters, old_parameters):
+        forward_weights = [delta_weights]
+        for i in range(self.calc_times):
+            process_weights = self.hyper_map(F.partial(_adasum_opt_forward, self.send_node[i], self.allreduce_list[i]),
+                                             self.parameter_divisibility_list[i], self.allreduce_node_num_list[i],
+                                             self.send_list_forward[i], self.recv_list_forward[i], forward_weights[-1])
+            forward_weights.append(process_weights)
+        for i in range(self.calc_times):
+            j = self.calc_times - i - 1
+            process_weights = self.hyper_map(F.partial(_adasum_opt_rollback, self.send_node[j]),
+                                             self.parameter_divisibility_list[j], forward_weights[j + 1],
+                                             self.send_list_rollback[j], self.recv_list_rollback[j])
+            forward_weights[j] = process_weights
+        adasum_parameters = self.hyper_map(F.partial(_update_parameters), delta_weights, forward_weights[0],
+                                           parameters, old_parameters)
+        return adasum_parameters
+
     def _generate_communication_op(self):
         """generate communication op."""
         self.calc_times = int(math.log(self.group_number, 2))
@@ -199,7 +223,7 @@ class AdaSum(Cell):
                               self.rank % self.device_number
                 neighbor_ids.append(neighbor_id)
                 group_name_last += neighbor_id
-            group_name = "adasum_" + str(step) + "_" + str(group_name_last)
+            group_name = "adasum_{}_{}".format(str(step), str(group_name_last))
             create_group(group_name, neighbor_ids)
 
             send_left = []
@@ -213,10 +237,10 @@ class AdaSum(Cell):
             weights_index = 0
             fusion_id = (step + 1) * 3
             for shape, dtype in left_delta_weights:
-                send_tag = self._hash(step, sr_target, weights_index)
+                send_tag = AdaSum._hash(step, sr_target, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
                 send.add_prim_attr("fusion", fusion_id)
-                recv_tag = self._hash(step, dest_target, weights_index)
+                recv_tag = AdaSum._hash(step, dest_target, weights_index)
                 recv = Receive(sr_tag=recv_tag, src_rank=dest_target, shape=shape, dtype=dtype,
                                group="hccl_world_group")
                 recv.add_prim_attr("fusion", fusion_id)
@@ -224,10 +248,10 @@ class AdaSum(Cell):
                 recv_left.append(recv)
                 weights_index += 1
             for shape, dtype in right_delta_weights:
-                send_tag = self._hash(step, sr_target, weights_index)
+                send_tag = AdaSum._hash(step, sr_target, weights_index)
                 send = Send(sr_tag=send_tag, dest_rank=dest_target, group="hccl_world_group")
                 send.add_prim_attr("fusion", fusion_id + 1)
-                recv_tag = self._hash(step, dest_target, weights_index)
+                recv_tag = AdaSum._hash(step, dest_target, weights_index)
                 recv = Receive(sr_tag=recv_tag, src_rank=dest_target, shape=shape, dtype=dtype,
                                group="hccl_world_group")
                 recv.add_prim_attr("fusion", fusion_id + 1)
@@ -282,7 +306,7 @@ class AdaSum(Cell):
             left_shape = copy.deepcopy(shape)
             right_shape = copy.deepcopy(shape)
             divisibility_flag = False
-            for i in range(len(shape)):
+            for i, _ in enumerate(shape):
                 if shape[i] > 1:
                     left_shape[i] = int(shape[i] // 2)
                     right_shape[i] = shape[i] - int(shape[i] // 2)
@@ -292,26 +316,3 @@ class AdaSum(Cell):
             right_delta_weights.append((right_shape, dtype))
             delta_weights_divisibility += (divisibility_flag,)
         return left_delta_weights, right_delta_weights, delta_weights_divisibility
-
-    def _hash(self, step, target, weights_index):
-        target = "tag" + str(step) + str(target) + str(weights_index)
-        target_hash = hashlib.sha1(target.encode()).hexdigest()
-        hash_res = int(int(target_hash, 16) % MAX_NUM_HASH)
-        return hash_res
-
-    def construct(self, delta_weights, parameters, old_parameters):
-        forward_weights = [delta_weights]
-        for i in range(self.calc_times):
-            process_weights = self.hyper_map(F.partial(_adasum_opt_forward, self.send_node[i], self.allreduce_list[i]),
-                                             self.parameter_divisibility_list[i], self.allreduce_node_num_list[i],
-                                             self.send_list_forward[i], self.recv_list_forward[i], forward_weights[-1])
-            forward_weights.append(process_weights)
-        for i in range(self.calc_times):
-            j = self.calc_times - i - 1
-            process_weights = self.hyper_map(F.partial(_adasum_opt_rollback, self.send_node[j]),
-                                             self.parameter_divisibility_list[j], forward_weights[j + 1],
-                                             self.send_list_rollback[j], self.recv_list_rollback[j])
-            forward_weights[j] = process_weights
-        adasum_parameters = self.hyper_map(F.partial(_update_parameters), delta_weights, forward_weights[0],
-                                           parameters, old_parameters)
-        return adasum_parameters

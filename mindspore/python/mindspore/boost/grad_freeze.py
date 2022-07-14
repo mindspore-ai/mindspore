@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """grad freeze"""
+from __future__ import absolute_import
 
 import numpy as np
-
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim import Optimizer
 from mindspore.common import Tensor
@@ -208,7 +208,6 @@ class GradientFreeze:
         self._freeze_p = freeze_p
         self._total_steps = total_steps
         self.grad_reducer = F.identity
-        self._param_processer = ParameterProcess()
 
     def split_parameters_groups(self, net, freeze_para_groups_number):
         r"""
@@ -253,7 +252,7 @@ class GradientFreeze:
         # local continuous freezing training strategy, as '00001234'
         if freeze_strategy == CONTINUOUS_STRATEGY:
             zero_cnt = int(
-                freeze_p * (parameter_groups_number - 1) / (1 - freeze_p) + 0.5)
+                freeze_p * (parameter_groups_number - 1) // (1 - freeze_p) + 0.5)
             sub_idx = [0] * zero_cnt + list(range(1, parameter_groups_number))
             freeze_idxes = []
             while len(freeze_idxes) < total_step:
@@ -290,8 +289,8 @@ class GradientFreeze:
         train_para_groups = self.split_parameters_groups(
             network, self._param_groups)
         for i in range(self._param_groups):
-            train_para_groups[i] = self._param_processer.generate_group_params(train_para_groups[i],
-                                                                               optimizer.init_params['params'])
+            train_para_groups[i] = ParameterProcess.generate_group_params(train_para_groups[i], \
+                                                                          optimizer.init_params['params'])
         train_strategy = self.generate_freeze_index_sequence(
             self._param_groups, self._freeze_type, self._freeze_p, self._total_steps)
         optimizer = FreezeOpt(optimizer, train_para_groups, train_strategy)

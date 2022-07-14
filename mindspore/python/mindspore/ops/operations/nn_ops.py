@@ -170,38 +170,38 @@ class AdaptiveAvgPool2D(PrimitiveWithInfer):
 
     Examples:
         >>> # case 1: output_size=(None, 2)
-        >>> input_x = Tensor(np.array([[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
-        ...                            [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+        ...                             [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]]]), mindspore.float32)
         >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((None, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
-        [[[1.5 2.5]
-          [4.5 5.5]
-          [7.5 8.5]]
-         [[1.5 2.5]
-          [4.5 5.5]
-          [7.5 8.5]]
-         [[1.5 2.5]
-          [4.5 5.5]
-          [7.5 8.5]]]
+        [[[[1.5 2.5]
+           [4.5 5.5]
+           [7.5 8.5]]
+          [[1.5 2.5]
+           [4.5 5.5]
+           [7.5 8.5]]
+          [[1.5 2.5]
+           [4.5 5.5]
+           [7.5 8.5]]]]
         >>> # case 2: output_size=2
         >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D(2)
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
-        [[[3. 4.]
-          [6. 7.]]
-         [[3. 4.]
-          [6. 7.]]
-         [[3. 4.]
-          [6. 7.]]]
+        [[[[3. 4.]
+           [6. 7.]]
+          [[3. 4.]
+           [6. 7.]]
+          [[3. 4.]
+           [6. 7.]]]]
         >>> # case 3: output_size=(1, 2)
         >>> adaptive_avg_pool_2d = ops.AdaptiveAvgPool2D((1, 2))
         >>> output = adaptive_avg_pool_2d(input_x)
         >>> print(output)
-        [[[4.5 5.5]]
-         [[4.5 5.5]]
-         [[4.5 5.5]]]
+        [[[[4.5 5.5]]
+          [[4.5 5.5]]
+          [[4.5 5.5]]]]
     """
 
     @prim_attr_register

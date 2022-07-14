@@ -365,6 +365,7 @@ constexpr auto kEnvironCreateOpName = "EnvironCreate";
 constexpr auto kEnvironSetOpName = "EnvironSet";
 constexpr auto kEnvironGetOpName = "EnvironGet";
 constexpr auto kEnvironDestroyAllOpName = "EnvironDestroyAll";
+constexpr auto kGatherDGradV2OpName = "GatherDGradV2";
 constexpr auto kNonDeterministicInts = "NonDeterministicInts";
 constexpr auto kUpdateStateOpName = "UpdateState";
 constexpr auto kTruncatedNormal = "TruncatedNormal";
