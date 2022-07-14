@@ -1,5 +1,5 @@
 mindspore.ops.random_gamma
-====================
+==========================
 
 .. py:function:: mindspore.ops.random_gamma(shape, alpha, seed=None)
 

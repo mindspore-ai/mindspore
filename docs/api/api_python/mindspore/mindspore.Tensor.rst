@@ -686,7 +686,7 @@ mindspore.Tensor
 
         Tensor是否已经初始化。
 
-    .. py:method:: index_fill(dim, index, value):
+    .. py:method:: index_fill(dim, index, value)
 
         按 `index` 中给定的顺序选择索引，将输入 `value` 值填充到当前Tensor的所有 `dim` 维元素。
 
