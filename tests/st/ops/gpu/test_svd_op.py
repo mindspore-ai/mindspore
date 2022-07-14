@@ -161,9 +161,12 @@ def test_svd_vmap1():
     tensor_a = Tensor(a, dtype=mindspore.float32)
     net = SvdNet(True, True)
     svd_vmap = ops.vmap(net, (0,), 0)
-    s, u, v = svd_vmap(tensor_a)
-    output = batch_matmul(u, batch_matmul(matrix_diag(s, (5, 3, 3)), transpose(v, (0, 2, 1))))
-    assert np.allclose(a, output.asnumpy(), rtol=RTOL, atol=ATOL)
+    outs = svd_vmap(tensor_a)
+
+    outs_expect = tensor_a.svd(full_matrices=True, compute_uv=True)
+    assert np.allclose(outs_expect[0].asnumpy(), outs[0].asnumpy(), rtol=RTOL, atol=ATOL)
+    assert np.allclose(outs_expect[1].asnumpy(), outs[1].asnumpy(), rtol=RTOL, atol=ATOL)
+    assert np.allclose(outs_expect[2].asnumpy(), outs[2].asnumpy(), rtol=RTOL, atol=ATOL)
 
 
 @pytest.mark.level0
@@ -180,5 +183,5 @@ def test_svd_vmap2():
     net = SvdNet(True, False)
     svd_vmap = ops.vmap(net, (0,), 0)
     s, _, _ = svd_vmap(tensor_a)
-    n_s = np.linalg.svd(a, full_matrices=True, compute_uv=False)
-    assert np.allclose(n_s, s.asnumpy(), rtol=RTOL, atol=ATOL)
+    s_expect = tensor_a.svd(full_matrices=True, compute_uv=False)
+    assert np.allclose(s_expect.asnumpy(), s.asnumpy(), rtol=RTOL, atol=ATOL)
