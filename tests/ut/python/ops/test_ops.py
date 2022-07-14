@@ -52,6 +52,7 @@ from mindspore.ops.operations.array_ops import SegmentMax
 from mindspore.ops.operations.array_ops import SegmentMin
 from mindspore.ops.operations.array_ops import SegmentSum
 from mindspore.ops.operations.array_ops import IdentityN
+from mindspore.ops.operations.array_ops import IndexFill
 from mindspore.ops.operations.array_ops import SegmentMean
 from mindspore.ops.operations.array_ops import SegmentProd
 from mindspore.ops.operations.random_ops import NonDeterministicInts
@@ -3306,6 +3307,14 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([1, 2, 3, 4, 5, 6]), mstype.int32),
                         Tensor(np.array([1, 3, 5]), mstype.int32)],
         'skip': ['backward'],
+    }),
+    ('IndexFill', {
+        'block': IndexFill(),
+        'desc_inputs': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32),
+                        1,
+                        Tensor(np.array([0, 2]), mstype.int32),
+                        Tensor(4.0, mstype.float32)],
+        'desc_bprop': [Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]), mstype.float32)],
     }),
     ('MaskedFill', {
         'block': P.MaskedFill(),

@@ -1,0 +1,263 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "plugin/device/cpu/kernel/index_fill_cpu_kernel.h"
+
+#include <utility>
+
+#include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "kernel/common_utils.h"
+
+namespace {
+#define INDEXFILL_COMPUTE_CASE(DTYPE, TYPE, inputs, outputs) \
+  case (DTYPE): {                                            \
+    LaunchKernel<TYPE>(inputs, outputs);                     \
+    break;                                                   \
+  }
+}  // namespace
+
+namespace mindspore {
+namespace kernel {
+namespace {
+const uint32_t kInputNum = 4;
+const uint32_t kOutputNum = 1;
+const uint32_t kInputIndex2 = 2;
+const uint32_t kInputIndex3 = 3;
+}  // namespace
+
+void IndexFillCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
+  MS_EXCEPTION_IF_NULL(kernel_node);
+  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+  x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  dim_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
+  indices_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex2);
+  value_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, kInputIndex3);
+  x_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
+  dim_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 1);
+  indices_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, kInputIndex2);
+
+  if (dim_shape_.size() != 0) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'dim' has to be a scalar.";
+  }
+  if (indices_shape_.size() > 1) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'index' has to be a vector/scalar.";
+  }
+  if (value_shape_.size() != 0) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_
+                             << "', 'value' must be a 0-dimensional tensor, but got a tensor with "
+                             << value_shape_.size() << " dimension(s).";
+  }
+  if (dim_type_ != kNumberTypeInt32) {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'dim' must be int32 or int64, but got "
+                            << dim_type_;
+  }
+  if (indices_type_ != kNumberTypeInt32) {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', the dtype of 'index' must be int32, but got "
+                            << indices_type_;
+  }
+}
+
+bool IndexFillCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
+                                   const std::vector<AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kInputNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kOutputNum, kernel_name_);
+  bool ret = true;
+  switch (x_type_) {
+    INDEXFILL_COMPUTE_CASE(kNumberTypeUInt8, uint8_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeUInt16, uint16_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeUInt32, uint32_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeUInt64, uint64_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeInt8, int8_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeInt16, int16_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeInt32, int32_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeInt64, int64_t, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeFloat16, float16, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeFloat32, float, inputs, outputs)
+    INDEXFILL_COMPUTE_CASE(kNumberTypeFloat64, double, inputs, outputs)
+    default:
+      MS_EXCEPTION(TypeError) << "Unsupported input data type: " << TypeIdToType(x_type_)->ToString();
+      ret = false;
+  }
+  return ret;
+}
+
+template <typename T>
+void IndexFillCpuKernelMod::DoFill(uint32_t data_num, const T *input_x, const int32_t *input_dim,
+                                   const std::map<int32_t, bool> &index_dict, const T *input_value, T *output_y,
+                                   const int32_t x_dim_nums) {
+  int32_t dim_flag = 0;
+  if (x_dim_nums != 0) {
+    dim_flag = *input_dim % x_dim_nums + 1;
+  }
+
+  int32_t remain_dims = 1;
+  if (dim_flag == x_dim_nums) {
+    if (dim_flag != 0) {
+      remain_dims = LongToInt(x_shape_[*input_dim]);
+    }
+    for (uint32_t i = 0; i < data_num; i++) {
+      int32_t index_flag = 0;
+      if (remain_dims != 0) {
+        index_flag = i % remain_dims;
+      }
+      auto f = index_dict.find(index_flag);
+      if (f != index_dict.end()) {
+        output_y[i] = *input_value;
+      } else {
+        output_y[i] = input_x[i];
+      }
+    }
+  } else {
+    for (int32_t i = *input_dim + 1; i < x_dim_nums; i++) {
+      remain_dims *= LongToInt(x_shape_[i]);
+    }
+    for (uint32_t i = 0; i < data_num; i++) {
+      int32_t index_flag = 0;
+      if (remain_dims != 0) {
+        index_flag = (i / remain_dims) % LongToInt(x_shape_[*input_dim]);
+      }
+      auto f = index_dict.find(index_flag);
+      if (f != index_dict.end()) {
+        output_y[i] = *input_value;
+      } else {
+        output_y[i] = input_x[i];
+      }
+    }
+  }
+}
+
+template <typename T>
+void IndexFillCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
+  T *input_0 = reinterpret_cast<T *>(inputs[0]->addr);
+  int32_t *input_1 = reinterpret_cast<int32_t *>(inputs[1]->addr);
+  int32_t *input_2 = reinterpret_cast<int32_t *>(inputs[2]->addr);
+  T *input_3 = reinterpret_cast<T *>(inputs[3]->addr);
+  T *output_0 = reinterpret_cast<T *>(outputs[0]->addr);
+  int32_t x_dim_nums = x_shape_.size();
+  uint32_t data_num = inputs[0]->size / sizeof(T);
+  uint32_t index_num = inputs[2]->size / sizeof(int32_t);
+  int32_t cur_dim = *input_1;
+  if (cur_dim < 0) {
+    *input_1 = *input_1 + x_dim_nums;
+  }
+
+  std::map<int32_t, bool> index_dict;
+  if (x_dim_nums == 0) {
+    for (uint32_t i = 0; i < index_num; i++) {
+      if (input_2[i] < -1 || input_2[i] > 0) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the input of 'index' out of range (expected to be in range of [-1, 0], "
+                          << "but got " << input_2[i] << ")";
+      } else {
+        index_dict.insert(std::pair<int32_t, bool>(0, true));
+      }
+    }
+  } else if (cur_dim < -x_dim_nums || cur_dim >= x_dim_nums) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the input of 'dim' out of range (expected to be in range of ["
+                      << (0 - x_dim_nums) << ", " << (x_dim_nums - 1) << "], but got " << cur_dim << ")";
+  } else {
+    for (uint32_t i = 0; i < index_num; i++) {
+      int32_t cur_index = LongToInt(x_shape_[*input_1]);
+      if (input_2[i] < -cur_index || input_2[i] >= cur_index) {
+        MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                          << "', the input of 'index' out of range (expected to be in range of [" << (0 - cur_index)
+                          << ", " << (cur_index - 1) << "], but got " << input_2[i] << ")";
+      } else {
+        if (input_2[i] < 0) {
+          input_2[i] = input_2[i] + cur_index;
+        }
+        index_dict.insert(std::pair<int32_t, bool>(input_2[i], true));
+      }
+    }
+  }
+
+  DoFill<T>(data_num, input_0, input_1, index_dict, input_3, output_0, x_dim_nums);
+}
+
+std::vector<KernelAttr> IndexFillCpuKernelMod::GetOpSupport() {
+  static std::vector<KernelAttr> support_list = {KernelAttr()
+                                                   .AddInputAttr(kNumberTypeUInt8)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeUInt8)
+                                                   .AddOutputAttr(kNumberTypeUInt8),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeUInt16)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeUInt16)
+                                                   .AddOutputAttr(kNumberTypeUInt16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeUInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeUInt32)
+                                                   .AddOutputAttr(kNumberTypeUInt32),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeUInt64)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeUInt64)
+                                                   .AddOutputAttr(kNumberTypeUInt64),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt8)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt8)
+                                                   .AddOutputAttr(kNumberTypeInt8),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt16)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt16)
+                                                   .AddOutputAttr(kNumberTypeInt16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddOutputAttr(kNumberTypeInt32),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt64)
+                                                   .AddOutputAttr(kNumberTypeInt64),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeFloat16)
+                                                   .AddOutputAttr(kNumberTypeFloat16),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeFloat32)
+                                                   .AddOutputAttr(kNumberTypeFloat32),
+                                                 KernelAttr()
+                                                   .AddInputAttr(kNumberTypeFloat64)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeInt32)
+                                                   .AddInputAttr(kNumberTypeFloat64)
+                                                   .AddOutputAttr(kNumberTypeFloat64)};
+
+  return support_list;
+}
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, IndexFill, IndexFillCpuKernelMod);
+}  // namespace kernel
+}  // namespace mindspore

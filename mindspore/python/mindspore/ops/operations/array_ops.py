@@ -7522,9 +7522,26 @@ class IndexFill(Primitive):
     by selecting the indices in the order given in index.
 
     Refer to :func:`mindspore.ops.index_fill` for more detail.
+    Inputs:
+        - **x** (Tensor) - Input tensor.
+          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **dim** (Union[int, Tensor]) - Dimension along which to fill the input tensor. Only supports
+          a 0-D tensor or an int number.
+        - **index** (Tensor) - Indices of the input tensor to fill in. Only supports a 0-D or 1-D tensor.
+        - **value** (Tensor) - Value to fill the returned tensor. Only supports a 0-D tensor or a scalar.
+
+    Outputs:
+        Tensor, has the same type and shape as input tensor.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If `dim` is neither a int number nor a tensor.
+        TypeError: If `index` is not a Tensor.
+        TypeError: If `value` is not a Tensor/Scalar.
+        TypeError: If dtype of `index` is not int32.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -7542,6 +7559,7 @@ class IndexFill(Primitive):
 
     @prim_attr_register
     def __init__(self):
+        """Initialize IndexFill"""
         self.init_prim_io_names(inputs=['x', 'dim', 'index', 'value'], outputs=['y'])
 
 

@@ -30,6 +30,7 @@ from ..operations.array_ops import MatrixSetDiagV3
 from ..operations.array_ops import Mvlgamma
 from ..operations.array_ops import Triu
 from ..operations.array_ops import IdentityN
+from ..operations.array_ops import IndexFill
 from ..operations.array_ops import CheckNumerics
 from ..operations.array_ops import ConjugateTranspose
 from ..operations.array_ops import SegmentMax
@@ -115,6 +116,26 @@ def get_bprop_tensor_scatter_div(self):
         dx = div_func(dout, indices, update)
         d_update = gather_x * gather_update
         return dx, zeros_like(indices), d_update
+
+    return bprop
+
+
+@bprop_getters.register(IndexFill)
+def get_bprop_index_fill(self):
+    """Generate bprop for IndexFill"""
+    gather = P.Gather()
+    index_fill = IndexFill()
+    shape = P.Shape()
+
+    def bprop(x, dim, indices, value, out, dout):
+        zero_value = zeros_like(value)
+        x_grad = index_fill(dout, dim, indices, zero_value)
+        if shape(x) == ():
+            value_grad = dout
+        else:
+            value_grad = gather(dout, indices, dim).sum()
+        result = (x_grad, zeros_like(dim), zeros_like(indices), value_grad)
+        return result
 
     return bprop
 
