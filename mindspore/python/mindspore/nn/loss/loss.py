@@ -314,6 +314,14 @@ class MSELoss(LossBase):
         return self.get_loss(x)
 
 
+@constexpr
+def _check_rmseloss_dtype(param_dtype, not_supported_dtype, cls_name):
+    """Check RMSELoss not supported data type"""
+    if param_dtype in not_supported_dtype:
+        raise TypeError(f"For '{cls_name}', the parameters data type must not be in {not_supported_dtype}, "
+                        f"but got mindspore.{str(param_dtype).lower()}.")
+
+
 class RMSELoss(LossBase):
     r"""
     RMSELoss creates a criterion to measure the root mean square error between :math:`x` and :math:`y`
@@ -358,9 +366,16 @@ class RMSELoss(LossBase):
     def __init__(self):
         """Initialize RMSELoss."""
         super(RMSELoss, self).__init__()
+        self.dtype = P.DType()
         self.MSELoss = MSELoss()
 
     def construct(self, logits, label):
+        logits_dtype = self.dtype(logits)
+        label_dtype = self.dtype(label)
+        not_supported_dtype = [mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64]
+        _check_rmseloss_dtype(logits_dtype, not_supported_dtype, 'RMSELoss')
+        _check_rmseloss_dtype(label_dtype, not_supported_dtype, "RMSELoss")
+
         rmse_loss = F.sqrt(self.MSELoss(logits, label))
 
         return rmse_loss
