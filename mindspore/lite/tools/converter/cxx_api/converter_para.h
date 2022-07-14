@@ -41,7 +41,6 @@ struct ConverterPara {
   std::string weight_file;
 
   std::string config_file;
-  std::map<std::string, std::map<std::string, std::string>> config_param;
   bool weight_fp16 = false;
   std::map<std::string, std::vector<int64_t>> input_shape;
   Format input_format = NHWC;

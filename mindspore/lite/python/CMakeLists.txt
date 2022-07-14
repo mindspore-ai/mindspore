@@ -18,6 +18,7 @@ if(Python3_FOUND)
 
     if(NOT ENABLE_CLOUD_AND_LITE)
       include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/utils.cmake)
+      include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/pybind11.cmake)
     endif()
 
     file(GLOB_RECURSE PY_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
@@ -29,7 +30,7 @@ if(Python3_FOUND)
 
     target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--whole-archive mindspore-lite_static -Wl,--no-whole-archive)
     if(MSLITE_ENABLE_CONVERTER OR MSLITE_ENABLE_RUNTIME_GLOG)
-      target_link_libraries(_c_lite_wrapper PRIVATE -Wl,--no-as-needed mindspore::glog)
+      target_link_libraries(_c_lite_wrapper PRIVATE mindspore::glog)
     endif()
     if(MSLITE_ENABLE_CONVERTER)
       target_link_libraries(_c_lite_wrapper PRIVATE
