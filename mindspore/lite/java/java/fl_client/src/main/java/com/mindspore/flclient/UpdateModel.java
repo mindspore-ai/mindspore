@@ -520,9 +520,7 @@ public class UpdateModel {
             RequestUpdateModel.addFeatureMap(builder, this.fmOffset);
             RequestUpdateModel.addSignature(builder, this.signDataOffset);
             RequestUpdateModel.addUploadLoss(builder, this.uploadLossOffset);
-            if (evalAccuracy > 0.0f) {
-                RequestUpdateModel.addUploadAccuracy(builder, this.evalAccuracy);
-            }
+            RequestUpdateModel.addUploadAccuracy(builder, this.evalAccuracy);
             RequestUpdateModel.addSign(builder, this.sign);
             RequestUpdateModel.addIndexArray(builder, this.indexArrayOffset);
             int root = RequestUpdateModel.endRequestUpdateModel(builder);
