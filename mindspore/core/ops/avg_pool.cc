@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,136 @@ void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<in
   this->set_round_mode(round_mode);
 }
 
+namespace {
+abstract::ShapePtr AvgPoolInferShape(const PrimitivePtr &primitive,
+                                     const std::vector<abstract::AbstractBasePtr> &input_args) {
+  auto op_name = primitive->name();
+  auto shape_map = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto in_shape = shape_map[kShape];
+  auto max_shape = shape_map[kMaxShape];
+  auto min_shape = shape_map[kMinShape];
+  int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  const int64_t x_size = 4;
+  const int64_t attr_size = 4;
+  (void)CheckAndConvertUtils::CheckInteger("x_rank", SizeToLong(in_shape.size()), kEqual, x_size, op_name);
+  if (format == NHWC) {
+    in_shape = {in_shape[0], in_shape[3], in_shape[1], in_shape[2]};
+  }
+
+  auto kernel_size = GetValue<std::vector<int64_t>>(primitive->GetAttr(kKernelSize));
+  int64_t pad_mode;
+  CheckAndConvertUtils::GetPadModEnumValue(primitive->GetAttr(kPadMode), &pad_mode, true);
+
+  auto batch = in_shape[0];
+  auto channel = in_shape[1];
+  auto in_h = in_shape[2];
+  auto in_w = in_shape[3];
+
+  auto strides = GetValue<std::vector<int64_t>>(primitive->GetAttr(kStrides));
+  (void)CheckAndConvertUtils::CheckInteger("kernel", SizeToLong(kernel_size.size()), kEqual, attr_size, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("strides", SizeToLong(strides.size()), kEqual, attr_size, op_name);
+  if (std::any_of(strides.begin(), strides.end(), [](int64_t stride) { return stride <= 0; })) {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', strides must be positive, but it's " << strides << ".";
+  }
+  if (std::any_of(kernel_size.begin(), kernel_size.end(), [](int64_t size) { return size <= 0; })) {
+    MS_LOG(EXCEPTION) << "For '" << op_name << "', Kernel size must be positive, but it's " << kernel_size << ".";
+  }
+
+  auto kernel_h = kernel_size[2];
+  auto kernel_w = kernel_size[3];
+  auto stride_h = strides[2];
+  auto stride_w = strides[3];
+  int64_t out_h = abstract::Shape::SHP_ANY;
+  int64_t out_w = abstract::Shape::SHP_ANY;
+
+  if (pad_mode == VALID) {
+    out_h = static_cast<int64_t>(std::ceil((in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(std::ceil((in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
+  } else if (pad_mode == SAME) {
+    out_h = static_cast<int64_t>(std::ceil(in_h / static_cast<float>(stride_h)));
+    out_w = static_cast<int64_t>(std::ceil(in_w / static_cast<float>(stride_w)));
+  }
+  std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
+
+  if (format == NHWC) {
+    out_shape = {batch, out_h, out_w, channel};
+  }
+
+  auto var_shape = input_args[kInputIndex0]->BuildShape();
+  auto var_shape_ptr = var_shape->cast<abstract::ShapePtr>();
+  if (!var_shape_ptr->IsDynamic()) {
+    if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
+      MS_LOG(EXCEPTION) << "For Out_Shape values must be positive, but it's " << out_shape << ".";
+    }
+  }
+
+  if (min_shape.empty() || max_shape.empty()) {
+    return std::make_shared<abstract::Shape>(out_shape);
+  }
+
+  auto max_batch = max_shape[0];
+  auto max_channel = max_shape[1];
+  auto max_in_h = max_shape[2];
+  auto max_in_w = max_shape[3];
+  auto min_batch = min_shape[0];
+  auto min_channel = min_shape[1];
+  auto min_in_h = min_shape[2];
+  auto min_in_w = min_shape[3];
+
+  int64_t max_out_h = abstract::Shape::SHP_ANY;
+  int64_t max_out_w = abstract::Shape::SHP_ANY;
+  int64_t min_out_h = abstract::Shape::SHP_ANY;
+  int64_t min_out_w = abstract::Shape::SHP_ANY;
+
+  if (pad_mode == VALID) {
+    max_out_h = static_cast<int64_t>(std::ceil((max_in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
+    max_out_w = static_cast<int64_t>(std::ceil((max_in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
+    min_out_h = static_cast<int64_t>(std::ceil((min_in_h - (kernel_h - 1)) / static_cast<float>(stride_h)));
+    min_out_w = static_cast<int64_t>(std::ceil((min_in_w - (kernel_w - 1)) / static_cast<float>(stride_w)));
+  } else if (pad_mode == SAME) {
+    max_out_h = static_cast<int64_t>(std::ceil(max_in_h / static_cast<float>(stride_h)));
+    max_out_w = static_cast<int64_t>(std::ceil(max_in_w / static_cast<float>(stride_w)));
+    min_out_h = static_cast<int64_t>(std::ceil(min_in_h / static_cast<float>(stride_h)));
+    min_out_w = static_cast<int64_t>(std::ceil(min_in_w / static_cast<float>(stride_w)));
+  }
+
+  std::vector<int64_t> max_out_shape = {max_batch, max_channel, max_out_h, max_out_w};
+  std::vector<int64_t> min_out_shape = {min_batch, min_channel, min_out_h, min_out_w};
+
+  if (format == NHWC) {
+    max_out_shape = {max_batch, max_out_h, max_out_w, max_channel};
+    min_out_shape = {min_batch, min_out_h, min_out_w, min_channel};
+  }
+  return std::make_shared<abstract::Shape>(out_shape, min_out_shape, max_out_shape);
+}
+
+TypePtr AvgPoolInferType(const PrimitivePtr &prim, const std::vector<abstract::AbstractBasePtr> &input_args) {
+  if (std::any_of(input_args.begin(), input_args.end(),
+                  [](const abstract::AbstractBasePtr arg) { return arg == nullptr; })) {
+    MS_LOG(EXCEPTION) << "For '" << prim->name()
+                      << "', the input args userd for infer shape and type is necessary, but got missing it.";
+  }
+  auto name = prim->name();
+  auto input_type = input_args[0]->BuildType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  auto input_tensor_type = input_type->cast<TensorTypePtr>();
+  if (input_tensor_type == nullptr) {
+    MS_LOG_EXCEPTION << "For '" << name << "', the input must be a tensor but got " << input_type->ToString() << ".";
+  }
+  return input_tensor_type->element();
+}
+}  // namespace
+
+abstract::AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const std::vector<abstract::AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kGreaterEqual, input_num, primitive->name());
+  auto infer_type = AvgPoolInferType(primitive, input_args);
+  auto infer_shape = AvgPoolInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
 MIND_API_OPERATOR_IMPL(AvgPool, BaseOperator);
-REGISTER_PRIMITIVE_C(kNameAvgPool, AvgPool);
+REGISTER_PRIMITIVE_EVAL_IMPL(AvgPool, prim::kPrimAvgPool, AvgPoolInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
