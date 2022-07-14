@@ -689,7 +689,7 @@ class RandomCategorical(PrimitiveWithInfer):
         self.add_prim_attr("side_effect_hidden", True)
 
 
-class Multinomial(PrimitiveWithInfer):
+class Multinomial(Primitive):
     r"""
     Returns a tensor sampled from the multinomial probability distribution located in the corresponding
     row of tensor input.
@@ -701,58 +701,43 @@ class Multinomial(PrimitiveWithInfer):
     Args:
         seed (int): Random seed, must be non-negative. Default: 0.
         seed2 (int): Random seed2, must be non-negative. Default: 0.
+        dtype(dtype): The type of output, must be int32 or int64. Default: int32.
 
     Inputs:
-        - **x** (Tensor[float32]) - the input tensor containing the cumsum of probabilities, must be 1 or 2
-          dimensions.
-        - **num_samples** (int32) - number of samples to draw.
+        - **x** (Tensor) - the input tensor containing the cumsum of probabilities, must be 1 or 2
+          dimensions. Must be one of the following types: float16, float32, float64. CPU and GPU
+          supports x 1 or 2 dimensions and Ascend only supports 2 dimensions.
+        - **num_samples** (int) - number of samples to draw, must be a nonnegative number.
 
     Outputs:
         Tensor with the same rows as `x`, each row has num_samples sampled indices.
 
     Raises:
         TypeError: If neither `seed` nor `seed2` is an int.
-        TypeError: If `input` is not a Tensor whose dtype is float32.
-        TypeError: If dtype of `num_samples` is not int32.
+        TypeError: If `x` is not a Tensor whose dtype is float16, float32, float64.
+        TypeError: If dtype of `num_samples` is not int.
+        TypeError: If dtype is not int32 or int64.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([0., 9., 4., 0.], mstype.float32)
+        >>> x = Tensor([[0., 9., 4., 0.]], mstype.float32)
         >>> multinomial = ops.Multinomial(seed=10)
         >>> output = multinomial(x, 2)
-        >>> print(output)
-        [2 1]
+        >>> print(output) # run in CPU
+        [[1 1]]
     """
 
     @prim_attr_register
-    def __init__(self, seed=0, seed2=0):
+    def __init__(self, seed=0, seed2=0, dtype=mstype.int32):
         """Initialize Multinomial."""
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
-        self.init_prim_io_names(inputs=['input', 'num_sample'], outputs=['output'])
-        self.add_prim_attr("side_effect_hidden", True)
-
-    def __infer__(self, inputs, num_samples):
-        input_shape = inputs["shape"]
-        if len(input_shape) != 1 and len(input_shape) != 2:
-            raise ValueError(f"For '{self.name}', the dimension of 'inputs' must be 1 or 2, "
-                             f"but got {len(input_shape)}.")
-        Validator.check_tensor_dtype_valid('inputs', inputs['dtype'], [mstype.float32], self.name)
-        num_samples_value = num_samples["value"]
-        if num_samples_value is None:
-            raise ValueError(f"For '{self.name}', the 'num_samples' cannot be None.")
-        Validator.check_value_type("num_samples", num_samples_value, (int,), self.name)
-        Validator.check_positive_int(num_samples_value, "num_samples")
-        y_shape = (num_samples_value,)
-        if len(input_shape) == 2:
-            y_shape = (input_shape[0], num_samples_value)
-        out = {
-            "shape": y_shape,
-            "dtype": mstype.int32,
-            "value": None}
-        return out
+        self.init_prim_io_names(inputs=['x', 'num_samples'], outputs=['output'])
+        Validator.check_value_type("dtype", dtype, [mstype.Type], self.name)
+        valid_values = (mstype.int64, mstype.int32)
+        Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
 class UniformCandidateSampler(PrimitiveWithInfer):

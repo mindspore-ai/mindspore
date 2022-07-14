@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,46 @@
  */
 
 #include "plugin/device/cpu/kernel/multinomial_cpu_kernel.h"
+#include <Eigen/Dense>
 #include <algorithm>
+#include <random>
+#include <cmath>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <string>
+#include <functional>
+#include <utility>
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/device/cpu/kernel/cpu_kernel.h"
+#include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+bool MultinomialCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->GetPrim()->name();
+  if (inputs.empty() || outputs.empty()) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' got empty inputs or outputs, which is invalid.";
+    return false;
+  }
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "' does not support this kernel type: " << kernel_attr;
+    return false;
+  }
+  kernel_func_ = func_list_[index].second;
+  input_shape_ = inputs[0]->GetShapeVector();
   if (AnfAlgo::IsShapesDynamic({input_shape_})) {
-    return;
+    return true;
   }
-
-  // The dimensions of input tensor must be 1 or 2, with data type of float32.
-  if (input_shape_.size() == 1) {
-    workspace_size_list_.push_back(LongToSize(input_shape_[0]) * sizeof(float));
-  } else if (input_shape_.size() == 2) {
-    workspace_size_list_.push_back(LongToSize(input_shape_[1]) * sizeof(float));
-  }
-
-  seed_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed")));
-  seed2_ = static_cast<int>(GetValue<int64_t>(common::AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("seed2")));
+  output_dtype_ = outputs[0]->GetDtype();
+  input0_dtype_ = inputs[0]->GetDtype();
+  input1_dtype_ = inputs[1]->GetDtype();
+  auto kernel_ptr = std::make_shared<ops::Multinomial>(base_operator->GetPrim());
+  seed_ = kernel_ptr->get_seed();
+  seed2_ = kernel_ptr->get_seed2();
   int64_t RNG_seed = 0;
   if (seed2_ > 0) {
     RNG_seed = seed2_;
@@ -47,55 +65,82 @@ void MultinomialCpuKernel::InitKernel(const CNodePtr &kernel_node) {
     RNG_seed = static_cast<int64_t>(rd());
   }
   rng_.seed(LongToUlong(RNG_seed));
+  return true;
 }
 
-bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> &workspace,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
-  if (inputs.size() != 2) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs must be 2, but got " << inputs.size()
-                      << "input(s).";
+int MultinomialCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                    const std::vector<KernelTensorPtr> &outputs,
+                                    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KRET_OK;
+  ResetResource();
+  if ((ret = NativeCpuKernelMod::Resize(base_operator, inputs, outputs)) != 0) {
+    return ret;
   }
-  if (workspace.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of workspace must be 1, but got " << workspace.size()
-                      << "workspace(s).";
+
+  size_t elem_num = std::accumulate(input_shape_.begin(), input_shape_.end(), 1, std::multiplies<size_t>());
+
+  if (input0_dtype_ == kNumberTypeFloat16) {
+    workspace_size_list_.emplace_back(elem_num * sizeof(float16));
+  } else if (input0_dtype_ == kNumberTypeFloat32) {
+    workspace_size_list_.emplace_back(elem_num * sizeof(float));
+  } else if (input0_dtype_ == kNumberTypeFloat64) {
+    workspace_size_list_.emplace_back(elem_num * sizeof(double));
   }
-  if (outputs.size() != 1) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs must be 1, but got " << outputs.size()
-                      << "output(s).";
-  }
+  return KRET_OK;
+}
+
+void MultinomialCpuKernelMod::ResetResource() noexcept {
+  input_size_list_.clear();
+  output_size_list_.clear();
+  workspace_size_list_.clear();
+}
+
+template <typename T_in, typename T_out>
+bool MultinomialCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                           const std::vector<kernel::AddressPtr> &workspace,
+                                           const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), 2, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), 1, kernel_name_);
+  CHECK_KERNEL_WORKSPACE_SIZE(workspace.size(), 1, kernel_name_);
+
   MS_EXCEPTION_IF_NULL(inputs[0]);
   MS_EXCEPTION_IF_NULL(inputs[1]);
   MS_EXCEPTION_IF_NULL(workspace[0]);
   MS_EXCEPTION_IF_NULL(outputs[0]);
 
-  float *input_tensor = reinterpret_cast<float *>(inputs[0]->addr);
+  auto *input_tensor = reinterpret_cast<T_in *>(inputs[0]->addr);
   int num_sample = reinterpret_cast<int *>(inputs[1]->addr)[0];
-  int *output = reinterpret_cast<int *>(outputs[0]->addr);
-  float *cumulative_value = reinterpret_cast<float *>(workspace[0]->addr);
+  auto *output = reinterpret_cast<T_out *>(outputs[0]->addr);
+  auto *cumulative_value = reinterpret_cast<T_in *>(workspace[0]->addr);
+
+  // check num_samples nonnegative
+  if (num_sample < 0.0) {
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "' num_samples should be a nonnegative number, but got "
+                             << num_sample << ".";
+  }
 
   MS_EXCEPTION_IF_NULL(input_tensor);
   MS_EXCEPTION_IF_NULL(output);
   MS_EXCEPTION_IF_NULL(cumulative_value);
 
-  int num_row = 1;
+  int64_t num_row = 1;
   if (input_shape_.size() == 2) {
     num_row = input_shape_[0];
   }
-  int num_col = input_shape_[input_shape_.size() - 1];
+  int64_t num_col = input_shape_[input_shape_.size() - 1];
 
-  for (int i = 0; i < num_row; ++i) {
+  for (int64_t i = 0; i < num_row; ++i) {
     // Compute the cumulative array.
     cumulative_value[i * num_col] = input_tensor[i * num_col];
-    for (int j = 1; j < num_col; ++j) {
+    for (int64_t j = 1; j < num_col; ++j) {
       size_t index = i * num_col + j;
       cumulative_value[index] = cumulative_value[index - 1] + input_tensor[index];
     }
 
     // Normalize the cumulative array.
-    float sum = cumulative_value[(i + 1) * num_col - 1];
-    if (sum != 0) {
-      for (int k = 0; k < num_col; ++k) {
+    auto sum = cumulative_value[(i + 1) * num_col - 1];
+    if (sum != static_cast<T_in>(0.0)) {
+      for (int64_t k = 0; k < num_col; ++k) {
         size_t index = i * num_col + k;
         cumulative_value[index] /= sum;
       }
@@ -105,14 +150,14 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     std::uniform_real_distribution<float> dist(0.0, 1.0);
 
     // Sample data from cumulative array.
-    for (int n = 0; n < num_sample; ++n) {
-      auto rand_prob = dist(rng_);
-      int begin = 0;
-      int end = num_col - 1;
+    for (int64_t n = 0; n < IntToLong(num_sample); ++n) {
+      auto rand_prob = static_cast<T_in>(dist(rng_));
+      int64_t begin = 0;
+      int64_t end = num_col - 1;
 
       while (end - begin > 0) {
-        int pivot = begin + (end - begin) / 2;
-        float pivot_prob = cumulative_value[i * num_col + pivot];
+        int64_t pivot = begin + (end - begin) / 2;
+        auto pivot_prob = cumulative_value[i * num_col + pivot];
         if (pivot_prob > rand_prob) {
           end = pivot;
         } else {
@@ -125,6 +170,27 @@ bool MultinomialCpuKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Multinomial, MultinomialCpuKernel);
+std::vector<std::pair<KernelAttr, MultinomialCpuKernelMod::MultinomialFunc>> MultinomialCpuKernelMod::func_list_ = {
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<float, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<float16, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+   &MultinomialCpuKernelMod::LaunchKernel<double, int32_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialCpuKernelMod::LaunchKernel<float, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialCpuKernelMod::LaunchKernel<float16, int64_t>},
+  {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt64),
+   &MultinomialCpuKernelMod::LaunchKernel<double, int64_t>}};
+
+std::vector<KernelAttr> MultinomialCpuKernelMod::GetOpSupport() {
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, MultinomialFunc> &pair) { return pair.first; });
+  return support_list;
+}
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Multinomial, MultinomialCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
