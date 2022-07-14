@@ -1241,7 +1241,7 @@ class Model:
             >>> loss_scale_manager = ms.FixedLossScaleManager()
             >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None,
-                                 loss_scale_manager=loss_scale_manager)
+            ...                  loss_scale_manager=loss_scale_manager)
             >>> model.build(dataset, epoch=2)
             >>> model.train(2, dataset)
         """
