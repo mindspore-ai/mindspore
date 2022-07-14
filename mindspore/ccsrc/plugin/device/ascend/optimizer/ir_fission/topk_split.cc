@@ -29,60 +29,89 @@
 #include "runtime/device/kernel_info.h"
 #include "utils/ms_context.h"
 #include "plugin/device/ascend/optimizer/optimizer_factory.h"
+#include "common/util/platform_info.h"
 
 namespace mindspore::opt {
 namespace {
-constexpr size_t kFloat16Len = 2;  // size of float16;
+constexpr size_t kMultiply2 = 2;
 constexpr size_t kTopkIndexK = 1;
 constexpr auto kAttrSorted = "sorted";
 
-tensor::TensorPtr CreateTensor() {
-  // 1 create tensor
-  const size_t last_dim = 4096;
-  std::vector<int64_t> indices_shape = {SizeToLong(last_dim * 2)};
-  TensorTypePtr tensor_type = std::make_shared<TensorType>(kFloat16);
-  MS_EXCEPTION_IF_NULL(tensor_type);
+tensor::TensorPtr ConstructAssistTensor(size_t assist_len, bool is_segment_sort = false, bool is_int32 = false) {
+  // create tensor
+  int64_t shape_len = is_segment_sort ? SizeToLong(assist_len) : SizeToLong(assist_len * kMultiply2);
+  std::vector<int64_t> assist_shape{shape_len};
+  auto dtype = is_int32 ? kInt32 : kFloat16;
+  TensorTypePtr tensor_type = std::make_shared<TensorType>(dtype);
   tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
-  tensor::TensorPtr indices_tensor = std::make_shared<tensor::Tensor>(kFloat16->type_id(), indices_shape);
-  MS_EXCEPTION_IF_NULL(indices_tensor);
-  indices_tensor->set_device_info(device_info);
+  tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(dtype->type_id(), assist_shape);
+  assist_tensor->set_device_info(device_info);
 
-  // 2 set value of tensor
-  auto data_ptr = indices_tensor->data_c();
+  // set value of tensor
+  auto data_ptr = assist_tensor->data_c();
   MS_EXCEPTION_IF_NULL(data_ptr);
-  std::vector<float16> half_data;
-  for (size_t i = 0; i < last_dim; ++i) {
-    (void)half_data.emplace_back(float16(static_cast<float>(i)));
+  if (is_int32) {
+    auto data = static_cast<int32_t *>(data_ptr);
+    for (int32_t i = 0; i < SizeToInt(assist_len); ++i) {
+      *data = i;
+      ++data;
+    }
+  } else {
+    auto data = static_cast<float16 *>(data_ptr);
+    for (size_t i = 0; i < assist_len; ++i) {
+      *data = float16(static_cast<float>(i));
+      ++data;
+    }
+    if (!is_segment_sort) {
+      for (size_t i = 0; i < assist_len; ++i) {
+        auto gap = static_cast<int>(i) - static_cast<int>(float16(static_cast<float>(i)));
+        *data = float16(static_cast<float>(gap));
+        ++data;
+      }
+    }
   }
-  for (size_t i = 0; i < last_dim; ++i) {
-    auto gap = static_cast<int>(i) - static_cast<int>(float16(static_cast<float>(i)));
-    (void)half_data.emplace_back(float16(static_cast<float>(gap)));
-  }
-  auto elem_num = last_dim * kFloat16Len * 2;
-  auto ret_code = memcpy_s(data_ptr, static_cast<size_t>(indices_tensor->data().nbytes()),
-                           static_cast<void *>(half_data.data()), elem_num);
-  if (ret_code != 0) {
-    MS_LOG(ERROR) << "Failed to copy data into tensor, memcpy_s errorno: " << ret_code;
-    return nullptr;
-  }
-  return indices_tensor;
+
+  return assist_tensor;
 }
 
-ValueNodePtr CreateValueNode() {
-  tensor::TensorPtr indices_tensor = CreateTensor();
-  MS_EXCEPTION_IF_NULL(indices_tensor);
-  auto indices_const = std::make_shared<ValueNode>(indices_tensor);
-  MS_EXCEPTION_IF_NULL(indices_const);
-  auto indices_abstract = indices_tensor->ToAbstract();
-  indices_const->set_abstract(indices_abstract);
-  auto indices_kernel_info = std::make_shared<device::KernelInfo>();
-  MS_EXCEPTION_IF_NULL(indices_kernel_info);
-  indices_const->set_kernel_info(indices_kernel_info);
+tensor::TensorPtr CreateAssistTensor(const std::vector<int64_t> &input_shape, int32_t k_num,
+                                     const fe::PlatformInfo &platform_info, const fe::OptionalInfo &optional_info) {
+  bool is_lhisi = optional_info.soc_version.find("Hi3796CV300CS") != std::string::npos ||
+                  optional_info.soc_version.find("Hi3796CV300ES") != std::string::npos ||
+                  optional_info.soc_version.find("SD3403") != std::string::npos;
+  constexpr int64_t kLhisiMaxLastSize = 3000;
+  constexpr int64_t kHisiMaxLastSize = 5000;
+  constexpr int64_t kLhisiMaxKNum = 2048;
+  constexpr int64_t kHisiMaxKNum = 4096;
+  constexpr size_t kSmallSceneAssistLen = 4096;
+  constexpr size_t kLargeSceneAssistLen = 2048;
+  int64_t max_last_size = is_lhisi ? kLhisiMaxLastSize : kHisiMaxLastSize;
+  int64_t max_k_num = is_lhisi ? kLhisiMaxKNum : kHisiMaxKNum;
+  if (input_shape.back() > max_last_size || k_num > max_k_num) {
+    if (platform_info.str_info.short_soc_version == "Ascend910B" ||
+        platform_info.str_info.short_soc_version == "Ascend310B") {
+      return ConstructAssistTensor(kLargeSceneAssistLen, true, true);
+    } else {
+      return ConstructAssistTensor(kLargeSceneAssistLen, true);
+    }
+  }
+  return ConstructAssistTensor(kSmallSceneAssistLen);
+}
+
+ValueNodePtr CreateAssistNode(const std::vector<int64_t> &input_shape, int32_t k_num,
+                              const fe::PlatformInfo &platform_info, const fe::OptionalInfo &optional_info) {
+  tensor::TensorPtr assist_tensor = CreateAssistTensor(input_shape, k_num, platform_info, optional_info);
+  MS_EXCEPTION_IF_NULL(assist_tensor);
+  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
+  auto assist_abstract = assist_tensor->ToAbstract();
+  assist_const->set_abstract(assist_abstract);
+  auto assist_kernel_info = std::make_shared<device::KernelInfo>();
+  assist_const->set_kernel_info(assist_kernel_info);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetOutputsFormat({kOpFormat_DEFAULT});
-  builder1.SetOutputsDeviceType({kNumberTypeFloat16});
-  AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), indices_const.get());
-  return indices_const;
+  builder1.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
+  AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), assist_const.get());
+  return assist_const;
 }
 
 kernel::KernelBuildInfoPtr CreateKernelBuildInfo() {
@@ -106,13 +135,13 @@ bool CheckInputNamesSize(const CNodePtr &cnode) {
   return true;
 }
 
-bool CheckOutputShape(const AnfNodePtr &node) {
+bool CheckInputShape(const AnfNodePtr &node) {
   auto shape = common::AnfAlgo::GetPrevNodeOutputInferShape(node, 0);
   if (shape.empty()) {
-    MS_LOG(INFO) << "The output shape of topk to split must not be empty";
+    MS_LOG(INFO) << "The input shape of topk to split must not be empty";
     return false;
   }
-  auto last_dim = shape[shape.size() - 1];
+  auto last_dim = shape.back();
   const int64_t kMaxFloat16 = 65500;
   if (last_dim > kMaxFloat16) {
     MS_LOG(INFO) << "The last dim is more than " << kMaxFloat16 << ", switch to aicpu ops.";
@@ -132,13 +161,13 @@ bool CheckInputType(const AnfNodePtr &node) {
 }
 
 bool CheckFusion(const CNodePtr &node) {
-  if (!common::AnfAlgo::HasNodeAttr(kAttrSorted, node) || !common::AnfAlgo::GetNodeAttr<bool>(node, kAttrSorted)) {
+  if (common::AnfAlgo::HasNodeAttr(kAttrSorted, node) && !common::AnfAlgo::GetNodeAttr<bool>(node, kAttrSorted)) {
     return false;
   }
   if (!CheckInputNamesSize(node)) {
     return false;
   }
-  if (!CheckOutputShape(node)) {
+  if (!CheckInputShape(node)) {
     return false;
   }
   if (!CheckInputType(node)) {
@@ -182,28 +211,37 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   if (!IsValueNode<tensor::Tensor>(input_k)) {
     return nullptr;
   }
+
+  fe::PlatformInfo platform_info;
+  fe::OptionalInfo optional_info;
+  if (fe::PlatformInfoManager::Instance().GetPlatformInfoWithOutSocVersion(platform_info, optional_info)) {
+    MS_LOG(WARNING) << "Get platform info failed, quit fusion.";
+    return nullptr;
+  }
+
   ValuePtr value = GetValueNode(input_k);
   MS_EXCEPTION_IF_NULL(value);
   auto tensor = value->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(tensor);
   auto *data = static_cast<int32_t *>(tensor->data_c());
   MS_EXCEPTION_IF_NULL(data);
-  auto new_value_node = std::make_shared<ValueNode>(MakeValue(*data));
+  int32_t k_num = *data;
+  auto new_value_node = std::make_shared<ValueNode>(MakeValue(k_num));
   new_cnode->set_input(kTopkIndexK + 1, new_value_node);
 
   mindspore::HashSet<size_t> attr_index{kTopkIndexK};
   ConstInputToAttr(new_cnode, attr_index);
-  auto indices_const = CreateValueNode();
-  new_cnode->add_input(indices_const);
+  auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(new_cnode, 0);
+  auto assist_const = CreateAssistNode(input_shape, k_num, platform_info, optional_info);
+  new_cnode->add_input(assist_const);
   MS_EXCEPTION_IF_NULL(supported_checker_);
   if (!supported_checker_->CheckAICoreSupported(new_cnode, CreateKernelBuildInfo())) {
-    MS_LOG(INFO) << "split topk failed, check to aicpu.";
+    MS_LOG(INFO) << "Split topk failed, check to aicpu.";
     return nullptr;
   }
-
   if (kernel_graph != nullptr) {
-    MS_LOG(INFO) << "split topk success. use tbe aicore.";
-    kernel_graph->AddValueNodeToGraph(indices_const);
+    MS_LOG(INFO) << "Split topk success. use tbe aicore.";
+    kernel_graph->AddValueNodeToGraph(assist_const);
   }
 
   return new_cnode;

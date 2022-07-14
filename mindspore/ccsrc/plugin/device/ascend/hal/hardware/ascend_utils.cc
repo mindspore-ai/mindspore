@@ -22,11 +22,15 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "utils/ms_context.h"
+#include "runtime/dev.h"
+#include "common/util/platform_info.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 constexpr auto kUnknowErrorString = "Unknown error occurred";
+constexpr auto kSOC_VERSION = "SOC_VERSION";
+
 void ReportErrorMessage() {
   const string &error_message = ErrorManager::GetInstance().GetErrorMessage();
   if (!error_message.empty() && error_message.find(kUnknowErrorString) == string::npos) {
@@ -54,6 +58,56 @@ bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
   return std::any_of(node_list.begin(), node_list.end(),
                      [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
+}
+
+std::string GetSocVersion() {
+  // Get default soc version.
+  static std::string version;
+  if (version.empty()) {
+    const int kSocVersionLen = 50;
+    char soc_version[kSocVersionLen] = {0};
+    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
+    }
+    // Get soc version from env value.
+    const char *soc_version_env = nullptr;
+    std::string str_soc_version_env = common::GetEnv(kSOC_VERSION);
+    if (!str_soc_version_env.empty()) {
+      soc_version_env = common::SafeCStr(str_soc_version_env);
+    }
+    if (soc_version_env != nullptr) {
+      if (std::strcmp(soc_version, soc_version_env) != 0) {
+        MS_LOG(DEBUG) << "Detected the env SOC_VERSION, so the SocVersion will be changed to " << str_soc_version_env
+                      << ".";
+        ret = rtSetSocVersion(soc_version_env);
+        if (ret != RT_ERROR_NONE) {
+          MS_LOG(EXCEPTION) << "SetSocVersion failed, errorno: " << ret;
+        }
+        version = soc_version_env;
+        return soc_version_env;
+      }
+    }
+    version = soc_version;
+  }
+  return version;
+}
+
+void PlatformInfoInitialization() {
+  auto soc_version = GetSocVersion();
+  fe::PlatformInfo platform_info;
+  fe::OptionalInfo opti_compilation_info;
+  fe::PlatformInfoManager &inst = fe::PlatformInfoManager::Instance();
+  if (inst.InitializePlatformInfo() != 0) {
+    MS_LOG(WARNING) << "Initialize PlatformInfo failed.";
+    return;
+  }
+  if (inst.GetPlatformInfo(soc_version, platform_info, opti_compilation_info) != 0) {
+    MS_LOG(WARNING) << "GetPlatformInfo failed.";
+    return;
+  }
+  opti_compilation_info.soc_version = soc_version;
+  inst.SetOptionalCompilationInfo(opti_compilation_info);
 }
 
 void AssignOutputNopNodeDeviceAddress(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {

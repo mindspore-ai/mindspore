@@ -18,6 +18,7 @@
 #include "utils/ms_context.h"
 #include "runtime/dev.h"
 #include "opt_info/opt_info.h"
+#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 
 namespace mindspore {
 namespace {
@@ -55,18 +56,6 @@ inline std::vector<std::string> SplitStrByRegex(const std::string &str, const st
   return std::vector<std::string>(std::sregex_token_iterator(str.begin(), str.end(), split, -1),
                                   std::sregex_token_iterator());
 }
-
-static std::string GetSocVersion() {
-  constexpr int kSocVersionLen = 50;
-  char soc_version[kSocVersionLen] = {0};
-  auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(WARNING) << "rtGetSocVersion failed, ret = " << ret;
-    return "Ascend910";
-  }
-
-  return soc_version;
-}
 }  // namespace
 
 LicManager::LicManager() { ParseSwitch(); }
@@ -87,7 +76,7 @@ bool LicManager::GetPassSwitch(OptPassEnum pass) const {
 
 void LicManager::ParseSwitch() {
   std::map<std::string, std::string> opt_info_map;
-  auto ret = gelc::GetOptInfo(0, GetSocVersion(), opt_info_map);
+  auto ret = gelc::GetOptInfo(0, device::ascend::GetSocVersion(), opt_info_map);
   if (ret != 0) {
     MS_LOG(WARNING) << "GetOptInfo failed.";
     return;

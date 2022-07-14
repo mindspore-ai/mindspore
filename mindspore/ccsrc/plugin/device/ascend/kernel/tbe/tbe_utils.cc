@@ -41,6 +41,7 @@
 #include "mindspore/ccsrc/include/common/debug/common.h"
 #include "kernel/common_utils.h"
 #include "mindspore/core/utils/file_utils.h"
+#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -48,7 +49,6 @@ namespace tbe {
 constexpr auto kCceKernelMeta = "kernel_meta/";
 constexpr auto kJsonSuffix = ".json";
 constexpr auto kInfoSuffix = ".info";
-constexpr auto kSOC_VERSION = "SOC_VERSION";
 constexpr auto kBuildRes = "build_result";
 constexpr auto kTUNE_BANK_PATH = "TUNE_BANK_PATH";
 constexpr auto kTUNE_DUMP_PATH = "TUNE_DUMP_PATH";
@@ -148,7 +148,7 @@ nlohmann::json TbeUtils::GenSocInfo() {
   soc_info_json["l1Fusion"] = "false";
   soc_info_json["l2Fusion"] = "false";
   soc_info_json["op_bank_update"] = false;
-  soc_info_json["socVersion"] = GetSocVersion();
+  soc_info_json["socVersion"] = device::ascend::GetSocVersion();
   soc_info_json["offlineTune"] = CheckOfflineTune();
   soc_info_json["op_debug_dir"] = GetOpDebugPath();
   soc_info_json["op_debug_level"] = GetOpDebugLevel();
@@ -470,39 +470,6 @@ bool TbeUtils::CheckOfflineTune() {
     offline = (offline_tune == "true");
   }
   return offline;
-}
-
-std::string TbeUtils::GetSocVersion() {
-  // Get default soc version.
-  static std::string version;
-  if (version.empty()) {
-    const int kSocVersionLen = 50;
-    char soc_version[kSocVersionLen] = {0};
-    auto ret = rtGetSocVersion(soc_version, kSocVersionLen);
-    if (ret != RT_ERROR_NONE) {
-      MS_LOG(EXCEPTION) << "GetSocVersion failed.";
-    }
-    // Get soc version from env value.
-    const char *soc_version_env = nullptr;
-    std::string str_soc_version_env = common::GetEnv(kSOC_VERSION);
-    if (!str_soc_version_env.empty()) {
-      soc_version_env = common::SafeCStr(str_soc_version_env);
-    }
-    if (soc_version_env != nullptr) {
-      if (std::strcmp(soc_version, soc_version_env) != 0) {
-        MS_LOG(DEBUG) << "Detected the env SOC_VERSION, so the SocVersion will be changed to " << str_soc_version_env
-                      << ".";
-        ret = rtSetSocVersion(soc_version_env);
-        if (ret != RT_ERROR_NONE) {
-          MS_LOG(EXCEPTION) << "SetSocVersion failed, errorno: " << ret;
-        }
-        version = soc_version_env;
-        return soc_version_env;
-      }
-    }
-    version = soc_version;
-  }
-  return version;
 }
 
 KernelPackPtr KernelMeta::LoadFromFile(const std::string &kernel_name) const {

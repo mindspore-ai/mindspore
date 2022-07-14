@@ -19,6 +19,7 @@
 #include <string>
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
+#include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
 #include "common/graph_kernel/adapter/expander.h"
 #include "common/graph_kernel/value_graph_binder.h"
@@ -112,6 +113,8 @@ void AscendGraphOptimization::OptimizeGraphWithoutDeviceInfo(const KernelGraphPt
   // add all graphs to manager first, so that don't have to make new manager in following passes.
   memo_.clear();
   AddGraphToManager(NOT_NULL(graph), NOT_NULL(graph_manager_));
+
+  PlatformInfoInitialization();
 
   memo_.clear();
   IRFusionOptimization(graph);

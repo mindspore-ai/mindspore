@@ -56,8 +56,6 @@ class TbeUtils {
 
   static nlohmann::json GenSocInfo();
 
-  static std::string GetSocVersion();
-
   static std::string GetOpDebugPath();
 
   static std::string GetBankPath();
