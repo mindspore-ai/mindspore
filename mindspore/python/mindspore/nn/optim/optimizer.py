@@ -343,7 +343,7 @@ class Optimizer(Cell):
         return parameters
 
     @staticmethod
-    def use_distibuted_optimizer():
+    def _use_distibuted_optimizer():
         """
         Whether use distributed optimizers.
         """
