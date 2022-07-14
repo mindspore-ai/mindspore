@@ -773,7 +773,7 @@ class AdaptiveMaxPool3d(Cell):
         ValueError: If the dimensions number of `x` is not 4 or 5.
         TypeError: If dtype of `x` is not int8, int16, int32, int64, uint8, uint16, uint32, uint64,
                    float16, float32 or float64.
-        ValueError: If the shape of `output_size` is not (3,).
+        ValueError: If `output_size` is neither an int nor a tuple with shape (3,).
 
     Supported Platforms:
         ``GPU``

@@ -2523,9 +2523,9 @@ class MaxPool3DWithArgmax(Primitive):
         >>> max_pool3d_with_arg_op = ops.MaxPool3DWithArgmax(ksize=2, strides=1, pads=1)
         >>> output_tensor, argmax = max_pool3d_with_arg_op(x)
         >>> print(output_tensor.shape)
-        [2, 1, 3, 3, 3]
+        (2, 1, 3, 3, 3)
         >>> print(argmax.shape)
-        [2, 1, 3, 3, 3]
+        (2, 1, 3, 3, 3)
     """
 
     @prim_attr_register
