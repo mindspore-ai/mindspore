@@ -1,5 +1,5 @@
 mindspore.ops.standard_normal
-============================
+=============================
 
 .. py:function:: mindspore.ops.standard_normal(shape, seed=0, seed2=0)
 
