@@ -32,6 +32,7 @@ class Net(nn.Cell):
         return self.population_count(x0)
 
 
+@pytest.mark.skip(reason='platform not support')
 def test16_net():
     x = Tensor(np.array([13, 65]), mstype.int16)
     print("x:\n", x)
@@ -45,6 +46,7 @@ def test16_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
+@pytest.mark.skip(reason='platform not support')
 def test8_net():
     x = Tensor(np.array([13, 65]), mstype.int8)
     pc = Net()

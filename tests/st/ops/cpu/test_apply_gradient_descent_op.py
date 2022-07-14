@@ -39,6 +39,7 @@ def run_net(var, alpha, delta, expect):
     np.testing.assert_almost_equal(net.var.asnumpy(), expect, decimal=3)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -64,6 +65,7 @@ def test_apply_gradient_descent_float32():
     run_net(var, alpha, delta, expect)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -89,6 +91,7 @@ def test_apply_gradient_descent_float16():
     run_net(var, alpha, delta, expect)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

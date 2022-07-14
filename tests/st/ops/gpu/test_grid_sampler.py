@@ -100,6 +100,7 @@ def run_net3d(dtype):
     assert np.all(np.abs(diff_out) < error_out)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -115,6 +116,7 @@ def test_gridsampler2d():
     run_net2d(np.float64)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -130,6 +132,7 @@ def test_gridsampler3d():
     run_net3d(np.float64)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
@@ -160,6 +163,7 @@ def test_gridsampler2d_neg_input():
     assert np.all(np.abs(diff_out) < error_out)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
