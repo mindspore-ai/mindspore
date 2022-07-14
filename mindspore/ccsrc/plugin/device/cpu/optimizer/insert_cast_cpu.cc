@@ -225,10 +225,8 @@ bool InsertCastCPU::Run(const FuncGraphPtr &func_graph) {
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
-    auto func_output = func_graph->output();
-    InsertCastForGraphOutput(func_graph, func_output);
-  }
+  auto func_output = func_graph->output();
+  InsertCastForGraphOutput(func_graph, func_output);
   return true;
 }
 }  // namespace opt
