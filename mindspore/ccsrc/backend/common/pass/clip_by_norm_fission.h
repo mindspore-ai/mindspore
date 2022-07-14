@@ -43,6 +43,12 @@ class ClipByNormFission : public PatternProcessPass {
   AnfNodePtr CreateReduceSumNode(const FuncGraphPtr &func_graph, const AnfNodePtr &square,
                                  const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
                                  const TypeId &type_id) const;
+  AnfNodePtr CreateConstantNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp, const ShapeVector &shape_vec,
+                                const TypeId &type_id, const std::string &op_name) const;
+  AnfNodePtr CreateGreaterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp_a, const AnfNodePtr &inp_b,
+                               const ShapeVector &shape_vec) const;
+  AnfNodePtr CreateSelectNode(const FuncGraphPtr &func_graph, const AnfNodePtr &cond, const AnfNodePtr &inp_a,
+                              const AnfNodePtr &inp_b, const ShapeVector &shape_vec, const TypeId &type_id) const;
   AnfNodePtr CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum, const TypeId &type_id) const;
   AnfNodePtr CreateMulNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &clip_norm,
                            const ShapeVector &shape_vec, const TypeId &type_id) const;
