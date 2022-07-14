@@ -336,6 +336,10 @@ std::shared_ptr<Context> ModelPool::GetUserDefineContext(const std::shared_ptr<R
     }
     context->SetThreadNum(thread_num);
   }
+  if (context->GetInterOpParallelNum() <= 0) {
+    MS_LOG(ERROR) << "Invalid inter op parallel num " << context->GetInterOpParallelNum();
+    return nullptr;
+  }
   auto status = CheckAffinityCoreList(runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "user set core list failed.";
