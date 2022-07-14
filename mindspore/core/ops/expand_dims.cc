@@ -74,6 +74,7 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
 
 TypePtr ExpandDimsInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto prim_name = prim->name();
+  CheckAndConvertUtils::CheckArgs<abstract::AbstractTensor>(prim_name, input_args, kInputIndex0);
 
   constexpr auto kExpandDimsInputsNum = 2;
   ValuePtr num_value = nullptr;
