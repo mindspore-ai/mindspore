@@ -31,6 +31,7 @@ from .log import _log_aicpu
 from .padding import _padding_aicpu
 from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
+from .gather_d_grad_v2 import _gather_d_grad_v2_aicpu
 from .gather_d import _gather_d_aicpu
 from .scatter import _scatter_aicpu
 from .identity import _identity_aicpu

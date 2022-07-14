@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """less Batch Normalization"""
+from __future__ import absolute_import
+
 import numpy as np
 from mindspore.nn.cell import Cell
 from mindspore.nn.layer import Dense
@@ -104,7 +106,8 @@ class LessBN(Cell):
             self._convert_to_less_bn_net(self.network)
         self.network.add_flags(defer_inline=True)
 
-    def _convert_dense(self, subcell):
+    @staticmethod
+    def _convert_dense(subcell):
         """
         convert dense cell to FN cell
         """
@@ -136,7 +139,7 @@ class LessBN(Cell):
                 self._convert_to_less_bn_net(subcell)
 
         if dense_list:
-            new_subcell = self._convert_dense(dense_list[-1])
+            new_subcell = LessBN._convert_dense(dense_list[-1])
             net.insert_child_to_cell(dense_name[-1], new_subcell)
 
     def construct(self, *inputs):

@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """tbe helper to parse json content"""
+from __future__ import absolute_import
 import os
 import stat
 import fcntl
@@ -96,15 +97,13 @@ class BuildType(Enum):
     ACCURATELY = "accurately"
 
 
-job_type_list = [job_type.value for _, job_type in JobType.__members__.items()]
-
-
 def check_job_json(job_info):
     """
     Check tne compilation job json's required element
     :param job_info:tne compilation job json
     :return: raise value error if wrong
     """
+    job_type_list = [job_type.value for _, job_type in JobType.__members__.items()]
     if 'source_id' not in job_info:
         raise ValueError("Json string Errors, key:source_id not found.")
     if 'job_id' not in job_info:
@@ -212,6 +211,7 @@ def get_single_io_arg(info):
     """
     if 'valid' not in info:
         raise ValueError("Json string Errors, key:valid not found.")
+    res = None
     if info['valid']:
         check_arg_info(info)
         del info['valid']
@@ -221,8 +221,6 @@ def get_single_io_arg(info):
                 if info['range'][i][1] == -1:
                     info['range'][i][1] = None
         res = info
-    else:
-        res = None
     return res
 
 

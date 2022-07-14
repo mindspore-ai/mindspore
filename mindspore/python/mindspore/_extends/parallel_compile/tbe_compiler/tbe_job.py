@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """tbe compile job definition"""
+from __future__ import absolute_import
 import datetime
 import json
 from enum import Enum
