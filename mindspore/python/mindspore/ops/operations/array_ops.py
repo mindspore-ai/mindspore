@@ -5130,7 +5130,7 @@ class ScatterNdMin(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_min` for more details.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
