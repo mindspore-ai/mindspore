@@ -13,6 +13,10 @@ Common imported modules in corresponding API examples are as follows:
 
     import mindspore.numpy as np
 
+.. note::
+    
+    MindSpore numpy provides a consistent programming experience with native numpy by assembling the low-level operators. Compared with MindSpore's function and ops interfaces, it is easier for user to understand and use. However, please notice that to be more compatible with native numpy, the performance of some MindSpore numpy interfaces may be weaker than the corresponding function/ops interfaces. Users can choose which to use as needed.
+
 Array Generation
 ----------------
 
