@@ -107,14 +107,23 @@ def get_bprop_mvlgamma(self):
 def get_bprop_tensor_scatter_div(self):
     """Generate bprop for TensorScatterDiv"""
     gather_nd = P.GatherNd()
-    div_func = P.TensorScatterDiv()
+    tensor_scatter_div = P.TensorScatterDiv()
+    neg = P.Neg()
+    div = P.Div()
+    mul = P.Mul()
 
     def bprop(x, indices, update, out, dout):
+        # (input)' / update
+        in_grad = tensor_scatter_div(dout, indices, update)
+
+        # - (input * (update)') / (update * update)
         gather_update = gather_nd(dout, indices)
         gather_x = gather_nd(x, indices)
-        dx = div_func(dout, indices, update)
-        d_update = gather_x * gather_update
-        return dx, zeros_like(indices), d_update
+        mul_result = mul(update, update)
+        neg_result = neg(mul_result)
+        update_grad = gather_update * div(gather_x, neg_result)
+
+        return in_grad, zeros_like(indices), update_grad
 
     return bprop
 
