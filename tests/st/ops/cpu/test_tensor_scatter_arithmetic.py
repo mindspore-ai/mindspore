@@ -279,6 +279,26 @@ def test_tensor_scatter_arithmetic_type_check(func, data_type, index_type):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+@pytest.mark.parametrize('func', ['add', 'sub'])
+@pytest.mark.parametrize('data_type', [mstype.int32])
+@pytest.mark.parametrize('index_type', [mstype.int32])
+def test_tensor_scatter_arithmetic_indices_check(func, data_type, index_type):
+    """
+    Feature: TensorScatter* operators.
+    Description: test cases for invalid indices.
+    Expectation: raise RuntimeError.
+    """
+    input_x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), data_type)
+    indices = Tensor(np.array([[10, 10]]), index_type)
+    updates = Tensor(np.array([1.0]), data_type)
+
+    with pytest.raises(RuntimeError):
+        compare_with_numpy(func, input_x, indices, updates)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['div'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
