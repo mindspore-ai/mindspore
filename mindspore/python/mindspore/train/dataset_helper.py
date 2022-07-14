@@ -349,8 +349,14 @@ class DatasetHelper:
 
         Examples:
             >>> import mindspore as ms
+            >>> import numpy as np
             >>>
-            >>> train_dataset = create_custom_dataset()
+            >>> # Define a dataset pipeline
+            >>> def generator():
+            ...    for i in range(5):
+            ...        yield (np.ones((32, 10)),)
+            >>>
+            >>> train_dataset = ms.dataset.GeneratorDataset(generator, ["data"])
             >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
             >>>
             >>> types, shapes = dataset_helper.types_shapes()
@@ -363,8 +369,14 @@ class DatasetHelper:
 
         Examples:
             >>> import mindspore as ms
+            >>> import numpy as np
             >>>
-            >>> train_dataset = create_custom_dataset()
+            >>> # Define a dataset pipeline
+            >>> def generator():
+            ...    for i in range(5):
+            ...        yield (np.ones((32, 10)),)
+            >>>
+            >>> train_dataset = ms.dataset.GeneratorDataset(generator, ["data"])
             >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True, sink_size=-1)
             >>>
             >>> # if sink_size==-1, then will return the full size of source dataset.
@@ -401,10 +413,16 @@ class DatasetHelper:
 
         Examples:
             >>> import mindspore as ms
+            >>> import numpy as np
             >>>
-            >>> train_dataset = create_custom_dataset()
+            >>> # Define a dataset pipeline
+            >>> def generator():
+            ...    for i in range(5):
+            ...        yield (np.ones((32, i)),)
+            >>>
+            >>> train_dataset = ms.dataset.GeneratorDataset(generator, ["data"])
             >>> # config dynamic shape
-            >>> dataset.set_dynamic_columns(columns={"data1": [16, None, 83], "data2": [None]})
+            >>> train_dataset.set_dynamic_columns(columns={"data": [32, None]})
             >>> dataset_helper = ms.DatasetHelper(train_dataset, dataset_sink_mode=True)
             >>>
             >>> min_shapes, max_shapes = dataset_helper.dynamic_min_max_shapes()
