@@ -46,6 +46,7 @@ int TopKInt8CPUKernel::ReSize() {
   for (size_t i = static_cast<size_t>(parameter->axis_ + 1); i < input->shape().size(); ++i) {
     parameter->inner_loop_num_ *= input->shape().at(i);
   }
+  CHECK_LESS_RETURN(parameter->dim_size_, parameter->k_);
   return RET_OK;
 }
 
