@@ -100,10 +100,11 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(adaptive_max_pool2d, kIndex0);
-  if (input_shape.size() < kShape4dDims) {
-    return nullptr;
+  if (input_shape.size() != kShape4dDims) {
+    MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's input shape must equal to 4, but got " << input_shape.size();
   }
 
+  // process output_size
   if (!common::AnfAlgo::HasNodeAttr(kAttrOutputSize, adaptive_max_pool2d)) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D need to set output_size attribute.";
   }
@@ -111,10 +112,6 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   if (output_size.size() != kShape2dDims) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size shape should equal to 2.";
   }
-  if (common::AnfAlgo::GetOutputTensorNum(adaptive_max_pool2d) > 1) {
-    return nullptr;
-  }
-
   int64_t height = SizeToLong(input_shape.at(kDim2));
   int64_t width = SizeToLong(input_shape.at(kDim3));
   int64_t output_h = (output_size[kDim0] == -1) ? height : output_size[kDim0];
@@ -122,13 +119,18 @@ const AnfNodePtr AdaptiveMaxPool2DFusion::Process(const FuncGraphPtr &func_graph
   if (output_h <= 0 || output_w <= 0) {
     MS_LOG(EXCEPTION) << "AdaptiveMaxPool2D's output_size value is invalid.";
   }
+  std::vector<int64_t> new_output_size{output_h, output_w};
+  common::AnfAlgo::SetNodeAttr(kAttrOutputSize, MakeValue(new_output_size), adaptive_max_pool2d);
+
+  if (common::AnfAlgo::GetOutputTensorNum(adaptive_max_pool2d) > 1) {
+    return nullptr;
+  }
+
   if (height % output_h != 0 || width % output_w != 0) {
     auto types = {common::AnfAlgo::GetOutputInferDataType(adaptive_max_pool2d, 0), kNumberTypeInt64};
     auto shapes = {common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0),
                    common::AnfAlgo::GetOutputDetailShape(adaptive_max_pool2d, 0)};
     common::AnfAlgo::SetOutputTypeAndDetailShape(types, shapes, adaptive_max_pool2d.get());
-    std::vector<int64_t> new_output_size{output_h, output_w};
-    common::AnfAlgo::SetNodeAttr(kAttrOutputSize, MakeValue(new_output_size), adaptive_max_pool2d);
     std::vector<AnfNodePtr> multi_outputs;
     CreateMultipleOutputsOfAnfNode(func_graph, adaptive_max_pool2d, kAdaptiveMaxpool2DOutputNumber, &multi_outputs);
     return multi_outputs[kIndex0];
