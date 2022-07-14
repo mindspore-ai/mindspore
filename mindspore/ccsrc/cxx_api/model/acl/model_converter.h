@@ -41,7 +41,7 @@ class MS_API ModelConverter {
  private:
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph) const;
   Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &init_options,
-                       const std::map<std::string, std::string> &build_options);
+                       const std::map<std::string, std::string> &build_options) const;
   Buffer LoadAscendIRInner(const Buffer &model_data);
 
   std::weak_ptr<AclModelOptions> options_;

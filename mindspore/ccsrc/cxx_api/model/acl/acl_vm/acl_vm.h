@@ -30,7 +30,7 @@ class AclBackend : public compile::MsBackend {
   AclBackend(const std::string &name, const std::string &target, const std::shared_ptr<AclModelOptions> &options);
   ~AclBackend() override = default;
 
-  VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) override;
+  VectorRef MsRunGraph(const GraphId &g, const VectorRef &args, const std::string & /* target */) override;
   bool GetCond(const BaseRef &c, bool *value) override;
   bool GetIndex(const BaseRef &c, int64_t *value) override;
 };
@@ -42,13 +42,13 @@ class AclCompileGraph : public compile::CompileGraph {
   ~AclCompileGraph() override = default;
 
   int64_t Ref(const AnfNodePtr &node) override;
+
+ protected:
   void AddExternal(const compile::LinConvertResult &result) override;
   void AddInput(const AnfNodePtr &node) override;
   void AddPartial(const CNodePtr &node) override;
   int64_t AddCall(const FuncGraphPtr &graph, const CNodePtr &node) override;
   void PushParameters(const FuncGraphPtr &func_graph) override;
-
- private:
   void AddInst(const compile::Instruction &inst, const MSTensorRef &arg);
 };
 
