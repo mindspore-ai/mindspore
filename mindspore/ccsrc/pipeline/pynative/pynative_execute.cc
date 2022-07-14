@@ -55,7 +55,7 @@
 #include "pipeline/jit/pipeline.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/pynative/base.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
+#include "backend/common/optimizer/const_input_to_attr_factory.h"
 #include "backend/common/optimizer/helper.h"
 #include "runtime/pynative/op_executor.h"
 #include "runtime/hardware/device_context_manager.h"
@@ -632,69 +632,29 @@ void ConvertPyObjectToTensor(const OpExecInfoPtr &op_run_info, size_t index, con
   (void)input_tensors->emplace_back(tensor_ptr);
 }
 
-bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, opt::ConstInputToAttrInfoRegister *reg) {
+bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, mindspore::HashSet<size_t> *input_to_attr_ptr) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  MS_EXCEPTION_IF_NULL(reg);
-  // Checking whether attr conversion is needed.
-  bool need_convert_input_to_attr = false;
+  MS_EXCEPTION_IF_NULL(input_to_attr_ptr);
   if (op_run_info->op_name == prim::kPrimCustom->name()) {
     // Custom op needs to set reg dynamically
     mindspore::HashSet<size_t> attr_indexes;
     const PrimitivePtr &op_prim = op_run_info->py_primitive;
     MS_EXCEPTION_IF_NULL(op_prim);
-    opt::GetCustomOpAttrIndex(op_prim, &attr_indexes);
-    if (!attr_indexes.empty()) {
-      need_convert_input_to_attr = true;
-      (void)reg->SetConstInputToAttr(attr_indexes);
-    }
-  } else {
-    need_convert_input_to_attr =
-      opt::ConstInputToAttrInfoRegistry::Instance().GetRegisterByOpName(op_run_info->op_name, reg);
+    opt::GetCustomOpAttrIndex(op_prim, input_to_attr_ptr);
+    return !input_to_attr_ptr->empty();
   }
-  // No reg info for this op, return false right away
-  if (!need_convert_input_to_attr) {
-    return false;
-  }
-
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  bool is_dynamic_shape = IsDynamicShape(op_run_info);
-  if (is_dynamic_shape) {
-    if (device_target == kGPUDevice) {
-      if (DynamicShapeConstInputToAttrGPU.find(op_run_info->op_name) == DynamicShapeConstInputToAttrGPU.end()) {
-        need_convert_input_to_attr = false;
-      }
-    } else if (device_target == kCPUDevice) {
-      if (DynamicShapeConstInputToAttrCPU.find(op_run_info->op_name) == DynamicShapeConstInputToAttrCPU.end()) {
-        need_convert_input_to_attr = false;
-      }
-    } else {
-      if (DynamicShapeConstInputToAttr.find(op_run_info->op_name) == DynamicShapeConstInputToAttr.end()) {
-        need_convert_input_to_attr = false;
-      }
-    }
-    // Dynamic shape
-    if (!need_convert_input_to_attr) {
-      MS_LOG(DEBUG) << "Current node is dynamic shape " << op_run_info->op_name;
-      return false;
-    }
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
+  if (device_target != cur_target) {
+    MS_LOG(WARNING) << "primitive target does not match backend: " << device_target
+                    << ", primitive_target: " << cur_target;
+    device_target = cur_target;
   }
-
-  if (device_target != kCPUDevice && op_run_info->op_name == prim::kPrimEmbeddingLookup->name()) {
-    auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
-    if (cur_target != kCPUDevice) {
-      return false;
-    }
-  }
-  // Gather op needs converting const input to attr on GPU device
-  if (device_target != kGPUDevice && op_run_info->op_name == prim::kPrimGatherD->name()) {
-    auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
-    if (cur_target != kGPUDevice) {
-      need_convert_input_to_attr = false;
-    }
-  }
-  return need_convert_input_to_attr;
+  *input_to_attr_ptr = opt::ConstInputToAttrRegister::GetInstance().GetConstToAttr(op_run_info->op_name, device_target,
+                                                                                   IsDynamicShape(op_run_info));
+  return !input_to_attr_ptr->empty();
 }
 
 void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t> *tensors_mask,
@@ -703,8 +663,8 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   MS_EXCEPTION_IF_NULL(tensors_mask);
   MS_EXCEPTION_IF_NULL(input_tensors);
 
-  opt::ConstInputToAttrInfoRegister reg;
-  bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, &reg);
+  mindspore::HashSet<size_t> input_to_attr = {};
+  bool need_convert_input_to_attr = NeedConvertConstInputToAttr(op_run_info, &input_to_attr);
   MS_LOG(DEBUG) << "Need convert input to addr " << need_convert_input_to_attr;
   if (need_convert_input_to_attr) {
     // Clone a new prim
@@ -721,8 +681,7 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
   }
   for (size_t index = 0; index < input_num; ++index) {
     // convert const input to attr
-    if (need_convert_input_to_attr &&
-        RunOpConvertConstInputToAttr(op_run_info, index, op_prim, reg.GetConstInputAttrInfo())) {
+    if (need_convert_input_to_attr && RunOpConvertConstInputToAttr(op_run_info, index, op_prim, input_to_attr)) {
       continue;
     }
     // convert const and tuple input to tensor
