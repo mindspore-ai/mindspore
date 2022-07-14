@@ -54,7 +54,7 @@ void HcclTask::Distribute() {
   // Get privateDef and opsKernelStorePtr
   MS_LOG(INFO) << "Distribute hccl task start.";
   void *ops_kernel_store = task_info_->ops_kernel_store();
-  ::ge::OpsKernelInfoStore *ops_kernel_info_store = reinterpret_cast<::ge::OpsKernelInfoStore *>(ops_kernel_store);
+  ::ge::OpsKernelInfoStore *ops_kernel_info_store = static_cast<::ge::OpsKernelInfoStore *>(ops_kernel_store);
   MS_EXCEPTION_IF_NULL(ops_kernel_info_store);
 
   char *private_def = reinterpret_cast<char *>(const_cast<char unsigned *>(task_info_->private_def().data()));
@@ -77,7 +77,7 @@ void HcclTask::Distribute() {
   ge_task.kernelHcclInfo[0].inputDataAddr = task_info_->input_data_addr();
   ge_task.kernelHcclInfo[0].outputDataAddr = task_info_->output_data_addr();
   ge_task.kernelHcclInfo[0].workSpaceAddr = workspace_mem_;
-  ge_task.kernelHcclInfo[0].workSpaceMemSize = task_info_->workspace_size();
+  ge_task.kernelHcclInfo[0].workSpaceMemSize = static_cast<uint64_t>(task_info_->workspace_size());
   ge_task.kernelHcclInfo[0].count = task_info_->count();
   ge_task.kernelHcclInfo[0].dataType = static_cast<int32_t>(task_info_->data_type());
   ge_task.kernelHcclInfo[0].opType = static_cast<int32_t>(task_info_->op_type());

@@ -23,10 +23,9 @@ LabelSwitchTask::LabelSwitchTask(const ModelContext &model_context,
     : TaskRepeater<LabelSwitchTaskInfo>(model_context, task_info),
       task_info_(task_info),
       stream_(nullptr),
+      rt_model_handle_(model_context.rt_model_handle()),
       label_info_(nullptr) {
   MS_EXCEPTION_IF_NULL(task_info);
-
-  rt_model_handle_ = model_context.rt_model_handle();
   auto all_label_resource = model_context.label_list();
   auto stream_list = model_context.stream_list();
   uint32_t stream_id = task_info->stream_id();
