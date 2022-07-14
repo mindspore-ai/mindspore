@@ -187,7 +187,7 @@ class Model:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim, metrics=None)
-        >>> # For details about how to build the dataset, please refer to the function `create_dataset` in tutorial
+        >>> # For details about how to build the dataset, please refer to the variable `dataset_train` in tutorial
         >>> # document on the official website:
         >>> # https://www.mindspore.cn/tutorials/zh-CN/master/beginner/quick_start.html
         >>> dataset = create_custom_dataset()
