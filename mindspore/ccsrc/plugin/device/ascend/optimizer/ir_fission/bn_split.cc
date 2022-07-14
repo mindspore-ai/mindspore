@@ -159,7 +159,8 @@ AnfNodePtr SyncBnSplit::SyncBNSplitForTBE(const FuncGraphPtr &func_graph, const 
 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
   for (size_t i = 0; i < bn_training_reduce_outputs.size(); ++i) {
-    auto allreduce_mul_output = CreateAllReduceAndMul(func_graph, bn_training_reduce_outputs[i], cnode, *this);
+    auto allreduce_mul_output =
+      CreateAllReduceAndMul(func_graph, bn_training_reduce_outputs[i], cnode, *this, is_dynamic);
     (void)allreduce_mul_outputs.emplace_back(allreduce_mul_output);
   }
 
@@ -214,7 +215,7 @@ AnfNodePtr InsertCast(const FuncGraphPtr &graph, const AnfNodePtr &input, const 
 }
 
 AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &allreduce_input,
-                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass) {
+                                 const CNodePtr &sync_bn_cnode, const PatternProcessPass &pass, bool is_dynamic) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(allreduce_input);
   MS_EXCEPTION_IF_NULL(sync_bn_cnode);
@@ -247,6 +248,11 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   }
   common::AnfAlgo::SetNodeAttr(kAttrFusion, MakeValue(opid), allreduce);
 
+  // Dynamic Shape support for allreduce node
+  if (is_dynamic) {
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), allreduce);
+  }
+
   // create Mul
   auto device_num_reciprocal_vnode = CreateValueNodeOfDeviceNumReciprocal(graph, sync_bn_cnode);
   std::vector<AnfNodePtr> mul_inputs = {NewValueNode(std::make_shared<Primitive>(kMulOpName)), allreduce,
@@ -255,6 +261,12 @@ AnfNodePtr CreateAllReduceAndMul(const FuncGraphPtr &graph, const AnfNodePtr &al
   MS_EXCEPTION_IF_NULL(mul);
   mul->set_abstract(input_node->abstract());
   mul->set_scope(allreduce_input->scope());
+
+  // Dynamic Shape support for mul node
+  if (is_dynamic) {
+    common::AnfAlgo::SetNodeAttr(kAttrInputIsDynamicShape, MakeValue(true), mul);
+    common::AnfAlgo::SetNodeAttr(kAttrOutputIsDynamicShape, MakeValue(true), mul);
+  }
 
   // Cast output to origin datatype to reduce the number of cast node.
   // Should be removed if BNTrainingReduce/BNTrainingUpdateGrad op support fp16 output.

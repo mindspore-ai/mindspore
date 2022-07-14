@@ -139,7 +139,7 @@ CNodePtr SyncBnGradSplit::SyncBNGradSplitForTBE(const FuncGraphPtr &func_graph, 
 
   std::vector<AnfNodePtr> allreduce_mul_outputs;
   for (size_t i = 0; i < bn_update_grad_outputs.size(); ++i) {
-    auto allreduce_mul_output = CreateAllReduceAndMul(func_graph, bn_update_grad_outputs[i], cnode, *this);
+    auto allreduce_mul_output = CreateAllReduceAndMul(func_graph, bn_update_grad_outputs[i], cnode, *this, is_dynamic);
     allreduce_mul_outputs.emplace_back(allreduce_mul_output);
   }
 

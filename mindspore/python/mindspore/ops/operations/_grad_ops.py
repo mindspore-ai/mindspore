@@ -147,7 +147,7 @@ class BatchNormGradGrad(Primitive):
         self.data_format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
 
 
-class SyncBatchNormGrad(PrimitiveWithInfer):
+class SyncBatchNormGrad(Primitive):
     """Performs grad of SyncBatchNorm operation."""
 
     @prim_attr_register
@@ -156,13 +156,6 @@ class SyncBatchNormGrad(PrimitiveWithInfer):
         if not isinstance(group, str):
             raise TypeError("The group attr of SyncBatchNormGrad must be str.")
         validator.check_int(device_num, 2, Rel.GE, "device_num", self.name)
-
-    def infer_shape(self, y_backprop_shape, x_shape, scale_shape, save_mean_shape, save_variance_shape):
-        validator.check("BatchNorm y_backprop_shape", y_backprop_shape, "BatchNorm x_shape", x_shape)
-        return (x_shape, scale_shape, scale_shape)
-
-    def infer_dtype(self, y_backprop_type, x_type, scale_type, save_mean_shape, save_variance_shape):
-        return (x_type, scale_type, scale_type)
 
 
 class BiasAddGrad(Primitive):
