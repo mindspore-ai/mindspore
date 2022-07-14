@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_TRANSPOSE_FOR_SORT_H_
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_INSERT_TRANSPOSE_FOR_SORT_H_
 #include <memory>
-#include <vector>
 #include "backend/common/optimizer/optimizer.h"
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 
@@ -29,7 +28,7 @@ class InsertTransposeForSort : public PatternProcessPass {
       : PatternProcessPass("insert_transpose_for_sort", multigraph) {}
   ~InsertTransposeForSort() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

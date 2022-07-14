@@ -67,7 +67,8 @@ bool FusionBasePass::CheckMultiOutputEltWiseNode(const session::KernelGraph &ker
          cnode->inputs().size() == ELTWISE_INPUT_SIZE;
 }
 
-size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph, const AnfNodePtr &node) {
+size_t FusionBasePass::GetNotUpdateStateUserNums(const session::KernelGraph &kernel_graph,
+                                                 const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(node);
   auto manager = kernel_graph.manager();
   MS_EXCEPTION_IF_NULL(manager);

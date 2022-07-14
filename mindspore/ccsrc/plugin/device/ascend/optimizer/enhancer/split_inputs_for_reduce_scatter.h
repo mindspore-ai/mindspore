@@ -30,7 +30,7 @@ class SplitInputsForReduceScatter : public PatternProcessPass {
         kernel_select_(std::make_shared<KernelSelect>()) {}
   ~SplitInputsForReduceScatter() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr RearrangeInputsForReduceScatter(const FuncGraphPtr &func_graph, const AnfNodePtr &node,

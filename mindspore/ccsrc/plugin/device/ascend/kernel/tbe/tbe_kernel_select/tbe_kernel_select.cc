@@ -68,9 +68,7 @@ bool TbeCheckIsKernelInfoEmpty(const CNodePtr &kernel_node) {
 }
 
 TbeKernelSelect::TbeKernelSelect(CNodePtr kernel_node, std::vector<std::shared_ptr<KernelBuildInfo>> *kernel_info_list)
-    : cnode_ptr_(std::move(kernel_node)), kernel_info_list_(kernel_info_list) {
-  check_cnode = CheckCNode();
-}
+    : cnode_ptr_(std::move(kernel_node)), kernel_info_list_(kernel_info_list), check_cnode(CheckCNode()) {}
 
 bool TbeKernelSelect::CheckCNode() {
   MS_EXCEPTION_IF_NULL(cnode_ptr_);

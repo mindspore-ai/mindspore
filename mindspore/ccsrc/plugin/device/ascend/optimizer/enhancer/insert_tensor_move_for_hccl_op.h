@@ -28,7 +28,7 @@ class InsertTensorMoveForHcclOp : public PatternProcessPass {
       : PatternProcessPass("insert_tensor_move_for_hccl_op", multigraph),
         kernel_query_(std::make_shared<KernelQuery>()) {}
   ~InsertTensorMoveForHcclOp() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   void InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;

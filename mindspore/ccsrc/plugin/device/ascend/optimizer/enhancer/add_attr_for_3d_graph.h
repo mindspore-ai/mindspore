@@ -16,9 +16,7 @@
 
 #ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_ATTR_FOR_3D_GRAPH_H
 #define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_ATTR_FOR_3D_GRAPH_H
-#include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 #include "ir/anf.h"
 #include "backend/common/optimizer/optimizer.h"
@@ -32,7 +30,7 @@ class AddIoFormatAttrFor3DGraph : public PatternProcessPass {
       : PatternProcessPass("add_attr_for_3d_graph", multigraph) {}
   ~AddIoFormatAttrFor3DGraph() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore

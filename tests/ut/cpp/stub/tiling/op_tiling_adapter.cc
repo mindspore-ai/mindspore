@@ -40,7 +40,7 @@ constexpr auto CONSTANTOP = "Constant";
 constexpr auto ATTR_NAME_WEIGHTS = "value";
 constexpr auto PARAM_DYNAMIC = "dynamic";
 
-std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) {
+std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) const {
   static const std::map<std::string, std::string> kOpTypeMap = {
     {"SparseApplyFtrl", "SparseApplyFtrlD"},
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
@@ -64,13 +64,9 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
   return iter->second;
 }
 
-std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t index) {
-  return "";
-}
+std::string OpTilingCalculateAdapter::GetOutputName(const CNodePtr &node, size_t index) { return ""; }
 
-std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t index) {
-  return "";
-}
+std::string OpTilingCalculateAdapter::GetInputName(const CNodePtr &node, size_t index) { return ""; }
 
 void OpTilingCalculateAdapter::ConvertInputShapeAndType(const CNodePtr &node, ge::OpDescPtr *op_desc) {}
 
@@ -80,7 +76,7 @@ void OpTilingCalculateAdapter::ConvertCompileInfo(const CNodePtr &node, ge::OpDe
 
 ge::NodePtr OpTilingCalculateAdapter::NewConstantOp(const CNodePtr &node, const std::string &name,
                                                     const tensor::TensorPtr &tensor_data, ge::ComputeGraphPtr *ge_graph,
-                                                    size_t index) {
+                                                    size_t index) const {
   ge::NodePtr constand_op;
   return constand_op;
 }
@@ -97,7 +93,7 @@ void OpTilingCalculateAdapter::AddEdge(const ge::NodePtr &ge_node,
 
 void OpTilingCalculateAdapter::InitOpIoName(const CNodePtr &node) {}
 
-ge::Operator OpTilingCalculateAdapter::GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) {
+ge::Operator OpTilingCalculateAdapter::GeNodeToGeOperatorAdapter(const ::ge::NodePtr &ge_node) const {
   ge::Operator op;
   return op;
 }
@@ -109,11 +105,11 @@ ge::NodePtr OpTilingCalculateAdapter::AnfNodeToGeNodeAdapter(
   return ge_node;
 }
 
-ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph,
-                                          const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                          const std::string &op_compile_info) {
+ge::Operator OpTilingCalculateAdapter::AnfNodeToGeOperatorAdapter(
+  const CNodePtr &node, ::ge::ComputeGraphPtr *ge_graph, const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+  const std::string &op_compile_info) {
   ge::Operator op;
-  return op;             
+  return op;
 }
 }  // namespace tiling
 }  // namespace device

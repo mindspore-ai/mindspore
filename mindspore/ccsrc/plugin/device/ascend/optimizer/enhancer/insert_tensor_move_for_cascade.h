@@ -28,7 +28,7 @@ class InsertTensorMoveForCascade : public PatternProcessPass {
       : PatternProcessPass("insert_tensor_move_for_cascade", multigraph),
         kernel_select_(std::make_shared<KernelSelect>()) {}
   ~InsertTensorMoveForCascade() override = default;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
  private:
   AnfNodePtr InsertTensorMove(const FuncGraphPtr &graph, const CNodePtr &hccl_node) const;
