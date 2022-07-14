@@ -134,7 +134,7 @@ bool FP32Imm::operator==(const FP32Imm &other) const {
   if (std::isinf(v_) && std::isinf(other.v_)) {
     return true;
   }
-  return fabs(v_ - other.v_) < FLT_EPSILON;
+  return fabs(v_ - other.v_) < DBL_EPSILON;
 }
 bool FP64Imm::operator==(const Value &other) const {
   if (other.isa<FP64Imm>()) {
