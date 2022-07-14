@@ -41,7 +41,8 @@ CNodePtr FindInputNode(const CNodePtr &cnode, const string &node_type, const ker
 }
 }  // namespace
 
-bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1, mindspore::HashSet<AnfNodePtr> *record) {
+bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1,
+                                                 mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise - eltwise1
   const std::set<string> kElem1TypeList = {kAddOpName, kReluOpName, kFusedMulAddOpName};
   if (kElem1TypeList.find(common::AnfAlgo::GetCNodeName(eltwise1)) == kElem1TypeList.end()) {
@@ -59,7 +60,8 @@ bool BatchMatmulEltwiseFusionPass::MatchPattern1(const CNodePtr &eltwise1, minds
   return false;
 }
 
-bool BatchMatmulEltwiseFusionPass::MatchPattern2(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record) {
+bool BatchMatmulEltwiseFusionPass::MatchPattern2(const CNodePtr &eltwise,
+                                                 mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise
   const std::set<string> kElemTypeList = {kFusedMulAddOpName, kAddOpName,  kDivOpName,
                                           kRealDivOpName,     kReluOpName, kReluGradOpName};
@@ -77,7 +79,8 @@ bool BatchMatmulEltwiseFusionPass::MatchPattern2(const CNodePtr &eltwise, mindsp
   return true;
 }
 
-bool BatchMatmulEltwiseFusionPass::MatchPattern3(const CNodePtr &eltwise, mindspore::HashSet<AnfNodePtr> *record) {
+bool BatchMatmulEltwiseFusionPass::MatchPattern3(const CNodePtr &eltwise,
+                                                 mindspore::HashSet<AnfNodePtr> *record) const {
   // bmm - eltwise1(mul) - eltwise2(sigmoid) - eltwise(mul)
   if (common::AnfAlgo::GetCNodeName(eltwise) != kMulOpName) {
     return false;

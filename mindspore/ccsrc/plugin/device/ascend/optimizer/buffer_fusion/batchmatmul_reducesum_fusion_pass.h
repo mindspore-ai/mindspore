@@ -35,7 +35,7 @@ class BatchMatmulReduceSumFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchBatchMatmulReduceSum(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
+  void MatchBatchMatmulReduceSum(const CNodePtr &reduce_sum, const session::KernelGraph &kernel_graph,
                                  FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt

@@ -119,7 +119,7 @@ class KernelMeta {
  private:
   KernelMeta() = default;
   ~KernelMeta() = default;
-  KernelPackPtr LoadFromFile(const std::string &kernel_name);
+  KernelPackPtr LoadFromFile(const std::string &kernel_name) const;
   std::unordered_map<std::string, std::string> kernel_index_map_{};
   std::unordered_map<std::string, KernelPackPtr> kernel_pack_map_{};
 };

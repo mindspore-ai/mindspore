@@ -22,7 +22,6 @@
 #include <set>
 #include <memory>
 #include <vector>
-#include <utility>
 #include "ir/anf.h"
 #include "kernel/kernel.h"
 #include "kernel/kernel_fusion.h"
@@ -78,7 +77,7 @@ class TbeKernelCompileManager {
   // pre build
   void TbePreBuild(const KernelGraphPtr &kernel_graph);
   // single op compile
-  void TbeSingleOpCompile(const std::vector<CNodePtr> &anf_nodes);
+  void TbeSingleOpCompile(const std::vector<CNodePtr> &node_list);
   // fusion op compile
   JsonNameMap TbeFusionOpCompile(const std::vector<FusionScopeInfo> &fusion_scopes);
 
@@ -86,7 +85,7 @@ class TbeKernelCompileManager {
   TbeKernelCompileManager() = default;
   ~TbeKernelCompileManager();
   // tbe kernel build client interface
-  std::string DispatchCompileTask(const nlohmann::json &kernel_json);
+  std::string DispatchCompileTask(const nlohmann::json &kernel_json) const;
   // save all build task: pre-build, single-build, fusion-build
   void SaveTaskInfo(const bool is_dynamic, const nlohmann::json &json, const std::string &json_name,
                     const std::string &full_name, int task_id, int64_t scope_id);
@@ -100,21 +99,22 @@ class TbeKernelCompileManager {
   void Query(const std::string &type);
   // single op build/pre-build
   void QueryProcess(const std::string &type, const std::string &job_result, std::vector<int> *success_job);
-  void GetAllTbeNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph, std::vector<CNodePtr> *tbe_nodes);
-  void PrintProcessLog(const nlohmann::json &json, int adjust_log_level);
-  void JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json);
+  void GetAllTbeNodes(const std::shared_ptr<session::KernelGraph> &kernel_graph,
+                      std::vector<CNodePtr> *tbe_nodes) const;
+  void PrintProcessLog(const nlohmann::json &json, int adjust_log_level) const;
+  void JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json) const;
   void PrintInitResult(const nlohmann::json &json);
   void PrintCompileResult(const nlohmann::json &json);
   std::string ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node);
-  void ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *task_info);
-  nlohmann::json TurnStrToJson(const std::string &str) const;
+  void ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *target_status) const;
+  nlohmann::json TurnStrToJson(const std::string &string) const;
   void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,
                       const std::vector<AnfNodePtr> &output_nodes = {});
   void ClearOldTask();
   void UpdateFusionTypeAndOutputDataDesc(const std::vector<CNodePtr> &nodes);
   JsonNameMap GetAllSuccessFusion();
-  void GenKernelMod(const std::vector<CNodePtr> &anf_nodes);
-  void DistributeCompileTask(const std::vector<CNodePtr> &anf_nodes, const std::string &job_type);
+  void GenKernelMod(const std::vector<CNodePtr> &node_list);
+  void DistributeCompileTask(const std::vector<CNodePtr> &node_list, const std::string &job_type);
   void DistributePreBuildTask(const std::vector<CNodePtr> &node_list);
 
   // init flag
