@@ -252,13 +252,6 @@ class _MindsporeFunctionExecutor:
                             new_tensor = _load_tensor_by_layout(state.data, layout)
                             state.set_data(new_tensor, True)
 
-            # set data for all optimizer states in case it is executed in graph mode
-            prefix_list = ["moments", "accum", "moment1", "moment2", "lamb_m", "lamb_v", "mean_grad",
-                           "mean_square", "prev"]
-            for opt_param in opt_params:
-                prefix = opt_param.name[:opt_param.name.find(".")]
-                if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
-                    opt_param.init_data()
         _pynative_executor.get_top_cell().parameter_layout_dict = obj.parameter_layout_dict
 
     def compile(self, args_list, method_name):
@@ -314,8 +307,14 @@ class _MindsporeFunctionExecutor:
                 self._graph_executor.set_weights_values(self.obj.parameters_dict())
             is_compile = self._graph_executor.compile(self.obj, compile_args, phase, True)
 
+        # init sliced parameter and optimizer state
         if is_pynative_parallel() and self.fn.__name__ == _PYNATIVE_PARRALLEL_FUNC_NAME:
             self._parallel_process_for_ms_function(phase)
+
+        # init the rest optimizer states
+        if is_pynative_parallel() and _pynative_executor.get_optimizer():
+            opt_states = _pynative_executor.get_optimizer().trainable_params()
+            self._optimizer_state_init(opt_states)
 
         if not is_compile:
             raise RuntimeError("Executor compile failed.")
@@ -351,6 +350,16 @@ class _MindsporeFunctionExecutor:
             output = _pynative_executor.grad_ms_function(output, *new_inputs)
 
         return output
+
+    @staticmethod
+    def _optimizer_state_init(opt_states):
+        """set data for all optimizer states in case it is executed in graph mode"""
+        prefix_list = ["moments", "accum", "moment1", "moment2", "lamb_m", "lamb_v", "mean_grad",
+                       "mean_square", "prev"]
+        for opt_param in opt_states:
+            prefix = opt_param.name[:opt_param.name.find(".")]
+            if opt_param.has_init and (prefix in prefix_list or opt_param.name == "global_step"):
+                opt_param.init_data()
 
     def _generate_compile_args(self, args_list):
         """Chose dynamic shape tensors or actual input tensors as compile args."""
