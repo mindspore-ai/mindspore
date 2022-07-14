@@ -2552,8 +2552,10 @@ class Tensor(Tensor_):
         equal to the shape of `self[indices]`. For more details, see use cases.
 
         Note:
-            If some values of the `indices` are out of bound, instead of raising an index error,
-            the corresponding `updates` will not be updated to self tensor.
+            On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+            the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
+            the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
+            not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
         Args:
             indices (Tensor): The index of input tensor whose data type is int32 or int64.
@@ -2598,8 +2600,10 @@ class Tensor(Tensor_):
         equal to the shape of `self[indices]`. For more details, see use cases.
 
         Note:
-            If some values of the `indices` are out of bound, instead of raising an index error,
-            the corresponding `updates` will not be updated to `input_x`, the variable `input_x` refers to self tensor.
+            On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+            the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
+            the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
+            not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
         Args:
             indices (Tensor): The index of input tensor whose data type is int32 or int64.
