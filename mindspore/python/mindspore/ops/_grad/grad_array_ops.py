@@ -362,11 +362,21 @@ def get_bprop_padding(self):
     return bprop
 
 
+@constexpr
+def _transpose_perm_positive(perm):
+    res = []
+    for value in perm:
+        value = value if (value >= 0) else (value + len(perm))
+        res.append(value)
+    return tuple(res)
+
+
 @bprop_getters.register(P.Transpose)
 def get_bprop_transpose(self):
     """Generate bprop for Transpose"""
 
     def bprop(x, perm, out, dout):
+        perm = _transpose_perm_positive(perm)
         return transpose(dout, invert_permutation(perm)), zeros_like(perm)
 
     return bprop
