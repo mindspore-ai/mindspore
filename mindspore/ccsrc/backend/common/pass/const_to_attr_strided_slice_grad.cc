@@ -140,8 +140,7 @@ const AnfNodePtr ConstToAttrStridedSliceGradPass::Process(const FuncGraphPtr &gr
     }
   }
 
-  ConstInputToAttr(strided_slice_grad, {1, 2, 3, 4});
-  return nullptr;
+  return ConstInputToAttr(strided_slice_grad, {1, 2, 3, 4});
 }
 }  // namespace opt
 }  // namespace mindspore

@@ -20,6 +20,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/log_adapter.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "backend/common/optimizer/helper.h"
 
 namespace mindspore {
 namespace opt {
@@ -134,7 +135,7 @@ bool ConstInputToAttrInfoRegistry::GetRegisterByOpName(const std::string &op_nam
   return false;
 }
 
-void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
+CNodePtr ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &input_attrs) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> new_inputs;
   auto primitive = GetCNodePrimitive(cnode);
@@ -143,7 +144,7 @@ void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &i
   auto input_names = primitive->GetAttr(kAttrInputNames);
   if (input_names == nullptr) {
     MS_LOG(DEBUG) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
-    return;
+    return cnode;
   }
   auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
   auto inputs = cnode->inputs();
@@ -179,8 +180,21 @@ void ConstInputToAttr(const CNodePtr &cnode, const mindspore::HashSet<size_t> &i
   if (need_update) {
     // Update cnode's inputs
     new_inputs[0] = NewValueNode(primitive);
-    cnode->set_inputs(new_inputs);
+    auto graph = cnode->func_graph();
+    MS_EXCEPTION_IF_NULL(graph);
+    auto new_cnode = NewCNode(new_inputs, graph, {cnode});
+    MS_EXCEPTION_IF_NULL(new_cnode);
+    new_cnode->set_abstract(cnode->abstract());
+    new_cnode->set_scope(cnode->scope());
+    new_cnode->set_primal_attrs(cnode->primal_attrs());
+    new_cnode->set_attrs(cnode->attrs());
+    auto kernel_graph = graph->cast<KernelGraphPtr>();
+    if (kernel_graph != nullptr) {
+      kernel_graph->FrontBackendlMapUpdate(cnode, new_cnode);
+    }
+    return new_cnode;
   }
+  return cnode;
 }
 }  // namespace opt
 }  // namespace mindspore
