@@ -3794,7 +3794,7 @@ def mean(x, axis=(), keep_dims=False):
         >>> print(output)
         5.0
         >>> print(output.shape)
-        (1, 1, 1)
+        ()
         >>> # case 2: Reduces a dimension along the axis 0
         >>> output = ops.mean(x, 0, True)
         >>> print(output)
@@ -3860,7 +3860,7 @@ def prod(x, axis=(), keep_dims=False):
         >>> print(output)
         2.2833798e+33
         >>> print(output.shape)
-        (1, 1, 1)
+        ()
         >>> # case 2: Reduces a dimension along axis 0.
         >>> output = ops.prod(x, 0, True)
         >>> print(output)
