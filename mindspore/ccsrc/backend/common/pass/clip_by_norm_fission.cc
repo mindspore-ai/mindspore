@@ -77,13 +77,13 @@ AnfNodePtr ClipByNormFission::CreateCNodeBase(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(new_node);
 
   new_node->set_scope(node->scope());
-  new_node->set_kernel_info(std::make_shared<device::KernelInfo>());
   return new_node;
 }
 
 AnfNodePtr ClipByNormFission::CreateSquareNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
                                                const ShapeVector &shape_vec, const TypeId &type_id) const {
   auto square = CreateCNodeBase(func_graph, {inp}, kSquareOpName, inp);
+  MS_EXCEPTION_IF_NULL(square);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   square->set_abstract(abs);
   return square;
@@ -93,6 +93,7 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
                                                   const AnfNodePtr &clip_by_norm, const ShapeVector &shape_vec,
                                                   const TypeId &type_id) const {
   auto reduce_sum = CreateCNodeBase(func_graph, {square}, kReduceSumOpName, square);
+  MS_EXCEPTION_IF_NULL(reduce_sum);
   // Sync the attribute of `ClipByNorm` to `ReduceSum`
   auto clip_by_norm_prim = common::AnfAlgo::GetCNodePrimitive(clip_by_norm);
   MS_EXCEPTION_IF_NULL(clip_by_norm_prim);
@@ -127,14 +128,52 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
     auto positive_idx = idx < 0 ? idx + ddim : idx;
     reduce_sum_output_shape[positive_idx] = 1;
   }
+
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
   reduce_sum->set_abstract(abs);
   return reduce_sum;
 }
 
+AnfNodePtr ClipByNormFission::CreateConstantNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp,
+                                                 const ShapeVector &shape_vec, const TypeId &type_id,
+                                                 const std::string &op_name) const {
+  auto tensor = std::make_shared<tensor::Tensor>(type_id, shape_vec);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  ValueNodePtr value_node = kernel_graph->NewValueNode(tensor->ToAbstract(), tensor);
+  kernel_graph->AddValueNodeToGraph(value_node);
+  auto constant_node = CreateCNodeBase(func_graph, {value_node}, op_name, inp);
+  MS_EXCEPTION_IF_NULL(constant_node);
+
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
+  constant_node->set_abstract(abs);
+  return constant_node;
+}
+
+AnfNodePtr ClipByNormFission::CreateGreaterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &inp_a,
+                                                const AnfNodePtr &inp_b, const ShapeVector &shape_vec) const {
+  auto greater = CreateCNodeBase(func_graph, {inp_a, inp_b}, kGreaterOpName, inp_a);
+  MS_EXCEPTION_IF_NULL(greater);
+  auto abs = std::make_shared<abstract::AbstractTensor>(kBool, shape_vec);
+  greater->set_abstract(abs);
+  return greater;
+}
+
+AnfNodePtr ClipByNormFission::CreateSelectNode(const FuncGraphPtr &func_graph, const AnfNodePtr &cond,
+                                               const AnfNodePtr &inp_a, const AnfNodePtr &inp_b,
+                                               const ShapeVector &shape_vec, const TypeId &type_id) const {
+  auto select = CreateCNodeBase(func_graph, {cond, inp_a, inp_b}, kSelectOpName, inp_a);
+  MS_EXCEPTION_IF_NULL(select);
+  auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
+  select->set_abstract(abs);
+  return select;
+}
+
 AnfNodePtr ClipByNormFission::CreateSqrtNode(const FuncGraphPtr &func_graph, const AnfNodePtr &reduce_sum,
                                              const TypeId &type_id) const {
   auto sqrt = CreateCNodeBase(func_graph, {reduce_sum}, kSqrtOpName, reduce_sum);
+  MS_EXCEPTION_IF_NULL(sqrt);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), GetOutputInferShape(reduce_sum));
   sqrt->set_abstract(abs);
   return sqrt;
@@ -143,6 +182,7 @@ AnfNodePtr ClipByNormFission::CreateSqrtNode(const FuncGraphPtr &func_graph, con
 AnfNodePtr ClipByNormFission::CreateMaxNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x, const AnfNodePtr &y,
                                             const TypeId &type_id) const {
   auto max = CreateCNodeBase(func_graph, {x, y}, kMaximumOpName, y);
+  MS_EXCEPTION_IF_NULL(max);
   auto x_shape = GetOutputInferShape(x);
   auto y_shape = GetOutputInferShape(y);
   auto output_shape = InferBroadcastShape(x_shape, y_shape, "ClipByNorm", "clip_norm_cast", "l2_norm");
@@ -155,6 +195,7 @@ AnfNodePtr ClipByNormFission::CreateMulNode(const FuncGraphPtr &func_graph, cons
                                             const AnfNodePtr &clip_norm, const ShapeVector &shape_vec,
                                             const TypeId &type_id) const {
   auto mul = CreateCNodeBase(func_graph, {x, clip_norm}, kMulOpName, x);
+  MS_EXCEPTION_IF_NULL(mul);
   auto output_shape = shape_vec;
   auto clip_norm_shape = GetOutputInferShape(clip_norm);
   if (clip_norm_shape.size() > output_shape.size()) {
@@ -170,6 +211,7 @@ AnfNodePtr ClipByNormFission::CreateDivNode(const FuncGraphPtr &func_graph, cons
                                             const AnfNodePtr &divisor, const ShapeVector &shape_vec,
                                             const TypeId &type_id) const {
   auto div = CreateCNodeBase(func_graph, {dividend, divisor}, kDivOpName, divisor);
+  MS_EXCEPTION_IF_NULL(div);
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), shape_vec);
   div->set_abstract(abs);
   return div;
@@ -183,6 +225,7 @@ AnfNodePtr ClipByNormFission::CreateCastNode(const FuncGraphPtr &func_graph, con
   }
 
   auto cast = CreateCNodeBase(func_graph, {inp}, kCastOpName, inp);
+  MS_EXCEPTION_IF_NULL(cast);
   if (dst_type_id == kNumberTypeFloat16) {
     common::AnfAlgo::SetNodeAttr(kAttrDstType, kFloat16, cast);
   } else if (dst_type_id == kNumberTypeFloat32) {
@@ -220,21 +263,32 @@ const AnfNodePtr ClipByNormFission::Process(const FuncGraphPtr &func_graph, cons
   auto x_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(clip_by_norm, 0);
   // Create `op1 = square(x)` op
   auto square = CreateSquareNode(func_graph, inp_x, shape_vec, x_type_id);
-  // Create 'op2 = reduce_sum(op1)' op
+  // Create `op2 = reduce_sum(op1)` op
   auto reduce_sum = CreateReduceSumNode(func_graph, square, clip_by_norm, shape_vec, x_type_id);
+  ShapeVector reduce_sum_output_shape = GetOutputInferShape(reduce_sum);
   // Create `op3 = cast(op2)` to float32 data type
-  auto reduce_sum_cast =
-    CreateCastNode(func_graph, reduce_sum, GetOutputInferShape(reduce_sum), x_type_id, dst_type_id);
-  // Create 'op4 = sqrt(op3)' op
-  auto sqrt = CreateSqrtNode(func_graph, reduce_sum_cast, dst_type_id);
-  // Create 'op5 = x * clip_norm' op
+  auto reduce_sum_cast = CreateCastNode(func_graph, reduce_sum, reduce_sum_output_shape, x_type_id, dst_type_id);
+  // Create `op4 = greater(op3, zeros)` op
+  auto zeros_node =
+    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimZerosLike->name());
+  auto greater = CreateGreaterNode(func_graph, reduce_sum_cast, zeros_node, reduce_sum_output_shape);
+  // Create `op5 = select(op4, op3, Ones)` op
+  auto ones_node =
+    CreateConstantNode(func_graph, reduce_sum_cast, reduce_sum_output_shape, dst_type_id, prim::kPrimOnesLike->name());
+  auto safe_reduce_sum_cast =
+    CreateSelectNode(func_graph, greater, reduce_sum_cast, ones_node, reduce_sum_output_shape, dst_type_id);
+  // Create `op6 = sqrt(op5)` op
+  auto sqrt = CreateSqrtNode(func_graph, safe_reduce_sum_cast, dst_type_id);
+  // Create `op7 = select(op4, op6, op3)` op
+  auto safe_sqrt = CreateSelectNode(func_graph, greater, sqrt, reduce_sum_cast, reduce_sum_output_shape, dst_type_id);
+  // Create 'op8 = x * clip_norm' op
   auto inp_x_cast = CreateCastNode(func_graph, inp_x, shape_vec, x_type_id, dst_type_id);
   auto clip_norm_cast = CreateCastNode(func_graph, inp_clip_norm, GetOutputInferShape(inp_clip_norm),
                                        common::AnfAlgo::GetOutputInferDataType(inp_clip_norm, 0), dst_type_id);
   auto mul = CreateMulNode(func_graph, inp_x_cast, clip_norm_cast, shape_vec, dst_type_id);
-  // Create `op6 = max(op4, op5)` op
-  auto max = CreateMaxNode(func_graph, clip_norm_cast, sqrt, dst_type_id);
-  // Create 'op7 = op5 / op6' op
+  // Create `op9 = max(op8, op7)` op
+  auto max = CreateMaxNode(func_graph, clip_norm_cast, safe_sqrt, dst_type_id);
+  // Create 'op10 = op8 / op9' op
   auto div = CreateDivNode(func_graph, mul, max, shape_vec, dst_type_id);
   return div;
 }
