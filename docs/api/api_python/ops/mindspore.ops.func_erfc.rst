@@ -1,5 +1,5 @@
 mindspore.ops.erfc
-=================
+==================
 
 .. py:function:: mindspore.ops.erfc(x)
 
