@@ -49,7 +49,6 @@ const AnfNodePtr ConvertConstInputToAttr::Process(const FuncGraphPtr &, const An
   if (attr_index.empty()) {
     return nullptr;
   }
-  ConstInputToAttr(cnode, attr_index);
-  return node;
+  return ConstInputToAttr(cnode, attr_index);
 }
 }  // namespace mindspore::opt
