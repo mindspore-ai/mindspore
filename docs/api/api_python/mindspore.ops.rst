@@ -188,6 +188,7 @@ MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支
     mindspore.ops.ComputeAccidentalHits
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
+    mindspore.ops.UpsampleTrilinear3D
     
 图像处理
 ^^^^^^^^^^

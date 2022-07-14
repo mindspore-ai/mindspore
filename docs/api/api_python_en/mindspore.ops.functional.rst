@@ -546,6 +546,7 @@ Other Operators
     mindspore.ops.clip_by_value
     mindspore.ops.core
     mindspore.ops.count_nonzero
+    mindspore.ops.ctc_greedy_decoder
     mindspore.ops.cummin
     mindspore.ops.derivative
     mindspore.ops.dot
