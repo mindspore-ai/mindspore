@@ -28,6 +28,7 @@
 #include "plugin/device/cpu/kernel/nnacl/fp32/power_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/sub_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/mul_fp32.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32/arithmetic_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
 
 namespace mindspore {
@@ -235,13 +236,19 @@ void ArithmeticCpuTypeFunc<T>::AssignAdd(T *input1, const T *input2, T *out) {
 
 template <typename T>
 void ArithmeticCpuTypeFunc<T>::AssignSub(T *input1, const T *input2, T *out) {
-  auto task = [&input1, &input2, &out](size_t start, size_t end) {
-    for (size_t i = start; i < end; i++) {
-      out[i] = input1[i] - input2[i];
-      input1[i] = out[i];
-    }
-  };
-  ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  if constexpr (std::is_same_v<T, float>) {
+    auto task = [&input1, &input2, &out](size_t start, size_t end) {
+      (void)AssignSubOpt(input1 + start, input2 + start, end - start);
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  } else {
+    auto task = [&input1, &input2, &out](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        input1[i] = input1[i] - input2[i];
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size_, this, &parallel_search_info_);
+  }
 }
 
 template <typename T>
@@ -901,25 +908,65 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithmeticCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
      SpecializeArithFunc<double>}}},
   {kAssignSub,
-   {{KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+   {{KernelAttr()
+       .AddInputAttr(kNumberTypeInt8)
+       .AddInputAttr(kNumberTypeInt8)
+       .AddOutputAttr(kNumberTypeInt8)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<int8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddInputAttr(kNumberTypeUInt8)
+       .AddOutputAttr(kNumberTypeUInt8)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<uint8_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt16)
+       .AddInputAttr(kNumberTypeInt16)
+       .AddOutputAttr(kNumberTypeInt16)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<int16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddInputAttr(kNumberTypeUInt16)
+       .AddOutputAttr(kNumberTypeUInt16)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<uint16_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt32)
+       .AddInputAttr(kNumberTypeInt32)
+       .AddOutputAttr(kNumberTypeInt32)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<int32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddInputAttr(kNumberTypeUInt32)
+       .AddOutputAttr(kNumberTypeUInt32)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<uint32_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kNumberTypeFloat32)
+       .AddOutputAttr(kNumberTypeFloat32)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<float>},
-    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddInputAttr(kNumberTypeUInt64)
+       .AddOutputAttr(kNumberTypeUInt64)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<uint64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeInt64)
+       .AddInputAttr(kNumberTypeInt64)
+       .AddOutputAttr(kNumberTypeInt64)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<int64_t>},
-    {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddInputAttr(kNumberTypeFloat64)
+       .AddOutputAttr(kNumberTypeFloat64)
+       .AddOutInRef(0, 0),
      SpecializeArithFunc<double>}}},
   {prim::kPrimSquaredDifference->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),

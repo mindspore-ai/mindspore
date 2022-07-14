@@ -77,6 +77,8 @@ int ElementOptMod(const float *in0, const float *in1, float *out, int size, cons
 int ElementModInt(const int *in0, const int *in1, int *out, int size);
 int ElementOptModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
+void AssignSubOpt(float *in0, const float *in1, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
