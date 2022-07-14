@@ -1352,6 +1352,37 @@ class Tensor(Tensor_):
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
 
+    def prod(self, axis=(), keep_dims=False):
+        """
+        Reduce a dimension of a tensor by product all elements in the dimension.
+
+        Args:
+            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction.
+                When the axis is None or empty tuple, reduce all dimensions. When the axis is int, tuple(int) or
+                list(int), if the dimension of Tensor is dim, the value range is [-dim, dim). Default: ().
+            keep_dims (bool): Whether to keep the reduced dimensions. Default: False.
+
+        Returns:
+            Tensor, has the same data type as input tensor.
+
+        Raises:
+            TypeError: If `axis` is not one of the following: int, tuple or list.
+            TypeError: If `keep_dims` is not a bool.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> input_x = Tensor(np.array([1, 2, 3], dtype=np.float32))
+            >>> output = input_x.prod()
+            >>> print(output)
+            6.0
+        """
+        self._init_check()
+        return tensor_operator_registry.get('prod')(self, axis, keep_dims)
+
     def select(self, condition, y):
         r"""
         The conditional tensor determines whether the corresponding element in the output must be

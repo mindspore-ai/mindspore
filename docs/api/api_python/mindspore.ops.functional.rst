@@ -207,17 +207,17 @@ Reduction算子
 
    * - functional
      - Description
-   * - mindspore.ops.reduce_max
+   * - mindspore.ops.amax
      - Refer to :class:`mindspore.ops.ReduceMax`.
-   * - mindspore.ops.reduce_mean
+   * - mindspore.ops.mean
      - Refer to :class:`mindspore.ops.ReduceMean`.
-   * - mindspore.ops.reduce_min
+   * - mindspore.ops.amin
      - Refer to :class:`mindspore.ops.ReduceMin`.
-   * - mindspore.ops.reduce_prod
+   * - mindspore.ops.prod
      - Refer to :class:`mindspore.ops.ReduceProd`.
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
-   
+
 比较算子
 ^^^^^^^^^^^^^
 
@@ -262,7 +262,7 @@ Reduction算子
      - `tensor_le` will be deprecated in the future. Please use `mindspore.ops.le` instead.
    * - mindspore.ops.tensor_lt
      - `tensor_lt` will be deprecated in the future. Please use `mindspore.ops.less` instead.
-   
+
 线性代数算子
 ^^^^^^^^^^^^^
 
@@ -461,7 +461,7 @@ Parameter操作算子
      - Description
    * - mindspore.ops.print\_
      - Refer to :class:`mindspore.ops.Print`.
-   
+
 其他算子
 ----------------
 

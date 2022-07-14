@@ -35,6 +35,10 @@
 #include "ops/sub.h"
 #include "ops/strided_slice.h"
 #include "ops/reduce_sum.h"
+#include "ops/reduce_mean.h"
+#include "ops/reduce_min.h"
+#include "ops/reduce_max.h"
+#include "ops/reduce_prod.h"
 #include "abstract/abstract_function.h"
 #include "abstract/ops/infer_functions.h"
 #include "utils/ms_context.h"
@@ -339,11 +343,12 @@ PrimitiveEvalImplMap &GetPrimitiveToBackendEvalImplMap() {
     {prim::kPrimLog, R{ops::LogInfer, nullptr, true}},
     {prim::kPrimReciprocal, R{ops::ReciprocalInfer, nullptr, true}},
     {prim::kPrimReduceSum, R{ops::ReduceSumInfer, nullptr, true}},
-    {prim::kPrimReduceMean, R{InferImplReduceFunc, nullptr, true}},
+    {prim::kPrimReduceMean, R{ops::ReduceMeanInfer, nullptr, true}},
+    {prim::kPrimReduceProd, R{ops::ReduceProdInfer, nullptr, true}},
     {prim::kPrimReduceAll, R{InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceAny, R{InferImplReduceFunc, nullptr, true}},
     {prim::kPrimReduceMax, R{InferImplReduceFunc, nullptr, true}},
-    {prim::kPrimReduceMin, R{InferImplReduceFunc, nullptr, true}},
+    {prim::kPrimReduceMin, R{ops::ReduceMinInfer, nullptr, true}},
     {prim::kPrimBiasAddGrad, R{InferImplBiasAddGrad, nullptr, true}},
     {prim::kPrimReduceScatter, R{InferImplReduceScatter, nullptr, true}},
     {prim::kPrimCast, R{InferImplCast, nullptr, true}},

@@ -12,7 +12,7 @@ mindspore.Tensor
     - **shape** (Union[tuple, list, int]) - 用于定义该Tensor的形状。如果指定了 `input_data` ，则无需设置该参数。默认值：None。
     - **init** (Initializer) - 用于在并行模式中延迟Tensor的数据的初始化，如果指定该参数，则 `dtype` 和 `shape` 也必须被指定。不推荐在非自动并行之外的场景下使用该接口。只有当调用 `Tensor.init_data` 时，才会使用指定的 `init` 来初始化Tensor数据。默认值：None。
     - **internal** (bool) - Tensor是否由框架创建。 如果为True，表示Tensor是由框架创建的，如果为False，表示Tensor是由用户创建的。默认值：False。
-    
+
     **输出：**
 
     Tensor。
@@ -125,7 +125,7 @@ mindspore.Tensor
         **参数：**
 
         - **value** (Tensor) - 用于赋值的Tensor。
-        
+
         **返回：**
 
         Tensor，赋值后的Tensor。
@@ -453,7 +453,7 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
-    
+
     .. py:method:: gather_elements(dim, index)
 
         获取指定轴的元素。
@@ -495,7 +495,7 @@ mindspore.Tensor
 
         .. math::
             output[(i_0, ..., i_{K-2})] = input\_x[indices[(i_0, ..., i_{K-2})]]
-        
+
         `indices` 的最后一维不能超过输入Tensor的秩：
         :math:`indices.shape[-1] <= input\_x.rank`。
 
@@ -510,7 +510,7 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 如果输入Tensor的shape长度小于 `indices` 的最后一个维度。
-    
+
     .. py:method:: gather(input_indices, axis)
 
         返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。
@@ -525,14 +525,14 @@ mindspore.Tensor
         - **axis** (int) - 指定维度索引的轴以搜集切片。
 
         **返回：**
-        
+
         Tensor,其中shape维度为 :math:`input\_params.shape[:axis] + input\_indices.shape + input\_params.shape[axis + 1:]`。
 
         **异常：**
 
         - **TypeError** - 如果 `axis` 不是一个整数。
         - **TypeError** - 如果 `input_indices` 不是一个整数类型的Tensor。
-    
+
     .. py:method:: ger(x)
 
         计算两个Tensor的外积，即计算此Tensor 和 `x` 的外积。如果此Tensor shape为 :math:`(m,)` ，`x` shape为 :math:`(n,)` ，
@@ -553,9 +553,9 @@ mindspore.Tensor
         那么输出shape为 :math:`(m, n)` 。
 
     .. py:method:: hardshrink(lambd=0.5)
-        
+
         Hard Shrink激活函数，按输入元素计算输出，公式定义如下：
-        
+
         .. math::
             \text{HardShrink}(x) =
             \begin{cases}
@@ -563,17 +563,17 @@ mindspore.Tensor
             x, & \text{ if } x < -\lambda \\
             0, & \text{ otherwise }
             \end{cases}
-            
+
         **参数：**
-        
+
         - **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值：0.5。
-        
+
         **返回：**
-        
+
         Tensor，shape和数据类型与输入相同。
-        
+
         **异常：**
-        
+
         - **TypeError** - `lambd` 不是float。
         - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
 
@@ -850,6 +850,24 @@ mindspore.Tensor
         **返回：**
 
         与输入的张量具有相同的数据类型的Tensor。
+
+    .. py:method:: prod(axis=(), keep_dims=False)
+
+        默认情况下，通过将维度中的所有元素相乘来减少张量的维度。并且还可以沿轴减小“x”的维度。通过控制`keep_dims`判断输出和输入的维度是否相同。
+
+        **参数：**
+
+        - **axis** (Union[None, int, tuple(int), list(int)]) - 计算prod的维度。当 `axis` 为None或空元组时，计算所有维度。当 `axis` 为int、tuple(int)或list(int)时，记Tensor的维度为dim，则其取值范围为[-dim, dim)。默认值：()。
+        - **keep_dims** (bool) - 计算结果是否保留维度。默认值：False。
+
+        **返回：**
+
+        与输入的张量具有相同的数据类型的Tensor。
+
+        **异常：**
+
+        - **TypeError** - 如果 `axis` 不是以下数据类型之一：int、tuple 或 list。
+        - **TypeError** - 如果 `keep_dims` 不是bool类型
 
     .. py:method:: min(axis=None, keepdims=False, initial=None, where=True)
 
