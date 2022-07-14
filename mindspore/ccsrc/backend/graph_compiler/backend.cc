@@ -624,7 +624,8 @@ const ActorInfo &MindRTBackend::CompileGraphs(const FuncGraphPtr &func_graph) {
   // Construct the graph compiler info.
   auto graph_compiler_info = ConstructGraphCompilerInfo(root_graph);
   MS_EXCEPTION_IF_NULL(graph_compiler_info);
-  if (real_execution_mode_ == kGraphMode && !graph_compiler_info->graphs_.empty()) {
+  if (real_execution_mode_ == kGraphMode &&
+      ((!graph_compiler_info->graphs_.empty()) || graph_compiler_info->control_nodes_.size() > 1)) {
     // Transform graph to actor DAG, and schedule the actor DAG.
     ParseControlNodes(*graph_compiler_info);
     const auto &actor_set = runtime::GraphScheduler::GetInstance().Transform(*graph_compiler_info);

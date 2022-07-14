@@ -209,10 +209,11 @@ class ControlNodeParser {
   // 3. Determine the type of device context output for the real parameters on the partial nodes and call nodes.
   void ParseDeviceContext(const std::vector<AnfNodePtr> &control_nodes,
                           const std::vector<KernelGraphPtr> &kernel_graphs,
-                          const std::vector<DeviceContext *> &device_contexts,
+                          const std::vector<DeviceContext *> &device_contexts, DeviceContext *default_context,
                           const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
   void ParseDeviceContextForFuncGraph(const std::vector<KernelGraphPtr> &kernel_graphs,
                                       const std::vector<DeviceContext *> &device_contexts,
+                                      DeviceContext *default_context,
                                       const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs);
   void ParseDeviceContextForReturnNode(const DeviceContext *default_context);
   void ParseDeviceContextForCallNode(const std::vector<AnfNodePtr> &control_nodes);

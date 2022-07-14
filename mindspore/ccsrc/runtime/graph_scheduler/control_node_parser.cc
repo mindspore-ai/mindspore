@@ -20,6 +20,7 @@
 #include "runtime/graph_scheduler/actor/actor_common.h"
 #include "include/common/utils/convert_utils.h"
 #include "abstract/utils.h"
+#include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "abstract/abstract_function.h"
 
@@ -677,10 +678,25 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
                       << " device context num:" << device_contexts.size();
   }
 
-  if (control_nodes.size() <= 1 || device_contexts.empty()) {
+  if (control_nodes.size() <= 1) {
+    MS_LOG(DEBUG) << "Control node parser is not inited.";
     return;
   }
   MS_LOG(DEBUG) << "Control node parse start.";
+
+  // Fetch default device context.
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  DeviceContext *default_context = nullptr;
+  if (device_contexts.empty()) {
+    default_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_name, device_id});
+  } else {
+    default_context = device_contexts[0];
+  }
+  MS_EXCEPTION_IF_NULL(default_context);
+
   KernelGraphToDeviceContext kernel_graph_to_device_contexts;
   for (size_t i = 0; i < graphs.size(); ++i) {
     kernel_graph_to_device_contexts[graphs[i]] = device_contexts[i];
@@ -724,13 +740,13 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseFrontToBackendParameter(graphs, device_contexts);
 
-  CreateDeviceTensorForRootGraphParameter(device_contexts[0]);
+  CreateDeviceTensorForRootGraphParameter(default_context);
 
   ParseFrontToBackendKernel(graphs, device_contexts);
 
-  ParseDeviceContext(control_nodes, graphs, device_contexts, func_graph_to_kernel_graphs);
+  ParseDeviceContext(control_nodes, graphs, device_contexts, default_context, func_graph_to_kernel_graphs);
 
-  FetchFrontValueNode(control_nodes, device_contexts[0]);
+  FetchFrontValueNode(control_nodes, default_context);
 
   ParseControlNodeParameter(control_nodes);
 
@@ -861,25 +877,24 @@ bool ControlNodeParser::IsSameKernelGraphGroup(const AnfNodePtr &node, const Ker
 void ControlNodeParser::ParseDeviceContext(const std::vector<AnfNodePtr> &control_nodes,
                                            const std::vector<KernelGraphPtr> &kernel_graphs,
                                            const std::vector<DeviceContext *> &device_contexts,
+                                           DeviceContext *default_context,
                                            const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
-  if (device_contexts.empty()) {
-    MS_LOG(EXCEPTION) << "Invalid device contexts.";
-  }
-
-  ParseDeviceContextForFuncGraph(kernel_graphs, device_contexts, func_graph_to_kernel_graphs);
-  ParseDeviceContextForReturnNode(device_contexts[0]);
+  MS_EXCEPTION_IF_NULL(default_context);
+  ParseDeviceContextForFuncGraph(kernel_graphs, device_contexts, default_context, func_graph_to_kernel_graphs);
+  ParseDeviceContextForReturnNode(default_context);
   ParseDeviceContextForCallNode(control_nodes);
   ParseDeviceContextForPartialNode(control_nodes);
 }
 
 void ControlNodeParser::ParseDeviceContextForFuncGraph(const std::vector<KernelGraphPtr> &kernel_graphs,
                                                        const std::vector<DeviceContext *> &device_contexts,
+                                                       DeviceContext *default_context,
                                                        const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
+  MS_EXCEPTION_IF_NULL(default_context);
   mindspore::HashMap<KernelGraphPtr, DeviceContext *> kernel_graph_to_device_context;
   for (size_t i = 0; i < kernel_graphs.size(); ++i) {
     kernel_graph_to_device_context[kernel_graphs[i]] = device_contexts[i];
   }
-  const auto &default_context = device_contexts[0];
 
   // Collect the device context type of the parameter in the kernel graph as the type of the real parameters.
   for (const auto &func_graph_to_kernel_graph : func_graph_to_kernel_graphs) {
