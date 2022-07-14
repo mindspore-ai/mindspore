@@ -3172,6 +3172,9 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
         Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
         \end{align}
 
+    Note:
+        Ascend platform only supports float16 type for input_x.
+
     Args:
         input_x (Tensor) - The input of adaptive_max_pool2d, which is a 3D or 4D tensor,
           with float16, float32 or float64 data type.
@@ -3197,7 +3200,7 @@ def adaptive_max_pool2d(input_x, output_size, return_indices=False):
         ValueError: If the dimension of `input_x` is not NCHW or CHW.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)

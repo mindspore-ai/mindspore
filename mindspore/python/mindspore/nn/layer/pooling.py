@@ -668,6 +668,9 @@ class AdaptiveMaxPool2d(Cell):
         Output(i,j) &= {\max Input[h_{start}:h_{end}, w_{start}:w_{end}]}
         \end{align}
 
+    Note:
+        Ascend platform only supports float16 type for input_x.
+
     Args:
         output_size (Union[int, tuple]): The target output size is H x W.
             ouput_size can be a tuple, or a single H for H x H, and H and W can be int or None
@@ -694,7 +697,7 @@ class AdaptiveMaxPool2d(Cell):
         ValueError: If the dimension of `input_x` is not NCHW or CHW.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> # case 1: output_size=(None, 2)
