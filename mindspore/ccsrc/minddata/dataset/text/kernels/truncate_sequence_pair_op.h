@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_KERNELS_DATA_TRUNCATE_SEQUENCE_PAIR_OP_H_
 
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/kernels/tensor_op.h"

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ class ConcatOp : public PipelineOp {
   bool IgnoreSample();
 
  private:
-  Status Verify(int32_t id, const TensorRow &tensor_row);
+  Status Verify(int32_t id, const TensorRow &new_row);
 
   std::unordered_map<std::string, int32_t> column_name_id_;  // Mapping between col index and col name
   std::vector<DataType> data_type_;

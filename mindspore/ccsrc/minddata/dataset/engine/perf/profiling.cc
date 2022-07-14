@@ -235,7 +235,7 @@ bool ProfilingManager::IsProfilingEnable(const ExecutionTree *tree) const {
   return (external_state == kEnabledTreeNotRegistered || external_state == kEnabledTreeRegistered);
 }
 
-Status ProfilingManager::RegisterTree(TreeAdapter *tree_adapter) {
+Status ProfilingManager::RegisterTree(const TreeAdapter *tree_adapter) {
   CHECK_FAIL_RETURN_UNEXPECTED(tree_ == nullptr, "Another tree is already registered.");
   CHECK_FAIL_RETURN_UNEXPECTED((autotuning_ || profiling_) == true,
                                "MD Profiler is disabled. Cannot register the tree.");
@@ -812,7 +812,9 @@ Status ProfilingManager::Save(const std::string &profile_data_path) {
 
 ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeState(const ExecutionTree *tree) const {
   auto enabled = (profiling_ || autotuning_);
-  if (!enabled) return kNotEnabled;
+  if (!enabled) {
+    return kNotEnabled;
+  }
   if (tree_ == nullptr) {
     return kEnabledTreeNotRegistered;
   } else {
@@ -820,7 +822,7 @@ ProfilingManager::ProfilingRegistrationState ProfilingManager::GetProfilerTreeSt
   }
 }
 
-std::string ProfilingManager::GetRankID() {
+std::string ProfilingManager::GetRankID() const {
   std::string rank_id;
 #ifdef ENABLE_GPUQUE
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ class SBUOp : public MappableLeafOp {
   // @param row_id_type row_id - id for this tensor row.
   // @param TensorRow row - image & label read into this tensor row.
   // @return Status - The status code returned.
-  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
+  Status LoadTensorRow(row_id_type row_id, TensorRow *trow) override;
 
   // Private function for computing the assignment of the column name map.
   // @return Status - The status code returned.
@@ -82,7 +82,7 @@ class SBUOp : public MappableLeafOp {
   // @param const std::string &path - path to the image file.
   // @param std::shared_ptr<Tensor> tensor - tensor to store image.
   // @return Status - The status code returned.
-  Status ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor);
+  Status ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) const;
 
   // Parse SBU data file.
   // @return Status - The status code returned.
@@ -105,7 +105,7 @@ class SBUOp : public MappableLeafOp {
   // @param const std::string &from - string from.
   // @param const std::string &to - string to.
   // @return Status - The status code returned.
-  Status ReplaceAll(std::string *str, const std::string &from, const std::string &to);
+  Status ReplaceAll(std::string *str, const std::string &from, const std::string &to) const;
 
   std::string folder_path_;  // directory of data files
   const bool decode_;

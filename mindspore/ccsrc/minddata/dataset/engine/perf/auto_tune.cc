@@ -46,20 +46,20 @@ AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
       phase_1_best_time_(-1),
       phase_1_no_improve_count_(0),
       AT_change_(false),
-      phase_3_state_(AutoTuneMemPhase::kAutoTuneMemInit) {
-  tree_modifier_ = std::make_unique<TreeModifier>(tree_adapter_);
+      phase_3_state_(AutoTuneMemPhase::kAutoTuneMemInit),
+      tree_modifier_(std::make_unique<TreeModifier>(tree_adapter_)),
+      step_gap_(GlobalContext::config_manager()->autotune_interval()),
+      save_autoconfig_(GlobalContext::config_manager()->save_autoconfig()) {
   max_workers_ = GlobalContext::config_manager()->num_cpu_threads();
-  step_gap_ = GlobalContext::config_manager()->autotune_interval();
-  save_autoconfig_ = GlobalContext::config_manager()->save_autoconfig();
   autotune_json_filepath_ = GlobalContext::config_manager()->get_autotune_json_filepath();
 }
 
 Status AutoTune::Main() {
   TaskManager::FindMe()->Post();
   MS_LOG(INFO) << "Dataset AutoTune thread has started.";
-  if (step_gap_) {
+  if (step_gap_ != 0) {
     mode_ = AutoTuneMode::kAutoTuneModeStep;
-  } else if (step_gap_ == 0) {
+  } else {
     mode_ = AutoTuneMode::kAutoTuneModeEpoch;
   }
   const bool nodes_offloaded = !tree_adapter_->GetOffloadJson().empty();
@@ -306,7 +306,7 @@ Status AutoTune::GetOpsQueueUtil(std::map<int32_t, double> *out_ops_queue_util,
     // Input queue is the output queue of the child
     (*in_ops_queue_util)[itr->first] = (*out_ops_queue_util)[itr->first + 1];
     // If the child is an inlined op, use the prev known utilization
-    if ((*in_ops_queue_util)[itr->first] == -1) {
+    if ((*in_ops_queue_util)[itr->first] == -1.0) {
       (*in_ops_queue_util)[itr->first] = (*in_ops_queue_util)[itr->first + 1];
     }
   }
@@ -325,13 +325,13 @@ Status AutoTune::GetOpsNumWorker(std::map<int32_t, int32_t> *ops_num_workers) {
   return Status::OK();
 }
 
-bool AutoTune::IsSink() {
+bool AutoTune::IsSink() const {
   std::shared_ptr<Tracing> node;
   return profiling_manager_->GetTracingNode(kDeviceQueueTracingName, &node).IsOk();
 }
 
 template <typename T>
-double AutoTune::Mean(const std::vector<T> &items) {
+double AutoTune::Mean(const std::vector<T> &items) const {
   if (items.size() == 0) {
     return 0;
   }
@@ -471,7 +471,7 @@ Status AutoTune::RunIteration() {
   return Status::OK();
 }
 
-Status AutoTune::GetConnectorSize(std::vector<int32_t> *sizes) {
+Status AutoTune::GetConnectorSize(std::vector<int32_t> *sizes) const {
   if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
     RETURN_IF_NOT_OK(profiling_manager_->GetConnectorSizeByEpoch(cur_epoch_running_, sizes));
   } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
@@ -480,7 +480,7 @@ Status AutoTune::GetConnectorSize(std::vector<int32_t> *sizes) {
   return Status::OK();
 }
 
-Status AutoTune::GetConnectorCapacity(std::vector<int32_t> *capacities) {
+Status AutoTune::GetConnectorCapacity(std::vector<int32_t> *capacities) const {
   if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
     RETURN_IF_NOT_OK(profiling_manager_->GetConnectorCapacityByEpoch(cur_epoch_running_, capacities));
   } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {
@@ -497,13 +497,13 @@ Status AutoTune::GetConnectorUtil(double *usage_avg_last, double *avg_size, doub
   std::vector<int32_t> capacities;
   RETURN_IF_NOT_OK(GetConnectorCapacity(&capacities));
   *avg_capacity = Mean(capacities);
-  CHECK_FAIL_RETURN_UNEXPECTED(avg_capacity != 0, "Capacities of connectors should not be 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(*avg_capacity != 0.0, "Capacities of connectors should not be 0.0");
   // size here means size of queue utilized
   *usage_avg_last = (*avg_size / *avg_capacity);
   return Status::OK();
 }
 
-Status AutoTune::GetEmptyQueueFrequency(float *empty_freq) {
+Status AutoTune::GetEmptyQueueFrequency(float *empty_freq) const {
   if (mode_ == AutoTuneMode::kAutoTuneModeEpoch) {
     RETURN_IF_NOT_OK(profiling_manager_->GetEmptyQueueFrequencyByEpoch(cur_epoch_running_, empty_freq));
   } else if (mode_ == AutoTuneMode::kAutoTuneModeStep) {

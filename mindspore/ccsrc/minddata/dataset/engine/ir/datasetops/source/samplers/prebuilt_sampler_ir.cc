@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,11 @@ Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
 Status PreBuiltSamplerObj::SamplerBuild(std::shared_ptr<SamplerRT> *const sampler) {
   Status s = BuildChildren(&sp_);
-  if (s.IsOk())
+  if (s.IsOk()) {
     *sampler = sp_;
-  else
+  } else {
     *sampler = nullptr;
+  }
   return s;
 }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ Status USPSOp::CountTotalRows(const std::string &dir, const std::string &usage, 
   return Status::OK();
 }
 
-int64_t USPSOp::CountRows(const std::string &data_file) {
+int64_t USPSOp::CountRows(const std::string &data_file) const {
   std::ifstream data_file_reader;
   data_file_reader.open(data_file, std::ios::in);
   if (!data_file_reader.is_open()) {
@@ -233,7 +233,7 @@ Status USPSOp::LoadTensor(std::string *line, TensorRow *trow) {
 }
 
 Status USPSOp::ParseLine(std::string *line, const std::unique_ptr<unsigned char[]> &images_buffer,
-                         const std::unique_ptr<uint32_t[]> &labels_buffer) {
+                         const std::unique_ptr<uint32_t[]> &labels_buffer) const {
   auto label = &labels_buffer[0];
   auto pixels = &images_buffer[0];
 

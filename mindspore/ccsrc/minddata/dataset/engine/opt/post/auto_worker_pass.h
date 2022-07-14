@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ class AutoWorkerPass : public IRTreePass {
   /// \brief destructor, by doing "= default", compiler will automatically generate the correct destructor
   ~AutoWorkerPass() override = default;
 
-  Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *) override;
+  Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) override;
 
  private:
   class OpWeightPass : public IRNodePass {

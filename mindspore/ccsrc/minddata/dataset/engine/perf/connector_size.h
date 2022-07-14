@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ class ConnectorSize : public Sampling {
   Status Init() override;
 
   // Parse op information and transform to json format
-  json ParseOpInfo(const DatasetOp &node);
+  json ParseOpInfo(const DatasetOp &node) const;
 
   // Change file mode after save throughput data
   Status ChangeFileMode(const std::string &dir_path, const std::string &rank_id) override { return Status::OK(); }

@@ -41,14 +41,16 @@
 namespace mindspore {
 namespace dataset {
 
-TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), launched_(false), tree_state_(kCompileStateInit) {
-  optimize_ = common::GetEnv("OPTIMIZE") == "true";
+TreeAdapter::TreeAdapter(UsageFlag usage)
+    : usage_(usage),
+      launched_(false),
+      tree_state_(kCompileStateInit),
+      optimize_(common::GetEnv("OPTIMIZE") == "true"),
 
-  // Initialize profiling parameters
-  cur_batch_num_ = 0;
-  cur_connector_size_ = 0;
-  cur_connector_capacity_ = 0;
-}
+      // Initialize profiling parameters
+      cur_batch_num_(0),
+      cur_connector_size_(0),
+      cur_connector_capacity_(0) {}
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   RETURN_UNEXPECTED_IF_NULL(ir);

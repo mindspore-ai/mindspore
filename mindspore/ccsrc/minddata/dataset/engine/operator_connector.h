@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,8 @@ class OperatorConnector : public Queue<TensorRow> {
  public:
   /// Constructor of OperatorConnector
   /// \param queue_capacity The number of element (TensorRows) for the queue.
-  explicit OperatorConnector(int32_t queue_capacity) : Queue<TensorRow>(queue_capacity) {
+  explicit OperatorConnector(int32_t queue_capacity) : Queue<TensorRow>(queue_capacity), out_rows_count_(0) {
     my_name_ = Services::GetUniqueID();
-    out_rows_count_ = 0;
   }
 
   /// Destructor of -OperatorConnector

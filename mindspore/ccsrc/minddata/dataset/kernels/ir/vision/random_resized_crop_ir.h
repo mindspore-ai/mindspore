@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ class RandomResizedCropOperation : public TensorOperation {
 
   /// \brief default copy constructor
   explicit RandomResizedCropOperation(const RandomResizedCropOperation &);
+
+  // Copy assignment operator
+  RandomResizedCropOperation &operator=(const RandomResizedCropOperation &) = default;
 
   ~RandomResizedCropOperation();
 

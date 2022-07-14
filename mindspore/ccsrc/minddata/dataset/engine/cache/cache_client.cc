@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,9 @@ CacheClient::~CacheClient() {
   // Manually release the async buffer because we need the comm layer.
   if (async_buffer_stream_) {
     Status rc = async_buffer_stream_->ReleaseBuffer();
-    if (rc.IsError()) MS_LOG(ERROR) << rc;
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
+    }
   }
   if (client_id_ != -1) {
     try {

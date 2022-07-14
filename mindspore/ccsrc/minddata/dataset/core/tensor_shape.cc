@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,9 @@ TensorShape::TensorShape(py::list l)
 
 #ifndef ENABLE_ANDROID
 TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
-    : raw_shape_(*GlobalContext::Instance()->int_allocator()), strides_(*GlobalContext::Instance()->int_allocator()) {
+    : raw_shape_(*GlobalContext::Instance()->int_allocator()),
+      strides_(*GlobalContext::Instance()->int_allocator()),
+      known_(true) {
   for (int i = 0; i < cv_size.dims(); i++) {
     raw_shape_.push_back(cv_size[i]);
   }
@@ -102,7 +104,6 @@ TensorShape::TensorShape(cv::MatSize cv_size, uint32_t type)
   if (channels != 1) {
     raw_shape_.push_back(channels);
   }
-  known_ = true;
 }
 #endif
 

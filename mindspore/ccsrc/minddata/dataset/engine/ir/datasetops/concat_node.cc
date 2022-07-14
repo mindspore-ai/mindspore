@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,9 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   // calculate the size of the shard
   int64_t shard_dataset_size = 0;
   std::shared_ptr<SamplerRT> sampler_rt_base = nullptr;
-  if (sampler_) RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt_base));
+  if (sampler_) {
+    RETURN_IF_NOT_OK(sampler_->SamplerBuild(&sampler_rt_base));
+  }
   std::shared_ptr<DistributedSamplerRT> sampler_rt =
     sampler_ ? std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_rt_base) : nullptr;
   if (sampler_rt != nullptr) {

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
   int32_t padded_image_w = 0;
   const int output_count = 2;
   output->resize(output_count);
-  (*output)[1] = std::move(input[1]);  // since some boxes may be removed
+  (*output)[1] = input[1];  // since some boxes may be removed
 
   bool crop_further = true;  // Whether further cropping will be required or not, true unless required size matches
   RETURN_IF_NOT_OK(          // Error passed back to caller
@@ -47,13 +47,13 @@ Status RandomCropWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) 
                                &padded_image_w, &padded_image_h, &crop_further));
 
   // update bounding boxes with new values based on relevant image padding
-  if (t_pad_left || t_pad_top) {
+  if (t_pad_left != 0 || t_pad_top != 0) {
     RETURN_IF_NOT_OK(BoundingBox::PadBBoxes(&(*output)[1], boxCount, t_pad_top, t_pad_left));
   }
   if (!crop_further) {
     // no further cropping required
     (*output)[0] = pad_image;
-    (*output)[1] = std::move(input[1]);
+    (*output)[1] = input[1];
     return Status::OK();
   }
 

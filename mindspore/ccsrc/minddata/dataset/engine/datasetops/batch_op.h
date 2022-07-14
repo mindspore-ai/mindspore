@@ -206,7 +206,7 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @param const PadInfo &pad_info pad info
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status The status code returned
-  static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
+  static Status PadColumns(const std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
   int64_t GetTreeBatchSize() override;

@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_OPT_PRE_ADD_SKIP_PASS_H_
 
 #include <memory>
-#include <vector>
 #include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
@@ -70,9 +69,9 @@ class AddSkipPass : public IRTreePass {
     /// \brief Getter
     std::shared_ptr<DatasetNode> injection_point() { return injection_point_; }
 
-    int64_t GetStep() { return step_; }
+    int64_t GetStep() const { return step_; }
 
-    int32_t GetNumEpochs() { return num_epochs_; }
+    int32_t GetNumEpochs() const { return num_epochs_; }
 
    private:
     std::shared_ptr<DatasetNode> injection_point_;

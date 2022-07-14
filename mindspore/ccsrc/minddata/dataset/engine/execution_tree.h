@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,6 +230,8 @@ class ExecutionTree {
   std::string unique_id_;            // A unique identifier for the tree
 
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+  // Constructor for if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+  explicit ExecutionTree(std::shared_ptr<ConfigManager> cfg);
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
   // but for distribute scenario, this rank_id come from _get_global_rank() in python

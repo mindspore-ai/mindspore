@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ Status ConnectorSize::Sample() {
 }
 
 // JSON serializer helper function
-json ConnectorSize::ParseOpInfo(const DatasetOp &node) {
+json ConnectorSize::ParseOpInfo(const DatasetOp &node) const {
   json json_node;
   json_node["op_id"] = node.id();
   json_node["op_type"] = node.Name();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,10 +84,18 @@ Status DatasetCacheImpl::to_json(nlohmann::json *out_json) {
   args["session_id"] = session_id_;
   args["cache_memory_size"] = cache_mem_sz_;
   args["spill"] = spill_;
-  if (hostname_) args["hostname"] = hostname_.value();
-  if (port_) args["port"] = port_.value();
-  if (num_connections_) args["num_connections"] = num_connections_.value();
-  if (prefetch_sz_) args["cache_prefetch_size"] = prefetch_sz_.value();
+  if (hostname_) {
+    args["hostname"] = hostname_.value();
+  }
+  if (port_) {
+    args["port"] = port_.value();
+  }
+  if (num_connections_) {
+    args["num_connections"] = num_connections_.value();
+  }
+  if (prefetch_sz_) {
+    args["cache_prefetch_size"] = prefetch_sz_.value();
+  }
   *out_json = args;
   return Status::OK();
 }

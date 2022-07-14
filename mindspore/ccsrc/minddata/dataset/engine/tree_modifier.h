@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ class TreeModifier {
  public:
   /// Constructor to create a TreeModifier given a TreeAdapter
   /// \param adapter TreeAdapter
-  explicit TreeModifier(TreeAdapter *adapter);
+  explicit TreeModifier(const TreeAdapter *adapter);
 
   /// Constructor to create a TreeModifier given an ExecutionTree
   /// \param tree ExecutionTree

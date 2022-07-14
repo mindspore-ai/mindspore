@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,7 +189,10 @@ int CsvOp::CsvParser::PutRow(int c) {
   if (s.IsError()) {
     err_message_ = s.ToString();
     // if error type is interrupted, return error code -2
-    if (s.StatusCode() == kMDInterrupted) return -2;
+    if (s.StatusCode() == kMDInterrupted) {
+      constexpr int error_code = -2;
+      return error_code;
+    }
     return -1;
   }
 
@@ -494,7 +497,9 @@ Status CsvOp::LoadFile(const std::string &file, int64_t start_offset, int64_t en
       int err = csv_parser.ProcessMessage(chr);
       if (err != 0) {
         // if error code is -2, the returned error is interrupted
-        if (err == -2) return Status(kMDInterrupted);
+        if (err == -2) {
+          return Status(kMDInterrupted);
+        }
         RETURN_STATUS_UNEXPECTED("Invalid file, failed to parse csv file: " + file + " at line " +
                                  std::to_string(csv_parser.GetTotalRows() + 1) +
                                  ". Error message: " + csv_parser.GetErrorMessage());

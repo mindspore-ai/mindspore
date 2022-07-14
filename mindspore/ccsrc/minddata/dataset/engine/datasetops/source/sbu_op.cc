@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ Status SBUOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   return Status::OK();
 }
 
-Status SBUOp::ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) {
+Status SBUOp::ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) const {
   RETURN_IF_NOT_OK(Tensor::CreateFromFile(path, tensor));
   if (decode_ == true) {
     Status rc = Decode(*tensor, tensor);
@@ -210,7 +210,7 @@ Status SBUOp::ParsePair(const std::string &url, const std::string &caption) {
   return Status::OK();
 }
 
-Status SBUOp::ReplaceAll(std::string *str, const std::string &from, const std::string &to) {
+Status SBUOp::ReplaceAll(std::string *str, const std::string &from, const std::string &to) const {
   size_t pos = 0;
   while ((pos = str->find(from, pos)) != std::string::npos) {
     str->replace(pos, from.length(), to);

@@ -139,8 +139,8 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
   return Status::OK();
 }
 
-Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const unsigned char *src,
-                                const dsize_t &length, TensorPtr *out) {
+Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, const uchar *src, const dsize_t &length,
+                                TensorPtr *out) {
   RETURN_UNEXPECTED_IF_NULL(src);
   RETURN_UNEXPECTED_IF_NULL(out);
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();

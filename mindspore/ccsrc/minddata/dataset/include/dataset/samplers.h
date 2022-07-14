@@ -75,7 +75,8 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
   friend class VOCDataset;
   friend class WIDERFaceDataset;
   friend class YesNoDataset;
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -104,7 +105,8 @@ class MS_API Sampler : std::enable_shared_from_this<Sampler> {
 /// \brief A class to represent a Distributed Sampler in the data pipeline.
 /// \note A Sampler that accesses a shard of the dataset.
 class MS_API DistributedSampler final : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -146,7 +148,8 @@ class MS_API DistributedSampler final : public Sampler {
 /// \note Samples K elements for each P class in the dataset.
 ///        This will sample all classes.
 class MS_API PKSampler final : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -178,7 +181,8 @@ class MS_API PKSampler final : public Sampler {
 /// \brief A class to represent a Random Sampler in the data pipeline.
 /// \note Samples the elements randomly.
 class MS_API RandomSampler final : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -208,7 +212,8 @@ class MS_API RandomSampler final : public Sampler {
 /// \brief A class to represent a Sequential Sampler in the data pipeline.
 /// \note Samples the dataset elements sequentially, same as not having a sampler.
 class MS_API SequentialSampler final : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -238,7 +243,8 @@ class MS_API SequentialSampler final : public Sampler {
 /// \brief A class to represent a Subset Sampler in the data pipeline.
 /// \note Samples the elements from a sequence of indices.
 class MS_API SubsetSampler : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -267,7 +273,8 @@ class MS_API SubsetSampler : public Sampler {
 /// \brief A class to represent a Subset Random Sampler in the data pipeline.
 /// \note Samples the elements randomly from a sequence of indices.
 class MS_API SubsetRandomSampler final : public SubsetSampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor
@@ -294,7 +301,8 @@ class MS_API SubsetRandomSampler final : public SubsetSampler {
 /// \note Samples the elements from [0, len(weights) - 1] randomly with the given
 ///        weights (probabilities).
 class MS_API WeightedRandomSampler final : public Sampler {
-  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t, bool, int32_t, int32_t);
+  friend std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int32_t num_shards,
+                                                   int32_t shard_id);
 
  public:
   /// \brief Constructor

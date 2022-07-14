@@ -40,7 +40,7 @@ Status WeightedRandomSamplerObj::ValidateParams() {
         "weights[" +
         std::to_string(i) + "] = " + std::to_string(weights_[i]));
     }
-    if (weights_[i] == 0.0) {
+    if (weights_[i] == 0) {
       zero_elem++;
     }
   }

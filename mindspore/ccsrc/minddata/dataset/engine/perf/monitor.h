@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,11 +29,12 @@ namespace mindspore {
 namespace dataset {
 class ExecutionTree;
 class ProfilingManager;
+class ConfigManager;
 
 class Monitor {
  public:
   // Monitor object constructor
-  explicit Monitor(ProfilingManager *profiler_manager);
+  explicit Monitor(ProfilingManager *profiling_manager);
 
   ~Monitor();
 
@@ -45,6 +46,9 @@ class Monitor {
   void SetTree(ExecutionTree *tree) { tree_ = tree; }
 
  private:
+  // private constructor
+  Monitor(ProfilingManager *profiling_manager, std::shared_ptr<ConfigManager> cfg);
+
   ProfilingManager *profiling_manager_;
   int64_t sampling_interval_;
   ExecutionTree *tree_;

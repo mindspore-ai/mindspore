@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
+#include <utility>
+#include <vector>
 #include "minddata/dataset/engine/consumers/python_tree_consumer.h"
 
 namespace mindspore::dataset {
-Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
+Status PythonIteratorConsumer::GetNextAsList(const py::list *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<TensorPtr> row;
   {
@@ -30,7 +32,7 @@ Status PythonIteratorConsumer::GetNextAsList(py::list *out) {
   return Status::OK();
 }
 
-Status PythonIteratorConsumer::GetNextAsDict(py::dict *out) {
+Status PythonIteratorConsumer::GetNextAsDict(const py::dict *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> vec;
   Status s;

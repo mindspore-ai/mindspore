@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class ManifestOp : public MappableLeafOp {
   // @param std::pair<std::string, std::vector<std::string>> - <imagefile, <label1, label2...>>
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
-  Status LoadTensorRow(row_id_type row_id, TensorRow *row) override;
+  Status LoadTensorRow(row_id_type row_id, TensorRow *trow) override;
 
   // Parse manifest file to get image path and label and so on.
   // @return Status The status code returned

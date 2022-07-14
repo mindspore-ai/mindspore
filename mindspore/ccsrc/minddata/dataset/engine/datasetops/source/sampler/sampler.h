@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,13 @@ class SamplerRT {
   SamplerRT(int64_t num_samples, int64_t samples_per_tensor);
 
   SamplerRT(const SamplerRT &s) : SamplerRT(s.num_samples_, s.samples_per_tensor_) {}
+
+  // Copy assignment operator
+  SamplerRT &operator=(const SamplerRT &other) {
+    num_samples_ = other.num_samples_;
+    samples_per_tensor_ = other.samples_per_tensor_;
+    return *this;
+  }
 
   // default destructor
   virtual ~SamplerRT() = default;
