@@ -190,6 +190,7 @@ mindspore.Tensor
         - **TypeError** - 指定了无法解析的类型。
 
     .. py:method:: atan2(y)
+
         逐元素计算x/y的反正切值。
 
         `x` 指的当前 Tensor。
