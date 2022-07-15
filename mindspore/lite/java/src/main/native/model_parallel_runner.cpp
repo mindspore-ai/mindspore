@@ -90,6 +90,10 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_ModelParallelRunner_init(J
     }
     runner_config->SetContext(copy_context);
     runner_config->SetWorkersNum(c_runner_config->GetWorkersNum());
+    auto config_info = c_runner_config->GetConfigInfo();
+    for (auto &item : config_info) {
+      runner_config->SetConfigInfo(item.first, item.second);
+    }
     auto ret = runner->Init(model_path_str, runner_config);
     if (ret != mindspore::kSuccess) {
       delete runner;
