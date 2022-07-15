@@ -26,17 +26,33 @@
 
 namespace mindspore {
 namespace ops {
+constexpr size_t kSTFTIndex0 = 0;
+constexpr size_t kSTFTIndex1 = 1;
 namespace {
 abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  constexpr int64_t k2DInputDims = 2;
-  constexpr int64_t k1DWindowDims = 1;
-  constexpr int64_t k1DSignalInput = 1;
-  constexpr int64_t k2DSignalInput = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-                                                    {k1DSignalInput, k2DSignalInput}, op_name);
+  int64_t batch_rank = 0;
+  if (primitive->HasAttr(kBatchRank)) {
+    auto value_ptr = primitive->GetAttr(kBatchRank);
+    batch_rank = GetValue<int64_t>(value_ptr);
+  }
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSTFTIndex0]->GetShapeTrack())[kShape];
+  auto window_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSTFTIndex1]->GetShapeTrack())[kShape];
+  if (batch_rank == 0) {
+    (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+                                                      {kSTFT1DSignalInput, kSTFT2DSignalInput}, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual, kSTFT1DWindowDims,
+                                             op_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckInRange<int64_t>(
+      "x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
+      {kSTFT1DSignalInput + batch_rank, kSTFT2DSignalInput + batch_rank}, op_name);
+    (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual,
+                                             kSTFT1DWindowDims + batch_rank, op_name);
+  }
+
   int64_t len = x_shape.back();
 
   int64_t n_fft = GetValue<int64_t>(primitive->GetAttr(kNFft));
@@ -48,14 +64,15 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
   int64_t win_length = GetValue<int64_t>(primitive->GetAttr(kWinLength));
   (void)CheckAndConvertUtils::CheckInRange<int64_t>("win_length", win_length, kIncludeRight, {0, n_fft}, op_name);
 
-  auto window_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("window_rank", SizeToLong(window_shape.size()), kEqual, k1DWindowDims,
-                                           op_name);
-  (void)CheckAndConvertUtils::CheckInteger("window_shape", window_shape[0], kEqual, win_length, op_name);
+  (void)CheckAndConvertUtils::CheckInteger("window_shape", window_shape.back(), kEqual, win_length, op_name);
 
   std::vector<int64_t> out_shape = {};
-  if (x_shape.size() == k2DInputDims) {
-    out_shape.emplace_back(x_shape[0]);
+  for (int64_t index = 0; index < batch_rank; index++) {
+    (void)CheckAndConvertUtils::CheckInteger("batch_shape", x_shape[index], kEqual, window_shape[index], op_name);
+    out_shape.emplace_back(x_shape[index]);
+  }
+  if (x_shape.size() - batch_rank == kSTFT2DInputDims) {
+    out_shape.emplace_back(x_shape[batch_rank]);
   }
   int64_t n_frames = 1 + (len - n_fft) / hop_length;
   int64_t fft_length = n_fft;
@@ -77,17 +94,12 @@ abstract::ShapePtr STFTInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr STFTInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  constexpr int64_t k1DSignalInput = 1;
-  constexpr int64_t k2DSignalInput = 2;
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_dtype = input_args[0]->BuildType();
   MS_EXCEPTION_IF_NULL(x_dtype);
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64, kComplex64, kComplex128};
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, valid_types, op_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->GetShapeTrack())[kShape];
-  (void)CheckAndConvertUtils::CheckInRange<int64_t>("x_rank", SizeToLong(x_shape.size()), kIncludeBoth,
-                                                    {k1DSignalInput, k2DSignalInput}, op_name);
 
   auto window_dtype = input_args[1]->BuildType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("window", window_dtype, valid_types, op_name);
@@ -136,6 +148,60 @@ AbstractBasePtr STFTInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   auto infer_type = STFTInferType(primitive, input_args);
   auto infer_shape = STFTInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+void STFT::Init(int64_t n_fft, int64_t hop_length, int64_t win_length, bool normalized, bool onesided,
+                bool return_complex) {
+  this->set_n_fft(n_fft);
+  this->set_hop_length(hop_length);
+  this->set_win_length(win_length);
+  this->set_normalized(normalized);
+  this->set_onesided(onesided);
+  this->set_return_complex(return_complex);
+}
+
+void STFT::set_n_fft(int64_t n_fft) { (void)this->AddAttr(kNFft, api::MakeValue(n_fft)); }
+
+void STFT::set_hop_length(int64_t hop_length) { (void)this->AddAttr(kHopLength, api::MakeValue(hop_length)); }
+
+void STFT::set_win_length(int64_t win_length) { (void)this->AddAttr(kWinLength, api::MakeValue(win_length)); }
+
+void STFT::set_normalized(bool normalized) { (void)this->AddAttr(kNormalized, api::MakeValue(normalized)); }
+
+void STFT::set_onesided(bool onesided) { (void)this->AddAttr(kOnesided, api::MakeValue(onesided)); }
+
+void STFT::set_return_complex(bool return_complex) {
+  (void)this->AddAttr(kReturnComplex, api::MakeValue(return_complex));
+}
+
+int64_t STFT::get_n_fft() const {
+  auto value_ptr = this->GetAttr(kNFft);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t STFT::get_hop_length() const {
+  auto value_ptr = this->GetAttr(kHopLength);
+  return GetValue<int64_t>(value_ptr);
+}
+
+int64_t STFT::get_win_length() const {
+  auto value_ptr = this->GetAttr(kWinLength);
+  return GetValue<int64_t>(value_ptr);
+}
+
+bool STFT::get_normalized() const {
+  auto value_ptr = this->GetAttr(kNormalized);
+  return GetValue<bool>(value_ptr);
+}
+
+bool STFT::get_onesided() const {
+  auto value_ptr = this->GetAttr(kOnesided);
+  return GetValue<bool>(value_ptr);
+}
+
+bool STFT::get_return_complex() const {
+  auto value_ptr = this->GetAttr(kReturnComplex);
+  return GetValue<bool>(value_ptr);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(STFT, prim::kPrimSTFT, STFTInfer, nullptr, true);

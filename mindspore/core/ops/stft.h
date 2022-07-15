@@ -27,6 +27,10 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSTFT = "STFT";
+constexpr int64_t kSTFT2DInputDims = 2;
+constexpr int64_t kSTFT1DWindowDims = 1;
+constexpr int64_t kSTFT1DSignalInput = 1;
+constexpr int64_t kSTFT2DSignalInput = 2;
 
 /// \brief 3D Average pooling operation. Refer to Python API @ref mindspore.ops.STFT for more details.
 class MIND_API STFT : public BaseOperator {
@@ -34,6 +38,19 @@ class MIND_API STFT : public BaseOperator {
   MIND_API_BASE_MEMBER(STFT);
   /// \brief Constructor.
   STFT() : BaseOperator(kNameSTFT) { InitIOName({"input"}, {"output"}); }
+  void Init(int64_t n_fft, int64_t hop_length, int64_t win_length, bool normalized, bool onesided, bool return_complex);
+  void set_n_fft(int64_t n_fft);
+  void set_hop_length(int64_t hop_length);
+  void set_win_length(int64_t win_length);
+  void set_normalized(bool normalized);
+  void set_onesided(bool onesided);
+  void set_return_complex(bool return_complex);
+  int64_t get_n_fft() const;
+  int64_t get_hop_length() const;
+  int64_t get_win_length() const;
+  bool get_normalized() const;
+  bool get_onesided() const;
+  bool get_return_complex() const;
 };
 
 abstract::AbstractBasePtr STFTInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
