@@ -2,6 +2,112 @@
 
 [查看中文](./RELEASE_CN.md)
 
+# MindSpore 1.8.0
+
+## MindSpore 1.8.0 Release Notes
+
+### Major Features and Improvements
+
+#### OS
+
+- [STABLE] Support Python 3.8(Linux/Windows/Mac).
+- [STABLE] Installation improved with more detailed install guide and automated shell scripts.
+- [STABLE] Support operator computing with multi-thread under Windows.
+- [STABLE] Compatible with GCC from version 7.3 to 9.x.
+
+#### FrontEnd
+
+- [BETA] Add `mindspore.Model.fit` API, add  `mindspore.callback.EarlyStopping` and `mindspore.callback.ReduceLROnPlateau` in Callback.
+- [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
+- [BETA] Support custom operator implemented by Julia.
+- [STABLE] The export() interface supports the export of a model using a user-defined encryption algorithm, and the load() interface supports the import of a model using a user-defined decryption algorithm.
+- [BETA]   [Unified_Dynamic_and_Static_Graphs] [Usability] Constant type data(tuple/list/dict) can be set to mutable during graph compile.
+- [BETA]   [Unified_Dynamic_and_Static_Graphs] JIT fallback is used to support the control flow capability in the graph mode constant scenario.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python raise statement is supported in the graph mode constant scenario.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python assert statement is supported in the graph mode constant scenario.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python print statement is supported in the graph mode constant scenario.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The str.format() method is supported in graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The slice method can be used to assign a value to the list in graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] Custom classes can be created and invoke instances in graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] Obtaining the properties of a class from the Cell array and the custom class array is supported.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] Expand the isinstance capability in graph mode.
+- [STABLE] Rename the decorator 'ms_hybrid' of custom operator to 'ms_kernel'.
+- [BETA] Support custom operator by Hybrid DSL on the backend of CPU.
+- [BETA] Support custom operator scheduling intrinstics on Ascend via new AKG Polyhedral scheduler.
+
+#### PyNative
+
+- [STABLE] Implement the AdamWeightDecay operator to replace the original small operator combination mode.
+- [STABLE] In PyNative mode, use ms_function to decorate the optimizer.
+- [STABLE] Optimize the execution performance of PyNative bprop graph and ms_function.
+
+#### Auto Parallel
+
+- [STABLE]Support AllToAll Operator in the KernelByKernel execution mode.
+- [STABLE]Support using MPI to lanuch the graph mode.
+- [STABLE]The initialization of the model weight can be configured by the seed. If you do not set the random number seed through the mindspore.set_seed command, the weights initialized by each parameter is determined by the current fragment index. If the random number seed is configured, the initialization results of the same shape and weight of the same segmentation policy are the same.
+- [STABLE]The HCCL shields internal full-mesh and non-full-mesh connections. Allows both fully-connected AllToAllv and hierarchical AllToAllv during a training session.
+- [BETA]CPU optimizer fusion. Multiple optimizer operators are combined by data type through cross-parameter fusion, improving performance. Currently, It has been verified on CPU AdamWeightDecay optimizer. You can use the flatten_weights method in the network cell class to enable this feature.
+
+#### Executor
+
+- [STABLE] Provides southbound API.
+- [STABLE] Multi actor fusion execution to optimize the execution performance of runtime.
+- [STABLE] Nopop operators (eg. reshape) execute elimination.
+- [STABLE] Embedded cache architecture switching unified distributed runtime.
+- [STABLE] Parameter Server switching unified distributed runtime.
+- [STABLE] Support Parameter Server mode training on CPU.
+
+#### DataSet
+
+- [STABLE] When using the map operation for dataset objects and the parameters like: num_parallel_workers > 1 and python_multiprocessing=True, the multi sub-process mechanism is optimized, so that the data channel and child processes are mapped one by one, avoiding excessive file handle occupation, and closing_pool interface is also deleted.
+- [STABLE] Support a batch of Vision, Text and Audio data augmentation operations.
+- [STABLE] Fix a bug where the flat_map method of the Dataset class does not flatten the result.
+- [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use, refer to [latest api usages](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html).
+
+#### GraphKernel Fusion
+
+#### Federated Learning
+
+#### Debug
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+- Deprecated usage:  `import mindspore.dataset.engine.datasets as ds`.  Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.dataset.html).
+- Add `mindspore.ms_class` interface, as class decorator for user-defined classes. It allows MindSpore to identify user-defined classes and access their attributes and methods([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
+- Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505]())
+- Add Tensor init arg `internal` for internal use.
+- DVPP simulation algorithm is no longer supported, remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
+- MindSpore's QAT feature is refactoring, and corresponding interfaces under the `mindspore.compression` package have been removed ([!31364]()). We will re-provide MindSpore's QAT feature based on MindSpore Rewrite in version r1.8, which is currently in the demo state ([!30974]()).
+- Add `on_train_epoch_end` method in LossMonitor to print metric information when LossMonitor is used with `mindspore.Model.fit`.
+- Add "train" or "eval" mode in the print content of TimeMonitor。
+- The input arg `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
+
+## MindSpore Lite
+
+### Major Features and Improvements
+
+#### API
+
+- [STABLE] Added C++ and Python APIs for model conversion.
+- [STABLE] Added Python APIs for model inference.
+
+#### Post Training Quantization
+
+- [STABLE] Support perlayer quantization, and built-in CLE to optimize perlayer quantization accuracy.
+
+### Contributors
+
+Thanks goes to these wonderful people:
+
+AGroupofProbiotocs, anzhengqi, askmiao, baihuawei, baiyangfan, bai-yangfan, bingyaweng, BowenK, buxue, caifubi, CaoJian, caojian05, caozhou, Cathy, changzherui, chenbo116, chenfei, chengxianbin, chenhaozhe, chenjianping, chenzomi, chenzupeng, chujinjin, cj, cjh9368, Corleone, damon0626, danish, Danish, davidmc, dayschan, doitH, dong-li001, fary86, fuzhiye, Gaoxiong, GAO_HYP_XYJ, gengdongjie, Gogery, gongdaguo, gray0v0, gukecai, guoqi, gzhcv, hangq, hanhuifeng2020, Harshvardhan, He, heleiwang, hesham, hexia, Hoai, HuangBingjian, huangdongrun, huanghui, huangxinjing, huqi, huzhifeng, hwjiaorui, Jiabin Liu, jianghui58, Jiaqi, jin-xiulang, jinyaohui, jjfeing, John, jonyguo, JulyAi, jzg, kai00, kingfo, kingxian, kpy, kswang, liuyongqi, laiyongqiang, leonwanghui, liangchenghui, liangzelang, lichen_101010, lichenever, lihongkang, lilei, limingqi107, ling, linqingke, Lin Xh, liubuyu, liuwenhao4, liuxiao78, liuxiao93, liuyang_655, liuzhongkai, Lixia, lixian, liyanliu, liyong, lizhenyu, luopengting, lvchangquan, lvliang, lz, maning202007, Margaret_wangrui, mengyuanli, Ming_blue, ms_yan, ougongchang, panfengfeng, panyifeng, Payne, Peilin, peixu_ren, Pengyongrong, qianlong, qianjiahong, r1chardf1d0, riemann_penn, rmdyh, Sheng, shenwei41, simson, Simson, Su, sunsuodong, tao_yunhao, tinazhang, VectorSL, , Wan, wandongdong, wangdongxu, wangmin,  wangyue01, wangzhe, wanyiming, Wei, wenchunjiang, wilfChen, WilliamLian, wsc, wudenggang, wukesong, wuweikang, wuxuejian, Xiao Tianci, Xiaoda, xiefangqi, xinyunfan, xuanyue, xuyongfei, yanghaitao, yanghaitao1, yanghaoran, YangLuo, yangruoqi713, yankai, yanzhenxiang2020, yao_yf, yepei6, yeyunpeng, Yi, yoni, yoonlee666, yuchaojie, yujianfeng, yuximiao, zengzitao, Zhang,  zhanghuiyao, zhanghui_china, zhangxinfeng3, zhangyihui, zhangz0911gm, zhanke, zhanyuan, zhaodezan, zhaojichen, zhaoting, zhaozhenlong, zhengjun10, zhiqwang, zhoufeng, zhousiyi, zhouyaqiang, zhouyifengCode, Zichun, Ziyan, zjun, ZPaC, wangfengwfwf, zymaa, gerayking, shu-kun-zhang.
+
+Contributions of any kind are welcome!
+
 ## MindSpore 1.7.0 Release Notes
 
 ### Major Features and Improvements
