@@ -61,14 +61,14 @@ void KernelAdjust::ReorderGetNext(const std::shared_ptr<session::KernelGraph> &k
   std::vector<CNodePtr> other_list;
   for (const auto &cnode : origin_cnode_list) {
     if (common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName) {
-      getnext_list.emplace_back(cnode);
+      (void)getnext_list.emplace_back(cnode);
     } else {
-      other_list.emplace_back(cnode);
+      (void)other_list.emplace_back(cnode);
     }
   }
   std::vector<CNodePtr> new_order_list;
-  new_order_list.insert(new_order_list.end(), getnext_list.begin(), getnext_list.end());
-  new_order_list.insert(new_order_list.end(), other_list.begin(), other_list.end());
+  (void)new_order_list.insert(new_order_list.end(), getnext_list.begin(), getnext_list.end());
+  (void)new_order_list.insert(new_order_list.end(), other_list.begin(), other_list.end());
   kernel_graph_ptr->set_execution_order(new_order_list);
 }
 
@@ -80,7 +80,7 @@ bool KernelAdjust::NeedLoopSink() {
 }
 
 CNodePtr CreateEventApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id,
-                                std::vector<AnfNodePtr> input_list) {
+                                const std::vector<AnfNodePtr> &input_list) {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   CNodePtr event_node_ptr = graph_ptr->NewCNode(input_list);
   MS_EXCEPTION_IF_NULL(event_node_ptr);
@@ -94,7 +94,7 @@ CNodePtr CreateEventApplyKernel(const std::shared_ptr<session::KernelGraph> &gra
 }
 
 CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
-                                             uint32_t event_id) {
+                                             uint32_t event_id) const {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   auto send_op = std::make_shared<Primitive>(kSendOpName);
   MS_EXCEPTION_IF_NULL(send_op);
@@ -104,7 +104,7 @@ CNodePtr KernelAdjust::CreateSendApplyKernel(const std::shared_ptr<session::Kern
 }
 
 CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr,
-                                             uint32_t event_id) {
+                                             uint32_t event_id) const {
   MS_EXCEPTION_IF_NULL(graph_ptr);
   auto recv_op = std::make_shared<Primitive>(kRecvOpName);
   MS_EXCEPTION_IF_NULL(recv_op);
@@ -113,14 +113,14 @@ CNodePtr KernelAdjust::CreateRecvApplyKernel(const std::shared_ptr<session::Kern
   return CreateEventApplyKernel(graph_ptr, event_id, {recv_apply});
 }
 
-bool KernelAdjust::ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+bool KernelAdjust::ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const std::vector<CNodePtr> &cnode_list = kernel_graph_ptr->execution_order();
   return std::any_of(cnode_list.begin(), cnode_list.end(),
                      [](const CNodePtr &cnode) { return common::AnfAlgo::GetCNodeName(cnode) == kGetNextOpName; });
 }
 
-bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) {
+bool KernelAdjust::ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   const auto &exe_orders = kernel_graph_ptr->execution_order();
   return std::any_of(exe_orders.begin(), exe_orders.end(), [&kernel_graph_ptr](const CNodePtr &node) {
@@ -183,9 +183,9 @@ void KernelAdjust::CopyMemcpyList(const std::shared_ptr<session::KernelGraph> &k
         (*other_list).pop_back();
         (*memcpy_list).push_back(pre_node);
       }
-      (*memcpy_list).emplace_back(cur_cnode);
+      (void)(*memcpy_list).emplace_back(cur_cnode);
     } else {
-      (*other_list).emplace_back(cur_cnode);
+      (void)(*other_list).emplace_back(cur_cnode);
     }
   }
 }
@@ -485,7 +485,7 @@ void KernelAdjust::ProcessLoopSink(const std::shared_ptr<session::KernelGraph> &
 }
 
 kernel::KernelBuildInfo::KernelBuildInfoBuilder KernelAdjust::CreateMngKernelBuilder(
-  const std::vector<std::string> &formats, const std::vector<TypeId> &type_ids) {
+  const std::vector<std::string> &formats, const std::vector<TypeId> &type_ids) const {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder selected_kernel_builder;
   selected_kernel_builder.SetInputsFormat(formats);
   selected_kernel_builder.SetInputsDeviceType(type_ids);
@@ -547,7 +547,7 @@ CNodePtr KernelAdjust::CreateStreamActiveOp(const std::shared_ptr<session::Kerne
 }
 
 CNodePtr KernelAdjust::CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                             const CNodePtr &node, size_t output_idx) {
+                                             const CNodePtr &node, size_t output_idx) const {
   auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
   auto imm = std::make_shared<Int64Imm>(SizeToInt(output_idx));
@@ -664,7 +664,7 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
   for (const auto &cnode_ptr : cnode_ptr_list) {
     ProfilingUtils::InsertProfilingTraceFp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                            NOT_NULL(&new_cnode_list));
-    new_cnode_list.emplace_back(cnode_ptr);
+    (void)new_cnode_list.emplace_back(cnode_ptr);
     ProfilingUtils::InsertProfilingCustomOp(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
                                             NOT_NULL(&new_cnode_list));
     ProfilingUtils::InsertProfilingTraceBpEnd(cnode_ptr, profiling_trace_info, kernel_graph_ptr,
@@ -677,7 +677,7 @@ void KernelAdjust::InsertProfilingKernel(const ProfilingTraceInfo &profiling_tra
 #endif
 
 CNodePtr KernelAdjust::CreateNPUGetFloatStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                               const CNodePtr &npu_alloc_cnode) {
+                                               const CNodePtr &npu_alloc_cnode) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(npu_alloc_cnode);
   auto npu_get_primitive = std::make_shared<Primitive>(kNPUGetFloatStatusOpName);
@@ -700,7 +700,7 @@ CNodePtr KernelAdjust::CreateNPUGetFloatStatus(const std::shared_ptr<session::Ke
 }
 
 CNodePtr KernelAdjust::CreateNPUClearStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                            const CNodePtr &npu_alloc_cnode) {
+                                            const CNodePtr &npu_alloc_cnode) const {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   MS_EXCEPTION_IF_NULL(npu_alloc_cnode);
   auto npu_clear_primitive = std::make_shared<Primitive>(kNPUClearFloatStatusOpName);
@@ -848,7 +848,7 @@ void KernelAdjust::InsertOverflowCheckOperations(const std::shared_ptr<session::
   AnfNodePtr specify_param = nullptr;
   std::vector<AnfNodePtr> dynamic_loss_scale_param_list;
   // find parameter in all child graph.
-  for (auto child_graph : child_graph_list) {
+  for (const auto child_graph : child_graph_list) {
     auto parameters = child_graph->parameters();
     for (auto param : parameters) {
       auto param_fullname = param->fullname_with_scope();
@@ -1008,7 +1008,7 @@ void KernelAdjust::InsertDynamicLossScaleCheckOperations(const std::shared_ptr<s
           CreateAssignAdd(kernel_graph_ptr, npu_alloc_cnode, dynamic_loss_scale_param_list->at(cur_param));
         AnfAlgo::SetStreamId(cur_stream_id, assign_add_cnode.get());
         (void)new_execution_order.emplace_back(assign_add_cnode);
-        viewed_id.insert(cur_param);
+        (void)viewed_id.insert(cur_param);
         cur_param--;
       }
       auto npu_clear_cnode = CreateNPUClearStatus(kernel_graph_ptr, npu_alloc_cnode);
@@ -1022,7 +1022,7 @@ void KernelAdjust::InsertDynamicLossScaleCheckOperations(const std::shared_ptr<s
 }
 
 // device loop control
-std::shared_ptr<Tensor> KernelAdjust::CreateTensor(int32_t initial_value) {
+std::shared_ptr<Tensor> KernelAdjust::CreateTensor(int32_t initial_value) const {
   ShapeVector shp = {1};
   tensor::TensorPtr tensor = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(tensor);
@@ -1033,7 +1033,7 @@ std::shared_ptr<Tensor> KernelAdjust::CreateTensor(int32_t initial_value) {
 }
 
 std::shared_ptr<Parameter> KernelAdjust::CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                                         const string parameter_name) {
+                                                         const string parameter_name) const {
   ShapeVector shp = {1};
   tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
   MS_EXCEPTION_IF_NULL(tensor_ptr);
@@ -1092,7 +1092,7 @@ void KernelAdjust::AssignLoopCtrlTensorMem(const session::KernelGraph &kernel_gr
                                            const string name) {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto device_loop_control_params = kernel_graph.device_loop_control_params();
-  if (!device_loop_control_params.count(name)) {
+  if (device_loop_control_params.count(name) == 0) {
     MS_LOG(WARNING) << "Can't find Device Loop Control Parameter " << name;
     return;
   }
@@ -1156,7 +1156,7 @@ void KernelAdjust::SetDeviceLoopCtrlTensor(const std::shared_ptr<session::Kernel
                                            const std::string name, int32_t value) {
   MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
   auto device_loop_control_tensors = kernel_graph_ptr->device_loop_control_tensors();
-  if (!device_loop_control_tensors.count(name)) {
+  if (device_loop_control_tensors.count(name) == 0) {
     MS_LOG(WARNING) << "Can't find Device Loop Control Tensor " << name;
     return;
   }
