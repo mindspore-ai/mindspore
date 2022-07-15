@@ -56,12 +56,13 @@ class AnalysisSchedule {
   void Stop();
   void Wait();
   void Add2Schedule(const AsyncInferTaskPtr &async_infer_task_ptr);
-  void Yield(const AsyncInferTask *asyncTask);
+  void WaitForRun();
+  void Yield(AsyncInferTask *asyncTask);
 
   void EnterWaiting() {
     {
       std::lock_guard<std::mutex> activeLock(activate_thread_lock_);
-      activate_threads_.clear();
+      activate_threads_.erase(AnalysisSchedule::thread_id());
       MS_LOG(DEBUG) << "Infer return to main thread.";
     }
     activate_thread_cv_.notify_one();
@@ -83,7 +84,7 @@ class AnalysisSchedule {
 
     {
       std::lock_guard<std::mutex> active_lock(activate_thread_lock_);
-      activate_threads_.clear();
+      activate_threads_.erase(AnalysisSchedule::thread_id());
       MS_LOG(DEBUG) << " The active thread count: " << activate_threads_.size()
                     << " The infer_thread_count: " << infer_thread_count_
                     << " schedule list size: " << schedule_list_.size() << " thread: " << thread_id() + " "
@@ -301,8 +302,10 @@ using AsyncAbstractFuncAtomPtr = std::shared_ptr<AsyncAbstractFuncAtom>;
 class AsyncInferTask {
  public:
   explicit AsyncInferTask(const std::string &thread_id, const AsyncAbstractPtr &abstract)
-      : thread_id_(thread_id), abstract_ptr_(abstract) {}
-  ~AsyncInferTask() = default;
+      : thread_id_(thread_id), abstract_ptr_(abstract) {
+    MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " : " << this;
+  }
+  ~AsyncInferTask() { MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " : " << this; }
 
   static AsyncInferTaskPtr MakeShared(const AsyncAbstractPtr &abstract, const std::string &thread = "") {
     std::string thread_id = thread;
@@ -316,26 +319,23 @@ class AsyncInferTask {
   }
 
   bool HasResult() { return abstract_ptr_->HasResult(); }
-  int ready() const { return SizeToInt(ready_); }
+  int ready() {
+    std::lock_guard<std::mutex> lock(lock_);
+    return SizeToInt(ready_);
+  }
   std::string thread_id() const { return thread_id_; }
 
   AbstractBasePtr GetResult() {
     StaticAnalysisException::Instance().CheckException();
-    std::unique_lock<std::mutex> lock(lock_);
-    if (ready_) {
-      ProcessResult();
-      return abstract_ptr_->TryGetResult();
-    }
-    // Avoid to dead lock between AsyncInferTask::lock and AnalysisSchedule::activate_thread_lock_
-    lock.unlock();
     AnalysisSchedule::GetInstance().Yield(this);
-
-    lock.lock();
+    std::unique_lock<std::mutex> lock(lock_);
+    MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " waiting.";
     condition_var_.wait(lock, [this] { return ready_; });
     MS_LOG(DEBUG) << this << " received notify and wake up: " << ready_ << " thread id:" << thread_id_;
     ProcessResult();
     auto ans = abstract_ptr_->TryGetResult();
     MS_EXCEPTION_IF_NULL(ans);
+    MS_LOG(DEBUG) << AnalysisSchedule::thread_id() << " active.";
     return ans;
   }
 
