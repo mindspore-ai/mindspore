@@ -49,6 +49,7 @@ inline const char ATTR_MIN_SHAPE[] = "min_shape";
 inline const char ATTR_MAX_SHAPE[] = "max_shape";
 inline const char ATTR_MIN_VALUE[] = "min_value";
 inline const char ATTR_MAX_VALUE[] = "max_value";
+inline const char ATTR_SHAPE_VALUE[] = "shape_value";
 inline const char ATTR_NO_ELIMINATE[] = "no_eliminate";
 }  // namespace mindspore
 

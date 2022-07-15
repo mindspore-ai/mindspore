@@ -15,8 +15,10 @@
 
 import numpy as np
 import pytest
+import mindspore as ms
+from mindspore import ops, nn, ParameterTuple, context, set_seed, Tensor
+from mindspore.ops.operations import _inner_ops as inner
 
-from mindspore import ops, nn, ParameterTuple, context, set_seed
 from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
 
@@ -36,10 +38,9 @@ def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, epoch_num, s
     return dataset_helper, network
 
 
-def dynamic_shape_sink_process(network, dataset, is_train=True):
+def dynamic_shape_sink_process(network, dataset, is_train=True, sink_size=1):
     # epoch_num=1 sink_size=1: exec one step
     dataset_sink_mode = True
-    sink_size = 1
     epoch_num = 1
     dataset_helper, network = _exec_preprocess(network, is_train, dataset, dataset_sink_mode, epoch_num, sink_size)
     network.set_train(is_train)
@@ -148,6 +149,27 @@ class ReduceSumNet(nn.Cell):
 class AddNet(nn.Cell):
     def construct(self, x, y):
         return ops.add(x, y)
+
+
+class ShapeTensorNet(nn.Cell):
+    def __init__(self):
+        super(ShapeTensorNet, self).__init__()
+        self.reshape = ops.Reshape()
+        self.shape = ops.TensorShape()
+        self.strided_slice = ops.StridedSlice()
+        self.add = ops.Add()
+        self.mul = ops.Mul()
+        self.concat = ops.Concat()
+        self.broadcast_to = inner.DynamicBroadcastTo()
+
+    def construct(self, x, y):
+        res = self.shape(x)
+        res = self.strided_slice(res, (1,), (4,), (1,))
+        res = self.mul(res, 4)
+        y = self.reshape(x, res)
+        res = self.concat((Tensor(np.array([2]).astype(np.int64)), res))
+        z = self.broadcast_to(y, res)
+        return z
 
 
 class SoftmaxNet(nn.Cell):
@@ -344,6 +366,30 @@ def test_dynamic_add2():
     gradients = dynamic_shape_sink_process(net, dataset)
     gradients_cmp = fixed_shape_process(net, dataset)
     assert compare(gradients, gradients_cmp)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tensor_shape_value():
+    """
+    Feature: Test shape tensor infer mechanism.
+    Description: Shape value of tensor should be inferred precisely.
+    Expectation: Assert that results are consistent with fixed shape.
+    """
+    data_list = []
+    for i in range(42, 50):
+        data_list.append((np.random.rand(64, 16, 4, i).astype(np.float32),
+                          np.random.rand(64, 16, 4, i).astype(np.float32)))
+
+    dataset = ds.GeneratorDataset(data_list, ["data1", "data2"])
+    net = ShapeTensorNet()
+    input_0 = Tensor(shape=[64, 16, 4, None], dtype=ms.float32)
+    input_1 = Tensor(shape=[64, 16, 4, None], dtype=ms.float32)
+    net.set_inputs(input_0, input_1)
+    res = dynamic_shape_sink_process(net, dataset, True, 3)
+    assert res.shape == (2, 64, 16, 180)
 
 
 @pytest.mark.level0
