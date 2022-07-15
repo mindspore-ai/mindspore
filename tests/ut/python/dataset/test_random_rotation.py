@@ -145,13 +145,13 @@ def test_random_rotation_op_py(plot=False):
             visualize_image(original, rotation_de, mse, rotation_cv)
 
 
-def test_random_rotation_op_py_ANTIALIAS():
+def test_random_rotation_op_py_antialias():
     """
     Feature: RandomRotation
     Description: Test RandomRotation in Python transformations op with resample=Inter.ANTIALIAS
     Expectation: The dataset is processed as expected
     """
-    logger.info("test_random_rotation_op_py_ANTIALIAS")
+    logger.info("test_random_rotation_op_py_antialias")
 
     # First dataset
     data1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, shuffle=False)
@@ -297,13 +297,43 @@ def test_random_rotation_op_exception():
 
     image = Image.open("../data/dataset/testImageNetData2/train/class1/1_1.jpg")
 
-    try:
+    with pytest.raises(ValueError) as error_info:
         random_rotation_op = vision.RandomRotation((90, 90), expand=True, resample=Inter.ANTIALIAS, center=(50, 50))
-        out = random_rotation_op(image)
-        assert out.size == image.size[::-1]
-    except ValueError as e:
-        assert "When using Inter.ANTIALIAS, center needs to be None and angle needs to be an integer multiple of 90." \
-               in str(e)
+        _ = random_rotation_op(image)
+    assert "When using Inter.ANTIALIAS, center needs to be None and angle needs to be an integer multiple of 90." \
+           in str(error_info.value)
+
+
+def test_random_rotation_op_exception_c_pilcubic():
+    """
+    Feature: RandomRotation
+    Description: Test RandomRotation with resample=Inter.PILCUBIC for NumPy input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_random_rotation_op_exception_c_pilcubic")
+
+    image = cv2.imread("../data/dataset/apple.jpg")
+
+    with pytest.raises(RuntimeError) as error_info:
+        random_rotation_op = vision.RandomRotation((90, 90), expand=True, resample=Inter.PILCUBIC)
+        _ = random_rotation_op(image)
+    assert "RandomRotation: Invalid InterpolationMode" in str(error_info.value)
+
+
+def test_random_rotation_op_exception_py_pilcubic():
+    """
+    Feature: RandomRotation
+    Description: Test RandomRotation with resample=Inter.PILCUBIC for PIL input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_random_rotation_op_exception_py_pilcubic")
+
+    image = Image.open("../data/dataset/apple.jpg").convert("RGB")
+
+    with pytest.raises(TypeError) as error_info:
+        random_rotation_op = vision.RandomRotation((90, 90), expand=True, resample=Inter.PILCUBIC)
+        _ = random_rotation_op(image)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
 
 
 def test_random_rotation_with_channel_5():
@@ -339,10 +369,12 @@ if __name__ == "__main__":
     test_random_rotation_op_c(plot=True)
     test_random_rotation_op_c_area()
     test_random_rotation_op_py(plot=True)
-    test_random_rotation_op_py_ANTIALIAS()
+    test_random_rotation_op_py_antialias()
     test_random_rotation_expand()
     test_random_rotation_md5()
     test_rotation_diff(plot=True)
     test_random_rotation_op_exception()
+    test_random_rotation_op_exception_c_pilcubic()
+    test_random_rotation_op_exception_py_pilcubic()
     test_random_rotation_with_channel_5()
     test_random_rotation_with_channel_5_and_invalid_resample()

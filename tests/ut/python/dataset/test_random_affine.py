@@ -15,10 +15,14 @@
 """
 Testing RandomAffine op in DE
 """
+import cv2
 import numpy as np
+from PIL import Image
+import pytest
 import mindspore.dataset as ds
 import mindspore.dataset.transforms
 import mindspore.dataset.vision as vision
+from mindspore.dataset.vision.utils import Inter
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, \
     config_get_set_seed, config_get_set_num_parallel_workers
@@ -40,7 +44,7 @@ def test_random_affine_op(plot=False):
     # define map operations
     transforms1 = [
         vision.Decode(True),
-        vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1), resample=Inter.NEAREST),
         vision.ToTensor()
     ]
     transform1 = mindspore.dataset.transforms.Compose(transforms1)
@@ -80,7 +84,7 @@ def test_random_affine_op_c(plot=False):
     # define map operations
     transforms1 = [
         vision.Decode(),
-        vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0))
+        vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0), resample=Inter.AREA)
     ]
 
     transforms2 = [
@@ -360,6 +364,57 @@ def test_random_affine_exception_shear_size():
         assert str(e) == "shear must be of length 2 or 4."
 
 
+def test_random_affine_op_exception_c_resample():
+    """
+    Feature: RandomAffine
+    Description: Test RandomAffine with unsupported resample values for NumPy input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_random_affine_op_exception_c_resample")
+
+    image = cv2.imread("../data/dataset/apple.jpg")
+
+    with pytest.raises(RuntimeError) as error_info:
+        random_affine_op = vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0), resample=Inter.PILCUBIC)
+        _ = random_affine_op(image)
+    assert "RandomAffine: Invalid InterpolationMode" in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        random_affine_op = vision.RandomAffine(degrees=2, translate=(0.2, 0.2, 0, 0), resample=Inter.ANTIALIAS)
+        _ = random_affine_op(image)
+    assert "Current Interpolation is not supported with NumPy input." in str(error_info.value)
+
+
+def test_random_affine_op_exception_py_resample():
+    """
+    Feature: RandomAffine
+    Description: Test RandomAffine with unsupported resample values for PIL input in eager mode
+    Expectation: Exception is raised as expected
+    """
+    logger.info("test_random_affine_op_exception_py_resample")
+
+    image = Image.open("../data/dataset/apple.jpg").convert("RGB")
+
+    with pytest.raises(TypeError) as error_info:
+        random_affine_op = vision.RandomAffine(degrees=0, translate=(0.5, 0.5, 0, 0), resample=Inter.PILCUBIC)
+        _ = random_affine_op(image)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
+
+    with pytest.raises(TypeError) as error_info:
+        random_affine_op = vision.RandomAffine(degrees=2, translate=(0.2, 0.2, 0, 0), resample=Inter.AREA)
+        _ = random_affine_op(image)
+    assert "Current Interpolation is not supported with PIL input." in str(error_info.value)
+
+    with pytest.raises(ValueError) as error_info:
+        random_affine_op = vision.RandomAffine(degrees=1, translate=(0.1, 0.1, 0, 0), resample=Inter.ANTIALIAS)
+        _ = random_affine_op(image)
+    # Note: Lower PILLOW versions like 7.2.0 return "image.LANCZOS/Image.ANTIALIAS (1) cannot be used."
+    #     Higher PILLOW versions like 9.0.1 return "Image.Resampling.LANCZOS (1) cannot be used."
+    #     since ANTIALIAS is deprecated and replaced with LANCZOS.
+    assert "LANCZOS" in str(error_info.value)
+    assert "cannot be used." in str(error_info.value)
+
+
 if __name__ == "__main__":
     test_random_affine_op(plot=True)
     test_random_affine_op_c(plot=True)
@@ -375,3 +430,5 @@ if __name__ == "__main__":
     test_random_affine_exception_translate_size()
     test_random_affine_exception_scale_size()
     test_random_affine_exception_shear_size()
+    test_random_affine_op_exception_c_resample()
+    test_random_affine_op_exception_py_resample()
