@@ -1919,6 +1919,11 @@ FunctionBlockPtr Parser::ParseWhile(const FunctionBlockPtr &block, const py::obj
   }
   header_block->Mature();
   after_block->Mature();
+  py::object orelse_obj = python_adapter::GetPyObjAttr(node, "orelse");
+  if (py::len_hint(orelse_obj) != 0) {
+    TraceGuard(GetLocation(orelse_obj));
+    MS_LOG(EXCEPTION) << "The 'while...else...' statement is not supported now.";
+  }
   auto &end_block = loop_context.EndBlock();
   // end_block exists if we encounter 'break' in loop body.
   if (end_block) {
@@ -1938,6 +1943,12 @@ FunctionBlockPtr Parser::GenerateBlock(const TraceInfoPtr &trace_info) {
 }
 
 FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::object &node) {
+  // Check for-else
+  py::object orelse_obj = python_adapter::GetPyObjAttr(node, "orelse");
+  if (py::len_hint(orelse_obj) != 0) {
+    TraceGuard(GetLocation(orelse_obj));
+    MS_LOG(EXCEPTION) << "The 'for...else...' statement is not supported now.";
+  }
   static const auto transform_for_half_unroll_call = (common::GetEnv("MS_DEV_FOR_HALF_UNROLL") == "1");
   if (transform_for_half_unroll_call) {
     return ParseForRepeat(block, node);

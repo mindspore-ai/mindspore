@@ -15,7 +15,7 @@
 import pytest
 from mindspore.common import dtype as mstype
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, ms_function
 from mindspore.ops import composite as C
 from mindspore import context
 
@@ -70,3 +70,30 @@ def test_backward():
     backward_net = BackwardNet(forward_net)
     output = backward_net(c1, c2)
     assert expect == output
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_single_while():
+    """
+    Feature: The else branches of while loops aren't supported.
+    Description: The else branches of while loops aren't supported.
+    Expectation: No exception.
+    """
+    @ms_function
+    def control_flow_while(x, y):
+        while x > y:
+            y += x
+            break
+        else:
+            y = x + 6
+        return y
+
+    with pytest.raises(RuntimeError, match="The 'while...else...' statement is not supported now."):
+        input_x = Tensor([0], mstype.int32)
+        input_y = Tensor([2], mstype.int32)
+        res = control_flow_while(input_x, input_y)
+        print("res:", res)
