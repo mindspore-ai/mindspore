@@ -66,9 +66,6 @@ void BroadcastToCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   output_shape_ = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-
-  InitTaskFunc(kernel_node);
-
   if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
     return;
   }
@@ -83,6 +80,8 @@ void BroadcastToCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   }
   shape_info_.input_shape_size_ = SizeToInt(input_shape_size);
   shape_info_.output_shape_size_ = SizeToInt(output_shape_size);
+
+  InitTaskFunc(kernel_node);
 }
 
 void BroadcastToCpuKernelMod::CheckArgs() {

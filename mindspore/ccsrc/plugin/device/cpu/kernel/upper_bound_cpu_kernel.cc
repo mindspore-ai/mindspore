@@ -24,12 +24,6 @@ void UpperBoundCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   sorted_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   values_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "UpperBound does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
   if (AnfAlgo::IsShapesDynamic({sorted_x_shape_, values_shape_, output_shape_})) {
     return;
   }
@@ -44,6 +38,13 @@ void UpperBoundCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (values_num_ != output_num_) {
     MS_LOG(EXCEPTION) << "Infer the shape of output error.";
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "UpperBound does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename I, typename O>

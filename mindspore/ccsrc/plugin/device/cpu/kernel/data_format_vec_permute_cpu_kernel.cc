@@ -34,14 +34,6 @@ void DataFormatVecPermuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   dim_ = input_shape_.size();
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "DataFormatVecPermute does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
-
   if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
     return;
   }
@@ -75,6 +67,12 @@ void DataFormatVecPermuteCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For " << kernel_name_ << ", input[" << input_type_ << "] and output[" << output_type_
                       << "] must have the same DataType.";
   }
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "DataFormatVecPermute does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>

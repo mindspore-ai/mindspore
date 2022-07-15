@@ -43,12 +43,6 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
                       << Vector2Str(indices_shape);
   }
   auto values_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, VALUES);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
   if (AnfAlgo::IsShapesDynamic({values_shape, indices_shape})) {
     return;
   }
@@ -69,6 +63,13 @@ void SparseTensorDenseMatmulCpuKernelMod::InitKernel(const CNodePtr &kernel_node
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the dimension of output must be "
                       << kSparseTensorDenseMatmulOutputShapeSize << "-D, but got " << output_shape_.size() << "-D";
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "SparseTensorDenseMatmul does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename I, typename T>

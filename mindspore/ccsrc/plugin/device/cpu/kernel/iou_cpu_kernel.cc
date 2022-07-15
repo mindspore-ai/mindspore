@@ -33,12 +33,6 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto anchor_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, ANCHOR_BOXES);
   auto gt_boxes_shape = AnfAlgo::GetInputDeviceShape(kernel_node, GT_BOXES);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "IOU does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
   if (AnfAlgo::IsShapesDynamic({anchor_boxes_shape, gt_boxes_shape})) {
     return;
   }
@@ -64,6 +58,13 @@ void IOUCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (iou_mode == "iof") {
     mode_ = IOF_MODE;
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "IOU does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
