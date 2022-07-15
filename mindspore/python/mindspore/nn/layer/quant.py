@@ -922,6 +922,9 @@ class Conv2dBnFoldQuant(Cell):
                  freeze_bn=100000):
         """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuant, self).__init__()
+        if context.get_context('device_target') == "CPU":
+            raise ValueError(f"For '{self.cls_name}', only the 'Ascend' and 'GPU' platforms"
+                             f" are supported, but got {context.get_context('device_target')}.")
         self.in_channels = Validator.check_positive_int(in_channels, "in_channels", self.cls_name)
         self.out_channels = Validator.check_positive_int(out_channels, "out_channels", self.cls_name)
         self.kernel_size = twice(kernel_size)
@@ -991,9 +994,6 @@ class Conv2dBnFoldQuant(Cell):
         elif context.get_context('device_target') == "GPU":
             self.batchnorm_fold2_train = Q.BatchNormFold2(freeze_bn=freeze_bn)
             self.batchnorm_fold2_infer = Q.BatchNormFold2(freeze_bn=0)
-        else:
-            raise ValueError(f"For '{self.cls_name}', only the 'Ascend' and 'GPU' platforms"
-                             f" are supported, but got {context.get_context('device_target')}.")
         self.step = Parameter(initializer('normal', [1], dtype=mstype.int32), name='step', requires_grad=False)
         self.one = Tensor(1, mstype.int32)
         self.assignadd = P.AssignAdd()
