@@ -1270,7 +1270,6 @@ class Tensor(Tensor_):
             ``Ascend`` ``CPU``
 
         Examples:
-            >>> from mindspore.ops.function.math_func import approximate_equal
             >>> from mindspore.common import dtype as mstype
             >>> tol = 2.
             >>> x = Tensor(np.array([1, 2, 3]), mstype.float32)
