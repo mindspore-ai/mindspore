@@ -56,6 +56,8 @@ class HcclKernel : public AscendKernelMod {
     const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  protected:
+  void UpdateOutputSizeList();
+  void CalLoopSize();
   std::vector<std::vector<int64_t>> hccl_kernel_input_shape_list_;
   std::vector<std::vector<int64_t>> hccl_kernel_output_shape_list_;
   std::vector<HcclDataType> hccl_data_type_list_;
@@ -72,6 +74,7 @@ class HcclKernel : public AscendKernelMod {
   std::string group_;
   std::mutex hccl_mutex_;
   std::condition_variable cond_;
+  ulong loop_size_{0};
 };
 
 using HcclKernelCreater = std::function<std::shared_ptr<HcclKernel>()>;
