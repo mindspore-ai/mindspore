@@ -21,6 +21,10 @@
 #include "src/common/log_adapter.h"
 
 namespace mindspore {
+namespace {
+constexpr size_t kMaxSectionNum = 100;
+constexpr size_t kMaxConfigNumPerSection = 1000;
+}  // namespace
 namespace lite {
 int RunConverter(const std::shared_ptr<ConverterPara> &data_);
 }
@@ -49,6 +53,29 @@ std::string Converter::GetConfigFile() const {
   } else {
     return "";
   }
+}
+
+void Converter::SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config) {
+  if (data_ != nullptr) {
+    if (data_->config_param.size() > kMaxSectionNum) {
+      MS_LOG(ERROR) << "Section num " << data_->config_param.size() << "exceeds max num " << kMaxSectionNum;
+      return;
+    }
+    if (data_->config_param.find(section) != data_->config_param.end()) {
+      MS_LOG(WARNING) << "Section " << section << "already exists, "
+                      << "value will be overwrite.";
+    }
+    if (config.size() > kMaxConfigNumPerSection) {
+      MS_LOG(ERROR) << "Config num " << config.size() << " exceeds max num " << kMaxConfigNumPerSection << " in "
+                    << section;
+      return;
+    }
+    data_->config_param[section] = config;
+  }
+}
+
+std::map<std::string, std::map<std::string, std::string>> Converter::GetConfigInfo() const {
+  return data_->config_param;
 }
 
 void Converter::SetWeightFp16(bool weight_fp16) {

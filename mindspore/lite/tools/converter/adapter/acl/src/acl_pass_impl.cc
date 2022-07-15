@@ -155,10 +155,10 @@ STATUS AclPassImpl::PreProcGraph(const FuncGraphPtr &func_graph) {
 }
 
 STATUS AclPassImpl::PostProcGraph(const FuncGraphPtr &func_graph) {
-#ifdef ENABLE_ONLINE_MODEL_INFER
-  MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
-  return lite::RET_OK;
-#endif
+  if (!user_options_cfg_.offline) {
+    MS_LOG(DEBUG) << "Online model infer no need to change to nhwc format.";
+    return lite::RET_OK;
+  }
   if (fmk_type_ == converter::kFmkTypeTf) {
     MS_LOG(DEBUG) << "Tf no need to change to nhwc format.";
     return lite::RET_OK;
@@ -417,9 +417,11 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
   static size_t iter = 0;
   CHECK_NULL_RETURN(node);
   AnfNodePtr cur_node = node;
+  CNodePtr pre_node = nullptr;
   while (cur_node->isa<CNode>() && IsPrimitiveCNode(cur_node, prim::kPrimTupleGetItem)) {
     auto tmp = cur_node->cast<CNodePtr>();
     CHECK_NULL_RETURN(tmp);
+    pre_node = tmp;
     cur_node = tmp->input(kTupleGetItemFirstInputIdx);
   }
   CHECK_NULL_RETURN(cur_node);
@@ -449,7 +451,13 @@ STATUS AclPassImpl::TraceOutput(const AnfNodePtr &node) {
     MS_LOG(INFO) << "Graph out name: " << cnode->fullname_with_scope();
     graph_output_names_.emplace_back(cnode->fullname_with_scope());
     std::vector<int64_t> dims;
-    if (lite::acl::GetShapeVectorFromCNode(cnode, &dims) != lite::RET_OK) {
+    STATUS ret;
+    if (pre_node != nullptr && IsPrimitiveCNode(pre_node, prim::kPrimTupleGetItem)) {
+      ret = lite::acl::GetShapeVectorFromCNode(pre_node, &dims);
+    } else {
+      ret = lite::acl::GetShapeVectorFromCNode(cnode, &dims);
+    }
+    if (ret != lite::RET_OK) {
       MS_LOG(ERROR) << "Get node shape failed.";
       return lite::RET_ERROR;
     }
