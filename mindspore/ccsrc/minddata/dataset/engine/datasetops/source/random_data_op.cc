@@ -137,8 +137,14 @@ Status RandomDataOp::CreateRandomRow(TensorRow *new_row) {
     // Now, create a chunk of memory for the entire tensor and copy this byte in repeatedly.
     buf = std::make_unique<unsigned char[]>(size_in_bytes);
     int ret_code = memset_s(buf.get(), size_in_bytes, random_byte, size_in_bytes);
-    if (ret_code != 0) {
-      RETURN_STATUS_UNEXPECTED("[Internal ERROR] memset_s failed to set random bytes for a tensor.");
+    if (ret_code != EOK) {
+      std::string error_msg = "RandomData: failed to set random data, ";
+      if (ret_code == ERANGE) {
+        RETURN_STATUS_UNEXPECTED(error_msg + "memory size of total data can not be zero or exceed " +
+                                 std::to_string(SECUREC_MEM_MAX_LEN) + ", but got: " + std::to_string(size_in_bytes));
+      } else {
+        RETURN_STATUS_UNEXPECTED("memset_s method failed with errno_t: " + std::to_string(ret_code));
+      }
     }
 
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.Type(), buf.get(), &new_tensor));
