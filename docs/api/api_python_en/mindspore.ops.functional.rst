@@ -329,6 +329,7 @@ Array Operation
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
