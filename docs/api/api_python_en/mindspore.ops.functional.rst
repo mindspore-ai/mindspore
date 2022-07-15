@@ -48,7 +48,6 @@ Neural Network
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
     mindspore.ops.interpolate
-    mindspore.ops.pad
     mindspore.ops.deformable_conv2d
 
 Activation Functions
