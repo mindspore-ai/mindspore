@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_HCCL_HCCL_KERNEL_METADATA_ANFALGO_H_
-#include <string>
 #include <vector>
 #include <memory>
 #include "kernel/kernel_build_info.h"

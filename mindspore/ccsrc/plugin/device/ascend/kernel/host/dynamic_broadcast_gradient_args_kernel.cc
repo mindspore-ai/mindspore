@@ -144,14 +144,13 @@ std::vector<int64_t> GetInputShape(const CNodePtr &cnode, size_t index) {
   x_shape_value->set_device_address(address_x, false);
   x_shape_value->data_sync();
 
-  auto x_value = reinterpret_cast<int64_t *>(x_shape_value->data_c());
+  auto x_value = static_cast<int64_t *>(x_shape_value->data_c());
   MS_EXCEPTION_IF_NULL(x_value);
   std::vector<int64_t> input_shape = {x_value, x_value + x_num};
   return input_shape;
 }
 
-size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &grad_reduce_idx, size_t index,
-                      size_t input_num) {
+size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64_t>> &grad_reduce_idx, size_t index) {
   std::vector<int64_t> output;
   size_t out_size = grad_reduce_idx[index].size();
   for (size_t k = 0; k < out_size; ++k) {
@@ -188,7 +187,7 @@ size_t SetOutputValue(const CNodePtr &cnode, const std::vector<std::vector<int64
 }
 }  // namespace
 
-void DynamicBroadcastGradientArgsKernelMod::Execute() {
+void DynamicBroadcastGradientArgsKernelMod::Execute() const {
   MS_LOG(INFO) << "Execute DynamicBroadcastGradientArgsKernel Start";
   auto node = anf_node_.lock();
   MS_EXCEPTION_IF_NULL(node);
@@ -205,8 +204,8 @@ void DynamicBroadcastGradientArgsKernelMod::Execute() {
   input_shapes[1] = GetInputShape(cnode, 1);
   auto grad_reduce_idx = CalculateOutput(input_shapes);
 
-  auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0, input_shapes[0].size());
-  auto r1_size = SetOutputValue(cnode, grad_reduce_idx, 1, input_shapes[1].size());
+  auto r0_size = SetOutputValue(cnode, grad_reduce_idx, 0);
+  auto r1_size = SetOutputValue(cnode, grad_reduce_idx, 1);
 
   ShapeVector r0_shp{SizeToLong(r0_size)};
   ShapeVector r1_shp{SizeToLong(r1_size)};
