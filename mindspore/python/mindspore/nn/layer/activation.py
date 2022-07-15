@@ -48,6 +48,7 @@ __all__ = ['Softmin',
            'HSwish',
            'ELU',
            'LogSigmoid',
+           'LRN',
            'SoftShrink',
            'HShrink',
            'CELU',
@@ -1211,6 +1212,35 @@ class LogSigmoid(Cell):
         rec_exp_neg_input_1 = self.rec(exp_neg_input_1)
         ret = self.log(rec_exp_neg_input_1)
         return ret
+
+
+class LRN(Cell):
+    r"""
+    Local Response Normalization.
+
+    Refer to :func:`mindspore.ops.lrn` for more details.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x = Tensor(np.array([[[[0.1], [0.2]],
+        ...                       [[0.3], [0.4]]]]), mindspore.float32)
+        >>> output = nn.LRN()(input_x)
+        >>> print(output)
+        [[[[0.09534626]
+           [0.1825742 ]]
+          [[0.2860388 ]
+           [0.3651484 ]]]]
+    """
+
+    def __init__(self, depth_radius=5, bias=1.0, alpha=1.0, beta=0.5, norm_region="ACROSS_CHANNELS"):
+        """Initialize LRN."""
+        super(LRN, self).__init__()
+        self.lrn_op = NN_OPS.LRN(depth_radius, bias, alpha, beta, norm_region)
+
+    def construct(self, input_x):
+        return self.lrn_op(input_x)
 
 
 class SoftShrink(Cell):

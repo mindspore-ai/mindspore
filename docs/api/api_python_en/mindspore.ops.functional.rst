@@ -139,10 +139,13 @@ Element-by-Element Operations
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
+    mindspore.ops.lrn
+    mindspore.ops.mish
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
     mindspore.ops.round
+    mindspore.ops.selu
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sub

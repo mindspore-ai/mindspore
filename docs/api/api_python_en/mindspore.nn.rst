@@ -116,11 +116,14 @@ Nonlinear Activation Function Layer
     mindspore.nn.LeakyReLU
     mindspore.nn.LogSigmoid
     mindspore.nn.LogSoftmax
+    mindspore.nn.LRN
+    mindspore.nn.Mish
     mindspore.nn.Softsign
     mindspore.nn.PReLU
     mindspore.nn.ReLU
     mindspore.nn.ReLU6
     mindspore.nn.RReLU
+    mindspore.nn.SeLU
     mindspore.nn.SiLU
     mindspore.nn.Sigmoid
     mindspore.nn.Softmin
