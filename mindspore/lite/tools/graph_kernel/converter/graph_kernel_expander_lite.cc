@@ -26,7 +26,7 @@
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "utils/ms_context.h"
-#include "tools/graph_kernel/converter/substitute_conv2d.h"
+#include "tools/graph_kernel/converter/preprocess_weight.h"
 
 namespace mindspore::graphkernel {
 AnfNodePtr ParaToValueDeco::Run(const AnfNodePtr &node) {
@@ -122,6 +122,7 @@ ExpanderPtr GraphKernelExpanderLite::InitExpander(const AnfNodePtr &node) {
     {prim::kPrimReshape->name(), {InputToAttrDeco::GetCreator({1}), FixFormatDeco::Creator}},
     {prim::kPrimTranspose->name(), {ParaToValueDeco::GetCreator({1}), InputToAttrDeco::GetCreator({1})}},
     {prim::kPrimConv2DFusion->name(), {ParaToTensorDeco::GetCreator({1}), SubstituteConv2D::Creator}},
+    {prim::kPrimMatMulFusion->name(), {ParaToTensorDeco::GetCreator({1}), MatmulPackB::Creator}},
   };
   auto iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
