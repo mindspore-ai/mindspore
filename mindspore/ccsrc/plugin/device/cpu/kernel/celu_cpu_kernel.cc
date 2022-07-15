@@ -18,7 +18,6 @@
 #include <utility>
 #include <algorithm>
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "plugin/device/cpu/kernel/nnacl/fp32/activation_fp32.h"
 namespace mindspore {
 namespace kernel {
 namespace {
@@ -70,7 +69,12 @@ bool CeluCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   auto out_data = static_cast<float *>(outputs[0]->addr);
 
   auto task = [this, in_data, out_data](size_t start, size_t end) {
-    Celu(in_data + start, (end - start), out_data + start, alpha_);
+    auto src = in_data + start;
+    auto dst = out_data + start;
+    auto length = end - start;
+    for (size_t i = 0; i < length; ++i) {
+      dst[i] = src[i] > 0 ? src[i] : (expm1(src[i] / alpha_) * alpha_);
+    }
   };
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 
