@@ -18,7 +18,7 @@
 #include "tools/optimizer/fusion/scale_scale_fusion.h"
 #include <functional>
 #include <memory>
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/common/tensor_util.h"
 #include "ops/fusion/scale_fusion.h"

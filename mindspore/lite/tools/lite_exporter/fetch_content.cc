@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <map>
 #include <utility>
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/ms_utils_secure.h"

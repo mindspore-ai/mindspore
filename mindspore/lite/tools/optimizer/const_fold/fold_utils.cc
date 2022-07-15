@@ -21,7 +21,7 @@
 #include <vector>
 #include "backend/common/optimizer/helper.h"
 #include "ir/anf.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "tools/common/node_util.h"
 #include "tools/common/tensor_util.h"

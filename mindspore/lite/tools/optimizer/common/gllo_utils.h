@@ -66,6 +66,8 @@ std::vector<float> CastToFloat(const ValuePtr &value);
 
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type);
 
+int GetPrimitiveType(const AnfNodePtr &node, std::string *name);
+
 bool IsRealCNodeKernel(const AnfNodePtr &node);
 
 bool IsGraphKernel(const AnfNodePtr &node);
@@ -133,6 +135,8 @@ bool IsTrainOp(const CNodePtr &cnode);
 bool IsMarkedTrainOp(const CNodePtr &cnode);
 
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id);
+
+size_t GetOutputSize(const AnfNodePtr &anf_node);
 
 bool IsQuantParameterNode(const PrimitiveCPtr &prim);
 

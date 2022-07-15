@@ -19,7 +19,7 @@
 #include <functional>
 #include <utility>
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
 #include "nnacl/op_base.h"
 

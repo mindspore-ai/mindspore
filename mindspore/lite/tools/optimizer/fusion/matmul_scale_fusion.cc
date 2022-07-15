@@ -20,7 +20,7 @@
 #include <vector>
 #include "ops/mat_mul.h"
 #include "tools/optimizer/common/gllo_utils.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
 

@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAM_HOLDER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAM_HOLDER_H_
 
-#include <utility>
 #include <vector>
 #include <memory>
 #include "ir/anf.h"
@@ -64,8 +63,8 @@ class QuantParamHolder : public Value {
         if (input_quant_params_rhs.at(i).size() != this->input_quant_params_.at(i).size()) {
           return false;
         }
-        auto *params = reinterpret_cast<const char *>(this->input_quant_params_.at(i).data());
-        auto *params_rhs = reinterpret_cast<const char *>(input_quant_params_rhs.at(i).data());
+        auto *params = reinterpret_cast<const int8_t *>(this->input_quant_params_.at(i).data());
+        auto *params_rhs = reinterpret_cast<const int8_t *>(input_quant_params_rhs.at(i).data());
         for (size_t j = 0; j < input_quant_params_rhs.at(i).size() * sizeof(schema::QuantParamT); ++j) {
           if (params[j] != params_rhs[j]) {
             return false;
@@ -76,8 +75,8 @@ class QuantParamHolder : public Value {
         if (output_quant_params_rhs.at(i).size() != this->output_quant_params_.at(i).size()) {
           return false;
         }
-        auto *params = reinterpret_cast<const char *>(this->output_quant_params_.at(i).data());
-        auto *params_rhs = reinterpret_cast<const char *>(output_quant_params_rhs.at(i).data());
+        auto *params = reinterpret_cast<const int8_t *>(this->output_quant_params_.at(i).data());
+        auto *params_rhs = reinterpret_cast<const int8_t *>(output_quant_params_rhs.at(i).data());
         for (size_t j = 0; j < output_quant_params_rhs.at(i).size() * sizeof(schema::QuantParamT); ++j) {
           if (params[j] != params_rhs[j]) {
             return false;
@@ -94,24 +93,6 @@ class QuantParamHolder : public Value {
 
   schema::QuantType quant_type() const { return quant_type_; }
 
-  void set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param) {
-    if (index >= this->input_quant_params_.size()) {
-      std::vector<schema::QuantParamT> place_quant(1);
-      this->input_quant_params_.insert(this->input_quant_params_.end(), index + 1 - input_quant_params_.size(),
-                                       place_quant);
-    }
-    this->input_quant_params_.at(index) = input_quant_param;
-  }
-
-  void set_output_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param) {
-    if (index >= this->output_quant_params_.size()) {
-      std::vector<schema::QuantParamT> place_quant(1);
-      this->output_quant_params_.insert(this->output_quant_params_.end(), index + 1 - output_quant_params_.size(),
-                                        place_quant);
-    }
-    this->output_quant_params_.at(index) = output_quant_param;
-  }
-
   void set_enable_huffman_code(bool enable_huffman_code) { enable_huffman_code_ = enable_huffman_code; }
 
   bool enable_huffman_code() const { return enable_huffman_code_; }
@@ -120,29 +101,17 @@ class QuantParamHolder : public Value {
 
   std::vector<std::vector<schema::QuantParamT>> get_output_quant_params() const { return this->output_quant_params_; }
 
-  bool IsInputQuantParamsInited() {
-    if (this->input_quant_params_.empty()) {
-      return false;
-    }
-    for (auto &quant_param : this->input_quant_params_) {
-      if (!quant_param.front().inited) {
-        return false;
-      }
-    }
-    return true;
-  }
+  void set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param);
 
-  bool IsOutputQuantParamsInited() {
-    if (this->output_quant_params_.empty()) {
-      return false;
-    }
-    for (auto &quant_param : this->output_quant_params_) {
-      if (!quant_param.front().inited) {
-        return false;
-      }
-    }
-    return true;
-  }
+  void set_output_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &output_quant_param);
+
+  bool IsInputQuantParamsInited();
+
+  bool IsOutputQuantParamsInited();
+
+  void ClearQuantParams();
+
+  bool CheckInit(size_t index, bool is_input);
 
  private:
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
@@ -154,4 +123,4 @@ using QuantParamHolderPtr = std::shared_ptr<QuantParamHolder>;
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANT_PARAM_HOLDER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANT_PARAM_HOLDER_H_

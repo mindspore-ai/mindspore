@@ -32,7 +32,7 @@
 #include "tools/converter/parser/inputs_adjust.h"
 #include "tools/converter/parser/tf_bidirection_gru_cf_fusion.h"
 #include "tools/converter/parser/unused_node_remove_pass.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/optimizer/format/to_format_base.h"
 #include "nnacl/op_base.h"

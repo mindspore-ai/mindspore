@@ -22,7 +22,7 @@
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "base/base.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/cxx_api/converter_para.h"
 
 namespace mindspore::lite::quant {

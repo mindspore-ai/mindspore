@@ -33,7 +33,7 @@
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "ops/tuple_get_item.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "tools/converter/quantizer/bitpacking.h"
 #include "src/common/utils.h"

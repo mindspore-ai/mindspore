@@ -18,7 +18,7 @@
 #include <memory>
 #include "tools/converter/adapter/acl/mapper/primitive_mapper_register.h"
 #include "tools/converter/adapter/acl/mapper/tbe_op_def.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "src/common/log_util.h"
 #include "nnacl/op_base.h"
 
