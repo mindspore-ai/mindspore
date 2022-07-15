@@ -62,7 +62,7 @@ ValueNodePtr DiagFission::CreateAssistNode(const FuncGraphPtr &func_graph, const
     x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat, output_shape);
   } else {
     MS_EXCEPTION(TypeError) << "The type of node [" << node->DebugString()
-                            << "] should be int32, float16 or float32, but got" << node->Type()->ToString();
+                            << "] must be int32, float16 or float32, but got " << node->Type()->ToString() << ".";
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
