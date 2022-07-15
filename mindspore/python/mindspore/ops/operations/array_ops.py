@@ -5067,7 +5067,7 @@ class ScatterNdMul(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_mul = ops.ScatterNdMul()
+        >>> scatter_nd_mul = ScatterNdMul()
         >>> output = scatter_nd_mul(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]
@@ -5151,10 +5151,11 @@ class ScatterNdMax(_ScatterNdOp):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> from mindspore.ops.operations.array_ops import ScatterNdMax
         >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
-        >>> scatter_nd_max = ops.ScatterNdMax()
+        >>> scatter_nd_max = ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [ 1. 8. 6.  4. 7.  6.  7. 9.]
@@ -5162,7 +5163,7 @@ class ScatterNdMax(_ScatterNdOp):
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)
-        >>> scatter_nd_max = ops.ScatterNdMax()
+        >>> scatter_nd_max = ScatterNdMax()
         >>> output = scatter_nd_max(input_x, indices, updates)
         >>> print(output)
         [[[1 1 1 1]

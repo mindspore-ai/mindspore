@@ -1384,10 +1384,6 @@ class Tensor(Tensor_):
         """
         Returns a boolean Tensor where two Tensors are element-wise equal within a tolerance.
 
-        Note:
-            On Ascend, input arrays containing inf or NaN are not supported. Therefore, when the input is NaN or inf,
-            the result is uncertain. And `equal_nan` must be True on Ascend.
-
         Args:
             x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
             rtol (float, optional): Relative tolerance. Default: 1e-05.
@@ -1405,17 +1401,16 @@ class Tensor(Tensor_):
             TypeError: If the dtype of self Tensor is not same as the `x2`.
             ValueError: If self Tensor and `x2` can not be broadcast.
             ValueError: If either of `atol` and `rtol` is less than zero.
-            ValueError: If `equal_nan` is False on Ascend platform.
 
         Supported Platforms:
-            ``Ascend`` ``CPU``
+            ``CPU``
 
         Examples:
             >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
             >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
-            >>> output = ops.isclose(input, other)
+            >>> output = input.isclose(other)
             >>> print(output)
-                [True False False False True]
+            [ True False False False  True]
         """
         self._init_check()
         return tensor_operator_registry.get('isclose')(self, x2, rtol, atol, equal_nan)

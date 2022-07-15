@@ -841,9 +841,6 @@ mindspore.Tensor
 
         返回一个布尔型Tensor，表示当前Tensor与 `x2` 的对应元素的差异是否在容忍度内相等。
 
-        .. note::
-            目前，Ascend后端不支持包含 inf 或 NaN 的输入数组。因此，当输入包含NaN或inf时，结果是不确定的。在Ascend后端上， `equal_nan` 必须为真。
-
         **参数：**
 
         - **x2** (Tensor) - 对比的第二个输入，支持的类型有float32，float16，int32。
@@ -864,7 +861,6 @@ mindspore.Tensor
         - **TypeError** - 当前Tensor和 `x2` 的数据类型不同。
         - **ValueError** - 当前Tensor和 `x2` 无法广播。
         - **ValueError** - `atol` 和 `rtol` 中的任何一个小于零。
-        - **ValueError** - Ascend平台上的 `equal_nan` 为False。
 
     .. py:method:: item(index=None)
 
