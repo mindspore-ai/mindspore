@@ -7810,7 +7810,7 @@ class AffineGrid(Primitive):
     Examples:
         >>> affinegrid = AffineGrid(align_corners=False)
         >>> theta = Tensor([[[0.8, 0.5, 0],[-0.5, 0.8, 0]]], mindspore.float32)
-        >>> out_size = Tensor([1, 3, 2, 3], mindspore.int32)
+        >>> out_size = (1, 3, 2, 3)
         >>> output = affinegrid(theta, out_size)
         >>> print(output)
         [[[[-0.78333336 -0.06666666]

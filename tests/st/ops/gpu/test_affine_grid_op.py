@@ -42,7 +42,6 @@ class AffineGridDynamicShapeNet(nn.Cell):
 
     def construct(self, theta, size):
         theta = self.test_dynamic(theta)
-        size = self.test_dynamic(size)
         grid = self.affine_grid(theta, size)
         return grid
 
@@ -52,7 +51,7 @@ def generate_nchw():
     c = np.random.randint(1, 128)
     h = np.random.randint(100, 1000)
     w = np.random.randint(100, 1000)
-    return np.array([n, c, h, w]).astype(np.int32)
+    return np.array([n, c, h, w])
 
 
 def generate_ncdhw():
@@ -61,7 +60,7 @@ def generate_ncdhw():
     d = np.random.randint(50, 300)
     h = np.random.randint(100, 1000)
     w = np.random.randint(100, 1000)
-    return np.array([n, c, d, h, w]).astype(np.int32)
+    return np.array([n, c, d, h, w])
 
 
 def np_linspace_from_neg_one(theta, n_steps, align_corners):
@@ -111,14 +110,14 @@ def test_affine_grid_4d(net, align, dtype):
     Expectation: success or throw AssertionError exception or raise TypeError.
     """
     # Big case, require enormous memory.
-    np_nchw = np.array([128, 1, 1080, 1920]).astype(np.int32)
+    np_nchw = (32, 1, 540, 960)
     np_theta = np.array([[[1, 0, 0], [0, 1, 0]]]).astype(dtype)
     np_theta = np.repeat(np_theta, np_nchw[0], axis=0)
 
     np_grid = np_affine_grid_4d(np_theta, np_nchw, align_corners=align)
 
     affine_grid = net(align_corners=align)
-    ms_theta, ms_nchw = Tensor(np_theta), Tensor(np_nchw)
+    ms_theta, ms_nchw = Tensor(np_theta), np_nchw
     ms_grid = affine_grid(ms_theta, ms_nchw)
 
     print(f"max error: {np.max(np_grid - ms_grid.asnumpy())}")
@@ -144,14 +143,14 @@ def test_affine_grid_5d(net, align, dtype):
     Expectation: success or throw AssertionError exception or raise TypeError.
     """
     # Big case, require enormous memory.
-    np_ncdhw = np.array([128, 1, 16, 270, 480]).astype(np.int32)
+    np_ncdhw = (32, 1, 16, 135, 240)
     np_theta = np.array([[[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0]]]).astype(dtype)
     np_theta = np.repeat(np_theta, np_ncdhw[0], axis=0)
 
     np_grid = np_affine_grid_5d(np_theta, np_ncdhw, align_corners=align)
 
     affine_grid = net(align_corners=align)
-    ms_theta, ms_ncdhw = Tensor(np_theta), Tensor(np_ncdhw)
+    ms_theta, ms_ncdhw = Tensor(np_theta), np_ncdhw
     ms_grid = affine_grid(ms_theta, ms_ncdhw)
 
     print(f"max error: {np.max(np_grid - ms_grid.asnumpy())}")

@@ -334,6 +334,7 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
+    mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
@@ -354,7 +355,6 @@ Array操作
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
     mindspore.ops.meshgrid
-    mindspore.ops.affine_grid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.padding
