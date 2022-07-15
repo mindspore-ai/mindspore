@@ -2072,8 +2072,7 @@ class Square(Primitive):
         out_{i} = (x_{i})^2
 
     Inputs:
-        - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
@@ -2107,8 +2106,8 @@ class Rsqrt(Primitive):
         out_{i} =  \frac{1}{\sqrt{x_{i}}}
 
     Inputs:
-        - **x** (Tensor) - The input of Rsqrt. Each element must be a non-negative number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - The input of Rsqrt. Its rank must be in [0, 7] inclusive and
+            each element must be a non-negative number.
 
     Outputs:
         Tensor, has the same type and shape as `x`.
@@ -2147,8 +2146,7 @@ class Sqrt(Primitive):
 
 
     Inputs:
-        - **x** (Tensor) - The input tensor whose dtype is number.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        - **x** (Tensor) - The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Outputs:
         Tensor, has the same shape and data type as the `x`.
