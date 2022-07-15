@@ -40,13 +40,6 @@ void TruncatedNormalCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "TruncatedNormal does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
   if (IsDynamic(input_shape)) {
     return;
   }
@@ -60,6 +53,14 @@ void TruncatedNormalCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_shape.size() != kInputDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "TruncatedNormal does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
 }
 
 bool TruncatedNormalCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,

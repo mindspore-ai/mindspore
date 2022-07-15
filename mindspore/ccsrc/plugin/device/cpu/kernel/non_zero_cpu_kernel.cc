@@ -32,21 +32,11 @@ void NonZeroCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, NonZeroFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "NonZero does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
-
-  if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
+  if (AnfAlgo::IsShapesDynamic({input_shape})) {
     return;
   }
   input_shape_ = Convert2SizeT(input_shape);
-  output_shape_ = Convert2SizeT(output_shape);
+  output_shape_ = Convert2SizeTClipNeg(output_shape);
   input_rank_ = input_shape_.size();
   node_wpt_ = kernel_node;
   if (input_shape_.size() < kInputMinDim) {
@@ -63,6 +53,16 @@ void NonZeroCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the shape[1] of output should be equal to rank of input"
                       << ", but got output_shape[1]=" << output_shape_[1] << " and x_rank=" << input_rank_ << ".";
   }
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, NonZeroFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "NonZero does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>
