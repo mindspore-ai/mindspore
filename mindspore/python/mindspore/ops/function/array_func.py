@@ -2025,7 +2025,7 @@ def scatter_nd_min(input_x, indices, updates, use_locking=False):
                       is required when data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
