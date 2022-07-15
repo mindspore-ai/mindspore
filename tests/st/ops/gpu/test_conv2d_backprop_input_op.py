@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
 
@@ -73,3 +74,50 @@ def test_conv2d_backprop_input():
                          [-3, -2, 0, -14, 3, 16]]]]).astype(np.float32)
 
     assert (abs(output.asnumpy() - expect) < np.ones(shape=[1, 1, 6, 6]) * 1.0e-4).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv2d_backprop_input_vmap():
+    """
+    Feature: Conv2DBackpropInput op
+    Description: Test vmap rule for Conv2DBackpropInput op
+    Expectation: The dataset is processed as expected
+    """
+    conv2d_input = Conv2dInput()
+
+    batch_dout = Tensor(np.arange(1 * 2 * 1 * 4 * 4).reshape(1, 2, 1, 4, 4).astype(np.float32))
+    x = Tensor(np.arange(1 * 1 * 3 * 3).reshape(1, 1, 3, 3).astype(np.float32))
+    w = Tensor(np.ones([1, 1, 6, 6]).astype(np.float32))
+    expected1 = np.array([[[[[0., 0., 1., 4., 7., 6.], [0., 7., 23., 38., 41., 29.],
+                             [12., 45., 102., 138., 126., 81.], [48., 129., 246., 282., 234., 141.],
+                             [84., 197., 341., 374., 287., 163.], [72., 162., 271., 292., 217., 120.]]]],
+                          [[[[0., 16., 49., 52., 55., 38.], [48., 135., 263., 278., 233., 141.],
+                             [156., 381., 678., 714., 558., 321.], [192., 465., 822., 858., 666., 381.],
+                             [228., 517., 869., 902., 671., 371.], [168., 370., 607., 628., 457., 248.]]]]]
+                        ).astype(np.float32)
+    output1 = vmap(conv2d_input, (1, None, None))(batch_dout, x, w)
+    assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
+
+    dout = Tensor(np.arange(1 * 1 * 4 * 4).reshape(1, 1, 4, 4).astype(np.float32))
+    batch_x = Tensor(np.arange(2 * 1 * 1 * 3 * 3).reshape(2, 1, 1, 3, 3).astype(np.float32))
+    expected2 = np.array([[[[[0., 0., 1., 4., 7., 6.], [0., 7., 23., 38., 41., 29.],
+                             [12., 45., 102., 138., 126., 81.], [48., 129., 246., 282., 234., 141.],
+                             [84., 197., 341., 374., 287., 163.], [72., 162., 271., 292., 217., 120.]]]],
+                          [[[[0., 9., 28., 58., 52., 33.], [36., 97., 185., 254., 203., 119.],
+                             [120., 288., 507., 624., 477., 270.], [264., 588., 975., 1092., 801., 438.],
+                             [264., 575., 935., 1022., 737., 397.], [180., 387., 622., 670., 478., 255.]]]]]
+                        ).astype(np.float32)
+    output2 = vmap(conv2d_input, (None, 0, None))(dout, batch_x, w)
+    assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)
+
+    expected3 = np.array([[[[[0., 0., 1., 4., 7., 6.], [0., 7., 23., 38., 41., 29.],
+                             [12., 45., 102., 138., 126., 81.], [48., 129., 246., 282., 234., 141.],
+                             [84., 197., 341., 374., 287., 163.], [72., 162., 271., 292., 217., 120.]]]],
+                          [[[[144., 313., 508., 538., 388., 209.], [372., 801., 1289., 1358., 971., 519.],
+                             [696., 1488., 2379., 2496., 1773., 942.], [840., 1788., 2847., 2964., 2097., 1110.],
+                             [696., 1471., 2327., 2414., 1697., 893.], [420., 883., 1390., 1438., 1006., 527.]]]]]
+                        ).astype(np.float32)
+    output3 = vmap(conv2d_input, (1, 0, None))(batch_dout, batch_x, w)
+    assert np.allclose(output3.asnumpy(), expected3, 0.0001, 0.0001)

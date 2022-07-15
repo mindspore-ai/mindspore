@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.functional import vmap
 
 
 class NetConv3dTranspose(nn.Cell):
@@ -63,3 +64,34 @@ def test_conv3d_transpose():
     conv3dtranspose = NetConv3dTranspose()
     output = conv3dtranspose(x, w)
     assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv3d_transpose_vmap():
+    """
+    Feature: Conv3DTranspose op
+    Description: Test vmap rule for Conv3DTranspose op
+    Expectation: The dataset is processed as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    conv3d_trans = NetConv3dTranspose()
+
+    batch_dout = Tensor(np.arange(2 * 1 * 2 * 3 * 3 * 3).reshape(2, 1, 2, 3, 3, 3).astype(np.float32))
+    weight = Tensor(np.ones([2, 2, 2, 2, 2]).astype(np.float32))
+    expected1 = np.array([[[[[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]],
+                            [[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]]]],
+                          [[[[[1184., 1200.], [1232., 1248.]], [[1328., 1344.], [1376., 1392.]]],
+                            [[[1184., 1200.], [1232., 1248.]], [[1328., 1344.], [1376., 1392.]]]]]]).astype(np.float32)
+    output1 = vmap(conv3d_trans, (0, None))(batch_dout, weight)
+    assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
+
+    dout = Tensor(np.arange(1 * 2 * 3 * 3 * 3).reshape(1, 2, 3, 3, 3).astype(np.float32))
+    batch_weight = Tensor(np.ones([2, 2, 2, 2, 2, 2]).astype(np.float32))
+    expected2 = np.array([[[[[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]],
+                            [[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]]]],
+                          [[[[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]],
+                            [[[320., 336.], [368., 384.]], [[464., 480.], [512., 528.]]]]]]).astype(np.float32)
+    output2 = vmap(conv3d_trans, (None, 0))(dout, batch_weight)
+    assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)

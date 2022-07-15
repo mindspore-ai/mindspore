@@ -23,6 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
+from mindspore.ops.functional import vmap
 
 
 class NetConv2d(nn.Cell):
@@ -265,3 +266,37 @@ def test_conv_NHWC():
     conv2d = NetConvNHWC(w1, x1)
     output = conv2d()
     assert (output.asnumpy() == expected).all()
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv2d_vmap():
+    """
+    Feature: Conv2D op
+    Description: Test vmap rule for Conv2D op
+    Expectation: The dataset is processed as expected
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    conv2d = NetConv2d()
+
+    batch_x = Tensor(np.arange(2 * 1 * 3 * 3 * 3).reshape(2, 1, 3, 3, 3).astype(np.float32))
+    w = Tensor(np.ones([2, 3, 1, 1]).astype(np.float32))
+    expected1 = np.array([[[[[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]],
+                            [[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]]]],
+                          [[[[108., 111., 114.], [117., 120., 123.], [126., 129., 132.]],
+                            [[108., 111., 114.], [117., 120., 123.], [126., 129., 132.]]]]]).astype(np.float32)
+    output1 = vmap(conv2d, (0, None))(batch_x, w)
+    assert np.allclose(output1.asnumpy(), expected1, 0.0001, 0.0001)
+
+    x = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
+    batch_w = Tensor(np.ones([2, 2, 3, 1, 1]).astype(np.float32))
+    expected2 = np.array([[[[[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]],
+                            [[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]]]],
+                          [[[[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]],
+                            [[27., 30., 33.], [36., 39., 42.], [45., 48., 51.]]]]]).astype(np.float32)
+    output2 = vmap(conv2d, (None, 0))(x, batch_w)
+    assert np.allclose(output2.asnumpy(), expected2, 0.0001, 0.0001)
+
+    output3 = vmap(conv2d, (0, 0))(batch_x, batch_w)
+    assert np.allclose(output3.asnumpy(), expected1, 0.0001, 0.0001)
