@@ -177,7 +177,7 @@ AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object 
   if (para_node == nullptr) {
     auto value = py::cast<tensor::MetaTensorPtr>(obj);
     para_node = top_func_graph->AddFvParameter(param_name, value);
-    param_obj_ids.emplace_back(obj_id);
+    (void)param_obj_ids.emplace_back(obj_id);
     MS_LOG(DEBUG) << "Created a new weight parameter for " << func_graph->ToString()
                   << ", param: " << para_node->DebugString() << ", top_func_graph: " << top_func_graph->ToString();
   }
@@ -227,6 +227,29 @@ void ConvertLoadedGraph(const FuncGraphPtr &func_graph, const ValuePtr &value) {
   }
   resolved_graph->set_parameters(input_params);
   BroadenCNodeAbstract(resolved_graph);
+}
+
+AnfNodePtr ConvertObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, const FuncGraphPtr &func_graph) {
+  // When the cell is set recomputed, it should not use old scope from cache.
+  auto scope = origin_node->scope();
+  bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
+  ValuePtr convert_result = nullptr;
+  bool converted =
+    ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
+  if (!converted) {
+    MS_LOG(ERROR) << "Convert data failed";
+    return nullptr;
+  }
+  MS_EXCEPTION_IF_NULL(convert_result);
+  if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
+    UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
+  }
+  ConvertLoadedGraph(func_graph, convert_result);
+  AnfNodePtr output = NewValueNode(convert_result);
+  if (convert_result->isa<tensor::Tensor>()) {
+    output = GetMixedPrecisionCastHelp(func_graph, output);
+  }
+  return output;
 }
 
 bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node) {
@@ -288,25 +311,9 @@ bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, A
       return true;
     }
   }
-
-  // When the cell is set recomputed, it should not use old scope from cache.
-  auto scope = origin_node->scope();
-  bool has_recompute_scope = (scope == nullptr) ? false : scope->name().find(kAttrRecompute) == 0;
-  ValuePtr convert_result = nullptr;
-  bool converted =
-    ConvertData(obj, &convert_result, python_adapter::UseSignatureInResolve(), nullptr, has_recompute_scope);
-  if (!converted) {
-    MS_LOG(ERROR) << "Convert data failed";
+  output = ConvertObjectToNode(origin_node, obj, func_graph);
+  if (output == nullptr) {
     return false;
-  }
-  MS_EXCEPTION_IF_NULL(convert_result);
-  if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
-    UpdateDebugInfo(convert_result->cast<FuncGraphPtr>(), origin_node->scope(), origin_node->debug_info());
-  }
-  ConvertLoadedGraph(func_graph, convert_result);
-  output = NewValueNode(convert_result);
-  if (convert_result->isa<tensor::Tensor>()) {
-    output = GetMixedPrecisionCastHelp(func_graph, output);
   }
   *node = output;
   return true;
@@ -509,7 +516,7 @@ AnfNodePtr ResolveSequenceWithAttr(const FuncGraphManagerPtr &manager, const py:
     for (size_t i = 0; i < sequence_size; ++i) {
       auto attr_str = GetValue<std::string>(GetValueNode(attr));
       auto res = ResolveMsClassWithAttr(manager, sequence[i], attr_str, operand_cnode);
-      inputs.emplace_back(res);
+      (void)inputs.emplace_back(res);
     }
   } else {
     return nullptr;
@@ -702,7 +709,7 @@ bool ResolveAll(const FuncGraphManagerPtr &manager) {
   res->set_manager(manager);
 
   auto roots = manager->roots();
-  for (auto &fg : roots) {
+  for (const auto &fg : roots) {
     bool ret = ResolveFuncGraph(fg, res, false);
     if (!ret) {
       MS_EXCEPTION_IF_NULL(fg);

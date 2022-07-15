@@ -79,9 +79,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   const std::map<std::string, std::string> &jit_config() const { return jit_config_; }
   void SaveCompiledGraph(const std::string &phase);
   bool CompileInner(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
-  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase_obj, bool use_vm);
+  bool Compile(const py::object &source_obj, const py::tuple &args, const py::object &phase, bool use_vm);
 
-  void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *arg_list);
+  void ProcessVmArg(const py::tuple &args, const std::string &phase, VectorRef *const arg_list);
 
   // for pynative mode when use_vm is on
   py::object Run(const py::tuple &args, const py::object &phase_obj);
@@ -89,7 +89,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr GetFuncGraph(const std::string &phase);
   FuncGraphPtr GetGradGraph(const std::string &phase);
   void SetGradGraph(const FuncGraphPtr &grad_graph, const std::string &phase);
-  py::bytes GetFuncGraphProto(const std::string &phase, const std::string &type);
+  py::bytes GetFuncGraphProto(const std::string &phase, const std::string &ir_type);
 #ifndef ENABLE_SECURITY
   py::bytes GetOptimizeGraphProto(const std::string &phase);
 #endif
@@ -100,9 +100,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
                           const py::object &broadcast_params = {}) const;
   void UpdataParamNodeDefaultInput(const std::string &phase,
-                                   const std::unordered_map<std::string, tensor::TensorPtr> &params);
-  void PyExePath(const py::object &py_exe_path);
-  void KernelBuildServerDir(const py::object &kernel_build_server_dir);
+                                   const std::unordered_map<std::string, tensor::TensorPtr> &params_value);
+  void PyExePath(const py::object &py_exe_path) const;
+  void KernelBuildServerDir(const py::object &kernel_build_server_dir) const;
   py::dict GetParameterLayout(const std::string &phase);
   // Get CNode name, input node name and attribute from each graph
   py::dict GetParallelGraphInfo(const std::string &phase);
@@ -110,10 +110,10 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   py::list GetParallelParameterNameList(const std::string &phase);
   void SetCNodeStrategy(const std::string &name, const parallel::Strategies &strategy);
   size_t GetNumOpsInfo(const std::string &phase);
-  void SetNumOpsInfo(size_t);
+  void SetNumOpsInfo(size_t num_ops);
   py::dict GetAllreduceFusion(const std::string &phase);
   void DelNetRes(const py::set &id);
-  void ReleaseResource(const py::object &phase_obj);
+  void ReleaseResource(const py::object &phase);
   static void ClearRes();
   void set_queue_name(const std::string &queue_name) { queue_name_ = queue_name; }
   void set_enable_tuple_broaden(bool enable_tuple_broaden) { enable_tuple_broaden_ = enable_tuple_broaden; }
@@ -134,7 +134,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
  private:
   GraphExecutorPy() = default;
   void GetWeightInfo(const CNodePtr &root_node, const AnfNodePtr &weight_node,
-                     std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table);
+                     std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) const;
   void GetGeBackendPolicy() const;
   // filter some pipeline actions according to phase, e.g. when exporting onnx, it is no need to execute actions after
   // 'validate' stage
