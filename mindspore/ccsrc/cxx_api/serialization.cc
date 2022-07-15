@@ -117,16 +117,16 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
         MS_LOG(ERROR) << err_msg.str();
         return Status(kMEInvalidInput, err_msg.str());
       } else if (dec_key.len == 0) {
-        if (IsCipherFile(reinterpret_cast<const unsigned char *>(model_data))) {
+        if (IsCipherFile(static_cast<const unsigned char *>(model_data))) {
           err_msg << "Load model failed. The model_data may be encrypted, please pass in correct key.";
           MS_LOG(ERROR) << err_msg.str();
           return Status(kMEInvalidInput, err_msg.str());
         } else {
-          anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data), data_size);
+          anf_graph = ConvertStreamToFuncGraph(static_cast<const char *>(model_data), data_size);
         }
       } else {
         size_t plain_data_size;
-        auto plain_data = mindspore::Decrypt(&plain_data_size, reinterpret_cast<const unsigned char *>(model_data),
+        auto plain_data = mindspore::Decrypt(&plain_data_size, static_cast<const unsigned char *>(model_data),
                                              data_size, dec_key.key, dec_key.len, CharToString(dec_mode));
         if (plain_data == nullptr) {
           err_msg << "Load model failed. Please check the valid of dec_key and dec_mode or the file integrity.";

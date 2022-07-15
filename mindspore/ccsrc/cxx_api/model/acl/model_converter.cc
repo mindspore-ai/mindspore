@@ -129,7 +129,7 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 
 Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
                                      const std::map<std::string, std::string> &init_options,
-                                     const std::map<std::string, std::string> &build_options) {
+                                     const std::map<std::string, std::string> &build_options) const {
   ge::ModelBufferData model;
   auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
@@ -201,7 +201,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     // receive convert model result from child
     CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
       (void)buffer_ret.ResizeData(msg_len);
-      return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
+      return static_cast<uint8_t *>(buffer_ret.MutableData());
     };
     status = multi_process->ReceiveMsg(call);
     if (status != kSuccess) {
@@ -216,7 +216,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     Buffer model;
     CreateBufferCall call = [&model](size_t msg_len) -> uint8_t * {
       (void)model.ResizeData(msg_len);
-      return reinterpret_cast<uint8_t *>(model.MutableData());
+      return static_cast<uint8_t *>(model.MutableData());
     };
     auto status = multi_process->ReceiveMsg(call);
     if (status != kSuccess) {
@@ -248,8 +248,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
   ge::Model load_model = ge::Model("loadmodel", "version2");
-  ge::Status ret =
-    ge::Model::Load(reinterpret_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
+  ge::Status ret = ge::Model::Load(static_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
   if (ret != ge::GRAPH_SUCCESS) {
     MS_LOG(ERROR) << "Load AscendIR failed, ret = " << ret;
     return Buffer();

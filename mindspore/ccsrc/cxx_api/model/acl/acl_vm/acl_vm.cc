@@ -43,7 +43,7 @@ AclBackend::AclBackend(const std::string &name, const std::string &target,
   session->SetOptions(options);
 }
 
-VectorRef AclBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string &target) {
+VectorRef AclBackend::MsRunGraph(const GraphId &g, const VectorRef &args, const std::string & /* target */) {
   std::vector<MSTensor> inputs;
   for (const auto &arg : args) {
     if (!utils::isa<MSTensorRef>(arg)) {
@@ -76,7 +76,7 @@ bool AclBackend::GetCond(const BaseRef &c, bool *value) {
   if (data == nullptr) {
     return false;
   }
-  (*value) = *reinterpret_cast<const bool *>(data.get());
+  (*value) = *static_cast<const bool *>(data.get());
   return true;
 }
 
@@ -93,7 +93,7 @@ bool AclBackend::GetIndex(const BaseRef &c, int64_t *value) {
     if (data == nullptr) {
       return false;
     }
-    auto value_int32 = *reinterpret_cast<const int32_t *>(data.get());
+    auto value_int32 = *static_cast<const int32_t *>(data.get());
     (*value) = static_cast<int64_t>(value_int32);
     return true;
   } else if (wrapper.GetTensor().DataType() == DataType::kNumberTypeInt64) {
@@ -101,7 +101,7 @@ bool AclBackend::GetIndex(const BaseRef &c, int64_t *value) {
     if (data == nullptr) {
       return false;
     }
-    (*value) = *reinterpret_cast<const int64_t *>(data.get());
+    (*value) = *static_cast<const int64_t *>(data.get());
     return true;
   } else {
     MS_LOG(ERROR) << "Index must be Int type.";

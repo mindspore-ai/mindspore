@@ -57,8 +57,8 @@ class MS_API AclModelOptions {
   std::string buffer_optimize_mode_;
   std::map<int, std::vector<int>> input_shape_map_;
   // other options
-  uint32_t device_id_;
-  std::optional<bool> first_graph_flag_;
+  uint32_t device_id_{0};
+  std::optional<bool> first_graph_flag_{false};
   std::string om_file_path_;
 };
 }  // namespace mindspore

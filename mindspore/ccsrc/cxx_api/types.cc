@@ -248,7 +248,7 @@ MSTensor *MSTensor::CreateTensorFromFile(const std::vector<char> &file, enum Dat
       return nullptr;
     }
 
-    auto &io_read = ifs.read(reinterpret_cast<char *>(ret->MutableData()), static_cast<std::streamsize>(size));
+    auto &io_read = ifs.read(static_cast<char *>(ret->MutableData()), static_cast<std::streamsize>(size));
     if (!io_read.good() || io_read.fail() || io_read.bad()) {
       ifs.close();
       MS_LOG(ERROR) << "Failed to read file: " + file_path;
@@ -283,21 +283,21 @@ MSTensor *MSTensor::CharStringsToTensor(const std::vector<char> &name, const std
     return nullptr;
   }
 
-  int32_t *data = reinterpret_cast<int32_t *>(tensor->MutableData());
+  int32_t *data = static_cast<int32_t *>(tensor->MutableData());
   if (data == nullptr) {
     MS_LOG(ERROR) << "Create tensor failed.";
     DestroyTensorPtr(tensor);
     return nullptr;
   }
   uint8_t *cur_data = reinterpret_cast<uint8_t *>(data + 1 + str.size());
-  *reinterpret_cast<int32_t *>(data) = str.size();
+  *static_cast<int32_t *>(data) = str.size();
   for (size_t i = 0; i < str.size(); ++i) {
     int32_t offset = (cur_data - reinterpret_cast<uint8_t *>(data));
     data[i + 1] = offset;
     if (str[i].empty()) {
       continue;
     }
-    auto ret = memcpy_s(reinterpret_cast<void *>(cur_data), str[i].size(), str[i].data(), str[i].size());
+    auto ret = memcpy_s(static_cast<void *>(cur_data), str[i].size(), str[i].data(), str[i].size());
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       DestroyTensorPtr(tensor);
@@ -317,7 +317,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 
   std::vector<std::vector<char>> strings;
   auto host_data = tensor.Data();
-  const int32_t *data = reinterpret_cast<const int32_t *>(host_data.get());
+  const int32_t *data = static_cast<const int32_t *>(host_data.get());
   int32_t str_num = data[0];
   if (str_num == 0) {
     return {};
@@ -354,7 +354,7 @@ std::vector<std::vector<char>> MSTensor::TensorToStringChars(const MSTensor &ten
 
     str.resize(str_len);
     const uint8_t *cur_data = reinterpret_cast<const uint8_t *>(data) + offset;
-    auto ret = memcpy_s(reinterpret_cast<void *>(str.data()), str.size(), cur_data, str_len);
+    auto ret = memcpy_s(static_cast<void *>(str.data()), str.size(), cur_data, str_len);
     if (ret != 0) {
       MS_LOG(ERROR) << "memcpy_s failed, ret = " << ret;
       return {};
