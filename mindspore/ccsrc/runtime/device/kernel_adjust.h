@@ -70,20 +70,20 @@ class KernelAdjust {
 #endif
   static bool NeedLoopSink();
   CNodePtr CreateStreamActiveOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
-  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id);
+  CNodePtr CreateRecvApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
+  CNodePtr CreateSendApplyKernel(const std::shared_ptr<session::KernelGraph> &graph_ptr, uint32_t event_id) const;
 
  private:
   KernelAdjust() = default;
   ~KernelAdjust() = default;
 
   CNodePtr CreateNPUGetFloatStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                   const CNodePtr &npu_cnode);
+                                   const CNodePtr &npu_alloc_cnode) const;
   CNodePtr CreateNPUClearStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                const CNodePtr &npu_cnode);
+                                const CNodePtr &npu_alloc_cnode) const;
   CNodePtr CreateNPUAllocStatus(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &npu_get_cnode,
-                           const AnfNodePtr &specify_para);
+  CNodePtr CreateAssignAdd(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
+                           const CNodePtr &npu_alloc_cnode, const AnfNodePtr &specify_para);
   CNodePtr CreateAssign(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const AnfNodePtr &specify_para);
   void ReorderGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   CNodePtr CreateStreamSwitchOp(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
@@ -91,20 +91,20 @@ class KernelAdjust {
                                 StreamSwitchKind kind);
 
   CNodePtr CreatTupleGetItemNode(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr, const CNodePtr &node,
-                                 size_t output_idx);
+                                 size_t output_idx) const;
   CNodePtr CreateEndOfSequenceOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                  const CNodePtr &getnext_cnode);
   CNodePtr CreateStreamAssignAddnOP(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                     const std::map<std::string, mindspore::ParameterPtr> &switch_loop_input,
                                     bool cur_loop);
   kernel::KernelBuildInfo::KernelBuildInfoBuilder CreateMngKernelBuilder(const std::vector<std::string> &formats,
-                                                                         const std::vector<TypeId> &type_ids);
+                                                                         const std::vector<TypeId> &type_ids) const;
 #ifndef ENABLE_SECURITY
   void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
                              NotNull<session::KernelGraph *> kernel_graph_ptr);
 #endif
-  bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
-  bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
+  bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr) const;
   void InsertGetNextLoopStreamSwitch(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                      std::vector<CNodePtr> *exec_order, uint32_t *getnext_switch_stream_id,
                                      uint32_t *getnext_stream_id,
@@ -163,9 +163,9 @@ class KernelAdjust {
                                              const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
   void InsertDynamicLossScaleCheckOperations(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
                                              std::vector<AnfNodePtr> *dynamic_loss_scale_param_list);
-  std::shared_ptr<Tensor> CreateTensor(int32_t initial_value);
+  std::shared_ptr<Tensor> CreateTensor(int32_t initial_value) const;
   std::shared_ptr<Parameter> CreateParameter(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr,
-                                             const string parameter_name);
+                                             const string parameter_name) const;
 };
 }  // namespace device
 }  // namespace mindspore
