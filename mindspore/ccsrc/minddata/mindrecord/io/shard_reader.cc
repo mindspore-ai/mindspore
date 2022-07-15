@@ -356,6 +356,11 @@ std::vector<std::tuple<int, int, int, uint64_t>> ShardReader::ReadRowGroupSummar
       // return -1 when page's size equals to 0.
       auto last_page_id = shard_header_->GetLastPageId(shard_id);
       if (static_cast<int>(last_page_id) == -1) {
+        // Empty mindrecord file which does not contain any samples
+        MS_LOG(WARNING) << "The mindrecord file: " << file_paths_[shard_id]
+                        << " does not contain any samples, pls remove it.";
+        row_group_summary.emplace_back(shard_id, 0, 0, 0);
+        shard_sample_count_.push_back(total_count);
         continue;
       }
       for (uint64_t page_id = 0; page_id <= last_page_id; ++page_id) {
