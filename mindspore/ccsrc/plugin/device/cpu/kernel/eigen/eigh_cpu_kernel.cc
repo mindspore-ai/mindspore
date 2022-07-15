@@ -35,6 +35,14 @@ void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   compute_eigen_vectors_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, C_EIEH_VECTOR);
   lower_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, LOWER);
   auto A_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "Eigh does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = std::get<1>(func_list_[index]);
+  const size_t kTwoIdx = 2;
+  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
   if (AnfAlgo::IsShapesDynamic({A_shape})) {
     return;
   }
@@ -48,15 +56,6 @@ void EighCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                       << A_shape[kDim1] << "].";
   }
   m_ = LongToSize(A_shape[kDim0]);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "Eigh does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = std::get<1>(func_list_[index]);
-  const size_t kTwoIdx = 2;
-  init_io_func_ = std::get<kTwoIdx>(func_list_[index]);
 }
 
 template <typename T>

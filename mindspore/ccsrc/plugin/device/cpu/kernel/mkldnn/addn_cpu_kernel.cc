@@ -56,6 +56,12 @@ void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int64_t> src0_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   std::vector<int64_t> src1_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   std::vector<int64_t> dst_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "AddN does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
   if (AnfAlgo::IsShapesDynamic({src0_shape, src1_shape, dst_shape})) {
     return;
   }
@@ -68,13 +74,6 @@ void AddNCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   AddArgument(DNNL_ARG_SRC_0, src0_mem_desc);
   AddArgument(DNNL_ARG_SRC_1, src1_mem_desc);
   AddArgument(DNNL_ARG_DST, dst_mem_desc);
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "AddN does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T>

@@ -41,6 +41,13 @@ void NonDeterministicIntsCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   input_type_ = AnfAlgo::GetInputDeviceDataType(kernel_node, 0);
   output_type_ = AnfAlgo::GetOutputDeviceDataType(kernel_node, 0);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "NonDeterministicInts does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
   if (AnfAlgo::IsShapesDynamic({input_shape})) {
     return;
   }
@@ -50,14 +57,6 @@ void NonDeterministicIntsCPUKernelMod::InitKernel(const CNodePtr &kernel_node) {
   if (input_shape.size() != kInpuDims) {
     MS_EXCEPTION(ValueError) << "The input tensor must be a 1-D tensor.";
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "NonDeterministicInts does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
 }
 
 bool NonDeterministicIntsCPUKernelMod::Launch(const std::vector<AddressPtr> &inputs,
