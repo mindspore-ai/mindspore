@@ -394,7 +394,9 @@ from .resize_bilinear_v2 import _resize_bilinear_v2_tbe
 from .resize_bilinear_grad import _resize_bilinear_grad_tbe
 from .flatten import _flatten_tbe
 from .roi_align import _roi_align_tbe
+from .roi_align_ds import _roi_align_ds_tbe
 from .roi_align_grad import _roi_align_grad_tbe
+from .roi_align_grad_ds import _roi_align_grad_ds_tbe
 from .bounding_box_decode import _bounding_box_decode_tbe
 from .bounding_box_decode_ds import _bounding_box_decode_ds_tbe
 from .bounding_box_encode import _bounding_box_encode_tbe

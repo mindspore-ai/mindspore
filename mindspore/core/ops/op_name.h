@@ -353,6 +353,11 @@ constexpr auto kHandle = "handle";
 constexpr auto kBatchSize = "batch_size";
 constexpr auto kCross = "cross";
 constexpr auto kDeviceNum = "device_num";
+constexpr auto kPooledHeight = "pooled_height";
+constexpr auto kPooledWidth = "pooled_width";
+constexpr auto kSpatialScale = "spatial_scale";
+constexpr auto kSampleNum = "sample_num";
+constexpr auto kRoiEndMode = "roi_end_mode";
 
 constexpr size_t kInputIndex0 = 0;
 constexpr size_t kInputIndex1 = 1;

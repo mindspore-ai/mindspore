@@ -926,6 +926,7 @@ GVAR_DEF(PrimitivePtr, kPrimLARSUpdate, std::make_shared<Primitive>("LARSUpdate"
 GVAR_DEF(PrimitivePtr, kPrimBoundingBoxDecode, std::make_shared<Primitive>("BoundingBoxDecode"));
 GVAR_DEF(PrimitivePtr, kPrimBoundingBoxEncode, std::make_shared<Primitive>("BoundingBoxEncode"));
 GVAR_DEF(PrimitivePtr, kPrimROIAlign, std::make_shared<Primitive>("ROIAlign"));
+GVAR_DEF(PrimitivePtr, kPrimROIAlignGrad, std::make_shared<Primitive>("ROIAlignGrad"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAddSign, std::make_shared<Primitive>("ApplyAddSign"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdagrad, std::make_shared<Primitive>("ApplyAdagrad"));
 GVAR_DEF(PrimitivePtr, kPrimApplyAdadelta, std::make_shared<Primitive>("ApplyAdadelta"));
