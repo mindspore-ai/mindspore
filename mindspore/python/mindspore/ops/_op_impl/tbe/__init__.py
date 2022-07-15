@@ -363,6 +363,7 @@ from .floor_mod_ds import _floor_mod_ds_tbe
 from .scatter_nd_update import _scatter_nd_update_tbe
 from .scatter_nd_update_ds import _scatter_nd_update_ds_tbe
 from .avg_pool import _avg_pool_tbe
+from .avg_pool_ds import _avg_pool_ds_tbe
 from .avg_pool_grad import _avg_pool_grad_tbe
 from .avg_pool_grad_vm import _avg_pool_grad_vm_tbe
 from .avg_pool_3d import _avg_pool_3d_tbe
