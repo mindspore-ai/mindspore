@@ -32,11 +32,11 @@ void NonZeroCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto output_shape = common::AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  if (AnfAlgo::IsShapesDynamic({input_shape, output_shape})) {
+  if (AnfAlgo::IsShapesDynamic({input_shape})) {
     return;
   }
   input_shape_ = Convert2SizeT(input_shape);
-  output_shape_ = Convert2SizeT(output_shape);
+  output_shape_ = Convert2SizeTClipNeg(output_shape);
   input_rank_ = input_shape_.size();
   node_wpt_ = kernel_node;
   if (input_shape_.size() < kInputMinDim) {
