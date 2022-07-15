@@ -308,7 +308,6 @@ Tensor创建
     mindspore.ops.random_gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
-    mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
 
 Array操作
