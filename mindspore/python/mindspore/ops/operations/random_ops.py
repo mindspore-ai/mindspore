@@ -834,7 +834,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         TypeError: If `true_classes` is not a Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        ``GPU``
 
     Examples:
         >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4)

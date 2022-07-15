@@ -191,6 +191,10 @@ void UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
 bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
                                                const std::vector<KernelTensorPtr> &inputs,
                                                const std::vector<KernelTensorPtr> &outputs) {
+  // delete the operator in r1.8 version
+  MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', it's not supported on CPU device recently and"
+                    << " it will be provided in later version.";
+
   if (!base_operator) {
     MS_LOG(ERROR) << "UniformCandiadataSampler ops is null.";
     return false;
