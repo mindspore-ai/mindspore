@@ -883,7 +883,6 @@ class Cell(Cell_):
             >>> import mindspore as ms
             >>> from mindspore import nn, Tensor, context
             >>>
-            >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
             >>> class reluNet(nn.Cell):
             ...     def __init__(self):
             ...         super(reluNet, self).__init__()
