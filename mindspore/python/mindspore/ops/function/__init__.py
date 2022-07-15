@@ -55,6 +55,7 @@ from .array_func import (
     scalar_to_tensor,
     tuple_to_array,
     expand_dims,
+    squeeze,
     transpose,
     scatter_nd,
     scatter_nd_add,

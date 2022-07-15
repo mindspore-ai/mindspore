@@ -63,7 +63,6 @@ sort = P.Sort()
 tensor_range = P.Range()
 if not security.enable_security():
     print_ = P.Print()
-squeeze = P.Squeeze()
 tensor_scatter_update = P.TensorScatterUpdate()
 scatter_nd_update = P.ScatterNdUpdate()
 
