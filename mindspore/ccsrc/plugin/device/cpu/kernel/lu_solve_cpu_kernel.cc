@@ -36,6 +36,17 @@ void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   auto x_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   auto lu_data_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   auto lu_pivots_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
+
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  std::vector<KernelAttr> support_list;
+  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
+                       [](const std::pair<KernelAttr, LuSolveFunc> &pair) { return pair.first; });
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "LuSolve does not support this kernel data type: " << kernel_attr;
+  }
+  kernel_func_ = func_list_[index].second;
+
   if (AnfAlgo::IsShapesDynamic({x_shape, lu_data_shape, lu_pivots_shape})) {
     return;
   }
@@ -92,16 +103,6 @@ void LuSolveCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
                                << "batch dimension of LU_pivots should match batch dimension of LU_data.";
     }
   }
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, LuSolveFunc> &pair) { return pair.first; });
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "LuSolve does not support this kernel data type: " << kernel_attr;
-  }
-  kernel_func_ = func_list_[index].second;
 }
 
 template <typename T1, typename T2>

@@ -42,6 +42,14 @@ void FractionalMaxPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
   input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
+  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
+  if (!is_match) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
+  }
+
+  kernel_func_ = func_list_[index].second;
+
   if (AnfAlgo::IsShapesDynamic({input_shape_, output_shape_})) {
     return;
   }
@@ -71,14 +79,6 @@ void FractionalMaxPoolCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   deterministic_ = common::AnfAlgo::GetNodeAttr<bool>(kernel_node, "deterministic");
   seed_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed"));
   seed2_ = static_cast<int>(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, "seed2"));
-
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
-  auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!is_match) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', does not support this kernel data type: " << kernel_attr;
-  }
-
-  kernel_func_ = func_list_[index].second;
 }
 
 static std::vector<int64_t> GeneratePoolingSequencePseudoRandom(size_t input_length, size_t output_length, int seed) {
