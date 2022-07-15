@@ -82,6 +82,10 @@ def normal(shape, mean, stddev, seed=None):
     const_utils.check_type_valid(stddev_dtype, mstype.int_type + (mstype.float16, mstype.float32), 'normal')
     seed1, seed2 = _get_seed(seed, "normal")
     stdnormal = P.StandardNormal(seed1, seed2)
+    if not isinstance(shape, tuple):
+        const_utils.raise_value_error("Type of 'shape' should be tuple, but got: {}".format(type(shape)))
+    if not _check_shape(shape):
+        const_utils.raise_value_error("All values of 'shape' should be positive integer, but got: {}".format(shape))
     random_normal = stdnormal(shape)
     value = random_normal * stddev + mean
     return value
@@ -130,6 +134,10 @@ def laplace(shape, mean, lambda_param, seed=None):
     const_utils.check_tensors_dtype_same(lambda_param_dtype, mstype.float32, "laplace")
     seed1, seed2 = _get_seed(seed, "laplace")
     stdlaplace = P.StandardLaplace(seed1, seed2)
+    if not isinstance(shape, tuple):
+        const_utils.raise_value_error("Type of 'shape' should be tuple, but got: {}".format(type(shape)))
+    if not _check_shape(shape):
+        const_utils.raise_value_error("All values of 'shape' should be positive integer, but got: {}".format(shape))
     rnd = stdlaplace(shape)
     value = rnd * lambda_param + mean
     return value
@@ -404,3 +412,13 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
         _, indices = P.TopK()(vals, num_sample)
         return indices
     return P.Multinomial(seed1, seed2)(inputs, num_sample)
+
+
+def _check_shape(input_shape):
+    """
+    Check 'shape' value.
+    """
+    for item in input_shape:
+        if not (isinstance(item, int) and item >= 1):
+            return False
+    return True
