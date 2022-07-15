@@ -55,12 +55,6 @@ int ApplyAdadeltaCpuKernelMod::CheckInputShape(const std::vector<KernelTensorPtr
   std::vector<int64_t> rho_shape = inputs[kRhoIndex]->GetShapeVector();
   std::vector<int64_t> epsilon_shape = inputs[kEpsilonIndex]->GetShapeVector();
   std::vector<int64_t> grad_shape = inputs[kGradIndex]->GetShapeVector();
-  if (var_shape.empty()) {
-    MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the dimension of 'var' must be at least 1-D, but got "
-                     "scalar or None.";
-    return KRET_RESIZE_FAILED;
-  }
   if (!(IsSameShape(var_shape, accum_shape) && IsSameShape(var_shape, accum_update_shape) &&
         IsSameShape(var_shape, grad_shape))) {
     MS_LOG(ERROR) << "For '" << kernel_name_
