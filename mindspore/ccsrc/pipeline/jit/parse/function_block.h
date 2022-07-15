@@ -56,13 +56,13 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr ReadVariable(const std::string &var_name);
   void AddPrevBlock(const FunctionBlockPtr &block);
   void SetPhiArgument(const ParameterPtr &phi);
-  bool CollectRemovablePhi(const ParameterPtr &phi);
+  void CollectRemovablePhi(const ParameterPtr &phi);
   // A block is matured if all its predecessors is generated
   void Mature();
   CNodePtr ForceToBoolNode(const AnfNodePtr &cond);
   CNodePtr ForceToWhileCond(const AnfNodePtr &cond);
   void Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args);
-  AnfNodePtr SearchReplaceNode(const std::string &var, const ParameterPtr &phi);
+  std::set<AnfNodePtr> SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi);
   CNodePtr ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
                            const AnfNodePtr &false_block_call);
   CNodePtr ConditionalJump(const AnfNodePtr &cond_node, const FunctionBlockPtr &true_block,
@@ -81,13 +81,14 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr HandleBuiltinNamespaceInfo(const py::tuple &info);
   AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
-  const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
+  const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_args() const { return phi_args_; }
   void FindIsolatedNodes();
   void AddIsolatedNode(const AnfNodePtr &target);
   void AttachIsolatedNodesBeforeReturn();
   const std::vector<FunctionBlock *> &prev_blocks() const { return prev_blocks_; }
   bool is_dead_block() const { return is_dead_block_; }
   void SetAsDeadBlock();
+  CNodePtr GetJumpNode(FunctionBlock *target_block);
 
   const py::dict &global_py_params() const { return global_py_params_; }
   void set_global_py_params(const py::dict &symbols) { global_py_params_ = symbols; }
@@ -175,7 +176,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   std::map<FunctionBlock *, CNodePtr> jumps_;
 
   // Keep all removable phis which will be removed in one pass.
-  mindspore::HashMap<ParameterPtr, AnfNodePtr> removable_phis_;
+  std::map<ParameterPtr, std::set<AnfNodePtr>> phi_args_;
 
   // Hold declared global variables in function
   std::set<std::string> global_vars_;
