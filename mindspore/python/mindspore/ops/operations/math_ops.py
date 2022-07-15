@@ -5513,7 +5513,7 @@ class Real(Primitive):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
@@ -5577,7 +5577,7 @@ class Imag(Primitive):
        TypeError: If the input is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``CPU`` ``GPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.asarray(np.complex(1.3+0.4j)), mindspore.complex64)
