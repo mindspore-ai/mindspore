@@ -556,17 +556,6 @@ class PrimitiveWithInfer(Primitive):
 
     def __infer__(self, *args):
         """Infer shape, type, and value at the same time by using dictionary as arguments."""
-        is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
-        fn_infer_dynamic_shape = getattr(self, 'infer_dynamic_shape', None)
-        if is_graph_mode and fn_infer_dynamic_shape is not None:
-            out = fn_infer_dynamic_shape(*args)
-            tracks = ['dtype', 'value']
-            for track in tracks:
-                fn = getattr(self, 'infer_' + track)
-                # fn may return None
-                out[track] = fn(*(x[track] for x in args))
-            return out
-
         tracks = ['dtype', 'shape', 'value']
         out = {}
         for track in tracks:
@@ -604,6 +593,10 @@ class PrimitiveWithInfer(Primitive):
             if hasattr(self, '_infer_max_value'):
                 fn_infer_max_value = getattr(self, '_infer_max_value')
                 out['max_value'] = fn_infer_max_value(*max_values)
+        has_shape_value, shape_values = get_specified_value(args, 'shape_value')
+        if has_shape_value and hasattr(self, '_infer_shape_value'):
+            fn_infer_shape_value = getattr(self, '_infer_shape_value')
+            out['shape_value'] = fn_infer_shape_value(*shape_values)
         if not has_dynamic_shape(out['shape']):
             return out
 

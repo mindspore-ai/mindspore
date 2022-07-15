@@ -23,7 +23,7 @@
 #include "abstract/ops/primitive_infer_map.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
-
+#include "utils/shape_utils.h"
 namespace mindspore {
 namespace ops {
 std::vector<int64_t> CalBroadCastShape(std::vector<int64_t> x_shape, std::vector<int64_t> y_shape,
@@ -276,6 +276,185 @@ TypePtr ReduceBaseInferType(const PrimitivePtr &prim, const std::vector<abstract
   valid_types.insert(kBool);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x dtype", x_type, valid_types, prim->name());
   return x_type;
+}
+// Shape value infer mechanism implementation
+namespace {
+std::vector<ShapeVector> GetArgsShapeValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  std::vector<ShapeVector> args_shape_list;
+  for (size_t i = 0; i < args.size(); ++i) {
+    if (args[i]->isa<abstract::AbstractTensor>()) {
+      auto arg_tensor = dyn_cast<abstract::AbstractTensor>(args[i]);
+      auto shape_value_ptr = arg_tensor->get_shape_value();
+      if (shape_value_ptr != nullptr) {
+        auto shape_value = CheckAndConvertUtils::CheckTupleInt("shape_value", shape_value_ptr, prim->name());
+        args_shape_list.push_back(shape_value);
+        MS_LOG(DEBUG) << "Input shape value: " << shape_value;
+      }
+    } else if (args[i]->isa<abstract::AbstractSequence>()) {
+      auto arg_list = args[i]->cast<abstract::AbstractSequencePtr>();
+      auto &elements = arg_list->elements();
+      auto tuple_args_shape_list = GetArgsShapeValue(prim, elements);
+      args_shape_list.insert(args_shape_list.end(), tuple_args_shape_list.begin(), tuple_args_shape_list.end());
+    }
+  }
+  return args_shape_list;
+}
+
+ValuePtr TransShapeToTensorValue(const ShapeVector &shape) {
+  MS_EXCEPTION_IF_CHECK_FAIL(!shape.empty(), "Empty shape vector cannot be handled");
+  constexpr size_t kType64Len = 8;
+  int64_t shape_dim = SizeToLong(shape.size());
+  std::vector<int64_t> shape_vec_shape = {shape_dim};
+  auto new_value = std::make_shared<tensor::Tensor>(kNumberTypeInt64, shape_vec_shape);
+  auto data_c = new_value->data_c();
+  auto elem_num = shape.size() * kType64Len;
+  auto ret_code = memcpy_s(data_c, static_cast<size_t>(new_value->data().nbytes()), &shape[0], elem_num);
+  if (ret_code == 0) {
+    return new_value;
+  }
+  return nullptr;
+}
+
+AbstractBasePtrList ConstructArgs(const std::vector<ShapeVector> &args_shape_list, const AbstractBasePtrList &ori_args,
+                                  int *shape_index) {
+  AbstractBasePtrList new_args;
+  for (size_t i = 0; i < ori_args.size(); ++i) {
+    auto new_arg = ori_args[i]->Clone();
+    if (new_arg->isa<abstract::AbstractTensor>()) {
+      auto arg_tensor = dyn_cast<abstract::AbstractTensor>(new_arg);
+      if (arg_tensor->get_shape_value() != nullptr) {
+        auto new_shape = args_shape_list[*shape_index];
+        auto new_value = TransShapeToTensorValue(new_shape);
+        arg_tensor->set_value(new_value);
+        *shape_index = *shape_index + 1;
+      }
+    } else if (new_arg->isa<abstract::AbstractSequence>()) {
+      auto arg_list = new_arg->cast<abstract::AbstractSequencePtr>();
+      auto &elements = arg_list->elements();
+      auto new_tuple_args = ConstructArgs(args_shape_list, elements, shape_index);
+      new_arg = std::make_shared<abstract::AbstractTuple>(new_tuple_args);
+    }
+    new_args.push_back(new_arg);
+  }
+  return new_args;
+}
+
+ShapeVector RunCInferShapeValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  ShapeVector shape_value;
+  auto eval_impl = abstract::GetPrimitiveInferImpl(prim);
+  if (eval_impl.infer_value_impl_ != nullptr) {
+    auto value = eval_impl.infer_value_impl_(prim, args);
+    if (value != nullptr) {
+      shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", value, prim->name());
+      MS_LOG(DEBUG) << "Inferred shape value: " << shape_value;
+    }
+  }
+  return shape_value;
+}
+
+ShapeVector MakeFakeShape(const ShapeVector &shape) {
+  ShapeVector new_shape = shape;
+  for (unsigned int i = 0; i < new_shape.size(); ++i) {
+    if (new_shape[i] < 0) {
+      new_shape[i] = 1;
+    }
+  }
+  return new_shape;
+}
+
+ShapeVector MakeFakeShapeBack(const PrimitivePtr &prim, const ShapeVector &shape, const ShapeVector &unknown_shape) {
+  ShapeVector new_shape = shape;
+  MS_EXCEPTION_IF_CHECK_FAIL(shape.size() == unknown_shape.size(),
+                             "Input and output shape size must be consistent for element-wise op");
+  for (unsigned int i = 0; i < unknown_shape.size(); i++) {
+    if (unknown_shape[i] < 0) {
+      new_shape[i] = -1;
+    }
+  }
+  return new_shape;
+}
+
+std::vector<ShapeVector> ConvertShape(const std::vector<ShapeVector> &shapes) {
+  std::vector<ShapeVector> converted_shapes;
+  (void)std::transform(shapes.begin(), shapes.end(), std::back_inserter(converted_shapes),
+                       [](const ShapeVector &shape) -> ShapeVector { return MakeFakeShape(shape); });
+  return converted_shapes;
+}
+
+bool HasInferValue(const PrimitivePtr &prim) {
+  auto eval_impl = abstract::GetPrimitiveInferImpl(prim);
+  if (eval_impl.infer_value_impl_ != nullptr) {
+    return true;
+  }
+  return false;
+}
+
+ValuePtr EvalShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args, bool convert_shape = false) {
+  MS_LOG(DEBUG) << prim->name() << " has infer shape value";
+  if (!HasInferValue(prim)) {
+    return nullptr;
+  }
+  std::vector<ShapeVector> arg_shapes = GetArgsShapeValue(prim, args);
+  if (arg_shapes.empty()) {
+    return nullptr;
+  }
+  std::vector<ShapeVector> converted_shapes = arg_shapes;
+  if (convert_shape) {
+    converted_shapes = ConvertShape(arg_shapes);
+  }
+  int shape_index = 0;
+  AbstractBasePtrList new_args = ConstructArgs(converted_shapes, args, &shape_index);
+  auto shape_value = RunCInferShapeValue(prim, new_args);
+  if (shape_value.empty()) {
+    return nullptr;
+  }
+  if (convert_shape) {
+    shape_value = MakeFakeShapeBack(prim, shape_value, arg_shapes[0]);
+    MS_LOG(DEBUG) << "Convert back shape: " << shape_value;
+  }
+  return MakeValue(shape_value);
+}
+}  // namespace
+
+ShapeVector GetShapeValue(const AbstractBasePtr &arg) {
+  auto abs_value = arg->BuildValue();
+  if (arg->isa<abstract::AbstractTensor>()) {
+    auto abs_tensor = arg->cast<abstract::AbstractTensorPtr>();
+    if (abs_value->isa<tensor::Tensor>()) {
+      auto shape_value = CheckAndConvertUtils::CheckTensorIntValue("shape", abs_value, "");
+      MS_EXCEPTION_IF_CHECK_FAIL(!shape_value.empty(), "Data type of shape value must be int64_t or int32_t");
+      return shape_value;
+    }
+    auto abs_tensor_shape = abs_tensor->shape()->shape();
+    MS_EXCEPTION_IF_CHECK_FAIL(abs_tensor_shape.size() == 1, "Shape of shape value only could be one-dimensional");
+    if (IsDynamic(abs_tensor_shape)) {
+      return {UNKNOWN_RANK};
+    }
+    auto shape_size = abs_tensor_shape[0];
+    auto shape_value = abs_tensor->get_shape_value();
+    if (shape_value == nullptr) {
+      return ShapeVector(shape_size, UNKNOWN_DIM);
+    } else {
+      auto shape_vector = GetValue<ShapeVector>(shape_value);
+      MS_EXCEPTION_IF_CHECK_FAIL(LongToSize(shape_size) == shape_vector.size(), "Illegal shape of shape value");
+      return shape_vector;
+    }
+  } else if (arg->isa<abstract::AbstractTuple>()) {
+    auto elements = arg->cast<abstract::AbstractTuplePtr>()->elements();
+    MS_EXCEPTION_IF_CHECK_FAIL(!elements.empty() && !elements[0]->isa<abstract::AbstractTensor>(),
+                               "Input cannot be a tuple of tensor");
+    auto out_shape = GetValue<std::vector<int64_t>>(abs_value);
+    return out_shape;
+  }
+  MS_EXCEPTION(TypeError) << "Input arg must be abstract tensor or tuple.";
+}
+
+ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  return EvalShapeTensorValue(prim, args, false);
+}
+
+ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args) {
+  return EvalShapeTensorValue(prim, args, true);
 }
 }  // namespace ops
 }  // namespace mindspore

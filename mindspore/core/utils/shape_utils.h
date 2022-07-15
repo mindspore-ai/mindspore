@@ -21,6 +21,9 @@
 #include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
+static const ShapeValueDType UNKNOWN_DIM = -1;
+static const ShapeValueDType UNKNOWN_RANK = -2;
+
 inline size_t SizeOf(const ShapeVector &shape) {
   ShapeValueDType data_size = 1;
   for (auto dim : shape) {

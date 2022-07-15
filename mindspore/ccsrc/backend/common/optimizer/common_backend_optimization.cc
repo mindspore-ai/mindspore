@@ -39,6 +39,7 @@
 #include "backend/common/optimizer/dynamic_shape/convert_custom_op.h"
 #include "backend/common/optimizer/dynamic_shape/link_custom_op.h"
 #include "backend/common/pass/convert_unused_tuple_para_to_make_tuple.h"
+#include "backend/common/pass/convert_dynamic_broadcast_to.h"
 #include "utils/ms_context.h"
 #include "include/common/debug/anf_ir_dump.h"
 
@@ -60,6 +61,7 @@ void BackendCommonOptimization(const std::shared_ptr<session::KernelGraph> &kern
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto common_pm = std::make_shared<PassManager>("common_pm");
   common_pm->AddPass(std::make_shared<AddDynamicShapeAttr>());
+  common_pm->AddPass(std::make_shared<ConvertDynamicBroadcastTo>());
   common_pm->AddPass(std::make_shared<ReduceSumOptimizer>());
   common_pm->AddPass(std::make_shared<ConvertConstInputToAttr>());
   common_pm->AddPass(std::make_shared<CustomOpConstInputToAttr>());

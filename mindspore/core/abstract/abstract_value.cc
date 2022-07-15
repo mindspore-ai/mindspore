@@ -964,6 +964,10 @@ bool AbstractTensor::equal_to(const AbstractTensor &other) const {
   if (!IsEqual(shape(), other.shape())) {
     return false;
   }
+  // Check shape value.
+  if (!IsEqual(get_shape_value(), other.get_shape_value())) {
+    return false;
+  }
   // Check min and max values.
   return IsEqual(get_min_value(), other.get_min_value()) && IsEqual(get_max_value(), other.get_max_value());
 }
@@ -987,6 +991,7 @@ AbstractBasePtr AbstractTensor::Clone() const {
   clone->set_shape(shp->Clone());
   clone->set_value(GetValueTrack());
   clone->set_value_range(get_min_value(), get_max_value());
+  clone->set_shape_value(get_shape_value());
   return clone;
 }
 

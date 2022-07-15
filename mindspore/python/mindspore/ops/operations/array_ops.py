@@ -437,6 +437,8 @@ class Cast(PrimitiveWithInfer):
             max_value = tuple(max_value.asnumpy().tolist())
             out['min_value'] = min_value
             out['max_value'] = max_value
+        if 'shape_value' in x:
+            out['shape_value'] = x['shape_value']
         return out
 
 
@@ -689,6 +691,8 @@ class Reshape(PrimitiveWithInfer):
             # when dynamic memory allocation is supported, max_shape can be left out
             min_shape = [1] * shape_rank
             max_shape = [int(np.prod(x["max_shape"]))] * shape_rank
+        if "shape_value" in shape:
+            out_shape = shape["shape_value"]
         return out_shape, min_shape, max_shape
 
     @staticmethod
@@ -3592,23 +3596,20 @@ class StridedSlice(PrimitiveWithInfer):
         if "max_value" in x and "min_value" in x:
             validator.check_value_type("min_value", x["min_value"], [tuple, list], self.name)
             validator.check_value_type("max_value", x["max_value"], [tuple, list], self.name)
-            max_value_np = np.array(x["max_value"])
-            min_value_np = np.array(x["min_value"])
-            slice_index = []
-            for begin_i, end_i, strides_i in zip(begin_v['value'], end_v['value'], strides_v['value']):
-                s = slice(begin_i, end_i, strides_i)
-                slice_index.append(s)
-            slice_index = tuple(slice_index)
-            max_value_slice = max_value_np[slice_index]
-            min_value_slice = min_value_np[slice_index]
-            max_value_slice = tuple(max_value_slice.tolist())
-            min_value_slice = tuple(min_value_slice.tolist())
+            max_value_slice = self._compute_dynamic_slicing_value(x["max_value"], begin_v, end_v, strides_v)
+            min_value_slice = self._compute_dynamic_slicing_value(x["min_value"], begin_v, end_v, strides_v)
             return {'shape': ret_shape,
                     'dtype': x['dtype'],
                     'value': value,
                     'max_value': max_value_slice,
                     'min_value': min_value_slice}
-
+        if "shape_value" in x:
+            validator.check_value_type("shape_value", x["shape_value"], [tuple], self.name)
+            shape_value_slice = self._compute_dynamic_slicing_value(x["shape_value"], begin_v, end_v, strides_v)
+            return {'shape': ret_shape,
+                    'dtype': x['dtype'],
+                    'shape_value': shape_value_slice,
+                    'value': value}
         return {'shape': ret_shape,
                 'dtype': x['dtype'],
                 'value': value}
@@ -3708,6 +3709,17 @@ class StridedSlice(PrimitiveWithInfer):
                 i += 1
                 j += 1
         return ret_shape
+
+    def _compute_dynamic_slicing_value(self, shape_value, begin_v, end_v, strides_v):
+        shape_value_np = np.array(shape_value)
+        slice_index = []
+        for begin_i, end_i, strides_i in zip(begin_v['value'], end_v['value'], strides_v['value']):
+            s = slice(begin_i, end_i, strides_i)
+            slice_index.append(s)
+        slice_index = tuple(slice_index)
+        shape_value_slice = shape_value_np[slice_index]
+        shape_value_slice = tuple(shape_value_slice.tolist())
+        return shape_value_slice
 
     def _compute_dynamic_slicing_shape(self, x_shape, slice_len, max_shape):
         """Computes the shape of the slicing for dynamic shape, mask is currently not supported."""
