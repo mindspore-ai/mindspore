@@ -1358,6 +1358,7 @@ mindspore.Tensor
     .. py:method:: tan()
 
         返回每个元素的正切值。
+
         .. math::
 
             out_i = tan(x_i)
