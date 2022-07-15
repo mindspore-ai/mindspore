@@ -2777,7 +2777,7 @@ class Pipe:
         self.res_queue._joincancelled = True  # pylint: disable=W0212
 
     def master_send(self, func_index, data):
-        self.in_queue.put_nowait((func_index, tuple(data)))
+        self.in_queue.put_nowait((func_index, *data))
 
     def master_receive(self):
         return self.res_queue.get_until(timeout=1, exit_signal=self.eof)
@@ -2794,10 +2794,10 @@ class Pipe:
         result = self.in_queue.get_until(timeout=1, exit_signal=self.eof)
         if result is None:
             return result
-        if len(result) != 2:
-            raise RuntimeError(f"Corrupted data. Worker received {len(result)} elements, it should be 2.")
-        func_index, data = result[0], result[1]
-        return func_index, data
+        if len(result) == 1:
+            raise RuntimeError(f"Corrupted data. Worker received {len(result)} elements, it should be more than 1.")
+        func_index, *data = result
+        return func_index, tuple(data)
 
     def worker_close(self):
         self.res_queue.cancel_join_thread()
