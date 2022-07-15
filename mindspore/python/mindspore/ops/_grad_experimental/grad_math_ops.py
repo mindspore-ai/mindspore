@@ -40,6 +40,7 @@ from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import Betainc
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
+from ..operations.math_ops import TridiagonalMatMul
 from ..operations.math_ops import Logit
 
 transpose = P.Transpose()
@@ -869,6 +870,63 @@ def get_bprop_igammac(self):
             return neg_(reshape_(reduce_sum_(partial_a * dout, ra), sa)), \
                    neg_(reshape_(reduce_sum_(partial_x * dout, rx), sx))
         return neg_(reshape_(partial_a * dout, sa)), neg_(reshape_(partial_x * dout, sx))
+
+    return bprop
+
+
+@bprop_getters.register(TridiagonalMatMul)
+def get_bprop_tridiagonal_matmul(self):
+    """Grad definition for 'TridiagonalMatMul' operation"""
+
+    def _leftshift(x):
+        """Shifts next-to-last dimension to the left, adding zero on the right."""
+        rank = P.Rank()(x)
+        paddings = ((0,) * (2),) * (rank - 2) + ((0, 1), (0, 0))
+        pad_op = P.Pad(paddings)
+        return pad_op(x[..., 1:, :])
+
+    def _rightshift(x):
+        """Shifts next-to-last dimension to the right, adding zero on the left."""
+        rank = P.Rank()(x)
+        paddings = ((0,) * (2),) * (rank - 2) + ((1, 0), (0, 0))
+        pad_op = P.Pad(paddings)
+        return pad_op(x[..., :-1, :])
+
+    def matrix_transpose(x):
+        x_rank = P.Rank()(x)
+        if x_rank > 2:
+            m = x_rank - 2
+            n = x_rank - 1
+            x_range = range(m)
+            perm = (x_range) + (n, m)
+        else:
+            perm = (1, 0)
+        return P.Transpose()(x, perm)
+
+    reduce_sum = P.ReduceSum()
+    expand_dims = P.ExpandDims()
+    conjugate = P.Conj()
+
+    def bprop(superdiag, maindiag, subdiag, rhs, out, grad):
+        superdiag_type = F.dtype(superdiag)
+        superdiag_conj = matrix_transpose(superdiag)
+        maindiag_conj = matrix_transpose(maindiag)
+        subdiag_conj = matrix_transpose(subdiag)
+        rhs_conj = rhs
+        if superdiag_type in (mstype.complex64, mstype.complex128):
+            superdiag_conj = conjugate(superdiag_conj)
+            maindiag_conj = conjugate(maindiag_conj)
+            subdiag_conj = conjugate(subdiag_conj)
+            rhs_conj = conjugate(rhs)
+        superdiag_grad = reduce_sum(_leftshift(rhs_conj) * grad, -1)
+        maindiag_grad = reduce_sum(rhs_conj * grad, -1)
+        subdiag_grad = reduce_sum(_rightshift(rhs_conj) * grad, -1)
+        rhs_grad = _rightshift(superdiag_conj * grad) + maindiag_conj * grad + \
+        _leftshift(subdiag_conj * grad)
+        superdiag_grad = expand_dims(superdiag_grad, -2)
+        maindiag_grad = expand_dims(maindiag_grad, -2)
+        subdiag_grad = expand_dims(subdiag_grad, -2)
+        return superdiag_grad, maindiag_grad, subdiag_grad, rhs_grad
 
     return bprop
 

@@ -181,6 +181,7 @@ from .resize_bilinear_grad import _resize_bilinear_grad_aicpu
 from .resize_nearest_neighbor_v2 import _resize_nearest_neighbor_v2_aicpu
 from .resize_nearest_neighbor_v2_grad import _resize_nearest_neighbor_v2_grad_aicpu
 from .scatter_elements import _scatter_elements_aicpu
+from .tridiagonal_matmul import _tridiagonal_matmul_aicpu
 from .multilabel_margin_loss_grad import _multilabel_margin_loss_grad_aicpu
 from .non_max_suppression import _non_max_suppression_aicpu
 from .square import _square_aicpu
