@@ -313,20 +313,19 @@ def get_unstack_vmap_rule(prim, axis_size):
     if new_axis >= 0:
         new_axis += 1
 
-    def vmap_rule(*inputs_bdim):
-        is_all_none, result = vmap_general_preprocess(prim, *inputs_bdim)
+    def vmap_rule(inputs_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, inputs_bdim)
         if is_all_none:
             return result
 
-        args = inputs_bdim[0]
-        vals = ()
-        for each_arg in args:
-            x, bdim = each_arg
-            x = _bdim_at_front(x, bdim, axis_size)
-            vals = vals + (x,)
+        x, bdim = inputs_bdim
+        x = _bdim_at_front(x, bdim, axis_size)
 
-        out = P.Unstack(new_axis)(vals)
-        return out, 0
+        outputs = P.Unstack(new_axis)(x)
+        outputs_tuple = ()
+        for output in outputs:
+            outputs_tuple = outputs_tuple + ((output, 0),)
+        return outputs_tuple
 
     return vmap_rule
 
