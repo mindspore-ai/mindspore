@@ -113,7 +113,7 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
   auto input_names_vec = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
   EXPECT_EQ(input_names_vec.size(), 2);
   mindspore::HashSet<size_t> attr_index{1};
-  ConstInputToAttr(topk_cnode, attr_index);
+  topk_cnode = ConstInputToAttr(topk_cnode, attr_index);
   EXPECT_EQ(topk_cnode->inputs().size(), 2);
   input_names_vec = common::AnfAlgo::GetNodeAttr<std::vector<std::string>>(topk_cnode, kAttrInputNames);
   EXPECT_EQ(input_names_vec.size(), 2);
@@ -126,7 +126,7 @@ TEST_F(TestHWTopKSplit, test_topk_no_split) {
   pm->AddPass(topk_split);
   optimizer->AddPassManager(pm);
   FuncGraphPtr new_graph = optimizer->Optimize(kernel_graph);
-  EXPECT_EQ(topk_cnode, GetTopkCNodeFromKernelGraph(new_graph));
+  EXPECT_NE(topk_cnode, GetTopkCNodeFromKernelGraph(new_graph));
 }
 }  // namespace opt
 }  // namespace mindspore

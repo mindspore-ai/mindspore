@@ -213,17 +213,6 @@ void AscendGraphOptimization::IRFusionOptimization(const KernelGraphPtr &graph) 
   memo_.insert(graph);
 
   opt::AscendBackendIRFusionOptimization(graph);
-
-#ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
-  if (save_graphs) {
-    std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpIR(file_name, graph);
-  }
-#endif
-
   for (auto &child_graph : graph->child_graph_order()) {
     IRFusionOptimization(NOT_NULL(child_graph.lock()));
   }
@@ -247,6 +236,15 @@ void AscendGraphOptimization::RootGraphExecutorValidate(NotNull<KernelGraphPtr> 
 
 void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(graph);
+#ifdef ENABLE_DUMP_IR
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "select_kernel_before_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph, true, kTopStack);
+  }
+#endif
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
@@ -256,9 +254,6 @@ void AscendGraphOptimization::RecurseSelectKernelInfo(const KernelGraphPtr &grap
   MS_LOG(INFO) << "Status record: end select kernel info. graph id: " << graph->graph_id();
 
 #ifdef ENABLE_DUMP_IR
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
   if (save_graphs) {
     std::string file_name = "select_kernel_after_graph_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph);
