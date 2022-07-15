@@ -372,14 +372,20 @@ void GetValueNodeString(std::ostringstream &buf, const tensor::TensorPtr &tensor
 
   if (dtype->type_id() == kNumberTypeBool) {
     fn(reinterpret_cast<bool *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt16) {
+    fn(reinterpret_cast<int16_t *>(tensor->data_c()));
+  } else if (dtype->type_id() == kNumberTypeInt32) {
+    fn(reinterpret_cast<int32_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeInt64) {
     fn(reinterpret_cast<int64_t *>(tensor->data_c()));
   } else if (dtype->type_id() == kNumberTypeFloat16) {
     buf << *reinterpret_cast<float16 *>(tensor->data_c());
   } else if (dtype->type_id() == kNumberTypeFloat32) {
     buf << *reinterpret_cast<float *>(tensor->data_c());
+  } else if (dtype->type_id() == kNumberTypeFloat64) {
+    buf << *reinterpret_cast<double *>(tensor->data_c());
   } else {
-    MS_LOG(EXCEPTION) << "The dtype of the constant input is not int64 or float32!";
+    MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
   }
 }
 
