@@ -178,5 +178,17 @@ size_t GetMaxMallocSize() {
 #endif
   return max_malloc_size;
 }
+
+int GetCoreNum() {
+  int core_num = 1;
+#if defined(_MSC_VER) || defined(_WIN32)
+  SYSTEM_INFO sysinfo;
+  GetSystemInfo(&sysinfo);
+  core_num = sysinfo.dwNumberOfProcessors;
+#else
+  core_num = sysconf(_SC_NPROCESSORS_CONF);
+#endif
+  return core_num;
+}
 }  // namespace lite
 }  // namespace mindspore

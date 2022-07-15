@@ -33,17 +33,6 @@ constexpr int kNumPhysicalCoreThreshold = 16;
 constexpr int kDefaultWorkerNumPerPhysicalCpu = 2;
 constexpr int kDefaultThreadsNum = 8;
 constexpr int kInvalidNumaId = -1;
-int GetCoreNum() {
-  int core_num = 1;
-#if defined(_MSC_VER) || defined(_WIN32)
-  SYSTEM_INFO sysinfo;
-  GetSystemInfo(&sysinfo);
-  core_num = sysinfo.dwNumberOfProcessors;
-#else
-  core_num = sysconf(_SC_NPROCESSORS_CONF);
-#endif
-  return core_num;
-}
 
 Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vector<int> *logical_list) {
   int processor_id = -1;
@@ -74,7 +63,7 @@ Status DistinguishPhysicalAndLogical(std::vector<int> *physical_list, std::vecto
     if (data_size == kNumCoreDataLen) {
       if (core_id == -1 && physical_id == -1) {
         MS_LOG(DEBUG) << "All cores are physical cores.";
-        int core_size = GetCoreNum();
+        int core_size = lite::GetCoreNum();
         for (int core_num = 0; core_num < core_size; core_num++) {
           physical_list->push_back(core_num);
         }
@@ -218,14 +207,14 @@ Status ModelPool::SetBindStrategy(std::vector<std::vector<int>> *all_model_bind_
     MS_LOG(ERROR) << "thread num is zero.";
     return kLiteError;
   }
-  std::vector<int> physical_core_lite;
+  std::vector<int> physical_core_list;
   std::vector<int> logical_core_list;
-  auto status = DistinguishPhysicalAndLogical(&physical_core_lite, &logical_core_list);
+  auto status = DistinguishPhysicalAndLogical(&physical_core_list, &logical_core_list);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "distinguish physical and logical failed.";
     return kLiteError;
   }
-  std::vector<int> all_core_list = physical_core_lite;
+  std::vector<int> all_core_list = physical_core_list;
   all_core_list.insert(all_core_list.end(), logical_core_list.begin(), logical_core_list.end());
   size_t core_id = 0;
   for (size_t i = 0; i < workers_num_; i++) {
@@ -261,7 +250,7 @@ Status ModelPool::SetDefaultOptimalModelNum(int thread_num) {
     workers_num_ = worker_num;
   } else {
     // each worker binds all available cores in order
-    workers_num_ = GetCoreNum() / thread_num;
+    workers_num_ = lite::GetCoreNum() / thread_num;
   }
   return kSuccess;
 }
@@ -304,7 +293,7 @@ Status ModelPool::CheckAffinityCoreList(const std::shared_ptr<RunnerConfig> &run
   if (worker_num != 0 && !all_bind_core_list.empty() &&
       static_cast<int>(all_bind_core_list.size()) == context->GetThreadNum() * worker_num) {
     // Use the core id set by the user. Currently, this function can only be enabled when the worker num is not 0.
-    auto max_core_id = GetCoreNum();
+    auto max_core_id = lite::GetCoreNum();
     for (size_t i = 0; i < all_bind_core_list.size(); i++) {
       if (all_bind_core_list[i] < 0 || all_bind_core_list[i] >= max_core_id) {
         MS_LOG(ERROR) << "Please set correct core id, core id should be less than " << max_core_id
