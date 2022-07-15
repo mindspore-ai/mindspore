@@ -92,19 +92,31 @@ int SparseApplyAdagradV2GpuKernelMod::Resize(const BaseOperatorPtr &base_operato
                   << Vector2Str(accum_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
     return KRET_RESIZE_FAILED;
   }
-  if (!IsSameShape(var_shape, grad_shape)) {
+  if (var_shape.size() != grad_shape.size()) {
     MS_LOG(ERROR) << "For '" << kernel_name_
-                  << "', the shape of 'grad' must be the same as the shape of 'var', "
-                     "but got the shape of 'grad': "
-                  << Vector2Str(grad_shape) << " and the shape of 'var': " << Vector2Str(var_shape);
+                  << "', the dimension of 'grad' must be the same as the dimension of "
+                     "'var', but got the dimension of 'grad': "
+                  << grad_shape.size() << " and the dimension of 'var': " << var_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
-  if (grad_shape[0] != indices_shape[0]) {
-    MS_LOG(ERROR)
-      << "For '" << kernel_name_
-      << "', the first element of shape of 'indices' must be the same as the first element of shape of 'grad', "
-         "but got the shape of 'indices': "
-      << Vector2Str(indices_shape) << " and the shape of 'grad': " << Vector2Str(grad_shape);
+  for (size_t i = 1; i < var_shape.size(); ++i) {
+    if (var_shape[i] != grad_shape[i]) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the shape of 'var' and 'grad' must be equal in dimension i=" << i
+                    << ", but got 'var_shape[i]': " << var_shape[i] << " and 'grad_shape[i]': " << grad_shape[i];
+      return KRET_RESIZE_FAILED;
+    }
+  }
+  if (indices_shape.size() != 1) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'indices' must be a 1-D vector, but got "
+                  << indices_shape.size() << "-D.";
+    return KRET_RESIZE_FAILED;
+  }
+  auto indices_size = indices_shape[0];
+  if (grad_shape[0] != SizeToLong(indices_size)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the first dimension value of 'grad' must be equal to "
+                     "the first dimension value of 'indices', but got the first dimension value of 'grad': "
+                  << grad_shape[0] << ", and the first dimension value of 'indices': " << indices_size;
     return KRET_RESIZE_FAILED;
   }
 

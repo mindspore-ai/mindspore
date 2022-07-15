@@ -53,9 +53,11 @@ class CTCGreedyDecoderCpuKernelMod : public NativeCpuKernelMod, public MatchKern
 
  private:
   bool merge_repeated_{true};
-  std::vector<int64_t> inputs_x_shape_;
   std::vector<TypeId> types_;
   std::vector<KernelTensorPtr> outputs_ = {};
+  int64_t max_time_;
+  int64_t batch_size_;
+  int64_t num_classes_raw_;
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,

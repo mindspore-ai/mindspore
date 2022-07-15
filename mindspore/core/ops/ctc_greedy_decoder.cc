@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "ops/ctc_greedy_decoder.h"
+
 #include <map>
 #include <string>
+
 #include "abstract/ops/primitive_infer_map.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
@@ -46,6 +47,8 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
   auto inputs_x_ptr = abstract::CheckArg<abstract::AbstractTensor>(prim_name, input_args, 0);
   auto inputs_x_dtype = input_args[kInputIndex0]->BuildType();
   auto sequence_length_dtype = input_args[kInputIndex1]->BuildType();
+  auto inputs_x_shape_ptr = input_args[0]->BuildShape();
+  auto sequence_length_shape_ptr = input_args[1]->BuildShape();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("inputs type", inputs_x_dtype, {kFloat32, kFloat64}, prim_name);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("sequence length dtype", sequence_length_dtype, {kInt32}, prim_name);
 
@@ -54,20 +57,6 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape());
   auto inputs_x_shape = inputs_x_shape_map[kShape];
   auto sequence_length_shape = sequence_length_shape_map[kShape];
-
-  if (inputs_x_shape.size() != kInputsRank) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size() << ".";
-  }
-
-  if (sequence_length_shape.size() != kSeqLenRank) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name
-                      << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
-  }
-
-  if (inputs_x_shape[1] != sequence_length_shape[0]) {
-    MS_LOG(EXCEPTION) << "For '" << prim_name << "', inputs batch_size must be the same with sequence_length batch_size"
-                      << ".";
-  }
 
   ShapeVector decoded_indices_shape = {-1, 2};
   ShapeVector decoded_indices_min_shape = {1, 2};
@@ -89,6 +78,27 @@ AbstractBasePtr CTCGreedyDecoderInfer(const abstract::AnalysisEnginePtr &, const
     std::make_shared<abstract::AbstractTensor>(inputs_x_ptr->element()->BuildType(), log_probability_shape);
 
   AbstractBasePtrList ret = {decoded_indices, decoded_values, decoded_shape, log_probability};
+
+  if (inputs_x_shape_ptr->IsDynamic() || sequence_length_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::AbstractTuple>(ret);
+  }
+
+  if (inputs_x_shape.size() != kInputsRank) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name << "', inputs's dim must be 3, but got: " << inputs_x_shape.size() << ".";
+  }
+
+  if (sequence_length_shape.size() != kSeqLenRank) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', sequence_length's dims must be 1, but got: " << sequence_length_shape.size() << ".";
+  }
+
+  if (inputs_x_shape[1] != sequence_length_shape[0]) {
+    MS_LOG(EXCEPTION) << "For '" << prim_name
+                      << "', inputs batch_size must be the same with sequence_length batch_size, "
+                      << "but now inputs batch_size: " << inputs_x_shape[1]
+                      << " and sequence_length batch_size: " << sequence_length_shape[0] << ".";
+  }
+
   return std::make_shared<abstract::AbstractTuple>(ret);
 }
 MIND_API_OPERATOR_IMPL(CTCGreedyDecoder, BaseOperator);

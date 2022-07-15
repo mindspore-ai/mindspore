@@ -6901,10 +6901,9 @@ class ApplyFtrl(Primitive):
         self.use_locking = validator.check_value_type("use_locking", use_locking, [bool], self.name)
 
 
-class SparseApplyFtrl(PrimitiveWithCheck):
+class SparseApplyFtrl(Primitive):
     """
-    Updates relevant entries according to the FTRL-proximal scheme.
-
+    Updates relevant entries according to the FTRL-proximal scheme
     For more details, please refer to :class:`mindspore.nn.FTRL`.
 
     All of inputs except `indices` comply with the implicit type conversion rules to make the data types consistent.
@@ -6991,20 +6990,6 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         self.init_prim_io_names(inputs=['var', 'accum', 'linear', 'grad', 'indices'],
                                 outputs=['var', 'accum', 'linear'])
         self.add_prim_attr('side_effect_mem', True)
-
-    def check_shape(self, var_shape, accum_shape, linear_shape, grad_shape, indices_shape):
-        validator.check('var shape', var_shape, 'accum shape', accum_shape, Rel.EQ, self.name)
-        validator.check('var shape', var_shape, 'linear shape', linear_shape, Rel.EQ, self.name)
-        if len(var_shape) > 1:
-            validator.check('var_shape[1:]', var_shape[1:], 'grad_shape[1:]', grad_shape[1:], Rel.EQ, self.name)
-        validator.check_int(len(indices_shape), 1, Rel.EQ, "indices rank", self.name)
-        validator.check('grad_shape[0]', grad_shape[0], 'indices_shape[0]', indices_shape[0], Rel.EQ, self.name)
-
-    def check_dtype(self, var_dtype, accum_dtype, linear_dtype, grad_dtype, indices_dtype):
-        args = {"var_dtype": var_dtype, "accum_dtype": accum_dtype,
-                "linear_dtype": linear_dtype, "grad_dtype": grad_dtype}
-        validator.check_tensors_dtypes_same_and_valid(args, [mstype.float16, mstype.float32], self.name)
-        validator.check_tensor_dtype_valid("indices_dtype", indices_dtype, [mstype.int32, mstype.int64], self.name)
 
 
 class SparseApplyFtrlV2(PrimitiveWithInfer):
@@ -7320,7 +7305,7 @@ class CTCLoss(Primitive):
         self.ignore_longer_outputs_than_inputs_ = ignore_longer_outputs_than_inputs
 
 
-class CTCGreedyDecoder(PrimitiveWithCheck):
+class CTCGreedyDecoder(Primitive):
     r"""
     Performs greedy decoding on the logits given in inputs.
 
@@ -7376,24 +7361,6 @@ class CTCGreedyDecoder(PrimitiveWithCheck):
     def __init__(self, merge_repeated=True):
         """Initialize CTCGreedyDecoder."""
         self.merge_repeated = validator.check_value_type("merge_repeated", merge_repeated, [bool], self.name)
-
-    def check_shape(self, inputs_shape, sequence_length_shape):
-        validator.check_int(len(inputs_shape), 3, Rel.EQ, "inputs rank", self.name)
-        validator.check_int(len(sequence_length_shape), 1, Rel.EQ, "sequence_length rank", self.name)
-        validator.check('inputs batch_size', inputs_shape[1], 'sequence_length batch_size',
-                        sequence_length_shape[0], Rel.EQ, self.name)
-        total_decoded_outputs = -1
-        decoded_indices_shape = [total_decoded_outputs, 2]
-        decoded_values = [total_decoded_outputs]
-        decoded_shape = [2]
-        log_probability_shape = [inputs_shape[1], 1]
-        return decoded_indices_shape, decoded_values, decoded_shape, log_probability_shape
-
-    def check_dtype(self, inputs_dtype, sequence_length_dtype):
-        validator.check_tensor_dtype_valid("inputs_dtype", inputs_dtype, [mstype.float32, mstype.double], self.name)
-        validator.check_tensor_dtype_valid("sequence_length_dtype", sequence_length_dtype, [mstype.int32], self.name)
-        decoded_type = mstype.tensor_type(mstype.int64)
-        return decoded_type, decoded_type, decoded_type, inputs_dtype
 
 
 class BasicLSTMCell(PrimitiveWithInfer):
@@ -10180,7 +10147,9 @@ class GridSampler2D(Primitive):
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``Ascend````CPU````GPU``
+        ``Ascend`` ``CPU`` ``GPU``
+
+    Examples:
         >>> gridsampler = GridSampler2D(interpolation_mode='bilinear', padding_mode='zeros', align_corners=True)
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
         >>> grid = Tensor(np.arange(-9, 9, 0.5).reshape((2, 3, 3, 2)).astype(np.float32))

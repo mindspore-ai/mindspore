@@ -63,7 +63,9 @@ bool CTCGreedyDecoderCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
   auto kernel_ptr = std::make_shared<ops::CTCGreedyDecoder>(base_operator->GetPrim());
   merge_repeated_ = kernel_ptr->get_merge_repeated();
 
-  inputs_x_shape_ = inputs[kIndex0]->GetShapeVector();
+  max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
+  batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];
+  num_classes_raw_ = inputs[kIndex0]->GetShapeVector()[kIndex2];
 
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
@@ -90,12 +92,15 @@ int CTCGreedyDecoderCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
       return KRET_RESIZE_FAILED;
     }
     output_size_list_.clear();
-    auto max_out_size = inputs_x_shape_[kIndex0] * inputs_x_shape_[kIndex1];
+    max_time_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
+    batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex1];
+    num_classes_raw_ = inputs[kIndex0]->GetShapeVector()[kIndex2];
+    auto max_out_size = max_time_ * batch_size_;
     (void)output_size_list_.emplace_back(max_out_size * kDecodedIndicesRank *
                                          GetTypeByte(TypeIdToType(types_[kIndex0])));
     (void)output_size_list_.emplace_back(max_out_size * GetTypeByte(TypeIdToType(types_[kIndex1])));
     (void)output_size_list_.emplace_back(kDecodedIndicesRank * GetTypeByte(TypeIdToType(types_[kIndex2])));
-    (void)output_size_list_.emplace_back(inputs_x_shape_[kIndex1] * GetTypeByte(TypeIdToType(types_[kIndex3])));
+    (void)output_size_list_.emplace_back(batch_size_ * GetTypeByte(TypeIdToType(types_[kIndex3])));
   }
   return ret;
 }
@@ -104,6 +109,14 @@ template <typename T>
 bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
                                                 const std::vector<AddressPtr> &,
                                                 const std::vector<kernel::AddressPtr> &outputs) {
+  if (inputs.size() != kInputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of inputs should be " << kInputNum << ", but got "
+                      << inputs.size() << " input(s).";
+  }
+  if (outputs.size() != kOutputNum) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the number of outputs should be " << kOutputNum << ", but got "
+                      << outputs.size() << " output(s).";
+  }
   auto inputs_x = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   auto sequence_length = reinterpret_cast<int32_t *>(inputs[kIndex1]->addr);
 
@@ -112,14 +125,14 @@ bool CTCGreedyDecoderCpuKernelMod::LaunchKernel(const std::vector<kernel::Addres
   auto decoded_shape = reinterpret_cast<int64_t *>(outputs[kIndex2]->addr);
   auto log_probability = reinterpret_cast<T *>(outputs[kIndex3]->addr);
 
-  int ret = memset_s(log_probability, outputs[kIndex3]->size, 0, sizeof(T) * inputs_x_shape_[kIndex1]);
+  int ret = memset_s(log_probability, sizeof(T) * batch_size_, 0, sizeof(T) * batch_size_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
   }
 
-  const int64_t max_time = inputs_x_shape_[0];
-  const int64_t batch_size = inputs_x_shape_[1];
-  const int64_t num_classes_raw = inputs_x_shape_[2];
+  const int64_t max_time = max_time_;
+  const int64_t batch_size = batch_size_;
+  const int64_t num_classes_raw = num_classes_raw_;
   const bool merge_repeated = merge_repeated_;
   const int num_classes = static_cast<const int>(num_classes_raw);
   int blank_index = num_classes - 1;

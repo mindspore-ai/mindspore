@@ -1712,7 +1712,7 @@ def grid_sample(input_x, grid, interpolation_mode='bilinear', padding_mode='zero
         ValueError: If `padding_mode` is not "zeros", "border", "reflection" or a string value.
 
     Supported Platforms:
-        ``GPU``
+        ``CPU`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32))
