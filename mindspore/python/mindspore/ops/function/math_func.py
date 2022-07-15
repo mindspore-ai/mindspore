@@ -422,8 +422,7 @@ def neg(x):
         out_{i} = - x_{i}
 
     Args:
-        x (Tensor): The input tensor whose dtype is number.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor with a dtype of Number, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape and dtype as input.
@@ -452,8 +451,7 @@ def ceil(x):
         out_i = \lceil x_i \rceil = \lfloor x_i \rfloor + 1
 
     Args:
-        x (Tensor): The input tensor. It's element data type must be float16 or float32.
-          :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape as the `x`.
@@ -786,8 +784,7 @@ def exp(x):
         out_i = e^{x_i}
 
     Args:
-        x (Tensor): The input tensor.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -816,8 +813,7 @@ def expm1(x):
         out_i = e^{x_i} - 1
 
     Args:
-        x (Tensor): The input tensor. With float16 or float32 data type.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor with a dtype of float16 or float32, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape as the `x`.
@@ -885,8 +881,8 @@ def floor(x):
         out_i = \lfloor x_i \rfloor
 
     Args:
-        x (Tensor): The input tensor. Its element data type must be float16 or float32.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor, its rank must be in [0, 7] inclusive
+            and data type must be float16, float32 or float64.
 
     Returns:
         Tensor, has the same shape as `x`.
@@ -1393,8 +1389,7 @@ def sinh(x):
         out_i = \sinh(x_i)
 
     Args:
-        x (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor of hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape as `x`.
@@ -1423,8 +1418,8 @@ def cosh(x):
         out_i = \cosh(x_i)
 
     Args:
-        x (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor of hyperbolic cosine function, its rank must be in [0, 7] inclusive
+            and data type must be float16, float32, float64, complex64 or complex128.
 
     Returns:
         Tensor, has the same shape as `x`.
@@ -1490,8 +1485,7 @@ def asinh(x):
         out_i = \sinh^{-1}(input_i)
 
     Args:
-        x (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor of inverse hyperbolic sine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape and type as `x`.
@@ -1524,8 +1518,7 @@ def acosh(x):
         Input range is [1, inf].
 
     Args:
-        x (Tensor): The shape of tensor is
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor of inverse hyperbolic cosine function, its rank must be in [0, 7] inclusive.
 
     Returns:
         Tensor, has the same shape and type as `x`.
@@ -1802,8 +1795,8 @@ def erf(x):
         erf(x)=\frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        x (Tensor): Input Tensor of Gaussian error function. Its dimension must be less than 8 and
-            data type must be float16 or float32.
+        x (Tensor): The input tensor of Gaussian error function. Its rank must be in [0, 7] inclusive
+            and data type must be float16 or float32.
 
     Returns:
         Tensor, has the same shape and dtype as the `x`.
@@ -1833,11 +1826,11 @@ def erfc(x):
         erfc(x) = 1 - \frac{2} {\sqrt{\pi}} \int\limits_0^{x} e^{-t^{2}} dt
 
     Args:
-        x (Tensor): The input tensor. The data type must be float16 or float32.
-            :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
+        x (Tensor): The input tensor with a dtype of float16 or float32,
+            its rank should be in [0, 7] inclusive.
 
     Returns:
-        Tensor, has the same shap dtype as the `x`.
+        Tensor, has the same shape and dtype as `x`.
 
     Raises:
         TypeError: If `x` is not a Tensor.
