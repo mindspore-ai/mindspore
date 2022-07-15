@@ -106,8 +106,8 @@ TypePtr TensorScatterArithmeticInferType(const PrimitivePtr &primitive,
     return CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_bool, prim_name);
   }
 
-  /* tensor scatter div grad need div
-   * div do not support int8 and uint8 currently */
+  /* tensor scatter div grad need Neg
+   * Neg do not support int8 and uint8 currently */
   if (prim_name == prim::kPrimTensorScatterDiv->name()) {
     const std::set<TypePtr> tensor_scatter_div_data_type = {kInt16,  kInt32,   kInt64,   kUInt16, kUInt32,
                                                             kUInt64, kFloat16, kFloat32, kFloat64};
