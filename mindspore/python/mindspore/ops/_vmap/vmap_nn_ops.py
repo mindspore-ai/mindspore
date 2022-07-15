@@ -208,6 +208,48 @@ def get_apply_proximal_adagrad_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(P.ApplyProximalGradientDescent)
+def get_apply_proximal_gradient_descent_rule(prim, axis_size):
+    """VmapRule for `ApplyProximalGradientDescent` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(var_bdim, alpha_bdim, l1_bdim, l2_bdim, delta_bdim, u_monad):
+        var, var_dim = var_bdim
+        alpha, alpha_dim = alpha_bdim
+        l1, l1_dim = l1_bdim
+        l2, l2_dim = l2_bdim
+        delta, delta_dim = delta_bdim
+
+        if var_dim is None:
+            if any(dim is not None for dim in [alpha_dim, l1_dim, l2_dim, delta_dim]):
+                ValueError("The source axis of `var` is None, but the source "
+                           "axis of `alpha/l1/l2/delta` is not None. The execution order of "
+                           "operator `{}` cannot be guaranteed.".format(prim_name))
+            var = prim(var, alpha, l1, l2, delta, u_monad)
+            return (var, None)
+
+        if var_dim != 0:
+            raise ValueError("For `{}`, the source axis of `var` must not equal to 0, "
+                             "but got the source axis of `var`: {}.".format(prim_name, var_dim))
+
+        alpha = _bdim_at_front(alpha, alpha_dim, axis_size)
+        l1 = _bdim_at_front(l1, l1_dim, axis_size)
+        l2 = _bdim_at_front(l2, l2_dim, axis_size)
+        delta = _bdim_at_front(delta, delta_dim, axis_size)
+
+        var = batch_prim(var, alpha, l1, l2, delta, u_monad)
+        return (var, 0)
+
+    return vmap_rule
+
+
 @vmap_rules_getters.register(NN.BCEWithLogitsLoss)
 def get_bce_with_logits_loss_vamp_rule(prim, axis_size):
     """VmapRule for 'BCEWithLogitsLoss' ."""
