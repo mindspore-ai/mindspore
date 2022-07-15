@@ -104,6 +104,7 @@ from mindspore.ops.operations.nn_ops import ReLUV3
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
+from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
@@ -3993,7 +3994,14 @@ test_case_sparse_ops = [
         'desc_inputs': [Tensor(np.array([[0, 0], [1, 1]]), mstype.int64),
                         Tensor(np.array([1, 1]), mstype.int64),
                         Tensor(np.array([[1, 2], [3, 4]]), mstype.int64)],
-        'skip': ['backward']})
+        'skip': ['backward']}),
+    ('SparseTensorDenseAdd', {
+        'block': SparseTensorDenseAdd(),
+        'desc_inputs': [Tensor([[0]], mstype.int32),
+                        Tensor([1], mstype.float32),
+                        Tensor([1], mstype.int32),
+                        Tensor([1], mstype.float32)],
+        'desc_bprop': [Tensor([1], mstype.float32)]}),
 ]
 
 test_case_lists = [test_case_nn_ops, test_case_math_ops, test_case_array_ops,
