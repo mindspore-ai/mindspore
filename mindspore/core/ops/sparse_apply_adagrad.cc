@@ -39,11 +39,17 @@ abstract::TupleShapePtr SparseApplyAdagradInferShape(const PrimitivePtr &primiti
   // Get input shape
   auto var_shape_ptr = input_args[0]->BuildShape();
   auto accum_shape_ptr = input_args[1]->BuildShape();
+  auto grad_shape_ptr = input_args[2]->BuildShape();
+  auto indices_shape_ptr = input_args[3]->BuildShape();
   auto var_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(var_shape_ptr)[kShape];
   auto accum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(accum_shape_ptr)[kShape];
-  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[2]->BuildShape())[kShape];
-  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[3]->BuildShape())[kShape];
+  auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(grad_shape_ptr)[kShape];
+  auto indices_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(indices_shape_ptr)[kShape];
 
+  if (var_shape_ptr->IsDynamic() || accum_shape_ptr->IsDynamic() || grad_shape_ptr->IsDynamic() ||
+      indices_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::TupleShape>(std::vector<abstract::BaseShapePtr>{var_shape_ptr, accum_shape_ptr});
+  }
   (void)CheckAndConvertUtils::CheckValue("var_shape", var_shape, kEqual, "accum_shape", accum_shape, prim_name);
 
   // Indices must be rank 1
