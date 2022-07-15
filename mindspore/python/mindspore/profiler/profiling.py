@@ -46,6 +46,7 @@ from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
 from mindspore.profiler.parser.hccl_parser import HcclParser
 from mindspore.profiler.parser.op_intermediate_parser import OPIntermediateParser
+from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
@@ -455,6 +456,16 @@ class Profiler:
             self._ascend_pynative_analyse()
         else:
             self._ascend_graph_analyse()
+
+        # Call msadvisor function
+        try:
+            msadvisor = Msadvisor(self._get_profiling_job_id(), self._rank_id, self._output_path)
+            logger.info("Msadvisor is running")
+            msadvisor.analyse()
+        except (ProfilerFileNotFoundException, ValueError) as err:
+            logger.warning("Running Msadvisor failed. %s", err)
+        finally:
+            pass
 
     def _ascend_graph_memory_analyse(self, points):
         """Analyse memory usage info."""
