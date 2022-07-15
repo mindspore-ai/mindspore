@@ -54,7 +54,7 @@ class MoEConfig:
         Examples:
             >>> from mindspore.nn.transformer import MoEConfig
             >>> moe_config = MoEConfig(expert_num=4, capacity_factor=5.0, aux_loss_factor=0.05, num_experts_chosen=1,
-            >>> expert_group_size=64)
+            ...                        expert_group_size=64)
     """
 
     def __init__(self, expert_num=1, capacity_factor=1.1, aux_loss_factor=0.05,
