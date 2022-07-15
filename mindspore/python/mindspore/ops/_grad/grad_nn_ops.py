@@ -1319,13 +1319,14 @@ def get_bprop_dropout3d(self):
     keep_prob = self.keep_prob
 
     def bprop(x, out, dout):
-        _, mask = dout
-        y = cast(mask, mstype.float32)
+        _, mask = out
+        dy, _ = dout
+        mask = cast(mask, mstype.float32)
         if keep_prob != 0:
-            y = y * (1 / keep_prob)
-        y = mul(x, y)
-        y = cast(y, dtype(x))
-        return (y,)
+            dy = dy * (1 / keep_prob)
+        dy = mul(mask, dy)
+        dy = cast(dy, dtype(x))
+        return (dy,)
 
     return bprop
 
