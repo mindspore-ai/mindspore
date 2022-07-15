@@ -27,7 +27,7 @@ class Invert(Bijector):
             'Invert' + bijector.name.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
