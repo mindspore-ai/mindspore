@@ -1,5 +1,5 @@
 mindspore.ops.Poisson
-===================
+=====================
 
 .. py:class:: mindspore.ops.Poisson(seed=0, seed2=0)
 
