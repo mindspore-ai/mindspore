@@ -79,7 +79,6 @@ int ApplyAdamWithAmsgradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
                                              const std::map<uint32_t, tensor::TensorPtr> &others) {
   int ret = 0;
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, others)) != 0) {
-    MS_LOG(ERROR) << kernel_name_ << " reinit failed.";
     return ret;
   }
 
@@ -123,8 +122,8 @@ int ApplyAdamWithAmsgradCpuKernelMod::Resize(const BaseOperatorPtr &base_operato
     return KRET_RESIZE_FAILED;
   }
 
-  input_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
-  input_elements_ = input_elements_ / batch_size_;
+  int64_t temp_elements_ = std::accumulate(var_shape.begin(), var_shape.end(), int64_t(1), std::multiplies<int64_t>());
+  input_elements_ = static_cast<size_t>(temp_elements_ / batch_size_);
 
   return 0;
 }
