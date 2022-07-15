@@ -190,9 +190,13 @@ class OpKernelBin {
   OpKernelBin(const OpKernelBin &) = delete;
   const OpKernelBin &operator=(const OpKernelBin &) = delete;
 
+  bool loaded() const { return loaded_; }
+  void SetLoaded(bool flag) { loaded_ = flag; }
+
  private:
   std::string name_;
   std::vector<char> data_;
+  bool loaded_{false};
 };
 
 using OpKernelBinPtr = std::shared_ptr<OpKernelBin>;
