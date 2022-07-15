@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-#include "profiler/device/cpu/cpu_profiling.h"
-
-#include <cxxabi.h>
-#include <cmath>
-#include <ctime>
-#include "profiler/device/cpu/cpu_data_saver.h"
-#include "include/common/pybind_api/api_register.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_data_saver.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
 #include "utils/ms_context.h"
@@ -28,13 +23,19 @@
 namespace mindspore {
 namespace profiler {
 namespace cpu {
-std::shared_ptr<CPUProfiler> CPUProfiler::profiler_inst_ = std::make_shared<CPUProfiler>();
-std::shared_ptr<CPUProfiler> &CPUProfiler::GetInstance() { return profiler_inst_; }
+namespace {
+PROFILER_REG(kCPUDevice, CPUProfiler);
+}  // namespace
+std::shared_ptr<CPUProfiler> CPUProfiler::GetInstance() {
+  auto instance = Profiler::GetInstance(kCPUDevice);
+  MS_EXCEPTION_IF_NULL(instance);
+  return std::dynamic_pointer_cast<CPUProfiler>(instance);
+}
 
-void CPUProfiler::Init(const std::string &profileDataPath = "") {
+void CPUProfiler::Init(const std::string &profiling_path, uint32_t, const std::string &) {
   MS_LOG(INFO) << "Initialize CPU Profiling";
   base_time_ = GetHostMonoTimeStamp();
-  profile_data_path_ = profileDataPath;
+  profile_data_path_ = profiling_path;
   MS_LOG(INFO) << " Host start time(ns): " << base_time_ << " profile data path: " << profile_data_path_;
 }
 
@@ -108,16 +109,11 @@ void CPUProfiler::OpDataProducerBeginParallel(const std::string op_name, const u
   SetRunTimeData(op_name, pid, true);
   SetRuntimeStart(op_name, start_timestamp);
 
-#if ENABLE_GPU
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    // For heterogeneous scene, record op name to gpu_profiler_inst.
-    auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-    // For cpu network, no gpu profiler, do not to raise exception.
-    if (gpu_profiler_inst && gpu_profiler_inst->GetEnableFlag()) {
-      gpu_profiler_inst->RecordOneStepStartEndInfo(op_name);
-    }
+  if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
+      gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
+      gpu_instance->GetEnableFlag()) {
+    gpu_instance->RecordOneStepStartEndInfo();
   }
-#endif
 }
 
 void CPUProfiler::RecordFrameWorkInfo(const CNodePtr &kernel) {
@@ -153,16 +149,11 @@ void CPUProfiler::OpDataProducerBegin(const std::string op_name, const uint32_t 
   op_time_mono_start_ = GetHostMonoTimeStamp();
   SetRunTimeData(op_name, pid);
 
-#if ENABLE_GPU
-  if (MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT)) {
-    // For heterogeneous scene, record op name to gpu_profiler_inst.
-    auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-    // For cpu network, no gpu profiler, do not to raise exception.
-    if (gpu_profiler_inst && gpu_profiler_inst->GetEnableFlag()) {
-      gpu_profiler_inst->RecordOneStepStartEndInfo(op_name);
-    }
+  if (auto gpu_instance = Profiler::GetInstance(kGPUDevice);
+      gpu_instance != nullptr && MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_MINDRT) &&
+      gpu_instance->GetEnableFlag()) {
+    gpu_instance->RecordOneStepStartEndInfo();
   }
-#endif
 }
 
 void CPUProfiler::OpDataProducerEnd() {
@@ -203,15 +194,6 @@ void CPUProfiler::ClearInst() {
   enable_flag_ = false;
   has_find = false;
 }
-
-REGISTER_PYBIND_DEFINE(CPUProfiler_, ([](const py::module *m) {
-                         (void)py::class_<CPUProfiler, std::shared_ptr<CPUProfiler>>(*m, "CPUProfiler")
-                           .def_static("get_instance", &CPUProfiler::GetInstance, "CPUProfiler get_instance.")
-                           .def("init", &CPUProfiler::Init, py::arg("profile_data_path"), "init")
-                           .def("stop", &CPUProfiler::Stop, "stop")
-                           .def("step_profiling_enable", &CPUProfiler::StepProfilingEnable, py::arg("enable_flag"),
-                                "enable or disable step profiling");
-                       }));
 }  // namespace cpu
 }  // namespace profiler
 }  // namespace mindspore

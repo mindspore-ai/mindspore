@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_H
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_H
 #include <cuda.h>
 #include <cupti.h>
 #include <algorithm>
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 #include "profiler/device/profiling.h"
-#include "profiler/device/gpu/gpu_profiling_utils.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling_utils.h"
 
 namespace mindspore {
 namespace profiler {
@@ -118,18 +118,20 @@ class ProfilingOp {
 
 class MS_CORE_API GPUProfiler : public Profiler {
  public:
-  static std::shared_ptr<GPUProfiler> &GetInstance();
+  static std::shared_ptr<GPUProfiler> GetInstance();
+
   GPUProfiler() = default;
   ~GPUProfiler() { StopCUPTI(); }
   GPUProfiler(const GPUProfiler &) = delete;
   GPUProfiler &operator=(const GPUProfiler &) = delete;
 
-  void Init(const std::string &profileDataPath) override;
+  void Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) override;
+  void Finalize() override {}
+  void Start() override {}
   void Stop() override;
   void StopCUPTI();
   void StepProfilingEnable(const bool enable_flag) override;
   void SyncEnable(const bool enable_flag);
-  bool GetEnableFlag() const { return enable_flag_; }
   bool GetSyncEnableFlag() const { return sync_enable_flag_; }
   void EventHandleProcess(CUpti_CallbackId cbid, const CUpti_CallbackData *cbdata, const std::string &typestring,
                           uint64_t startTimestamp, uint64_t endTimestamp);
@@ -157,8 +159,6 @@ class MS_CORE_API GPUProfiler : public Profiler {
   void SetRunTimeData(const std::string &op_name, void *stream);
   void FixOpNameByCorrelationId(Event *event);
 
-  static std::shared_ptr<GPUProfiler> profiler_inst_;
-  bool enable_flag_ = false;
   bool sync_enable_flag_ = true;
   std::unordered_map<uint32_t, std::string> op_name_map_;
   std::vector<Event> events_;
@@ -194,4 +194,4 @@ class MS_CORE_API GPUProfiler : public Profiler {
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_PROFILING_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_H

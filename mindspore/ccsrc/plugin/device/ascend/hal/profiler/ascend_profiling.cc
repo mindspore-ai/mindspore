@@ -13,21 +13,19 @@
  * limitations under the License.
  */
 
-#include "profiler/device/ascend/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 #include <map>
 #include <string>
 #include <vector>
 #include "common/util/error_manager/error_manager.h"
-#include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include "plugin/device/ascend/hal/device/profiling/profiling_manager.h"
-#include "profiler/device/ascend/parallel_strategy_profiling.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #include <nlohmann/json.hpp>
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
-#include "backend/common/session/kernel_graph.h"
 #include "acl/acl_rt.h"
 
 using mindspore::device::ascend::ProfilingManager;
@@ -37,7 +35,11 @@ using mindspore::profiler::ascend::MemoryProfiling;
 namespace mindspore {
 namespace profiler {
 namespace ascend {
+namespace {
 constexpr auto kUnknownErrorString = "Unknown error occurred";
+
+PROFILER_REG(kAscendDevice, AscendProfiler);
+}  // namespace
 
 std::map<std::string, aclprofAicoreMetrics> kAicMetrics{
   {"ArithmeticUtilization", ACL_AICORE_ARITHMETIC_UTILIZATION},
@@ -47,9 +49,11 @@ std::map<std::string, aclprofAicoreMetrics> kAicMetrics{
   {"ResourceConflictRatio", ACL_AICORE_RESOURCE_CONFLICT_RATIO},
 };
 
-std::shared_ptr<AscendProfiler> AscendProfiler::ascend_profiler_ = std::make_shared<AscendProfiler>();
-
-std::shared_ptr<AscendProfiler> &AscendProfiler::GetInstance() { return ascend_profiler_; }
+std::shared_ptr<AscendProfiler> AscendProfiler::GetInstance() {
+  auto instance = Profiler::GetInstance(kAscendDevice);
+  MS_EXCEPTION_IF_NULL(instance);
+  return std::dynamic_pointer_cast<AscendProfiler>(instance);
+}
 
 void AscendProfiler::ReportErrorMessage() const {
   const std::string &error_message = ErrorManager::GetInstance().GetErrorMessage();
@@ -63,8 +67,7 @@ void AscendProfiler::StepProfilingEnable(const bool enable_flag) {
   enable_flag_ = enable_flag;
 }
 
-void AscendProfiler::InitProfiling(const std::string &profiling_path, uint32_t device_id,
-                                   const std::string &profiling_options) {
+void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) {
   MS_LOG(INFO) << "Begin to init profiling and call aclprofInit function.";
   profiling_options_ = profiling_options;
   profile_data_path_ = profiling_path;
@@ -183,7 +186,7 @@ void AscendProfiler::Stop() {
   StepProfilingEnable(false);
 }
 
-void AscendProfiler::Finalize() const {
+void AscendProfiler::Finalize() {
   MS_LOG(INFO) << "Begin to finalize profiling";
   aclError aclRet = aclprofFinalize();
   if (aclRet != ACL_SUCCESS) {
@@ -220,16 +223,6 @@ void AscendProfiler::GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t grap
   last_tid[t_id] = task_id;
   last_streamid[t_id] = stream_id;
 }
-
-REGISTER_PYBIND_DEFINE(AscendProfiler_, ([](const py::module *m) {
-                         (void)py::class_<AscendProfiler, std::shared_ptr<AscendProfiler>>(*m, "AscendProfiler")
-                           .def_static("get_instance", &AscendProfiler::GetInstance, "AscendProfiler get_instance.")
-                           .def("init", &AscendProfiler::InitProfiling, py::arg("profiling_path"), py::arg("device_id"),
-                                py::arg("profiling_options"), "init")
-                           .def("start", &AscendProfiler::Start, "start")
-                           .def("stop", &AscendProfiler::Stop, "stop")
-                           .def("finalize", &AscendProfiler::Finalize, "finalize");
-                       }));
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore

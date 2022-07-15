@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_DATA_SAVER_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_DATA_SAVER_H
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <memory>
-#include "profiler/device/gpu/gpu_profiling.h"
-#include "profiler/device/cpu/cpu_data_saver.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_data_saver.h"
 #include "profiler/device/data_saver.h"
 namespace mindspore {
 namespace profiler {
@@ -105,4 +105,4 @@ class GpuDataSaver : public DataSaver {
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_DATA_SAVER_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_DATA_SAVER_H

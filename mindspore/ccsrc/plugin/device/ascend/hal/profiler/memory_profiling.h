@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_PROFILER_DEVICE_COMMON_PROFILING_MEMORY_H
-#define MINDSPORE_PROFILER_DEVICE_COMMON_PROFILING_MEMORY_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PROFILING_MEMORY_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PROFILING_MEMORY_H
 
 #include "proto/memory_profiling.pb.h"
 #include <string>
@@ -130,4 +130,4 @@ class MemoryProfiling {
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_PROFILING_MEMORY_H

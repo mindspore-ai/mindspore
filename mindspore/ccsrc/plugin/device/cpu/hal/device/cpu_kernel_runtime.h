@@ -27,7 +27,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/any.h"
-#include "profiler/device/cpu/cpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 namespace mindspore {
 namespace device {
 namespace cpu {

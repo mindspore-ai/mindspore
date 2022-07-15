@@ -68,7 +68,7 @@
 
 #ifndef ENABLE_SECURITY
 #ifdef ENABLE_D
-#include "mindspore/ccsrc/profiler/device/ascend/parallel_strategy_profiling.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 #endif
 #endif
 

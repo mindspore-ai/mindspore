@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_ASCEND_PROFILING_H
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_ASCEND_PROFILING_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_ASCEND_PROFILING_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_ASCEND_PROFILING_H
 #include <string>
 #include <memory>
 #include <map>
@@ -28,35 +28,30 @@ namespace profiler {
 namespace ascend {
 class AscendProfiler : public Profiler {
  public:
-  static std::shared_ptr<AscendProfiler> &GetInstance();
-  AscendProfiler() : profiling_options_("") {}
+  static std::shared_ptr<AscendProfiler> GetInstance();
+
+  AscendProfiler() {}
   ~AscendProfiler() = default;
   AscendProfiler(const AscendProfiler &) = delete;
   AscendProfiler &operator=(const AscendProfiler &) = delete;
-  void Init(const std::string &profileDataPath) { return; }
-  void InitProfiling(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options);
-  void Stop();
+  void Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) override;
+  void Finalize() override;
+  void Start() override;
+  void Stop() override;
   void StepProfilingEnable(const bool enable_flag) override;
-  void OpDataProducerEnd() { return; }
-  void Start();
-  bool GetProfilingEnableFlag() const { return enable_flag_; }
-  std::string GetProfilingOptions() const { return profiling_options_; }
+  void OpDataProducerEnd() override { return; }
   uint64_t GetOptionsMask() const;
   aclprofAicoreMetrics GetAicMetrics() const;
-  void Finalize() const;
-  bool IsInitialized() const { return init_flag_; }
   void ReportErrorMessage() const;
   void GetNodeTaskIdStreamId(const CNodePtr &kernel, uint32_t graph_id, int device_id, const KernelType kernel_type);
   std::map<std::thread::id, uint32_t> last_tid;
   std::map<std::thread::id, uint32_t> last_streamid;
 
  protected:
-  void SaveProfileData() { return; }
-  void ClearInst() { return; }
+  void SaveProfileData() override { return; }
+  void ClearInst() override { return; }
 
  private:
-  static std::shared_ptr<AscendProfiler> ascend_profiler_;
-  std::string profiling_options_;
   uint32_t device_id_ = 0;
   uint32_t aicpu_kernel_type_ = 2;
   uint32_t max_op_taskid_limit_ = 65536;
@@ -65,4 +60,4 @@ class AscendProfiler : public Profiler {
 }  // namespace ascend
 }  // namespace profiler
 }  // namespace mindspore
-#endif
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_PROFILER_ASCEND_PROFILING_H

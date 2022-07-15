@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "profiler/device/ascend/parallel_strategy_profiling.h"
+#include "plugin/device/ascend/hal/profiler/parallel_strategy_profiling.h"
 
 namespace mindspore {
 namespace profiler {

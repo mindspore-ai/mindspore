@@ -16,7 +16,7 @@
 #include <cupti.h>
 #include <dlfcn.h>
 #include "utils/log_adapter.h"
-#include "profiler/device/gpu/cupti_interface.h"
+#include "plugin/device/gpu/hal/profiler/cupti_interface.h"
 
 namespace mindspore {
 namespace profiler {

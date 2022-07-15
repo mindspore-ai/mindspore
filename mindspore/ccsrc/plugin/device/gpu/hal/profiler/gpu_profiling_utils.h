@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_UTILS_H_
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_UTILS_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_UTILS_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_UTILS_H_
 
 #include <map>
 #include <memory>
@@ -70,4 +70,4 @@ class ProfilingUtils {
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_GPU_GPU_PROFILING_UTILS_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_GPU_PROFILING_UTILS_H_

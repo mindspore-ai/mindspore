@@ -22,16 +22,28 @@
 #include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
-#if ENABLE_GPU
-#include "profiler/device/gpu/gpu_profiling.h"
-#endif
-#if ENABLE_D
-#include "profiler/device/ascend/ascend_profiling.h"
-#endif
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace profiler {
-std::shared_ptr<ProfilerManager> ProfilerManager::profiler_manager_inst_ = std::make_shared<ProfilerManager>();
+std::shared_ptr<Profiler> Profiler::GetInstance(const std::string &name) noexcept {
+  if (auto iter = instance_map_.find(name); iter != instance_map_.end()) {
+    return iter->second;
+  }
+
+  MS_LOG(WARNING) << "Profiler instance " << name << " not found.";
+  return nullptr;
+}
+
+bool Profiler::Register(const std::string &name, const std::shared_ptr<Profiler> &instance) {
+  if (instance_map_.find(name) != instance_map_.end()) {
+    MS_LOG(WARNING) << name << " has been registered.";
+  } else {
+    (void)instance_map_.emplace(name, instance);
+  }
+
+  return true;
+}
 
 uint64_t Profiler::GetHostMonoTimeStamp() const {
   struct timespec ts;
@@ -163,32 +175,28 @@ std::shared_ptr<ProfilerManager> &ProfilerManager::GetInstance() {
 }
 
 bool ProfilerManager::GetProfilingEnableFlag() const {
-#if ENABLE_GPU
-  return profiler::gpu::GPUProfiler::GetInstance()->GetEnableFlag();
-#endif
-#if ENABLE_D
-  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_instance);
-  return ascend_instance->GetProfilingEnableFlag();
-#endif
+  if (auto gpu_instance = Profiler::GetInstance(kGPUDevice); gpu_instance != nullptr) {
+    return gpu_instance->GetEnableFlag();
+  }
+
+  if (auto ascend_instance = Profiler::GetInstance(kAscendDevice); ascend_instance != nullptr) {
+    return ascend_instance->GetEnableFlag();
+  }
+
   return false;
 }
 
 void ProfilerManager::RecordOneStepStartEndInfo() const {
-#if ENABLE_GPU
-  auto gpu_profiler_inst = profiler::gpu::GPUProfiler::GetInstance();
-  if (gpu_profiler_inst->GetEnableFlag()) {
-    gpu_profiler_inst->RecordOneStepStartEndInfo();
+  if (auto gpu_instance = Profiler::GetInstance(kGPUDevice); gpu_instance != nullptr && gpu_instance->GetEnableFlag()) {
+    gpu_instance->RecordOneStepStartEndInfo();
   }
-#endif
 }
 
 std::string ProfilerManager::GetProfilingOptions() const {
-#if ENABLE_D
-  auto ascend_instance = profiler::ascend::AscendProfiler::GetInstance();
-  MS_EXCEPTION_IF_NULL(ascend_instance);
-  return ascend_instance->GetProfilingOptions();
-#endif
+  if (auto ascend_instance = Profiler::GetInstance(kAscendDevice); ascend_instance != nullptr) {
+    return ascend_instance->GetProfilingOptions();
+  }
+
   return "";
 }
 
@@ -196,6 +204,19 @@ REGISTER_PYBIND_DEFINE(ProfilerManager_, ([](const py::module *m) {
                          (void)py::class_<ProfilerManager, std::shared_ptr<ProfilerManager>>(*m, "ProfilerManager")
                            .def_static("get_instance", &ProfilerManager::GetInstance, "ProfilerManager get_instance.")
                            .def("dynamic_status", &ProfilerManager::GetNetDynamicShapeStatus, "dynamic_status");
+                       }));
+
+REGISTER_PYBIND_DEFINE(Profiler_, ([](const py::module *m) {
+                         (void)py::class_<Profiler, std::shared_ptr<Profiler>>(*m, "Profiler")
+                           .def_static("get_instance", &Profiler::GetInstance, py::arg("device_name"),
+                                       "Profiler get_instance.")
+                           .def("init", &Profiler::Init, py::arg("profiling_path"), py::arg("device_id") = py::int_(0),
+                                py::arg("profiling_options") = py::str(""), "init")
+                           .def("start", &Profiler::Start, "start")
+                           .def("stop", &Profiler::Stop, "stop")
+                           .def("finalize", &Profiler::Finalize, "finalize")
+                           .def("step_profiling_enable", &Profiler::StepProfilingEnable, py::arg("enable_flag"),
+                                "enable or disable step profiling");
                        }));
 }  // namespace profiler
 }  // namespace mindspore

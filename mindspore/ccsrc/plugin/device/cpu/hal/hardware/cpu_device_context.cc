@@ -41,7 +41,7 @@
 #include "common/graph_kernel/value_graph_binder.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "profiler/device/cpu/cpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #ifdef WITH_BACKEND
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
 #endif

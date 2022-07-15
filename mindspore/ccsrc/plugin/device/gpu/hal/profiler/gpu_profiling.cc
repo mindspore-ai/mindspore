@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "profiler/device/gpu/gpu_profiling.h"
+#include "plugin/device/gpu/hal/profiler/gpu_profiling.h"
 
 #include <cxxabi.h>
 #include <chrono>
 #include <cmath>
 #include <ctime>
-#include "profiler/device/gpu/cupti_interface.h"
-#include "profiler/device/gpu/gpu_data_saver.h"
+#include "plugin/device/gpu/hal/profiler/cupti_interface.h"
+#include "plugin/device/gpu/hal/profiler/gpu_data_saver.h"
 #include "include/common/pybind_api/api_register.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/utils.h"
@@ -31,6 +31,9 @@
 namespace mindspore {
 namespace profiler {
 namespace gpu {
+namespace {
+PROFILER_REG(kGPUDevice, GPUProfiler);
+}  // namespace
 const size_t BUF_SIZE = 32 * 1024;
 const size_t ALIGN_SIZE = 8;
 #define CHECK_CUPTI_RET_WITH_ERROR(expression, message)                                          \
@@ -65,8 +68,6 @@ const size_t ALIGN_SIZE = 8;
       return;                                                    \
     }                                                            \
   } while (0)
-
-std::shared_ptr<GPUProfiler> GPUProfiler::profiler_inst_ = std::make_shared<GPUProfiler>();
 
 int32_t GetThreadID() {
   uint32_t thread_id = static_cast<uint32_t>(pthread_self());
@@ -216,9 +217,10 @@ std::string GetKernelFuncName(std::string kernel_name) {
   return kernel_name.substr(func_name_begin_iter);
 }
 
-std::shared_ptr<GPUProfiler> &GPUProfiler::GetInstance() {
-  MS_EXCEPTION_IF_NULL(profiler_inst_);
-  return profiler_inst_;
+std::shared_ptr<GPUProfiler> GPUProfiler::GetInstance() {
+  auto instance = Profiler::GetInstance(kGPUDevice);
+  MS_EXCEPTION_IF_NULL(instance);
+  return std::dynamic_pointer_cast<GPUProfiler>(instance);
 }
 
 void GPUProfiler::SyncEnable(const bool enable_flag) {
@@ -385,7 +387,7 @@ void CUPTIAPI ActivityAllocBuffer(uint8_t **buffer, size_t *size, size_t *maxNum
 
 void CUPTIAPI ActivityProcessBuffer(CUcontext ctx, uint32_t streamId, uint8_t *buffer, size_t size, size_t validSize);
 
-void GPUProfiler::Init(const std::string &profileDataPath = "") {
+void GPUProfiler::Init(const std::string &profiling_path, uint32_t device_id, const std::string &profiling_options) {
   MS_LOG(INFO) << "Initialize GPU Profiling";
   if (subscriber_ != nullptr) {
     StopCUPTI();
@@ -412,7 +414,7 @@ void GPUProfiler::Init(const std::string &profileDataPath = "") {
   base_time_.host_start_time = GetHostTimeStamp();
   base_time_.host_start_monotonic_raw_time = GetHostMonoTimeStamp();
 
-  profile_data_path_ = profileDataPath;
+  profile_data_path_ = profiling_path;
   MS_LOG(INFO) << "GPU start time(ns):" << base_time_.gpu_start_time
                << " Host start time(ns):" << base_time_.host_start_time << " profile data path: " << profile_data_path_;
   is_init_ = true;
@@ -789,17 +791,6 @@ void CUPTIAPI GPUProfiler::ProcessBuffer(CUcontext ctx, uint32_t streamId, uint8
 
   free(buffer);
 }
-
-REGISTER_PYBIND_DEFINE(GPUProfiler_, ([](const py::module *m) {
-                         (void)py::class_<GPUProfiler, std::shared_ptr<GPUProfiler>>(*m, "GPUProfiler")
-                           .def_static("get_instance", &GPUProfiler::GetInstance, "GPUProfiler get_instance.")
-                           .def("init", &GPUProfiler::Init, py::arg("profile_data_path"), "init")
-                           .def("stop", &GPUProfiler::Stop, "stop")
-                           .def("step_profiling_enable", &GPUProfiler::StepProfilingEnable, py::arg("enable_flag"),
-                                "enable or disable step profiling")
-                           .def("sync_enable", &GPUProfiler::SyncEnable, py::arg("enable_flag"),
-                                "enable or disable synchronization profiling");
-                       }));
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore

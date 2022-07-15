@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_CPU_DATA_SAVER_H
-#define MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_CPU_DATA_SAVER_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
 #include <string>
 #include <memory>
-#include "profiler/device/cpu/cpu_profiling.h"
+#include "plugin/device/cpu/hal/profiler/cpu_profiling.h"
 #include "profiler/device/data_saver.h"
 namespace mindspore {
 namespace profiler {
@@ -52,4 +52,4 @@ class CpuDataSaver : public DataSaver {
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PROFILER_DEVICE_CPU_CPU_DATA_SAVER_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_HAL_PROFILER_CPU_DATA_SAVER_H

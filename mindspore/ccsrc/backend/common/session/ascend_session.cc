@@ -75,7 +75,7 @@
 #endif
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #ifndef ENABLE_SECURITY
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 
 using Adx::AdxRegDumpProcessCallBack;
 using mindspore::device::ascend::ProfilingManager;

@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#include "profiler/device/ascend/memory_profiling.h"
+#include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 #include <fstream>
 #include <memory>
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "nlohmann/json.hpp"
-#include "profiler/device/ascend/ascend_profiling.h"
-#include "profiler/device/ascend/options.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
+#include "plugin/device/ascend/hal/profiler/options.h"
 
 namespace mindspore {
 namespace profiler {

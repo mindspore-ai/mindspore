@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CUPTI_INTERFACE_H
-#define MINDSPORE_CUPTI_INTERFACE_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_CUPTI_INTERFACE_H
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_CUPTI_INTERFACE_H
 #ifndef FUNC_EXPORT
 #define FUNC_EXPORT __attribute__((visibility("default")))
 #endif
@@ -41,4 +41,4 @@ CUptiResult CuptiFinalize();
 }  // namespace profiler
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CUPTI_INTERFACE_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_HAL_PROFILER_CUPTI_INTERFACE_H
