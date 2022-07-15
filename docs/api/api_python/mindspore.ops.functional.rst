@@ -364,6 +364,7 @@ Array操作
     mindspore.ops.size
     mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
+    mindspore.ops.sparse_segment_mean
     mindspore.ops.split
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add

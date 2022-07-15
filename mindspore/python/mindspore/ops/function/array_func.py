@@ -1958,13 +1958,13 @@ def scatter_nd_max(input_x, indices, updates, use_locking=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Parameter(Tensor(np.ones(8) * 10, mindspore.float32), name="x")
+        >>> input_x = Parameter(Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8]), mindspore.float32), name="x")
         >>> indices = Tensor(np.array([[2], [4], [1], [7]]), mindspore.int32)
         >>> updates = Tensor(np.array([6, 7, 8, 9]), mindspore.float32)
         >>> output = ops.scatter_nd_max(input_x, indices, updates, False)
         >>> print(output)
-        [ 1. 8. 6.  4. 7.  6.  7. 9.]
-        >>> input_x = Parameter(Tensor(np.ones((4, 4, 4)) * 10, mindspore.int32))
+        [1. 8. 6. 4. 7. 6. 7. 9.]
+        >>> input_x = Parameter(Tensor(np.ones((4, 4, 4)), mindspore.int32))
         >>> indices = Tensor(np.array([[0], [2]]), mindspore.int32)
         >>> updates = Tensor(np.array([[[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]],
         ...                            [[5, 5, 5, 5], [6, 6, 6, 6], [7, 7, 7, 7], [8, 8, 8, 8]]]), mindspore.int32)

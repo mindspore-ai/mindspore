@@ -2757,10 +2757,6 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
 
             ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
 
-    Note:
-        On Ascend, input arrays containing inf or NaN are not supported. Therefore, when the input is NaN or inf,
-        the result is uncertain. And `equal_nan` must be True on Ascend.
-
     Args:
         x1 (Tensor): First Tensor to compare, with data type belongs to float32, float16, int32.
         x2 (Tensor): Second Tensor to compare, with data type belongs to float32, float16, int32.
@@ -2779,17 +2775,16 @@ def isclose(x1, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
         TypeError: If the dtype of `x1` is not same as the `x2`.
         ValueError: If `x1` and `x2` can not be broadcast.
         ValueError: If either of `atol` and `rtol` is less than zero.
-        ValueError: If `equal_nan` is False on Ascend platform.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
         >>> input = Tensor(np.array([1.3, 2.1, 3.2, 4.1, 5.1]), mindspore.float16)
         >>> other = Tensor(np.array([1.3, 3.3, 2.3, 3.1, 5.1]), mindspore.float16)
         >>> output = ops.isclose(input, other)
         >>> print(output)
-            [True False False False True]
+        [ True False False False  True]
     """
     is_close = _get_cache_prim(P.IsClose)(rtol=rtol, atol=atol, equal_nan=equal_nan)
     return is_close(x1, x2)
@@ -3768,8 +3763,48 @@ def cummax(x, axis):
 
 
 def sparse_segment_mean(x, indices, segment_ids):
-    """
-    Computes the mean along sparse segments of a tensor.
+    r"""
+    Computes a Tensor such that :math:`output_i = \frac{\sum_j x_{indices[j]}}{N}` where mean is over :math:`j` such
+    that :math:`segment\_ids[j] == i` and :math:`N` is the total number of values summed. If the mean is empty for
+    a given segment ID :math:`i`, :math:`output[i] = 0`.
+
+    Note:
+        - On CPU, values in `segment_ids` are always validated to be sorted, and an error is thrown for indices that
+          are not increasing. Moreover, values in `indices` are validated to be bounded, and an error is thrown when
+          `indices` are out of range[0, x.shape[0]).
+        - On GPU, this does not throw an error for unsorted `segment_ids` and out-of-bound `indices`. Out-of-order
+          `segment_ids` result in safe but unspecified behavior, while out-of-range `indices` will be ignored.
+
+    Args:
+        x (Tensor): A Tensor, and its rank must be greater than or equal to 1.
+        indices (Tensor): A 1-D Tensor, with int32 or int64 data type.
+        segment_ids (Tensor): A 1-D Tensor, must have the same dtype as `indices`.
+            Values should be sorted and can be repeated.
+
+    Returns:
+        Tensor, whose dtype and rank is the same as `x`. The first dimension is equal to the value of the last element
+        of `segment_ids` plus one, and the other dimensions are the same as those of `x`.
+
+    Raises:
+        TypeError: If `x`, `indices` or `segment_ids` is not a Tensor.
+        TypeError: If the dtype of `x` is not one of the following dtype: float16, float32, float64.
+        TypeError: If the dtype of `indices` and `segment_ids` are not one of the following dtype: int32, int64.
+        TypeError: If the dtype of `indices` and `segment_ids` are not the same.
+        ValueError: If the shape of `x`, 'indices' or `segment_ids` don't meet the parameter description.
+        ValueError: If the size of 'indices' and `segment_ids` are not the same.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=mindspore.float32)
+        >>> indices = Tensor([0, 1, 2], dtype=mindspore.int32)
+        >>> segment_ids = Tensor([1,2,2], dtype=mindspore.int32)
+        >>> out = ops.sparse_segment_mean(x, indices, segment_ids)
+        >>> print(out)
+        [[0. 0. 0.]
+         [0. 1. 2.]
+         [2. 4. 5.]]
     """
     return sparse_segment_mean_(x, indices, segment_ids)
 
