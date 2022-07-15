@@ -1060,6 +1060,7 @@ std::pair<AbstractBasePtrList, AbstractBasePtr> FuncGraphSpecializer::BuildFromB
   for (size_t i = 1; i < args_vector.size(); ++i) {
     // The args may be not joinable (AbstractScalar join with AbstractTensor), just ignore that case.
     try {
+      MS_LOG_TRY_CATCH_SCOPE;
       joined_argvals = abstract::AbstractJoin(joined_argvals, args_vector[i]);
     } catch (const std::exception &e) {
       MS_LOG(DEBUG) << "Cannot join, args1: " << ::mindspore::ToString(joined_argvals)
