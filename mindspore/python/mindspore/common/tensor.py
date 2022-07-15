@@ -4239,7 +4239,7 @@ class Tensor(Tensor_):
         the scalar could only be a constant.
 
         Args:
-            - **y** (Union[Tensor, number.Number, bool]) - The `y` input is a number.Number or
+            y (Union[Tensor, number.Number, bool]): The `y` input is a number.Number or
               a bool or a tensor whose data type is number or bool.
 
         Returns:
@@ -4276,9 +4276,6 @@ class Tensor(Tensor_):
 
         Supported Platforms:
             ``Ascend`` ``GPU``  ``CPU``
-
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
             >>> x = Tensor(np.array([-1, 0, 1, 2, 3]), mindspore.float32)
