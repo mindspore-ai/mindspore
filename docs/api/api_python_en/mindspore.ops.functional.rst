@@ -136,6 +136,7 @@ Element-by-Element Operations
     mindspore.ops.invert
     mindspore.ops.lerp
     mindspore.ops.log
+    mindspore.ops.log1p
     mindspore.ops.logical_and
     mindspore.ops.logical_not
     mindspore.ops.logical_or
@@ -327,6 +328,7 @@ Array Operation
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
+    mindspore.ops.gumbel_softmax
     mindspore.ops.intopk
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
@@ -345,6 +347,7 @@ Array Operation
     mindspore.ops.size
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
+    mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_max
@@ -358,8 +361,8 @@ Array Operation
     mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
-    mindspore.ops.gumbel_softmax
     mindspore.ops.unsorted_segment_sum
+    mindspore.ops.unstack
 
 .. list-table::
    :widths: 50 50
@@ -379,8 +382,6 @@ Array Operation
      - Refer to :class:`mindspore.ops.Sort`.
    * - mindspore.ops.squeeze
      - Refer to :class:`mindspore.ops.Squeeze`.
-   * - mindspore.ops.stack
-     - Refer to :class:`mindspore.ops.Stack`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_update
