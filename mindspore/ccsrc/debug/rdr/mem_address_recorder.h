@@ -15,7 +15,6 @@
  */
 #ifndef MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_
 #define MINDSPORE_CCSRC_DEBUG_RDR_MEM_ADDRESS_RECORDER_H_
-#include <vector>
 #include <string>
 #include <map>
 #include <set>
