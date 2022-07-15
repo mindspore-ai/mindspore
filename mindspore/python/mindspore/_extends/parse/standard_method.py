@@ -2131,7 +2131,7 @@ def xdivy(x, y):
     r"""
     Divides the first input tensor by the second input tensor element-wise. Returns zero when `x` is zero.
     """
-    return F.tensor_xdivy(x, y)
+    return F.xdivy(x, y)
 
 
 def int_bool(x):
