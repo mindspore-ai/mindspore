@@ -551,9 +551,13 @@ int MatmulFp32BaseCPUKernel::FullConnectionReSize() {
   return MatmulFp32BaseCPUKernel::ReSize();
 }
 
+bool MatmulFp32BaseCPUKernel::CheckRow1OptimalConditions() {
+  return params_->row_ == 1 && !(SupportMulBatchCuttingByRow() && (a_batch_ > 1 && b_batch_ == 1));
+}
+
 int MatmulFp32BaseCPUKernel::InitParameter() {
   InitGlobalVariable();
-  if (params_->row_ == 1) {
+  if (CheckRow1OptimalConditions()) {
     row_tile_ = 1;
     matrix_a_pack_fun_ = params_->a_transpose_ ? RowMajor2ColMajor : RowMajor2RowMajor;
     matrix_a_.need_pack = false;
@@ -618,8 +622,7 @@ int MatmulFp32BaseCPUKernel::InitTmpOutBuffer() {
 }
 
 int MatmulFp32BaseCPUKernel::GetThreadCuttingPolicy() {
-  if ((a_batch_ >= op_parameter_->thread_num_ &&
-       (b_batch_ == a_batch_ || params_->row_ == 1 || !SupportMulBatchCuttingByRow())) ||
+  if ((a_batch_ >= op_parameter_->thread_num_ && (b_batch_ == a_batch_ || !SupportMulBatchCuttingByRow())) ||
       params_->col_ == 1) {
     thread_count_ = op_parameter_->thread_num_;
     batch_stride_ = UP_DIV(params_->batch, thread_count_);
