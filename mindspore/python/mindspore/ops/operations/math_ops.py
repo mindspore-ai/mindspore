@@ -5213,6 +5213,8 @@ class LinSpace(PrimitiveWithInfer):
         """Initialize LinSpace"""
 
     def check_elim(self, start, stop, num):
+        if not isinstance(num, int):
+            return False, None
         if num != 1:
             return False, None
         start_npy = start.asnumpy().reshape((1,))
