@@ -81,6 +81,7 @@ class BaseStepTraceParser:
         self._header = []
         self._step_num = 0
         self._tag_map = {}
+        self._unique_id_map = {}
 
     @property
     def output_file(self):
@@ -501,7 +502,7 @@ class AscendStepTraceParser(BaseStepTraceParser):
         log.info("Start to parse step trace file.")
         ts_track_paths = self._list_ts_track_files(self._input_dir)
         ts_tracks = self._list_ts_track_step_traces(ts_track_paths)
-        self._tag_map = self._construct_point_info(ts_tracks, self._task_id_op_name_dict)
+        self._unique_id_map, self._tag_map = self._construct_point_info(ts_tracks, self._task_id_op_name_dict)
         self._save_step_trace_to_result(ts_tracks, self._skip_first_step)
         self._record_average_info()
         log.info("Finish to parse step trace file.")
@@ -522,15 +523,19 @@ class AscendStepTraceParser(BaseStepTraceParser):
 
     def _construct_point_info(self, ts_tracks, task_id_op_name_dict):
         """This function can not support multi graph scenario."""
-        tag_map_task = {}
+        unique_id_map_tag = {}
+        tag_map_unique_id = {}
         for ts_track in ts_tracks:
             unique_id = combine_stream_task_id(ts_track.get('streamId'), ts_track.get('taskId'))
-            tag_map_task[unique_id] = ts_track.get('tagId')
-
+            unique_id_map_tag[unique_id] = ts_track.get('tagId')
+            tag_map_unique_id[ts_track.get('tagId')] = unique_id
+        unique_id_map_op = {}
         tag_map_op = {}
-        for task_id, tag in tag_map_task.items():
-            tag_map_op[task_id] = self._get_real_point_op_name(tag, task_id, task_id_op_name_dict)
-        return tag_map_op
+        for unique_id, tag in unique_id_map_tag.items():
+            unique_id_map_op[unique_id] = self._get_real_point_op_name(tag, unique_id, task_id_op_name_dict)
+        for tag, unique_id in tag_map_unique_id.items():
+            tag_map_op[tag] = self._get_real_point_op_name(tag, unique_id, task_id_op_name_dict)
+        return unique_id_map_op, tag_map_op
 
     def _get_real_point_op_name(self, tag, profiling_task_id, task_id_op_name_dict):
         """Get real point op name from given tag and task id."""
@@ -645,10 +650,10 @@ class AscendStepTraceParser(BaseStepTraceParser):
             dict, reduce info.
         """
         reduce_info = {}
-        if self._tag_map.get(end_point[0]) != self._tag_map.get(start_point[0]):
+        if self._unique_id_map.get(end_point[0]) != self._unique_id_map.get(start_point[0]):
             log.warning("Unmatched reduce event <%s, %s>.", start_point, end_point)
             return reduce_info
-        op_type = self._tag_map.get(start_point[0])
+        op_type = self._unique_id_map.get(start_point[0])
         # append field name with op type.
         if not op_type:
             log.warning("Can't recognize the inner type for point tag: %d.", start_point[0])
