@@ -104,11 +104,7 @@ T QuantizeData(const float origin_data, const schema::QuantParamT *quant_param) 
 template <typename T>
 int DoPerLayerQuant(const float *raw_datas, size_t elem_count, std::vector<schema::QuantParamT> *quant_params,
                     const int &quant_max, const int &quant_min, const size_t &bit_num, std::vector<T> *quant_datas,
-                    bool symmetric = false, bool narrow_range = false, bool k_means = false) {
-  if (k_means) {
-    MS_LOG(ERROR) << "Unsupported K-means.";
-    return RET_ERROR;
-  }
+                    bool symmetric = false, bool narrow_range = false) {
   float min = FLT_MAX;
   float max = -FLT_MIN;
   for (uint32_t i = 0; i < elem_count; i++) {
@@ -150,13 +146,9 @@ template <typename T>
 int DoPerChannelQuant(const float *raw_datas, size_t elem_count, const schema::QuantType &quant_type,
                       std::vector<schema::QuantParamT> *quant_params, const int &quant_max, const int &quant_min,
                       const size_t &bit_num, std::vector<T> *quant_datas, const std::vector<int> &dims,
-                      int preferred_dim, bool symmetric = false, bool narrow_range = false, bool k_means = false) {
+                      int preferred_dim, bool symmetric = false, bool narrow_range = false) {
   if (raw_datas == nullptr || quant_params == nullptr || quant_datas == nullptr) {
     MS_LOG(ERROR) << "raw_data, quant_params or quant_data is nullptr.";
-    return RET_ERROR;
-  }
-  if (k_means) {
-    MS_LOG(ERROR) << "Unsupported K-means.";
     return RET_ERROR;
   }
   int ret;

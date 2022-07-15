@@ -391,6 +391,7 @@ STATUS GetPrimitiveType(const AnfNodePtr &node, std::string *name) {
     }
   } else if (node->isa<ValueNode>()) {
     auto fn_value = GetValueNode<PrimitivePtr>(node);
+    CHECK_NULL_RETURN(fn_value);
     *name = fn_value->name();
     return RET_OK;
   }
