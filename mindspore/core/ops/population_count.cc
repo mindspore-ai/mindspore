@@ -31,15 +31,21 @@ namespace ops {
 namespace {
 abstract::ShapePtr PopulationCountInferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) {
-  auto x_shape = input_args[0]->BuildShape();
-  MS_EXCEPTION_IF_NULL(x_shape);
-  auto output_shape = x_shape->cast<abstract::ShapePtr>();
-  return output_shape;
+  MS_EXCEPTION_IF_NULL(primitive);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  auto x = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(x);
+  auto shape_element = x->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape_element);
+  return shape_element;
 }
 
 TypePtr PopulationCountInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(prim);
-  CheckAndConvertUtils::CheckInteger("input number", input_args.size(), kEqual, 1, prim->name());
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   bool is_cpu = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kCPUDevice);
@@ -53,15 +59,20 @@ TypePtr PopulationCountInferType(const PrimitivePtr &prim, const std::vector<Abs
     std::set<TypePtr> check_list = {kInt16, kUInt16};
     CheckAndConvertUtils::CheckTensorTypeValid("input_x", input_type, check_list, prim->name());
   }
-  return kUInt8;
+  auto output_type = kUInt8;
+  return output_type;
 }
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(PopulationCount, BaseOperator);
 AbstractBasePtr PopulationCountInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
-  return abstract::MakeAbstract(PopulationCountInferShape(primitive, input_args),
-                                PopulationCountInferType(primitive, input_args));
+  MS_EXCEPTION_IF_NULL(primitive);
+  const int64_t input_num = 1;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  auto infer_type = PopulationCountInferType(primitive, input_args);
+  auto infer_shape = PopulationCountInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(PopulationCount, prim::kPrimPopulationCount, PopulationCountInfer, nullptr, true);
