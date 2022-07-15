@@ -473,7 +473,7 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
         >>> ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> gradient = Tensor(np.ones([2, 2]), mstype.float16)
-        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient, norm)
+        >>> output = net(0.001, 0.9, 0.999, 1e-8, 0.0, gradient, 1.0)
     """
 
     @prim_attr_register
