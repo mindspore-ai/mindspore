@@ -189,6 +189,27 @@ mindspore.Tensor
 
         - **TypeError** - 指定了无法解析的类型。
 
+    .. py:method:: atan2(y)
+        逐元素计算x/y的反正切值。
+
+        `x` 指的当前 Tensor。
+
+        返回 :math:`\theta\ \in\ [-\pi, \pi]` ，使得 :math:`x = r*\sin(\theta), y = r*\cos(\theta)` ， 其中 :math:`r = \sqrt{x^2 + y^2}` 。
+        输入 `x` 和 `y` 会通过隐式数据类型转换使数据类型保持一致。如果数据类型不同，低精度的数据类型会被转换到高精度的数据类型。
+
+        **参数：**
+
+        - **y** (Tensor) - 输入Tensor，shape应能在广播后与 `x` 相同，或 `x` 的shape在广播后与 `y` 相同。
+
+        **返回：**
+
+        Tensor，与广播后的输入shape相同，和 `x` 数据类型相同。
+
+        **异常：**
+
+        - **TypeError** - `x` 或 `y` 不是Tensor。
+        - **RuntimeError** - `x` 与 `y` 之间的数据类型转换不被支持
+
     .. py:method:: bernoulli(p=0.5, seed=-1)
 
         以p的概率随机将输出的元素设置为0或1，服从伯努利分布。
@@ -915,6 +936,21 @@ mindspore.Tensor
         - **TypeError** - 如果 `weight` 为Tensor且 `end` 、 `weight` 和当前Tensor数据类型不一致。
         - **ValueError** - 如果 `end` 的维度信息无法相互广播到当前Tensor。
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
+
+    .. py:method:: log1p()
+        对当前Tensor逐元素加一后计算自然对数。
+
+        .. math::
+            out_i = {log_e}(x_i + 1)
+
+        **返回：**
+
+        Tensor，与 `x` 的shape相同。
+
+        **异常：**
+
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `x` 的数据类型非float16或float32。
 
     .. py:method:: log_matrix_determinant()
 
