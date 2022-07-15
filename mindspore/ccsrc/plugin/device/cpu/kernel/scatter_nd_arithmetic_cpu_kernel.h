@@ -64,7 +64,6 @@ class ScatterNdArithmeticCpuKernelMod : public NativeCpuKernelMod,
   template <typename T>
   std::pair<bool, ComputeFunc<T>> InitComputeFunc();
 
-  bool is_tensor_scatter_arithmetic_{false};
   size_t slice_size_{1};
   size_t batch_size_{1};
   size_t inner_size_{1};

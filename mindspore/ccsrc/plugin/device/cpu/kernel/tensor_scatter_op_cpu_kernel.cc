@@ -33,11 +33,12 @@ namespace {
 template <typename T>
 using MatrixXd = Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>;
 constexpr size_t kMinIndiceRank = 2;
-enum class Op { ADD, SUB, MAX, MIN };
-std::map<string, Op> OpMap{{prim::kPrimTensorScatterAdd->name(), Op::ADD},
-                           {prim::kPrimTensorScatterSub->name(), Op::SUB},
-                           {prim::kPrimTensorScatterMax->name(), Op::MAX},
-                           {prim::kPrimTensorScatterMin->name(), Op::MIN}};
+enum class Op { ADD, SUB, MAX, MIN, MUL, DIV };
+std::map<string, Op> OpMap{
+  {prim::kPrimTensorScatterAdd->name(), Op::ADD}, {prim::kPrimTensorScatterSub->name(), Op::SUB},
+  {prim::kPrimTensorScatterMax->name(), Op::MAX}, {prim::kPrimTensorScatterMin->name(), Op::MIN},
+  {prim::kPrimTensorScatterMul->name(), Op::MUL}, {prim::kPrimTensorScatterDiv->name(), Op::DIV},
+};
 }  // namespace
 bool TensorScatterOpCpuKernelMode::Init(const BaseOperatorPtr &base_operator,
                                         const std::vector<KernelTensorPtr> &inputs,
@@ -109,6 +110,12 @@ inline void ComputeFunc(string kernel_name, MatrixXd<T> eigen_output, Eigen::Den
     case Op::MIN:
       eigen_output.row(out_index) = eigen_output.row(out_index).cwiseMin(eigen_update.row(upd_index));
       break;
+    case Op::MUL:
+      eigen_output.row(out_index) = eigen_output.row(out_index).cwiseProduct(eigen_update.row(upd_index));
+      break;
+    case Op::DIV:
+      eigen_output.row(out_index) = eigen_output.row(out_index).cwiseQuotient(eigen_update.row(upd_index));
+      break;
     default:
       MS_LOG(EXCEPTION) << "Invalid kernel name: " << kernel_name;
   }
@@ -134,7 +141,7 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
   if (ret != EOK) {
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy_s function run error. Error no: " << ret;
   }
-
+  int64_t invalid_index_pos = -1;
   Eigen::Map<Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_update(updates, batch_size_,
                                                                                              inner_size_);
   Eigen::Map<Eigen::Matrix<S, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> eigen_indices(indices, batch_size_,
@@ -143,17 +150,32 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
                                                                                              inner_size_);
   for (Eigen::DenseIndex i = 0; i < batch_size_; ++i) {
     Eigen::DenseIndex out_index = 0;
-    bool is_valid = true;
     for (Eigen::DenseIndex j = 0; j < slice_size_; ++j) {
       const Eigen::DenseIndex idx_index = eigen_indices(i, j);
       out_index += batch_strides_[j] * idx_index;
-      is_valid &= (idx_index >= 0 && idx_index < input_shape_[j]);
+      if (idx_index < 0 || idx_index >= static_cast<S>(input_shape_[j])) {
+        invalid_index_pos = SizeToLong(idx_index);
+        break;
+      }
     }
-    if (!is_valid) {
-      MS_LOG(DEBUG) << "Skip invalid indices.";
-      continue;
+    if (invalid_index_pos != -1) {
+      break;
     }
     ComputeFunc<T>(kernel_name_, eigen_output, out_index, eigen_update, i);
+  }
+  if (invalid_index_pos != -1) {
+    std::stringstream indices_ss;
+    std::stringstream input_shape_ss;
+    for (Eigen::DenseIndex i = 0; i < slice_size_; i++) {
+      if (i > 0) {
+        indices_ss << ", ";
+        input_shape_ss << ", ";
+      }
+      indices_ss << std::to_string(indices[invalid_index_pos + i]);
+      input_shape_ss << std::to_string(input_shape_[i]);
+    }
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the " << invalid_index_pos << "-th value of 'indices'["
+                      << indices_ss.str() << "] is out of range[" << input_shape_ss.str() << "].";
   }
   return true;
 }
@@ -211,5 +233,7 @@ MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterAdd, TensorScatterOpCpuKe
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterSub, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMax, TensorScatterOpCpuKernelMode);
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMin, TensorScatterOpCpuKernelMode);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterDiv, TensorScatterOpCpuKernelMode);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, TensorScatterMul, TensorScatterOpCpuKernelMode);
 }  // namespace kernel
 }  // namespace mindspore
