@@ -416,6 +416,13 @@ Status GaussianBlur(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 Status SlicePatches(const std::shared_ptr<Tensor> &input, std::vector<std::shared_ptr<Tensor>> *output,
                     int32_t num_height, int32_t num_width, SliceMode slice_mode, uint8_t fill_value);
 
+/// \brief Solarize the image by inverting all pixel values within the threshold.
+/// \param[in] input Input Tensor
+/// \param[out] output Output Tensor
+/// \param[in] threshold Pixel value range to be inverted.
+Status Solarize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                const std::vector<float> &threshold);
+
 /// \brief Compute patch height and width.
 /// \param[in] input Input CVTensor
 /// \param[out] patch_size Size of patch
