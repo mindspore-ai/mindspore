@@ -27,7 +27,7 @@
 #include "tools/common/tensor_util.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/optimizer/common/gllo_utils.h"

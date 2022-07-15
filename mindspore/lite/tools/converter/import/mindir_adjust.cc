@@ -18,7 +18,7 @@
 #include <memory>
 #include <set>
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "src/common/log_adapter.h"
 #include "src/common/quant_utils.h"

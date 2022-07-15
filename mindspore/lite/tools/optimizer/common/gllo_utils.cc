@@ -29,11 +29,12 @@
 #include "tools/common/tensor_util.h"
 #include "frontend/operator/ops.h"
 #include "backend/common/optimizer/helper.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "ops/op_utils.h"
+#include "ops/custom.h"
 
 namespace mindspore {
 namespace opt {
@@ -365,6 +366,36 @@ bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_ty
     return IsPrimitive(node, primitive_type);
   }
   return false;
+}
+
+STATUS GetPrimitiveType(const AnfNodePtr &node, std::string *name) {
+  if (name == nullptr) {
+    MS_LOG(ERROR) << "name is nulltr.";
+    return RET_ERROR;
+  }
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+    if (primitive == nullptr) {
+      MS_LOG(ERROR) << "primitive is nullptr. " << cnode->fullname_with_scope();
+      return RET_ERROR;
+    }
+    if (CheckPrimitiveType(node, prim::kPrimCustom)) {
+      auto custom_prim = api::MakeShared<ops::Custom>(primitive);
+      MS_CHECK_TRUE_MSG(custom_prim != nullptr, RET_ERROR, "custom op is nullptr.");
+      *name = custom_prim->get_type();
+      return RET_OK;
+    } else {
+      *name = primitive->name();
+      return RET_OK;
+    }
+  } else if (node->isa<ValueNode>()) {
+    auto fn_value = GetValueNode<PrimitivePtr>(node);
+    *name = fn_value->name();
+    return RET_OK;
+  }
+  MS_LOG(ERROR) << "There is no name for this node";
+  return RET_ERROR;
 }
 
 bool IsOpType(const BaseRef &n, const PrimitivePtr &prim) {
@@ -1026,6 +1057,25 @@ bool IsMarkedTrainOp(const CNodePtr &cnode) {
     return true;
   }
   return false;
+}
+
+size_t GetOutputSize(const AnfNodePtr &anf_node) {
+  if (anf_node == nullptr) {
+    MS_LOG(ERROR) << "anf_node is nullptr.";
+    return RET_ERROR;
+  }
+  AbstractBasePtr abstract_base;
+  if (CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+    abstract_base = anf_node->cast<CNodePtr>()->input(1)->abstract();
+  } else {
+    abstract_base = anf_node->abstract();
+  }
+  // used for multi output e.g. split.
+  if (utils::isa<abstract::AbstractTuple>(abstract_base)) {
+    auto abstract_tuple = abstract_base->cast<abstract::AbstractTuplePtr>();
+    return abstract_tuple->elements().size();
+  }
+  return 1;
 }
 
 int GetDataTypeFromAnfNode(const AnfNodePtr &anf_node, TypeId *type_id) {

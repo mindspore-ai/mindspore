@@ -25,7 +25,7 @@
 #include "ir/func_graph.h"
 #include "src/common/file_utils.h"
 #include "tools/common/graph_util.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/converter_context.h"
 #include "tools/converter/parser/tflite/tflite_inputs_adjust.h"
 #include "tools/converter/parser/parser_utils.h"

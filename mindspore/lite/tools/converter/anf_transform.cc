@@ -482,6 +482,7 @@ FuncGraphPtr AnfTransform::TransformFuncGraph(const FuncGraphPtr &old_graph,
     MS_LOG(ERROR) << "Unsupported external extension with quantization.";
     return nullptr;
   }
+
   status = DoQuantize(old_graph, param);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Do Quantize failed.";

@@ -21,7 +21,7 @@
 #include "ops/make_tuple.h"
 #include "ops/return.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "src/common/log_adapter.h"
 #include "tools/common/node_util.h"
 #include "tools/converter/parser/parser_utils.h"

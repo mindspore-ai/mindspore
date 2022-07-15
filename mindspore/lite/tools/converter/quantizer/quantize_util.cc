@@ -124,6 +124,16 @@ int ComputeBiasDataAndQuantParam(const std::vector<double> &bias_scales, const s
 }
 }  // namespace
 
+QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode) {
+  MS_CHECK_TRUE_RET(cnode != nullptr, nullptr);
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "primitive is nullptr";
+    return nullptr;
+  }
+  return GetCNodeQuantHolder(primitive);
+}
+
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive) {
   MS_CHECK_TRUE_RET(primitive != nullptr, nullptr);
   QuantParamHolderPtr quant_params_holder = nullptr;

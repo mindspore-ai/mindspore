@@ -71,8 +71,12 @@ constexpr size_t kMillisecondsBase = 10;
 constexpr float kDelta = 0.1;
 constexpr float kRatio = 10.0;
 constexpr int kCpuBindMode = 1;
+constexpr const int kPrimIndex = 0;
+constexpr const int kPrimOffset = 1;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
+
+QuantParamHolderPtr GetCNodeQuantHolder(const CNodePtr &cnode);
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
 

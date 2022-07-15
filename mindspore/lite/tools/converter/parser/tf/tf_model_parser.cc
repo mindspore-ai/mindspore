@@ -31,7 +31,7 @@
 #include "ops/tuple_get_item.h"
 #include "ir/anf.h"
 #include "abstract/utils.h"
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "tools/converter/parser/tf/functionalize_control_op_pass.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"

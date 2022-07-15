@@ -19,7 +19,7 @@
 #include <unordered_map>
 #include <memory>
 #include <vector>
-#include "tools/converter/quant_param_holder.h"
+#include "tools/converter/quantizer/quant_param_holder.h"
 #include "mindspore/core/ops/transpose.h"
 #include "tools/optimizer/common/format_utils.h"
 #include "ops/fusion/scale_fusion.h"
