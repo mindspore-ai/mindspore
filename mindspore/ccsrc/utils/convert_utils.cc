@@ -348,4 +348,52 @@ bool IsAKGSparseOP(const AnfNodePtr &cnode) {
                            prim::kPrimCSR2COO,      prim::kPrimCOO2CSR, prim::kPrimCSRDiv, prim::kPrimCSRMM};
   return IsOneOfPrimitiveCNode(cnode, prims);
 }
+
+namespace {
+ShapeVector ConvertTensorListToShapeVector(const tensor::TensorPtrList &tensor_list, size_t index) {
+  ShapeVector shape;
+  if (index >= tensor_list.size()) {
+    MS_LOG(EXCEPTION) << "Index " << index << " is out of range of " << tensor_list.size();
+    return shape;
+  }
+
+  auto converter = [](tensor::TensorPtr tensorptr) {
+    MS_EXCEPTION_IF_NULL(tensorptr);
+    if (tensorptr->DataDim() != 0) {
+      MS_LOG(EXCEPTION) << "Element must be scalar!";
+    }
+    tensorptr->data_sync(false);
+    return *(static_cast<int64_t *>(tensorptr->data_c()));
+  };
+  std::transform(tensor_list.begin() + index, tensor_list.end(), std::back_inserter(shape), converter);
+  if (shape.empty()) {
+    MS_LOG(ERROR) << "ShapeVector is empty!";
+  }
+  return shape;
+}
+tensor::CSRTensorPtr TensorListToCSRTensor(const tensor::TensorPtrList &tensor_list) {
+  tensor::TensorPtr indptr = utils::cast<tensor::TensorPtr>(tensor_list[tensor::CSRTensor::kIndptrIdx]);
+  tensor::TensorPtr indices = utils::cast<tensor::TensorPtr>(tensor_list[tensor::CSRTensor::kIndicesIdx]);
+  tensor::TensorPtr values = utils::cast<tensor::TensorPtr>(tensor_list[tensor::CSRTensor::kValuesIdx]);
+  ShapeVector shape = ConvertTensorListToShapeVector(tensor_list, tensor::CSRTensor::kShapeIdx);
+  auto csr_tensor_ptr = std::make_shared<tensor::CSRTensor>(indptr, indices, values, shape);
+  return csr_tensor_ptr;
+}
+
+tensor::COOTensorPtr TensorListToCOOTensor(const tensor::TensorPtrList &tensor_list) {
+  tensor::TensorPtr indices = utils::cast<tensor::TensorPtr>(tensor_list[tensor::COOTensor::kIndicesIdx]);
+  tensor::TensorPtr values = utils::cast<tensor::TensorPtr>(tensor_list[tensor::COOTensor::kValuesIdx]);
+  ShapeVector shape = ConvertTensorListToShapeVector(tensor_list, tensor::COOTensor::kShapeIdx);
+  auto coo_tensor_ptr = std::make_shared<tensor::COOTensor>(indices, values, shape);
+  return coo_tensor_ptr;
+}
+}  // namespace
+
+tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBasePtr &abs_sparse,
+                                                     const tensor::TensorPtrList &tensor_list) {
+  if (abs_sparse->isa<abstract::AbstractCOOTensor>()) {
+    return TensorListToCOOTensor(tensor_list);
+  }
+  return TensorListToCSRTensor(tensor_list);
+}
 }  // namespace mindspore

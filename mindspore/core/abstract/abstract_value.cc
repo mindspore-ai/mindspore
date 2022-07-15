@@ -1579,6 +1579,8 @@ AbstractBasePtr AbstractCOOTensor::Broaden() const {
   return std::make_shared<abstract::AbstractCOOTensor>(ElementsBroaden());
 }
 
+AbstractBasePtr AbstractCOOTensor::PartialBroaden() const { return Broaden(); }
+
 std::string AbstractCOOTensor::ToString() const {
   std::ostringstream buffer;
   buffer << type_name() << "("
@@ -1629,6 +1631,8 @@ AbstractBasePtr AbstractCSRTensor::Clone() const {
 AbstractBasePtr AbstractCSRTensor::Broaden() const {
   return std::make_shared<abstract::AbstractCSRTensor>(ElementsBroaden());
 }
+
+AbstractBasePtr AbstractCSRTensor::PartialBroaden() const { return Broaden(); }
 
 std::string AbstractCSRTensor::ToString() const {
   std::ostringstream buffer;

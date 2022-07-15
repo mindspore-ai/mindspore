@@ -243,7 +243,8 @@ def test_cg_grad(flatten, tensor_type, dtype, tol, a, b, grad_a, grad_b):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-8)])
+@pytest.mark.parametrize('tensor_type, dtype, tol', [('Tensor', onp.float32, 1e-5), ('Tensor', onp.float64, 1e-8),
+                                                     ('CSRTensor', onp.float32, 1e-5)])
 @pytest.mark.parametrize('a, b, grad_a, grad_b', [
     ([[1.96822833, 0.82204467, 1.03749232, 0.88915326, 0.44986806, 1.11167143],
       [0.82204467, 2.25216591, 1.40235719, 0.70838919, 0.81377919, 1.06000368],
@@ -278,6 +279,8 @@ def test_cg_grad_pynative(tensor_type, dtype, tol, a, b, grad_a, grad_b):
     Description: test cases for grad implementation of cg in pynative mode
     Expectation: the result match expectation
     """
+    if tensor_type == "CSRTensor" and get_platform() != "linux":
+        return
     context.set_context(mode=context.PYNATIVE_MODE)
 
     a = to_tensor((a, tensor_type), dtype)

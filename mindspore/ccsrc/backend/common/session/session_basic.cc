@@ -558,6 +558,40 @@ bool UseParamInitInServer(const FuncGraphPtr &kernel_graph, const AnfNodePtr &pa
                      [](const AnfNodePtr &node) { return AnfUtils::IsRealKernel(node); });
 }
 #endif
+
+void IterateFindTensor(std::vector<ValuePtr> *msTensors, const VectorRef &ref_list) {
+  for (size_t i = 0; i < ref_list.size(); ++i) {
+    if (utils::isa<tensor::TensorPtr>(ref_list[i])) {
+      auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(ref_list[i]);
+      MS_EXCEPTION_IF_NULL(tensor_ptr);
+      msTensors->emplace_back(tensor_ptr);
+    } else if (utils::isa<VectorRef>(ref_list[i])) {
+      auto ref_iter = utils::cast<VectorRef>(ref_list[i]);
+      IterateFindTensor(msTensors, ref_iter);
+    } else if (utils::isa<tensor::CSRTensorPtr>(ref_list[i])) {
+      auto csr_tensor = utils::cast<tensor::CSRTensorPtr>(ref_list[i]);
+      MS_EXCEPTION_IF_NULL(csr_tensor);
+      msTensors->emplace_back(csr_tensor);
+    } else {
+      MS_LOG(EXCEPTION) << "The output is not a tensor/sparse tensor";
+    }
+  }
+}
+
+std::vector<ValuePtr> TransformVectorRefToMultiValue(const VectorRef &base_ref) {
+  std::vector<ValuePtr> msTensors;
+  if (utils::isa<VectorRef>(base_ref)) {
+    auto ref_list = utils::cast<VectorRef>(base_ref);
+    IterateFindTensor(&msTensors, ref_list);
+  } else if (utils::isa<tensor::Tensor>(base_ref)) {
+    auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref);
+    MS_EXCEPTION_IF_NULL(tensor_ptr);
+    msTensors.emplace_back(tensor_ptr);
+  } else {
+    MS_LOG(EXCEPTION) << "The output is not a base ref list or a tensor!";
+  }
+  return msTensors;
+}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1566,14 +1600,16 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
   MS_EXCEPTION_IF_NULL(op_output_map);
   MS_EXCEPTION_IF_NULL(graph_output_info);
   MS_EXCEPTION_IF_NULL(graph_output_info->graph_outputs);
-  auto output_tensors = TransformVectorRefToMultiTensor(op_outputs);
-  if (output_tensors.size() > op_outputs.size()) {
+  auto output_values = TransformVectorRefToMultiValue(op_outputs);
+  if (output_values.size() > op_outputs.size()) {
     MS_LOG(EXCEPTION) << "Op output contains tuple, node = " << kernel->DebugString();
   }
   size_t out_index = 0;
-  for (const auto &output_tensor : output_tensors) {
+  for (const auto &output_value : output_values) {
     auto kernel_with_index = make_pair(kernel, out_index++);
-    if (ref_count.find(kernel_with_index) != ref_count.end()) {
+    auto output_tensor = output_value->cast<tensor::TensorPtr>();
+    bool value_is_tensor = (output_tensor != nullptr);
+    if (ref_count.find(kernel_with_index) != ref_count.end() && value_is_tensor) {
       (*op_output_map)[kernel_with_index] = output_tensor;
     }
     const auto &iter = graph_output_info->output_indexes.find(kernel_with_index);
@@ -1597,8 +1633,10 @@ void SessionBasic::HandleOpOutputs(const AnfNodePtr &kernel, const VectorRef &op
         cur_vector_ref = &utils::cast<VectorRef>(base_ref);
       }
       BaseRef &tensor_ref = (*const_cast<VectorRef *>(cur_vector_ref))[ref_indexes.at(n)];
-      tensor_ref = output_tensor;
-      graph_output_info->graph_output_tensors.emplace_back(output_tensor);
+      tensor_ref = output_value;
+      if (value_is_tensor) {
+        graph_output_info->graph_output_tensors.emplace_back(output_tensor);
+      }
     }
   }
 }

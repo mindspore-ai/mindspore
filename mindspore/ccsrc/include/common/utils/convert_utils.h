@@ -82,6 +82,9 @@ COMMON_EXPORT ValuePtr ShallowCopyTensorValue(const ValuePtr &value);
 COMMON_EXPORT size_t CountValueNum(const ValueTuplePtr &value_tuple);
 
 COMMON_EXPORT bool IsAKGSparseOP(const AnfNodePtr &cnode);
+
+COMMON_EXPORT tensor::MetaSparseTensorPtr TensorListToSparseTensor(const abstract::AbstractBasePtr &abs_sparse,
+                                                                   const tensor::TensorPtrList &tensor_list);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_CONVERT_UTILS_H_

@@ -1461,6 +1461,7 @@ class MS_CORE_API AbstractCOOTensor : public AbstractSparseTensor {
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden() const override;
+  AbstractBasePtr PartialBroaden() const override;
   std::string ToString() const override;
 
   static constexpr size_t kIndicesIdx = 0;
@@ -1489,6 +1490,7 @@ class MS_CORE_API AbstractCSRTensor : public AbstractSparseTensor {
   TypePtr BuildType() const override;
   AbstractBasePtr Clone() const override;
   AbstractBasePtr Broaden() const override;
+  AbstractBasePtr PartialBroaden() const override;
   std::string ToString() const override;
 
   static constexpr size_t kIndptrIdx = 0;
