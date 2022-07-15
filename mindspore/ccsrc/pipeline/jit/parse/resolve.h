@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_RESOLVE_H_
 
-#include <utility>
 #include <memory>
 #include <string>
 
@@ -160,7 +159,7 @@ AnfNodePtr ResolveSymbolWithAttr(const FuncGraphManagerPtr &manager, const AnfNo
                                  const AnfNodePtr &attr_node, const AnfNodePtr &node);
 AnfNodePtr ResolveGetItemWithAttr(const FuncGraphManagerPtr &manager, const AnfNodePtr &getitem_node,
                                   const AnfNodePtr &attr_node, const AnfNodePtr &node);
-AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &ms_class,
+AnfNodePtr ResolveMsClassWithAttr(const FuncGraphManagerPtr &manager, const py::object &cls_obj,
                                   const std::string &attr, const AnfNodePtr &node);
 
 // Check if node is cnode with getitem.
