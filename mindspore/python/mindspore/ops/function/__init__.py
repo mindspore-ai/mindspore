@@ -47,6 +47,8 @@ from .array_func import (
     reshape_,
     flatten,
     concat,
+    stack,
+    unstack,
     tensor_slice,
     slice,
     scalar_to_array,
@@ -226,6 +228,7 @@ from .math_func import (
     mean,
     prod,
     log2,
+    log1p,
     approximate_equal,
     xlogy
 )
