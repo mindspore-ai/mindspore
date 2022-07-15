@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -176,6 +176,8 @@ class BufferAppend(PrimitiveWithInfer):
         >>> capacity = 100
         >>> count = Parameter(Tensor(5, ms.int32), name="count")
         >>> head = Parameter(Tensor(0, ms.int32), name="head")
+        >>> shapes = [(4,), (2,), (1,), (4,)]
+        >>> types = [ms.float32, ms.int32, ms.int32, ms.float32]
         >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
                       Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
                       Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
@@ -273,6 +275,8 @@ class BufferGetItem(PrimitiveWithInfer):
         >>> index = 3
         >>> count = Parameter(Tensor(5, ms.int32), name="count")
         >>> head = Parameter(Tensor(0, ms.int32), name="head")
+        >>> shapes = [(4,), (2,), (1,), (4,)]
+        >>> types = [ms.float32, ms.int32, ms.int32, ms.float32]
         >>> buffer = [Parameter(Tensor(np.arange(100 * 4).reshape(100, 4).astype(np.float32)), name="states"),
                       Parameter(Tensor(np.arange(100 * 2).reshape(100, 2).astype(np.int32)), name="action"),
                       Parameter(Tensor(np.ones((100, 1)).astype(np.int32)), name="reward"),
