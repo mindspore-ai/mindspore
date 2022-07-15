@@ -26,5 +26,5 @@ mindspore.ops.Poisson
     **异常：**
 
     - **TypeError** - `seed` 或 `seed2` 的数据类型不是 int。
+    - **TypeError** - `shape` 不是 tuple。
     - **TypeError** - `mean` 不是数据类型为 float32 的 Tensor。
-    - **ValueError** - `shape` 不是常量值。

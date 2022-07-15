@@ -32,6 +32,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import DataType
 from mindspore import log as logger
 from mindspore import ops
+from mindspore.communication.management import get_rank, GlobalComm
 from ._ms_kernel import determine_variable_usage
 from ._custom_grad import autodiff_bprop
 from ._pyfunc_registry import add_pyfunc
@@ -54,7 +55,7 @@ def _get_cache_path():
         cache_path = cache_path + "/"
 
     if not os.path.exists(cache_path):
-        os.makedirs(cache_path)
+        os.makedirs(cache_path, exist_ok=True)
 
     return cache_path
 
@@ -70,6 +71,10 @@ def _compile_aot(file):
         str, the path to the compiled library.
     """
     cache_path = _get_cache_path()
+    # for distributed case, we create folders separately to avoid conflict
+    if GlobalComm.INITED:
+        cache_path = os.path.join(cache_path, "rank_" + str(get_rank()), "")
+        os.makedirs(cache_path, exist_ok=True)
 
     search_res = importlib.util.find_spec("mindspore")
     if search_res is None:
