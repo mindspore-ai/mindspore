@@ -1870,7 +1870,7 @@ def bessel_j0(x):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = ops.bessel_j0(x)
         >>> print(output)
-        [1.8427168e+00 1.0000000e+00 1.5728319e-01 4.6912432e-03 2.2351742e-05]
+        [0.93846981  0.76519769  0.22389078  -0.39714981]
     """
     return bessel_j0_(x)
 
@@ -1924,7 +1924,7 @@ def bessel_i0(x):
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
         >>> output = ops.bessel_i0(x)
         >>> print(output)
-        [1.26606588 1.06348337 1.06348337 1.26606588]
+        [1.26606588  1.06348337  1.06348337  1.26606588]
     """
     return bessel_i0_(x)
 
@@ -1951,7 +1951,7 @@ def bessel_i0e(x):
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
         >>> output = ops.bessel_i0e(x)
         >>> print(output)
-        [0.46575961 0.64503527 0.64503527 0.46575961]
+        [0.46575961  0.64503527  0.64503527  0.46575961]
     """
     return bessel_i0e_(x)
 
@@ -1978,7 +1978,7 @@ def bessel_k0(x):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = ops.bessel_k0(x)
         >>> print(output)
-        [0.92441907 0.42102444 0.11389387 0.01115968]
+        [0.92441907  0.42102444  0.11389387  0.01115968]
     """
     return bessel_k0_(x)
 
@@ -2005,7 +2005,7 @@ def bessel_k0e(x):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = ops.bessel_k0e(x)
         >>> print(output)
-        [1.52410939 1.14446308 0.84156822 0.60929767]
+        [1.52410939  1.14446308  0.84156822  0.60929767]
     """
     return bessel_k0e_(x)
 
@@ -3436,7 +3436,7 @@ def bessel_i1(x):
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
         >>> output = ops.bessel_i1(x)
         >>> print(output)
-        [-0.5651591, -0.25789431, 0.25789431, 0.5651591]
+        [-0.5651591  -0.25789431  0.25789431  0.5651591]
     """
     return bessel_i1_(x)
 
@@ -3463,7 +3463,7 @@ def bessel_i1e(x):
         >>> x = Tensor(np.array([-1, -0.5, 0.5, 1]), mindspore.float32)
         >>> output = ops.bessel_i1e(x)
         >>> print(output)
-        [-0.20791042, -0.15642083, 0.15642083, 0.20791042]
+        [-0.20791042  -0.15642083  0.15642083  0.20791042]
     """
     return bessel_i1e_(x)
 
@@ -3490,7 +3490,7 @@ def bessel_k1(x):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = ops.bessel_k1(x)
         >>> print(output)
-        [1.65644112, 0.60190723, 0.13986588, 0.0124835]
+        [1.65644112  0.60190723  0.13986588  0.0124835]
     """
     return bessel_k1_(x)
 
@@ -3517,7 +3517,7 @@ def bessel_k1e(x):
         >>> x = Tensor(np.array([0.5, 1., 2., 4.]), mindspore.float32)
         >>> output = ops.bessel_k1e(x)
         >>> print(output)
-        [2.73100971, 1.63615349, 1.03347685, 0.68157595]
+        [2.73100971  1.63615349  1.03347685  0.68157595]
     """
     return bessel_k1e_(x)
 
