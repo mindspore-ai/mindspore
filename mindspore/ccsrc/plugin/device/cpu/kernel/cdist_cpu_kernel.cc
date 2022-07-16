@@ -145,7 +145,5 @@ bool CdistCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std:
   }
   return true;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Cdist, CdistCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

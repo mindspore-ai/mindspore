@@ -279,6 +279,5 @@ const KernelAttrAndDeformableOffsetsFuncList &DeformableOffsetsCpuKernelMod::Get
      &DeformableOffsetsCpuKernelMod::LaunchKernel<float>}};
   return func_list;
 }
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, DeformableOffsets, DeformableOffsetsCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

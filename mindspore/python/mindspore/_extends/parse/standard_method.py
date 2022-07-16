@@ -1164,13 +1164,6 @@ def fill(x, value):
     return F.fill(x.dtype, x.shape, value)
 
 
-def fills(x, value):
-    """
-    Create a tensor of the same shape and type as the input tensor and fill it with specified value.
-    """
-    return F.fills(x, value)
-
-
 def ptp(x, axis=None, keepdims=False):
     """
     The name of the function comes from the acronym for "peak to peak".
@@ -1374,15 +1367,6 @@ def one_hot(self, depth, on_value, off_value, axis=-1):
     """
     check_is_int(axis, 'axis')
     return P.OneHot(axis)(self, depth, on_value, off_value)
-
-
-def gather_elements(x, dim, index):
-    r"""
-    Gathers elements along an axis specified by dim.
-
-    Refer to :func:`mindspore.ops.gather_elements` for more detail.
-    """
-    return F.gather_elements(x, dim, index)
 
 
 def sum(x, axis=None, dtype=None, keepdims=False, initial=None):  # pylint: disable=redefined-builtin
@@ -1872,13 +1856,6 @@ def nonzero(x):
     Return a Tensor of the positions of all non-zero values.
     """
     return F.nonzero(x)
-
-
-def diag(x):
-    """
-    Constructs a diagonal tensor with a given diagonal values.
-    """
-    return F.diag(x)
 
 
 def masked_select(x, mask):

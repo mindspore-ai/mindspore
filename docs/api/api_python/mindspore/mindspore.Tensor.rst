@@ -315,40 +315,6 @@ mindspore.Tensor
 
         Tensor，数据类型和shape与 `x` 相同。
 
-    .. py:method:: cumsum(axis=None, dtype=None)
-
-        返回指定轴方向上元素的累加值。
-
-        .. note::
-            如果 `dtype` 为 `int8` , `int16` 或 `bool` ，则结果 `dtype` 将提升为 `int32` ，不支持 `int64` 。
-
-        **参数：**
-
-        - **axis** (int, optional) - 轴，在该轴方向上的累积和。默认情况下，计算所有元素的累加和。
-        - **dtype** (`mindspore.dtype` , optional) - 如果未指定参数值，则保持与原始Tensor相同，除非参数值是一个精度小于 `float32` 的整数。在这种情况下，使用 `float32` 。默认值：None。
-
-        **异常：**
-
-        - **ValueError** - 轴超出范围。
-
-        **返回：**
-
-        Tensor。
-
-    .. py:method:: diag()
-
-        用给定的对角线值构造对角线张量。
-
-        假设输入Tensor维度为 :math:`[D_1,... D_k]` ，则输出是一个rank为2k的tensor，其维度为 :math:`[D_1,..., D_k, D_1,..., D_k]` ，其中 :math:`output[i_1,..., i_k, i_1,..., i_k] = self[i_1,..., i_k]` 并且其他位置的值为0。
-
-        **返回：**
-
-        Tensor，具有与输入Tensor相同的数据类型。
-
-        **异常：**
-
-        - **ValueError** - 输入Tensor的rank小于1。
-
     .. py:method:: diagonal(offset=0, axis1=0, axis2=1)
 
         返回指定的对角线。
@@ -501,38 +467,6 @@ mindspore.Tensor
 
         与输入的张量具有相同的数据类型的Tensor。
 
-    .. py:method:: gather_elements(dim, index)
-
-        获取指定轴的元素。
-
-        对于三维Tensor，输出为：
-
-        .. code-block::
-
-            output[i][j][k] = x[index[i][j][k]][j][k]  # if dim == 0
-
-            output[i][j][k] = x[i][index[i][j][k]][k]  # if dim == 1
-
-            output[i][j][k] = x[i][j][index[i][j][k]]  # if dim == 2
-
-        `index` 与当前Tensor拥有一样的维度长度，且除 `dim` 维外其他维度一致。如果维度 `dim` 为i，当前Tensor是shape为 :math:`(z_0, z_1, ..., z_i, ..., z_{n-1})` 的n维Tensor，则 `index` 必须是shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})` 的n维Tensor，其中 `y` 大于等于1。输出的shape与 `index` 相同。
-
-        **参数：**
-
-        - **dim** (int) - 获取元素的轴。数据类型为int32或int64。取值范围为[-self.ndim, self.ndim)。
-        - **index** (Tensor) - 获取收集元素的索引。支持的数据类型包括：int32，int64。每个索引元素的取值范围为[-self.shape(dim), self.shape(dim))。
-
-        **返回：**
-
-        Tensor，shape与 `index` 相同，即其shape为 :math:`(z_0, z_1, ..., y, ..., z_{n-1})`，数据类型与 `self.dtype` 相同。
-
-        **异常：**
-
-        - **TypeError** - `dim` 或 `index` 的数据类型既不是int32，也不是int64。
-        - **ValueError** - `self` 和 `index` 的维度长度不一致。
-        - **ValueError** - `self` 和 `index` 除 `dim` 维外的维度不一致。
-        - **ValueError** - `dim` 的值不在合理范围内。
-
     .. py:method:: gather_nd(indices)
 
         按索引从输入Tensor中获取切片。
@@ -557,7 +491,7 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 如果输入Tensor的shape长度小于 `indices` 的最后一个维度。
-
+        
     .. py:method:: gather(input_indices, axis)
 
         返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。

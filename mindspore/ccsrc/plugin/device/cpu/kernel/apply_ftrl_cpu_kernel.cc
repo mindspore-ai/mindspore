@@ -239,7 +239,5 @@ std::vector<KernelAttr> ApplyFtrlCpuKernelMod::GetOpSupport() {
                                                    .AddOutInRef(0, 0)};
   return support_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyFtrl, ApplyFtrlCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

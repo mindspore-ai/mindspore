@@ -232,31 +232,6 @@ def test_huber_loss():
     loss(input_data, target_data)
 
 
-def test_cross_entropy_loss():
-    """
-    Feature: Test CrossEntropyLoss.
-    Description: Test CrossEntropyLoss functional.
-    Expectation: Success.
-    """
-    loss = nn.CrossEntropyLoss()
-    input_data = Tensor(np.random.randn(3, 5).astype(np.float32))
-    target_data = Tensor(np.array([1, 0, 4]).astype(np.int32))
-    loss(input_data, target_data)
-
-
-def test_cross_entropy_loss_with_weight():
-    """
-    Feature: Test CrossEntropyLoss.
-    Description: Test CrossEntropyLoss functional.
-    Expectation: Success.
-    """
-    input_data = Tensor(np.random.randn(3, 5).astype(np.float32))
-    target_data = Tensor(np.array([1, 0, 4]).astype(np.int32))
-    weight_data = Tensor(np.array([0.1, 0.2, 0.3, 0.4, 0.5]).astype(np.float32))
-    loss = nn.CrossEntropyLoss(weight=weight_data)
-    loss(input_data, target_data)
-
-
 def test_nll_loss():
     """
     Feature: Test NLLLoss.

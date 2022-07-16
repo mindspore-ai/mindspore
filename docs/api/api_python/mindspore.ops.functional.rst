@@ -45,10 +45,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_avg_pool2d
-    mindspore.ops.adaptive_max_pool3d
-    mindspore.ops.avg_pool2d
     mindspore.ops.interpolate
-    mindspore.ops.deformable_conv2d
 
 激活函数
 ^^^^^^^^^^
@@ -58,7 +55,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.celu
     mindspore.ops.fast_gelu
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
@@ -75,7 +71,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.cross_entropy
     mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
@@ -273,7 +268,6 @@ Reduction算子
 
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
-    mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
 
@@ -290,7 +284,6 @@ Tensor创建
 
     mindspore.ops.eye
     mindspore.ops.fill
-    mindspore.ops.fills
     mindspore.ops.linspace
     mindspore.ops.ones
     mindspore.ops.ones_like
@@ -320,16 +313,13 @@ Array操作
     :template: classtemplate.rst
 
     mindspore.ops.adaptive_max_pool2d
-    mindspore.ops.batch_to_space_nd
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
-    mindspore.ops.diag
     mindspore.ops.expand_dims
     mindspore.ops.flatten
     mindspore.ops.gather
     mindspore.ops.gather_d
-    mindspore.ops.gather_elements
     mindspore.ops.gather_nd
     mindspore.ops.gumbel_softmax
     mindspore.ops.masked_fill
@@ -375,8 +365,6 @@ Array操作
      - Refer to :class:`mindspore.ops.Cast`.
    * - mindspore.ops.cumprod
      - Refer to :class:`mindspore.ops.CumProd`.
-   * - mindspore.ops.cumsum
-     - Refer to :class:`mindspore.ops.CumSum`.
    * - mindspore.ops.dtype
      - Refer to :class:`mindspore.ops.DType`.
    * - mindspore.ops.sort
