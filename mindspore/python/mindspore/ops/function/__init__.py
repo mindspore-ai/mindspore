@@ -24,7 +24,6 @@ from . import (
     parameter_func,
     math_func,
     nn_func,
-    linalg_func,
 )
 from .array_func import (
     unique,
@@ -73,7 +72,6 @@ from .array_func import (
     tensor_scatter_mul,
     unique_consecutive,
     tensor_scatter_div,
-    tensor_scatter_max,
     tensor_scatter_min,
     tensor_scatter_elements,
     scatter_add,
@@ -259,9 +257,6 @@ from .nn_func import (
     grid_sample,
     ctc_greedy_decoder,
 )
-from .linalg_func import (
-    svd,
-)
 from .sparse_func import (
     dense_to_sparse_coo,
     dense_to_sparse_csr,
@@ -278,7 +273,6 @@ __all__.extend(array_func.__all__)
 __all__.extend(parameter_func.__all__)
 __all__.extend(math_func.__all__)
 __all__.extend(nn_func.__all__)
-__all__.extend(linalg_func.__all__)
 __all__.extend(sparse_func.__all__)
 __all__.extend(random_func.__all__)
 __all__.sort()

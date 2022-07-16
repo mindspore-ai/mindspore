@@ -155,7 +155,5 @@ std::vector<std::pair<KernelAttr, SvdCpuKernelMod::SvdFunc>> SvdCpuKernelMod::fu
      .AddOutputAttr(kNumberTypeFloat64)
      .AddOutputAttr(kNumberTypeFloat64),
    &SvdCpuKernelMod::LaunchKernel<double>}};
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Svd, SvdCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

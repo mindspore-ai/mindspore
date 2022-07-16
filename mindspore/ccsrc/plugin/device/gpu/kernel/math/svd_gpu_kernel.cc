@@ -377,7 +377,5 @@ std::vector<KernelAttr> SvdGpuKernelMod::GetOpSupport() {
     [](const std::pair<KernelAttr, std::pair<LaunchKernelFunc, InitSizeListsFunc>> &pair) { return pair.first; });
   return support_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Svd, SvdGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
