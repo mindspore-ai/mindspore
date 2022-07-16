@@ -43,6 +43,7 @@ int ConvDelegateCoder::Prepare(CoderContext *const context) {
     op_parameter->thread_num_ = thread_num_;
     conv_coder_->set_type(primitive_type);
     conv_coder_->set_thread_num(thread_num_);
+    memcpy(op_parameter, parameter_, sizeof(ConvParameter));
     conv_coder_->set_parameter(op_parameter);
   }
   return conv_coder_->Prepare(context);

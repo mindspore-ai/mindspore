@@ -219,22 +219,23 @@ int MatMulBaseInt8Coder::DoCode(CoderContext *const context) {
   auto filter_tensor_name = MemoryAllocator::GetInstance()->GetRuntimeAddr(filter_tensor_);
   std::string bias_ptr_str = MemoryAllocator::GetInstance()->GetRuntimeAddr(bias_tensor_);
   bias_ptr_str = (bias_ptr_str == "") ? "NULL" : bias_ptr_str;
-
-  if (param_->b_const_ && target_ != kCortex_M) {
-    init_code.CodeBufferOffsetExpression(weight_bias_sums_, context->weight_name(), context->weight_offset_name(),
-                                         context->weight_size_name(), weight_bias_sums_size_);
-    init_code.CodeBufferOffsetExpression(pack_b_ptr_, context->weight_name(), context->weight_offset_name(),
-                                         context->weight_size_name(), b_pack_ptr_size_);
-    w_buf_size += weight_bias_sums_size_ + b_pack_ptr_size_;
-    init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
-    init_code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
-                           param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
-                           "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
-  } else {
-    code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
-    code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
-                      param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
-                      "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
+  if (target_ != kCortex_M) {
+    if (param_->b_const_) {
+      init_code.CodeBufferOffsetExpression(weight_bias_sums_, context->weight_name(), context->weight_offset_name(),
+                                           context->weight_size_name(), weight_bias_sums_size_);
+      init_code.CodeBufferOffsetExpression(pack_b_ptr_, context->weight_name(), context->weight_offset_name(),
+                                           context->weight_size_name(), b_pack_ptr_size_);
+      w_buf_size += weight_bias_sums_size_ + b_pack_ptr_size_;
+      init_code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
+      init_code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
+                             param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
+                             "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
+    } else {
+      code.CodeArray("init_filter_zp", quant_.filter_zp_, weight_quant_num_, false);
+      code.CodeFunction("InitInt8MatrixB", filter_tensor_name, weight_bias_sums_, pack_b_ptr_, param_->batch,
+                        param_->deep_, param_->col_, param_->col_align_, param_->deep_16_, quant_.input_.zp_,
+                        "init_filter_zp", bias_ptr_str, param_->b_transpose_, filter_per_channel_);
+    }
   }
   std::string a_ptr_str = allocator_->GetRuntimeAddr(input_tensor_);
   std::string c_ptr_str = allocator_->GetRuntimeAddr(output_tensor_);
