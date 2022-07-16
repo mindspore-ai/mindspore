@@ -230,7 +230,7 @@ const AnfNodePtr TopKSplit::Process(const FuncGraphPtr &func_graph, const AnfNod
   new_cnode->set_input(kTopkIndexK + 1, new_value_node);
 
   mindspore::HashSet<size_t> attr_index{kTopkIndexK};
-  ConstInputToAttr(new_cnode, attr_index);
+  new_cnode = ConstInputToAttr(new_cnode, attr_index);
   auto input_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(new_cnode, 0);
   auto assist_const = CreateAssistNode(input_shape, k_num, platform_info, optional_info);
   new_cnode->add_input(assist_const);

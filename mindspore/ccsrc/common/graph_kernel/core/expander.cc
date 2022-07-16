@@ -45,8 +45,12 @@ CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node) const {
 
 AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
   auto cnode = QuickCloneCNode(node);
-  opt::ConstInputToAttr(cnode, input_idx_);
-  return decorated_->Run(cnode);
+  auto new_node = opt::ConstInputToAttr(cnode, input_idx_);
+  auto graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_EXCEPTION_IF_NULL(graph->manager());
+  graph->manager()->Replace(cnode, new_node);
+  return decorated_->Run(new_node);
 }
 
 AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {

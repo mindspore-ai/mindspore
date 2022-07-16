@@ -40,9 +40,7 @@ const AnfNodePtr CustomOpConstInputToAttr::Process(const FuncGraphPtr &, const A
     return nullptr;
   }
 
-  ConstInputToAttr(cnode, attr_indices);
-
-  return node;
+  return ConstInputToAttr(cnode, attr_indices);
 }
 }  // namespace opt
 }  // namespace mindspore
