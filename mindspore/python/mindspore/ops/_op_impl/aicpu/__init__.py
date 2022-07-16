@@ -219,6 +219,7 @@ from .equal import _equal_aicpu
 from .complex_abs import _complex_abs_aicpu
 from .priority_replay_buffer import _prb_destroy_op_cpu
 from .right_shift import _right_shift_aicpu
+from .parameterized_truncated_normal import _parameterized_truncated_normal_aicpu
 from .tril import _tril_aicpu
 from .bucketize import _bucketize_aicpu
 from .eye import _eye_aicpu
