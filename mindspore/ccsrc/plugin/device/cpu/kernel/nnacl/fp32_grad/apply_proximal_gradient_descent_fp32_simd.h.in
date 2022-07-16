@@ -1,0 +1,64 @@
+/**
+ * Copyright 2022 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#ifndef MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_GRADIENT_DESCENT_@SIMD_INSTRUCTION@_H_
+#define MINDSPORE_NNACL_FP32_APPLY_PROXIMAL_GRADIENT_DESCENT_@SIMD_INSTRUCTION@_H_
+
+#include "nnacl/intrinsics/ms_simd_instructions.h"
+#include "nnacl/intrinsics/ms_simd_@SIMD_INSTRUCTION_LOWER@_instructions.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+@SIMD_INSTRUCTION_BEGIN@
+
+static inline int64_t ApplyProximalGradientDescentOpt@SIMD_INSTRUCTION@(
+  int64_t index, float *var, float alpha, float l1, float l2, float *delta, int64_t size) {
+  SIMD_F32 alpha_vec = SIMD_MOV_F32(alpha);
+  SIMD_F32 l1_vec = SIMD_MOV_F32(l1);
+  SIMD_F32 l2_vec = SIMD_MOV_F32(l2);
+  for (int64_t block_max_size = size - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+    SIMD_F32 delta_vec = SIMD_LD_F32(delta + index);
+    SIMD_F32 prox_v_vec = SIMD_LD_F32(var + index);
+
+    prox_v_vec = SIMD_SUB_F32(prox_v_vec, SIMD_MUL_F32(delta_vec, alpha_vec));
+    SIMD_F32 tmp_vec1 = SIMD_FMADD_F32(l2_vec, alpha_vec, SIMD_MOV_F32(1));
+    if (l1 > 0) {
+      SIMD_F32 tmp_vec2 = SIMD_MUL_F32(alpha_vec, l1_vec);
+      tmp_vec2 = SIMD_SUB_F32(SIMD_ABS_F32(prox_v_vec), tmp_vec2);
+      tmp_vec2 = SIMD_MAX_F32(tmp_vec2, SIMD_MOV_F32(0.0f));
+      tmp_vec2 = SIMD_DIV_F32(tmp_vec2, tmp_vec1);
+
+      SIMD_MASK greater_mask = SIMD_CMPGT_F32(SIMD_SET0_F32, prox_v_vec);
+      SIMD_MASK less_mask = SIMD_CMPLT_F32(SIMD_SET0_F32, prox_v_vec);
+      SIMD_F32 greater_v = SIMD_BLEND_F32(SIMD_MOV_F32(1), SIMD_SET0_F32, greater_mask);
+      SIMD_F32 less_v = SIMD_BLEND_F32(SIMD_MOV_F32(1), SIMD_SET0_F32, less_mask);
+      greater_v = SIMD_SUB_F32(greater_v, less_v);
+
+      prox_v_vec = SIMD_MUL_F32(tmp_vec2, greater_v);
+    } else {
+      prox_v_vec = SIMD_DIV_F32(prox_v_vec, tmp_vec1);
+    }
+    SIMD_ST_F32(var + index, prox_v_vec);
+  }
+
+  return index;
+}
+
+@SIMD_INSTRUCTION_END@
+#ifdef __cplusplus
+}
+#endif
+#endif
