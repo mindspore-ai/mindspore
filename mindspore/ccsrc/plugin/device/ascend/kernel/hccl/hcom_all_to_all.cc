@@ -97,14 +97,32 @@ const std::vector<size_t> &HcomAllToAllKernel::GetOutputSizeList() const {
   if (!mutable_output_size_list_.empty()) {
     return mutable_output_size_list_;
   }
+  size_t size = 0;
   for (size_t i = 0; i < hccl_kernel_output_shape_list_.size(); ++i) {
-    size_t size = 0;
     if (!HcomUtil::GetHcclOpSize(data_type_, hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(EXCEPTION) << "AllToAllv get output size failed.";
     }
     mutable_output_size_list_.push_back(size);
   }
   return mutable_output_size_list_;
+}
+
+void HcomAllToAllKernel::UpdateOutputSizeList() {
+  auto anf_node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(anf_node);
+  size_t size = 0;
+  hccl_kernel_output_shape_list_.clear();
+  mutable_output_size_list_.clear();
+  if (!HcomUtil::GetKernelOutputShape(anf_node, &hccl_kernel_output_shape_list_)) {
+    MS_LOG(EXCEPTION) << "GetKernelOutputShape fail!";
+  }
+
+  for (size_t i = 0; i < hccl_kernel_output_shape_list_.size(); ++i) {
+    if (!HcomUtil::GetHcclOpSize(data_type_, hccl_kernel_output_shape_list_[i], &size)) {
+      MS_LOG(EXCEPTION) << "AllToAllv get output size failed in Update stage";
+    }
+    mutable_output_size_list_.push_back(size);
+  }
 }
 
 std::vector<TaskInfoPtr> HcomAllToAllKernel::GenTask(const std::vector<AddressPtr> &inputs,
