@@ -145,40 +145,34 @@ bool MatrixBandPartCpuKernelMod::LaunchKernelNotBroadcast(const T *x_ptr, const 
     }
     return true;
   }
-  auto ret_s1 = memset_s(output_ptr, output_element_num_ * sizeof(T), 0, output_element_num_ * sizeof(T));
-  if (ret_s1 != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memset failed. Error no: " << ret_s1;
-  }
-  bool is_diagonal = (lower_ == 0 && upper_ == 0);
-  // The non_zero_len is the length of the non zero element along the -2 axis, so it can skip the position with 0.
-  size_t non_zero_len = std::min(m_, lower_ + n_);
-  int errno_t = EOK;
-  auto task = [this, &errno_t, is_diagonal, non_zero_len, x_ptr, output_ptr](size_t start, size_t end) {
-    for (size_t t = start; t < end; t++) {
-      // The non_zero_len can not be 0.
-      const auto i = t / non_zero_len;
-      const auto j = t % non_zero_len;
-      const auto offset = i * m_ * n_ + j * n_;
-      if (is_diagonal) {
-        output_ptr[offset + j] = x_ptr[offset + j];
-      } else {
-        const auto s = (j < lower_ ? 0 : j - lower_);
-        // When j + upper_ >= n_, the e is n - 1.
-        const auto e = (j >= n_ - upper_ ? n_ - 1 : j + upper_);
-        auto temp_errno_t = memcpy_s(output_ptr + offset + s, output_element_num_ * sizeof(T), x_ptr + offset + s,
-                                     (e - s + 1) * sizeof(T));
-        if (temp_errno_t != EOK) {
-          // In multi-thread, it can not throw exception.
-          errno_t = temp_errno_t;
-          break;
-        }
+  auto task = [this, x_ptr, output_ptr](size_t start, size_t end) {
+    const int start_int = static_cast<int>(start);
+    const int end_int = static_cast<int>(end);
+    const int m_int = static_cast<int>(m_);
+    const int n_int = static_cast<int>(n_);
+    const int lower_int = static_cast<int>(lower_);
+    const int upper_int = static_cast<int>(upper_);
+    for (int t = start_int; t < end_int; t++) {
+      const int i = t / m_int;
+      const int j = t % m_int;
+      const int offset = i * m_int * n_int + j * n_int;
+      const int s = (j < lower_int ? 0 : j - lower_int);
+      // When j + upper_ >= n_, the e is n - 1.
+      const int e = (j >= n_int - upper_int ? n_int - 1 : j + upper_int);
+      const int zero_end = std::min(s, n_int);
+      for (int zero_i = offset; zero_i < offset + zero_end; ++zero_i) {
+        output_ptr[zero_i] = static_cast<T>(0.0);
+      }
+      for (int cpy_i = offset + s; cpy_i < offset + e + 1; ++cpy_i) {
+        output_ptr[cpy_i] = x_ptr[cpy_i];
+      }
+      for (int zero_i = offset + e + 1; zero_i < offset + n_int; ++zero_i) {
+        output_ptr[zero_i] = static_cast<T>(0.0);
       }
     }
   };
-  ParallelLaunchAutoSearch(task, output_outer_size_ * non_zero_len, this, &parallel_search_info_, pool_);
-  if (errno_t != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', it's memcpy failed. Error no: " << errno_t;
-  }
+  constexpr float min_column_size = 8;
+  ParallelLaunch(task, output_outer_size_ * m_, min_column_size, this, pool_);
   return true;
 }
 
