@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 
 
@@ -72,4 +72,34 @@ def test_net_constant():
     x = np.random.randn(1, 16, 1, 1).astype(np.int32)
     net = NetConstant(x)
     output = net()
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_func():
+    """
+    Feature: Test ExpandDims CPU.
+    Description: Test functional api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    output = ops.expand_dims(Tensor(x), -1)
+    assert np.all(output.asnumpy() == np.expand_dims(x, -1))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_tensor():
+    """
+    Feature: Test ExpandDims CPU.
+    Description: Test Tensor api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+    output = Tensor(x).expand_dims(-1)
     assert np.all(output.asnumpy() == np.expand_dims(x, -1))

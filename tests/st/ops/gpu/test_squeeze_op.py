@@ -17,7 +17,7 @@ import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, ops
 from mindspore.ops import operations as P
 
 
@@ -49,3 +49,43 @@ def test_squeeze(data_type):
     net = SqueezeNet()
     output = net(Tensor(x))
     assert np.all(output.asnumpy() == x.squeeze())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_func():
+    """
+    Feature: Test Squeeze GPU.
+    Description: Test functional api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+
+    output = ops.squeeze(Tensor(x))
+    assert np.all(output.asnumpy() == x.squeeze())
+
+    output = ops.squeeze(Tensor(x), 0)
+    assert np.all(output.asnumpy() == x.squeeze(0))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_tensor():
+    """
+    Feature: Test Squeeze GPU.
+    Description: Test Tensor api.
+    Expectation: match to np benchmark.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    np.random.seed(0)
+    x = np.random.randn(1, 16, 1, 1).astype(np.int32)
+
+    output = Tensor(x).squeeze()
+    assert np.all(output.asnumpy() == x.squeeze())
+
+    output = Tensor(x).squeeze(0)
+    assert np.all(output.asnumpy() == x.squeeze(0))
