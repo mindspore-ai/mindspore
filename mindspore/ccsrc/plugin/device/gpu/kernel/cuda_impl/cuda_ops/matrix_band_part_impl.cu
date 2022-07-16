@@ -23,8 +23,7 @@ using Complex = mindspore::utils::Complex<T>;
 
 template <typename T>
 __global__ void MatrixBandPartDiagonalKernel(const size_t size, const T *x_ptr, const size_t non_zero_len,
-                                             const size_t m, const size_t n, const int64_t lower, const int64_t upper,
-                                             T *output_ptr, cudaStream_t cuda_stream) {
+                                             const size_t m, const size_t n, T *output_ptr) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     const size_t i = pos / non_zero_len;
     const size_t j = pos % non_zero_len;
@@ -35,19 +34,17 @@ __global__ void MatrixBandPartDiagonalKernel(const size_t size, const T *x_ptr, 
 }
 
 template <typename T>
-__global__ void MatrixBandPartKernel(const size_t size, const T *x_ptr, const size_t m, const size_t n,
-                                     const int64_t lower, const int64_t upper, T *output_ptr,
-                                     cudaStream_t cuda_stream) {
-  auto zero = static_cast<T>(0.0);
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
-    const size_t last_two_dim_offset = pos % (m * n);
-    int64_t i = static_cast<int64_t>(last_two_dim_offset / n);
-    int64_t j = static_cast<int64_t>(last_two_dim_offset % n);
+__global__ void MatrixBandPartKernel(const int size, const T *x_ptr, const int m, const int n, const int lower,
+                                     const int upper, T *output_ptr) {
+  int start_idx = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
+  int step = static_cast<int>(blockDim.x * gridDim.x);
+  for (int pos = start_idx; pos < size; pos += step) {
+    const int last_two_dim_offset = pos % (m * n);
+    const int i = last_two_dim_offset / n;
+    const int j = last_two_dim_offset % n;
     // Note: the type of i or j can not be size_t.
-    if ((i - j) <= lower && (j - i) <= upper) {
-      output_ptr[pos] = x_ptr[pos];
-    } else {
-      output_ptr[pos] = zero;
+    if ((i - j) > lower || (j - i) > upper) {
+      output_ptr[pos] = static_cast<T>(0.0);
     }
   }
 }
@@ -61,8 +58,7 @@ __global__ void MatrixBandPartKernelBroadcast(const size_t size, size_t x0, size
                                               size_t u1, size_t u2, size_t u3, size_t u4, size_t u5, size_t u6,
                                               size_t u7, size_t o0, size_t o1, size_t o2, size_t o3, size_t o4,
                                               size_t o5, size_t o6, size_t o7, const T *x_ptr, const size_t m,
-                                              const size_t n, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr,
-                                              cudaStream_t cuda_stream) {
+                                              const size_t n, const LU *lower_ptr, const LU *upper_ptr, T *output_ptr) {
   auto zero = static_cast<T>(0.0);
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     size_t i = pos / (o1 * o2 * o3 * o4 * o5 * o6 * o7) % o0;
@@ -121,13 +117,14 @@ void MatrixBandPart(const size_t output_outer_size, const T *x_ptr, const size_t
   if (lower == 0 && upper == 0) {
     // The non_zero_len is the length of the non zero element along the -2 axis, so it can skip the position with 0.
     size_t non_zero_len = std::min(m, lower + n);
-    int size = output_outer_size * non_zero_len;
+    auto size = output_outer_size * non_zero_len;
     MatrixBandPartDiagonalKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      size, x_ptr, non_zero_len, m, n, lower, upper, output_ptr, cuda_stream);
+      size, x_ptr, non_zero_len, m, n, output_ptr);
   } else {
-    int size = output_outer_size * m * n;
+    auto size = output_outer_size * m * n;
     MatrixBandPartKernel<<<CUDA_BLOCKS(device_id, size), CUDA_THREADS(device_id), 0, cuda_stream>>>(
-      size, x_ptr, m, n, lower, upper, output_ptr, cuda_stream);
+      static_cast<int>(size), x_ptr, static_cast<int>(m), static_cast<int>(n), static_cast<int>(lower),
+      static_cast<int>(upper), output_ptr);
   }
 }
 
@@ -148,7 +145,7 @@ void MatrixBandPartBroadcast(const size_t output_element_num, const std::vector<
     broadcast_upper_shape[5], broadcast_upper_shape[6], broadcast_upper_shape[7], broadcast_output_shape[0],
     broadcast_output_shape[1], broadcast_output_shape[2], broadcast_output_shape[3], broadcast_output_shape[4],
     broadcast_output_shape[5], broadcast_output_shape[6], broadcast_output_shape[7], x_ptr, m, n, lower_ptr, upper_ptr,
-    output_ptr, cuda_stream);
+    output_ptr);
 }
 
 template CUDA_LIB_EXPORT void MatrixBandPart<char>(const size_t output_outer_size, const char *x_ptr, const size_t m,
