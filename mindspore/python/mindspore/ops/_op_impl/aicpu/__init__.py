@@ -35,6 +35,7 @@ from .gather import _gather_aicpu
 from .gather_grad import _gather_grad_aicpu
 from .gather_d_grad_v2 import _gather_d_grad_v2_aicpu
 from .gather_d import _gather_d_aicpu
+from .hamming_window import _hamming_window_aicpu
 from .scatter import _scatter_aicpu
 from .exp import _exp_aicpu
 from .expm1 import _expm1_aicpu

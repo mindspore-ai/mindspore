@@ -106,6 +106,7 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kSegmentMin = prim::kPrimSegmentMin->name();
   static const auto &kSegmentSum = prim::kPrimSegmentSum->name();
   static const auto &kBlackmanWindow = prim::kPrimBlackmanWindow->name();
+  static const auto &kHammingWindow = prim::kPrimHammingWindow->name();
   static const auto &kExpand = prim::kPrimExpand->name();
   static const auto &kSspaddmm = prim::kPrimSspaddmm->name();
   static const auto &kBartlettWindow = prim::kPrimBartlettWindow->name();
@@ -172,6 +173,7 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kTransposeNOD, ShapeSet{1}},
                                          {kResizeLinear1D, ShapeSet{1}},
                                          {kBlackmanWindow, ShapeSet{0}},
+                                         {kHammingWindow, ShapeSet{0}},
                                          {kExpand, ShapeSet{1}},
                                          {kSspaddmm, ShapeSet{0, 2, 3, 5, 7}},
                                          {kBartlettWindow, ShapeSet{0}},

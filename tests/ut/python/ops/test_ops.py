@@ -112,6 +112,7 @@ from mindspore.nn.layer import normalization
 from mindspore.ops.operations.array_ops import RightShift
 from mindspore.ops.operations.array_ops import LeftShift
 from mindspore.ops.operations.array_ops import Expand
+from mindspore.ops.operations.array_ops import HammingWindow
 from mindspore._c_expression import security
 from tests.security_utils import security_off_wrap
 from ..ut_filter import non_graph_engine
@@ -3466,6 +3467,11 @@ test_case_array_ops = [
         'block': Triu(),
         'desc_inputs': [Tensor(np.random.rand(3, 8, 9), mstype.float32)],
         'desc_brop': [Tensor(np.random.rand(5, 6, 6), mstype.float32)]
+    }),
+    ('HammingWindow', {
+        'block': HammingWindow(),
+        'desc_inputs': [Tensor(np.array([10]).astype(np.int64))],
+        'skip': ['backward']
     }),
     ('SegmentMax', {
         'block': SegmentMax(),
