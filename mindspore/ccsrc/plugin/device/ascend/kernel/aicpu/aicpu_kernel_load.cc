@@ -215,6 +215,9 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
   rtError_t status;
   std::vector<CustAicpuSoBuf> v_cust_so;
   for (const auto &it_so : it->second) {
+    if (it_so.second->loaded()) {
+      continue;
+    }
     const auto &so_name = it_so.first;
     const void *aicpu_data = it_so.second->GetBinData();
     uint32_t aicpu_data_length = it_so.second->GetBinDataSize();
@@ -254,6 +257,12 @@ bool AicpuOpKernelLoad::CacheBinaryFileToDevice(const uintptr_t &resource_id, st
     cust_aicpu_so_buf.kernelSoName = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(d_so_name));
     cust_aicpu_so_buf.kernelSoNameLen = so_name.size();
     v_cust_so.emplace_back(cust_aicpu_so_buf);
+    it_so.second->SetLoaded(true);
+  }
+
+  if (v_cust_so.empty()) {
+    batch_args->soNum = 0;
+    return true;
   }
 
   void *args = nullptr;
@@ -304,6 +313,10 @@ bool AicpuOpKernelLoad::LaunchAicpuKernelSo() {
   if (!ret) {
     MS_LOG(ERROR) << "CacheBinaryFileToDevice is failed.";
     return false;
+  }
+  if (batch_args.soNum == 0) {
+    MS_LOG(INFO) << "All cust so has been loaded.";
+    return true;
   }
 
   rtStream_t stream = nullptr;
