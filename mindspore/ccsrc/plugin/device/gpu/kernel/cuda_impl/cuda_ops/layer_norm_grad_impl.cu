@@ -124,11 +124,13 @@ inline __device__ void InputThreadReduce(const int &row, const int &col_dim, con
       T v1 = dy[pos] * gamma[gamma_offset];
       T v2 = x[pos] - mean[row];
 
-      sum1[0] += -0.5 * v1 * v2 * my_pow(var[row] + epsilon, -1.5);
+      sum1[0] += v1 * v2;
       sum2[0] += v1;
-      sum3[0] += -2.0 * v2;
+      sum3[0] += v2;
     }
   }
+  sum1[0] = -0.5 * sum1[0] * my_pow(var[row] + epsilon, -1.5);
+  sum3[0] = -2.0 * sum3[0];
 }
 
 template <>
@@ -148,11 +150,13 @@ inline __device__ void InputThreadReduce(const int &row, const int &col_dim, con
       half v1 = dy[pos] * gamma[gamma_offset];
       half v2 = x[pos] - mean[row];
 
-      sum1[0] += __float2half(-0.5) * v1 * v2 * my_pow(var[row] + epsilon, -1.5);
+      sum1[0] += v1 * v2;
       sum2[0] += v1;
-      sum3[0] += __float2half(-2.0) * v2;
+      sum3[0] += v2;
     }
   }
+  sum1[0] = __float2half(-0.5) * sum1[0] * my_pow(var[row] + epsilon, -1.5);
+  sum3[0] = __float2half(-2.0) * sum3[0];
 }
 
 template <typename T>
@@ -191,14 +195,15 @@ template <typename T>
 inline __device__ void InputProp(const int &row, const int &col_dim, const int &param_dim, const T &epsilon,
                                  const T *dy, const T *x, const T *mean, const T *var, const T *gamma, T *dx,
                                  const T *share_mem) {
+  T v3 = my_pow(var[row] + epsilon, -0.5);
+  T v4 = share_mem[0] * (2.0 / col_dim);
+  T v5 = (-1.0 * v3 * share_mem[1] + (1.0 / col_dim) * share_mem[0] * share_mem[2]) * (1.0 / col_dim);
   for (int col = threadIdx.x; col < col_dim; col += blockDim.x) {
     int pos = (row * col_dim + col);
     int gamma_offset = pos % param_dim;
     T v1 = dy[pos] * gamma[gamma_offset];
     T v2 = x[pos] - mean[row];
-    T v3 = my_pow(var[row] + epsilon, -0.5);
-    dx[pos] = v1 * v3 + share_mem[0] * (2.0 / col_dim) * v2 +
-              (-1.0 * v3 * share_mem[1] + (1.0 / col_dim) * share_mem[0] * share_mem[2]) * (1.0 / col_dim);
+    dx[pos] = v1 * v3 + v4 * v2 + v5;
   }
 }
 
@@ -206,15 +211,16 @@ template <>
 inline __device__ void InputProp(const int &row, const int &col_dim, const int &param_dim, const half &epsilon,
                                  const half *dy, const half *x, const half *mean, const half *var, const half *gamma,
                                  half *dx, const half *share_mem) {
+  half v3 = my_pow(var[row] + epsilon, -0.5);
+  half v4 = share_mem[0] * __float2half(2.0 / col_dim);
+  half v5 = (__float2half(-1.0) * v3 * share_mem[1] + __float2half(1.0 / col_dim) * share_mem[0] * share_mem[2]) *
+            __float2half(1.0 / col_dim);
   for (int col = threadIdx.x; col < col_dim; col += blockDim.x) {
     int pos = (row * col_dim + col);
     int gamma_offset = pos % param_dim;
     half v1 = dy[pos] * gamma[gamma_offset];
     half v2 = x[pos] - mean[row];
-    half v3 = my_pow(var[row] + epsilon, -0.5);
-    dx[pos] = v1 * v3 + share_mem[0] * __float2half(2.0 / col_dim) * v2 +
-              (__float2half(-1.0) * v3 * share_mem[1] + __float2half(1.0 / col_dim) * share_mem[0] * share_mem[2]) *
-                __float2half(1.0 / col_dim);
+    dx[pos] = v1 * v3 + v4 * v2 + v5;
   }
 }
 
