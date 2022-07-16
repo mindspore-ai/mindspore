@@ -186,7 +186,7 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
   std::vector<std::future<void>> async_tasks;
   int32_t threads = GlobalContext::config_manager()->num_cpu_threads();
   // constrain the workers
-  int32_t kThreadCount = 8;
+  int32_t kThreadCount = 4;
   threads = threads < kThreadCount ? threads : kThreadCount;
 
   if (threads > filename_index_->size()) {
