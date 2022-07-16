@@ -242,3 +242,13 @@ int SoftShrink(const float *src, int length, float *dst, float lambd) {
   }
   return NNACL_OK;
 }
+
+int SoftsignFp32Opt(const float *src, int length, float *dst) {
+  int i = 0;
+
+  SIMD_RUN_NO_SCALAR(SoftsignFp32Opt, i, src, length, dst);
+  for (; i < length; ++i) {
+    dst[i] = src[i] / (1.0 + fabsf(src[i]));
+  }
+  return NNACL_OK;
+}

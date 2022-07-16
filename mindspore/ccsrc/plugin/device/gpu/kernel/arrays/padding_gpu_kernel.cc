@@ -21,9 +21,12 @@
 #include <memory>
 #include "mindspore/core/ops/padding.h"
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/padding_impl.cuh"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/complex.h"
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
+using Complex = mindspore::utils::Complex<T>;
 bool PaddingGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                const std::vector<KernelTensorPtr> &outputs) {
   kernel_name_ = base_operator->name();
@@ -111,6 +114,10 @@ std::vector<std::pair<KernelAttr, PaddingGpuKernelMod::PaddingFunc>> PaddingGpuK
    &PaddingGpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &PaddingGpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &PaddingGpuKernelMod::LaunchKernel<Complex<float>>},
+  {KernelAttr().AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &PaddingGpuKernelMod::LaunchKernel<Complex<double>>},
   {KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
    &PaddingGpuKernelMod::LaunchKernel<bool>}};
 
