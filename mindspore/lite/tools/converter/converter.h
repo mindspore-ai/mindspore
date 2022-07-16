@@ -60,7 +60,7 @@ class ConverterImpl {
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
   schema::MetaGraphT *TransferFuncGraph(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph);
 
-  int InitConfigFile(const std::shared_ptr<ConverterPara> &param);
+  int InitConfigParam(const std::shared_ptr<ConverterPara> &param);
   int InitExtendedIntegrationInfo(const std::shared_ptr<ConverterPara> &param,
                                   const lite::ConfigFileParser &config_file_parser);
   bool CheckOfflineParallelConfig(const std::string &file, ParallelSplitConfig *parallel_split_config);

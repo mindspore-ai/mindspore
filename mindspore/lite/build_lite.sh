@@ -101,9 +101,9 @@ build_lite_jni_and_jar() {
     cp ./libmindspore-lite-jni.so ${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
     cp ./libmindspore-lite-jni.so ${INSTALL_PREFIX}/${PKG_NAME}/runtime/lib/
     cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/lib/*.so ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/
-    LIB_GLOG="libglog.so*"
+    LIB_GLOG="libmindspore_glog.so*"
     if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/glog/${LIB_GLOG}`" ]; then
-      cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libglog.so
+      cp ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/glog/libmindspore_glog.so* ${LITE_JAVA_PATH}/src/main/resources/com/mindspore/lite/${RESOURCE_PATH_ARCH}/libmindspore_glog.so
     fi
     LIB_JPEG="libjpeg.so*"
     if [ -f "`echo ${BASEPATH}/output/tmp/${PKG_NAME}/runtime/third_party/libjpeg-turbo/lib/${LIB_JPEG}`" ]; then
@@ -673,12 +673,12 @@ build_lite_x86_64_aarch64_jar()
   cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
   cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/lib/libmindspore-lite-jni.so ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/
 
-  if [ -f "${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libglog.so.0" ]; then
-    cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/libglog.so
+  if [ -f "${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libmindspore_glog.so.0" ]; then
+    cp ${x86_64_base_path}/tmp/${x86_64_package_name}/runtime/third_party/glog/libmindspore_glog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_x86_64/libmindspore_glog.so
   fi
 
-  if [ -f "${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so.0" ]; then
-    cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libglog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/libglog.so
+  if [ -f "${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libmindspore_glog.so.0" ]; then
+    cp ${aarch64_base_path}/tmp/${aarch64_package_name}/runtime/third_party/glog/libmindspore_glog.so* ${LITE_JAVA_NATIVE_RESOURCE_PATH}/linux_aarch64/libmindspore_glog.so
   fi
   # compile jar package
   [ -n "${LITE_JAVA_PATH}" ] && rm -rf ${LITE_JAVA_PATH}/build

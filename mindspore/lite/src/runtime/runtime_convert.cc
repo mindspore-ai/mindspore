@@ -54,6 +54,7 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
           }
         }
       }
+      param->aclModelOptionCfgParam.offline = false;
       param->aclModelOptionCfgParam.device_id = ascend_info->GetDeviceID();
       param->aclModelOptionCfgParam.output_type = ascend_info->GetOutputType();
       param->aclModelOptionCfgParam.input_shape_map = ascend_info->GetInputShapeMap();
