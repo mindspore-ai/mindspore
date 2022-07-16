@@ -32,9 +32,11 @@ class MultiGraphAclSession : public session::SessionBasic {
   MultiGraphAclSession() = default;
   ~MultiGraphAclSession() override = default;
   void Init(uint32_t device_id) override;
-  GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   void RunGraph(GraphId graph_id, const std::vector<MSTensor> &inputs, VectorRef *outputs);
   void SetOptions(const std::shared_ptr<AclModelOptions> &options) { options_ = options; }
+
+ protected:
+  GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
 
  private:
   VectorRef ConstructOutputRef(GraphId graph_id, std::deque<MSTensor> *out_tensors);

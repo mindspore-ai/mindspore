@@ -182,7 +182,7 @@ bool AclModel::CheckDeviceSupport(mindspore::DeviceType device_type) {
 bool AclModel::CheckModelSupport(enum ModelType model_type) {
   static const std::set<ModelType> kSupportedModelMap = {kMindIR, kOM};
   auto iter = kSupportedModelMap.find(model_type);
-  if (iter == kSupportedModelMap.end()) {
+  if (iter == kSupportedModelMap.cend()) {
     return false;
   }
   return true;

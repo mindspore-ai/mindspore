@@ -81,7 +81,7 @@ void MultiGraphAclSession::RunGraph(GraphId graph_id, const std::vector<MSTensor
   MS_EXCEPTION_IF_NULL(outputs);
   MS_LOG(INFO) << "Start run graph " << graph_id;
   auto iter = graph_cells_.find(graph_id);
-  if (iter == graph_cells_.end()) {
+  if (iter == graph_cells_.cend()) {
     MS_LOG(EXCEPTION) << "Graph id " << graph_id << " not found.";
   }
   std::vector<MSTensor> out_tensors;
