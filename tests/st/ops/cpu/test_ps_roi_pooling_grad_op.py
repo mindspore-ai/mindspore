@@ -15,29 +15,42 @@
 """
 Test PSROIPoolingGrad.
 """
+import tempfile
+import os
+
 import numpy as np
 import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
+import mindspore.ops as P
 from mindspore.ops.operations import _grad_ops as G
 
 DEVICE_TARGET = "CPU"
+CTX_MODE = ms.context.GRAPH_MODE
+ALL_CLOSE_CRITERION = 1e-4
 
 
 class NetPSROIPoolingGrad(nn.Cell):
     """Simple net for PSROIPoolingGrad."""
 
-    def __init__(self, input_size, spatial_scale, group_size, output_dim):
+    def __init__(self, input_size, spatial_scale, group_size, output_dim, dynamic_shape=False):
         super(NetPSROIPoolingGrad, self).__init__()
+        self.dynamic_shape = dynamic_shape
+        self.unique_op = P.Unique()
+        self.reshape_op = P.Reshape()
         self.ps_roi_pooling_grad = G.PSROIPoolingGrad(input_size, spatial_scale,
                                                       group_size, output_dim)
 
     def construct(self, dy, rois):
+        if self.dynamic_shape:
+            rois = self.reshape_op(rois, (-1,))
+            rois, _ = self.unique_op(rois)
+            rois = self.reshape_op(rois, (2, 5, -1))
         return self.ps_roi_pooling_grad(dy, rois)
 
 
-def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None):
+def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None, dynamic_shape=False):
     """Run op calculation."""
     size_scale = 10
     rois_np = np.array(
@@ -67,8 +80,9 @@ def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None):
 
     ms.context.set_context(mode=mode,
                            device_target=DEVICE_TARGET)
-    ps_roi_pooling_grad = NetPSROIPoolingGrad(input_size, spatial_scale,
-                                              group_size, output_dim)
+    ps_roi_pooling_grad = NetPSROIPoolingGrad(
+        input_size, spatial_scale, group_size, output_dim,
+        dynamic_shape=dynamic_shape)
 
     runtime_error_occurred = False
     try:
@@ -150,7 +164,72 @@ def _ps_roi_pooling_grad_case(data_type, mode, y_size_adjust=None):
           [[0., 0., 0., 0.], [0., 0., 0., 0.],
            [0., 0., 0.25, 0.25], [0., 0., 0.25, 0.25],
            [0., 0., 0., 0.]]]], dtype=data_type)
-    assert np.allclose(output_ms, output_gt, atol=1e-4, rtol=1e-4)
+    assert np.allclose(
+        output_ms, output_gt,
+        atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ps_roi_pooling_grad_dynamic_shape():
+    """
+    Feature: PSROIPoolingGrad op.
+    Description: Test the dynamic shape behavior of PSROIPooingGrad op.
+    Expectation: success.
+    """
+    _ps_roi_pooling_grad_case(np.float32, CTX_MODE, dynamic_shape=True)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ps_roi_pooling_grad_mind_ir():
+    """
+    Feature: PSROIPoolingGrad op.
+    Description: Test the MindIR behavior of PSROIPooingGrad op.
+    Expectation: success.
+    """
+    ms.context.set_context(mode=CTX_MODE, device_target=DEVICE_TARGET)
+    data_type = np.float32
+    size_scale = 10
+    rois_np = np.array(
+        [[[0.0000], [150.3563 / size_scale],
+          [200.1320 / size_scale], [579.3563 / size_scale],
+          [602.3452 / size_scale]],
+         [[1.0000], [65.1263 / size_scale],
+          [30.8564 / size_scale], [762.4214 / size_scale],
+          [567.9854 / size_scale]]]).astype(data_type)
+    batch_size = rois_np.shape[0]
+    rois_number = rois_np.shape[2]
+    rois_ms = ms.Tensor(rois_np)
+
+    x_height = 5
+    x_width = 4
+    group_size = 2
+    output_dim = 2
+
+    y_size = [batch_size * rois_number, output_dim, group_size, group_size]
+    dy_np = np.ones(y_size).astype(data_type)
+    dy_ms = ms.Tensor(dy_np)
+
+    input_size = (x_height, x_width)
+    spatial_scale = 1.0 / 16
+    net = NetPSROIPoolingGrad(input_size, spatial_scale, group_size, output_dim)
+    old_out = net(dy_ms, rois_ms)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        file_name = os.path.join(tmp_dir, "ps_roi_pooling_grad.mindir")
+        ms.export(
+            net, dy_ms, rois_ms,
+            file_name=file_name,
+            file_format='MINDIR')
+
+        graph = ms.load(file_name)
+        new_net = nn.GraphCell(graph)
+        new_out = new_net(dy_ms, rois_ms)
+    assert np.allclose(
+        old_out.asnumpy(), new_out.asnumpy(),
+        atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
 @pytest.mark.level0
@@ -164,7 +243,7 @@ def test_ps_roi_pooling_grad_graph_mode():
     """
     _ps_roi_pooling_grad_case(
         data_type=np.float32,
-        mode=ms.context.GRAPH_MODE)
+        mode=CTX_MODE)
 
 
 @pytest.mark.level0
@@ -178,7 +257,7 @@ def test_ps_roi_pooling_grad_y_0_shape_wrong():
     """
     _ps_roi_pooling_grad_case(
         data_type=np.float32,
-        mode=ms.context.GRAPH_MODE,
+        mode=CTX_MODE,
         y_size_adjust=0
     )
 
@@ -194,7 +273,7 @@ def test_ps_roi_pooling_grad_y_1_shape_wrong():
     """
     _ps_roi_pooling_grad_case(
         data_type=np.float32,
-        mode=ms.context.GRAPH_MODE,
+        mode=CTX_MODE,
         y_size_adjust=0
     )
 
@@ -210,7 +289,7 @@ def test_ps_roi_pooling_grad_y_2_shape_wrong():
     """
     _ps_roi_pooling_grad_case(
         data_type=np.float32,
-        mode=ms.context.GRAPH_MODE,
+        mode=CTX_MODE,
         y_size_adjust=0
     )
 
@@ -226,7 +305,7 @@ def test_ps_roi_pooling_grad_y_3_shape_wrong():
     """
     _ps_roi_pooling_grad_case(
         data_type=np.float32,
-        mode=ms.context.GRAPH_MODE,
+        mode=CTX_MODE,
         y_size_adjust=0
     )
 
@@ -414,7 +493,7 @@ def test_ps_roi_pooling_output_dim_attr_range_wrong():
 
 
 def _check_attr_validation(arg_name, arg_value):
-    ms.context.set_context(mode=ms.context.PYNATIVE_MODE,
+    ms.context.set_context(mode=CTX_MODE,
                            device_target=DEVICE_TARGET)
     op_kwargs = {
         "input_size": 100,
@@ -442,7 +521,7 @@ def test_ps_roi_pooling_grad_input_args_num():
     Description: Test the validation of input args num.
     Expectation: success.
     """
-    ms.context.set_context(mode=ms.context.PYNATIVE_MODE,
+    ms.context.set_context(mode=CTX_MODE,
                            device_target=DEVICE_TARGET)
     op = G.PSROIPoolingGrad(
         input_size=100,
@@ -471,7 +550,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported():
     Description: Test the validation of input type.
     Expectation: success.
     """
-    ms.context.set_context(mode=ms.context.PYNATIVE_MODE,
+    ms.context.set_context(mode=CTX_MODE,
                            device_target=DEVICE_TARGET)
     op = G.PSROIPoolingGrad(
         input_size=100,
@@ -500,7 +579,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported2():
     Description: Test the validation of input type.
     Expectation: success.
     """
-    ms.context.set_context(mode=ms.context.PYNATIVE_MODE,
+    ms.context.set_context(mode=CTX_MODE,
                            device_target=DEVICE_TARGET)
     op = G.PSROIPoolingGrad(
         input_size=100,
@@ -529,7 +608,7 @@ def test_ps_roi_pooling_grad_input_type_unsupported3():
     Description: Test the validation of input type.
     Expectation: success.
     """
-    ms.context.set_context(mode=ms.context.PYNATIVE_MODE,
+    ms.context.set_context(mode=CTX_MODE,
                            device_target=DEVICE_TARGET)
     op = G.PSROIPoolingGrad(
         input_size=100,
