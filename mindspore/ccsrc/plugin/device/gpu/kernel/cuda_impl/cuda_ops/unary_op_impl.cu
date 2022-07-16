@@ -111,6 +111,13 @@ __global__ void Log1pKernel(const double *input, double *output, const size_t co
   return;
 }
 template <typename T>
+__global__ void Log1pKernel(const Complex<T> *input, Complex<T> *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = log(input[i] + Complex<T>(1, 0));
+  }
+  return;
+}
+template <typename T>
 __global__ void ErfKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = erff(input[i]);
@@ -1884,6 +1891,8 @@ template CUDA_LIB_EXPORT void Negative<Complex<float>>(const Complex<float> *inp
                                                        const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Expm1<Complex<float>>(const Complex<float> *input, Complex<float> *output,
                                                     const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<Complex<float>>(const Complex<float> *input, Complex<float> *output,
+                                                    const size_t count, cudaStream_t cuda_stream);
 
 // complex128
 template CUDA_LIB_EXPORT void Exponential<Complex<double>>(const Complex<double> *input, Complex<double> *output,
@@ -1938,6 +1947,8 @@ template CUDA_LIB_EXPORT void Negative<Complex<double>>(const Complex<double> *i
                                                         const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Expm1<Complex<double>>(const Complex<double> *input, Complex<double> *output,
                                                      const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Log1p<Complex<double>>(const Complex<double> *input, Complex<double> *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 
 // bool
 template CUDA_LIB_EXPORT void Real<bool>(const bool *input, bool *output, const size_t count, cudaStream_t cuda_stream);
