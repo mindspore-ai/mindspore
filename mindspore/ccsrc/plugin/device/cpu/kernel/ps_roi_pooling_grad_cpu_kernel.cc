@@ -24,9 +24,11 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int DY_OUTPUT_DIM_INDEX = 1;
-constexpr int DY_HEIGHT_INDEX = 2;
-constexpr int DY_WIDTH_INDEX = 3;
+namespace {
+constexpr int kDyOutputDimIndex = 1;
+constexpr int kDyHeightIndex = 2;
+constexpr int kDyWidthIndex = 3;
+}  // namespace
 
 template <typename T>
 void PSROIPoolingGradCpuKernelMod::PSROIPoolBackward(size_t start, size_t end, const T *input_diff, T *output_diff,
@@ -134,41 +136,44 @@ bool PSROIPoolingGradCpuKernelMod::IsSupportedDtype(TypeId type_id) {
 int PSROIPoolingGradCpuKernelMod::ResizeCheckInputs(const std::vector<KernelTensorPtr> &inputs) {
   size_t input_num = inputs.size();
   if (input_num != INPUT_NUM) {
-    MS_LOG(ERROR) << "Input number is " << input_num << ", but PSROIPoolingGradCpuKernelMod needs " << INPUT_NUM
-                  << " input.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input number is expected to be " << input_num
+                  << ", but PSROIPoolingBackV2GpuKernelMod needs " << INPUT_NUM << " input.";
     return KRET_RESIZE_FAILED;
   }
 
   auto dy_type = inputs[0]->GetDtype();
   if (!IsSupportedDtype(dy_type)) {
-    MS_LOG(ERROR) << "Input[0] is expected to have type_id kNumberTypeFloat32(" << kNumberTypeFloat32
-                  << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but get type_id " << dy_type << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[0] is expected to have type_id kNumberTypeFloat32("
+                  << kNumberTypeFloat32 << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but got type_id "
+                  << dy_type << ".";
     return KRET_RESIZE_FAILED;
   }
 
   auto dy_shape = inputs[0]->GetShapeVector();
   if (dy_shape.size() != DY_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "The rank of input[0] should be " << DY_SHAPE_SIZE
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[0] should be " << DY_SHAPE_SIZE
                   << ", but got the rank of input[0]: " << dy_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
 
   auto rois_type = inputs[1]->GetDtype();
   if (!IsSupportedDtype(rois_type)) {
-    MS_LOG(ERROR) << "Input[1] is expected to have type_id kNumberTypeFloat32(" << kNumberTypeFloat32
-                  << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but get type_id " << rois_type << ".";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', input[1] is expected to have type_id kNumberTypeFloat32("
+                  << kNumberTypeFloat32 << ") or kNumberTypeFloat16(" << kNumberTypeFloat16 << "), but got type_id "
+                  << rois_type << ".";
     return KRET_RESIZE_FAILED;
   }
 
   if (dy_type != rois_type) {
-    MS_LOG(ERROR) << "Input[1] is expected to have the same type with Input[2], but the type_ids are " << dy_type
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', input[1] is expected to have the same type with Input[2], but the type_ids are " << dy_type
                   << ", " << rois_type << ".";
     return KRET_RESIZE_FAILED;
   }
 
   auto rois_shape = inputs[1]->GetShapeVector();
   if (rois_shape.size() != ROI_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "The rank of input[1] should be " << ROI_SHAPE_SIZE
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of input[1] should be " << ROI_SHAPE_SIZE
                   << ", but got the rank of input[1]: " << rois_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
@@ -182,21 +187,21 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
   auto ret = ResizeCheckInputs(inputs);
   if (ret != KRET_OK) {
-    MS_LOG(ERROR) << "Inputs check failed";
+    MS_LOG(ERROR) << "Inputs check failed, see above message for details.";
     return ret;
   }
 
   // Get the number of output args
   size_t output_num = outputs.size();
   if (output_num != OUTPUT_NUM) {
-    MS_LOG(ERROR) << "Output number is " << output_num << ", but PSROIPoolingGradCpuKernelMod needs " << OUTPUT_NUM
-                  << " output.";
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', output number is expected to be " << output_num << ", but got "
+                  << OUTPUT_NUM << " output.";
     return KRET_RESIZE_FAILED;
   }
 
   auto dx_shape = outputs[0]->GetShapeVector();
   if (dx_shape.size() != DX_SHAPE_SIZE) {
-    MS_LOG(ERROR) << "The rank of outputs[0] should be " << DX_SHAPE_SIZE
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the rank of outputs[0] should be " << DX_SHAPE_SIZE
                   << ", but got the rank of outputs[0]: " << dx_shape.size() << ".";
     return KRET_RESIZE_FAILED;
   }
@@ -237,26 +242,29 @@ int PSROIPoolingGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
 
   auto dy_shape = inputs[0]->GetShapeVector();
   if (dy_shape[0] != batch_size_ * rois_num_) {
-    MS_LOG_ERROR << "Shape mismatch! We expect input[0].shape[0](" << dy_shape[0] << ") == input[1].shape[0]("
-                 << rois_shape[0] << ") * input[1].shape[2](" << rois_shape[ROIS_NUM_INDEX] << "), but it's not true.";
+    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[0](" << dy_shape[0]
+                 << ") should be equal to input[1].shape[0](" << rois_shape[0] << ") * input[1].shape[2]("
+                 << rois_shape[ROIS_NUM_INDEX] << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
-  if (dy_shape[DY_OUTPUT_DIM_INDEX] != output_channels_) {
-    MS_LOG_ERROR << "Shape mismatch. We expect input[0].shape[" << DY_OUTPUT_DIM_INDEX << "]("
-                 << dy_shape[DY_OUTPUT_DIM_INDEX] << ") == output_dim(" << output_channels_ << "), but it's not true.";
+  if (dy_shape[kDyOutputDimIndex] != output_channels_) {
+    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyOutputDimIndex << "]("
+                 << dy_shape[kDyOutputDimIndex] << ") should be equal to output_dim(" << output_channels_
+                 << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
-  if (dy_shape[DY_HEIGHT_INDEX] != group_size_) {
-    MS_LOG_ERROR << "Shape mismatch. We expect input[0].shape[" << DY_HEIGHT_INDEX << "](" << dy_shape[DY_HEIGHT_INDEX]
-                 << ") == group_size(" << group_size_ << "), but it's not true.";
+  if (dy_shape[kDyHeightIndex] != group_size_) {
+    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyHeightIndex << "]("
+                 << dy_shape[kDyHeightIndex] << ") should be equal to group_size(" << group_size_
+                 << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
-  if (dy_shape[DY_WIDTH_INDEX] != group_size_) {
-    MS_LOG_ERROR << "Shape mismatch. We expect input[0].shape[" << DY_WIDTH_INDEX << "](" << dy_shape[DY_WIDTH_INDEX]
-                 << ") == group_size(" << group_size_ << "), but it's not true.";
+  if (dy_shape[kDyWidthIndex] != group_size_) {
+    MS_LOG_ERROR << "For '" << kernel_name_ << "', input[0].shape[" << kDyWidthIndex << "](" << dy_shape[kDyWidthIndex]
+                 << ") should be equal to group_size(" << group_size_ << "), but it's not true.";
     return KRET_RESIZE_FAILED;
   }
 
@@ -308,7 +316,7 @@ bool PSROIPoolingGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
     return true;
   }
 
-  MS_LOG(ERROR) << "Data_type_id " << data_type_id_ << " is not supported.";
+  MS_LOG(ERROR) << "For '" << kernel_name_ << "', data_type_id " << data_type_id_ << " is not supported.";
   return false;
 }
 
