@@ -26,13 +26,19 @@
 
 namespace mindspore {
 namespace kernel {
-class RMSPropCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class RMSPropCpuKernelMod : public NativeCpuKernelMod {
  public:
   RMSPropCpuKernelMod() = default;
   explicit RMSPropCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~RMSPropCpuKernelMod() override = default;
 
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
@@ -51,6 +57,8 @@ class RMSPropCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<kernel::AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
+  int CheckShapeEqual(std::vector<int64_t> size_a, std::vector<int64_t> size_b, const char *name_a, const char *name_b);
+  int CalElements(std::vector<int64_t> var_shape, std::vector<int64_t> lr_shape, int ret);
   using RMSPropFunc =
     std::function<bool(RMSPropCpuKernelMod *, const std::vector<kernel::AddressPtr> &,
                        const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
@@ -62,6 +70,9 @@ class RMSPropCpuKernelMod : public DeprecatedNativeCpuKernelMod {
   float decay_{0.f};
   float momentum_{0.9f};
   float epsilon_{1e-12};
+  int64_t batch_size_{1};
+  int64_t batch_rank_{0};
+  int64_t input_elements_;
   TypeId dtype_{kTypeUnknown};
   std::string kernel_type_{"Unknown"};
 };
