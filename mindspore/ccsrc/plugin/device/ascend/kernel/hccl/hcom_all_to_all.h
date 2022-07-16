@@ -34,6 +34,10 @@ class HcomAllToAllKernel : public HcclKernel {
   std::vector<TaskInfoPtr> GenTask(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                    const std::vector<AddressPtr> &outputs, uint32_t stream_id) override;
 
+ protected:
+  void UpdateOutputSizeList() override;
+  void CalLoopSize() override {}
+
  private:
   HcclDataType data_type_ = {};
   bool need_drop_input_ = false;
