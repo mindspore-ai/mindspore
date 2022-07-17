@@ -73,6 +73,8 @@ class MatmulFp32BaseCPUKernel : public LiteKernel {
   int PackMatrixAImpl();
   int PackMatrixBImpl();
   virtual int PackMatrixAImplOpt();
+  bool CheckRow1OptimalConditions();
+  virtual bool SupportMulBatchCuttingByRow() { return false; }
   int PackBiasMatrix();
   void FreePackedMatrixA();
   void FreePackedMatrixB();
