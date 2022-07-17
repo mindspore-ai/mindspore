@@ -52,10 +52,11 @@ class TCPComm {
   void Finalize();
 
   // Create the server socket represented by url.
-  bool StartServerSocket(const std::string &url);
+  // allocate_cb is the method used to allocate memory when server receiving message from the remote.
+  bool StartServerSocket(const std::string &url, const MemAllocateCallback &allocate_cb);
 
   // Create the server socket with local IP and random port.
-  bool StartServerSocket();
+  bool StartServerSocket(const MemAllocateCallback &allocate_cb);
 
   // Connection operation for a specified destination.
   bool Connect(const std::string &dst_url);
@@ -74,6 +75,20 @@ class TCPComm {
 
   // Get the file descriptor of server socket.
   int GetServerFd() const;
+
+  /**
+   * @description: Set callback to free message for the connection specified by url.
+   * @param {string} &dst_url: The connection url.
+   * @param {MemFreeCallback} &free_cb: The callback which frees the real memory after message is sent to peer.
+   * @return {void}
+   */
+  void SetMessageFreeCallback(const std::string &dst_url, const MemFreeCallback &free_cb);
+
+  /**
+   * @description: Returns the allocating callback.
+   * @return {const MemAllocateCallback &}
+   */
+  const MemAllocateCallback &allocate_cb() const { return allocate_cb_; }
 
  private:
   // Build the connection.
@@ -115,6 +130,9 @@ class TCPComm {
 
   // The mutex for connection operations.
   std::shared_ptr<std::mutex> conn_mutex_;
+
+  // The method used to allocate memory when tcp servers of this TcpComm receive message from the remote.
+  MemAllocateCallback allocate_cb_;
 
   bool enable_ssl_;
 

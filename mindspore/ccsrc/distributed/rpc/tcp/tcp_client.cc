@@ -56,11 +56,12 @@ void TCPClient::Finalize() {
   }
 }
 
-bool TCPClient::Connect(const std::string &dst_url, size_t retry_count) {
+bool TCPClient::Connect(const std::string &dst_url, size_t retry_count, const MemFreeCallback &free_cb) {
   size_t interval = 5;
   for (size_t i = 0; i < retry_count; ++i) {
     if (tcp_comm_->Connect(dst_url)) {
       MS_LOG(INFO) << "Connected to the tcp server " << dst_url << " successfully.";
+      tcp_comm_->SetMessageFreeCallback(dst_url, free_cb);
       return true;
     } else {
       MS_LOG(WARNING) << "Failed to connect to the tcp server : " << dst_url << ", retry to reconnect(" << (i + 1)

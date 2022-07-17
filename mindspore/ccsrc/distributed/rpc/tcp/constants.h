@@ -34,6 +34,20 @@ using MessageHandler = std::function<MessageBase *const(MessageBase *const)>;
 using DeleteCallBack = void (*)(const std::string &from, const std::string &to);
 using ConnectionCallBack = std::function<void(void *connection)>;
 
+/**
+ * @description: The callback function type for allocating memory after receiving data for the peer.
+ * @param {size_t} size: Size of the memory to be allocated.
+ * @return {void *}: A pointer to the newly allocated memory.
+ */
+using MemAllocateCallback = std::function<void *(size_t size)>;
+
+/**
+ * @description: The callback function for releasing memory after sending it to the peer.
+ * @param {void} *data: The memory to be released, which should be allocated on heap.
+ * @return {bool}: Whether the memory is successfully released.
+ */
+using MemFreeCallback = std::function<bool(void *data)>;
+
 constexpr int SEND_MSG_IO_VEC_LEN = 5;
 constexpr int RECV_MSG_IO_VEC_LEN = 4;
 
@@ -122,7 +136,11 @@ __attribute__((unused)) static void FillMessageHeader(const MessageBase &message
   header->name_len = htonl(static_cast<uint32_t>(message.name.size()));
   header->to_len = htonl(static_cast<uint32_t>(send_to.size()));
   header->from_len = htonl(static_cast<uint32_t>(send_from.size()));
-  header->body_len = htonl(static_cast<uint32_t>(message.body.size()));
+  if (message.data != nullptr) {
+    header->body_len = htonl(static_cast<uint32_t>(message.size));
+  } else {
+    header->body_len = htonl(static_cast<uint32_t>(message.body.size()));
+  }
 }
 
 // Compute and return the byte size of the whole message.

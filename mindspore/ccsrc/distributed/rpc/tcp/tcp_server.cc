@@ -37,7 +37,7 @@ std::string TCPServer::GetIP() const { return ip_; }
 
 uint32_t TCPServer::GetPort() const { return port_; }
 
-bool TCPServer::InitializeImpl(const std::string &url) {
+bool TCPServer::InitializeImpl(const std::string &url, const MemAllocateCallback &allocate_cb) {
   if (tcp_comm_ == nullptr) {
     tcp_comm_ = std::make_unique<TCPComm>(enable_ssl_);
     MS_EXCEPTION_IF_NULL(tcp_comm_);
@@ -46,10 +46,10 @@ bool TCPServer::InitializeImpl(const std::string &url) {
       MS_LOG(EXCEPTION) << "Failed to initialize tcp comm";
     }
     if (url != "") {
-      rt = tcp_comm_->StartServerSocket(url);
+      rt = tcp_comm_->StartServerSocket(url, allocate_cb);
       ip_ = SocketOperation::GetIP(url);
     } else {
-      rt = tcp_comm_->StartServerSocket();
+      rt = tcp_comm_->StartServerSocket(allocate_cb);
       ip_ = SocketOperation::GetLocalIP();
     }
     auto server_fd = tcp_comm_->GetServerFd();
