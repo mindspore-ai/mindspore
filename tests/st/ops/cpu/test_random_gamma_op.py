@@ -82,8 +82,7 @@ def test_random_gamma_functional(dtype):
     ms.set_context(mode=ms.PYNATIVE_MODE, device_target='CPU')
     shape = Tensor(np.array([4, 2]), ms.int32)
     alpha = Tensor(np.array([[3, 4], [5, 6]]), ms.float32)
-    beta = Tensor(np.array([1, 2]), ms.float32)
-    output = F.random_gamma(shape=shape, alpha=alpha, beta=beta, seed=1)
+    output = F.random_gamma(shape=shape, alpha=alpha, seed=1)
     expect = np.array([4, 2, 2, 2])
 
     print(output)
