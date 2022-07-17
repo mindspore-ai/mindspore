@@ -28,6 +28,7 @@ namespace distributed {
 namespace rpc {
 // Print error message every 1000 times and sleep for 5ms in case the log file is too large.
 static size_t kPrintCount = 0;
+static std::mutex kPrintCountMutex;
 size_t kPrintCountInterval = 1000;
 size_t kPrintTimeInterval = 50000;
 
@@ -62,13 +63,19 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
       conn->read_callback(conn);
     }
   }
+
+  std::lock_guard<std::mutex> conn_lock(conn->conn_owned_mutex_);
   // Handle disconnect event.
   if (conn->state == ConnectionState::kDisconnecting || (events & (uint32_t)(EPOLLHUP | EPOLLRDHUP | EPOLLERR))) {
-    if (kPrintCount++ % kPrintCountInterval == 0) {
-      MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
-                   << ", errcode: " << conn->error_code << ", errno: " << errno << ", to: " << conn->destination.c_str()
-                   << ", type:" << conn->recv_message_type << ", remote: " << conn->is_remote;
-      usleep(kPrintTimeInterval);
+    {
+      std::lock_guard<std::mutex> count_lock(kPrintCountMutex);
+      if (kPrintCount++ % kPrintCountInterval == 0) {
+        MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
+                     << ", errcode: " << conn->error_code << ", errno: " << errno
+                     << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
+                     << ", remote: " << conn->is_remote;
+        usleep(kPrintTimeInterval);
+      }
     }
     conn->state = ConnectionState::kDisconnecting;
     if (conn->event_callback != nullptr) {
