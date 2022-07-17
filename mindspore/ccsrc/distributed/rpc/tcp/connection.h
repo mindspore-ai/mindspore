@@ -157,6 +157,9 @@ struct Connection {
   // Owned by the tcp_comm.
   std::shared_ptr<std::mutex> conn_mutex;
 
+  // Owned by connection itself.
+  std::mutex conn_owned_mutex_;
+
   State recv_state;
 
   // Total length of received and sent messages.
