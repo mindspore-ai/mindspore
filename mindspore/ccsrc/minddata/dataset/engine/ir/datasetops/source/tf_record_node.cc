@@ -117,7 +117,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
     // First, get the number of rows in the dataset
     int32_t thread_count = GlobalContext::config_manager()->num_cpu_threads();
     // constrain the workers
-    int32_t kThreadCount = 8;
+    int32_t kThreadCount = 4;
     thread_count = thread_count < kThreadCount ? thread_count : kThreadCount;
     RETURN_IF_NOT_OK(TFReaderOp::CountTotalRows(&num_rows, sorted_dir_files, thread_count));
 
@@ -153,7 +153,7 @@ Status TFRecordNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   int64_t num_rows;
   int32_t thread_count = GlobalContext::config_manager()->num_cpu_threads();
   // constrain the workers
-  int32_t kThreadCount = 8;
+  int32_t kThreadCount = 4;
   thread_count = thread_count < kThreadCount ? thread_count : kThreadCount;
 
   // By default, TFRecord will do file-based sharding. But when cache is injected, it will be row-based sharding.
