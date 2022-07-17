@@ -266,3 +266,5 @@ from .sparse_tensor_dense_mat_mul import _sparse_tensor_dense_mat_mul_aicpu
 from .sparse_matrix_nnz import _sparse_matrix_nnz_aicpu
 from .multinomial import _multinomial_aicpu
 from .pow import _pow_aicpu
+from .depth_to_space import _depth_to_space_aicpu
+from .space_to_depth import _space_to_depth_aicpu

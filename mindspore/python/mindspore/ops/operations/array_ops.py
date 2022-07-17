@@ -5260,7 +5260,7 @@ class ScatterNonAliasingAdd(Primitive):
         self.add_prim_attr('side_effect_mem', True)
 
 
-class SpaceToDepth(PrimitiveWithInfer):
+class SpaceToDepth(Primitive):
     r"""
     Rearrange blocks of spatial data into depth.
 
@@ -5303,30 +5303,11 @@ class SpaceToDepth(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_size):
         """Initialize SpaceToDepth"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, self.name, 2, Rel.GE)
         self.block_size = block_size
         self.add_prim_attr("data_format", "NCHW")
-
-    def infer_shape(self, x_shape):
-        validator.check('x dimension', len(x_shape), self.name, 4, Rel.EQ)
-        out_shape = copy.deepcopy(x_shape)
-        for i in range(2):
-            if out_shape[i + 2] % self.block_size != 0:
-                msg_prefix = "2nd" if i + 2 == 2 else "3rd"
-                raise ValueError(f"For '{self.name}', the shape of output with index {i + 2} must be divided "
-                                 f"exactly by 'block_size', but got the {msg_prefix} dimension "
-                                 f"of output: {out_shape[i + 2]} and "
-                                 f"'block_size': {self.block_size}.")
-            out_shape[i + 2] //= self.block_size
-
-        out_shape[1] *= self.block_size * self.block_size
-        return out_shape
-
-    def infer_dtype(self, x_dtype):
-        validator.check_subclass("x_dtype", x_dtype, mstype.tensor, self.name)
-        return x_dtype
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class DepthToSpace(Primitive):
@@ -5375,11 +5356,11 @@ class DepthToSpace(Primitive):
     @prim_attr_register
     def __init__(self, block_size):
         """Initialize DepthToSpace"""
-        self.init_prim_io_names(inputs=['x'], outputs=['y'])
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
         self.add_prim_attr("data_format", "NCHW")
+        self.init_prim_io_names(inputs=['x'], outputs=['y'])
 
 
 class SpaceToBatch(PrimitiveWithInfer):
