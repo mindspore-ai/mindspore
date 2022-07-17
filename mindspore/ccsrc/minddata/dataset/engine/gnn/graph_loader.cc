@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/gnn/local_node.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "minddata/mindrecord/include/shard_error.h"
+#include "utils/file_utils.h"
 
 using ShardTuple = std::vector<std::tuple<std::vector<uint8_t>, mindspore::mindrecord::json>>;
 namespace mindspore {
@@ -44,10 +45,11 @@ GraphLoader::GraphLoader(GraphDataImpl *graph_impl, std::string mr_filepath, int
       optional_key_({{"weight", false}}) {}
 
 Status GraphLoader::GetNodesAndEdges() {
+  MS_LOG(INFO) << "Start to fill node and edges into graph.";
   NodeIdMap *n_id_map = &graph_impl_->node_id_map_;
   EdgeIdMap *e_id_map = &graph_impl_->edge_id_map_;
   for (std::deque<std::shared_ptr<Node>> &dq : n_deques_) {
-    while (dq.empty() == false) {
+    while (!dq.empty()) {
       std::shared_ptr<Node> node_ptr = dq.front();
       n_id_map->insert({node_ptr->id(), node_ptr});
       graph_impl_->node_type_map_[node_ptr->type()].push_back(node_ptr->id());
@@ -56,16 +58,21 @@ Status GraphLoader::GetNodesAndEdges() {
   }
 
   for (std::deque<std::shared_ptr<Edge>> &dq : e_deques_) {
-    while (dq.empty() == false) {
+    while (!dq.empty()) {
       std::shared_ptr<Edge> edge_ptr = dq.front();
-      std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> p;
-      RETURN_IF_NOT_OK(edge_ptr->GetNode(&p));
-      auto src_itr = n_id_map->find(p.first->id()), dst_itr = n_id_map->find(p.second->id());
+      NodeIdType src_id, dst_id;
+      RETURN_IF_NOT_OK(edge_ptr->GetNode(&src_id, &dst_id));
+      auto src_itr = n_id_map->find(src_id), dst_itr = n_id_map->find(dst_id);
 
-      CHECK_FAIL_RETURN_UNEXPECTED(src_itr != n_id_map->end(), "invalid src_id.");
-      CHECK_FAIL_RETURN_UNEXPECTED(dst_itr != n_id_map->end(), "invalid src_id.");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        src_itr != n_id_map->end(),
+        "[Internal Error] src node with id '" + std::to_string(src_id) + "' has not been created yet.");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        dst_itr != n_id_map->end(),
+        "[Internal Error] dst node with id '" + std::to_string(dst_id) + "' has not been created yet.");
 
-      RETURN_IF_NOT_OK(edge_ptr->SetNode({src_itr->second, dst_itr->second}));
+      RETURN_IF_NOT_OK(edge_ptr->SetNode(src_itr->second->id(), dst_itr->second->id()));
+
       RETURN_IF_NOT_OK(src_itr->second->AddNeighbor(dst_itr->second, edge_ptr->weight()));
       RETURN_IF_NOT_OK(src_itr->second->AddAdjacent(dst_itr->second, edge_ptr));
 
@@ -85,6 +92,12 @@ Status GraphLoader::GetNodesAndEdges() {
 Status GraphLoader::InitAndLoad() {
   CHECK_FAIL_RETURN_UNEXPECTED(num_workers_ > 0, "num_reader can't be < 1\n");
   CHECK_FAIL_RETURN_UNEXPECTED(row_id_ == 0, "InitAndLoad Can only be called once!\n");
+
+  auto realpath = FileUtils::GetRealPath(mr_path_.c_str());
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    realpath.has_value(),
+    "Invalid file, failed to get the realpath of mindrecord files. Please check file: " + mr_path_);
+
   n_deques_.resize(num_workers_);
   e_deques_.resize(num_workers_);
   n_feature_maps_.resize(num_workers_);
@@ -118,6 +131,8 @@ Status GraphLoader::InitAndLoad() {
     RETURN_IF_NOT_OK(shard_reader_->GetTotalBlobSize(&total_blob_size));
     graph_impl_->graph_shared_memory_ = std::make_unique<GraphSharedMemory>(total_blob_size, mr_path_);
     RETURN_IF_NOT_OK(graph_impl_->graph_shared_memory_->CreateSharedMemory());
+#else
+    RETURN_STATUS_UNEXPECTED("Server mode is not supported in Windows OS.");
 #endif
   }
 
@@ -163,6 +178,8 @@ Status GraphLoader::LoadNode(const std::vector<uint8_t> &col_blob, const mindrec
         (*default_feature)[ind] = std::make_shared<Feature>(ind, zero_tensor);
       }
     }
+#else
+    RETURN_STATUS_UNEXPECTED("Server mode is not supported in Windows OS.");
 #endif
   } else {
     for (int32_t ind : indices) {
@@ -192,9 +209,7 @@ Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrec
   if (optional_key_["weight"]) {
     edge_weight = col_jsn["weight"];
   }
-  std::shared_ptr<Node> src = std::make_shared<LocalNode>(src_id, -1, 1);
-  std::shared_ptr<Node> dst = std::make_shared<LocalNode>(dst_id, -1, 1);
-  (*edge) = std::make_shared<LocalEdge>(edge_id, edge_type, edge_weight, src, dst);
+  (*edge) = std::make_shared<LocalEdge>(edge_id, edge_type, edge_weight, src_id, dst_id);
   std::vector<int32_t> indices;
   RETURN_IF_NOT_OK(graph_feature_parser_->LoadFeatureIndex("edge_feature_index", col_blob, &indices));
   if (graph_impl_->server_mode_) {
@@ -215,6 +230,8 @@ Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrec
         (*default_feature)[ind] = std::make_shared<Feature>(ind, zero_tensor);
       }
     }
+#else
+    RETURN_STATUS_UNEXPECTED("Server mode is not supported in Windows OS.");
 #endif
   } else {
     for (int32_t ind : indices) {

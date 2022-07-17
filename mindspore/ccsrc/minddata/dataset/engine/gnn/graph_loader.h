@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,15 +59,26 @@ class GraphLoader {
   GraphLoader(GraphDataImpl *graph_impl, std::string mr_filepath, int32_t num_workers = 4, bool server_mode = false);
 
   ~GraphLoader() = default;
-  // Init mindrecord and load everything into memory multi-threaded
+  // Init mindrecord or array and load everything into memory multi-threaded
   // @return Status - the status code
-  Status InitAndLoad();
+  virtual Status InitAndLoad();
 
-  // this function will query mindrecord and construct all nodes and edges
+  // this function will query mindrecord or array and construct all nodes and edges
   // nodes and edges are added to map without any connection. That's because there nodes and edges are read in
   // random order. src_node and dst_node in Edge are node_id only with -1 as type.
   // features attached to each node and edge are expected to be filled correctly
   Status GetNodesAndEdges();
+
+ protected:
+  // merge NodeFeatureMap and EdgeFeatureMap of each worker into 1
+  void MergeFeatureMaps();
+  std::vector<std::deque<std::shared_ptr<Node>>> n_deques_;
+  std::vector<std::deque<std::shared_ptr<Edge>>> e_deques_;
+  std::vector<NodeFeatureMap> n_feature_maps_;
+  std::vector<EdgeFeatureMap> e_feature_maps_;
+  std::vector<DefaultNodeFeatureMap> default_node_feature_maps_;
+  std::vector<DefaultEdgeFeatureMap> default_edge_feature_maps_;
+  GraphDataImpl *graph_impl_;
 
  private:
   //
@@ -95,21 +106,11 @@ class GraphLoader {
   Status LoadEdge(const std::vector<uint8_t> &blob, const mindrecord::json &jsn, std::shared_ptr<Edge> *edge,
                   EdgeFeatureMap *feature_map, DefaultEdgeFeatureMap *default_feature);
 
-  // merge NodeFeatureMap and EdgeFeatureMap of each worker into 1
-  void MergeFeatureMaps();
-
-  GraphDataImpl *graph_impl_;
   std::string mr_path_;
   const int32_t num_workers_;
   std::atomic_int row_id_;
   std::unique_ptr<ShardReader> shard_reader_;
   std::unique_ptr<GraphFeatureParser> graph_feature_parser_;
-  std::vector<std::deque<std::shared_ptr<Node>>> n_deques_;
-  std::vector<std::deque<std::shared_ptr<Edge>>> e_deques_;
-  std::vector<NodeFeatureMap> n_feature_maps_;
-  std::vector<EdgeFeatureMap> e_feature_maps_;
-  std::vector<DefaultNodeFeatureMap> default_node_feature_maps_;
-  std::vector<DefaultEdgeFeatureMap> default_edge_feature_maps_;
   const std::vector<std::string> required_key_;
   std::unordered_map<std::string, bool> optional_key_;
 };

@@ -513,14 +513,15 @@ def type_check(arg, types, arg_name):
     Returns:
         Exception: when the validation fails, otherwise nothing.
     """
-    # handle special case of booleans being a subclass of ints
-    print_value = '\"\"' if repr(arg) == repr('') else arg
 
     if int in types and bool not in types:
         if isinstance(arg, bool):
+            # handle special case of booleans being a subclass of ints
+            print_value = '\"\"' if repr(arg) == repr('') else arg
             raise TypeError("Argument {0} with value {1} is not of type {2}, but got {3}.".format(arg_name, print_value,
                                                                                                   types, type(arg)))
     if not isinstance(arg, types):
+        print_value = '\"\"' if repr(arg) == repr('') else arg
         raise TypeError("Argument {0} with value {1} is not of type {2}, but got {3}.".format(arg_name, print_value,
                                                                                               list(types), type(arg)))
 
@@ -719,13 +720,14 @@ def check_gnn_list_of_pair_or_ndarray(param, param_name):
                 param_name, param.dtype))
 
 
-def check_gnn_list_or_ndarray(param, param_name):
+def check_gnn_list_or_ndarray(param, param_name, data_type=int):
     """
     Check if the input parameter is list or numpy.ndarray.
 
     Args:
         param (Union[list, nd.ndarray]): param.
         param_name (str): param_name.
+        data_type(object): data type.
 
     Returns:
         Exception: TypeError if error.
@@ -734,7 +736,7 @@ def check_gnn_list_or_ndarray(param, param_name):
     type_check(param, (list, np.ndarray), param_name)
     if isinstance(param, list):
         param_names = ["param_{0}".format(i) for i in range(len(param))]
-        type_check_list(param, (int,), param_names)
+        type_check_list(param, (data_type,), param_names)
 
     elif isinstance(param, np.ndarray):
         if not param.dtype == np.int32:
@@ -802,3 +804,18 @@ def deprecator_factory(version, old_module, new_module, substitute_name=None, su
         return wrapper
 
     return decorator
+
+
+def check_dict(data, key_type, value_type, param_name):
+    """ check key and value type in dict."""
+    if data is not None:
+        if not isinstance(data, dict):
+            raise TypeError("{0} should be dict type, but got: {1}".format(param_name, type(data)))
+
+        for key, value in data.items():
+            if not isinstance(key, key_type):
+                raise TypeError("key '{0}' in parameter {1} should be {2} type, but got: {3}"
+                                .format(key, param_name, key_type, type(key)))
+            if not isinstance(value, value_type):
+                raise TypeError("value of '{0}' in parameter {1} should be {2} type, but got: {3}"
+                                .format(key, param_name, value_type, type(value)))

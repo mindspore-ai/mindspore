@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,16 @@
 
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/engine/gnn/graph_loader.h"
+#include "minddata/dataset/engine/gnn/graph_loader_array.h"
 #include "minddata/dataset/util/random.h"
 namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-GraphDataImpl::GraphDataImpl(const std::string &dataset_file, int32_t num_workers, bool server_mode)
-    : dataset_file_(dataset_file),
+GraphDataImpl::GraphDataImpl(const std::string &data_format, const std::string &dataset_file, int32_t num_workers,
+                             bool server_mode)
+    : data_format_(data_format),
+      dataset_file_(dataset_file),
       num_workers_(num_workers),
       rnd_(GetRandomDevice()),
       random_walk_(this),
@@ -123,9 +126,10 @@ Status GraphDataImpl::GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list
       std::string err_msg = "Invalid edge id:" + std::to_string(edge_id);
       RETURN_STATUS_UNEXPECTED(err_msg);
     } else {
-      std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>> nodes;
-      RETURN_IF_NOT_OK(itr->second->GetNode(&nodes));
-      node_list.push_back({nodes.first->id(), nodes.second->id()});
+      NodeIdType src_id, dst_id;
+      RETURN_UNEXPECTED_IF_NULL(itr->second);
+      RETURN_IF_NOT_OK(itr->second->GetNode(&src_id, &dst_id));
+      node_list.push_back({src_id, dst_id});
     }
   }
   RETURN_IF_NOT_OK(CreateTensorByVector<NodeIdType>(node_list, DataType(DataType::DE_INT32), out));
@@ -276,7 +280,7 @@ Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_li
           std::shared_ptr<Node> node;
           RETURN_IF_NOT_OK(GetNodeByNodeId(node_id, &node));
           std::vector<NodeIdType> out;
-          RETURN_IF_NOT_OK(node->GetSampledNeighbors(neighbor_types[i], neighbor_nums[i], strategy, &out));
+          RETURN_IF_NOT_OK(node->GetSampledNeighbors(neighbor_types[i], neighbor_nums[i], strategy, &out, &rnd_));
           neighbors.insert(neighbors.end(), out.begin(), out.end());
         }
       }
@@ -565,8 +569,47 @@ Status GraphDataImpl::GetEdgeFeatureSharedMemory(const std::shared_ptr<Tensor> &
   return Status::OK();
 }
 
+Status GraphDataImpl::GetGraphFeature(const std::vector<FeatureType> &feature_types, TensorRow *out) {
+  CHECK_FAIL_RETURN_UNEXPECTED(!feature_types.empty(), "Input feature_types is empty.");
+  RETURN_UNEXPECTED_IF_NULL(out);
+  TensorRow tensors;
+  for (const auto &type : feature_types) {
+    std::shared_ptr<Feature> feature;
+    auto itr = graph_feature_map_.find(type);
+    if (itr == graph_feature_map_.end()) {
+      std::string err_msg = "Invalid feature type:" + std::to_string(type);
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+    feature = itr->second;
+    tensors.push_back(feature->Value());
+  }
+  *out = std::move(tensors);
+  return Status::OK();
+}
+
 Status GraphDataImpl::Init() {
-  RETURN_IF_NOT_OK(LoadNodeAndEdge());
+  if (data_format_ != "mindrecord") {
+    RETURN_STATUS_UNEXPECTED("Data Format should be `mindrecord` as dataset file is provided.");
+  }
+  GraphLoader gl(this, dataset_file_, num_workers_, server_mode_);
+
+  // ask graph_loader to load everything into memory
+  RETURN_IF_NOT_OK(gl.InitAndLoad());
+  RETURN_IF_NOT_OK(gl.GetNodesAndEdges());
+  return Status::OK();
+}
+
+Status GraphDataImpl::Init(int32_t num_nodes, const std::shared_ptr<Tensor> &edge,
+                           const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &node_feat,
+                           const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &edge_feat,
+                           const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &graph_feat,
+                           const std::shared_ptr<Tensor> &node_type, const std::shared_ptr<Tensor> &edge_type) {
+  MS_LOG(INFO) << "Create graph with loading numpy array data.";
+  GraphLoaderFromArray gl(this, num_nodes, edge, node_feat, edge_feat, graph_feat, node_type, edge_type, num_workers_,
+                          server_mode_);
+  RETURN_IF_NOT_OK(gl.InitAndLoad());
+  RETURN_IF_NOT_OK(gl.GetNodesAndEdges());
+
   return Status::OK();
 }
 
@@ -607,6 +650,10 @@ Status GraphDataImpl::GetMetaInfo(MetaInfo *meta_info) {
   std::sort(meta_info->edge_feature_type.begin(), meta_info->edge_feature_type.end());
   auto unique_edge = std::unique(meta_info->edge_feature_type.begin(), meta_info->edge_feature_type.end());
   meta_info->edge_feature_type.erase(unique_edge, meta_info->edge_feature_type.end());
+
+  for (const auto &graph_feature : graph_feature_map_) {
+    meta_info->graph_feature_type.emplace_back(graph_feature.first);
+  }
   return Status::OK();
 }
 
@@ -621,18 +668,10 @@ Status GraphDataImpl::GraphInfo(py::dict *out) {
   (*out)["edge_num"] = py::cast(meta_info.edge_num);
   (*out)["node_feature_type"] = py::cast(meta_info.node_feature_type);
   (*out)["edge_feature_type"] = py::cast(meta_info.edge_feature_type);
+  (*out)["graph_feature_type"] = py::cast(meta_info.graph_feature_type);
   return Status::OK();
 }
 #endif
-
-Status GraphDataImpl::LoadNodeAndEdge() {
-  GraphLoader gl(this, dataset_file_, num_workers_, server_mode_);
-  // ask graph_loader to load everything into memory
-  RETURN_IF_NOT_OK(gl.InitAndLoad());
-  // get all maps
-  RETURN_IF_NOT_OK(gl.GetNodesAndEdges());
-  return Status::OK();
-}
 
 Status GraphDataImpl::GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node) {
   RETURN_UNEXPECTED_IF_NULL(node);

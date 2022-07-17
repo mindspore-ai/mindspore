@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <utility>
 
 #include "minddata/dataset/core/tensor.h"
@@ -40,6 +41,7 @@ struct MetaInfo {
   std::map<EdgeType, EdgeIdType> edge_num;
   std::vector<FeatureType> node_feature_type;
   std::vector<FeatureType> edge_feature_type;
+  std::vector<FeatureType> graph_feature_type;
 };
 
 class GraphData {
@@ -119,7 +121,7 @@ class GraphData {
   // Get the feature of a node
   // @param std::shared_ptr<Tensor> nodes - List of nodes
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //    does not exist.
   // @param TensorRow *out - Returned features
   // @return Status The status code returned
   virtual Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
@@ -128,16 +130,31 @@ class GraphData {
   // Get the feature of a edge
   // @param std::shared_ptr<Tensor> edges - List of edges
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
-  // does not exist.
+  //     does not exist.
   // @param Tensor *out - Returned features
   // @return Status The status code returned
   virtual Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
                                 TensorRow *out) = 0;
 
+  // Get the feature in graph level
+  // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
+  //     does not exist.
+  // @param Tensor *out - Returned features
+  // @return Status The status code returned
+  virtual Status GetGraphFeature(const std::vector<FeatureType> &feature_types, TensorRow *out) = 0;
+
   // Return meta information to python layer
   virtual Status GraphInfo(py::dict *out) = 0;
 
   virtual Status Init() = 0;
+
+  virtual Status Init(int32_t num_nodes, const std::shared_ptr<Tensor> &edge,
+                      const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &node_feat,
+                      const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &edge_feat,
+                      const std::unordered_map<std::int16_t, std::shared_ptr<Tensor>> &graph_feat,
+                      const std::shared_ptr<Tensor> &node_type, const std::shared_ptr<Tensor> &edge_type) {
+    return Status::OK();
+  }
 
   virtual Status Stop() = 0;
 };
