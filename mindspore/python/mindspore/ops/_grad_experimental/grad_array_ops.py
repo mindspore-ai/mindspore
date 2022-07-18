@@ -39,6 +39,7 @@ from ..operations.array_ops import SegmentSum
 from ..operations.array_ops import TensorScatterElements
 from ..operations.array_ops import Expand
 from ..operations.array_ops import SegmentMean
+from ..operations.array_ops import AffineGrid
 from .. import functional as F
 from .. import operations as P
 from .._utils.utils import is_shape_unknown
@@ -461,6 +462,120 @@ def get_bprop_segment_sum(self):
         if dout_type == mstype.float64:
             dout = cast(dout, mstype.float32)
         return cast(gather(dout, segment_ids, 0), dout_type), zeros_like(segment_ids)
+
+    return bprop
+
+
+@bprop_getters.register(AffineGrid)
+def get_bprop_affinegrid(self):
+    """Generate bprop for AffineGrid"""
+
+    align_corners = self.align_corners
+    ones = P.Ones()
+    transpose = P.Transpose()
+    concat = P.Concat(1)
+    tile = P.Tile()
+    reshape = P.Reshape()
+    linspace = P.LinSpace()
+    batmatmul = P.BatchMatMul()
+    expend_dims = P.ExpandDims()
+
+    def bprop(theta, output_size, out, dout):
+        x_shape = P.Shape()(dout)
+        n_value = x_shape[0]
+        h_value = x_shape[1]
+        w_value = x_shape[2]
+        d_value = output_size[2]
+        perm1 = (1, 0)
+        perm2 = (0, 2, 1)
+        output_size_shape = len(output_size)
+        len_output_size = output_size_shape
+        vecx = vecy = vecz = dtheta = dout_ = two = one = tre = []
+        if len_output_size == 5:
+            n_value = output_size[0]
+            d_value = output_size[2]
+            h_value = output_size[3]
+            w_value = output_size[4]
+            start = Tensor(-1, mstype.float32)
+            stop = Tensor(1, mstype.float32)
+            vecx = Tensor([0], dtype=mstype.float32)
+            if w_value != 1:
+                vecx = linspace(start, stop, w_value)
+            vecy = Tensor([0], dtype=mstype.float32)
+            if h_value != 1:
+                vecy = linspace(start, stop, h_value)
+            vecz = Tensor([0], dtype=mstype.float32)
+            if d_value != 1:
+                vecz = linspace(start, stop, d_value)
+            if align_corners is False:
+                vecx = vecx * (w_value - 1) / w_value
+                vecy = vecy * (h_value - 1) / h_value
+                vecz = vecz * (d_value - 1) / d_value
+            out = vecx
+            if h_value*d_value != 1:
+                multiples = (h_value*d_value, 1)
+                out = tile(vecx, multiples)
+            one = reshape(out, (h_value*w_value*d_value, 1))
+            if w_value == 1:
+                out = expend_dims(vecy, 0)
+            elif w_value != 1:
+                multiples = (w_value, 1)
+                out = tile(vecy, multiples)
+            out = transpose(out, perm1)
+            if d_value != 1:
+                multiples = (d_value, 1)
+                out = tile(out, multiples)
+            two = reshape(out, (h_value*w_value*d_value, 1))
+            out = expend_dims(vecz, 0)
+            if w_value*h_value != 1:
+                multiples = (w_value*h_value, 1)
+                out = tile(vecz, multiples)
+            out = transpose(out, perm1)
+            tre = reshape(out, (h_value*w_value*d_value, 1))
+            fou = ones((h_value*w_value*d_value, 1), mstype.float32)
+            output = concat((one, two, tre, fou))
+            output = transpose(output, perm1)
+            if n_value != 1:
+                multiples = (n_value, 1)
+                output = tile(output, multiples)
+            output = output.view(n_value, 4, h_value*w_value*d_value)
+            dout_ = dout.view(n_value, d_value*h_value*w_value, 3).astype("float32")
+            dtheta = batmatmul(output, dout_)
+            dtheta = transpose(dtheta, perm2)
+        elif len_output_size == 4:
+            start = Tensor(-1, mstype.float32)
+            stop = Tensor(1, mstype.float32)
+            vecx = Tensor([0], dtype=mstype.float32)
+            if w_value != 1:
+                vecx = linspace(start, stop, w_value)
+            vecy = Tensor([0], dtype=mstype.float32)
+            if h_value != 1:
+                vecy = linspace(start, stop, h_value)
+            if align_corners is False:
+                vecx = vecx * (w_value - 1) / w_value
+                vecy = vecy * (h_value - 1) / h_value
+            out = vecx
+            if h_value != 1:
+                multiples = (h_value, 1)
+                out = tile(vecx, multiples)
+            one = reshape(out, (h_value*w_value, 1))
+            if w_value == 1:
+                out = expend_dims(vecy, 0)
+            elif w_value != 1:
+                multiples = (w_value, 1)
+                out = tile(vecy, multiples)
+            out = transpose(out, perm1)
+            two = reshape(out, (h_value*w_value, 1))
+            tre = ones((h_value*w_value, 1), mstype.float32)
+            output = concat((one, two, tre))
+            multiples = (n_value, 1)
+            output = transpose(output, perm1)
+            output = tile(output, multiples)
+            output = output.view(n_value, 3, h_value*w_value)
+            dout_ = dout.view(n_value, h_value*w_value, 2).astype("float32")
+            dtheta = batmatmul(output, dout_)
+            dtheta = transpose(dtheta, perm2)
+        return dtheta, tre
 
     return bprop
 

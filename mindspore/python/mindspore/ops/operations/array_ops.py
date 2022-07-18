@@ -7832,7 +7832,7 @@ class AffineGrid(Primitive):
     Refer to :func:`mindspore.ops.affine_grid` for more detail.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> affinegrid = AffineGrid(align_corners=False)
