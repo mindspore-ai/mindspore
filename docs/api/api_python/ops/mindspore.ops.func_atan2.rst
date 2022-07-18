@@ -1,7 +1,7 @@
 mindspore.ops.atan2
 ===================
 
-.. py:function:: mindspore.ops.atan2
+.. py:function:: mindspore.ops.atan2(x, y)
 
     逐元素计算x/y的反正切值。
 

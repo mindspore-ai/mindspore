@@ -792,6 +792,7 @@ mindspore.Tensor
         - **ValueError** - 如果 `weight` 为Tensor且 `weight` 的维度信息无法广播到当前Tensor。
 
     .. py:method:: log1p()
+
         对当前Tensor逐元素加一后计算自然对数。
 
         .. math::

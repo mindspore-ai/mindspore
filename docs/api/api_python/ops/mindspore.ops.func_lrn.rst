@@ -22,7 +22,7 @@ mindspore.ops.lrn
     - **beta** (float) - 指数。默认值：0.5。
     - **norm_region** (str) - 指定归一化区域。可选值："ACROSS_CHANNELS"。默认值："ACROSS_CHANNELS"。
 
-    **输出：**
+    **返回：**
 
     Tensor，与 `x` 的shape和数据类型相同。
 
