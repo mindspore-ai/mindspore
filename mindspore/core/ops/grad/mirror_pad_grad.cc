@@ -61,6 +61,11 @@ abstract::ShapePtr MirrorPadGradInferShape(const PrimitivePtr &primitive,
                              << "', the dimension of input only supports less than or equal to 5 dims, but got " << size
                              << " dims";
   }
+  auto input_x_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  if (input_x_shape_ptr->IsDynamic()) {
+    return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
   for (int64_t i = 0; i < size; i++) {
     if (paddings_attr[LongToSize(i)].first < 0 || paddings_attr[LongToSize(i)].second < 0) {
       MS_EXCEPTION(ValueError) << "For '" << prim_name << "', all elements of paddings must be >= 0.";

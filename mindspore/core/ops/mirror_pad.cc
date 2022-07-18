@@ -54,6 +54,11 @@ abstract::ShapePtr MirrorPadInferShape(const PrimitivePtr &primitive, const std:
   }
   (void)CheckAndConvertUtils::CheckInteger("paddings_size", SizeToLong(paddings_attr.size()), kEqual, x_shape.size(),
                                            prim_name);
+  auto input_x_shape_ptr = input_args[0]->BuildShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape_ptr);
+  if (input_x_shape_ptr->IsDynamic()) {
+    return input_args[0]->BuildShape()->cast<abstract::ShapePtr>();
+  }
   int64_t size = SizeToLong(x_shape.size());
   if (size < 0 || size > MAX_PADDINGS) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
