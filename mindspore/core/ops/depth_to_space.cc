@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "ops/depth_to_space.h"
-#include <string>
-#include <algorithm>
-#include <memory>
-#include <set>
-#include <vector>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
 namespace mindspore {
@@ -60,17 +55,25 @@ abstract::ShapePtr DepthToSpaceInferShape(const PrimitivePtr &primitive,
   auto x_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
-  auto format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  auto data_format_ptr = primitive->GetAttr("format");
+  int64_t format = CheckAndConvertUtils::GetAndCheckFormat(primitive->GetAttr("format"));
+  primitive->AddAttr("data_format", data_format_ptr);
   const int64_t dim_0 = 0;
   const int64_t dim_1 = 1;
   const int64_t dim_2 = 2;
   const int64_t dim_3 = 3;
+  const int64_t min_block_size = 2;
+  const int64_t x_rank = 4;
   if (format == Format::NHWC) {
     x_shape = {x_shape[dim_0], x_shape[dim_3], x_shape[dim_1], x_shape[dim_2]};
   }
-  const int64_t x_rank = 4;
   (void)CheckAndConvertUtils::CheckInteger("x rank", SizeToLong(x_shape.size()), kEqual, x_rank, prim_name);
   int64_t block_size = GetValue<int64_t>(primitive->GetAttr(kBlockSize));
+  if (block_size < min_block_size) {
+    MS_EXCEPTION(ValueError) << "For DepthToSpace, block_size must greater than 2, but got the block_size is "
+                             << block_size;
+  }
+  (void)CheckAndConvertUtils::CheckInteger("block_size", block_size % dim_1, kEqual, 0, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("x_shape[1] % (block_size*block_size)",
                                            x_shape[dim_1] % (block_size * block_size), kEqual, 0, prim_name);
   auto out_shape = x_shape;
