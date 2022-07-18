@@ -189,6 +189,7 @@ Sampling Operator
     mindspore.ops.ComputeAccidentalHits
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
+    mindspore.ops.UpsampleTrilinear3D
     
 Image Processing
 ^^^^^^^^^^^^^^^^
