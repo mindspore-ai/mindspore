@@ -21,6 +21,8 @@
 #include "mindapi/base/shape_vector.h"
 
 namespace mindspore {
+constexpr size_t kDynamicRankLen = 1;
+constexpr ShapeValueDType kDynamicRankValue = -2;
 inline size_t SizeOf(const ShapeVector &shape) {
   ShapeValueDType data_size = 1;
   for (auto dim : shape) {
@@ -35,6 +37,10 @@ inline size_t SizeOf(const ShapeVector &shape) {
 
 inline bool IsDynamic(const ShapeVector &shape) {
   return std::any_of(shape.begin(), shape.end(), [](ShapeValueDType s) { return s < 0; });
+}
+
+inline bool IsDynamicRank(const ShapeVector &shape) {
+  return ((shape.size() == kDynamicRankLen) && (shape[0] == kDynamicRankValue));
 }
 }  // namespace mindspore
 
