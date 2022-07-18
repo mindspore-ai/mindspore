@@ -21,7 +21,6 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/apply_adam_with_amsgrad_cpu_kernel.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
-#include "plugin/device/cpu/kernel/nnacl/errorcode.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/adam_fp32.h"
 #include "mindspore/core/ops/apply_adam_with_amsgrad.h"
 #include "utils/ms_utils.h"
