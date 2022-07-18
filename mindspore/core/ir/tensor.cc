@@ -553,189 +553,60 @@ class TensorSubDataImpl : public TensorSubData {
   }
 };
 
-template <typename... Args>
-TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const Args... args) {
+template <template <class> class ImplClass = TensorDataImpl, typename... Args>
+TensorDataPtr MakeTensorData(TypeId data_type, Args &&... args) {
   switch (data_type) {
     case kNumberTypeBool:
-      return std::make_shared<TensorDataImpl<bool>>(shape, args...);
+      return std::make_shared<ImplClass<bool>>(std::forward<Args>(args)...);
     case kNumberTypeUInt8:
-      return std::make_shared<TensorDataImpl<uint8_t>>(shape, args...);
+      return std::make_shared<ImplClass<uint8_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt8:
-      return std::make_shared<TensorDataImpl<int8_t>>(shape, args...);
+      return std::make_shared<ImplClass<int8_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt16:
-      return std::make_shared<TensorDataImpl<int16_t>>(shape, args...);
+      return std::make_shared<ImplClass<int16_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt32:
-      return std::make_shared<TensorDataImpl<int32_t>>(shape, args...);
+      return std::make_shared<ImplClass<int32_t>>(std::forward<Args>(args)...);
     case kNumberTypeInt64:
-      return std::make_shared<TensorDataImpl<int64_t>>(shape, args...);
+      return std::make_shared<ImplClass<int64_t>>(std::forward<Args>(args)...);
     case kNumberTypeUInt16:
-      return std::make_shared<TensorDataImpl<uint16_t>>(shape, args...);
+      return std::make_shared<ImplClass<uint16_t>>(std::forward<Args>(args)...);
     case kNumberTypeUInt32:
-      return std::make_shared<TensorDataImpl<uint32_t>>(shape, args...);
+      return std::make_shared<ImplClass<uint32_t>>(std::forward<Args>(args)...);
     case kNumberTypeUInt64:
-      return std::make_shared<TensorDataImpl<uint64_t>>(shape, args...);
+      return std::make_shared<ImplClass<uint64_t>>(std::forward<Args>(args)...);
     case kNumberTypeFloat16:
-      return std::make_shared<TensorDataImpl<float16>>(shape, args...);
+      return std::make_shared<ImplClass<float16>>(std::forward<Args>(args)...);
     case kNumberTypeFloat:
-      return std::make_shared<TensorDataImpl<float>>(shape, args...);
+      return std::make_shared<ImplClass<float>>(std::forward<Args>(args)...);
     case kNumberTypeFloat32:
-      return std::make_shared<TensorDataImpl<float>>(shape, args...);
+      return std::make_shared<ImplClass<float>>(std::forward<Args>(args)...);
     case kNumberTypeFloat64:
-      return std::make_shared<TensorDataImpl<double>>(shape, args...);
+      return std::make_shared<ImplClass<double>>(std::forward<Args>(args)...);
     case kNumberTypeComplex64:
-      return std::make_shared<TensorDataImpl<ComplexStorage<float>>>(shape, args...);
+      return std::make_shared<ImplClass<ComplexStorage<float>>>(std::forward<Args>(args)...);
     case kNumberTypeComplex128:
-      return std::make_shared<TensorDataImpl<ComplexStorage<double>>>(shape, args...);
+      return std::make_shared<ImplClass<ComplexStorage<double>>>(std::forward<Args>(args)...);
     case kObjectTypeString:
-      return std::make_shared<TensorDataImpl<uint8_t>>(shape, args...);
+      return std::make_shared<ImplClass<uint8_t>>(std::forward<Args>(args)...);
     case kObjectTypeTensorType:
-      return std::make_shared<TensorDataImpl<int>>(shape, args...);
+      return std::make_shared<ImplClass<int>>(std::forward<Args>(args)...);
     default:
       break;
   }
   MS_LOG(EXCEPTION) << "Cannot construct Tensor because of unsupported data type: " << data_type << ".";
 }
 
-template <typename... Args>
-TensorDataPtr MakeChunkData(TypeId data_type, size_t size) {
-  switch (data_type) {
-    case kNumberTypeBool:
-      return std::make_shared<TensorChunkData<bool>>(size);
-    case kNumberTypeUInt8:
-      return std::make_shared<TensorChunkData<uint8_t>>(size);
-    case kNumberTypeInt8:
-      return std::make_shared<TensorChunkData<int8_t>>(size);
-    case kNumberTypeInt16:
-      return std::make_shared<TensorChunkData<int16_t>>(size);
-    case kNumberTypeInt32:
-      return std::make_shared<TensorChunkData<int32_t>>(size);
-    case kNumberTypeInt64:
-      return std::make_shared<TensorChunkData<int64_t>>(size);
-    case kNumberTypeUInt16:
-      return std::make_shared<TensorChunkData<uint16_t>>(size);
-    case kNumberTypeUInt32:
-      return std::make_shared<TensorChunkData<uint32_t>>(size);
-    case kNumberTypeUInt64:
-      return std::make_shared<TensorChunkData<uint64_t>>(size);
-    case kNumberTypeFloat16:
-      return std::make_shared<TensorChunkData<float16>>(size);
-    case kNumberTypeFloat:
-      return std::make_shared<TensorChunkData<float>>(size);
-    case kNumberTypeFloat32:
-      return std::make_shared<TensorChunkData<float>>(size);
-    case kNumberTypeFloat64:
-      return std::make_shared<TensorChunkData<double>>(size);
-    case kNumberTypeComplex64:
-      return std::make_shared<TensorChunkData<ComplexStorage<float>>>(size);
-    case kNumberTypeComplex128:
-      return std::make_shared<TensorChunkData<ComplexStorage<double>>>(size);
-    case kObjectTypeString:
-      return std::make_shared<TensorChunkData<uint8_t>>(size);
-    case kObjectTypeTensorType:
-      return std::make_shared<TensorChunkData<int>>(size);
-    default:
-      break;
-  }
-  MS_LOG(EXCEPTION) << "Cannot construct chunk data because of unsupported data type: " << data_type << ".";
-}
-
-template <typename... Args>
-TensorDataPtr MakeCompressionTensorData(TypeId data_type, size_t size) {
-  switch (data_type) {
-    case kNumberTypeBool:
-      return std::make_shared<CompressionTensorData<bool>>(size);
-    case kNumberTypeUInt8:
-      return std::make_shared<CompressionTensorData<uint8_t>>(size);
-    case kNumberTypeInt8:
-      return std::make_shared<CompressionTensorData<int8_t>>(size);
-    case kNumberTypeInt16:
-      return std::make_shared<CompressionTensorData<int16_t>>(size);
-    case kNumberTypeInt32:
-      return std::make_shared<CompressionTensorData<int32_t>>(size);
-    case kNumberTypeInt64:
-      return std::make_shared<CompressionTensorData<int64_t>>(size);
-    case kNumberTypeUInt16:
-      return std::make_shared<CompressionTensorData<uint16_t>>(size);
-    case kNumberTypeUInt32:
-      return std::make_shared<CompressionTensorData<uint32_t>>(size);
-    case kNumberTypeUInt64:
-      return std::make_shared<CompressionTensorData<uint64_t>>(size);
-    case kNumberTypeFloat16:
-      return std::make_shared<CompressionTensorData<float16>>(size);
-    case kNumberTypeFloat:
-      return std::make_shared<CompressionTensorData<float>>(size);
-    case kNumberTypeFloat32:
-      return std::make_shared<CompressionTensorData<float>>(size);
-    case kNumberTypeFloat64:
-      return std::make_shared<CompressionTensorData<double>>(size);
-    case kNumberTypeComplex64:
-      return std::make_shared<CompressionTensorData<ComplexStorage<float>>>(size);
-    case kNumberTypeComplex128:
-      return std::make_shared<CompressionTensorData<ComplexStorage<double>>>(size);
-    case kObjectTypeString:
-      return std::make_shared<CompressionTensorData<uint8_t>>(size);
-    case kObjectTypeTensorType:
-      return std::make_shared<CompressionTensorData<int>>(size);
-    default:
-      break;
-  }
-  MS_LOG(EXCEPTION) << "Cannot construct compression data because of unsupported data type: " << data_type << ".";
-}
-
-template <typename T>
-TensorDataPtr MakeSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
+TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
   const size_t data_bytes = data->nbytes();
   if (data_bytes == 0) {
     MS_LOG(EXCEPTION) << "Tensor data size is 0.";
   }
-  auto sub_data = std::make_shared<TensorSubDataImpl<T>>(owner, offset, data->size(), data->ndim());
+  auto sub_data = MakeTensorData<TensorSubDataImpl>(owner->data_type(), owner, offset, data->size(), data->ndim());
   // If tensor data is initialized, copy it.
   if (data->const_data() != nullptr) {
     CopyTensorData(sub_data, data);
   }
   return sub_data;
-}
-
-TensorDataPtr MakeTensorSubData(const TensorPtr &owner, size_t offset, const TensorDataPtr &data) {
-  switch (owner->data_type()) {
-    case kNumberTypeBool:
-      return MakeSubData<bool>(owner, offset, data);
-    case kNumberTypeUInt8:
-      return MakeSubData<uint8_t>(owner, offset, data);
-    case kNumberTypeInt8:
-      return MakeSubData<int8_t>(owner, offset, data);
-    case kNumberTypeInt16:
-      return MakeSubData<int16_t>(owner, offset, data);
-    case kNumberTypeInt32:
-      return MakeSubData<int32_t>(owner, offset, data);
-    case kNumberTypeInt64:
-      return MakeSubData<int64_t>(owner, offset, data);
-    case kNumberTypeUInt16:
-      return MakeSubData<uint16_t>(owner, offset, data);
-    case kNumberTypeUInt32:
-      return MakeSubData<uint32_t>(owner, offset, data);
-    case kNumberTypeUInt64:
-      return MakeSubData<uint64_t>(owner, offset, data);
-    case kNumberTypeFloat16:
-      return MakeSubData<float16>(owner, offset, data);
-    case kNumberTypeFloat:
-      return MakeSubData<float>(owner, offset, data);
-    case kNumberTypeFloat32:
-      return MakeSubData<float>(owner, offset, data);
-    case kNumberTypeFloat64:
-      return MakeSubData<double>(owner, offset, data);
-    case kNumberTypeComplex64:
-      return MakeSubData<ComplexStorage<float>>(owner, offset, data);
-    case kNumberTypeComplex128:
-      return MakeSubData<ComplexStorage<double>>(owner, offset, data);
-    case kObjectTypeString:
-      return MakeSubData<uint8_t>(owner, offset, data);
-    case kObjectTypeTensorType:
-      return MakeSubData<int>(owner, offset, data);
-    default:
-      break;
-  }
-  MS_LOG(EXCEPTION) << "Unsupported data type: " << owner->data_type() << ".";
 }
 
 Tensor::Tensor(const Tensor &tensor)
@@ -804,30 +675,31 @@ Tensor::Tensor(const std::vector<double> &input, const TypePtr &data_type)
 
 Tensor::Tensor(int64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeInt64), {}),
-      data_(MakeTensorData(data_type_, {}, input)),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
 Tensor::Tensor(double input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeFloat32), {}),
-      data_(MakeTensorData(data_type_, {}, input)),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
 Tensor::Tensor(uint64_t input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt64), {}),
-      data_(MakeTensorData(data_type_, {}, input)),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
 Tensor::Tensor(bool input, const TypePtr &data_type)
     : MetaTensor(TypeIdOf(data_type, kNumberTypeBool), {}),
-      data_(MakeTensorData(data_type_, {}, input)),
+      data_(MakeTensorData(data_type_, ShapeVector{}, input)),
       id_(MakeId()) {}
 
 Tensor::Tensor(TypeId data_type, size_t data_size)
-    : Tensor(data_type, ShapeVector{static_cast<int64_t>(data_size)}, MakeChunkData(data_type, data_size)) {}
+    : Tensor(data_type, ShapeVector{static_cast<int64_t>(data_size)},
+             MakeTensorData<TensorChunkData>(data_type, data_size)) {}
 
 Tensor::Tensor(TypeId origin_data_type, const ShapeVector &shape, size_t compression_data_size,
                TensorCompressionType compression_type)
-    : Tensor(origin_data_type, shape, MakeCompressionTensorData(kNumberTypeInt8, compression_data_size)) {
+    : Tensor(origin_data_type, shape, MakeTensorData<CompressionTensorData>(kNumberTypeInt8, compression_data_size)) {
   compression_type_ = compression_type;
 }
 
