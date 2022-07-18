@@ -67,7 +67,7 @@ Flags::Flags() {
           "e.g. \"inTensor1:1,32,32,32;inTensor2:1,1,32,32,4\"",
           "");
   AddFlag(&Flags::graphInputFormatStr, "inputDataFormat",
-          "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "NHWC");
+          "Assign the input format of exported model. Only Valid for 4-dimensional input. NHWC | NCHW", "");
 #ifdef ENABLE_OPENSSL
   AddFlag(&Flags::encryptionStr, "encryption",
           "Whether to export the encryption model."

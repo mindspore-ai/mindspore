@@ -43,8 +43,13 @@ class CudaCommon {
 
   uint32_t device_id_;
 };
+
+#ifndef GET_BLOCKS
 #define GET_BLOCKS(total_threads) mindspore::device::gpu::CudaCommon::GetInstance().blocks_num(total_threads)
+#endif
+#ifndef GET_THREADS
 #define GET_THREADS mindspore::device::gpu::CudaCommon::GetInstance().threads_num()
+#endif
 #define GET_THREADS_MAXSIZE(size) mindspore::device::gpu::CudaCommon::GetInstance().threads_num(size)
 #define GET_MAJOR_SM mindspore::device::gpu::CudaCommon::GetInstance().major_sm()
 #define GET_CUDA_CAP mindspore::device::gpu::CudaCommon::GetInstance().cuda_cap()

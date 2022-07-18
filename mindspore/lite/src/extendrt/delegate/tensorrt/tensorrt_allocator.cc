@@ -22,10 +22,7 @@
 #include "src/extendrt/delegate/tensorrt/cuda_impl/cast.cuh"
 
 namespace mindspore::lite {
-void *TensorRTAllocator::MallocDeviceMem(const mindspore::MSTensor &host_tensor, size_t size) {
-  if (host_tensor == NULL) {
-    return nullptr;
-  }
+void *TensorRTAllocator::MallocDeviceMem(const TensorInfo &host_tensor, size_t size) {
   return MallocDeviceMem(host_tensor.Name(), size, ConvertDataType(host_tensor.DataType()));
 }
 
@@ -82,26 +79,52 @@ void *TensorRTAllocator::GetDevicePtr(const std::string &tensor_name) {
   return this->cuda_tensor_map_.find(tensor_name)->second.data;
 }
 
-int TensorRTAllocator::SyncMemInHostAndDevice(mindspore::MSTensor host_tensor, const std::string &device_tensor_name,
-                                              bool is_host2device, bool sync) {
+int TensorRTAllocator::SyncMemHostToDevice(const tensor::Tensor &host_tensor, const std::string &device_tensor_name,
+                                           bool sync) {
+  return SyncMemInHostAndDevice(const_cast<void *>(host_tensor.data_c()), device_tensor_name, host_tensor.Size(), true,
+                                sync);
+}
+
+int TensorRTAllocator::SyncMemDeviceToHost(tensor::Tensor *host_tensor, const std::string &device_tensor_name,
+                                           bool sync) {
   if (host_tensor == NULL) {
     MS_LOG(ERROR) << "host tensor is null.";
     return RET_ERROR;
   }
 #if TRT_VERSION_GE(7, 2)
-  if (host_tensor.DataType() == DataType::kNumberTypeBool && !is_host2device) {
+  if (host_tensor->data_type() == TypeId::kNumberTypeBool) {
     CudaTensorParam &current_cuda_tensor = cuda_tensor_map_.find(device_tensor_name)->second;
     auto device_ptr = current_cuda_tensor.data;
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
       return RET_ERROR;
     }
-    Cast<int32_t, bool>(host_tensor.DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
+    Cast<int32_t, bool>(host_tensor->DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
                         stream_);
   }
 #endif
-  return SyncMemInHostAndDevice(host_tensor.MutableData(), device_tensor_name, host_tensor.DataSize(), is_host2device,
-                                sync);
+  return SyncMemInHostAndDevice(host_tensor->data_c(), device_tensor_name, host_tensor->Size(), false, sync);
+}
+
+int TensorRTAllocator::SyncMemInHostAndDevice(tensor::Tensor *host_tensor, const std::string &device_tensor_name,
+                                              bool is_host2device, bool sync) {
+  if (host_tensor == NULL) {
+    MS_LOG(ERROR) << "host tensor is null.";
+    return RET_ERROR;
+  }
+#if TRT_VERSION_GE(7, 2)
+  if (host_tensor->data_type() == TypeId::kNumberTypeBool && !is_host2device) {
+    CudaTensorParam &current_cuda_tensor = cuda_tensor_map_.find(device_tensor_name)->second;
+    auto device_ptr = current_cuda_tensor.data;
+    if (device_ptr == nullptr) {
+      MS_LOG(ERROR) << "device_ptr is null for " << device_tensor_name;
+      return RET_ERROR;
+    }
+    Cast<int32_t, bool>(host_tensor->DataSize(), static_cast<int32_t *>(device_ptr), static_cast<bool *>(device_ptr),
+                        stream_);
+  }
+#endif
+  return SyncMemInHostAndDevice(host_tensor->data_c(), device_tensor_name, host_tensor->Size(), is_host2device, sync);
 }
 
 int TensorRTAllocator::SyncMemInHostAndDevice(void *host_data, const std::string &device_tensor_name, size_t data_size,

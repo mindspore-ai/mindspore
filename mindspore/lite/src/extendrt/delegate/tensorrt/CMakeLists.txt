@@ -1,7 +1,8 @@
 include_directories(${TENSORRT_PATH}/include)
 include_directories(${CUDA_PATH}/include)
 include_directories(${CUDA_PATH})
-include_directories($(CCSRC_DIR)/plugin/device/cpu/kernel)
+include_directories(${CCSRC_DIR}/plugin/device/cpu/kernel)
+include_directories(${CCSRC_DIR}/../)
 include_directories(${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 
 if(DEFINED ENV{MS_ENABLE_CUDA_DISTRIBUTION})
@@ -13,7 +14,7 @@ endif()
 set(NCCL_MPI_SRC_STUB
     ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_collective.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/distribution/distribution_base.cc
-)
+    )
 
 # nccl mpi
 if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
@@ -23,7 +24,7 @@ if(MS_ENABLE_CUDA_DISTRIBUTION STREQUAL "on")
         ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/collective_wrapper.cc
         ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/mpi_wrapper.cc
         ${CCSRC_DIR}/plugin/device/gpu/hal/device/distribution/nccl_wrapper.cc
-    )
+        )
     list(REMOVE_ITEM NCCL_MPI_SRC ${NCCL_MPI_SRC_STUB})
 
     add_compile_definitions(LITE_CUDA_DISTRIBUTION)
@@ -43,20 +44,20 @@ file(GLOB TENSORRT_RUNTIME_SRC LIST_DIRECTORIES false
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/op/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../litert/delegate/delegate_utils.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../extendrt/delegate/delegate_utils.cc
     ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.cc
-)
+    )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache)
+# include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache)
 
-set(TENSORRT_RUNTIME_SRC
-        ${TENSORRT_RUNTIME_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/load_host_cache_model.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/lfu_cache.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/gpu/gpu_cache_mem.cc
-        )
+#set(TENSORRT_RUNTIME_SRC
+#    ${TENSORRT_RUNTIME_SRC}
+#    ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache_manager.cc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/load_host_cache_model.cc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/lfu_cache.cc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/embedding_cache.cc
+#    ${CMAKE_CURRENT_SOURCE_DIR}/../parameter_cache/gpu/gpu_cache_mem.cc
+#    )
 
 link_libraries(${CUDA_LIB_PATH}/libcudnn.so)
 link_libraries(${CUDA_LIB_PATH}/libnvrtc.so)
@@ -81,16 +82,4 @@ target_link_libraries(
     libnvinfer
 )
 
-# cuda
-find_package(CUDA)
-file(GLOB_RECURSE CUDA_KERNEL_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/cuda_impl/*.cu
-    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/gather.cu
-    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/swish_impl.cu
-    ${CCSRC_DIR}/plugin/device/gpu/kernel/cuda_impl/cuda_ops/cumsum_impl.cu
-)
-
-set_source_files_properties(${CUDA_KERNEL_SRC} PROPERTIES CUDA_SOURCE_PROPERTY_FORMAT OBJ)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGES} -std=c++14 -fPIC")
-SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-std=c++14;-arch=sm_53)
-cuda_add_library(cuda_kernel_mid STATIC ${CUDA_KERNEL_SRC})
+add_subdirectory(cuda_impl)

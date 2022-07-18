@@ -25,8 +25,9 @@
 namespace mindspore::lite {
 struct ITensorHelper {
   nvinfer1::ITensor *trt_tensor_{nullptr};
-  mindspore::Format format_{Format::NHWC};
+  mindspore::Format format_{Format::NCHW};
   bool same_format_{true};
+  bool is_tensor{true};
 };
 class TensorRTContext {
  public:
@@ -38,7 +39,6 @@ class TensorRTContext {
   void RegisterLayer(nvinfer1::ILayer *layer, const std::string &basename);
   void RegisterTensor(ITensorHelper tensor, const std::string &basename);
   void RegisterTensorWithSameName(ITensorHelper tensor, const std::string &basename);
-  // void RegisterTensor(ITensorHelper tensor);
   bool HasTensor(const std::string &name) const;
   ITensorHelper MsName2Tensor(const std::string &ms_name);
 

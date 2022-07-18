@@ -20,10 +20,11 @@
 #include <numeric>
 #include <memory>
 #include <functional>
+#include "ops/cast.h"
 
 namespace mindspore::lite {
-int CastTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                            const std::vector<mindspore::MSTensor> &out_tensors) {
+int CastTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                            const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -42,11 +43,11 @@ int CastTensorRT::IsSupport(const schema::Primitive *primitive, const std::vecto
 int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
   // cast to type tensor
   auto type_tensor = in_tensors_[1];
-  if (type_tensor.Data() == nullptr) {
+  if (!type_tensor.IsConst()) {
     MS_LOG(ERROR) << "unknown cast type of " << op_name_;
     return RET_ERROR;
   }
-  auto type_data = static_cast<const int *>(type_tensor.Data().get());
+  auto type_data = static_cast<const int *>(type_tensor.Data());
   DataType data_type = static_cast<DataType>(type_data[0]);
   MS_LOG(DEBUG) << op_name_ << " cast to data type(43 float): " << type_data[0];
   nvinfer1::DataType dest_datatype = ConvertDataType(data_type);
@@ -74,5 +75,5 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
   this->layer_ = cast_layer;
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Cast, CastTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameCast, CastTensorRT)
 }  // namespace mindspore::lite

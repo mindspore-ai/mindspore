@@ -65,7 +65,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string dec_key = "";
   std::string dec_mode = "AES-GCM";
   std::string graphInputFormatStr;
-  mindspore::Format graphInputFormat = mindspore::NHWC;
+  mindspore::Format graphInputFormat = mindspore::DEFAULT_FORMAT;
   std::string encKeyStr;
   std::string encMode = "AES-GCM";
   std::string inferStr;

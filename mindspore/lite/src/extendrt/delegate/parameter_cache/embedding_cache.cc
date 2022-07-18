@@ -25,6 +25,7 @@
 #include "src/extendrt/delegate/parameter_cache/gpu/gpu_cache_mem.h"
 #include "src/extendrt/delegate/parameter_cache/lfu_cache.h"
 #include "src/extendrt/delegate/parameter_cache/factory_mgr_base.h"
+#include "core/utils/convert_utils_base.h"
 
 namespace {
 constexpr size_t kEmbeddingTensorShapeSize = 2;
@@ -71,7 +72,7 @@ Status EmbeddingCache::Init(mindspore::MSTensor host_cache_tensor, mindspore::MS
                   << ", host size is " << host_cache_tensor.Shape()[1];
     return kLiteError;
   }
-  if (host_cache_size_ != host_cache_tensor.Shape()[0]) {
+  if (SizeToInt(host_cache_size_) != host_cache_tensor.Shape()[0]) {
     MS_LOG(ERROR) << device_tensor.Name() << " host_cache_size is invalid, host_cache_size"
                   << host_cache_tensor.Shape()[0] << ", index begin:" << min_host_index_
                   << ", index end:" << max_host_index_ << "rank_group_size_ num:" << rank_group_size_
@@ -134,7 +135,7 @@ Status EmbeddingCache::Init(uint32_t device_id, const void *context, mindspore::
   }
   ret = cache_->Init(device_cache_size_, min_host_index_, max_host_index_);
   if (ret != kSuccess) {
-    MS_LOG(ERROR) << "init cache failed," << ret.CodeAsString;
+    // MS_LOG(ERROR) << "init cache failed," << ret.CodeAsString();
     return kLiteError;
   }
 

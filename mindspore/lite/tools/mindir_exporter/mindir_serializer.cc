@@ -105,6 +105,9 @@ int MindIRSerializer::Save(const std::shared_ptr<ConverterPara> &param, const Fu
     MS_LOG(ERROR) << "parse path failed.";
     return ret;
   }
+  // todo
+  func_graph->set_attr("graph_output_names",
+                       MakeValue(ConverterInnerContext::GetInstance()->GetGraphOutputTensorNames()));
 
   ret = RemoveQuantParameterHolder(func_graph);
   if (ret != RET_OK && ret != RET_NO_CHANGE) {

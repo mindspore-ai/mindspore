@@ -17,6 +17,7 @@
 #include "src/extendrt/delegate/tensorrt/op/allgather_tensorrt.h"
 #include <numeric>
 #include "NvInferRuntimeCommon.h"
+#include "ops/all_gather.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(AllGatherPluginCreater);
@@ -26,8 +27,8 @@ nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
 template <class T>
 std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
-int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                                 const std::vector<mindspore::MSTensor> &out_tensors) {
+int AllGatherTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                                 const std::vector<TensorInfo> &out_tensors) {
 #ifndef LITE_CUDA_DISTRIBUTION
   MS_LOG(ERROR)
     << "Unsupported package for gpu distribution feature, please recompile with MS_ENABLE_CUDA_DISTRIBUTION set to on.";
@@ -52,7 +53,7 @@ int AllGatherTensorRT::IsSupport(const schema::Primitive *primitive, const std::
 
 int AllGatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_};
-  auto allgather_op = op_primitive_->value_as_AllGather();
+  auto allgather_op = AsOps<ops::AllGather>();
   if (allgather_op == nullptr) {
     MS_LOG(ERROR) << "convert failed for " << op_name_;
     return RET_ERROR;
@@ -108,5 +109,5 @@ nvinfer1::DimsExprs AllGatherPlugin::getOutputDimensions(int outputIndex, const 
   }
   return out_dims;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_AllGather, AllGatherTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameAllGather, AllGatherTensorRT)
 }  // namespace mindspore::lite

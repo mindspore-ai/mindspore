@@ -42,6 +42,7 @@ int NormalizeOptPlugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc,
   size_t dim_at_axis = input_dims.d[axis_];
   int element_cnt = std::accumulate(input_dims.d, input_dims.d + input_dims.nbDims, 1, std::multiplies<int64_t>());
   Normalize(input, gamma, beta, output, dim_at_axis, epsilion_, element_cnt, stream);
+  return RET_OK;
 }
 
 nvinfer1::IPluginV2DynamicExt *NormalizeOptPlugin::clone() const noexcept {

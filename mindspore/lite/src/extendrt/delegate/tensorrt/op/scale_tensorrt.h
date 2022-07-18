@@ -24,20 +24,21 @@ using mindspore::lite::RET_OK;
 namespace mindspore::lite {
 class ScaleTensorRT : public TensorRTOp {
  public:
-  ScaleTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  ScaleTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~ScaleTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  bool IsWeightInputHanledInner() const override { return true; }
+
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
-  nvinfer1::ScaleMode GetScaleMode(int64_t axis);
+  nvinfer1::ScaleMode GetScaleMode(nvinfer1::ITensor *, int64_t axis);
 
   nvinfer1::ITensor *PreProcessInputTensor(TensorRTContext *ctx);
 

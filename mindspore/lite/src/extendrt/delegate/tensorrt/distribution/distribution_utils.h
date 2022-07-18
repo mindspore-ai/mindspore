@@ -20,6 +20,7 @@
 #include "include/errorcode.h"
 #include "NvInfer.h"
 #include "schema/ops_types_generated.h"
+#include "mindapi/base/types.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -27,6 +28,6 @@ using mindspore::lite::RET_OK;
 namespace mindspore::lite {
 ncclDataType_t ConvertNCCLDataType(nvinfer1::DataType type_id);
 
-ncclRedOp_t ConvertNCCLReduceMode(schema::ReduceMode mode);
+ncclRedOp_t ConvertNCCLReduceMode(ReduceMode mode);
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_DELEGATE_TENSORRT_DISTRIBUTION_DISTRIBUTION_UTILS_H_

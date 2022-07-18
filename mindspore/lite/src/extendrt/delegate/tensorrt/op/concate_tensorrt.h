@@ -18,32 +18,34 @@
 #include <string>
 #include <vector>
 #include "src/extendrt/delegate/tensorrt/op/tensorrt_op.h"
+#include "ops/concat.h"
+#include "ops/stack.h"
 
 namespace mindspore::lite {
 class ConcateTensorRT : public TensorRTOp {
  public:
-  ConcateTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                  const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                  const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {
-    type_ = primitive->value_type();
-    axis_ = (type_ == schema::PrimitiveType_Concat ? primitive->value_as_Concat()->axis()
-                                                   : primitive->value_as_Stack()->axis());
+  ConcateTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                  const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {
+    if (type_ == ops::kNameConcat) {
+      axis_ = AsOps<ops::Concat>()->get_axis();
+    } else {
+      axis_ = AsOps<ops::Stack>()->get_axis();
+    }
   }
 
   ~ConcateTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   int PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *trt_input_tensors[]);
 
-  Format out_format_{Format::NHWC};
+  Format out_format_{Format::NCHW};
   bool same_format_{true};
-  schema::PrimitiveType type_;
   int axis_;
 };
 }  // namespace mindspore::lite

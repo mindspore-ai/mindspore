@@ -23,17 +23,16 @@
 namespace mindspore::lite {
 class PReluTensorRT : public TensorRTOp {
  public:
-  PReluTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  PReluTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~PReluTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_DELEGATE_TENSORRT_OP_PRELU_TENSORRT_H_

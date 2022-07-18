@@ -262,7 +262,7 @@ tensor::TensorPtr MSANFModelParser::GenerateTensorPtrFromTensorProto(const mind_
 
   MS_EXCEPTION_IF_NULL(tensor);
   const std::string &tensor_buf = attr_tensor.raw_data();
-  if (attr_tensor.has_raw_data()) {
+  if (attr_tensor.has_raw_data() && tensor->data().nbytes() != 0) {
     auto *tensor_data_buf = reinterpret_cast<uint8_t *>(tensor->data_c());
     auto ret = memcpy_s(tensor_data_buf, tensor->data().nbytes(), tensor_buf.data(), tensor_buf.size());
     if (ret != 0) {
@@ -822,9 +822,7 @@ bool MSANFModelParser::SetPrimitiveAttrWithType(const PrimitivePtr &prim, const 
         return false;
       }
       const std::string &op_type = prim->name();
-      if (!IsLite()) {
-        CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
-      }
+      CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &value);
       if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && value->isa<StringImm>()) {
         auto str_dtype = GetValue<std::string>(value);
         if (str_dtype == "int32") {
@@ -861,9 +859,7 @@ bool MSANFModelParser::GetAttrValueForCNode(const PrimitivePtr &prim, const mind
       if (ref_attr_name.find("value0") != std::string::npos) {
         ValuePtr res = ObtainCNodeAttrInSingleScalarForm(attr_proto);
         const std::string &op_type = prim->name();
-        if (!IsLite()) {
-          CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
-        }
+        CheckAndConvertUtils::ConvertAttrValueInLoad(op_type, attr_name, &res);
         if (op_type == "HistogramFixedWidth" && attr_name == "dtype" && res->isa<StringImm>()) {
           auto str_dtype = GetValue<std::string>(res);
           if (str_dtype == "int32") {
@@ -1440,8 +1436,19 @@ bool MSANFModelParser::BuildAttrForFuncGraph(const FuncGraphPtr &outputFuncGraph
         outputFuncGraph->set_attr(attr_proto.name(), ParseAttrInSingleScalar_int32_t_int32_t(attr_proto));
         break;
       }
+      case mind_ir::AttributeProto_AttributeType_TUPLE:
+      case mind_ir::AttributeProto_AttributeType_LIST: {
+        auto sequence_value = ObtainValueInSequenceForm(attr_proto);
+        if (sequence_value == nullptr) {
+          MS_LOG(ERROR) << "Failed to get sequence value for " << attr_proto.name();
+          return false;
+        }
+        outputFuncGraph->set_attr(attr_proto.name(), sequence_value);
+        break;
+      }
       default:
-        MS_LOG(ERROR) << "Obtain attr for graph has not support input type: " << attr_type << "!";
+        MS_LOG(ERROR) << "Obtain attr for graph has not support input type: " << attr_type
+                      << ", attr name: " << attr_proto.name();
         return false;
     }
   }
@@ -1537,6 +1544,9 @@ bool MSANFModelParser::SetValueForTopGraphParameter(const FuncGraphPtr &topGraph
 
 FuncGraphPtr MSANFModelParser::Parse(const mind_ir::ModelProto &model_proto,
                                      const std::map<std::string, ValuePtr> &weights) {
+  if (IsLite()) {
+    abstract_valid_ = true;
+  }
   FuncGraphPtr dstGraph = std::make_shared<FuncGraph>();
   if (!MSANFParseModelConfigureInfo(model_proto)) {
     MS_LOG(ERROR) << "Parse configuration info for pb file failed!";

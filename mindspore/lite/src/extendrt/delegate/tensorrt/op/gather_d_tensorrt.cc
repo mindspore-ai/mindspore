@@ -20,6 +20,7 @@
 #include <memory>
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/gather_d.h"
 
 namespace mindspore::lite {
 REGISTER_TENSORRT_PLUGIN(GatherDPluginCreater);
@@ -29,8 +30,8 @@ nvinfer1::PluginFieldCollection TensorRTPluginCreater<T>::field_collection_{};
 template <class T>
 std::vector<nvinfer1::PluginField> TensorRTPluginCreater<T>::fields_;
 
-int GatherDTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                               const std::vector<mindspore::MSTensor> &out_tensors) {
+int GatherDTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                               const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported gatherd input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -48,7 +49,7 @@ int GatherDTensorRT::IsSupport(const schema::Primitive *primitive, const std::ve
 
 int GatherDTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 2).trt_tensor_};
-  auto dim_tensor = static_cast<const int *>(in_tensors_[1].Data().get());
+  auto dim_tensor = static_cast<const int *>(in_tensors_[1].Data());
   if (dim_tensor == nullptr) {
     MS_LOG(ERROR) << op_name_ << " gatherd dim_tensor is null!";
     return RET_ERROR;
@@ -124,7 +125,7 @@ void GatherDPlugin::Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const n
   size_t dim_at_axis_input = input_dims.d[IntToSize(axis_)];
   size_t dim_at_axis_output = output_dims.d[IntToSize(axis_)];
   size_t dim_after_axis = 1;
-  for (size_t i = IntToSize(axis_) + 1; i < output_dims.nbDims; i++) {
+  for (size_t i = IntToSize(axis_) + 1; i < IntToSize(output_dims.nbDims); i++) {
     dim_after_axis *= output_dims.d[i];
   }
 
@@ -134,5 +135,5 @@ void GatherDPlugin::Reshape(const nvinfer1::PluginTensorDesc *inputDesc, const n
   dim_after_axis_ = dim_after_axis;
   return;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_GatherD, GatherDTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameGatherD, GatherDTensorRT)
 }  // namespace mindspore::lite

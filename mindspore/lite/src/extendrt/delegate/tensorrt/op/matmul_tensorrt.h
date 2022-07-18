@@ -24,17 +24,18 @@
 namespace mindspore::lite {
 class MatMulTensorRT : public TensorRTOp {
  public:
-  MatMulTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                 const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  MatMulTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                 const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~MatMulTensorRT() override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
   int AddInnerOp(TensorRTContext *ctx) override;
+
+  bool IsWeightInputHanledInner() const override { return true; }
 
  private:
   int PreprocessMatMulInputs(TensorRTContext *ctx, ITensorHelper *matmul_a, ITensorHelper *matmul_b);
@@ -47,12 +48,12 @@ class MatMulTensorRT : public TensorRTOp {
 
   nvinfer1::ITensor *AddBias(TensorRTContext *ctx, nvinfer1::ITensor *input_tensor);
 
-  bool RunFullConnect();
+  bool RunFullConnect(TensorRTContext *ctx);
 
   bool transpose_a_{false};
   bool transpose_b_{false};
-  Format out_format_{Format::NHWC};
-  schema::ActivationType activation_{schema::ActivationType::ActivationType_NO_ACTIVATION};
+  Format out_format_{Format::NCHW};
+  ActivationType activation_{ActivationType::NO_ACTIVATION};
   void *weight_ptr_{nullptr};
 };
 }  // namespace mindspore::lite

@@ -25,20 +25,19 @@
 namespace mindspore::lite {
 class CumsumTensorRT : public TensorRTOp {
  public:
-  CumsumTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                 const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                 const schema::QuantType &quant_type)
-      : TensorRTOp(primitive, in_tensors, out_tensors, name, quant_type) {}
+  CumsumTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                 const std::vector<TensorInfo> &out_tensors, std::string name)
+      : TensorRTOp(base_operator, in_tensors, out_tensors, name) {}
 
   ~CumsumTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 };
 
-constexpr char *CUMSUM_PLUGIN_NAME{"CumsumPlugin"};
+constexpr auto CUMSUM_PLUGIN_NAME{"CumsumPlugin"};
 class CumsumPlugin : public TensorRTPlugin {
  public:
   CumsumPlugin(const std::string name, int axis, bool exclusive, bool reverse, uint32_t device_id)
@@ -73,9 +72,9 @@ class CumsumPlugin : public TensorRTPlugin {
  private:
   int RunCudaCumsum(const nvinfer1::PluginTensorDesc *inputDesc, const void *const *inputs, void *const *outputs,
                     cudaStream_t stream);
+  int axis_;
   bool exclusive_;
   bool reverse_;
-  int axis_;
   const std::string layer_name_;
   std::string name_space_;
 };

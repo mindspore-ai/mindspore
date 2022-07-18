@@ -24,10 +24,11 @@
 #include "NvInferRuntimeCommon.h"
 #include "src/extendrt/delegate/tensorrt/op/cumsum_tensorrt.h"
 #include "cumsum_impl.cuh"
+#include "ops/cumsum.h"
 
 namespace mindspore::lite {
-int CumsumTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                              const std::vector<mindspore::MSTensor> &out_tensors) {
+int CumsumTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                              const std::vector<TensorInfo> &out_tensors) {
   if (in_tensors.size() != 2) {
     MS_LOG(ERROR) << "Unsupported input tensor size, size is " << in_tensors.size();
     return RET_ERROR;
@@ -47,9 +48,10 @@ int CumsumTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
-  int axis = static_cast<const int *>(in_tensors_[1].Data().get())[0];
-  bool exclusive = op_primitive_->value_as_CumSum()->exclusive();
-  bool reverse = op_primitive_->value_as_CumSum()->reverse();
+  int axis = static_cast<const int *>(in_tensors_[1].Data())[0];
+  auto cumsum_op = AsOps<ops::CumSum>();
+  bool exclusive = cumsum_op->get_exclusive();
+  bool reverse = cumsum_op->get_reverse();
   auto plugin =
     std::make_shared<CumsumPlugin>(input_helper.trt_tensor_->getName(), axis, exclusive, reverse, device_id_);
   nvinfer1::ITensor *inputTensors[] = {input_helper.trt_tensor_};
@@ -115,5 +117,5 @@ void CumsumPlugin::serialize(void *buffer) const noexcept {
   SerializeValue(&buffer, &exclusive_, sizeof(bool));
   SerializeValue(&buffer, &reverse_, sizeof(bool));
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_CumSum, CumsumTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameCumSum, CumsumTensorRT)
 }  // namespace mindspore::lite

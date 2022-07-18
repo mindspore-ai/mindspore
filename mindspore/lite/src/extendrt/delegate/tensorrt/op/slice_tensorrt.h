@@ -26,14 +26,14 @@ class SliceTensorRTUtil {
  public:
   SliceTensorRTUtil() = default;
   virtual ~SliceTensorRTUtil() = default;
-  virtual bool IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                         const std::vector<mindspore::MSTensor> &out_tensors) = 0;
+  virtual bool IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                         const std::vector<TensorInfo> &out_tensors) = 0;
   virtual std::tuple<nvinfer1::Dims, nvinfer1::Dims, nvinfer1::Dims> GetSliceParams(
-    const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-    const std::vector<mindspore::MSTensor> &out_tensors) = 0;
+    const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+    const std::vector<TensorInfo> &out_tensors, const ITensorHelper &helper) = 0;
   virtual nvinfer1::ITensor *PostProcess(TensorRTContext *ctx, nvinfer1::ITensor *input,
-                                         const std::vector<mindspore::MSTensor> &in_tensors,
-                                         const std::vector<mindspore::MSTensor> &out_tensors) {
+                                         const std::vector<TensorInfo> &in_tensors,
+                                         const std::vector<TensorInfo> &out_tensors) {
     return input;
   }
   std::string op_name_;
@@ -48,16 +48,15 @@ constexpr int CROP_INPUT_SIZE = 2;
 constexpr int SLICE_INPUT_SIZE = 3;
 class SliceTensorRT : public TensorRTOp {
  public:
-  SliceTensorRT(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors, const std::string &name,
-                const schema::QuantType &quant_type);
+  SliceTensorRT(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &inputs,
+                const std::vector<TensorInfo> &outputs, std::string name);
 
   ~SliceTensorRT() override = default;
 
   int AddInnerOp(TensorRTContext *ctx) override;
 
-  int IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                const std::vector<mindspore::MSTensor> &out_tensors) override;
+  int IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                const std::vector<TensorInfo> &out_tensors) override;
 
  private:
   std::unique_ptr<SliceTensorRTUtil> util_;

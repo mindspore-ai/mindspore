@@ -1,10 +1,10 @@
 set(MODEL_LOADER_FRAMEWORK_SRC
-        ${MODEL_LOADER_FRAMEWORK_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/model_loader.cc
-)
+    ${MODEL_LOADER_FRAMEWORK_SRC}
+    ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/model_loader.cc
+    )
 
 set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-        ${MODEL_LOADER_FRAMEWORK_SRC})
+    ${MODEL_LOADER_FRAMEWORK_SRC})
 if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     set(ENABLE_CPU on)
     add_compile_definitions(USE_GLOG)
@@ -13,45 +13,44 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_compile_definitions(ENABLE_CLOUD_FUSION_INFERENCE)
     remove_definitions(-DBUILD_LITE_INFERENCE)
     set(MINDIR_MODEL_SRC
-            ${MINDIR_MODEL_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_util.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_convertor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_loader.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/kernel_mod_util.cc
-            )
+        ${MINDIR_MODEL_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_convertor.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/mindir_model_loader.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/kernel_mod_util.cc
+        )
 
     set(MINDIR_KERNEL_SRC
-            ${MINDIR_KERNEL_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/inner_kernel.cc)
+        ${MINDIR_KERNEL_SRC}
+        ${CMAKE_CURRENT_SOURCE_DIR}/mindir_loader/mindir_model/inner_kernel.cc)
 
     set(MSLITE_KERNEL_PLUGIN
-            ${MSLITE_KERNEL_PLUGIN}
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
+        ${MSLITE_KERNEL_PLUGIN}
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/ascend/plugin/ascend_kernel_plugin.cc)
 
     set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
-            ${MSLITE_KERNEL_PLUGIN}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/delegate.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/session/graph_executor_session.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/tensorrt/graph_executor.cc
-            )
+        ${MSLITE_KERNEL_PLUGIN}
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/file_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../common/graph_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/../litert/pack_weight_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/dynamic_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/numa_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/less_test_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/kernel/cpu/transpose_kernel_mod.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/infer_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/single_op_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/infer_device_address.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_build_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/kernel_graph_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/tensor_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils/runtime_utils.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/delegate/graph_executor/delegate.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/delegate_session.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/session/graph_executor_session.cc
+        )
 
     if(NOT MSLITE_ENABLE_ACL)
         set(MSLITE_EXTEND_RUNTIME_SRC ${MSLITE_EXTEND_RUNTIME_SRC}
@@ -62,9 +61,9 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     endif()
 
     set(FBS_FILES
-            ${CCSRC_DIR}/../schema/cipher.fbs
-            ${CCSRC_DIR}/../schema/fl_job.fbs
-            )
+        ${CCSRC_DIR}/../schema/cipher.fbs
+        ${CCSRC_DIR}/../schema/fl_job.fbs
+        )
     ms_build_flatbuffers_lite(FBS_FILES ${CCSRC_DIR}/../schema/ generated_fbs_files ${CMAKE_BINARY_DIR}/schema "")
 
     include_directories("${CCSRC_DIR}/ps/core")
@@ -75,7 +74,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     if(NOT ENABLE_SECURITY)
         include_directories("${CCSRC_DIR}/profiler/device/ascend")
         file(GLOB_RECURSE PROFILER_PROTO_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        "${CCSRC_DIR}/plugin/device/ascend/hal/profiler/memory_profiling.proto")
+            "${CCSRC_DIR}/plugin/device/ascend/hal/profiler/memory_profiling.proto")
         ms_protobuf_generate(PROFILER_MEM_PROTO_SRC PROFILER_MEM_PROTO_HDRS ${PROFILER_PROTO_LIST})
         list(APPEND MSLITE_PROTO_SRC ${PROFILER_MEM_PROTO_SRC})
     endif()
@@ -125,7 +124,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
         ${CCSRC_DIR}/utils/comm_manager.cc
         )
     add_library(mindspore-kernel-graph OBJECT ${KERNEL_GRAPH_SRC})
-    add_dependencies(mindspore-kernel-graph  mindspore-lite-proto)
+    add_dependencies(mindspore-kernel-graph mindspore-lite-proto)
 
     add_library(mindspore-extendrt SHARED ${MSLITE_EXTEND_RUNTIME_SRC})
     add_dependencies(mindspore-extendrt fbs_inner_src)
@@ -145,8 +144,8 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     add_subdirectory(${CCSRC_DIR}/backend/common/optimizer mindspore_ccsrc_backend_cmmon_optimizer)
     target_link_libraries(mindspore-extendrt mindspore_infer_shared_lib_obj)
     target_link_libraries(mindspore-extendrt mindspore-infer-anfalgo
-                          mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
-                          _mindspore_backend_common_pass_obj)
+        mindspore-kernel-graph _mindspore_backend_common_optimizer_obj
+        _mindspore_backend_common_pass_obj)
     target_link_libraries(mindspore-extendrt mindspore_core mindspore::protobuf mindspore::pybind11_module)
 
     if(NOT WIN32)
@@ -186,7 +185,7 @@ if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
     else()
         set(TENSORRT_STUB
             ${CMAKE_CURRENT_SOURCE_DIR}/delegate/tensorrt/distribution/distribution_base.cc
-        )
+            )
         add_library(tensorrt_stub OBJECT ${TENSORRT_STUB})
         target_link_libraries(mindspore-extendrt tensorrt_stub)
     endif()

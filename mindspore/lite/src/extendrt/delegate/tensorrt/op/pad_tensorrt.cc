@@ -18,11 +18,11 @@
 #include <functional>
 #include "src/extendrt/delegate/tensorrt/op/pad_tensorrt.h"
 #include "src/extendrt/delegate/tensorrt/tensorrt_utils.h"
+#include "ops/fusion/pad_fusion.h"
 
 namespace mindspore::lite {
-int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
-                           const std::vector<mindspore::MSTensor> &in_tensors,
-                           const std::vector<mindspore::MSTensor> &out_tensors) {
+int PadTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                           const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -35,31 +35,32 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
     MS_LOG(ERROR) << "Unsupported output tensor size, size is " << out_tensors.size();
     return RET_ERROR;
   }
-  if (in_tensors_[1].Data() == nullptr) {
+  if (!in_tensors_[1].IsConst()) {
     MS_LOG(ERROR) << "invalid pad tensor for: " << op_name_;
     return RET_ERROR;
   }
-  auto pad_primitive = this->GetPrimitive()->value_as_PadFusion();
-  if (pad_primitive == nullptr) {
+  auto pad_op = AsOps<ops::PadFusion>();
+  if (pad_op == nullptr) {
     MS_LOG(ERROR) << "convert PadFusion failed: " << op_name_;
     return RET_ERROR;
   }
-  schema::PaddingMode padding_mode = pad_primitive->padding_mode();
-  if (padding_mode != schema::PaddingMode::PaddingMode_CONSTANT) {
-    MS_LOG(ERROR) << "Unsupported padding mode: " << schema::PaddingMode(padding_mode) << ", for op: " << op_name_;
+  PaddingMode padding_mode = pad_op->get_padding_mode();
+  if (padding_mode != PaddingMode::CONSTANT) {
+    MS_LOG(ERROR) << "Unsupported padding mode: " << PaddingMode(padding_mode) << ", for op: " << op_name_;
     return RET_ERROR;
   }
   if (in_tensors[0].format() != Format::NHWC && in_tensors[0].format() != Format::NCHW) {
     MS_LOG(ERROR) << "Unsupported input tensor format of " << in_tensors[0].format();
     return RET_ERROR;
   }
-  constant_value_ = pad_primitive->constant_value();
+  constant_value_ = pad_op->get_constant_value();
   return RET_OK;
 }
 
 int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  mindspore::MSTensor &pad_tensor = in_tensors_[1];
-  int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
+  TensorInfo &pad_tensor = in_tensors_[1];
+  auto pad_shape = pad_tensor.Shape();
+  int element_cnt = std::accumulate(pad_shape.begin(), pad_shape.end(), 1, std::multiplies<int>());
   if (element_cnt != input(ctx, 0).trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
     MS_LOG(ERROR) << "pad tensor cnt is invalid. cnt: " << element_cnt
                   << ", input tensor dims cnt: " << input(ctx, 0).trt_tensor_->getDimensions().nbDims;
@@ -82,7 +83,7 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   // trt 6 only support 2D padding
-  const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data().get());
+  const int *padding_data = reinterpret_cast<const int *>(in_tensors_[1].Data());
   MS_ASSERT(padding_data);
   nvinfer1::IPaddingLayer *padding_layer = nullptr;
   if (element_cnt == index_NHWC_ * INPUT_SIZE2) {
@@ -136,5 +137,5 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(output_helper);
   return RET_OK;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PadFusion, PadTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNamePadFusion, PadTensorRT)
 }  // namespace mindspore::lite

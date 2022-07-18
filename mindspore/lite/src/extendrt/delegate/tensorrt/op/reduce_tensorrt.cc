@@ -16,10 +16,11 @@
 
 #include <valarray>
 #include "src/extendrt/delegate/tensorrt/op/reduce_tensorrt.h"
+#include "ops/fusion/reduce_fusion.h"
 
 namespace mindspore::lite {
-int ReduceTensorRT::IsSupport(const schema::Primitive *primitive, const std::vector<mindspore::MSTensor> &in_tensors,
-                              const std::vector<mindspore::MSTensor> &out_tensors) {
+int ReduceTensorRT::IsSupport(const BaseOperatorPtr &base_operator, const std::vector<TensorInfo> &in_tensors,
+                              const std::vector<TensorInfo> &out_tensors) {
   if (!IsShapeKnown()) {
     MS_LOG(ERROR) << "Unsupported input tensor unknown shape: " << op_name_;
     return RET_ERROR;
@@ -38,17 +39,18 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  auto reduce_op = op_primitive_->value_as_ReduceFusion();
+  auto reduce_op = AsOps<ops::ReduceFusion>();
   if (reduce_op == nullptr) {
     MS_LOG(ERROR) << "convert failed";
     return RET_ERROR;
   }
-  bool keep_dims = reduce_op->keep_dims();
+  bool keep_dims = reduce_op->get_keep_dims();
   out_format_ = input(ctx, 0).format_;
   nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
   MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
   if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
       !SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
+    /*
     if (input(ctx, 0).format_ == Format::NCHW) {
       // NCHW->NHWC
       nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
@@ -74,9 +76,10 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     } else {
       MS_LOG(WARNING) << "input tensor format needs check: " << op_name_;
     }
+     */
   }
   MS_LOG(DEBUG) << "after transpose input " << GetTensorFormat(reduce_input, out_format_, true);
-  if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
+  if (reduce_op->get_mode() == ReduceMode::Reduce_L2) {
     // x^2
     auto *pow2_layer =
       ctx->network()->addElementWise(*reduce_input, *reduce_input, nvinfer1::ElementWiseOperation::kPROD);
@@ -88,9 +91,9 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   uint32_t reduceAxis = GetAxis();
-  auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->mode());
+  auto reduce_operation_opt = TryConvertTRTReduceMode(reduce_op->get_mode());
   if (!reduce_operation_opt) {
-    MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(reduce_op->mode());
+    MS_LOG(WARNING) << "invalid reduce for TensorRT, need check: " << static_cast<int>(reduce_op->get_mode());
     return RET_ERROR;
   }
   nvinfer1::IReduceLayer *layer =
@@ -102,7 +105,7 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
   nvinfer1::ITensor *out_tensor = layer->getOutput(0);
   CHECK_NULL_RETURN(out_tensor);
 
-  if (reduce_op->mode() == schema::ReduceMode::ReduceMode_ReduceL2) {
+  if (reduce_op->get_mode() == ReduceMode::Reduce_L2) {
     auto sqrt_layer = ctx->network()->addUnary(*out_tensor, nvinfer1::UnaryOperation::kSQRT);
     CHECK_NULL_RETURN(sqrt_layer);
     sqrt_layer->setName((op_name_ + "_sqrt").c_str());
@@ -117,15 +120,15 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
 uint32_t ReduceTensorRT::GetAxis() {
   // axis
   uint32_t reduceAxis = 0;
-  mindspore::MSTensor axis_tensor = this->in_tensors_[1];
-  if (axis_tensor.Data() == nullptr) {
+  auto axis_tensor = this->in_tensors_[1];
+  if (!axis_tensor.IsConst()) {
     MS_LOG(ERROR) << "invalid axis_tensor";
     return reduceAxis;
   }
   if (axis_tensor.DataType() != DataType::kNumberTypeInt32) {
     MS_LOG(WARNING) << "not int data type";
   }
-  int *axis_data = reinterpret_cast<int *>(axis_tensor.MutableData());
+  auto axis_data = reinterpret_cast<const int *>(axis_tensor.Data());
   CHECK_NULL_RETURN(axis_data);
   for (int i = 0; i < axis_tensor.ElementNum(); i++) {
     int format_axis_data = (*axis_data == -1) ? in_tensors_[0].Shape().size() - 1 : *axis_data;
@@ -135,5 +138,5 @@ uint32_t ReduceTensorRT::GetAxis() {
   }
   return reduceAxis;
 }
-REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_ReduceFusion, ReduceTensorRT)
+REGISTER_TENSORRT_CREATOR(ops::kNameReduceFusion, ReduceTensorRT)
 }  // namespace mindspore::lite

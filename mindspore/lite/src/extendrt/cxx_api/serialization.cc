@@ -106,7 +106,6 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
     MS_LOG(ERROR) << err_msg.str();
     return Status(kMEInvalidInput, err_msg.str());
   }
-
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = nullptr;
     try {
@@ -120,7 +119,7 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
           MS_LOG(ERROR) << err_msg.str();
           return Status(kMEInvalidInput, err_msg.str());
         } else {
-          anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data), data_size);
+          anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(model_data), data_size, true);
         }
       } else {
         size_t plain_data_size;
@@ -131,7 +130,7 @@ Status Serialization::Load(const void *model_data, size_t data_size, ModelType m
           MS_LOG(ERROR) << err_msg.str();
           return Status(kMEInvalidInput, err_msg.str());
         }
-        anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size);
+        anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(plain_data.get()), plain_data_size, true);
       }
     } catch (const std::exception &) {
       err_msg << "Load model failed. Please check the valid of dec_key and dec_mode.";
@@ -181,7 +180,7 @@ Status Serialization::Load(const std::vector<char> &file, ModelType model_type, 
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
-    MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
+    MindIRLoader mindir_loader(true, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
                                false);
     anf_graph = mindir_loader.LoadMindIR(file_path);
     if (anf_graph == nullptr) {
@@ -265,7 +264,7 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
       MS_LOG(ERROR) << err_msg.str();
       return Status(kMEInvalidInput, err_msg.str());
     }
-    MindIRLoader mindir_loader(false, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
+    MindIRLoader mindir_loader(true, dec_key.len == 0 ? nullptr : dec_key.key, dec_key.len, CharToString(dec_mode),
                                true);
     auto anf_graphs = mindir_loader.LoadMindIRs(files_path);
     if (anf_graphs.size() != files_path.size()) {
