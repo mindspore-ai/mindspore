@@ -425,7 +425,7 @@ bool GraphExecutorPy::HasCompiled(const std::string &phase) const {
 py::bytes GraphExecutorPy::GetFuncGraphProto(const std::string &phase, const std::string &ir_type) {
   FuncGraphPtr fg_ptr = GetFuncGraph(phase);
   if (fg_ptr == nullptr) {
-    for (auto &item : info_) {
+    for (const auto &item : info_) {
       MS_LOG(DEBUG) << "Phase key is: " << item.first;
     }
     MS_LOG(EXCEPTION) << "Can not find func graph " << phase;
@@ -590,7 +590,7 @@ GraphExecutorPy::~GraphExecutorPy() {
 
 void GraphExecutorPy::GetWeightInfo(
   const CNodePtr &root_node, const AnfNodePtr &weight_node,
-  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) {
+  std::map<std::string, std::pair<PrimitivePyAdapterPtr, std::string>> *fake_quant_table) const {
   MS_EXCEPTION_IF_NULL(root_node);
   MS_EXCEPTION_IF_NULL(fake_quant_table);
   std::string weight_name;
@@ -884,7 +884,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source_obj, const py::tuple
   // Save the compiled graph to MsPipeLine.
   SaveCompiledGraph(phase);
 #ifdef ENABLE_DUMP_IR
-  (void)mindspore::RDR::Snapshot();
+  mindspore::RDR::Snapshot();
 #endif
   opt::python_pass::PyPassManager::GetInstance()->ClearPipelineRes();
   abstract::AnalysisContext::ClearContext();
@@ -1340,7 +1340,7 @@ void GraphExecutorPy::UpdataParamNodeDefaultInput(
   }
 }
 
-void GraphExecutorPy::PyExePath(const py::object &py_exe_path) {
+void GraphExecutorPy::PyExePath(const py::object &py_exe_path) const {
   if (!py::isinstance<py::str>(py_exe_path)) {
     MS_LOG(EXCEPTION) << "Failed, py_exe_path input is not a str";
   }
@@ -1349,7 +1349,7 @@ void GraphExecutorPy::PyExePath(const py::object &py_exe_path) {
   ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
 }
 
-void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) {
+void GraphExecutorPy::KernelBuildServerDir(const py::object &kernel_build_server_dir) const {
   if (!py::isinstance<py::str>(kernel_build_server_dir)) {
     MS_LOG(EXCEPTION) << "Failed, kernel_build_server_dir input is not a str";
   }
@@ -1503,7 +1503,7 @@ void InitHccl() {
 #ifdef ENABLE_D
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
-    (void)InitPipeline();
+    InitPipeline();
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     const auto &device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
@@ -1524,9 +1524,9 @@ void InitHccl() {
       MS_LOG(EXCEPTION) << "Mpi init failed, please check if mpirun is used correctly.";
     }
     auto rank_id = HcclCollectiveGroup::instance().GetRankId(kHcclWorldGroup);
-    common::SetEnv(kRankID, std::to_string(rank_id).c_str());
+    (void)common::SetEnv(kRankID, std::to_string(rank_id).c_str());
     device_id = IntToUint(HcclCollectiveGroup::instance().GetDeviceId());
-    common::SetEnv("DEVICE_ID", std::to_string(device_id).c_str());
+    (void)common::SetEnv("DEVICE_ID", std::to_string(device_id).c_str());
     ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id);
   }
 #endif
@@ -1554,7 +1554,7 @@ void FinalizeHccl() {
 #ifdef ENABLE_D
   auto backend = ms_context->backend_policy();
   if (backend == "ge") {
-    (void)FinalizeBackend();
+    FinalizeBackend();
     return;
   }
 #endif

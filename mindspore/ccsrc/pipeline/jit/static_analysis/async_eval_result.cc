@@ -126,7 +126,7 @@ void AnalysisSchedule::SetNextReady() {
     return;
   }
   // Check if enter endless loop
-  auto it = std::find_if(schedule_list_.begin(), schedule_list_.end(), [](const auto &item) {
+  auto it = std::find_if(schedule_list_.cbegin(), schedule_list_.cend(), [](const auto &item) {
     MS_EXCEPTION_IF_NULL(item);
     return item->HasResult();
   });

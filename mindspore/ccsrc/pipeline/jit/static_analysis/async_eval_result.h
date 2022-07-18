@@ -430,10 +430,10 @@ class AnalysisResultCacheMgr {
   inline EvalResultPtr GetValue(const AnfNodeConfigPtr &conf) { return cache_.get(conf); }
   void InitSwitchValue(const AnfNodeConfigPtr &conf);
   AbstractBasePtr GetSwitchValue(const AnfNodeConfigPtr &conf);
-  void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
+  void SetSwitchValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
   const_iterator begin() { return cache_.begin(); }
   const_iterator end() { return cache_.end(); }
-  void CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale);
+  void CheckSwitchValueJoinable(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg);
   const PrimitiveEvalCachePtr &prim_eval_cache() const { return prim_eval_cache_; }
 
  private:
@@ -442,7 +442,8 @@ class AnalysisResultCacheMgr {
   using AnalysisConfigAsyncResultCache =
     MultiThreadCache<AnfNodeConfigPtr, AsyncAbstractPtr, AnalysisConfigAsyncResultMap>;
   AnalysisResultCacheMgr() = default;
-  void SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &vale, AnalysisConfigAsyncResultCache *cache);
+  void SetCacheValue(const AnfNodeConfigPtr &conf, const AbstractBasePtr &current_abs,
+                     AnalysisConfigAsyncResultCache *cache);
 
   std::mutex lock_;
   AnalysisConfigResultCache cache_;
@@ -451,7 +452,7 @@ class AnalysisResultCacheMgr {
   PrimitiveEvalCachePtr prim_eval_cache_ = std::make_shared<PrimitiveEvalCache>();
 };
 
-std::string ArgsToString(const AbstractBasePtrList &args_spec_list);
+std::string ArgsToString(const AbstractBasePtrList &args_abs_list);
 
 inline std::string GetInferThread() { return std::string(" INFER:") + AnalysisSchedule::thread_id() + ":"; }
 }  // namespace abstract
