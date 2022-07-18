@@ -6,7 +6,7 @@ mindspore.ops.sparse_segment_mean
     计算输出Tensor :math:`output_i = \frac{\sum_j x_{indices[j]}}{N}` ，其中平均是对所有满足 :math:`segment\_ids[j] == i` 的元素， :math:`N` 表示相加的元素个数。如果给定的分段ID :math:`i` 不存在，则有 :math:`output[i] = 0` 。
 
     .. note::
-        - 在CPU上， `segment_ids` 中的值会被校验是否排序，若索引值不是升序的，则抛出错误。另外， `indices` 中的值也会被校验是否在界限内，若索引值超出范围[0, x.shape[0])，则抛出错误。
+        - 在CPU平台， `segment_ids` 中的值会被校验是否排序，若索引值不是升序的，则抛出错误。另外， `indices` 中的值也会被校验是否在界限内，若索引值超出范围[0, x.shape[0])，则抛出错误。
         - 在GPU平台，对于 `segment_ids` 未排序和 `indices` 越界则不抛出错误。如果，无序的 `segment_ids` 会导致安全但未指定的行为，而超出范围的 `indices` 将被忽略。
 
     **参数：**
