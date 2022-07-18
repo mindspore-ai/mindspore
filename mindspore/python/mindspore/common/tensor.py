@@ -686,6 +686,8 @@ class Tensor(Tensor_):
         r"""
         Returns arctangent of x/y element-wise.
 
+        `x` refer to self tensor.
+
         It returns :math:`\theta\ \in\ [-\pi, \pi]`
         such that :math:`x = r*\sin(\theta), y = r*\cos(\theta)`, where :math:`r = \sqrt{x^2 + y^2}`.
 
@@ -694,8 +696,6 @@ class Tensor(Tensor_):
         the relatively highest precision data type.
 
         Args:
-            x (Tensor): The input tensor.
-                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
             y (Tensor): The input tensor. It has the same shape with `x`.
 
         Returns:
@@ -1321,13 +1321,10 @@ class Tensor(Tensor_):
         r"""
         Returns the natural logarithm of one plus the input tensor element-wise.
 
+        `x` refer to self tensor.
+
         .. math::
             out_i = {log_e}(x_i + 1)
-
-        Args:
-            - **x** (Tensor) - The input tensor. With float16 or float32 data type.
-              The value must be greater than -1.
-              :math:`(N,*)` where :math:`*` means, any number of additional dimensions, its rank should be less than 8.
 
         Returns:
             Tensor, has the same shape as the `x`.
