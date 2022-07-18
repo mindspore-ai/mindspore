@@ -16,7 +16,7 @@ mindspore.ops.DataFormatDimMap
 
     **输出：**
 
-    - **output** (Tensor) - 输出Tensor，返回给定目标数据格式的维度索引，与 `input_x` 具有相同的数据类型和shape。
+    输出Tensor，返回给定目标数据格式的维度索引，与 `input_x` 具有相同的数据类型和shape。
 
     **异常：**
 
