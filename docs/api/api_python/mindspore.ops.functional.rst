@@ -87,6 +87,16 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.softsign
     mindspore.ops.tanh
 
+采样函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.grid_sample
+
 数学运算函数
 ----------------
 
@@ -153,6 +163,9 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.sinh
     mindspore.ops.sub
     mindspore.ops.tan
+    mindspore.ops.trunc
+    mindspore.ops.truncate_div
+    mindspore.ops.truncate_mod
     mindspore.ops.xlogy
 
 .. list-table::
@@ -357,6 +370,7 @@ Array操作
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.padding
+    mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements

@@ -88,6 +88,16 @@ Activation Functions
     mindspore.ops.soft_shrink
     mindspore.ops.tanh
 
+Sampling Functions
+^^^^^^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.grid_sample
+
 Mathematical Functions
 ----------------------
 
@@ -155,6 +165,9 @@ Element-by-Element Functions
     mindspore.ops.sinh
     mindspore.ops.sub
     mindspore.ops.tan
+    mindspore.ops.trunc
+    mindspore.ops.truncate_div
+    mindspore.ops.truncate_mod
     mindspore.ops.xlogy
 
 .. list-table::
@@ -358,6 +371,7 @@ Array Functions
     mindspore.ops.nonzero
     mindspore.ops.one_hot
     mindspore.ops.padding
+    mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements
