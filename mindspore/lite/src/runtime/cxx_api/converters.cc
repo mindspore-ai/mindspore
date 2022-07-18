@@ -83,6 +83,10 @@ lite::InnerContext *ContextUtils::Convert(Context *context) {
     MS_LOG(ERROR) << "Device num, support min: 1, max: " << kMaxNumOfDevices;
     return nullptr;
   }
+  if (context->GetInterOpParallelNum() <= 0) {
+    MS_LOG(ERROR) << "Invalid inter op parallel num : " << context->GetInterOpParallelNum();
+    return nullptr;
+  }
   SetContextAttr(context->GetThreadNum(), context->GetInterOpParallelNum(), context->GetEnableParallel(),
                  context->GetThreadAffinityCoreList(), context->GetDelegate(), inner_context.get(),
                  context->GetMultiModalHW());
