@@ -3036,10 +3036,10 @@ def affine_grid(theta, output_size, align_corners=False):
     Generates a 2D or 3D flow field (sampling grid), given a batch of affine matrices theta.
 
     Args:
-        theta (Tensor) - The input tensor whose dtype is float16, float32.
-          Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
-        output_size (tuple[int]) - The target output image size.
-          The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
+        theta (Tensor): The input tensor whose dtype is float16, float32.
+            Input batch of affine matrices with shape [N, 2, 3] for 2D grid or [N, 3, 4] for 3D grid.
+        output_size (tuple[int]): The target output image size.
+            The value of target output with format [N, C, H, W] for 2D grid or [N, C, D, H, W] for 3D grid.
         align_corners (bool): If True, consider -1 and 1 to refer to the centers of the corner pixels rather
                               than the image corners. The default value is False.
 
@@ -3053,7 +3053,7 @@ def affine_grid(theta, output_size, align_corners=False):
         ValueError: If the size of `output_size` is not 4 or 5.
         ValueError: If the shape of `theta` is [N, 2, 3], the size of `output_size` is not 4;
                     If the shape of `theta` is [N, 3, 4], the size of `output_size` is not 5.
-                    If the output_size[0] is not equal to the shape[0] of theta.
+        ValueError: If the output_size[0] is not equal to the shape[0] of theta.
 
     Supported Platforms:
         ``GPU``
