@@ -91,13 +91,26 @@ void TensorPyBind(const py::module &m) {
          [](MSTensor &tensor, const py::array &input) {
            PyArrayObject *darray = PyArray_GETCONTIGUOUS(reinterpret_cast<PyArrayObject *>(input.ptr()));
            void *data = PyArray_DATA(darray);
-           tensor.SetData(data);
+           auto tensor_data = tensor.MutableData();
+           memcpy(tensor_data, data, tensor.DataSize());
+           Py_DECREF(darray);
          })
     .def("get_data_to_numpy", [](MSTensor &tensor) -> py::array {
       auto info = GetPyBufferInfo(tensor);
       py::object self = py::cast(&tensor);
       return py::array(py::dtype(info), info.shape, info.strides, info.ptr, self);
     });
+}
+
+MSTensor create_tensor() {
+  auto tensor = mindspore::MSTensor::CreateTensor("", DataType::kNumberTypeFloat32, {}, nullptr, 0);
+  if (tensor == nullptr) {
+    MS_LOG(ERROR) << "create tensor failed.";
+    return {};
+  }
+  auto copy_tensor = *tensor;
+  delete tensor;
+  return copy_tensor;
 }
 
 std::string GetPyTypeFormat(DataType data_type) {

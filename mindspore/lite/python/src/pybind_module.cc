@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "pybind11/pybind11.h"
+#include "include/api/types.h"
 
 namespace mindspore::lite {
 namespace py = pybind11;
@@ -22,6 +23,7 @@ void ContextPyBind(const py::module &m);
 void ConverterPyBind(const py::module &m);
 void ModelPyBind(const py::module &m);
 void TensorPyBind(const py::module &m);
+MSTensor create_tensor();
 
 PYBIND11_MODULE(_c_lite_wrapper, m) {
   m.doc() = "MindSpore Lite";
@@ -31,5 +33,6 @@ PYBIND11_MODULE(_c_lite_wrapper, m) {
 #endif
   ModelPyBind(m);
   TensorPyBind(m);
+  m.def("create_tensor", &create_tensor);
 }
 }  // namespace mindspore::lite
