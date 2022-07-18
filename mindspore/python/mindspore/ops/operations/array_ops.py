@@ -7236,6 +7236,7 @@ class Cummax(Primitive):
         """Initialize Cummax"""
         validator.check_value_type("axis", axis, [int], self.name)
         self.init_prim_io_names(inputs=['x'], outputs=['y', 'indices'])
+        self.add_prim_attr("dim", axis)
 
 
 class RightShift(Primitive):
