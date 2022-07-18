@@ -131,8 +131,10 @@ mindspore.dataset
 .. mscnautosummary::
     :toctree: dataset
 
+    mindspore.dataset.ArgoverseDataset
+    mindspore.dataset.Graph
     mindspore.dataset.GraphData
-
+    mindspore.dataset.InMemoryGraphDataset
 
 采样器
 -------

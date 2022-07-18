@@ -113,7 +113,10 @@ Graph
     :nosignatures:
     :template: classtemplate_inherited.rst
 
+    mindspore.dataset.ArgoverseDataset
+    mindspore.dataset.Graph
     mindspore.dataset.GraphData
+    mindspore.dataset.InMemoryGraphDataset
 
 Sampler
 --------
