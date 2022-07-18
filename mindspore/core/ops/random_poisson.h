@@ -32,6 +32,10 @@ class MIND_API RandomPoisson : public BaseOperator {
   MIND_API_BASE_MEMBER(RandomPoisson);
   RandomPoisson() : BaseOperator(kRandomPoisson) { InitIOName({"shape", "rate"}, {"output"}); }
   void Init() const {}
+  void set_seed(const int64_t seed);
+  int64_t get_seed() const;
+  void set_seed2(const int64_t seed2);
+  int64_t get_seed2() const;
 };
 abstract::AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args);
