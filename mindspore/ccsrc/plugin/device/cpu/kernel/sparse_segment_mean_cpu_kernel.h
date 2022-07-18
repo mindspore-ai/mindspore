@@ -54,9 +54,13 @@ class SparseSegmentMeanCpuKernelMod : public NativeCpuKernelMod {
     SparseSegmentMeanCpuKernelMod *, const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
   static std::vector<std::pair<KernelAttr, SparseSegmentMeanLaunchFunc>> func_list_;
   SparseSegmentMeanLaunchFunc kernel_func_;
-  size_t dim0_size_{1};
-  size_t dimx_size_{1};
+  size_t outer_size_{1};
+  size_t inner_size_{1};
   size_t indices_size_{1};
+  size_t x_size_{1};
+  size_t y_size_{1};
+  size_t batch_rank_{0};
+  size_t batch_size_{1};
 };
 }  // namespace kernel
 }  // namespace mindspore

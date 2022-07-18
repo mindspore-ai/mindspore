@@ -724,6 +724,43 @@ def get_cum_min_max_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
+@vmap_rules_getters.register(math_ops.SparseSegmentMean)
+def get_sparse_segment_mean_vmap_rule(prim, axis_size):
+    """VmapRule for `SparseSegmentMean` operation."""
+
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    prim_name = prim.name
+    batch_prim = math_ops.SparseSegmentMean()
+    batch_prim.add_prim_attr("batch_rank", batch_rank)
+
+    def vmap_rule(x_bdim, indices_bdim, segment_ids_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, x_bdim, indices_bdim, segment_ids_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        indices, indices_dim = indices_bdim
+        segment_ids, segment_ids_dim = segment_ids_bdim
+
+        # segment_ids affect output shape, must be none
+        if segment_ids_dim is not None:
+            _raise_value_error("The source axis of `segment_ids` in `{}` must be None, "
+                               "but got {}.".format(prim_name, segment_ids_dim))
+
+        x = _bdim_at_front(x, x_dim, axis_size)
+        indices = _bdim_at_front(indices, indices_dim, axis_size)
+        segment_ids = _bdim_at_front(segment_ids, segment_ids_dim, axis_size)
+
+        out = batch_prim(x, indices, segment_ids)
+        return out, 0
+
+    return vmap_rule
+
+
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignAdd)(get_assign_vmap_rule)
 get_assign_vmap_rule = vmap_rules_getters.register(P.AssignSub)(get_assign_vmap_rule)
 # Unary vmap
