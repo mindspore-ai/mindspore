@@ -12,6 +12,7 @@
 
 - [BETA]  提供`mindspore.Model.fit` API，增加两种callback方法 `mindspore.callback.EarlyStopping` 和 `mindspore.callback.ReduceLROnPlateau`。
 - [BETA] 自定义算子支持Julia算子。
+- [BETA] 自定义算子支持Hybrid DSL算子。
 - [STABLE] export()接口支持自定义加密算法导出模型，load()接口支持自定义解密算法导入模型。
 - [BETA]   [动静统一] [易用性] 图编译支持常量类型设置可变(1.8版本支持tuple/list/dict)。
 - [BETA]   [动静统一] 常量场景下控制流内支持JIT Fallback功能。
@@ -63,11 +64,6 @@
 
 ##### Python API
 
-- 修改register_backward_hook功能对应hook的梯度返回值类型，将梯度返回值统一改成tuple类型。([!31876](https://gitee.com/mindspore/mindspore/pulls/31876))
-- 弃用的import用法： `import mindspore.dataset.engine.datasets as ds` ，因其import目录过深且过度依赖Python目录结构。推荐使用官方推荐用法 `import mindspore.dataset as ds` ，更多参考详见 [API文档](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.dataset.html).
-- 新增`mindspore.ms_class` 接口，作为用户自定义类的类装饰器，使得MindSpore能够识别用户自定义类，并且获取这些类的属性和方法。([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
-- `mindspore.SparseTensor`接口废弃使用，对应新接口为`mindspore.COOTensor`. ([!28505]())
-- Tensor新增一个入参`internal`，作为框架内部使用。
 - 不再支持DVPP模拟算法，删除 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` 和 `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` 接口。
 - LossMonitor中增加`on_train_epoch_end` 方法，实现在 `mindspore.Model.fit` 中使用时，打印epoch级别的metric信息。
 - TimeMonitor打印内容变更，打印内容加入”train“或“eval”用于区分训练和推理阶段。
