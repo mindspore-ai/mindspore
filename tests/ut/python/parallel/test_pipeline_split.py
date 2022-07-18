@@ -466,7 +466,7 @@ class TestPipelineSplitWithNoOptimizer:
         self.cat_fp16_from_ir(pattern='grad_mirror_MirrorMicroStepOperator',
                               target_count=2)
         self.cat_fp16_from_ir(pattern='Cast(',
-                              target_count=14)
+                              target_count=16)
 
     def test_pipeline_with_micro_batch_no_parallel_optimizer(self):
         """
@@ -485,7 +485,7 @@ class TestPipelineSplitWithNoOptimizer:
         self.cat_fp16_from_ir(pattern='grad_mirror_MirrorMicroStepOperator',
                               target_count=2)
         self.cat_fp16_from_ir(pattern='Cast(',
-                              target_count=26)
+                              target_count=28)
 
 def test_pipeline_split_stage0_device_num_48():
     """
