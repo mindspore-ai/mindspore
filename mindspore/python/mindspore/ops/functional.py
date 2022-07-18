@@ -33,7 +33,6 @@ from mindspore.ops.primitive import constexpr, Primitive
 from . import operations as P
 from .operations import _grad_ops
 from .operations import _csr_ops
-from .operations import linalg_ops
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
@@ -956,7 +955,6 @@ tensor_operator_registry.register('inv', inv)
 tensor_operator_registry.register('invert', invert)
 tensor_operator_registry.register('hardshrink', P.HShrink)
 tensor_operator_registry.register('soft_shrink', P.SoftShrink)
-tensor_operator_registry.register('svd', linalg_ops.Svd)
 tensor_operator_registry.register('diag', P.Diag)
 tensor_operator_registry.register('unique_consecutive', UniqueConsecutive)
 tensor_operator_registry.register('unique_with_pad', P.UniqueWithPad)
@@ -1019,7 +1017,6 @@ tensor_operator_registry.register('tensor_scatter_update', tensor_scatter_update
 tensor_operator_registry.register('tensor_scatter_mul', tensor_scatter_mul)
 tensor_operator_registry.register('tensor_scatter_div', tensor_scatter_div)
 tensor_operator_registry.register('tensor_scatter_min', P.TensorScatterMin)
-tensor_operator_registry.register('tensor_scatter_max', P.TensorScatterMax)
 tensor_operator_registry.register('tensor_scatter_sub', P.TensorScatterSub)
 tensor_operator_registry.register('tensor_scatter_add', P.TensorScatterAdd)
 tensor_operator_registry.register('bernoulli', bernoulli)

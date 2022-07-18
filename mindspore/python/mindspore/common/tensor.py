@@ -3721,55 +3721,6 @@ class Tensor(Tensor_):
         self._init_check()
         return tensor_operator_registry.get('nonzero')(self)
 
-    def svd(self, full_matrices=False, compute_uv=True):
-        """
-        Refer to :func:`mindspore.ops.svd` for more detail.
-
-        Args:
-            full_matrices (bool, optional): If true, compute full-sized :math:`U` and :math:`V`. If false, compute
-                                            only the leading P singular vectors. P is the minimum of M and N.
-                                            M, N is the row, col of the input matrix. Default: False.
-            compute_uv (bool, optional): If true, compute the left and right singular vectors.
-                                         If false, compute only the singular values. Default: True.
-
-        Returns:
-            - **s**  (Tensor) - Singular values. The shape is :math:`(*, P)`.
-            - **u**  (Tensor) - Left singular vectors. If compute_uv is False, u will not be returned.
-              The shape is :math:`(*, M, P)`. If full_matrices is True, the shape will be :math:`(*, M, M)`.
-            - **v**  (Tensor) - Right singular vectors. If compute_uv is False, v will not be returned.
-              The shape is :math:`(*, P, N)`. If full_matrices is True, the shape will be :math:`(*, N, N)`.
-
-        Raises:
-            TypeError: If full_matrices or compute_uv is not the type of bool.
-            TypeError: If the rank of input less than 2.
-            TypeError: If the type of input is not one of the following dtype: mstype.float32, mstype.float64.
-
-        Supported Platforms:
-            ``GPU`` ``CPU``
-
-        Examples:
-            >>> import numpy as np
-            >>> from mindspore import Tensor, context
-            >>> context.set_context(device_target="CPU")
-            >>> a = Tensor(np.array([[1, 2], [-4, -5], [2, 1]]).astype(np.float32))
-            >>> s, u, v = a.svd(full_matrices=True, compute_uv=True)
-            >>> print(s)
-            [7.0652843 1.040081 ]
-            >>> print(u)
-            [[ 0.30821905 -0.48819482 0.81649697]
-             [-0.90613353  0.11070572 0.40824813]
-             [ 0.2896955   0.8656849  0.4082479 ]]
-            >>> print(v)
-            [[ 0.63863593 0.769509  ]
-             [ 0.769509  -0.63863593]]
-        """
-        svd_op = tensor_operator_registry.get("svd")
-        if compute_uv:
-            return svd_op(full_matrices, compute_uv)(self)
-
-        s, _, _ = svd_op(full_matrices, compute_uv)(self)
-        return s
-
     def hardshrink(self, lambd=0.5):
         r"""
         Apply the Hard Shrink function for tensor. Calculates the output according to the input elements.

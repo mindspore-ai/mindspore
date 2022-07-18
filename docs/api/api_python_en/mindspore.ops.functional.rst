@@ -149,7 +149,6 @@ Element-by-Element Operations
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sub
-    mindspore.ops.svd
     mindspore.ops.tan
     mindspore.ops.xlogy
 
@@ -349,7 +348,6 @@ Array Operation
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
     mindspore.ops.tensor_scatter_add
-    mindspore.ops.tensor_scatter_min
     mindspore.ops.tensor_scatter_max
     mindspore.ops.tensor_scatter_div
     mindspore.ops.tensor_scatter_mul

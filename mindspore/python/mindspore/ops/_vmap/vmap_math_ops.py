@@ -22,7 +22,6 @@ from mindspore.ops import functional as F
 from mindspore.ops import constexpr
 from mindspore.common import Tensor
 from mindspore.ops.operations import math_ops
-from mindspore.ops.operations import linalg_ops
 from mindspore.ops.operations import _inner_ops
 from mindspore.ops.operations import _grad_ops as G
 from ..primitive import Primitive
@@ -494,7 +493,6 @@ def get_index_add_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(linalg_ops.Svd)
 def get_svd_vmap_rule(prim, axis_size):
     """VmapRule for 'Svd' operation."""
     if isinstance(prim, str):
