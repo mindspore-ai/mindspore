@@ -199,8 +199,7 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @param int32_t size - batch_size
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status The status code returned
-  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
-                          bool concat_batch = false);
+  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size);
 
   // @param table
   // @param const PadInfo &pad_info pad info
@@ -281,7 +280,6 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   Status ComputeColMap() override;
 
   int32_t start_batch_size_;
-  bool concat_batch_ = false;                           // bool for whether to concat batch rows
   const bool drop_;                                     // bool for whether to drop remainder or not
   const bool pad_;                                      // bool for whether to perform padding on tensor
   std::vector<std::string> in_col_names_;               // input column name for per_batch_map
