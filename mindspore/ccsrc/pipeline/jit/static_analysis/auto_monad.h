@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,9 @@
 #define MINDSPORE_CCSRC_PIPELINE_JIT_PARSE_AUTO_MONAD_H_
 
 #include <string>
-#include <memory>
 
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "base/effect_info.h"
 
 namespace mindspore::pipeline {
 

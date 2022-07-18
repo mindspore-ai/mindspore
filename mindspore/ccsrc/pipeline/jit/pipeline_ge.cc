@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ void DoExecNonInputGraph(const std::string &phase) {
   }
 }
 
-Status CreateSessionAndGraphRunner(bool is_training = true) {
+void CreateSessionAndGraphRunner(bool is_training = true) {
   std::shared_ptr<ge::Session> sess = transform::GetGeSession();
   if (sess == nullptr) {
     transform::SessionOptions options;
@@ -98,7 +98,6 @@ Status CreateSessionAndGraphRunner(bool is_training = true) {
   options.sess_ptr = sess;
   auto graph_runner = transform::NewGraphRunner(options);
   transform::SetGraphRunner(graph_runner);
-  return Status::SUCCESS;
 }
 
 bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batch_size,
@@ -137,10 +136,7 @@ bool InitExecDatasetGe(const std::string &queue_name, int64_t size, int64_t batc
     (void)setenv("GE_TRAIN", "0", 1);
   }
 
-  if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
-    return false;
-  }
+  CreateSessionAndGraphRunner(training);
 
   MS_LOG(INFO) << "DoExecNonInputGraph:" << phase;
   DoExecNonInputGraph(phase);
@@ -273,10 +269,7 @@ FuncGraphPtr BuildDFGraph(const std::map<std::string, ExecutorInfoPtr> &info, co
     (void)setenv("GE_TRAIN", "0", 1);
   }
 
-  if (CreateSessionAndGraphRunner(training) != Status::SUCCESS) {
-    MS_LOG(ERROR) << "Create GE Session or GraphRunner failed.";
-    return nullptr;
-  }
+  CreateSessionAndGraphRunner(training);
 
   return anf_graph;
 }
@@ -321,7 +314,7 @@ py::object ExtractGeneralCnodeRet(const AbstractBasePtr &cnode_data, const py::t
   for (size_t i = 0; i < size; i++) {
     tp[i] = ExtractGeneralCnodeRet(elements[i], data, count);
   }
-  return std::move(tp);
+  return tp;
 }
 
 py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data, size_t *count) {
@@ -352,7 +345,7 @@ py::object StructureOutput(const AnfNodePtr &output_node, const py::tuple &data,
     for (size_t i = 1; i < size; i++) {
       tp[i - 1] = StructureOutput(input_list[i], data, count);
     }
-    return std::move(tp);
+    return tp;
   }
   if (output_c->IsApply(prim::kPrimDepend)) {
     return StructureOutput(output_c->input(1), data, count);
@@ -368,7 +361,7 @@ void GetMeRetDataType(const AbstractBasePtr &cnode_data, std::vector<TypeId> *me
     TypeId me_type = cnode_data->BuildType()->type_id();
     if (me_type == kObjectTypeTensorType) {
       me_type = dyn_cast<TensorType>(cnode_data->BuildType())->element()->type_id();
-      me_types->emplace_back(me_type);
+      (void)me_types->emplace_back(me_type);
     }
     return;
   }
