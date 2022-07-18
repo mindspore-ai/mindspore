@@ -22,6 +22,7 @@
 #include <memory>
 #include <vector>
 #include "utils/ms_context.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace device {
@@ -39,6 +40,7 @@ class AscendMemAdapter {
 
   uint8_t *MallocStaticDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocDynamicDevMem(size_t size, const std::string &tag = "");
+  uint8_t *MallocOverflowMem(size_t size);
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
 

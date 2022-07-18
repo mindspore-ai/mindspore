@@ -17,6 +17,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 #include <algorithm>
+#include "ir/func_graph.h"
 #include "runtime/mem.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils_base.h"
@@ -171,6 +172,12 @@ uint8_t *AscendMemAdapter::MallocDynamicDevMem(size_t size, const std::string &t
   max_dynamic_mem_offset_ = std::max(cur_dynamic_mem_offset_, max_dynamic_mem_offset_);
   dynamic_memory_block_list_.push_back(std::make_shared<MemoryBlock>(memory_block_ptr, size, tag));
 
+  return memory_block_ptr;
+}
+
+uint8_t *AscendMemAdapter::MallocOverflowMem(size_t size) {
+  auto memory_block_ptr = MallocStaticDevMem(size, "overflow_memory");
+  MS_EXCEPTION_IF_NULL(memory_block_ptr);
   return memory_block_ptr;
 }
 
