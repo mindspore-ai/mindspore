@@ -25,6 +25,8 @@
 
 namespace mindspore {
 namespace runtime {
+using DeviceTensor = mindspore::device::DeviceAddress;
+
 // The device tensor mainly includes address ptr, size and reference count,
 // which represents the basic data structure of kernel launch and transfers between actors.
 // Some device tensors (such as ref real parameters) need be refreshed in the running,
