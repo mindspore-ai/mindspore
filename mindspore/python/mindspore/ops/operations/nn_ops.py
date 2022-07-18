@@ -755,6 +755,8 @@ class ReLU6(PrimitiveWithCheck):
 
 class ReLUV2(Primitive):
     r"""
+    The ReLUV2 interface is deprecated, please use the :class:`mindspore.ops.ReLU` instead.
+
     Rectified Linear Unit activation function.
 
     It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
@@ -776,7 +778,7 @@ class ReLUV2(Primitive):
         ValueError: If shape of `input_x` is not 4-D.
 
     Supported Platforms:
-        ``Ascend``
+        deprecated
 
     Examples:
         >>> input_x = Tensor(np.array([[[[1, -2], [-3, 4]], [[-5, 6], [7, -8]]]]), mindspore.float32)
