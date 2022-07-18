@@ -654,8 +654,8 @@ bool NeedConvertConstInputToAttr(const OpExecInfoPtr &op_run_info, mindspore::Ha
   auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   auto cur_target = GetCurrentDeviceTarget(device_target, op_run_info->py_primitive);
   if (device_target != cur_target) {
-    MS_LOG(WARNING) << "primitive target does not match backend: " << device_target
-                    << ", primitive_target: " << cur_target;
+    MS_LOG(DEBUG) << "primitive target does not match backend: " << device_target
+                  << ", primitive_target: " << cur_target;
     device_target = cur_target;
   }
   *input_to_attr_ptr = opt::ConstInputToAttrRegister::GetInstance().GetConstToAttr(op_run_info->op_name, device_target,
