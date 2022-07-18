@@ -247,26 +247,6 @@ class HcclTaskInfo : public TaskInfo {
         op_type_(op_type),
         data_type_(data_type),
         group_(group) {}
-  HcclTaskInfo(const std::string &op_name, uint32_t stream_id, const std::string hccl_type, void *input_data_addr,
-               void *output_data_addr, void *workspace_addr, int64_t workspace_size, int64_t hccl_stream_num,
-               const std::vector<uint8_t> &private_def, void *ops_kernel_store, int32_t count, int64_t root_id,
-               int64_t op_type, int64_t data_type, const std::string &group, bool dump_flag,
-               const std::vector<void *> &global_workspace_addr)
-      : TaskInfo(op_name, stream_id, TaskInfoType::HCCL, dump_flag),
-        hccl_type_(hccl_type),
-        input_data_addr_(input_data_addr),
-        output_data_addr_(output_data_addr),
-        workspace_addr_(workspace_addr),
-        workspace_size_(workspace_size),
-        hccl_stream_num_(hccl_stream_num),
-        private_def_(private_def),
-        ops_kernel_store_(ops_kernel_store),
-        count_(count),
-        root_id_(root_id),
-        op_type_(op_type),
-        data_type_(data_type),
-        group_(group),
-        global_workspace_addr_(global_workspace_addr) {}
   ~HcclTaskInfo() override {}
 
   const std::string &hccl_type() const { return hccl_type_; }
@@ -283,6 +263,9 @@ class HcclTaskInfo : public TaskInfo {
   int64_t data_type() const { return data_type_; }
   const std::string &group() const { return group_; }
   const std::vector<void *> &global_workspace_addr() const { return global_workspace_addr_; }
+  void SetGlobalWorkspaceAddr(const std::vector<void *> &global_workspace_addr) {
+    this->global_workspace_addr_ = global_workspace_addr;
+  }
 
  private:
   std::string hccl_type_;

@@ -167,7 +167,7 @@ void MPICollective::AssignLocalRankSize(const std::string &name, const std::vect
   CHECK_RET(
     MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, all_host_hashs.data(), sizeof(size_t), MPI_BYTE, mpi_group_comm),
     MPI_SUCCESS, "MPI_Allgather host hash failed.");
-  int local_rank_size = std::count(all_host_hashs.begin(), all_host_hashs.end(), host_hash);
+  int local_rank_size = static_cast<int>(std::count(all_host_hashs.begin(), all_host_hashs.end(), host_hash));
   std::get<local_rank_size_index>(group_info_[name]) = local_rank_size;
   std::vector<int> group_world_ranks(group_ranks.begin(), group_ranks.end());
   world_map_[name] = group_world_ranks;

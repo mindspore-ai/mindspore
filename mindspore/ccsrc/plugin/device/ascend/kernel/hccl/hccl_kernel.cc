@@ -290,15 +290,17 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
 
     std::vector<void *> global_workspace_addr;
     auto overflow_memory_ptr =
-      device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem(hccl_overflow_addr_size);
+      device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem(anf_node_.lock()->cast<CNodePtr>());
     MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
-    global_workspace_addr.push_back(overflow_memory_ptr);
+    global_workspace_addr.push_back(reinterpret_cast<void *>(overflow_memory_ptr));
 
-    results.emplace_back(std::make_shared<HcclTaskInfo>(
-      unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr, output_data_addr,
-      workspace_addr, task.workspace_size, task.stream_num, private_def,
-      hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(), hccl_count_, root_id_, op_type_, data_type, group_,
-      NeedDump(), global_workspace_addr));
+    HcclTaskInfoPtr hcclTaskInfo =
+      std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
+                                     output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
+                                     private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
+                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump());
+    hcclTaskInfo->SetGlobalWorkspaceAddr(global_workspace_addr);
+    results.emplace_back(hcclTaskInfo);
   }
 
   return results;
