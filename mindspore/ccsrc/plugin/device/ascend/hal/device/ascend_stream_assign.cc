@@ -372,7 +372,7 @@ void AscendStreamAssign::InsertEvents(const NotNull<KernelGraphPtr> &kernel_grap
                                       const AnfNodePtr &node_before_send,
                                       mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_send,
                                       mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> *kernel_recv,
-                                      const AnfNodePtr &node_after_recv) {
+                                      const AnfNodePtr &node_after_recv) const {
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   uint32_t event_id = resource_manager.ApplyNewEvent();
   auto event = resource_manager.ApplyRtEvent();
@@ -955,7 +955,7 @@ void AscendStreamAssign::AssignAllNodesStream(const NotNull<KernelGraphPtr> &gra
 void AscendStreamAssign::ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &graph_ptr,
                                               std::vector<CNodePtr> *common_list, std::vector<CNodePtr> *hcom_list,
                                               std::vector<CNodePtr> *independent_list,
-                                              std::vector<CNodePtr> *comm_sub_graph_list) {
+                                              std::vector<CNodePtr> *comm_sub_graph_list) const {
   MS_EXCEPTION_IF_NULL(common_list);
   MS_EXCEPTION_IF_NULL(hcom_list);
   MS_EXCEPTION_IF_NULL(independent_list);
@@ -979,7 +979,7 @@ void AscendStreamAssign::ClassifyNodeByKernel(const NotNull<KernelGraphPtr> &gra
 }
 
 void AscendStreamAssign::ClassifyNodeByGroupAndGraph(const std::vector<CNodePtr> hcom_list,
-                                                     GroupGraphMap *group_graph_map) {
+                                                     GroupGraphMap *group_graph_map) const {
   MS_EXCEPTION_IF_NULL(group_graph_map);
   for (auto cur_cnode_ptr : hcom_list) {
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
@@ -1057,7 +1057,7 @@ void AscendStreamAssign::ClassifyNodeByGraph(const std::vector<CNodePtr> indepen
   }
 }
 
-uint32_t AscendStreamAssign::GetNodeTaskNum(const CNodePtr &cnode) {
+uint32_t AscendStreamAssign::GetNodeTaskNum(const CNodePtr &cnode) const {
   auto node_name = common::AnfAlgo::GetCNodeName(cnode);
   if (node_name == kHcomSendOpName || node_name == kReceiveOpName) {
     return kTaskNumPerHcomSendRecvNode;
@@ -1511,9 +1511,10 @@ void AscendStreamAssign::InsertEventForHcomParallel(const NotNull<KernelGraphPtr
   MS_LOG(INFO) << "End";
 }
 
-bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr, uint32_t graph_id) {
+bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGraphPtr> &graph_ptr,
+                                                          uint32_t graph_id) const {
   auto cnodes = graph_ptr->execution_order();
-  for (int64_t i = cnodes.size() - 1; i >= 0; --i) {
+  for (int64_t i = static_cast<int64_t>(cnodes.size() - 1); i >= 0; --i) {
     if (AnfAlgo::GetGraphId(cnodes[static_cast<size_t>(i)].get()) == graph_id &&
         IsHcom(cnodes[static_cast<size_t>(i)])) {
       return (common::AnfAlgo::GetCNodeName(cnodes[static_cast<size_t>(i)]) == kSendOpName) ||
@@ -1526,9 +1527,9 @@ bool AscendStreamAssign::ExistStreamSendAfterLastHcomNode(const NotNull<KernelGr
 }
 
 void AscendStreamAssign::InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &root_graph, std::vector<CNodePtr> *cnodes,
-                                               uint32_t cur_event_id, uint32_t graph_id) {
+                                               uint32_t cur_event_id, uint32_t graph_id) const {
   std::set<std::string> ending_nodes = {kStreamActiveOpName, kLabelGotoOpName};
-  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); iter--) {
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
     if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
       continue;
     }
@@ -1540,11 +1541,11 @@ void AscendStreamAssign::InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &ro
     // StreamRecv node after the last node, at the same time, the next node of the last not in the graph is LabelSet.
     if (ending_nodes.find(node_name) != ending_nodes.end()) {
       MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " before node: " << (*iter)->fullname_with_scope();
-      cnodes->insert(iter, recv_cnode);
+      (void)cnodes->insert(iter, recv_cnode);
       break;
     } else if ((iter < cnodes->end() - 1) && common::AnfAlgo::GetCNodeName(*(iter + 1)) == kLabelSetOpName) {
       MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " after node: " << (*iter)->fullname_with_scope();
-      cnodes->insert(iter + 1, recv_cnode);
+      (void)cnodes->insert(iter + 1, recv_cnode);
       break;
     } else {
       MS_LOG(EXCEPTION) << "The last node of graph " << graph_id
@@ -1556,9 +1557,9 @@ void AscendStreamAssign::InsertRecvForLoopSink(const NotNull<KernelGraphPtr> &ro
 
 void AscendStreamAssign::InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> &root_graph,
                                                   std::vector<CNodePtr> *cnodes, uint32_t cur_event_id,
-                                                  uint32_t graph_id) {
+                                                  uint32_t graph_id) const {
   uint32_t stream_id = UINT32_MAX;
-  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); iter--) {
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
     if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
       continue;
     }
@@ -1572,13 +1573,13 @@ void AscendStreamAssign::InsertRecvForNotLoopSink(const NotNull<KernelGraphPtr> 
     MS_LOG(EXCEPTION) << "Can not find compute node in graph " << graph_id;
   }
 
-  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); iter--) {
+  for (auto iter = cnodes->end() - 1; iter >= cnodes->begin(); --iter) {
     if (AnfAlgo::GetGraphId((*iter).get()) != graph_id) {
       continue;
     }
     CNodePtr recv_cnode = CreateRecvApplyKernel(root_graph, cur_event_id, stream_id);
     MS_LOG(INFO) << "Insert StreamRecv " << cur_event_id << " after node: " << (*iter)->fullname_with_scope();
-    cnodes->insert(iter + 1, recv_cnode);
+    (void)cnodes->insert(iter + 1, recv_cnode);
     break;
   }
 }
@@ -1780,7 +1781,7 @@ vector<CNodePtr> AscendStreamAssign::GetLastInputCnode(const NotNull<KernelGraph
   return final_inputs;
 }
 
-vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &cnode) {
+vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(cnode);
   vector<CNodePtr> input_cnodes;
   queue<CNodePtr> nop_nodes;
@@ -1813,7 +1814,7 @@ vector<CNodePtr> AscendStreamAssign::GetInputKernels(const CNodePtr &cnode) {
   return input_cnodes;
 }
 
-void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPtr> &graph_ptr) const {
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> cnodes;
@@ -1859,7 +1860,7 @@ void AscendStreamAssign::InsertEventHcomDependCommon(const NotNull<KernelGraphPt
 }
 
 std::vector<std::pair<uint32_t, vector<size_t>>> AscendStreamAssign::GetStreamIDHcomMap(
-  std::vector<CNodePtr> cnode_ptr_list, const std::string group, size_t graph_id) {
+  std::vector<CNodePtr> cnode_ptr_list, const std::string group, size_t graph_id) const {
   std::vector<std::pair<uint32_t, vector<size_t>>> stream_indices;
   for (size_t i = 0; i < cnode_ptr_list.size(); i++) {
     auto cur_cnode = cnode_ptr_list[i];
@@ -1907,7 +1908,7 @@ void AscendStreamAssign::InsertEventHcomDependHcomAtSameGroup(
   }
 }
 
-void AscendStreamAssign::InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::InsertEventForCallCommSubGraph(const NotNull<KernelGraphPtr> &graph_ptr) const {
   std::map<uint32_t, std::string> comm_sub_graph_id_to_group = {};  // key: label id, value: hcom group
   const auto &cnode_list = graph_ptr->execution_order();
   for (const auto &n : cnode_list) {
@@ -1972,8 +1973,8 @@ void AscendStreamAssign::InsertEventHcomDependHcom(const NotNull<KernelGraphPtr>
   }
 }
 
-void AscendStreamAssign::InsertEventBetweenHcom(const NotNull<KernelGraphPtr> &graph_ptr,
-                                                const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index) {
+void AscendStreamAssign::InsertEventBetweenHcom(
+  const NotNull<KernelGraphPtr> &graph_ptr, const std::vector<std::pair<uint32_t, vector<size_t>>> &hcom_index) const {
   vector<CNodePtr> orders;
   AscendStreamMng &resource_manager = AscendStreamMng::GetInstance();
   auto cnode_ptr_list = graph_ptr->execution_order();
@@ -2297,7 +2298,7 @@ void AscendStreamAssign::GetNeedActiveStreams(const NotNull<KernelGraphPtr> &gra
 }
 
 // section8
-void AscendStreamAssign::CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::CheckResourceAssign(const NotNull<KernelGraphPtr> &graph_ptr) const {
   CheckStreamAssign(graph_ptr);
   CheckEventAssign(graph_ptr);
 }
@@ -2889,7 +2890,7 @@ void AscendStreamAssign::FindEventRelations(const NotNull<KernelGraphPtr> &graph
 }
 
 // section12
-void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr> &graph_ptr) const {
   // Eg:[atomic, recv, memcpy] should be [recv, atomic, memcpy]
   std::vector<CNodePtr> update_orders;
   auto &exe_orders = graph_ptr->execution_order();
@@ -2919,7 +2920,7 @@ void AscendStreamAssign::AdjustAtomicAddrCleanOrder(const NotNull<KernelGraphPtr
 CNodePtr FindNextGenMask(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePtr do_mask_cnode) {
   auto &exec_order = graph_ptr->execution_order();
   auto iter = std::find(exec_order.begin(), exec_order.end(), do_mask_cnode);
-  for (; iter != exec_order.end(); iter++) {
+  for (; iter != exec_order.end(); ++iter) {
     auto cnode = *iter;
     if ((common::AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskOpName &&
          common::AnfAlgo::GetCNodeName(cnode) != kDropoutGenMaskV3OpName) ||
@@ -2931,7 +2932,7 @@ CNodePtr FindNextGenMask(const NotNull<KernelGraphPtr> &graph_ptr, const CNodePt
   return nullptr;
 }
 
-void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr) {
+void AscendStreamAssign::InsertEventForMicroBatchIndependent(const NotNull<KernelGraphPtr> &graph_ptr) const {
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() <= 1) {
     return;
   }
