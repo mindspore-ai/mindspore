@@ -77,7 +77,7 @@ std::string OpTilingCalculateAdapter::GetRealOpType(const std::string &op_type) 
   return iter->second;
 }
 
-std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(const std::string &op_type) {
+std::map<std::string, std::string> OpTilingCalculateAdapter::GetConvertAttr(const std::string &op_type) const {
   std::map<std::string, std::string> attrs;
   static const std::map<std::string, std::map<std::string, std::string>> op_type_map = {
     {"ArgMaxWithValue", {{"axis", "dimension"}}}};

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace opt {
 class AscendCommOpReuse {
  public:
-  AscendCommOpReuse(const KernelGraphPtr &root_graph, const uint32_t &max_comm_op_reuse_num)
+  AscendCommOpReuse(const KernelGraphPtr &root_graph, const size_t &max_comm_op_reuse_num)
       : root_graph_(root_graph), max_comm_op_reuse_num_(max_comm_op_reuse_num) {}
   void Run();
 
@@ -46,9 +46,9 @@ class AscendCommOpReuse {
   KernelGraphPtr root_graph_ = {};
   std::vector<std::pair<CNodePtr, KernelGraphPtr>> all_comm_ops_ = {};  // use vector to keep order
   std::map<CNodePtr, KernelGraphPtr> reused_comm_sub_graphs_ = {};      // origin comm op to reused comm sub graph
-  const uint32_t max_comm_op_reuse_num_;
+  const size_t max_comm_op_reuse_num_;
+  size_t total_comm_op_reuse_num_ = 0;
   uint32_t comm_subgraph_sum_ = 50000;
-  uint32_t total_comm_op_reuse_num_ = 0;
 };
 }  // namespace opt
 }  // namespace mindspore

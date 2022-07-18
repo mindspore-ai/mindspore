@@ -28,7 +28,6 @@ constexpr auto kAttrTransposeX2 = "transpose_x2";
 }  // namespace
 
 void MatmulConfusionTranposeFusionPass::MatchMatmulConfusionTranpose(const CNodePtr &cnode,
-                                                                     const session::KernelGraph &kernel_graph,
                                                                      FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
@@ -58,7 +57,7 @@ void MatmulConfusionTranposeFusionPass::MatchSingleFusionPattern(const session::
     MS_EXCEPTION_IF_NULL(cnode);
 
     if (common::AnfAlgo::GetCNodeName(cnode) == kConfusionTransposeDOpName) {
-      MatchMatmulConfusionTranpose(cnode, kernel_graph, candidate_fusion);
+      MatchMatmulConfusionTranpose(cnode, candidate_fusion);
     }
   }
 }

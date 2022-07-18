@@ -103,9 +103,9 @@ class TbeKernelCompileManager {
                       std::vector<CNodePtr> *tbe_nodes) const;
   void PrintProcessLog(const nlohmann::json &json, int adjust_log_level) const;
   void JsonAssemble(const std::string &job_type, const nlohmann::json &src_json, nlohmann::json *dst_json) const;
-  void PrintInitResult(const nlohmann::json &json);
+  void PrintInitResult(const nlohmann::json &json) const;
   void PrintCompileResult(const nlohmann::json &json);
-  std::string ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node);
+  std::string ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node) const;
   void ParseTargetJobStatus(const nlohmann::json &json, TargetJobStatus *target_status) const;
   nlohmann::json TurnStrToJson(const std::string &string) const;
   void SaveIOSizeInfo(const nlohmann::json &json, const std::string &json_name,

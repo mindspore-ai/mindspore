@@ -181,7 +181,7 @@ void AscendGraphOptimization::CommOpReuse(const KernelGraphPtr &graph) {
     return;
   }
   MS_LOG(INFO) << "Status record: start comm op reuse. graph id: " << graph->graph_id();
-  const uint32_t max_comm_op_reuse_num = IntToUint(std::stoi(max_comm_op_reuse_num_env));
+  const size_t max_comm_op_reuse_num = LongToSize(std::stol(max_comm_op_reuse_num_env));
   MS_LOG(INFO) << "MAX_COMM_OP_REUSE_NUM: " << max_comm_op_reuse_num;
   opt::AscendCommOpReuse comm_io_reuse(graph, max_comm_op_reuse_num);
   comm_io_reuse.Run();
