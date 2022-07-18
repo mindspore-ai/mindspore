@@ -181,7 +181,7 @@ class Tensor:
                 raise TypeError(f"tensor must be TensorBind, but got {type(tensor)}.")
             self._tensor = tensor
         else:
-            self._tensor = _c_lite_wrapper.TensorBind()
+            self._tensor = _c_lite_wrapper.create_tensor()
 
     def set_tensor_name(self, tensor_name):
         """
