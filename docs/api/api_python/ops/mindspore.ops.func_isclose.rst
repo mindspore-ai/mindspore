@@ -9,9 +9,6 @@ mindspore.ops.isclose
 
         ∣x1−x2∣  ≤  atol + rtol × ∣x2∣
 
-    .. note::
-        目前，Ascend后端不支持包含 inf 或 NaN 的输入数组。因此，当输入包含NaN或inf时，结果是不确定的。在Ascend后端上， `equal_nan` 必须为真。
-
     **参数：**
 
     - **x1** (Tensor) - 对比的第一个输入，支持的类型有float32，float16，int32。
@@ -33,4 +30,3 @@ mindspore.ops.isclose
     - **TypeError** - 如果 `x1` 和 `x2` 的数据类型不同。
     - **ValueError** - 如果 `x1` 和 `x2` 无法广播。
     - **ValueError** - 如果 `atol` 和 `rtol` 中的任何一个小于零。
-    - **ValueError** - 如果Ascend平台上的  `equal_nan`  为False。
