@@ -121,16 +121,15 @@ void UniformCandidateSamplerCpuKernelMod::ExpectedLanuch(const int64_t counter, 
 bool UniformCandidateSamplerCpuKernelMod::CheckAttribute() {
   // check attrs
   if (num_true_ <= 0 || num_sampled_ <= 0 || range_max_ <= 0) {
-    MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', the parameters must be larger than 0, but got "
-                      << "'num_true' = " << num_true_ << ", 'num_sampled' = " << num_sampled_
-                      << ", 'range_max' = " << range_max_;
-    return false;
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameters must be larger than 0, but got "
+                             << "'num_true' = " << num_true_ << ", 'num_sampled' = " << num_sampled_
+                             << ", 'range_max' = " << range_max_;
   }
 
   if (unique_ && (num_sampled_ > range_max_)) {
-    MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', the parameter 'num_sampled' can not be larger than"
-                      << "'range_max', but got 'num_sampled' = " << num_sampled_ << ", 'range_max' = " << range_max_;
-    return false;
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the parameter 'num_sampled' can not be larger than"
+                             << "'range_max', but got 'num_sampled' = " << num_sampled_
+                             << ", 'range_max' = " << range_max_;
   }
   return true;
 }
@@ -139,36 +138,31 @@ bool UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
                                                                 const std::vector<KernelTensorPtr> &outputs) {
   if (inputs.empty() || outputs.empty()) {
     MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', inputs or outputs can not be empty.";
-    return false;
   }
 
   if (inputs.size() != kInputsNum || outputs.size() != kOutputsNum) {
-    MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', the sizes of inputs and outputs must be " << kInputsNum
-                      << " and " << kOutputsNum << ", but got inputs' size : " << inputs.size()
-                      << ", outputs' size: " << outputs.size();
-    return false;
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the sizes of inputs and outputs must be " << kInputsNum
+                             << " and " << kOutputsNum << ", but got inputs' size : " << inputs.size()
+                             << ", outputs' size: " << outputs.size();
   }
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
   auto input_rank = static_cast<size_t>(batch_rank_ + kInputRank);
   if (input_shape.size() != input_rank) {
-    MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', the dimension of input 'true_classes' must be " << input_rank
-                      << ", but got " << input_shape.size();
-    return false;
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the dimension of input 'true_classes' must be "
+                             << input_rank << ", but got " << input_shape.size();
   }
   auto kindex = static_cast<size_t>(batch_rank_ + kIndex1);
   if (input_shape[kindex] != num_true_) {
-    MS_LOG(EXCEPTION) << "For 'UniformCandidateSampler', the input 'true_classes' must have 'num_true' columns, "
-                      << "but got 'true_classes': (" << input_shape[0] << ", " << input_shape[1] << ")"
-                      << "'num_true': " << num_true_;
-    return false;
+    MS_EXCEPTION(ValueError) << "For 'UniformCandidateSampler', the input 'true_classes' must have 'num_true' columns, "
+                             << "but got 'true_classes': (" << input_shape[0] << ", " << input_shape[1] << ")"
+                             << "'num_true': " << num_true_;
   }
 
   auto output_kIndex0_type = outputs.at(kIndex0)->GetDtype();
   if (output_kIndex0_type == kNumberTypeInt32) {
     if (range_max_ > static_cast<int64_t>(std::numeric_limits<int>::max())) {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', 'range_max' can not exceed the range of int32, but got "
-                        << range_max_ << ". The input data type should be changed from int32 to int64.";
-      return false;
+      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', 'range_max' can not exceed the range of int32, but "
+                               << "got" << range_max_ << ". The input data type should be changed to int64.";
     }
   }
 
@@ -184,9 +178,7 @@ bool UniformCandidateSamplerCpuKernelMod::CheckInputsAndOutputs(const std::vecto
   batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   batch_size_ = batch_size_ / num_sampled_;
   if (batch_size_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of output 'sampled_candidates' can not be 0, but got 0";
-    return false;
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
   input_size_ = std::accumulate(input_shape.begin(), input_shape.end(), 1, std::multiplies<int64_t>());
   input_size_ = input_size_ / batch_size_;
@@ -225,7 +217,6 @@ bool UniformCandidateSamplerCpuKernelMod::Init(const BaseOperatorPtr &base_opera
   } else {
     MS_LOG(EXCEPTION) << "For UniformCandidateSamplerCpuKernelMod, it's name must be UniformCandidateSampler, but got "
                       << "invalid kernel name " << prim::kPrimUniformCandidateSampler->name();
-    return false;
   }
 
   (void)CheckAttribute();
@@ -250,9 +241,7 @@ int UniformCandidateSamplerCpuKernelMod::Resize(const BaseOperatorPtr &base_oper
   batch_size_ = std::accumulate(output_shape.begin(), output_shape.end(), 1, std::multiplies<int64_t>());
   batch_size_ = batch_size_ / num_sampled_;
   if (batch_size_ == 0) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_
-                      << "', the shape of output 'sampled_candidates' can not be 0, but got 0";
-    return false;
+    MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the shape of output 'sampled_candidates' can not be 0";
   }
 
   auto input_shape = inputs.at(kIndex0)->GetShapeVector();
