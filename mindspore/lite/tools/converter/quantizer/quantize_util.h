@@ -71,8 +71,8 @@ constexpr size_t kMillisecondsBase = 10;
 constexpr float kDelta = 0.1;
 constexpr float kRatio = 10.0;
 constexpr int kCpuBindMode = 1;
-constexpr const int kPrimIndex = 0;
-constexpr const int kPrimOffset = 1;
+constexpr int kPrimIndex = 0;
+constexpr int kPrimOffset = 1;
 
 QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
@@ -126,7 +126,7 @@ template <typename T>
 int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                         const PrimitivePtr &primitive, QuantType quant_type, int quant_max, int quant_min,
                         size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
-                        int preferred_dim, bool symmetric = false, bool narrow_range = false, bool k_means = false) {
+                        int preferred_dim, bool symmetric = false, bool narrow_range = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive != nullptr);
   auto dims = weight->shape();
@@ -151,7 +151,7 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
     ret = DoPerChannelQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(),
                                static_cast<mindspore::schema::QuantType>(quant_type), &quant_params, quant_max,
                                quant_min, bit_num, &quant_data, ConvertShapeVectorToInt32(dims), preferred_dim,
-                               symmetric, narrow_range, k_means);
+                               symmetric, narrow_range);
     if (ret == RET_NO_CHANGE) {
       return ret;
     } else if (ret != RET_OK) {
@@ -160,7 +160,7 @@ int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPt
     }
   } else if (weight_quant_type == FIXED_BIT_PER_LAYER) {
     ret = DoPerLayerQuant<T>(static_cast<float *>(weight->data_c()), weight->DataSize(), &quant_params, quant_max,
-                             quant_min, bit_num, &quant_data, symmetric, narrow_range, k_means);
+                             quant_min, bit_num, &quant_data, symmetric, narrow_range);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Do per layer quant failed.";
       return ret;
