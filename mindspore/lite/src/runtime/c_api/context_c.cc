@@ -66,7 +66,7 @@ void MSContextSetThreadAffinityMode(MSContextHandle context, int mode) {
 int MSContextGetThreadAffinityMode(const MSContextHandle context) {
   if (context == nullptr) {
     MS_LOG(ERROR) << "param is nullptr.";
-    return 0;
+    return -1;
   }
   auto impl = static_cast<mindspore::ContextC *>(context);
   return impl->affinity_mode;
