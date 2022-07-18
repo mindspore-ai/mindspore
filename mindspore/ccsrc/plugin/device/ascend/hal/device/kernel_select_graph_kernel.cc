@@ -20,7 +20,7 @@
 #include "runtime/device/kernel_info.h"
 #include "ir/func_graph.h"
 #include "kernel/common_utils.h"
-#include "kernel/kernel_query.h"
+#include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/kernel_build_info.h"
 
 namespace mindspore {

@@ -22,7 +22,7 @@
 #include <memory>
 #include <map>
 #include <string>
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "kernel/task_stream.h"
 
 namespace mindspore {

@@ -33,6 +33,7 @@
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "plugin/device/ascend/kernel/tbe/tiling/op_tiling_adapter.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_manager.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/utils/utils.h"
 #include "register/op_tiling.h"
@@ -43,6 +44,7 @@ namespace kernel {
 using TbeTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::TbeTaskInfo>;
 using tbe::KernelManager;
 using AddressPtrList = std::vector<mindspore::kernel::AddressPtr>;
+using tbe::TbeUtils;
 
 DynamicTbeKernelMod::DynamicTbeKernelMod(KernelPackPtr kernel_pack, const AnfNodePtr &anf_node_ptr)
     : TbeKernelMod(std::move(kernel_pack), anf_node_ptr) {

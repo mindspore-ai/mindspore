@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_util.h"
 namespace mindspore {
 namespace kernel {

@@ -24,7 +24,7 @@
 #include <tuple>
 #include <set>
 #include "utils/hash_map.h"
-#include "backend/common/session/gpu_session.h"
+#include "plugin/device/gpu/hal/hardware/gpu_session.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"

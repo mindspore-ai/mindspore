@@ -395,12 +395,13 @@ void SetGraphKernelInfo(const CNodePtr &kernel_node, const FuncGraphPtr &func_gr
   }
 
   // set graph kernel innner nodes kernel info.
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   for (size_t i = 0; i < node_list.size(); ++i) {
     const auto &anf_node = node_list[i];
     MS_EXCEPTION_IF_NULL(anf_node);
     auto cnode = anf_node->cast<CNodePtr>();
     cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-    SetKernelInfo(cnode, KernelType::AKG_KERNEL);
+    kernel_info_setter->SetKernelInfo(cnode, KernelType::AKG_KERNEL);
   }
 
   // set graph kernel node kernel info.
@@ -509,12 +510,6 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
   format_transform_ = false;
 }
 
-void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
-  auto [msg, etype] = SetKernelInfoWithMsg(kernel_node, kernel_type);
-  if (msg.empty()) return;
-  MS_EXCEPTION(etype) << msg;
-}
-
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   if (common::AnfAlgo::IsGraphKernel(kernel_node)) {
@@ -599,6 +594,14 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), kernel_node.get());
   SetTensorDeviceInfo(*(builder->Build()), kernel_node, input_reduce_index);
   return {};
+}
+
+void GPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+  auto [msg, etype] = SetKernelInfoWithMsg(kernel_node, kernel_type);
+  if (msg.empty()) {
+    return;
+  }
+  MS_EXCEPTION(etype) << msg;
 }
 }  // namespace gpu
 }  // namespace device

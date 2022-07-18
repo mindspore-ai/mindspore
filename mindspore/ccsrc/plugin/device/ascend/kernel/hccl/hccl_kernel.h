@@ -23,7 +23,7 @@
 #include <vector>
 #include <algorithm>
 #include <utility>
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/hccl/hcom_util.h"
 #include "hccl/hcom.h"
 #include "hccl/hccl_types.h"

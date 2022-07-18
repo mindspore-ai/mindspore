@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/session/ascend_inference_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_inference_session.h"
 
 #include <algorithm>
 #include "ir/tensor.h"

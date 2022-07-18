@@ -15,7 +15,7 @@
  */
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_label_assign.h"
-#include "runtime/device/kernel_adjust.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 
 namespace mindspore {
 namespace device {

@@ -25,7 +25,7 @@
 #include "include/common/utils/parallel_context.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "runtime/device/kernel_adjust.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "backend/common/optimizer/helper.h"
 #include "kernel/oplib/oplib.h"

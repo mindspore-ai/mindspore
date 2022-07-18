@@ -27,6 +27,9 @@
 #include "runtime/device/device_address.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/data_dump/dump_utils.h"
+#ifdef ENABLE_DEBUGGER
+#include "debug/debugger/debugger.h"
+#endif
 #ifdef ENABLE_D
 #include "proto/dump_data.pb.h"
 #endif

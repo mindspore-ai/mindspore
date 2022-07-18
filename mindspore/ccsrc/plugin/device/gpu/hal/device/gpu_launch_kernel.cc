@@ -23,6 +23,7 @@
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_kernel_build.h"
 #include "abstract/utils.h"
+#include "kernel/graph_kernel_info.h"
 
 namespace {
 constexpr size_t kCommunicationMemAlignSize = 16;
@@ -47,8 +48,9 @@ uint8_t *GPULaunchkernel::AllocDeviceMem(size_t size) {
 
 void GPULaunchkernel::KernelSelect(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   auto node_list = kernel_graph->execution_order();
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   for (size_t i = 0; i < node_list.size(); ++i) {
-    device::gpu::SetKernelInfo(node_list[i]);
+    kernel_info_setter->SetKernelInfo(node_list[i], KernelType::UNKNOWN_KERNEL_TYPE);
   }
 }
 

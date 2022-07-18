@@ -25,7 +25,7 @@
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "include/common/utils/parallel_context.h"
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "acl/acl_rt.h"
 
 #ifndef ENABLE_SECURITY

@@ -26,9 +26,13 @@
 #include "ir/dtype.h"
 #include "include/common/utils/utils.h"
 #include "kernel/kernel.h"
+#include "kernel/kernel_build_info.h"
+#include "kernel/graph_kernel_info.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/common_utils.h"
-#include "mindspore/core/ops/core_ops.h"
+#include "ops/core_ops.h"
+#include "utils/ms_context.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
@@ -69,7 +73,6 @@ static std::map<std::string, std::pair<std::vector<size_t>, std::vector<size_t>>
   {prim::kPrimSplit->name(), {{0}, {kAllPositions}}},
 };
 
-void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kernel_node,
                                                            KernelType kernel_type = KernelType::UNKNOWN_KERNEL_TYPE);
 
@@ -91,6 +94,15 @@ class FormatTransformChecker {
 
   bool format_transform_{true};
 };
+
+class BACKEND_EXPORT GPUGraphKernelInfo : public GraphKernelInfo {
+ public:
+  GPUGraphKernelInfo() = default;
+  virtual ~GPUGraphKernelInfo() = default;
+  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override;
+};
+
+REG_GRAPH_KERNEL_INFO(kGPUDevice, GPUGraphKernelInfo);
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore

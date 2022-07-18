@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/session/cpu_session.h"
+#include "plugin/device/cpu/hal/hardware/cpu_session.h"
 #include <algorithm>
 #include <sstream>
 #include <exception>
@@ -41,6 +41,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
 #include "include/common/debug/dump_proto.h"
+#include "kernel/graph_kernel_info.h"
 #ifndef ENABLE_SECURITY
 #include "debug/data_dump/dump_json_parser.h"
 #endif
@@ -308,9 +309,10 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
 void CPUSession::SetKernelInfo(const KernelGraph *kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto &kernel_nodes = kernel_graph->execution_order();
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kCPUDevice);
   for (const auto &kernel_node : kernel_nodes) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    device::cpu::SetKernelInfo(kernel_node);
+    kernel_info_setter->SetKernelInfo(kernel_node, KernelType::UNKNOWN_KERNEL_TYPE);
   }
 }
 

@@ -25,6 +25,7 @@
 #include <vector>
 #include <numeric>
 #include <optional>
+#include "kernel/oplib/oplib.h"
 #include "ir/dtype.h"
 #include "kernel/kernel.h"
 #include "ir/dtype/type.h"

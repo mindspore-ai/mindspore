@@ -22,7 +22,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_adapter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "runtime/dev.h"
 #include "utils/ms_utils.h"

@@ -21,11 +21,11 @@
 #include <set>
 #include <vector>
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
-#include "kernel/kernel_query.h"
+#include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
 
 namespace mindspore {

@@ -131,6 +131,38 @@ void AscendEnableDynamicRuntimeCache(const session::KernelGraph *graph) {
 }
 }  // namespace
 
+struct TbeLaunchKernelModRegister {
+  TbeLaunchKernelModRegister() {
+    KernelRuntime::tbe_call_setter(
+      [](const AnfNodePtr &kernel, const kernel::KernelMod *kernel_mod, std::vector<AddressPtr> *workspace_addr) {
+        MS_EXCEPTION_IF_NULL(kernel);
+        MS_EXCEPTION_IF_NULL(kernel_mod);
+        MS_EXCEPTION_IF_NULL(workspace_addr);
+        auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
+        auto ms_context = MsContext::GetInstance();
+        MS_EXCEPTION_IF_NULL(ms_context);
+        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+        auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
+        MS_EXCEPTION_IF_NULL(runtime_instance);
+        for (auto size : workspace_size_list) {
+          auto device_address_ptr =
+            std::make_shared<ascend::AscendDeviceAddress>(nullptr, size, kAscendDevice, device_id);
+          device_address_ptr->set_is_ptr_persisted(true);
+          auto ret = runtime_instance->GetMemoryManager()->MallocMemFromMemPool(device_address_ptr, size);
+          if (!ret) {
+            MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
+          }
+          AddressPtr workspace_addr_ptr =
+            std::make_shared<kernel::Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
+          workspace_addr->emplace_back(workspace_addr_ptr);
+        }
+      });
+  }
+  TbeLaunchKernelModRegister(const TbeLaunchKernelModRegister &) = delete;
+  TbeLaunchKernelModRegister &operator=(const TbeLaunchKernelModRegister &) = delete;
+  ~TbeLaunchKernelModRegister() = default;
+} tbe_launch_kernel_mod_register;
+
 std::vector<rtExceptionInfo> AscendKernelRuntime::task_fail_infoes_ = {};
 const session::KernelGraph *current_graph_ = nullptr;
 std::map<std::string, uint32_t> AscendKernelRuntime::overflow_tasks_;

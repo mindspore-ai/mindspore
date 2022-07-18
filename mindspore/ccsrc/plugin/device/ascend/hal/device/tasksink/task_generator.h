@@ -26,7 +26,7 @@
 #include <fstream>
 #include "runtime/device/kernel_runtime.h"
 #include "ir/anf.h"
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/task_info.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "common/backend_common_test.h"
-#include "backend/common/session/ascend_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/action.h"

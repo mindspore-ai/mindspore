@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/session/ascend_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include <algorithm>
 #include <map>
 #include <tuple>
@@ -35,7 +35,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #include "plugin/device/ascend/optimizer/ascend_backend_optimization.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
-#include "runtime/device/kernel_adjust.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
@@ -52,7 +52,7 @@
 #include "debug/debugger/debugger_utils.h"
 #endif
 #include "common/graph_kernel/adapter/graph_kernel_optimization.h"
-#include "backend/common/session/ascend_auto_monad.h"
+#include "plugin/device/ascend/hal/hardware/ascend_auto_monad.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #include "abstract/utils.h"
@@ -74,6 +74,7 @@
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
 #include "plugin/device/ascend/hal/device/ascend_bucket.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #ifndef ENABLE_SECURITY
 #include "plugin/device/ascend/hal/profiler/memory_profiling.h"
 

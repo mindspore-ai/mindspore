@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/common/session/ascend_auto_monad.h"
+#include "plugin/device/ascend/hal/hardware/ascend_auto_monad.h"
 #include <set>
 #include <map>
 #include <stack>

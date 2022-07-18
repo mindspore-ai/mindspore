@@ -38,7 +38,6 @@
 #include "include/common/utils/utils.h"
 #include "include/common/utils/parallel_context.h"
 #include "include/common/debug/env_config_parser.h"
-#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #ifdef WITH_BACKEND
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -102,6 +101,7 @@ std::mutex *CreateStreamMutex(const void *stream, std::shared_mutex *shd_mtx,
 }
 }  // namespace
 constexpr size_t kMinInputSize = 2;
+KernelRuntime::TbeLaunchKernelModCallBack KernelRuntime::tbe_call_ = nullptr;
 KernelRuntime::~KernelRuntime() {
   stream_ = nullptr;
   independent_stream_ = nullptr;
@@ -1737,27 +1737,8 @@ bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph, bool mock
       // allocate workspace size
       std::vector<AddressPtr> workspace_addr;
       if (AnfAlgo::GetKernelType(kernel) == KernelType::TBE_KERNEL) {
-#ifdef ENABLE_D
-        auto workspace_size_list = kernel_mod->GetWorkspaceSizeList();
-        auto ms_context = MsContext::GetInstance();
-        MS_EXCEPTION_IF_NULL(ms_context);
-        auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-        auto runtime_instance = KernelRuntimeManager::Instance().GetSingleKernelRuntime(kAscendDevice, device_id);
-        MS_EXCEPTION_IF_NULL(runtime_instance);
-
-        for (auto size : workspace_size_list) {
-          auto device_address_ptr =
-            std::make_shared<ascend::AscendDeviceAddress>(nullptr, size, kAscendDevice, device_id);
-          device_address_ptr->set_is_ptr_persisted(true);
-          auto device_ptr = runtime_instance->MallocMem(MemType::kDynamicMem, size, device_address_ptr);
-          if (device_ptr == nullptr) {
-            MS_LOG(EXCEPTION) << "MallocMem from memory pool failed. Node info :" << kernel->fullname_with_scope();
-          }
-          AddressPtr workspace_addr_ptr =
-            std::make_shared<Address>(device_address_ptr->GetMutablePtr(), device_address_ptr->GetSize());
-          workspace_addr.emplace_back(workspace_addr_ptr);
-        }
-#endif
+        MS_EXCEPTION_IF_NULL(tbe_call_);
+        tbe_call_(kernel, kernel_mod, &workspace_addr);
       } else {
         workspace_addr = kernel_launch_info.workspaces_;
       }

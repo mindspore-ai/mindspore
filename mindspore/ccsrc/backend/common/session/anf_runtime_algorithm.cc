@@ -44,7 +44,6 @@ namespace session {
 using abstract::AbstractTensor;
 using abstract::AbstractTuple;
 using device::KernelInfo;
-using device::ascend::AscendDeviceAddress;
 using kernel::KernelBuildInfoPtr;
 using kernel::KernelMod;
 using kernel::KernelModPtr;

@@ -3,8 +3,7 @@ if("${ENABLE_HIDDEN}" STREQUAL "OFF")
     string(REPLACE " -fvisibility=hidden" " -fvisibility=default" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 
-file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/kernel_adjust.cc)
+file(GLOB_RECURSE DEVICE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 list(REMOVE_ITEM DEVICE_SRC_LIST "distribute/mpi_collective_group.cc"
         "distribute/collective_group_wrapper.cc" "distribute/mpi_pycc.cc")
 

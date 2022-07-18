@@ -17,7 +17,7 @@
 #include <algorithm>
 #include "plugin/device/ascend/hal/device/profiling/profiling_reporter.h"
 #include "kernel/kernel.h"
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "include/common/utils/utils.h"
 #include "backend/common/session/kernel_graph.h"
 

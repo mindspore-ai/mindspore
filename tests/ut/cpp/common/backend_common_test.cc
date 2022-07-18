@@ -22,7 +22,7 @@
 #include "utils/log_adapter.h"
 #include "frontend/operator/ops.h"
 #include "include/common/debug/anf_ir_dump.h"
-#include "backend/common/session/ascend_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "pipeline/jit/resource.h"
 #include "pipeline/jit/action.h"
 #include "ir/anf.h"

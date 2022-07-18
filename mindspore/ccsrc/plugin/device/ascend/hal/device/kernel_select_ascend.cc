@@ -16,7 +16,6 @@
 
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -25,21 +24,15 @@
 #include <utility>
 #include <vector>
 #include <tuple>
-#include "kernel/kernel_build_info.h"
-#include "kernel/kernel_query.h"
+#include <algorithm>
+#include "plugin/device/ascend/kernel/kernel_query.h"
 #include "kernel/oplib/oplib.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/aicpu/aicpu_attr_to_input_registry.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "runtime/device/ms_device_shape_transfer.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "frontend/operator/ops.h"
-#include "utils/ms_context.h"
-#include "utils/ms_utils.h"
 #include "utils/trace_base.h"
-#include "include/common/utils/convert_utils.h"
 
 namespace mindspore {
 namespace device {
@@ -894,7 +887,7 @@ KernelSelectStatus SelectKernelInfo(const CNodePtr &kernel_node, KernelType kern
   return status;
 }
 
-void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
+void SetAscendKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel_node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);

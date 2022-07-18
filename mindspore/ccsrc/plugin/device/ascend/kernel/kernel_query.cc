@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-#include "kernel/kernel_query.h"
+#include "plugin/device/ascend/kernel/kernel_query.h"
 #include <algorithm>
+#include <string>
 #include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/host/host_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_info.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_select.h"
-#include "kernel/akg/akg_kernel_metadata.h"
+#include "plugin/device/ascend/kernel/akg/akg_kernel_metadata.h"
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "utils/ms_context.h"
