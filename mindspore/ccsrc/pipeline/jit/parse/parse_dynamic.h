@@ -41,7 +41,7 @@ class DynamicParser {
                                const std::vector<std::string> &compare_prim = {});
   static bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static bool ParseAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
-  static bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
+  static bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseFunctionAst> &, const py::object &node,
                                      const std::vector<std::string> &compare_prim = {});
   static bool ParseForExprNode(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node);
   static std::string ParseNodeName(const std::shared_ptr<parse::ParseFunctionAst> &ast, const py::object &node,
