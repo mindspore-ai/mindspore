@@ -119,33 +119,40 @@ FuncGraphPtr ConverterImpl::BuildFuncGraph(const std::shared_ptr<ConverterPara> 
   return func_graph;
 }
 
-schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, const void *buf,
-                                           const size_t &size) {
+int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph,
+                           const void *buf, const size_t &size) {
   if (param == nullptr || buf == nullptr) {
     MS_LOG(ERROR) << "Input param is nullptr";
-    return nullptr;
+    return RET_ERROR;
   }
   auto graph = BuildFuncGraph(param, buf, size);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
-    return nullptr;
+    return RET_ERROR;
   }
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed.");
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed.");
   // funcgraph_transform
   graph = funcgraph_transform_->Transform(graph, param);
-  MS_CHECK_TRUE_MSG(graph != nullptr, nullptr, "Transform anf graph return nullptr.");
+  MS_CHECK_TRUE_MSG(graph != nullptr, RET_ERROR, "Transform anf graph return nullptr.");
   // export protobuf
-  auto status = MindIRSerialize(param, graph);
-  if (status != RET_OK) {
-    MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
+  if (param->export_mindir == kMindIR) {
+    auto status = MindIRSerialize(param, graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Export to mindir proto failed";
+      return RET_ERROR;
+    } else {
+      MS_LOG(DEBUG) << "Export to mindir success";
+      return RET_OK;
+    }
   }
-  return TransferFuncGraph(param, graph);
+  *meta_graph = TransferFuncGraph(param, graph);
+  return RET_OK;
 }
 
-schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param) {
+int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph) {
   if (param == nullptr) {
     MS_LOG(ERROR) << "Input param is nullptr";
-    return nullptr;
+    return RET_ERROR;
   }
 
   param->aclModelOptionCfgParam.om_file_path = param->output_file;
@@ -153,7 +160,7 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
     auto ret = InitConfigParam(param);
     if (ret != RET_OK) {
       std::cerr << "Init config file failed." << std::endl;
-      return nullptr;
+      return RET_ERROR;
     }
   }
 
@@ -162,11 +169,11 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
   if (!param->plugins_path.empty()) {
     for (auto &path : param->plugins_path) {
       auto dl_loader = std::make_shared<DynamicLibraryLoader>();
-      MS_CHECK_TRUE_RET(dl_loader != nullptr, nullptr);
+      MS_CHECK_TRUE_RET(dl_loader != nullptr, RET_ERROR);
       auto status = dl_loader->Open(path);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "open dynamic library failed. " << path;
-        return nullptr;
+        return RET_ERROR;
       }
       dl_loaders.emplace_back(dl_loader);
     }
@@ -175,24 +182,30 @@ schema::MetaGraphT *ConverterImpl::Convert(const std::shared_ptr<ConverterPara> 
   auto graph = BuildFuncGraph(param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
-    return nullptr;
+    return RET_ERROR;
   }
 
-  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, nullptr, "funcgraph_transform init failed");
+  MS_CHECK_TRUE_MSG(funcgraph_transform_ != nullptr, RET_ERROR, "funcgraph_transform init failed");
   // funcgraph transform
   graph = funcgraph_transform_->Transform(graph, param);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
-    return nullptr;
+    return RET_ERROR;
   }
 
   // export protobuf
-  auto status = MindIRSerialize(param, graph);
-  if (status != RET_OK) {
-    MS_LOG(WARNING) << "Export to mindir proto return nullptr.";
+  if (param->export_mindir == kMindIR) {
+    auto status = MindIRSerialize(param, graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Export to mindir failed";
+      return RET_ERROR;
+    } else {
+      MS_LOG(DEBUG) << "Export to mindir success";
+      return RET_OK;
+    }
   }
-
-  return TransferFuncGraph(param, graph);
+  *meta_graph = TransferFuncGraph(param, graph);
+  return RET_OK;
 }
 
 schema::MetaGraphT *ConverterImpl::TransferFuncGraph(const std::shared_ptr<ConverterPara> &param,
@@ -531,9 +544,18 @@ int RunConverter(const std::shared_ptr<ConverterPara> &param, void **model_data,
 
   param->aclModelOptionCfgParam.offline = !not_save;
   ConverterImpl converter_impl;
-  auto meta_graph = converter_impl.Convert(param);
+  schema::MetaGraphT *meta_graph = nullptr;
+  int status = converter_impl.Convert(param, &meta_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert model failed";
+    return RET_ERROR;
+  }
+  if (param->export_mindir == kMindIR) {
+    MS_LOG(DEBUG) << "No need to export mindir to fb";
+    return RET_OK;
+  }
   NotSupportOp::GetInstance()->PrintOps();
-  int status = ReturnCode::GetSingleReturnCode()->status_code();
+  status = ReturnCode::GetSingleReturnCode()->status_code();
   std::ostringstream oss;
   if (meta_graph == nullptr) {
     oss.clear();

@@ -22,6 +22,7 @@ from enum import Enum
 from ._checkparam import check_isinstance, check_input_shape, check_config_info
 from .lib import _c_lite_wrapper
 from .tensor import DataType, Format, data_type_py_cxx_map, data_type_cxx_py_map, format_py_cxx_map, format_cxx_py_map
+from .model import ModelType
 
 __all__ = ['FmkType', 'Converter']
 
@@ -69,7 +70,7 @@ class Converter:
             defined in model. Default: DataType.FLOAT32.
         output_data_type (DataType, optional): Data type of output tensors.
             The default type is same with the type defined in model. Default: DataType.FLOAT32.
-        export_mindir (bool, optional): Whether to export MindIR pb. Default: False.
+        export_mindir (ModelType, optional): Which model type need to be export. Default: ModelType.MINDIR_LITE.
         decrypt_key (str, optional): The key used to decrypt the file, expressed in hexadecimal characters.
             Only valid when fmk_type is FmkType.MINDIR. Default: "".
         decrypt_mode (str, optional): Decryption method for the MindIR file. Only valid when dec_key is set.
@@ -96,7 +97,7 @@ class Converter:
         TypeError: `input_format` is not a Format.
         TypeError: `input_data_type` is not a DataType.
         TypeError: `output_data_type` is not a DataType.
-        TypeError: `export_mindir` is not a bool.
+        TypeError: `export_mindir` is not a ModelType.
         TypeError: `decrypt_key` is not a str.
         TypeError: `decrypt_mode` is not a str.
         TypeError: `enable_encryption` is not a bool.
@@ -121,7 +122,7 @@ class Converter:
         input_format: Format.NHWC,
         input_data_type: DataType.FLOAT32,
         output_data_type: DataType.FLOAT32,
-        export_mindir: False,
+        export_mindir: MINDIR_LITE,
         decrypt_key: ,
         decrypt_mode: ,
         enable_encryption: False,
@@ -133,8 +134,9 @@ class Converter:
 
     def __init__(self, fmk_type, model_file, output_file, weight_file="", config_file="", weight_fp16=False,
                  input_shape=None, input_format=Format.NHWC, input_data_type=DataType.FLOAT32,
-                 output_data_type=DataType.FLOAT32, export_mindir=False, decrypt_key="", decrypt_mode="AES-GCM",
-                 enable_encryption=False, encrypt_key="", infer=False, train_model=False, no_fusion=False):
+                 output_data_type=DataType.FLOAT32, export_mindir=ModelType.MINDIR_LITE, decrypt_key="",
+                 decrypt_mode="AES-GCM", enable_encryption=False, encrypt_key="", infer=False, train_model=False,
+                 no_fusion=False):
         check_isinstance("fmk_type", fmk_type, FmkType)
         check_isinstance("model_file", model_file, str)
         check_isinstance("output_file", output_file, str)
@@ -145,7 +147,7 @@ class Converter:
         check_isinstance("input_format", input_format, Format)
         check_isinstance("input_data_type", input_data_type, DataType)
         check_isinstance("output_data_type", output_data_type, DataType)
-        check_isinstance("export_mindir", export_mindir, bool)
+        check_isinstance("export_mindir", export_mindir, ModelType)
         check_isinstance("decrypt_key", decrypt_key, str)
         check_isinstance("decrypt_mode", decrypt_mode, str)
         check_isinstance("enable_encryption", enable_encryption, bool)
@@ -189,7 +191,7 @@ class Converter:
             self._converter.set_input_data_type(data_type_py_cxx_map.get(input_data_type))
         if output_data_type != DataType.FLOAT32:
             self._converter.set_output_data_type(data_type_py_cxx_map.get(output_data_type))
-        if export_mindir:
+        if export_mindir != ModelType.MINDIR_LITE:
             self._converter.set_export_mindir(export_mindir)
         if decrypt_key != "":
             self._converter.set_decrypt_key(decrypt_key)

@@ -71,7 +71,7 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string inferStr;
   bool infer = false;
   std::string exportMindIR;
-  bool export_mindir = false;
+  ModelType export_mindir = kMindIR_Lite;
 #ifdef ENABLE_OPENSSL
   std::string encryptionStr = "true";
   bool encryption = true;
