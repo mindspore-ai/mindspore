@@ -240,24 +240,6 @@ CUDA_LIB_EXPORT void SparseAdd(const T *a_indices, const S *a_values, const T *b
     const thr_type* threshold,  const uint32_t &device_id,                                     \
     cudaStream_t cuda_stream);
 
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, int8_t, int8_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, int16_t, int16_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, int32_t, int32_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, int64_t, int64_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, float, float)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, double, double)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, cuComplex, float)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int16_t, cuDoubleComplex, double)
-
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, int8_t, int8_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, int16_t, int16_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, int32_t, int32_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, int64_t, int64_t)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, float, float)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, double, double)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, cuComplex, float)
-GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int32_t, cuDoubleComplex, double)
-
 GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int64_t, int8_t, int8_t)
 GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int64_t, int16_t, int16_t)
 GPU_SPARSE_ADD_GRAD_EXPORT_REGISTER(int64_t, int32_t, int32_t)

@@ -34,6 +34,16 @@ namespace {
 constexpr size_t kSparseAddGradIndex0 = 0;
 constexpr size_t kSparseAddGradIndex1 = 1;
 constexpr size_t kSparseAddGradIndex2 = 2;
+constexpr size_t kSparseAddGradIndex3 = 3;
+
+inline void CheckSparseAddGradShape(const size_t sparse_shape_size, const size_t expected_dim,
+                                    const std::string &arg_name, const std::string &op_name) {
+  if (sparse_shape_size != expected_dim) {
+    MS_EXCEPTION(mindspore::ValueError) << "For '" << op_name << "', " << arg_name << " must be a " << expected_dim
+                                        << "-dimensional tensor, but got a " << sparse_shape_size
+                                        << "-dimensional tensor.";
+  }
+}
 
 mindspore::TypePtr SparseAddGradInferType(const std::string &op_name, const AbstractBasePtrList &args_spec_list,
                                           size_t index) {
@@ -49,14 +59,29 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
   const size_t kInputNum = 4;
+  constexpr size_t kIndicesShapeSize = 2;
+  constexpr size_t kValuesShapeSize = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, name);
-  auto type = SparseAddGradInferType(name, input_args, 0);
 
+  auto type = SparseAddGradInferType(name, input_args, 0);
+  const std::set<TypePtr> indices_valid_types = {kInt64};
+  const std::set<TypePtr> values_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
+                                                kFloat32, kFloat64, kComplex64, kComplex128};
+  CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", type, values_valid_types, name);
+  auto x1_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex1);
+  CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", x1_type, indices_valid_types, name);
+  auto x2_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex2);
+  CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", x2_type, indices_valid_types, name);
+  auto sum_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex3);
+  CheckAndConvertUtils::CheckTensorTypeValid("sum_indices", sum_type, indices_valid_types, name);
   std::shared_ptr<AbstractTensor> dx1 = nullptr;
   std::shared_ptr<AbstractTensor> dx2 = nullptr;
+  auto val_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  (void)CheckSparseAddGradShape(val_grad_shape[kShape].size(), kValuesShapeSize, "backprop_val_grad", name);
   auto x1_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex1]->BuildShape());
   bool x1_is_dyn_shape = !x1_shape[kMaxShape].empty();
   auto dx1_shape = x1_shape[kShape];
+  (void)CheckSparseAddGradShape(dx1_shape.size(), kIndicesShapeSize, "x1_indices", name);
   ShapeVector shp = {dx1_shape.at(0)};
   if (x1_is_dyn_shape) {
     auto dx1_min_shape = x1_shape[kMinShape];
@@ -71,6 +96,7 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto x2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex2]->BuildShape());
   bool x2_is_dyn_shape = !x2_shape[kMaxShape].empty();
   ShapeVector dx2_shape = x2_shape[kShape];
+  (void)CheckSparseAddGradShape(dx2_shape.size(), kIndicesShapeSize, "x2_indices", name);
   shp = {dx2_shape.at(0)};
   if (x2_is_dyn_shape) {
     auto dx2_min_shape = x2_shape[kMinShape];
@@ -81,6 +107,8 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   } else {
     dx2 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
   }
+  auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->BuildShape());
+  (void)CheckSparseAddGradShape(sum_shape.size(), kIndicesShapeSize, "sum_indices", name);
   AbstractBasePtrList ret = {dx1, dx2};
   return std::make_shared<AbstractTuple>(ret);
 }

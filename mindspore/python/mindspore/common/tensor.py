@@ -4959,6 +4959,57 @@ class COOTensor(COOTensor_):
         data = self.values.abs()
         return COOTensor(self.indices, data, self.shape)
 
+    def add(self, other, thresh):
+        """
+        Return the sum with another COOTensor.
+
+        Args:
+            other(COOTensor): the second SparseTensor to sum.
+            thresh(Tensor): the magnitude threshold that determines
+                if an output value/index pair pair take space.
+
+        Returns:
+            COOTensor, representing the sum.
+
+        Raises:
+            ValueError: If any input(self/other)'s indices's dim is not equal to 2.
+            ValueError: If any input(self/other)'s values's dim is not equal to 1.
+            ValueError: If any input(self/other)'s shape's dim is not equal to 1.
+            ValueError: If thresh's dim is not equal to 0.
+            TypeError: If any input(self/other)'s indices's type is not equal to int64.
+            TypeError: If any input(self/other)'s shape's type is not equal to int64.
+            ValueError: If any input(self/other)'s indices's length is not equal to
+                its values's length.
+            TypeError: If any input(self/other)'s values's type is not equal to anf of
+                (int8/int16/int32/int64/float32/float64/complex64/complex128)
+            TypeError: If thresh's type is not equal to anf of
+                (int8/int16/int32/int64/float32/float64)
+            TypeError: If self's indices's type is not equal to other's indices's type
+            TypeError: If self's values's type is not equal to other's values's type
+            TypeError: If self's shape's type is not equal to other's shape's type
+            TypeError: If (self/other)'s value's type is not match to thresh's type
+
+        Supported Platforms:
+            ``CPU`` ``GPU``
+
+        Examples:
+            >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
+            >>> values0 = Tensor([1, 2], dtype=mstype.int32)
+            >>> shape0 = (3, 4)
+            >>> input0 = COOTensor(indics0, values0, shape0)
+            >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
+            >>> values1 = Tensor([3, 4], dtype=mstype.int32)
+            >>> shape1 = (3, 4)
+            >>> input1 = COOTensor(indics1, values1, shape1)
+            >>> thres = Tensor(0, dtype=mstype.int32)
+            >>> out = input0.add(input1, thres)
+            >>> print(out)
+            COOTensor(shape = [3, 4], dtype = Int32, indices=Tensor(shape=[2,2],
+            dtype = Int64, value=[[0 1], [1 2]]),  values=Tensor(shape[2],
+            dtype=Int32, value=[4 6]))
+        """
+        return tensor_operator_registry.get('coo_add')(self, other, thresh)
+
 
 class CSRTensor(CSRTensor_):
     """

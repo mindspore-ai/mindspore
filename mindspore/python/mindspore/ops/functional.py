@@ -36,6 +36,7 @@ from .operations import _csr_ops
 from .operations import linalg_ops
 from .operations.array_ops import UniqueConsecutive
 from .operations.nn_ops import AdaptiveMaxPool2D
+from .function.sparse_func import sparse_add
 from .composite import _Grad, Shard, _Vmap, _TaylorOperation
 from .._c_expression import security
 
@@ -918,5 +919,6 @@ tensor_operator_registry.register('adaptive_max_pool2d', AdaptiveMaxPool2D)
 tensor_operator_registry.register('coalesce', coalesce)
 tensor_operator_registry.register('arg_min_with_value', min)
 tensor_operator_registry.register('unsorted_segment_sum', P.UnsortedSegmentSum)
+tensor_operator_registry.register('coo_add', sparse_add)
 __all__ = [name for name in dir() if name[0] != "_"]
 __all__.remove('Primitive')

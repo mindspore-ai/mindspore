@@ -185,39 +185,40 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // workspace/output mem reset
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(a_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex0)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(b_value_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex1)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(is_from_a_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex2)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(whole_values_ptr, 0, workspace.at(kSparseAddIndex3)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(place_holder_index_ptr, static_cast<size_t>(0), workspace.at(kSparseAddIndex4)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(indices_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex5)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(threshold_valid_ptr, static_cast<bool>(0), workspace.at(kSparseAddIndex6)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(res_store_mem_ptr, 0, workspace.at(kSparseAddIndex7)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(sum_count_ptr, static_cast<int64_t>(0), workspace.at(kSparseAddIndex8)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(sum_indices_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex0)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
   CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
     cudaMemsetAsync(sum_values_ptr, static_cast<T>(0), outputs.at(kSparseAddIndex1)->size, cuda_stream_),
-    "For SparseAdd failed to cudaMemset");
+    "For SparseAdd, failed to cudaMemset.");
 
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "cudaStreamSynchronize failed.");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
+                                     "For SparseAdd, cudaStreamSynchronize failed.");
 
   SparseAdd(a_indices_ptr, a_values_ptr, b_indices_ptr, b_values_ptr, sum_indices_ptr, sum_values_ptr,
             a_value_index_ptr, b_value_index_ptr, is_from_a_ptr, whole_values_ptr, place_holder_index_ptr, indices_ptr,
@@ -226,10 +227,10 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   // Get dynamic shape
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
     cudaMemcpyAsync(&real_output_size_, sum_count_ptr, sizeof(int64_t), cudaMemcpyDeviceToHost, cuda_stream_),
-    "SparseAdd cudaMemcpyAsync failed.");
+    "For SparseAdd, cudaMemcpyAsync failed.");
   CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpyAsync(sum_shape_ptr, dense_shape_ptr, dense_shape_size_ * indices_size_,
                                                      cudaMemcpyHostToHost, cuda_stream_),
-                                     "SparseAdd cudaMemcpyAsync failed.");
+                                     "For SparseAdd, cudaMemcpyAsync failed.");
   return true;
 }
 
@@ -250,7 +251,8 @@ bool SparseAddGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
   }
 
 void SparseAddGpuKernelMod::SyncData() {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_), "SparseAdd cudaStreamSynchronized failed");
+  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(cuda_stream_),
+                                     "For SparseAdd cudaStreamSynchronized failed.");
   std::vector<int64_t> sum_indices_shape = {real_output_size_, static_cast<int32_t>(rank_)};
   std::vector<int64_t> sum_values_shape = {real_output_size_};
   std::vector<int64_t> dense_shape(dense_shape_.begin(), dense_shape_.end());
@@ -260,31 +262,13 @@ void SparseAddGpuKernelMod::SyncData() {
 }
 
 std::vector<std::pair<KernelAttr, SparseAddGpuKernelMod::SparseAddLaunchFunc>> SparseAddGpuKernelMod::func_list_ = {
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt8, kNumberTypeInt8, int16_t, int8_t, int8_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt8, kNumberTypeInt8, int32_t, int8_t, int8_t),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int64_t, int8_t, int8_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt16, kNumberTypeInt16, int16_t, int16_t, int16_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt16, int32_t, int16_t, int16_t),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t, int16_t, int16_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt32, int16_t, int32_t, int32_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t, int32_t),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int32_t, int32_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt64, kNumberTypeInt64, int16_t, int64_t, int64_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt64, int32_t, int64_t, int64_t),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t, int64_t),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat32, kNumberTypeFloat32, int16_t, float, float),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat32, int32_t, float, float),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t, float, float),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat64, kNumberTypeFloat64, int16_t, double, double),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeFloat64, int32_t, double, double),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, int64_t, double, double),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeComplex64, kNumberTypeFloat32, int16_t, cuComplex, float),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeComplex64, kNumberTypeFloat32, int32_t, cuComplex, float),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeFloat32, int64_t, cuComplex, float),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeComplex128, kNumberTypeFloat64, int16_t, cuDoubleComplex,
-                                 double),
-  GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeComplex128, kNumberTypeFloat64, int32_t, cuDoubleComplex,
-                                 double),
   GPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeFloat64, int64_t, cuDoubleComplex,
                                  double),
 };
