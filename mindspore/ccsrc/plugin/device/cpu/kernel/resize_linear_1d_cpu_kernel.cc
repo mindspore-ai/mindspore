@@ -27,21 +27,21 @@ namespace mindspore::kernel {
 constexpr auto kResizeLinear1D = "ResizeLinear1D";
 constexpr const size_t kResizeLinear1DInputsNum = 2;
 constexpr const size_t kResizeLinear1DOutputsNum = 1;
-constexpr const size_t kResizeLinear1DNewShapeSize = sizeof(int64_t);
+constexpr const size_t kResizeDims = 3;
 
+template <typename T>
 void ResizeLinear1DCpuKernelMod::ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
-                                                            const CoordinateTransformationFunc &func,
-                                                            CachedInterpolation *interpolation) {
-  interpolation[out_size].lower = 0;
-  interpolation[out_size].upper = 0;
+                                                            const CoordinateTransformationFunc<T> &func,
+                                                            size_t *interp_lower, size_t *interp_upper,
+                                                            T *interp_lerp) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      const float in = func(i, in_size, out_size);
-      const float in_floor = std::floor(in);
-      const float in_ceil = std::ceil(in);
-      interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-      interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
-      interpolation[i].lerp = in - in_floor;
+      const T in = func(i, in_size, out_size);
+      const T in_floor = std::floor(in);
+      const T in_ceil = std::ceil(in);
+      interp_lower[i] = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
+      interp_upper[i] = static_cast<size_t>(in_ceil < static_cast<T>(in_size - 1) ? in_ceil : in_size - 1);
+      interp_lerp[i] = in - in_floor;
     }
   };
   ParallelLaunchAutoSearch(task, out_size, this, &parallel_search_info_, pool_);
@@ -50,27 +50,16 @@ void ResizeLinear1DCpuKernelMod::ComputeInterpolationCaches(const size_t out_siz
 
 template <typename T>
 bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                              const std::vector<AddressPtr> &,
+                                              const std::vector<AddressPtr> &workspace,
                                               const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DOutputsNum, kernel_name_);
   T *input = reinterpret_cast<T *>(inputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(input, false);
-  auto size_input = inputs[kIndex1];
-  int64_t *new_shape_data = reinterpret_cast<int64_t *>(size_input->addr);
-  MS_ERROR_IF_NULL_W_RET_VAL(new_shape_data, false);
   T *output = reinterpret_cast<T *>(outputs[kIndex0]->addr);
   MS_ERROR_IF_NULL_W_RET_VAL(output, false);
 
-  size_t new_shape_data_size = size_input->size;
-  if (new_shape_data_size != kResizeLinear1DNewShapeSize) {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', new shape data should be " << kResizeLinear1DNewShapeSize
-                  << ", but got " << new_shape_data_size;
-    return false;
-  }
-
-  size_t out_width = LongToSize(new_shape_data[0]);
-  if (out_width == in_width_) {
+  if (out_width_ == in_width_) {
     auto task = [input, output](size_t start, size_t end) {
       for (size_t i = start; i < end; ++i) {
         output[i] = input[i];
@@ -80,18 +69,24 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
     return true;
   }
 
-  std::vector<CachedInterpolation> xs(out_width + 1);
-  ComputeInterpolationCaches(out_width, in_width_, coordinate_transformation_func_, xs.data());
+  size_t *interp_lower = reinterpret_cast<size_t *>(workspace[kIndex0]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_lower, false);
+  size_t *interp_upper = reinterpret_cast<size_t *>(workspace[kIndex1]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_upper, false);
+  T *interp_lerp = reinterpret_cast<T *>(workspace[kIndex2]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_lerp, false);
 
-  auto task = [input, output, xs, out_width, this](size_t start, size_t end) {
+  auto coordinate_transformation_func = ChooseCoordinateTransformationFunc<T>(coordinate_transformation_mode_);
+
+  ComputeInterpolationCaches(out_width_, in_width_, coordinate_transformation_func, interp_lower, interp_upper,
+                             interp_lerp);
+
+  auto task = [input, output, interp_lower, interp_upper, interp_lerp, this](size_t start, size_t end) {
     for (size_t index = start; index < end; ++index) {
-      for (size_t w = 0; w < out_width; ++w) {
-        const size_t xs_lower = xs[w].lower;
-        const size_t xs_upper = xs[w].upper;
-        const float xs_lerp = static_cast<float>(xs[w].lerp);
-        const float left(static_cast<float>(*(input + index * in_width_ + xs_lower)));
-        const float right(static_cast<float>(*(input + index * in_width_ + xs_upper)));
-        *(output + index * out_width + w) = static_cast<T>(left + (right - left) * xs_lerp);
+      for (size_t w = 0; w < out_width_; ++w) {
+        const T left(static_cast<T>(*(input + index * in_width_ + interp_lower[w])));
+        const T right(static_cast<T>(*(input + index * in_width_ + interp_upper[w])));
+        *(output + index * out_width_ + w) = left + (right - left) * interp_lerp[w];
       }
     }
   };
@@ -100,24 +95,26 @@ bool ResizeLinear1DCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressP
   return true;
 }
 
-#define RESIZE_LINEAR_1D_CPU_REG(MS_T, T)                                             \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(MS_T), \
-    &ResizeLinear1DCpuKernelMod::LaunchKernel<T>
+#define RESIZE_LINEAR_1D_CPU_REG(MS_T, MS_S, T) \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), &ResizeLinear1DCpuKernelMod::LaunchKernel<T>
 
 const std::vector<std::pair<KernelAttr, ResizeLinear1DCpuKernelMod::KernelRunFunc>>
   &ResizeLinear1DCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeLinear1DCpuKernelMod::KernelRunFunc>> func_list = {
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat16, float16)},
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat32, float)},
-    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat64, double)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+    {RESIZE_LINEAR_1D_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
   };
   return func_list;
 }
 
-ResizeLinear1DCpuKernelMod::CoordinateTransformationFunc ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
+template <typename T>
+ResizeLinear1DCpuKernelMod::CoordinateTransformationFunc<T>
+ResizeLinear1DCpuKernelMod::ChooseCoordinateTransformationFunc(
   CoordinateTransformationMode coordinate_transformation_mode) {
-  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc()}, {HALF_PIXEL, HalfPixelFunc()}, {ASYMMETRIC, AsymmetricFunc()}};
+  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
+    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}, {ASYMMETRIC, AsymmetricFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -146,13 +143,22 @@ bool ResizeLinear1DCpuKernelMod::Init(const BaseOperatorPtr &base_operator, cons
     return false;
   }
 
-  coordinate_transformation_func_ = ChooseCoordinateTransformationFunc(coordinate_transformation_mode_);
-
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
   return true;
+}
+
+void ResizeLinear1DCpuKernelMod::MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs) {
+  workspace_size_list_.clear();
+  workspace_size_list_.push_back(sizeof(size_t) * out_width_);
+  workspace_size_list_.push_back(sizeof(size_t) * out_width_);
+  auto input_data_type = inputs[kIndex0]->GetDtype();
+  if (input_data_type == kNumberTypeFloat32) {
+    workspace_size_list_.push_back(sizeof(float) * out_width_);
+  } else if (input_data_type == kNumberTypeFloat64) {
+    workspace_size_list_.push_back(sizeof(double) * out_width_);
+  }
 }
 
 int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -162,10 +168,22 @@ int ResizeLinear1DCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, con
   if ((ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost)) != 0) {
     return ret;
   }
-  std::vector<int64_t> shape_ = inputs[kIndex0]->GetShapeVector();
-  batch_ = LongToSize(shape_[kIndex0]);
-  channel_ = LongToSize(shape_[kIndex1]);
-  in_width_ = LongToSize(shape_[kIndex2]);
+
+  std::vector<int64_t> input_shape = inputs[kIndex0]->GetShapeVector();
+  std::vector<int64_t> output_shape = outputs[kIndex0]->GetShapeVector();
+  if (input_shape.size() != kResizeDims || output_shape.size() != kResizeDims) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the dimension of 'input_x' and the dimension of 'output' should be equal to 3, but got "
+                  << input_shape.size() << " and " << output_shape.size() << ".";
+    return KRET_RESIZE_FAILED;
+  }
+
+  batch_ = LongToSize(input_shape[kIndex0]);
+  channel_ = LongToSize(input_shape[kIndex1]);
+  in_width_ = LongToSize(input_shape[kIndex2]);
+  out_width_ = LongToSize(output_shape[kIndex2]);
+
+  MallocWorkSpace(inputs);
   return KRET_OK;
 }
 

@@ -73,13 +73,21 @@ abstract::ShapePtr ResizeLinear1DInferShape(const PrimitivePtr &primitive,
                              << shape1_v.size() << "-D";
   }
   if (size_arg->isa<abstract::AbstractTensor>() && size_arg->BuildValue()->isa<tensor::Tensor>()) {
-    auto size_shape_ptr = reinterpret_cast<int64_t *>(size_shape_tensor->data_c());
-    if (size_shape_ptr[kInputIndex0] <= 0) {
-      MS_EXCEPTION(ValueError) << "The size must be positive , but got " << size_shape_ptr[kInputIndex0];
+    int64_t out_width = 0;
+    if (size_shape_tensor->data_type() == kNumberTypeInt32) {
+      auto size_shape_ptr = reinterpret_cast<int32_t *>(size_shape_tensor->data_c());
+      out_width = static_cast<int64_t>(size_shape_ptr[kInputIndex0]);
+    } else if (size_shape_tensor->data_type() == kNumberTypeInt64) {
+      auto size_shape_ptr = reinterpret_cast<int64_t *>(size_shape_tensor->data_c());
+      out_width = size_shape_ptr[kInputIndex0];
     }
+    if (out_width <= 0) {
+      MS_EXCEPTION(ValueError) << "The size must be positive , but got " << out_width;
+    }
+
     std::vector<int64_t> output_shape = shape0_v;
     output_shape.pop_back();
-    output_shape.push_back(size_shape_ptr[kInputIndex0]);
+    output_shape.push_back(out_width);
     return std::make_shared<abstract::Shape>(output_shape);
   } else {
     ShapeVector shape_out = shape0_v;
