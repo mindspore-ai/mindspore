@@ -116,7 +116,6 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
   auto aspect_ratios = prior_box_param_->aspect_ratios;
   for (auto i = 0; i < prior_box_param_->aspect_ratios_size; i++) {
     float ratio = aspect_ratios[i];
-    MS_CHECK_TRUE_RET(ratio != 0, RET_ERROR);
     bool exist = std::any_of(different_aspect_ratios.begin(), different_aspect_ratios.end(),
                              [&](float v) { return abs(ratio - v) < 1e-6; });
     if (!exist) {
@@ -127,9 +126,6 @@ int PriorBoxCPUKernel::GeneratePriorBox() {
       }
     }
   }
-
-  MS_CHECK_TRUE_RET(step_w_ != 0, RET_ERROR);
-  MS_CHECK_TRUE_RET(step_h_ != 0, RET_ERROR);
 
   if (InitOutput(different_aspect_ratios) != RET_OK) {
     MS_LOG(ERROR) << "Init output size error.";
