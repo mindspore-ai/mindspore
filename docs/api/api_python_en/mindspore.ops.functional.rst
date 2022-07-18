@@ -101,6 +101,7 @@ Sampling Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.grid_sample
     mindspore.ops.uniform_candidate_sampler
 
 Distance Functions
@@ -184,6 +185,9 @@ Element-by-Element Operations
     mindspore.ops.sub
     mindspore.ops.svd
     mindspore.ops.tan
+    mindspore.ops.trunc
+    mindspore.ops.truncate_div
+    mindspore.ops.truncate_mod
     mindspore.ops.xlogy
 
 .. list-table::
@@ -393,6 +397,7 @@ Array Operation
     mindspore.ops.meshgrid
     mindspore.ops.normal
     mindspore.ops.nonzero
+    mindspore.ops.population_count
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.repeat_elements
