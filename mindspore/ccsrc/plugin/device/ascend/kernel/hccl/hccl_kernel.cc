@@ -24,6 +24,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
@@ -280,11 +281,19 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
       workspace_addr = workspace.at(0)->addr;
     }
 
-    results.emplace_back(
+    std::vector<void *> global_workspace_addr;
+    auto overflow_memory_ptr =
+      device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem(anf_node_.lock()->cast<CNodePtr>());
+    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
+    global_workspace_addr.push_back(reinterpret_cast<void *>(overflow_memory_ptr));
+
+    HcclTaskInfoPtr hcclTaskInfo =
       std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
                                      output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
                                      private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
-                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump()));
+                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump());
+    hcclTaskInfo->SetGlobalWorkspaceAddr(global_workspace_addr);
+    results.emplace_back(hcclTaskInfo);
   }
 
   return results;
