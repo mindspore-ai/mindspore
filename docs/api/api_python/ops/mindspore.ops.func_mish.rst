@@ -16,7 +16,7 @@ mindspore.ops.mish
 
     - **x** (Tensor) - shape: :math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度，数据类型支持float16或float32。
 
-    **输出：**
+    **返回：**
 
     Tensor，与 `x` 的shape和数据类型相同。
 

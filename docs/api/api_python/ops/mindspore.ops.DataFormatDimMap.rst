@@ -1,7 +1,7 @@
 mindspore.ops.DataFormatDimMap
 ==============================
 
-.. py:class:: mindspore.ops.DataFormatDimMap()
+.. py:class:: mindspore.ops.DataFormatDimMap(src_format='NHWC', dst_format='NCHW')
 
     返回源数据格式中的目标数据格式的维度索引。
 

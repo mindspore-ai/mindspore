@@ -1,7 +1,7 @@
 mindspore.ops.affine_grid
 =========================
 
-.. py:function:: mindspore.ops.affine_grid(theta, output_size, align_corners)
+.. py:function:: mindspore.ops.affine_grid(theta, output_size, align_corners=False)
 
     给定一批仿射矩阵 theta，生成 2D 或 3D 流场（采样网格）。
 

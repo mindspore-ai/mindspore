@@ -1,7 +1,7 @@
 mindspore.ops.ceil
 ===================
 
-.. py:function:: mindspore.ops.ceil()
+.. py:function:: mindspore.ops.ceil(x)
 
     向上取整函数。
 
