@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <utility>
+#include <complex>
 #include "include/common/thread_pool.h"
 #include "mindspore/core/ops/sparse_add.h"
 
@@ -97,7 +98,7 @@ int SparseAddCpuKernelMod::CompareTowIndices(const T &a_indices, const T &b_indi
   return 0;
 }
 
-template <typename T, typename S>
+template <typename T, typename S, typename K>
 bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
                                          const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() != kInputNum) {
@@ -111,22 +112,22 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   // Inputs
   const auto a_indices = reinterpret_cast<T *>(inputs[kAIndicesIdx]->addr);
   const auto a_values = reinterpret_cast<S *>(inputs[kAValuesIdx]->addr);
-  const auto a_shape = reinterpret_cast<int *>(inputs[kAShapeIdx]->addr);
+  const auto a_shape = reinterpret_cast<T *>(inputs[kAShapeIdx]->addr);
   const auto b_indices = reinterpret_cast<T *>(inputs[kBIndicesIdx]->addr);
   const auto b_values = reinterpret_cast<S *>(inputs[kBValuesIdx]->addr);
-  const auto thresh = reinterpret_cast<float *>(inputs[kThreshIdx]->addr);
+  const auto thresh = reinterpret_cast<K *>(inputs[kThreshIdx]->addr);
   // Outputs
   auto sum_indices = reinterpret_cast<T *>(outputs[kSumIndicesIdx]->addr);
   auto sum_values = reinterpret_cast<S *>(outputs[kSumValuesIdx]->addr);
-  auto sum_shape = reinterpret_cast<int *>(outputs[kSumShapeIdx]->addr);
+  auto sum_shape = reinterpret_cast<T *>(outputs[kSumShapeIdx]->addr);
 
   const int64_t a_indices_num = inputs[kAIndicesIdx]->size / ((sizeof(T)) * 2);
   const int64_t b_indices_num = inputs[kBIndicesIdx]->size / ((sizeof(T)) * 2);
 
   // Use double pointer to calculate the sum of two inputs
-  int64_t i = 0, j = 0;
+  T i = 0, j = 0;
   S sum_ab = 0;
-  std::vector<std::pair<bool, int64_t>> whole_indices;
+  std::vector<std::pair<bool, T>> whole_indices;
   std::vector<S> whole_values;
   whole_indices.reserve(a_indices_num + b_indices_num);
   while (i < a_indices_num && j < b_indices_num) {
@@ -198,40 +199,44 @@ bool SparseAddCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &
   return true;
 }
 
-#define CPU_SPARSE_ADD_KERNEL_REGISTER(ms_index_type, ms_value_type, ms_shape_type, ms_thresh_type, index_type, \
-                                       value_type)                                                              \
-  {                                                                                                             \
-    KernelAttr()                                                                                                \
-      .AddInputAttr(ms_index_type)                                                                              \
-      .AddInputAttr(ms_value_type)                                                                              \
-      .AddInputAttr(ms_shape_type)                                                                              \
-      .AddInputAttr(ms_index_type)                                                                              \
-      .AddInputAttr(ms_value_type)                                                                              \
-      .AddInputAttr(ms_shape_type)                                                                              \
-      .AddInputAttr(ms_thresh_type)                                                                             \
-      .AddOutputAttr(ms_index_type)                                                                             \
-      .AddOutputAttr(ms_value_type)                                                                             \
-      .AddOutputAttr(ms_shape_type),                                                                            \
-      &SparseAddCpuKernelMod::LaunchKernel<index_type, value_type>                                              \
+#define CPU_SPARSE_ADD_KERNEL_REGISTER(ms_index_type, ms_value_type, ms_thresh_type, index_type, value_type, \
+                                       thresh_type)                                                          \
+  {                                                                                                          \
+    KernelAttr()                                                                                             \
+      .AddInputAttr(ms_index_type)                                                                           \
+      .AddInputAttr(ms_value_type)                                                                           \
+      .AddInputAttr(ms_index_type)                                                                           \
+      .AddInputAttr(ms_index_type)                                                                           \
+      .AddInputAttr(ms_value_type)                                                                           \
+      .AddInputAttr(ms_index_type)                                                                           \
+      .AddInputAttr(ms_thresh_type)                                                                          \
+      .AddOutputAttr(ms_index_type)                                                                          \
+      .AddOutputAttr(ms_value_type)                                                                          \
+      .AddOutputAttr(ms_index_type),                                                                         \
+      &SparseAddCpuKernelMod::LaunchKernel<index_type, value_type, thresh_type>                              \
   }
 
 const std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::KernelRunFunc>> &SparseAddCpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, SparseAddCpuKernelMod::KernelRunFunc>> func_list = {
     // float values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeInt32, kNumberTypeFloat32, int,
-                                   float),
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat32, kNumberTypeFloat32, int64_t, float, float),
     // double values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, kNumberTypeInt32, kNumberTypeFloat32, int,
-                                   double),
-    // int values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt32, kNumberTypeInt32, kNumberTypeFloat32, int, int),
-    // int64 values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt64, kNumberTypeInt32, kNumberTypeFloat32, int,
-                                   int64_t),
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, kNumberTypeFloat64, int64_t, double, double),
+    // int8 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt8, kNumberTypeInt8, int64_t, int8_t, int8_t),
     // int16 values
-    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeFloat32, int,
-                                   int16_t),
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt16, kNumberTypeInt16, int64_t, int16_t, int16_t),
+    // int values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt32, kNumberTypeInt32, int64_t, int, int),
+    // int64 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeInt64, kNumberTypeInt64, int64_t, int64_t, int64_t),
+    // complex64 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, kNumberTypeFloat32, int64_t,
+                                   std::complex<float>, float),
+    // complex64 values
+    CPU_SPARSE_ADD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, kNumberTypeFloat32, int64_t,
+                                   std::complex<double>, double),
   };
   return func_list;
 }
