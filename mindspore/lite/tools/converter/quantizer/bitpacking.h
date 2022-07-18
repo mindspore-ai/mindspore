@@ -16,12 +16,15 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_BITPACKING_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_BITPACKING_H_
+#include <cmath>
 #include <cstdint>
 #include <stack>
 #include <queue>
 #include <vector>
 #include <cassert>
+#include "tools/converter/quantizer/quant_params.h"
 
+using mindspore::lite::quant::k8Bit;
 namespace mindspore::lite {
 class BitPack {
  public:
@@ -36,8 +39,8 @@ class BitPack {
       DoBinary<T2>(bit_num, tmp, &bit_data_vec, packed_data_vec);
     }
     size_t remain_bit_data = bit_data_vec.size();
-    if (sizeof(T1) * 8 > remain_bit_data && remain_bit_data > 0) {
-      for (size_t i = 0; i < sizeof(T1) * 8 - remain_bit_data; i++) {
+    if (sizeof(T1) * k8Bit > remain_bit_data && remain_bit_data > 0) {
+      for (size_t i = 0; i < sizeof(T1) * k8Bit - remain_bit_data; i++) {
         bit_data_vec.push(false);
       }
       PackFromOriginToUint<T2>(&bit_data_vec, packed_data_vec);
@@ -49,7 +52,7 @@ class BitPack {
   static void PackFromOriginToUint(std::stack<bool> *ans, std::vector<T2> *packed_data_vec) {
     MS_ASSERT(ans != nullptr);
     uint32_t result = 0;
-    for (size_t i = 0; i < sizeof(T2) * 8; i++) {
+    for (size_t i = 0; i < sizeof(T2) * k8Bit; i++) {
       bool bit_tmp = ans->top();
       result = (result << 1) + static_cast<size_t>(bit_tmp);
       ans->pop();
@@ -64,7 +67,7 @@ class BitPack {
       bool a = n % 2;
       n = n / 2;
       ans->push(a);
-      if (ans->size() == sizeof(T2) * 8) {
+      if (ans->size() == sizeof(T2) * k8Bit) {
         PackFromOriginToUint(ans, packed_data_vec);
       }
     }

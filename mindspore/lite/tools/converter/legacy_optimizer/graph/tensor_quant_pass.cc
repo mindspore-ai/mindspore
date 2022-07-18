@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/converter/quantizer/tensor_compressor.h"
 #include "tools/common/tensor_util.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/meta_graph_utils.h"
@@ -192,6 +193,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       index++;
       continue;
     }
+    auto compressor = quant::TensorCompressor();
 
     if (tensor->quantParams.size() > 1) {  // perchannel
       status = ComputeQuantTensorPerChannel(tensor.get(), index, *graph);
@@ -200,7 +202,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         return RET_ERROR;
       }
       int bit_num = tensor->quantParams.front()->numBits;
-      if (quant::DoBitPack(bit_num, tensor.get()) != RET_OK) {
+      if (compressor.DoBitPack(bit_num, tensor.get()) != RET_OK) {
         MS_LOG(ERROR) << "bit pack failed.";
         return RET_ERROR;
       }
@@ -213,7 +215,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
         quantParam->dstDtype == TypeId::kNumberTypeFloat32 || quantParam->dstDtype == TypeId::kNumberTypeFloat) {
       status = ComputeDataToInt8(tensor);
       int bit_num = tensor->quantParams.front()->numBits;
-      if (quant::DoBitPack(bit_num, tensor.get()) != RET_OK) {
+      if (compressor.DoBitPack(bit_num, tensor.get()) != RET_OK) {
         MS_LOG(ERROR) << "bit pack failed.";
         return RET_ERROR;
       }

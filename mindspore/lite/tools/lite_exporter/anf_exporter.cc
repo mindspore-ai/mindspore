@@ -47,6 +47,7 @@
 #include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quantize_util.h"
 #include "tools/converter/quantizer/fse_encoder.h"
+#include "tools/converter/quantizer/tensor_compressor.h"
 #include "nnacl/op_base.h"
 
 using mindspore::ops::PrimitiveC;
@@ -131,14 +132,15 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     if (dst_node->quantType != schema::QuantType_QUANT_WEIGHT) {
       return RET_OK;
     }
+    auto compressor = quant::TensorCompressor();
     if (bit_num == kBitNumMix) {
       tensor_input->quantParams.clear();
     } else if (bit_num == kBitNum8) {
-      (void)quant::PackRepetition<int8_t>(bit_num, tensor_input);
+      (void)compressor.PackRepetition<int8_t>(bit_num, tensor_input);
     } else if (bit_num == kBitNum16) {
-      (void)quant::PackRepetition<int16_t>(bit_num, tensor_input);
+      (void)compressor.PackRepetition<int16_t>(bit_num, tensor_input);
     } else {
-      auto status = quant::DoBitPack(bit_num, tensor_input);
+      auto status = compressor.DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "do bit pack failed. " << status;
         return RET_ERROR;
