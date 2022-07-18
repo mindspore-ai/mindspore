@@ -108,15 +108,17 @@ bool ResizeLinear1DGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inp
   return true;
 }
 
-#define RESIZE_LINEAR_1D_GPU_REG(MS_T, T)                                             \
-  KernelAttr().AddInputAttr(MS_T).AddInputAttr(kNumberTypeInt64).AddOutputAttr(MS_T), \
-    &ResizeLinear1DGpuKernelMod::LaunchKernel<T>
+#define RESIZE_LINEAR_1D_GPU_REG(MS_T, MS_S, T) \
+  KernelAttr().AddInputAttr(MS_T).AddInputAttr(MS_S).AddOutputAttr(MS_T), &ResizeLinear1DGpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ResizeLinear1DGpuKernelMod::ResizeLinear1DFunc>>
   ResizeLinear1DGpuKernelMod::func_list_ = {
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, half)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, float)},
-    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, double)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, kNumberTypeInt32, half)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, kNumberTypeInt32, float)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, kNumberTypeInt32, double)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat16, kNumberTypeInt64, half)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
+    {RESIZE_LINEAR_1D_GPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
 };
 
 std::vector<KernelAttr> ResizeLinear1DGpuKernelMod::GetOpSupport() {

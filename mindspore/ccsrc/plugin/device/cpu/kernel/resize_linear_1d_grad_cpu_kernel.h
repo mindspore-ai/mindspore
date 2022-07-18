@@ -54,18 +54,24 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::OpSupport(); }
 
  private:
+  void MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs);
+
   template <typename T>
-  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &,
+  bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                     const std::vector<kernel::AddressPtr> &outputs);
 
   enum CoordinateTransformationMode { ALIGN_CORNERS = 0, HALF_PIXEL = 1, ASYMMETRIC = 2, INVALID_MODE = 255 };
-  using CoordinateTransformationFunc =
-    std::function<float(const float &new_x, const int &old_length, const int &new_length)>;
 
-  void ComputeInterpolationCaches(const size_t out_size, const size_t in_size, const CoordinateTransformationFunc &func,
-                                  CachedInterpolation *interpolation);
+  template <typename T>
+  using CoordinateTransformationFunc = std::function<T(const T &new_x, const int &old_length, const int &new_length)>;
 
-  CoordinateTransformationFunc ChooseCoordinateTransformationFunc(
+  template <typename T>
+  void ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
+                                  const CoordinateTransformationFunc<T> &func, size_t *interp_lower,
+                                  size_t *interp_upper, T *interp_lerp);
+
+  template <typename T>
+  CoordinateTransformationFunc<T> ChooseCoordinateTransformationFunc(
     CoordinateTransformationMode coordinate_transformation_mode);
 
   std::string kernel_type_{kUnknown};
@@ -76,7 +82,6 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   size_t input_width_{0};
   size_t output_width_{0};
   CoordinateTransformationMode coordinate_transformation_mode_{ALIGN_CORNERS};
-  CoordinateTransformationFunc coordinate_transformation_func_;
 };
 }  // namespace mindspore::kernel
 

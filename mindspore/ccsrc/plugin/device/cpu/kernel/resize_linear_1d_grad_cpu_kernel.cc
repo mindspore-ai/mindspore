@@ -28,27 +28,28 @@ constexpr auto kResizeLinear1DGrad = "ResizeLinear1DGrad";
 constexpr const size_t kResizeLinear1DGradInputsNum = 2;
 constexpr const size_t kResizeLinear1DGradOutputsNum = 1;
 
+template <typename T>
 void ResizeLinear1DGradCpuKernelMod::ComputeInterpolationCaches(const size_t out_size, const size_t in_size,
-                                                                const CoordinateTransformationFunc &func,
-                                                                CachedInterpolation *interpolation) {
-  interpolation[out_size].lower = 0;
-  interpolation[out_size].upper = 0;
+                                                                const CoordinateTransformationFunc<T> &func,
+                                                                size_t *interp_lower, size_t *interp_upper,
+                                                                T *interp_lerp) {
   auto task = [&](size_t start, size_t end) {
     for (size_t i = start; i < end; ++i) {
-      const float in = func(i, in_size, out_size);
-      const float in_floor = std::floor(in);
-      const float in_ceil = std::ceil(in);
-      interpolation[i].lower = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
-      interpolation[i].upper = static_cast<size_t>(in_ceil < static_cast<float>(in_size - 1) ? in_ceil : in_size - 1);
-      interpolation[i].lerp = in - in_floor;
+      const T in = func(i, in_size, out_size);
+      const T in_floor = std::floor(in);
+      const T in_ceil = std::ceil(in);
+      interp_lower[i] = static_cast<size_t>(in_floor > 0 ? in_floor : 0);
+      interp_upper[i] = static_cast<size_t>(in_ceil < static_cast<T>(in_size - 1) ? in_ceil : in_size - 1);
+      interp_lerp[i] = in - in_floor;
     }
   };
   ParallelLaunchAutoSearch(task, out_size, this, &parallel_search_info_, pool_);
+  return;
 }
 
 template <typename T>
 bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                                  const std::vector<AddressPtr> &,
+                                                  const std::vector<AddressPtr> &workspace,
                                                   const std::vector<kernel::AddressPtr> &outputs) {
   CHECK_KERNEL_INPUTS_NUM(inputs.size(), kResizeLinear1DGradInputsNum, kernel_name_);
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kResizeLinear1DGradOutputsNum, kernel_name_);
@@ -71,19 +72,25 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
     MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', output buffer memset failed.";
   }
 
-  std::vector<CachedInterpolation> xs(output_width_ + 1);
-  ComputeInterpolationCaches(output_width_, input_width_, coordinate_transformation_func_, xs.data());
+  size_t *interp_lower = reinterpret_cast<size_t *>(workspace[kIndex0]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_lower, false);
+  size_t *interp_upper = reinterpret_cast<size_t *>(workspace[kIndex1]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_upper, false);
+  T *interp_lerp = reinterpret_cast<T *>(workspace[kIndex2]->addr);
+  MS_ERROR_IF_NULL_W_RET_VAL(interp_lerp, false);
 
-  auto task = [grad_output, grad_input, xs, this](size_t start, size_t end) {
+  auto coordinate_transformation_func = ChooseCoordinateTransformationFunc<T>(coordinate_transformation_mode_);
+
+  ComputeInterpolationCaches(output_width_, input_width_, coordinate_transformation_func, interp_lower, interp_upper,
+                             interp_lerp);
+
+  auto task = [grad_output, grad_input, interp_lower, interp_upper, interp_lerp, this](size_t start, size_t end) {
     for (size_t index = start; index < end; ++index) {
       for (size_t w = 0; w < output_width_; ++w) {
-        const size_t xs_lower = xs[w].lower;
-        const size_t xs_upper = xs[w].upper;
-        const float xs_lerp = static_cast<float>(xs[w].lerp);
-        *(grad_input + index * input_width_ + xs_lower) +=
-          static_cast<T>((*(grad_output + index * output_width_ + w)) * static_cast<T>(1 - xs_lerp));
-        *(grad_input + index * input_width_ + xs_upper) +=
-          static_cast<T>((*(grad_output + index * output_width_ + w)) * static_cast<T>(xs_lerp));
+        *(grad_input + index * input_width_ + interp_lower[w]) +=
+          static_cast<T>((*(grad_output + index * output_width_ + w)) * (1.0 - interp_lerp[w]));
+        *(grad_input + index * input_width_ + interp_upper[w]) +=
+          static_cast<T>((*(grad_output + index * output_width_ + w)) * interp_lerp[w]);
       }
     }
   };
@@ -99,18 +106,18 @@ bool ResizeLinear1DGradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
 const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>>
   &ResizeLinear1DGradCpuKernelMod::GetFuncList() const {
   static const std::vector<std::pair<KernelAttr, ResizeLinear1DGradCpuKernelMod::KernelRunFunc>> func_list = {
-    {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat16, float16)},
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat32, float)},
     {RESIZE_LINEAR_1D_GRAD_CPU_REG(kNumberTypeFloat64, double)},
   };
   return func_list;
 }
 
-ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc
+template <typename T>
+ResizeLinear1DGradCpuKernelMod::CoordinateTransformationFunc<T>
 ResizeLinear1DGradCpuKernelMod::ChooseCoordinateTransformationFunc(
   CoordinateTransformationMode coordinate_transformation_mode) {
-  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc> coordinate_map{
-    {ALIGN_CORNERS, AlignCornersFunc()}, {HALF_PIXEL, HalfPixelFunc()}, {ASYMMETRIC, AsymmetricFunc()}};
+  const std::unordered_map<CoordinateTransformationMode, CoordinateTransformationFunc<T>> coordinate_map{
+    {ALIGN_CORNERS, AlignCornersFunc<T>()}, {HALF_PIXEL, HalfPixelFunc<T>()}, {ASYMMETRIC, AsymmetricFunc<T>()}};
   return coordinate_map.at(coordinate_transformation_mode);
 }
 
@@ -141,12 +148,22 @@ bool ResizeLinear1DGradCpuKernelMod::Init(const BaseOperatorPtr &base_operator,
     return false;
   }
 
-  coordinate_transformation_func_ = ChooseCoordinateTransformationFunc(coordinate_transformation_mode_);
-
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
   return true;
+}
+
+void ResizeLinear1DGradCpuKernelMod::MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs) {
+  workspace_size_list_.clear();
+  workspace_size_list_.push_back(sizeof(size_t) * output_width_);
+  workspace_size_list_.push_back(sizeof(size_t) * output_width_);
+  auto input_data_type = inputs[kIndex0]->GetDtype();
+  if (input_data_type == kNumberTypeFloat32) {
+    workspace_size_list_.push_back(sizeof(float) * output_width_);
+  } else if (input_data_type == kNumberTypeFloat64) {
+    workspace_size_list_.push_back(sizeof(double) * output_width_);
+  }
 }
 
 int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
@@ -175,6 +192,7 @@ int ResizeLinear1DGradCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
     return KRET_RESIZE_FAILED;
   }
 
+  MallocWorkSpace(inputs);
   return KRET_OK;
 }
 
