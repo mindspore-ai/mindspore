@@ -31,7 +31,7 @@ namespace parallel {
   OperatorInfoPtr objectCreator##className(std::string name, Shapes in, Shapes out, PrimitiveAttrs &attrs) { \
     return std::make_shared<className>(name, in, out, attrs);                                                \
   }                                                                                                          \
-  RegisterAction className##Register(#className, (CreatFn)objectCreator##className);
+  RegisterAction className##Register(#className, reinterpret_cast<CreatFn>(objectCreator##className));
 
 typedef OperatorInfoPtr (*CreatFn)(const std::string &name, const Shapes &shape_in, const Shapes shape_out,
                                    const PrimitiveAttrs &attrs);
@@ -51,7 +51,7 @@ class DynCreator {
   OperatorInfoPtr Create(const std::string &name, const Shapes &shape_in, const Shapes &shape_out,
                          const PrimitiveAttrs &attrs, size_t count) {
     std::string op_name = name + std::to_string(count);
-    auto iter = Function_map_.find(name);
+    const auto iter = Function_map_.find(name);
     if (iter == Function_map_.end()) {
       MS_LOG(INFO) << name << " is not register yet";
       return nullptr;
@@ -66,7 +66,7 @@ class DynCreator {
 
 class RegisterAction {
  public:
-  RegisterAction(const std::string &name, CreatFn creatfn) : name_(name) {
+  RegisterAction(const std::string &name, CreatFn creatfn) noexcept : name_(name) {
     DynCreator::Instance().Register(name, creatfn);
   }
   ~RegisterAction() = default;
