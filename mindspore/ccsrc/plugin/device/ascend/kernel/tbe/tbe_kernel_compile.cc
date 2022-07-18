@@ -568,7 +568,7 @@ void TbeKernelCompileManager::UpdateFusionTypeAndOutputDataDesc(const std::vecto
   MS_LOG(INFO) << "End update fusion type after pre build";
 }
 
-void TbeKernelCompileManager::PrintInitResult(const nlohmann::json &json) {
+void TbeKernelCompileManager::PrintInitResult(const nlohmann::json &json) const {
   if (json.at(kStatus) == kFailed) {
     PrintProcessLog(json);
     MS_LOG(EXCEPTION) << "TbeInitialize running failed.";
@@ -576,7 +576,7 @@ void TbeKernelCompileManager::PrintInitResult(const nlohmann::json &json) {
   MS_LOG(INFO) << "TbeInitialize running success.";
 }
 
-std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node) {
+std::string TbeKernelCompileManager::ParseSelectAndCheckResult(const nlohmann::json &json, const CNodePtr &node) const {
   // for check supported and format select
   MS_EXCEPTION_IF_NULL(node);
   auto job_type = GetJsonValue<std::string>(json, kJobType);
