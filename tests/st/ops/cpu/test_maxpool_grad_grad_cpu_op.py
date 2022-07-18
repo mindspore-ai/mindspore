@@ -19,14 +19,15 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
+from mindspore.ops.functional import vmap
 
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-class NetPoolGradGrad(nn.Cell):
+class NetMaxPoolGradGrad(nn.Cell):
     def __init__(self, mode, kernel, stride):
-        super(NetPoolGradGrad, self).__init__()
+        super(NetMaxPoolGradGrad, self).__init__()
         self.maxpool_grad_grad_fun = G.MaxPoolGradGrad(pad_mode=mode,
                                                        kernel_size=kernel,
                                                        strides=stride)
@@ -60,7 +61,7 @@ def test_maxpool2d_grad_grad_fp16():
                                 [[3.7, 3.9],
                                  [4.5, 4.7]]]])).astype(np.float16)
 
-    maxpool2d_grad_grad = NetPoolGradGrad("VALID", 2, 2)
+    maxpool2d_grad_grad = NetMaxPoolGradGrad("VALID", 2, 2)
     output = maxpool2d_grad_grad(x, out, d)
     assert np.allclose(output.asnumpy(), expect_result)
 
@@ -99,6 +100,36 @@ def test_maxpool2d_grad_grad_fp32():
                                  [4.6, 4.7, 4.8, 4.9, 4.9],
                                  [4.6, 4.7, 4.8, 4.9, 4.9]]]])).astype(np.float32)
 
-    maxpool2d_grad_grad = NetPoolGradGrad("SAME", 3, 1)
+    maxpool2d_grad_grad = NetMaxPoolGradGrad("SAME", 3, 1)
     output = maxpool2d_grad_grad(x, out, d)
     assert np.allclose(output.asnumpy(), expect_result)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('axis', [2])
+def test_maxpool2d_grad_grad_vmap(axis):
+    """
+    Feature: MaxPool2dGradGrad cpu kernel
+    Description: test the rightness of MaxPool2dGradGrad cpu kernel vmap feature.
+    Expectation: Success.
+    """
+    maxpool2d_grad_grad = NetMaxPoolGradGrad("SAME", 3, 1)
+
+    x = np.random.random((2, 3, 5, 5, axis)).astype(np.float32)
+    y = np.random.random((2, 3, 5, 5, axis)).astype(np.float32)
+    grad = np.random.random((2, 3, 5, 5, axis)).astype(np.float32)
+
+    output_vmap = vmap(maxpool2d_grad_grad, in_axes=(-1, -1, -1)
+                       )(Tensor(x), Tensor(y), Tensor(grad))
+
+    def manually_batched(x, y, grad):
+        output = []
+        for i in range(x.shape[-1]):
+            output.append(maxpool2d_grad_grad(Tensor(x[:, :, :, :, i]), Tensor(
+                y[:, :, :, :, i]), Tensor(grad[:, :, :, :, i])).asnumpy())
+        return np.stack(output)
+
+    expect = manually_batched(x, y, grad)
+    assert np.array_equal(output_vmap.asnumpy(), expect)

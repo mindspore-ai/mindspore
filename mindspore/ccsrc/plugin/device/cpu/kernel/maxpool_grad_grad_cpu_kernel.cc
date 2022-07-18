@@ -189,5 +189,6 @@ bool MaxPoolGradGradCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs,
 std::vector<KernelAttr> MaxPoolGradGradCpuKernelMod::GetOpSupport() { return kernel_attr; }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaxPoolGradGrad, MaxPool2DGradGradCpuKernelMod);
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, MaxPool3DGradGrad, MaxPool3DGradGradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

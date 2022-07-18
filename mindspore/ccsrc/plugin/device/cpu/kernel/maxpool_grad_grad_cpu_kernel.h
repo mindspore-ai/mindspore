@@ -24,6 +24,7 @@
 #include <utility>
 #include <unordered_map>
 #include "mindspore/core/ops/grad/max_pool_grad_grad.h"
+#include "mindspore/core/ops/grad/max_pool_3d_grad_grad.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/device/cpu/kernel/nnacl/pooling_parameter.h"
 
