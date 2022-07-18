@@ -22,6 +22,7 @@
 #include "nnacl/errorcode.h"
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/op_base.h"
+#include "nnacl/fp32/matmul_avx_fp32.h"
 
 #define ADD_BIAS(value, bias, c) \
   if (bias != NULL) value = value + bias[c];
@@ -63,41 +64,6 @@ void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float 
                           int col, int stride, int write_mode);
 void MatmulFloatNeon32Opt12x4(const float *a, const float *b, float *c, const float *bias, int act_type, int depth,
                               int row, int col, int stride, int write_mode);
-
-#elif defined(ENABLE_AVX)
-typedef void (*DeconvAvxKernel)(const float *src, const float *weight, float *dst, int col, int row, int depth,
-                                int stride);
-void DeconvMatmulAvx(const float *a, const float *b, float *c, int depth, int row, int col, int kernel_plane);
-void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, size_t act_type, size_t depth,
-                       size_t row, size_t col, size_t stride, size_t write_mode);
-typedef void (*MatVecMulKernel)(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                                size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatVecMulAvxFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int cur_col,
-                      int col_align);
-void MatMulAvxFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int cur_col,
-                   int col_align, int row);
-void MatVecMul1x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatVecMul1x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatVecMul1x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                         size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatVecMul1x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                        size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatMul3x32Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                      size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatMul4x24Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                      size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatMul6x16Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                      size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-void MatMul8x8Kernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                     size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-#ifdef ENABLE_DEBUG
-void DeconvColXRowAvxKernel(const float *src, const float *weight, float *dst, int col, int row, int depth, int stride);
-
-void MatVecMulRowxColKernel(float *dst, const float *src, const float *weight, const float *bias, size_t act_flag,
-                            size_t row_block, size_t col_block, size_t col_algin, size_t deep);
-#endif
 
 #elif defined(ENABLE_SSE)
 void DeconvMatmulFloatSse(const float *a, const float *b, float *c, int depth, int row, int col);
