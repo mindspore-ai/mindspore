@@ -23,6 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "abstract/abstract_value.h"
+#include "ops/primitive_c.h"
+#include "utils/check_convert_utils.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/types.h"
 
@@ -33,6 +36,13 @@ class MIND_API MultiMarginLoss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MultiMarginLoss);
   MultiMarginLoss() : BaseOperator(kNameMultiMarginLoss) { InitIOName({"x", "target", "weight"}, {"y"}); }
+  void Init(int64_t p, float margin, const Reduction &reduction = MEAN);
+  void set_p(int64_t p);
+  void set_margin(float margin);
+  void set_reduction(const Reduction &reduction);
+  int64_t get_p() const;
+  float get_margin() const;
+  string get_reduction() const;
 };
 
 abstract::AbstractBasePtr MultiMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

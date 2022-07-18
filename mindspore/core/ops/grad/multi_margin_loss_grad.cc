@@ -83,6 +83,31 @@ abstract::ShapePtr MultiMarginLossGradInferShape(const PrimitivePtr &primitive,
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(MultiMarginLossGrad, BaseOperator);
+
+void MultiMarginLossGrad::set_p(int64_t p) { (void)AddAttr(kP, api::MakeValue(p)); }
+
+void MultiMarginLossGrad::set_margin(float margin) { (void)AddAttr(kMargin, api::MakeValue(margin)); }
+
+void MultiMarginLossGrad::set_reduction(const Reduction &reduction) {
+  int64_t swi = reduction;
+  (void)this->AddAttr(kReduction, api::MakeValue(swi));
+}
+
+int64_t MultiMarginLossGrad::get_p() const {
+  auto value_ptr = GetAttr(kP);
+  return GetValue<int64_t>(value_ptr);
+}
+
+float MultiMarginLossGrad::get_margin() const {
+  auto value_ptr = GetAttr(kMargin);
+  return GetValue<float>(value_ptr);
+}
+
+string MultiMarginLossGrad::get_reduction() const {
+  auto value_ptr = GetAttr(kReduction);
+  return GetValue<string>(value_ptr);
+}
+
 AbstractBasePtr MultiMarginLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                          const std::vector<AbstractBasePtr> &input_args) {
   constexpr size_t kInputNumWithWeight = 4;
