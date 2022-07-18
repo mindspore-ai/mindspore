@@ -3576,7 +3576,7 @@ class ApproximateEqual(_LogicBinaryOp):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3]), mindspore.float32)
