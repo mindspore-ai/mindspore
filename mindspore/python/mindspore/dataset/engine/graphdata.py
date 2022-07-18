@@ -22,7 +22,6 @@ import random
 import time
 from enum import IntEnum
 import numpy as np
-import pandas as pd
 from mindspore._c_dataengine import GraphDataClient
 from mindspore._c_dataengine import GraphDataServer
 from mindspore._c_dataengine import Tensor
@@ -138,21 +137,17 @@ class GraphData:
         if working_mode in ['local', 'client']:
             self._graph_data = GraphDataClient(self.data_format, dataset_file, num_parallel_workers, working_mode,
                                                hostname, port)
-            atexit.register(self.stop)
+            atexit.register(self._stop)
 
         if working_mode == 'server':
             self._graph_data = GraphDataServer(
                 self.data_format, dataset_file, num_parallel_workers, hostname, port, num_client, auto_shutdown)
-            atexit.register(self.stop)
+            atexit.register(self._stop)
             try:
                 while self._graph_data.is_stopped() is not True:
                     time.sleep(1)
             except KeyboardInterrupt:
                 raise Exception("Graph data server receives KeyboardInterrupt.")
-
-    def stop(self):
-        """Stop GraphDataClient or GraphDataServer."""
-        self._graph_data.stop()
 
     @check_gnn_get_all_nodes
     def get_all_nodes(self, node_type):
@@ -530,23 +525,30 @@ class GraphData:
         return self._graph_data.random_walk(target_nodes, meta_path, step_home_param, step_away_param,
                                             default_node).as_array()
 
+    def _stop(self):
+        """Stop GraphDataClient or GraphDataServer."""
+        self._graph_data.stop()
+
 
 class Graph(GraphData):
     """
-    A graph object for storing Graph structure and feature data.
+    A graph object for storing Graph structure and feature data, and provide capabilities such as graph sampling.
 
-    This class supports init graph With input numpy array data, which represent edge, node and its features.
+    This class supports init graph With input numpy array data, which represent node, edge and its features.
     If working mode is `local`, there is no need to specify input arguments like `working_mode`, `hostname`, `port`,
     `num_client`, `auto_shutdown`.
 
     Args:
         edges(Union[list, numpy.ndarray]): edges of graph in COO format with shape [2, num_edges].
-        node_feat(dict, optional): feature of nodes, key is feature type, value should be numpy.array with shape
-            [num_nodes, num_node_features], feature type should be string, like 'weight' etc.
-        edge_feat(dict, optional): feature of edges, key is feature type, value should be numpy.array with shape
-            [num_edges, num_edge_features], feature type should be string, like 'weight' etc.
-        graph_feat(dict, optional): additional feature, which can not be assigned to node_feat or edge_feat, key is
-            feature type, value should be numpy.array.
+        node_feat(dict, optional): feature of nodes, input data format should be dict, key is feature type, which is
+            represented with string like 'weight' etc, value should be numpy.array with shape
+            [num_nodes, num_node_features].
+        edge_feat(dict, optional): feature of edges, input data format should be dict, key is feature type, which is
+            represented with string like 'weight' etc, value should be numpy.array with shape
+            [num_edges, num_edge_features].
+        graph_feat(dict, optional): additional feature, which can not be assigned to node_feat or edge_feat, input data
+            format should be dict, key is feature type, which is represented with string, value should be numpy.array,
+            its shape is not restricted.
         node_type(Union[list, numpy.ndarray], optional): type of nodes, each element should be string which represent
             type of corresponding node. If not provided, default type for each node is '0'.
         edge_type(Union[list, numpy.ndarray], optional): type of edges, each element should be string which represent
@@ -630,22 +632,18 @@ class Graph(GraphData):
             self._graph_data = GraphDataClient(self.data_format, num_nodes, edges, node_feat, edge_feat, graph_feat,
                                                node_type, edge_type, num_parallel_workers, working_mode, hostname,
                                                port)
-            atexit.register(self.stop)
+            atexit.register(self._stop)
 
         if working_mode == 'server':
             self._graph_data = GraphDataServer(self.data_format, num_nodes, edges, node_feat, edge_feat, graph_feat,
                                                node_type, edge_type, num_parallel_workers, hostname, port, num_client,
                                                auto_shutdown)
-            atexit.register(self.stop)
+            atexit.register(self._stop)
             try:
                 while self._graph_data.is_stopped() is not True:
                     time.sleep(1)
             except KeyboardInterrupt:
                 raise Exception("Graph data server receives KeyboardInterrupt.")
-
-    def stop(self):
-        """Stop GraphDataClient or GraphDataServer."""
-        self._graph_data.stop()
 
     @check_gnn_get_all_nodes
     def get_all_nodes(self, node_type):
@@ -679,7 +677,8 @@ class Graph(GraphData):
         Get all edges in the graph.
 
         Args:
-            edge_type (int): Specify the type of edge.
+            edge_type (str): Specify the type of edge, default edge_type is '0' when init graph without specify
+                edge_type.
 
         Returns:
             numpy.ndarray, array of edges.
@@ -1037,7 +1036,7 @@ class Graph(GraphData):
 
         Returns:
             dict, meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
-            node_feature_type and edge_feature_type.
+            node_feature_type, edge_feature_type and graph_feature_type.
         """
         if self._working_mode == 'server':
             raise Exception("This method is not supported when working mode is server.")
@@ -1223,11 +1222,33 @@ class _UsersDatasetTemplate:
 
 class InMemoryGraphDataset(GeneratorDataset):
     """
-    The basic Dataset for loading graph into memory.
-    Recommended to inherit this class, and implement your own method like 'process', 'save' and 'load'.
+    Basic Dataset for loading graph into memory.
+
+    Recommended to Implement your own dataset with inheriting this class, and implement your own method like 'process',
+    'save' and 'load'.
+
+    Args:
+        data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
+            `process` method.
+        save_dir (str): relative directory for saving processed dataset, this directory is under `data_dir`.
+        column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
+            num of column name should be equal to num of item in return data when implement method like `__getitem__`.
+        num_samples (int, optional): The number of samples to be included in the dataset (default=None, all samples).
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        num_shards (int, optional): Number of shards that the dataset will be divided into (default=None).
+            Random accessible input is required. When this argument is specified, `num_samples` reflects the max
+            sample number of per shard.
+        shard_id (int, optional): The shard ID within `num_shards` (default=None). This argument must be specified only
+            when num_shards is also specified. Random accessible input is required.
+        python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+            option could be beneficial if the Python operation is computational heavy (default=True).
+        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory allocation to copy
+            data between processes.  This is only used if python_multiprocessing is set to True (default 6 MB).
     """
 
-    def __init__(self, data_dir, column_names="graph", save_dir="./processed", num_parallel_workers=1,
+    def __init__(self, data_dir, save_dir="./processed", column_names="graph", num_samples=None, num_parallel_workers=1,
                  shuffle=None, num_shards=None, shard_id=None, python_multiprocessing=True, max_rowsize=6):
         self.graphs = []
         self.data_dir = data_dir
@@ -1244,25 +1265,25 @@ class InMemoryGraphDataset(GeneratorDataset):
             setattr(source, k, v)
         for k, v in self.__class__.__dict__.items():
             setattr(source.__class__, k, getattr(self.__class__, k))
-        super().__init__(source, column_names=column_names, num_parallel_workers=num_parallel_workers, shuffle=shuffle,
-                         num_shards=num_shards, shard_id=shard_id, python_multiprocessing=python_multiprocessing,
-                         max_rowsize=max_rowsize)
+        super().__init__(source, column_names=column_names, num_samples=num_samples,
+                         num_parallel_workers=num_parallel_workers, shuffle=shuffle, num_shards=num_shards,
+                         shard_id=shard_id, python_multiprocessing=python_multiprocessing, max_rowsize=max_rowsize)
 
     def process(self):
         """
-        Override this method in your our dataset class.
+        Process method based on origin dataset, override this method in your our dataset class.
         """
         raise NotImplementedError("'process' method should be implemented in your own logic.")
 
     def save(self):
         """
-        Override this method in your our dataset class.
+        Save processed data into disk in numpy.npz format, you can also override this method in your dataset class.
         """
         save_graphs(self.processed_path, self.graphs)
 
     def load(self):
         """
-        Override this method in your our dataset class.
+        Load data from given(processed) path, you can also override this method in your dataset class.
         """
         self.graphs = load_graphs(self.processed_path, num_parallel_workers=1)
 
@@ -1280,14 +1301,32 @@ class InMemoryGraphDataset(GeneratorDataset):
 class ArgoverseDataset(InMemoryGraphDataset):
     """
     Load argoverse dataset and create graph.
+
+    Here argoverse dataset is public dataset for autonomous driving, current implement `ArgoverseDataset` is mainly for
+    loading Motion Forecasting Dataset in argoverse dataset, recommend to visit official website for more detail:
+    https://www.argoverse.org/av1.html#download-link.
+
+    Args:
+        data_dir (str): directory for loading dataset, here contains origin format data and will be loaded in
+            `process` method.
+        column_names (Union[str, list[str]], optional): single column name or list of column names of the dataset,
+            num of column name should be equal to num of item in return data when implement method like `__getitem__`.
+        num_parallel_workers (int, optional): Number of subprocesses used to fetch the dataset in parallel (default=1).
+        shuffle (bool, optional): Whether or not to perform shuffle on the dataset. Random accessible input is required.
+            (default=None, expected order behavior shown in the table).
+        python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
+            option could be beneficial if the Python operation is computational heavy (default=True).
+        perf_mode(bool, optional): mode for obtaining higher performance when iterate created dataset(will call
+            `__getitem__` method in this process). Default True, will save all the data in graph
+            (like edge index, node feature and graph feature) into graph feature.
     """
 
-    def __init__(self, data_dir, column_names="graph", shuffle=None, num_parallel_workers=1,
+    def __init__(self, data_dir, column_names="graph", num_parallel_workers=1, shuffle=None,
                  python_multiprocessing=True, perf_mode=True):
         # For high performance, here we store edge_index into graph_feature directly
         self.perf_mode = perf_mode
-        super().__init__(data_dir, column_names, shuffle=shuffle, num_parallel_workers=num_parallel_workers,
-                         python_multiprocessing=python_multiprocessing)
+        super().__init__(data_dir=data_dir, column_names=column_names, shuffle=shuffle,
+                         num_parallel_workers=num_parallel_workers, python_multiprocessing=python_multiprocessing)
 
     def __getitem__(self, index):
         graph = self.graphs[index]
@@ -1312,6 +1351,10 @@ class ArgoverseDataset(InMemoryGraphDataset):
         """
         process method mainly refers to: https://github.com/xk-huang/yet-another-vectornet/blob/master/dataset.py
         """
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError("Import pandas failed, recommend to install pandas with pip.")
 
         def get_edge_full_connection(node_num, start_index=0):
             """
