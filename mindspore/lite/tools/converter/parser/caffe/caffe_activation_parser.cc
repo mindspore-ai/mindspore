@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/fusion/activation.h"
 #include "nnacl/op_base.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -30,7 +31,7 @@ PrimitiveCPtr CaffeReluParser::Parse(const caffe::LayerParameter &proto, const c
 
   if (proto.has_relu_param() && proto.relu_param().has_negative_slope()) {
     float negative_slope = proto.relu_param().negative_slope();
-    if (negative_slope != 0) {
+    if (!FloatCompare(negative_slope)) {
       prim->set_activation_type(mindspore::ActivationType::LEAKY_RELU);
       prim->set_alpha(negative_slope);
     }
