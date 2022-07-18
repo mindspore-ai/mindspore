@@ -518,7 +518,7 @@ def get_bprop_erfinv(self):
 
     def bprop(input_x, out, dout):
         root_pi_over_two = cast(sqrt(F.scalar_to_tensor(np.pi)) / 2, dtype(dout))
-        dout_square = square(dout)
+        dout_square = square(out)
         dx = dout * root_pi_over_two * exp(dout_square)
         return (dx,)
 
