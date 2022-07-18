@@ -79,21 +79,21 @@ bool MaxPool3DWithArgmaxFwdGpuKernelMod::Init(const BaseOperatorPtr &base_operat
     return false;
   }
 
-  ksize_d_ = ksize[kIndex0];
-  ksize_h_ = ksize[kIndex1];
-  ksize_w_ = ksize[kIndex2];
+  ksize_d_ = LongToInt(ksize[kIndex0]);
+  ksize_h_ = LongToInt(ksize[kIndex1]);
+  ksize_w_ = LongToInt(ksize[kIndex2]);
 
-  stride_d_ = strides[kIndex0];
-  stride_h_ = strides[kIndex1];
-  stride_w_ = strides[kIndex2];
+  stride_d_ = LongToInt(strides[kIndex0]);
+  stride_h_ = LongToInt(strides[kIndex1]);
+  stride_w_ = LongToInt(strides[kIndex2]);
 
-  pad_d_ = pads[kIndex0];
-  pad_h_ = pads[kIndex1];
-  pad_w_ = pads[kIndex2];
+  pad_d_ = LongToInt(pads[kIndex0]);
+  pad_h_ = LongToInt(pads[kIndex1]);
+  pad_w_ = LongToInt(pads[kIndex2]);
 
-  dilation_d_ = dilation[kIndex0];
-  dilation_h_ = dilation[kIndex1];
-  dilation_w_ = dilation[kIndex2];
+  dilation_d_ = LongToInt(dilation[kIndex0]);
+  dilation_h_ = LongToInt(dilation[kIndex1]);
+  dilation_w_ = LongToInt(dilation[kIndex2]);
 
   auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, GetOpSupport());
@@ -137,15 +137,15 @@ int MaxPool3DWithArgmaxFwdGpuKernelMod::Resize(const BaseOperatorPtr &base_opera
     return KRET_RESIZE_FAILED;
   }
 
-  in_n_ = input_shape[kIndex0];
-  in_c_ = input_shape[kIndex1];
-  in_d_ = input_shape[kIndex2];
-  in_h_ = input_shape[kIndex3];
-  in_w_ = input_shape[kIndex4];
+  in_n_ = LongToInt(input_shape[kIndex0]);
+  in_c_ = LongToInt(input_shape[kIndex1]);
+  in_d_ = LongToInt(input_shape[kIndex2]);
+  in_h_ = LongToInt(input_shape[kIndex3]);
+  in_w_ = LongToInt(input_shape[kIndex4]);
 
-  out_d_ = output_shape[kIndex2];
-  out_h_ = output_shape[kIndex3];
-  out_w_ = output_shape[kIndex4];
+  out_d_ = LongToInt(output_shape[kIndex2]);
+  out_h_ = LongToInt(output_shape[kIndex3]);
+  out_w_ = LongToInt(output_shape[kIndex4]);
 
   return KRET_OK;
 }
