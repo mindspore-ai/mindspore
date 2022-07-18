@@ -59,6 +59,10 @@ class UpsampleNearest3dGpuKernelMod : public NativeGpuKernelMod {
 
   bool GetUpsampleNearest3dAttr(const BaseOperatorPtr &base_operator);
 
+  float Scaling(const size_t in_size, const size_t out_size, int idx);
+
+  float Scaling(const float scale_value, int idx);
+
   void *cuda_stream_{nullptr};
   bool is_null_input_{false};
   std::vector<size_t> input_shape_;
