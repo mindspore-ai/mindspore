@@ -652,3 +652,32 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetFail) {
   std::shared_ptr<Dataset> ds = RandomData(3)->SetNumWorkers(5);
   EXPECT_EQ(ds->CreateIterator(), nullptr);
 }
+
+/// Feature: RandomData
+/// Description: Test RandomData failed with large tensor shape
+/// Expectation: Expecting error message is logged
+TEST_F(MindDataTestPipeline, TestRandomDataLargeShape) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDataLargeShape.";
+
+  // Create a RandomDataset
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(
+    schema->add_column("data", mindspore::DataType::kNumberTypeFloat32, {1, 12, 5, 3, 4, 5, 6, 7, 8, 5, 3, 1, 5, 6}));
+  std::shared_ptr<Dataset> ds = RandomData(50, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, mindspore::MSTensor> row;
+  Status s = iter->GetNextRow(&row);
+  ASSERT_ERROR(s);
+  ASSERT_TRUE(s.ToString().find("memory size of total data can not be zero or exceed") != std::string::npos);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
