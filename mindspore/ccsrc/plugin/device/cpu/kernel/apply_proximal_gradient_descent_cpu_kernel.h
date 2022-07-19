@@ -67,7 +67,8 @@ class ApplyProximalGradientDescentCpuKernelMod : public NativeCpuKernelMod {
 
  private:
   template <typename T>
-  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelDefault(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  void LaunchKernelOptFp32(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
   TypeId dtype_{kTypeUnknown};
   int64_t batch_rank_;
   int64_t batch_size_;

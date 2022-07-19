@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 #include "plugin/device/cpu/kernel/apply_proximal_gradient_descent_cpu_kernel.h"
+#include <algorithm>
 #include <functional>
+#include "kernel/common_utils.h"
+#include "plugin/device/cpu/kernel/nnacl/op_base.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "plugin/device/cpu/kernel/nnacl/fp32_grad/apply_proximal_gradient_descent_fp32.h"
+#include "plugin/device/cpu/kernel/nnacl/intrinsics/ms_simd_instructions.h"
 
 namespace {
 constexpr size_t kApplyProximalGradientDescentInputsNum = 5;
@@ -147,25 +152,9 @@ int ApplyProximalGradientDescentCpuKernelMod::Resize(const BaseOperatorPtr &base
   return ret;
 }
 
-bool ApplyProximalGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                                      const std::vector<kernel::AddressPtr> &,
-                                                      const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyProximalGradientDescentInputsNum, kernel_name_);
-  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyProximalGradientDescentOutputsNum, kernel_name_);
-  if (dtype_ == kNumberTypeFloat16) {
-    LaunchKernel<float16>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else {
-    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
-                            << dtype_ << "].";
-  }
-  return true;
-}
-
 template <typename T>
-void ApplyProximalGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
-                                                            const std::vector<AddressPtr> &) {
+void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelDefault(const std::vector<AddressPtr> &inputs,
+                                                                   const std::vector<AddressPtr> &) {
   auto var_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto alpha_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto l1_addr = reinterpret_cast<T *>(inputs[2]->addr);
@@ -192,6 +181,43 @@ void ApplyProximalGradientDescentCpuKernelMod::LaunchKernel(const std::vector<Ad
   ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
 }
 
+void ApplyProximalGradientDescentCpuKernelMod::LaunchKernelOptFp32(const std::vector<kernel::AddressPtr> &inputs,
+                                                                   const std::vector<kernel::AddressPtr> &) {
+  auto var = reinterpret_cast<float *>(inputs[kVarIndex]->addr);
+  auto alpha = reinterpret_cast<float *>(inputs[kAlphaIndex]->addr);
+  auto l1 = reinterpret_cast<float *>(inputs[kL1Index]->addr);
+  auto l2 = reinterpret_cast<float *>(inputs[kL2Index]->addr);
+  auto delta = reinterpret_cast<float *>(inputs[kDeltaIndex]->addr);
+
+  auto task = [this, &var, &alpha, &l1, &l2, &delta](size_t start, size_t end) {
+    auto cur_input_elements = end - start;
+    for (int64_t b = 0; b < batch_size_; b++) {
+      auto offset = b * input_elements_ + start;
+      auto var_cur = var + offset;
+      auto delta_cur = delta + offset;
+
+      ApplyProximalGradientDescentOpt(var_cur, alpha[b], l1[b], l2[b], delta_cur, cur_input_elements);
+    }
+  };
+
+  ParallelLaunchAutoSearch(task, input_elements_, this, &parallel_search_info_, pool_);
+}
+
+bool ApplyProximalGradientDescentCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                                      const std::vector<kernel::AddressPtr> &,
+                                                      const std::vector<kernel::AddressPtr> &outputs) {
+  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kApplyProximalGradientDescentInputsNum, kernel_name_);
+  CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kApplyProximalGradientDescentOutputsNum, kernel_name_);
+  if (dtype_ == kNumberTypeFloat16) {
+    LaunchKernelDefault<float16>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeFloat32) {
+    LaunchKernelOptFp32(inputs, outputs);
+  } else {
+    MS_EXCEPTION(TypeError) << "For '" << kernel_name_ << "', input dtype only support float16 and float32, but got ["
+                            << dtype_ << "].";
+  }
+  return true;
+}
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyProximalGradientDescent, ApplyProximalGradientDescentCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
