@@ -38,10 +38,15 @@ class StackUnstackEliminator : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     Reset();
-    if (IsPrimitiveCNode(node, prim::kPrimUnstack)) {
-      FetchUnstackAttrs(node);
-      AnfVisitor::Match(prim::kPrimUnstack, {IsCNode})(node);
+
+    if (!IsPrimitiveCNode(node, prim::kPrimUnstack)) {
+      return nullptr;
     }
+
+    if (!FetchUnstackAttrs(node)) {
+      return nullptr;
+    }
+    AnfVisitor::Match(prim::kPrimUnstack, {IsCNode})(node);
 
     if (is_match_) {
       return stack_->input(1);
@@ -53,7 +58,10 @@ class StackUnstackEliminator : public AnfVisitor {
     if (IsPrimitiveCNode(cnode, prim::kPrimStack)) {
       auto prim = GetCNodePrimitive(cnode);
       auto num_val = prim->GetAttr(kAttrNum);
-      MS_EXCEPTION_IF_NULL(num_val);
+      // Stack may not be inferred and do not have attribute axis.
+      if (num_val == nullptr) {
+        return;
+      }
       auto axis_val = prim->GetAttr(kAttrAxis);
       MS_EXCEPTION_IF_NULL(axis_val);
       auto num = dyn_cast<Int64Imm>(num_val)->value();
@@ -65,14 +73,18 @@ class StackUnstackEliminator : public AnfVisitor {
     }
   }
 
-  void FetchUnstackAttrs(const AnfNodePtr &node) {
+  bool FetchUnstackAttrs(const AnfNodePtr &node) {
     auto prim = GetCNodePrimitive(node);
     auto num_val = prim->GetAttr(kAttrNum);
-    MS_EXCEPTION_IF_NULL(num_val);
+    // UnStack may not be inferred and do not have attribute axis.
+    if (num_val == nullptr) {
+      return false;
+    }
     auto axis_val = prim->GetAttr(kAttrAxis);
     MS_EXCEPTION_IF_NULL(axis_val);
     num_ = dyn_cast<Int64Imm>(num_val)->value();
     axis_ = dyn_cast<Int64Imm>(axis_val)->value();
+    return true;
   }
 
   void Reset() {
