@@ -20,7 +20,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <utility>
 #include <map>
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"

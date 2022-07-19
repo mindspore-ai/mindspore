@@ -123,7 +123,7 @@ bool FusionBuildTbeJsonCreator::CheckInput(const FusionScopeInfo &fusion_scope_i
 void FusionBuildTbeJsonCreator::GenDataJson(const std::vector<AnfNodePtr> &compute_nodes,
                                             const std::vector<nlohmann::json> &compute_json,
                                             std::vector<nlohmann::json> *op_list_json,
-                                            const ANodeFusionDataTypeMap &spec_data_input) {
+                                            const ANodeFusionDataTypeMap &spec_data_input) const {
   MS_EXCEPTION_IF_NULL(op_list_json);
   MS_LOG(DEBUG) << "Start.";
   std::vector<std::string> compute_nodes_fullname;
@@ -280,7 +280,7 @@ bool FusionBuildTbeJsonCreator::GenOutputsJson(const AnfNodePtr &anf_node, nlohm
 }
 
 void FusionBuildTbeJsonCreator::GenReusedOutputDesc(const AnfNodePtr &anf_node, size_t index, size_t output_index,
-                                                    nlohmann::json *output_desc, size_t out_size) {
+                                                    nlohmann::json *output_desc, size_t out_size) const {
   GenDesJsonCommon(output_desc);
   std::string output_desc_name = anf_node->fullname_with_scope() + "_" + std::to_string(index);
   (*output_desc)[kJName] = output_desc_name;
