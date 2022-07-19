@@ -55,7 +55,7 @@ class COMMON_EXPORT ExpanderDecorator : public Expander {
 
  protected:
   // The expander cannot change the original node, this function clone the cnode with original info.
-  CNodePtr QuickCloneCNode(const AnfNodePtr &node) const;
+  CNodePtr QuickCloneCNode(const AnfNodePtr &node, bool clone_prim = false) const;
 
   ExpanderPtr decorated_;
 };
@@ -77,6 +77,7 @@ class COMMON_EXPORT InputToAttrDeco : public ExpanderDecorator {
   }
 
  protected:
+  bool ConstInputToAttr(const CNodePtr &cnode) const;
   HashSet<size_t> input_idx_;
 };
 

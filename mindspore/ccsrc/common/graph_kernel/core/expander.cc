@@ -16,11 +16,11 @@
 
 #include "common/graph_kernel/core/expander.h"
 
+#include <string>
 #include "utils/anf_utils.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 #include "common/graph_kernel/core/graph_kernel_utils.h"
 #include "common/graph_kernel/expanders/op_desc_registry.h"
-#include "backend/common/optimizer/const_input_to_attr.h"
 
 namespace mindspore::graphkernel {
 ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList &deco_creators) {
@@ -33,24 +33,56 @@ ExpanderPtr WrapExpander(const ExpanderPtr &base, const ExpanderCreatorFuncList 
 
 AnfNodePtr ExpanderDecorator::Run(const AnfNodePtr &node) { return node ? decorated_->Run(node) : nullptr; }
 
-CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node) const {
+CNodePtr ExpanderDecorator::QuickCloneCNode(const AnfNodePtr &node, bool clone_prim) const {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
   auto func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
   CNodePtr new_node = func_graph->NewCNode(cnode->inputs());
   new_node->CloneCNodeInfo(cnode);
+  if (clone_prim) {
+    new_node->set_input(0, NewValueNode(GetCNodePrimitive(node)->Clone()));
+  }
   return new_node;
 }
 
+bool InputToAttrDeco::ConstInputToAttr(const CNodePtr &cnode) const {
+  AnfNodePtrList new_inputs;
+  auto primitive = GetCNodePrimitive(cnode);
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto input_names = primitive->GetAttr(kAttrInputNames);
+  if (input_names == nullptr) {
+    MS_LOG(INFO) << "input_names are nullptr in cnode[" + cnode->DebugString() + "]";
+    return false;
+  }
+  auto input_names_vec = GetValue<std::vector<std::string>>(input_names);
+  auto inputs = cnode->inputs();
+  new_inputs.push_back(inputs[0]);
+  for (size_t i = 0; i < inputs.size() - 1; ++i) {
+    auto input_node = inputs[i + 1];
+    MS_EXCEPTION_IF_NULL(input_node);
+    if (input_idx_.count(i) != 0 && input_node->isa<ValueNode>()) {
+      auto value_node = input_node->cast<ValueNodePtr>();
+      if (i >= input_names_vec.size()) {
+        MS_LOG(INFO) << "Index " << i << " is larger than input names size [" << input_names_vec.size() << "]";
+        return false;
+      }
+      auto value = value_node->value();
+      primitive->set_attr(input_names_vec[i], value);
+    } else {
+      new_inputs.push_back(inputs[i + 1]);
+    }
+  }
+  if (new_inputs.size() != inputs.size()) {
+    cnode->set_inputs(new_inputs);
+  }
+  return true;
+}
+
 AnfNodePtr InputToAttrDeco::Run(const AnfNodePtr &node) {
-  auto cnode = QuickCloneCNode(node);
-  auto new_node = opt::ConstInputToAttr(cnode, input_idx_);
-  auto graph = cnode->func_graph();
-  MS_EXCEPTION_IF_NULL(graph);
-  MS_EXCEPTION_IF_NULL(graph->manager());
-  graph->manager()->Replace(cnode, new_node);
-  return decorated_->Run(new_node);
+  auto cnode = QuickCloneCNode(node, true);
+  auto ret = ConstInputToAttr(cnode);
+  return ret ? decorated_->Run(cnode) : nullptr;
 }
 
 AnfNodePtr DefaultExpander::Run(const AnfNodePtr &node) {
