@@ -27,21 +27,20 @@ from .._primitive_cache import _get_cache_prim
 from .._utils import get_broadcast_shape
 
 
-def random_gamma(shape, alpha, beta=None, seed=0, seed2=0):
+def random_gamma(shape, alpha, seed=0, seed2=0):
     r"""
     Outputs random values from the Gamma distribution(s) described by alpha.
-    It is defined as:
 
-    .. math::
-        \text{P}(x|α,β) = \frac{\exp(-x/β)}{{β^α}\cdot{\Gamma(α)}}\cdot{x^{α-1}}
 
     Args:
         shape (Tensor): The shape of random tensor to be generated.
-        Must be one of the following types: int32, int64. 1-D integer tensor.
+            Must be one of the following types: int32, int64. 1-D integer tensor.
         alpha (Tensor): The alpha α distribution parameter.
-        A Tensor. Must be one of the following types: half, float32, float64.
+            A Tensor. Must be one of the following types: half, float32, float64.
         seed (int): Seed is used as entropy source for the random number engines to generate
-          pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
+            pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
+        seed2 (int): Seed2 is used as entropy source for the random number engines to generate
+            pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the concat shape between the input `shape` and the broadcast
@@ -55,9 +54,10 @@ def random_gamma(shape, alpha, beta=None, seed=0, seed2=0):
         TypeError: If dtype of `alpha` is not half, float32 or float64.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``CPU``
 
     Examples:
+        >>> import numpy as np
         >>> from mindspore.ops import functional as F
         >>> shape = Tensor(np.array([7, 5]), mindspore.int32)
         >>> alpha = Tensor(np.array([0.5, 1.5]), mindspore.float32)
@@ -68,8 +68,7 @@ def random_gamma(shape, alpha, beta=None, seed=0, seed2=0):
     """
 
     alpha_type = P.DType()(alpha)
-    if beta is None:
-        beta = Tensor(np.array([1.0]), alpha_type)
+    beta = Tensor(np.array([1.0]), alpha_type)
     alpha_shape = P.Shape()(alpha)
     beta_shape = P.Shape()(beta)
     broadcast_shape = get_broadcast_shape(alpha_shape, beta_shape, "random_gamma",
