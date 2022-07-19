@@ -167,52 +167,11 @@ Status TFReaderOp::CalculateNumRowsPerShard() {
     return Status::OK();
   }
 
-  // Do row count in parallel
-  std::mutex thread_mutex;
-  auto rowcount_task = [this, &thread_mutex](int st, int ed) {
-    auto iter = filename_index_->begin();
-    auto end_iter = filename_index_->begin();
-    std::advance(iter, st);
-    std::advance(end_iter, ed);
-    for (; iter != end_iter; ++iter) {
-      std::vector<std::string> file(1, iter.value());
-      int64_t num = CountTotalRowsSectioned(file, 0, 1);
-      std::lock_guard<std::mutex> lock(thread_mutex);
-      filename_numrows_[iter.value()] = num;
-      num_rows_ += num;
-    }
-  };
-
-  std::vector<std::future<void>> async_tasks;
-  int32_t threads = GlobalContext::config_manager()->num_cpu_threads();
-  // constrain the workers
-  int32_t kThreadCount = 4;
-  threads = threads < kThreadCount ? threads : kThreadCount;
-
-  if (threads > filename_index_->size()) {
-    threads = filename_index_->size();
-  }
-  CHECK_FAIL_RETURN_SYNTAX_ERROR(
-    threads > 0,
-    "Invalid threads number, TFRecordDataset should own more than 0 thread, but got " + std::to_string(threads) + ".");
-
-  int64_t chunk_size = filename_index_->size() / threads;
-  int64_t remainder = filename_index_->size() % threads;
-  int64_t begin = 0;
-  int64_t end = begin;
-  for (int i = 0; i < threads; i++) {
-    end += chunk_size;
-    if (remainder > 0) {
-      end++;
-      remainder--;
-    }
-    async_tasks.emplace_back(std::async(std::launch::async, rowcount_task, begin, end));
-    begin = end;
-  }
-
-  // Wait until all tasks have been finished
-  for (int i = 0; i < async_tasks.size(); i++) {
-    async_tasks[i].get();
+  for (auto it = filename_index_->begin(); it != filename_index_->end(); ++it) {
+    std::vector<std::string> file(1, it.value());
+    int64_t num = CountTotalRowsSectioned(file, 0, 1);
+    filename_numrows_[it.value()] = num;
+    num_rows_ += num;
   }
 
   num_rows_per_shard_ = static_cast<int64_t>(std::ceil(num_rows_ * 1.0 / num_devices_));
