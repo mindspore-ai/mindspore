@@ -185,7 +185,7 @@ class BufferAppend(PrimitiveWithInfer):
         >>> exp = [Tensor(np.array([2, 2, 2, 2]), ms.float32), Tensor(np.array([0, 0]), ms.int32),
         ...        Tensor(np.array([0]), ms.int32), Tensor(np.array([3, 3, 3, 3]), ms.float32)]
         >>> batch_exp = [Tensor(np.array([[2, 2, 2, 2], [2, 2, 2, 2]]), ms.float32),
-        ...              Tensor(np.array([[0, 0], [0, 0]), ms.int32),
+        ...              Tensor(np.array([[0, 0], [0, 0]]), ms.int32),
         ...              Tensor(np.array([[0], [0]]), ms.int32),
         ...              Tensor(np.array([[3, 3, 3, 3], [3, 3, 3, 3]]), ms.float32)]
         >>> buffer_append = ops.BufferAppend(capacity, shapes, types)
