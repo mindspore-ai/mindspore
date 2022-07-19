@@ -150,17 +150,12 @@ CUDA_LIB_EXPORT void SparseSegmentMean(const DataType *x_ptr, const IndexType *i
   dim3 grid(grid_x, grid_y);
   unsigned int shared_memory_size = block_x * block_y * sizeof(DataType);
   // Reduce each segment along the indices of first dimension.
-  if (batch_size <= 1) {
+  for (size_t i = 0; i < batch_size; i++) {
+    auto batch_x_ptr = x_ptr + i * x_size;
+    auto batch_y_ptr = y_ptr + i * y_size;
+    auto batch_indices_ptr = indices_ptr + i * indices_size;
     SparseSegmentMeanKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
-      x_ptr, indices_ptr, segment_pos_ptr, y_ptr, outer_size, inner_size, segment_size);
-  } else {
-    for (size_t i = 0; i < batch_size; i++) {
-      auto batch_x_ptr = x_ptr + i * x_size;
-      auto batch_y_ptr = y_ptr + i * y_size;
-      auto batch_indices_ptr = indices_ptr + i * indices_size;
-      SparseSegmentMeanKernel<<<grid, block, shared_memory_size, cuda_stream>>>(
-        batch_x_ptr, batch_indices_ptr, segment_pos_ptr, batch_y_ptr, outer_size, inner_size, segment_size);
-    }
+      batch_x_ptr, batch_indices_ptr, segment_pos_ptr, batch_y_ptr, outer_size, inner_size, segment_size);
   }
 }
 

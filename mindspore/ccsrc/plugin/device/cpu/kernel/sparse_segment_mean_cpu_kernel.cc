@@ -98,21 +98,24 @@ bool SparseSegmentMeanCpuKernelMod::LaunchKernel(const std::vector<kernel::Addre
       }
     }
   }
-  // Set zero for all values of 'y'.
-  auto ret = memset_s(y_ptr, outputs[kIndex0]->size, 0, outputs[kIndex0]->size);
-  if (ret != EOK) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', memset_s error. Error no: " << ret;
-  }
   auto task = [this, &x_ptr, &indices_ptr, &segment_ids_ptr, &y_ptr](size_t start, size_t end) {
     for (size_t ii = 0; ii < batch_size_; ii++) {
       size_t x_batch_offset = ii * x_size_;
       size_t index_batch_offset = ii * indices_size_;
       size_t y_batch_offset = ii * y_size_;
       size_t segment_length = 1;
+      IndexType pre_segment_id = -1;
       for (size_t k = 0; k < indices_size_; ++k) {
         auto i = index_batch_offset + k;
         auto x_offset = x_batch_offset + indices_ptr[i] * inner_size_;
         auto y_offset = y_batch_offset + segment_ids_ptr[i] * inner_size_;
+        // Reset the empty segments by setting output[i] = 0.
+        for (auto sid = pre_segment_id + 1; sid <= segment_ids_ptr[i]; sid++) {
+          auto reset_y_ptr = y_ptr + (y_batch_offset + sid * inner_size_);
+          std::fill(reset_y_ptr + start, reset_y_ptr + end, DataType(0));
+        }
+        pre_segment_id = segment_ids_ptr[i];
+        // Accumulate the specific segment.
         for (size_t j = start; j < end; ++j) {
           y_ptr[y_offset + j] = x_ptr[x_offset + j] + y_ptr[y_offset + j];
         }
