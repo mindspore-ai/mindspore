@@ -2262,8 +2262,10 @@ def tensor_scatter_add(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
+        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
+        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
+        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
     Args:
         - **input_x** (Tensor) - The target tensor. The dimension of input_x must be no less than indices.shape[-1].
@@ -2312,8 +2314,10 @@ def tensor_scatter_sub(input_x, indices, updates):
     equal to the shape of `input_x[indices]`. For more details, see use cases.
 
     Note:
-        If some values of the `indices` are out of bound, instead of raising an index error,
-        the corresponding `updates` will not be updated to `input_x`.
+        On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
+        the corresponding `updates` will not be updated to self tensor. On CPU, if some values of
+        the `indices` are out of bound, raising an index error. On Ascend, out of bound checking is
+        not supported, if some values of the `indices` are out of bound, unknown errors may be caused.
 
     Args:
         input_x (Tensor): The target tensor. The dimension of input_x must be no less than indices.shape[-1].

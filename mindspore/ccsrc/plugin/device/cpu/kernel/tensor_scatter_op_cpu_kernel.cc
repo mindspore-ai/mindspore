@@ -154,7 +154,7 @@ bool TensorScatterOpCpuKernelMode::LaunchKernel(const std::vector<kernel::Addres
       const Eigen::DenseIndex idx_index = eigen_indices(i, j);
       out_index += batch_strides_[j] * idx_index;
       if (idx_index < 0 || idx_index >= static_cast<S>(input_shape_[j])) {
-        invalid_index_pos = SizeToLong(idx_index);
+        invalid_index_pos = SizeToLong(i * slice_size_);
         break;
       }
     }
