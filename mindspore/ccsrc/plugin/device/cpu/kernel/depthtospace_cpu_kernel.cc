@@ -21,6 +21,8 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+using complex64 = __complex__ float;
+using complex128 = __complex__ double;
 constexpr size_t kDepthToSpaceInputsNum = 1;
 constexpr size_t kDepthToSpaceOutputsNum = 1;
 }  // namespace
@@ -105,7 +107,11 @@ std::vector<std::pair<KernelAttr, DepthToSpaceCpuKernelMod::DepthToSpaceFunc>> D
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
    &DepthToSpaceCpuKernelMod::LaunchKernel<uint32_t>},
   {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &DepthToSpaceCpuKernelMod::LaunchKernel<uint64_t>}};
+   &DepthToSpaceCpuKernelMod::LaunchKernel<uint64_t>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<complex64>},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
+   &DepthToSpaceCpuKernelMod::LaunchKernel<complex128>}};
 
 std::vector<KernelAttr> DepthToSpaceCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;
