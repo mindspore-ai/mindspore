@@ -85,22 +85,22 @@ class Edge {
   // Init cost_map_: for each output layout and input layout, calculate the cost
   Status InitEdgeCost();
   std::map<CostPtrKey, CostPtrList> GetCostMap() { return cost_map_; }
-  CostPtr GetCostByStrategyPair(const CostPtrKey &);
+  CostPtr GetCostByStrategyPair(const CostPtrKey &stra_pair);
 
-  StrategyPtr GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPtr &);
-  StrategyPtr GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPtr &);
+  StrategyPtr GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPtr &prev_op_stra);
+  StrategyPtr GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPtr &next_op_stra);
   int64_t GetReshapeSWCIndexByNextOpStrategy(const StrategyPtr &next_op_stra);
   int64_t GetReshapeSWCIndexByPrevOpStrategy(const StrategyPtr &prev_op_stra);
   StrategyPtr GetPrevOpStrategyByReshapeSWCIndex(int64_t swc_index);
   StrategyPtr GetNextOpStrategyByReshapeSWCIndex(int64_t swc_index);
-  bool CheckStrategyConsistency(StrategyPtr, StrategyPtr);
+  bool CheckStrategyConsistency(StrategyPtr prev_stra, StrategyPtr next_stra);
 
-  void SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &);
+  void SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &cost_map);
   // For two operators u--->v, given the output tensor layout of u,
   // and the input tensor layout of v, return the redistribution cost,
   // and the op_list to carry out the redistribution.
   Status GetRedistributionCost(const TensorLayout &prev_op_output_layout, const TensorLayout &next_op_input_layout,
-                               size_t, const TypePtr &type, CostPtr *cost);
+                               size_t type_length, const TypePtr &type, CostPtr *cost);
 
   void set_pre_op_output(const std::vector<std::pair<std::shared_ptr<Strategy>, std::vector<TensorInfo>>> &output_set) {
     pre_op_output_ = output_set;
