@@ -135,11 +135,7 @@ static STATUS CompressTensor(schema::TensorT *tensor_input, const std::unique_pt
     auto compressor = quant::TensorCompressor();
     if (bit_num == kBitNumMix) {
       tensor_input->quantParams.clear();
-    } else if (bit_num == kBitNum8) {
-      (void)compressor.PackRepetition<int8_t>(bit_num, tensor_input);
-    } else if (bit_num == kBitNum16) {
-      (void)compressor.PackRepetition<int16_t>(bit_num, tensor_input);
-    } else {
+    } else if (bit_num != kBitNum8 && bit_num != kBitNum16) {
       auto status = compressor.DoBitPack(bit_num, tensor_input);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "do bit pack failed. " << status;

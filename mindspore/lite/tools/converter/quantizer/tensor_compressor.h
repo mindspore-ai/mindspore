@@ -26,32 +26,41 @@
 #include <limits>
 #include <functional>
 #include <algorithm>
+#include "include/errorcode.h"
+#include "ir/anf.h"
+#include "ir/tensor.h"
 #include "src/common/log_adapter.h"
+#include "src/common/log_util.h"
 #include "schema/inner/model_generated.h"
 #include "tools/converter/quantizer/bitpacking.h"
-#include "include/errorcode.h"
 #include "tools/converter/quantizer/quant_params.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
+using mindspore::ParameterPtr;
 namespace mindspore::lite::quant {
 class TensorCompressor {
  public:
   template <typename T>
-  bool PackRepetition(size_t bit_num, schema::TensorT *tensor) {
-    if (tensor->weightQuantCompressType != schema::WeightQuantCompressType_NONE) {
-      MS_LOG(INFO) << tensor->name << " is shared weight.";
-      return true;
+  int PackRepetition(const CNodePtr &cnode, const ParameterPtr &weight, size_t bit_num,
+                     const std::vector<schema::QuantParamT> &quant_params) {
+    auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(tensor_info);
+    if (tensor_info->compression_type() != kNoCompression) {
+      MS_LOG(INFO) << weight->fullname_with_scope() << " is shared weight.";
+      return RET_OK;
     }
-    auto quant_data_array = reinterpret_cast<T *>(tensor->data.data());
-    std::vector<T> quant_data(quant_data_array, quant_data_array + tensor->data.size() / sizeof(T));
+    auto max_size = tensor_info->Size();
+    auto quant_data_array = static_cast<T *>(tensor_info->data().data());
+
+    std::vector<T> quant_data(quant_data_array, quant_data_array + max_size / sizeof(T));
     auto elem_cnt = quant_data.size();
-    auto dims = tensor->dims;
+    auto dims = tensor_info->shape_c();
     size_t elem_cnt_by_dims = std::accumulate(dims.begin(), dims.end(), 1, std::multiplies<>());
     if (elem_cnt != elem_cnt_by_dims) {
-      MS_LOG(ERROR) << tensor->name << " elem_cnt: " << elem_cnt << " not equal elem_cnt_by_dims: " << elem_cnt_by_dims;
-      return false;
+      MS_LOG(ERROR) << weight->fullname_with_scope() << " elem_cnt: " << elem_cnt
+                    << " not equal elem_cnt_by_dims: " << elem_cnt_by_dims;
+      return RET_ERROR;
     }
-
-    auto &quant_params = tensor->quantParams;
 
     std::set<T> quant_data_set;
     for (auto quant_value : quant_data) {
@@ -79,32 +88,29 @@ class TensorCompressor {
                   << " indexing: " << pack_repetition_size_in_byte << " sparse: " << pack_sparsity_size_in_byte;
     auto min_byte_need = std::min({origin_size_in_byte, pack_repetition_size_in_byte, pack_sparsity_size_in_byte});
     if (min_byte_need == origin_size_in_byte) {
-      return false;
+      return RET_NO_CHANGE;
     } else if (min_byte_need == pack_repetition_size_in_byte) {
       MS_LOG(DEBUG) << "from " << origin_size_in_byte << " to " << pack_repetition_size_in_byte;
-      return IndexingCompress<T>(quant_data_set, unique_value_index_map, unique_value_bit, unique_value_cnt,
-                                 pack_repetition_size_in_byte, bit_num, tensor);
+      return IndexingCompress<T>(weight, quant_data_set, unique_value_index_map, unique_value_bit, unique_value_cnt,
+                                 pack_repetition_size_in_byte, bit_num);
     } else if (min_byte_need == pack_sparsity_size_in_byte) {
       MS_LOG(DEBUG) << "from " << origin_size_in_byte << " to " << pack_sparsity_size_in_byte;
-      return SparsityCompress<T>(quant_data_set, unique_value_index_map, unique_value_bit, unique_value_cnt,
-                                 pack_sparsity_size_in_byte, nz_cnt, coor_best_bit, bit_num, tensor);
+      return SparsityCompress<T>(weight, quant_params, quant_data_set, unique_value_index_map, unique_value_bit,
+                                 unique_value_cnt, pack_sparsity_size_in_byte, nz_cnt, coor_best_bit, bit_num);
     } else {
       MS_LOG(DEBUG) << "unexpected: " << min_byte_need << " not in {" << origin_size_in_byte << " "
                     << pack_repetition_size_in_byte << " " << pack_sparsity_size_in_byte << "}";
     }
-    return false;
+    return RET_NO_CHANGE;
   }
 
   int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
 
  private:
   template <typename T>
-  bool IndexingCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
-                        size_t unique_value_bit, size_t unique_value_cnt, size_t pack_repetition_size_in_byte,
-                        size_t bit_num, schema::TensorT *tensor) {
-    auto quant_data_array = reinterpret_cast<T *>(tensor->data.data());
-    std::vector<T> quant_data(quant_data_array, quant_data_array + tensor->data.size() / sizeof(T));
-
+  int IndexingCompress(const ParameterPtr &weight, const std::set<T> &quant_data_set,
+                       const std::map<T, size_t> &unique_value_index_map, size_t unique_value_bit,
+                       size_t unique_value_cnt, size_t pack_repetition_size_in_byte, size_t bit_num) {
     std::vector<bool> bits(pack_repetition_size_in_byte * k8Bit);
     size_t index = 0;
     // write unique_value_cnt: bit_num bit for unsigned
@@ -117,48 +123,50 @@ class TensorCompressor {
         bits[index++] = ((*iter + (1 << (bit_num - 1))) >> (bit_num - i - 1)) & (0x1);
       }
     }
+
+    auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(tensor_info);
+    auto max_size = tensor_info->Size();
+    auto quant_data = static_cast<T *>(tensor_info->data().data());
     // write the index: each index has unique_value_bit unsigned
-    for (auto quant_value : quant_data) {
-      for (size_t i = 0; i < unique_value_bit; i++) {
-        bits[index++] = (unique_value_index_map.at(quant_value) >> (unique_value_bit - i - 1)) & (0x1);
+    for (size_t i = 0; i < max_size; i++) {
+      auto quant_value = quant_data[i];
+      for (size_t j = 0; j < unique_value_bit; j++) {
+        bits[index++] = (unique_value_index_map.at(quant_value) >> (unique_value_bit - j - 1)) & (0x1);
       }
     }
     if (index > pack_repetition_size_in_byte * k8Bit) {
       MS_LOG(ERROR) << "unexpected index: " << index << " should not be greater than "
                     << pack_repetition_size_in_byte * k8Bit;
-      return false;
+      return RET_ERROR;
     }
-    // update tensor data
-    auto new_data_str = BoolVectorToString(bits);
-    auto ret = memcpy_s(tensor->data.data(), tensor->data.size(), new_data_str.c_str(), new_data_str.size());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error";
-      return false;
-    }
-    tensor->data.resize(new_data_str.size());
 
-    tensor->weightQuantCompressType = schema::WeightQuantCompressType_INDEXING;
-    MS_LOG(DEBUG) << "set WeightQuantCompressType_INDEXING";
-    return true;
+    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, kIndexing);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Add New tensor failed.";
+      return RET_ERROR;
+    }
+    return RET_OK;
   }
 
   template <typename T>
-  bool SparsityCompress(const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
-                        size_t unique_value_bit, size_t unique_value_cnt, size_t pack_sparsity_size_in_byte,
-                        size_t nz_cnt, size_t coor_best_bit, size_t bit_num, schema::TensorT *tensor) {
-    auto quant_data_array = reinterpret_cast<T *>(tensor->data.data());
-    std::vector<T> quant_data(quant_data_array, quant_data_array + tensor->data.size() / sizeof(T));
-    auto &quant_params = tensor->quantParams;
-    auto elem_cnt = quant_data.size();
+  int SparsityCompress(const ParameterPtr &weight, const std::vector<schema::QuantParamT> &quant_params,
+                       const std::set<T> &quant_data_set, const std::map<T, size_t> &unique_value_index_map,
+                       size_t unique_value_bit, size_t unique_value_cnt, size_t pack_sparsity_size_in_byte,
+                       size_t nz_cnt, size_t coor_best_bit, size_t bit_num) {
+    auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+    CHECK_NULL_RETURN(tensor_info);
+    auto quant_data = static_cast<T *>(tensor_info->data().data());
+    auto elem_cnt = tensor_info->DataSize();
     auto channel_cnt = quant_params.size();
     if (channel_cnt == 0) {
       MS_LOG(ERROR) << "quant_params is empty.";
-      return false;
+      return RET_ERROR;
     }
     auto elem_perchannel = elem_cnt / channel_cnt;
 
     std::vector<bool> bits(pack_sparsity_size_in_byte * k8Bit);
-    int index = 0;
+    size_t index = 0;
     // coor_best_bit
     for (size_t i = 0; i < k8Bit; i++) {
       bits[index++] = (coor_best_bit >> (k8Bit - i - 1)) & 0x1;
@@ -183,7 +191,7 @@ class TensorCompressor {
     size_t prev_index = -1;
     for (size_t di = 0; di < elem_cnt; di++) {
       auto cur_channel = di / elem_perchannel;
-      auto zp = quant_params[cur_channel]->zeroPoint;
+      auto zp = quant_params[cur_channel].zeroPoint;
       auto nz_value = quant_data[di];
       if (nz_value != zp || (di - prev_index) >= static_cast<size_t>((1 << coor_best_bit))) {
         MS_ASSERT(coors_index < nz_cnt);
@@ -200,27 +208,23 @@ class TensorCompressor {
         bits[index++] = (coor >> (coor_best_bit - i - 1)) & 0x1;
       }
     }
-    if ((unsigned int)index > pack_sparsity_size_in_byte * k8Bit) {
+    if (index > pack_sparsity_size_in_byte * k8Bit) {
       MS_LOG(ERROR) << "unexpected index: " << index << " should not be greater than "
                     << pack_sparsity_size_in_byte * k8Bit;
-      return false;
+      return RET_ERROR;
     }
-    auto new_data_str = BoolVectorToString(bits);
-    auto ret = memcpy_s(tensor->data.data(), tensor->data.size(), new_data_str.c_str(), new_data_str.size());
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error";
-      return false;
-    }
-    tensor->data.resize(new_data_str.size());
 
-    tensor->weightQuantCompressType = schema::WeightQuantCompressType_SPARSE;
-    MS_LOG(INFO) << "set WeightQuantCompressType_SPARSITY";
-    return true;
+    auto ret = SetNewCompressionTensor(weight, bits, bit_num, tensor_info, kSparse);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Add New tensor failed.";
+      return RET_ERROR;
+    }
+    return RET_ERROR;
   }
 
   template <typename T>
   size_t CalCoorBestBit(const std::vector<T> &quant_data, size_t elem_cnt,
-                        const std::vector<std::unique_ptr<schema::QuantParamT>> &quant_params, int unique_value_bit,
+                        const std::vector<schema::QuantParamT> &quant_params, int unique_value_bit,
                         size_t *coor_best_bit) {
     MS_ASSERT(!quant_params.empty());
     size_t best_nn_cnt = 0;
@@ -234,7 +238,7 @@ class TensorCompressor {
       auto elem_perchannel = elem_cnt / channel_cnt;
       for (size_t i = 0; i < elem_cnt; i++) {
         auto cur_channel = i / elem_perchannel;
-        auto zp = quant_params[cur_channel]->zeroPoint;
+        auto zp = quant_params[cur_channel].zeroPoint;
         if (quant_data[i] != zp || (static_cast<int>(i) - prev_index) >= ((1 << bit))) {
           nn_cnt++;
           prev_index = i;
@@ -251,7 +255,10 @@ class TensorCompressor {
     return best_nn_cnt;
   }
 
-  std::string BoolVectorToString(const std::vector<bool> &bool_vec);
+  void WriteBufferWithAlignByte(const std::vector<bool> &bool_vec, int8_t *data);
+
+  int SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, int bit_num,
+                              const tensor::TensorPtr &tensor_info, TensorCompressionType compression_type);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_TENSOR_COMPRESSOR_H_

@@ -26,22 +26,15 @@
 #include <algorithm>
 
 namespace mindspore::lite::quant {
-namespace {
-constexpr size_t kBitNumPerByte = 8;
-}
-std::string TensorCompressor::BoolVectorToString(const std::vector<bool> &bool_vec) {
-  size_t size_in_byte = static_cast<size_t>(ceil(bool_vec.size() / kBitNumPerByte));
-  std::string str(size_in_byte, '\0');
-  auto iter = str.begin();
+void TensorCompressor::WriteBufferWithAlignByte(const std::vector<bool> &bool_vec, int8_t *data) {
   size_t shift = kBitNumPerByte;
   for (bool bit : bool_vec) {
-    *iter |= bit << (shift - 1);
+    *data |= bit << (shift - 1);
     if (--shift == 0) {
-      iter++;
+      data++;
       shift = kBitNumPerByte;
     }
   }
-  return str;
 }
 
 int TensorCompressor::DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input) {
@@ -82,6 +75,30 @@ int TensorCompressor::DoBitPack(const size_t &bit_num, schema::TensorT *tensor_i
       return RET_ERROR;
     }
   }
+  return RET_OK;
+}
+
+int TensorCompressor::SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, int bit_num,
+                                              const tensor::TensorPtr &tensor_info,
+                                              TensorCompressionType compression_type) {
+  // Add New Tensor
+  auto size_in_byte = static_cast<size_t>(ceil(bits.size() / kBitNumPerByte));
+  std::shared_ptr<mindspore::tensor::Tensor> compression_tensor = nullptr;
+  if (bit_num == k8Bit) {
+    compression_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt8, tensor_info->shape(),
+                                                                     size_in_byte, compression_type);
+  } else if (bit_num == k16Bit) {
+    compression_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt16, tensor_info->shape(),
+                                                                     size_in_byte, compression_type);
+  } else {
+    MS_LOG(ERROR) << "bit_num only support 8 or 16 bit.";
+    return RET_ERROR;
+  }
+  CHECK_NULL_RETURN(compression_tensor);
+  // update tensor data
+  WriteBufferWithAlignByte(bits, static_cast<int8_t *>(compression_tensor->data().data()));
+  weight->set_default_param(compression_tensor);
+  weight->set_abstract(compression_tensor->ToAbstract());
   return RET_OK;
 }
 }  // namespace mindspore::lite::quant

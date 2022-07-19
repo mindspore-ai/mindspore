@@ -23,14 +23,13 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "src/common/log_util.h"
 #include "tools/converter/quantizer/fse_encoder.h"
+#include "tools/converter/quantizer/tensor_compressor.h"
 
 namespace mindspore::lite::quant {
-WeightQuantizer::~WeightQuantizer() {}
-
 int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
                                  const std::set<PrimitivePtr> &support_weight_quant_types,
                                  const std::set<PrimitivePtr> &per_layer_types,
-                                 const std::set<PrimitivePtr> &symmetric_types) {
+                                 const std::set<PrimitivePtr> &symmetric_types, bool compression) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     auto primitive = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
     if (primitive == nullptr) {
@@ -70,7 +69,8 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
         weight_indices.push_back(i);
       }
     }
-    auto status = DoCNodeWeightQuant(func_graph, cnode, weight_indices, weight_quant_type, q_min, q_max, symmetric);
+    auto status =
+      DoCNodeWeightQuant(func_graph, cnode, weight_indices, weight_quant_type, q_min, q_max, symmetric, compression);
     if (status != RET_OK) {
       MS_LOG(ERROR) << cnode->fullname_with_scope() << " do weight quantize error";
       return RET_ERROR;
@@ -79,9 +79,61 @@ int WeightQuantizer::WeightQuant(const FuncGraphPtr &func_graph,
   return RET_OK;
 }
 
+int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &parameter, int idx) {
+  int ret = RET_OK;
+  TensorCompressor compressor;
+  auto quant_param_holder = GetCNodeQuantHolder(cnode);
+  auto tensor_quant_params = quant_param_holder->get_input_quant_params();
+  MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
+  auto quant_params = tensor_quant_params.at(idx - 1);
+  if (type_id_ == kNumberTypeInt8) {
+    ret = compressor.PackRepetition<int8_t>(cnode, parameter, bit_num_, quant_params);
+  } else if (type_id_ == kNumberTypeInt16) {
+    ret = compressor.PackRepetition<int16_t>(cnode, parameter, bit_num_, quant_params);
+  }
+  if (ret == RET_OK) {
+    MS_LOG(INFO) << parameter->fullname_with_scope() << " compression success.";
+  }
+  return RET_OK;
+}
+
+int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &parameter, int idx,
+                                   const tensor::TensorPtr &tensor_info, int preferred_dim,
+                                   WeightQuantType weight_quant_type, bool symmetric) {
+  auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
+  CHECK_NULL_RETURN(primitive);
+  auto status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
+                                    WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
+                                    preferred_dim, symmetric);
+  if (status == RET_OK) {
+    FSEEncoder fse_encoder;
+    auto quant_param_holder = GetCNodeQuantHolder(primitive);
+    auto tensor_quant_params = quant_param_holder->get_input_quant_params();
+    MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
+    auto quant_params = tensor_quant_params.at(idx - 1);
+    status = fse_encoder.Compress(parameter, quant_params);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "fse encode compress failed." << status;
+      return RET_ERROR;
+    }
+  }
+  // rollback to 8 bit.
+  if (status == RET_ERROR || status == RET_NO_CHANGE) {
+    const int quant_min = QuantMin(k8Bit, false, false);  // -128
+    const int quant_max = QuantMax(k8Bit);                // 127
+    MS_LOG(WARNING)
+      << parameter->fullname_with_scope()
+      << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
+    status =
+      FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type, quant_max,
+                                  quant_min, bit_num_, weight_quant_type, type_id_, idx - 1, preferred_dim, symmetric);
+  }
+  return status;
+}
+
 int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                         const std::vector<int> &weight_indices, WeightQuantType weight_quant_type,
-                                        int q_min, int q_max, bool symmetric) {
+                                        int q_min, int q_max, bool symmetric, bool compression) {
   CHECK_NULL_RETURN(cnode);
   auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
   CHECK_NULL_RETURN(primitive);
@@ -115,32 +167,7 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     }
     auto status = RET_ERROR;
     if (is_mixed_bit_) {
-      status = MixedBitQuantFilter(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
-                                   WeightQuantType::MIXED_BIT_PER_LAYER, type_id_, mixed_bit_init_scale_, idx - 1,
-                                   preferred_dim, symmetric);
-      if (status == RET_OK) {
-        FSEEncoder fse_encoder;
-        auto quant_param_holder = GetCNodeQuantHolder(primitive);
-        auto tensor_quant_params = quant_param_holder->get_input_quant_params();
-        MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
-        auto quant_params = tensor_quant_params.at(idx - 1);
-        status = fse_encoder.Compress(parameter, quant_params);
-        if (status != RET_OK) {
-          MS_LOG(ERROR) << "fse encode compress failed." << status;
-          return RET_ERROR;
-        }
-      }
-      // rollback to 8 bit.
-      if (status == RET_ERROR || status == RET_NO_CHANGE) {
-        const int quant_min = QuantMin(k8Bit, false, false);  // -128
-        const int quant_max = QuantMax(k8Bit);                // 127
-        MS_LOG(WARNING)
-          << parameter->fullname_with_scope()
-          << " mixed bit quantization search failed, the current layer rolls back to 8 bit fixed quantization.";
-        status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
-                                             quant_max, quant_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
-                                             preferred_dim, symmetric);
-      }
+      status = DoMixBitQuant(cnode, parameter, idx, tensor_info, preferred_dim, tmp_weight_quant_type, symmetric);
     } else if (type_id_ == kNumberTypeInt8) {
       status = FixedBitQuantFilter<int8_t>(parameter, tensor_info, primitive, param_->commonQuantParam.quant_type,
                                            q_max, q_min, bit_num_, tmp_weight_quant_type, type_id_, idx - 1,
@@ -155,6 +182,13 @@ int WeightQuantizer::DoCNodeWeightQuant(const FuncGraphPtr &func_graph, const CN
     } else if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
+    }
+    if (compression && !is_mixed_bit_) {
+      status = DoCompression(cnode, parameter, idx);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << cnode->fullname_with_scope() << " compression failed.";
+        return status;
+      }
     }
     weight_quantized_tensors_.insert(tensor_info);
   }
