@@ -134,7 +134,7 @@ int GatherBaseCPUKernel::UpdateThreadNumProcess(int32_t kernel_type, int64_t per
   auto all_bytes = static_cast<int64_t>(out_tensors_.front()->Size());
   constexpr int kMinCostPerThread = 16384;
   if (all_bytes <= static_cast<int64_t>(kMinCostPerThread)) {
-    block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
+    thread_num_ = 1;
     return RET_OK;
   }
 
@@ -148,13 +148,17 @@ int GatherBaseCPUKernel::ChooseThreadCuttingStrategy() {
   if (outer_size_ == 0 || indices_size_ == 0 || byte_inner_size_ == 0) {
     return RET_OK;
   }
-  int64_t block_size = 1;
-  auto total_block = outer_size_ * indices_size_;
+
   if (UpdateThreadNumPass(TC_PTYPE(PrimitiveType_Gather), 0, byte_inner_size_, out_tensors_.front()->Size()) !=
       RET_OK) {
     return RET_ERROR;
   }
-  block_size = total_block / thread_num_;
+  if (thread_num_ == 1) {
+    block_boundary_infos_.emplace_back(BlockBoundaryInfo{0, 0, outer_size_, 0});
+    return RET_OK;
+  }
+  auto total_block = outer_size_ * indices_size_;
+  int64_t block_size = total_block / thread_num_;
   auto remain_block = total_block - block_size * thread_num_;
   int64_t start = 0;
   while (start < total_block) {
