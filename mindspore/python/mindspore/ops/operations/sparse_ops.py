@@ -691,3 +691,61 @@ class SparseAdd(Primitive):
         self.init_prim_io_names(
             inputs=["x1_indices", "x1_values", "x1_shape", "x2_indices", "x2_values", "x2_shape", "thresh"],
             outputs=["sum_indices", "sum_values", "sum_shape"])
+
+
+class CSRSparseMatrixToDense(Primitive):
+    """
+    Converts a CSR sparse matrix(maybe batched) to its dense form.
+
+    Note:
+        It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator won't work.
+
+    Inputs:
+        - **x_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the input CSR sparse matrix, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **x_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of nonzero values of the first `i - 1` batches.
+        - **x_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          nonzero values of the first `i - 1` rows in the corresponding batch.
+        - **x_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
+          in the input CSR sparse matrix.
+        - **x_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
+          input CSR sparse matrix.
+
+    Outputs:
+        Tensor, which is the dense form of the input CSR sparse matrix.
+        Its dtype is the same as `x_values`.
+
+    Raises:
+        TypeError: If the dtype of `x_dense_shape`, `x_batch_pointers`, `x_row_pointers` or `x_col_indices`
+            is not int32 or int64, or the dtypes of above inputs are not the same.
+        TypeError: If the dtype of `x_values` is not float32, float64, complex64 or complex128.
+        TypeError: If any of the inputs is not a tensor.
+        ValueError: If any of the inputs is not 1-D.
+        ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> dense_shape = Tensor([2, 2], dtype=ms.int32)
+        >>> batch_pointers = Tensor([0, 1], dtype=ms.int32)
+        >>> row_pointers = Tensor([0, 1, 1], dtype=ms.int32)
+        >>> col_indices = Tensor([1], dtype=ms.int32)
+        >>> values = Tensor([1.], dtype=ms.float32)
+        >>> csr_to_dense = ops.CSRSparseMatrixToDense()
+        >>> out = csr_to_dense(dense_shape, batch_pointers, row_pointers, col_indices, values)
+        >>> print(out)
+        [[0. 1.]
+         [0. 0.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize CSRSparseMatrixToDense"""
+        self.init_prim_io_names(
+            inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers', 'x_col_indices', 'x_values'],
+            outputs=['y'])

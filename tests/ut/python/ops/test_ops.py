@@ -102,6 +102,7 @@ from mindspore.ops.operations.nn_ops import MaxPoolV1
 from mindspore.ops.operations.array_ops import NonZero
 from mindspore.ops.operations._grad_ops import MaxPoolGradV1
 from mindspore.ops.operations.nn_ops import ReLUV3
+from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToDense
 from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
@@ -1699,6 +1700,14 @@ test_case_math_ops = [
         'desc_inputs': [Tensor(np.array([[1.0, 0.0], [0.0, 1.0]]).astype(np.float32)),
                         Tensor(np.array([[5.0, 2.0], [3.0, 5.0]]).astype(np.float32))],
         'desc_bprop': [Tensor(np.array([[3.0, 5.0], [5.0, 7.0]]).astype(np.float32))]}),
+    ('CSRSparseMatrixToDense', {
+        'block': CSRSparseMatrixToDense(),
+        'desc_inputs': [Tensor(np.array([2, 2, 2]).astype(np.int64)),
+                        Tensor(np.array([0, 2, 4]).astype(np.int64)),
+                        Tensor(np.array([0, 1, 2, 0, 1, 2]).astype(np.int64)),
+                        Tensor(np.array([0, 1, 0, 1]).astype(np.int64)),
+                        Tensor(np.array([5, 2, 3, 5]).astype(np.float64))],
+        'skip': ['backward']}),
     ('DenseToCSRSparseMatrix', {
         'block': DenseToCSRSparseMatrix(),
         'desc_inputs': [Tensor(np.array([[1, 0], [0, 1]]).astype(np.float32)),
