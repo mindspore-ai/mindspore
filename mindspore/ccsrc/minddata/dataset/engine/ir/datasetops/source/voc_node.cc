@@ -69,8 +69,8 @@ std::shared_ptr<DatasetNode> VOCNode::Copy() {
   auto node =
     std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_, extra_metadata_);
 #endif
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

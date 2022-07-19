@@ -94,7 +94,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MappableSourceNode> no
   MS_LOG(INFO) << "Adding SkipFirstEpochSampler(" << skip_count_ << ")";
   auto sampler = node->Sampler();
   if (sampler != nullptr) {
-    new_sampler->AddChildSampler(sampler);
+    RETURN_IF_NOT_OK(new_sampler->AddChildSampler(sampler));
   }
   node->SetSampler(new_sampler);
   skip_count_ = 0;
@@ -121,7 +121,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<NonMappableSourceNode>
   }  // no active skip node above. normal flow
 
   // insert a skip node above
-  insert_skip_above_.emplace_back(node, skip_count_);
+  (void)insert_skip_above_.emplace_back(node, skip_count_);
   skip_count_ = 0;
   return Status::OK();
 }
@@ -135,7 +135,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<MindDataNode> node, bo
   }  // no active skip node above. normal flow
 
   // insert a skip node above
-  insert_skip_above_.emplace_back(node, skip_count_);
+  (void)insert_skip_above_.emplace_back(node, skip_count_);
   skip_count_ = 0;
   return Status::OK();
 }
@@ -149,7 +149,7 @@ Status SkipPushdownPass::SkipNodes::Visit(std::shared_ptr<DatasetNode> node, boo
   }  // no active skip node above. normal flow
 
   // insert a skip node above
-  insert_skip_above_.emplace_back(node, skip_count_);
+  (void)insert_skip_above_.emplace_back(node, skip_count_);
   skip_count_ = 0;
   return Status::OK();
 }

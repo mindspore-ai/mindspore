@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ AGNewsNode::AGNewsNode(const std::string &dataset_dir, int64_t num_samples, Shuf
 std::shared_ptr<DatasetNode> AGNewsNode::Copy() {
   auto node =
     std::make_shared<AGNewsNode>(dataset_dir_, num_samples_, shuffle_, usage_, num_shards_, shard_id_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

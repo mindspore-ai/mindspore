@@ -17,11 +17,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_IR_DATASETOPS_SOURCE_SAMPLERS_SEQUENTIAL_SAMPLER_IR_H_
 
-#include <limits>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 #include <nlohmann/json.hpp>
 
 #include "minddata/dataset/engine/ir/datasetops/source/samplers/samplers_ir.h"

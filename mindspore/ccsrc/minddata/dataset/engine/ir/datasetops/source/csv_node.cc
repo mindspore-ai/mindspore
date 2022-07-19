@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ CSVNode::CSVNode(const std::vector<std::string> &csv_files, char field_delim,
 std::shared_ptr<DatasetNode> CSVNode::Copy() {
   auto node = std::make_shared<CSVNode>(dataset_files_, field_delim_, column_defaults_, column_names_, num_samples_,
                                         shuffle_, num_shards_, shard_id_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

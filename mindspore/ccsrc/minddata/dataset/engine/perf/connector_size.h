@@ -71,12 +71,14 @@ class ConnectorSize : public Sampling {
   // Clear all collected data
   void Clear() override;
 
+ protected:
+  Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
+
  private:
   json initial_nodes_data;  // store data when execution tree is running. (all information for ops except sampled data)
   ExecutionTree *tree_ = nullptr;          // ExecutionTree pointer
   ConnectorSizeSampleTable sample_table_;  // Dataset structure to store all samples of connector size sampling
   Timestamps ts_;                          // time of sample
-  Path GetFileName(const std::string &dir_path, const std::string &rank_id) override;
 };
 
 }  // namespace dataset

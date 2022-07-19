@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modifi
   // Temporary fix to set the num_workers and connector_queue_size to each cloned node.
   // This can be improved by adding a new method in the base class DatasetNode to transfer the properties to
   // the cloned node. Each derived class's Copy() will need to include this method.
-  new_node->SetNumWorkers(node->NumWorkers());
-  new_node->SetConnectorQueueSize(node->ConnectorQueueSize());
+  (void)new_node->SetNumWorkers(node->NumWorkers());
+  (void)new_node->SetConnectorQueueSize(node->ConnectorQueueSize());
   // This method below assumes a DFS walk and from the first child to the last child.
   // Future: A more robust implementation that does not depend on the above assumption.
   RETURN_IF_NOT_OK(parent_->AppendChild(new_node));

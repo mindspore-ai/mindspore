@@ -63,8 +63,8 @@ std::shared_ptr<DatasetNode> BatchNode::Copy() {
 #else
   auto node = std::make_shared<BatchNode>(nullptr, batch_size_, drop_remainder_);
 #endif
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -184,8 +184,8 @@ Status BatchNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode
   int32_t batch_size = json_obj["batch_size"];
   bool drop_remainder = json_obj["drop_remainder"];
   *result = std::make_shared<BatchNode>(ds, batch_size, drop_remainder);
-  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  (*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
+  (void)(*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 

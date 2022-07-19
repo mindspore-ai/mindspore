@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ ManifestNode::ManifestNode(const std::string &dataset_file, const std::string &u
 std::shared_ptr<DatasetNode> ManifestNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<ManifestNode>(dataset_file_, usage_, sampler, class_index_, decode_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

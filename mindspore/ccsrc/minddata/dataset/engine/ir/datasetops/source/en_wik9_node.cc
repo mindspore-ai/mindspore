@@ -46,8 +46,8 @@ EnWik9Node::EnWik9Node(const std::string &dataset_dir, int32_t num_samples, Shuf
 
 std::shared_ptr<DatasetNode> EnWik9Node::Copy() {
   auto node = std::make_shared<EnWik9Node>(dataset_dir_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

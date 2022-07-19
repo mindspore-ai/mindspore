@@ -31,14 +31,12 @@ class OperatorConnector : public Queue<TensorRow> {
  public:
   /// Constructor of OperatorConnector
   /// \param queue_capacity The number of element (TensorRows) for the queue.
-  explicit OperatorConnector(int32_t queue_capacity) : Queue<TensorRow>(queue_capacity), out_rows_count_(0) {
-    my_name_ = Services::GetUniqueID();
-  }
+  explicit OperatorConnector(int32_t queue_capacity) : Queue<TensorRow>(queue_capacity), out_rows_count_(0) {}
 
   /// Destructor of -OperatorConnector
   ~OperatorConnector() = default;
 
-  Status PopFront(TensorRow *row) {
+  Status PopFront(TensorRow *row) override {
     out_rows_count_++;
     return Queue::PopFront(row);
   }
@@ -54,7 +52,6 @@ class OperatorConnector : public Queue<TensorRow> {
   auto out_rows_count() const { return out_rows_count_; }
 
  private:
-  std::string my_name_;
   int64_t out_rows_count_;
 };
 }  // namespace dataset

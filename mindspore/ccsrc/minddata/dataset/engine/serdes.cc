@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -457,7 +457,7 @@ Status Serdes::RecurseUpdateOptimizedIRTreeJSON(nlohmann::json *serialized_json,
   }
   ++(*op_id);
   auto num_children = (*serialized_json)["children"].size();
-  for (int i = 0; i < num_children; ++i) {
+  for (int i = 0; i < static_cast<int>(num_children); ++i) {
     RETURN_IF_NOT_OK(RecurseUpdateOptimizedIRTreeJSON(&(*serialized_json)["children"][i], op_id, op_map));
   }
   return Status::OK();

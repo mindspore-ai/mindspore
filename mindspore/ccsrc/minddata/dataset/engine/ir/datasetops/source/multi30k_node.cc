@@ -50,8 +50,8 @@ void Multi30kNode::Print(std::ostream &out) const {
 std::shared_ptr<DatasetNode> Multi30kNode::Copy() {
   auto node = std::make_shared<Multi30kNode>(dataset_dir_, usage_, language_pair_, num_samples_, shuffle_, num_shards_,
                                              shard_id_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

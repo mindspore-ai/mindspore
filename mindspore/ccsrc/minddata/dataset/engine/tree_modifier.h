@@ -36,6 +36,7 @@ class ChangeRequest {
  public:
   /// Default constructor
   ChangeRequest() = default;
+  virtual ~ChangeRequest() = default;
 
   /// Pure virtual method. Subclasses should override this function and implement the actual change to the give
   /// operator.
@@ -131,7 +132,7 @@ class TreeModifier {
     for (auto itr = tree_->begin(); itr != tree_->end(); ++itr) {
       auto cb = std::make_shared<AutotuneCallback>(1, itr.get().get());
       itr->AddCallbacks({cb});
-      callbacks.insert(std::make_pair(itr->id(), cb));
+      (void)callbacks.insert(std::make_pair(itr->id(), cb));
     }
   }
 

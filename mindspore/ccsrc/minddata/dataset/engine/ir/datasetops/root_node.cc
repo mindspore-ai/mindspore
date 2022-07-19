@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ RootNode::RootNode(std::shared_ptr<DatasetNode> child) : DatasetNode() {
   // The root node's parent must remain nullptr, which is set in the constructor of DatasetNode.
   AddChild(child);
   num_epochs_ = 0;
+  step_ = 0;
 }
 
 std::shared_ptr<DatasetNode> RootNode::Copy() {

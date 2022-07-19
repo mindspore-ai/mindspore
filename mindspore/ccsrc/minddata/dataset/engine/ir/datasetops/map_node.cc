@@ -52,8 +52,8 @@ std::shared_ptr<DatasetNode> MapNode::Copy() {
   std::vector<std::shared_ptr<TensorOperation>> operations = operations_;
   auto node = std::make_shared<MapNode>(nullptr, operations, input_columns_, output_columns_, project_columns_, cache_,
                                         callbacks_, offload_, python_mp_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 
@@ -209,8 +209,8 @@ Status MapNode::from_json(nlohmann::json json_obj, std::shared_ptr<DatasetNode> 
   std::vector<std::shared_ptr<TensorOperation>> operations;
   RETURN_IF_NOT_OK(Serdes::ConstructTensorOps(json_obj["operations"], &operations));
   *result = std::make_shared<MapNode>(ds, operations, input_columns, output_columns, project_columns);
-  (*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
-  (*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
+  (void)(*result)->SetNumWorkers(json_obj["num_parallel_workers"]);
+  (void)(*result)->SetConnectorQueueSize(json_obj["connector_queue_size"]);
   return Status::OK();
 }
 #endif

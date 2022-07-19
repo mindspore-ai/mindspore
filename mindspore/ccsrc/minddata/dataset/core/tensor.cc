@@ -175,7 +175,7 @@ Status Tensor::CreateFromMemory(const TensorShape &shape, const DataType &type, 
 Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   std::vector<dsize_t> shape;
-  for (dsize_t i = 0; i < arr.ndim(); i++) {
+  for (size_t i = 0; i < arr.ndim(); i++) {
     shape.push_back(static_cast<dsize_t>(arr.shape()[i]));
   }
   arr.resize({arr.size()});  // flatten the py::array so we can iterate once

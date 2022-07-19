@@ -102,7 +102,8 @@ class SystemInfo {
 
 class TaskCpuInfo {
  public:
-  explicit TaskCpuInfo(pid_t pid) : pid_(pid), first_sample_(true), last_sampling_failed_(false) {}
+  explicit TaskCpuInfo(pid_t pid)
+      : pid_(pid), prev_task_stat_(TaskStat{0, 0}), first_sample_(true), last_sampling_failed_(false) {}
   virtual ~TaskCpuInfo() = default;
   virtual Status Sample(uint64_t total_time_elapsed) = 0;
   virtual pid_t GetId() = 0;
@@ -121,7 +122,10 @@ class TaskCpuInfo {
 class ProcessInfo : public TaskCpuInfo {
  public:
   explicit ProcessInfo(pid_t pid, bool track_history = false)
-      : TaskCpuInfo(pid), last_mem_sampling_failed_(false), track_sampled_history_(track_history) {}
+      : TaskCpuInfo(pid),
+        prev_memory_info_(MemoryInfo{0.0, 0.0, 0.0}),
+        last_mem_sampling_failed_(false),
+        track_sampled_history_(track_history) {}
   ~ProcessInfo() override = default;
   Status Sample(uint64_t total_time_elapsed) override;
   pid_t GetId() override { return pid_; }
