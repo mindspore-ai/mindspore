@@ -324,7 +324,7 @@ Status Edge::CalculateMemoryCostForInference() {
     MS_LOG(ERROR) << "Failure: unexpected output critical flag value: " << is_output_critical_;
     return FAILED;
   }
-  for (auto &cost_kv : cost_map_) {
+  for (const auto &cost_kv : cost_map_) {
     auto &cost_v = cost_kv.second;
     if (!cost_v.empty()) {
       cost_v[0]->memory_with_reuse_ = 0;
@@ -354,9 +354,9 @@ CostPtr Edge::GetCostByStrategyPair(const CostPtrKey &stra_pair) {
 StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPtr &prev_op_stra) {
   std::vector<std::pair<StrategyPtr, double>> next_op_stras;
   // First, try to find the strategy with zero communication cost.
-  for (auto &key_value : cost_map_) {
+  for (const auto &key_value : cost_map_) {
     const auto &candidate_prev_op_stra = key_value.first.first;
-    if (prev_op_stra->IsEqual(candidate_prev_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
+    if (prev_op_stra->IsEqual(candidate_prev_op_stra) && (key_value.second[0]->communication_cost_ < EPS)) {
       (void)next_op_stras.emplace_back(key_value.first.second, key_value.second[0]->computation_cost_);
     }
   }
@@ -403,9 +403,9 @@ StrategyPtr Edge::GetNextOpStrategyByPrevOpStrategyWithMiniComm(const StrategyPt
 StrategyPtr Edge::GetPrevOpStrategyByNextOpStrategyWithMiniComm(const StrategyPtr &next_op_stra) {
   std::vector<std::pair<StrategyPtr, double>> prev_op_stras;
   // First, try to find the strategy with zero communication cost.
-  for (auto &key_value : cost_map_) {
+  for (const auto &key_value : cost_map_) {
     const auto &candidate_next_op_stra = key_value.first.second;
-    if (next_op_stra->IsEqual(candidate_next_op_stra) && (key_value.second[0]->communication_cost_ == 0.0)) {
+    if (next_op_stra->IsEqual(candidate_next_op_stra) && (key_value.second[0]->communication_cost_ < EPS)) {
       (void)prev_op_stras.emplace_back(key_value.first.first, key_value.second[0]->computation_cost_);
     }
   }
@@ -568,7 +568,7 @@ void Edge::SetCostMapAndInputOutput(const std::map<CostPtrKey, CostPtrList> &cos
   pre_op_output_.clear();
   next_op_input_.clear();
 
-  for (auto &key_value : cost_map_) {
+  for (const auto &key_value : cost_map_) {
     auto &key_pair = key_value.first;
     (void)pre_op_output_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.first, {}));
     (void)next_op_input_.emplace_back(std::pair<StrategyPtr, std::vector<TensorInfo>>(key_pair.second, {}));

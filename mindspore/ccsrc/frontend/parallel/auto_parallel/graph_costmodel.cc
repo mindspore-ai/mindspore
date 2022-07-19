@@ -180,7 +180,7 @@ void CheckConfiguredPrevEdgeConsistency(const EdgePtr &edge,
 
 void CostGraph::BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
                     const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops,
-                    std::map<OperatorInfoPtr, bool> *visited) {
+                    std::map<OperatorInfoPtr, bool> *visited) const {
   std::queue<std::pair<std::pair<OperatorInfoPtr, std::pair<StrategyPtr, int64_t>>, int64_t>> next_level;
   (void)next_level.emplace(std::make_pair(op, std::make_pair(op_stra, -1)), 0);
   while (!next_level.empty()) {
@@ -353,7 +353,7 @@ CostPtrList CostGraph::CreateFinalCostList(const OperatorInfoPtr &u, const std::
 }
 
 // Create final cost list for the graph containing a single node: u
-CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr &u) {
+CostPtrList CostGraph::CreateFinalSingleCostList(const OperatorInfoPtr &u) const {
   MS_EXCEPTION_IF_NULL(u);
   CostPtrList ret;
   for (const auto &u_strategy : u->GetStrategyCost()) {
@@ -392,7 +392,7 @@ CostPtr CostGraph::SelectCostWithMinInferenceTime(const CostPtrList &cost_list, 
   // Filter out the valid costs.
   for (auto &a_cost : cost_list) {
     if (a_cost->memory_with_reuse_ <= memory) {
-      after_mem_filter.emplace_back(std::move(a_cost));
+      after_mem_filter.push_back(a_cost);
     } else if (a_cost->memory_with_reuse_ < minimum_memory) {
       minimum_memory = a_cost->memory_with_reuse_;
     }
@@ -447,7 +447,7 @@ CostPtr CostGraph::SelectCostWithMinTrainingTime(const CostPtrList &cost_list, d
   // Filter out the valid costs.
   for (auto &a_cost : cost_list) {
     if (a_cost->memory_with_reuse_ <= memory) {
-      after_mem_filter.emplace_back(std::move(a_cost));
+      after_mem_filter.push_back(a_cost);
     } else if (a_cost->memory_with_reuse_ < minimum_memory) {
       minimum_memory = a_cost->memory_with_reuse_;
     }
@@ -870,7 +870,7 @@ std::pair<OperatorInfoPtr, OperatorInfoPtr> CostGraph::CheckSourceElimination() 
 
 void CostGraph::CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, const CostPtrList &op1_old_clist,
                                                    StrategyPtr op2_old_stra, const CostPtrList &op2_old_clist,
-                                                   CostPtrList *op1_new_clist) {
+                                                   CostPtrList *op1_new_clist) const {
   for (auto &op1_cost : op1_old_clist) {
     for (auto &op2_cost : op2_old_clist) {
       double computation = op1_cost->computation_cost_ + op2_cost->computation_cost_;
@@ -889,7 +889,7 @@ void CostGraph::CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, con
       new_cost->memory_with_reuse_ = memory;
       new_cost->communication_forward_ = communication_forward;
       MS_EXCEPTION_IF_NULL(op1_new_clist);
-      op1_new_clist->emplace_back(std::move(new_cost));
+      op1_new_clist->push_back(std::move(new_cost));
     }
   }
 }
@@ -922,7 +922,7 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     op1->ReplaceSuccEdge(ith_edge->next_operator(), new_edge);
     ith_edge->next_operator()->ReplacePreEdge(op1, new_edge);
-    (void)op1_new_succ_edges->erase(op1_new_succ_edges->begin() + SizeToLong(i));
+    (void)op1_new_succ_edges->erase(op1_new_succ_edges->cbegin() + SizeToLong(i));
     (void)op1_new_succ_edges->emplace(op1_new_succ_edges->begin() + SizeToLong(i), new_edge);
   }
   for (size_t i = 0; i < op2_old_succ_edges->size(); ++i) {
@@ -947,7 +947,7 @@ std::pair<std::vector<EdgePtr>, std::vector<EdgePtr>> UpdateEdgesIncidentToNodes
     // replace the old successive edges with the new ones.
     destination->ReplacePreEdge(op2, new_edge);
     op1->AddSuccEdge(new_edge);
-    (void)op2_new_succ_edges->erase(op2_new_succ_edges->begin() + SizeToLong(i));
+    (void)op2_new_succ_edges->erase(op2_new_succ_edges->cbegin() + SizeToLong(i));
     (void)op2_new_succ_edges->emplace(op2_new_succ_edges->begin() + SizeToLong(i), new_edge);
   }
   return std::make_pair(*op1_new_succ_edges, *op2_new_succ_edges);
@@ -978,7 +978,7 @@ std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>
     for (const auto &key_value : op1_cost_map) {
       const auto &from_to_strategies = key_value.first;
       const auto &costlist = key_value.second;
-      from_tocost[from_to_strategies.first].emplace_back(std::make_pair(from_to_strategies.second, costlist));
+      from_tocost[from_to_strategies.first].push_back(std::make_pair(from_to_strategies.second, costlist));
     }
     op1_edges_reorganised_cost[i] = from_tocost;
   }
@@ -1013,7 +1013,7 @@ std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>
       // Calculate new cost for 'op1_new_costlist'
       CreateSourceEliminationSubCostList(op1_old_stra, op1_old_costlist, op2_stra, op2_costlist, &op1_new_costlist);
       std::shared_ptr<StrategyWithCost> swc = std::make_shared<StrategyWithCost>(op1_new_stra, op1_new_costlist);
-      op1_new_stra_cost.emplace_back(swc);
+      op1_new_stra_cost.push_back(swc);
 
       // Set cost for new successive edges of op1 and op2
       for (size_t i = 0; i < op1_old_succ_edges.size(); ++i) {
@@ -1296,7 +1296,7 @@ void CostGraph::CreateContractEliminationSubCostList(StrategyPtr contract_op_str
           communication_without_para + gamma * (communication - communication_without_para);
         new_cost->memory_with_reuse_ = memory;
         new_cost->communication_forward_ = communication_forward;
-        tar_cost_list_new->emplace_back(std::move(new_cost));
+        tar_cost_list_new->push_back(std::move(new_cost));
       }
     }
   }
@@ -1385,7 +1385,7 @@ void CostGraph::CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, 
         new_cost->communication_with_partial_para_ = new_commu_without + gamma * (new_commu_cost - new_commu_without);
         new_cost->memory_with_reuse_ = new_memory;
         new_cost->communication_forward_ = new_commu_forward;
-        left_node_clist_new->emplace_back(std::move(new_cost));
+        left_node_clist_new->push_back(std::move(new_cost));
       }
     }
   }
@@ -1526,7 +1526,7 @@ void CostGraph::CreateStarEliminationSubCostList(const StrategyPtr &first_succ_n
         new_cost->communication_with_partial_para_ = commu_without + gamma * (commu_cost - commu_without);
         new_cost->memory_with_reuse_ = memory_cost;
         new_cost->communication_forward_ = commu_forward;
-        first_succ_node_clist_new->emplace_back(std::move(new_cost));
+        first_succ_node_clist_new->push_back(std::move(new_cost));
       }
     }
   }
@@ -1803,7 +1803,7 @@ Status CostGraph::DetermineCriticalOps(const std::vector<OperatorInfoPtr> &topo_
         MS_LOG(ERROR) << "Failure: " << prev_op->name() << "'s current output count: " << curr_memory_state[prev_op];
         return FAILED;
       } else if (curr_memory_state[prev_op] == 0) {
-        curr_memory_state.erase(prev_op);
+        (void)curr_memory_state.erase(prev_op);
         curr_memory_size -= prev_op->GetOutputsTotalSize();
       }
     }
@@ -1860,7 +1860,7 @@ Status CostGraph::CalculateOpsMemoryCostForInference() {
 }
 
 Status CostGraph::CalculateEdgesMemoryCost() {
-  for (auto &edge_pair : edges_) {
+  for (const auto &edge_pair : edges_) {
     const auto &edges = edge_pair.second;
     for (auto &one_edge : edges) {
       if (one_edge->CalculateMemoryCost() != SUCCESS) {
@@ -1873,7 +1873,7 @@ Status CostGraph::CalculateEdgesMemoryCost() {
 }
 
 Status CostGraph::CalculateEdgesMemoryCostForInference() {
-  for (auto &edge_pair : edges_) {
+  for (const auto &edge_pair : edges_) {
     const auto &edges = edge_pair.second;
     for (auto &one_edge : edges) {
       if (one_edge->CalculateMemoryCostForInference() != SUCCESS) {
@@ -1885,7 +1885,7 @@ Status CostGraph::CalculateEdgesMemoryCostForInference() {
   return SUCCESS;
 }
 
-OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(std::string &p_name) const {
+OperatorInfoPtr CostGraph::FindTmpIdentityByParameterName(const std::string &p_name) const {
   for (auto one_op : ops_) {
     if (one_op->name().find(IDENTITY_INFO) != std::string::npos) {
       if (one_op->refkey_parameter_name() == p_name) {
@@ -1976,7 +1976,7 @@ void CostGraph::CheckApproximateCostGraphEdges() {
   if (!approximation) {
     return;
   }
-  for (auto &s_edge : edges_) {
+  for (const auto &s_edge : edges_) {
     auto &edges_vector = s_edge.second;
     for (auto &edge_ptr : edges_vector) {
       MS_EXCEPTION_IF_NULL(edge_ptr);

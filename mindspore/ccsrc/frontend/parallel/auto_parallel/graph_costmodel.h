@@ -52,8 +52,9 @@ class CostGraph {
   void RemoveOperator(const OperatorInfoPtr &op);
   bool IsOperatorInCostGraph(const OperatorInfoPtr &op);
   void StrategyPropagate(const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &);
-  void BFS(const OperatorInfoPtr &, const StrategyPtr &, const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &,
-           std::map<OperatorInfoPtr, bool> *);
+  void BFS(const OperatorInfoPtr &op, const StrategyPtr &op_stra,
+           const std::map<OperatorInfoPtr, StrategyPtr, OpsPtrCompare> &configured_ops,
+           std::map<OperatorInfoPtr, bool> *visited) const;
   // the edge is in the form: u --> v
   void AddEdge(OperatorInfoPtr u_node, OperatorInfoPtr v_node, const EdgePtr &edge);
   std::vector<std::shared_ptr<Edge>> GetOriginalPrevEdges(const OperatorInfoPtr &v_node) { return in_edges_[v_node]; }
@@ -66,7 +67,7 @@ class CostGraph {
            const std::shared_ptr<CostGraph> &component);
 
   CostPtrList CreateFinalCostList(const OperatorInfoPtr &u, const EdgePtr &e, const OperatorInfoPtr &v);
-  CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u);
+  CostPtrList CreateFinalSingleCostList(const OperatorInfoPtr &u) const;
   CostPtr SelectCostWithMinInferenceTime(const CostPtrList &cost_list, double memory);
   CostPtr SelectCostWithMinTrainingTime(const CostPtrList &cost_list, double memory);
   CostPtrList SelectCostListWithMinTrainingTimeMultiple(const std::vector<CostPtrList> &all_costlist,
@@ -135,8 +136,11 @@ class CostGraph {
                                          const StrategyPtr &, const StrategyPtr &, const StrategyPtr &,
                                          const CostPtrList &, const CostPtrList &, const CostPtrList &, CostPtrList *);
   // Given the relevant costlist, create the TriangleElimination cost
-  void CreateTriangleEliminationSubCostList(StrategyPtr, StrategyPtr, StrategyPtr, const CostPtr &, const CostPtrList &,
-                                            const CostPtrList &, const CostPtr &, const CostPtrList &, CostPtrList *);
+  void CreateTriangleEliminationSubCostList(StrategyPtr elimi_op_stra, StrategyPtr left_op_stra,
+                                            StrategyPtr right_op_stra, const CostPtr &right_op_cost,
+                                            const CostPtrList &elimi_op_clist, const CostPtrList &left_edge_clist,
+                                            const CostPtr &right_edge_cost, const CostPtrList &left_node_clist_origin,
+                                            CostPtrList *left_node_clist_new);
 
   // Applying the Star Elimination in DP algorithm. Return the successive edges of this merged_op
   // NOTE: this elimination MUST be performed only when the above 5 operation cannot be applied.
@@ -148,8 +152,9 @@ class CostGraph {
                                         CostPtrList &, CostPtrList &, CostPtrList *);
   // Return <op1, op2>. we merge 'op2' into 'op1'
   std::pair<OperatorInfoPtr, OperatorInfoPtr> CheckSourceElimination() const;
-  void CreateSourceEliminationSubCostList(StrategyPtr, const CostPtrList &, StrategyPtr, const CostPtrList &,
-                                          CostPtrList *);
+  void CreateSourceEliminationSubCostList(StrategyPtr op1_old_stra, const CostPtrList &op1_old_clist,
+                                          StrategyPtr op2_old_stra, const CostPtrList &op2_old_clist,
+                                          CostPtrList *op1_new_clist) const;
   // We merge 'op2' into op1. The returned value are '<Edges1, Edges2>'. 'Edges1' are newly updated edges for 'op1',
   // 'Edges2' are newly updated edges for 'op2'.
   std::pair<std::vector<std::shared_ptr<Edge>>, std::vector<std::shared_ptr<Edge>>> EliminationSources(
@@ -174,7 +179,7 @@ class CostGraph {
   size_t GetNumEdges() const;
   Status InitReshapeStrategy();
   Status InitSelectedStrategy();
-  OperatorInfoPtr FindTmpIdentityByParameterName(std::string &) const;
+  OperatorInfoPtr FindTmpIdentityByParameterName(const std::string &p_name) const;
   // When TmpIdentity is used by multiple operators, the corresponding parameter's memory cost should be calculated only
   // once (instead of multiple times), this method is used to correct this.
   Status CorrectOpsMemoryCost();
@@ -205,10 +210,11 @@ class CostGraph {
   const std::map<std::string, std::string> get_tuple_getitem_list() const { return tuple_getitem_list_; }
 
  private:
-  void TopologyOrder(std::vector<OperatorInfoPtr> *);
-  void DFSForTopoOrder(const OperatorInfoPtr &, std::map<OperatorInfoPtr, bool> *, std::vector<OperatorInfoPtr> *);
-  Status DetermineCriticalOps(const std::vector<OperatorInfoPtr> &);
-  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int64_t> &);
+  void TopologyOrder(std::vector<OperatorInfoPtr> *topo_order);
+  void DFSForTopoOrder(const OperatorInfoPtr &current_op, std::map<OperatorInfoPtr, bool> *visited,
+                       std::vector<OperatorInfoPtr> *topo_order);
+  Status DetermineCriticalOps(const std::vector<OperatorInfoPtr> &topo_order);
+  void MarkCriticalOpsAndEdges(const std::map<OperatorInfoPtr, int64_t> &candidate_ops);
   // Needed by rec_parser
   std::vector<std::vector<std::string>> inputs_tensor_name_list_;
   // Needed by rec_parser 2
