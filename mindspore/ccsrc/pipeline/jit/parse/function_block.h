@@ -61,7 +61,7 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   void Mature();
   CNodePtr ForceToBoolNode(const AnfNodePtr &cond);
   CNodePtr ForceToWhileCond(const AnfNodePtr &cond);
-  void Jump(const FunctionBlockPtr &block, const std::vector<AnfNodePtr> &args);
+  void Jump(const FunctionBlockPtr &target_block, const std::vector<AnfNodePtr> &args);
   AnfNodePtr SearchReplaceNode(const std::string &var, const ParameterPtr &phi);
   CNodePtr ConditionalJump(const AnfNodePtr &cond_node, const AnfNodePtr &true_block_call,
                            const AnfNodePtr &false_block_call);
@@ -76,9 +76,9 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
   AnfNodePtr MakeResolveSymbol(const std::string &value);
   AnfNodePtr MakeResolveOperation(const std::string &value);
   AnfNodePtr MakeResolve(const std::shared_ptr<NameSpace> &name_space, const std::shared_ptr<Symbol> &resolve_symbol);
-  AnfNodePtr GetResolveNode(const py::tuple &namespace_info);
-  AnfNodePtr HandleNamespaceInfo(const py::tuple &namespace_info);
-  AnfNodePtr HandleBuiltinNamespaceInfo(const py::tuple &namespace_info);
+  AnfNodePtr GetResolveNode(const py::tuple &info);
+  AnfNodePtr HandleNamespaceInfo(const py::tuple &info);
+  AnfNodePtr HandleBuiltinNamespaceInfo(const py::tuple &info);
   AnfNodePtr MakeInterpret(const std::string &script_text, const AnfNodePtr &global_dict_node,
                            const AnfNodePtr &local_dict_node, const AnfNodePtr &orig_node);
   const mindspore::HashMap<ParameterPtr, AnfNodePtr> &removable_phis() const { return removable_phis_; }
@@ -111,11 +111,11 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
 
   // Call this method to update or add a variable.
   void UpdateLocalPyParam(const std::string &name, const AnfNodePtr &node) {
-    auto key_iter = local_py_params_keys_.find(name);
+    const auto key_iter = local_py_params_keys_.find(name);
     if (key_iter == local_py_params_keys_.end()) {
       MS_LOG(DEBUG) << "Add '" << name << "', " << node->DebugString();
-      (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(name, NewValueNode(name)));
-      (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(name, node));
+      (void)local_py_params_keys_.emplace(std::pair<std::string, AnfNodePtr>(name, NewValueNode(name)));
+      (void)local_py_params_values_.emplace(std::pair<std::string, AnfNodePtr>(name, node));
     } else {
       // Find the same position in 'values', and update the node.
       MS_LOG(DEBUG) << "Update '" << name << "', " << local_py_params_values_[name]->DebugString() << " -> "
@@ -131,10 +131,10 @@ class FunctionBlock : public std::enable_shared_from_this<FunctionBlock> {
     }
     for (auto iter = keys.begin(); iter != keys.end(); ++iter) {
       const std::string &cur_key_name = iter->first;
-      auto key_iter = local_py_params_keys_.find(cur_key_name);
+      const auto key_iter = local_py_params_keys_.find(cur_key_name);
       if (key_iter == local_py_params_keys_.end()) {
-        (void)local_py_params_keys_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, iter->second));
-        (void)local_py_params_values_.insert(std::pair<std::string, AnfNodePtr>(cur_key_name, values[cur_key_name]));
+        (void)local_py_params_keys_.emplace(std::pair<std::string, AnfNodePtr>(cur_key_name, iter->second));
+        (void)local_py_params_values_.emplace(std::pair<std::string, AnfNodePtr>(cur_key_name, values[cur_key_name]));
         MS_LOG(DEBUG) << "Add '" << iter->second->DebugString() << "', " << values[cur_key_name]->DebugString();
       } else {
         // The local variable is already in the current block. This means the current block has multiples previous
