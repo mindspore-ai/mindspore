@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/cpu/fp32/arithmetic_self_fp32.h"
+#include <unordered_map>
 #include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
@@ -55,6 +56,16 @@ ArithmeticSelfFunc ArithmeticSelfCPUKernel::GetArithmeticSelfFun(int primitive_t
 ArithmeticSelfBoolFunc ArithmeticSelfCPUKernel::GetArithmeticSelfBoolFun(int primitive_type) const {
   if (primitive_type == mindspore::schema::PrimitiveType_LogicalNot) {
     return ElementLogicalNotBool;
+  }
+  return nullptr;
+}
+
+ArithmeticSelfIntFunc ArithmeticSelfCPUKernel::GetArithmeticSelfIntFun(int primitive_type) const {
+  static std::unordered_map<int, ArithmeticSelfIntFunc> func_table = {
+    {mindspore::schema::PrimitiveType_Abs, ElementAbsInt}, {mindspore::schema::PrimitiveType_Neg, ElementNegativeInt}};
+  auto iter = func_table.find(primitive_type);
+  if (iter != func_table.end()) {
+    return iter->second;
   }
   return nullptr;
 }
@@ -103,12 +114,20 @@ int ArithmeticSelfCPUKernel::DoExecute(int task_id) {
     bool *input_ptr = reinterpret_cast<bool *>(in_tensors_.at(0)->data());
     bool *output_ptr = reinterpret_cast<bool *>(out_tensors_.at(0)->data());
     ret = func_bool_(input_ptr + offset, output_ptr + offset, count);
+  } else if (in_tensors_[0]->data_type() == kNumberTypeInt32) {
+    if (func_int_ == nullptr) {
+      MS_LOG(ERROR) << "Function is null!";
+      return RET_OK;
+    }
+    int32_t *input_ptr = reinterpret_cast<int32_t *>(in_tensors_.at(0)->data());
+    int32_t *output_ptr = reinterpret_cast<int32_t *>(out_tensors_.at(0)->data());
+    ret = func_int_(input_ptr + offset, output_ptr + offset, count);
   } else {
     MS_LOG(ERROR) << "Unsupported type: " << in_tensors_[0]->data_type() << ".";
     return RET_ERROR;
   }
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run failed, illegal input! ";
+    MS_LOG(ERROR) << "Run failed, illegal input!ret: " << ret;
   }
   return ret;
 }
@@ -145,4 +164,6 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Round, LiteKernelCreator<Arit
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Neg, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reciprocal, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Erf, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Neg, LiteKernelCreator<ArithmeticSelfCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Abs, LiteKernelCreator<ArithmeticSelfCPUKernel>)
 }  // namespace mindspore::kernel

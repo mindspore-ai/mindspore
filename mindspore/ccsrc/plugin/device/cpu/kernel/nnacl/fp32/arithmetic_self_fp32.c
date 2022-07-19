@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <string.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 #include "nnacl/arithmetic_self_fp32_simd.h"
 
@@ -26,6 +26,17 @@ int ElementAbs(const float *input, float *output, const int element_size) {
   SIMD_RUN_AVX512(ElementAbs, i, input, output, element_size);
   for (; i < element_size; i++) {
     output[i] = fabsf(input[i]);
+  }
+  return NNACL_OK;
+}
+
+int ElementAbsInt(const int *input, int *output, const int element_size) {
+  int i = 0;
+
+  // only avx512 support abs fp32 instruction
+  SIMD_RUN_AVX512(ElementAbsInt, i, input, output, element_size);
+  for (; i < element_size; i++) {
+    output[i] = abs(input[i]);
   }
   return NNACL_OK;
 }
@@ -41,7 +52,7 @@ int ElementCos(const float *input, float *output, const int element_size) {
 // log:
 int ElementLog(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input[i] <= 0) {
+    if (input[i] < 0) {
       return NNACL_ERRCODE_LOG_NEGATIVE_OR_ZERO;
     }
     output[i] = logf(input[i]);
@@ -143,6 +154,16 @@ int ElementNegative(const float *input, float *output, const int element_size) {
   int i = 0;
 
   SIMD_RUN_NO_SCALAR(ElementNegative, i, input, output, element_size);
+  for (; i < element_size; ++i) {
+    output[i] = -input[i];
+  }
+  return NNACL_OK;
+}
+
+int ElementNegativeInt(const int *input, int *output, const int element_size) {
+  int i = 0;
+
+  SIMD_RUN_NO_SCALAR(ElementNegativeInt, i, input, output, element_size);
   for (; i < element_size; ++i) {
     output[i] = -input[i];
   }
