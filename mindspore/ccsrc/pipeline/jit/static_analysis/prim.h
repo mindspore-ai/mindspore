@@ -92,7 +92,7 @@ class UniformPrimEvaluator final : public TrivialPrimEvaluator {
   ~UniformPrimEvaluator() override { impl_ = nullptr; };
   MS_DECLARE_PARENT(UniformPrimEvaluator, TrivialPrimEvaluator);
 
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args) override;
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args) override;
   ValuePtr RunImpl(const ValuePtrList &args) const;
 
   // If eval_value_ is False, return broadened arguments.
@@ -121,8 +121,8 @@ class DoSignatureEvaluator final : public Evaluator {
   explicit DoSignatureEvaluator(const PrimitivePtr primitive) : Evaluator("DoSignatureEvaluator"), prim_(primitive) {}
   ~DoSignatureEvaluator() override = default;
   MS_DECLARE_PARENT(DoSignatureEvaluator, Evaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -137,8 +137,8 @@ class UnpackGraphEvaluator final : public Evaluator {
   explicit UnpackGraphEvaluator(const PrimitivePtr primitive) : Evaluator("UnpackGraphEvaluator"), prim_(primitive) {}
   ~UnpackGraphEvaluator() override = default;
   MS_DECLARE_PARENT(UnpackGraphEvaluator, Evaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -154,8 +154,8 @@ class MixedPrecisionCastEvaluator final : public Evaluator {
       : Evaluator("MixedPrecisionCastEvaluator"), prim_(primitive) {}
   ~MixedPrecisionCastEvaluator() override = default;
   MS_DECLARE_PARENT(MixedPrecisionCastEvaluator, Evaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &argrefs,
-                    const AnfNodeConfigPtr &out_config) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
+                    const AnfNodeConfigPtr &out_conf) override;
 
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Eval() should not be called, Run() method should be called";
@@ -170,7 +170,7 @@ class MakeTupleEvaluator : public TransitionPrimEvaluator {
   MakeTupleEvaluator() : TransitionPrimEvaluator("MakeTupleEvaluator") {}
   ~MakeTupleEvaluator() override = default;
   MS_DECLARE_PARENT(MakeTupleEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 };
 
@@ -179,7 +179,7 @@ class MakeListEvaluator : public TransitionPrimEvaluator {
   MakeListEvaluator() : TransitionPrimEvaluator("MakeListEvaluator") {}
   ~MakeListEvaluator() override = default;
   MS_DECLARE_PARENT(MakeListEvaluator, TransitionPrimEvaluator);
-  EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
+  EvalResultPtr EvalPrim(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list, const ConfigPtr &,
                          const AnfNodeConfigPtr &out_conf) override;
 };
 

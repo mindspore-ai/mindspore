@@ -19,13 +19,8 @@
 #ifndef MINDSPORE_CCSRC_PIPELINE_JIT_VALIDATOR_H_
 #define MINDSPORE_CCSRC_PIPELINE_JIT_VALIDATOR_H_
 
-#include <string>
-#include <iostream>
-#include <memory>
-#include "utils/hash_set.h"
 #include "frontend/operator/ops.h"
 #include "ir/anf.h"
-#include "utils/misc.h"
 
 namespace mindspore {
 namespace validator {

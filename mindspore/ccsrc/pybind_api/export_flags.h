@@ -17,7 +17,6 @@
 #ifndef PYBIND_API_EXPORT_FLAGS_H_
 #define PYBIND_API_EXPORT_FLAGS_H_
 
-#include "utils/flags.h"
 namespace mindspore {
 extern const char PYTHON_PRIMITIVE_FLAG[];
 extern const char PYTHON_CELL_AS_LIST[];
