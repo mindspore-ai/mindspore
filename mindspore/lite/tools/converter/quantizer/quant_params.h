@@ -22,6 +22,24 @@
 #include <set>
 #include "schema/inner/model_generated.h"
 namespace mindspore::lite::quant {
+enum WeightQuantType {
+  FIXED_BIT_PER_CHANNEL = 0,
+  FIXED_BIT_PER_LAYER = 1,
+  MIXED_BIT_PER_LAYER = 2,
+};
+constexpr size_t k2Bit = 2;
+constexpr size_t k8Bit = 8;
+constexpr size_t k10Bit = 10;
+constexpr size_t k16Bit = 16;
+constexpr size_t k32Bit = 32;
+constexpr size_t kMaxNum1024 = 1024;
+constexpr size_t kMillisecondsBase = 10;
+constexpr float kDelta = 0.1;
+constexpr float kRatio = 10.0;
+constexpr int kCpuBindMode = 1;
+constexpr int kPrimIndex = 0;
+constexpr int kPrimOffset = 1;
+
 enum ActivationQuantizedMethod {
   MAX_MIN = 0,
   KL = 1,
