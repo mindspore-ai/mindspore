@@ -24,6 +24,7 @@
 #include "runtime/device/kernel_runtime.h"
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 #include "plugin/device/ascend/hal/device/distribute/ascend_collective.h"
+#include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 
 using HcclTaskInfoPtr = std::shared_ptr<mindspore::ge::model_runner::HcclTaskInfo>;
 using mindspore::ge::model_runner::HcclTaskInfo;
@@ -47,6 +48,7 @@ std::string MsOpNameToHcomOpType(const std::string &ms_op_type) {
 
 namespace mindspore {
 namespace kernel {
+constexpr uint64_t hccl_overflow_addr_size = 512;
 void HcclKernelFactory::Register(const std::string &name, HcclKernelCreater &&fun) {
   hccl_kernel_map_.emplace(name, fun);
 }
@@ -286,11 +288,17 @@ std::vector<TaskInfoPtr> HcclKernel::GenTask(const std::vector<AddressPtr> &inpu
       workspace_addr = workspace.at(0)->addr;
     }
 
-    results.emplace_back(
-      std::make_shared<HcclTaskInfo>(unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr,
-                                     output_data_addr, workspace_addr, task.workspace_size, task.stream_num,
-                                     private_def, hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(),
-                                     hccl_count_, root_id_, op_type_, data_type, group_, NeedDump()));
+    std::vector<void *> global_workspace_addr;
+    auto overflow_memory_ptr =
+      device::ascend::AscendMemAdapter::GetInstance().MallocOverflowMem(hccl_overflow_addr_size);
+    MS_EXCEPTION_IF_NULL(overflow_memory_ptr);
+    global_workspace_addr.push_back(overflow_memory_ptr);
+
+    results.emplace_back(std::make_shared<HcclTaskInfo>(
+      unique_name_, stream_id, hccl::HcclAdapter::GetHcclType(anf_node), input_data_addr, output_data_addr,
+      workspace_addr, task.workspace_size, task.stream_num, private_def,
+      hccl::HcclAdapter::GetInstance().GetHcclOpsKernelInfoStore(), hccl_count_, root_id_, op_type_, data_type, group_,
+      NeedDump(), global_workspace_addr));
   }
 
   return results;

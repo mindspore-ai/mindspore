@@ -82,6 +82,9 @@ void HcclTask::Distribute() {
   ge_task.kernelHcclInfo[0].dataType = static_cast<int32_t>(task_info_->data_type());
   ge_task.kernelHcclInfo[0].opType = static_cast<int32_t>(task_info_->op_type());
   ge_task.kernelHcclInfo[0].rootId = task_info_->root_id();
+  if (!task_info_->global_workspace_addr().empty()) {
+    ge_task.kernelHcclInfo[0].global_workspace_addr = task_info_->global_workspace_addr();
+  }
 
   std::vector<rtStream_t> secondary_stream_list;
   std::transform(secondary_stream_list_.begin(), secondary_stream_list_.end(),
