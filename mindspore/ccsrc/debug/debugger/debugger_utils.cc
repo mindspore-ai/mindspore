@@ -54,7 +54,7 @@ std::vector<size_t> CheckRealOutput(const std::string &node_name, const size_t &
   // can add the filter list for more operators here....
   if (node_name == "BatchNorm") {
     MS_LOG(INFO) << "loading node named " << node_name;
-    (void)real_outputs.insert(real_outputs.end(), {0, 3, 4});
+    (void)real_outputs.insert(real_outputs.cend(), {0, 3, 4});
   } else {
     // by default, TensorLoader will load all outputs
     for (size_t j = 0; j < output_size; ++j) {

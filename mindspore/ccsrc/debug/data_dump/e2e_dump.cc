@@ -933,8 +933,9 @@ bool E2eDump::ConvertFormatForOneTensor(dump_data_t *dump_tensor_info) {
     host_format = kOpFormat_ND;
   }
   if (device_format != host_format) {
-    auto iter = kSuppTransFormatPair.find(std::make_pair(device_format, host_format));
-    if (iter == kSuppTransFormatPair.end()) {
+    std::set<std::pair<std::string, std::string>>::const_iterator iter =
+      kSuppTransFormatPair.find(std::make_pair(device_format, host_format));
+    if (iter == kSuppTransFormatPair.cend()) {
       MS_LOG(INFO) << "Do not support convert from format " << device_format << " to " << host_format << " for tensor "
                    << dump_tensor_info->dump_file_path << "." << dump_tensor_info->in_out_str << "."
                    << dump_tensor_info->slot;
@@ -960,7 +961,7 @@ bool E2eDump::ConvertFormatForOneTensor(dump_data_t *dump_tensor_info) {
   return trans_success;
 }
 
-uint64_t UnpackUint64Value(char *ptr) {
+uint64_t UnpackUint64Value(const char *ptr) {
 #if defined(__APPLE__)
   return *reinterpret_cast<const uint64_t *>(ptr);
 #else

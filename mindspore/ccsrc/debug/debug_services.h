@@ -303,11 +303,11 @@ class DebugServices {
 
   const void *PreparePrevTensor(uint64_t *prev_num_elements, const std::string &tensor_name);
 
-  void CheckHistoryErrorCode(int *error_code, bool history_not_found);
+  void CheckHistoryErrorCode(int *error_code, bool history_not_found) const;
 
   void CheckWatchpointsForTensor(ChunkData *chunk_data, const std::vector<std::string> &op_overflows,
                                  ProcessedNPYFiles *const processed_npy_files,
-                                 std::vector<std::shared_ptr<TensorData>> *tensor_list, int begin, int end,
+                                 std::vector<std::shared_ptr<TensorData>> *const tensor_list, int begin, int end,
                                  int chunk_id, const bool init_dbg_suspend, const bool step_end, const bool recheck,
                                  std::vector<unsigned int> *device_id, std::vector<unsigned int> *root_graph_id,
                                  bool error_on_no_value = false);
@@ -322,13 +322,13 @@ class DebugServices {
                         const bool step_end, const bool recheck, std::vector<unsigned int> *device_id = nullptr,
                         std::vector<unsigned int> *root_graph_id = nullptr, bool error_on_no_value = false);
 
-  void SortWatchpointsInfo(std::vector<std::future<void>> *tensor_future_vec, std::vector<int> *exec_order,
+  void SortWatchpointsInfo(std::vector<std::future<void>> *const tensor_future_vec, std::vector<int> *exec_order,
                            std::vector<std::string> *time_stamps, uint64_t *tensor_list_byte_size,
                            std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                            std::vector<unsigned int> *const watchpoint_id,
                            std::vector<std::vector<parameter_t>> *parameters, std::vector<int32_t> *error_codes,
                            ChunkData *chunk_data, std::vector<unsigned int> *device_id,
-                           std::vector<unsigned int> *root_graph_id);
+                           std::vector<unsigned int> *root_graph_id) const;
 #ifdef OFFLINE_DBG_MODE
   void SetTensorToNotInUse(const std::shared_ptr<TensorData> &tensor, const void *previous_tensor_ptr);
 #endif
@@ -342,7 +342,7 @@ class DebugServices {
                                  const std::string time_stamp, const std::string &qualified_tensor_name,
                                  const std::string &tensor_slot, const watchpoint_t &wp,
                                  const unsigned int device_id_val, const unsigned int root_graph_id_val,
-                                 const std::vector<parameter_t> &parameter_list, const int32_t error_code);
+                                 const std::vector<parameter_t> &parameter_list, const int32_t error_code) const;
 #ifdef OFFLINE_DBG_MODE
   void AddToTensorData(const std::string &backend_name, const std::string &time_stamp, const std::size_t slot,
                        const unsigned int iteration, const unsigned int device_id, const unsigned int root_graph_id,
@@ -394,11 +394,11 @@ class DebugServices {
                          std::size_t *const size, std::vector<int64_t> *const shape, char **const data_buffer,
                          bool *no_mem_to_read, bool is_base_request = false);
 
-  AsyncPreProcessResult PreProcessDumpDirAsync(const std::string &specific_dump_dir);
+  AsyncPreProcessResult PreProcessDumpDirAsync(const std::string &specific_dump_dir) const;
 
-  DebugServices::NPYFilePool PreProcessDumpDirSync(const std::string &specific_dump_dir);
+  DebugServices::NPYFilePool PreProcessDumpDirSync(const std::string &specific_dump_dir) const;
 
-  ProcessedNPYFiles ProcessNPYFilePool(const NPYFilePool &npy_file_pool);
+  ProcessedNPYFiles ProcessNPYFilePool(const NPYFilePool &npy_file_pool) const;
 
   void ConvertToHostFormat(const DirMap &dir_to_files_map, NPYFilePool *const result_list);
 
@@ -414,7 +414,7 @@ class DebugServices {
 
   void ProcessConvertList(const DumpFileMap &dump_dir_mapped_files, const std::string &prefix_dump_file_name,
                           const std::string &specific_dump_dir, DirMap *dir_to_files_map,
-                          NPYFilePool *const result_list);
+                          NPYFilePool *const result_list) const;
 
   void GetTensorDataInfoAsync(const std::vector<ProtoDump> &proto_dump, const std::string &specific_dump_dir,
                               uint32_t iteration, uint32_t device_id, uint32_t root_graph_id,
@@ -433,7 +433,7 @@ class DebugServices {
 
   void ReadGraphRunIter(std::string file_path, std::tuple<uint32_t, uint32_t> rank_and_graph);
 
-  std::string IterationString(unsigned int iteration);
+  std::string IterationString(unsigned int iteration) const;
 #endif
   void ReadNodesTensors(const std::vector<std::string> &name, std::vector<std::string> *ret_name,
                         std::vector<const char *> *data_ptr, std::vector<ssize_t> *data_size,
@@ -446,7 +446,7 @@ class DebugServices {
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
 
-  bool CompareCurrentRootGraph(uint32_t id);
+  bool CompareCurrentRootGraph(uint32_t id) const;
 #endif
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() const;
@@ -474,17 +474,17 @@ class DebugServices {
   bool CheckOpOverflow(std::string node_name_to_find, unsigned int device_id = 0, unsigned int root_graph_id = 0,
                        unsigned int iteration = 0);
 
-  std::string RemoveKernelGraphPrefix(std::string node_name_to_find);
+  std::string RemoveKernelGraphPrefix(std::string node_name_to_find) const;
 
-  bool GetTaskIdStreamId(std::string file_name, std::string overflow_file_prefix, uint64_t *task_id,
-                         uint64_t *stream_id);
+  bool GetTaskIdStreamId(std::string file_name, std::string overflow_file_prefix, uint64_t *const task_id,
+                         uint64_t *const stream_id) const;
 
-  bool GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
-                            uint64_t *stream_id);
+  bool GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *const task_id,
+                            uint64_t *const stream_id) const;
 
-  std::string RealPath(const std::string &input_path);
+  std::string RealPath(const std::string &input_path) const;
 
-  uint64_t BytestoUInt64(const std::vector<char> &buffer);
+  uint64_t BytestoUInt64(const std::vector<char> &buffer) const;
 
   bool TensorExistsInCurrent(const std::string &tensor_name);
 
@@ -502,7 +502,7 @@ class DebugServices {
 
   void SetSyncMode(bool is_sync_mode);
 
-  bool GetSyncMode();
+  bool GetSyncMode() const;
 
   void SetMemLimit(uint64_t max_mem_size);
 

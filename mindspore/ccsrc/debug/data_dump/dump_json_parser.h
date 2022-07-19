@@ -125,7 +125,7 @@ class BACKEND_EXPORT DumpJsonParser {
   void ParseInputOutput(const nlohmann::json &content);
   void ParseKernels(const nlohmann::json &content);
   void ParseSupportDevice(const nlohmann::json &content);
-  bool ParseEnable(const nlohmann::json &content);
+  bool ParseEnable(const nlohmann::json &content) const;
   void ParseOpDebugMode(const nlohmann::json &content);
   void ParseFileFormat(const nlohmann::json &content);
 

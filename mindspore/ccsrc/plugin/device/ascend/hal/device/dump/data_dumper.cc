@@ -53,7 +53,7 @@ static constexpr uint64_t kOpDebugShape = 2048;
 static constexpr uint64_t kOpDebugHostMemSize = 2048;
 static constexpr uint64_t kOpDebugDevMemSize = sizeof(void *);
 static constexpr uint8_t kNoOverflow = 0;
-static constexpr uint8_t kAiCoreOverflow = (0x1 << 0);
+static constexpr uint8_t kAiCoreOverflow = 0x1;
 static constexpr uint8_t kAtomicOverflow = (0x1 << 1);
 static constexpr uint8_t kAllOverflow = (kAiCoreOverflow | kAtomicOverflow);
 static const std::map<uint32_t, std::string> kOverflowModeStr = {{kNoOverflow, "NoOverflow"},
@@ -236,7 +236,7 @@ void DataDumper::UnloadDumpInfo() {
 
   for (const auto &kernel_name : dump_kernel_names_) {
     aicpu::dump::Task task;
-    auto iter = runtime_info_map_.find(kernel_name);
+    std::map<std::string, std::shared_ptr<RuntimeInfo>>::const_iterator iter = runtime_info_map_.find(kernel_name);
     if (iter == runtime_info_map_.end()) {
       MS_LOG(EXCEPTION) << "[DataDump] kernel name not found in runtime_info_map";
     }
