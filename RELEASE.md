@@ -8,13 +8,6 @@
 
 ### Major Features and Improvements
 
-#### OS
-
-- [STABLE] Support Python 3.8(Linux/Windows/Mac).
-- [STABLE] Installation improved with more detailed install guide and automated shell scripts.
-- [STABLE] Support operator computing with multi-thread under Windows.
-- [STABLE] Compatible with GCC from version 7.3 to 9.x.
-
 #### FrontEnd
 
 - [BETA] Add `mindspore.Model.fit` API, add  `mindspore.callback.EarlyStopping` and `mindspore.callback.ReduceLROnPlateau` in Callback.
@@ -65,24 +58,13 @@
 - [STABLE] Fix a bug where the flat_map method of the Dataset class does not flatten the result.
 - [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use, refer to [latest api usages](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html).
 
-#### GraphKernel Fusion
-
-#### Federated Learning
-
-#### Debug
-
 ### API Change
 
 #### Backwards Incompatible Change
 
 ##### Python API
 
-- Deprecated usage:  `import mindspore.dataset.engine.datasets as ds`.  Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.dataset.html).
-- Add `mindspore.ms_class` interface, as class decorator for user-defined classes. It allows MindSpore to identify user-defined classes and access their attributes and methods([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
-- Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505]())
-- Add Tensor init arg `internal` for internal use.
 - DVPP simulation algorithm is no longer supported, remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
-- MindSpore's QAT feature is refactoring, and corresponding interfaces under the `mindspore.compression` package have been removed ([!31364]()). We will re-provide MindSpore's QAT feature based on MindSpore Rewrite in version r1.8, which is currently in the demo state ([!30974]()).
 - Add `on_train_epoch_end` method in LossMonitor to print metric information when LossMonitor is used with `mindspore.Model.fit`.
 - Add "train" or "eval" mode in the print content of TimeMonitor。
 - The input arg `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
@@ -174,6 +156,7 @@ Contributions of any kind are welcome!
 - Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended in [mindspore doc](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.html).
 - Add `mindspore.ms_class` interface, as class decorator for user-defined classes. It allows MindSpore to identify user-defined classes and access their attributes and methods([!30855](https://gitee.com/mindspore/mindspore/pulls/30855))
 - Deprecate `mindspore.SparseTensor` and use `mindspore.COOTensor` instead. ([!28505](https://gitee.com/mindspore/mindspore/pulls/28505))
+- Add Tensor init arg `internal` for internal use.
 
 ## MindSpore Lite
 
