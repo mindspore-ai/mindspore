@@ -126,7 +126,7 @@ class StackFrame final : public Base {
   AbstractBasePtrList GenerateArgsAbsList(const AnalysisEnginePtr &engine, const EvaluatorPtr &evaluator,
                                           const CNodePtr current_cnode);
   AnalysisContextPtr GetParentContext(const BaseFuncGraphEvaluatorPtr &fg_evaluator,
-                                      const AbstractFunctionPtr &graph_func);
+                                      const AbstractFunctionPtr &graph_func) const;
   StackFramePtr DoJump(const AnalysisEnginePtr &engine, const CNodePtr current_cnode,
                        const AbstractFunctionPtr &graph_func);
 

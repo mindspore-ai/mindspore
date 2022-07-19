@@ -18,18 +18,15 @@
 #define MINDSPORE_CCSRC_UTILS_PRIMITIVE_PY_H_
 
 #include <map>
-#include <memory>
 #include <string>
-#include <tuple>
 #include <vector>
+#include <memory>
 
 #include "utils/hash_map.h"
 #include "abstract/abstract_value.h"
 #include "ir/primitive.h"
 #include "ir/signature.h"
 #include "pybind11/pybind11.h"
-#include "utils/log_adapter.h"
-#include "utils/misc.h"
 
 namespace py = pybind11;
 namespace mindspore {
@@ -45,6 +42,7 @@ class PrimitivePy : public Primitive {
  public:
   explicit PrimitivePy(const std::string &name);
   PrimitivePy(const PrimitivePy &prim_py);
+  PrimitivePy &operator=(const PrimitivePy &other);
   PrimitivePy(const py::object &python_obj, const PrimitivePyAdapterPtr &adapter);
   ~PrimitivePy() override;
   MS_DECLARE_PARENT(PrimitivePy, Primitive);

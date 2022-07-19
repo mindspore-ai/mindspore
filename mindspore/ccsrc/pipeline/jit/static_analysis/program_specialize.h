@@ -113,9 +113,9 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   void FirstPass();
   void SecondPass();
   void ProcessNode(const AnfNodePtr &node);
-  void ProcessCNode(const CNodePtr &node);
+  void ProcessCNode(const CNodePtr &cnode);
 
-  void EliminateUnusedSequenceItem(const CNodePtr &cnode);
+  void EliminateUnusedSequenceItem(const CNodePtr &cnode) const;
 
   const NodeToNodeMap &cloned_nodes() const { return cloner_->cloned_nodes(); }
 
@@ -124,7 +124,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   }
 
   inline AnalysisContextPtr MakeContext(const AnalysisEnginePtr &engine, const BaseFuncGraphEvaluatorPtr &evaluator,
-                                        const AbstractBasePtrList &args_spec_list) {
+                                        const AbstractBasePtrList &args_spec_list) const {
     AbstractBasePtrList normalized_args_spec_list = evaluator->NormalizeArgs(args_spec_list);
     FuncGraphPtr fg = evaluator->GetFuncGraph(engine, normalized_args_spec_list);
     MS_EXCEPTION_IF_NULL(evaluator->parent_context());
@@ -134,7 +134,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
 
   inline void AddTodoItem(const AnfNodePtr &node) { todo_.push_back(node); }
   inline void AddTodoItem(const std::vector<AnfNodePtr> &nodes) {
-    (void)todo_.insert(todo_.end(), nodes.cbegin(), nodes.cend());
+    (void)todo_.insert(todo_.cend(), nodes.cbegin(), nodes.cend());
   }
   // Get node replicated by Cloner.
   AnfNodePtr GetReplicatedNode(const AnfNodePtr &node);
@@ -143,7 +143,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   AnfNodePtr ReplicateDisconnectedNode(const AnfNodePtr &node);
 
   // Build a value node from parameter if the function graph has special flag to hint it can be done.
-  AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &node);
+  AnfNodePtr BuildSpecializedParameterNode(const CNodePtr &cnode);
   // Build a value node if ival is a function.
   AnfNodePtr BuildValueNodeForAbstractFunction(const AnfNodePtr &origin_node, const AbstractBasePtr &ival,
                                                const AttrValueMapPtr &attrs, const AnfNodePtr &cnode,
@@ -155,16 +155,16 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   // replicated node.
   AnfNodePtr BuildReplacedNode(const AnfNodeConfigPtr &conf);
   // Build a specialized node from given argvals;
-  AnfNodePtr BuildSpecializedNode(const CNodePtr &cnode, const AnfNodePtr &node, const AbstractBasePtr &abs,
+  AnfNodePtr BuildSpecializedNode(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractBasePtr &abs,
                                   const AbstractBasePtrList &argvals);
-  AnfNodePtr BuildSpecializedNodeInner(const CNodePtr &cnode, const AnfNodePtr &node, const AbstractBasePtr &abs,
-                                       const AbstractFunctionPtr &func, const AbstractBasePtrList &args,
+  AnfNodePtr BuildSpecializedNodeInner(const CNodePtr &cnode, const AnfNodePtr &func, const AbstractBasePtr &abs,
+                                       const AbstractFunctionPtr &func_abs, const AbstractBasePtrList &args,
                                        SpecializeStatusCode *errcode);
 
   // Find the unique argument values which can be used to specialize a primitive or graph function.
-  SpecializeStatusCode AcquireUniqueEvalVal(const AbstractFunctionPtr &fn, const EvaluatorPtr &eval,
+  SpecializeStatusCode AcquireUniqueEvalVal(const AbstractFunctionPtr &func, const EvaluatorPtr &eval,
                                             const AbstractBasePtrList &argvals,
-                                            std::pair<AbstractBasePtrList, AbstractBasePtr> *result);
+                                            std::pair<AbstractBasePtrList, AbstractBasePtr> *res);
   // Get cache, it may be eval's cache or cache built from broaded argument values.
   const EvaluatorCacheMgrPtr GetEvalCache(const EvaluatorPtr &eval);
   // Try to build unique argvals from the broaded arg vals if it is unique.

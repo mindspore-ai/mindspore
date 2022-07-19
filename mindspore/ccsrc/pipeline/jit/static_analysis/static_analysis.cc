@@ -150,7 +150,7 @@ AnalysisContextPtr AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Ana
   return root_context_;
 }
 
-void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) {
+void AnalysisEngine::SaveEvalResultInCache(const AnfNodeConfigPtr &conf, const EvalResultPtr &result) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(result);
   static AnalysisResultCacheMgr &cache_mgr = AnalysisResultCacheMgr::GetInstance();
@@ -257,7 +257,7 @@ EvalResultPtr AnalysisEngine::Eval(const AnfNodeConfigPtr &conf) {
   return eval_result;
 }
 
-AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) {
+AbstractBasePtr AnalysisEngine::EvalValueNode(const ValueNodePtr &value_node, const AnfNodeConfigPtr &conf) const {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(value_node);
   auto out = ToAbstract(value_node->value(), conf->context(), conf);
@@ -659,7 +659,7 @@ EvalResultPtr AnalysisEngine::ExecuteEvaluators(const std::vector<EvaluatorPtr> 
   }
 }
 
-void AnalysisEngine::SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) {
+void AnalysisEngine::SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const {
   MS_EXCEPTION_IF_NULL(possible_parent_fg);
   static std::mutex fg_lock;
   std::lock_guard<std::mutex> infer_lock(fg_lock);
@@ -675,10 +675,10 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   *continue_flag = false;
   // Find latest entry function to handle nested recursion.
   EvaluatorPtr latest_entry = eval;
-  auto latest_entry_iter = eval_trace_.rbegin();
-  for (auto r_it = eval_trace_.rbegin(); *r_it != *it;) {
-    auto it_temp = std::find(evaluators.begin(), evaluators.end(), r_it->evaluator_);
-    if (it_temp != evaluators.end()) {
+  auto latest_entry_iter = eval_trace_.crbegin();
+  for (auto r_it = eval_trace_.crbegin(); *r_it != *it;) {
+    auto it_temp = std::find(evaluators.cbegin(), evaluators.cend(), r_it->evaluator_);
+    if (it_temp != evaluators.cend()) {
       latest_entry = *it_temp;
       latest_entry_iter = r_it;
       break;
@@ -694,19 +694,20 @@ EvaluatorPtr AnalysisEngine::HandleNestedRecursion(const std::vector<EvaluatorPt
   bool has_undetermined = false;
   // Check whether sub loop has untraced undetermined evaluator.
   mindspore::HashSet<EvaluatorArgs, EvaluatorArgsHasher, EvaluatorArgsEqual> undetermined_evals;
-  for (auto r_it = eval_trace_.rbegin(); r_it != latest_entry_iter; r_it++) {
+  for (auto r_it = eval_trace_.crbegin(); r_it != latest_entry_iter; r_it++) {
     undetermined_evals.insert(*r_it);
   }
   MS_LOG(DEBUG) << "undetermined_evals size(): " << undetermined_evals.size();
 
-  for (auto u_eval : undetermined_evals) {
+  for (const auto &u_eval : undetermined_evals) {
     MS_LOG(DEBUG) << u_eval.evaluator_->ToString() << "check undetermined.";
     auto &alternate_evaluator = multi_poss_[u_eval.evaluator_];
     auto eval_cache = alternate_evaluator->evaluator_cache_mgr();
     const auto &alt_eval_args = EvaluatorArgs(alternate_evaluator, args_spec_list);
-    if ((!undetermined_evals.count(alt_eval_args)) &&
-        (((!continued_evals_.count(u_eval)) && (eval_cache->GetValue(args_spec_list) != nullptr)) ||
-         (eval_cache->GetValue(args_spec_list) == nullptr))) {
+    auto is_not_undetermined_eval = (undetermined_evals.find(alt_eval_args) == undetermined_evals.cend());
+    auto is_not_continued_eval = (continued_evals_.find(u_eval) == continued_evals_.cend());
+    auto args_not_evaluated = (eval_cache->GetValue(args_spec_list) == nullptr);
+    if (is_not_undetermined_eval && (args_not_evaluated || is_not_continued_eval)) {
       MS_LOG(DEBUG) << u_eval.evaluator_->ToString() << "has undetermined.";
       has_undetermined = true;
       break;
@@ -1028,8 +1029,8 @@ EvalResultPtr AnalysisEngine::ExecuteMultipleEvaluators(const std::vector<Evalua
     const auto current_inf = EvaluatorArgs(eval, args_spec_list);
     MS_LOG(DEBUG) << "Check Evaluator " << eval->ToString();
     // If current evaluator is under tracing, then skip current evaluator to avoid recursively evaluating.
-    auto it = std::find(eval_trace_.rbegin(), eval_trace_.rend(), current_inf);
-    if (it == eval_trace_.rend()) {
+    auto it = std::find(eval_trace_.crbegin(), eval_trace_.crend(), current_inf);
+    if (it == eval_trace_.crend()) {
       eval_trace_.push_back(current_inf);
       auto eval_result = eval->Run(shared_from_this(), args_conf_list, out_conf);
       auto eval_abstract = eval_result->abstract();
