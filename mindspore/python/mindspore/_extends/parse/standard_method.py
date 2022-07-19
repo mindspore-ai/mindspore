@@ -2319,6 +2319,44 @@ def filter_(fun, iter_):
 ##################
 
 
+def csr_softmax(logits, dtype):
+    """
+    Calculates the softmax of a CSRTensorMatrix.
+
+    Args:
+        logits (CSRTensor): Sparse CSR Tensor.
+        dtype (dtype): Data type.
+
+    Returns:
+        CSRTensor. a csr_tensor containing:
+        indptr: indicates the start and end point for `values` in each row.
+        indices: the column positions of all non-zero values of the input.
+        values: the non-zero values of the dense tensor.
+        shape: the shape of the csr_tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.common import dtype as mstype
+        >>> from mindspore import Tensor, CSRTensor
+        >>> from mindspore.ops.functional import sparse_matrix_softmax
+        >>> logits_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> logits_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> logits_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> shape = (2, 6)
+        >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
+        >>> out = sparse_matrix_softmax(logits, mstype.float32)
+        >>> print(out)
+        CSRTensor(shape=[2,6], dtype=Float32,
+                  indptr=Tensor(shape=[3], dtype=Int64, value = [0, 1, 2]),
+                  indices=Tensor(shape=[2], dtype=Int64, value = [0, 1]),
+                  values=Tensor(shape=[2], dtype=Float32, value = [2.0, 4.0]))
+    """
+
+    return F.sparse_matrix_softmax(logits, dtype)
+
+
 def csr_astype(x, dtype):
     """Implementation of `astype` for CSRTensor."""
     data = x.values.astype(dtype)
