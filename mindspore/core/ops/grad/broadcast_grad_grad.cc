@@ -35,7 +35,7 @@ abstract::TupleShapePtr BroadcastGradGradInferShape(const PrimitivePtr &primitiv
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
-  auto broadcast = BroadCastInferShape(prim_name, {input_args[kInputIndex0], input_args[kInputIndex0]});
+  auto broadcast = BroadCastInferShape(prim_name, {input_args[kInputIndex0], input_args[kInputIndex1]});
   auto x1 = input_args[kInputIndex0]->BuildShape();
   auto x2 = input_args[kInputIndex1]->BuildShape();
   auto dx1 = input_args[kInputIndex2]->BuildShape();
