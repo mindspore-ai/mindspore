@@ -164,17 +164,17 @@ class Parser {
   // Process a variable name
   AnfNodePtr ParseName(const FunctionBlockPtr &block, const py::object &node);
   // Process NoneType
-  AnfNodePtr ParseNone(const FunctionBlockPtr &, const py::object &);
+  AnfNodePtr ParseNone(const FunctionBlockPtr &block, const py::object &node);
   // Process Ellipsis
-  AnfNodePtr ParseEllipsis(const FunctionBlockPtr &, const py::object &);
+  AnfNodePtr ParseEllipsis(const FunctionBlockPtr &block, const py::object &node);
   // Process an integer or float number
-  AnfNodePtr ParseNum(const FunctionBlockPtr &, const py::object &node);
+  AnfNodePtr ParseNum(const FunctionBlockPtr &block, const py::object &node);
   // Process a string variable
-  AnfNodePtr ParseStr(const FunctionBlockPtr &, const py::object &node);
+  AnfNodePtr ParseStr(const FunctionBlockPtr &block, const py::object &node);
   // Process a Constant
-  AnfNodePtr ParseConstant(const FunctionBlockPtr &, const py::object &node);
+  AnfNodePtr ParseConstant(const FunctionBlockPtr &block, const py::object &node);
   // Process a name
-  AnfNodePtr ParseNameConstant(const FunctionBlockPtr &, const py::object &node);
+  AnfNodePtr ParseNameConstant(const FunctionBlockPtr &block, const py::object &node);
   // Process a function call
   AnfNodePtr ParseCall(const FunctionBlockPtr &block, const py::object &node);
   // Process function 'super'
@@ -219,7 +219,7 @@ class Parser {
   std::vector<AnfNodePtr> ParseRaiseCall(const FunctionBlockPtr &block, const py::object &node);
   void ParseStrInError(const FunctionBlockPtr &block, const py::list &args, std::vector<AnfNodePtr> *str_nodes);
   FunctionBlockPtr MakeAssertErrorBlock(const FunctionBlockPtr &block, const py::object &node);
-  AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node) const;
+  AnfNodePtr ProcessAttributeWithClassMember(const FunctionBlockPtr &block, const py::object &node);
 
   // Transform tail call to parallel call.
   void TransformParallelCall();
@@ -231,9 +231,9 @@ class Parser {
 
   // Check if script_text is in global/local params.
   bool IsScriptInParams(const std::string &script_text, const py::dict &global_dict,
-                        const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph) const;
+                        const std::map<std::string, AnfNodePtr> &local_keys, const FuncGraphPtr &func_graph);
   // Set the interpret flag for the node calling the interpret node.
-  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node) const;
+  void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const AnfNodePtr &node);
   void UpdateInterpretForUserNode(const AnfNodePtr &user_node, const std::vector<AnfNodePtr> &nodes);
   // Make interpret node.
   AnfNodePtr MakeInterpretNode(const FunctionBlockPtr &block, const AnfNodePtr &value_node, const string &script_text);
@@ -250,28 +250,28 @@ class Parser {
                                          const py::object &value_object);
 
   // Generate argument nodes for ast function node
-  void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &fn_node);
+  void GenerateArgsNodeForFunction(const FunctionBlockPtr &block, const py::object &function_node);
   // Generate argument default value for ast function node
-  void GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, const py::object &fn_node);
+  void GenerateArgsDefaultValueForFunction(const FunctionBlockPtr &block, const py::object &function_node);
   // Parse ast function node
-  FunctionBlockPtr ParseDefFunction(const py::object &node, const FunctionBlockPtr &block = nullptr);
+  FunctionBlockPtr ParseDefFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
   // Parse lambda function node
-  FunctionBlockPtr ParseLambdaFunction(const py::object &node, const FunctionBlockPtr &block = nullptr);
+  FunctionBlockPtr ParseLambdaFunction(const py::object &function_node, const FunctionBlockPtr &block = nullptr);
   // Parse ast statements
-  FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &nodes);
+  FunctionBlockPtr ParseStatements(FunctionBlockPtr block, const py::object &stmt_node);
   // Parse one ast statement node
   FunctionBlockPtr ParseStatement(const FunctionBlockPtr &block, const py::object &node);
   // Parse an ast expression node
   AnfNodePtr ParseExprNode(const FunctionBlockPtr &block, const py::object &node);
 
-  void MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
-                           const FunctionBlockPtr &false_block) const;
+  void MakeConditionBlocks(const FunctionBlockPtr &block, const FunctionBlockPtr &trueBlock,
+                           const FunctionBlockPtr &falseBlock);
   void RemoveUnnecessaryPhis();
   // Write a new var
-  void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node);
+  void WriteAssignVars(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &value_node);
 
   // Assign value to single variable name
-  void HandleAssignName(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node) const;
+  void HandleAssignName(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
 
   // Assign value to tuple
   void HandleAssignTuple(const FunctionBlockPtr &block, const py::object &targ, const AnfNodePtr &assigned_node);
@@ -289,12 +289,18 @@ class Parser {
   // Process a bool operation value list
   AnfNodePtr ProcessBoolOpValueList(const FunctionBlockPtr &block, const py::list &value_list, AstSubType mode);
 
+  CNodePtr GenerateIteratorInFor(const FunctionBlockPtr &block, const pybind11::object &node,
+                                 const AnfNodePtr &op_iter);
+
+  CNodePtr GenerateCondInFor(const ParameterPtr &iter_param, const FunctionBlockPtr &header_block,
+                             const AnfNodePtr &op_hasnext);
+
   FunctionBlockPtr GenerateBlock(const TraceInfoPtr &trace_info);
 
   void ParseKeywordsInCall(const FunctionBlockPtr &block, const py::object &node, ArgsContext *args_context);
 
   void ParseArgsInCall(const FunctionBlockPtr &block, const py::list &args, ArgsContext *args_context);
-  AnfNodePtr GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_node,
+  AnfNodePtr GenerateAnfNodeForCall(const FunctionBlockPtr &block, const AnfNodePtr &call_function_anf_node,
                                     const ArgsContext &args_context) const;
   ScopePtr GetScopeForParseFunction();
   // Check the value is subscript is reference type
