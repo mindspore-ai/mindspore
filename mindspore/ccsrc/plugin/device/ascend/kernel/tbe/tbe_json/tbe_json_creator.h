@@ -88,7 +88,7 @@ class TbeJsonCreator {
                            nlohmann::json *output_desc);
   void GenDesJsonCommon(nlohmann::json *output_desc) const;
   void GenInputConstValue(const AnfNodePtr &anf_node, size_t real_input_index, nlohmann::json *input_desc) const;
-  size_t GenJsonHash(nlohmann::json tbe_json);
+  size_t GenJsonHash(nlohmann::json tbe_json) const;
   void DeleteDescName(nlohmann::json *desc_jsons) const;
   void AddOpNameForComputeNode(nlohmann::json *kernel_json) const;
   void GenFusionOpName(nlohmann::json *kernel_json, std::string prefix = "");

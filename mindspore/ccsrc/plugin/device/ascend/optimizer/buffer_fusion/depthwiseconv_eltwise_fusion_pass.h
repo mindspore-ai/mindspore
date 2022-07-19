@@ -37,8 +37,7 @@ class DepthwiseConvEltwiseFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchDepthwiseConvRelu(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                              FusedNodeRecord *candidate_fusion, bool is_order);
+  void MatchDepthwiseConvRelu(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion, bool is_order);
 };
 }  // namespace opt
 }  // namespace mindspore
