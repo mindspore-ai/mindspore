@@ -334,6 +334,7 @@ Randomly Generating Functions
     mindspore.ops.standard_laplace
     mindspore.ops.standard_normal
     mindspore.ops.uniform
+    mindspore.ops.uniform_candidate_sampler
 
 Array Functions
 ^^^^^^^^^^^^^^^
