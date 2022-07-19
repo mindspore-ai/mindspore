@@ -54,7 +54,7 @@ class ResizeLinear1DGradCpuKernelMod : public NativeCpuKernelMod,
   std::vector<KernelAttr> GetOpSupport() override { return MatchKernelHelper::OpSupport(); }
 
  private:
-  void MallocWorkSpace(const std::vector<KernelTensorPtr> &inputs);
+  void SetWorkSpaceSize(const std::vector<KernelTensorPtr> &inputs);
 
   template <typename T>
   bool LaunchKernel(const std::vector<kernel::AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,

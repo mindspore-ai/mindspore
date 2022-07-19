@@ -32,28 +32,25 @@ __global__ void TensorScatterElementsKernel(const int input_dims, const int indi
                                             const T *updates, T *output, const int64_t axis,
                                             const int64_t input_axis_size, const size_t *indices_stride,
                                             const size_t *output_stride, const ReductionT reduction_func) {
-  int index = blockDim.x * blockIdx.x + threadIdx.x;
-  if (index >= indices_size) {
-    return;
-  }
-
-  int remain = index;
-  int output_offset = 0;
-  for (size_t i = 0; i < input_dims; ++i) {
-    int output_dim_index = remain / indices_stride[i];
-    remain %= indices_stride[i];
-    if (i == axis) {
-      output_dim_index = *(indices + index);
-      if (output_dim_index >= input_axis_size || output_dim_index < -input_axis_size) {
-        return;
+  for (int index = blockIdx.x * blockDim.x + threadIdx.x; index < indices_size; index += blockDim.x * gridDim.x) {
+    int remain = index;
+    int output_offset = 0;
+    for (size_t i = 0; i < input_dims; ++i) {
+      int output_dim_index = remain / indices_stride[i];
+      remain %= indices_stride[i];
+      if (i == axis) {
+        output_dim_index = *(indices + index);
+        if (output_dim_index >= input_axis_size || output_dim_index < -input_axis_size) {
+          return;
+        }
+        if (output_dim_index < 0) {
+          output_dim_index += input_axis_size;
+        }
       }
-      if (output_dim_index < 0) {
-        output_dim_index += input_axis_size;
-      }
+      output_offset += output_stride[i] * output_dim_index;
     }
-    output_offset += output_stride[i] * output_dim_index;
+    reduction_func(output + output_offset, *(updates + index));
   }
-  reduction_func(output + output_offset, *(updates + index));
   return;
 }
 
