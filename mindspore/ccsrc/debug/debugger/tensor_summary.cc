@@ -88,7 +88,7 @@ double VarianceAndMeanCalculator::GetVariance() const {
   return 0.0;
 }
 
-double VarianceAndMeanCalculator::GetStandardDeviation() { return sqrt(GetVariance()); }
+double VarianceAndMeanCalculator::GetStandardDeviation() const { return sqrt(GetVariance()); }
 
 template <typename T>
 TensorSummary<T>::TensorSummary(const void *current_tensor_ptr, const void *const previous_tensor_ptr,
@@ -369,7 +369,7 @@ double_t TensorSummary<T>::StatLookup(const std::string &parameter_name, const D
 }
 
 template <typename T>
-double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) {
+double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) const {
   CONDITION_TYPE type = wp.condition.type;
   if (type == CONDITION_TYPE::MAX_LT || type == CONDITION_TYPE::MAX_GT) {
     return max_;
@@ -390,7 +390,7 @@ double_t TensorSummary<T>::StatLookup(const DebugServices::watchpoint_t &wp) {
 }
 
 template <typename T>
-double_t TensorSummary<T>::GetZeroValPercent() {
+double_t TensorSummary<T>::GetZeroValPercent() const {
   if (num_elements_ == 0) {
     return 0.0;
   }

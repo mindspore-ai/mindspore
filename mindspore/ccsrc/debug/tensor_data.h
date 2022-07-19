@@ -173,6 +173,8 @@ class TensorData {
 #endif
   }
 
+  TensorData operator=(const TensorData &obj) { return TensorData(obj); }
+
   ~TensorData() { DeleteDataPtr(); }
 
   void DeleteDataPtr() noexcept {

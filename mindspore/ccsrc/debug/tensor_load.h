@@ -115,8 +115,8 @@ class TensorLoader {
 
   std::vector<std::shared_ptr<TensorData>> GetTensor() {
     std::vector<std::shared_ptr<TensorData>> tensor_list;
-    for (auto &it : tensor_list_map_) {
-      if (!IsPrevTensor(it.first)) tensor_list.push_back(it.second);
+    for (auto it = tensor_list_map_.cbegin(); it != tensor_list_map_.cend(); it++) {
+      if (!IsPrevTensor(it->first)) tensor_list.push_back(it->second);
     }
     return tensor_list;
   }
@@ -144,8 +144,8 @@ class TensorLoader {
   void SearchTensors(const std::vector<std::string> &search_list,
                      std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> *result_list) {
     for (auto i : search_list) {
-      const std::map<std::string, std::shared_ptr<TensorData>>::iterator iter = tensor_list_map_.find(i);
-      if (iter != tensor_list_map_.end()) {
+      std::map<std::string, std::shared_ptr<TensorData>>::const_iterator iter = tensor_list_map_.find(i);
+      if (iter != tensor_list_map_.cend()) {
         result_list->push_back(std::make_tuple(i, iter->second));
       } else {
         result_list->push_back(std::make_tuple(i, nullptr));
@@ -250,8 +250,8 @@ class TensorLoader {
     }
 
     std::string tensor_loader_name = tensor_name + ":" + std::to_string(slot);
-    const auto iter = tensor_list_map_.find(tensor_loader_name);
-    if (iter != tensor_list_map_.end()) {
+    std::map<std::string, std::shared_ptr<TensorData>>::const_iterator iter = tensor_list_map_.find(tensor_loader_name);
+    if (iter != tensor_list_map_.cend()) {
       std::shared_ptr<TensorData> node = iter->second;
       std::string path = filepath + '.' + node->GetFormat();
 

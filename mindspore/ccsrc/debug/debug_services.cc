@@ -345,7 +345,7 @@ void DebugServices::SetCheckWatchpointsResult(const int chunk_id, ChunkData *chu
                                               const std::string &tensor_slot, const watchpoint_t &wp,
                                               const unsigned int device_id_val, const unsigned int root_graph_id_val,
                                               const std::vector<parameter_t> &parameter_list,
-                                              const int32_t error_code) {
+                                              const int32_t error_code) const {
   (void)(chunk_data->chunk_exec_orders)[chunk_id].emplace_back(exec_order);
   (void)(chunk_data->chunk_names)[chunk_id].emplace_back(qualified_tensor_name);
   (void)(chunk_data->chunk_slots)[chunk_id].emplace_back(tensor_slot);
@@ -427,7 +427,7 @@ void DebugServices::SetTensorToNotInUse(const std::shared_ptr<TensorData> &tenso
  * different. 2) Set prev_tensor_ptr to nullptr if current_root_graph_id is different from prev_root_graph_id. 3) Skip
  * reading tensor if tensor's root_graph_id is different from current_root_graph_id.
  */
-bool DebugServices::CompareCurrentRootGraph(uint32_t id) {
+bool DebugServices::CompareCurrentRootGraph(uint32_t id) const {
   auto debugger = Debugger::GetInstance();
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -466,7 +466,7 @@ const void *DebugServices::PreparePrevTensor(uint64_t *prev_num_elements, const 
 }
 #endif
 
-void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_found) {
+void DebugServices::CheckHistoryErrorCode(int *error_code, bool history_not_found) const {
   // check history error_code only for offline debugger
   if (history_not_found) {
     *error_code = ITensorSummary::HISTORY_NOT_FOUND;  // error code for history not found
@@ -699,7 +699,7 @@ void DebugServices::SortWatchpointsInfo(std::vector<std::future<void>> *const te
                                         std::vector<std::vector<parameter_t>> *const parameters,
                                         std::vector<int32_t> *const error_codes, ChunkData *chunk_data,
                                         std::vector<unsigned int> *const device_id,
-                                        std::vector<unsigned int> *const root_graph_id) {
+                                        std::vector<unsigned int> *const root_graph_id) const {
   for (unsigned int i = 0; i < (*tensor_future_vec).size(); i++) {
     (*tensor_future_vec)[i].wait();
     (*tensor_future_vec)[i].get();
@@ -1026,7 +1026,7 @@ void DebugServices::ConvertWatchPointNodes(const DumpFileMap &dump_dir_mapped_fi
  * Runtime category: Old runtime, MindRT.
  * Description: This function is to search the dump dir and separate npy files from bin files in async dump dir.
  */
-DebugServices::AsyncPreProcessResult DebugServices::PreProcessDumpDirAsync(const std::string &specific_dump_dir) {
+DebugServices::AsyncPreProcessResult DebugServices::PreProcessDumpDirAsync(const std::string &specific_dump_dir) const {
   // DumpFileMap for each specific dump dir (including rank, graph_id and iteration)
   DumpFileMap dump_dir_mapped_files;
   AsyncPreProcessResult async_result;
@@ -1087,7 +1087,7 @@ DebugServices::AsyncPreProcessResult DebugServices::PreProcessDumpDirAsync(const
  * Runtime category: Old runtime, MindRT.
  * Description: This function is to search the dump dir for npy files.
  */
-DebugServices::NPYFilePool DebugServices::PreProcessDumpDirSync(const std::string &specific_dump_dir) {
+DebugServices::NPYFilePool DebugServices::PreProcessDumpDirSync(const std::string &specific_dump_dir) const {
   // npy format:
   // {dump_path}/{op_type}.{op_name}.{task_id}.{stream_id}.{timestamp}.{output_or_input_string}.{slot}.{format}.npy
   NPYFilePool npy_files;
@@ -1114,7 +1114,7 @@ DebugServices::NPYFilePool DebugServices::PreProcessDumpDirSync(const std::strin
 
 void DebugServices::ProcessConvertList(const DumpFileMap &dump_dir_mapped_files,
                                        const std::string &prefix_dump_file_name, const std::string &specific_dump_dir,
-                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) {
+                                       DirMap *dir_to_files_map, NPYFilePool *const result_list) const {
   MS_EXCEPTION_IF_NULL(dir_to_files_map);
   auto it = dump_dir_mapped_files.find(specific_dump_dir);
   if (it == dump_dir_mapped_files.end()) {
@@ -1196,7 +1196,7 @@ void DebugServices::GetTensorDataInfoAsync(const std::vector<ProtoDump> &proto_d
  * Description: This function extracts the attributes like op_name and time stamp from npy file name and is used for
  * both sync and async dump.
  */
-DebugServices::ProcessedNPYFiles DebugServices::ProcessNPYFilePool(const NPYFilePool &npy_file_pool) {
+DebugServices::ProcessedNPYFiles DebugServices::ProcessNPYFilePool(const NPYFilePool &npy_file_pool) const {
   // npy file format: node_type.node_name.task_id.stream_id.timestamp.output_input.slot.format.npy
   ProcessedNPYFiles processed_files;
   if (npy_file_pool.empty()) {
@@ -1476,7 +1476,7 @@ void DebugServices::AddToTensorData(const std::string &backend_name, const std::
   tensor_data->SetShape(shape);
   tensor_data->SetTimeStamp(time_stamp);
   tensor_data->SetPrevIteration(GetPrevIteration(tensor_data));
-  if (data_size) {
+  if (data_size > 0) {
     (void)tensor_loader_->LoadNewTensor(tensor_data, false);
   }
 
@@ -1702,7 +1702,7 @@ void DebugServices::ProcessTensorDataSync(const std::vector<ProtoDump> &proto_to
                                           unsigned int iteration, unsigned int device_id, unsigned int root_graph_id,
                                           std::vector<std::shared_ptr<TensorData>> *const tensor_list,
                                           bool error_on_no_value) {
-  auto it = processed_npy_files.find(specific_dump_dir);
+  ProcessedNPYFiles::const_iterator it = processed_npy_files.find(specific_dump_dir);
   if (it == processed_npy_files.end()) {
     MS_LOG(WARNING) << "no npy files was found for dump directory: " << specific_dump_dir;
     return;
@@ -1725,7 +1725,7 @@ void DebugServices::ProcessTensorDataSync(const std::vector<ProtoDump> &proto_to
   }
 }
 
-std::string DebugServices::IterationString(unsigned int iteration) {
+std::string DebugServices::IterationString(unsigned int iteration) const {
   std::string iteration_string;
   bool init_dbg_suspend = (iteration == std::numeric_limits<unsigned int>::max());
   if (init_dbg_suspend) {
@@ -2047,7 +2047,7 @@ bool DebugServices::CheckOpOverflow(std::string node_name_to_find, unsigned int 
   return false;
 }
 
-std::string DebugServices::RemoveKernelGraphPrefix(std::string node_name_to_find) {
+std::string DebugServices::RemoveKernelGraphPrefix(std::string node_name_to_find) const {
   std::string op_name_to_find = node_name_to_find;
   const std::string kernel_prefix = "kernel_graph_";
   if (node_name_to_find.rfind(kernel_prefix, 0) == 0) {
@@ -2059,8 +2059,8 @@ std::string DebugServices::RemoveKernelGraphPrefix(std::string node_name_to_find
   return op_name_to_find;
 }
 
-bool DebugServices::GetTaskIdStreamId(std::string file_name, std::string overflow_file_prefix, uint64_t *task_id,
-                                      uint64_t *stream_id) {
+bool DebugServices::GetTaskIdStreamId(std::string file_name, std::string overflow_file_prefix, uint64_t *const task_id,
+                                      uint64_t *const stream_id) const {
   size_t task_pos_start = overflow_file_prefix.length();
   size_t task_pos_end = file_name.find(".", task_pos_start);
   if (task_pos_end == std::string::npos) {
@@ -2091,8 +2091,8 @@ bool DebugServices::GetTaskIdStreamId(std::string file_name, std::string overflo
   return true;
 }
 
-bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::string *const node_name, uint64_t *task_id,
-                                         uint64_t *stream_id) {
+bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::string *const node_name,
+                                         uint64_t *const task_id, uint64_t *const stream_id) const {
   // get the node_name, task_id, and stream_id from dump filename in the following two formats:
   // 1. bin file: node_type.node_name.task_id.stream_id.timestamp
   // 2. npy file: node_type.node_name.task_id.stream_id.timestamp.output_input.slot.format.npy
@@ -2154,7 +2154,7 @@ bool DebugServices::GetAttrsFromFilename(const std::string &file_name, std::stri
   return true;
 }
 
-std::string DebugServices::RealPath(const std::string &input_path) {
+std::string DebugServices::RealPath(const std::string &input_path) const {
   if (input_path.length() >= PATH_MAX) {
     MS_LOG(EXCEPTION) << "The length of path: " << input_path << " exceeds limit: " << PATH_MAX;
   }
@@ -2191,7 +2191,7 @@ std::string DebugServices::RealPath(const std::string &input_path) {
   return std::string(real_path);
 }
 
-uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) {
+uint64_t DebugServices::BytestoUInt64(const std::vector<char> &buffer) const {
 #if defined(__APPLE__)
   return *reinterpret_cast<const uint64_t *>(buffer.data());
 #else
@@ -2222,7 +2222,7 @@ std::string DebugServices::GetDumpDir() { return dump_dir_; }
 
 void DebugServices::SetSyncMode(bool is_sync_mode) { this->is_sync_mode_ = is_sync_mode; }
 
-bool DebugServices::GetSyncMode() { return is_sync_mode_; }
+bool DebugServices::GetSyncMode() const { return is_sync_mode_; }
 
 void DebugServices::SetMemLimit(uint64_t max_mem_size) { tensor_loader_->SetMemTotal(max_mem_size); }
 

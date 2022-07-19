@@ -61,7 +61,7 @@ class GrpcClient {
 
   EventReply SendWatchpointHits(const std::list<WatchpointHit> &watchpoints);
 
-  std::vector<std::string> ChunkString(std::string str, int graph_size);
+  std::vector<std::string> ChunkString(std::string str, int graph_size) const;
 
   EventReply SendHeartbeat(const Heartbeat &heartbeat);
 
