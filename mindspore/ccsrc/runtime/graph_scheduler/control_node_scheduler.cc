@@ -1348,6 +1348,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
     for (const auto &actor : from_actors) {
       MS_LOG(DEBUG) << "Add stack control aid:" << actor->GetAID() << " for actor:" << stack_actor->GetAID();
       (void)stack_actor->stack_control_aids_.emplace(actor->GetAID());
+      stack_actor->control_aid_to_indexs_[actor->GetAID()] = stack_actor->input_stack_controls_num_;
     }
   }
   MS_LOG(DEBUG) << "Link auto monad control arrow from node:" << from_node->DebugString()

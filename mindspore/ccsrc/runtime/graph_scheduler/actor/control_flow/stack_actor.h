@@ -70,8 +70,12 @@ class StackActor : public ControlActor {
   // stored in the device tensor in the stack.
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<DeviceTensor *>>> input_stack_data_;
   mindspore::HashMap<int, mindspore::HashMap<size_t, std::stack<OpPartialPtr>>> input_stack_partials_;
-  mindspore::HashMap<int, mindspore::HashMap<AID *, size_t>> input_stack_controls_;
-
+  // When the input has side effects, some control arrows need to be pushed to the stack, which needs to be
+  // recorded according to the from aids, but if the input node is a call node, the input control arrows may
+  // come from different exit actors, so the relationship between from actor and index needs to be recorded
+  // during the schedule, and the number of control arrows is recorded according to the index at runtime.
+  mindspore::HashMap<AID, size_t> control_aid_to_indexs_;
+  mindspore::HashMap<int, mindspore::HashMap<size_t, size_t>> input_stack_controls_;
   std::set<AID> stack_control_aids_;
   // Input parameter num represents the number of actor's input come from funcgraph itself, these inputs will
   // be ranked at the front of input.

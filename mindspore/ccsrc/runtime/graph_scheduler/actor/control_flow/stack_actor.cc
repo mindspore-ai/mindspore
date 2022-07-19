@@ -96,12 +96,13 @@ void StackActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<Dev
 void StackActor::RunOpControl(AID *const input_control, OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   auto &sequential_num = context->sequential_num_;
-  if (stack_control_aids_.find(*input_control) != stack_control_aids_.end()) {
+  if (control_aid_to_indexs_.find(*input_control) != control_aid_to_indexs_.end()) {
     if ((input_stack_controls_.find(sequential_num) == input_stack_controls_.end()) ||
-        (input_stack_controls_[sequential_num].find(input_control) == input_stack_controls_[sequential_num].end())) {
-      input_stack_controls_[sequential_num][input_control] = 1;
+        (input_stack_controls_[sequential_num].find(control_aid_to_indexs_[*input_control]) ==
+         input_stack_controls_[sequential_num].end())) {
+      input_stack_controls_[sequential_num][control_aid_to_indexs_[*input_control]] = 1;
     } else {
-      input_stack_controls_[sequential_num][input_control]++;
+      input_stack_controls_[sequential_num][control_aid_to_indexs_[*input_control]]++;
     }
   } else {
     (void)input_op_controls_[sequential_num].emplace_back(input_control);
@@ -247,7 +248,7 @@ bool StackActor::CheckStackControlRunningCondition(const OpContext<DeviceTensor>
         return false;
       } else if (one_stack.second > branch_id_size) {
         MS_LOG(ERROR) << "Invalid input stack control num:" << one_stack.second
-                      << " for input actor:" << one_stack.first->Name() << " need:" << branch_id_size
+                      << " for input actor index:" << one_stack.first << " need:" << branch_id_size
                       << " for actor:" << GetAID();
         return false;
       }
@@ -338,7 +339,7 @@ void StackActor::EraseInput(const OpContext<DeviceTensor> *const context) {
       return;
     }
 
-    mindspore::HashMap<AID *, size_t> tmp_stack_controls;
+    mindspore::HashMap<size_t, size_t> tmp_stack_controls;
     for (auto stack_iter = control_iter->second.begin(); stack_iter != control_iter->second.end(); ++stack_iter) {
       if (stack_iter->second == 0) {
         MS_LOG(ERROR) << "Input stack control aid:" << stack_iter->first << " is null in actor:" << GetAID();
