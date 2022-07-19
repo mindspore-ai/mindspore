@@ -853,6 +853,65 @@ def reshape(input_x, input_shape):
     return reshape_(input_x, input_shape)
 
 
+def reverse_sequence(x, seq_lengths, seq_dim, batch_dim=0):
+    """
+    Reverses variable length slices.
+
+    Args:
+        x (Tensor): The input to reverse, supporting all number types including bool.
+        seq_lengths (Tensor): Must be a 1-D vector with int32 or int64 types.
+        seq_dim (int): The dimension where reversal is performed. Required.
+        batch_dim (int): The input is sliced in this dimension. Default: 0.
+
+    Returns:
+        Reversed tensor with the same shape and data type as input.
+
+    Raises:
+        TypeError: If `seq_dim` or `batch_dim` is not an int.
+        ValueError: If value of `batch_dim` is equal to or greater than length of shape of input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([1, 2, 3]))
+        >>> output = ops.reverse_sequence(x, seq_lengths, seq_dim=1)
+        >>> print(output)
+        [[1. 2. 3.]
+         [5. 4. 6.]
+         [9. 8. 7.]]
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([1, 2, 3]))
+        >>> output = ops.reverse_sequence(x, seq_lengths, seq_dim=0, batch_dim=1)
+        >>> print(output)
+        [[1. 5. 9.]
+         [4. 2. 6.]
+         [7. 8. 3.]]
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([2, 2, 3]))
+        >>> output = ops.reverse_sequence(x, seq_lengths, seq_dim=1)
+        >>> print(output)
+        [[2. 1. 3.]
+         [5. 4. 6.]
+         [9. 8. 7.]]
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([3, 2, 3]))
+        >>> output = ops.reverse_sequence(x, seq_lengths, seq_dim=1)
+        >>> print(output)
+        [[3. 2. 1.]
+         [5. 4. 6.]
+         [9. 8. 7.]]
+        >>> x = Tensor(np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), mindspore.float32)
+        >>> seq_lengths = Tensor(np.array([4, 4]))
+        >>> output = ops.reverse_sequence(x, seq_lengths, seq_dim=1)
+        >>> print(output)
+        [[4. 3. 2. 1.]
+         [8. 7. 6. 5.]]
+    """
+    return P.ReverseSequence(seq_dim=seq_dim, batch_dim=batch_dim)(x, seq_lengths)
+
+
 def flatten(input_x):
     r"""
     Flattens a tensor without changing its batch size on the 0-th axis.
@@ -3694,6 +3753,7 @@ __all__ = [
     'range',
     'reshape',
     'reshape_',
+    'reverse_sequence',
     'flatten',
     'tensor_slice',
     'slice',

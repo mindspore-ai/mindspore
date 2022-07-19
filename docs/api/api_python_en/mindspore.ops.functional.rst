@@ -340,6 +340,7 @@ Array Operation
     mindspore.ops.range
     mindspore.ops.rank
     mindspore.ops.reshape
+    mindspore.ops.reverse_sequence
     mindspore.ops.flatten
     mindspore.ops.scatter_nd
     mindspore.ops.select
