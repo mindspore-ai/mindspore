@@ -594,7 +594,7 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
       (void)CheckAndConvertUtils::CheckIrAttrtoOpAttr(prim->name(), it.first, &value);
       // set attr from primitive
       int ret = setAttr(op, it.first, value);
-      if (ret) {
+      if (ret != 0) {
         return ret;
       }
     } else {
@@ -602,7 +602,7 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
       auto it_extra = extra_attr_->find(it.first);
       if (it_extra != extra_attr_->end()) {
         int ret = setAttr(op, it.first, it_extra->second);
-        if (ret) {
+        if (ret != 0) {
           return ret;
         }
       }
