@@ -968,7 +968,6 @@ def get_ger_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.GatherD)
 def get_gatherd_vmap_rule(prim, axis_size):
     """VmapRule for GatherD operations."""
     if isinstance(prim, str):
@@ -1028,7 +1027,6 @@ def get_space_to_batch_nd_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.BatchToSpaceND)
 def get_batch_to_space_nd_vmap_rule(prim, axis_size):
     """VmapRule for `BatchToSpaceND`."""
 
@@ -1148,7 +1146,6 @@ def get_masked_fill_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.Gather)
 def get_gather_vmap_rule(prim, axis_size):
     """VmapRule for `Gather` operation. """
     if isinstance(prim, str):
@@ -1374,7 +1371,6 @@ def get_data_format_dim_map_vmap_rule(prim, axis_size):
     return vmap_rule
 
 
-@vmap_rules_getters.register(P.ExpandDims)
 def get_expand_dims_vmap_rule(prim, axis_size):
     """VmapRule for `ExpandDims`."""
 

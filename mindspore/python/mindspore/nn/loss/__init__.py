@@ -28,4 +28,4 @@ from .loss import LossBase, L1Loss, MSELoss, SmoothL1Loss, SoftMarginLoss, Focal
 __all__ = ['LossBase', 'L1Loss', 'MSELoss', 'SmoothL1Loss', 'SoftMarginLoss', 'FocalLoss',
            'SoftmaxCrossEntropyWithLogits', 'BCELoss', 'BCEWithLogitsLoss',
            'CosineEmbeddingLoss', 'SampledSoftmaxLoss', 'DiceLoss', 'MultiClassDiceLoss',
-           'RMSELoss', 'MAELoss', 'HuberLoss', 'CrossEntropyLoss', 'NLLLoss']
+           'RMSELoss', 'MAELoss', 'HuberLoss', 'NLLLoss']

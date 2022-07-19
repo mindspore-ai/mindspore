@@ -121,7 +121,5 @@ bool FillsGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, cons
   FillsForward(input_elements_, value_ptr, y_ptr, device_id_, cuda_stream);
   return true;
 }
-
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Fills, FillsGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

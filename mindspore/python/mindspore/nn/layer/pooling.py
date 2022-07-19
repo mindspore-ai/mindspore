@@ -25,7 +25,7 @@ from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D
 from ..cell import Cell
 
 __all__ = ['AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d',
-           'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d', 'AdaptiveAvgPool2d']
+           'AdaptiveMaxPool2d', 'AdaptiveAvgPool2d']
 
 
 class _PoolNd(Cell):

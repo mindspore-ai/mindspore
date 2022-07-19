@@ -4553,7 +4553,6 @@ __all__ = [
     'invert',
     'erf',
     'erfc',
-    'cdist',
     'ceil',
     'bernoulli',
     'bessel_j0',

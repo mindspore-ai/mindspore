@@ -185,7 +185,6 @@ Pooling Layer
     mindspore.nn.AdaptiveAvgPool2d
     mindspore.nn.AdaptiveMaxPool1d
     mindspore.nn.AdaptiveMaxPool2d
-    mindspore.nn.AdaptiveMaxPool3d
     mindspore.nn.AvgPool1d
     mindspore.nn.AvgPool2d
     mindspore.nn.MaxPool1d
@@ -218,7 +217,6 @@ Loss Function
     mindspore.nn.BCELoss
     mindspore.nn.BCEWithLogitsLoss
     mindspore.nn.CosineEmbeddingLoss
-    mindspore.nn.CrossEntropyLoss
     mindspore.nn.DiceLoss
     mindspore.nn.FocalLoss
     mindspore.nn.HuberLoss

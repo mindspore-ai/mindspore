@@ -125,7 +125,5 @@ bool AssertCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std
 
   return true;
 }
-
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Assert, AssertCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
