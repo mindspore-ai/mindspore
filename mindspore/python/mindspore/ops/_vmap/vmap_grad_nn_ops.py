@@ -331,3 +331,79 @@ def get_deformable_offsets_vmap_rule(prim, axis_size):
         return (dx, 0), (d_offsets, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(G.MaxPoolGradGrad)
+def get_maxpool_grad_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPoolGradGrad`."""
+    chw_reverse_index = -3
+
+    def vmap_rule(x_bdim, y_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, y_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        input_shape = (-1,) + x_shape[chw_reverse_index:]
+        x = F.reshape(x, input_shape)
+
+        y, y_dim = y_bdim
+        y = _bdim_at_front(y, y_dim, axis_size)
+        y_shape = F.shape(y)
+        y_shape = (-1,) + y_shape[chw_reverse_index:]
+        y = F.reshape(y, y_shape)
+
+        grad, grad_dim = grad_bdim
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        grad_shape = (-1,) + grad_shape[chw_reverse_index:]
+        grad = F.reshape(grad, grad_shape)
+
+        out = prim(x, y, grad)
+        out_shape = F.shape(out)
+        real_out_shape = x_shape[:chw_reverse_index] + \
+            out_shape[chw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return (out, 0)
+
+    return vmap_rule
+
+
+@vmap_rules_getters.register(G.MaxPool3DGradGrad)
+def get_maxpool_3d_grad_grad_vmap_rule(prim, axis_size):
+    """VmapRule for `MaxPool3DGradGrad`."""
+    cdhw_reverse_index = -4
+
+    def vmap_rule(x_bdim, y_bdim, grad_bdim):
+        is_all_none, result = vmap_general_preprocess(prim, y_bdim)
+        if is_all_none:
+            return result
+
+        x, x_dim = x_bdim
+        x = _bdim_at_front(x, x_dim, axis_size)
+        x_shape = F.shape(x)
+        input_shape = (-1,) + x_shape[cdhw_reverse_index:]
+        x = F.reshape(x, input_shape)
+
+        y, y_dim = y_bdim
+        y = _bdim_at_front(y, y_dim, axis_size)
+        y_shape = F.shape(y)
+        y_shape = (-1,) + y_shape[cdhw_reverse_index:]
+        y = F.reshape(y, y_shape)
+
+        grad, grad_dim = grad_bdim
+        grad = _bdim_at_front(grad, grad_dim, axis_size)
+        grad_shape = F.shape(grad)
+        grad_shape = (-1,) + grad_shape[cdhw_reverse_index:]
+        grad = F.reshape(grad, grad_shape)
+
+        out = prim(x, y, grad)
+        out_shape = F.shape(out)
+        real_out_shape = x_shape[:cdhw_reverse_index] + \
+            out_shape[cdhw_reverse_index:]
+        out = F.reshape(out, real_out_shape)
+        return (out, 0)
+
+    return vmap_rule

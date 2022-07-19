@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_HSHRINK_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_HSHRINK_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOL_GRAD_GRAD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOL_GRAD_GRAD_GPU_KERNEL_H_
 #include <vector>
 #include <map>
 #include <utility>
@@ -24,14 +24,18 @@
 
 namespace mindspore {
 namespace kernel {
+constexpr int kMaxPool2DGradGradDim = 2;
+constexpr int kMaxPool3DGradGradDim = 3;
+
 class MaxPoolGradGradGpuKernelMod : public NativeGpuKernelMod {
  public:
-  MaxPoolGradGradGpuKernelMod() {}
+  explicit MaxPoolGradGradGpuKernelMod(const int &dim) : dim_(dim) {}
   ~MaxPoolGradGradGpuKernelMod() override = default;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs, void *cuda_stream) override {
     cuda_stream_ = cuda_stream;
-    return kernel_func_(this, inputs, workspace, outputs);
+    return kernel_func_(this, inputs, outputs);
   }
 
   bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
@@ -44,32 +48,60 @@ class MaxPoolGradGradGpuKernelMod : public NativeGpuKernelMod {
 
  private:
   template <typename T>
-  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-                    const std::vector<AddressPtr> &outputs);
-  using MaxPoolGradGradFunc =
-    std::function<bool(MaxPoolGradGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
-                       const std::vector<kernel::AddressPtr> &, const std::vector<kernel::AddressPtr> &)>;
+  bool LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+  using MaxPoolGradGradFunc = std::function<bool(MaxPoolGradGradGpuKernelMod *, const std::vector<kernel::AddressPtr> &,
+                                                 const std::vector<kernel::AddressPtr> &)>;
 
   void *cuda_stream_{nullptr};
   MaxPoolGradGradFunc kernel_func_{};
   static std::vector<std::pair<KernelAttr, MaxPoolGradGradFunc>> func_list_;
 
+  void CalPad();
+
+  std::vector<int64_t> kernels_;
+  std::vector<int64_t> strides_;
+  PadMode pad_mode_;
+  std::vector<int64_t> in_shapes_;
+  std::vector<int64_t> out_shapes_;
+
+  int dim_ = 0;
   int batch_ = 0;
   int channel_ = 0;
+  int input_depth_ = 0;
   int input_height_ = 0;
   int input_width_ = 0;
-  int window_height_ = 0;
-  int window_width_ = 0;
-  int stride_height_ = 0;
-  int stride_width_ = 0;
-  PadMode pad_mode_;
-  int pad_height_ = 0;
-  int pad_width_ = 0;
-  int pad_top_ = 0;
-  int pad_left_ = 0;
+  int output_depth_ = 0;
   int output_height_ = 0;
   int output_width_ = 0;
+
+  int window_depth_ = 0;
+  int window_height_ = 0;
+  int window_width_ = 0;
+  int stride_depth_ = 0;
+  int stride_height_ = 0;
+  int stride_width_ = 0;
+  int pad_front_ = 0;
+  int pad_top_ = 0;
+  int pad_left_ = 0;
+
+  size_t depth_index_ = 0;
+  size_t height_index_ = 0;
+  size_t width_index_ = 0;
+  size_t input_batch_stride_ = 0;
+  size_t output_batch_stride_ = 0;
+};
+
+class MaxPool2DGradGradGpuKernelMod : public MaxPoolGradGradGpuKernelMod {
+ public:
+  MaxPool2DGradGradGpuKernelMod() : MaxPoolGradGradGpuKernelMod(kMaxPool2DGradGradDim) {}
+  ~MaxPool2DGradGradGpuKernelMod() = default;
+};
+
+class MaxPool3DGradGradGpuKernelMod : public MaxPoolGradGradGpuKernelMod {
+ public:
+  MaxPool3DGradGradGpuKernelMod() : MaxPoolGradGradGpuKernelMod(kMaxPool3DGradGradDim) {}
+  ~MaxPool3DGradGradGpuKernelMod() = default;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_HSHRINK_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_MAXPOOL_GRAD_GRAD_GPU_KERNEL_H_

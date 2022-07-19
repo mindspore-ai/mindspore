@@ -1004,13 +1004,27 @@ class MaxPoolGradGrad(_PoolGrad):
               will be returned without padding. Extra pixels will be discarded.
 
     Inputs:
-        - **origin_input** (Tensor) - Tensor with data format "NCHW", data type must be float16.
+        - **origin_input** (Tensor) - Tensor with data format "NCHW".
+          For Ascend, data type must be float16. For CPU and GPU, data type support float16 and float32.
         - **origin_output** (Tensor) - Data type same as `origin_input`.
-        - **grad** (Tensor) - Data type same as `origin_input`.
+        - **grad** (Tensor) - Data type and shape same as `origin_input`.
 
     Outputs:
-        Tensor, with data type same as `origin_input`.
+        Tensor, with data type same as `origin_input`. Shape same as `origin_output`.
 
+    Raises:
+        TypeError: If kernel_size is neither int nor a tuple of 2/4 int numbers.
+        TypeError: If strides is neither int nor a tuple of 2/4 int numbers.
+        TypeError: If pad_mode is not string.
+        ValueError: If pad_mode is neither "same" nor "valid"(not case sensitive).
+        TypeError: For Ascend, input data type is not float16. For CPU or GPU, input data type is neither
+        float16 nor float32.
+        ValueError: If the rank of `origin_input`, `origin_output` or `grad` is not equal to 4.
+        ValueError: If data types of all inputs are not equal.
+        ValueError: If the data type of `origin_input` and `origin_output` are not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
@@ -1089,7 +1103,50 @@ class MaxPool3DGrad(Primitive):
 
 
 class MaxPool3DGradGrad(PrimitiveWithInfer):
-    """Gradients of the max pool3d grad operation."""
+    r"""Gradients of the max pool3d grad operation.
+
+    Args:
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents depth, height and width are both kernel_size, or a tuple
+            of two int numbers that represent depth, height and width respectively. Default: 1.
+        strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
+            the depth, height and width of movement are both strides, or a tuple of two int numbers that
+            represent depth, height and width of movement respectively. Default: 1.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+            Default: "valid".
+
+            - same: Adopts the way of completion. The depth, height and width of the output will be the
+              same as the input. The total number of padding will be calculated in depth, horizontal and
+              vertical directions and evenly distributed to front and back, top and bottom, left and
+              right if possible. Otherwise, the last extra padding will be done from the back, the bottom
+              and the right side.
+
+            - valid: Adopts the way of discarding. The possible largest height and width of output
+              will be returned without padding. Extra pixels will be discarded.
+
+    Inputs:
+        - **origin_input** (Tensor) - Tensor with data format "NCDHW".
+          For Ascend, data type must be float16. For CPU and GPU, data type support float16 and float32.
+        - **origin_output** (Tensor) - Data type same as `origin_input`.
+        - **grad** (Tensor) - Data type and shape same as `origin_input`.
+
+    Outputs:
+        Tensor, with data type same as `origin_input`. Shape same as `origin_output`.
+
+    Raises:
+        TypeError: If kernel_size is neither int nor a tuple of 3/5 int numbers.
+        TypeError: If strides is neither int nor a tuple of 3/5 int numbers.
+        TypeError: If pad_mode is not string.
+        ValueError: If pad_mode is neither "same" nor "valid"(not case sensitive).
+        TypeError: For Ascend, input data type is not float16. For CPU or GPU, input data type is neither
+        float16 nor float32.
+        ValueError: If the rank of `origin_input`, `origin_output` or `grad` is not equal to 5.
+        ValueError: If data types of all inputs are not equal.
+        ValueError: If the data type of `origin_input` and `origin_output` are not equal.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
 
     @prim_attr_register
     def __init__(self, kernel_size=(1, 1, 1, 1, 1), strides=(1, 1, 1, 1, 1), pad_mode='VALID', data_format="NCDHW"):
