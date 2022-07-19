@@ -18,8 +18,13 @@
 
 #include "pipeline/jit/parse/data_converter.h"
 #include <utility>
+#include <string>
+#include <memory>
+#include <vector>
+#include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
+#include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
@@ -32,9 +37,7 @@ namespace mindspore {
 namespace parse {
 namespace {
 struct PyDataToValueRegister {
-  PyDataToValueRegister() noexcept {
-    python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue);
-  }
+  PyDataToValueRegister() { python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue); }
 } callback_register;
 }  // namespace
 using Tensor = mindspore::tensor::Tensor;
@@ -369,10 +372,10 @@ ValuePtr ConvertCellObjToFuncGraph(const py::object &obj) {
 
 ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_type) {
   if (obj_type == RESOLVE_TYPE_NUMPY_INT_NUMBER) {
-    MS_LOG(INFO) << "Convert constant numpy int64_t number:" << py::cast<std::string>(obj);
+    MS_LOG(INFO) << "Convert constant numpy int64_t number:" << (std::string)py::str(obj);
     return MakeValue(py::cast<int64_t>(obj));
   } else if (obj_type == RESOLVE_TYPE_NUMPY_FLOAT_NUMBER) {
-    MS_LOG(INFO) << "Convert constant numpy float number::" << py::cast<std::string>(obj);
+    MS_LOG(INFO) << "Convert constant numpy float number::" << (std::string)py::str(obj);
     return MakeValue(py::cast<float>(obj));
   }
   MS_LOG(ERROR) << "Convert numpy number type is invalid, obj: " << py::str(obj);
@@ -381,7 +384,7 @@ ValuePtr ConvertConstantNumpyNumber(const py::object &obj, ResolveTypeDef obj_ty
 
 ValuePtr ConvertOtherObj(const py::object &obj, bool forbid_reuse = false) {
   auto obj_type = data_converter::GetObjType(obj);
-  MS_LOG(DEBUG) << "Converting the object(" << (py::cast<std::string>(obj)) << ") detail type: " << obj_type << " ";
+  MS_LOG(DEBUG) << "Converting the object(" << ((std::string)py::str(obj)) << ") detail type: " << obj_type << " ";
   if (obj_type == RESOLVE_TYPE_CLASS_TYPE) {
     MS_LOG(DEBUG) << "Resolve the class type, need create class instance.";
     std::string desc = py::str(obj);
@@ -625,8 +628,8 @@ const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs()
 
 void CacheObjectValue(const std::string &obj_key, const ValuePtr &data) { object_map_[obj_key] = data; }
 
-bool GetObjectValue(const std::string &obj_key, ValuePtr *const data) {
-  if (object_map_.count(obj_key) != 0) {
+bool GetObjectValue(const std::string &obj_key, ValuePtr *data) {
+  if (object_map_.count(obj_key)) {
     *data = object_map_[obj_key];
     return true;
   }

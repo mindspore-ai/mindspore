@@ -18,10 +18,13 @@
 
 #include "pipeline/jit/parse/function_block.h"
 
+#include <string>
+#include <memory>
 #include <algorithm>
 #include <unordered_set>
 #include <queue>
 
+#include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -34,8 +37,10 @@ namespace mindspore {
 namespace py = pybind11;
 
 namespace parse {
-FunctionBlock::FunctionBlock(const Parser &parser)
-    : func_graph_(std::make_shared<FuncGraph>()), parser_(parser), matured_(false) {}
+FunctionBlock::FunctionBlock(const Parser &parser) : parser_(parser) {
+  func_graph_ = std::make_shared<FuncGraph>();
+  matured_ = false;
+}
 
 void FunctionBlock::AddPrevBlock(const FunctionBlockPtr &block) { prev_blocks_.push_back(block.get()); }
 
@@ -132,7 +137,7 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
   while (!block_queue.empty()) {
     const auto cur_block = block_queue.front();
     block_queue.pop();
-    (void)visited_block.insert(cur_block);
+    visited_block.insert(cur_block);
     auto pred_node = cur_block->ReadLocalVariable(var_name);
     if (pred_node != nullptr) {
       has_found = true;
@@ -370,7 +375,7 @@ AnfNodePtr FunctionBlock::MakeResolveOperation(const std::string &value) {
 }
 
 AnfNodePtr FunctionBlock::MakeResolve(const NameSpacePtr &name_space, const SymbolPtr &resolve_symbol) {
-  MS_LOG(DEBUG) << "MakeResolve for " << (name_space ? py::cast<std::string>(name_space->obj()) : "null namespace")
+  MS_LOG(DEBUG) << "MakeResolve for " << (name_space ? (std::string)py::str(name_space->obj()) : "null namespace")
                 << " , " << (resolve_symbol ? (std::string)resolve_symbol->symbol() : "null resolve symbol.");
   ValueNodePtr module_node = NewValueNode(name_space);
   ValueNodePtr symbol_node = NewValueNode(resolve_symbol);
@@ -645,7 +650,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   std::vector<AnfNodePtr> states;
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   constexpr int recursive_level = 2;
-  for (const auto &node : isolated_nodes_) {
+  for (auto &node : isolated_nodes_) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(recursive_level) << " in "
                   << func_graph_->ToString();
