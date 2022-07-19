@@ -70,7 +70,13 @@ class InstanceNormGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHe
 
   size_t batch_{0};
   size_t channel_{0};
+  size_t batch_rank_{0};
   size_t workspace_size_{0};
+  size_t batch_rank_cum_{0};
+
+  size_t input_offset_{0};
+  size_t para_offset_{0};
+  size_t updated_para_offset_{0};
 
   double epsilon_{10e-5};
   double exp_avg_factor_{0.1};

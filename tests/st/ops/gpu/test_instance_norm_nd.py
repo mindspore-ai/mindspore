@@ -15,10 +15,45 @@
 
 import pytest
 import numpy as np
-from mindspore import Tensor, nn, context, ms_function
+from mindspore import Tensor, Parameter, nn, context, ms_function, ops
 from mindspore import dtype as mstype
 from mindspore.ops.composite import GradOperation
 from mindspore.ops import functional as F
+from mindspore.ops.operations.nn_ops import InstanceNorm
+from mindspore.ops.operations._grad_ops import InstanceNormGrad
+
+
+class VmapInstanceNet(nn.Cell):
+    def __init__(self):
+        super(VmapInstanceNet, self).__init__()
+        self.instance = InstanceNorm()
+
+    def construct(self, x, gamma, beta, mean, variance):
+        return self.instance(x, gamma, beta, mean, variance)
+
+
+class VmapInstanceGradNet(nn.Cell):
+    def __init__(self):
+        super(VmapInstanceGradNet, self).__init__()
+        self.instance = InstanceNormGrad()
+
+    def construct(self, dy, x, gamma, mean, variance):
+        return self.instance(dy, x, gamma, mean, variance)
+
+
+class VMapNet(nn.Cell):
+    def __init__(self, net, gamma, beta, mean, variance, in_axes, out_axes):
+        super(VMapNet, self).__init__()
+        self.gamma = Parameter(gamma, name="gamma")
+        self.beta = Parameter(beta, name="beta")
+        self.mean = Parameter(mean, name="mean")
+        self.variance = Parameter(variance, name="variance")
+        self.net = net
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def construct(self, x):
+        return ops.vmap(self.net, self.in_axes, self.out_axes)(x, self.gamma, self.beta, self.mean, self.variance)
 
 
 class Grad(nn.Cell):
@@ -192,3 +227,119 @@ def test_instancenorm_2d_dynamic_shape():
     result = instance_backward_net(Tensor(x_np), Tensor(grad))
     expected = expected_backward_net(Tensor(x_np), Tensor(grad))
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_instancenorm_vmap():
+    """
+    Feature: test InstanceNorm operator with vmap.
+    Description: Compatible with instance_norm_np.
+    Expectation: The result matches numpy implementation.
+    """
+    vmap_batch = 8
+    batch = 4
+    channel = 3
+    shape = (vmap_batch, batch, channel, 4, 5)
+    parameter_shape = (vmap_batch, channel)
+    data_type = np.float32
+
+    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x_np = np.random.randn(*shape).astype(data_type)
+    gamma_np = np.random.randn(*parameter_shape).astype(data_type)
+    beta_np = np.random.randn(*parameter_shape).astype(data_type)
+    moving_mean_np = np.random.randn(*parameter_shape).astype(data_type)
+    moving_variance_np = np.random.randn(*parameter_shape).astype(data_type)
+
+    # vmap
+    in_axes = (0, 0, 0, 0, 0)
+    out_axes = (0, 0, 0)
+    vmap_output_x, vmap_updated_moving_mean, vmap_updated_moving_variance = \
+        VMapNet(VmapInstanceNet(), Tensor(gamma_np), Tensor(beta_np), Tensor(moving_mean_np),
+                Tensor(moving_variance_np), in_axes, out_axes)(Tensor(x_np))
+
+    # for loop
+    instance_norm = InstanceNorm()
+    output_x_list = []
+    updated_moving_mean_list = []
+    updated_moving_variance_list = []
+    for i in range(vmap_batch):
+        output_x, updated_moving_mean, updated_moving_variance = instance_norm(
+            Tensor(x_np[i, ...]),
+            Parameter(Tensor(gamma_np[i, ...].copy())),
+            Parameter(Tensor(beta_np[i, ...].copy())),
+            Parameter(Tensor(moving_mean_np[i, ...].copy())),
+            Parameter(Tensor(moving_variance_np[i, ...].copy())),
+        )
+        output_x_list.append(output_x)
+        updated_moving_mean_list.append(updated_moving_mean)
+        updated_moving_variance_list.append(updated_moving_variance)
+
+    for_output_x = ops.Stack()(output_x_list)
+    for_updated_moving_mean = ops.Stack()(updated_moving_mean_list)
+    for_updated_moving_variance = ops.Stack()(updated_moving_variance_list)
+
+    assert np.allclose(vmap_output_x.asnumpy(), for_output_x.asnumpy())
+    assert np.allclose(vmap_updated_moving_mean.asnumpy(), for_updated_moving_mean.asnumpy())
+    assert np.allclose(vmap_updated_moving_variance.asnumpy(), for_updated_moving_variance.asnumpy())
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_instancenorm_grad_vmap():
+    """
+    Feature: test InstanceNormGrad operator with vmap.
+    Description: Compatible with instance_norm_np.
+    Expectation: The result matches numpy implementation.
+    """
+    vmap_batch = 8
+    batch = 4
+    channel = 3
+    shape = (vmap_batch, batch, channel, 4, 5)
+    parameter_shape = (vmap_batch, channel)
+    save_parameter_shape = (vmap_batch, batch * channel)
+    data_type = np.float32
+
+    np.random.seed(0)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    dy_np = np.random.randn(*shape).astype(data_type)
+    x_np = np.random.randn(*shape).astype(data_type)
+    gamma_np = np.random.randn(*parameter_shape).astype(data_type)
+    moving_mean_np = np.random.randn(*save_parameter_shape).astype(data_type)
+    moving_variance_np = np.random.randn(*save_parameter_shape).astype(data_type)
+
+    # vmap
+    in_axes = (0, 0, 0, 0, 0)
+    out_axes = (0, 0, 0)
+    vmap_output_x, vmap_updated_moving_mean, vmap_updated_moving_variance = \
+        ops.vmap(VmapInstanceGradNet(), in_axes, out_axes)(Tensor(dy_np), Tensor(x_np), Tensor(gamma_np),
+                                                           Tensor(moving_mean_np), Tensor(moving_variance_np))
+
+    # for loop
+    instance_norm_grad = InstanceNormGrad()
+    output_x_list = []
+    updated_moving_mean_list = []
+    updated_moving_variance_list = []
+    for i in range(vmap_batch):
+        output_x, updated_moving_mean, updated_moving_variance = instance_norm_grad(
+            Tensor(dy_np[i, ...]),
+            Tensor(x_np[i, ...]),
+            Tensor(gamma_np[i, ...].copy()),
+            Tensor(moving_mean_np[i, ...].copy()),
+            Tensor(moving_variance_np[i, ...].copy()),
+        )
+        output_x_list.append(output_x)
+        updated_moving_mean_list.append(updated_moving_mean)
+        updated_moving_variance_list.append(updated_moving_variance)
+
+    for_output_x = ops.Stack()(output_x_list)
+    for_updated_moving_mean = ops.Stack()(updated_moving_mean_list)
+    for_updated_moving_variance = ops.Stack()(updated_moving_variance_list)
+
+    assert np.allclose(vmap_output_x.asnumpy(), for_output_x.asnumpy())
+    assert np.allclose(vmap_updated_moving_mean.asnumpy(), for_updated_moving_mean.asnumpy())
+    assert np.allclose(vmap_updated_moving_variance.asnumpy(), for_updated_moving_variance.asnumpy())

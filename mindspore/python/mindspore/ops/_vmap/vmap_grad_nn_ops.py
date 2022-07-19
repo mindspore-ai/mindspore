@@ -464,3 +464,33 @@ def get_maxpool_3d_grad_grad_vmap_rule(prim, axis_size):
         return (out, 0)
 
     return vmap_rule
+
+
+@vmap_rules_getters.register(G.InstanceNormGrad)
+def get_instance_norm_grad_rule(prim, axis_size):
+    """VmapRule for `InstanceNormGrad` operation."""
+    if hasattr(prim, 'batch_rank'):
+        batch_rank = prim.batch_rank + 1
+    else:
+        batch_rank = 1
+
+    batch_prim = _vmap_clone_prim(prim)
+    batch_prim.add_prim_attr('batch_rank', batch_rank)
+
+    def vmap_rule(dy_bdim, x_bdim, gamma_bdim, mean_bdim, variance_bdim):
+        dy, dy_dim = dy_bdim
+        x, x_dim = x_bdim
+        gamma, gamma_dim = gamma_bdim
+        mean, mean_dim = mean_bdim
+        variance, variance_dim = variance_bdim
+
+        dy = _bdim_at_front(dy, dy_dim, axis_size)
+        x = _bdim_at_front(x, x_dim, axis_size)
+        gamma = _bdim_at_front(gamma, gamma_dim, axis_size)
+        mean = _bdim_at_front(mean, mean_dim, axis_size)
+        variance = _bdim_at_front(variance, variance_dim, axis_size)
+
+        output_x, updated_moving_mean, updated_moving_variance = batch_prim(dy, x, gamma, mean, variance)
+        return (output_x, 0), (updated_moving_mean, 0), (updated_moving_variance, 0)
+
+    return vmap_rule
