@@ -33,6 +33,7 @@
 #include "plugin/device/cpu/hal/device/cpu_memory_manager.h"
 #include "profiler/device/profiling.h"
 #include "runtime/hardware/device_context_manager.h"
+#include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"
 
 namespace mindspore {
 namespace device {
@@ -293,11 +294,8 @@ void GeGraphExecutor::AllocInputHostMemory(const KernelGraphPtr &kernel_graph) c
       continue;
     }
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(input_node, 0);
-    std::vector<size_t> shape = Convert2SizeT(common::AnfAlgo::GetOutputInferShape(input_node, 0));
-    size_t type_size = GetTypeByte(TypeIdToType(output_type_id));
-    size_t tensor_size = std::accumulate(shape.begin(), shape.end(), type_size, std::multiplies<size_t>());
     auto device_address_ptr =
-      std::make_shared<cpu::CPUDeviceAddress>(nullptr, tensor_size, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
+      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
     device_address_ptr->set_is_ptr_persisted(false);
     AnfAlgo::SetOutputAddr(device_address_ptr, 0, input_node.get());
   }
@@ -308,10 +306,18 @@ void GeGraphExecutor::AllocOutputHostMemory(const KernelGraphPtr &kernel_graph) 
   auto outputs = common::AnfAlgo::GetAllOutputWithIndex(kernel_graph->output());
   for (const auto &[output_node, i] : outputs) {
     TypeId output_type_id = common::AnfAlgo::GetOutputInferDataType(output_node, i);
-    auto device_address_ptr =
-      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0);
-    device_address_ptr->set_is_ptr_persisted(false);
-    AnfAlgo::SetOutputAddr(device_address_ptr, i, output_node.get());
+    AnfAlgo::SetOutputAddr(
+      std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0), i,
+      output_node.get());
+
+    if (common::AnfAlgo::IsNopNode(output_node)) {
+      auto [real_node, real_idx] = common::AnfAlgo::GetPrevNodeOutput(output_node, i, true);
+      if (real_node != output_node || real_idx != i) {
+        AnfAlgo::SetOutputAddr(
+          std::make_shared<cpu::CPUDeviceAddress>(nullptr, 0, kOpFormat_DEFAULT, output_type_id, kCPUDevice, 0),
+          real_idx, real_node.get());
+      }
+    }
   }
 }
 
@@ -426,7 +432,20 @@ void GeDeviceContext::Initialize() {
   MS_EXCEPTION_IF_NULL(device_res_manager_);
   device_res_manager_->Initialize();
 
-  initialized_ = InitGe(MsContext::GetInstance());
+  MS_EXCEPTION_IF_NULL(MsContext::GetInstance());
+  bool ret = InitGe(MsContext::GetInstance());
+  if (!ret) {
+    MS_LOG(EXCEPTION) << "Init ge failed.";
+  }
+
+  std::string rank_id = common::GetEnv("RANK_ID");
+  std::string rank_table_file = common::GetEnv("RANK_TABLE_FILE");
+  if (!rank_id.empty() && !rank_table_file.empty()) {
+    (void)hccl::HcclAdapter::GetInstance().InitHccl(MsContext::GetInstance()->get_param<uint32_t>(MS_CTX_DEVICE_ID),
+                                                    rank_id, rank_table_file, hccl::HcclMode::kGraph);
+  }
+
+  initialized_ = true;
 }
 
 void GeDeviceContext::Destroy() { (void)FinalizeGe(MsContext::GetInstance()); }
