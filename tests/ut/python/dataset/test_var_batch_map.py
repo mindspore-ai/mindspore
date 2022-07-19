@@ -471,25 +471,127 @@ def test_multi_col_concat_map():
     """
     def gen_2_cols(num):
         for i in range(1, 1 + num):
-            yield np.array([i]), np.array([i ** 2])
+            yield np.array([i]), np.array([i * 2]), np.array([i ** 2])
 
-    def concat_col(col1, col2, batch_info):
+    def concat(args):
         arg_list = []
-        for arg in [col1, col2]:
+        for arg in args:
             rows = []
             for value in arg:
                 rows.append(value)
             arg_list.append(np.array(np.concatenate(rows, axis=0)))
-        return tuple(arg_list)
+        return arg_list
 
-    dst = ds.GeneratorDataset((lambda: gen_2_cols(3)), ["col1", "col2"])
-    dst = dst.batch(batch_size=3, input_columns=["col1", "col2"], output_columns=["col1", "col2"],
-                    per_batch_map=concat_col)
+    def append_batch_array(args):
+        arg_list = []
+        for arg in args:
+            rows = []
+            for value in arg:
+                rows.append(value)
+            arg_list.append(np.array(rows))
+        return arg_list
+
+    def append_batch_list(args):
+        arg_list = []
+        for arg in args:
+            rows = []
+            for value in arg:
+                rows.append(value)
+            arg_list.append(rows)
+        return arg_list
+
+    def concat_all_col(col1, col2, col3, batch_info):
+        return tuple(concat([col1, col2, col3]))
+
+    def concat_less_col(col1, col2, batch_info):
+        return tuple(concat([col1, col2]))
+
+    def concat_more_col(col1, col2, batch_info):
+        return tuple(concat([col1, col2, col1]))
+
+    def append_all_col_list(col1, col2, col3, batch_info):
+        return tuple(append_batch_list([col1, col2, col3]))
+
+    def append_less_col_list(col1, col2, batch_info):
+        return tuple(append_batch_list([col1, col2]))
+
+    def append_more_col_list(col1, col2, batch_info):
+        return tuple(append_batch_list([col1, col2, col1]))
+
+    def append_all_col_array(col1, col2, col3, batch_info):
+        return tuple(append_batch_array([col1, col2, col3]))
+
+    def append_less_col_array(col1, col2, batch_info):
+        return tuple(append_batch_array([col1, col2]))
+
+    def append_more_col_array(col1, col2, batch_info):
+        return tuple(append_batch_array([col1, col2, col1]))
+
+    def batch_map(num, all_col, batch_size, icol, ocol, pfunc, res):
+        dst = ds.GeneratorDataset((lambda: gen_2_cols(num)), all_col)
+        dst = dst.batch(batch_size=batch_size, input_columns=icol, output_columns=ocol,
+                        per_batch_map=pfunc)
+        for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
+            res.append(row)
+
+    # test all column
     res = []
-    for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
-        res.append(row)
+    batch_map(3, ["col1", "col2", "col3"], 3, ["col1", "col2", "col3"], ["col1", "col2", "col3"], concat_all_col, res)
+    assert np.array_equal(res[0]["col1"], [1, 2, 3]) and np.array_equal(res[0]["col2"], [2, 4, 6]) and \
+           np.array_equal(res[0]["col3"], [1, 4, 9])
+    # test less column
+    res = []
+    batch_map(6, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2"], concat_less_col, res)
+    assert np.array_equal(res[1]["col1"], [4, 5, 6]) and np.array_equal(res[1]["col2"], [8, 10, 12]) and \
+           np.array_equal(res[1]["col3"], [[16], [25], [36]])
+    # test more column
+    res = []
+    batch_map(8, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2", "col4"], concat_more_col, res)
+    assert np.array_equal(res[0]["col1"], [1, 2, 3]) and np.array_equal(res[0]["col2"], [2, 4, 6]) and \
+           np.array_equal(res[0]["col3"], [[1], [4], [9]]) and np.array_equal(res[0]["col4"], [1, 2, 3])
+    assert np.array_equal(res[2]["col1"], [7, 8]) and np.array_equal(res[2]["col2"], [14, 16]) and \
+           np.array_equal(res[2]["col3"], [[49], [64]]) and np.array_equal(res[2]["col4"], [7, 8])
 
-    assert np.array_equal(res[0]["col1"], [1, 2, 3]) and np.array_equal(res[0]["col2"], [1, 4, 9])
+    # test all column
+    res = []
+    batch_map(3, ["col1", "col2", "col3"], 3, ["col1", "col2", "col3"], ["col1", "col2", "col3"],
+              append_all_col_array, res)
+    assert np.array_equal(res[0]["col1"], [[1], [2], [3]]) and np.array_equal(res[0]["col2"], [[2], [4], [6]]) and \
+           np.array_equal(res[0]["col3"], [[1], [4], [9]])
+    list_res = []
+    batch_map(3, ["col1", "col2", "col3"], 3, ["col1", "col2", "col3"], ["col1", "col2", "col3"],
+              append_all_col_list, list_res)
+    assert np.array_equal(res[0]["col1"], list_res[0]["col1"]) and \
+           np.array_equal(res[0]["col2"], list_res[0]["col2"]) \
+           and np.array_equal(res[0]["col3"], list_res[0]["col3"])
+
+    # test less column
+    res = []
+    batch_map(6, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2"], append_less_col_array, res)
+    assert np.array_equal(res[1]["col1"], [[4], [5], [6]]) and np.array_equal(res[1]["col2"], [[8], [10], [12]]) and \
+           np.array_equal(res[1]["col3"], [[16], [25], [36]])
+    list_res = []
+    batch_map(6, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2"], append_less_col_list, list_res)
+    assert np.array_equal(res[1]["col1"], list_res[1]["col1"]) and \
+           np.array_equal(res[1]["col2"], list_res[1]["col2"]) \
+           and np.array_equal(res[1]["col3"], list_res[1]["col3"])
+
+    # test more column
+    res = []
+    batch_map(8, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2", "col4"], append_more_col_array, res)
+    assert np.array_equal(res[0]["col1"], [[1], [2], [3]]) and np.array_equal(res[0]["col2"], [[2], [4], [6]]) and \
+           np.array_equal(res[0]["col3"], [[1], [4], [9]]) and np.array_equal(res[0]["col4"], [[1], [2], [3]])
+    assert np.array_equal(res[2]["col1"], [[7], [8]]) and np.array_equal(res[2]["col2"], [[14], [16]]) and \
+           np.array_equal(res[2]["col3"], [[49], [64]]) and np.array_equal(res[2]["col4"], [[7], [8]])
+    list_res = []
+    batch_map(8, ["col1", "col2", "col3"], 3, ["col1", "col2"], ["col1", "col2", "col4"], append_more_col_list,
+              list_res)
+    assert np.array_equal(res[0]["col1"], list_res[0]["col1"]) and \
+           np.array_equal(res[0]["col2"], list_res[0]["col2"]) \
+           and np.array_equal(res[0]["col3"], list_res[0]["col3"])
+    assert np.array_equal(res[2]["col1"], list_res[2]["col1"]) and \
+           np.array_equal(res[2]["col2"], list_res[2]["col2"]) \
+           and np.array_equal(res[2]["col3"], list_res[2]["col3"])
 
 
 def test_exceptions_2():
