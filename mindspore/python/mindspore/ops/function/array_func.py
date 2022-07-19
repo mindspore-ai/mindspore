@@ -593,7 +593,7 @@ def unique_with_pad(x, pad_num):
         - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as `x`.
         - idx (Tensor) - The index of each value of `x` in the unique output `y`, the shape and data type same as `x`.
 
-    Raises:x
+    Raises:
         TypeError: If dtype of `x` is neither int32 nor int64.
         ValueError: If length of shape of `x` is not equal to 1.
 
@@ -1151,7 +1151,7 @@ def unstack(input_x, axis=0):
     This is the opposite of pack.
 
     Args:
-        input_x (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
+        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
             A tensor to be unstacked and the rank of the tensor must be greater than 0.
         axis (int): Dimension along which to unpack. Default: 0.
             Negative values wrap around. The range is [-R, R).

@@ -25,7 +25,7 @@ mindspore.nn.AdaptiveAvgPool2d
 
     **输入：**
 
-    - **input_x** (Tensor) - AdaptiveAvgPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
+    - **x** (Tensor) - AdaptiveAvgPool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。
 
     **输出：**
 
@@ -34,6 +34,6 @@ mindspore.nn.AdaptiveAvgPool2d
     **异常：**
 
     - **ValueError** - 如果 `output_size` 是tuple，并且 `output_size` 的长度不是2。
-    - **TypeError** - 如果 `input_x` 不是Tensor。
-    - **TypeError** - 如果 `input_x` 的数据类型不是float16、float32或者float64。
-    - **ValueError** - 如果 `input_x` 的维度小于或等于 `output_size` 的维度。
+    - **TypeError** - 如果 `x` 不是Tensor。
+    - **TypeError** - 如果 `x` 的数据类型不是float16、float32或者float64。
+    - **ValueError** - 如果 `x` 的维度小于或等于 `output_size` 的维度。

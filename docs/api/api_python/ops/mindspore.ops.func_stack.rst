@@ -1,7 +1,7 @@
 ﻿mindspore.ops.stack
 ====================
 
-.. py:function:: mindspore.ops.stack(input_x, axis)
+.. py:function:: mindspore.ops.stack(input_x, axis=0)
 
     在指定轴上对输入Tensor序列进行堆叠。
 
