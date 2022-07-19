@@ -28,7 +28,7 @@ namespace mindspore {
 namespace dataset {
 class NormalizePadOp : public TensorOp {
  public:
-  NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, std::string dtype = "float32",
+  NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, const std::string dtype = "float32",
                  bool is_hwc = true);
 
   ~NormalizePadOp() override = default;

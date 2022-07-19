@@ -86,7 +86,7 @@ Status SBUOp::ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor>
 Status SBUOp::ComputeColMap() {
   // set the column name map (base class field)
   if (column_name_id_map_.empty()) {
-    for (int32_t i = 0; i < data_schema_->NumColumns(); ++i) {
+    for (int32_t i = 0; i < static_cast<int32_t>(data_schema_->NumColumns()); ++i) {
       column_name_id_map_[data_schema_->Column(i).Name()] = i;
     }
   } else {
@@ -191,7 +191,7 @@ Status SBUOp::GetAvailablePairs(std::ifstream &url_file_reader, std::ifstream &c
                                "Invalid data, no valid images in " + image_folder_.ToString() + ", check SBU dataset.");
 
   // base field of RandomAccessOp
-  num_rows_ = image_caption_pairs_.size();
+  num_rows_ = static_cast<int64_t>(image_caption_pairs_.size());
 
   return Status::OK();
 }

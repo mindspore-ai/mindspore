@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,11 @@ class DIV2KOp : public MappableLeafOp {
   /// \return Name of the current Op.
   std::string Name() const override { return "DIV2KOp"; }
 
+ protected:
+  /// \brief Parse DIV2K data.
+  /// \return Status - The status code returned.
+  Status PrepareData() override;
+
  private:
   /// \brief Load a tensor row according to a pair.
   /// \param[in] uint64_t index - index need to load.
@@ -88,10 +93,6 @@ class DIV2KOp : public MappableLeafOp {
   /// \param[in] lr_dir_key - the key of high resolution images dir.
   /// \return Status - The status code returned.
   Status GetDIV2KLRDirRealName(const std::string &hr_dir_key, const std::string &lr_dir_key);
-
-  /// \brief Parse DIV2K data.
-  /// \return Status - The status code returned.
-  Status PrepareData() override;
 
   /// \brief Get DIV2K data by usage.
   /// \return Status - The status code returned.

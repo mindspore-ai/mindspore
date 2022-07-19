@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ Status BuildVocabOp::WorkerEntry(int32_t worker_id) {
     std::make_unique<std::unordered_map<std::string, int64_t>>();
   int32_t row_cnt = 0;
   while (!new_row.empty()) {
-    for (int32_t col : col_ids_) {
+    for (size_t col : col_ids_) {
       CHECK_FAIL_RETURN_UNEXPECTED(!new_row[col]->type().IsNumeric(),
                                    "Invalid datatype, 'build_vocab' only supports string type of input, but got "
                                    "numeric type: " +

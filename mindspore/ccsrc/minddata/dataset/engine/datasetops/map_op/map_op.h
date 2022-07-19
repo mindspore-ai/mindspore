@@ -112,6 +112,16 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @return Name of the current Op
   std::string Name() const override { return kMapOp; }
 
+  /// Send wait flag row to worker at worker_id to make it wait
+  /// \param worker_id id of the worker
+  /// \return Status code
+  Status SendWaitFlagToWorker(int32_t worker_id) override;
+
+  /// Send quit flag row to worker at worker_id to make it exit
+  /// \param worker_id id of the worker
+  /// \return Status code
+  Status SendQuitFlagToWorker(int32_t worker_id) override;
+
   // List of tensor ops getter/setter
   // @Return the vector of tensor ops by non-const reference
 
@@ -194,20 +204,8 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // @return - Status
   Status InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_name_id_map);
 
-  /// Send wait flag row to worker at worker_id to make it wait
-  /// \param worker_id id of the worker
-  /// \return Status code
-  Status SendWaitFlagToWorker(int32_t worker_id) override;
-
-  /// Send quit flag row to worker at worker_id to make it exit
-  /// \param worker_id id of the worker
-  /// \return Status code
-  Status SendQuitFlagToWorker(int32_t worker_id) override;
-
  protected:
   Status Launch() override;
-
- protected:
   Status AddNewWorkers(int32_t num_new_workers) override;
   Status RemoveWorkers(int32_t num_workers) override;
 };

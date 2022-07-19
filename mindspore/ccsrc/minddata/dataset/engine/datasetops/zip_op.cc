@@ -31,12 +31,12 @@ ZipOp::~ZipOp() {}
 Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child) const {
   *new_zip_row = {};
   // iterate over all iterators and generate a row
-  for (int32_t i = 0; i < child_.size(); ++i) {
+  for (size_t i = 0; i < child_.size(); ++i) {
     TensorRow new_row;
     RETURN_IF_NOT_OK(child_[i]->GetNextRow(&new_row));
     if (new_row.eoe() || new_row.eof()) {
       *new_zip_row = new_row;
-      *skip_child = i;
+      *skip_child = static_cast<int32_t>(i);
       return Status::OK();
     } else {
       MS_LOG(DEBUG) << "Zip operator got row from child " << i << ". Num cols: " << new_row.size() << ".";
@@ -48,7 +48,7 @@ Status ZipOp::getNextZippedRow(TensorRow *const new_zip_row, int32_t *skip_child
 
 // drain end of epoch messages from iterator for this epoch
 Status ZipOp::drainPipeline(int32_t skip_child) const {
-  for (int32_t con = 0; con < child_.size(); ++con) {
+  for (size_t con = 0; con < child_.size(); ++con) {
     if (con == skip_child) {
       continue;
     }

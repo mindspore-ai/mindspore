@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ CifarOp::CifarOp(CifarType type, const std::string &usage, int32_t num_works, co
 }
 
 Status CifarOp::RegisterAndLaunchThreads() {
-  ParallelOp::RegisterAndLaunchThreads();
+  RETURN_IF_NOT_OK(ParallelOp::RegisterAndLaunchThreads());
   RETURN_IF_NOT_OK(cifar_raw_data_block_->Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
     "Get cifar data block", std::bind(&CifarOp::ReadCifarBlockDataAsync, this), nullptr, id()));

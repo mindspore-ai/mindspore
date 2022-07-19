@@ -68,6 +68,11 @@ class SBUOp : public MappableLeafOp {
   // @return Status - The status code returned.
   static Status CountTotalRows(const std::string &dir, int64_t *count);
 
+ protected:
+  // Parse SBU data file.
+  // @return Status - The status code returned.
+  Status PrepareData() override;
+
  private:
   // Load a tensor row according to a pair.
   // @param row_id_type row_id - id for this tensor row.
@@ -83,10 +88,6 @@ class SBUOp : public MappableLeafOp {
   // @param std::shared_ptr<Tensor> tensor - tensor to store image.
   // @return Status - The status code returned.
   Status ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) const;
-
-  // Parse SBU data file.
-  // @return Status - The status code returned.
-  Status PrepareData() override;
 
   // Get available image-caption pairs.
   // @param std::ifstream &url_file_reader - url file reader.

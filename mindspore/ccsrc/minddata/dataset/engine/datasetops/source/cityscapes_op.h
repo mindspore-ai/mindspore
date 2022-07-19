@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,16 +80,17 @@ class CityscapesOp : public MappableLeafOp {
   /// \return Name of the current Op.
   std::string Name() const override { return "CityscapesOp"; }
 
+ protected:
+  /// \brief Parse Cityscapes data.
+  /// \return Status - The status code returned.
+  Status PrepareData() override;
+
  private:
   /// \brief Load a tensor row according to a pair.
   /// \param[in] uint64_t index - index need to load.
   /// \param[out] TensorRow row - image & task read into this tensor row.
   /// \return Status - The status code returned.
   Status LoadTensorRow(row_id_type index, TensorRow *trow) override;
-
-  /// \brief Parse Cityscapes data.
-  /// \return Status - The status code returned.
-  Status PrepareData() override;
 
   /// \brief Get Cityscapes data by usage.
   /// \param[in] images_dir - path to the images in the dataset.

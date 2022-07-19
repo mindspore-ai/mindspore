@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 BuildSentencePieceVocabOp::BuildSentencePieceVocabOp(std::shared_ptr<SentencePieceVocab> vocab,
-                                                     std::vector<std::string> col_names, int32_t vocab_size,
+                                                     const std::vector<std::string> col_names, int32_t vocab_size,
                                                      float character_coverage, SentencePieceModel model_type,
                                                      const std::unordered_map<std::string, std::string> &params,
                                                      int32_t op_conn_size)

@@ -331,8 +331,8 @@ Status MindRecordOp::AddNewWorkers(int32_t num_new_workers) {
   num_mind_record_workers_ += num_new_workers;
 
   for (int32_t i = 0; i < num_new_workers; i++) {
-    worker_in_queues_.AddQueue(tree_->AllTasks());
-    worker_out_queues_.AddQueue(tree_->AllTasks());
+    RETURN_IF_NOT_OK(worker_in_queues_.AddQueue(tree_->AllTasks()));
+    RETURN_IF_NOT_OK(worker_out_queues_.AddQueue(tree_->AllTasks()));
     Task *new_task;
     RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask(
       Name() + "::WorkerEntry", std::bind(&MindRecordOp::WorkerEntry, this, num_workers_), &new_task, id()));

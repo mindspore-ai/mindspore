@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -752,7 +752,7 @@ Status TFReaderOp::CountTotalRows(int64_t *out_total_rows, const std::vector<std
 
 int64_t TFReaderOp::CountTotalRowsSectioned(const std::vector<std::string> &filenames, int64_t begin, int64_t end) {
   int64_t rows_read = 0;
-  for (int i = begin; i < end; i++) {
+  for (size_t i = begin; i < end; i++) {
     auto realpath = FileUtils::GetRealPath(filenames[i].c_str());
     if (!realpath.has_value()) {
       MS_LOG(ERROR) << "Invalid file path, " << filenames[i] << " does not exist.";

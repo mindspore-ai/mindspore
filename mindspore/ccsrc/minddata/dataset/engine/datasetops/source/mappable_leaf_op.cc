@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ Status MappableLeafOp::ImageDecrypt(const std::string &path, std::shared_ptr<Ten
     }
     try {
       py::bytes ret_py_obj = decrypt(path);
-      int64_t num_bytes = len(ret_py_obj);
+      int64_t num_bytes = static_cast<int64_t>(len(ret_py_obj));
       CHECK_FAIL_RETURN_UNEXPECTED(num_bytes < kDeMaxDim,
                                    "The length of decrypted bytes returned by the decryption function exceeds the "
                                    "maximum value of int64, check path: " +

@@ -46,18 +46,21 @@ Status FilterOp::operator()() {
   int64_t cnt = 0;
   while (child_iterator_->EofHandled() == false) {
     while (new_row.empty() == false) {
-      RETURN_IF_NOT_OK(worker_in_queues_[cnt % num_workers_]->EmplaceBack(new_row));
+      RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(cnt % num_workers_)]->EmplaceBack(new_row));
       cnt++;
       RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
     }
 
-    RETURN_IF_NOT_OK(worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagEOE))));
+    RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(cnt++ % num_workers_)]->EmplaceBack(
+      std::move(TensorRow(TensorRow::kFlagEOE))));
     RETURN_IF_NOT_OK(child_iterator_->FetchNextTensorRow(&new_row));
   }
-  RETURN_IF_NOT_OK(worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagEOF))));
+  RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(cnt++ % num_workers_)]->EmplaceBack(
+    std::move(TensorRow(TensorRow::kFlagEOF))));
   // EOF received, send quit signal to all workers
   for (int32_t ind = 0; ind < num_workers_; ind++) {
-    RETURN_IF_NOT_OK(worker_in_queues_[cnt++ % num_workers_]->EmplaceBack(std::move(TensorRow(TensorRow::kFlagQuit))));
+    RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(cnt++ % num_workers_)]->EmplaceBack(
+      std::move(TensorRow(TensorRow::kFlagQuit))));
   }
 
   return Status::OK();
