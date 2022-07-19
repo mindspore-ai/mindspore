@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ static CNodePtr CreateVirtualDataset(const FuncGraphPtr &func_graph) {
       auto graph_input_index = func_graph->get_inputs()[index];
       auto virtual_dataset_abstract = graph_input_index->abstract()->Clone();
       MS_EXCEPTION_IF_NULL(virtual_dataset_abstract);
-      abstract_list.emplace_back(virtual_dataset_abstract);
+      (void)abstract_list.emplace_back(virtual_dataset_abstract);
       virtual_dataset_node_inputs.push_back(func_graph->get_inputs()[index]);
     }
   }
@@ -135,17 +135,17 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
   for (auto &anf_param : root->parameters()) {
     auto param = anf_param->cast<ParameterPtr>();
     if (!param->has_default()) {
-      input_parameters.insert(anf_param);
+      (void)input_parameters.insert(anf_param);
     }
   }
-  for (auto input_parameter : input_parameters) {
+  for (const auto &input_parameter : input_parameters) {
     auto node_users_map = root->manager()->node_users();
     auto node_users = node_users_map[input_parameter];
     for (auto node_user : node_users) {
       auto cnode = node_user.first->cast<CNodePtr>();
       if (IsValueNode<Primitive>(cnode->inputs()[0]) ||
           (IsValueNode<FuncGraph>(cnode->inputs()[0]) && !root->has_flag(parallel::kTraining))) {
-        graph_sets.insert(cnode->func_graph());
+        (void)graph_sets.insert(cnode->func_graph());
       }
     }
   }
@@ -166,7 +166,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
       } else {
         fun_graph = node->func_graph();
       }
-      graph_sets.insert(fun_graph);
+      (void)graph_sets.insert(fun_graph);
     }
   }
   return graph_sets;
@@ -175,7 +175,7 @@ static std::set<FuncGraphPtr> FindForwardGraph(const FuncGraphPtr &root, const s
 static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes) {
   MS_EXCEPTION_IF_NULL(root);
   std::set<FuncGraphPtr> forward_graph_set = FindForwardGraph(root, all_nodes);
-  for (auto forward_graph : forward_graph_set) {
+  for (const auto &forward_graph : forward_graph_set) {
     FuncGraphManagerPtr manager = forward_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     std::vector<AnfNodePtr> graph_inputs = forward_graph->get_inputs();
@@ -187,7 +187,7 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
         continue;
       }
       auto node_users = node_user_map[graph_inputs[index]];
-      for (auto node_user : node_users) {
+      for (const auto &node_user : node_users) {
         auto cnode = node_user.first->cast<CNodePtr>();
         for (size_t input_index = 1; input_index < cnode->inputs().size(); input_index++) {
           if (!IsValueNode<Primitive>(cnode->inputs()[0]) && !IsValueNode<FuncGraph>(cnode->inputs()[0])) {
@@ -202,12 +202,12 @@ static void InsertVirtualDataset(const FuncGraphPtr &root, const std::vector<Anf
           if (!is_match) {
             continue;
           }
-          size_t node_input_index = node_input_iter - graph_inputs.begin();
+          size_t node_input_index = LongToSize(node_input_iter - graph_inputs.begin());
           if (parameter_index_map.empty() || parameter_index_map.count(node_input_index) == 0) {
             parameter_index_map[node_input_index] =
               CreateTupleGetItem(virtual_dataset_node, node_input_index, forward_graph);
           }
-          manager->SetEdge(cnode, input_index, parameter_index_map[node_input_index]);
+          manager->SetEdge(cnode, SizeToInt(input_index), parameter_index_map[node_input_index]);
           manager->SetEdge(parameter_index_map[node_input_index], 1, virtual_dataset_node);
         }
       }
