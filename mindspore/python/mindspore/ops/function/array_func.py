@@ -3967,9 +3967,9 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
 
     Args:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - Set :math:`z` as num_segments.
+        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
+        segment_ids (Tensor): Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        num_segments (int): Set :math:`z` as num_segments.
 
     Returns:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
@@ -3987,13 +3987,13 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
-        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
         >>> print(output)
         [3. 3. 4. 0.]
         >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
         >>> num_segments = 6
-        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
         >>> print(output)
         [3. 3. 4. 2. 5. 0.]
     """

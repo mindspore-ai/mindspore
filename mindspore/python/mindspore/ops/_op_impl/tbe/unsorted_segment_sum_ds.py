@@ -23,8 +23,6 @@ unsorted_segment_sum_ds_op_info = TBERegOp("UnsortedSegmentSum") \
     .compute_cost(10) \
     .kernel_name("unsorted_segment_sum") \
     .partial_flag(True) \
-    .need_check_supported(True) \
-    .dynamic_compile_static(True) \
     .dynamic_shape(True) \
     .input(0, "x", False, "required", "all") \
     .input(1, "segment_ids", False, "required", "all", "optional") \
