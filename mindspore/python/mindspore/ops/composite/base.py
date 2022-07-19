@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -884,7 +884,7 @@ class _ListInsert(ListInsert_):
     """
 
     def __init__(self, name):
-        """Initialize _ListAppend."""
+        """Initialize _ListInsert."""
         ListInsert_.__init__(self, name)
 
     def __call__(self, *args):

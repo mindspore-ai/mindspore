@@ -2289,6 +2289,11 @@ def list_insert(self_, index, obj):
     return _insert(self_, index, obj)
 
 
+def dict_get(self_, key_index, default_value=None):
+    """Get value by key from dict"""
+    return F.dict_getitem(self_, key_index, default_value)
+
+
 #################
 # Array methods #
 #################
