@@ -189,18 +189,23 @@ struct CachedInterpolation {
   float lerp;
 };
 
+template <typename T>
 struct AlignCornersFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+  T operator()(const T &new_x, const int &old_length, const int &new_length) const {
     return new_length != 1 ? new_x * (old_length - 1) / (new_length - 1) : 0;
   }
 };
+
+template <typename T>
 struct AsymmetricFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+  T operator()(const T &new_x, const int &old_length, const int &new_length) const {
     return new_length != 0 ? new_x * old_length / new_length : 0;
   }
 };
+
+template <typename T>
 struct HalfPixelFunc {
-  float operator()(const float &new_x, const int &old_length, const int &new_length) const {
+  T operator()(const T &new_x, const int &old_length, const int &new_length) const {
     return new_length > 1 ? (new_x + 0.5) * old_length / new_length - 0.5 : 0;
   }
 };
