@@ -9755,7 +9755,7 @@ class FractionalMaxPool3DWithFixedKsize(Primitive):
         ValueError: If the third dimension size of `random_samples` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])

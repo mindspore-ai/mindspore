@@ -33,6 +33,15 @@ class MIND_API FractionalMaxPool3DGradWithFixedKsize : public BaseOperator {
   FractionalMaxPool3DGradWithFixedKsize() : BaseOperator(kNameFractionalMaxPool3DGradWithFixedKsize) {
     InitIOName({"origin_input", "out_backprop", "argmax"}, {"y"});
   }
+  void Init(const std::string data_format);
+  /// \brief Init. Refer to the parameters of Python API @ref
+  /// mindspore.ops.operations._grad_ops.FractionalMaxPool3DWithFixedKsize for the inputs.
+  void set_data_format(const std::string data_format);
+  /// \brief Set data format.
+  std::string get_data_format() const;
+  /// \brief Method to get data format attributes.
+  ///
+  /// \return data format attributes.
 };
 
 abstract::AbstractBasePtr FractionalMaxPool3DGradWithFixedKsizeInfer(

@@ -135,9 +135,7 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
       output_size.push_back(c_dim);
     }
   }
-  if (std::any_of(output_size.begin(), output_size.end(), [](int64_t shp_v) { return shp_v <= 0; })) {
-    MS_LOG(EXCEPTION) << "For '" << op_name << "', output_size is not valid.";
-  }
+
   if (input_shape.size() == kDimSize4) {
     if (random_samples_shape[0] != input_shape[0]) {
       MS_EXCEPTION(ValueError)
@@ -150,11 +148,6 @@ abstract::TupleShapePtr FractionalMaxPool3DWithFixedKsizeInferShape(const Primit
         << "', if 'x' is 4 dimensional, the second dimension size of 'random_samples' must be equal to 3.";
     }
   } else {
-    if (random_samples_shape[0] != input_shape[0]) {
-      MS_EXCEPTION(ValueError)
-        << "For '" << op_name
-        << "', if 'x' is 5 dimensional, the first dimension size of 'x' and 'random_samples' must be equal.";
-    }
     if (random_samples_shape[1] != input_shape[1]) {
       MS_EXCEPTION(ValueError)
         << "For '" << op_name
@@ -190,7 +183,7 @@ TuplePtr FractionalMaxPool3DWithFixedKsizeInferType(const PrimitivePtr &primitiv
 }
 }  // namespace
 
-MIND_API_BASE_IMPL(FractionalMaxPool3DWithFixedKsize, PrimitiveC, BaseOperator);
+MIND_API_OPERATOR_IMPL(FractionalMaxPool3DWithFixedKsize, BaseOperator);
 AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(const abstract::AnalysisEnginePtr &,
                                                        const PrimitivePtr &primitive,
                                                        const std::vector<AbstractBasePtr> &input_args) {
@@ -198,6 +191,39 @@ AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(const abstract::AnalysisE
   auto infer_type = FractionalMaxPool3DWithFixedKsizeInferType(primitive, input_args);
   auto infer_shape = FractionalMaxPool3DWithFixedKsizeInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+void FractionalMaxPool3DWithFixedKsize::Init(const std::vector<float> ksize, const std::vector<int64_t> output_shape,
+                                             const std::string data_format) {
+  set_ksize(ksize);
+  set_output_shape(output_shape);
+  set_data_format(data_format);
+}
+
+void FractionalMaxPool3DWithFixedKsize::set_ksize(const std::vector<float> ksize) {
+  (void)this->AddAttr("ksize", api::MakeValue(ksize));
+}
+
+void FractionalMaxPool3DWithFixedKsize::set_output_shape(const std::vector<int64_t> output_shape) {
+  (void)this->AddAttr("output_shape", api::MakeValue(output_shape));
+}
+
+void FractionalMaxPool3DWithFixedKsize::set_data_format(const std::string data_format) {
+  (void)this->AddAttr(kFormat, api::MakeValue(data_format));
+}
+
+std::vector<float> FractionalMaxPool3DWithFixedKsize::get_ksize() const {
+  auto value_ptr = GetAttr("ksize");
+  return GetValue<std::vector<float>>(value_ptr);
+}
+
+std::vector<int64_t> FractionalMaxPool3DWithFixedKsize::get_output_shape() const {
+  auto value_ptr = GetAttr("output_shape");
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+std::string FractionalMaxPool3DWithFixedKsize::get_data_format() const {
+  return GetValue<std::string>(GetAttr(kFormat));
 }
 
 REGISTER_PRIMITIVE_EVAL_IMPL(FractionalMaxPool3DWithFixedKsize, prim::kPrimFractionalMaxPool3DWithFixedKsize,

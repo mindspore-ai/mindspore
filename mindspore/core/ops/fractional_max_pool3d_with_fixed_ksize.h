@@ -33,6 +33,27 @@ class MIND_API FractionalMaxPool3DWithFixedKsize : public BaseOperator {
   FractionalMaxPool3DWithFixedKsize() : BaseOperator(kNameFractionalMaxPool3DWithFixedKsize) {
     InitIOName({"x", "random_samples"}, {"y", "argmax"});
   }
+  void Init(const std::vector<float> ksize, const std::vector<int64_t> output_shape, const std::string data_format);
+  /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.FractionalMaxPool3DWithFixedKsize for the
+  /// inputs.
+  void set_ksize(const std::vector<float> ksize);
+  /// \brief Set ksize.
+  void set_output_shape(const std::vector<int64_t> output_shape);
+  /// \brief Set output shape.
+  void set_data_format(const std::string data_format);
+  /// \brief Set data format.
+  std::vector<float> get_ksize() const;
+  /// \brief Method to get ksize attributes.
+  ///
+  /// \return ksize attributes.
+  std::vector<int64_t> get_output_shape() const;
+  /// \brief Method to get output shape attributes.
+  ///
+  /// \return output shape attributes.
+  std::string get_data_format() const;
+  /// \brief Method to get data format attributes.
+  ///
+  /// \return data format attributes.
 };
 
 abstract::AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(
