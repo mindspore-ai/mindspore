@@ -1569,22 +1569,22 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
     Performs greedy decoding on the logits given in inputs.
 
     Args:
-        inputs (Tensor) - The input Tensor must be a 3-D tensor whose shape is
+        inputs (Tensor): The input Tensor must be a 3-D tensor whose shape is
             :math:`(max\_time, batch\_size, num\_classes)`. `num_classes` must be `num_labels + 1` classes,
             `num_labels` indicates the number of actual labels. Blank labels are reserved.
             Default blank label is `num_classes - 1`. Data type must be float32 or float64.
-        sequence_length (Tensor) - A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
+        sequence_length (Tensor): A tensor containing sequence lengths with the shape of :math:`(batch\_size, )`.
             The type must be int32. Each value in the tensor must be equal to or less than `max_time`.
         merge_repeated (bool): If true, merge repeated classes in output. Default: True.
 
     Returns:
-        decoded_indices (Tensor): A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
+        decoded_indices (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
             Data type is int64.
-        decoded_values (Tensor): A tensor with shape of :math:`(total\_decoded\_outputs, )`,
+        decoded_values (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, )`,
             it stores the decoded classes. Data type is int64.
-        decoded_shape (Tensor): A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
+        decoded_shape (Tensor), A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
             Data type is int64.
-        log_probability (Tensor): A tensor with shape of :math:`(batch\_size, 1)`,
+        log_probability (Tensor), A tensor with shape of :math:`(batch\_size, 1)`,
             containing sequence log-probability, has the same type as `inputs`.
 
     Raises:
