@@ -12,7 +12,7 @@ mindspore.nn.Optimizer
 
     **参数：**
 
-    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) - 
+    - **learning_rate** (Union[float, int, Tensor, Iterable, LearningRateSchedule]) -
 
       .. include:: mindspore.nn.optim_arg_dynamic_lr.rst
 
@@ -64,6 +64,20 @@ mindspore.nn.Optimizer
 
         tuple[Tensor]，衰减权重后的梯度。
 
+    .. py:method:: flatten_gradients(gradients)
+
+        如果网络参数已经使用了连续内存，则将梯度也按数据类型分组使用连续内存。
+
+        一种网络参数和梯度都使用连续内存的性能优化方法。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，需调用该接口使能连续内存优化。
+
+        **参数：**
+
+        - **gradients** (tuple[Tensor]) - 网络参数的梯度，形状（shape）与网络参数相同。
+
+        **返回：**
+
+        tuple[Tensor]，如果网络参数使用了连续内存，则返回按数据类型分组使用连续内存后的梯度，否则原样返回输入的梯度。
+
     .. py:method:: get_lr()
 
         优化器调用该接口获取当前步骤（step）的学习率。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可在参数更新前调用该接口获取学习率。
@@ -83,7 +97,7 @@ mindspore.nn.Optimizer
         **返回：**
 
         Parameter，单个 `Parameter` 或 `Parameter` 列表。如果使用了动态学习率，返回用于计算学习率的 `LearningRateSchedule` 或 `LearningRateSchedule` 列表。
-    
+
     .. py:method:: get_weight_decay()
 
         优化器调用该接口获取当前步骤（step）的weight decay值。继承 :class:`mindspore.nn.Optimizer` 自定义优化器时，可在参数更新前调用该接口获取weight decay值。
