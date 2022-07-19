@@ -463,35 +463,6 @@ def test_multi_col_map():
            in batch_map_config(2, 2, split_col, ["col-1"], ["col_x", "col_y"])
 
 
-def test_multi_col_concat_map():
-    """
-    Feature: Batch op
-    Description: Test Batch op with multiple columns with concat per_batch_map args with valid inputs
-    Expectation: Output is equal to the expected output for valid input
-    """
-    def gen_2_cols(num):
-        for i in range(1, 1 + num):
-            yield np.array([i]), np.array([i ** 2])
-
-    def concat_col(col1, col2, batch_info):
-        arg_list = []
-        for arg in [col1, col2]:
-            rows = []
-            for value in arg:
-                rows.append(value)
-            arg_list.append(np.array(np.concatenate(rows, axis=0)))
-        return tuple(arg_list)
-
-    dst = ds.GeneratorDataset((lambda: gen_2_cols(3)), ["col1", "col2"])
-    dst = dst.batch(batch_size=3, input_columns=["col1", "col2"], output_columns=["col1", "col2"],
-                    per_batch_map=concat_col)
-    res = []
-    for row in dst.create_dict_iterator(num_epochs=1, output_numpy=True):
-        res.append(row)
-
-    assert np.array_equal(res[0]["col1"], [1, 2, 3]) and np.array_equal(res[0]["col2"], [1, 4, 9])
-
-
 def test_exceptions_2():
     """
     Feature: Batch op

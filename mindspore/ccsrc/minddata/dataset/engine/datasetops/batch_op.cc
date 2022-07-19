@@ -164,8 +164,7 @@ void BatchOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
-Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
-                          bool concat_batch) {
+Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size) {
   RETURN_UNEXPECTED_IF_NULL(src);
   RETURN_UNEXPECTED_IF_NULL(dest);
   if ((*src)->size() != batch_size) {
@@ -177,10 +176,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *d
     (*src)->pop_front();
 
     for (const auto &tensor : (*dest)) {
-      // If concat batch rows, the result should not be expend dimension.
-      if (!concat_batch) {
-        RETURN_IF_NOT_OK(tensor->ExpandDim(0));
-      }
+      RETURN_IF_NOT_OK(tensor->ExpandDim(0));
     }
     return Status::OK();
   }
@@ -260,7 +256,7 @@ Status BatchOp::MakeBatchedRow(std::pair<std::unique_ptr<TensorQTable>, CBatchIn
   if (pad_) {
     RETURN_IF_NOT_OK(PadColumns(&table_pair.first, pad_info_, column_name_id_map_));
   }  // do padding if needed
-  RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size(), concat_batch_));
+  RETURN_IF_NOT_OK(BatchRows(&table_pair.first, new_row, table_pair.first->size()));
   return Status::OK();
 }
 
@@ -277,6 +273,7 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   RETURN_UNEXPECTED_IF_NULL(table_pair->first);
   std::unique_ptr<TensorQTable> in_q_table = std::move(table_pair->first);
   size_t num_rows = in_q_table->size();
+  auto out_q_table = std::make_unique<TensorQTable>(num_rows, TensorRow(column_name_id_map_.size(), nullptr));
   TensorTable in_cols(in_col_names_.size(), TensorRow(num_rows, nullptr)), out_cols;
 
   std::unordered_map<std::string, size_t> in_col_name_id;  // name of columns that need to be fed to per-batch_map
@@ -288,33 +285,21 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
       for (size_t i = 0; i < num_rows; i++) {
         in_cols[col_itr->second][i] = std::move((*in_q_table)[i][itr.second]);
       }
-    }
-  }
-
-  RETURN_IF_NOT_OK(InvokeBatchMapFunc(&in_cols, &out_cols, table_pair->second));
-
-  auto out_q_table = std::make_unique<TensorQTable>(num_rows, TensorRow(column_name_id_map_.size(), nullptr));
-  // If concat batch rows, the num_rows should be 1.
-  if (concat_batch_) {
-    out_q_table = std::make_unique<TensorQTable>(1, TensorRow(column_name_id_map_.size(), nullptr));
-  }
-
-  for (const auto &itr : child_map_) {
-    auto col_itr = in_col_name_id.find(itr.first);
-    if (col_itr == in_col_name_id.end()) {  // col needs to be prepared for per_batch_map
-      // col needs to be placed into the out table
+    } else {  // col needs to be placed into the out table
       size_t col_id = column_name_id_map_[itr.first];
       for (size_t i = 0; i < num_rows; i++) {
         (*out_q_table)[i][col_id] = std::move((*in_q_table)[i][itr.second]);
       }
     }
   }
+
   in_q_table.reset();  // release the input table
+  RETURN_IF_NOT_OK(InvokeBatchMapFunc(&in_cols, &out_cols, table_pair->second));
 
   for (size_t i = 0; i < out_cols.size(); i++) {
     size_t col_id = column_name_id_map_[out_col_names_[i]];
     size_t row_id = 0;
-    CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size() || concat_batch_,
+    CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size(),
                                  "Invalid data, column: " + out_col_names_[i] +
                                    " expects: " + std::to_string(num_rows) +
                                    " rows returned from 'per_batch_map', got: " + std::to_string(out_cols[i].size()));
@@ -413,19 +398,12 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
                        << " returned by per_batch_map is not a list, this could lead to conversion failure.";
         }
 
-        if (py::isinstance<py::array>(ret_tuple[i])) {
-          concat_batch_ = true;
+        py::list output_list = py::cast<py::list>(ret_tuple[i]);
+
+        for (size_t j = 0; j < output_list.size(); j++) {
           std::shared_ptr<Tensor> out;
-          // If concat batch rows, the batch map function result should be in 1 row.
-          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(ret_tuple[i]), &out));
+          RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));
           output_batch.push_back(std::move(out));
-        } else {
-          py::list output_list = py::cast<py::list>(ret_tuple[i]);
-          for (size_t j = 0; j < output_list.size(); j++) {
-            std::shared_ptr<Tensor> out;
-            RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));
-            output_batch.push_back(std::move(out));
-          }
         }
         output->push_back(std::move(output_batch));
       }
