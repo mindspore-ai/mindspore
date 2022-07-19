@@ -5122,7 +5122,7 @@ class ScatterNdMax(_ScatterNdOp):
     Refer to :func:`mindspore.ops.scatter_nd_max` for more details.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.array_ops import ScatterNdMax
