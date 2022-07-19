@@ -373,7 +373,7 @@ class SideEffectFinder {
   }
 
   // Gets branch graph from a switch cnode at given input index.
-  FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
+  FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) {
     MS_EXCEPTION_IF_NULL(cnode);
     return GetValueNode<FuncGraphPtr>(cnode->inputs().at(index));
   }
@@ -406,7 +406,7 @@ class SideEffectFinder {
 
   // Add monad parameter to switch branch graphs.
   void AddMonadParameters(const std::vector<FuncGraphPtr> &branches, const std::string &name,
-                          const AbstractBasePtr &abs) const {
+                          const AbstractBasePtr &abs) {
     for (auto &branch : branches) {
       (void)AddMonadParameter(branch, name, abs);
     }
@@ -472,7 +472,7 @@ class SideEffectFinder {
     }
   }
 
-  void FixSwitchBranch(const CNodePtr &caller, const FuncGraphPtr &branch) const {
+  void FixSwitchBranch(const CNodePtr &caller, const FuncGraphPtr &branch) {
     for (size_t i = caller->size() - 1; i > 0; --i) {
       auto &input = caller->input(i);
       if (HasAbstractUMonad(input)) {
@@ -531,7 +531,7 @@ class SideEffectFinder {
   }
 
   // Get graphs from a tuple of funcs make node for switch_layer.
-  std::vector<FuncGraphPtr> GetGraphsFromMakeTuple(const CNodePtr &make_tuple) const {
+  std::vector<FuncGraphPtr> GetGraphsFromMakeTuple(const CNodePtr &make_tuple) {
     MS_EXCEPTION_IF_NULL(make_tuple);
     auto &inputs = make_tuple->inputs();
     if (inputs.size() <= 1) {
@@ -794,7 +794,7 @@ class SideEffectFinder {
     return {EffectInfo::kDetected, false, false, false};
   }
 
-  int GetParameterIndex(const FuncGraphPtr &func_graph, const ParameterPtr &para) const {
+  int GetParameterIndex(const FuncGraphPtr &func_graph, const ParameterPtr &para) {
     int parameter_index = 0;
     for (auto &parameter : func_graph->parameters()) {
       if (para == parameter) {
@@ -1075,7 +1075,7 @@ class SideEffectFinder {
     }
   }
 
-  void AddMonadArgument(const CNodePtr &cnode, const ValuePtr &monad) const {
+  void AddMonadArgument(const CNodePtr &cnode, const ValuePtr &monad) {
     MS_EXCEPTION_IF_NULL(cnode);
     MS_EXCEPTION_IF_NULL(monad);
     auto monad_abs = monad->ToAbstract();
@@ -1211,7 +1211,7 @@ class AutoMonadConverter {
   }
 
   // Return true if the given cnode is primitive cnode with 'no_eliminate' flag.
-  bool IsNoEliminateNode(const CNodePtr &cnode) const {
+  bool IsNoEliminateNode(const CNodePtr &cnode) {
     if (cnode == nullptr || cnode->size() == 0) {
       return false;
     }
