@@ -279,7 +279,7 @@ void TbeJsonCreator::DeleteDescName(nlohmann::json *desc_jsons) const {
   }
 }
 
-size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) {
+size_t TbeJsonCreator::GenJsonHash(nlohmann::json tbe_json) const {
   auto &op_lists = tbe_json.at(kJOpList);
   for (auto &op : op_lists) {
     (void)op.erase(kJName);

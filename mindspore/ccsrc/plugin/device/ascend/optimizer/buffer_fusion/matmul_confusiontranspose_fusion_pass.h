@@ -37,8 +37,7 @@ class MatmulConfusionTranposeFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchMatmulConfusionTranpose(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                    FusedNodeRecord *candidate_fusion);
+  void MatchMatmulConfusionTranpose(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore

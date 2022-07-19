@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace opt {
 void Conv2DBackpropEltwiseFusionPass::MatchConv2DBackpropInputEltwise(const CNodePtr &cnode,
-                                                                      const session::KernelGraph &kernel_graph,
                                                                       FusedNodeRecord *candidate_fusion) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
@@ -54,7 +53,7 @@ void Conv2DBackpropEltwiseFusionPass::MatchSingleFusionPattern(const session::Ke
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (common::AnfAlgo::GetCNodeName(cnode) == kReluGradV2OpName) {
-      MatchConv2DBackpropInputEltwise(cnode, kernel_graph, candidate_fusion);
+      MatchConv2DBackpropInputEltwise(cnode, candidate_fusion);
     }
   }
 }

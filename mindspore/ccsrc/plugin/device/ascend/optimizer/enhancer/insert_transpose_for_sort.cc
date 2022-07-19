@@ -140,7 +140,7 @@ AnfNodePtr InsertTranspose(const FuncGraphPtr &func_graph, const CNodePtr &node,
   std::vector<int64_t> perm(in_shape.size(), 0);
   int64_t i = 0;
   std::generate(perm.begin(), perm.end(), [&] { return i++; });
-  std::reverse(perm.begin() + LongToSize(axis), perm.end());
+  std::reverse(perm.begin() + axis, perm.end());
 
   auto new_sort = InsertForInput(func_graph, node, perm);
   common::AnfAlgo::SetNodeAttr("axis", MakeValue(IntToLong(-1)), new_sort);

@@ -24,9 +24,8 @@
 
 namespace mindspore {
 namespace opt {
-void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnode,
-                                                            const session::KernelGraph &kernel_graph,
-                                                            FusedNodeRecord *candidate_fusion, bool is_order) {
+void DepthwiseConvEltwiseFusionPass::MatchDepthwiseConvRelu(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion,
+                                                            bool is_order) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(candidate_fusion);
   if (is_order) {
@@ -66,10 +65,10 @@ void DepthwiseConvEltwiseFusionPass::MatchSingleFusionPattern(const session::Ker
       auto eltwise_input = cnode->input(kIndex1);
       if (eltwise_input->isa<CNode>() &&
           common::AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimDepthwiseConv2dNative)) {
-        MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, true);
+        MatchDepthwiseConvRelu(cnode, candidate_fusion, true);
       }
     } else if (common::AnfAlgo::GetCNodeName(cnode) == prim::kPrimDepthwiseConv2dNative->name()) {
-      MatchDepthwiseConvRelu(cnode, kernel_graph, candidate_fusion, false);
+      MatchDepthwiseConvRelu(cnode, candidate_fusion, false);
     }
   }
 }

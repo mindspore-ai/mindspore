@@ -37,8 +37,7 @@ class Conv2DBackpropEltwiseFusionPass : public FusionBasePass {
   void MatchSingleFusionPattern(const session::KernelGraph &kernel_graph, FusedNodeRecord *candidate_fusion) override;
 
  private:
-  void MatchConv2DBackpropInputEltwise(const CNodePtr &cnode, const session::KernelGraph &kernel_graph,
-                                       FusedNodeRecord *candidate_fusion);
+  void MatchConv2DBackpropInputEltwise(const CNodePtr &cnode, FusedNodeRecord *candidate_fusion);
 };
 }  // namespace opt
 }  // namespace mindspore
