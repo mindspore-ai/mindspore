@@ -27,6 +27,9 @@
 
 namespace mindspore {
 namespace ops {
+int64_t CTCLossV2Grad::get_blank() const { return GetValue<int64_t>(GetAttr("blank")); }
+std::string CTCLossV2Grad::get_reduction() const { return GetValue<std::string>(GetAttr("reduction")); }
+bool CTCLossV2Grad::get_zero_infinity() const { return GetValue<bool>(GetAttr("zero_infinity")); }
 namespace {
 abstract::ShapePtr CTCLossV2GradInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
@@ -56,7 +59,7 @@ abstract::ShapePtr CTCLossV2GradInferShape(const PrimitivePtr &primitive,
 TypePtr CTCLossV2GradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
-  const std::set<TypePtr> valid_types = {kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);

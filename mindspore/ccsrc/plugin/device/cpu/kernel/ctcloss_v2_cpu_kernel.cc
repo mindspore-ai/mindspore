@@ -16,6 +16,7 @@
 
 #include "plugin/device/cpu/kernel/ctcloss_v2_cpu_kernel.h"
 #include <utility>
+#include <map>
 #include <string>
 #include <limits>
 #include <algorithm>
@@ -24,17 +25,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-template <typename T>
-T log_sum_exp(T a, T b) {
-  constexpr T neg_inf = -std::numeric_limits<T>::infinity();
-  if (a < b) {
-    std::swap(a, b);
-  }
-  if (b == neg_inf) {
-    return a;
-  }
-  return a + std::log1p(std::exp(b - a));
-}
+constexpr int64_t target_mul = 2;
 }  // namespace
 bool CTCLossV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                  const std::vector<KernelTensorPtr> &outputs) {
@@ -43,183 +34,161 @@ bool CTCLossV2CpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it got empty inputs or outputs, which is invalid.";
     return false;
   }
-
-  // Save for later use
-  outputs_ = outputs;
-
-  // Getting values
   auto kernel_ptr = std::make_shared<ops::CTCLossV2>(base_operator->GetPrim());
   blank_ = kernel_ptr->get_blank();
-  auto reduction = kernel_ptr->get_reduction();
-
-  static const HashMap<std::string, ReductionType> kReductionMap = {{MEAN, Mean}, {SUM, Sum}, {NONE, None}};
-  auto iter = kReductionMap.find(reduction);
-  if (iter == kReductionMap.end()) {
-    MS_EXCEPTION(ValueError) << "For " << kernel_name_
-                             << ", the attr 'reduction' only support 'mean', 'sum' and 'none', but got " << reduction;
-  }
-  reduction_ = iter->second;
-
   if (!MatchKernelFunc(base_operator, inputs, outputs)) {
     return false;
   }
-
   return true;
 }
 int CTCLossV2CpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                   const std::vector<KernelTensorPtr> &outputs,
                                   const std::map<uint32_t, tensor::TensorPtr> &) {
   if (auto ret = KernelMod::Resize(base_operator, inputs, outputs); ret != KRET_OK) {
-    dyamic_shape_ = ret == KRET_UNKNOWN_SHAPE;
     return ret;
   }
-  // log_probs_shape.size() is 3, checked in CTCLossV2InferShape
-  auto log_probs_shape = inputs[kIndex0]->GetShapeVector();
+  const auto log_probs_shape = inputs[kIndex0]->GetShapeVector();
   time_series_ = log_probs_shape[kIndex0];
-  batch_ = log_probs_shape[kIndex1];
-  num_classes_ = log_probs_shape[kIndex2];
-  // target_shape.size() is 2, checked in CTCLossV2InferShape
-  target_shape_ = inputs[kIndex1]->GetShapeVector();
-  padded_targets = target_shape_.size() != 1;
-  // Deal with workspace_size_list_
-  workspace_size_list_.clear();
-  if (reduction_ != None) {
-    const size_t value_size = abstract::TypeIdSize(inputs.at(kIndex0)->GetDtype());
-    workspace_size_list_ = {LongToSize(batch_) * value_size};
+  batch_sizes_ = log_probs_shape[kIndex1];
+  num_labels_ = log_probs_shape[kIndex2];
+  const auto target_shape = inputs[kIndex1]->GetShapeVector();
+  max_target_length_ = target_shape[kIndex1];
+  const auto input_length_shape = inputs[kIndex3]->GetShapeVector();
+  if (!(blank_ >= 0 && blank_ < num_labels_)) {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << ", the attr blank must be in label range [ 0, " << num_labels_
+                  << " ), but got value " << blank_ << ".";
+    return KRET_RESIZE_FAILED;
   }
-
+  if (input_length_shape.size() != 1 || input_length_shape[0] != batch_sizes_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'input_length' must be one-dimensional, "
+                     "and the size is equal to batch_size: "
+                  << batch_sizes_ << ", but got the shape of 'input_length': " << Vector2Str(input_length_shape) << ".";
+    return KRET_RESIZE_FAILED;
+  }
+  const auto target_length_shape = inputs[kIndex3]->GetShapeVector();
+  if (target_length_shape.size() != 1 || target_length_shape[0] != batch_sizes_) {
+    MS_LOG(ERROR) << "For '" << kernel_name_
+                  << "', the shape of 'target_length' must be one-dimensional, "
+                     "and the size is equal to batch_size: "
+                  << batch_sizes_ << ", but got the shape of 'target_length': " << Vector2Str(target_length_shape)
+                  << ".";
+    return KRET_RESIZE_FAILED;
+  }
   return KRET_OK;
 }
 
-template <typename S>
-std::vector<S> CTCLossV2CpuKernelMod::IndexProcessing(const S *input_lengths, const S *target_lengths) {
-  std::vector<S> target_offsets(LongToSize(batch_));
-  if (padded_targets) {
-    const auto target_length = target_shape_[kIndex1];
-    for (size_t i = 0; i < LongToSize(batch_); ++i) {
-      if (target_lengths[i] < 0 || target_lengths[i] > target_length) {
-        MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the target_lengths[" << i
-                                 << "] = " << target_lengths[i]
-                                 << " is negative or larger than target.shape[1] = " << target_length << ".";
+template <typename S, typename T>
+void CTCLossV2CpuKernelMod::LossCompute(S *log_probs_p, S *log_alpha_p, T *tar_p, SoftParam params) {
+  constexpr S neg_inf = -std::numeric_limits<S>::infinity();
+  int64_t input_length = params.input_length;
+  int64_t target_length = params.target_length;
+  int64_t offset = params.offset;
+  int64_t batch = params.batch;
+  NdTensorIterator<kDim3> log_probs_it(time_series_, batch_sizes_, num_labels_);
+  NdTensorIterator<kDim3> log_alpha_it(batch_sizes_, time_series_, target_mul * max_target_length_ + 1);
+  if (target_length > 0) {
+    log_alpha_p[log_alpha_it(batch, 0, 1)] =
+      log_probs_p[log_probs_it(0, batch, GetBlankPaddedTarget(tar_p, offset, 1))];
+  }
+  for (int64_t t = 1; t < input_length; t++) {
+    for (int64_t s = 0; s < target_mul * target_length + 1; s++) {
+      auto current_target_prime = GetBlankPaddedTarget(tar_p, offset, s);
+      S log_a1 = log_alpha_p[log_alpha_it(batch, t - 1, s)];
+      S log_max = log_a1;
+      S log_a2, log_a3;
+      if (s > 0) {
+        log_a2 = log_alpha_p[log_alpha_it(batch, t - 1, s - 1)];
+        log_max = std::max(log_a2, log_max);
+      } else {
+        log_a2 = neg_inf;
       }
-      target_offsets[i] = target_length * SizeToLong(i);
-    }
-  } else {
-    S current = 0;
-    for (size_t i = 0; i < LongToSize(batch_); ++i) {
-      target_offsets[i] = current;
-      current += target_lengths[i];
-    }
-    const int64_t target_length = target_shape_[kIndex0];
-    if (current != target_length) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the sum of target_lengths " << current
-                               << " should be equal to targets.shape[0] " << target_length << ".";
-    }
-  }
-
-  for (size_t b = 0; b < LongToSize(batch_); ++b) {
-    const auto input_length = input_lengths[b];
-    const auto target_length = target_lengths[b];
-    if (input_length > time_series_) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input_lengths[" << b << "] = " << input_length
-                               << " should be smaller than probs.shape[0] = " << time_series_;
-    }
-    if (input_length < 0 || input_length < target_length) {
-      MS_EXCEPTION(ValueError) << "For '" << kernel_name_ << "', the input_lengths[" << b << "] = " << input_length
-                               << " should be non-negative and smaller than target_lengths[" << b
-                               << "] = " << target_length;
+      if ((s > 1) && (GetBlankPaddedTarget(tar_p, offset, s - target_mul) != current_target_prime)) {
+        log_a3 = log_alpha_p[log_alpha_it(batch, t - 1, s - target_mul)];
+        log_max = std::max(log_a3, log_max);
+      } else {
+        log_a3 = neg_inf;
+      }
+      if (log_max == neg_inf) {
+        log_max = 0;
+      }
+      log_alpha_p[log_alpha_it(batch, t, s)] =
+        std::log(std::exp(log_a1 - log_max) + std::exp(log_a2 - log_max) + std::exp(log_a3 - log_max)) + log_max +
+        log_probs_p[log_probs_it(t, batch, current_target_prime)];
     }
   }
-  return target_offsets;
 }
 
-template <typename T, typename S>
-bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
-                                         const std::vector<kernel::AddressPtr> &workspace,
-                                         const std::vector<kernel::AddressPtr> &outputs) {
-  auto probs = reinterpret_cast<T *>(inputs[kIndex0]->addr);
-  auto targets = reinterpret_cast<S *>(inputs[kIndex1]->addr);
-  auto input_lengths = reinterpret_cast<S *>(inputs[kIndex2]->addr);
-  auto target_lengths = reinterpret_cast<S *>(inputs[kIndex3]->addr);
-  auto batched_log_alpha = reinterpret_cast<T *>(outputs[kIndex1]->addr);
-
-  auto neg_log_likelihood =
-    reinterpret_cast<T *>((reduction_ == None) ? outputs[kIndex0]->addr : workspace[kIndex0]->addr);
-
-  std::vector<S> target_offsets = IndexProcessing(input_lengths, target_lengths);
-
-  const auto max_target_length = padded_targets
-                                   ? target_shape_[kIndex1]
-                                   : static_cast<int64_t>(*std::max_element(target_lengths, target_lengths + batch_));
-  const auto padded_max_target_length = 2 * max_target_length + 1;
-  const auto batched_log_alpha_offset = time_series_ * padded_max_target_length;
-
-  NdTensorIterator<kDim3> probs_it(time_series_, batch_, num_classes_);
-  NdTensorIterator<kDim2> log_alpha_it(time_series_, padded_max_target_length);
-
-  // Set log_alpha shape
-  if (dyamic_shape_) {
-    const std::vector<int64_t> log_alpha_shape = {batch_, time_series_, padded_max_target_length};
-    outputs_[kIndex1]->SetShapeVector(log_alpha_shape);
-  }
-
-  std::fill(batched_log_alpha, batched_log_alpha + (batch_ * time_series_ * padded_max_target_length),
-            -std::numeric_limits<T>::infinity());
-
-  auto task = [this, probs, &probs_it, input_lengths, targets, target_lengths, target_offsets, batched_log_alpha,
-               batched_log_alpha_offset, &log_alpha_it, neg_log_likelihood](size_t start, size_t end) {
-    for (size_t b = start; b < end; b++) {
-      const auto input_length = input_lengths[b];
-      const auto padded_target_length = 2 * target_lengths[b] + 1;
-      const auto current_target = targets + target_offsets[b];
-      T *log_alpha = batched_log_alpha + batched_log_alpha_offset * SizeToLong(b);
-      log_alpha[log_alpha_it(0, 0)] = probs[probs_it(0, b, blank_)];
-      log_alpha[log_alpha_it(0, 1)] = probs[probs_it(0, b, current_target[0])];
-      for (int64_t t = 1; t < input_length; ++t) {
-        for (int64_t i = 0; i < padded_target_length; ++i) {
-          S target = GetBlankPaddedTarget(current_target, i);
-          T alpha = log_alpha[log_alpha_it(t - 1, i)];
-          if (i - 1 >= 0) {
-            alpha = log_sum_exp(alpha, log_alpha[log_alpha_it(t - 1, i - 1)]);
-          }
-          if ((target != blank_) && (i - 2 >= 0) && (target != GetBlankPaddedTarget(current_target, i - 2))) {
-            alpha = log_sum_exp(alpha, log_alpha[log_alpha_it(t - 1, i - 2)]);
-          }
-          log_alpha[log_alpha_it(t, i)] = alpha + probs[probs_it(t, b, target)];
-        }
-      }
-      if (padded_target_length > 1) {
-        neg_log_likelihood[b] = -log_sum_exp(log_alpha[log_alpha_it(input_length - 1, padded_target_length - 1)],
-                                             log_alpha[log_alpha_it(input_length - 1, padded_target_length - 2)]);
-      } else {
-        neg_log_likelihood[b] = -log_alpha[log_alpha_it(input_length - 1, 0)];
-      }
+template <typename T>
+bool CTCLossV2CpuKernelMod::IndexProcessing(T *in_len_p, T *tar_len_p, std::vector<int64_t> *target_offsets) {
+  const int64_t target_stride = max_target_length_;
+  for (size_t i = 0; i < LongToSize(batch_sizes_); ++i) {
+    if (tar_len_p[i] < 0 || tar_len_p[i] > target_stride) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the target_lengths[" << i << "] = " << tar_len_p[i]
+                    << " is negative or larger than target.shape[1] = " << target_stride << ".";
+      return false;
     }
-  };
-
-  ParallelLaunchAutoSearch(task, LongToSize(batch_), this, &parallel_search_info_);
-
-  if (reduction_ != None) {
-    auto reduced_result = reinterpret_cast<T *>(outputs[kIndex0]->addr);
-    *reduced_result = DoReduce(neg_log_likelihood, target_lengths);
+    (*target_offsets)[i] = target_stride * SizeToLong(i);
   }
-
+  for (size_t b = 0; b < LongToSize(batch_sizes_); ++b) {
+    const auto input_length = in_len_p[b];
+    const auto target_length = tar_len_p[b];
+    if (input_length > time_series_) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input_lengths[" << b << "] = " << input_length
+                    << " should be smaller than probs.shape[0] = " << time_series_;
+      return false;
+    }
+    if (input_length < 0 || input_length < target_length) {
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', the input_lengths[" << b << "] = " << input_length
+                    << " should be non-negative and smaller than tar_len_p[" << b << "] = " << target_length;
+      return false;
+    }
+  }
   return true;
 }
 
-template <typename T, typename S>
-T CTCLossV2CpuKernelMod::DoReduce(T *neg_log_likelihood, const S *target_lengths) const {
-  if (reduction_ == Mean) {
-    for (int b = 0; b < batch_; ++b) {
-      neg_log_likelihood[b] = neg_log_likelihood[b] / target_lengths[b];
-    }
-    T sum = std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, 0.0);
-    return sum / batch_;
-  } else {  // Sum
-    return std::accumulate(neg_log_likelihood, neg_log_likelihood + batch_, 0.0);
+template <typename S, typename T>
+bool CTCLossV2CpuKernelMod::LaunchKernel(const std::vector<kernel::AddressPtr> &inputs,
+                                         const std::vector<kernel::AddressPtr> &workspace,
+                                         const std::vector<kernel::AddressPtr> &outputs) {
+  auto log_probs_p = reinterpret_cast<S *>(inputs[kIndex0]->addr);
+  auto tar_p = reinterpret_cast<T *>(inputs[kIndex1]->addr);
+  auto in_len_p = reinterpret_cast<T *>(inputs[kIndex2]->addr);
+  auto tar_len_p = reinterpret_cast<T *>(inputs[kIndex3]->addr);
+  auto neg_log_p = reinterpret_cast<S *>(outputs[kIndex0]->addr);
+  auto log_alpha_p = reinterpret_cast<S *>(outputs[kIndex1]->addr);
+  std::vector<int64_t> target_offsets(LongToSize(batch_sizes_));
+  if (!IndexProcessing<T>(in_len_p, tar_len_p, &target_offsets)) {
+    return false;
   }
+  const int64_t padding_target_length = target_mul * max_target_length_ + 1;
+  NdTensorIterator<kDim3> log_probs_it(time_series_, batch_sizes_, num_labels_);
+  NdTensorIterator<kDim3> log_alpha_it(batch_sizes_, time_series_, padding_target_length);
+  std::fill(log_alpha_p, log_alpha_p + (batch_sizes_ * time_series_ * padding_target_length),
+            -std::numeric_limits<S>::infinity());
+  auto task = [&](size_t start, size_t end) {
+    for (size_t b = start; b < end; b++) {
+      int64_t in_len = in_len_p[b];
+      int64_t tar_len = tar_len_p[b];
+      int64_t offset = target_offsets[b];
+      log_alpha_p[log_alpha_it(b, 0, 0)] = log_probs_p[log_probs_it(0, b, blank_)];
+      SoftParam param = {in_len, tar_len, offset, SizeToLong(b)};
+      LossCompute<S, T>(log_probs_p, log_alpha_p, tar_p, param);
+      if (tar_len == 0) {
+        neg_log_p[b] = -log_alpha_p[log_alpha_it(b, in_len - 1, 0)];
+      } else {
+        S l1 = log_alpha_p[log_alpha_it(b, in_len - 1, tar_len * target_mul)];
+        S l2 = log_alpha_p[log_alpha_it(b, in_len - 1, tar_len * target_mul - 1)];
+        S m = std::max(l1, l2);
+        m = ((m == -std::numeric_limits<S>::infinity()) ? 0 : m);
+        S log_likelihood = std::log(std::exp(l1 - m) + std::exp(l2 - m)) + m;
+        neg_log_p[b] = -log_likelihood;
+      }
+    }
+  };
+  ParallelLaunchAutoSearch(task, LongToSize(batch_sizes_), this, &parallel_search_info_);
+  return true;
 }
-
 const std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::KernelRunFunc>> &CTCLossV2CpuKernelMod::GetFuncList()
   const {
   static const std::vector<std::pair<KernelAttr, CTCLossV2CpuKernelMod::KernelRunFunc>> func_list = {

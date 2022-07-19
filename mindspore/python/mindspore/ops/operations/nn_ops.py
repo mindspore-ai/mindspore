@@ -8555,7 +8555,7 @@ class CTCLossV2(Primitive):
 
     Inputs:
         - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
-            of classes (including blank).
+          of classes (including blank).
         - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
         - **input_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
         - **target_lengths** (Union(Tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
@@ -8566,9 +8566,34 @@ class CTCLossV2(Primitive):
 
     Raises:
         TypeError: If `zero_infinity` is not a bool, reduction is not string.
+        TypeError: If the dtype of `log_probs` is not float or double.
+        TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
+        RuntimeError: If the rank of `log_probs` is not 3.
+        RuntimeError: If the rank of `targets` is not 2.
+        RuntimeError: If the shape of `input_lengths` does not match {batch_size|N}.
+        RuntimeError: If the shape of `target_lengths` does not match {batch_size|N}.
+        RuntimeError: If the types of `targets`, `input_lengths` or `target_lengths` are different.
+        RuntimeError: If the value of `blank` is not in range [0, num_labels|C).
+        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
+        RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
+        ``Ascend`` ``CPU``
 
+    Examples:
+        >>> log_probs = Tensor(np.array([[[0.3, 0.6, 0.6]],
+                                         [[0.9, 0.4, 0.2]]]).astype(np.float32))
+        >>> targets = Tensor(np.array([[0, 1]]), mstype.int32)
+        >>> input_lengths = Tensor(np.array([2]), mstype.int32)
+        >>> target_lengths = Tensor(np.array([1]), mstype.int32)
+        >>> CTCLossV2 = op.CTCLossV2(blank=0, reduction='none', zero_infinity=False)
+        >>> neg_log_hood, log_alpha = CTCLossV2(
+        ...     log_probs, targets, input_lengths, target_lengths)
+        >>> print(neg_log_hood)
+        [-2.2986124]
+        >>> print(log_alpha)
+        [[[0.3       0.3            -inf      -inf      -inf]
+          [1.2       1.8931472 1.2            -inf      -inf]]]
     """
 
     @prim_attr_register
@@ -8596,13 +8621,13 @@ class CTCLossV2Grad(Primitive):
     Args:
         blank (int): The blank label. Default: 0.
         reduction (string): Apply specific reduction method to the output. Currently only support 'none'.
-        Default(None): "none".
+            Default: "none".
         zero_infinity (bool): Whether to set infinite loss and correlation gradient to zero. Default: False.
 
     Inputs:
         - **grad_out** (Tenosr) - Gradient renewal codfficient, A tensor for shape (N), where N is batch size.
         - **log_probs** (Tensor) - A tensor of shape (T, N, C), where T is input length, N is batch size and C is number
-            of classes (including blank).
+          of classes (including blank).
         - **targets** (Tensor) - A tensor of shape (N, S), where S is max target length, means the target sequences.
         - **input_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the input.
         - **target_lengths** (Union(tuple, Tensor)) - A tuple or Tensor of shape(N). It means the lengths of the target.
@@ -8610,13 +8635,23 @@ class CTCLossV2Grad(Primitive):
         - **neg_log_likelihood** (Tensor) - A loss value which is differentiable with respect to each input node.
 
     Outputs:
-        - **grad** (Tensor) - The grad of Connectionist Temporal Classification Loss
+        - **grad** (Tensor) - The grad of Connectionist Temporal Classification Loss.
 
     Raises:
         TypeError: If `zero_infinity` is not a bool, reduction is not string.
+        TypeError: If the dtype of `log_probs` or `grad_out` is not float or double.
+        TypeError: If the dtype of `targets`, `input_lengths` or `target_lengths` is not int32 or int64.
+        RuntimeError: If the rank of `log_probs` is not 3.
+        RuntimeError: If the rank of `targets` is not 2.
+        RuntimeError: If the shape of `input_lengths` does not match {batch_size|N}.
+        RuntimeError: If the shape of `target_lengths` does not match {batch_size|N}.
+        RuntimeError: If the types of `targets`, `input_lengths`, `grad_out` or `target_lengths` are different.
+        RuntimeError: If the value of `blank` is not in range [0, num_labels|C).
+        RuntimeError: If any value of `input_lengths` is larger than (num_labels|C).
+        RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
     """
 
     @prim_attr_register

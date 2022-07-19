@@ -36,6 +36,21 @@ class MIND_API CTCLossV2Grad : public BaseOperator {
       {"grad"});
   }
   void Init() const {}
+
+  /// \brief Get blank.
+  ///
+  /// \return blank.
+  int64_t get_blank() const;
+
+  /// \brief Get reduction.
+  ///
+  /// \return reduction.
+  std::string get_reduction() const;
+
+  /// \brief Get zero_infinity.
+  ///
+  /// \return zero_infinity.
+  bool get_zero_infinity() const;
 };
 
 abstract::AbstractBasePtr CTCLossV2GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

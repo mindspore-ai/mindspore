@@ -84,6 +84,7 @@ from mindspore.ops.operations.nn_ops import FractionalMaxPool3DWithFixedKsize
 from mindspore.ops.operations._grad_ops import FractionalMaxPool3DGradWithFixedKsize
 from mindspore.ops.operations.nn_ops import FractionalAvgPool
 from mindspore.ops.operations._grad_ops import FractionalAvgPoolGrad
+from mindspore.ops.operations.nn_ops import CTCLossV2
 from mindspore.ops.operations.nn_ops import GridSampler2D
 from mindspore.ops.operations.nn_ops import GridSampler3D
 from mindspore.ops.operations.nn_ops import MaxUnpool2D
@@ -2963,6 +2964,17 @@ test_case_nn_ops = [
         'desc_inputs': [Tensor(np.arange(16).reshape((2, 2, 2, 2)).astype(np.float32)),
                         Tensor(np.arange(-0.9, 0.9, 0.05).reshape((2, 3, 3, 2)).astype(np.float32))],
         'desc_bprop': [Tensor(np.arange(-0.9, 0.9, 0.05).reshape((2, 2, 3, 3)).astype(np.float32))]}),
+    ('CTCLossV2', {
+        'block': CTCLossV2(blank=0, reduction='none', zero_infinity=False),
+        'desc_inputs': [Tensor(np.array([[[0.3, 0.6, 0.6],
+                                          [0.4, 0.3, 0.9]],
+                                         [[0.9, 0.4, 0.2],
+                                          [0.9, 0.9, 0.1]]]).astype(np.float32)),
+                        Tensor(np.array([[0, 0], [1, 0]]), mstype.int32),
+                        Tensor(np.array([2, 2]), mstype.int32),
+                        Tensor(np.array([1, 2]), mstype.int32)],
+        'desc_bprop': [Tensor(np.ones([2], np.float32)),
+                       Tensor(np.ones([2, 2, 5], np.float32))]}),
     ('SparseApplyAdagradDA', {
         'block': SparseApplyAdagradDANet(),
         'desc_inputs': [Tensor(np.array([[0.4, 0.5], [0.3, 0.1]]).astype(np.float32)),
