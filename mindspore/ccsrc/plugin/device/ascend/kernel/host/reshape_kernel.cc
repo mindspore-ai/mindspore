@@ -184,5 +184,24 @@ void ReshapeKernelMod::Execute(const std::vector<AddressPtr> &inputs, const std:
   }
   MS_LOG(INFO) << "Execute host ReshapeKernel End";
 }
+
+bool ReshapeKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
+                              const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+  auto node = anf_node_.lock();
+  MS_EXCEPTION_IF_NULL(node);
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (stream_ == nullptr) {
+    stream_ = stream_ptr;
+  }
+  try {
+    Execute(inputs, outputs);
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. node: " << cnode->fullname_with_scope() << ", Error message is "
+                  << e.what();
+    return false;
+  }
+  return true;
+}
 }  // namespace kernel
 }  // namespace mindspore
