@@ -47,7 +47,7 @@ mindspore.nn.Adadelta
 
     **输入：**
 
-    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）与 `params` 相同。
+    - **grads** (tuple[Tensor]) - 优化器中 `params` 的梯度，形状（shape）和数据类型与 `params` 相同。数据类型为float16或float32。
 
     **输出：**
 
