@@ -65,6 +65,10 @@ int TopKCPUKernel::Run() {
     MS_LOG(ERROR) << "The k value is out of the data size range.";
     return RET_ERROR;
   }
+  if (topk_param_->k_ > topk_param_->dim_size_) {
+    MS_LOG(ERROR) << "The k value is out of the data size range.";
+    return RET_ERROR;
+  }
   MS_ASSERT(ms_context_->allocator != nullptr);
   topk_param_->topk_node_list_ =
     ms_context_->allocator->Malloc(static_cast<int>(sizeof(TopkNode)) * topk_param_->dim_size_);

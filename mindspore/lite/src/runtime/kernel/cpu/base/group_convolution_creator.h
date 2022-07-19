@@ -47,7 +47,7 @@ class GroupConvCreator {
 
   ~GroupConvCreator() = default;
 
-  void SetShapeOfTensors();
+  int SetShapeOfTensors();
   int CreateConvs(std::vector<kernel::LiteKernel *> *group_convs);
   void CopyQuantParam(const std::vector<lite::Tensor *> *tensors);
   int GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,

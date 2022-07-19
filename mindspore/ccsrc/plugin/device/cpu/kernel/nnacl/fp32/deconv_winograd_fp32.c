@@ -669,7 +669,7 @@ int DeconvWg(const float *nhwc_input_, float *tile_in, float *tile_out, int star
                                                       deconv_param->oc_div_ * DECONV_WINOGRAD_DEFAULT_TILE * tile_num;
 
       /* winograd a buffer */
-      if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT) {
+      if (unit->winograd_.kh_ >= DECONV_WINOGRAD_BUFFER_COUNT || unit->winograd_.AT_ == NULL) {
         return NNACL_ERR;
       }
       DeConvWgABuffer *wg_buf = &deconv_param->a_buffer_[unit->winograd_.kh_];

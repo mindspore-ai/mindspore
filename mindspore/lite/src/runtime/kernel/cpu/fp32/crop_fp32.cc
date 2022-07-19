@@ -60,6 +60,10 @@ int CropCPUKernel::Run() {
   auto output = out_tensors_[0];
   MS_ASSERT(input != nullptr);
   MS_ASSERT(output != nullptr);
+  if (output->shape().size() <= 1) {
+    MS_LOG(ERROR) << "Output shape size should be greater than 1, but got " << output->shape().size();
+    return RET_ERROR;
+  }
   if (output->shape()[1] < crop_para_->thread_count_) {
     float *input_data = reinterpret_cast<float *>(input->data());
     float *output_data = reinterpret_cast<float *>(output->data());

@@ -83,6 +83,10 @@ lite::Tensor *CreateConstTensor(const lite::Tensor *tensor, const std::vector<in
   }
   void *new_tensor_data =
     reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(tensor->data()) + index * new_tensor->Size());
+  if (new_tensor_data == nullptr) {
+    delete new_tensor;
+    return nullptr;
+  }
   memcpy(new_tensor->data(), reinterpret_cast<void *>(new_tensor_data), new_tensor->Size());
   return new_tensor;
 }
@@ -169,19 +173,28 @@ int GroupConvCreator::NewConstTensor(std::vector<lite::Tensor *> *tensors, int g
   return lite::RET_OK;
 }
 
-void GroupConvCreator::SetShapeOfTensors() {
-  int new_in_channel = origin_inputs_.at(kWeightIndex)->Channel();
+int GroupConvCreator::SetShapeOfTensors() {
+  auto weight_tensor = origin_inputs_.at(kWeightIndex);
+  CHECK_NULL_RETURN(weight_tensor);
+  int new_in_channel = weight_tensor->Channel();
   int new_out_channel = 0;
   if (conv_param_ == nullptr) {
-    return;
+    return lite::RET_ERROR;
   }
   if (conv_param_->group_ == 0) {
     MS_LOG(ERROR) << "Divisor 'group' cannot be 0.";
-    return;
-  } else {
-    new_out_channel = origin_inputs_.at(kWeightIndex)->Batch() / conv_param_->group_;
+    return lite::RET_ERROR;
   }
-
+  MS_CHECK_TRUE_MSG(weight_tensor->shape().size() == DIMENSION_4D, lite::RET_ERROR,
+                    "weight tensor shape size should be 4.");
+  if (conv_param_->kernel_h_ != weight_tensor->shape()[SECOND_INPUT] ||
+      conv_param_->kernel_w_ != weight_tensor->shape()[THIRD_INPUT]) {
+    MS_LOG(ERROR) << "kernel_h, kernel_w should be equal to " << weight_tensor->shape()[SECOND_INPUT] << ", "
+                  << weight_tensor->shape()[SECOND_INPUT] << " but got " << conv_param_->kernel_h_ << ", "
+                  << conv_param_->kernel_w_;
+    return lite::RET_ERROR;
+  }
+  new_out_channel = origin_inputs_.at(kWeightIndex)->Batch() / conv_param_->group_;
   /* set shape */
   set_filter_shape({new_out_channel, conv_param_->kernel_h_, conv_param_->kernel_w_, new_in_channel});
   set_bias_shape({new_out_channel});
@@ -193,6 +206,7 @@ void GroupConvCreator::SetShapeOfTensors() {
     set_output_shape({origin_inputs_.front()->Batch(), origin_outputs_.front()->Height(),
                       origin_outputs_.front()->Width(), new_out_channel});
   }
+  return lite::RET_OK;
 }
 
 int GroupConvCreator::GetSingleConvParam(ConvParameter *conv_param, std::vector<lite::Tensor *> *new_inputs,

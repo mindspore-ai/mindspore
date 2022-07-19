@@ -30,15 +30,21 @@ namespace mindspore::kernel {
 int CropBaseCPUKernel::Prepare() { return RET_OK; }
 
 int CropBaseCPUKernel::ReSize() {
-  CHECK_LESS_RETURN(in_tensors_.size(), 1);
+  // check in_tensors size
+  CHECK_LESS_RETURN(in_tensors_.size(), kInputSize1);
+  // check out_tensors size
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
   auto *input_tensor = in_tensors_.at(kInputIndex);
   CHECK_NULL_RETURN(input_tensor);
+  auto *crop_tensor = in_tensors_.at(SECOND_INPUT);
+  CHECK_NULL_RETURN(crop_tensor);
   auto *out_tensor = out_tensors_.at(kOutputIndex);
   CHECK_NULL_RETURN(out_tensor);
 
   input_shape_ = input_tensor->shape();
   CHECK_NULL_RETURN(input_shape_.data());
+  crop_shape_ = crop_tensor->shape();
+  CHECK_NULL_RETURN(crop_shape_.data());
   output_shape_ = out_tensor->shape();
   CHECK_NULL_RETURN(output_shape_.data());
   size_t input_dim = input_shape_.size();
@@ -71,6 +77,7 @@ int CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) const 
           crop_offset = crop_para->offset_[i - axis];
         }
       }
+      MS_CHECK_GE(input_shape_[i] - crop_offset, crop_shape_[i], RET_ERROR);
     }
     crop_para->in_offset_[i] = crop_offset;
   }

@@ -15,10 +15,15 @@
  */
 
 #include "nnacl/fp32/invert_permutation_fp32.h"
+#include "nnacl/errorcode.h"
 
-void InvertPermutation(const int *input, int *output, int num) {
+int InvertPermutation(const int *input, int *output, int num) {
   for (int i = 0; i < num; i++) {
     int index = input[i];
+    if (index >= num) {
+      return NNACL_ERR;
+    }
     output[index] = i;
   }
+  return NNACL_OK;
 }

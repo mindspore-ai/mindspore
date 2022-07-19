@@ -18,6 +18,7 @@
 #include "src/runtime/kernel_registry.h"
 #include "schema/model_generated.h"
 #include "nnacl/fp32/invert_permutation_fp32.h"
+#include "mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH;
 using mindspore::lite::KernelRegistrar;
@@ -58,7 +59,11 @@ int InvertPermutationCPUKernel::Run() {
   auto output_ptr = reinterpret_cast<int32_t *>(out_tensor->data());
   CHECK_NULL_RETURN(input_ptr);
   CHECK_NULL_RETURN(output_ptr);
-  InvertPermutation(input_ptr, output_ptr, in_tensors_[0]->ElementsNum());
+  auto ret = InvertPermutation(input_ptr, output_ptr, in_tensors_[0]->ElementsNum());
+  if (ret != NNACL_OK) {
+    MS_LOG(ERROR) << "null pointer dereferencing.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

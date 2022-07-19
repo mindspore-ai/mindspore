@@ -54,6 +54,11 @@ int ArithmeticsInt8Launch(void *cdata, int task_id, float, float) {
 int ArithmeticInt8CPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->quant_type_ != schema::QuantType_QUANT_ALL) {
+    MS_LOG(ERROR) << "Quant type should be: " << schema::QuantType_QUANT_ALL
+                  << " but got: " << op_parameter_->quant_type_;
+    return RET_ERROR;
+  }
   switch (op_parameter_->type_) {
     case PrimitiveType_Equal:
       arithmetic_run_ = ElementEqualInt8;

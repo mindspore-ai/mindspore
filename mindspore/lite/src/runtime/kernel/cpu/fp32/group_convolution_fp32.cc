@@ -104,12 +104,16 @@ int GroupConvolutionFp32CPUKernel::Prepare() {
   if (group_conv_creator_ == nullptr) {
     return lite::RET_ERROR;
   }
-  group_conv_creator_->SetShapeOfTensors();
+  auto ret = group_conv_creator_->SetShapeOfTensors();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetShapeOfTensors for fp32 group conv failed.";
+    return lite::RET_ERROR;
+  }
   for (int i = 0; i < conv_param_->group_; ++i) {
     auto *new_conv_param = CreateNewConvParameter(conv_param_);
     std::vector<lite::Tensor *> new_inputs;
     std::vector<lite::Tensor *> new_outputs;
-    auto ret = group_conv_creator_->GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
+    ret = group_conv_creator_->GetSingleConvParam(new_conv_param, &new_inputs, &new_outputs, i);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "GetSingleConv for fp32 group conv failed.";
       return lite::RET_ERROR;

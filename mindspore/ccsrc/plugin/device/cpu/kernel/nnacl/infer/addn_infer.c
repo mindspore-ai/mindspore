@@ -37,6 +37,11 @@ int AddnInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **o
   size_t max_dims = input->shape_size_;
   size_t max_dims_idx = 0;
 
+  // check zerp dimension
+  for (size_t i = 0; i < max_dims; i++) {
+    MS_CHECK_FALSE(input->shape_[i] == 0, NNACL_ERR);
+  }
+
   // determine max_dims
   for (size_t i = 1; i < inputs_size; ++i) {
     if (inputs[i]->shape_size_ > max_dims) {

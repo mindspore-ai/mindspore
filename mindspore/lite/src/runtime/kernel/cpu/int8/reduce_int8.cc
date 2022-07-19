@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/cpu/int8/reduce_int8.h"
+#include <limits>
 #include "schema/model_generated.h"
 #include "src/runtime/kernel_registry.h"
 #include "nnacl/int8/quantize.h"
@@ -102,6 +103,23 @@ void ReduceInt8CPUKernel::Match4DReducePattern() {
   }
 }
 
+int ReduceInt8CPUKernel::CheckQuantParams() {
+  lite::Tensor *input = in_tensors_.at(0);
+  lite::Tensor *output = out_tensors_.at(0);
+  MS_CHECK_FALSE_MSG(input->quant_params().empty(), RET_ERROR, "input quant params is empty.");
+  MS_CHECK_FALSE_MSG(output->quant_params().empty(), RET_ERROR, "input quant params is empty.");
+  double epsilon = std::numeric_limits<double>::epsilon();
+  auto input_quant_param = input->quant_params().front();
+  auto output_quant_param = output->quant_params().front();
+  MS_CHECK_FALSE_MSG(input_quant_param.scale < -epsilon, RET_ERROR, "The input scale value should be positive.");
+  MS_CHECK_FALSE_MSG(output_quant_param.scale < -epsilon, RET_ERROR, "The output scale value should be positive.");
+  if (input_quant_param.scale < epsilon || output_quant_param.scale < epsilon) {
+    MS_LOG(ERROR) << "Scale value is equal 0.0";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 int ReduceInt8CPUKernel::Prepare() {
   auto ret = ReduceBaseCPUKernel::Prepare();
   if (ret != RET_OK) {
@@ -110,6 +128,15 @@ int ReduceInt8CPUKernel::Prepare() {
   Match4DReducePattern();
   if (!this->in_tensors_[0]->shape().empty()) {
     this->valid_shape_ = true;
+    // check axis [-rank(x), rank(x))
+    auto shape_size = in_tensors_.at(kInputIndex)->shape().size();
+    for (auto i = 0; i < num_axes_; i++) {
+      if (axes_[i] >= static_cast<int>(shape_size) || axes_[i] < -(static_cast<int>(shape_size))) {
+        MS_LOG(ERROR) << "Reduce axis should be in [" << -(static_cast<int>(shape_size)) << ", " << shape_size
+                      << ") but got" << axes_[i];
+        return RET_ERROR;
+      }
+    }
     ret = CalculateQuantArgs();
     if (ret != RET_OK) {
       return ret;
@@ -393,17 +420,29 @@ int ReduceMeanPatternInt8Impl(void *cdata, int task_id, float, float) {
 void ReduceInt8CPUKernel::GetQuantArgs(size_t i) {
   MS_ASSERT(i < static_cast<size_t>(num_axes_));
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceMean)) {
+    if (i >= mean_multipliers_.size()) {
+      MS_LOG(ERROR) << "Buffer overflow error.";
+      return;
+    }
     quant_arg_.mean_multiplier_ = mean_multipliers_[i]->multiplier_;
     quant_arg_.mean_left_shift_ = mean_multipliers_[i]->left_shift_;
     quant_arg_.mean_right_shift_ = mean_multipliers_[i]->right_shift_;
   }
 
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceProd)) {
+    if (i >= prod_multipliers_.size()) {
+      MS_LOG(ERROR) << "Buffer overflow error.";
+      return;
+    }
     quant_arg_.prod_multiplier_ = prod_multipliers_[i]->multiplier_;
     quant_arg_.prod_left_shift_ = prod_multipliers_[i]->left_shift_;
     quant_arg_.prod_right_shift_ = prod_multipliers_[i]->right_shift_;
   }
   if (mode_ == static_cast<int>(schema::ReduceMode_ReduceSumSquare)) {
+    if (i >= sum_square_multipliers_.size()) {
+      MS_LOG(ERROR) << "buffer overflow error.";
+      return;
+    }
     quant_arg_.sum_square_multiplier_ = sum_square_multipliers_[i]->multiplier_;
     quant_arg_.sum_square_left_shift_ = sum_square_multipliers_[i]->left_shift_;
     quant_arg_.sum_square_right_shift_ = sum_square_multipliers_[i]->right_shift_;

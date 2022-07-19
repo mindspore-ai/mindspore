@@ -98,6 +98,7 @@ int FillCPUKernel::Run() {
   } else if (fill_input->data_type() == kNumberTypeInt32 || fill_input->data_type() == kNumberTypeInt) {
     auto fill_data = reinterpret_cast<int *>(fill_input->data());
     CHECK_NULL_RETURN(fill_data);
+    MS_CHECK_TRUE_RET(fill_input->shape().empty(), RET_ERROR);
     int32_src_data_ = fill_data[0];
     int32_out_ptr_ = reinterpret_cast<int *>(output->MutableData());
     CHECK_NULL_RETURN(int32_out_ptr_);
