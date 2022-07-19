@@ -1,7 +1,7 @@
 ﻿mindspore.ops.unstack
 =======================
 
-.. py:function:: mindspore.ops.unstack(axis=0)
+.. py:function:: mindspore.ops.unstack(input_x, axis=0)
 
     根据指定轴对输入矩阵进行分解。
 

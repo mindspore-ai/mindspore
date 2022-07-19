@@ -1,7 +1,7 @@
 mindspore.ops.xlogy
 ====================
 
-.. py:class:: mindspore.ops.xlogy(x, y)
+.. py:function:: mindspore.ops.xlogy(x, y)
 
     计算第一个输入Tensor乘以第二个输入Tensor的对数。当 `x` 为零时，则返回零。
 

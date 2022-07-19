@@ -541,9 +541,9 @@ class AdaptiveAvgPool2d(Cell):
 
     Raises:
         ValueError: If `output_size` is a tuple and the length of `output_size` is not 2.
-        TypeError: If `input_x` is not a Tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or float64.
-        ValueError: If the dimension of `input_x` is less than or equal to the dimension of `output_size`.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+        ValueError: If the dimension of `x` is less than or equal to the dimension of `output_size`.
 
     Supported Platforms:
         ``GPU``
