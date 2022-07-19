@@ -1784,15 +1784,26 @@ py::object ForwardExecutor::DoAutoCastTuple(const py::tuple &tuple, const TypeId
 py::object ForwardExecutor::DoParamMixPrecisionCast(bool *is_cast, const py::object &obj, const std::string &op_name,
                                                     size_t index) {
   MS_EXCEPTION_IF_NULL(is_cast);
-  const auto &tensor = py::cast<tensor::TensorPtr>(obj);
-  MS_EXCEPTION_IF_NULL(tensor);
-  const auto &cast_type = tensor->cast_dtype();
-  if (cast_type != nullptr) {
-    auto source_element = tensor->Dtype();
-    if (source_element != nullptr && IsSubType(source_element, kFloat) && *source_element != *cast_type) {
-      MS_LOG(DEBUG) << "Cast to " << cast_type->ToString();
+  if (forward_cell_stack_.empty()) {
+    // Pure function running, mix precision cast is disable.
+    return obj;
+  }
+  // Get mixed_precision_flag from cell object.
+  const auto &c_cell = py::cast<CellPtr>(forward_cell_stack_.top());
+  MS_EXCEPTION_IF_NULL(c_cell);
+  auto mixed_precision_flag = c_cell->GetMixedPrecisionType();
+  if (mixed_precision_flag != kNotSet) {
+    auto dst_dtype = kFloat16;
+    if (mixed_precision_flag == kFP32) {
+      dst_dtype = kFloat32;
+    }
+    const auto &tensor = py::cast<tensor::TensorPtr>(obj);
+    MS_EXCEPTION_IF_NULL(tensor);
+    auto source_dtype = tensor->Dtype();
+    if (source_dtype != nullptr && IsSubType(source_dtype, kFloat) && *source_dtype != *dst_dtype) {
+      MS_LOG(DEBUG) << "Cast input i: " << index << " args to " << dst_dtype->ToString();
       *is_cast = true;
-      return DoAutoCast(obj, cast_type->type_id(), op_name, index);
+      return DoAutoCast(obj, dst_dtype->type_id(), op_name, index);
     }
   }
   return obj;
@@ -2784,11 +2795,11 @@ py::object ForwardExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info) {
 void ForwardExecutor::ClearRes() {
   MS_LOG(DEBUG) << "Clear forward res";
   lazy_build_ = false;
-  cell_depth_ = 0;
   implicit_cast_map_.clear();
   prim_abs_list_.clear();
   node_abs_map_.clear();
   dynamic_shape_info_ptr()->reset();
+  std::stack<py::object>().swap(forward_cell_stack_);
 }
 
 ForwardExecutorPtr GradExecutor::forward() const {
@@ -4405,7 +4416,7 @@ void PynativeExecutor::ClearRes() {
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
   if (py::isinstance<Cell>(cell)) {
-    forward_executor()->IncreaseCellDepth();
+    forward_executor()->PushForwardCell(cell);
   }
 
   // Do some initing work before new graph
@@ -4421,7 +4432,7 @@ void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
 
 void PynativeExecutor::EndGraph(const py::object &cell, const py::object &out, const py::args &args) {
   if (py::isinstance<Cell>(cell)) {
-    forward_executor()->DecreaseCellDepth();
+    forward_executor()->PopForwardCell();
   }
 
   // Do some finishing work before end graph
