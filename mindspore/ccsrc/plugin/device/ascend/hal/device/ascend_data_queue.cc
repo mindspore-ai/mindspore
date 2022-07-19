@@ -27,7 +27,7 @@ void CheckRtRetWithError(rtError_t error, const std::string &msg) {
 }
 
 AscendDataQueueDynamic::AscendDataQueueDynamic(const size_t capacity)
-    : DataQueue(capacity), stream_(0), node_info_(nullptr) {
+    : DataQueue(capacity), stream_(nullptr), node_info_(nullptr) {
   auto context_key = device_context_->device_context_key();
   auto runtime_instance = dynamic_cast<ascend::AscendKernelRuntime *>(
     device::KernelRuntimeManager::Instance().GetKernelRuntime(context_key.device_name_, context_key.device_id_));

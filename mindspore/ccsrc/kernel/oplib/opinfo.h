@@ -114,6 +114,8 @@ class OpInfo {
     dynamic_compile_static_ = opinfo.dynamic_compile_static_;
     op_pattern_ = opinfo.op_pattern();
     processor_ = opinfo.processor_;
+    input_to_attr_index_ = opinfo.input_to_attr_index_;
+    real_input_index_ = opinfo.real_input_index_;
     need_check_supported_ = opinfo.need_check_supported();
     is_dynamic_format_ = opinfo.is_dynamic_format();
     for (const auto &attr : opinfo.attrs_ptr()) {

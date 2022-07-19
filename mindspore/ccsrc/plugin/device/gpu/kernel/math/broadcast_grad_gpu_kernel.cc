@@ -82,7 +82,7 @@ int BroadcastOpGradGpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
   if (is_null_input_) {
     return KRET_OK;
   }
-  need_broadcast_ = broadcast_utils::IsBroadcast(x1_shape_, x2_shape_);
+  need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(x1_shape_, x2_shape_);
   // For x1_shape, x2_shape, dy_shape, it's validation has been done in core/ops/xxx.cc.
   // But we need check shape rank less equal to 7D.
   if (!broadcast_utils::AlignedBroadCastShape(kMaxDim, &dy_shape_, &x1_shape_, &x2_shape_)) {

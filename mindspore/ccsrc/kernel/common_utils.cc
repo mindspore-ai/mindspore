@@ -628,7 +628,7 @@ void GetValidKernelNodes(const FuncGraphPtr &func_graph, std::vector<AnfNodePtr>
   GetValidKernelNodes(func_graph, node_list);
 
   auto parameters = func_graph->parameters();
-  input_list->insert(input_list->cbegin(), parameters.begin(), parameters.end());
+  (void)input_list->insert(input_list->cbegin(), parameters.begin(), parameters.end());
 
   GetFuncGraphOutputNodes(func_graph, output_list);
 }
@@ -1353,22 +1353,10 @@ void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr
   for (const auto &ref : out_in_ref) {
     (void)to_kernel_attr->AddOutInRef(ref.first, ref.second);
   }
-  to_kernel_attr->AddAllOutInRef(all_out_in_ref);
+  (void)to_kernel_attr->AddAllOutInRef(all_out_in_ref);
 }
 
 namespace broadcast_utils {
-bool IsBroadcast(const std::vector<size_t> &lhs, const std::vector<size_t> &rhs) {
-  if (lhs.size() != rhs.size()) {
-    return true;
-  }
-  for (size_t i = 0; i < lhs.size(); i++) {
-    if (lhs[i] != rhs[i]) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool AlignedBroadCastShape(size_t align_rank, std::vector<size_t> *broadcast, std::vector<size_t> *lhs,
                            std::vector<size_t> *rhs) {
   if (broadcast == nullptr || lhs == nullptr || rhs == nullptr) {

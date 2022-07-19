@@ -125,7 +125,7 @@ int BroadcastOpGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const 
   if (is_null_input_) {
     return KRET_OK;
   }
-  need_broadcast_ = broadcast_utils::IsBroadcast(lhs_shape_, rhs_shape_);
+  need_broadcast_ = common::AnfAlgo::IsTensorBroadcast(lhs_shape_, rhs_shape_);
   if (!broadcast_utils::AlignedBroadCastShape(MAX_DIMS, &output_shape_, &lhs_shape_, &rhs_shape_)) {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', it's dimension of input cannot be greater than " << MAX_DIMS
                   << ", but got " << lhs_shape_.size();
