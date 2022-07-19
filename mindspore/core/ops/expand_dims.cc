@@ -40,8 +40,8 @@ abstract::ShapePtr ExpandDimsInferShape(const PrimitivePtr &primitive, const std
   auto min_shape = shape_map[kMinShape];
 
   // ExpandDims could handle -1, but could not handle -2
-  if (std::any_of(x_shape.begin(), x_shape.end(), [](ShapeValueDType s) { return s < -1; })) {
-    return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
+  if (IsDynamicRank(x_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
   }
 
   const int64_t rank = SizeToLong(x_shape.size());

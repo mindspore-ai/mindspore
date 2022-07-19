@@ -35,10 +35,14 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
   std::vector<int64_t> ret_min_shape;
   std::vector<int64_t> ret_max_shape;
 
-  auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
+  auto shape_infos = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape());
   auto in_shape = shape_infos[kShape];
   auto max_shape = shape_infos[kMaxShape];
   auto min_shape = shape_infos[kMinShape];
+
+  if (IsDynamicRank(in_shape)) {
+    return std::make_shared<abstract::Shape>(std::vector<int64_t>{-2});
+  }
 
   auto len = SizeToLong(in_shape.size());
   if (axis.empty()) {
@@ -55,7 +59,7 @@ abstract::ShapePtr SqueezeInferShape(const PrimitivePtr &primitive, const std::v
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange<int64_t>("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
       auto idx = item >= 0 ? item : len + item;
-      if (in_shape[LongToSize(idx)] != 1L) {
+      if ((in_shape[LongToSize(idx)] >= 0) && (in_shape[LongToSize(idx)] != 1L)) {
         MS_EXCEPTION(ValueError) << "For '" << op_name << ", input_x shape[" << LongToSize(idx)
                                  << "] must be equal to one, but got " << in_shape[LongToSize(idx)] << ".";
       }
