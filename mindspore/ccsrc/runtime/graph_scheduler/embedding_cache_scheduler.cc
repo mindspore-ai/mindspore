@@ -351,8 +351,8 @@ void EmbeddingCacheScheduler::SetDataSetChannel(const std::string &actor_id,
       if (!common::AnfAlgo::HasNodeAttr("shared_name", kernel_node)) {
         MS_LOG(EXCEPTION) << "Can not find attr[shared_name] of GetNext";
       }
-      data_prepare_aid_to_data_channel_.emplace(actor_id,
-                                                common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "shared_name"));
+      (void)data_prepare_aid_to_data_channel_.emplace(
+        actor_id, common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, "shared_name"));
       break;
     }
   }

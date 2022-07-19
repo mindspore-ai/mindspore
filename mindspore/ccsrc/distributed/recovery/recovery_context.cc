@@ -165,8 +165,8 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
   const std::string biz = "sync_ckpt";
 
   std::vector<std::string> names_prefix;
-  names_prefix.push_back(kCkptEpochInfoPrefix);
-  names_prefix.push_back(kCkptStepInfoPrefix);
+  (void)names_prefix.emplace_back(kCkptEpochInfoPrefix);
+  (void)names_prefix.emplace_back(kCkptStepInfoPrefix);
 
   std::vector<std::string> values;
   values.push_back(std::to_string(latest_ckpt_epoch_));
@@ -233,7 +233,6 @@ void RecoveryContext::ObtainLocalLatestCkptInfo() {
   DIR *dir = opendir(ckpt_save_dir.c_str());
   if (dir == nullptr) {
     MS_LOG(EXCEPTION) << "The file path [" << ckpt_save_dir << "] is not exist";
-    return;
   }
 
   if (!ckpt_files_.empty()) {
@@ -280,7 +279,7 @@ void RecoveryContext::ObtainLocalLatestCkptInfo() {
 void RecoveryContext::ParseLatestCkptInfo(const std::vector<int> &recv_buffer) {
   std::vector<std::pair<int, int>> ckpts_epoch_step;
   for (std::size_t i = 0; i < recv_buffer.size(); i += kSendBufferLen) {
-    ckpts_epoch_step.emplace_back(recv_buffer[i], recv_buffer[i + 1]);
+    (void)ckpts_epoch_step.emplace_back(recv_buffer[i], recv_buffer[i + 1]);
   }
   sort(ckpts_epoch_step.begin(), ckpts_epoch_step.end(),
        [](const std::pair<int, int> &a, const std::pair<int, int> &b) {
@@ -340,12 +339,12 @@ void RecoveryContext::CreateConfigFile(const std::string &config_file_path) {
     std::string config_content = recovery_js.dump();
     auto ret_size = write(fd, config_content.c_str(), config_content.size());
     if (ret_size != SizeToLong(config_content.size())) {
-      close(fd);
+      (void)close(fd);
       errno_t err = (ret_size == 0) ? EOF : errno;
       MS_LOG(EXCEPTION) << "Write config file: [" << config_file_path << "] failed, errno: " << err << ", "
                         << strerror(err);
     }
-    close(fd);
+    (void)close(fd);
   }
 }
 
