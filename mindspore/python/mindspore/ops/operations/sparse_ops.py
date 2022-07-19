@@ -47,7 +47,7 @@ class SparseToDense(PrimitiveWithInfer):
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]])
-        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> values = Tensor([1, 2], dtype=mindspore.float32)
         >>> sparse_shape = (3, 4)
         >>> sparse_to_dense = ops.SparseToDense()
         >>> out = sparse_to_dense(indices, values, sparse_shape)
@@ -174,10 +174,10 @@ class SparseTensorDenseMatmul(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
-        >>> values = Tensor([1, 2], dtype=ms.float32)
+        >>> indices = Tensor([[0, 1], [1, 2]], dtype=mindspore.int32)
+        >>> values = Tensor([1, 2], dtype=mindspore.float32)
         >>> sparse_shape = (3, 4)
-        >>> dense = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=ms.float32)
+        >>> dense = Tensor([[1, 1], [2, 2], [3, 3], [4, 4]], dtype=mindspore.float32)
         >>> sparse_dense_matmul = ops.SparseTensorDenseMatmul()
         >>> out = sparse_dense_matmul(indices, values, sparse_shape, dense)
         >>> print(out)
@@ -344,8 +344,8 @@ class DenseToCSRSparseMatrix(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=ms.float32)
-        >>> indices = Tensor([[0, 0, 0], [0, 1, 1]], dtype=ms.int32)
+        >>> x = Tensor([[[1., 0.], [0., 2.]]], dtype=mindspore.float32)
+        >>> indices = Tensor([[0, 0, 0], [0, 1, 1]], dtype=mindspore.int32)
         >>> dense_to_csr = ops.DenseToCSRSparseMatrix()
         >>> out = dense_to_csr(x, indices)
         >>> print(out[0])
@@ -752,11 +752,11 @@ class CSRSparseMatrixToDense(Primitive):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> dense_shape = Tensor([2, 2], dtype=ms.int32)
-        >>> batch_pointers = Tensor([0, 1], dtype=ms.int32)
-        >>> row_pointers = Tensor([0, 1, 1], dtype=ms.int32)
-        >>> col_indices = Tensor([1], dtype=ms.int32)
-        >>> values = Tensor([1.], dtype=ms.float32)
+        >>> dense_shape = Tensor([2, 2], dtype=mindspore.int32)
+        >>> batch_pointers = Tensor([0, 1], dtype=mindspore.int32)
+        >>> row_pointers = Tensor([0, 1, 1], dtype=mindspore.int32)
+        >>> col_indices = Tensor([1], dtype=mindspore.int32)
+        >>> values = Tensor([1.], dtype=mindspore.float32)
         >>> csr_to_dense = ops.CSRSparseMatrixToDense()
         >>> out = csr_to_dense(dense_shape, batch_pointers, row_pointers, col_indices, values)
         >>> print(out)
@@ -924,3 +924,208 @@ class SparseTensorToCSRSparseMatrix(Primitive):
         self.init_prim_io_names(
             inputs=['x_indices', 'x_values', 'x_dense_shape'],
             outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices', 'y_values'])
+
+
+class SparseMatrixSparseMatMul(Primitive):
+    r"""
+    Performs a matrix multiplication of a sparse matrix x1 with sparse matrix x2; return a sparse matrix x1*x2.
+    Each matrix may be transposed or adjointed (conjugated and transposed),
+    according to the Boolean parameters transpose_a,adjoint_a,transpose_b and adjoint_b.
+    At most one of transpose_a or adjoint_a may be True. Similarly, at most one of transpose_b or adjoint_b may be True.
+
+    Args:
+        transpose_a (bool): If true, sparse tensor x1 is transposed before multiplication. Default: False.
+        transpose_b (bool): If true, dense tensor x2 is transposed before multiplication. Default: False.
+        adjoint_a (bool): If true, sparse tensor x1 is adjointed before multiplication. Default: False.
+        adjoint_b (bool): If true, dense tensor x2 is adjointed before multiplication. Default: False.
+
+    Inputs:
+        - **x1_dense_shape** (Tensor) - A 1-D Tensor, represents the shape of input sparse matrix x1 under dense status.
+          Support int32, int64. The shape is :math:`(2)` or :math:`(3)`.
+        - **x1_batch_pointers** (Tensor) - A 1-D Tensor, represents the non-zero elements number in each batch.
+          Support int32, int64, takes on values: :math:`(0, nnz[0], nnz[0] + nnz[1], ..., total\_nnz)`.
+          If there are `n` batch within input sparse matrix x1, the shape is :math:`(n+1)`.
+        - **x1_row_pointers** (Tensor) - A 1-D Tensor, represents the non-zero elements of each row.
+          Support int32, int64, takes on values:
+          :math:`(0, num\_rows\{b\}[0], num\_rows\{b\}[0] + num\_rows\{b\}[1], ..., nnz[b])`,
+          for :math:`b = 0, ..., n - 1`.
+          If there are `n` batch within input sparse matrix x1 and dense shape is :math:`(rows,cols)`,
+          the shape is :math:`((rows + 1) * n)`.
+          Note: num_rows{0}[0] means the non-zero elements number in the first row of first sparse matrix x1.
+        - **x1_col_indices** (Tensor) - A 1-D Tensor, represents the column values for the given row and column index.
+          Support int32, int64. The shape is :math:`(M)`,
+          where `M` is the number of non-zero elements in  input sparse matrix x1.
+        - **x1_values** (Tensor) - A 1-D Tensor, represents the actual values for the given row and column index.
+          Support float32, double, complex64, complex128.
+          The shape is :math:`(M)`, where `M` is the number of non-zero elements in input sparse matrix x1.
+
+          **x2_dense_shape** (Tensor) - B 1-D Tensor, represents the shape of input sparse matrix x2 under dense status.
+          Support int32, int64. The shape is :math:`(2)` or :math:`(3)`.
+        - **x2_batch_pointers** (Tensor) - B 1-D Tensor, represents the non-zero elements number in each batch.
+          Support int32, int64, takes on values: :math:`(0, nnz[0], nnz[0] + nnz[1], ..., total\_nnz)`.
+          If there are `n` batch within input sparse matrix x2, the shape is :math:`(n+1)`.
+        - **x2_row_pointers** (Tensor) - B 1-D Tensor, represents the non-zero elements of each row.
+          Support int32, int64, takes on values:
+          :math:`(0, num\_rows\{b\}[0], num\_rows\{b\}[0] + num\_rows\{b\}[1], ..., nnz[b])`,
+          for :math:`b = 0, ..., n - 1`.
+          If there are `n` batch within input sparse matrix x2 and dense shape is :math:`(rows,cols)`,
+          the shape is :math:`((rows + 1) * n)`.
+          Note: num_rows{0}[0] means the non-zero elements number in the first row of sparse matrix x2.
+        - **x2_col_indices** (Tensor) - B 1-D Tensor, represents the column values for the given row and column index.
+          Support int32, int64. The shape is :math:`(M)`,
+          where `M` is the number of non-zero elements in  input sparse matrix x2.
+        - **x2_values** (Tensor) - B 1-D Tensor, represents the actual values for the given row and column index.
+          Support float32, double, complex64, complex128.
+          The shape is :math:`(M)`, where `M` is the number of non-zero elements in input sparse matrix x2.
+
+    Outputs:
+        - **y_dense_shape** (Tensor) - B 1-D Tensor, represents the shape of output sparse matrix y under dense status.
+          Support int32, int64. The shape is :math:`(2)` or :math:`(3)`.
+        - **y_batch_pointers** (Tensor) - B 1-D Tensor, represents the non-zero elements number in each batch.
+          Support int32, int64, takes on values: :math:`(0, nnz[0], nnz[0] + nnz[1], ..., total\_nnz)`.
+          If there are `n` batch within output sparse matrix y, the shape is :math:`(n+1)`.
+        - **y_row_pointers** (Tensor) - B 1-D Tensor, represents the non-zero elements of each row.
+          Support int32, int64, takes on values:
+          :math:`(0, num\_rows\{b\}[0], num\_rows\{b\}[0] + num\_rows\{b\}[1], ..., nnz[b])`,
+          for :math:`b = 0, ..., n - 1`.
+          If there are `n` batch within output sparse matrix y and dense shape is :math:`(rows,cols)`,
+          the shape is :math:`((rows + 1) * n)`.
+          Note: num_rows{0}[0] means the non-zero elements number in the first row of sparse matrix y.
+        - **y_col_indices** (Tensor) - B 1-D Tensor, represents the column values for the given row and column index.
+          Support int32, int64. The shape is :math:`(M)`,
+          where `M` is the number of non-zero elements in  output sparse matrix y.
+        - **y_values** (Tensor) - B 1-D Tensor, represents the actual values for the given row and column index.
+          Support float32, double, complex64, complex128.
+          The shape is :math:`(M)`, where `M` is the number of non-zero elements in output sparse matrix y.
+
+    Raises:
+        TypeError: If any dtype of `x1_dense_shape`, `x1_batch_pointers`, `x1_row_pointers`, `x1_col_indices`,
+        `x1_values` or `x2_dense_shape`, `x2_batch_pointers`, `x2_row_pointers`, `x2_col_indices`,
+        `x2_values` doesn't meet the parameter description.
+        ValueError: If rank of `x1_dense_shape` or `x2_dense_shape' is not 2 or 3.
+
+    Supported Platforms:
+
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseMatrixSparseMatMul
+        >>> x1_dense_shape = Tensor([4, 5], dtype=mindspore.int32)
+        >>> x1_batch_pointers = Tensor([0, 4], dtype=mindspore.int32)
+        >>> x1_row_pointers = Tensor([0, 1, 1, 3, 4], dtype=mindspore.int32)
+        >>> x1_col_indices = Tensor([0, 3, 4, 0], dtype=mindspore.int32)
+        >>> x1_values = Tensor([1.0, 5.0, -1.0, -2.0], dtype=mindspore.float32)
+        >>> x2_dense_shape = Tensor([5, 3], dtype=mindspore.int32)
+        >>> x2_batch_pointers = Tensor([0, 3], dtype=mindspore.int32)
+        >>> x2_row_pointers = Tensor([0, 1, 1, 3, 3, 3], dtype=mindspore.int32)
+        >>> x2_col_indices = Tensor([0, 0, 1], dtype=mindspore.int32)
+        >>> x2_values = Tensor([2.0, 7.0, 8.0], dtype=mindspore.float32)
+        >>> sparse_matrix_sparse_mat_mul = SparseMatrixSparseMatMul()
+        >>> out_dense_shape, out_batch_pointers, out_row_pointers, out_col_indices, out_values =
+        ... sparse_matrix_sparse_mat_mul(x1_dense_shape, x1_batch_pointers, x1_row_pointers, x1_col_indices, x1_values,
+        ...                              x2_dense_shape, x2_batch_pointers, x2_row_pointers, x2_col_indices, x2_values)
+        >>> print(out_dense_shape)
+        [4 3]
+        >>> print(out_batch_pointers)
+        [0 2]
+        >>> print(out_row_pointers)
+        [0 1 1 1 2]
+        >>> print(out_col_indices)
+        [0 0]
+        >>> print(out_values)
+        [ 2. -4.]
+    """
+
+    @prim_attr_register
+    def __init__(self, transpose_a=False, transpose_b=False, adjoint_a=False, adjoint_b=False):
+        """Initialize SparseMatrixSparseMatMul"""
+        validator.check_value_type("transpose_a", transpose_a, [bool], self.name)
+        validator.check_value_type("transpose_b", transpose_b, [bool], self.name)
+        validator.check_value_type("adjoint_a", adjoint_b, [bool], self.name)
+        validator.check_value_type("adjoint_b", adjoint_b, [bool], self.name)
+        self.init_prim_io_names(
+            inputs=['x1_dense_shape', 'x1_batch_pointers', 'x1_row_pointers', 'x1_col_indices', 'x1_values',
+                    'x2_dense_shape', 'x2_batch_pointers', 'x2_row_pointers', 'x2_col_indices', 'x2_values'],
+            outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices', 'y_values'])
+
+
+class SparseMatrixMatMul(Primitive):
+    r"""
+    Performs a matrix multiplication of a sparse matrix x1 with dense matrix x2; return a dense matrix x1*x2.
+    Each matrix may be transposed or adjointed (conjugated and transposed)
+    according to the Boolean parameters transpose_x1,adjoint_x1,transpose_x2 and adjoint_x2.
+    At most one of transpose_x1 or adjoint_x1 may be True.
+    Similarly, at most one of transpose_x2 or adjoint_x2 may be True.
+
+    Note:
+        It is assumed that all the inputs can form a legal CSR sparse matrix, otherwise this operator is not defined.
+
+    Args:
+        transpose_x1 (bool): If true, sparse tensor x1 is transposed before multiplication. Default: False.
+        transpose_x2 (bool): If true, dense tensor x2 is transposed before multiplication. Default: False.
+        adjoint_x1 (bool): If true, sparse tensor x1 is adjointed before multiplication. Default: False.
+        adjoint_x2 (bool): If true, dense tensor x2 is adjointed before multiplication. Default: False.
+        transpose_output (bool): If true, output x1*x2 is tansposed. Default: False.
+        conjugate_output (bool): If true, output x1*x2 is conjugated. Default: False.
+
+    Inputs:
+        - **x1_dense_shape** (Tensor) - A 1-D Tensor. It represents the dense form shape of
+          the input CSR sparse matrix x1, the shape of which should be :math:`(2,)` or :math:`(3,)`.
+        - **x1_batch_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix x1 is of
+          batch size `n`, it should have shape :math:`(n+1,)`, while the `i`-th element of which stores
+          acummulated counts of nonzero values of the first `i - 1` batches.
+        - **x1_row_pointers** (Tensor) - A 1-D Tensor. Supposing the input CSR sparse matrix x1 is of
+          batch size `n` and row number `m`, it can be divided into `n` parts, each part of length
+          `m + 1`. The `i`-th element of each :math:`(m+1,)` vector stores acummulated counts of
+          nonzero values of the first `i - 1` rows in the corresponding batch.
+        - **x1_col_indices** (Tensor) - A 1-D Tensor. It represents column indices of the nonzero values
+          in the input CSR sparse matrix x1.
+        - **x1_values** (Tensor) - A 1-D Tensor. It represents all the nonzero values in the
+          input CSR sparse matrix x1.
+
+        - **x2_dense** (Tensor) - A 2-D or 3-D Tensor, represents the input dense matrix x2.
+          Support float32, float64, complex64, complex128.
+
+    Outputs:
+        **y_dense** (Tensor) - A 2-D or 3-D Tensor, represents the output dense matrix y.
+          Support float32, float64, complex64, complex128.
+
+    Raises:
+        TypeError: If any dtype of `x1_dense_shape`, `x1_batch_pointers`, `x1_row_pointers`, `x1_col_indices`,
+        `x1_values` or `x2_dense` doesn't meet the parameter description.
+        ValueError: If shape[0] of `x1_dense_shape` or the dimension of `x2_dense' is not 2 or 3.
+        ValueError: If shape[0]-1 of x1_batch_pointers and shape[0] of x2_dense are not the same.
+
+    Supported Platforms:
+
+
+    Examples:
+        >>> from mindspore.ops.operations.sparse_ops import SparseMatrixMatMul
+        >>> x1_dense_shape = Tensor([4, 5], dtype=mindspore.int32)
+        >>> x1_batch_pointers = Tensor([0, 4], dtype=mindspore.int32)
+        >>> x1_row_pointers = Tensor([0, 1, 1, 3, 4], dtype=mindspore.int32)
+        >>> x1_col_indices = Tensor([0, 3, 4, 0], dtype=mindspore.int32)
+        >>> x1_values = Tensor([1.0, 5.0, -1.0, -2.0], dtype=mindspore.float32)
+        >>> x2_dense = Tensor([[2.0, 0.8, 1.0],[ 2.9, 3.2, 0.0],[7.0, 4.6, 0.2],[3.5, 4.9, 1.4],[4.0, 3.7, 6.9]],
+        ... dtype=mindspore.float32)
+        >>> sparse_matrix_mat_mul = SparseMatrixMatMul()
+        >>> out = sparse_matrix_mat_mul(x1_dense_shape, x1_batch_pointers, x1_row_pointers, x1_col_indices,
+        ... x1_values, x2_dense)
+        >>> print(out)
+        [[ 2.         0.8        1.       ]
+         [ 0.         0.         0.       ]
+         [13.5       20.8        0.0999999]
+         [-4.        -1.6       -2.       ]]
+    """
+
+    @prim_attr_register
+    def __init__(self, transpose_x1=False, transpose_x2=False, adjoint_x1=False, adjoint_x2=False,
+                 transpose_output=False, conjugate_output=False):
+        """Initialize SparseMatrixMatMul"""
+        validator.check_value_type("transpose_x1", transpose_x1, [bool], self.name)
+        validator.check_value_type("transpose_x2", transpose_x2, [bool], self.name)
+        validator.check_value_type("adjoint_x1", adjoint_x1, [bool], self.name)
+        validator.check_value_type("adjoint_x2", adjoint_x2, [bool], self.name)
+        validator.check_value_type("transpose_output", transpose_output, [bool], self.name)
+        validator.check_value_type("conjugate_output", conjugate_output, [bool], self.name)
+        self.init_prim_io_names(inputs=['x1_dense_shape', 'x1_batch_pointers', 'x1_row_pointers',
+                                        'x1_col_indices', 'x1_values', 'x2_dense'], outputs=['y_dense'])
