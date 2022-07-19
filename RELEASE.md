@@ -10,53 +10,53 @@
 
 #### FrontEnd
 
-- [BETA] Add `mindspore.Model.fit` API, add  `mindspore.callback.EarlyStopping` and `mindspore.callback.ReduceLROnPlateau` in Callback.
-- [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
+- [BETA] Add `mindspore.Model.fit` API, add `mindspore.callback.EarlyStopping` and `mindspore.callback.ReduceLROnPlateau` in Callback.
 - [BETA] Support custom operator implemented by Julia.
-- [STABLE] The export() interface supports the export of a model using a user-defined encryption algorithm, and the load() interface supports the import of a model using a user-defined decryption algorithm.
-- [BETA]   [Unified_Dynamic_and_Static_Graphs] [Usability] Constant type data(tuple/list/dict) can be set to mutable during graph compile.
-- [BETA]   [Unified_Dynamic_and_Static_Graphs] JIT fallback is used to support the control flow capability in the graph mode constant scenario.
+- [BETA] Support custom operator implemented by MindSpore Hybrid DSL.
+- [STABLE] The export() interface supports the export of a model using a custom encryption algorithm, and the load() interface supports the import of a model using a custom decryption algorithm.
+- [BETA] [Unified_Dynamic_and_Static_Graphs] [Usability] Constant-type data (tuple/list/dict is supported in Version 1.8) can be set to be variable during graph compiling.
+- [BETA] [Unified_Dynamic_and_Static_Graphs] JIT fallback is used to support the control flow capability in the constant scenario.
 - [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python raise statement is supported in the graph mode constant scenario.
 - [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python assert statement is supported in the graph mode constant scenario.
 - [STABLE] [Unified_Dynamic_and_Static_Graphs] The Python print statement is supported in the graph mode constant scenario.
-- [STABLE] [Unified_Dynamic_and_Static_Graphs] The str.format() method is supported in graph mode.
-- [STABLE] [Unified_Dynamic_and_Static_Graphs] The slice method can be used to assign a value to the list in graph mode.
-- [STABLE] [Unified_Dynamic_and_Static_Graphs] Custom classes can be created and invoke instances in graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The str.format() method is supported in the graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The slice method can be used to assign a value to the list in the graph mode.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] The instances of custom classes can be created and invoked in the graph mode.
 - [STABLE] [Unified_Dynamic_and_Static_Graphs] Obtaining the properties of a class from the Cell array and the custom class array is supported.
-- [STABLE] [Unified_Dynamic_and_Static_Graphs] Expand the isinstance capability in graph mode.
-- [STABLE] Rename the decorator 'ms_hybrid' of custom operator to 'ms_kernel'.
-- [BETA] Support custom operator by Hybrid DSL on the backend of CPU.
-- [BETA] Support custom operator scheduling intrinstics on Ascend via new AKG Polyhedral scheduler.
+- [STABLE] [Unified_Dynamic_and_Static_Graphs] isinstance supports scenario expanding in the graph mode.
+- [STABLE] Rename the custom operator decorator 'ms_hybrid' to 'ms_kernel'.
+- [BETA] Custom operator Hybrid DSL is supported on the backend of CPU.
+- [BETA] Custom operator Ascend backend adds custom scheduling primitive syntax support.
 
 #### PyNative
 
 - [STABLE] Implement the AdamWeightDecay operator to replace the original small operator combination mode.
-- [STABLE] In PyNative mode, use ms_function to decorate the optimizer.
+- [STABLE] In PyNative mode, execute the optimizer by unifying the dynamic and static graphs.
 - [STABLE] Optimize the execution performance of PyNative bprop graph and ms_function.
 
 #### Auto Parallel
 
-- [STABLE]Support AllToAll Operator in the KernelByKernel execution mode.
-- [STABLE]Support using MPI to lanuch the graph mode.
-- [STABLE]The initialization of the model weight can be configured by the seed. If you do not set the random number seed through the mindspore.set_seed command, the weights initialized by each parameter is determined by the current fragment index. If the random number seed is configured, the initialization results of the same shape and weight of the same segmentation policy are the same.
-- [STABLE]The HCCL shields internal full-mesh and non-full-mesh connections. Allows both fully-connected AllToAllv and hierarchical AllToAllv during a training session.
-- [BETA]CPU optimizer fusion. Multiple optimizer operators are combined by data type through cross-parameter fusion, improving performance. Currently, It has been verified on CPU AdamWeightDecay optimizer. You can use the flatten_weights method in the network cell class to enable this feature.
+- [STABLE] Docking the AllToAll single-operator mode. Support AllToAll Operator in the KernelByKernel execution mode.
+- [STABLE] Whole-graph offloading supports MPI launching. In Whole-graph offloading, launching with MPI is supported.
+- [STABLE] Seeds of model weights provide parallel interface configuration. If you do not set the random number of seeds through the mindspore.set_seed command, the weights initialized by each parameter is determined by the current fragment index. If the random number of seeds are configured, the initialization results of the same shape and weight of the same segmentation policy are the same.
+- [STABLE] The HCCL shields internal full-mesh and non-full-mesh connections. Both fully-connected AllToAllv and hierarchical AllToAllv are allowed in one training session.
+- [BETA] CPU optimizer fusion. Multiple optimizer operators are combined according to data types through cross-parameter fusion, improving performance. Currently, It has been verified on CPU AdamWeightDecay optimizer. You can use the flatten_weights method in the network cell class to enable this function.
 
 #### Executor
 
-- [STABLE] Provides southbound API.
-- [STABLE] Multi actor fusion execution to optimize the execution performance of runtime.
+- [STABLE] Provide southbound API.
+- [STABLE] Multi-actor fusion execution to optimize the execution performance during runtime.
 - [STABLE] Nopop operators (eg. reshape) execute elimination.
-- [STABLE] Embedded cache architecture switching unified distributed runtime.
-- [STABLE] Parameter Server switching unified distributed runtime.
+- [STABLE] Embedded cache architecture switches unified distributed runtime.
+- [STABLE] Parameter Server switches unified distributed runtime.
 - [STABLE] Support Parameter Server mode training on CPU.
 
 #### DataSet
 
-- [STABLE] When using the map operation for dataset objects and the parameters like: num_parallel_workers > 1 and python_multiprocessing=True, the multi sub-process mechanism is optimized, so that the data channel and child processes are mapped one by one, avoiding excessive file handle occupation, and closing_pool interface is also deleted.
-- [STABLE] Support a batch of Vision, Text and Audio data augmentation operations.
+- [STABLE] When using the map operation for dataset objects and the parameters like: num_parallel_workers > 1 and python_multiprocessing=True, the multi-process mechanism is optimized, so that the data channel and child processes are mapped one by one, avoiding excessive file handle occupation, and closing_pool interface is also deleted.
+- [STABLE] Add a batch of Vision, Text and Audio data augmentation operations.
 - [STABLE] Fix a bug where the flat_map method of the Dataset class does not flatten the result.
-- [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use, refer to [latest api usages](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html).
+- [STABLE] Unify import paths of dataset augmentation APIs to provide more easier way to use. Refer to [latest api usages](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.vision.html).
 
 ### API Change
 
@@ -64,10 +64,10 @@
 
 ##### Python API
 
-- DVPP simulation algorithm is no longer supported, remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
-- Add `on_train_epoch_end` method in LossMonitor to print metric information when LossMonitor is used with `mindspore.Model.fit`.
-- Add "train" or "eval" mode in the print content of TimeMonitor。
-- The input arg `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
+- DVPP simulation algorithm is no longer supported. Remove `mindspore.dataset.vision.c_transforms.SoftDvppDecodeRandomCropResizeJpeg` and `mindspore.dataset.vision.c_transforms.SoftDvppDecodeResizeJpeg` interfaces.
+- Add `on_train_epoch_end` method in LossMonitor, which implements printing metric information in the epoch level when it is used in `mindspore.Model.fit`.
+- TimeMonitor printing content changes, and the printed content is added to "train" or "eval" to distinguish between training and inference phases.
+- `filter_prefix` of `mindspore.load_checkpoint` interface: empty string ("") is no longer supported, and the matching rules are changed from strong matching to fuzzy matching.
 
 ## MindSpore Lite
 
@@ -75,10 +75,10 @@
 
 #### API
 
-- [STABLE] Added C++ and Python APIs for model conversion.
-- [STABLE] Added Python APIs for model inference.
+- [STABLE] Add C++ and Python APIs for model conversion.
+- [STABLE] Add Python APIs for model inference.
 
-#### Post Training Quantization
+#### Post-Training Quantization
 
 - [STABLE] Support perlayer quantization, and built-in CLE to optimize perlayer quantization accuracy.
 
