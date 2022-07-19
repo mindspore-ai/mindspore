@@ -46,16 +46,15 @@ using RedistributionOpListPtr = std::shared_ptr<std::pair<OperatorVector, OutPut
 struct Cost {
   Cost();
   Cost(double computation, double communication, const std::shared_ptr<Decision> &decision_ = nullptr)
-      : computation_cost_(computation), communication_cost_(communication), decision_ptr_(std::move(decision_)) {
-    memory_with_reuse_ = 0.0;
-    communication_without_parameter_ = 0.0;
-    communication_with_partial_para_ = 0.0;
-    communication_redis_forward_ = 0.0;
-    communication_redis_backward_ = 0.0;
-    communication_forward_ = 0.0;
-  }
-  // 'memory_with_reuse_' calculates the peak memory usage in a training (or inference) phase
-  double memory_with_reuse_;
+      : computation_cost_(computation),
+        communication_cost_(communication),
+        communication_without_parameter_(0.0),
+        communication_with_partial_para_(0.0),
+        communication_forward_(0.0),
+        communication_redis_forward_(0.0),
+        communication_redis_backward_(0.0),
+        memory_with_reuse_(0.0),
+        decision_ptr_(decision_) {}
   // 'computation_cost_'  models the training time of an iteration in a training phase. Currently, this is calculated
   // by ONLY forward phase
   double computation_cost_;
@@ -70,6 +69,8 @@ struct Cost {
   double communication_forward_;
   double communication_redis_forward_;
   double communication_redis_backward_;
+  // 'memory_with_reuse_' calculates the peak memory usage in a training (or inference) phase
+  double memory_with_reuse_;
   std::shared_ptr<Decision> decision_ptr_;
 };
 
@@ -351,8 +352,8 @@ using FinalDecisionPtr = std::shared_ptr<FinalDecision>;
 using FinalSingleDecisionPtr = std::shared_ptr<FinalSingleDecision>;
 
 void Simplify(CostPtrList *clist);
-void SimplifyForDecreasingCommunicationForward(CostPtrList *clist);
-void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist);
+void SimplifyForDecreasingCommunicationForward(CostPtrList *clist_ptrs);
+void SimplifyForDecreasingCommunicationWithPartialPara(CostPtrList *clist_ptrs);
 void RefineForPracticalCost(const CostPtr &, bool is_redistribution);
 }  // namespace parallel
 }  // namespace mindspore
