@@ -29,12 +29,12 @@ constexpr size_t kSoftmaxInputNum = 1;
 constexpr size_t kDropoutV3InputNum = 2;
 constexpr size_t kSoftmaxDropoutOutputNum = 2;
 constexpr size_t kSoftmaxInputShapeSize = 4;
-constexpr size_t kMaxInputH = 512;
-constexpr size_t kBlock = 32;
+constexpr int64_t kMaxInputH = 512;
+constexpr int64_t kBlock = 32;
 constexpr auto kAttrAxes = "axes";
 constexpr auto kAttrKeepProb = "keep_prob";
 
-bool CheckShapeIsUsePattern(size_t input_h, size_t input_w) {
+bool CheckShapeIsUsePattern(int64_t input_h, int64_t input_w) {
   if (input_h == input_w && input_h <= kMaxInputH && input_h % kBlock == 0) {
     return true;
   }

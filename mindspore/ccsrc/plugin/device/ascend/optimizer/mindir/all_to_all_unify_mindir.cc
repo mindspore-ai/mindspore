@@ -82,7 +82,7 @@ CNodePtr AllToAllUnifyMindIR::CreateSplitNode(const FuncGraphPtr &graph, const C
     MS_LOG(EXCEPTION) << "Invalid split dim " << split_dim << " is over the shape size " << shape.size()
                       << trace::DumpSourceLines(all_to_all);
   }
-  if (split_count == 0 || shape[LongToSize(split_dim)] % static_cast<size_t>(split_count) != 0) {
+  if (split_count == 0 || shape[LongToSize(split_dim)] % split_count != 0) {
     MS_LOG(EXCEPTION) << "Invalid split count " << split_count << " cannot be divisible by shape[" << split_dim
                       << "] = " << shape[LongToSize(split_dim)] << trace::DumpSourceLines(all_to_all);
   }

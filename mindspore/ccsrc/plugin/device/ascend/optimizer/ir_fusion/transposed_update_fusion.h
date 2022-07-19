@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_TRANSPOSED_UPDATE_FUSION_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_IR_FUSION_TRANSPOSED_UPDATE_FUSION_H_
 #include <string>
-#include <utility>
 #include <memory>
 
 #include "backend/common/optimizer/pass.h"
