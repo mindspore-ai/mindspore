@@ -586,7 +586,7 @@ def unique_with_pad(x, pad_num):
         - y (Tensor) - The unique elements filled with pad_num, the shape and data type same as `x`.
         - idx (Tensor) - The index of each value of `x` in the unique output `y`, the shape and data type same as `x`.
 
-    Raises:x
+    Raises:
         TypeError: If dtype of `x` is neither int32 nor int64.
         ValueError: If length of shape of `x` is not equal to 1.
 

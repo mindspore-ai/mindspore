@@ -876,7 +876,7 @@ mindspore.Tensor
 
     .. py:method:: prod(axis=(), keep_dims=False)
 
-        默认情况下，通过将维度中的所有元素相乘来减少张量的维度。并且还可以沿轴减小“x”的维度。通过控制`keep_dims`判断输出和输入的维度是否相同。
+        默认情况下，通过将维度中的所有元素相乘来减少张量的维度。并且还可以沿轴减小“x”的维度。通过控制 `keep_dims` 判断输出和输入的维度是否相同。
 
         **参数：**
 
@@ -1522,6 +1522,11 @@ mindspore.Tensor
         **返回：**
 
         初始化的Tensor。
+
+        **异常：**
+
+        - **TypeError** - `indices` 的数据类型既不是int32，也不是int64。
+        - **ValueError** - Tensor的shape长度小于 `indices` 的shape的最后一个维度。
 
     .. py:method:: unsorted_segment_min(segment_ids, num_segments)
 

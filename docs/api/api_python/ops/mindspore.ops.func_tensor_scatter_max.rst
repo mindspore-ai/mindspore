@@ -1,7 +1,7 @@
-﻿maxdspore.ops.tensor_scatter_max
+﻿mindspore.ops.tensor_scatter_max
 ================================
 
-.. py:function:: maxdspore.ops.tensor_scatter_max(input_x, indices, updates)
+.. py:function:: mindspore.ops.tensor_scatter_max(input_x, indices, updates)
 
     根据指定的更新值和输入索引，通过最大值运算，输出结果以Tensor形式返回。
 
