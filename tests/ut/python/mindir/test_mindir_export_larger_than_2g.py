@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2021-2022 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -200,3 +200,29 @@ def test_ms_mindir_enc_2g_0001():
     export(net, *inputs, file_name=os.path.join(mindir_dir, "AddNet.mindir"), file_format="MINDIR", enc_key=key)
     graph = load(os.path.join(mindir_dir, "AddNet_graph.mindir"), dec_key=key)
     assert graph is not None
+
+
+def test_mindir_export_remove_parameter():
+    """
+    Feature: MindIR Export model is exceed TOTAL_SAVE(1G but mocked as 0)
+    Description: MindIR Export model is exceed TOTAL_SAVE should be split save as model file and data file
+    Expectation: No exception.
+    """
+    ms.train.serialization.TOTAL_SAVE = 0
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.addn = ops.AddN()
+            self.y = Parameter(Tensor(np.array([2, 3, 3, 4]).astype(np.float32)), name="w")
+            self.z = Parameter(Tensor(np.array([2, 3, 3, 4])).astype(np.float32), name="z")
+
+        def construct(self, x):
+            return self.addn((x, self.y, self.z))
+
+    x = Tensor(np.array([2, 3, 3, 4]).astype(np.float32))
+    add_net = Net()
+    export(add_net, x, file_name="mindir_export_split", file_format="MINDIR")
+    shutil.rmtree("./mindir_export_split_variables/")
+    with pytest.raises(RuntimeError, match=" please check the correct of the file."):
+        load("mindir_export_split_graph.mindir")
