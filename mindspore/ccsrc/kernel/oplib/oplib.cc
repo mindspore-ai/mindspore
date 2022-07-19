@@ -150,8 +150,8 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
     std::map<size_t, size_t> real_index;
     std::map<size_t, size_t> ori_index;
     for (size_t i = 0; i < real_input_index.size(); ++i) {
-      real_index.emplace(std::pair{i, real_input_index.at(i)});
-      ori_index.emplace(std::pair{real_input_index.at(i), i});
+      (void)real_index.emplace(std::pair{i, real_input_index.at(i)});
+      (void)ori_index.emplace(std::pair{real_input_index.at(i), i});
     }
     op_info->set_real_input_index(std::pair{real_index, ori_index});
   }
