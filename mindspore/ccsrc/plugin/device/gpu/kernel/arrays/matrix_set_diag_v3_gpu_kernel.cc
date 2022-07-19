@@ -117,7 +117,7 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
 
   lower_ = host_k_vec.at(kIndex0);
   upper_ = host_k_vec.at(kIndex0);
-  if (!is_single_diag_) {
+  if (!is_single_diag_ && k_length > 1) {
     upper_ = host_k_vec.at(kIndex1);
     is_single_diag_ = (lower_ == upper_);
   }
