@@ -205,7 +205,8 @@ void DfGraphConvertor::DrawParamInitSubGraph(const std::string &name, const AnfN
              << "op_assign" << it.get() << ":2" << endl;
 }
 
-void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std::vector<::ge::Operator> *init_input) {
+void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors,
+                                              std::vector<::ge::Operator> *const init_input) {
   DfGraphPtr init_graph = std::make_shared<DfGraph>("init");
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
 
@@ -245,7 +246,7 @@ void DfGraphConvertor::SetupParamInitSubGraph(const TensorOrderMap &tensors, std
   }
 
   // set up init sub graph
-  if (init_input->size()) {
+  if (init_input->size() != 0) {
     // init sub graph needs no input
     MS_LOG(INFO) << "Build data init subgraph.";
     (void)init_graph->SetInputs(*init_input);
@@ -313,13 +314,17 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       MS_LOG(EXCEPTION) << "Can not find op for node " << node->ToString() << ".";
     }
     auto adpt = FindAdapter(kNameParam, training_);
-    if (adpt == nullptr) continue;
+    if (adpt == nullptr) {
+      continue;
+    }
     auto param_op = adpt->generate(name + "_data");
     MS_LOG(INFO) << "Add parameter " << name << " as input, index " << index << ".";
 
     if (!training_) {
       auto adpt_const = FindAdapter(kNameConst, training_);
-      if (adpt_const == nullptr) continue;
+      if (adpt_const == nullptr) {
+        continue;
+      }
       auto const_op = adpt_const->generate(name + "_const");
       (void)adpt_const->setAttr(const_op, "value", it.second);
 
@@ -414,7 +419,9 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
   // for each "parameter" in anf graph excluding "input"
   for (const auto &it : vars_) {
     name = it.first;
-    if (it.second == nullptr || name.find("/") != std::string::npos) continue;
+    if (it.second == nullptr || name.find("/") != std::string::npos) {
+      continue;
+    }
     Variable variable(name);
     (void)variable.update_output_desc_y(it.second->GetOutputDesc(0));
     (void)save_op.set_dynamic_input_tensors(static_cast<uint32_t>(index++), variable);
@@ -437,7 +444,7 @@ void DfGraphConvertor::BuildSaveCheckpointGraph() {
                      << "op_save" << &save_op << ":1" << endl;
     save_op_is_active = 1;
   }
-  if (save_op_is_active) {
+  if (save_op_is_active != 0) {
     std::vector<Operator> graph_output;
     graph_output.emplace_back(save_op);
     DfGraphPtr checkpoint_graph = std::make_shared<DfGraph>("checkpoint");
@@ -759,7 +766,8 @@ void DfGraphConvertor::SetupDatasetIterGetNextNode() {
         std::static_pointer_cast<::ge::op::GetNextFromQueue>(get_next_from_queue_);
       (void)iter_getnext->create_dynamic_output_y(static_cast<unsigned int>(output_num));
       for (uint32_t i = 0; i < output_num; i++) {
-        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW, (::ge::DataType)param.ge_types()[i]);
+        ::ge::TensorDesc desc(GeShape(param.shapes()[i]), ::ge::FORMAT_NCHW,
+                              static_cast<enum ::ge::DataType>(param.ge_types()[i]));
         // we don't SetRealDimCnt here since GE do not use this output's real-dim
         (void)iter_getnext->update_dynamic_output_desc_y((i), desc);
       }
@@ -896,7 +904,9 @@ std::shared_ptr<std::vector<Operator>> DfGraphConvertor::GetWhileSubGraphInput()
       auto value = const_op_to_value_[temp];
       MS_EXCEPTION_IF_NULL(value);
       auto adpt_const = FindAdapter(kNameConst, training_);
-      if (adpt_const == nullptr) continue;
+      if (adpt_const == nullptr) {
+        continue;
+      }
       name += name_app;
       auto const_op = adpt_const->generate(name);
       (void)adpt_const->setAttr(const_op, "value", value);
@@ -2213,7 +2223,9 @@ void DfGraphConvertor::ProcessSubgraph(const AnfNodePtr &node, const std::vector
           auto value = const_op_to_value_[temp];
           MS_EXCEPTION_IF_NULL(value);
           auto adpt_const = FindAdapter(kNameConst, training_);
-          if (adpt_const == nullptr) continue;
+          if (adpt_const == nullptr) {
+            continue;
+          }
           name += "_case";
           auto const_op = adpt_const->generate(name);
           (void)adpt_const->setAttr(const_op, "value", value);
@@ -2287,7 +2299,7 @@ OperatorPtr DfGraphConvertor::Convert(const AnfNodePtr node) {
     return nullptr;
   }
   // find in cache
-  if (op_cache_.count(node.get())) {
+  if (op_cache_.count(node.get()) != 0) {
     return op_cache_[node.get()];
   }
   if (IsSubGraph()) {
