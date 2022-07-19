@@ -260,7 +260,9 @@ CUDA_LIB_EXPORT void GridSampler2DGrad(const size_t size, const size_t dinput_si
     dinput_size, dinput_addr);
   GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(
     dgrid_size, dgrid_addr);
-  GridSampler2DGradKernel<<<GET_BLOCKS(size), GET_THREADS_MAXSIZE(size), 0, cuda_stream>>>(
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
+  GridSampler2DGradKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
     size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr,
     input_shape[1], input_shape[2], input_shape[3],
     grid_shape[1], grid_shape[2],
@@ -542,7 +544,9 @@ CUDA_LIB_EXPORT void GridSampler3DGrad(const size_t size, const size_t dinput_si
     dinput_size, dinput_addr);
   GridSamplerGradInitKernel<<<GET_BLOCKS(dgrid_size), GET_THREADS_MAXSIZE(dgrid_size), 0, cuda_stream>>>(
     dgrid_size, dgrid_addr);
-  GridSampler3DGradKernel<<<GET_BLOCKS(size), GET_THREADS_MAXSIZE(size), 0, cuda_stream>>>(
+  size_t thread_per_block = 256;
+  size_t block_per_grid = (size + thread_per_block - 1) / thread_per_block;
+  GridSampler3DGradKernel<<<block_per_grid, thread_per_block, 0, cuda_stream>>>(
     size, grad_addr, input_addr, grid_addr, dinput_addr, dgrid_addr,
     input_shape[1], input_shape[2], input_shape[3], input_shape[4],
     grid_shape[1], grid_shape[2], grid_shape[3],
