@@ -936,14 +936,14 @@ VmapOperation::VmapOperation(const std::string &name) : MetaFuncGraph(name) {
                              SignatureEnumDType::kDTypeEmptyDefaultValue}});
 }
 
-FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) const {
+FuncGraphPtr VmapOperation::GetVmap(const AnfNodePtr &vmap, int param_number) const {
   FuncGraphPtr vmap_child = std::make_shared<FuncGraph>();
   vmap_child->set_flag(FUNC_GRAPH_FLAG_CORE, true);
   vmap_child->set_flag(FUNC_GRAPH_FLAG_K_GRAPH, true);
 
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(vmap);
-  for (size_t i = 0; i < forward_graph_params.size(); ++i) {
+  for (int i = 0; i < param_number; ++i) {
     inputs.push_back(vmap_child->add_parameter());
   }
   auto vmap_app = vmap_child->NewCNodeInOrder(inputs);
@@ -971,7 +971,7 @@ bool IsAxesAllNone(const ValuePtr &axes) {
   return false;
 }
 
-ValuePtr CheckAxes(const AbstractBasePtr &axes_abs, const bool &is_in_axes = false, int nparam = 0) {
+ValuePtr CheckAxes(const AbstractBasePtr &axes_abs, bool is_in_axes = false, int nparam = 0, size_t cell_size = 0) {
   ValuePtr axes_value = nullptr;
   auto axes_name = is_in_axes ? "in_axes" : "out_axes";
 
@@ -989,21 +989,80 @@ ValuePtr CheckAxes(const AbstractBasePtr &axes_abs, const bool &is_in_axes = fal
       }
     }
     bool elem_all_none = IsAxesAllNone(axes_value);
-    if (elem_all_none) {
-      MS_LOG(EXCEPTION) << "The '" << axes_name << "' of 'vmap' cannot be all None, but got " << axes_value->ToString()
-                        << ".";
+    if (elem_all_none && cell_size == 0) {
+      MS_LOG(EXCEPTION) << "The '" << axes_name
+                        << "' of 'vmap' cannot be all None while 'fn' is not a 'CellList', but got "
+                        << axes_value->ToString() << ".";
     }
   } else {
     axes_value = axes_abs->BuildValue();
     MS_EXCEPTION_IF_NULL(axes_value);
-    if (axes_value->isa<None>()) {
-      MS_LOG(EXCEPTION) << "The '" << axes_name << "' of 'vmap' cannot be a single None.";
-    } else if (!axes_value->isa<Int64Imm>()) {
+    if (axes_value->isa<None>() && cell_size == 0) {
+      MS_LOG(EXCEPTION) << "The '" << axes_name
+                        << "' of 'vmap' cannot be a single None while 'fn' is not a 'CellList'.";
+    } else if (!axes_value->isa<None>() && !axes_value->isa<Int64Imm>()) {
       MS_LOG(EXCEPTION) << "The axis in vmap`s '" << axes_name << "' can only be of type Int or None, but got "
                         << axes_abs->ToString() << ".";
     }
   }
   return axes_value;
+}
+
+DebugInfoPtr CheckVmapFunc(const AbstractBasePtr &fn_arg, int *nparam, size_t *cell_size) {
+  DebugInfoPtr origin_graph_info = nullptr;
+  // In the model ensembling parallel training scenario, fn is a CellList.
+  AbstractTuplePtr cell_list = dyn_cast<AbstractTuple>(fn_arg);
+  if (cell_list != nullptr) {
+    *cell_size = cell_list->size();
+    if (*cell_size <= 1) {
+      MS_LOG(EXCEPTION) << "In the model ensembling parallel training scenario ('VmapOperation' arg0 is a 'CellList'),"
+                        << " the size of 'CellList' must be greater than 1, but got " << *cell_size << ".";
+    }
+    const AbstractBasePtrList &cell_list_fns = cell_list->elements();
+    for (auto fn_abs : cell_list_fns) {
+      MS_EXCEPTION_IF_NULL(fn_abs);
+      AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_abs);
+      if (fn == nullptr) {
+        MS_LOG(EXCEPTION) << "'VmapOperation' arg0 is a 'CellList', whose elements must be 'Cell', but got "
+                          << fn_abs->ToString() << ".";
+      }
+
+      auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
+      if (real_fn == nullptr) {
+        MS_LOG(EXCEPTION) << "'VmapOperation' arg0 is a 'CellList', whose element " << fn->ToString()
+                          << " cast to 'FuncGraphAbstractClosure' failed.";
+      }
+
+      FuncGraphPtr orig_graph = real_fn->func_graph();
+      MS_EXCEPTION_IF_NULL(orig_graph);
+      orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+
+      int fn_nparam = SizeToInt(orig_graph->parameters().size());
+      if (*nparam == -1) {
+        origin_graph_info = orig_graph->debug_info();
+        *nparam = fn_nparam;
+      } else if (*nparam != fn_nparam) {
+        MS_LOG(EXCEPTION) << "'VmapOperation' arg0 is a CellList, whose elements's inputs should be consistent.";
+      }
+    }
+  } else {
+    AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_arg);
+    if (fn == nullptr) {
+      MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString() << ".";
+    }
+
+    auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
+    if (real_fn == nullptr) {
+      MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to 'FuncGraphAbstractClosure' failed.";
+    }
+
+    FuncGraphPtr orig_graph = real_fn->func_graph();
+    MS_EXCEPTION_IF_NULL(orig_graph);
+    orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+    *nparam = SizeToInt(orig_graph->parameters().size());
+    origin_graph_info = orig_graph->debug_info();
+  }
+  return origin_graph_info;
 }
 }  // namespace
 
@@ -1020,25 +1079,15 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   auto in_axes_arg = args_spec_list[1];
   auto out_axes_arg = args_spec_list[2];
 
-  AbstractFunctionPtr fn = dyn_cast<AbstractFunction>(fn_arg);
-  if (fn == nullptr) {
-    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 must be a 'Function' or 'Cell', but got " << fn_arg->ToString() << ".";
-  }
+  int nparam = -1;
+  size_t cell_size = 0;
+  DebugInfoPtr origin_graph_info = CheckVmapFunc(fn_arg, &nparam, &cell_size);
 
-  auto real_fn = dyn_cast<FuncGraphAbstractClosure>(fn);
-  if (real_fn == nullptr) {
-    MS_LOG(EXCEPTION) << "'VmapOperation' arg0 " << fn->ToString() << " cast to 'FuncGraphAbstractClosure' failed.";
-  }
-
-  FuncGraphPtr orig_graph = real_fn->func_graph();
-  MS_EXCEPTION_IF_NULL(orig_graph);
-  orig_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
   FuncGraphPtr vmap_fg = nullptr;
   {
-    TraceGuard guard(std::make_shared<TraceVmapOperation>(orig_graph->debug_info()));
+    TraceGuard guard(std::make_shared<TraceVmapOperation>(origin_graph_info));
     vmap_fg = std::make_shared<FuncGraph>();
   }
-  int nparam = SizeToInt(orig_graph->parameters().size());
 
   std::ostringstream ss;
   ss << "vmap{" << nparam << "}";
@@ -1051,12 +1100,13 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
   (void)vmap_fg->add_parameter();
 
   // Validity verification of in_axes and out_axes
-  ValuePtr in_axes = CheckAxes(in_axes_arg, true, nparam);
+  ValuePtr in_axes = CheckAxes(in_axes_arg, true, nparam, cell_size);
   ValuePtr out_axes = CheckAxes(out_axes_arg);
 
   PrimitivePtr kprim_vmap = std::make_shared<Primitive>(prim::kVmap, kSideEffectPropagate);
   kprim_vmap->set_attr("in_axes", in_axes);
   kprim_vmap->set_attr("out_axes", out_axes);
+  kprim_vmap->set_attr("cell_size", MakeValue(cell_size));
 
   std::vector<AnfNodePtr> inputs;
   inputs.push_back(NewValueNode(kprim_vmap));
@@ -1065,8 +1115,8 @@ FuncGraphPtr VmapOperation::GenerateFuncGraph(const AbstractBasePtrList &args_sp
 
   FuncGraphPtr vmap_child = nullptr;
   {
-    TraceGuard guard(std::make_shared<TraceVmapOperation>(orig_graph->debug_info()));
-    vmap_child = GetVmap(vmap, orig_graph->parameters());
+    TraceGuard guard(std::make_shared<TraceVmapOperation>(origin_graph_info));
+    vmap_child = GetVmap(vmap, nparam);
   }
 
   vmap_fg->set_output(NewValueNode(vmap_child));

@@ -292,7 +292,7 @@ class VmapOperation : public MetaFuncGraph {
   ~VmapOperation() override = default;
   MS_DECLARE_PARENT(VmapOperation, MetaFuncGraph)
 
-  FuncGraphPtr GetVmap(const AnfNodePtr &vmap, const std::vector<AnfNodePtr> &forward_graph_params) const;
+  FuncGraphPtr GetVmap(const AnfNodePtr &vmap, int param_number) const;
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
 };

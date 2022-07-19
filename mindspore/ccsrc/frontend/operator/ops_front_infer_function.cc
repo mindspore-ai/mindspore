@@ -945,18 +945,29 @@ AbstractBasePtr InferImplVmap(const AnalysisEnginePtr &, const PrimitivePtr &pri
   auto fn_arg = args_spec_list[0];
   MS_LOG(DEBUG) << "Evaluate Vmap: " << fn_arg->ToString() << ".";
 
-  AbstractFunctionPtr x = dyn_cast<AbstractFunction>(fn_arg);
-  MS_EXCEPTION_IF_NULL(x);
-
+  AbstractFuncAtomPtrList vmap_v;
   ValuePtr in_axes = primitive->GetAttr("in_axes");
   ValuePtr out_axes = primitive->GetAttr("out_axes");
 
-  AbstractFuncAtomPtrList vmap_v;
-  auto build_vmap_v = [&vmap_v, &in_axes, &out_axes](const AbstractFuncAtomPtr &func) {
-    auto vmap_closure = std::make_shared<VmapTransformedAbstractClosure>(func, in_axes, out_axes);
-    vmap_v.push_back(vmap_closure);
+  auto traverse_fn = [&vmap_v, &in_axes, &out_axes](const AbstractBasePtr &fn_arg) {
+    AbstractFunctionPtr x = dyn_cast<AbstractFunction>(fn_arg);
+    MS_EXCEPTION_IF_NULL(x);
+    auto build_vmap_v = [&vmap_v, &in_axes, &out_axes](const AbstractFuncAtomPtr &func) {
+      auto vmap_closure = std::make_shared<VmapTransformedAbstractClosure>(func, in_axes, out_axes);
+      vmap_v.push_back(vmap_closure);
+    };
+    x->Visit(build_vmap_v);
   };
-  x->Visit(build_vmap_v);
+
+  AbstractTuplePtr cell_list = dyn_cast<AbstractTuple>(fn_arg);
+  if (cell_list != nullptr) {
+    const auto &cell_list_fns = cell_list->elements();
+    for (const auto &fn : cell_list_fns) {
+      traverse_fn(fn);
+    }
+  } else {
+    traverse_fn(fn_arg);
+  }
 
   return AbstractFunction::MakeAbstractFunction(vmap_v);
 }

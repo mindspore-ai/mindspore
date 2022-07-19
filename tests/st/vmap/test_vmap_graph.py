@@ -389,3 +389,50 @@ def test_vmap_with_tuple_input():
     assert isinstance(res[1], Tensor)
     assert np.allclose(res[0].asnumpy(), np.array([[2, 2, 2], [2, 2, 2]]))
     assert np.allclose(res[1].asnumpy(), np.array([[4, 4, 4], [4, 4, 4]]))
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vmap_with_celllist_input():
+    """
+    Feature: vmap
+    Description: When vmap use celllist inputs in graph, it is executing the model ensembling parallel scenario.
+    Expectation: success
+    """
+    class AssignNet(nn.Cell):
+        def __init__(self):
+            super(AssignNet, self).__init__()
+            self.assign = P.Assign()
+            self.ref_a = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_a')
+            self.ref_b = Parameter(Tensor([0, 1, 2], mstype.float32), name='ref_b')
+
+        def construct(self, replace_tensor):
+            out = self.assign(self.ref_a, replace_tensor)
+            out = self.ref_b + out
+            return out
+
+    m1 = AssignNet()
+    m2 = AssignNet()
+    m3 = AssignNet()
+    mm = nn.CellList([m1, m2, m3])
+    replace_tensor = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mstype.float32)
+
+    output = F.vmap(mm, 0)(replace_tensor)
+
+    expect_res1 = Tensor([[1, 3, 5], [4, 6, 8], [7, 9, 11]], mstype.float32)
+    expect_res2 = Tensor([1, 2, 3], mstype.float32)
+    expect_res3 = Tensor([4, 5, 6], mstype.float32)
+    expect_res4 = Tensor([7, 8, 9], mstype.float32)
+    expect_res5 = Tensor([0, 1, 2], mstype.float32)
+
+    assert np.allclose(output.asnumpy(), expect_res1.asnumpy())
+    assert np.allclose(m1.ref_a.asnumpy(), expect_res2.asnumpy())
+    assert np.allclose(m2.ref_a.asnumpy(), expect_res3.asnumpy())
+    assert np.allclose(m3.ref_a.asnumpy(), expect_res4.asnumpy())
+    assert np.allclose(m1.ref_b.asnumpy(), expect_res5.asnumpy())
+    assert np.allclose(m2.ref_b.asnumpy(), expect_res5.asnumpy())
+    assert np.allclose(m3.ref_b.asnumpy(), expect_res5.asnumpy())

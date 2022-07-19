@@ -716,6 +716,17 @@ class SideEffectFinder {
       return TraceTupleGetItemEffectInfo(cnode, &tuple_indexes);
     }
 
+    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple)) {
+      // Trace make_tuple.
+      const auto &inputs = cnode->inputs();
+      EffectInfo info{EffectInfo::kDetected, false, false, false};
+      for (size_t i = 1; i < inputs.size(); ++i) {
+        auto input_info = TraceEffectInfo(inputs[i]);
+        info.Merge(input_info);
+      }
+      return info;
+    }
+
     // For high-order pritimive such as Partial,
     // we trace effect info from its argument.
     int index_prim = GetSideEffectPropagate(prim);

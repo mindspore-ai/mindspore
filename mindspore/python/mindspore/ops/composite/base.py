@@ -604,8 +604,13 @@ class _Vmap(VmapOperation_):
         VmapOperation_.__init__(self, 'vmap')
         self.vmap_fn = None
         self.fn = None
+        self.in_axes = None
+        self.out_axes = None
 
     def __call__(self, fn, in_axes=0, out_axes=0):
+        if self.vmap_fn is not None and self.fn == fn and self.in_axes == in_axes and self.out_axes == out_axes:
+            return self.vmap_fn
+
         vmap_ = self
 
         @ms_function
@@ -614,6 +619,8 @@ class _Vmap(VmapOperation_):
 
         self.vmap_fn = after_vmap
         self.fn = fn
+        self.in_axes = in_axes
+        self.out_axes = out_axes
         return self.vmap_fn
 
 

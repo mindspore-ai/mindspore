@@ -18,6 +18,9 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_VMAP_ELIMINATE_H_
 
 #include <memory>
+#include <utility>
+#include <string>
+#include <vector>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"
@@ -31,20 +34,28 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
+using ParamMappingVector = std::vector<std::pair<ParameterPtr, std::vector<AnfNodePtr>>>;
 // {prim::kPrimVmap, C}
 class ExpandVmapPrim : public ExpandMetaFgPrim {
  public:
   ExpandVmapPrim() { prim_ = prim::kPrimVmap; }
   virtual ~ExpandVmapPrim() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) override;
+  bool CheckIfEmbedMetaFgPrim(const CNodePtr &node) const override;
 };
 using ExpandVmapPrimPtr = std::shared_ptr<ExpandVmapPrim>;
 namespace internal {
+constexpr int64_t kParamSizeIndex = 0;
+constexpr int64_t kUMonadOffsetIndex = 1;
+constexpr int64_t kIOMonadOffsetIndex = 2;
+using VisitedHashSetPair = std::pair<mindspore::HashSet<FuncGraphPtr>, mindspore::HashSet<AnfNodePtr>>;
+constexpr char kVmapFunctionModelName[] = "mindspore.ops._vmap";
+
 int GetAxisSizeByAbs(const AbstractBasePtr &abs, ValuePtr *const in_axes);
 
-FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource,
-                               mindspore::HashSet<FuncGraphPtr> *visited_graph,
-                               mindspore::HashSet<AnfNodePtr> *visited_node, int axis_size);
+FuncGraphPtr ExpandVmapFunctor(const FuncGraphPtr &vmap_fg, const pipeline::ResourceBasePtr &resource, int axis_size,
+                               VisitedHashSetPair *visited_pair,
+                               mindspore::HashMap<std::string, ParameterPtr> *stacked_params = nullptr);
 }  // namespace internal
 }  // namespace irpass
 }  // namespace opt
