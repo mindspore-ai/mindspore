@@ -1289,7 +1289,7 @@ void ControlNodeScheduler::LinkControlArrowByAutoMonad(ControlActor *to_actor, c
   for (const auto &depend_node : depend_nodes) {
     MS_EXCEPTION_IF_NULL(depend_node);
     MS_LOG(DEBUG) << "Add depend node:" << depend_node->DebugString() << " for actor:" << to_actor->GetAID();
-    auto from_actor = FetchActor(depend_node->DebugString());
+    auto from_actor = FetchActor(GetActorName(depend_node));
     auto graph = parser->FetchKernelGraphByFrontNode(depend_node);
 
     std::vector<AbstractActor *> from_actors;
