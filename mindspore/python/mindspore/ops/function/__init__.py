@@ -321,6 +321,7 @@ from .random_func import (
     uniform,
     standard_normal,
     random_gamma,
+    uniform_candidate_sampler,
 )
 
 __all__ = []
