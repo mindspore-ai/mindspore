@@ -3763,7 +3763,7 @@ class Lerp(Primitive):
     Refer to :func:`mindspore.ops.lerp` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore.ops.operations.math_ops import Lerp
