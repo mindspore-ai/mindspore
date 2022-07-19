@@ -268,7 +268,7 @@ void EmbeddingCachePrefetchActor::Finalize() {
   SyncEmbeddingTable();
 
   running_ = false;
-  FinalizeRemote();
+  (void)FinalizeRemote();
 
   PsDataPrefetch::GetInstance().NotifyFinalize();
   data_parser_.notify_all();
@@ -474,7 +474,12 @@ void EmbeddingCachePrefetchActor::Run() {
   // Bind device to current thread to gain device control privileges
   MS_EXCEPTION_IF_NULL(device_context_);
   MS_EXCEPTION_IF_NULL(device_context_->device_res_manager_);
-  device_context_->device_res_manager_->BindDeviceToCurrentThread();
+  if (!device_context_->device_res_manager_->BindDeviceToCurrentThread()) {
+    MS_LOG(ERROR) << "Failed to bind device to current thread.";
+    running_ = false;
+    PsDataPrefetch::GetInstance().NotifyFinalize();
+    return;
+  }
 
   // Wait initialize parameters on remote.
   // Prevents the subsequent prefetch cache from failing due to the long initialization time of the large parameter on
@@ -1223,7 +1228,7 @@ void EmbeddingCachePrefetchActor::GetRemoteEmbeddingSliceBound() {
       begin = remote_embedding_slice_bounds_[i - 1].second + 1;
       end = begin + remote_embedding_slice_sizes[i] - 1;
     }
-    remote_embedding_slice_bounds_.emplace_back(begin, end);
+    (void)remote_embedding_slice_bounds_.emplace_back(begin, end);
   }
 }
 
@@ -1277,8 +1282,8 @@ bool EmbeddingCachePrefetchActor::PartitionIdsAndEmbeddings(const int *ids, size
     for (size_t j = 0; j < ids_num; j++) {
       if (ids[j] >= begin && ids[j] <= end) {
         slice_ids.push_back(ids[j] - offset);
-        slice_embeddings.insert(slice_embeddings.end(), embeddings + (j * embedding_dim),
-                                embeddings + (j * embedding_dim) + embedding_dim);
+        (void)slice_embeddings.insert(slice_embeddings.end(), embeddings + (j * embedding_dim),
+                                      embeddings + (j * embedding_dim) + embedding_dim);
       }
     }
   }
@@ -1638,10 +1643,16 @@ bool Sender::Send(const std::vector<ShapeVector> &shapes, const std::vector<Type
 
 Sender::~Sender() {
   if (client_) {
-    client_->Disconnect(server_url_);
-    client_->Finalize();
+    try {
+      if (!client_->Disconnect(server_url_)) {
+        MS_LOG(ERROR) << "Failed to disconnect tcp client.";
+      }
+      client_->Finalize();
+      client_ = nullptr;
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Failed to disconnect and finalize tcp client, error message: " << e.what();
+    }
   }
-  client_ = nullptr;
   receiver_ = nullptr;
 }
 
@@ -1699,20 +1710,20 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
     // Message format:
     // |RPC_DYNAMIC_SHAPE_DATA | dynamic shape PB data size |---dynamic shape PB data----|---real data----|
     // 1. The dynamic shape header.
-    message->body.append(kRpcDynamicShapeData);
+    (void)message->body.append(kRpcDynamicShapeData);
     // 2. The size of the protobuf DynamicShapeMessage.
     size_t ds_pb_msg_size = ds_pb_msg_str.size();
-    message->body.append(reinterpret_cast<char *>(&ds_pb_msg_size), sizeof(ds_pb_msg_size));
+    (void)message->body.append(reinterpret_cast<char *>(&ds_pb_msg_size), sizeof(ds_pb_msg_size));
     // 3. Protobuf DynamicShapeMessage.
-    message->body.append(ds_pb_msg_str);
+    (void)message->body.append(ds_pb_msg_str);
     // 4. The real data buffer need to be sent.
-    message->body.append(static_cast<char *>(data->addr), data->size);
+    (void)message->body.append(static_cast<char *>(data->addr), data->size);
   }
 
   // 5. Finalize remote command.
   if (finalize_remote) {
-    message->body.append(distributed::kFinalizeMuxRecvActor);
-    message->body.append(reinterpret_cast<char *>(&finalize_remote), sizeof(finalize_remote));
+    (void)message->body.append(distributed::kFinalizeMuxRecvActor);
+    (void)message->body.append(reinterpret_cast<char *>(&finalize_remote), sizeof(finalize_remote));
   }
 
   return message;
@@ -1720,9 +1731,13 @@ std::unique_ptr<MessageBase> Sender::BuildRpcMessage(const std::vector<ShapeVect
 
 Receiver::~Receiver() {
   if (server_) {
-    server_->Finalize();
+    try {
+      server_->Finalize();
+      server_ = nullptr;
+    } catch (const std::exception &e) {
+      MS_LOG(ERROR) << "Failed to finalize tcp server, error message: " << e.what();
+    }
   }
-  server_ = nullptr;
   received_buffer_ = nullptr;
 }
 
@@ -1730,8 +1745,12 @@ std::unique_ptr<std::vector<char>> Receiver::Receive() {
   std::unique_lock<std::mutex> locker(received_msg_mtx_);
   // The maximum time(300 seconds) to wait to receive message.
   const int64_t longest_time_to_wait = 300;
-  received_msg_cv_.wait_for(locker, std::chrono::seconds(longest_time_to_wait),
-                            [this] { return received_msg_.load(); });
+  auto ret = received_msg_cv_.wait_for(locker, std::chrono::seconds(longest_time_to_wait),
+                                       [this] { return received_msg_.load(); });
+  if (!ret) {
+    MS_LOG(ERROR) << "Receive message timeout";
+    return nullptr;
+  }
 
   std::unique_ptr<std::vector<char>> output = std::move(received_buffer_);
   MS_EXCEPTION_IF_NULL(output);

@@ -248,7 +248,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
   device::DeviceContext *device_context_;
   // The device stream used to async memcpy operators and launch device kernels, such as embedding cache look up and
   // update kernel.
-  size_t stream_id_;
+  size_t stream_id_{0};
 
   // The embedding cache look up kernel node(operator name: 'Gather').
   CNodePtr embedding_cache_lookup_node_;
@@ -342,7 +342,7 @@ class EmbeddingCachePrefetchActor : public ActorBase {
 class RpcOperator {
  public:
   RpcOperator() : inter_process_edge_(""), route_table_proxy_(nullptr) {}
-  ~RpcOperator() = default;
+  virtual ~RpcOperator() = default;
 
   // Set the inter-process edge name for rpc operators.
   void set_inter_process_edge_name(const std::string &edge_name) { inter_process_edge_ = edge_name; }
@@ -365,7 +365,7 @@ class RpcOperator {
 class Sender : public RpcOperator {
  public:
   Sender() : server_url_(""), client_(nullptr) {}
-  ~Sender();
+  ~Sender() override;
 
   // Send buffer to peer.
   bool Send(const std::vector<ShapeVector> &shapes, const std::vector<TypeId> data_types,
@@ -402,7 +402,7 @@ class Sender : public RpcOperator {
 class Receiver : public RpcOperator {
  public:
   Receiver() : ip_(""), port_(0), server_(nullptr), received_buffer_(nullptr), received_msg_(false) {}
-  ~Receiver();
+  ~Receiver() override;
 
   // Receive message from the peer sender, this interface is a synchronous interface and will wait for the message
   // until the timeout period is reached.

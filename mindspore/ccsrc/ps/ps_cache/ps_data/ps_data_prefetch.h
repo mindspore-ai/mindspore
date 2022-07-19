@@ -40,7 +40,7 @@ class EXPORT PsDataPrefetch {
   EXPORT void NotifyFinalize();
   EXPORT bool QueryData(const std::string &channel_name, void **data_ptr) const;
   EXPORT size_t data_size(const std::string &channel_name) const;
-  EXPORT bool TryWakeChannel(const std::string &channel_name);
+  EXPORT bool TryWakeChannel(const std::string &channel_name) const;
 
  private:
   PsDataPrefetch() : cache_enable_(false), data_ready_(false) {}
@@ -48,7 +48,7 @@ class EXPORT PsDataPrefetch {
   PsDataPrefetch(const PsDataPrefetch &) = delete;
   PsDataPrefetch &operator=(const PsDataPrefetch &) = delete;
   std::shared_ptr<PsDataChannel> ps_data_channel(const std::string &channel_name) const;
-  void WakeAllChannel();
+  void WakeAllChannel() const;
   std::map<std::string, std::shared_ptr<PsDataChannel>> ps_data_channel_map_;
   bool cache_enable_;
   bool data_ready_;

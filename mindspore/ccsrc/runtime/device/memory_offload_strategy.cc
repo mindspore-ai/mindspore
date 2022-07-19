@@ -166,7 +166,7 @@ void MemOffloadStrategy::GenSwapEventSet() {
   continuous_mem_info_helper_->ClearContinuousMallocIndex();
   std::vector<size_t> cur_mem_used(min_mem_used_.begin(), min_mem_used_.end());
 
-  auto compare_total_size = [](ContinuousMemInfoPtr l, ContinuousMemInfoPtr r) -> bool {
+  auto compare_total_size = [](const ContinuousMemInfoPtr &l, const ContinuousMemInfoPtr &r) -> bool {
     return l->total_size_ < r->total_size_;
   };
   auto all_continuous_mem_info = continuous_mem_info_helper_->GetAllContinuousMemInfo();
@@ -248,11 +248,11 @@ void MemOffloadStrategy::GenContinuousMemSwapEvent(const ContinuousMemInfoPtr &c
           swap_in_span = span;
           swap_in_event_index = i;
         }
-        events_no_need_swap->insert(mem_event);
+        (void)events_no_need_swap->insert(mem_event);
       }
     }
     if (swap_in_event_index != kFirstGetMemEventIndex || is_high_priority) {
-      swap_events_.insert(events_iter->second[swap_in_event_index]);
+      (void)swap_events_.insert(events_iter->second[swap_in_event_index]);
     }
     // Find the earliest index that continuous memory should be allocated
     if (swap_in_span > first_malloc_span) {
@@ -393,9 +393,10 @@ std::shared_ptr<ContinuousMemInfo> ContinuousMemInfoHelper::GetContinuousMemInfo
 std::vector<ContinuousMemInfoPtr> ContinuousMemInfoHelper::GetAllContinuousMemInfo() {
   std::vector<ContinuousMemInfoPtr> all_continuous_mem_info(input_continuous_mem_info_.size() +
                                                             output_continuous_mem_info_.size());
-  std::copy(input_continuous_mem_info_.begin(), input_continuous_mem_info_.end(), all_continuous_mem_info.begin());
-  std::copy_backward(output_continuous_mem_info_.begin(), output_continuous_mem_info_.end(),
-                     all_continuous_mem_info.end());
+  (void)std::copy(input_continuous_mem_info_.begin(), input_continuous_mem_info_.end(),
+                  all_continuous_mem_info.begin());
+  (void)std::copy_backward(output_continuous_mem_info_.begin(), output_continuous_mem_info_.end(),
+                           all_continuous_mem_info.end());
   return all_continuous_mem_info;
 }
 
@@ -422,14 +423,14 @@ void ContinuousMemInfoHelper::AddContinuousMemInfo(bool is_input, size_t compute
     auto key = address_key_list[i];
     MS_EXCEPTION_IF_NULL(key);
     (void)continuous_mem_info->key_index_map_.emplace(key, i);
-    key_continuous_info_map_.emplace(key, continuous_mem_info);
+    (void)key_continuous_info_map_.emplace(key, continuous_mem_info);
   }
   if (is_input) {
-    input_continuous_mem_info_.insert(continuous_mem_info);
+    (void)input_continuous_mem_info_.insert(continuous_mem_info);
   } else {
-    output_continuous_mem_info_.insert(continuous_mem_info);
+    (void)output_continuous_mem_info_.insert(continuous_mem_info);
   }
-  index_continuous_info_map_[compute_index].emplace_back(continuous_mem_info);
+  (void)index_continuous_info_map_[compute_index].emplace_back(continuous_mem_info);
 }
 
 void MemOffloadStrategy::CountContinuousMemUsage(std::vector<size_t> *total_mem_used) {
