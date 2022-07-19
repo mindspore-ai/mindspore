@@ -553,7 +553,7 @@ class SeLU(Cell):
 
     def __init__(self):
         """Initialize SeLU"""
-        super(SeLU).__init__()
+        super(SeLU, self).__init__()
         self.selu = P.SeLU()
 
     def construct(self, input_x):
