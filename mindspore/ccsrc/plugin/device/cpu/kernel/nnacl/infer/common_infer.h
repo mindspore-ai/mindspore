@@ -28,6 +28,8 @@
 extern "C" {
 #endif
 
+#define EPSILON 1e-6
+
 enum NNACLLshProjectionType {
   LshProjectionType_UNKNOWN = 0,
   LshProjectionType_SPARSE = 1,

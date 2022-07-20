@@ -60,7 +60,7 @@ int RangeInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **
         float start = *(float *)(inputs[0]->data_);
         float limit = *(float *)(inputs[1]->data_);
         float delta = *(float *)(inputs[2]->data_);
-        if (delta == 0) {
+        if (fabsf(delta) < EPSILON) {
           return NNACL_ERR;
         }
         shape_size = imax((int)(ceil((float)(limit - start) / delta)), 0);
