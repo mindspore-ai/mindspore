@@ -87,8 +87,18 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     }
 
     num_count_ = SizeOf(input_shape);
+    if (num_count_ % kDropoutTileSize == 0) {
+      use_fused_dropout_ = true;
+      if (kernel_node->HasAttr(kAttrOnlyUseFirstOutput)) {
+        only_use_first_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseFirstOutput));
+      } else if (kernel_node->HasAttr(kAttrOnlyUseSecondOutput)) {
+        only_use_second_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseSecondOutput));
+      }
+    }
+
     keep_prob_ = GetAttr<float>(kernel_node, "keep_prob");
-    if (!states_init_) {
+
+    if (!states_init_ && !use_fused_dropout_) {
       int64_t seed = GetAttr<int64_t>(kernel_node, "Seed0");
       if (seed == 0) {
         seed = GetAttr<int64_t>(kernel_node, "Seed1");
@@ -98,20 +108,12 @@ class DropoutFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       }
       seed_ = static_cast<uint64_t>(seed);
 
-      if (num_count_ % kDropoutTileSize == 0) {
-        use_fused_dropout_ = true;
-        if (kernel_node->HasAttr(kAttrOnlyUseFirstOutput)) {
-          only_use_first_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseFirstOutput));
-        } else if (kernel_node->HasAttr(kAttrOnlyUseSecondOutput)) {
-          only_use_second_output_ = GetValue<bool>(kernel_node->GetAttr(kAttrOnlyUseSecondOutput));
-        }
-      } else {
-        CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
-                                     "Failed to create generator");
-        CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
-                                     "Failed to SetPseudoRandomGeneratorSeed");
-        MS_EXCEPTION_IF_NULL(mask_generator_);
-      }
+      CHECK_CURAND_RET_WITH_EXCEPT(curandCreateGenerator(&mask_generator_, CURAND_RNG_PSEUDO_DEFAULT),
+                                   "Failed to create generator");
+      CHECK_CURAND_RET_WITH_EXCEPT(curandSetPseudoRandomGeneratorSeed(mask_generator_, seed_),
+                                   "Failed to SetPseudoRandomGeneratorSeed");
+      MS_EXCEPTION_IF_NULL(mask_generator_);
+
       states_init_ = true;
     }
 
