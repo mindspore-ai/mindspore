@@ -14,8 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
-
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -34,25 +32,23 @@ class Net(nn.Cell):
         return self.trunc(x0)
 
 
-@pytest.mark.skip(reason='platform not support')
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test32_net():
     x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3]), mstype.float32)
     uniq = Net()
     output = uniq(x)
+    print("x:\n", output)
     expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1]
+    print("expected_x:\n", expect_x_result)
+
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.skip(reason='platform not support')
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
 def test16_net():
     x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3]), mstype.float16)
     uniq = Net()
     output = uniq(x)
+    print("x:\n", output)
     expect_x_result = [1., -2., 5., 2., 0., -1., 2, -1]
+    print("expected_x:\n", expect_x_result)
+
     assert (output.asnumpy() == expect_x_result).all()

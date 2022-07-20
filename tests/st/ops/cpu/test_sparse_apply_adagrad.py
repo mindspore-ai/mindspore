@@ -35,7 +35,6 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -57,7 +56,6 @@ def test_sparseapplyadagradop_fp32():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -80,7 +78,6 @@ def test_sparseapplyadagradop_update_slot_false():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

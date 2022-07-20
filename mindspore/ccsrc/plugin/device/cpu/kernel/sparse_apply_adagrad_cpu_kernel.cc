@@ -223,5 +223,7 @@ bool SparseApplyAdagradCpuKernelMod::LaunchKernel(const std::vector<kernel::Addr
   MultiThreadCompute<T>(ComputeAdaGrad<T>, &input_params, unique_sparse_grad.indices_size_);
   return true;
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SparseApplyAdagrad, SparseApplyAdagradCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

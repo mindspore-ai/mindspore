@@ -3108,7 +3108,7 @@ class TruncateDiv(Primitive):
         TypeError: If `x` and `y` is not one of the following: Tensor, Number, bool.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend``  ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -3161,7 +3161,7 @@ class TruncateMod(Primitive):
         ValueError: If the shape `x` and `y` cannot be broadcasted to each other.
 
     Supported Platforms:
-        ``Ascend``  ``GPU``
+        ``Ascend``  ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.int32)
@@ -5684,7 +5684,7 @@ class Trunc(Primitive):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> trunc = ops.Trunc()

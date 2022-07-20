@@ -70,5 +70,7 @@ void ApplyGradientDescentCpuKernelMod::LaunchKernel(const std::vector<AddressPtr
   };
   ParallelLaunchAutoSearch(task, input_size_, this, &parallel_search_info_);
 }
+
+MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, ApplyGradientDescent, ApplyGradientDescentCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
