@@ -345,17 +345,17 @@ class FeedForward(Cell):
         where the :math:`W_1, W_2, b_1` and :math:`b_2` are trainable parameters.
 
         Args:
-            hidden_size: (int): The dimension of the inputs.
-            ffn_hidden_size: (int): The intermediate hidden size.
-            dropout_rate: (float): The dropout rate for the second linear's output.
-            hidden_act: (str): The activation of the internal feedforward layer. Supports 'relu',
+            hidden_size (int): The dimension of the inputs.
+            ffn_hidden_size (int): The intermediate hidden size.
+            dropout_rate (float): The dropout rate for the second linear's output.
+            hidden_act (str): The activation of the internal feedforward layer. Supports 'relu',
                 'relu6', 'tanh', 'gelu', 'fast_gelu', 'elu', 'sigmoid', 'prelu', 'leakyrelu', 'hswish',
                 'hsigmoid', 'logsigmoid' and so on. Default: gelu.
-            expert_num: (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
+            expert_num (int): The number of experts used in Linear. For the case expert_num > 1, BatchMatMul is used
                 and the first dimension in BatchMatMul indicate expert_num. Default: 1.
             expert_group_size (int): The number of tokens in each data parallel group. Default: None. This parameter is
                 effective only when in AUTO_PARALLEL mode, and NOT SHARDING_PROPAGATION.
-            param_init_type: (dtype.Number): The parameter initialization type. Should be mstype.float32 or
+            param_init_type (dtype.Number): The parameter initialization type. Should be mstype.float32 or
                 mstype.float16. Default: mstype.float32.
             parallel_config (OpParallelConfig, MoEParallelConfig): The config of parallel setting, see
                 `OpParallelConfig` or `MoEParallelConfig`. When MoE is applied, MoEParallelConfig is effective,
@@ -626,11 +626,11 @@ class VocabEmbedding(Cell):
             as the shard is designed for 2d inputs.
 
         Args:
-            vocab_size: (int): Size of the dictionary of embeddings.
-            embedding_size: (int): The size of each embedding vector.
-            parallel_config(EmbeddingOpParallelConfig): The parallel config of network. Default
+            vocab_size (int): Size of the dictionary of embeddings.
+            embedding_size (int): The size of each embedding vector.
+            parallel_config (EmbeddingOpParallelConfig): The parallel config of network. Default
                 `default_embedding_parallel_config`, an instance of `EmbeddingOpParallelConfig` with default args.
-            param_init: (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
+            param_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the embedding_table.
                 Refer to class `initializer` for the values of string when a string
                 is specified. Default: 'normal'.
 
