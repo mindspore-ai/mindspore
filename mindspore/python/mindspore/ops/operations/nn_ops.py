@@ -5757,7 +5757,7 @@ class ApplyAdaMax(Primitive):
         RuntimeError: If the data type of `var`, `m`, `v` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class Net(nn.Cell):
@@ -5801,7 +5801,7 @@ class ApplyAdaMax(Primitive):
         sig.make_sig('beta1', dtype=sig.sig_dtype.T3),
         sig.make_sig('beta2', dtype=sig.sig_dtype.T4),
         sig.make_sig('epsilon', dtype=sig.sig_dtype.T5),
-        sig.make_sig('grad', dtype=sig.sig_dtype.T)
+        sig.make_sig('grad', dtype=sig.sig_dtype.T6)
     )
 
     @prim_attr_register
@@ -5859,7 +5859,7 @@ class ApplyAdadelta(Primitive):
                       is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> import numpy as np
@@ -5892,8 +5892,8 @@ class ApplyAdadelta(Primitive):
          [ 9.91633832e-02,  4.99105573e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[ 9.00000036e-02,  4.89999980e-01],
          [ 1.00000007e-02,  6.40000045e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 8.99990976e-01,  1.00000791e-01],
-         [ 6.99930906e-01,  7.99999654e-01]]))
+        [[ 8.99990857e-01,  1.00000791e-01],
+         [ 6.99930906e-01,  7.99999774e-01]]))
     """
 
     __mindspore_signature__ = (

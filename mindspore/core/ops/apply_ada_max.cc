@@ -137,7 +137,7 @@ TuplePtr ApplyAdaMaxInferType(const PrimitivePtr &prim, const std::vector<Abstra
   auto beta2_type = input_args[kInputIndex6]->BuildType();
   auto epsilon_type = input_args[kInputIndex7]->BuildType();
   auto grad_type = input_args[kInputIndex8]->BuildType();
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   // m v grad must have the same type as var
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));

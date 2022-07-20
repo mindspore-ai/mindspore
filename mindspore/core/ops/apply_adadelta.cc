@@ -82,7 +82,7 @@ TuplePtr ApplyAdadeltaInferType(const PrimitivePtr &primitive, const std::vector
   auto epsilon_type = input_args[kInputIndex5]->BuildType();
   auto grad_type = input_args[kInputIndex6]->BuildType();
 
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
   std::map<std::string, TypePtr> args;
   (void)args.insert(std::make_pair("var_type", var_type));
   (void)args.insert(std::make_pair("accum_type", accum_type));
