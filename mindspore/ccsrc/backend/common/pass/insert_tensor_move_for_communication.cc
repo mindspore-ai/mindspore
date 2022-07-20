@@ -15,6 +15,8 @@
  */
 
 #include "backend/common/pass/insert_tensor_move_for_communication.h"
+
+#include <vector>
 #include "include/common/utils/anfalgo.h"
 
 namespace mindspore {
@@ -43,7 +45,7 @@ bool InsertTensorMoveForCommunication::Run(const FuncGraphPtr &graph) {
         auto tensor_move = CreateTensorMoveOp(graph, input);
         FuncGraphManagerPtr manager = graph->manager();
         MS_EXCEPTION_IF_NULL(manager);
-        manager->SetEdge(communication_op, i + 1, tensor_move);
+        manager->SetEdge(communication_op, static_cast<int>(i + 1), tensor_move);
         MS_LOG(DEBUG) << "Insert TensorMove for op " << communication_op->fullname_with_scope();
       }
     }

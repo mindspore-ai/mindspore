@@ -33,7 +33,7 @@ class DropoutGenMaskFusion : public Pass {
 
  private:
   bool DoFusion(const std::vector<CNodePtr> &genmasks, const std::set<int64_t> fusion_set,
-                const FuncGraphManagerPtr &manager);
+                const FuncGraphManagerPtr &manager) const;
 };
 }  // namespace opt
 }  // namespace mindspore

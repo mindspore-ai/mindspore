@@ -56,33 +56,28 @@ constexpr size_t kSwitchTrueBranchIndex = 2;
 // ops pair that dynamic input order is differ from the fixed shape ops
 // pair: <real_input->ori_input, ori_input->real_input>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_dynamic_node_list = {
-  {prim::kPrimStridedSliceGrad->name(),
-   {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
-  {prim::kPrimConv2DBackpropInput->name(), {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
-  {prim::kPrimConv2DBackpropFilter->name(), {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
+  {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}},
+  {kConv2DBackpropInputOpName, {{{0, 2}, {1, 1}, {2, 0}}, {{0, 2}, {1, 1}, {2, 0}}}},
+  {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 2}, {2, 0}}, {{1, 0}, {2, 1}, {0, 2}}}}};
 
 // pair: <real_input->ori_input, ori_input->real_input>
 static std::map<std::string, std::pair<std::map<size_t, size_t>, std::map<size_t, size_t>>> spec_node_list = {
-  {prim::kPrimConv2DBackpropInput->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {kConv2DBackpropInputOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
   {kFusionOpConv2DBackpropInputReluGradV2Name, {{{0, 1}, {1, 0}, {2, 2}}, {{0, 1}, {1, 0}, {2, 2}}}},
   {kFusionOpConv2DBackpropInputAddNReluGradV2Name,
    {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
-  {prim::kPrimConv2DBackpropFilter->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
-  {prim::kPrimLogSoftmaxGrad->name(), {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
-  {prim::kPrimLayerNormGrad->name(),
-   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {prim::kPrimLayerNormBetaGammaBackprop->name(), {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
-  {prim::kPrimLayerNormXBackprop->name(),
-   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {prim::kPrimLayerNormXBackpropV2->name(),
-   {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
-  {prim::kPrimMinimumGrad->name(), {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
-  {prim::kPrimMaximumGrad->name(), {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
-  {prim::kPrimApplyCenteredRMSProp->name(),
+  {kConv2DBackpropFilterOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {kLogSoftmaxGradOpName, {{{0, 1}, {1, 0}}, {{0, 1}, {1, 0}}}},
+  {kLayerNormGradOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {kLayerNormBetaGammaBackpropOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}}}},
+  {kLayerNormXBackpropOpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {kLayerNormXBackpropV2OpName, {{{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}, {{0, 1}, {1, 0}, {2, 2}, {3, 3}, {4, 4}}}},
+  {kMinimumGradOpName, {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
+  {kMaximumGradOpName, {{{0, 2}, {1, 0}, {2, 1}}, {{2, 0}, {0, 1}, {1, 2}}}},
+  {kApplyCenteredRMSPropOpName,
    {{{0, 0}, {1, 1}, {2, 2}, {3, 3}, {4, 5}, {5, 6}, {6, 7}, {7, 8}, {8, 4}},
     {{0, 0}, {1, 1}, {2, 2}, {3, 3}, {5, 4}, {6, 5}, {7, 6}, {8, 7}, {4, 8}}}},
-  {prim::kPrimStridedSliceGrad->name(),
-   {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
+  {kStridedSliceGradOpName, {{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}}, {{1, 0}, {2, 1}, {3, 2}, {4, 3}, {0, 4}}}}};
 
 std::string PrintKernelFormatAndType(const std::string &fmt, const TypeId &type, const std::vector<int64_t> &shape) {
   std::ostringstream buffer;
@@ -1044,7 +1039,7 @@ ShapeVector AnfRuntimeAlgorithm::GetInputDeviceShapeAdaptively(const AnfNodePtr 
     auto ConvertNegOneToDefault = [&kDefaultValueForDynamicDim](int64_t size) {
       return size < 0 ? kDefaultValueForDynamicDim : size;
     };
-    std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
+    (void)std::transform(shape.begin(), shape.end(), std::back_inserter(ret_shape), ConvertNegOneToDefault);
     auto format = GetInputFormat(anf_node, index);
     auto dtype = GetInputDeviceDataType(anf_node, index);
     (void)trans::TransShapeToDevice(ret_shape, format, anf_node, index, dtype, false);
