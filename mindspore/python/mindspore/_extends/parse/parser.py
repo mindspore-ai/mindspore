@@ -34,6 +34,7 @@ from mindspore import Tensor
 from mindspore import log as logger
 from mindspore import nn
 from mindspore import ops
+from mindspore import context
 from mindspore.common.api import _MindsporeFunctionExecutor, _convert_python_data
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
@@ -305,7 +306,7 @@ def get_obj_type(obj):
     obj_type = RESOLVE_TYPE_INVALID
     if obj is None:
         obj_type = RESOLVE_TYPE_NONE
-    elif isinstance(obj, types.FunctionType):
+    elif isinstance(obj, types.FunctionType) or type(obj).__name__ == 'cython_function_or_method':
         obj_type = RESOLVE_TYPE_FUNCTION
     elif isinstance(obj, types.MethodType):
         obj_type = RESOLVE_TYPE_METHOD
@@ -722,17 +723,17 @@ class Parser:
     ast_cache = {}
 
     def __init__(self, fn: (types.FunctionType, types.MethodType), parse_method=None) -> None:
-        self.fn = fn
+        self.fn = inspect.unwrap(fn.__func__ if isinstance(fn, types.MethodType) else fn)
         self.parse_method = parse_method
         self.line_offset = 0
-        self.filename: str = inspect.getfile(inspect.unwrap(self.fn))
+        self.filename: str = self.fn.__code__.co_filename
 
         # Used to resolve the function's globals namespace.
-        self.global_namespace = CellNamespace(fn.__module__)
-        self.function_module = fn.__module__
+        self.global_namespace = CellNamespace(self.fn.__module__)
+        self.function_module = self.fn.__module__
         # Used to resolve the function's nonlocals.
-        self.closure_namespace = ClosureNamespace(inspect.unwrap(self.fn))
-        self.function_name = fn.__name__
+        self.closure_namespace = ClosureNamespace(self.fn)
+        self.function_name = self.fn.__qualname__
         self.col_offset = 0
 
     @staticmethod
@@ -772,14 +773,29 @@ class Parser:
     def parse(self):
         """Parse the function or method."""
         logger.debug("fn: %r", self.fn)
-        if isinstance(self.fn, (types.FunctionType, types.MethodType)):
+        if isinstance(self.fn, (types.FunctionType, types.MethodType)) or \
+           type(self.fn).__name__ == 'cython_function_or_method':
+            attr = 'source'
             try:
-                lines, self.line_offset = inspect.getsourcelines(self.fn)
-            except OSError as e:
-                if e.__str__() == "could not get source code":
-                    raise OSError(f"Mindspore can not compile temporary source code in terminal. "
-                                  f"Please write source code to a python file and run the file.")
-                raise e
+                source = inspect.getsourcelines(self.fn)
+                if context.get_context('support_binary') and '/mindspore/' not in self.filename and \
+                   (not hasattr(self.fn, attr) or getattr(self.fn, attr) != source):
+                    if not os.access(self.filename, os.W_OK):
+                        raise PermissionError(f"Don't have the write permission on the file {self.filename}.")
+                    with open(self.filename, 'a') as f:
+                        f.write(f"\n# Set source attribute for function {self.function_name} "
+                                f"to support run so or pyc file in Graph Mode."
+                                f"\nsetattr({self.function_name}, '{attr}', {source})\n")
+                        setattr(self.fn, attr, source)
+            except (OSError, TypeError) as e:
+                if hasattr(self.fn, attr):
+                    source = getattr(self.fn, attr)
+                else:
+                    if e.__str__() == "could not get source code":
+                        raise OSError(f"Mindspore can not compile temporary source code in terminal. "
+                                      f"Please write source code to a python file and run the file.")
+                    raise e
+            lines, self.line_offset = source
             original_src = ''.join(lines)
             hexstr = hashlib.sha256(original_src.encode()).hexdigest()
             ast_tokens_cache = Parser.ast_cache.get(hexstr)
@@ -794,7 +810,7 @@ class Parser:
                     idt_err.filename = self.filename
                     idt_err.lineno = self.line_offset
                     idt_err.msg = f"There are incorrect indentations in definition or comment of function: " \
-                                  f"'{self.fn.__qualname__}'."
+                                  f"'{self.function_name}'."
                     raise idt_err
                 ast_tokens_cache = (ast_tokens, self.col_offset)
                 Parser.ast_cache[hexstr] = ast_tokens_cache
