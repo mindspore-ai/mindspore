@@ -206,7 +206,7 @@ void SchedulerHelper::AddLoopBodyControlArrow(AbstractActor *from_actor, Entranc
   (void)to_actor->loop_body_input_control_arrow_aids_.emplace_back(from_actor->GetAID());
 }
 
-void SchedulerHelper::AddDataWithBranchIDArrow(GatherActor *const gather_actor, EntranceActor *const entrance_actor,
+void SchedulerHelper::AddDataWithBranchIDArrow(GatherActor *const gather_actor, const EntranceActor *entrance_actor,
                                                const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(gather_actor);
   MS_EXCEPTION_IF_NULL(entrance_actor);
@@ -262,7 +262,7 @@ void SchedulerHelper::AddFormalParameterDeviceTensor(ControlActor *const from_ac
       }
       MS_LOG(INFO) << "Add dynamic shape backend parameter:" << input_node->DebugString() << " index:" << from_index
                    << " for actor:" << from_actor->GetAID();
-      from_actor->backend_parameters_[from_index].emplace_back(input_node);
+      (void)from_actor->backend_parameters_[from_index].emplace_back(input_node);
     }
   }
 
@@ -291,8 +291,8 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
   MS_EXCEPTION_IF_NULL(need_converted_node);
 
   // Erase the output data arrow in from actor.
-  (void)from_actor->output_data_arrows_.erase(from_actor->output_data_arrows_.begin() + data_arrow_index);
-  (void)from_actor->output_data_nodes_.erase(from_actor->output_data_nodes_.begin() + data_arrow_index);
+  (void)from_actor->output_data_arrows_.erase(from_actor->output_data_arrows_.begin() + SizeToLong(data_arrow_index));
+  (void)from_actor->output_data_nodes_.erase(from_actor->output_data_nodes_.begin() + SizeToLong(data_arrow_index));
 
   // Erase the input data arrow aid in to actor.
   bool to_actor_erase = false;
@@ -310,7 +310,8 @@ void SchedulerHelper::ConvertDataArrowToControlArrow(AbstractActor *const from_a
   }
 
   // Recalculate the ref count of converted node.
-  auto device_tensor = AnfAlgo::GetMutableOutputAddr(need_converted_node, data_arrow->from_output_index_, false);
+  auto device_tensor =
+    AnfAlgo::GetMutableOutputAddr(need_converted_node, IntToSize(data_arrow->from_output_index_), false);
   MS_EXCEPTION_IF_NULL(device_tensor);
   size_t old_ref_count = device_tensor->ref_count();
   // Ref count Initial value is 1.
@@ -364,8 +365,7 @@ void SchedulerHelper::AddDependency(AbstractActor *const actor, const AbstractAc
   MS_EXCEPTION_IF_NULL(dependent_actor);
   // For example, ActorA->dependent_actor->actor, the expanded dependent actors of actor are dependent_actor and ActorA.
   (void)actor->dependent_actors_.insert(dependent_actor->GetAID().Name());
-  (void)actor->dependent_actors_.insert(dependent_actor->dependent_actors_.begin(),
-                                        dependent_actor->dependent_actors_.end());
+  actor->dependent_actors_.insert(dependent_actor->dependent_actors_.begin(), dependent_actor->dependent_actors_.end());
 }
 
 bool SchedulerHelper::CheckDependency(const std::vector<AbstractActorPtr> &output_actors) {
@@ -409,7 +409,6 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
     auto &actor = actor_iter.second;
     MS_EXCEPTION_IF_NULL(actor);
 
-    mindspore::HashMap<std::string, std::unordered_set<std::string>> modified_batch_data_infos;
     // Link data arrow of fusion actor by the input data arrow of real actor.
     for (auto &input_data_arrow_aid : actor->input_data_arrow_aids_) {
       auto input_data_arrow = input_data_arrow_aid.second;
@@ -428,7 +427,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
       // Record the input index of real actor and fusion actor.
       (void)fusion_actor->real_input_data_.emplace_back(std::make_pair(actor.get(), input_data_arrow->to_input_index_));
       from_actor->data_arrow_to_fusion_actor_indexs_[input_data_arrow] = fusion_actor->input_data_arrow_aids_.size();
-      input_data_arrow->to_input_index_ = fusion_actor->input_data_arrow_aids_.size();
+      input_data_arrow->to_input_index_ = SizeToInt(fusion_actor->input_data_arrow_aids_.size());
 
       input_data_arrow->to_op_id_ = fusion_actor->GetAID();
       ++fusion_actor->input_datas_num_;
@@ -460,7 +459,7 @@ void SchedulerHelper::AddArrowForFusionActor(FusionActor *fusion_actor) {
 }
 
 namespace {
-bool CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
+void CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
   for (const auto &kernel_actor : kernel_actors) {
     MS_EXCEPTION_IF_NULL(kernel_actor);
     std::string exit_actor_name = "";
@@ -477,11 +476,9 @@ bool CheckKernelActorValid(const std::vector<KernelActorPtr> &kernel_actors) {
       if (exit_actor_name != arrow->to_op_id_.Name()) {
         MS_LOG(EXCEPTION) << "Kernel actor:" << kernel_actor->GetAID() << " link to two exit actor:" << exit_actor_name
                           << " and:" << arrow->to_op_id_.Name();
-        return false;
       }
     }
   }
-  return true;
 }
 
 bool CheckExitActorInvalid(const ExitActorPtr &exit_actor) {
@@ -521,15 +518,13 @@ std::vector<ControlActorPtr> CollectControlActors(const ControlActorSetPtr &cont
   return actors;
 }
 
-bool CheckControlActorValid(const ActorSet *actor_set) {
+void CheckControlActorValid(const ActorSet *actor_set) {
   MS_EXCEPTION_IF_NULL(actor_set);
   if (actor_set->control_actors_ == nullptr) {
-    return true;
+    return;
   }
 
-  if (!CheckKernelActorValid(actor_set->kernel_actors_)) {
-    return false;
-  }
+  CheckKernelActorValid(actor_set->kernel_actors_);
 
   auto control_actors = CollectControlActors(actor_set->control_actors_);
   for (const auto &control_actor : control_actors) {
@@ -577,7 +572,6 @@ bool CheckControlActorValid(const ActorSet *actor_set) {
       MS_LOG(WARNING) << "Stack actor:" << stack_actor->GetAID() << " has duplicate control arrows.";
     }
   }
-  return true;
 }
 }  // namespace
 

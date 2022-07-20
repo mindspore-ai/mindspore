@@ -15,7 +15,6 @@
  */
 
 #include "runtime/graph_scheduler/optimizer/batch_data_arrow_fusion.h"
-#include <map>
 #include "runtime/graph_scheduler/scheduler_helper.h"
 
 namespace mindspore {
