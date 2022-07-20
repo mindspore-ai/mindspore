@@ -415,7 +415,8 @@ int FSEEncoder::SerializingToTensor(const ParameterPtr &weight, FSEBitStream *bs
     return ret;
   }
 
-  auto new_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt8, tensor_info->shape(), out_size, kFSE);
+  auto new_tensor =
+    std::make_shared<mindspore::tensor::Tensor>(kNumberTypeFloat32, tensor_info->shape(), out_size, kFSE);
   ret = memcpy_s(new_tensor->data_c(), tensor_info->DataSize(), out8, out_size);
   if (ret != EOK) {
     MS_LOG(ERROR) << weight->name() << " memcpy failed.";

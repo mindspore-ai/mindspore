@@ -32,6 +32,7 @@ constexpr size_t k8Bit = 8;
 constexpr size_t k10Bit = 10;
 constexpr size_t k16Bit = 16;
 constexpr size_t k32Bit = 32;
+constexpr size_t kBitNumPerByte = 8;
 constexpr size_t kMaxNum1024 = 1024;
 constexpr size_t kMillisecondsBase = 10;
 constexpr float kDelta = 0.1;
