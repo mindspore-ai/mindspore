@@ -1657,8 +1657,19 @@ class Cell(Cell_):
     def flatten_weights(self, fusion_size=0):
         """
         Reset data for weight parameters so that they are using contiguous memory chunks grouped by data type.
+
+        Note:
+            By default, parameters with same data type will using a single contiguous memory chunk. but for
+            some models with huge number of parameters, splitting a large memory chunk into several smaller
+            memory chunks has the potential for performance gains, if this is the case, we can use 'fusion_size'
+            to limit the maximum memory chunk size.
+
+        Args:
+            fusion_size (int): Maximum memory chunk size in bytes, 0 for unlimited. Default: 0.
         """
-        Tensor._flatten_tensors(self.trainable_params(), 0)  # pylint: disable=W0212
+        if fusion_size < 0:
+            raise ValueError(f"Negative 'fusion_size' {fusion_size} is invalid.")
+        Tensor._flatten_tensors(self.trainable_params(), fusion_size)  # pylint: disable=W0212
 
     def _run_forward_pre_hook(self, inputs):
         """
