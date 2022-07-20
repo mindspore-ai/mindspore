@@ -192,12 +192,12 @@ class SomasSolverPre {
                  AlgorithmType algorithm = kManyObjects);
 
   void Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-           const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v);
+           const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) const;
 
   Status CheckTensors(const TensorsDescMap *pTensors, uint32_t index1, uint32_t index2) const;
-  Status AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors);
+  Status AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) const;
   Status AddContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v, vector<TensorsDescMap> *vecTensorsMap,
-                                      const TensorsDescMap *pTensors);
+                                      const TensorsDescMap *pTensors) const;
 
  private:
   size_t max_offset_;
