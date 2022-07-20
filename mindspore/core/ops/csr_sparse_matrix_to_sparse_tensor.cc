@@ -82,20 +82,21 @@ abstract::TupleShapePtr CSRSparseMatrixToSparseTensorInferShape(const PrimitiveP
   if (x_dense_shape_rank != kOne || x_batch_pointers_rank != kOne || x_row_pointers_rank != kOne ||
       x_col_indices_rank != kOne || x_values_rank != kOne) {
     MS_EXCEPTION(ValueError) << "For CSRSparseMatrixToSparseTensor, input x_dense_shape should be a 1-D tensor"
+                             << ", but got " << x_dense_shape_shape.size() << "-D"
                              << ", input x_batch_pointers should be a 1-D tensor"
+                             << ", but got " << x_batch_pointers_shape.size() << "-D"
                              << ", input x_row_pointers should be a 1-D tensor"
+                             << ", but got " << x_row_pointers_shape.size() << "-D"
                              << ", input x_col_indices should be a 1-D tensor"
+                             << ", but got " << x_col_indices_shape.size() << "-D"
                              << ", input x_values should be a 1-D tensor"
-                             << ", while dim0 = " << x_dense_shape_shape.size()
-                             << ", dim1 = " << x_batch_pointers_shape.size()
-                             << ", dim2 = " << x_row_pointers_shape.size() << ", dim3 = " << x_col_indices_shape.size()
-                             << ", dim4 = " << x_values_shape.size();
+                             << ", but got " << x_values_shape.size() << "-D";
   }
   if (x_col_indices_shape[kZero] != x_values_shape[kZero]) {
     MS_EXCEPTION(ValueError) << "For " << prim_name
-                             << ", first dimsize of `x_col_indices` and first dimsize of `x_values` should be the same"
-                             << ", while x_col_indices_shape[0] is " << x_col_indices_shape[kZero]
-                             << ", x_values_shape[0] is " << x_values_shape[kZero];
+                             << ", x_col_indices.shape[0] and x_values.shape[0] should be the same"
+                             << ", but got x_col_indices.shape[0] = " << x_col_indices_shape[kZero]
+                             << ", x_values.shape[0] = " << x_values_shape[kZero];
   }
   ShapeVector indices_shape = {x_values_shape[kZero], rank_x};
   ShapeVector values_shape = {x_values_shape[kZero]};

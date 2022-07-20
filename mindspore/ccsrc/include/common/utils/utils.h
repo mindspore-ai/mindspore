@@ -297,6 +297,7 @@ constexpr auto kLessOpName = "Less";
 constexpr auto kLessEqualOpName = "LessEqual";
 constexpr auto kSquareOpName = "Square";
 constexpr auto kSelectOpName = "Select";
+constexpr auto kCSRSparseMatrixToSparseTensorOpName = "CSRSparseMatrixToSparseTensor";
 constexpr auto kReduceSumOpName = "ReduceSum";
 constexpr auto kReduceMinOpName = "ReduceMin";
 constexpr auto kReduceMaxOpName = "ReduceMax";
@@ -889,6 +890,7 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName,
                                               kFractionalAvgPoolGradOpName,
                                               kDenseToDenseSetOperation,
                                               kSegmentMaxOpName,
+                                              kCSRSparseMatrixToSparseTensorOpName,
                                               kSegmentMinOpName,
                                               kSegmentSumOpName,
                                               kResizeBicubicOpName,
