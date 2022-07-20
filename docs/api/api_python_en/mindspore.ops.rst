@@ -75,7 +75,6 @@ Neural Network
     mindspore.ops.Pad
     mindspore.ops.EmbeddingLookup
     mindspore.ops.Padding
-    mindspore.ops.PSROIPooling
     mindspore.ops.ResizeNearestNeighbor
     mindspore.ops.ResizeBilinear
 
@@ -189,7 +188,6 @@ Sampling Operator
     mindspore.ops.ComputeAccidentalHits
     mindspore.ops.LogUniformCandidateSampler
     mindspore.ops.UniformCandidateSampler
-    mindspore.ops.UpsampleTrilinear3D
  
 Image Processing
 ^^^^^^^^^^^^^^^^
