@@ -139,6 +139,5 @@ bool RenormGpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::v
   kernel_func_ = func_list_[index].second;
   return GetRenormAttr(base_operator);
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, Renorm, RenormGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -208,6 +208,5 @@ std::vector<KernelAttr> MatrixDiagV3GpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MatrixDiagV3, MatrixDiagV3GpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

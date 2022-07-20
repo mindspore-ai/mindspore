@@ -3345,7 +3345,7 @@ class Xdivy(Primitive):
                       but data type conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([2, 4, -1]), mindspore.float32)
@@ -3414,7 +3414,7 @@ class Xlogy(Primitive):
     Refer to :func:`mindspore.ops.xlogy` for more detail.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([-5, 0, 4]), mindspore.float32)
@@ -4057,7 +4057,22 @@ class IsFinite(PrimitiveWithInfer):
     r"""
     Determines which elements are finite for each position.
 
-    Refer to :func:`mindspore.ops.isfinite` for more detail.
+    .. math::
+
+        out_i = \begin{cases}
+          & \text{ if } x_{i} = \text{Finite},\ \ True\  \\
+          & \text{ if } x_{i} \ne \text{Finite},\ \ False
+        \end{cases}
+
+    Inputs:
+        - **x** (Tensor) - The input tensor.
+          :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+    Outputs:
+        Tensor, has the same shape of input, and the dtype is bool.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

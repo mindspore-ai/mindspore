@@ -155,6 +155,5 @@ const std::vector<std::pair<KernelAttr, SmoothL1LossCpuKernelMod::KernelRunFunc>
   return func_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, SmoothL1Loss, SmoothL1LossCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

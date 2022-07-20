@@ -1633,13 +1633,9 @@ __all__ = [
     'log_softmax',
     'mish',
     'lrn',
-    'hardswish',
     'softsign',
     'selu',
-    'pad',
     'grid_sample',
-    'smooth_l1_loss',
-    'nll_loss',
     'ctc_greedy_decoder'
 ]
 __all__.sort()

@@ -492,7 +492,7 @@ mindspore.Tensor
         **异常：**
 
         - **ValueError** - 如果输入Tensor的shape长度小于 `indices` 的最后一个维度。
-        
+
     .. py:method:: gather(input_indices, axis)
 
         返回指定 `axis` 上 `input_indices` 的元素对应的输入Tensor切片。为了方便描述，对于输入Tensor记为 `input_params`。
@@ -606,28 +606,6 @@ mindspore.Tensor
         - **TypeError** - `x` 不是Tensor。
         - **TypeError** - 原始Tensor的dtype既不是float16也不是float32。
         - **ValueError** - `lambd` 小于0。
-
-    .. py:method:: inplace_update(v, indices)
-
-        根据 `indices` 以 `v` 来更新Tensor中的值。
-
-        .. note::
-            `indices` 只能沿着最高轴进行索引。
-
-        **参数：**
-
-        - **v** (Tensor) - 用来更新的值。
-        - **indices** (Union[int, tuple]) - 待更新值在原Tensor中的索引。
-
-        **返回：**
-
-        Tensor，更新后的Tensor。
-
-        **异常：**
-
-        - **TypeError** - `indices` 不是int或tuple。
-        - **TypeError** - `indices` 是元组，但是其中的元素不是int。
-        - **ValueError** - Tensor的shape与 `v` 的shape不同。
 
     .. py:method:: isclose(x2, rtol=1e-05, atol=1e-08, equal_nan=False)
 
@@ -753,44 +731,6 @@ mindspore.Tensor
         - **TypeError** - `epsilon` 不是float。
         - **ValueError** - `axis` 的元素超出范围 `[-len(input_x.shape, len(input_x.shape)]` ，其中 `input_x` 指当前Tensor。
         - **ValueError** - `axis` 的维度rank大于当前Tensor的维度rank。
-
-    .. py:method:: masked_fill(mask, value)
-
-        将掩码位置为True的位置填充指定的值。该Tensor和 `mask` 的shape需相同或可广播。
-
-        **参数：**
-
-        - **mask** (Tensor[bool]) - mask矩阵，值为bool类型的Tensor。
-        - **value** (Union[float, Tensor]) - 填充值，其数据类型与该Tensor相同。
-
-        **返回：**
-
-        Tensor，shape和dtype与该Tensor相同。
-
-        **异常：**
-
-        - **TypeError** - `mask` 不是Tensor。
-        - **TypeError** - `mask` 的数据类型不是bool。
-        - **ValueError** - 该Tensor和 `mask` 的shape不可广播。
-        - **TypeError** - 该Tensor 或 `value` 的数据类型不是float16、float32、int8、或int32。
-        - **TypeError** - `value` 的数据类型与该Tensor不同。
-        - **TypeError** - `value` 既不是float也不是Tensor。
-
-    .. py:method:: masked_select(mask)
-
-        返回一个一维张量，其中的内容是此张量中对应于 `mask` 张量中True位置的值。`mask` 张量的shape与此张量的shape不需要一样，但必须符合广播规则。
-
-        **参数：**
-
-        - **mask** (Tensor[bool]) - 值为bool类型的张量。
-
-        **返回：**
-
-        一个一维张量，类型与此张量相同。
-
-        **异常：**
-
-        - **TypeError** - `mask` 不是bool类型的Tensor。
 
     .. py:method:: inv()
 
@@ -935,32 +875,6 @@ mindspore.Tensor
         **返回：**
 
         Tensor，维度为2，类型为int64，表示输入中所有非零元素的下标。
-
-    .. py:method:: one_hot(depth, on_value, off_value, axis=-1)
-
-        生成一个新的one-hot类型的Tensor。 输入Tensor中的值代表位置索引，对应位置取值为 `on_value` ，而在其他所有位置取值为 `off_value` 。
-
-        .. note::
-            如果输入索引为秩 `N` ，则输出为秩 `N+1` 。新轴在 `axis` 处创建。
-
-        **参数：**
-
-        - **depth** (int) - 输入的Scalar，定义one-hot的深度。
-        - **on_value** (Tensor) - 在输入Tensor的值表示的位置索引处，用来填充输出的值。数据类型为float16或float32。
-        - **off_value** (Tensor) - 在除了输入Tensor的值表示的位置索引处之外的位置，用来填充输出的值。数据类型与 `on_value` 的相同。
-        - **axis** (int) - 指定one-hot的计算维度。例如，如果 输入索引Tensor的shape为 :math:`(N, C)` ，`axis` 为-1，则输出shape为 :math:`(N, C, D)` ，如果 `axis` 为0，则输出shape为 :math:`(D, N, C)` 。默认值：-1。
-
-        **返回：**
-
-        Tensor，one-hot类型的Tensor。shape为 :math:`(X_0, \ldots, X_{axis}, \text{depth} ,X_{axis+1}, \ldots, X_n)` 。
-
-        **异常：**
-
-        - **TypeError** - `axis` 或 `depth` 不是int。
-        - **TypeError** - `self` 的数据类型既不是uint8，也不是int32或者int64。
-        - **TypeError** - `self`、`on_value` 或 `off_value` 不是Tensor。
-        - **ValueError** - `axis` 不在[-1, ndim]范围内。
-        - **ValueError** - `depth` 小于0。
 
     .. py:method:: pow(power)
 
@@ -1598,29 +1512,6 @@ mindspore.Tensor
 
         **ValueError** - 输入Tensor的维度少于2。
 
-    .. py:method:: transpose(*axes)
-
-        返回被转置后的Tensor。
-
-        - 对于一维Tensor，这没有影响，因为转置后的向量是相同的。
-        - 对于二维Tensor，是标准的矩阵转置。
-        - 对于n维Tensor，如果提供了维度，则它们的顺序代表维度的置换方式。
-
-        如果未提供轴，且Tensor.shape等于(i[0], i[1],...i[n-2], i[n-1])，则Tensor.transpose().shape等于(i[n-1], i[n-2], ... i[1], i[0])。
-
-        **参数：**
-
-        - **axes** (Union[None, tuple(int), list(int), int], optional) - 如果 `axes` 为None或未设置，则该方法将反转维度。如果 `axes` 为tuple(int)或list(int)，则Tensor.transpose()把Tensor转置为新的维度。如果 `axes` 为整数，则此表单仅作为元组/列表表单的备选。
-
-        **返回：**
-
-        Tensor，具有与输入Tensor相同的维度，其中维度被准确的排列。
-
-        **异常：**
-
-        - **TypeError** - 输入参数类型有误。
-        - **ValueError** - `axes` 的数量不等于Tensor.ndim。
-
     .. py:method:: unique_consecutive(return_idx=False, return_counts=False, axis=None)
 
         返回输入张量中每个连续等效元素组中唯一的元素。
@@ -1673,29 +1564,3 @@ mindspore.Tensor
         **返回：**
 
         Tensor，具有与入参 `shape` 相同的维度。
-
-    .. py:method:: xlogy(y)
-
-        计算原Tensor乘以输入Tensor的对数。当原Tensor为零时，则返回零。原Tensor的数据类型需要是
-        `number <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_ 或
-        `bool_ <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.html#mindspore.dtype>`_。
-        后面为了使表达清晰，使用 `x` 代替原Tensor。
-
-        .. math::
-            out_i = x_{i}\ln{y_{i}}
-
-        `x` 和 `y` 的输入遵循隐式类型转换规则，使数据类型一致。输入必须是两个Tensor或一个Tensor和一个Scalar。当输入是两个Tensor时，它们的数据类型不能同时是bool的，它们的shape可以广播。当输入是一个Tensor和一个Scalar时，Scalar只能是一个常量。
-
-        **参数：**
-
-        - **y** (Union[Tensor, number.Number, bool]) - 第二个输入为数值型。当第一个输入是Tensor或数据类型为数值型或bool的Tensor时，则第二个输入是数值型或bool。当第一个输入是Scalar时，则第二个输入必须是数据类型为数值型或bool的Tensor。
-
-        **返回：**
-
-        Tensor，shape与广播后的shape相同，数据类型为两个输入中精度较高或数数值较高的类型。
-
-        **异常：**
-
-        - **TypeError** - 如果 `x` 和 `y` 不是数值型、bool或Tensor。
-        - **TypeError** - 如果 `x` 和 `y` 的数据类型不是float16、float32或float64。
-        - **ValueError** - 如果 `x` 不能广播到与 `y` 的shape一致。

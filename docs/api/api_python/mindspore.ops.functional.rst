@@ -57,7 +57,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.fast_gelu
     mindspore.ops.hardshrink
-    mindspore.ops.hardswish
     mindspore.ops.log_softmax
     mindspore.ops.soft_shrink
     mindspore.ops.softsign
@@ -71,7 +70,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.nll_loss
     mindspore.ops.smooth_l1_loss
 
 数学运算算子
@@ -126,7 +124,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.floor_mod
     mindspore.ops.inplace_add
     mindspore.ops.inplace_sub
-    mindspore.ops.inplace_update
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lerp
@@ -146,7 +143,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.sinh
     mindspore.ops.sub
     mindspore.ops.tan
-    mindspore.ops.xlogy
 
 .. list-table::
    :widths: 50 50
@@ -271,7 +267,6 @@ Reduction算子
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
     mindspore.ops.ger
-    mindspore.ops.renorm
 
 Tensor操作算子
 ----------------
@@ -300,7 +295,6 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.ops.gamma
-    mindspore.ops.random_gamma
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.standard_normal
@@ -323,12 +317,9 @@ Array操作
     mindspore.ops.gather_d
     mindspore.ops.gather_nd
     mindspore.ops.gumbel_softmax
-    mindspore.ops.masked_fill
-    mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
     mindspore.ops.meshgrid
     mindspore.ops.nonzero
-    mindspore.ops.one_hot
     mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
@@ -353,7 +344,6 @@ Array操作
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unsorted_segment_sum
-    mindspore.ops.unstack
 
 .. list-table::
    :widths: 50 50
@@ -373,8 +363,6 @@ Array操作
      - Refer to :class:`mindspore.ops.Squeeze`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
-   * - mindspore.ops.tensor_scatter_update
-     - Refer to :class:`mindspore.ops.TensorScatterUpdate`.
    * - mindspore.ops.tensor_slice
      - `tensor_slice` will be deprecated in the future. Please use `mindspore.ops.slice` instead.
 
