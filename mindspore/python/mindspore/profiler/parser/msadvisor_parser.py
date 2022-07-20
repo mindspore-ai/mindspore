@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-Msadvisor AICPU model parser.
+MSAdvisor AICPU model parser.
 """
 
 import os
@@ -32,7 +32,7 @@ AICPU_STREAM_ID = 9000  # aicpu stream id in profiler
 
 class MsadvisorParser:
     """
-    Data format conversion for msadvisor AICPU model.
+    Data format conversion for MSAdvisor AICPU model.
     """
 
     def __init__(self, job_id, device_id, rank_id, output_path):
@@ -157,7 +157,7 @@ class MsadvisorParser:
 
     def get_output_file(self):
         """
-        Get output path needed by msadvisor and created dir.
+        Get output path needed by MSAdvisor and created dir.
         """
         msprof_file = os.path.join(self._output_path, "msadvisor")
         msprof_file = os.path.join(msprof_file, self._rank_id)
@@ -174,7 +174,7 @@ class MsadvisorParser:
 
     def write_aicore(self):
         """
-        Read aicore information from file created by profiler and generate new file needed by msadvisor.
+        Read aicore information from file created by profiler and generate new file needed by MSAdvisor.
         """
         aicore_file = self._aicore_path
         output_file = self._output_path
@@ -198,7 +198,7 @@ class MsadvisorParser:
 
     def write_aicpu(self):
         """
-        Read aicpu information from file created by profiler and write into new file needed by msadvisor.
+        Read aicpu information from file created by profiler and write into new file needed by MSAdvisor.
         """
         aicpu_file = self._aicpu_path
         output_file = self._output_path
@@ -219,7 +219,7 @@ class MsadvisorParser:
 
     def parse(self):
         """
-        Interface to call all function in the class. Generated data for AiCpu model in Msadvisor.
+        Interface to call all function in the class. Generated data for AICpu model in MSAdvisor.
         """
         self.get_input_file()
         self.get_output_file()
