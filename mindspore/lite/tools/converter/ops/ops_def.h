@@ -44,6 +44,8 @@ ADD_CONVERTER_ONLY_OP(TensorArrayWriteV3);
 ADD_CONVERTER_ONLY_OP(Constant);
 ADD_CONVERTER_ONLY_OP(Merge);
 ADD_CONVERTER_ONLY_OP(Einsum);
+ADD_CONVERTER_ONLY_OP(QuantizeLinear);
+ADD_CONVERTER_ONLY_OP(DequantizeLinear);
 }  // namespace lite
 }  // namespace mindspore
 

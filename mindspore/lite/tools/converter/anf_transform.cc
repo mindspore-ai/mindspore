@@ -94,6 +94,7 @@
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/converter/import/cast_op_adjust.h"
+#include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -366,6 +367,19 @@ int AnfTransform::RunConstFoldPass(const FuncGraphPtr &old_graph, const std::sha
   if (optimizer->Optimize(old_graph) == nullptr) {
     MS_LOG(ERROR) << "run const fold failed.";
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+STATUS AnfTransform::QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param) {
+  if (param->fullQuantParam.target_device == quant::TargetDevice::DSP &&
+      param->commonQuantParam.quant_type != schema::QuantType_QUANT_ALL) {
+    auto remove_pass = quant::RemoveUnusedQuantParam(func_graph);
+    auto ret = remove_pass.Remove();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "remove unused quant param failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
