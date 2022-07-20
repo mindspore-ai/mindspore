@@ -451,6 +451,11 @@ class Conv2DBackpropFilter(Primitive):
         self.add_prim_attr('dilation', self.dilation)
         self.group = group
         self.add_prim_attr('groups', group)
+        if pad_list:
+            for x in pad_list:
+                if x != -1:
+                    validator.check_non_negative_int(x, 'element of pad_list', self.name)
+        self.pad_list = pad_list
 
 
 class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):

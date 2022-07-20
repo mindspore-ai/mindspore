@@ -26,7 +26,7 @@ namespace kernel {
 namespace {
 constexpr auto kConv2DBackpropFilter = "Conv2DBackpropFilter";
 constexpr auto kConv3DBackpropFilter = "Conv3DBackpropFilter";
-constexpr size_t kConvGradFilterInputsNum = 2;
+constexpr size_t kConvGradFilterInputsMinNum = 2;
 constexpr size_t kConvGradFilterOutputsNum = 1;
 }  // namespace
 void ConvGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
@@ -108,7 +108,9 @@ void ConvGradFilterCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
 bool ConvGradFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                         const std::vector<kernel::AddressPtr> &,
                                         const std::vector<kernel::AddressPtr> &outputs) {
-  CHECK_KERNEL_INPUTS_NUM(inputs.size(), kConvGradFilterInputsNum, kernel_name_);
+  if (inputs.size() < kConvGradFilterInputsMinNum) {
+    MS_LOG(EXCEPTION) << "Input numbers can not less " << kConvGradFilterInputsMinNum << ", but got " << inputs.size();
+  }
   CHECK_KERNEL_OUTPUTS_NUM(outputs.size(), kConvGradFilterOutputsNum, kernel_name_);
   SetArgumentHandle(DNNL_ARG_SRC, inputs[src_index_]->addr);
   SetArgumentHandle(DNNL_ARG_DIFF_DST, inputs[diff_dst_index_]->addr);
@@ -118,16 +120,19 @@ bool ConvGradFilterCpuKernelMod::Launch(const std::vector<kernel::AddressPtr> &i
 }
 
 std::vector<KernelAttr> ConvGradFilterCpuKernelMod::GetOpSupport() {
-  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {{kConv2DBackpropFilter,
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddOutputAttr(kNumberTypeFloat32)}},
-                                                                            {kConv3DBackpropFilter,
-                                                                             {KernelAttr()
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddInputAttr(kNumberTypeFloat32)
-                                                                                .AddOutputAttr(kNumberTypeFloat32)}}};
+  static std::map<std::string, std::vector<KernelAttr>> support_list_map = {
+    {kConv2DBackpropFilter,
+     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+      KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeInt64)
+        .AddOutputAttr(kNumberTypeFloat32)}},
+    {kConv3DBackpropFilter,
+     {KernelAttr()
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddInputAttr(kNumberTypeFloat32)
+        .AddOutputAttr(kNumberTypeFloat32)}}};
   auto iter = support_list_map.find(kernel_type_);
   if (iter == support_list_map.end()) {
     MS_LOG(EXCEPTION) << "ConvGradFilter does not support " << kernel_type_;

@@ -120,6 +120,10 @@ class Conv2dFwdGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     pad_width_ = pad_list[2];
     use_pad_ = !((pad_height_ == pad_list[1]) && (pad_width_ == pad_list[3]));
     pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+    if (pad_height_ == -1 || pad_width_ == -1) {
+      return true;
+    }
+
     SetStrideAndDilation(kernel_node);
     cudnnTensorDescriptor_t input_descriptor_real = nullptr;
     int padA[2];

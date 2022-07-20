@@ -48,6 +48,9 @@ constexpr size_t kWidth2DDilationIndex = 3;
 constexpr auto StaticInput = 2;
 constexpr auto DynamicInput = 3;
 
+constexpr auto k2DHeightIndexNCHW = 2;
+constexpr auto k2DHeightIndexNHWC = 1;
+
 template <typename T, typename S = int64_t>
 class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
  public:
@@ -118,6 +121,29 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       "ConvolutionBackwardFilter failed");
     return true;
   }
+
+  void CalPadList(const std::vector<int> pad_list, const ShapeVector in_shape, const ShapeVector filter_shape,
+                  int h_index, int w_index) {
+    if (pad_list[kTop2DPadIndex] == -1 || pad_list[kBottom2DPadIndex] == -1) {
+      int pad_needed_h = (static_cast<int>(std::ceil((in_shape[h_index] * 1.0) / stride_[2])) - 1) * stride_[2] +
+                         dilation_[2] * (filter_shape[h_index] - 1) + 1 - in_shape[h_index];
+      pad_height_ = std::max(0, pad_needed_h);
+      pad_top_ = static_cast<int>(std::floor(pad_height_ * 1.0 / kSymmetricCoef));
+    } else {
+      pad_height_ = pad_list[kTop2DPadIndex] + pad_list[kBottom2DPadIndex];
+      pad_top_ = pad_list[kTop2DPadIndex];
+    }
+    if (pad_list[kLeft2DPadIndex] == -1 || pad_list[kRight2DPadIndex] == -1) {
+      int pad_needed_w = (static_cast<int>(std::ceil((in_shape[w_index] * 1.0) / stride_[3])) - 1) * stride_[3] +
+                         dilation_[3] * (filter_shape[w_index] - 1) + 1 - in_shape[w_index];
+      pad_width_ = std::max(0, pad_needed_w);
+      pad_left_ = static_cast<int>(std::floor(pad_width_ * 1.0 / kSymmetricCoef));
+    } else {
+      pad_width_ = pad_list[kLeft2DPadIndex] + pad_list[kRight2DPadIndex];
+      pad_left_ = pad_list[kLeft2DPadIndex];
+    }
+  }
+
   bool Init(const CNodePtr &kernel_node) override {
     kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
     kernel_node_ = kernel_node;
@@ -142,8 +168,13 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     ShapeVector filter_shape;
     GetFilterShape(kernel_node, &filter_shape);
     CheckTensorSize({in_shape, dy_shape, filter_shape});
+
+    int h_index = k2DHeightIndexNCHW;
+    int w_index = k2DHeightIndexNCHW + 1;
     if (data_format_ == kOpFormat_NHWC) {
       compute_format_ = CUDNN_TENSOR_NHWC;
+      h_index = k2DHeightIndexNHWC;
+      w_index = k2DHeightIndexNHWC + 1;
     }
     SetNCHW(in_shape, &n_, &c_, &old_height_, &old_width_, data_format_);
     Set4DDesc(dy_shape, filter_shape, in_shape);
@@ -158,23 +189,17 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     if (pad_list.size() != k2DPadSize) {
       MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the length of 'pad' must be 4, but got " << pad_list.size();
     }
-    pad_height_ = pad_list[kTop2DPadIndex];
-    pad_width_ = pad_list[kLeft2DPadIndex];
-    use_pad_ = !((pad_height_ == pad_list[kBottom2DPadIndex]) && (pad_width_ == pad_list[kRight2DPadIndex]));
-    pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
     SetStrideAndDilation(kernel_node);
+    CalPadList(pad_list, in_shape, filter_shape, h_index, w_index);
+    use_pad_ = !(pad_height_ % kSymmetricCoef == 0 && pad_width_ % kSymmetricCoef == 0);
+    pad_mode_ = GetAttr<std::string>(kernel_node, "pad_mode");
+
     cudnnTensorDescriptor_t x_desc_real = nullptr;
     int padA[kConv2dDimSize];
     int strideA[kConv2dDimSize] = {stride_[kHeight2DStrideIndex], stride_[kWidth2DStrideIndex]};
     int dilaA[kConv2dDimSize] = {dilation_[kHeight2DDilationIndex], dilation_[kWidth2DDilationIndex]};
     if (use_pad_) {
-      pad_height_ = pad_list[kTop2DPadIndex] + pad_list[kBottom2DPadIndex];
-      pad_width_ = pad_list[kLeft2DPadIndex] + pad_list[kRight2DPadIndex];
-      pad_top_ = pad_list[kTop2DPadIndex];
-      pad_left_ = pad_list[kLeft2DPadIndex];
-      if (pad_height_ % kSymmetricCoef == 0 && pad_width_ % kSymmetricCoef == 0) {
-        use_pad_ = false;
-      }
+      use_pad_ = !(pad_height_ % kSymmetricCoef == 0 && pad_width_ % kSymmetricCoef == 0);
       int dimA[NBDIMS];
       int strideApadded[NBDIMS];
       if (data_format_ == kOpFormat_NCHW || data_format_ == kOpFormat_DEFAULT) {
@@ -198,11 +223,12 @@ class ConvGradFilterBkwGpuKernelMod : public DeprecatedNativeGpuKernelMod {
       x_desc_real = padded_descriptor_;
     } else {
       if (pad_mode_ == kValidPadModeUpperCase || pad_mode_ == kValidPadModeLowerCase) {
-        pad_height_ = 0;
-        pad_width_ = 0;
+        pad_top_ = 0;
+        pad_left_ = 0;
       }
-      padA[0] = pad_height_;
-      padA[1] = pad_width_;
+      padA[0] = pad_top_;
+      padA[1] = pad_left_;
+
       CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
                                   cudnnSetConvolutionNdDescriptor(conv_desc_, kConv2dDimSize, padA, strideA, dilaA,
                                                                   CUDNN_CROSS_CORRELATION, CUDNN_DATA_FLOAT),
