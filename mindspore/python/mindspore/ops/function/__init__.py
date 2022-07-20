@@ -176,6 +176,7 @@ from .math_func import (
     maximum,
     logaddexp,
     logaddexp2,
+    logit,
     std,
     ldexp,
     mv,

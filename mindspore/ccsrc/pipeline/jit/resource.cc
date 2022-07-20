@@ -212,6 +212,7 @@ BuiltInTypeMap &GetMethodMap() {
        {"inplace_update", std::string("inplace_update")},                  // P.InplaceUpdate
        {"lerp", std::string("lerp")},                                      // lerp()
        {"log1p", std::string("log1p")},                                    // P.Log1p()
+       {"logit", std::string("logit")},                                    // Logit()
        {"log_matrix_determinant", std::string("log_matrix_determinant")},  // log_matrix_determinant()
        {"matrix_determinant", std::string("matrix_determinant")},          // log_matrix_determinant()
        {"max", std::string("max")},                                        // P.reduce_max()

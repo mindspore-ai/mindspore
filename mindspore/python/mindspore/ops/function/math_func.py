@@ -27,6 +27,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.operations._inner_ops import Cummin
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import ReduceStd
+from mindspore.ops.operations.math_ops import Logit
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
 from ..operations.math_ops import (
@@ -2343,6 +2344,47 @@ def ldexp(x, other):
 
     out = mul_ops(x, pow_ops(2.0, other))
     return out
+
+
+def logit(x, eps=None):
+    r"""
+    Calculate the logit of a tensor element-wise. When eps is not None, element in 'x' is clamped to [eps, 1-eps].
+    When eps is None, input 'x' is not clamped.
+
+    .. math::
+        y_{i} = \ln(\frac{z_{i}}{1 - z_{i}}) \\
+        z_{i} = \begin{cases}
+        x_{i} &amp; \text{if eps is None} \\
+        \text{eps} &amp; \text{if } x_{i} &lt; \text{eps} \\
+        x_{i} &amp; \text{if } \text{eps} \leq x_{i} \leq 1 - \text{eps} \\
+        1 - \text{eps} &amp; \text{if } x_{i} &gt; 1 - \text{eps}
+        \end{cases}
+
+    Args:
+        x (Tensor): The input tensor.
+        eps (float, optional): The epsilon. The input clamp bound is defined as [eps, 1-eps]. Default: None.
+
+    Returns:
+        Tensor, with the same shape as the `x`.
+
+    Raises:
+        TypeError: If `eps` is not a float.
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16, float32 or float64.
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([0.1, 0.2, 0.3]).astype(np.float32))
+        >>> output = ops.logit(x, eps=1e-5)
+        >>> print(output)
+        [-2.1972246 -1.3862944 -0.8472978]
+    """
+    if eps is None:
+        eps = -1.0
+    logit_ = _get_cache_prim(Logit)(eps)
+    return logit_(x)
 
 
 #####################################
@@ -5008,6 +5050,7 @@ __all__ = [
     'logical_not',
     'logical_or',
     'logical_and',
+    'logit',
     'logsumexp',
     'ldexp',
     'sin',

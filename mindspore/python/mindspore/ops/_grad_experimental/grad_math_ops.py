@@ -37,6 +37,7 @@ from ..operations.math_ops import ReduceStd
 from ..operations.math_ops import MatrixSolve
 from ..operations.math_ops import CholeskySolve
 from ..operations.math_ops import AddV2
+from ..operations.math_ops import Logit
 
 transpose = P.Transpose()
 
@@ -54,6 +55,18 @@ def get_bprop_acos(self):
 
     def bprop(input_x, out, dout):
         dx = input_grad(input_x, dout)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(Logit)
+def get_bprop_logit(self):
+    """Grad definition for `Logit` operation."""
+    logitgrad = G.LogitGrad(self.eps)
+
+    def bprop(x, out, dout):
+        dx = logitgrad(dout, x)
         return (dx,)
 
     return bprop
