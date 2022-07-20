@@ -4659,9 +4659,9 @@ class AdamWeightDecay(PrimitiveWithInfer):
         - **var** (Parameter) - Weights to be updated. The shape is :math:`(N, *)` where :math:`*` means,
           any number of additional dimensions. The data type can be float16 or float32.
         - **m** (Parameter) - The 1st moment vector in the updating formula,
-          the shape and data type value should be the same as `var`.
-        - **v** (Parameter) - the 2nd moment vector in the updating formula,
-          the shape and data type value should be the same as `var`. Mean square gradients with the same type as `var`.
+          it should have the the shape as `var`. The data type can be float16 or float32.
+        - **v** (Parameter) - The 2nd moment vector in the updating formula,
+          it should have the same shape and dtype as `m`.
         - **lr** (float) - :math:`l` in the updating formula. The paper suggested value is :math:`10^{-8}`,
           the data type should be float32.
         - **beta1** (float) - The exponential decay rate for the 1st moment estimations,
@@ -4707,8 +4707,8 @@ class AdamWeightDecay(PrimitiveWithInfer):
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
-        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('m', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T2),
+        sig.make_sig('v', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T2),
         sig.make_sig('lr', dtype=sig.sig_dtype.T1),
         sig.make_sig('beta1', dtype=sig.sig_dtype.T1),
         sig.make_sig('beta2', dtype=sig.sig_dtype.T1),
