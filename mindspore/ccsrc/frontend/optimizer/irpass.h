@@ -186,6 +186,10 @@ class OptimizeIRPassLib {
   // ge Dropout DropoutGrad process
   SubstitutionPtr dropout_for_ge_;
   SubstitutionPtr dropout_grad_for_ge_;
+  // ge Lamb process
+  SubstitutionPtr lamb_for_ge_;
+  // ge ClipByNorm process
+  SubstitutionPtr clip_by_norm_for_ge_;
 };
 
 // the collection of irpass for resolve action

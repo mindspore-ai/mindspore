@@ -56,7 +56,8 @@
 #include "frontend/optimizer/irpass/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 #include "frontend/optimizer/irpass/ge/avg_pool_grad_for_ge.h"
 #include "frontend/optimizer/irpass/ge/dropout_for_ge.h"
-
+#include "frontend/optimizer/irpass/ge/lamb_split.h"
+#include "frontend/optimizer/irpass/ge/clip_by_norm_split.h"
 namespace mindspore {
 namespace opt {
 namespace irpass {
@@ -304,6 +305,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   dropout_for_ge_ = MakeSubstitution(std::make_shared<DropoutForGE>(), "dropout_for_ge", prim::kPrimDropout);
   dropout_grad_for_ge_ =
     MakeSubstitution(std::make_shared<DropoutGradForGE>(), "dropout_grad_for_ge", prim::kPrimDropoutGrad);
+  lamb_for_ge_ = MakeSubstitution(std::make_shared<LambForGE>(), "lamb_for_ge", prim::kPrimLamb);
+  clip_by_norm_for_ge_ =
+    MakeSubstitution(std::make_shared<ClipByNormForGE>(), "clip_by_norm_for_ge", prim::kPrimClipByNorm);
 }
 
 ResolveIRPassLib::ResolveIRPassLib() {
