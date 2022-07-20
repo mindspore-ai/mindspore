@@ -116,8 +116,7 @@ class TrivialPrimEvaluator : public PrimEvaluator {
       : PrimEvaluator(id), eval_cache_(AnalysisResultCacheMgr::GetInstance().prim_eval_cache()) {}
   ~TrivialPrimEvaluator() override = default;
   MS_DECLARE_PARENT(TrivialPrimEvaluator, PrimEvaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) final;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) final;
   virtual EvalResultPtr EvalPrim(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list) = 0;
 
  protected:
@@ -141,8 +140,7 @@ class SymbolicPrimEvaluator : public PrimEvaluator {
   explicit SymbolicPrimEvaluator(const std::string &id) : PrimEvaluator(id) {}
   ~SymbolicPrimEvaluator() override = default;
   MS_DECLARE_PARENT(SymbolicPrimEvaluator, PrimEvaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) final;
+  EvalResultPtr Run(AnalysisEnginePtr, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) final;
   virtual EvalResultPtr EvalPrim(const ConfigPtrList &args_conf_list) = 0;
 };
 
@@ -224,7 +222,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
   }
 
   void CollectSideEffectNodes(const AnfNodePtr &node, std::vector<AnfNodePtr> *side_effect_nodes);
-  void CheckSideEffectNodes(const AbstractBasePtr &abstract, const std::vector<AnfNodePtr> &side_effect_nodes);
+  void CheckSideEffectNodes(const AbstractBasePtr &abstract, const std::vector<AnfNodePtr> &side_effect_nodes) const;
 
  protected:
   AnalysisContextPtr parent_context_;
@@ -359,8 +357,7 @@ class JEvaluator : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
  private:
@@ -391,8 +388,7 @@ class TaylorEvaluator : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
  private:
@@ -425,8 +421,7 @@ class ShardEvaluator : public Evaluator {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
 
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
 
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
@@ -463,8 +458,7 @@ class VmapEvaluator : public Evaluator {
   EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
     MS_LOG(EXCEPTION) << "Should not be called, Run() method should be called";
   }
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) override;
+  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list, const AnfNodeConfigPtr &) override;
   std::string ToString() const override { return identifier_ + "_" + evaluator_->ToString(); }
 
  private:
