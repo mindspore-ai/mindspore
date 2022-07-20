@@ -37,8 +37,8 @@ GetNextDynamic::GetNextDynamic() {}
 
 GetNextDynamic::~GetNextDynamic() {}
 
-bool GetNextDynamic::Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-                            const std::vector<AddressPtr> &outputs, void *stream_ptr) {
+bool GetNextDynamic::Launch(const std::vector<AddressPtr> &, const std::vector<AddressPtr> &,
+                            const std::vector<AddressPtr> &, void *) {
   return true;
 }
 
@@ -53,9 +53,8 @@ bool GetNextDynamic::Init(const mindspore::AnfNodePtr &anf_node) {
   return true;
 }
 
-int GetNextDynamic::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
-                           const std::vector<KernelTensorPtr> &outputs,
-                           const std::map<uint32_t, tensor::TensorPtr> &others) {
+int GetNextDynamic::Resize(const BaseOperatorPtr &, const std::vector<KernelTensorPtr> &,
+                           const std::vector<KernelTensorPtr> &, const std::map<uint32_t, tensor::TensorPtr> &) {
   auto data_kernel = anf_node_.lock();
   bool ret = device::PopDataFromDataQueue(data_kernel);
   if (!ret) {
@@ -77,8 +76,8 @@ std::vector<std::shared_ptr<kernel::KernelBuildInfo>> GetNextDynamicDesc::GetKer
   std::vector<TypeId> output_type;
   for (size_t idx = 0; idx < output_num; ++idx) {
     auto data_type = common::AnfAlgo::GetOutputInferDataType(kernel_node, idx);
-    output_type.push_back(data_type);
-    output_format.push_back(kOpFormat_DEFAULT);
+    output_type.emplace_back(data_type);
+    output_format.emplace_back(kOpFormat_DEFAULT);
   }
   auto builder = KernelBuildInfo::KernelBuildInfoBuilder();
   builder.SetOutputsFormat(output_format);

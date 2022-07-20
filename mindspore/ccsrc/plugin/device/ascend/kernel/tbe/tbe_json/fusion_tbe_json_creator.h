@@ -33,9 +33,9 @@ class FusionBuildTbeJsonCreator : public TbeJsonCreator {
   bool GenOutputsJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
   std::vector<size_t> GetDescOutputIndex(const std::vector<int64_t> &output_used_nums) const;
   void GenReusedOutputDesc(const AnfNodePtr &anf_node, size_t index, size_t output_index, nlohmann::json *output_desc,
-                           size_t out_size);
+                           size_t out_size) const;
   void GenDataJson(const std::vector<AnfNodePtr> &compute_nodes, const std::vector<nlohmann::json> &compute_json,
-                   std::vector<nlohmann::json> *op_list_json, const ANodeFusionDataTypeMap &spec_data_input);
+                   std::vector<nlohmann::json> *op_list_json, const ANodeFusionDataTypeMap &spec_data_input) const;
   bool AttrsJsonPostProcessing(const AnfNodePtr &, const OpInfoPtr &, nlohmann::json *) override;
   void GenOtherJson(const AnfNodePtr &anf_node, nlohmann::json *compute_json) override;
 
