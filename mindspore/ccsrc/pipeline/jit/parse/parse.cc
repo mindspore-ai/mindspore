@@ -2257,9 +2257,16 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   // Create a header block.
   MS_EXCEPTION_IF_NULL(block->func_graph());
   FunctionBlockPtr top_block = GenerateBlock(std::make_shared<TraceListComp>(block->func_graph()->debug_info()));
+  top_block->AddPrevBlock(block);
   // Handle iter attribute.
   py::object iter_node = python_adapter::GetPyObjAttr(generator_node, "iter");
   AnfNodePtr iter_anf_node = ParseExprNode(block, iter_node);
+  MS_EXCEPTION_IF_NULL(iter_anf_node);
+  bool interpret_without_internal =
+    IsPrimitiveCNode(iter_anf_node, prim::kPrimPyInterpret) && !iter_anf_node->interpret_internal_type();
+  if (iter_anf_node->interpret() || interpret_without_internal) {
+    iter_anf_node = ConvertInterpretIterNodeToList(block, iter_anf_node, iter_node);
+  }
   AnfNodePtr op_iter = top_block->MakeResolveOperation(NAMED_PRIMITIVE_ITER);
   MS_EXCEPTION_IF_NULL(top_block->func_graph());
   CNodePtr iter_apply = top_block->func_graph()->NewCNodeInOrder({op_iter, iter_anf_node});
@@ -2267,7 +2274,6 @@ FunctionBlockPtr Parser::ParseListCompIter(const FunctionBlockPtr &block, const 
   // Create header graph.
   FunctionBlockPtr list_header_block =
     GenerateBlock(std::make_shared<TraceForHeader>(block->func_graph()->debug_info()));
-  list_header_block->AddPrevBlock(top_block);
 
   // Create hasNext apply.
   AnfNodePtr op_hasnext = top_block->MakeResolveOperation(NAMED_PRIMITIVE_HASNEXT);
@@ -2344,9 +2350,9 @@ AnfNodePtr Parser::ParseListCompIfs(const FunctionBlockPtr &list_body_block, con
   py::object elt_obj = python_adapter::GetPyObjAttr(node, "elt");
   AnfNodePtr elt_node = ParseExprNode(list_body_block, elt_obj);
   // Append the element.
-  auto list_append_op = prim::kPrimListAppend;
   MS_EXCEPTION_IF_NULL(list_body_block->func_graph());
-  auto new_list = list_body_block->func_graph()->NewCNodeInOrder({NewValueNode(list_append_op), list_param, elt_node});
+  auto new_list = list_body_block->func_graph()->NewCNodeInOrder(
+    {NewValueNode(std::make_shared<prim::ListAppend>("ListAppend")), list_param, elt_node});
   // Return new list in true branch graph.
   if_true_block->func_graph()->set_output(new_list);
 
