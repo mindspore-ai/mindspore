@@ -541,14 +541,8 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   std::string backend = ms_context->backend_policy();
-  if (device_target == kAscendDevice) {
-    if (backend == "ge") {
-      FinalizeBackend();
-    } else {
-      ConfigManager::GetInstance().ResetIterNum();
-    }
-  } else {
-    ConfigManager::GetInstance().ResetIterNum();
+  if (device_target == kAscendDevice && backend == "ge") {
+    FinalizeBackend();
   }
   for (auto item : id) {
     DelOneNetRes(item);
