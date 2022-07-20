@@ -1579,13 +1579,16 @@ def ctc_greedy_decoder(inputs, sequence_length, merge_repeated=True):
 
     Returns:
         decoded_indices (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, 2)`.
-            Data type is int64.
+        Data type is int64.
+
         decoded_values (Tensor), A tensor with shape of :math:`(total\_decoded\_outputs, )`,
-            it stores the decoded classes. Data type is int64.
+        it stores the decoded classes. Data type is int64.
+
         decoded_shape (Tensor), A tensor with shape of :math:`(batch\_size, max\_decoded\_legth)`.
-            Data type is int64.
+        Data type is int64.
+
         log_probability (Tensor), A tensor with shape of :math:`(batch\_size, 1)`,
-            containing sequence log-probability, has the same type as `inputs`.
+        containing sequence log-probability, has the same type as `inputs`.
 
     Raises:
         TypeError: If `merge_repeated` is not a bool.
