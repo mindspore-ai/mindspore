@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 
 #include "nnacl/int8/concat_int8.h"
-#include "nnacl/concat_parameter.h"
 #include <string.h>
+#include <math.h>
+#include <float.h>
+#include "nnacl/concat_parameter.h"
 
 void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, int axis, int64_t real_dst_count,
                 int task_id) {
@@ -40,7 +42,7 @@ void Int8Concat(int8_t **inputs, int8_t *output, const ConcatParameter *para, in
       const int32_t *input_shape = para->input_shapes_[i];
       int64_t in_copy_size = input_shape[axis] * after_axis_size;
       const int8_t *input_ptr = inputs[i] + k * in_copy_size;
-      if (input_quant[i].scale_ == output_scale && input_quant[i].zp_ == output_zp) {
+      if (fabs(input_quant[i].scale_ - output_scale) <= FLT_EPSILON && input_quant[i].zp_ == output_zp) {
         memcpy(output, input_ptr, in_copy_size);
       } else {
         float scale = input_quant[i].scale_ * output_inverse_scale;

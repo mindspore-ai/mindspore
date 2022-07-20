@@ -58,10 +58,10 @@ void DataDistribution::UpdateInterval() {
 
 int DataDistribution::UpdateHistogram(const std::vector<float> &data) {
   for (auto value : data) {
-    if (value == 0) {
+    if (IsEqual(value, 0)) {
       continue;
     }
-    if (this->interval_ == 0) {
+    if (IsEqual(this->interval_, 0)) {
       MS_LOG(ERROR) << "divisor 'interval' cannot be 0.";
       return RET_ERROR;
     }
@@ -112,7 +112,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     float left_scale = 0.0f;
     if (left_upper > start) {
       left_scale = left_upper - start;
-      if (!IsZero(this->histogram_[left_upper - 1])) {
+      if (!IsEqual(this->histogram_[left_upper - 1], 0)) {
         count += left_scale;
       }
     }
@@ -120,7 +120,7 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
     double right_scale = 0.0f;
     if (right_lower < end) {
       right_scale = end - right_lower;
-      if (!IsZero(this->histogram_[right_lower])) {
+      if (!IsEqual(this->histogram_[right_lower], 0)) {
         count += right_scale;
       }
     }
@@ -130,18 +130,18 @@ void DataDistribution::HandleBinForKL(int quant_bint_nums, int bin_index, std::v
         count += 1;
       }
     });
-    if (count == 0) {
+    if (IsEqual(count, 0)) {
       continue;
     }
     const float average_num = quantized_histogram->at(i) / count;
-    if (left_upper > start && !IsZero(this->histogram_[left_upper - 1])) {
+    if (left_upper > start && !IsEqual(this->histogram_[left_upper - 1], 0)) {
       expanded_histogram->at(left_upper - 1) += average_num * left_scale;
     }
-    if (right_lower < end && !IsZero(this->histogram_[right_lower])) {
+    if (right_lower < end && !IsEqual(this->histogram_[right_lower], 0)) {
       expanded_histogram->at(right_lower) += average_num * right_scale;
     }
     for (int k = left_upper; k < right_lower; ++k) {
-      if (!IsZero(this->histogram_[k])) {
+      if (!IsEqual(this->histogram_[k], 0)) {
         expanded_histogram->at(k) += average_num;
       }
     }

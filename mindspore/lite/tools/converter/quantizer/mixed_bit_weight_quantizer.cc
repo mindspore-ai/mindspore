@@ -16,6 +16,7 @@
 
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include <cmath>
+#include <cfloat>
 #include "tools/common/statistic_utils.h"
 
 namespace mindspore::lite::quant {
@@ -47,7 +48,7 @@ void MixedBitWeightQuantizer::GetBiasCorrection(float *weights, int element_num,
   }
   variance_dequant = std::sqrt(variance_dequant / element_num);
   variance_raw = std::sqrt(variance_raw / element_num);
-  if (variance_dequant == 0) {
+  if (fabs(variance_dequant) < DBL_EPSILON) {
     var_corr_ = 1;
   } else {
     var_corr_ = variance_raw / variance_dequant;

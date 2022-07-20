@@ -16,16 +16,21 @@
 
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_DATA_DISTRIBUTION_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_DATA_DISTRIBUTION_H_
+
 #include <vector>
 #include <utility>
+#include <limits>
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/quantize_util.h"
+#include "src/common/quant_utils.h"
+
 namespace mindspore::lite::quant {
 constexpr float kEps = 1e-8;
 
 class DataDistribution {
  public:
   DataDistribution() = default;
+
   DataDistribution(CNodePtr cnode, int bins, size_t bits, int quant_max, int quant_min,
                    ActivationQuantizedMethod activation_quant_method, bool symmetric) {
     this->activation_quant_method_ = activation_quant_method;
@@ -74,13 +79,14 @@ class DataDistribution {
 
  private:
   double CalculateMinMaxScale();
+
   double CalculateRemovalOutlierScale();
+
   double CalculateKLScale();
+
   double CalculateScale(float min_value, float max_value);
 
   std::pair<float, float> CalQuantileMinMax(const std::vector<float> &min_datas, const std::vector<float> &max_datas);
-
-  inline bool IsZero(float x) { return (x <= kEps && x >= -kEps); }
 
  private:
   std::vector<float> histogram_;

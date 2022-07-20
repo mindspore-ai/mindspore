@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 
 #include "nnacl/crop_parameter.h"
-#include "nnacl/int8/crop_int8.h"
 #include <string.h>
+#include <math.h>
+#include <float.h>
+#include "nnacl/int8/crop_int8.h"
 
 void Int8Crop(const int8_t *input, int8_t *output, int task_id, const CropParameter *para) {
   int input_dim = para->input_dim_;
@@ -58,7 +60,7 @@ void Int8Crop1D(const int8_t *input, int8_t *output, int task_id, const CropPara
   const int8_t *in_ptr = input + n + para->in_offset_[0];
   int8_t *out_ptr = output + n;
   int64_t out_dist_stride = MSMIN(out_batch - task_id * task_id_stride, task_id_stride);
-  if (in_scale == out_scale && in_zp == out_zp) {
+  if (fabs(in_scale - out_scale) <= FLT_EPSILON && in_zp == out_zp) {
     memcpy(out_ptr, in_ptr, sizeof(int8_t) * out_dist_stride);
   } else {
     for (int i = 0; i < out_dist_stride; i++) {
@@ -100,7 +102,7 @@ void Int8Crop2D(const int8_t *input, int8_t *output, int task_id, const CropPara
     const int8_t *in_ptr = input + (n + para->in_offset_[0]) * in_height + h + para->in_offset_[1];
     int8_t *out_ptr = output + n * out_height + h;
     int64_t out_dist_stride = MSMIN(out_height - task_id * task_id_stride, task_id_stride);
-    if (in_scale == out_scale && in_zp == out_zp) {
+    if (fabs(in_scale - out_scale) <= FLT_EPSILON && in_zp == out_zp) {
       memcpy(out_ptr, in_ptr, sizeof(int8_t) * out_dist_stride);
     } else {
       for (int i = 0; i < out_dist_stride; i++) {
@@ -154,7 +156,7 @@ void Int8Crop3D(const int8_t *input, int8_t *output, int task_id, const CropPara
       const int8_t *in_ptr =
         input + (n + para->in_offset_[0]) * in_stride_n + (h + para->in_offset_[1]) * in_stride_h + para->in_offset_[2];
       int8_t *out_ptr = output + n * out_stride_n + h * out_stride_h;
-      if (in_scale == out_scale && in_zp == out_zp) {
+      if (fabs(in_scale - out_scale) <= FLT_EPSILON && in_zp == out_zp) {
         memcpy(out_ptr, in_ptr, sizeof(int8_t) * out_width);
       } else {
         for (int i = 0; i < out_width; i++) {
@@ -215,7 +217,7 @@ void Int8Crop4D(const int8_t *input, int8_t *output, int task_id, const CropPara
                                (h + para->in_offset_[1]) * in_stride_h + (w + para->in_offset_[2]) * in_stride_w +
                                para->in_offset_[3];
         int8_t *out_ptr = output + n * out_stride_n + h * out_stride_h + w * out_stride_w;
-        if (in_scale == out_scale && in_zp == out_zp) {
+        if (fabs(in_scale - out_scale) <= FLT_EPSILON && in_zp == out_zp) {
           memcpy(out_ptr, in_ptr, sizeof(int8_t) * out_channel);
         } else {
           for (int i = 0; i < out_channel; i++) {
