@@ -26,23 +26,7 @@ class ReshapeKernelMod : public HostKernelMod {
   ReshapeKernelMod() = default;
   ~ReshapeKernelMod() override = default;
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
-              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto node = anf_node_.lock();
-    MS_EXCEPTION_IF_NULL(node);
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (stream_ == nullptr) {
-      stream_ = stream_ptr;
-    }
-    try {
-      Execute(inputs, outputs);
-    } catch (const std::exception &e) {
-      MS_LOG(ERROR) << "ReshapeKernelMod Launch failed. node: " << cnode->fullname_with_scope() << ", Error message is "
-                    << e.what();
-      return false;
-    }
-    return true;
-  }
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override;
 
  private:
   void Execute() const;
