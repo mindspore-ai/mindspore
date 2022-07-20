@@ -5340,6 +5340,7 @@ class KLDivLoss(Primitive):
         TypeError: If `reduction` is not a str.
         TypeError: If neither `logits` nor `labels` is a Tensor.
         TypeError: If dtype of `logits` or `labels` is not currently supported.
+        RuntimeError: If `logits` or `labels` is a scalar when `reduction` is 'batchmean'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -5348,7 +5349,7 @@ class KLDivLoss(Primitive):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.kldiv_loss = ops.KLDivLoss(reduction='none')
+        ...         self.kldiv_loss = ops.KLDivLoss(reduction='sum')
         ...     def construct(self, logits, labels):
         ...         result = self.kldiv_loss(logits, labels)
         ...         return result
@@ -5358,7 +5359,7 @@ class KLDivLoss(Primitive):
         >>> labels = Tensor(np.array([0., 1., 0.]), mindspore.float32)
         >>> output = net(logits, labels)
         >>> print(output)
-        [ 0.  -0.7  0. ]
+        -0.7
     """
 
     @prim_attr_register
