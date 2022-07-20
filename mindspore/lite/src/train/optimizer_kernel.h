@@ -27,11 +27,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OUT_OF_TENSOR_RANGE;
 
-static __attribute__((always_inline)) inline bool MS_ISNAN(float var) {
-  volatile float d = var;
-  return d != d;
-}
-
 namespace mindspore::kernel {
 enum class WeightUpdateMode { NORMAL, VIRTUAL_BATCH, ACCUMULATE_GRADS };
 
@@ -194,7 +189,7 @@ class OptimizerKernel : public LiteKernel {
       int length = in_tensors_.at(grad_idx_)->ElementsNum();
 
       for (int i = 0; i < length; ++i) {
-        if (MS_ISNAN(gradient[i]) || std::isinf(gradient[i])) {
+        if (std::isnan(gradient[i]) || std::isinf(gradient[i])) {
           MS_LOG(INFO) << "optimizer grad is nan or inf";
           return RET_OUT_OF_TENSOR_RANGE;
         }
