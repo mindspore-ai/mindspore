@@ -199,7 +199,17 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @param int32_t size - batch_size
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
   // @return Status The status code returned
-  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size);
+  static Status BatchRows(const std::unique_ptr<TensorQTable> *src, TensorRow *dest, dsize_t batch_size,
+                          bool concat_batch = false);
+
+  // convert the rows to tensor
+  // @param const std::unique_ptr<TensorQTable> *src - table that has the rows for batching
+  // @param const std::unique_ptr<TensorQTable> *dst - dest_table to hold batched rows
+  // @param int32_t size - batch_size
+  // @param int32_t size - col
+  // @return Status The status code returned
+  static Status ConvertRowsToTensor(const std::unique_ptr<TensorQTable> *src, std::shared_ptr<Tensor> *dst,
+                                    dsize_t batch_size, size_t col);
 
   // @param table
   // @param const PadInfo &pad_info pad info
@@ -241,7 +251,7 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // Function that calls pyfunc to perform map on batch
   // @param (std::pair<std::unique_ptr<TensorQTable>, batch_stats> *table_pair - contains un-batched tensor
   // @return Status The status code returned
-  Status MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair);
+  Status MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair, bool *concat_batch);
 #endif
 
   // @param const PadInfo &pad_info pad info to unpack
@@ -271,7 +281,7 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
 
   // Invoke batch map function with current BatchInfo to generate tensors to batch.
   // @return Status The status code returned
-  Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info);
+  Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info, bool *concat_batch);
 #endif
   Status SendWaitFlagToWorker(int32_t worker_id) override;
 
