@@ -255,6 +255,8 @@ from .segment_prod import _segment_prod_aicpu
 from .segment_sum import _segment_sum_aicpu
 from .scatter_nd_max import _scatter_nd_max_aicpu
 from .conj import _conj_aicpu
+from .ctc_loss_v2 import _ctc_loss_v2_aicpu
+from .ctc_loss_v2_grad import _ctc_loss_v2_grad_aicpu
 from .scatter_nd_min import _scatter_nd_min_aicpu
 from .cholesky import _cholesky_aicpu
 from .sspaddmm import _sspaddmm_aicpu
