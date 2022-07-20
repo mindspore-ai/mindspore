@@ -7083,6 +7083,60 @@ class CompareAndBitpack(Primitive):
         """Initialize CompareAndBitPack"""
 
 
+class NanToNum(Primitive):
+    """
+    Replaces `NaN`, positive infinity, and negative infinity values in the `x` with the values
+    specified by `nan`, `posinf`, and `neginf`, respectively. By default, NaN is replaced by 0,
+    positive infinity is replaced by the largest finite value representable by the x dtype,
+    and negative infinity is replaced by the smallest finite value representable by the x dtype.
+
+    Args:
+        nan (float): The value to replace `NaN`. Default value is 0.0.
+        posinf (float): If a Number, the value to replace positive infinity values with. If None, positive
+          infinity values are replaced with the greatest finite value representable by `x`'s dtype.
+          Default value is None.
+        neginf (float): if a Number, the value to replace negative infinity values with. If None, negative
+          infinity values are replaced with the lowest finite value representable by `x`'s dtype.
+          Default value is None.
+
+    Inputs:
+        - **x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. With float32 or float16 data type.
+
+    Outputs:
+        Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If `x` is not a Tensor.
+        TypeError: If dtype of `x` is not float16 or float32.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> nan_to_num = ops.NanToNum()
+        >>> x = Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mindspore.float32)
+        >>> output = nan_to_num(x)
+        >>> print(output)
+        [ 0.0000000e+00  3.4028235e+38 -3.4028235e+38  3.1400001e+00]
+    """
+
+    @prim_attr_register
+    def __init__(self, nan=0.0, posinf=None, neginf=None):
+        """Initialize NanToNum"""
+        if nan is not None:
+            validator.check_value_type("nan", nan, [float], self.name)
+        else:
+            self.add_prim_attr("nan_none", True)
+        if posinf is not None:
+            validator.check_value_type("posinf", posinf, [float], self.name)
+        else:
+            self.add_prim_attr("posinf_none", True)
+        if neginf is not None:
+            validator.check_value_type("neginf", neginf, [float], self.name)
+        else:
+            self.add_prim_attr("neginf_none", True)
+
+
 class Orgqr(Primitive):
     r"""
     Computes the first :math:`N` columns of a product of Householder matrices. Take the case of input without batch

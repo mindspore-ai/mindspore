@@ -28,6 +28,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.ops.function.math_func import matrix_exp
 from mindspore.ops.function.math_func import sinc
+from mindspore.ops.function.math_func import nan_to_num
 from mindspore.ops.operations.image_ops import CropAndResizeGradBoxes, AdjustHue, AdjustContrastv2, \
                                                AdjustSaturation, CombinedNonMaxSuppression, CropAndResizeGradImage
 from mindspore.ops.operations.image_ops import ExtractGlimpse
@@ -39,6 +40,7 @@ from mindspore.ops.operations.math_ops import BesselJ0, BesselJ1, BesselK0, Bess
 from mindspore.ops.operations.math_ops import ReduceStd
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import Sinc
+from mindspore.ops.operations.math_ops import NanToNum
 from mindspore.ops.operations.array_ops import ConjugateTranspose
 from mindspore.ops.operations.array_ops import UnravelIndex
 from mindspore.ops.operations.math_ops import Trace
@@ -434,6 +436,16 @@ class HistogramSummaryNet(nn.Cell):
         string_in = "out"
         self.summary(string_in, out)
         return out
+
+
+class NanToNumFunc(nn.Cell):
+    def __init__(self):
+        super(NanToNumFunc, self).__init__()
+        self.nan_to_num = nan_to_num
+
+    def construct(self, x):
+        y = self.nan_to_num(x)
+        return y
 
 
 class Moments(nn.Cell):
@@ -2383,6 +2395,14 @@ test_case_math_ops = [
         'desc_inputs': [Tensor([-1.0, 0.0, 1.5, 2.0, 5.0, 15], mstype.float16), Tensor([0.0, 5.0], mstype.float16)],
         'desc_bprop': [],
         'skip': ['backward']}),
+    ('NanToNum_1', {
+        'block': NanToNum(),
+        'desc_inputs': [Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mstype.float32)]}),
+    ('NanToNum_2', {
+        'block': NanToNumFunc(),
+        'desc_inputs': [Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mstype.float32)],
+        'desc_bprop': [Tensor(np.array([float('nan'), float('inf'), -float('inf'), 3.14]), mstype.float32)]}),
     ('Mod', {
         'block': P.Mod(),
         'desc_inputs': [[3, 4, 5], [2, 3, 4, 5]],
