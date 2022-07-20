@@ -97,7 +97,6 @@
 #define MS_CAST_F32_S32(src) _mm_castsi128_ps(src)
 #define MS_DIV128_EPI32(src1, src2) _mm_cvttps_epi32(MS_DIV128_F32(_mm_cvtepi32_ps(src1), _mm_cvtepi32_ps(src2)))
 #define MS_AND128_MASK(src1, src2) _mm_and_ps(src1, src2)
-#define MS_OR128_MASK(src1, src2) _mm_or_ps(src1, src2)
 #define MS_OR128_F32(src1, src2) _mm_or_ps(src1, src2)
 #define MS_AND128_MASK_F32(src1, src2) _mm_and_ps(src1, src2)
 
