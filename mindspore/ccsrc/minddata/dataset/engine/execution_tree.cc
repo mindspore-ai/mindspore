@@ -243,7 +243,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
                     << std::to_string(num_cpu_threads) << ", the maximum number of threads on this CPU.";
   }
   worker_tasks->resize(num_workers);
-  for (int32_t i = 0; i < num_workers; ++i) {
+  for (size_t i = 0; i < num_workers; ++i) {
     Task *task = nullptr;
     RETURN_IF_NOT_OK(tg_->CreateAsyncTask(name, std::bind(func, i), &task, operator_id));
     CHECK_FAIL_RETURN_UNEXPECTED(task != nullptr, "Failed to create a new worker");

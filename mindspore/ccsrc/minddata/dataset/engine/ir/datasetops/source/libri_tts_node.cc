@@ -34,8 +34,8 @@ void LibriTTSNode::Print(std::ostream &out) const { out << Name(); }
 std::shared_ptr<DatasetNode> LibriTTSNode::Copy() {
   std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<LibriTTSNode>(dataset_dir_, usage_, sampler, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

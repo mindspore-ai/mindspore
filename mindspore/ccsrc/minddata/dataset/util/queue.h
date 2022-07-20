@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ class Queue {
   }
 
   // Consumer
-  Status PopFront(pointer p) {
+  virtual Status PopFront(pointer p) {
     std::unique_lock<std::mutex> _lock(mux_);
     // Block when empty
     Status rc = empty_cv_.Wait(&_lock, [this]() -> bool { return !empty(); });
@@ -242,9 +242,9 @@ class QueueList {
   QueueList() {}
 
   void Init(int num_queues, int capacity) {
-    queue_list_.reserve(num_queues);
+    (void)queue_list_.reserve(num_queues);
     for (int i = 0; i < num_queues; i++) {
-      queue_list_.emplace_back(std::make_unique<Queue<T>>(capacity));
+      (void)queue_list_.emplace_back(std::make_unique<Queue<T>>(capacity));
     }
   }
 
@@ -267,12 +267,12 @@ class QueueList {
   ~QueueList() = default;
 
   Status AddQueue(TaskGroup *vg) {
-    queue_list_.emplace_back(std::make_unique<Queue<T>>(queue_list_[0]->capacity()));
+    (void)queue_list_.emplace_back(std::make_unique<Queue<T>>(queue_list_[0]->capacity()));
     return queue_list_[queue_list_.size() - 1]->Register(vg);
   }
   Status RemoveLastQueue() {
     CHECK_FAIL_RETURN_UNEXPECTED(queue_list_.size() > 1, "Cannot remove more than the current queues.");
-    queue_list_.pop_back();
+    (void)queue_list_.pop_back();
     return Status::OK();
   }
 

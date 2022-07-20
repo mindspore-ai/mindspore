@@ -348,12 +348,12 @@ Status TreeConsumer::Reset(int64_t step) {
 
   MS_LOG(INFO) << "Terminating pipeline with UUID:" << tree_adapter_->tree_->GetUniqueId();
   std::shared_ptr<DatasetNode> old_root = tree_adapter_->input_ir_;
-  this->Stop();
+  RETURN_IF_NOT_OK(this->Stop());
   {
 #ifdef ENABLE_PYTHON
     py::gil_scoped_release gil_release;  // release GIL to allow python threads to terminate.
 #endif
-    this->Terminate();
+    RETURN_IF_NOT_OK(this->Terminate());
   }
 
 #ifdef ENABLE_GPUQUE
@@ -363,7 +363,7 @@ Status TreeConsumer::Reset(int64_t step) {
   DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root.get());
   if (op != nullptr) {
     MS_LOG(INFO) << "Clearing the GPU device";
-    op->ClearDevice();
+    RETURN_IF_NOT_OK(op->ClearDevice());
   }
 #endif
 

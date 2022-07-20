@@ -148,7 +148,7 @@ Status ConnectorSize::GetOpConnectorSize(int32_t op_id, uint64_t start_time, uin
   auto last_iter = sample_table_.begin() + end_index;
   // op_id corresponds to the index in sample vector
   (void)std::transform(first_iter, last_iter, std::back_inserter(*result),
-                       [&](const ConnectorSizeSample &sample) { return sample[op_id]; });
+                       [&](const ConnectorSizeSample &sample) { return sample[static_cast<size_t>(op_id)]; });
 
   return Status::OK();
 }

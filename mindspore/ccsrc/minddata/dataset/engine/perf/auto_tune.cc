@@ -35,20 +35,24 @@ namespace dataset {
 AutoTune::AutoTune(TreeAdapter *tree_adap, ProfilingManager *profiling_mgr)
     : tree_adapter_(tree_adap),
       profiling_manager_(profiling_mgr),
+      tree_modifier_(std::make_unique<TreeModifier>(tree_adapter_)),
       leaf_op_id_(-1),
       cur_epoch_running_(1),
       last_epoch_autotuned_(0),
       cur_step_running_(1),
       last_step_autotuned_(0),
       mode_(0),
+      step_gap_(GlobalContext::config_manager()->autotune_interval()),
       skip_flag_(true),
       AT_phase_(AutoTunePhase::kAutoTunePhaseTime),
+      AT_change_(false),
       phase_1_best_time_(-1),
       phase_1_no_improve_count_(0),
-      AT_change_(false),
+      count_down_(0),
       phase_3_state_(AutoTuneMemPhase::kAutoTuneMemInit),
-      tree_modifier_(std::make_unique<TreeModifier>(tree_adapter_)),
-      step_gap_(GlobalContext::config_manager()->autotune_interval()),
+      phase_3_ID_(0),
+      avg_batch_time(0.0),
+      phase_3_prev_avg_(0.0),
       save_autoconfig_(GlobalContext::config_manager()->save_autoconfig()) {
   max_workers_ = GlobalContext::config_manager()->num_cpu_threads();
   autotune_json_filepath_ = GlobalContext::config_manager()->get_autotune_json_filepath();
@@ -180,7 +184,7 @@ Status AutoTune::SetAutotuneConfigJson() {
 Status AutoTune::SummarizeTreeConfiguration(std::vector<std::string> *out) {
   constexpr int op_name_width = 20;
   constexpr int val_width = 2;
-  for (int i = ops_.size() - 1; i >= 0; --i) {
+  for (int i = static_cast<int>(ops_.size()) - 1; i >= 0; --i) {
     const auto op = ops_[i];
     if (!op->inlined() && op->Name() != "DeviceQueueOp") {
       std::stringstream s;
@@ -208,7 +212,7 @@ void AutoTune::PostMainLogging() const {
 
 void AutoTune::PrintTreeConfiguration() const {
   ExecutionTree const *tree = tree_adapter_->tree_.get();
-  for (auto itr = tree->begin(); itr != tree->end(); itr++) {
+  for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
     if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
       MS_LOG(INFO) << itr->NameWithID() << " num_parallel_workers: " << itr->NumWorkers()
                    << " prefetch_size: " << itr->ConnectorCapacity();
@@ -243,7 +247,7 @@ Status AutoTune::CollectOpsInfo() {
   }
   // Sort parallel ops in reverse order of IDs (i.e., bottommost op is first)
   std::sort(parallel_ops_ids_.begin(), parallel_ops_ids_.end(), std::greater<>());
-  leaf_op_id_ = ops_.size() - 1;
+  leaf_op_id_ = static_cast<int32_t>(ops_.size()) - 1;
   return Status::OK();
 }
 
@@ -390,10 +394,10 @@ Status AutoTune::RunIterationStep() {
 
 Status AutoTune::RegisterWorkersQueue() {
   ExecutionTree *tree = tree_adapter_->tree_.get();
-  for (auto itr = tree->begin(); itr != tree->end(); itr++) {
+  for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
     if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
-      phase_1_best_workers.push_back(itr->NumWorkers());
-      phase_1_best_queue.push_back(itr->ConnectorCapacity());
+      (void)phase_1_best_workers.push_back(itr->NumWorkers());
+      (void)phase_1_best_queue.push_back(itr->ConnectorCapacity());
     }
   }
   return Status::OK();
@@ -405,7 +409,7 @@ Status AutoTune::ResetWorkersQueue() {
   }
   ExecutionTree *tree = tree_adapter_->tree_.get();
   int counter = 0;
-  for (auto itr = tree->begin(); itr != tree->end(); itr++) {
+  for (auto itr = tree->begin(); itr != tree->end(); (void)itr++) {
     if (!itr->inlined() && itr->Name() != "DeviceQueueOp") {
       int32_t target_workers = phase_1_best_workers[counter];
       int32_t target_queue = phase_1_best_queue[counter];
@@ -434,7 +438,7 @@ Status AutoTune::TrackPipelineTime() {
   }
   double avg_time_pipeline = Mean(pipeline_times);
   double avg_time_batch = Mean(batch_times);
-  avg_pipeline_times_.push_back(avg_time_pipeline);
+  (void)avg_pipeline_times_.push_back(avg_time_pipeline);
   MS_LOG(INFO) << "Average Pipeline time is " << avg_time_pipeline << " ms. The avg pipeline time for all epochs is "
                << Mean(avg_pipeline_times_) << "ms";
   // Time phase (phase 1) improvement tracking
@@ -687,11 +691,11 @@ Status AutoTune::AnalyseMemory() {
     for (auto op_id : parallel_ops_ids_) {
       if ((SkipOpsCheck(op_id)) || (ops_[op_id]->Name() == "DeviceQueueOp")) {
         // Op not supported - ignore throughout AT
-        OP_values.push_back(-1);
+        (void)OP_values.push_back(-1);
         continue;
       }
       // Op supported - attempt memory reduction on this
-      OP_values.push_back(0);
+      (void)OP_values.push_back(0);
       count_down_++;
     }
     phase_3_state_ = AutoTuneMemPhase::kAutoTuneMemSet;

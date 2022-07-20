@@ -62,14 +62,19 @@ Status SystemInfo::ParseCpuInfo(const std::string &str) {
   SystemUtil system_cpu_util = {0, 0, 0, 0};
   // Calculate the utilization from the second sampling
   if (!first_sample_) {
-    system_cpu_util.user_utilization = round((system_cpu_stat.user_stat - prev_sys_stat_.user_stat) * 1.0 /
-                                             (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * 100);
-    system_cpu_util.sys_utilization = round((system_cpu_stat.sys_stat - prev_sys_stat_.sys_stat) * 1.0 /
-                                            (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * 100);
-    system_cpu_util.io_utilization = round((system_cpu_stat.io_stat - prev_sys_stat_.io_stat) * 1.0 /
-                                           (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * 100);
-    system_cpu_util.idle_utilization = round((system_cpu_stat.idle_stat - prev_sys_stat_.idle_stat) * 1.0 /
-                                             (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * 100);
+    int one_hundred = 100;
+    system_cpu_util.user_utilization =
+      static_cast<uint8_t>(round((system_cpu_stat.user_stat - prev_sys_stat_.user_stat) * 1.0 /
+                                 (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * one_hundred));
+    system_cpu_util.sys_utilization =
+      static_cast<uint8_t>(round((system_cpu_stat.sys_stat - prev_sys_stat_.sys_stat) * 1.0 /
+                                 (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * one_hundred));
+    system_cpu_util.io_utilization =
+      static_cast<uint8_t>(round((system_cpu_stat.io_stat - prev_sys_stat_.io_stat) * 1.0 /
+                                 (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * one_hundred));
+    system_cpu_util.idle_utilization =
+      static_cast<uint8_t>(round((system_cpu_stat.idle_stat - prev_sys_stat_.idle_stat) * 1.0 /
+                                 (system_cpu_stat.total_stat - prev_sys_stat_.total_stat) * one_hundred));
   }
   // append the 0 util as well to maintain sys_cpu_util_.size == ts_.size
   (void)sys_cpu_util_.emplace_back(system_cpu_util);
@@ -142,11 +147,11 @@ Status SystemInfo::SampleSystemMemInfo() {
   uint64_t used = 0;
   uint64_t curr_val = 0;
 
-  getline(file, line);
+  (void)getline(file, line);
   if (sscanf_s(line.c_str(), "%*[MemTotal:] %lu %*[kB]", &curr_val) == 1) {
     total = curr_val;
-    getline(file, line);
-    getline(file, line);
+    (void)getline(file, line);
+    (void)getline(file, line);
     if (sscanf_s(line.c_str(), "%*[MemAvailable:] %lu %*[kB]", &curr_val) == 1) {
       available = curr_val;
       used = total - available;
@@ -166,9 +171,9 @@ Status SystemInfo::SampleSystemMemInfo() {
     return Status::OK();
   }
 
-  prev_system_memory_info_.total_mem = total / kBInMB;
-  prev_system_memory_info_.available_mem = available / kBInMB;
-  prev_system_memory_info_.used_mem = used / kBInMB;
+  prev_system_memory_info_.total_mem = static_cast<float>(total) / kBInMB;
+  prev_system_memory_info_.available_mem = static_cast<float>(available) / kBInMB;
+  prev_system_memory_info_.used_mem = static_cast<float>(used) / kBInMB;
 
   system_memory_info_.push_back(SystemMemInfo{
     prev_system_memory_info_.total_mem, prev_system_memory_info_.available_mem, prev_system_memory_info_.used_mem});
@@ -271,9 +276,9 @@ Status ProcessInfo::SampleMemInfo() {
   file.close();
   last_mem_sampling_failed_ = false;
 
-  prev_memory_info_.vss = total_vss / kBInMB;
-  prev_memory_info_.rss = total_rss / kBInMB;
-  prev_memory_info_.pss = total_pss / kBInMB;
+  prev_memory_info_.vss = static_cast<float>(total_vss) / kBInMB;
+  prev_memory_info_.rss = static_cast<float>(total_rss) / kBInMB;
+  prev_memory_info_.pss = static_cast<float>(total_pss) / kBInMB;
 
   // Sum the memory usage of all child processes and add to parent process
   if (IsParent()) {
@@ -515,7 +520,7 @@ Status CpuSampler::Init() {
 #if defined(USING_LINUX)
   main_pid_ = syscall(SYS_getpid);
 #endif
-  for (auto iter = tree->begin(); iter != tree->end(); iter++) {
+  for (auto iter = tree->begin(); iter != tree->end(); (void)iter++) {
     auto op_id = iter->id();
     (void)op_info_by_id_.emplace(std::make_pair(op_id, MDOperatorCpuInfo(op_id)));
   }

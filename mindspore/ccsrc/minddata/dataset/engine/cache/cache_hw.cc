@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,7 +269,7 @@ uint64_t CacheServerHW::GetAvailableMemory() {
       std::string::size_type pos1 = line.find_last_of(" ");
       std::string::size_type pos2 = line.find_last_of(" ", pos1 - 1);
       if (pos1 != std::string::npos && pos2 != std::string::npos && line.size() > pos1) {
-        mem_available_in_kb = std::stol(line.substr(pos2, pos1 - pos2));
+        mem_available_in_kb = static_cast<uint64_t>(std::stol(line.substr(pos2, pos1 - pos2)));
       }
       break;
     }

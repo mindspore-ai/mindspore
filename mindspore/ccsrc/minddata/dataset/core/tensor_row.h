@@ -230,7 +230,9 @@ class TensorRow {
 
   bool quit() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagQuit)); }
 
-  bool skip() const { return (static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagSkip)); }
+  bool skip() const {
+    return static_cast<bool>(static_cast<uint32_t>(tensor_row_flag_) & static_cast<uint32_t>(kFlagSkip));
+  }
 
   const TensorRowFlags Flags() { return tensor_row_flag_; }
 

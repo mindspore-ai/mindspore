@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,7 +133,7 @@ Status DatasetIterator::FetchNextTensorRow(TensorRow *out_row) {
 #ifndef ENABLE_SECURITY
     if (is_profiling_enable) {
       root_->Tree()->SetEpochEnd();
-      GlobalContext::profiling_manager()->RecordEndOfEpoch(cur_batch_num_);
+      GlobalContext::profiling_manager()->RecordEndOfEpoch(static_cast<uint32_t>(cur_batch_num_));
     }
 #endif
     return Status::OK();

@@ -180,7 +180,7 @@ Status Execute::BuildTransforms() {
     {MapTargetDevice::kCpu, "kCpu"}, {MapTargetDevice::kGpu, "kGpu"}, {MapTargetDevice::kAscend310, "kAscend310"}};
 
   // Validate and build runtime ops
-  for (int32_t i = 0; i < ops_.size(); i++) {
+  for (size_t i = 0; i < ops_.size(); i++) {
     if (ops_[i] == nullptr) {
       std::string err_msg = "Input TensorOperation[" + std::to_string(i) +
                             "] is unsupported on your input device:" + env_list.at(device_type_);
@@ -188,7 +188,7 @@ Status Execute::BuildTransforms() {
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
-    transforms_rt_.emplace_back(ops_[i]->Build());
+    (void)transforms_rt_.emplace_back(ops_[i]->Build());
   }
   return Status::OK();
 }

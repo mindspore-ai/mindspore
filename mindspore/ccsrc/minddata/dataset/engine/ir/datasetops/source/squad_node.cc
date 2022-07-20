@@ -46,8 +46,8 @@ void SQuADNode::Print(std::ostream &out) const {
 
 std::shared_ptr<DatasetNode> SQuADNode::Copy() {
   auto node = std::make_shared<SQuADNode>(dataset_dir_, usage_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);
-  node->SetNumWorkers(num_workers_);
-  node->SetConnectorQueueSize(connector_que_size_);
+  (void)node->SetNumWorkers(num_workers_);
+  (void)node->SetConnectorQueueSize(connector_que_size_);
   return node;
 }
 

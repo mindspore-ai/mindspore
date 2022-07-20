@@ -123,7 +123,7 @@ Status Tracing::TimeIntervalForStepRange(int32_t start_step, int32_t end_step, u
   CHECK_FAIL_RETURN_UNEXPECTED(end_step >= start_step,
                                "Expected end_step >= start_step. Got start_step: " + std::to_string(start_step) +
                                  " end_step: " + std::to_string(end_step));
-  CHECK_FAIL_RETURN_UNEXPECTED(end_step < ts_.size(),
+  CHECK_FAIL_RETURN_UNEXPECTED(end_step < static_cast<int32_t>(ts_.size()),
                                "Expected end_step < ts_.size(). Got end_step: " + std::to_string(end_step) +
                                  " ts_.size: " + std::to_string(ts_.size()));
   // end timestamp of (start_step - 1) step
@@ -159,10 +159,10 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
   const constexpr int32_t RECORDS_PER_STEP = 4;
   auto total_steps = records_.size() / RECORDS_PER_STEP;
   MS_LOG(DEBUG) << "start_step: " << start_step << " end_step: " << end_step;
-  CHECK_FAIL_RETURN_UNEXPECTED(start_step <= total_steps,
+  CHECK_FAIL_RETURN_UNEXPECTED(start_step <= static_cast<int32_t>(total_steps),
                                "Expected start_step <= total_steps. Got start_step: " + std::to_string(start_step) +
                                  " total_steps: " + std::to_string(total_steps));
-  CHECK_FAIL_RETURN_UNEXPECTED(end_step <= total_steps,
+  CHECK_FAIL_RETURN_UNEXPECTED(end_step <= static_cast<int32_t>(total_steps),
                                "Expected end_step <= total_steps. Got end_step: " + std::to_string(end_step) +
                                  " total_steps: " + std::to_string(total_steps));
   CHECK_FAIL_RETURN_UNEXPECTED(start_step <= end_step,
@@ -171,10 +171,11 @@ Status Tracing::GetRecordEntryFieldValue(int32_t start_step, int32_t end_step, i
 
   for (auto step_num = start_step; step_num <= end_step; step_num++) {
     auto idx = (step_num - 1) * RECORDS_PER_STEP + record_offset;
+    CHECK_FAIL_RETURN_UNEXPECTED(idx >= 0, "Expected idx >= 0. Got idx: " + std::to_string(idx));
     if (field == "value") {
-      (void)result->emplace_back(records_[idx].value);
+      (void)result->emplace_back(records_[static_cast<size_t>(idx)].value);
     } else if (field == "extra_info") {
-      (void)result->emplace_back(records_[idx].extra_info);
+      (void)result->emplace_back(records_[static_cast<size_t>(idx)].extra_info);
     } else {
       return {StatusCode::kMDUnexpectedError,
               "Received unexpected field: " + field + R"(. Expected: ["value", "extra_info"].)"};
@@ -208,7 +209,7 @@ Status Tracing::GetEmptyQueueFrequency(int32_t start_step, int32_t end_step, flo
   RETURN_IF_NOT_OK(GetConnectorSize(start_step, end_step, &sizes));
   int32_t total = end_step - start_step + 1;
   CHECK_FAIL_RETURN_UNEXPECTED(total > 0, "Start step is greater than end step.");
-  uint32_t count = std::count(sizes.begin(), sizes.end(), 0);
+  uint32_t count = static_cast<uint32_t>(std::count(sizes.begin(), sizes.end(), 0));
   *empty_queue_freq = static_cast<float_t>(count) / static_cast<float_t>(total);
   return Status::OK();
 }
@@ -475,7 +476,7 @@ Status ProfilingManager::GetSystemMemoryInfoByTime(SystemMemoryMetric metric, ui
 #endif
 
 Status ProfilingManager::EpochToTimeInterval(int32_t epoch_num, uint64_t *start_ts, uint64_t *end_ts) {
-  if (epoch_num <= 0 || epoch_num >= epoch_end_ts_.size()) {
+  if (epoch_num <= 0 || epoch_num >= static_cast<int32_t>(epoch_end_ts_.size())) {
     std::string err = "Epoch: " + std::to_string(epoch_num) + " is invalid.";
     MS_LOG(INFO) << err;
     return {StatusCode::kMDUnexpectedError, err};
@@ -486,7 +487,7 @@ Status ProfilingManager::EpochToTimeInterval(int32_t epoch_num, uint64_t *start_
 }
 
 Status ProfilingManager::EpochToStepInterval(int32_t epoch_num, uint32_t *start_step, uint32_t *end_step) {
-  if (epoch_num <= 0 || epoch_num >= epoch_end_step_.size()) {
+  if (epoch_num <= 0 || epoch_num >= static_cast<int32_t>(epoch_end_step_.size())) {
     std::string err = "Epoch: " + std::to_string(epoch_num) + " is invalid.";
     return {StatusCode::kMDUnexpectedError, err};
   }
@@ -715,7 +716,7 @@ Status ProfilingManager::Init(const bool for_autotune) {
   CHECK_FAIL_RETURN_UNEXPECTED(!profiling_, "Stop MD Profiler before initializing it.");
   CHECK_FAIL_RETURN_UNEXPECTED(profiling_state_ != ProfilingState::kProfilingStateRunning,
                                "Stop MD Profiler before reinitializing it.");
-  Reset();
+  RETURN_IF_NOT_OK(Reset());
   tracing_nodes_.clear();
   sampling_nodes_.clear();
   tree_ = nullptr;
@@ -737,7 +738,7 @@ Status ProfilingManager::Start() {
   if (profiling_state_ == ProfilingState::kProfilingStateFinished) {
     // This scenario (start, stop, and then start again) only happens in profiling, not autotune.
     MS_LOG(INFO) << "MD ProfilingManager had already stopped. Resetting...";
-    Reset();
+    RETURN_IF_NOT_OK(Reset());
     for (const auto &node : sampling_nodes_) {
       RETURN_IF_NOT_OK(node.second->Init());
     }

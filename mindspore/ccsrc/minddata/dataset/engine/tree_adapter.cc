@@ -58,23 +58,25 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   std::vector<std::unique_ptr<IRPass>> actions;
 
   MS_LOG(INFO) << "Running pre pass loops.";
-  actions.emplace_back(std::make_unique<InputValidationPass>());
-  actions.emplace_back(std::make_unique<CacheValidationPass>());
+  (void)actions.emplace_back(std::make_unique<InputValidationPass>());
+  (void)actions.emplace_back(std::make_unique<CacheValidationPass>());
   if (usage_ == kDeReset) {
-    actions.emplace_back(std::make_unique<AddSkipPass>());
-    actions.emplace_back(std::make_unique<SkipPushdownPass>());
+    (void)actions.emplace_back(std::make_unique<AddSkipPass>());
+    (void)actions.emplace_back(std::make_unique<SkipPushdownPass>());
   }
-  actions.emplace_back(std::make_unique<NodeRemovalPass>());
-  actions.emplace_back(std::make_unique<EpochCtrlPass>());
-  if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
+  (void)actions.emplace_back(std::make_unique<NodeRemovalPass>());
+  (void)actions.emplace_back(std::make_unique<EpochCtrlPass>());
+  if (usage_ == kDeGetter) {
+    (void)actions.emplace_back(std::make_unique<GetterPass>());
+  }
 #ifndef ENABLE_ANDROID
-  actions.emplace_back(std::make_unique<CacheTransformPass>());
+  (void)actions.emplace_back(std::make_unique<CacheTransformPass>());
 
   std::unique_ptr<NodeOffloadPass> offload = std::make_unique<NodeOffloadPass>();
   // Checks nodes for offload removal
   bool offload_mod = false;
   // Checks ir_tree nodes for offload removal
-  offload->Run(ir, &offload_mod);
+  RETURN_IF_NOT_OK(offload->Run(ir, &offload_mod));
   // Creates JSON object of offload nodes.
   offload_json_ = offload->GetOffloadJson();
 #endif
@@ -97,7 +99,7 @@ Status TreeAdapter::Optimize(std::shared_ptr<DatasetNode> ir) {
   std::vector<std::unique_ptr<IRNodePass>> optimizations;
   MS_LOG(INFO) << "Running optimization pass loops";
 #ifndef ENABLE_ANDROID
-  optimizations.emplace_back(std::make_unique<TensorOpFusionPass>());
+  (void)optimizations.emplace_back(std::make_unique<TensorOpFusionPass>());
 #endif
   // Apply optimization pass actions
   for (auto i = 0; i < optimizations.size(); i++) {
@@ -117,13 +119,13 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   // AutoWorkerPass should ideally precede CacheTransForm Pass to avoid complications of the setting
   if (GlobalContext::config_manager()->auto_num_workers() && usage_ == kDeIterator) {
     // skip this for getter pass
-    actions.emplace_back(std::make_unique<AutoWorkerPass>());
+    (void)actions.emplace_back(std::make_unique<AutoWorkerPass>());
   }
 #ifdef ENABLE_PYTHON
-  actions.emplace_back(std::make_unique<GeneratorNodePass>());
+  (void)actions.emplace_back(std::make_unique<GeneratorNodePass>());
 #endif
 #ifndef ENABLE_ANDROID
-  actions.emplace_back(std::make_unique<RepeatPass>());
+  (void)actions.emplace_back(std::make_unique<RepeatPass>());
 #endif
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 
