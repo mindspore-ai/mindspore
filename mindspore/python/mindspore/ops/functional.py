@@ -17,8 +17,6 @@
 
 """The names of functional part are summarized here."""
 
-import numpy as np
-
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.common import ms_function
 from mindspore.common import Tensor
@@ -588,95 +586,6 @@ shard_fn = Shard()
 
 def shard(fn, in_strategy, out_strategy, device="Ascend", level=0):
     return shard_fn(fn, in_strategy, out_strategy, device, level)
-
-
-def arange(start=0, stop=None, step=1, rtype=None):
-    """
-    Returns evenly spaced values within a given interval.
-
-    Args:
-        start(Union[int, float]): Start value of interval. The interval includes this value. When
-            `stop` is None, `start` must be greater than 0, and the interval is :math:`[0, start)`.
-            When `stop` is not None, `start` must be less than `stop`.
-        stop(Union[int, float], optional): End value of interval. The interval does not
-            include this value. Default is None.
-        step(Union[int, float], optional): Spacing between values. For any output
-            `out`, this is the distance between two adjacent values, :math:`out[i+1] - out[i]`.
-            The default step size is 1. If `step` is specified as a position argument,
-            `start` must also be given.
-        rtype (Union[:class:`mindspore.dtype`, str], optional): Designated tensor type.
-            If rtype is None, the data type of the new tensor will be inferred from start,
-            stop and step. Default is None.
-
-    Returns:
-        Tensor with evenly spaced values.
-
-    Raises:
-        TypeError: If input arguments have types not specified above.
-        ValueError: If input arguments have values not specified above.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.ops as ops
-        >>> print(ops.arange(0, 5, 1))
-        [0 1 2 3 4]
-        >>> print(ops.arange(3))
-        [0 1 2]
-        >>> print(ops.arange(start=0, stop=3))
-        [0 1 2]
-        >>> print(ops.arange(0, stop=3, step=0.5))
-        [0.  0.5 1.  1.5 2.  2.5]
-    """
-    if stop is None:
-        start, stop = 0, start
-
-    arg_map = {"start": start, "stop": stop, "step": step}
-    for arg in ("start", "stop", "step"):
-        arg_value = arg_map.get(arg)
-        if not isinstance(arg_value, int) and not isinstance(arg_value, float):
-            _raise_arange_type_error(arg, arg_value)
-    if start >= stop:
-        _raise_arange_value_error(start, stop)
-
-    if rtype is None:
-        if isinstance(start, float) or isinstance(stop, float) or isinstance(step, float):
-            rtype = mstype.float32
-        else:
-            rtype = mstype.int32
-    data = _arange(start, stop, step)
-    return _make_tensor(data, rtype)
-
-
-@constexpr
-def _make_tensor(data, rtype):
-    """Make Tensor"""
-    return Tensor(data, dtype=rtype)
-
-
-@constexpr
-def _arange(start, stop, step):
-    """Arange compute"""
-    return np.arange(start, stop, step)
-
-
-@constexpr
-def _raise_arange_type_error(arg, arg_value):
-    """
-    Raise TypeError in both graph/pynative mode.
-    """
-    raise TypeError("For mindspore.ops.arange, the argument '{}' must be int or float, but got {}."
-                    .format(arg, type(arg_value)))
-
-
-@constexpr
-def _raise_arange_value_error(start, stop):
-    """
-    Raise TypeError in both graph/pynative mode
-    """
-    raise ValueError("For mindspore.ops.arange, the argument 'start' must be < 'stop', but got 'start': {}, "
-                     "'stop': {}.".format(start, stop))
 
 
 def narrow(inputs, axis, start, length):
