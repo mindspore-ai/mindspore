@@ -82,6 +82,104 @@
 
 - [STABLE] Support perlayer quantization, and built-in CLE to optimize perlayer quantization accuracy.
 
+#### operator
+
+- [STABLE] Add GPU support for ops.adaptive_avg_pool2d.
+- [BETA] Add Ascend, GPU, and CPU support for ops.adaptive_max_pool2d .
+- [BETA] Add CPU support for ops.approximate_equal.
+- [STABLE] Add CPU support for ops.argmin.
+- [BETA] Add CPU support for ops.assign_sub.
+- [STABLE] Add GPU support for ops.bernoulli.
+- [BETA] Add CPU support for ops.bessel_i0.
+- [BETA] Add CPU support for ops.bessel_i0e.
+- [BETA] Add CPU support for ops.bessel_i1.
+- [BETA] Add CPU support for ops.bessel_i1e Add CPU support.
+- [STABLE] Add CPU support for ops.bessel_j0.
+- [STABLE] Add CPU support for ops.bessel_j1.
+- [STABLE] Add CPU support for ops.bessel_k0.
+- [STABLE] Add CPU support for ops.bessel_k0e.
+- [BETA] Add CPU support for ops.bessel_k1.
+- [BETA] Add CPU support for ops.bessel_k1e.
+- [STABLE] Add CPU support for ops.bessel_y0.
+- [STABLE] Add CPU support for ops.bessel_y1.
+- [STABLE] Add CPU support for ops.bitwise_and.
+- [STABLE] Add CPU support for ops.bitwise_or.
+- [STABLE] Add CPU support for ops.bitwise_xor.
+- [STABLE] Add functional interface for ops.broadcast_to.
+- [BETA] Add GPU and CPU support for ops.ceil.
+- [BETA] Add GPU support for ops.col2im.
+- [BETA] Add functional interface for ops.concat.
+- [STABLE] Add GPU support for ops.cosh.
+- [STABLE] Add Ascend and CPU support for ops.ctc_greedy_decoder.
+- [BETA] Add GPU and CPU support for ops.DataFormatDimMap.
+- [BETA] Add GPU and CPU support for ops.dropout2d.
+- [BETA] Add CPU support for ops.dropout3d.
+- [BETA] Add CPU support for ops.erf.
+- [BETA] Add CPU support for ops.erfc.
+- [STABLE] Add functional interface for ops.expand_dims.
+- [STABLE] Add GPU and CPU support for ops.fast_gelu.
+- [STABLE] Add Ascend dynamic shape support for ops.flatten.
+- [BETA] Add GPU and CPU support for ops.ger.
+- [STABLE] Add Ascend, GPU, and CPU support for ops.gumbel_softmax.
+- [BETA] Add GPU and CPU support for ops.hardshrink.
+- [BETA] Add CPU support for ops.index_add.
+- [BETA] Add CPU support for ops.inplace_add.
+- [BETA] Add CPU support for ops.inplace_sub.
+- [STABLE] Add CPU support for ops.intopk.
+- [STABLE] Add GPU and CPU support for ops.inv.
+- [STABLE] Add GPU and CPU support for ops.invert.
+- [BETA] Add CPU support for ops.isclose.
+- [STABLE] Add CPU support for ops.lerp.
+- [BETA] Add CPU support for ops.linspace.
+- [BETA] Add functional interface for ops.log_softmax.
+- [BETA] Add Ascend, GPU, and CPU support for ops.norm.
+- [BETA] Add CPU support for ops.lrn.
+- [BETA] Add GPU support for ops.masked_select.
+- [BETA] Add GPU and CPU support for ops.matrix_band_part.
+- [BETA] Add GPU and CPU support for ops.matrix_solve.
+- [BETA] Add CPU support for ops.meshgrid.
+- [STABLE] Add CPU support for ops.mish.
+- [BETA] Add GPU support forops.nonzero.
+- [STABLE] Add GPU and CPU support for ops.padding.
+- [BETA] Add Ascend dynamic shape support for ops.pow.
+- [BETA] Add functional interface for ops.range.
+- [BETA] Add Ascend dynamic shape support for ops.round.
+- [STABLE] Add Ascend dynamic shape support for ops.scatter_add.
+- [STABLE] Add Ascend dynamic shape support for ops.scatter_div.
+- [BETA] Add GPU support for ops.scatter_max.
+- [BETA] Add GPU support for ops.scatter_min.
+- [BETA] Add CPU support for ops.scatter_nd_add.
+- [STABLE] Add GPU and CPU support for ops.scatter_nd_div.
+- [STABLE] Add GPU and CPU support for ops.scatter_nd_min.
+- [STABLE] Add GPU and CPU support for ops.scatter_nd_mul.
+- [BETA] Add CPU support for ops.scatter_nd_sub.
+- [STABLE] Add Ascend dynamic shape support for ops.scatter_update.
+- [BETA] Add Ascend dynamic shape support for ops.select.
+- [BETA] Add GPU and CPU support for ops.selu.
+- [BETA] Add GPU and CPU support for ops.soft_shrink.
+- [BETA] Add CPU support for ops.softsign.
+- [STABLE] Add GPU support for ops.tan.
+- [BETA] Add Ascend and CPU support ops.tensor_scatter_add.
+- [STABLE] Add GPU and CPU support for ops.tensor_scatter_div.
+- [STABLE] Add GPU and CPU support for ops.tensor_scatter_mul.
+- [BETA] Add Ascend and CPU support for ops.tensor_scatter_sub.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.AdaptiveAvgPool1d.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.AdaptiveMaxPool1d.
+- [BETA] Add Ascend, GPU, and CPU support for nn.BiDense.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.ConstantPad1d.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.ConstantPad2d.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.ConstantPad3d.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.Hardtanh.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.HuberLoss.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.RReLU.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.Tanhshrink.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.Threshold.
+- [STABLE] Add Ascend, GPU, and CPU support for nn.ZeroPad2d.
+- [BETA] Add GPU support for ops.unique_consecutive.
+- [STABLE] Add CPU support for ops.unsorted_segment_max.
+- [STABLE] Add CPU support for ops.unsorted_segment_min.
+- [STABLE] Add GPU support for ops.unsorted_segment_prod.
+
 ### Contributors
 
 Thanks goes to these wonderful people:
