@@ -1370,8 +1370,8 @@ class Tensor(Tensor_):
             >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
             >>> sign, output  = input_x.log_matrix_determinant()
             >>> print(sign)
-            >>> print(output)
             [-1.   1.]
+            >>> print(output)
             [2.80336046e+00    3.04452229e+00]
         """
         self._init_check()

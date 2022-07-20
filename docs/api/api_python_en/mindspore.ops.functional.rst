@@ -336,6 +336,7 @@ Array Operation
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
+    mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
