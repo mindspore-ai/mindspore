@@ -235,6 +235,7 @@ Reduction算子
     mindspore.ops.less
     mindspore.ops.maximum
     mindspore.ops.minimum
+    mindspore.ops.ne
     mindspore.ops.same_type_shape
 
 .. list-table::
@@ -337,6 +338,7 @@ Array操作
     mindspore.ops.select
     mindspore.ops.shape
     mindspore.ops.size
+    mindspore.ops.slice
     mindspore.ops.space_to_batch_nd
     mindspore.ops.split
     mindspore.ops.stack
