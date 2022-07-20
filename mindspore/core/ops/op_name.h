@@ -315,6 +315,11 @@ constexpr auto kArgmaxType = "argmax_type";
 constexpr auto kNumSample = "num_samples";
 constexpr auto kMergeRepeated = "merge_repeated";
 constexpr auto kDim = "dim";
+constexpr auto kMinPercentile = "min_percentile";
+constexpr auto kMaxPercentile = "max_percentile";
+constexpr auto kSearchRange = "search_range";
+constexpr auto kSearchStep = "search_step";
+constexpr auto kWithOffset = "with_offset";
 
 enum Index : size_t {
   kInputIndex0 = 0,

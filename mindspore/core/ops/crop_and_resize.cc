@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,113 @@
  * limitations under the License.
  */
 
-#include <set>
-#include <memory>
 #include "ops/crop_and_resize.h"
+#include <algorithm>
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
 #include "mindapi/src/helper.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace ops {
-MIND_API_OPERATOR_IMPL(CropAndResize, BaseOperator);
+namespace {
+constexpr int64_t kUnknownDims = -2;
+constexpr int64_t kLimitValue2 = 2;
+constexpr int64_t kLimitValue4 = 4;
+constexpr size_t kCropAndResizeInputSize = 4;
+constexpr size_t kShapeRank2 = 2;
+constexpr size_t kShapeRank4 = 4;
+int64_t ParseNumBoxes(const std::vector<AbstractBasePtr> &input_args, const std::string &prim_name) {
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex1]->BuildShape()->isa<abstract::Shape>(), "boxes's shape wrong.");
+  auto boxes_shape_element = input_args[kInputIndex1]->BuildShape()->cast<abstract::ShapePtr>();
+  auto boxes_shape = boxes_shape_element->shape();
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    SizeToLong(boxes_shape.size()) == kShapeRank2 || (boxes_shape.size() == 1 && boxes_shape[0] == kUnknownDims),
+    "boxes's shape wrong.");
+
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex2]->BuildShape()->isa<abstract::Shape>(),
+                             "box_index's shape wrong.");
+  auto box_index_shape_element = input_args[kInputIndex2]->BuildShape()->cast<abstract::ShapePtr>();
+  auto box_index_shape = box_index_shape_element->shape();
+  CheckAndConvertUtils::Check("box_index rank", box_index_shape.size(), kEqual, 1, prim_name);
+  int64_t num_boxes = -1;
+  if (boxes_shape[0] >= 0 || box_index_shape[0] >= 0) {
+    if (boxes_shape[0] >= 0 && box_index_shape[0] >= 0) {
+      MS_EXCEPTION_IF_CHECK_FAIL(boxes_shape[0] == box_index_shape[0],
+                                 "boxes' first dim should be equal to that of box_index.");
+    }
+    if (boxes_shape.size() == kShapeRank2) {
+      MS_EXCEPTION_IF_CHECK_FAIL(boxes_shape[1] == kLimitValue4 || boxes_shape[1] == -1,
+                                 "boxes' second dim should be 4 or dynamic shape.");
+    }
+    num_boxes = std::max(boxes_shape[0], box_index_shape[0]);
+  }
+  return num_boxes;
+}
+
+abstract::ShapePtr CropAndResizeInferShape(const PrimitivePtr &primitive,
+                                           const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kCropAndResizeInputSize,
+                             "CropAndResize's input size should be 4 but got " + std::to_string(input_args.size()));
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args[kInputIndex0]->BuildShape()->isa<abstract::Shape>(), "x's shape wrong.");
+  auto x_shape_element = input_args[kInputIndex0]->BuildShape()->cast<abstract::ShapePtr>();
+  auto x_shape = x_shape_element->shape();
+  MS_EXCEPTION_IF_CHECK_FAIL(x_shape.size() == kShapeRank4 || (x_shape.size() == 1 && x_shape[0] == kUnknownDims),
+                             "x's shape wrong.");
+  int64_t out_channel = -1;
+  if (x_shape.size() == kShapeRank4 && x_shape.back() > 0) {
+    out_channel = x_shape.back();
+  }
+
+  auto num_boxes = ParseNumBoxes(input_args, prim_name);
+  auto crop_size_type = input_args[kInputIndex3]->BuildType();
+  MS_EXCEPTION_IF_CHECK_FAIL(crop_size_type != nullptr, "crop_size's type is invalid.");
+  auto value_ptr = input_args[kInputIndex3]->BuildValue();
+  std::vector<int64_t> crop_size;
+  if (crop_size_type->isa<TensorType>()) {
+    crop_size = CheckAndConvertUtils::CheckTensorIntValue("crop_size", value_ptr, prim_name);
+  } else if (IsIdentidityOrSubclass(crop_size_type, kTuple)) {
+    crop_size = CheckAndConvertUtils::CheckIntOrTupleInt("crop_size", value_ptr, prim_name);
+  } else {
+    MS_LOG(EXCEPTION) << "crop_size type is invalid, which should be Tensor or Tuple, but now is "
+                      << crop_size_type->ToString();
+  }
+  CheckAndConvertUtils::Check("crop_size length", crop_size.size(), kEqual, kLimitValue2, prim_name);
+  CheckAndConvertUtils::Check("crop_size weight", crop_size.front(), kGreaterThan, 0, prim_name);
+  CheckAndConvertUtils::Check("box_index height", crop_size.back(), kGreaterThan, 0, prim_name);
+  ShapeVector out_shape = {num_boxes, crop_size.front(), crop_size.back(), out_channel};
+  return std::make_shared<abstract::Shape>(out_shape);
+}
+
+TypePtr CropAndResizeInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  MS_EXCEPTION_IF_CHECK_FAIL(input_args.size() == kCropAndResizeInputSize,
+                             "CropAndResize's input size should be 4 but got " + std::to_string(input_args.size()));
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid(
+    "x", input_args[kInputIndex0]->BuildType(),
+    {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kUInt8, kUInt16}, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("boxes", input_args[kInputIndex1]->BuildType(), {kFloat32},
+                                                   prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("box_index", input_args[kInputIndex2]->BuildType(), {kInt32},
+                                                   prim_name);
+  return kFloat32;
+}
+}  // namespace
+
 void CropAndResize::Init(ResizeMethod method, float extrapolation_value) {
   this->set_method(method);
   this->set_extrapolation_value(extrapolation_value);
@@ -48,6 +145,14 @@ float CropAndResize::get_extrapolation_value() const {
   return GetValue<float>(value_ptr);
 }
 
-REGISTER_PRIMITIVE_C(kNameCropAndResize, CropAndResize);
+AbstractBasePtr CropAndResizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const std::vector<AbstractBasePtr> &input_args) {
+  auto infer_type = CropAndResizeInferType(primitive, input_args);
+  auto infer_shape = CropAndResizeInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
+}
+
+MIND_API_OPERATOR_IMPL(CropAndResize, BaseOperator);
+REGISTER_PRIMITIVE_EVAL_IMPL(CropAndResize, prim::kPrimCropAndResize, CropAndResizeInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

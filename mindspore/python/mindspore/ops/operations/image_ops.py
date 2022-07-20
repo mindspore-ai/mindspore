@@ -16,9 +16,7 @@
 """image_ops"""
 from ... import context
 from ..._checkparam import Validator as validator
-from ..._checkparam import Rel
-from ...common import dtype as mstype
-from ..primitive import PrimitiveWithInfer, prim_attr_register, Primitive
+from ..primitive import prim_attr_register, Primitive
 
 
 class AdjustSaturation(Primitive):
@@ -266,7 +264,7 @@ class ExtractGlimpse(Primitive):
                              f"when uniform_noise is True, but got {noise}.")
 
 
-class CropAndResize(PrimitiveWithInfer):
+class CropAndResize(Primitive):
     """
     Extracts crops from the input image tensor and resizes them.
 
@@ -341,54 +339,6 @@ class CropAndResize(PrimitiveWithInfer):
         validator.check_value_type("extrapolation_value", extrapolation_value, [float], self.name)
         self.extrapolation_value = extrapolation_value
         self.is_ge = context.get_context("enable_ge")
-
-    def __infer__(self, x, boxes, box_index, crop_size):
-        # get shape
-        x_shape = list(x['shape'])
-        boxes_shape = list(boxes['shape'])
-        box_index_shape = list(box_index['shape'])
-        # get value
-        if crop_size['value'] is None:
-            raise ValueError(f"For '{self.name}', the 'crop_size' cannot be None, but got {crop_size['value']}.")
-        crop_size_value = crop_size['value']
-        # get dtype
-        x_dtype = x['dtype']
-        boxes_dtype = boxes['dtype']
-        box_index_dtype = box_index['dtype']
-        crop_size_dtype = crop_size['dtype']
-        # check dytpe
-        validator.check_tensor_dtype_valid("x", x_dtype,
-                                           [mstype.int8, mstype.int16, mstype.int32, mstype.int64, mstype.float16,
-                                            mstype.float32, mstype.float64, mstype.uint8, mstype.uint16], self.name)
-        validator.check_tensor_dtype_valid("boxes", boxes_dtype, [mstype.float32], self.name)
-        validator.check_tensor_dtype_valid("box_index", box_index_dtype, [mstype.int32], self.name)
-        validator.check_value_type("crop_size", crop_size_value, [tuple], self.name)
-        # check input shape rank
-        validator.check("x rank", len(x_shape), "expected", 4, Rel.EQ, self.name)
-        validator.check("boxes rank", len(boxes_shape), "expected", 2, Rel.EQ, self.name)
-        validator.check("box_index rank", len(box_index_shape), "expected", 1, Rel.EQ, self.name)
-        validator.check("crop_size size", len(crop_size_value), "expected", 2, Rel.EQ, self.name)
-        validator.check("boxes dim_0", boxes_shape[0], "box_index dim_0", box_index_shape[0], Rel.EQ, self.name)
-        validator.check("boxes dim_1", boxes_shape[1], "expected", 4, Rel.EQ, self.name)
-        # check crop_size_value
-        validator.check("crop_height", crop_size_value[0], "minimum", 0, Rel.GT, self.name)
-        validator.check("crop_width", crop_size_value[1], "minimum", 0, Rel.GT, self.name)
-        # check crop_size element type
-        validator.check("crop_height dtype", crop_size_dtype[0], "expected", [mstype.int32, mstype.int64], Rel.IN,
-                        self.name)
-        validator.check("crop_width dtype", crop_size_dtype[1], "expected", [mstype.int32, mstype.int64], Rel.IN,
-                        self.name)
-
-        num_boxes = boxes_shape[0]
-        crop_height = crop_size_value[0]
-        crop_width = crop_size_value[1]
-        depth = x_shape[3]
-        out_shape = (num_boxes, crop_height, crop_width, depth)
-        if self.is_ge:
-            out_shape = (num_boxes, x_shape[1], crop_height, crop_width)
-        return {'shape': out_shape,
-                'dtype': mstype.float32,
-                'value': None}
 
 
 class NonMaxSuppressionV3(Primitive):
