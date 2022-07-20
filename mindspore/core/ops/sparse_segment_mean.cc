@@ -38,8 +38,9 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     batch_rank = GetValue<int64_t>(batch_rank_ptr);
   }
 
-  if (x_shape_ptr->IsDynamic() || indices_shape_ptr->IsDynamic() || x_shape_ptr->IsDynamic()) {
-    return std::make_shared<abstract::Shape>(x_shape);
+  if (x_shape_ptr->IsDimUnknown()) {
+    constexpr int64_t unknown_shape = -2;
+    return std::make_shared<abstract::Shape>(ShapeVector{unknown_shape});
   }
 
   constexpr int64_t number_one = 1;
@@ -49,14 +50,19 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
                                            batch_rank + number_one, prim_name);
   (void)CheckAndConvertUtils::CheckInteger("rank of 'segment_ids'", SizeToLong(segment_ids_shape.size()), kEqual,
                                            batch_rank + number_one, prim_name);
-  if (indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
+  if (!indices_shape_ptr->IsDynamic() && !segment_ids_shape_ptr->IsDynamic() &&
+      indices_shape[kInputIndex0] != segment_ids_shape[kInputIndex0]) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name
                              << "', the size of 'indices' and 'segment_ids' must be the same, but got "
                              << indices_shape[kInputIndex0] << " vs " << segment_ids_shape[kInputIndex0] << ".";
   }
   ShapeVector out_shape = x_shape;
-  if (input_args[kInputIndex2]->isa<abstract::AbstractTensor>() &&
-      input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+  if (!input_args[kInputIndex2]->BuildValue()->isa<tensor::Tensor>()) {
+    // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
+    // The framework ensures the `else` branch will be executed, so min/max shape are not necessary to set.
+    out_shape[batch_rank] = abstract::Shape::SHP_ANY;
+    return std::make_shared<abstract::Shape>(out_shape);
+  } else {
     auto segment_ids = input_args[kInputIndex2]->cast<abstract::AbstractTensorPtr>();
     MS_EXCEPTION_IF_NULL(segment_ids);
     auto segment_ids_value = segment_ids->BuildValue();
@@ -81,15 +87,6 @@ abstract::ShapePtr SparseSegmentMeanInferShape(const PrimitivePtr &prim,
     }
     out_shape[batch_rank] = segment_num;
     return std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    out_shape[batch_rank] = abstract::Shape::SHP_ANY;
-    ShapeVector min_out_shape = x_shape;
-    ShapeVector max_out_shape = x_shape;
-    // The real output shape relies on the last value of 'segment_ids', we have already added dependency map.
-    // The framework ensures the above branch will be executed, so min/max shape are not necessary to set
-    // correctly.
-    min_out_shape[batch_rank] = max_out_shape[batch_rank] = 1;
-    return std::make_shared<abstract::Shape>(out_shape, min_out_shape, max_out_shape);
   }
 }
 
