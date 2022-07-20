@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
-#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_SESSION_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_SESSION_H_
 
 #include <string>
 #include <memory>
@@ -179,4 +179,4 @@ class AscendSession : public SessionBasic {
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_SESSION_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_SESSION_H_

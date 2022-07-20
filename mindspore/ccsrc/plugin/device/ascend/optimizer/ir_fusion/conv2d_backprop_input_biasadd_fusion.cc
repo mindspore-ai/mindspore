@@ -16,12 +16,7 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/conv2d_backprop_input_biasadd_fusion.h"
 #include <memory>
 #include <vector>
-#include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
-#include "backend/common/optimizer/helper.h"
-#include "include/common/utils/utils.h"
-#include "utils/trace_base.h"
-#include "plugin/device/ascend/hal/device/lic_manager.h"
 
 namespace mindspore {
 namespace opt {

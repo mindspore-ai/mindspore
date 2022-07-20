@@ -20,7 +20,7 @@
 #include "plugin/device/ascend/hal/hardware/ascend_utils.h"
 #include "backend/common/session/kernel_graph.h"
 #include "plugin/device/ascend/hal/device/kernel_build_ascend.h"
-#include "runtime/device/kernel_adjust.h"
+#include "plugin/device/ascend/hal/device/kernel_adjust.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_assign.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_adapter.h"
 #ifndef ENABLE_SECURITY

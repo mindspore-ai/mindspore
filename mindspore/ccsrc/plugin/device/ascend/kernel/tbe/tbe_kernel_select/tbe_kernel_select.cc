@@ -21,22 +21,15 @@
 #include <set>
 #include <utility>
 #include "kernel/common_utils.h"
-#include "kernel/oplib/oplib.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_convert_utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/single_tbe_json_creator.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_build.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_compile.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/common_utils.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_broadcast_selecter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_kernel_reduce_selecter.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_select/tbe_property_checker.h"
 #include "backend/common/optimizer/helper.h"
-#include "backend/common/session/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "backend/common/session/kernel_build_client.h"
-#include "nlohmann/json.hpp"
-#include "utils/convert_utils_base.h"
+
 #include "include/common/utils/json_operation_utils.h"
 
 namespace mindspore::kernel {

@@ -24,9 +24,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/session/kernel_graph.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 #include "utils/ms_context.h"
-using mindspore::kernel::tbe::TbeUtils;
 namespace mindspore {
 namespace memreuse {
 static constexpr int kMaxRefCount = 9999;

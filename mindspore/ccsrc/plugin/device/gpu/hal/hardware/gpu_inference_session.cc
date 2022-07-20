@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "backend/common/session/gpu_inference_session.h"
+#include "plugin/device/gpu/hal/hardware/gpu_inference_session.h"
 #include <algorithm>
 #include "ir/tensor.h"
 #include "ir/anf.h"

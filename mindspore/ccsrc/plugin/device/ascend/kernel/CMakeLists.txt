@@ -3,8 +3,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
 endif()
 
 file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/kernel_query.cc
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/ascend_kernel_mod.cc
+        "kernel_query.cc"
+        "ascend_kernel_mod.cc"
         "tbe/*.cc"
         "host/*.cc"
         "aicpu/*.cc"
@@ -22,10 +22,7 @@ file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     endif()
 
     if(ENABLE_AKG AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND ENABLE_D)
-        file(GLOB_RECURSE AKG_D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "akg/*.cc"
-        ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/kernel/akg/akg_kernel_metadata.cc
-    )
+        file(GLOB_RECURSE AKG_D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "akg/*.cc")
 endif()
 
 set_property(SOURCE ${D_SRC_LIST} ${AKG_D_SRC_LIST}

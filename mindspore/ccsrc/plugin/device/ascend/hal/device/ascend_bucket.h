@@ -22,6 +22,7 @@
 #include <string>
 #include "utils/ms_context.h"
 #include "runtime/device/bucket.h"
+#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 
 namespace mindspore::device::ascend {
 class AscendBucket : public Bucket {

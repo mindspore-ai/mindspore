@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/common/session/gpu_session.h"
+#include "plugin/device/gpu/hal/hardware/gpu_session.h"
 
 #include <string>
 #include <utility>
@@ -85,6 +85,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "include/common/utils/utils.h"
 #include "abstract/utils.h"
+#include "kernel/graph_kernel_info.h"
 #ifdef WITH_BACKEND
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
@@ -134,9 +135,10 @@ void GPUSession::Init(uint32_t device_id) {
 void GPUSession::SelectKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   device::gpu::FormatTransformChecker::GetInstance().CheckSupportFormatTransform(kernel_graph);
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
   for (const auto &kernel_node : kernel_graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel_node);
-    device::gpu::SetKernelInfo(kernel_node);
+    kernel_info_setter->SetKernelInfo(kernel_node, KernelType::UNKNOWN_KERNEL_TYPE);
   }
 }
 

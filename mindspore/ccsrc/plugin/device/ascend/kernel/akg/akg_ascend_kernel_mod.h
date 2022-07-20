@@ -19,7 +19,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_utils.h"
 
 namespace mindspore {

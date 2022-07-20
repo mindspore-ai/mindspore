@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_METADATA_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_METADATA_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AKG_AKG_KERNEL_METADATA_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AKG_AKG_KERNEL_METADATA_H_
 
 #include <vector>
 #include "kernel/kernel_build_info.h"
@@ -25,4 +25,4 @@ namespace kernel {
 void AkgMetadataInfo(const CNodePtr &kernel_node, std::vector<KernelBuildInfoPtr> *kernel_info_list);
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AKG_AKG_KERNEL_METADATA_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_AKG_AKG_KERNEL_METADATA_H_

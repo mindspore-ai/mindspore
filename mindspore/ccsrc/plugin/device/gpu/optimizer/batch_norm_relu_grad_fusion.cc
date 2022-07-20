@@ -26,6 +26,7 @@
 #include "backend/common/optimizer/helper.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "utils/ms_context.h"
+#include "kernel/graph_kernel_info.h"
 
 namespace mindspore {
 namespace opt {
@@ -104,7 +105,8 @@ const AnfNodePtr BatchNormReluGradFusion::Process(const FuncGraphPtr &graph, con
   }
   common::AnfAlgo::SetOutputTypeAndDetailShape(outputs_type, outputs_shape, fused_batch_norm_grad_with_relu.get());
   common::AnfAlgo::CopyNodeAttrs(node, fused_batch_norm_grad_with_relu);
-  device::gpu::SetKernelInfo(fused_batch_norm_grad_with_relu);
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  kernel_info_setter->SetKernelInfo(fused_batch_norm_grad_with_relu, KernelType::UNKNOWN_KERNEL_TYPE);
   return fused_batch_norm_grad_with_relu;
 }
 }  // namespace opt

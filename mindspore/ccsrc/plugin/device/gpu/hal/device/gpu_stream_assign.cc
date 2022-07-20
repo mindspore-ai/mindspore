@@ -20,6 +20,7 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "kernel/graph_kernel_info.h"
 #include "plugin/device/gpu/hal/device/gpu_common.h"
 #include "plugin/device/gpu/hal/device/kernel_info_setter.h"
 #include "plugin/device/gpu/hal/device/gpu_device_manager.h"
@@ -212,7 +213,8 @@ CNodePtr CreateStreamSwitchNode(const std::shared_ptr<session::KernelGraph> &ker
   auto abstract_none = std::make_shared<abstract::AbstractNone>();
   MS_EXCEPTION_IF_NULL(abstract_none);
   node->set_abstract(abstract_none);
-  SetKernelInfo(node);
+  auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+  kernel_info_setter->SetKernelInfo(node, KernelType::UNKNOWN_KERNEL_TYPE);
   return node;
 }
 

@@ -21,8 +21,6 @@
 #include "kernel/common_utils.h"
 #include "plugin/factory/ms_factory.h"
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
-#include "kernel/kernel_build_info.h"
-#include "kernel/oplib/opinfo.h"
 #include "kernel/oplib/oplib.h"
 #include "plugin/device/cpu/kernel/pyfunc/py_func_cpu_kernel.h"
 #include "plugin/device/cpu/kernel/custom/custom_aot_cpu_kernel.h"
@@ -518,7 +516,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   return {};
 }
 
-void SetKernelInfo(const CNodePtr &kernel_node) {
+void CPUGraphKernelInfo::SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto [msg, etype] = SetKernelInfoWithMsg(kernel_node);
   if (msg.empty()) return;

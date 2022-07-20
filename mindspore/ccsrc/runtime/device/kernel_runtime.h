@@ -63,6 +63,9 @@ class KernelRuntime {
   void AssignCommunicationInputFromMemoryPool(const AnfNodePtr &node) const;
   void RunOpClearMemory(const session::KernelGraph &graph) const;
   void RunOpMallocPre(const session::KernelGraph &graph, const std::vector<tensor::TensorPtr> &input_tensors);
+  using TbeLaunchKernelModCallBack =
+    std::function<void(const AnfNodePtr &, const kernel::KernelMod *kernel_mod, std::vector<AddressPtr> *)>;
+  static void tbe_call_setter(const TbeLaunchKernelModCallBack &call) { tbe_call_ = call; }
 #ifdef ENABLE_DEBUGGER
   BACKEND_EXPORT static bool DumpDataEnabled();
   BACKEND_EXPORT static bool DumpDataEnabledIteration();
@@ -163,6 +166,7 @@ class KernelRuntime {
   void InitGraphInputTensors(const std::shared_ptr<MemScheduler> &mem_scheduler, const session::KernelGraph &graph);
 
  private:
+  static TbeLaunchKernelModCallBack tbe_call_;
   void GetDeviceAddress(const AnfNodePtr &item, const std::map<AnfNodePtr, AnfNodePtr> shadow_backend_node_map,
                         size_t index, uint32_t graph_id, DeviceAddressPtr *device_address);
   void UseMemSchedulerIfNeeded(const session::KernelGraph &graph);

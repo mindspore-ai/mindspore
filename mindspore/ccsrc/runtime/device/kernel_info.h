@@ -21,8 +21,8 @@
 #include <memory>
 #include "ir/kernel_info_dev.h"
 #include "kernel/kernel_build_info.h"
-#include "plugin/device/ascend/hal/device/ascend_device_address.h"
 #include "kernel/kernel.h"
+#include "runtime/device/device_address.h"
 
 namespace mindspore {
 const uint32_t kInvalidGraphId = UINT32_MAX;

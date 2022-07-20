@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/ascend_kernel_mod.h"
+#include "plugin/device/ascend/kernel/ascend_kernel_mod.h"
 #include "runtime/device/kernel_runtime.h"
 #include "runtime/rt.h"
 #include "include/common/utils/anfalgo.h"

@@ -24,12 +24,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/common_utils.h"
 #include "common/graph_kernel/adapter/fake_abstract_shape.h"
-#ifdef ENABLE_D
-#include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
-#elif defined(ENABLE_GPU)
-#include "plugin/device/gpu/hal/device/kernel_info_setter.h"
-#endif
-#include "plugin/device/cpu/hal/device/kernel_select_cpu.h"
+#include "kernel/graph_kernel_info.h"
 
 namespace mindspore::graphkernel {
 GRAPH_KERNEL_CALLBACK_REGISTER(CallbackImpl);
@@ -198,24 +193,18 @@ void CallbackImpl::SetEmptyKernelInfo(const AnfNodePtr &node) {
 void CallbackImpl::ResetKernelInfo(const AnfNodePtr &node) {
   auto cnode = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-#ifdef ENABLE_D
-  if (GetTargetFromContext() == kCPUDevice) {
-    cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-    device::cpu::SetKernelInfo(cnode);
+  if (GetTargetFromContext() == kAscendDevice) {
+    auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kAscendDevice);
+    kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
+  } else if (GetTargetFromContext() == kGPUDevice) {
+    auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kGPUDevice);
+    kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
   } else {
-    device::ascend::SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
+    auto kernel_info_setter = GraphKernelInfoManager::Instance().GetGraphKernelInfo(kCPUDevice);
+    if (kernel_info_setter != nullptr) {
+      kernel_info_setter->SetKernelInfo(cnode, KernelType::UNKNOWN_KERNEL_TYPE);
+    }
   }
-#elif defined(ENABLE_GPU)
-  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-  if (GetTargetFromContext() == kCPUDevice) {
-    device::cpu::SetKernelInfo(cnode);
-  } else {
-    device::gpu::SetKernelInfo(cnode);
-  }
-#elif defined(ENABLE_CPU)
-  cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
-  device::cpu::SetKernelInfo(cnode);
-#endif
 }
 
 ShapeVector CallbackImplWithInferShape::GetInputShape(const AnfNodePtr &node, size_t i) {

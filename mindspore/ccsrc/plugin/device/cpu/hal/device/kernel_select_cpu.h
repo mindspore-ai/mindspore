@@ -24,13 +24,25 @@
 #include "ir/anf.h"
 #include "ir/dtype/type.h"
 #include "include/common/utils/utils.h"
+#include "utils/ms_context.h"
+#include "kernel/kernel_build_info.h"
+#include "kernel/graph_kernel_info.h"
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace device {
 namespace cpu {
 using DataType = std::pair<TypeId, std::string>;
-void SetKernelInfo(const CNodePtr &apply_kernel_ptr);
 std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &apply_kernel_ptr);
+
+class BACKEND_EXPORT CPUGraphKernelInfo : public GraphKernelInfo {
+ public:
+  CPUGraphKernelInfo() = default;
+  virtual ~CPUGraphKernelInfo() = default;
+  void SetKernelInfo(const CNodePtr &kernel_node, KernelType kernel_type) override;
+};
+
+REG_GRAPH_KERNEL_INFO(kCPUDevice, CPUGraphKernelInfo);
 }  // namespace cpu
 }  // namespace device
 }  // namespace mindspore

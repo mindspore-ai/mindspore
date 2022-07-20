@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
-#define MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_INFERENCE_SESSION_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_INFERENCE_SESSION_H_
 #include <string>
 #include <memory>
 #include <vector>
@@ -24,7 +24,7 @@
 #include <tuple>
 #include <set>
 #include "utils/hash_map.h"
-#include "backend/common/session/ascend_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "backend/common/session/kernel_graph.h"
 #include "kernel/kernel.h"
 #include "backend/common/session/session_factory.h"
@@ -50,4 +50,4 @@ class AscendInferenceSession : public AscendSession {
 MS_REG_SESSION(kDavinciInferenceDevice, AscendInferenceSession);
 }  // namespace session
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_SESSION_ASCEND_INFERENCE_SESSION_H
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_ASCEND_INFERENCE_SESSION_H_

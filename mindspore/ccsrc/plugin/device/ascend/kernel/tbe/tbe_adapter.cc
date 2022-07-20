@@ -28,7 +28,7 @@
 #include "include/common/utils/anfalgo.h"
 #include "kernel/oplib/opinfo.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
-#include "plugin/device/ascend/kernel/tbe/tbe_dynaminc_shape_util.h"
+#include "plugin/device/ascend/kernel/tbe/tbe_dynamic_shape_util.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_json/tbe_json_utils.h"
 #include "include/common/utils/json_operation_utils.h"
 #include "utils/ms_context.h"

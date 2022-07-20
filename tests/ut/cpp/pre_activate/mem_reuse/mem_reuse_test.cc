@@ -18,7 +18,7 @@
 #include <string>
 #include "backend/common/session/kernel_graph.h"
 #include "backend/common/session/session_basic.h"
-#include "backend/common/session/ascend_session.h"
+#include "plugin/device/ascend/hal/hardware/ascend_session.h"
 #include "common/mem_reuse/kernel_refcount.h"
 #include "runtime/device/kernel_info.h"
 #include "plugin/device/ascend/kernel/tbe/tbe_kernel_mod.h"
