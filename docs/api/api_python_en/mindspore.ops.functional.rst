@@ -354,6 +354,7 @@ Array Operation
     mindspore.ops.matrix_band_part
     mindspore.ops.matrix_diag
     mindspore.ops.matrix_diag_part
+    mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
     mindspore.ops.nonzero
     mindspore.ops.one_hot
