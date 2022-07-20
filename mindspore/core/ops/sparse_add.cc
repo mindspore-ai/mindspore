@@ -30,18 +30,32 @@ namespace ops {
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTuple;
 namespace {
-inline void CheckSparseAddShape(const size_t sparse_shape_size, const size_t expected_dim,
-                                const std::string &arg_name) {
+inline void CheckSparseAddShape(const size_t sparse_shape_size, const size_t expected_dim, const std::string &arg_name,
+                                const std::string &op_name) {
   if (sparse_shape_size != expected_dim) {
-    MS_EXCEPTION(mindspore::ValueError) << arg_name << " must be a " << expected_dim
+    MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", " << arg_name << " must be a " << expected_dim
                                         << "-dimensional tensor, but got a " << sparse_shape_size
                                         << "-dimensional tensor.";
   }
 }
 
-inline void CheckSparseAddIndicesDtype(const mindspore::TypePtr dtype, const std::string &arg_name) {
-  if (!(dtype->equal(mindspore::kInt32))) {
-    MS_EXCEPTION(mindspore::TypeError) << "The dtype of " << arg_name << " Int32 but got " << dtype->ToString() << ".";
+inline void CheckSparseAddNNZ(const int64_t indices_nnz, const int64_t value_nnz, const std::string &indices_name,
+                              const std::string &value_name, const std::string &op_name) {
+  if (indices_nnz != value_nnz) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", the length of " << indices_name << " and "
+                                        << value_name << " must be same, but got"
+                                        << "length of " << indices_nnz << " is " << indices_nnz << ", and length of "
+                                        << value_name << " is " << value_nnz;
+  }
+}
+
+inline void CheckSparseAddSameDtype(const mindspore::TypePtr a_dtype, const mindspore::TypePtr b_dtype,
+                                    const std::string &a_arg_name, const std::string &b_arg_name,
+                                    const std::string &op_name) {
+  if (a_dtype->type_id() != b_dtype->type_id()) {
+    MS_EXCEPTION(mindspore::TypeError) << "For " << op_name << ", the type of " << a_arg_name << ", and " << b_arg_name
+                                       << " should be the same data type, but got type of x1_value is "
+                                       << a_dtype->ToString() << ", and type of x2_value is " << b_dtype->ToString();
   }
 }
 }  // namespace
@@ -79,34 +93,66 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
   MS_EXCEPTION_IF_NULL(b_shape);
   MS_EXCEPTION_IF_NULL(thresh);
 
+  // Check indices of a and b
   // 2-D indices
   auto a_indices_shape = a_indices->shape()->shape();
   auto b_indices_shape = b_indices->shape()->shape();
-  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "a_indices");
-  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "b_indices");
+  CheckSparseAddShape(a_indices_shape.size(), kIndicesShape, "x1_indices", op_name);
+  CheckSparseAddShape(b_indices_shape.size(), kIndicesShape, "x2_indices", op_name);
   // 1-D values
   auto a_values_shape = a_values->shape()->shape();
   auto b_values_shape = b_values->shape()->shape();
-  CheckSparseAddShape(a_values_shape.size(), 1, "a_values");
-  CheckSparseAddShape(b_values_shape.size(), 1, "b_values");
-
+  CheckSparseAddShape(a_values_shape.size(), 1, "x1_values", op_name);
+  CheckSparseAddShape(b_values_shape.size(), 1, "x2_values", op_name);
+  // 1-D shape
   auto a_shape_shape = a_shape->shape()->shape();
   auto b_shape_shape = b_shape->shape()->shape();
-  CheckSparseAddShape(a_shape_shape.size(), 1, "a_dense_shape");
-  CheckSparseAddShape(b_shape_shape.size(), 1, "b_dense_shape");
-  auto a_shape_type = a_shape->element()->BuildType();
+  CheckSparseAddShape(a_shape_shape.size(), 1, "x1_shape", op_name);
+  CheckSparseAddShape(b_shape_shape.size(), 1, "x2_shape", op_name);
+  // 0-D shape
+  auto thresh_shape = thresh->shape()->shape();
+  CheckSparseAddShape(thresh_shape.size(), 0, "thresh", op_name);
 
-  auto a_type = a_values->element()->BuildType();
-  auto b_type = b_values->element()->BuildType();
-  // Input a_value and b_value should be the same data type
-  if (a_type->type_id() != b_type->type_id()) {
-    MS_LOG(EXCEPTION) << "For " << op_name
-                      << ", the two input value should be the same data type, but got type of a_value is "
-                      << a_type->type_id() << ", and type of b_value is " << b_type->type_id();
+  // Check dtype
+  // a_indices and b_indices should be int64
+  auto a_indices_type = a_indices->element()->BuildType();
+  auto b_indices_type = b_indices->element()->BuildType();
+  const std::set<TypePtr> indices_valid_types = {kInt64};
+  CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", a_indices->BuildType(), indices_valid_types, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", b_indices->BuildType(), indices_valid_types, op_name);
+  // a_shape and b_shape should be int64
+  auto a_shape_type = a_shape->element()->BuildType();
+  auto b_shape_type = b_shape->element()->BuildType();
+  CheckAndConvertUtils::CheckTensorTypeValid("x1_shape", a_shape->BuildType(), indices_valid_types, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x2_shape", b_shape->BuildType(), indices_valid_types, op_name);
+  // check a_values and b_values
+  auto a_value_type = a_values->element()->BuildType();
+  auto b_value_type = b_values->element()->BuildType();
+  const std::set<TypePtr> value_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
+                                               kFloat32, kFloat64, kComplex64, kComplex128};
+  CheckAndConvertUtils::CheckTensorTypeValid("x1_values", a_values->BuildType(), value_valid_types, op_name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x2_values", b_values->BuildType(), value_valid_types, op_name);
+  // Check thresh
+  auto thresh_type = thresh->element()->BuildType();
+  const std::set<TypePtr> thresh_valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat32, kFloat64};
+  CheckAndConvertUtils::CheckTensorTypeValid("thresh", thresh->BuildType(), thresh_valid_types, op_name);
+
+  // Check same nnz
+  CheckSparseAddNNZ(a_indices_shape[0], a_values_shape[0], "x1_indices", "x1_values", op_name);
+  CheckSparseAddNNZ(b_indices_shape[0], b_values_shape[0], "x2_indices", "x2_values", op_name);
+
+  // Check same type
+  // value
+  CheckSparseAddSameDtype(a_value_type, b_value_type, "x1_values", "x2_values", op_name);
+  // indices
+  CheckSparseAddSameDtype(a_indices_type, b_indices_type, "x1_values", "x2_values", op_name);
+  // shape
+  CheckSparseAddSameDtype(a_shape_type, b_shape_type, "x1_values", "x2_values", op_name);
+  // thresh and value
+  if (!((a_value_type->equal(mindspore::kComplex64) && thresh_type->equal(mindspore::kFloat32)) ||
+        (a_value_type->equal(mindspore::kComplex128) && thresh_type->equal(mindspore::kFloat64)))) {
+    CheckSparseAddSameDtype(a_value_type, thresh_type, "x1_values", "thresh", op_name);
   }
-  // a_indices and b_indices should be int16, int32 or int64
-  CheckSparseAddIndicesDtype(a_indices->element()->BuildType(), op_name);
-  CheckSparseAddIndicesDtype(b_indices->element()->BuildType(), op_name);
 
   int64_t max_indices_shape_ = a_indices_shape[0] + b_indices_shape[0];
   int64_t min_indices_shape_ = std::max(a_indices_shape[0], b_indices_shape[0]);
@@ -121,7 +167,7 @@ AbstractBasePtr SparseAddInfer(const abstract::AnalysisEnginePtr &, const Primit
     a_indices->element()->BuildType(),
     std::make_shared<mindspore::abstract::Shape>(out_indices_shape, min_indices_shape, max_indices_shape));
   auto out_values = std::make_shared<AbstractTensor>(
-    a_type, std::make_shared<mindspore::abstract::Shape>(out_value_shape, min_value_shape, max_value_shape));
+    a_value_type, std::make_shared<mindspore::abstract::Shape>(out_value_shape, min_value_shape, max_value_shape));
   auto out_shape =
     std::make_shared<AbstractTensor>(a_shape_type, std::make_shared<mindspore::abstract::Shape>(a_shape_shape));
 
