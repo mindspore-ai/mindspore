@@ -230,15 +230,17 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
     return;
   }
 
-  // Failed to handshake. Throw exception and catch it in main thread.
-  try {
-    int err = SSL_get_error(ssl_, retval);
-    auto err_msg = ERR_reason_error_string(err);
-    if (err == SSL_ERROR_WANT_WRITE) {
-      (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
-    } else if (err == SSL_ERROR_WANT_READ) {
-      (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLIN | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
-    } else {
+  int err = SSL_get_error(ssl_, retval);
+  auto err_msg = ERR_reason_error_string(err);
+  MS_LOG(ERROR) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
+                << ", err info: " << err_msg;
+  if (err == SSL_ERROR_WANT_WRITE) {
+    (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLOUT | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
+  } else if (err == SSL_ERROR_WANT_READ) {
+    (void)conn->recv_event_loop->UpdateEpollEvent(fd, EPOLLIN | EPOLLHUP | EPOLLERR | EPOLLRDHUP);
+  } else {
+    // Failed to handshake. Throw exception and catch it in main thread.
+    try {
       MS_LOG(ERROR) << "ssl handshake info -- retval:" << retval << ", error:" << err << ", errno:" << errno
                     << ", conn:" << conn->send_to.c_str();
       uint64_t error = 0;
@@ -247,11 +249,11 @@ void SSLSocketOperation::Handshake(int fd, Connection *conn) {
       }
       conn->error_code = err;
       conn->state = ConnectionState::kDisconnecting;
+      MS_LOG(EXCEPTION) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
+                        << ", err info: " << err_msg;
+    } catch (const std::exception &e) {
+      MsException::Instance().SetException();
     }
-    MS_LOG(EXCEPTION) << "Failed to do the ssl handshake, retval: " << retval << ", errno: " << err
-                      << ", err info: " << err_msg;
-  } catch (const std::exception &e) {
-    MsException::Instance().SetException();
   }
 }
 }  // namespace rpc
