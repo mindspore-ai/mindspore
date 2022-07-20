@@ -323,6 +323,7 @@ Randomly Generating Operators
     mindspore.ops.standard_laplace
     mindspore.ops.uniform
     mindspore.ops.standard_normal
+    mindspore.ops.uniform_candidate_sampler
 
 Array Operation
 ^^^^^^^^^^^^^^^

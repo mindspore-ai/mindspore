@@ -45,8 +45,14 @@ abstract::TupleShapePtr UCSInferShape(const PrimitivePtr &primitive, const std::
     batch_rank = GetValue<int64_t>(value_ptr);
   }
   const int64_t input_dim = 2;
-  (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kGreaterEqual,
-                                           input_dim, op_name);
+  if (batch_rank > 0) {
+    // support vmap feature
+    (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kGreaterThan,
+                                             input_dim, op_name);
+  } else {
+    (void)CheckAndConvertUtils::CheckInteger("dimension of input", SizeToLong(input_shape.size()), kEqual, input_dim,
+                                             op_name);
+  }
 
   bool x_not_dyn = std::all_of(input_shape.begin(), input_shape.end(),
                                [](int64_t value) { return value != abstract::Shape::SHP_ANY; });
