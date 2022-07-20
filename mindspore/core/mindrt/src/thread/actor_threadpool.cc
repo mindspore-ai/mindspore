@@ -21,6 +21,8 @@
 #include "thread/core_affinity.h"
 
 namespace mindspore {
+size_t ActorThreadPool::actor_queue_size_ = kMaxHqueueSize;
+
 void ActorWorker::CreateThread() { thread_ = std::thread(&ActorWorker::RunWithSpin, this); }
 
 void ActorWorker::RunWithSpin() {
@@ -143,7 +145,7 @@ void ActorThreadPool::PushActorToQueue(ActorBase *actor) {
 
 int ActorThreadPool::ActorQueueInit() {
 #ifdef USE_HQUEUE
-  if (actor_queue_.Init(kMaxHqueueSize) != true) {
+  if (actor_queue_.Init(actor_queue_size_) != true) {
     THREAD_ERROR("init actor queue failed.");
     return THREAD_ERROR;
   }

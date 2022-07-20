@@ -289,7 +289,8 @@ ActorThreadPool *GetActorMgrInnerThreadPool() {
     size_t actor_thread_num = 0;
     size_t actor_and_kernel_thread_num = 0;
     runtime::ComputeThreadNums(&actor_thread_num, &actor_and_kernel_thread_num);
-    (void)actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num);
+    size_t actor_queue_size = 81920;
+    (void)actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num, actor_queue_size);
     thread_pool = actor_manager->GetActorThreadPool();
     MS_EXCEPTION_IF_NULL(thread_pool);
   }
