@@ -49,7 +49,8 @@ Status SomasSolverPre::CheckTensors(const TensorsDescMap *pTensors, uint32_t ind
   }
   return SUCCESS;
 }
-Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v, TensorsDescMap *pTensors) {
+Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &continuous_v,
+                                              TensorsDescMap *pTensors) const {
   auto &tensors = *pTensors;
   // creating S Lists
   for (auto &aux : continuous_v) {
@@ -67,7 +68,7 @@ Status SomasSolverPre::AddContiguousInfoInMap(const vector<vector<size_t>> &cont
 }
 Status SomasSolverPre::AddContiguousInfoInMultiMaps(const vector<vector<size_t>> &continuous_v,
                                                     vector<TensorsDescMap> *vecTensorsMap,
-                                                    const TensorsDescMap *pTensors) {
+                                                    const TensorsDescMap *pTensors) const {
   // creating S Lists
   for (auto &aux : continuous_v) {
     for (size_t i = 0; i < aux.size() - 1; i++) {
@@ -198,7 +199,8 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph, TensorsDescMap
 }
 
 void SomasSolverPre::Log(const session::KernelGraph *graph, const TensorsDescMap &tensors,
-                         const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
+                         const std::vector<DynamicBitSet> *pConstraints,
+                         const vector<vector<size_t>> &continuous_v) const {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
