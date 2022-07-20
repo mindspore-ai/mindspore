@@ -25,6 +25,8 @@
 
 namespace mindspore {
 namespace opt {
+constexpr int64_t kConcatInputDivisor = 63;
+
 using OutputInfo = std::tuple<std::vector<TypeId>, std::vector<ShapeVector>, std::vector<std::vector<int64_t>>,
                               std::vector<std::vector<int64_t>>, std::vector<std::string>, std::vector<TypeId>>;
 
@@ -32,6 +34,7 @@ class ConcatOutputsForAllGather : public PatternProcessPass {
  public:
   explicit ConcatOutputsForAllGather(bool multigraph = true)
       : PatternProcessPass("concat_outputs_for_all_gather", multigraph),
+        inputs_divisor_(kConcatInputDivisor),
         kernel_select_(std::make_shared<KernelSelect>()) {}
   ~ConcatOutputsForAllGather() override = default;
   const BaseRef DefinePattern() const override;
@@ -41,6 +44,9 @@ class ConcatOutputsForAllGather : public PatternProcessPass {
   AnfNodePtr InsertConcatForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                    const OutputInfo &output_info, const std::vector<AnfNodePtr> &new_tuple_getitems,
                                    int64_t rank_size) const;
+  CNodePtr CreateNewConcat(const FuncGraphPtr &func_graph, const std::vector<AnfNodePtr> &concat_input_nodes,
+                           const OutputInfo &concat_input_info, size_t begin_index, int64_t offset) const;
+  int64_t inputs_divisor_;
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
