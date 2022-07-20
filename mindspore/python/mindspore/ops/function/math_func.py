@@ -4269,7 +4269,12 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
     r"""
     STFTs can be used as a way of quantifying the change
     of a nonstationary signal’s frequency and phase content over time.
-
+    Ignoring the optional batch dimension, this method computes the following expression:
+    math:`X[\omega, m]=\sum_{k=0}^{\text {win_length-1 }}
+    \text { window }[k] \text { input }[m \times \text { hop_length }+
+    k] \exp \left(-j \frac{2 \pi \cdot \omega k}{\text { win_length }}\right)`
+    where m is the index of the sliding window, and
+    math:`\omegaω` is the frequency math:`0 \leq \omega < \text{n\_fft}0≤ω<n_fft`
     Args:
         x (Tensor): Time sequence of stft, must be either a 1-D time tensor or a 2-D tensor.
         n_fft (int): The size of Fourier transform.
@@ -4303,7 +4308,10 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         ValueError: If x arguments have values not specified above.
 
     Examples:
-        >>> x = Tensor(np.random.rand(2,7192), mindspore.float32)
+        >>> import mindspore as ms
+        >>> from mindspore import ops
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.random.rand(2,7192), ms.float32)
         >>> output = ops.stft(n_fft=64, x=x)
         >>> print(output.shape)
         (2, 33, 450, 2)
