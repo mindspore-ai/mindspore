@@ -96,7 +96,7 @@ void AdjustDependForParallelOptimizerRecomputeAllGather::IncreaseAllgatherFusion
 }
 
 bool AdjustDependForParallelOptimizerRecomputeAllGather::AdjustAllgatherDepend(
-  const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers) {
+  const FuncGraphPtr &graph, const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers) const {
   FuncGraphManagerPtr manager = graph->manager();
   bool changed = false;
   for (auto &node : parallel_optimizer_recompute_allgathers) {

@@ -37,7 +37,7 @@ class AdjustDependForParallelOptimizerRecomputeAllGather : public Pass {
 
  private:
   bool AdjustAllgatherDepend(const FuncGraphPtr &graph,
-                             const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers);
+                             const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers) const;
   void IncreaseAllgatherFusionId(const std::vector<AnfNodePtr> &parallel_optimizer_recompute_allgathers,
                                  const std::vector<AnfNodePtr> &parallel_optimizer_recompute_first_fusion_allgathers,
                                  int64_t unrecompute_max_fusion_id, int64_t recompute_min_fusion_id) const;

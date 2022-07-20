@@ -675,7 +675,7 @@ class CallInfoFinder {
     return {.graph = kg, .args = std::move(args)};
   }
 
-  std::vector<CallBranch> GetSwitchBranches(const CNodePtr &cnode) {
+  std::vector<CallBranch> GetSwitchBranches(const CNodePtr &cnode) const {
     constexpr size_t cond_start_index = 2;
     std::vector<CallBranch> branches;
     for (size_t index = cond_start_index; index < cnode->inputs().size(); ++index) {
@@ -1920,7 +1920,7 @@ class ExecuteOrderGenerator {
             continue;
           }
         }
-        label_used.insert(label);
+        (void)label_used.insert(label);
       }
       ++iter;
     }

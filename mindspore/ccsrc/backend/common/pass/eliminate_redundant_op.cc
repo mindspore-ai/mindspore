@@ -81,7 +81,7 @@ bool TransDataOpEliminateCondition(const CNodePtr &node1, const CNodePtr &node2)
 
 const AnfNodePtr EliminateRedundantOp::ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                            const CNodePtr &prev_cnode,
-                                                           std::vector<KernelWithIndex> *pass_vector) const {
+                                                           std::vector<KernelWithIndex> *const pass_vector) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(pass_vector);
   FuncGraphManagerPtr manager = func_graph->manager();

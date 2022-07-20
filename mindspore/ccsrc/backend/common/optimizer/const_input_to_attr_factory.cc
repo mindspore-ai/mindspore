@@ -39,8 +39,8 @@ mindspore::HashSet<size_t> ConstInputToAttrRegister::GetConstToAttr(const std::s
     }
     mindspore::HashSet<size_t> ret = {};
     auto input_to_attr_index_info = op_info->input_to_attr_index();
-    std::for_each(input_to_attr_index_info.begin(), input_to_attr_index_info.end(),
-                  [&](auto &index) { ret.insert(index); });
+    (void)std::for_each(input_to_attr_index_info.begin(), input_to_attr_index_info.end(),
+                        [&](auto &index) { ret.insert(index); });
     return ret;
   }
 
@@ -70,11 +70,11 @@ std::string ConstInputToAttrRegister::GenerateKey(const std::string &name, const
 ConstInputToAttrRegister::RegisterHelper::RegisterHelper(const string &name, const string &backend,
                                                          bool is_dynamic_shape, int len, ...) {
   mindspore::HashSet<size_t> input_to_attr;
-  input_to_attr.reserve(len);
+  input_to_attr.reserve(static_cast<size_t>(IntToUint(len)));
   va_list var_ptr;
   va_start(var_ptr, len);
   for (int i = 0; i < len; ++i) {
-    input_to_attr.insert(static_cast<size_t>(va_arg(var_ptr, int)));
+    (void)input_to_attr.insert(static_cast<size_t>(IntToUint(va_arg(var_ptr, int))));
   }
   va_end(var_ptr);
   ConstInputToAttrRegister::GetInstance().RegConstToAttr(name, backend, is_dynamic_shape, input_to_attr);
