@@ -154,7 +154,7 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
   return kLiteError;
 }
 
-Status Serialization::SetParameters(const std::map<std::string, Buffer> &parameters, Model *model) {
+Status Serialization::SetParameters(const std::map<std::vector<char>, Buffer> &parameters, Model *model) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }

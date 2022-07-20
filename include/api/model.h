@@ -83,9 +83,9 @@ class MS_API Model {
   /// \param[in] cropto_lib_path Define the openssl library path.
   ///
   /// \return Status.
-  Status Build(const void *model_data, size_t data_size, ModelType model_type,
-               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-               const std::string &cropto_lib_path);
+  inline Status Build(const void *model_data, size_t data_size, ModelType model_type,
+                      const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                      const std::string &cropto_lib_path);
 
   /// \brief Load and build a model from model buffer so that it can run on a device. Only valid for Lite.
   ///
@@ -377,8 +377,11 @@ class MS_API Model {
   Status UpdateConfig(const std::vector<char> &section, const std::pair<std::vector<char>, std::vector<char>> &config);
   Status Build(const std::vector<char> &model_path, ModelType model_type,
                const std::shared_ptr<Context> &model_context);
+  Status Build(const void *model_data, size_t data_size, ModelType model_type,
+               const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::vector<char> &dec_mode,
+               const std::vector<char> &cropto_lib_path);
   Status Build(const std::vector<char> &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
-               const Key &dec_key, const std::string &dec_mode, const std::vector<char> &cropto_lib_path);
+               const Key &dec_key, const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path);
   std::shared_ptr<ModelImpl> impl_;
 };
 
@@ -404,9 +407,17 @@ Status Model::UpdateConfig(const std::string &section, const std::pair<std::stri
   return UpdateConfig(StringToChar(section), config_pair);
 }
 
+Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                    const std::string &cropto_lib_path) {
+  return Build(model_data, data_size, model_type, model_context, dec_key, StringToChar(dec_mode),
+               StringToChar(cropto_lib_path));
+}
+
 Status Model::Build(const std::string &model_path, ModelType model_type, const std::shared_ptr<Context> &model_context,
                     const Key &dec_key, const std::string &dec_mode, const std::string &cropto_lib_path) {
-  return Build(StringToChar(model_path), model_type, model_context, dec_key, dec_mode, StringToChar(cropto_lib_path));
+  return Build(StringToChar(model_path), model_type, model_context, dec_key, StringToChar(dec_mode),
+               StringToChar(cropto_lib_path));
 }
 
 Status Model::Build(const std::string &model_path, ModelType model_type,

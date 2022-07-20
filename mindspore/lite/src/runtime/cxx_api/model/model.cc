@@ -60,8 +60,8 @@ Status DecryptModel(const std::string &cropto_lib_path, const void *model_buf, s
 #endif
 
 Status Model::Build(const void *model_data, size_t data_size, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-                    const std::string &cropto_lib_path) {
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
+                    const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
@@ -74,7 +74,8 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
   if (dec_key.len > 0) {
     std::unique_ptr<Byte[]> decrypt_buffer;
     size_t decrypt_len = 0;
-    Status ret = DecryptModel(cropto_lib_path, model_data, data_size, dec_key, dec_mode, &decrypt_buffer, &decrypt_len);
+    Status ret = DecryptModel(CharToString(cropto_lib_path), model_data, data_size, dec_key, CharToString(dec_mode),
+                              &decrypt_buffer, &decrypt_len);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Decrypt model failed.";
       return ret;
@@ -116,8 +117,8 @@ Status Model::Build(const void *model_data, size_t data_size, ModelType model_ty
 }
 
 Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
-                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
-                    const std::vector<char> &cropto_lib_path) {
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key,
+                    const std::vector<char> &dec_mode, const std::vector<char> &cropto_lib_path) {
 #ifdef ENABLE_OPENSSL
   if (impl_ == nullptr) {
     std::unique_lock<std::mutex> impl_lock(g_impl_init_lock);
@@ -136,8 +137,8 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
     }
     std::unique_ptr<Byte[]> decrypt_buffer;
     size_t decrypt_len = 0;
-    Status ret = DecryptModel(CharToString(cropto_lib_path), model_buf, model_size, dec_key, dec_mode, &decrypt_buffer,
-                              &decrypt_len);
+    Status ret = DecryptModel(CharToString(cropto_lib_path), model_buf, model_size, dec_key, CharToString(dec_mode),
+                              &decrypt_buffer, &decrypt_len);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "Decrypt model failed.";
       delete[] model_buf;

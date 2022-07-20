@@ -39,22 +39,24 @@ int32_t RunnerConfig::GetWorkersNum() const { return data_->workers_num; }
 
 std::shared_ptr<Context> RunnerConfig::GetContext() const { return data_->context; }
 
-void RunnerConfig::SetConfigInfo(const std::string &section, const std::map<std::string, std::string> &config) {
+void RunnerConfig::SetConfigInfo(const std::vector<char> &section,
+                                 const std::map<std::vector<char>, std::vector<char>> &config) {
   if (data_->config_info.size() > kMaxSectionNum) {
     return;
   }
   if (config.size() > kMaxConfigNumPerSection) {
     return;
   }
-  data_->config_info[section] = config;
+  data_->config_info[CharToString(section)] = MapVectorCharToString(config);
   return;
 }
 
-std::map<std::string, std::map<std::string, std::string>> RunnerConfig::GetConfigInfo() const {
-  return data_->config_info;
+std::map<std::vector<char>, std::map<std::vector<char>, std::vector<char>>> RunnerConfig::GetConfigInfoChar() const {
+  return MapMapStringToChar(data_->config_info);
 }
 
-Status ModelParallelRunner::Init(const std::string &model_path, const std::shared_ptr<RunnerConfig> &runner_config) {
+Status ModelParallelRunner::Init(const std::vector<char> &model_path,
+                                 const std::shared_ptr<RunnerConfig> &runner_config) {
 #ifdef USE_GLOG
   mindspore::mindspore_log_init();
 #endif
@@ -66,7 +68,7 @@ Status ModelParallelRunner::Init(const std::string &model_path, const std::share
     MS_LOG(ERROR) << "model pool is nullptr.";
     return kLiteNullptr;
   }
-  auto status = model_pool_->Init(model_path, runner_config);
+  auto status = model_pool_->Init(CharToString(model_path), runner_config);
   if (status != kSuccess) {
     MS_LOG(ERROR) << "model runner init failed.";
     return kLiteError;

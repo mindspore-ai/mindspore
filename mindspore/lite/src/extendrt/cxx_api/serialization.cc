@@ -327,7 +327,7 @@ Status Serialization::Load(const std::vector<std::vector<char>> &files, ModelTyp
   return Status(kMEInvalidInput, err_msg.str());
 }
 
-Status Serialization::SetParameters(const std::map<std::string, Buffer> &, Model *) {
+Status Serialization::SetParameters(const std::map<std::vector<char>, Buffer> &, Model *) {
   MS_LOG(ERROR) << "Unsupported feature.";
   return kMEFailed;
 }
