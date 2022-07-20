@@ -30,7 +30,7 @@ void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const Typ
   }
   if (dim < 0) {
     if (std::abs(dim) <= SizeToLong(in_shape.size())) {
-      dim += in_shape.size();
+      dim += SizeToLong(in_shape.size());
       common::AnfAlgo::SetNodeAttr("dim", MakeValue(dim), node);
     } else {
       MS_LOG(EXCEPTION) << "Attr dim must be less than the shape size, but got dim:" << dim
