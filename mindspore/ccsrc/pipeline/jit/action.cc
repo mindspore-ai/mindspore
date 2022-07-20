@@ -98,8 +98,12 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
 bool IsDynamicShapeGraph(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> node_list = TopoSort(func_graph->get_return());
-  return std::any_of(node_list.begin(), node_list.end(),
-                     [](const AnfNodePtr &node) { return common::AnfAlgo::IsDynamicShape(node); });
+  return std::any_of(node_list.begin(), node_list.end(), [](const AnfNodePtr &node) {
+    if (common::AnfAlgo::IsCallNode(node)) {
+      return false;
+    }
+    return common::AnfAlgo::IsDynamicShape(node);
+  });
 }
 
 // Disable mindRT in the heterogeneous scenario + dynamic_shape scenario.
