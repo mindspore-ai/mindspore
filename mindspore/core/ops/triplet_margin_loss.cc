@@ -77,7 +77,7 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
   auto op_name = primitive->name();
   const std::set<TypePtr> valid_types = {kComplex64, kComplex128, kFloat64, kFloat32, kFloat16, kInt16, kInt32,
                                          kInt64,     kInt8,       kUInt16,  kUInt32,  kUInt64,  kUInt8};
-  const std::set<TypePtr> valid_types2 = {kFloat32};
+  const std::set<TypePtr> valid_types2 = {kFloat32, kFloat64};
   std::map<std::string, TypePtr> types;
   types.emplace("x", input_args[kInputIndex0]->BuildType());
   types.emplace("positive", input_args[kInputIndex1]->BuildType());
@@ -87,8 +87,14 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
   (void)CheckAndConvertUtils::CheckTensorTypeValid("margin", margin, valid_types2, op_name);
   auto x_type = input_args[kInputIndex0]->BuildType();
   TypePtr output;
-  if (x_type == kFloat16) {
+  if (x_type->isa<TensorType>()) {
+    auto tensor_type = x_type->cast<TensorTypePtr>();
+    x_type = tensor_type->element();
+  }
+  if (IsIdentidityOrSubclass(x_type, kFloat16)) {
     output = kFloat16;
+  } else if (IsIdentidityOrSubclass(x_type, kFloat64) || IsIdentidityOrSubclass(x_type, kComplex128)) {
+    output = kFloat64;
   } else {
     output = kFloat32;
   }
@@ -97,6 +103,16 @@ TypePtr TripletMarginLossInferType(const PrimitivePtr &primitive, const std::vec
 }  // namespace
 
 MIND_API_OPERATOR_IMPL(TripletMarginLoss, BaseOperator);
+void TripletMarginLoss::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
+void TripletMarginLoss::set_eps(const float eps) { (void)this->AddAttr(kEps, api::MakeValue(eps)); }
+void TripletMarginLoss::set_swap(const bool swap) { (void)this->AddAttr(kSwap, api::MakeValue(swap)); }
+void TripletMarginLoss::set_reduction(const std::string &reduction) {
+  (void)this->AddAttr(kReduction, api::MakeValue(reduction));
+}
+int64_t TripletMarginLoss::get_p() const { return GetValue<int64_t>(GetAttr(kP)); }
+float TripletMarginLoss::get_eps() const { return GetValue<float>(GetAttr(kEps)); }
+bool TripletMarginLoss::get_swap() const { return GetValue<bool>(GetAttr(kSwap)); }
+std::string TripletMarginLoss::get_reduction() const { return GetValue<std::string>(GetAttr(kReduction)); }
 AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
