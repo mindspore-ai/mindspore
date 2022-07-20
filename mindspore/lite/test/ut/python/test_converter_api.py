@@ -178,13 +178,13 @@ def test_converter_26():
     with pytest.raises(TypeError) as raise_info:
         converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
                                      output_file="mobilenetv2.tflite", export_mindir=1)
-    assert "export_mindir must be bool" in str(raise_info.value)
+    assert "export_mindir must be ModelType" in str(raise_info.value)
 
 
 def test_converter_27():
     converter = mslite.Converter(fmk_type=mslite.FmkType.TFLITE, model_file="mobilenetv2.tflite",
-                                 output_file="mobilenetv2.tflite", export_mindir=True)
-    assert "export_mindir: True" in str(converter)
+                                 output_file="mobilenetv2.tflite", export_mindir=mslite.ModelType.MINDIR_LITE)
+    assert "export_mindir: ModelType.kMindIR_Lite" in str(converter)
 
 
 def test_converter_28():

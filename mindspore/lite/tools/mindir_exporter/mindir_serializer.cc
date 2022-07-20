@@ -403,9 +403,6 @@ int MindIRSerializer::SaveProtoToFile(mind_ir::ModelProto *model_proto, const st
 }
 
 int MindIRSerialize(const std::shared_ptr<ConverterPara> &param, const FuncGraphPtr &func_graph) {
-  if (!param->export_mindir) {
-    return RET_OK;
-  }
   mindspore::lite::MindIRSerializer serializer;
   return serializer.Save(param, func_graph);
 }

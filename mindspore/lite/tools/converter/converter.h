@@ -52,8 +52,9 @@ class ConverterImpl {
     delete model_parser_;
     this->model_parser_ = nullptr;
   }
-  schema::MetaGraphT *Convert(const std::shared_ptr<ConverterPara> &param);
-  schema::MetaGraphT *Convert(const std::shared_ptr<ConverterPara> &param, const void *buf, const size_t &size);
+  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph);
+  int Convert(const std::shared_ptr<ConverterPara> &param, schema::MetaGraphT **meta_graph, const void *buf,
+              const size_t &size);
 
  private:
   FuncGraphPtr BuildFuncGraph(const std::shared_ptr<ConverterPara> &param);

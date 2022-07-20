@@ -70,15 +70,19 @@ char *RuntimeConvert(const char *model_buf, const size_t &buf_size, size_t *size
   }
 
   ConverterImpl cvt;
-  auto meta_graph = cvt.Convert(param, model_buf, buf_size);
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Convert failed.";
+  schema::MetaGraphT *meta_graph = nullptr;
+  auto status = cvt.Convert(param, &meta_graph, model_buf, buf_size);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert model failed.";
     return nullptr;
   }
-
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "meta graph is nullptr.";
+    return nullptr;
+  }
   void *lite_buf = nullptr;
   meta_graph->version = Version();
-  auto status = TransferMetaGraph(*meta_graph, &lite_buf, size);
+  status = TransferMetaGraph(*meta_graph, &lite_buf, size);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transfer model failed.";
     delete meta_graph;
@@ -103,9 +107,14 @@ char *RuntimeConvert(const std::string &file_path, size_t *size) {
   param->train_model = false;
 
   ConverterImpl cvt;
-  auto meta_graph = cvt.Convert(param);
-  MS_LOG(ERROR) << "Convert failed.";
+  schema::MetaGraphT *meta_graph = nullptr;
+  auto status = cvt.Convert(param, &meta_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Convert model failed";
+    return nullptr;
+  }
   if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "meta graph is nullptr.";
     return nullptr;
   }
 

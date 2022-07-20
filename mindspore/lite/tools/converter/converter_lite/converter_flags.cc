@@ -32,7 +32,7 @@ Flags::Flags() {
   AddFlag(&Flags::fmkIn, "fmk", "Input model framework type. TF | TFLITE | CAFFE | MINDIR | ONNX", "");
   AddFlag(&Flags::modelFile, "modelFile",
           "Input model file. TF: *.pb | TFLITE: *.tflite | CAFFE: *.prototxt | MINDIR: *.mindir | ONNX: *.onnx", "");
-  AddFlag(&Flags::outputFile, "outputFile", "Output model file path. Will add .ms automatically", "");
+  AddFlag(&Flags::outputFile, "outputFile", "Output model file path.", "");
   AddFlag(&Flags::weightFile, "weightFile", "Input model weight file. Needed when fmk is CAFFE. CAFFE: *.caffemodel",
           "");
   AddFlag(&Flags::inputDataTypeStr, "inputDataType",
@@ -82,10 +82,7 @@ Flags::Flags() {
           "Whether to do pre-inference after convert. "
           "true | false",
           "false");
-  AddFlag(&Flags::exportMindIR, "exportMindIR",
-          "Whether to export MindIR pb. "
-          "true | false",
-          "false");
+  AddFlag(&Flags::exportMindIR, "exportMindIR", "MINDIR | MINDIR_LITE", "MINDIR_LITE");
   AddFlag(&Flags::noFusionStr, "NoFusion", "Avoid fusion optimization true|false", "false");
 }
 
@@ -279,10 +276,10 @@ int Flags::InitNoFusion() {
 }
 
 int Flags::InitExportMindIR() {
-  if (this->exportMindIR == "true") {
-    this->export_mindir = true;
-  } else if (this->exportMindIR == "false") {
-    this->export_mindir = false;
+  if (this->exportMindIR == "MINDIR") {
+    this->export_mindir = kMindIR;
+  } else if (this->exportMindIR == "MINDIR_LITE") {
+    this->export_mindir = kMindIR_Lite;
   } else {
     std::cerr << "INPUT ILLEGAL: exportMindIR must be true|false " << std::endl;
     return RET_INPUT_PARAM_INVALID;

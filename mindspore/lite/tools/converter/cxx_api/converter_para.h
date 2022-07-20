@@ -48,7 +48,7 @@ struct ConverterPara {
   Format input_format = NHWC;
   DataType input_data_type = DataType::kNumberTypeFloat32;
   DataType output_data_type = DataType::kNumberTypeFloat32;
-  bool export_mindir = false;
+  ModelType export_mindir = kMindIR_Lite;
   std::string decrypt_key;
   std::string decrypt_mode;
   std::string encrypt_key;

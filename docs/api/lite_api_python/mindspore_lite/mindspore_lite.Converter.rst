@@ -20,7 +20,7 @@ mindspore_lite.Converter
     - **input_format** (Format，可选) - 指定导出模型的输入格式。仅对四维输入有效。选项：Format.NHWC | Format.NCHW。默认值：Format.NHWC。
     - **input_data_type** (DataType，可选) - 输入张量的数据类型，默认与模型中定义的类型相同。默认值：DataType.FLOAT32。
     - **output_data_type** (DataType，可选) - 输出张量的数据类型，默认与模型中定义的类型相同。默认值：DataType.FLOAT32。
-    - **export_mindir** (bool，可选) - 是否导出MindIR pb。默认值：False。
+    - **export_mindir** (ModelType，可选) - 导出模型文件的类型。默认值：ModelType.MINDIR_LITE。
     - **decrypt_key** (str，可选) - 用于解密文件的密钥，以十六进制字符表示。仅当fmk_type为FmkType.MINDIR时有效。默认值：""。
     - **decrypt_mode** (str，可选) - MindIR文件的解密方法。仅在设置decrypt_key时有效。选项："AES-GCM" | "AES-CBC"。默认值："AES-GCM"。
     - **enable_encryption** (bool，可选) - 是否导出加密模型。默认值：False。
@@ -45,7 +45,7 @@ mindspore_lite.Converter
     - **TypeError** - `input_format` 不是Format类型。
     - **TypeError** - `input_data_type` 不是DataType类型。
     - **TypeError** - `output_data_type` 不是DataType类型。
-    - **TypeError** - `export_mindir` 不是bool类型。
+    - **TypeError** - `export_mindir` 不是ModelType类型。
     - **TypeError** - `decrypt_key` 不是str类型。
     - **TypeError** - `decrypt_mode` 不是str类型。
     - **TypeError** - `enable_encryption` 不是bool类型。
