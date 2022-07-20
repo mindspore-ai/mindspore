@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include "tools/graph_kernel/converter/substitute_conv2d.h"
+#include "tools/graph_kernel/converter/preprocess_weight.h"
 #include <utility>
+#include <vector>
 #include "utils/anf_utils.h"
 #include "common/graph_kernel/core/graph_kernel_callback.h"
 
@@ -128,6 +129,103 @@ AnfNodePtr SubstituteConv2D::InferWeightValue(const AnfNodePtr &node) {
 
 AnfNodePtr SubstituteConv2D::Run(const AnfNodePtr &node) {
   auto new_node = InferWeightValue(node);
+  if (new_node == nullptr) {
+    return nullptr;
+  }
+  return ExpanderDecorator::Run(new_node);
+}
+
+AnfNodePtr MatmulPackB::InferValue(const AnfNodePtr &node) {
+  auto cnode = QuickCloneCNode(node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  const size_t kMatMulWeightIndex = 2;
+  const size_t kMatMulWeightRank = 2;
+  auto cb = Callback::Instance();
+  auto type_id = cb->GetInputType(cnode, kMatMulWeightIndex - 1);
+  // only support float32
+  if (type_id != kNumberTypeFloat32) {
+    MS_LOG(INFO) << "MatmulPackB only supports Float32 but got " << TypeIdToString(type_id);
+    return nullptr;
+  }
+  auto shape = cb->GetInputShape(cnode, kMatMulWeightIndex - 1);
+  if (shape.size() != kMatMulWeightRank) {
+    MS_LOG(INFO) << "MatmulPackB only supports 2D weight, but got weight of rank " << shape.size();
+    return nullptr;
+  }
+  auto prim = GetCNodePrimitive(cnode);
+  auto weight_node = cnode->input(kConv2dWeightIndex)->cast<ValueNodePtr>();
+  if (weight_node == nullptr) {
+    return nullptr;
+  }
+  auto tensor = weight_node->value()->cast<tensor::TensorPtr>();
+  if (tensor == nullptr) {
+    return nullptr;
+  }
+  if (tensor->data().const_data() == nullptr) {
+    return nullptr;
+  }
+
+  // infer the transpose_b result
+  bool transpose_b = false;
+  if (prim->HasAttr("transpose_b")) {
+    transpose_b = GetValue<bool>(prim->GetAttr("transpose_b"));
+  }
+  auto new_tensor = PackB(tensor, shape, transpose_b);
+  if (transpose_b) {
+    auto new_prim = prim->Clone();
+    new_prim->set_attr("transpose_b", MakeValue(false));
+    cnode->set_input(0, NewValueNode(new_prim));
+  }
+  auto v = NewValueNode(new_tensor);
+  v->set_abstract(new_tensor->ToAbstract());
+  v->set_kernel_info(weight_node->kernel_info_ptr());
+  cnode->set_input(kMatMulWeightIndex, v);
+  return cnode;
+}
+
+/*
+Pack(B) example
+tensor of shape (3, 7):
+[ 1  2  3  4  5  6  7]
+[ 8  9 10 11 12 13 14]
+[15 16 17 18 19 20 21]
+--- pack in size 4, 2, 1  --->
+[(1 2 3 4) (8 9 10 11) (15 16 17 18) (5 6) (12 13) (19 20) (7) (14) (21)]
+--- reshape to (3, 7)  --->
+[ 1  2  3  4  8  9 10]
+[11 15 16 17 18  5  6]
+[12 13 19 20  7 14 21]
+*/
+tensor::TensorPtr MatmulPackB::PackB(const tensor::TensorPtr &tensor, const ShapeVector &shape, bool transpose) {
+  std::vector<int64_t> pack_size = {24, 16, 8, 4, 2, 1};
+  IndexCalc index_calc(shape);
+  auto height = shape[0];
+  auto width = shape[1];
+  if (transpose) {
+    std::swap(height, width);
+  }
+  auto new_tensor = std::make_shared<tensor::Tensor>(tensor->data_type(), std::vector{height, width});
+  auto *new_tensor_iter = static_cast<float *>(new_tensor->data_c());
+  int64_t width_offset = 0;
+  for (auto pack : pack_size) {
+    while (width_offset + pack <= width) {
+      for (int64_t i = 0; i < height; ++i) {
+        for (int64_t j = 0; j < pack; ++j) {
+          if (transpose) {
+            *new_tensor_iter++ = static_cast<float *>(tensor->data_c())[index_calc.GetFlatIndex({j + width_offset, i})];
+          } else {
+            *new_tensor_iter++ = static_cast<float *>(tensor->data_c())[index_calc.GetFlatIndex({i, j + width_offset})];
+          }
+        }
+      }
+      width_offset += pack;
+    }
+  }
+  return new_tensor;
+}
+
+AnfNodePtr MatmulPackB::Run(const AnfNodePtr &node) {
+  auto new_node = InferValue(node);
   if (new_node == nullptr) {
     return nullptr;
   }
