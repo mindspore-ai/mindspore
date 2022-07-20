@@ -63,10 +63,6 @@ class MatMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
     const int ldb = (transpose_x2_ == CUBLAS_OP_T) ? SizeToInt(k_) : SizeToInt(n_);
     const int ldc = n_;
 
-    auto stride_a = SizeToInt(m_ * k_);
-    auto stride_b = SizeToInt(k_ * n_);
-    auto stride_c = SizeToInt(m_ * n_);
-
     try {
       if (is_fused_matmul_biasadd_) {
         auto input3_addr = GetDeviceAddress<T>(inputs, 2);
@@ -83,6 +79,9 @@ class MatMulGpuKernelMod : public DeprecatedNativeGpuKernelMod {
                        compute_type, algo_),
           "cublasGemmEx failed. Possible reasons: the GPU is occupied by other processes.");
       } else {
+        auto stride_a = SizeToLong(m_ * k_);
+        auto stride_b = SizeToLong(k_ * n_);
+        auto stride_c = SizeToLong(m_ * n_);
         CHECK_CUBLAS_RET_WITH_EXCEPT(
           kernel_node_,
           cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
