@@ -200,7 +200,7 @@ void LogWriter::RemoveLabelBeforeOutputLog(const std::ostringstream &msg) const 
     auto replace = [&](const std::string &orgStr, const std::string &newStr) {
       std::string::size_type pos;
       while ((pos = str.find(orgStr)) != std::string::npos) {
-        str.replace(pos, orgStr.length(), newStr);
+        (void)str.replace(pos, orgStr.length(), newStr);
       }
       return str;
     };
@@ -255,7 +255,7 @@ void ParseExceptionMessage(const std::string &message, std::ostringstream &oss, 
         } else {
           (void)dmsg->emplace_back(temp[0]);
         }
-        (void)umsg->insert(umsg->end(), temp.begin() + 1, temp.end());
+        (void)umsg->insert(umsg->cend(), temp.cbegin() + 1, temp.cend());
       }
     } else {
       if (i != 0) {
