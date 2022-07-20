@@ -70,7 +70,7 @@ TypePtr FlattenInferType(const PrimitivePtr &primitive, const std::vector<Abstra
     MS_EXCEPTION_IF_NULL(item);
   }
   auto x_dtype = input_args[0]->BuildType();
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types_with_bool, prim_name);
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_dtype, common_valid_types_with_complex_and_bool, prim_name);
   return x_dtype;
 }
 }  // namespace
