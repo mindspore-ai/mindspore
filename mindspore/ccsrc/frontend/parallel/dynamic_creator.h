@@ -180,6 +180,7 @@ REGISTER(UniformCandidateSamplerInfo);
 REGISTER(UnsortedSegmentSumInfo);
 REGISTER(UnsortedSegmentMinInfo);
 REGISTER(UnsortedSegmentMaxInfo);
+REGISTER(CustomInfo);
 REGISTER(GatherInfo);
 REGISTER(EmbeddingLookupInfo);
 REGISTER(TileInfo);

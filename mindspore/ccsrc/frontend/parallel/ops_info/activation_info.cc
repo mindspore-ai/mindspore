@@ -205,6 +205,103 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   return sp_vector;
 }
 
+Status CustomInfo::CheckStrategy(const StrategyPtr &strategy) {
+  if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
+    return FAILED;
+  }
+
+  Strategys stra = strategy->GetInputDim();
+  Dimensions input_strategy = stra.at(0);
+
+  for (auto &element : axis_) {
+    int64_t axis_index = element;
+    if (element < 0) {
+      size_t input_dim = inputs_shape_.at(0).size();
+      axis_index = static_cast<int64_t>(input_dim) + element;
+    }
+
+    int64_t axis_strategy = input_strategy.at(LongToSize(axis_index));
+    // Dimension corresponding to axis is un-splittable
+    if (axis_strategy != MIN_SLICE_NUM) {
+      MS_LOG(ERROR) << name_ << " : The strategy corresponding to axis dimension(" << axis_strategy << ") is not 1";
+      return FAILED;
+    }
+  }
+
+  return SUCCESS;
+}
+
+Status CustomInfo::GetAttrs() {
+  if (attrs_.size() < SOFTMAX_ATTR_SIZE) {
+    MS_LOG(ERROR) << name_ << " : The size of attrs small than 1.";
+    return FAILED;
+  }
+
+  auto iter = attrs_.find(AXIS);
+  if (iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(iter->second);
+    if (iter->second->isa<Int64Imm>()) {  // the axis is a number
+      int64_t axis_element = iter->second->cast<Int64ImmPtr>()->value();
+      axis_.push_back(axis_element);
+      MS_LOG(INFO) << name_ << " : The axis is int64_t, value is " << axis_element;
+    } else if (iter->second->isa<ValueTuple>()) {  // the axis is a tuple
+      ValueTuplePtr value_tuple = iter->second->cast<ValueTuplePtr>();
+      if (value_tuple == nullptr) {
+        MS_LOG(ERROR) << name_ << " : The value_tuple is nullptr.";
+        return FAILED;
+      }
+      std::vector<ValuePtr> value_vector = value_tuple->value();
+      (void)std::transform(value_vector.begin(), value_vector.end(), std::back_inserter(axis_),
+                           [](const ValuePtr &value) { return static_cast<int64_t>(GetValue<int64_t>(value)); });
+      if (axis_.empty()) {
+        MS_LOG(ERROR) << name_ << " : The axis tuple is empty.";
+        return FAILED;
+      }
+      MS_LOG(INFO) << name_ << " : The axis is tuple, value is " << ListToString(axis_);
+    } else {
+      MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t or tuple int64_t.";
+      return FAILED;
+    }
+  }
+
+  // for example: tensor dimension is 4, then axis range [-4, 3]
+  int64_t dim = SizeToLong(inputs_shape_.at(0).size());
+  auto it =
+    std::find_if(axis_.begin(), axis_.end(), [dim](int64_t element) { return (element >= dim) || (element < -dim); });
+  if (it != axis_.end()) {
+    MS_LOG(ERROR) << name_ << " : The axis(" << *it << ") is out of range[" << (-dim) << ", " << (dim - 1) << "].";
+    return FAILED;
+  }
+
+  return SUCCESS;
+}
+
+Status CustomInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
+
+std::vector<StrategyPtr> CustomInfo::GenerateOpStrategies(int64_t stage_id) {
+  if ((inputs_shape_.size() != ACTIVATION_INPUTS_SIZE) || (outputs_shape_.size() != ACTIVATION_OUTPUTS_SIZE)) {
+    MS_LOG(EXCEPTION) << name_ << " : Inputs shape size or outputs shape size is wrong.";
+  }
+
+  Shape input0_split;
+  (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
+  for (auto &element : axis_) {
+    int64_t axis_index = element;
+    if (element < 0) {
+      size_t input_dim = inputs_shape_.at(0).size();
+      axis_index = static_cast<int64_t>(input_dim) + element;
+    }
+    input0_split[LongToSize(axis_index)] = 0;
+  }
+  Shapes splittable_inputs = {input0_split};
+
+  std::vector<StrategyPtr> sp_vector;
+  if (GenerateStrategiesForIndependentInputs(stage_id, inputs_shape_, splittable_inputs, &sp_vector) != SUCCESS) {
+    MS_LOG(EXCEPTION) << name_ << " : Generate strategies for independent inputs failed.";
+  }
+  return sp_vector;
+}
+
 Status CumOpBase::GetAttrs() {
   if (input_value_.size() != CUM_OP_INPUT_SIZE) {
     MS_LOG(ERROR) << name_ << ": Invalid inputs size " << input_value_.size();

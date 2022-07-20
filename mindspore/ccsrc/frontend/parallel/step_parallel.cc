@@ -1192,6 +1192,11 @@ void InsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, cons
     }
   }
 
+  if (IsPrimitiveCNode(node, std::make_shared<Primitive>("Custom"))) {
+    MS_LOG(INFO) << "Found the custom node ";
+    node_size--;
+  }
+
   if (!CheckInsertMirrorOps(mirror_ops, node, node_size)) {
     return;
   }
