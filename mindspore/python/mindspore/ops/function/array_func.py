@@ -3703,7 +3703,6 @@ __all__ = [
     'scalar_cast',
     'scalar_to_array',
     'scalar_to_tensor',
-    'space_to_batch_nd',
     'tuple_to_array',
     'expand_dims',
     'transpose',
@@ -3717,7 +3716,6 @@ __all__ = [
     'tensor_scatter_sub',
     'tensor_scatter_mul',
     'tensor_scatter_div',
-    'tensor_scatter_min',
     'tensor_scatter_elements',
     'unsorted_segment_min',
     'unsorted_segment_max',
@@ -3725,9 +3723,6 @@ __all__ = [
     'gather',
     'gather_d',
     'gather_nd',
-    'one_hot',
-    'masked_fill',
-    'masked_select',
     'scatter_add',
     'scatter_max',
     'scatter_min',
@@ -3742,7 +3737,6 @@ __all__ = [
     'broadcast_to',
     'col2im',
     'split',
-    'max',
-    'unsorted_segment_sum',
+    'max'
 ]
 __all__.sort()

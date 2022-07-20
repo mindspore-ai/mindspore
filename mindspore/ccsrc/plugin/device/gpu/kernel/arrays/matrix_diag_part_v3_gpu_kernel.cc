@@ -120,6 +120,5 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &MatrixDiagPartV3GpuKern
   };
   return func_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MatrixDiagPartV3, MatrixDiagPartV3GpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

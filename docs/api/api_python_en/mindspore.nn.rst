@@ -124,9 +124,7 @@ Nonlinear Activation Function Layer
     mindspore.nn.ReLU6
     mindspore.nn.RReLU
     mindspore.nn.SeLU
-    mindspore.nn.SiLU
     mindspore.nn.Sigmoid
-    mindspore.nn.Softmin
     mindspore.nn.Softmax
     mindspore.nn.SoftShrink
     mindspore.nn.Tanh
@@ -202,8 +200,6 @@ Padding Layer
     mindspore.nn.ConstantPad1d
     mindspore.nn.ConstantPad2d
     mindspore.nn.ConstantPad3d
-    mindspore.nn.ReflectionPad1d
-    mindspore.nn.ReflectionPad2d
     mindspore.nn.ZeroPad2d
 
 Loss Function
@@ -223,7 +219,6 @@ Loss Function
     mindspore.nn.L1Loss
     mindspore.nn.MSELoss
     mindspore.nn.MultiClassDiceLoss
-    mindspore.nn.NLLLoss
     mindspore.nn.RMSELoss
     mindspore.nn.SampledSoftmaxLoss
     mindspore.nn.SmoothL1Loss

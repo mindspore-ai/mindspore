@@ -22,15 +22,6 @@ from mindspore.ops.functional import vmap
 import mindspore.nn as nn
 
 
-class InplaceUpdate(nn.Cell):
-    def __init__(self, indices):
-        super(InplaceUpdate, self).__init__()
-        self.indices = indices
-
-    def construct(self, x, v):
-        return x.inplace_update(v, self.indices)
-
-
 class InplaceAdd(nn.Cell):
     def __init__(self, indices):
         super(InplaceAdd, self).__init__()
@@ -57,8 +48,6 @@ def inplace_op_np(op, x: np.ndarray, v: np.ndarray, indices):
         result[indices, :] += v
     elif op == 'sub':
         result[indices, :] -= v
-    elif op == 'update':
-        result[indices, :] = v
     return result
 
 
@@ -192,11 +181,6 @@ def test_inplace_sub_1d(shape, indice, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 4), ((5, 2, 4, 6), 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
 def test_inplace_update(shape, indice_len, dtype):
     """
     Feature: test InplaceUpdate
@@ -214,11 +198,6 @@ def test_inplace_update(shape, indice_len, dtype):
     np.allclose(result.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('shape, indice_len', [((10, 4, 3, 2), 2)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float16, np.int32])
 def test_vmap_inplace_update(shape, indice_len, dtype):
     """
     Feature: test vmap inplace operators
@@ -292,7 +271,7 @@ def test_vmap_inplace_sub(shape, indice_len, dtype):
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-@pytest.mark.parametrize('op', ['add', 'sub', 'update'])
+@pytest.mark.parametrize('op', ['add', 'sub'])
 def test_inplace_op_dynamic_shape(op):
     """
     Feature: test test_inplace_op_dynamic_shape dynamic_shape feature.
@@ -314,8 +293,6 @@ def test_inplace_op_dynamic_shape(op):
         dynamic_net = InplaceAdd(indices)
     elif op == 'sub':
         dynamic_net = InplaceSub(indices)
-    else:
-        dynamic_net = InplaceUpdate(indices)
 
     place_holder_x = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)
     place_holder_v = Tensor(shape=[None, 4, 3, 2], dtype=mstype.float32)

@@ -281,6 +281,5 @@ std::vector<KernelAttr> MaskedFillGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, MaskedFillFunc> &pair) { return pair.first; });
   return support_list;
 }
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, MaskedFill, MaskedFillGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

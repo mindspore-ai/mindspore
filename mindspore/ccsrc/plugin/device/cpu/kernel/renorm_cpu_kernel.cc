@@ -179,6 +179,5 @@ std::vector<KernelAttr> RenormCpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
-MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Renorm, RenormCpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

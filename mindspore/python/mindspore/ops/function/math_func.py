@@ -4465,12 +4465,9 @@ __all__ = [
     'tensor_floordiv',
     'floor_div',
     'floordiv',
-    'tensor_xdivy',
-    'xdivy',
     'tensor_pow',
     'pow',
     'pows',
-    'renorm',
     'tensor_mod',
     'floor_mod',
     'floormod',
@@ -4481,7 +4478,6 @@ __all__ = [
     'equal',
     'not_equal',
     'ne',
-    'inplace_update',
     'inplace_add',
     'inplace_sub',
     'isfinite',
@@ -4539,8 +4535,6 @@ __all__ = [
     'deg2rad',
     'stft',
     'rad2deg',
-    'truncate_div',
-    'truncate_mod',
     'gumbel_softmax',
     'matmul',
     'baddbmm',
@@ -4549,7 +4543,6 @@ __all__ = [
     'mean',
     'prod',
     'log2',
-    'approximate_equal',
-    'xlogy'
+    'approximate_equal'
 ]
 __all__.sort()

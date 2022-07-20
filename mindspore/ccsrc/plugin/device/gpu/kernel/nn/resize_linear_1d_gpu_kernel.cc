@@ -127,7 +127,5 @@ std::vector<KernelAttr> ResizeLinear1DGpuKernelMod::GetOpSupport() {
                        [](const std::pair<KernelAttr, ResizeLinear1DFunc> &pair) { return pair.first; });
   return support_list;
 }
-
-MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, ResizeLinear1D, ResizeLinear1DGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

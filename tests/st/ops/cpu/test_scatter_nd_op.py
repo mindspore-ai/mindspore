@@ -245,6 +245,7 @@ class FunctionalNet(nn.Cell):
         return ops.scatter_nd(indices, update, self.shape)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -268,6 +269,7 @@ def test_scatternd_functional():
     assert np.all(-diff < error)
 
 
+@pytest.mark.skip(reason='platform not support')
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard

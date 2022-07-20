@@ -161,6 +161,5 @@ def standard_normal(shape, seed=0, seed2=0):
 __all__ = [
     'standard_laplace',
     'standard_normal',
-    'random_gamma'
 ]
 __all__.sort()
