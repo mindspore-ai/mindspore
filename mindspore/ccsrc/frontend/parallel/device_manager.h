@@ -35,8 +35,7 @@
 
 namespace mindspore {
 namespace parallel {
-#define MAX_DEVICE_NUM 4096
-
+constexpr int64_t MAX_DEVICE_NUM = 4096;
 constexpr size_t DEVICE_NUM_PER_SERVER = 8;
 constexpr char HCCL_BACKEND[] = "hccl";
 constexpr char NCCL_BACKEND[] = "nccl";
@@ -53,7 +52,7 @@ bool InitDevice(int64_t device_num, int64_t global_rank, const std::string &back
 
 void CheckGlobalDeviceManager();
 
-std::string HashName(const std::string &rank_list_name);
+std::string HashName(const std::string &origin_name);
 
 class DeviceManager {
   // This class is used to manage the abstract devices, including group-related and stage-related management.
@@ -61,7 +60,8 @@ class DeviceManager {
   DeviceManager() { gm_ = GroupManager(); }
   ~DeviceManager() = default;
 
-  Status Init(const RankList &devices, int64_t local_device, const RankList &stage_map, const std::string &backend);
+  Status Init(const RankList &devices, int64_t global_device_rank, const RankList &stage_map,
+              const std::string &backend);
 
   static DeviceManager &GetInstance();
   RankList GetDeviceListByStageId(int64_t stage_id) const;
@@ -69,8 +69,8 @@ class DeviceManager {
   RankList GetDeviceListBetweenStage() const;
 
   Device CreateNewDeviceByRank(int64_t rank) const;
-  std::vector<Device> CreateDeviceListByRankList(RankList ranks);
-  std::string GenerateGroupNameByRanks(RankList dev_ranks);
+  std::vector<Device> CreateDeviceListByRankList(RankList ranks) const;
+  std::string GenerateGroupNameByRanks(RankList ranks);
   Status CreateGroup(const std::string &group_name, const std::vector<Device> &devices, Group *const comm_group);
   Status CreateGroup(const RankList &dev_ranks, Group *const comm_group);
 
@@ -91,7 +91,7 @@ class DeviceManager {
   std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info() const { return gm_.group_info(); }
   std::string FindRankListNameByHashName(const std::string &hash_name);
   RankList FindRankListByHashName(const std::string &hash_name);
-  Status CheckDeviceList(const RankList &rank_list);
+  Status CheckDeviceList(const RankList &rank_list) const;
 
  private:
   std::vector<std::shared_ptr<Device>> devices_;
