@@ -18,44 +18,38 @@ mindspore.COOTensor
     .. note::
         这是一个实验特性，在未来可能会发生API的变化。目前COOTensor中相同索引的值不会进行合并。
 
-    **参数：**
+    参数：
+        - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。
+        - **values** (Tensor) - 形状为 `[N]` 的一维张量，用来给 `indices` 中的每个元素提供数值。
+        - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
+        - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。
 
-    - **indices** (Tensor) - 形状为 `[N, ndims]` 的二维整数张量，其中N和ndims分别表示稀疏张量中 `values` 的数量和COOTensor维度的数量。目前 `ndims` 只能为2。请确保indices的值在所给shape范围内。
-    - **values** (Tensor) - 形状为 `[N]` 的一维张量，用来给 `indices` 中的每个元素提供数值。
-    - **shape** (tuple(int)) - 形状为ndims的整数元组，用来指定稀疏矩阵的稠密形状。
-    - **coo_tensor** (COOTensor) - COOTensor对象，用来初始化新的COOTensor。
-
-    **返回：**
-
-    COOTensor，由 `indices` 、 `values` 和 `shape` 组成。
+    返回：
+        COOTensor，由 `indices` 、 `values` 和 `shape` 组成。
 
     .. py:method:: abs()
 
         对所有非零元素取绝对值，并返回新的COOTensor。
 
-        **返回：**
-
-        COOTensor。
+        返回：
+            COOTensor。
 
     .. py:method:: astype(dtype)
 
         返回指定数据类型的COOTensor。
 
-        **参数：**
+        参数：
+            - **dtype** (Union[`mindspore.dtype` , `numpy.dtype` , str]) - 指定数据类型。
 
-        - **dtype** (Union[`mindspore.dtype` , `numpy.dtype` , str]) - 指定数据类型。
-
-        **返回：**
-
-        COOTensor。
+        返回：
+            COOTensor。
 
     .. py:method:: coalesce()
 
         合并COOTensor中相同索引的值。
 
-        **返回：**
-
-        COOTensor。
+        返回：
+            COOTensor。
 
     .. py:method:: dtype
         :property:
@@ -94,25 +88,22 @@ mindspore.COOTensor
         .. note::
             如果运行后端是CPU，那么仅支持在安装了LLVM12.0.1的机器运行。
 
-        **返回：**
-
-        CSRTensor。
+        返回：
+            CSRTensor。
 
     .. py:method:: to_dense()
 
         将COOTensor转换为稠密Tensor。
 
-        **返回：**
-
-        Tensor。
+        返回：
+            Tensor。
 
     .. py:method:: to_tuple()
 
         将COOTensor的索引，非零元素，以及形状信息作为tuple返回。
 
-        **返回：**
-
-        tuple(Tensor, Tensor, tuple(int))
+        返回：
+            tuple(Tensor, Tensor, tuple(int))。
 
     .. py:method:: values
         :property:

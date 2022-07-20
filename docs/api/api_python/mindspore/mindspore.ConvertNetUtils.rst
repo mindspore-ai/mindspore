@@ -12,6 +12,5 @@ mindspore.ConvertNetUtils
         .. note::
             此接口由二阶优化器thor自动调用。
 
-        **参数：**
-        
-        **net** (Cell) - 由二阶优化器thor训练的网络。
+        参数：
+            - **net** (Cell) - 由二阶优化器thor训练的网络。

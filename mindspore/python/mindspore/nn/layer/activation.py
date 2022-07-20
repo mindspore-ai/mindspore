@@ -539,9 +539,6 @@ class SeLU(Cell):
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
-    Raises:
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
-
     Examples:
         >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
         >>> selu = nn.SeLU()
@@ -1406,9 +1403,6 @@ class Mish(Cell):
 
     Supported Platforms:
         ``Ascend`` ``CPU``
-
-    Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
 
     Examples:
         >>> x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)

@@ -46,10 +46,10 @@ mindspore.dtype
       ``uint``                        无符号整数标量。
       ``float_``                      浮点标量。
       ``complex``                     复数标量。
-      ``number``                      数值型, 包括 ``int_`` , ``uint`` , ``float_`` , ``complex`` 和 ``bool_``。
+      ``number``                      数值型，包括 ``int_``、``uint``、``float_``、``complex`` 和 ``bool_``。
       ``list_``                       由 ``tensor`` 构造的列表，例如 ``List[T0,T1,...,Tn]`` ，其中元素 ``Ti`` 可以是不同的类型。
       ``tuple_``                      由 ``tensor`` 构造的元组，例如 ``Tuple[T0,T1,...,Tn]`` ，其中元素 ``Ti`` 可以是不同的类型。
-      ``function``                    函数类型。 两种返回方式，当function不是None时，直接返回function，另一种当function为None时返回function(参数: List[T0,T1,...,Tn], 返回值: T)。
+      ``function``                    函数类型。两种返回方式，当function不是None时，直接返回function，另一种当function为None时返回function(参数: List[T0,T1,...,Tn]，返回值: T)。
       ``type_type``                   类型的类型定义。
       ``type_none``                   没有匹配的返回类型，对应 Python 中的 ``type(None)``。
       ``symbolic_key``                在 ``env_type`` 中用作变量的键的变量的值。
