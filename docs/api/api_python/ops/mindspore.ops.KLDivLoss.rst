@@ -43,10 +43,11 @@ mindspore.ops.KLDivLoss
 
     **输出：**
 
-    Tensor或标量。如果 `reduction` 为 'none' ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
+    Tensor或标量。如果 `reduction` 为"none" ，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
 
     **异常：**
 
     - **TypeError** - `reduction` 不是str。
     - **TypeError** - `logits` 或 `labels` 不是Tensor。
     - **TypeError** - `logits` 或 `labels` 的数据类型不是支持的类型。
+    - **RuntimeError** - `logits` 或 `labels` 是标量并且 `reduction` 是"batchmean"。
