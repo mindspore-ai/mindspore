@@ -24,6 +24,7 @@
 
 #include "ir/anf.h"
 #include "frontend/parallel/status.h"
+#include "frontend/parallel/ops_info/ops_utils.h"
 
 namespace mindspore {
 namespace parallel {
@@ -192,8 +193,8 @@ StrategyRec PartitionNode(const Graph::NodeType &node,
 
 StrategyRec GetOneLoopStrategy(size_t op_inputs_num, const StrategyRec &old_str, StrategyRec new_str) {
   for (size_t i = 0; i < op_inputs_num; i++) {
-    if (old_str.inputTensor[i].str_n != 0 && old_str.inputTensor[i].str_c != 0 && old_str.inputTensor[i].str_h != 0 &&
-        old_str.inputTensor[i].str_w != 0) {
+    if (abs(old_str.inputTensor[i].str_n) > EPS && abs(old_str.inputTensor[i].str_c) > EPS &&
+        abs(old_str.inputTensor[i].str_h) > EPS && abs(old_str.inputTensor[i].str_w) > EPS) {
       new_str.inputTensor[i].str_n = new_str.inputTensor[i].str_n / old_str.inputTensor[i].str_n;
       new_str.inputTensor[i].str_c = new_str.inputTensor[i].str_c / old_str.inputTensor[i].str_c;
       new_str.inputTensor[i].str_h = new_str.inputTensor[i].str_h / old_str.inputTensor[i].str_h;

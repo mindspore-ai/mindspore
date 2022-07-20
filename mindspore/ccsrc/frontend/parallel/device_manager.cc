@@ -162,7 +162,7 @@ std::shared_ptr<Device> GetListMemberByIndex(size_t index, const std::vector<std
 }
 
 namespace {
-constexpr size_t NODE_PER_SERVER = 8;
+constexpr int64_t NODE_PER_SERVER = 8;
 Status IsFeasibleDeiveListOneServer(const RankList &rank_list) {
   if (rank_list.size() == 1 || rank_list.size() == 8) {
     return SUCCESS;
@@ -195,8 +195,8 @@ Status IsFeasibleDeiveList(const RankList &rank_list) {
     server_ranks_map[server_id].push_back(local_rank);
   }
   std::vector<RankList> server_ranks_list;
-  std::transform(server_ranks_map.begin(), server_ranks_map.end(), std::back_inserter(server_ranks_list),
-                 [](auto pairs) { return pairs.second; });
+  (void)std::transform(server_ranks_map.begin(), server_ranks_map.end(), std::back_inserter(server_ranks_list),
+                       [](auto pairs) { return pairs.second; });
   auto server0_local_ranks = server_ranks_list[0];
   bool is_all_server_same_count =
     std::all_of(server_ranks_list.begin(), server_ranks_list.end(),
@@ -211,7 +211,7 @@ Status IsFeasibleDeiveList(const RankList &rank_list) {
 }
 }  // namespace
 
-Status DeviceManager::CheckDeviceList(const RankList &rank_list) {
+Status DeviceManager::CheckDeviceList(const RankList &rank_list) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   std::string backend = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
@@ -298,17 +298,18 @@ RankList DeviceManager::GetDeviceListBetweenStage() const {
     MS_LOG(EXCEPTION) << "Stage num got " << stage_num << ", expected a positive integer.";
   }
   auto device_num = DeviceNum();
-  auto per_stage_rank_num = device_num / stage_num;
+  auto per_stage_rank_num = device_num / LongToSize(stage_num);
   for (int64_t i = 0; i < stage_num; ++i) {
-    rank_list.push_back(rank_id + per_stage_rank_num * (i - stage_id));
+    rank_list.push_back(rank_id + SizeToLong(per_stage_rank_num) * (i - stage_id));
   }
   return rank_list;
 }
 
 RankList DeviceManager::GetDeviceListByStageId(int64_t stage_id) const {
-  if (LongToSize(stage_id) >= stage_devices_.size())
+  if (LongToSize(stage_id) >= stage_devices_.size()) {
     MS_LOG(ERROR) << "the 'stage_id': " << stage_id
                   << ", is out of the scope of 'stage_devices_': " << stage_devices_.size();
+  }
   RankList res;
   int64_t index = 0;
   for (auto &stage : stage_devices_) {
@@ -322,7 +323,7 @@ RankList DeviceManager::GetDeviceListByStageId(int64_t stage_id) const {
 
 Device DeviceManager::CreateNewDeviceByRank(int64_t rank) const { return Device(rank); }
 
-std::vector<Device> DeviceManager::CreateDeviceListByRankList(RankList ranks) {
+std::vector<Device> DeviceManager::CreateDeviceListByRankList(RankList ranks) const {
   std::vector<Device> dev_list;
   for (auto &rank : ranks) {
     Device one = CreateNewDeviceByRank(rank);
@@ -341,8 +342,8 @@ std::string DeviceManager::FindRankListNameByHashName(const std::string &hash_na
   if ((hash_name == HCCL_WORLD_GROUP) || (hash_name == NCCL_WORLD_GROUP)) {
     return tmp;
   }
-  auto iter = group_to_rank_.find(hash_name);
-  if (iter == group_to_rank_.end()) {
+  std::map<std::string, std::string>::const_iterator iter = group_to_rank_.find(hash_name);
+  if (iter == group_to_rank_.cend()) {
     MS_LOG(WARNING) << "Can not find the rank list name by hash name: " << hash_name;
     return tmp;
   }
@@ -421,8 +422,8 @@ std::string DeviceManager::GenerateGroupNameByRanks(RankList ranks) {
 Status DeviceManager::CreateGroup(const std::string &group_name,
                                   const std::vector<mindspore::parallel::Device> &devices, Group *const comm_group) {
   RankList rank_list;
-  std::transform(devices.begin(), devices.end(), std::back_inserter(rank_list),
-                 [](Device device) { return device.rank(); });
+  (void)std::transform(devices.begin(), devices.end(), std::back_inserter(rank_list),
+                       [](const Device &device) { return device.rank(); });
   if (CheckDeviceList(rank_list) != SUCCESS) {
     MS_LOG(ERROR) << "Create communication group failed, the rank list is: " << rank_list;
     return FAILED;
