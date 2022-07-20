@@ -200,7 +200,7 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         TypeError: If 'dtype' is neither int32 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> from mindspore import Tensor, ops
@@ -210,13 +210,13 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> shape = (4, 2)
         >>> minval = Tensor(1, mindspore.int32)
         >>> maxval = Tensor(2, mindspore.int32)
-        >>> output = F.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5, dtype=mindspore.int32)
         >>>
         >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
         >>> shape = (3, 1, 2)
         >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mindspore.float32)
         >>> maxval = Tensor([8.0, 10.0], mindspore.float32)
-        >>> output = F.uniform(shape, minval, maxval, seed=5)
+        >>> output = ops.uniform(shape, minval, maxval, seed=5)
         >>> result = output.shape
         >>> print(result)
         (3, 2, 2)

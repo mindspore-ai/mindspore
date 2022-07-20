@@ -51,7 +51,7 @@ class Uniform(Distribution):
         TypeError: When the input `dtype` is not a subclass of float.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore

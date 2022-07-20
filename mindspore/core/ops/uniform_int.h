@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CORE_OPS_RANDOM_UNIFORM_INT_H_
-#define MINDSPORE_CORE_OPS_RANDOM_UNIFORM_INT_H_
+#ifndef MINDSPORE_CORE_OPS_UNIFORM_INT_H_
+#define MINDSPORE_CORE_OPS_UNIFORM_INT_H_
 #include <map>
 #include <vector>
 #include <string>
@@ -56,4 +56,4 @@ abstract::AbstractBasePtr UniformIntInfer(const abstract::AnalysisEnginePtr &, c
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_RANDOM_UNIFORM_INT_H_
+#endif  // MINDSPORE_CORE_OPS_UNIFORM_INT_H_

@@ -62,23 +62,25 @@ abstract::AbstractBasePtr UniformIntInfer(const abstract::AnalysisEnginePtr &, c
   abstract::ShapePtr minval_shape = minval->shape();
   MS_EXCEPTION_IF_NULL(minval_shape);
   if (minval_shape->IsDimUnknown() || minval_shape->shape().size() != 0) {
-    MS_LOG(EXCEPTION) << "The min value should be a scalar tensor, while the shape is: " << minval_shape->ToString();
+    MS_EXCEPTION(ValueError) << "The min value should be a scalar tensor, while the shape is: "
+                             << minval_shape->ToString();
   }
   abstract::AbstractTensorPtr maxval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, 2);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->BuildType(), {kInt32}, op_name);
   abstract::ShapePtr maxval_shape = maxval->shape();
   MS_EXCEPTION_IF_NULL(maxval_shape);
   if (maxval_shape->IsDimUnknown() || maxval_shape->shape().size() != 0) {
-    MS_LOG(EXCEPTION) << "The max value should be a scalar tensor, while the shape is: " << minval_shape->ToString();
+    MS_EXCEPTION(ValueError) << "The max value should be a scalar tensor, while the shape is: "
+                             << minval_shape->ToString();
   }
 
   ShapeVector shape;
   abstract::ShapePtr output_shape;
   auto shape_value = input_args[0]->BuildValue();
   if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
-    shape = shape_value->isa<ValueTuple>()
-              ? CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name)
-              : CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name);
+    shape = shape_value->isa<tensor::Tensor>()
+              ? CheckAndConvertUtils::CheckTensorIntValue("input[shape]", shape_value, op_name)
+              : CheckAndConvertUtils::CheckTupleInt("input[shape]", shape_value, op_name);
     output_shape = std::make_shared<abstract::Shape>(shape);
   } else {
     shape = {-2};  // unknown dimension.
