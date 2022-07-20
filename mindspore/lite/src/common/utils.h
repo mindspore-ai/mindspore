@@ -21,6 +21,8 @@
 #include <cstdint>
 #include <vector>
 #include <set>
+#include <limits>
+#include <cmath>
 #include <string>
 #include <utility>
 #include "src/common/log_adapter.h"
@@ -241,6 +243,10 @@ inline size_t DataTypeSize(TypeId type) {
       MS_LOG(ERROR) << "Not support the type: " << type;
       return 0;
   }
+}
+
+inline bool FloatCompare(const float &a, const float &b = 0.0f) {
+  return std::fabs(a - b) <= std::numeric_limits<float>::epsilon();
 }
 
 }  // namespace lite

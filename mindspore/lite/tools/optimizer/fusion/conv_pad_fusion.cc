@@ -26,6 +26,7 @@
 #include "nnacl/op_base.h"
 #include "ops/primitive_c.h"
 #include "ops/op_utils.h"
+#include "src/common/utils.h"
 
 namespace mindspore {
 namespace opt {
@@ -174,7 +175,7 @@ bool IsPrimitiveProper(const CNodePtr &pad_cnode) {
     }
     pad_value = *static_cast<float *>(data_info.data_ptr_);
   }
-  if (pad_value != 0) {
+  if (!mindspore::lite::FloatCompare(pad_value)) {
     return false;
   }
 
