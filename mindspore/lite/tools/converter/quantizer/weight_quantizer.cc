@@ -87,11 +87,19 @@ int WeightQuantizer::DoCompression(const CNodePtr &cnode, const ParameterPtr &pa
   MS_CHECK_GT(static_cast<int>(tensor_quant_params.size()), idx - 1, RET_ERROR);
   auto quant_params = tensor_quant_params.at(idx - 1);
   if (type_id_ == kNumberTypeInt8) {
-    ret = compressor.PackRepetition<int8_t>(cnode, parameter, bit_num_, quant_params);
+    ret = compressor.DoSparseCompress<int8_t>(parameter, bit_num_, quant_params);
   } else if (type_id_ == kNumberTypeInt16) {
-    ret = compressor.PackRepetition<int16_t>(cnode, parameter, bit_num_, quant_params);
+    ret = compressor.DoSparseCompress<int16_t>(parameter, bit_num_, quant_params);
   }
-  if (ret == RET_OK) {
+  if (ret != RET_OK) {
+    if (bit_num_ != k8Bit && bit_num_ != k16Bit) {
+      auto status = compressor.DoBitPack(parameter, bit_num_);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "do bit pack failed. " << status;
+        return RET_ERROR;
+      }
+    }
+  } else {
     MS_LOG(INFO) << parameter->fullname_with_scope() << " compression success.";
   }
   return RET_OK;
@@ -116,6 +124,7 @@ int WeightQuantizer::DoMixBitQuant(const CNodePtr &cnode, const ParameterPtr &pa
       MS_LOG(ERROR) << "fse encode compress failed." << status;
       return RET_ERROR;
     }
+    quant_param_holder->ClearQuantParams();
   }
   // rollback to 8 bit.
   if (status == RET_ERROR || status == RET_NO_CHANGE) {

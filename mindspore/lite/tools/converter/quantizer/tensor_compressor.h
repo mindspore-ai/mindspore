@@ -41,8 +41,8 @@ namespace mindspore::lite::quant {
 class TensorCompressor {
  public:
   template <typename T>
-  int PackRepetition(const CNodePtr &cnode, const ParameterPtr &weight, size_t bit_num,
-                     const std::vector<schema::QuantParamT> &quant_params) {
+  int DoSparseCompress(const ParameterPtr &weight, size_t bit_num,
+                       const std::vector<schema::QuantParamT> &quant_params) {
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
     CHECK_NULL_RETURN(tensor_info);
     if (tensor_info->compression_type() != kNoCompression) {
@@ -103,8 +103,9 @@ class TensorCompressor {
     }
     return RET_NO_CHANGE;
   }
-
   int DoBitPack(const size_t &bit_num, schema::TensorT *tensor_input);
+
+  int DoBitPack(const ParameterPtr &weight, size_t bit_num);
 
  private:
   template <typename T>
@@ -219,7 +220,7 @@ class TensorCompressor {
       MS_LOG(ERROR) << "Add New tensor failed.";
       return RET_ERROR;
     }
-    return RET_ERROR;
+    return RET_OK;
   }
 
   template <typename T>
@@ -257,7 +258,7 @@ class TensorCompressor {
 
   void WriteBufferWithAlignByte(const std::vector<bool> &bool_vec, int8_t *data);
 
-  int SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, int bit_num,
+  int SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, size_t bit_num,
                               const tensor::TensorPtr &tensor_info, TensorCompressionType compression_type);
 };
 }  // namespace mindspore::lite::quant
