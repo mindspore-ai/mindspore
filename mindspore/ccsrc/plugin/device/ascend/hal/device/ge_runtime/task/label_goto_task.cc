@@ -24,13 +24,13 @@ LabelGotoTask::LabelGotoTask(const ModelContext &model_context, const std::share
     : TaskRepeater<LabelGotoTaskInfo>(model_context, task_info),
       task_info_(task_info),
       stream_(nullptr),
-      index_value_(nullptr) {
+      index_value_(nullptr),
+      label_id_(task_info_->label_id()),
+      rt_model_handle_(model_context.rt_model_handle()) {
   MS_EXCEPTION_IF_NULL(task_info_);
   auto stream_list = model_context.stream_list();
   auto label_list = model_context.label_list();
-  rt_model_handle_ = model_context.rt_model_handle();
   uint32_t stream_id = task_info_->stream_id();
-  label_id_ = task_info_->label_id();
   MS_LOG(INFO) << "Stream list size: " << stream_list.size() << ", stream id: " << stream_id;
   MS_LOG(INFO) << "Label list size: " << label_list.size() << ", label id: " << label_id_;
   if (stream_id >= stream_list.size() || label_id_ >= label_list.size()) {

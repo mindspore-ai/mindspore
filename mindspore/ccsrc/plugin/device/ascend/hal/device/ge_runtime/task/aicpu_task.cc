@@ -55,8 +55,10 @@ AicpuTask::~AicpuTask() {
 void AicpuTask::Distribute() {
   MS_LOG(INFO) << "InitAicpuTask start.";
   std::vector<void *> io_addrs;
-  (void)io_addrs.insert(io_addrs.end(), task_info_->input_data_addrs().begin(), task_info_->input_data_addrs().end());
-  (void)io_addrs.insert(io_addrs.end(), task_info_->output_data_addrs().begin(), task_info_->output_data_addrs().end());
+  (void)io_addrs.insert(io_addrs.cend(), task_info_->input_data_addrs().cbegin(),
+                        task_info_->input_data_addrs().cend());
+  (void)io_addrs.insert(io_addrs.cend(), task_info_->output_data_addrs().cbegin(),
+                        task_info_->output_data_addrs().cend());
   auto io_addrs_num = static_cast<uint32_t>(io_addrs.size());
   auto io_addrs_size = static_cast<uint32_t>(io_addrs_num * sizeof(void *));
   constexpr uint32_t io_addr_offset = sizeof(aicpu::AicpuParamHead);
@@ -76,7 +78,7 @@ void AicpuTask::Distribute() {
   SetNodeDef(node_def_len_offset, node_def_addr_offset);
 
   // for data dump
-  input_output_addr_ = reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + io_addr_offset);
+  input_output_addr_ = static_cast<void *>(static_cast<uint8_t *>(args_) + io_addr_offset);
   auto dump_flag = task_info_->dump_flag() ? RT_KERNEL_DUMPFLAG : RT_KERNEL_DEFAULT;
   auto cpu_flag = task_info_->cust_aicpu() ? RT_KERNEL_CUSTOM_AICPU : dump_flag;
 
@@ -86,9 +88,9 @@ void AicpuTask::Distribute() {
   rtArgsEx_t argsInfo = {};
   argsInfo.args = args_;
   argsInfo.argsSize = args_size;
-  rt_ret = rtCpuKernelLaunchWithFlag(reinterpret_cast<const void *>(task_info_->so_name().data()),
-                                     reinterpret_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo,
-                                     nullptr, stream_, cpu_flag);
+  rt_ret = rtCpuKernelLaunchWithFlag(static_cast<const void *>(task_info_->so_name().data()),
+                                     static_cast<const void *>(task_info_->kernel_name().data()), 1, &argsInfo, nullptr,
+                                     stream_, cpu_flag);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtCpuKernelLaunchWithFlag failed, ret: " << rt_ret;
   }
@@ -124,8 +126,8 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
       MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << flag;
     }
 
-    flag = aclrtMemcpy(ext_info_, ext_size, const_cast<void *>(reinterpret_cast<const void *>(ext_info.data())),
-                       ext_size, ACL_MEMCPY_HOST_TO_DEVICE);
+    flag = aclrtMemcpy(ext_info_, ext_size, const_cast<void *>(static_cast<const void *>(ext_info.data())), ext_size,
+                       ACL_MEMCPY_HOST_TO_DEVICE);
     if (flag != RT_ERROR_NONE) {
       MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << flag;
     }
@@ -136,17 +138,17 @@ void AicpuTask::SetAicpuParamHead(uint32_t args_size, uint32_t io_addrs_num) {
   }
 
   // Memcpy AicpuParamHead
-  auto rt_ret = aclrtMemcpy(args_, sizeof(aicpu::AicpuParamHead), reinterpret_cast<void *>(&aicpu_param_head),
+  auto rt_ret = aclrtMemcpy(args_, sizeof(aicpu::AicpuParamHead), static_cast<void *>(&aicpu_param_head),
                             sizeof(aicpu::AicpuParamHead), ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 }
 
-void AicpuTask::SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_t io_addr_offset) {
+void AicpuTask::SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_t io_addr_offset) const {
   // Memcpy io addrs
   if (!io_addrs.empty()) {
-    auto rt_ret = aclrtMemcpy(reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + io_addr_offset),
+    auto rt_ret = aclrtMemcpy(static_cast<void *>(static_cast<uint8_t *>(args_) + io_addr_offset),
                               static_cast<uint32_t>(io_addrs.size()) * sizeof(void *), io_addrs.data(),
                               static_cast<uint32_t>(io_addrs.size()) * sizeof(void *), ACL_MEMCPY_HOST_TO_DEVICE);
     if (rt_ret != RT_ERROR_NONE) {
@@ -158,16 +160,15 @@ void AicpuTask::SetInputOutputAddrs(const std::vector<void *> &io_addrs, uint32_
 void AicpuTask::SetNodeDef(uint32_t node_def_len_offset, uint32_t node_def_addr_offset) {
   // Memcpy node def
   auto size = task_info_->node_def().size();
-  auto rt_ret =
-    aclrtMemcpy(reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + node_def_len_offset), sizeof(uint32_t),
-                reinterpret_cast<const void *>(&size), sizeof(uint32_t), ACL_MEMCPY_HOST_TO_DEVICE);
+  auto rt_ret = aclrtMemcpy(static_cast<void *>(static_cast<uint8_t *>(args_) + node_def_len_offset), sizeof(uint32_t),
+                            static_cast<const void *>(&size), sizeof(uint32_t), ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
   }
 
   // Memcpy node def
-  rt_ret = aclrtMemcpy(reinterpret_cast<void *>(reinterpret_cast<uint8_t *>(args_) + node_def_addr_offset),
-                       task_info_->node_def().size(), reinterpret_cast<const void *>(task_info_->node_def().data()),
+  rt_ret = aclrtMemcpy(static_cast<void *>(static_cast<uint8_t *>(args_) + node_def_addr_offset),
+                       task_info_->node_def().size(), static_cast<const void *>(task_info_->node_def().data()),
                        task_info_->node_def().size(), ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;

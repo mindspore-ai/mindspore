@@ -219,7 +219,7 @@ void RuntimeModel::DistributeTask() {
   MS_LOG(INFO) << "DistributeTask success.";
 }
 
-void RuntimeModel::Run() {
+void RuntimeModel::Run() const {
   MS_LOG(INFO) << "Davinci task run start.";
   rtError_t ret = rtModelExecute(rt_model_handle_, rt_model_stream_, 0);
   if (ret != RT_ERROR_NONE) {
@@ -280,7 +280,7 @@ void RuntimeModel::RtLabelDestory() noexcept {
   }
 }
 
-void RuntimeModel::RtModelDestory() noexcept {
+void RuntimeModel::RtModelDestory() const noexcept {
   rtError_t ret = rtModelDestroy(rt_model_handle_);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Call rt api rtModelDestroy failed, ret: " << ret;

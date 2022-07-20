@@ -168,7 +168,7 @@ void AscendGraphOptimization::OptimizeExecutionOrder(const KernelGraphPtr &graph
   MS_LOG(INFO) << "Status record: end optimize execution order. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) {
+void AscendGraphOptimization::PostOptimization(const KernelGraphPtr &graph) const {
   MS_LOG(INFO) << "Status record: start post optimization. graph id: " << graph->graph_id();
   graph->SetOptimizerFlag();
   MS_LOG(INFO) << "Status record: end post optimization. graph id: " << graph->graph_id();
@@ -219,7 +219,7 @@ void AscendGraphOptimization::HardWareOptimization(const KernelGraphPtr &graph) 
 }
 
 void AscendGraphOptimization::AddGraphToManager(const NotNull<KernelGraphPtr> graph,
-                                                NotNull<FuncGraphManagerPtr> manager, bool is_root) {
+                                                const NotNull<FuncGraphManagerPtr> manager, bool is_root) {
   if (memo_.find(graph) != memo_.end()) {
     return;
   }
@@ -244,7 +244,7 @@ void AscendGraphOptimization::IRFusionOptimization(const KernelGraphPtr &graph) 
   }
 }
 
-void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> graph) {
+void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> graph) const {
   MS_LOG(INFO) << "Status record: start handle control flow. graph id: " << graph->graph_id();
   PROF_START(handle_control_flow);
   AscendAutoMonad auto_monad(graph);
@@ -253,7 +253,7 @@ void AscendGraphOptimization::HandleControlFlow(const NotNull<KernelGraphPtr> gr
   MS_LOG(INFO) << "Status record: end handle control flow. graph id: " << graph->graph_id();
 }
 
-void AscendGraphOptimization::RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph) {
+void AscendGraphOptimization::RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph) {
   MS_LOG(INFO) << "Status record: start graph executor validate. graph id: " << graph->graph_id();
   AscendAutoMonad auto_monad(graph);
   auto_monad.GenerateExecuteOrder();
@@ -327,13 +327,13 @@ void AscendGraphOptimization::UpdateRefOutputMap(const KernelGraphPtr &graph) {
     UpdateRefOutputMap(NOT_NULL(child_graph_ptr));
     // copy ref map to final graph
     auto child_ref_map = child_graph_ptr->GetRefMap();
-    for (auto &item : child_ref_map) {
-      if (graph->IsInRefOutputMap(item.first)) {
-        MS_LOG(DEBUG) << "The ref pair <" << item.first.first->DebugString() << ", " << item.first.second
+    for (auto item = child_ref_map.cbegin(); item != child_ref_map.cend(); ++item) {
+      if (graph->IsInRefOutputMap(item->first)) {
+        MS_LOG(DEBUG) << "The ref pair <" << item->first.first->DebugString() << ", " << item->first.second
                       << "> is already in " << graph->ToString();
         continue;
       }
-      graph->AddRefCorrespondPairs(item.first, item.second);
+      graph->AddRefCorrespondPairs(item->first, item->second);
     }
   }
 }

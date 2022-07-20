@@ -50,19 +50,19 @@ class AscendGraphOptimization {
   void OptimizeGraphWithoutDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeGraphWithDeviceInfo(const KernelGraphPtr &graph);
   void OptimizeExecutionOrder(const KernelGraphPtr &graph);
-  void PostOptimization(const KernelGraphPtr &graph);
+  void PostOptimization(const KernelGraphPtr &graph) const;
 
   // Graph Optimized level-3 interface
   void CommOpReuse(const KernelGraphPtr &graph);
   void IRFusionOptimization(const KernelGraphPtr &graph);
   void UpdateRefOutputMap(const KernelGraphPtr &graph);
-  void AddGraphToManager(const NotNull<KernelGraphPtr> graph, NotNull<FuncGraphManagerPtr> manager,
+  void AddGraphToManager(const NotNull<KernelGraphPtr> graph, const NotNull<FuncGraphManagerPtr> manager,
                          bool is_root = true);
   void SelectKernel(const KernelGraphPtr &graph);
   void RecurseSelectKernelInfo(const KernelGraphPtr &graph);
   void HardWareOptimization(const KernelGraphPtr &graph);
-  void HandleControlFlow(const NotNull<KernelGraphPtr> graph);
-  void RootGraphExecutorValidate(NotNull<KernelGraphPtr> graph);
+  void HandleControlFlow(const NotNull<KernelGraphPtr> graph) const;
+  void RootGraphExecutorValidate(const NotNull<KernelGraphPtr> graph);
 
   void GetAllGraphs(const KernelGraphPtr &root_graph);
   void CheckControlFlowDynamicShape(const KernelGraphPtr &root_graph);

@@ -17,11 +17,6 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEVICE_CONTEXT_H_
 
-#include <vector>
-#include <memory>
-#include <string>
-#include <set>
-#include <map>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"

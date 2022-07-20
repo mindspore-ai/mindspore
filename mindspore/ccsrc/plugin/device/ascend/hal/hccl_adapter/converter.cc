@@ -54,7 +54,7 @@ static ge::DataType ConvertHcclDTypeToGeDType(HcclDataType datatype) {
     {HCCL_DATA_TYPE_INT32, ge::DT_INT32},
   };
 
-  auto iter = kHcomDataTypeMap.find(datatype);
+  decltype(kHcomDataTypeMap)::const_iterator iter = kHcomDataTypeMap.find(datatype);
   if (iter == kHcomDataTypeMap.end()) {
     MS_LOG(EXCEPTION) << "Unknown hccl data type " << datatype;
   }

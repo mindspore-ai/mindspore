@@ -244,7 +244,7 @@ bool TaskGenerator::LaunchKernel(const CNodePtr &anf_node_ptr, uint32_t stream_i
   MS_EXCEPTION_IF_NULL(ascend_kernel_mod);
   std::vector<TaskInfoPtr> task_info_ptrs =
     ascend_kernel_mod->GenTask(kernel_inputs, kernel_workspaces, kernel_outputs, stream_id);
-  task_info_list->insert(task_info_list->end(), task_info_ptrs.begin(), task_info_ptrs.end());
+  task_info_list->insert(task_info_list->cend(), task_info_ptrs.cbegin(), task_info_ptrs.cend());
   auto debug_info = std::make_shared<TaskDebugInfo>();
   MS_EXCEPTION_IF_NULL(debug_info);
   if (task_info_ptrs.empty()) {
@@ -276,8 +276,8 @@ std::vector<CNodePtr> TaskGenerator::ReorderDistribute(const std::vector<CNodePt
     }
   }
   std::vector<CNodePtr> ret = {};
-  ret.insert(ret.end(), send_recv_nodes.begin(), send_recv_nodes.end());
-  ret.insert(ret.end(), other_nodes.begin(), other_nodes.end());
+  ret.insert(ret.cend(), send_recv_nodes.cbegin(), send_recv_nodes.cend());
+  ret.insert(ret.cend(), other_nodes.cbegin(), other_nodes.cend());
   return ret;
 }
 

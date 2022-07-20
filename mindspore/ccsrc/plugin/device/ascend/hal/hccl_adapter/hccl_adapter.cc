@@ -330,7 +330,7 @@ HcclResult HcclAdapter::HcclBroadcast(void *buf, uint64_t count, HcclDataType da
 }
 
 HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+                                      const HcclReduceOp op, const aclrtStream stream, const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_reduce_);
   auto hccl_comm = GetHcomm(group);
@@ -339,7 +339,8 @@ HcclResult HcclAdapter::HcclAllReduce(void *send_buf, void *recv_buf, uint64_t c
 }
 
 HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                          HcclReduceOp op, aclrtStream stream, const std::string &group) const {
+                                          const HcclReduceOp op, const aclrtStream stream,
+                                          const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_reduce_scatter_);
   auto hccl_comm = GetHcomm(group);
@@ -348,7 +349,7 @@ HcclResult HcclAdapter::HcclReduceScatter(void *send_buf, void *recv_buf, uint64
 }
 
 HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t count, HcclDataType dataType,
-                                      aclrtStream stream, const std::string &group) const {
+                                      const aclrtStream stream, const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_all_gather_);
   auto hccl_comm = GetHcomm(group);
@@ -357,7 +358,7 @@ HcclResult HcclAdapter::HcclAllGather(void *send_buf, void *recv_buf, uint64_t c
 }
 
 HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType dataType, uint32_t destRank,
-                                 aclrtStream stream, const std::string &group) const {
+                                 const aclrtStream stream, const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_send_);
   auto hccl_comm = GetHcomm(group);
@@ -366,7 +367,7 @@ HcclResult HcclAdapter::HcclSend(void *send_buf, uint64_t count, HcclDataType da
 }
 
 HcclResult HcclAdapter::HcclRecv(void *recv_buf, uint64_t count, HcclDataType dataType, uint32_t srcRank,
-                                 aclrtStream stream, const std::string &group) const {
+                                 const aclrtStream stream, const std::string &group) const {
   CheckExcutionMode();
   CHECK_SYMBOL_NULL(launch_hccl_recv_);
   auto hccl_comm = GetHcomm(group);

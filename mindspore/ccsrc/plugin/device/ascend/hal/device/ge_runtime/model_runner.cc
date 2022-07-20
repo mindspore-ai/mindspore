@@ -18,6 +18,7 @@
 #include "plugin/device/ascend/hal/device/ge_runtime/runtime_model.h"
 #include "plugin/device/ascend/hal/device/ge_runtime/davinci_model.h"
 #include "mindspore/core/utils/log_adapter.h"
+#include "utils/log_adapter.h"
 
 namespace mindspore::ge::model_runner {
 ModelRunner &ModelRunner::Instance() {
@@ -33,8 +34,8 @@ void ModelRunner::LoadDavinciModel(uint32_t device_id, uint64_t session_id, uint
 }
 
 void ModelRunner::DistributeTask(uint32_t model_id) {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -42,8 +43,8 @@ void ModelRunner::DistributeTask(uint32_t model_id) {
 }
 
 void ModelRunner::LoadModelComplete(uint32_t model_id) {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -51,8 +52,8 @@ void ModelRunner::LoadModelComplete(uint32_t model_id) {
 }
 
 const std::vector<uint32_t> &ModelRunner::GetTaskIdList(uint32_t model_id) const {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -60,8 +61,8 @@ const std::vector<uint32_t> &ModelRunner::GetTaskIdList(uint32_t model_id) const
 }
 
 const std::vector<uint32_t> &ModelRunner::GetStreamIdList(uint32_t model_id) const {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -69,8 +70,8 @@ const std::vector<uint32_t> &ModelRunner::GetStreamIdList(uint32_t model_id) con
 }
 
 const std::map<std::string, std::shared_ptr<RuntimeInfo>> &ModelRunner::GetRuntimeInfoMap(uint32_t model_id) const {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -78,8 +79,8 @@ const std::map<std::string, std::shared_ptr<RuntimeInfo>> &ModelRunner::GetRunti
 }
 
 void *ModelRunner::GetModelHandle(uint32_t model_id) const {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -87,8 +88,8 @@ void *ModelRunner::GetModelHandle(uint32_t model_id) const {
 }
 
 void *ModelRunner::GetModelStream(uint32_t model_id) const {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);
@@ -96,15 +97,15 @@ void *ModelRunner::GetModelStream(uint32_t model_id) const {
 }
 
 void ModelRunner::UnloadModel(uint32_t model_id) {
-  auto iter = runtime_models_.find(model_id);
-  if (iter != runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator iter = runtime_models_.find(model_id);
+  if (iter != runtime_models_.cend()) {
     (void)runtime_models_.erase(iter);
   }
 }
 
 void ModelRunner::RunModel(uint32_t model_id) {
-  auto model_iter = runtime_models_.find(model_id);
-  if (model_iter == runtime_models_.end()) {
+  decltype(runtime_models_)::const_iterator model_iter = runtime_models_.find(model_id);
+  if (model_iter == runtime_models_.cend()) {
     MS_LOG(EXCEPTION) << "Model id " << model_id << " not found.";
   }
   MS_EXCEPTION_IF_NULL(model_iter->second);

@@ -23,7 +23,6 @@
 #include <tuple>
 #define google ascend_private
 #include "graph/node.h"
-#include "common/opskernel/ops_kernel_info_types.h"
 #include "proto/task.pb.h"
 #undef google
 #include "plugin/device/ascend/hal/hccl_adapter/hccl_adapter.h"

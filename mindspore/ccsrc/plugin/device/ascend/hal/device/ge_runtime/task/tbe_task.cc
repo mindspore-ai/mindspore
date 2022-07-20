@@ -68,12 +68,12 @@ void TbeTask::Distribute() {
 
   // Get args
   std::vector<void *> tensor_device_addrs;
-  tensor_device_addrs.insert(tensor_device_addrs.end(), task_info_->input_data_addrs().begin(),
-                             task_info_->input_data_addrs().end());
-  tensor_device_addrs.insert(tensor_device_addrs.end(), task_info_->output_data_addrs().begin(),
-                             task_info_->output_data_addrs().end());
-  tensor_device_addrs.insert(tensor_device_addrs.end(), task_info_->workspace_addrs().begin(),
-                             task_info_->workspace_addrs().end());
+  tensor_device_addrs.insert(tensor_device_addrs.cend(), task_info_->input_data_addrs().cbegin(),
+                             task_info_->input_data_addrs().cend());
+  tensor_device_addrs.insert(tensor_device_addrs.cend(), task_info_->output_data_addrs().cbegin(),
+                             task_info_->output_data_addrs().cend());
+  tensor_device_addrs.insert(tensor_device_addrs.cend(), task_info_->workspace_addrs().cbegin(),
+                             task_info_->workspace_addrs().cend());
   auto args_size = static_cast<uint32_t>(tensor_device_addrs.size() * sizeof(void *));
 
   rt_ret = rtMalloc(&args_, args_size, RT_MEMORY_HBM);
@@ -81,7 +81,7 @@ void TbeTask::Distribute() {
     MS_LOG(EXCEPTION) << "Call rt api rtMalloc failed, ret: " << rt_ret << " mem size " << args_size;
   }
 
-  rt_ret = aclrtMemcpy(args_, args_size, reinterpret_cast<void *>(tensor_device_addrs.data()), args_size,
+  rt_ret = aclrtMemcpy(args_, args_size, static_cast<void *>(tensor_device_addrs.data()), args_size,
                        ACL_MEMCPY_HOST_TO_DEVICE);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rt api rtMemcpy failed, ret: " << rt_ret;
