@@ -147,17 +147,17 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
   const size_t kInputShapeSize = 5;
   const size_t kAttrsSize = 3;
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
-  (void)CheckAndConvertUtils::CheckInteger("x_shape", SizeToLong(x_shape.size()), kEqual, kInputShapeSize,
+  (void)CheckAndConvertUtils::CheckInteger("input x rank", SizeToLong(x_shape.size()), kEqual, kInputShapeSize,
                                            prim->name());
   auto ksize = GetValue<std::vector<int64_t>>(prim->GetAttr("ksize"));
-  (void)CheckAndConvertUtils::CheckInteger("ksize_shape", SizeToLong(ksize.size()), kEqual, kAttrsSize, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("ksize rank", SizeToLong(ksize.size()), kEqual, kAttrsSize, prim->name());
   auto strides = GetValue<std::vector<int64_t>>(prim->GetAttr("strides"));
-  (void)CheckAndConvertUtils::CheckInteger("strides_shape", SizeToLong(strides.size()), kEqual, kAttrsSize,
+  (void)CheckAndConvertUtils::CheckInteger("strides rank", SizeToLong(strides.size()), kEqual, kAttrsSize,
                                            prim->name());
   auto pads = GetValue<std::vector<int64_t>>(prim->GetAttr("pads"));
-  (void)CheckAndConvertUtils::CheckInteger("pads_shape", SizeToLong(pads.size()), kEqual, kAttrsSize, prim->name());
+  (void)CheckAndConvertUtils::CheckInteger("pads rank", SizeToLong(pads.size()), kEqual, kAttrsSize, prim->name());
   auto dilation = GetValue<std::vector<int64_t>>(prim->GetAttr("dilation"));
-  (void)CheckAndConvertUtils::CheckInteger("dilation_shape", SizeToLong(dilation.size()), kEqual, kAttrsSize,
+  (void)CheckAndConvertUtils::CheckInteger("dilation rank", SizeToLong(dilation.size()), kEqual, kAttrsSize,
                                            prim->name());
   auto D_in = x_shape[kIndex2];
   auto H_in = x_shape[kIndex3];
@@ -172,16 +172,26 @@ abstract::TupleShapePtr MaxPool3DWithArgmaxInferShape(const PrimitivePtr &prim,
     H_out = ((H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1) / strides[kAttrH]) + 1;
     W_out = ((W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1) / strides[kAttrW]) + 1;
   } else {
-    // math: out = ((input + 2 * pad - dilation * (ksize - 1) - 2 + stride) / stride) + 1;
-    D_out = ((D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - factor + strides[kAttrD]) /
+    // math: out = ((input + 2 * pad - dilation * (ksize - 1) - 1 + (stride - 1)) / stride) + 1;
+    D_out = ((D_in + factor * pads[kAttrD] - dilation[kAttrD] * (ksize[kAttrD] - 1) - 1 + (strides[kAttrD] - 1)) /
              strides[kAttrD]) +
             1;
-    H_out = ((H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - factor + strides[kAttrH]) /
+    H_out = ((H_in + factor * pads[kAttrH] - dilation[kAttrH] * (ksize[kAttrH] - 1) - 1 + (strides[kAttrH] - 1)) /
              strides[kAttrH]) +
             1;
-    W_out = ((W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - factor + strides[kAttrW]) /
+    W_out = ((W_in + factor * pads[kAttrW] - dilation[kAttrW] * (ksize[kAttrW] - 1) - 1 + (strides[kAttrW] - 1)) /
              strides[kAttrW]) +
             1;
+    // The last pooling starts inside the image.
+    if ((D_out - 1) * strides[kAttrD] >= D_in + pads[kAttrD]) {
+      --D_out;
+    }
+    if ((H_out - 1) * strides[kAttrH] >= H_in + pads[kAttrH]) {
+      --H_out;
+    }
+    if ((W_out - 1) * strides[kAttrW] >= W_in + pads[kAttrW]) {
+      --W_out;
+    }
   }
   ShapeVector output_shape = {x_shape[0], x_shape[1], D_out, H_out, W_out};
   ShapeVector argmax_shape = output_shape;
