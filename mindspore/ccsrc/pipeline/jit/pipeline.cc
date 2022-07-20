@@ -503,11 +503,7 @@ void GraphExecutorPy::DelNetRes(const py::set &id) {
   std::string backend = ms_context->backend_policy();
   if (backend == "ge") {
     FinalizeBackend();
-  } else {
-    ConfigManager::GetInstance().ResetIterNum();
   }
-#else
-  ConfigManager::GetInstance().ResetIterNum();
 #endif
   for (auto item : id) {
     DelOneNetRes(item);
