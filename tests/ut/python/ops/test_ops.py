@@ -108,6 +108,7 @@ from mindspore.ops.operations.sparse_ops import DenseToCSRSparseMatrix, Sspaddmm
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseMatmul
 from mindspore.ops.operations.sparse_ops import SparseMatrixNNZ
 from mindspore.ops.operations.sparse_ops import SparseTensorDenseAdd
+from mindspore.ops.operations.sparse_ops import SparseMatrixTranspose
 from mindspore.ops.operations.other_ops import BlackmanWindow
 from mindspore.ops.operations.nn_ops import SparseApplyCenteredRMSProp
 from mindspore.nn.layer import normalization
@@ -4021,6 +4022,22 @@ test_case_quant_ops = [
     ('Quant_8', {
         'block': inner.Quant(80.0, 10.0, False, "Round"),
         'desc_inputs': [Tensor([100.0, 200.0], mstype.float16)],
+        'skip': ['backward']}),
+    ('SparseMatrixTranspose1', {
+        'block': SparseMatrixTranspose(conjugate=False),
+        'desc_inputs': [Tensor(np.array([2, 4]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([5.3, 2.4]).astype(np.float32))],
+        'skip': ['backward']}),
+    ('SparseMatrixTranspose2', {
+        'block': SparseMatrixTranspose(conjugate=True),
+        'desc_inputs': [Tensor(np.array([2, 4]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2, 2]).astype(np.int32)),
+                        Tensor(np.array([0, 2]).astype(np.int32)),
+                        Tensor(np.array([5.3, 2.4]).astype(np.float32))],
         'skip': ['backward']}),
 ]
 
