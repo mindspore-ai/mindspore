@@ -2162,8 +2162,8 @@ def log_matrix_determinant(x):
         >>> input_x = Tensor(np.array([[[-4.5, -1.5], [7.0, 6.0]], [[2.5, 0.5], [3.0, 9.0]]]), mindspore.float32)
         >>> sign, output = ops.log_matrix_determinant(input_x)
         >>> print(sign)
-        >>> print(output)
         [-1.   1.]
+        >>> print(output)
         [2.80336046e+00    3.04452229e+00]
     """
     return log_matrix_determinant_(x)
