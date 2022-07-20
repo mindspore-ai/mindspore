@@ -18,13 +18,8 @@
 
 #include "pipeline/jit/parse/data_converter.h"
 #include <utility>
-#include <string>
-#include <memory>
-#include <vector>
-#include "utils/hash_map.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/pipeline.h"
-#include "include/common/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/func_graph_cloner.h"
@@ -37,7 +32,9 @@ namespace mindspore {
 namespace parse {
 namespace {
 struct PyDataToValueRegister {
-  PyDataToValueRegister() { python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue); }
+  PyDataToValueRegister() noexcept {
+    python_adapter::PyAdapterCallback::SetPyDataToValueHandler(data_converter::PyDataToValue);
+  }
 } callback_register;
 }  // namespace
 using Tensor = mindspore::tensor::Tensor;
@@ -624,8 +621,8 @@ const mindspore::HashMap<std::string, std::vector<FuncGraphPtr>> &GetObjGraphs()
 
 void CacheObjectValue(const std::string &obj_key, const ValuePtr &data) { object_map_[obj_key] = data; }
 
-bool GetObjectValue(const std::string &obj_key, ValuePtr *data) {
-  if (object_map_.count(obj_key)) {
+bool GetObjectValue(const std::string &obj_key, ValuePtr *const data) {
+  if (object_map_.count(obj_key) != 0) {
     *data = object_map_[obj_key];
     return true;
   }

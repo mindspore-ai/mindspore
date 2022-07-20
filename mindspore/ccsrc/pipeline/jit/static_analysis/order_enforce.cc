@@ -102,7 +102,7 @@ class OrderEnforcer {
     }
   }
 
-  bool HasLoadInput(const CNodePtr &cnode) {
+  bool HasLoadInput(const CNodePtr &cnode) const {
     auto &inputs = cnode->inputs();
     return std::any_of(inputs.begin() + 1, inputs.end(),
                        [](const AnfNodePtr &input) { return IsPrimitiveCNode(input, prim::kPrimLoad); });
@@ -192,7 +192,7 @@ class OrderEnforcer {
     AddInputEdges(update_state_cnode, maketuple_users);
   }
 
-  bool IsRef(const AnfNodePtr &node) {
+  bool IsRef(const AnfNodePtr &node) const {
     auto &abs = node->abstract();
     return abs != nullptr && abs->isa<abstract::AbstractRefTensor>();
   }
@@ -201,7 +201,7 @@ class OrderEnforcer {
     return IsPrimitiveCNode(node, prim::kPrimExpandDims) || IsPrimitiveCNode(node, prim::kPrimBatchNormGrad);
   }
 
-  bool IsSpecialParallelPrimitive(const AnfNodePtr &node) {
+  bool IsSpecialParallelPrimitive(const AnfNodePtr &node) const {
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
@@ -247,7 +247,7 @@ class OrderEnforcer {
     }
   }
 
-  bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) {
+  bool IsInUpdateState(const AnfNodePtr &load_user, const CNodePtr &update_state) const {
     MS_EXCEPTION_IF_NULL(update_state);
     const size_t attach_index = 2;
     const size_t input_size = update_state->inputs().size();
@@ -410,7 +410,7 @@ class OrderEnforcer {
     return ref_key->value();
   }
 
-  std::vector<CNodePtr> GetAllLoads(const AnfNodePtrList &check_nodes) {
+  std::vector<CNodePtr> GetAllLoads(const AnfNodePtrList &check_nodes) const {
     std::vector<CNodePtr> need_insert_loads;
     for (auto &node : check_nodes) {
       if (IsPrimitiveCNode(node, prim::kPrimLoad)) {
@@ -424,7 +424,7 @@ class OrderEnforcer {
   std::vector<CNodePtr> GetSpecialLoads(const std::map<std::string, std::vector<CNodePtr>> &loads_map1,
                                         const std::map<std::string, std::vector<CNodePtr>> &loads_map2,
                                         const std::map<std::string, std::vector<CNodePtr>> &loads_map3,
-                                        const std::set<CNodePtr> &call_lodes) {
+                                        const std::set<CNodePtr> &call_lodes) const {
     std::vector<CNodePtr> need_insert_loads;
     for (auto &refkey_load : loads_map1) {
       auto &loads = refkey_load.second;
@@ -456,7 +456,7 @@ class OrderEnforcer {
     return need_insert_loads;
   }
 
-  bool CheckLoadInput(const AnfNodePtr &input) {
+  bool CheckLoadInput(const AnfNodePtr &input) const {
     return IsPrimitiveCNode(input, prim::kPrimCall) || IsPrimitiveCNode(input, prim::kPrimPartial) ||
            (input->isa<CNode>() && (IsValueNode<FuncGraph>(input->cast<CNodePtr>()->input(0)) ||
                                     IsPrimitiveCNode(input->cast<CNodePtr>()->input(0), prim::kPrimSwitch) ||
@@ -549,7 +549,7 @@ void OrderEnforce(const FuncGraphPtr &func_graph) {
   OrderEnforcer enforcer(func_graph);
   enforcer.Run();
   auto fg_used_total = func_graph->func_graphs_used_total();
-  for (auto &fg : fg_used_total) {
+  for (const auto &fg : fg_used_total) {
     OrderEnforcer fg_enforcer(fg);
     fg_enforcer.Run();
   }
