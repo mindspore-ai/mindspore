@@ -123,7 +123,7 @@ class TrtLogger : public nvinfer1::ILogger {
     }
   }
   // Redirect Tensor-RT inner log to GLOG
-  void log(Severity severity, const char *msg) override {
+  void log(Severity severity, const char *msg) noexcept override {
 #ifdef USE_GLOG
 #define google mindspore_private
     static std::map<Severity, std::tuple<MsLogLevel, int, std::string>> logger_map = {

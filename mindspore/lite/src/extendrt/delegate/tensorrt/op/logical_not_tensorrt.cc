@@ -43,25 +43,26 @@ int LogicalNotTensorRT::IsSupport(const schema::Primitive *primitive,
 }
 
 int LogicalNotTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx == nullptr || ctx->network() == nullptr || this->tensorrt_in_tensors_.size() != 1) {
+  if (ctx == nullptr || ctx->network() == nullptr || this->in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  if (tensorrt_in_tensors_[0].trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
-    auto cast_layer = ctx->network()->addIdentity(*tensorrt_in_tensors_[0].trt_tensor_);
+  ITensorHelper input_helper = input(ctx, 0);
+  if (input_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
+    auto cast_layer = ctx->network()->addIdentity(*input_helper.trt_tensor_);
     if (cast_layer == nullptr) {
       MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
       return RET_ERROR;
     }
     cast_layer->setOutputType(0, nvinfer1::DataType::kINT32);
-    tensorrt_in_tensors_[0].trt_tensor_ = cast_layer->getOutput(0);
+    input_helper.trt_tensor_ = cast_layer->getOutput(0);
   }
   auto plugin = std::make_shared<LogicalNotPlugin>(op_name_, op_primitive_->value_type());
   if (plugin == nullptr) {
     MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << op_name_;
     return RET_ERROR;
   }
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_};
+  nvinfer1::ITensor *inputTensors[] = {input_helper.trt_tensor_};
   nvinfer1::IPluginV2Layer *logical_layer = ctx->network()->addPluginV2(inputTensors, 1, *plugin);
   this->layer_ = logical_layer;
   nvinfer1::ITensor *op_out_tensor = logical_layer->getOutput(0);
@@ -69,9 +70,8 @@ int LogicalNotTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "addElementWise out tensor is nullptr.";
     return RET_ERROR;
   }
-  op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{op_out_tensor, input_helper.format_, input_helper.same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 

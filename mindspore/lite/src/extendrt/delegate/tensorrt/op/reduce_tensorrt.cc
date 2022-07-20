@@ -44,14 +44,14 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   bool keep_dims = reduce_op->keep_dims();
-  out_format_ = tensorrt_in_tensors_[0].format_;
-  nvinfer1::ITensor *reduce_input = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(tensorrt_in_tensors_[0]);
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      !SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
-    if (tensorrt_in_tensors_[0].format_ == Format::NCHW) {
+  out_format_ = input(ctx, 0).format_;
+  nvinfer1::ITensor *reduce_input = input(ctx, 0).trt_tensor_;
+  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+      !SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape())) {
+    if (input(ctx, 0).format_ == Format::NCHW) {
       // NCHW->NHWC
-      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *input(ctx, 0).trt_tensor_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -60,9 +60,9 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
       reduce_input = transpose_layer->getOutput(0);
       out_format_ = Format::NHWC;
       this->transpose_layer_ = transpose_layer;
-    } else if (tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+    } else if (input(ctx, 0).format_ == Format::NHWC) {
       // NHWC->NCHW
-      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+      nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
       if (transpose_layer == nullptr) {
         MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
         return RET_ERROR;
@@ -108,9 +108,9 @@ int ReduceTensorRT::AddInnerOp(TensorRTContext *ctx) {
     sqrt_layer->setName((op_name_ + "_sqrt").c_str());
     out_tensor = sqrt_layer->getOutput(0);
   }
-  out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, out_format_, true});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{out_tensor, out_format_, true};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 

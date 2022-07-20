@@ -52,12 +52,12 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
 
-  nvinfer1::ITensor *resize_in_tensor = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(tensorrt_in_tensors_[0]);
+  nvinfer1::ITensor *resize_in_tensor = input(ctx, 0).trt_tensor_;
+  MS_LOG(DEBUG) << "origin input " << GetTensorFormat(input(ctx, 0));
 
-  if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+  if (resize_in_tensor->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
     // NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
     if (transpose_layer == nullptr) {
       MS_LOG(ERROR) << "create transpose layer failed for " << op_name_;
       return RET_ERROR;
@@ -73,7 +73,7 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "create resize layer failed for " << op_name_;
     return RET_ERROR;
   }
-  int ret = SetOutputDims(resize_in_tensor, resize_layer);
+  int ret = SetOutputDims(ctx, resize_in_tensor, resize_layer);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SetOutputDims failed for " << op_name_;
     return RET_ERROR;
@@ -85,19 +85,20 @@ int ResizeTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
 
-  resize_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{resize_layer->getOutput(0), Format::NCHW, false});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{resize_layer->getOutput(0), Format::NCHW, false};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   this->layer_ = resize_layer;
   return RET_OK;
 }
 
-int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer) {
+int ResizeTensorRT::SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor,
+                                  nvinfer1::IResizeLayer *resize_layer) {
   nvinfer1::Dims in_dims = resize_in_tensor->getDimensions();
-  if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_dynamic_ && in_dims.nbDims == DIMENSION_4D) {
+  if (ReadyInputsNumber(ctx) == 1 && !dynamic_shape_params_.support_dynamic_ && in_dims.nbDims == DIMENSION_4D) {
     nvinfer1::Dims4 new_dims(in_dims.d[0], in_dims.d[1], resize_op_->new_height(), resize_op_->new_width());  // nchw
     resize_layer->setOutputDimensions(new_dims);  // static shape
-  } else if (in_tensors_.size() == 1 && !dynamic_shape_params_.support_hw_dynamic_ &&
+  } else if (ReadyInputsNumber(ctx) == 1 && !dynamic_shape_params_.support_hw_dynamic_ &&
              dynamic_shape_params_.support_dynamic_ && in_dims.nbDims == DIMENSION_4D) {
     // hw is static, but has dynamic batch size
     float scales[DIMENSION_4D]{1, 1, 1, 1};
@@ -106,12 +107,12 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
     resize_layer->setScales(scales, DIMENSION_4D);
   } else {
     auto shape_value_tensor = in_tensors_[1];
-    if (shape_value_tensor.Data() == nullptr && tensorrt_in_tensors_.size() >= INPUT_SIZE2) {
+    if (shape_value_tensor.Data() == nullptr && in_tensors_.size() >= INPUT_SIZE2) {
       // dynamic output shape
-      resize_layer->setInput(1, *tensorrt_in_tensors_[1].trt_tensor_);
+      resize_layer->setInput(1, *input(ctx, 1).trt_tensor_);
     } else {
       std::vector<float> out_shape;
-      ParseValueFromShapeTensor(shape_value_tensor, &out_shape);
+      ParseValueFromShapeTensor(ctx, shape_value_tensor, &out_shape);
       if (SameDims(out_shape, out_tensors_[0].Shape())) {
         // static dims
         if (out_shape.size() == DIMENSION_4D) {
@@ -151,7 +152,7 @@ int ResizeTensorRT::SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1:
   return RET_OK;
 }
 
-void ResizeTensorRT::ParseValueFromShapeTensor(const mindspore::MSTensor &shape_value_tensor,
+void ResizeTensorRT::ParseValueFromShapeTensor(TensorRTContext *ctx, const mindspore::MSTensor &shape_value_tensor,
                                                std::vector<float> *out_shape) {
   switch (shape_value_tensor.DataType()) {
     case DataType::kNumberTypeFloat32: {
@@ -180,12 +181,10 @@ void ResizeTensorRT::ParseValueFromShapeTensor(const mindspore::MSTensor &shape_
                       << " more datatype need to check: " << static_cast<int>(shape_value_tensor.DataType());
       break;
   }
-  if (out_shape->size() == DIMENSION_2D &&
-      tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
+  if (out_shape->size() == DIMENSION_2D && input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D) {
     // out_shape: origin_n, out_shape[0], out_shape[1], origin_c
-    out_shape->insert(out_shape->begin(),
-                      tensorrt_in_tensors_[0].trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
-    out_shape->push_back(in_tensors_[0].Shape()[kNHWC_C]);                         // channel is const
+    out_shape->insert(out_shape->begin(), input(ctx, 0).trt_tensor_->getDimensions().d[0]);  // batch size is dynamic
+    out_shape->push_back(in_tensors_[0].Shape()[kNHWC_C]);                                   // channel is const
   }
 }
 

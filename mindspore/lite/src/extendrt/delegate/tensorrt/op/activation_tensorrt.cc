@@ -70,10 +70,9 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
   float alpha = activation_op->alpha();
-  nvinfer1::ITensor *activation_input = tensorrt_in_tensors_[0].trt_tensor_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
-    activation_input =
-      TRTTensorCast(ctx, tensorrt_in_tensors_[0].trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
+  nvinfer1::ITensor *activation_input = input(ctx, 0).trt_tensor_;
+  if (input(ctx, 0).trt_tensor_->getType() == nvinfer1::DataType::kINT32) {
+    activation_input = TRTTensorCast(ctx, input(ctx, 0).trt_tensor_, nvinfer1::DataType::kFLOAT, op_name_ + "_cast_in");
   }
 
   auto runtime_precision_mode = runtime_->GetRuntimePrecisionMode();
@@ -94,9 +93,8 @@ int ActivationTensorRT::AddInnerOp(TensorRTContext *ctx) {
     out_tensor = TRTTensorCast(ctx, activation_layer->getOutput(0), ConvertDataType(out_tensors_[0].DataType()),
                                op_name_ + "_cast_out");
   }
-  out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = activation_layer;
   return RET_OK;
 }

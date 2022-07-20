@@ -48,15 +48,17 @@ int LogicalTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  for (int i = 0; i != tensorrt_in_tensors_.size(); ++i) {
-    if (tensorrt_in_tensors_[i].trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
-      auto cast_layer = ctx->network()->addIdentity(*tensorrt_in_tensors_[0].trt_tensor_);
+  nvinfer1::ITensor *inputTensors[] = {input(ctx, 0).trt_tensor_, input(ctx, 1).trt_tensor_};
+  for (int i = 0; i != in_tensors_.size(); ++i) {
+    ITensorHelper input_helper = input(ctx, i);
+    if (input_helper.trt_tensor_->getType() != nvinfer1::DataType::kINT32) {
+      auto cast_layer = ctx->network()->addIdentity(*input_helper.trt_tensor_);
       if (cast_layer == nullptr) {
         MS_LOG(ERROR) << "create cast layer failed for: " << op_name_;
         return RET_ERROR;
       }
       cast_layer->setOutputType(0, nvinfer1::DataType::kINT32);
-      tensorrt_in_tensors_[0].trt_tensor_ = cast_layer->getOutput(0);
+      inputTensors[i] = cast_layer->getOutput(0);
     }
   }
   auto plugin = std::make_shared<LogicalPlugin>(op_name_, op_primitive_->value_type());
@@ -64,7 +66,6 @@ int LogicalTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "create ActivationOptPlugin failed for " << op_name_;
     return RET_ERROR;
   }
-  nvinfer1::ITensor *inputTensors[] = {tensorrt_in_tensors_[0].trt_tensor_, tensorrt_in_tensors_[1].trt_tensor_};
   nvinfer1::IPluginV2Layer *logical_layer = ctx->network()->addPluginV2(inputTensors, 2, *plugin);
   this->layer_ = logical_layer;
   nvinfer1::ITensor *op_out_tensor = logical_layer->getOutput(0);
@@ -72,9 +73,8 @@ int LogicalTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "addElementWise out tensor is nullptr.";
     return RET_ERROR;
   }
-  op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{op_out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 

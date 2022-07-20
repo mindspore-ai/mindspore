@@ -40,11 +40,11 @@ int UnaryTensorRT::IsSupport(const schema::Primitive *primitive, const std::vect
 }
 
 int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (ctx == nullptr || ctx->network() == nullptr || this->tensorrt_in_tensors_.size() != 1) {
+  if (ctx == nullptr || ctx->network() == nullptr) {
     MS_LOG(ERROR) << "network or input tensor is invalid";
     return RET_ERROR;
   }
-  nvinfer1::IUnaryLayer *cal_layer = ctx->network()->addUnary(*tensorrt_in_tensors_[0].trt_tensor_, unary_op_);
+  nvinfer1::IUnaryLayer *cal_layer = ctx->network()->addUnary(*input(ctx, 0).trt_tensor_, unary_op_);
   if (cal_layer == nullptr) {
     MS_LOG(ERROR) << "addUnary failed for: " << op_name_;
     return RET_ERROR;
@@ -64,9 +64,8 @@ int UnaryTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   nvinfer1::ITensor *op_out_tensor = cal_layer->getOutput(0);
-  op_out_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{op_out_tensor, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{op_out_tensor, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Sqrt, UnaryTensorRT)

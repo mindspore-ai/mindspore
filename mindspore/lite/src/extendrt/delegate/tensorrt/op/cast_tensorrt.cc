@@ -50,7 +50,7 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
   DataType data_type = static_cast<DataType>(type_data[0]);
   MS_LOG(DEBUG) << op_name_ << " cast to data type(43 float): " << type_data[0];
   nvinfer1::DataType dest_datatype = ConvertDataType(data_type);
-  auto trt_tensor = tensorrt_in_tensors_[0].trt_tensor_;
+  auto trt_tensor = input(ctx, 0).trt_tensor_;
 
 #if TRT_VERSION_GE(7, 2)
   dest_datatype = (dest_datatype == nvinfer1::DataType::kBOOL ? nvinfer1::DataType::kINT32 : dest_datatype);
@@ -69,9 +69,8 @@ int CastTensorRT::AddInnerOp(TensorRTContext *ctx) {
 #endif
   cast_layer->setName(op_name_.c_str());
   nvinfer1::ITensor *cast_out = cast_layer->getOutput(0);
-  cast_out->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(
-    ITensorHelper{cast_out, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_});
+  ctx->RegisterTensor(ITensorHelper{cast_out, input(ctx, 0).format_, input(ctx, 0).same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = cast_layer;
   return RET_OK;
 }

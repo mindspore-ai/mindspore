@@ -175,7 +175,9 @@ nvinfer1::ITensor *ConvertConstantTensor(TensorRTContext *ctx, const mindspore::
     return nullptr;
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
-  return constant_tensor->getOutput(0);
+  auto tensor_ptr = constant_tensor->getOutput(0);
+  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
+  return tensor_ptr;
 }
 
 nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const void *value,
@@ -193,6 +195,14 @@ nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_siz
   }
   ctx->RegisterLayer(constant_tensor, op_name + "_constant");
   return constant_tensor->getOutput(0);
+}
+
+nvinfer1::ITensor *ConvertScalarToITensor(TensorRTContext *ctx, size_t shape_size, const mindspore::MSTensor &ms_tensor,
+                                          const DataType data_type, const std::string &op_name) {
+  const void *value = ms_tensor.Data().get();
+  auto tensor_ptr = ConvertScalarToITensor(ctx, shape_size, value, data_type, op_name);
+  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
+  return tensor_ptr;
 }
 
 std::experimental::optional<ActivationParams> TryConvertActivationType(schema::ActivationType activation_type) {
@@ -276,7 +286,9 @@ nvinfer1::ITensor *ConvertTensorWithExpandDims(TensorRTContext *ctx, const minds
     return nullptr;
   }
   ctx->RegisterLayer(constant_tensor, ms_tensor.Name() + "_" + op_name);
-  return constant_tensor->getOutput(0);
+  auto tensor_ptr = constant_tensor->getOutput(0);
+  // ctx->RegisterTensor(tensor_ptr, ms_tensor.Name());
+  return tensor_ptr;
 }
 
 nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const mindspore::MSTensor &ms_tensor,
@@ -285,7 +297,7 @@ nvinfer1::ITensor *ConvertConstantTensorWithDims(TensorRTContext *ctx, const min
   std::string tensor_name = op_name + "_" + ms_tensor.Name();
   if (ms_tensor.Shape().size() == 0 || ms_tensor.ElementNum() == 1) {
     constant_input =
-      lite::ConvertScalarToITensor(ctx, expect_shape.size(), ms_tensor.Data().get(), ms_tensor.DataType(), tensor_name);
+      lite::ConvertScalarToITensor(ctx, expect_shape.size(), ms_tensor, ms_tensor.DataType(), tensor_name);
     if (constant_input == nullptr) {
       MS_LOG(ERROR) << "create Itensor from scalar tensor failed: " << tensor_name;
       return nullptr;
@@ -600,7 +612,7 @@ std::experimental::optional<nvinfer1::ReduceOperation> TryConvertTRTReduceMode(s
            ? std::experimental::optional<nvinfer1::ReduceOperation>(reduce_ops_[mode])
            : std::experimental::nullopt;
 }
-int PreprocessInputs2SameDim(TensorRTContext *ctx, const ITensorHelper &input_tensor_helper,
+int PreprocessInputs2SameDim(TensorRTContext *ctx, ITensorHelper input_tensor_helper,
                              ITensorHelper *out_tensor_helper) {
   out_tensor_helper->trt_tensor_ = input_tensor_helper.trt_tensor_;
   out_tensor_helper->format_ = input_tensor_helper.format_;
@@ -717,5 +729,12 @@ nvinfer1::ITensor *Reshape(TensorRTContext *ctx, nvinfer1::ITensor *input, const
   }
   reshape_layer->setReshapeDimensions(shape);
   return reshape_layer->getOutput(0);
+}
+
+void DebugDims(const nvinfer1::Dims &dims) {
+  MS_LOG(DEBUG) << "nbdim : " << dims.nbDims;
+  for (int i = 0; i != dims.nbDims; ++i) {
+    MS_LOG(DEBUG) << dims.d[i];
+  }
 }
 }  // namespace mindspore::lite

@@ -60,19 +60,17 @@ int PadTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   mindspore::MSTensor &pad_tensor = in_tensors_[1];
   int element_cnt = std::accumulate(pad_tensor.Shape().begin(), pad_tensor.Shape().end(), 1, std::multiplies<int>());
-  if (element_cnt != tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
+  if (element_cnt != input(ctx, 0).trt_tensor_->getDimensions().nbDims * INPUT_SIZE2) {
     MS_LOG(ERROR) << "pad tensor cnt is invalid. cnt: " << element_cnt
-                  << ", input tensor dims cnt: " << tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
+                  << ", input tensor dims cnt: " << input(ctx, 0).trt_tensor_->getDimensions().nbDims;
     return RET_ERROR;
   }
 
-  nvinfer1::ITensor *pad_input = tensorrt_in_tensors_[0].trt_tensor_;
-  MS_LOG(DEBUG) << "before transpose "
-                << GetTensorFormat(pad_input, tensorrt_in_tensors_[0].format_, tensorrt_in_tensors_[0].same_format_);
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+  nvinfer1::ITensor *pad_input = input(ctx, 0).trt_tensor_;
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(pad_input, input(ctx, 0).format_, input(ctx, 0).same_format_);
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -93,6 +91,7 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
     int h_post;
     int w_pre;
     int w_post;
+    // MS_LOG(INFO) << in_tensors_[0].format();
     if (SameDims(pad_input->getDimensions(), in_tensors_[0].Shape())) {
       // NCHW: 0: N_pre, 1: N_post, 2: C_pre, 3: C_post, 4: H_pre, 5: H_post, 6: W_pre, 7: W_post
       if (*padding_data != 0 || *(padding_data + 1) != 0 || *(padding_data + 2) != 0 || *(padding_data + 3) != 0) {
@@ -129,11 +128,12 @@ int PadTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   this->layer_ = padding_layer;
   padding_layer->setName(op_name_.c_str());
-  padding_layer->getOutput(0)->setName((op_name_ + "_output").c_str());
-  bool same_format = SameDims(padding_layer->getOutput(0)->getDimensions(), out_tensors_[0].Shape()) &&
-                     SameDims(tensorrt_in_tensors_[0].trt_tensor_->getDimensions(), in_tensors_[0].Shape());
-  this->AddInnerOutTensors(ITensorHelper{padding_layer->getOutput(0), Format::NCHW, same_format});
-  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  nvinfer1::ITensor *out_tensor = padding_layer->getOutput(0);
+  bool same_format = SameDims(out_tensor->getDimensions(), out_tensors_[0].Shape()) &&
+                     SameDims(input(ctx, 0).trt_tensor_->getDimensions(), in_tensors_[0].Shape());
+  auto output_helper = ITensorHelper{out_tensor, Format::NCHW, same_format};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "after transpose " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_PadFusion, PadTensorRT)

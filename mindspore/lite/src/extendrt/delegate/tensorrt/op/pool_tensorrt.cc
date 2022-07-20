@@ -42,22 +42,21 @@ int PoolTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 }
 
 int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
-  if (tensorrt_in_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "invalid input tensor size: " << tensorrt_in_tensors_.size();
+  if (in_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "invalid input tensor size: " << in_tensors_.size();
     return RET_ERROR;
   }
-  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(tensorrt_in_tensors_[0]);
+  MS_LOG(DEBUG) << "before transpose " << GetTensorFormat(input(ctx, 0));
   int ret = ParseParams();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParseParams failed for : " << op_name_;
     return RET_ERROR;
   }
 
-  nvinfer1::ITensor *pool_input = tensorrt_in_tensors_[0].trt_tensor_;
-  if (tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-      tensorrt_in_tensors_[0].format_ == Format::NHWC) {
+  nvinfer1::ITensor *pool_input = input(ctx, 0).trt_tensor_;
+  if (input(ctx, 0).trt_tensor_->getDimensions().nbDims == DIMENSION_4D && input(ctx, 0).format_ == Format::NHWC) {
     // transpose: NHWC->NCHW
-    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *tensorrt_in_tensors_[0].trt_tensor_);
+    nvinfer1::IShuffleLayer *transpose_layer_in = NHWC2NCHW(ctx, *input(ctx, 0).trt_tensor_);
     if (transpose_layer_in == nullptr) {
       MS_LOG(ERROR) << "transpose: NHWC->NCHW failed";
       return RET_ERROR;
@@ -96,9 +95,9 @@ int PoolTensorRT::AddInnerOp(TensorRTContext *ctx) {
     activation_layer->setName((op_name_ + "_activation").c_str());
   }
   nvinfer1::ITensor *out_trt_tensor = activation_layer->getOutput(0);
-  out_trt_tensor->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_trt_tensor, Format::NCHW, false});
-  MS_LOG(DEBUG) << "output " << GetTensorFormat(tensorrt_out_tensors_[0]);
+  auto output_helper = ITensorHelper{out_trt_tensor, Format::NCHW, false};
+  ctx->RegisterTensor(output_helper, out_tensors_[0].Name());
+  MS_LOG(DEBUG) << "output " << GetTensorFormat(output_helper);
   return RET_OK;
 }
 

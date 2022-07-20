@@ -53,25 +53,20 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
     MS_LOG(ERROR) << "context or network is invalid";
     return RET_ERROR;
   }
-  if (tensorrt_in_tensors_.size() < INPUT_SIZE2 && in_tensors_.size() >= INPUT_SIZE2) {
-    int const_ms_tensor_index = in_tensors_[0].IsConst() ? 0 : 1;
-    auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_ms_tensor_index], op_name_);
-    if (const_input == nullptr) {
-      MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
-      return RET_ERROR;
-    }
-    tensorrt_in_tensors_.push_back(ITensorHelper{const_input});
+  if (ReadyInputsNumber(ctx) == 1) {
+    int const_index = in_tensors_[0].IsConst() ? 0 : 1;
+    auto const_input = ConvertConstantTensor(ctx, in_tensors_[const_index], op_name_);
+    ctx->RegisterTensor(ITensorHelper{const_input}, in_tensors_[const_index].Name());
   }
 
-  int indices_tensor_index = tensorrt_in_tensors_[0].trt_tensor_->getType() == nvinfer1::DataType::kINT32 ? 0 : 1;
-  ITensorHelper gather_input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[1 - indices_tensor_index], &gather_input);
+  ITensorHelper gather_input = input(ctx, 0);
+  int ret = PreprocessInputs2SameDim(ctx, gather_input, &gather_input);
   if (ret != RET_OK || gather_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim gather failed for " << op_name_;
     return RET_ERROR;
   }
-  ITensorHelper indices_tensor;
-  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[indices_tensor_index], &indices_tensor);
+  ITensorHelper indices_tensor = input(ctx, 1);
+  ret = PreprocessInputs2SameDim(ctx, indices_tensor, &indices_tensor);
   if (ret != RET_OK || indices_tensor.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim indices failed for " << op_name_;
     return RET_ERROR;
@@ -100,8 +95,9 @@ int GatherTensorRT::AddInnerOp(TensorRTContext *ctx) {
     squeeze->setReshapeDimensions(ConvertCudaDims(old_shape));
     op_output = squeeze->getOutput(0);
   }
-  op_output->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_});
+
+  ctx->RegisterTensor(ITensorHelper{op_output, gather_input.format_, gather_input.same_format_},
+                      out_tensors_[0].Name());
   return RET_OK;
 }
 REGISTER_TENSORRT_CREATOR(schema::PrimitiveType_Gather, GatherTensorRT)

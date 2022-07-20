@@ -40,24 +40,23 @@ int PReluTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 
 int PReluTensorRT::AddInnerOp(TensorRTContext *ctx) {
   ITensorHelper prelu_input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &prelu_input);
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &prelu_input);
   if (ret != RET_OK || prelu_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
   int input_nbdims = prelu_input.trt_tensor_->getDimensions().nbDims;
   int slope_nbdims = in_tensors_[1].Shape().size();
-  auto slope = tensorrt_in_tensors_[1].trt_tensor_;
+  ITensorHelper slope_helper;
   if (input_nbdims != slope_nbdims) {
-    slope = ConvertTensorWithExpandDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + "_slope");
-    tensorrt_in_tensors_[1].trt_tensor_ = slope;
+    slope_helper.trt_tensor_ =
+      ConvertTensorWithExpandDims(ctx, in_tensors_[1], in_tensors_[0].Shape(), op_name_ + "_slope");
   }
-  if (slope == nullptr) {
+  if (slope_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
     return RET_ERROR;
   }
-  ITensorHelper slope_helper;
-  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[1], &slope_helper);
+  ret = PreprocessInputs2SameDim(ctx, slope_helper, &slope_helper);
   if (ret != RET_OK || slope_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim slope tensor failed for " << op_name_;
     return ret;
@@ -70,8 +69,7 @@ int PReluTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   nvinfer1::ITensor *out_tensor = prelu_layer->getOutput(0);
-  out_tensor->setName((op_name_ + "_0").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, prelu_input.format_, prelu_input.same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, prelu_input.format_, prelu_input.same_format_}, out_tensors_[0].Name());
   this->layer_ = prelu_layer;
   return RET_OK;
 }

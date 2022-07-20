@@ -46,33 +46,19 @@ int ScatterNdTensorRT::IsSupport(const mindspore::schema::Primitive *primitive,
 int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
 #if TRT_VERSION_GE(8, 2)
   ITensorHelper scatter_input;
-  int ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], &scatter_input);
+  int ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), &scatter_input);
   if (ret != RET_OK || scatter_input.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim input tensor failed for " << op_name_;
     return ret;
   }
-  if (tensorrt_in_tensors_.size() < INPUT_SIZE3) {
-    auto indices = ConvertConstantTensor(ctx, in_tensors_[1], op_name_ + "_indice");
-    if (indices == nullptr) {
-      MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
-      return RET_ERROR;
-    }
-    tensorrt_in_tensors_.push_back(ITensorHelper{indices});
-    auto updates = ConvertConstantTensor(ctx, in_tensors_[INPUT_SIZE2], op_name_ + "_update");
-    if (updates == nullptr) {
-      MS_LOG(ERROR) << "add const input tensor failed for " << op_name_;
-      return RET_ERROR;
-    }
-    tensorrt_in_tensors_.push_back(ITensorHelper{updates});
-  }
   ITensorHelper indices_helper;
-  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[1], &indices_helper);
+  ret = PreprocessInputs2SameDim(ctx, input(ctx, 1), &indices_helper);
   if (ret != RET_OK || indices_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim indices tensor failed for " << op_name_;
     return ret;
   }
   ITensorHelper updates_helper;
-  ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[INPUT_SIZE2], &updates_helper);
+  ret = PreprocessInputs2SameDim(ctx, input(ctx, INPUT_SIZE2), &updates_helper);
   if (ret != RET_OK || updates_helper.trt_tensor_ == nullptr) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim update tensor failed for " << op_name_;
     return ret;
@@ -86,8 +72,8 @@ int ScatterNdTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   nvinfer1::ITensor *out_tensor = scatter_layer->getOutput(0);
-  out_tensor->setName((op_name_ + "_0").c_str());
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, scatter_input.format_, scatter_input.same_format_});
+  ctx->RegisterTensor(ITensorHelper{out_tensor, scatter_input.format_, scatter_input.same_format_},
+                      out_tensors_[0].Name());
   this->layer_ = scatter_layer;
   return RET_OK;
 #else

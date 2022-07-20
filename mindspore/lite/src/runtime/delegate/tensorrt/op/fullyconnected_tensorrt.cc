@@ -80,14 +80,13 @@ int FullyConnectedTensorRT::AddInnerOp(TensorRTContext *ctx) {
     out_tensor = activation_layer->getOutput(0);
   }
 
-  out_tensor->setName((op_name_ + "_output").c_str());
+  ctx->RegisterTensor(ITensorHelper{out_tensor, fc_input.format_}, out_tensors_[0].Name());
   MS_LOG(DEBUG) << "output " << GetTensorFormat(out_tensor);
-  this->AddInnerOutTensors(ITensorHelper{out_tensor, fc_input.format_});
   return RET_OK;
 }
 
 int FullyConnectedTensorRT::PreprocessInputs(TensorRTContext *ctx, ITensorHelper *fc_input) {
-  auto ret = PreprocessInputs2SameDim(ctx, tensorrt_in_tensors_[0], fc_input);
+  auto ret = PreprocessInputs2SameDim(ctx, input(ctx, 0), fc_input);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreprocessInputs2SameDim failed for " << op_name_;
     return ret;

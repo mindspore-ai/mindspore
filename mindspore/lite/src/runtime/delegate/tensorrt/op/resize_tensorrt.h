@@ -37,9 +37,10 @@ class ResizeTensorRT : public TensorRTOp {
                 const std::vector<mindspore::MSTensor> &out_tensors) override;
 
  private:
-  int SetOutputDims(nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer);
+  int SetOutputDims(TensorRTContext *ctx, nvinfer1::ITensor *resize_in_tensor, nvinfer1::IResizeLayer *resize_layer);
 
-  void ParseValueFromShapeTensor(const mindspore::MSTensor &shape_value_tensor, std::vector<float> *out_shape);
+  void ParseValueFromShapeTensor(TensorRTContext *ctx, const mindspore::MSTensor &shape_value_tensor,
+                                 std::vector<float> *out_shape);
 
   bool IsScaleOutputDim(const std::vector<int64_t> &in_shape, const std::vector<int64_t> &out_shape,
                         const std::vector<float> &shape_tensor_val);

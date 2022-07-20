@@ -60,7 +60,7 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "createOptimizationProfile failed.";
     return RET_ERROR;
   }
-  ctx_ = new (std::nothrow) TensorRTContext();
+  ctx_ = new TensorRTContext();
   if (ctx_ == nullptr) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
     return RET_OK;
@@ -145,7 +145,7 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
 
   // config setMaxWorkspaceSize to 1152 MB for max limit
-  config_->setMaxWorkspaceSize(1152 * (1 << 20));
+  config_->setMaxWorkspaceSize(2047 * (1 << 20));
   return RET_OK;
 }
 
@@ -233,6 +233,9 @@ nvinfer1::Dims TensorRTSubGraph::ParseInputDimsProfile(const mindspore::MSTensor
     MS_LOG(ERROR) << "setDimensions of kMAX failed for " << in_tensor.Name();
     return input_dims;
   }
+  DebugDims(input_dims_min);
+  DebugDims(input_dims_opt);
+  DebugDims(input_dims_max);
   return input_dims;
 }
 
@@ -271,7 +274,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           trt_tensor = TRTTensorCast(ctx_, trt_tensor, nvinfer1::DataType::kINT32, in_tensor.Name() + "_cast_int32");
         }
 #endif
-        cur_op->AddInnerInTensors(ITensorHelper{trt_tensor, in_tensor.format(), true});
+        ctx_->RegisterTensorWithSameName(ITensorHelper{trt_tensor, in_tensor.format(), true}, in_tensor.Name());
         continue;
       }
 
@@ -292,10 +295,10 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx_, in_tensor, cur_op->GetOpName());
           trt_tensor.format_ = Format::NHWC;
           MS_LOG(INFO) << "auto convert constant tensor for: " << in_tensor.Name();
-          cur_op->AddInnerInTensors(trt_tensor);
+          ctx_->RegisterTensor(trt_tensor, in_tensor.Name());
         }
       } else {
-        cur_op->AddInnerInTensors(trt_tensor);
+        ctx_->RegisterTensor(trt_tensor, in_tensor.Name());
       }
     }
     MS_LOG(DEBUG) << "Parsing TensorRT op for " << cur_op->GetOpName();
@@ -305,7 +308,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
       MS_LOG(ERROR) << "Add op failed in TensorRT network: " << cur_op->GetOpName();
       return RET_ERROR;
     }
-    ret = cur_op->SetInt8DynamicRange();
+    ret = cur_op->SetInt8DynamicRange(ctx_);
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Set Int8 dynamic range failed in TensorRT network: " << cur_op->GetOpName();
       return RET_ERROR;
@@ -336,13 +339,13 @@ int TensorRTSubGraph::MarkOutputs() {
       for (size_t index = 0; index < out_op->outputs().size(); index++) {
         if (out_op->outputs()[index] == out_tensor) {
           MS_LOG(INFO) << "markOutput for: " << out_tensor.Name();
-          nvinfer1::ITensor *out_trt_tensor = out_op->GetInnerOutTensor()[index].trt_tensor_;
-          if (out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
-              out_op->GetInnerOutTensor()[index].format_ == Format::NCHW &&
-              !SameDims(out_op->GetInnerOutTensor()[index].trt_tensor_->getDimensions(), out_tensor.Shape())) {
+          auto output_helper = out_op->output(ctx_, index);
+          nvinfer1::ITensor *out_trt_tensor = output_helper.trt_tensor_;
+          if (output_helper.trt_tensor_->getDimensions().nbDims == DIMENSION_4D &&
+              output_helper.format_ == Format::NCHW &&
+              !SameDims(output_helper.trt_tensor_->getDimensions(), out_tensor.Shape())) {
             // transpose subgraph output from nchw to nhwc
-            nvinfer1::IShuffleLayer *transpose_layer_out =
-              NCHW2NHWC(ctx_, *out_op->GetInnerOutTensor()[index].trt_tensor_);
+            nvinfer1::IShuffleLayer *transpose_layer_out = NCHW2NHWC(ctx_, *output_helper.trt_tensor_);
             if (transpose_layer_out == nullptr) {
               MS_LOG(ERROR) << "op action convert failed";
               return RET_ERROR;
@@ -350,7 +353,8 @@ int TensorRTSubGraph::MarkOutputs() {
             transpose_layer_out->setName((out_tensor.Name() + "_transpose2NHWC").c_str());
             out_trt_tensor = transpose_layer_out->getOutput(0);
           }
-
+          out_trt_tensor->setName(("__" + out_tensor.Name()).c_str());
+          out_trt_tensor = ctx_->network()->addIdentity(*out_trt_tensor)->getOutput(0);
           out_trt_tensor->setName(out_tensor.Name().c_str());
           ctx_->network()->markOutput(*out_trt_tensor);
           for (int n = 0; n < out_trt_tensor->getDimensions().nbDims; n++) {
@@ -382,7 +386,7 @@ int TensorRTSubGraph::Prepare() {
   }
   int binding_num = this->engine_->getNbBindings();
   if (binding_num < 0) {
-    MS_LOG(ERROR) << "invalid binding_num " << binding_num;
+    MS_LOG(ERROR) << "TensorRTSubGraph binding num < 0.";
     return RET_ERROR;
   }
   tensor_bindings_ = new (std::nothrow) void *[binding_num];
@@ -437,7 +441,7 @@ int TensorRTSubGraph::Prepare() {
     }
   }
   for (auto tensor : outputs_) {
-    (void)tensor.MutableData();
+    tensor.MutableData();
     auto device_ptr = runtime_->GetAllocator()->MallocDeviceMem(tensor, tensor.DataSize());
     if (device_ptr == nullptr) {
       MS_LOG(ERROR) << "malloc for outputs tensor device memory failed.";
@@ -614,7 +618,7 @@ ITensorHelper TensorRTSubGraph::FindTensorRTInputs(TensorRTOp *cur_op, const min
     for (size_t i = 0; i < input_op->outputs().size(); i++) {
       auto out_tensor = input_op->outputs().at(i);
       if (in_tensor.Name().compare(out_tensor.Name()) == 0) {
-        return input_op->GetInnerOutTensor().at(i);
+        return input_op->output(ctx_, i);
       }
     }
   }
@@ -679,7 +683,7 @@ int TensorRTSubGraph::HandleCacheTensor(TensorRTOp *cur_op, const mindspore::MST
     return RET_ERROR;
   }
   ITensorHelper trt_tensor{cache_input, Format::NHWC, true};
-  cur_op->AddInnerInTensors(trt_tensor);
+  ctx_->RegisterTensor(trt_tensor, in_tensor.Name());
   return RET_OK;
 }
 }  // namespace mindspore::lite

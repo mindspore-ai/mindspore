@@ -113,7 +113,7 @@ bool CumSumGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs, con
     Reshape();
   }
   CumSum(input_addr, output_addr, ws_addr, dims_[kIndex0], dims_[kIndex1], dims_[kIndex2], stride_, stride2_,
-         exclusive_, reverse_, cuda_stream);
+         exclusive_, reverse_, device_id_, cuda_stream);
   return true;
 }
 

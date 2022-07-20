@@ -54,13 +54,13 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     return RET_ERROR;
   }
 
-  if (tensorrt_in_tensors_.size() != in_tensors_.size()) {
-    MS_LOG(ERROR) << "concate_op in tensor is invalid, trt tensor has " << tensorrt_in_tensors_.size()
+  if (in_tensors_.size() != in_tensors_.size()) {
+    MS_LOG(ERROR) << "concate_op in tensor is invalid, trt tensor has " << in_tensors_.size()
                   << ", but origin ms tensor has " << in_tensors_.size();
     return RET_ERROR;
   }
 
-  nvinfer1::ITensor *trt_input_tensors[tensorrt_in_tensors_.size()];
+  nvinfer1::ITensor *trt_input_tensors[in_tensors_.size()];
   int ret = PreProcessInputs(ctx, trt_input_tensors);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "PreProcessInputs failed for " << op_name_;
@@ -78,7 +78,7 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
 
   if (type_ == schema::PrimitiveType_Stack) {
-    for (size_t i = 0; i != tensorrt_in_tensors_.size(); ++i) {
+    for (size_t i = 0; i != in_tensors_.size(); ++i) {
       auto shuffle_layer = ctx->network()->addShuffle(*trt_input_tensors[i]);
       if (shuffle_layer == nullptr) {
         MS_LOG(ERROR) << "addShuffle failed for TensorRT.";
@@ -94,7 +94,7 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
     }
   }
   nvinfer1::IConcatenationLayer *concate_layer =
-    ctx->network()->addConcatenation(trt_input_tensors, static_cast<int>(tensorrt_in_tensors_.size()));
+    ctx->network()->addConcatenation(trt_input_tensors, static_cast<int>(in_tensors_.size()));
   if (concate_layer == nullptr) {
     MS_LOG(ERROR) << "addConcatenation failed for TensorRT.";
     return RET_ERROR;
@@ -105,36 +105,35 @@ int ConcateTensorRT::AddInnerOp(TensorRTContext *ctx) {
   }
   concate_layer->setName(op_name_.c_str());
   auto concat_output = concate_layer->getOutput(0);
-  concat_output->setName((op_name_ + "_output").c_str());
-  this->AddInnerOutTensors(ITensorHelper{concat_output, out_format_, same_format_});
+  ctx->RegisterTensor(ITensorHelper{concat_output, out_format_, same_format_}, out_tensors_[0].Name());
   this->layer_ = concate_layer;
   return RET_OK;
 }
 
 int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *trt_input_tensors[]) {
-  int input_nbDims = tensorrt_in_tensors_[0].trt_tensor_->getDimensions().nbDims;
-  out_format_ = tensorrt_in_tensors_[0].format_;
-  same_format_ = tensorrt_in_tensors_[0].same_format_;
+  int input_nbDims = input(ctx, 0).trt_tensor_->getDimensions().nbDims;
+  out_format_ = input(ctx, 0).format_;
+  same_format_ = input(ctx, 0).same_format_;
 
-  for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
-    if (tensorrt_in_tensors_[i].trt_tensor_->getDimensions().nbDims != input_nbDims) {
+  for (size_t i = 0; i < in_tensors_.size(); i++) {
+    if (input(ctx, i).trt_tensor_->getDimensions().nbDims != input_nbDims) {
       MS_LOG(ERROR) << "dims of inputs is invalid for " << op_name_;
       return RET_ERROR;
     }
     // keep origin format if all input format are the same
-    if (input_nbDims == DIMENSION_4D && tensorrt_in_tensors_[i].format_ != out_format_) {
+    if (input_nbDims == DIMENSION_4D && input(ctx, i).format_ != out_format_) {
       out_format_ = Format::NHWC;
     }
   }
 
   // make sure all inputs are same format
   if (input_nbDims == DIMENSION_4D) {
-    for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
-      if (tensorrt_in_tensors_[i].format_ == out_format_) {
-        trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
-        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
+    for (size_t i = 0; i < in_tensors_.size(); i++) {
+      if (input(ctx, i).format_ == out_format_) {
+        trt_input_tensors[i] = input(ctx, i).trt_tensor_;
+        MS_LOG(DEBUG) << "concate input " << GetTensorFormat(input(ctx, i));
       } else {
-        nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *tensorrt_in_tensors_[i].trt_tensor_);
+        nvinfer1::IShuffleLayer *transpose_layer = NCHW2NHWC(ctx, *input(ctx, i).trt_tensor_);
         if (transpose_layer == nullptr) {
           MS_LOG(ERROR) << "op action convert failed";
           return RET_ERROR;
@@ -146,9 +145,9 @@ int ConcateTensorRT::PreProcessInputs(TensorRTContext *ctx, nvinfer1::ITensor *t
       }
     }
   } else {
-    for (size_t i = 0; i < tensorrt_in_tensors_.size(); i++) {
-      trt_input_tensors[i] = tensorrt_in_tensors_[i].trt_tensor_;
-      MS_LOG(DEBUG) << "concate input " << GetTensorFormat(tensorrt_in_tensors_[i]);
+    for (size_t i = 0; i < in_tensors_.size(); i++) {
+      trt_input_tensors[i] = input(ctx, i).trt_tensor_;
+      MS_LOG(DEBUG) << "concate input " << GetTensorFormat(input(ctx, i));
     }
   }
   return RET_OK;
