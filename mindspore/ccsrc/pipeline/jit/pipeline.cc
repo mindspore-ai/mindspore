@@ -1815,12 +1815,14 @@ py::bytes PyDecrypt(const std::string &encrypt_data_path, char *key, size_t key_
 bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFile(file_path); }
 
 void FinalizeCluster() {
+  MS_LOG(INFO) << "Start finalize the cluster instance.";
 #ifdef WITH_BACKEND
   if (distributed::cluster::ClusterContext::instance()->initialized()) {
     runtime::EmbeddingCacheScheduler::GetInstance().Finalize();
     (void)distributed::cluster::ClusterContext::instance()->Finalize(UINT32_MAX);
   }
 #endif
+  MS_LOG(INFO) << "End finalize the cluster instance.";
 }
 }  // namespace pipeline
 }  // namespace mindspore
