@@ -23,6 +23,7 @@ apply_rms_prop_op_info = TBERegOp("ApplyRMSProp") \
     .compute_cost(10) \
     .kernel_name("apply_rms_prop_d") \
     .partial_flag(True) \
+    .dynamic_shape(True) \
     .attr("rho", "required", "float", "all") \
     .attr("momentum", "required", "float", "all") \
     .attr("epsilon", "required", "float", "all") \
