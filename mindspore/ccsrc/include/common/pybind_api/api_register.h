@@ -66,7 +66,7 @@ class COMMON_EXPORT PybindDefineRegister {
 
 class PybindDefineRegisterer {
  public:
-  PybindDefineRegisterer(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) {
+  PybindDefineRegisterer(const std::string &name, const std::string &parent_name, const PybindDefineFunc &fn) noexcept {
     PybindDefineRegister::Register(name, parent_name, fn);
   }
   ~PybindDefineRegisterer() = default;

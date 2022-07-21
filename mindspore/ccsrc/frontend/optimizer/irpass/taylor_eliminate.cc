@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <string>
-#include "ir/func_graph_cloner.h"
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
+#include <string>
+#include <vector>
+#include "ir/func_graph_cloner.h"
 #include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
@@ -24,12 +24,13 @@ namespace opt {
 namespace irpass {
 namespace internal {
 // White list of ops with taylor rule.
-mindspore::HashSet<std::string> taylor_ops{prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(),
-                                           prim::kPrimMul->name(), prim::kPrimSin->name(), prim::kPrimCos->name(),
-                                           prim::kPrimTan->name(), prim::kPrimExp->name(), prim::kPrimLog->name()};
+const mindspore::HashSet<std::string> taylor_ops{
+  prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(),
+  prim::kPrimMul->name(), prim::kPrimSin->name(), prim::kPrimCos->name(),
+  prim::kPrimTan->name(), prim::kPrimExp->name(), prim::kPrimLog->name()};
 // The ops below are excluded when considering taylor rules.
-mindspore::HashSet<std::string> taylor_exception_ops{prim::kPrimReturn->name(), prim::kPrimMakeTuple->name(),
-                                                     prim::kPrimTupleGetItem->name(), prim::kPrimCast->name()};
+const mindspore::HashSet<std::string> taylor_exception_ops{prim::kPrimReturn->name(), prim::kPrimMakeTuple->name(),
+                                                           prim::kPrimTupleGetItem->name(), prim::kPrimCast->name()};
 
 // Cache list of primitive ops which have been replaced by taylor rule.
 mindspore::HashMap<PrimitivePtr, FuncGraphPtr> taylor_ops_cache_;
@@ -101,9 +102,9 @@ FuncGraphPtr TaylorFunctor(const FuncGraphPtr &func_graph, const pipeline::Resou
     MS_EXCEPTION_IF_NULL(node);
     if (IsValueNode<Primitive>(node)) {
       auto prim_node = GetValueNode<PrimitivePtr>(node);
-      if (taylor_ops.count(prim_node->name())) {
+      if (taylor_ops.count(prim_node->name()) > 0) {
         taylor_node_list.push_back(node);
-      } else if (!taylor_exception_ops.count(prim_node->name())) {
+      } else if (taylor_exception_ops.count(prim_node->name()) == 0) {
         MS_LOG(EXCEPTION) << "The operation " << prim_node->name()
                           << " is not supported in taylor higher order differentiation currently.";
       }
@@ -111,7 +112,7 @@ FuncGraphPtr TaylorFunctor(const FuncGraphPtr &func_graph, const pipeline::Resou
   }
   for (size_t i = 0; i < taylor_node_list.size(); i++) {
     FuncGraphPtr taylor_node_graph = GetTaylorPrimitive(taylor_node_list[i], resources);
-    manager->Replace(taylor_node_list[i], NewValueNode(taylor_node_graph));
+    (void)manager->Replace(taylor_node_list[i], NewValueNode(taylor_node_graph));
   }
   taylor_ops_cache_.clear();
   MS_LOG(INFO) << "return replaced taylor node: " << func_graph->ToString() << " replace end.";
@@ -131,7 +132,7 @@ AnfNodePtr ExpandTaylor(const ValueNodePtr &vnode, const pipeline::ResourceBaseP
 }
 }  // namespace internal
 
-bool ExpandTaylorPrim::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer) {
+bool ExpandTaylorPrim::operator()(const FuncGraphPtr &, const OptimizerPtr &optimizer) {
   // Search all taylor nodes.
   bool change = false;
   auto manager = optimizer->manager();
@@ -148,7 +149,7 @@ bool ExpandTaylorPrim::operator()(const FuncGraphPtr &func_graph, const Optimize
     auto taylor_fg_copy_node = NewValueNode(taylor_fg_copy);
     // Return expanded taylor graph.
     auto expanded_taylor = internal::ExpandTaylor(taylor_fg_copy_node->cast<ValueNodePtr>(), optimizer->resource());
-    manager->Replace(taylor_node, expanded_taylor);
+    (void)manager->Replace(taylor_node, expanded_taylor);
     change = true;
   }
   return change;

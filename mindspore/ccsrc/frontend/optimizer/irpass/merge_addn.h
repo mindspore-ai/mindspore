@@ -52,7 +52,7 @@ class MergeAddN : public AnfVisitor {
     auto addn = NewValueNode(GetValueNode(cnode->input(0)));
 
     // {prim::kPrimMakeTuple, Xs, Ys}, {prim::kPrimMakeTuple, Ys, Xs}
-    (void)args_.insert(args_.begin(), NewValueNode(prim::kPrimMakeTuple));
+    (void)args_.insert(args_.cbegin(), NewValueNode(prim::kPrimMakeTuple));
     auto fg = node->func_graph();
     auto make_node = fg->NewCNode(args_);
 
@@ -90,9 +90,9 @@ class MergeAddN : public AnfVisitor {
         }
 
         addn_nodes_.push_back(first_input);
-        (void)Ys_.erase(Ys_.begin());
-        (void)std::copy(Xs_.begin(), Xs_.end(), std::back_inserter(args_));
-        (void)std::copy(Ys_.begin(), Ys_.end(), std::back_inserter(args_));
+        (void)Ys_.erase(Ys_.cbegin());
+        (void)std::copy(Xs_.cbegin(), Xs_.cend(), std::back_inserter(args_));
+        (void)std::copy(Ys_.cbegin(), Ys_.cend(), std::back_inserter(args_));
         return;
       }
 

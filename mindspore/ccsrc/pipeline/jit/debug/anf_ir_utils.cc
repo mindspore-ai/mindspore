@@ -50,7 +50,7 @@ using mindspore::tensor::TensorPy;
 namespace mindspore {
 namespace {
 struct AnfDumpHandlerRegister {
-  AnfDumpHandlerRegister() {
+  AnfDumpHandlerRegister() noexcept {
     AnfDumpHandler::SetDumpDatHandler([](const std::string &realpath, const FuncGraphPtr &graph) {
       AnfExporter exporter("");
       std::string realpath_dat = realpath + ".dat";
@@ -131,12 +131,12 @@ int AnfExporter::GetParamIndexFromExported(const AnfNodePtr &param) {
   return ret;
 }
 
-std::string AnfExporter::GetValueNodeText(const FuncGraphPtr &fg, const ValueNodePtr &node) {
+std::string AnfExporter::GetValueNodeText(const FuncGraphPtr &func_graph, const ValueNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  return GetValueText(fg, node->value());
+  return GetValueText(func_graph, node->value());
 }
 
-std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) {
+std::string AnfExporter::GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) const {
   auto py_funcs = mt_func_graph->GetPyFunctions();
   if (py_funcs.empty()) {
     return "";
@@ -241,7 +241,7 @@ std::string AnfExporter::GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_
   return oss.str();
 }
 
-std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) {
+std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) const {
   std::ostringstream oss;
   if (prim == nullptr) {
     return oss.str();
@@ -264,7 +264,7 @@ std::string AnfExporter::GetPrimitiveText(const PrimitivePtr &prim) {
   return oss.str();
 }
 
-std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) {
+std::string AnfExporter::GetNameSpaceText(const parse::NameSpacePtr &ns) const {
   std::ostringstream oss;
   if (ns == nullptr) {
     return oss.str();
@@ -344,7 +344,7 @@ std::string AnfExporter::GetDictText(const FuncGraphPtr &func_graph, const Value
   return oss.str();
 }
 
-std::string AnfExporter::GetOtherValueText(const FuncGraphPtr &, const ValuePtr &value) {
+std::string AnfExporter::GetOtherValueText(const ValuePtr &value) const {
   std::ostringstream oss;
 
   if (check_integrity_) {
@@ -390,7 +390,7 @@ std::string AnfExporter::GetValueText(const FuncGraphPtr &func_graph, const Valu
   if (CanUseDumpText(value)) {
     return value->DumpText();
   }
-  return GetOtherValueText(func_graph, value);
+  return GetOtherValueText(value);
 }
 
 // This function is used to output node in CNode's inputs
@@ -572,7 +572,7 @@ void AnfExporter::OutputCNodes(std::ostringstream &oss, const std::vector<AnfNod
   }
 }
 
-void AnfExporter::OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph) {
+void AnfExporter::OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph) const {
   auto &order_list = func_graph->order_list();
   if (order_list.empty()) {
     return;
@@ -644,7 +644,7 @@ void AnfExporter::ExportFuncGraph(const std::string &filename, const FuncGraphPt
   TaggedNodeMap tagged_cnodes_map;
   func_graph_set.add(func_graph);
   while (!func_graph_set.empty()) {
-    FuncGraphPtr fg = *func_graph_set.begin();
+    FuncGraphPtr fg = *func_graph_set.cbegin();
     ExportOneFuncGraph(buffer, fg, tagged_cnodes_map);
     buffer << "\n\n";
     (void)func_graph_set.erase(fg);

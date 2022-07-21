@@ -17,13 +17,11 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_ROW_TENSOR_ELIMINATE_H_
 
-#include <vector>
-#include <algorithm>
-
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
+#include "ir/pattern_matcher.h"
 
 namespace mindspore {
 namespace opt {
