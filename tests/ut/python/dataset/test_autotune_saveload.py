@@ -17,7 +17,6 @@ Test Dataset AutoTune's Save and Load Configuration support
 """
 import os
 import json
-import random
 import numpy as np
 import pytest
 import mindspore.dataset as ds
@@ -46,7 +45,7 @@ class TestAutotuneSaveLoad:
 
     @staticmethod
     def setup_method():
-        os.environ['RANK_ID'] = str(random.randint(0, 9))
+        os.environ['RANK_ID'] = '0'
 
     @staticmethod
     def teardown_method():
