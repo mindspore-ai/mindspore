@@ -588,6 +588,114 @@ class SparseConcat(Primitive):
         validator.check_value_type("concat_dim", concat_dim, [int], self.name)
 
 
+class SparseSegmentSqrtN(Primitive):
+    """
+    Computes the sum along sparse segments of a tensor divided by the sqrt of N.
+    N is the size of the segment being reduced.
+
+    Inputs:
+        - **x** (Tensor) - A tensor.
+        - **indices** (Tensor) - Indices is a 1-D tensor. Must be one of the following types: int32, int64.
+          Has same rank as segment_ids. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids is a 1-D tensor. Must be one of the following types: int32, int64.
+          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the number of segments.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` is not a tensor.
+        TypeError: If the dtype of `x` is not any of the following data types: {float16, float32, float64}.
+        TypeError: If the dtype of `indices` is not int32 or int64.
+        TypeError: If the dtype of `segment_ids` is not int32 or int64.
+        ValueError: If dimension size of `x` less than 1.
+        ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
+        ValueError: If shape[0] of `indices` is not corresponding to shape[0] of `segment_ids`.
+        ValueError: If indices in `segment_ids` are not contiguous or do not start from 0.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If `indices` is out of range of x's first shape.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]).astype(np.float32))
+        >>> indices = Tensor(np.array([0,1,2]).astype(np.int32))
+        >>> segment_ids = Tensor(np.array([0,1,2]).astype(np.int32))
+        >>> sparse_segment_sqrt_n = SparseSegmentSqrtN()
+        >>> output = sparse_segment_sqrt_n(x, indices, segment_ids)
+        >>> print(output)
+        [[ 1.  2.  3.  4.]
+        [ 5.  6.  7.  8.]
+        [ 9. 10. 11. 12.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentSqrtN"""
+        self.init_prim_io_names(
+            inputs=['x', 'indices', 'segment_ids'], outputs=['y'])
+
+
+class SparseSegmentSqrtNWithNumSegments(Primitive):
+    """
+    Computes the sum along sparse segments of a tensor divided by the sqrt of N.
+    N is the size of the segment being reduced.
+    Like SparseSegmentSqrtN, but allows missing ids in segment_ids.
+    If an id is missing, the output tensor at that position will be zeroed.
+
+    Inputs:
+        - **x** (Tensor) - A Tensor.
+        - **indices** (Tensor) - 1-D Tensor. Must be one of the following types: int32, int64.
+          Has same rank as segment_ids. The shape should be :math:`(N,)`.
+        - **segment_ids** (Tensor) - Segment_ids: 1-D Tensor. Must be one of the following types: int32, int64.
+          Values should be sorted and can be repeated. The shape should be :math:`(N,)`.
+        - **num_segments** (Tensor) - Num_segments should equal the number of distinct segment_ids.
+
+    Outputs:
+        A Tensor. Has the same type as `x` .
+        Has same shape as `x`, except for dimension 0 which is the value of `num_segments`.
+
+    Raises:
+        TypeError: If `x` or `indices` or `segment_ids` or `num_segments` is not a tensor.
+        TypeError: If the dtype of `x` is not any of the following data types: {float16, float32, float64}.
+        TypeError: If the dtype of `indices` and `segment_ids` and `num_segments` is not int32 or int64.
+        TypeError: If dtype of `segment_ids` and `indices` mismatch.
+        TypeError: If dtype of `num_segments` and `indices` mismatch.
+        ValueError: If dimension size of `x` less than 1.
+        ValueError: If any of `indices` and `segment_ids` is not a 1-D tensor.
+        ValueError: If rank of `num_segments` is bigger than 1.
+        ValueError: If numelements of `num_segments` is not 1.
+        ValueError: If the first dimension of `indices` is not equal to the first dimension of `segment_ids`.
+        ValueError: If `segment_ids` is not sorted.
+        ValueError: If the last number of `segment_ids` is bigger than or equal to `num_segments`.
+        ValueError: If `indices` is out of range of x's first shape.
+
+    Supported Platforms:
+        ``Ascend`` ``CPU``
+
+    Examples:
+        >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
+        >>> indices = Tensor([0, 2, 1], dtype=ms.int32)
+        >>> segment_ids = Tensor([0, 1, 2], dtype=ms.int32)
+        >>> num_segments = Tensor([4], dtype=ms.int32)
+        >>> sparse_segment_sqrt_n_with_num_segments = SparseSegmentSqrtNWithNumSegments()
+        >>> output = sparse_segment_sqrt_n_with_num_segments(x, indices, segment_ids, num_segments)
+        >>> print(output)
+        [[0. 1. 0. 0.]
+         [1. 0. 1. 0.]
+         [0. 1. 1. 0.]
+         [0. 0. 0. 0.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SparseSegmentSqrtNWithNumSegments"""
+        self.init_prim_io_names(
+            inputs=['x', 'indices', 'segment_ids', 'num_segemnts'], outputs=['y'])
+
+
 class SparseMatrixNNZ(Primitive):
     r"""
     Count number of the non-zero elements in sparse matrix or sparse matrixs.

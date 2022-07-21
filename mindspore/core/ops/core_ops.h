@@ -120,6 +120,9 @@ constexpr auto kCross = "Cross";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kNextAfter = "NextAfter";
 constexpr auto kSparseSegmentMean = "SparseSegmentMean";
+constexpr auto kSparseSegmentSqrtN = "SparseSegmentSqrtN";
+constexpr auto kSparseSegmentSqrtNGrad = "SparseSegmentSqrtNGrad";
+constexpr auto kSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
 constexpr auto kTridiagonalMatMul = "TridiagonalMatMul";
 constexpr auto kFFTWithSize = "FFTWithSize";
 
@@ -1085,6 +1088,10 @@ GVAR_DEF(PrimitivePtr, kPrimBucketize, std::make_shared<Primitive>("Bucketize"))
 GVAR_DEF(PrimitivePtr, kPrimEinsum, std::make_shared<Primitive>("Einsum"));
 GVAR_DEF(PrimitivePtr, kPrimEinsumGrad, std::make_shared<Primitive>("EinsumGrad"));
 GVAR_DEF(PrimitivePtr, kPrimSparseSegmentMean, std::make_shared<Primitive>(kSparseSegmentMean));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtN, std::make_shared<Primitive>("SparseSegmentSqrtN"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNGrad, std::make_shared<Primitive>("SparseSegmentSqrtNGrad"));
+GVAR_DEF(PrimitivePtr, kPrimSparseSegmentSqrtNWithNumSegments,
+         std::make_shared<Primitive>("SparseSegmentSqrtNWithNumSegments"));
 GVAR_DEF(PrimitivePtr, kPrimTrace, std::make_shared<Primitive>("Trace"));
 GVAR_DEF(PrimitivePtr, kPrimTraceGrad, std::make_shared<Primitive>("TraceGrad"));
 GVAR_DEF(PrimitivePtr, kPrimTridiagonalMatMul, std::make_shared<Primitive>(kTridiagonalMatMul));
