@@ -3893,7 +3893,7 @@ class Mvlgamma(Primitive):
         ValueError: If all elements of `x` are not greater than (p-1)/2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> x = Tensor(np.array([[3, 4, 5], [4, 2, 6]]), mindspore.float32)

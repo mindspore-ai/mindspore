@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <map>
-#include <string>
+#include <algorithm>
 #include <set>
-
+#include <string>
 #include "ops/grad/mvlgamma_grad.h"
-#include "ops/op_utils.h"
-#include "utils/check_convert_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
+#include "ops/op_utils.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -30,21 +28,41 @@ namespace {
 abstract::ShapePtr MvlgammaGradInferShape(const PrimitivePtr &primitive,
                                           const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto y_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
-  return std::make_shared<abstract::Shape>(y_grad_shape);
+  for (const auto &item : input_args) {
+    MS_EXCEPTION_IF_NULL(item);
+  }
+
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kShape];
+
+  auto first_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMinShape];
+  auto first_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kMaxShape];
+  auto second_input_shape_min = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMinShape];
+  auto second_input_shape_max = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->BuildShape())[kMaxShape];
+  if (first_input_shape_min.empty() || first_input_shape_min.empty() || second_input_shape_min.empty() ||
+      second_input_shape_max.empty()) {
+    return std::make_shared<abstract::Shape>(x_shape);
+  }
+  ShapeVector min_shape = {first_input_shape_min[0], second_input_shape_min[0]};
+  ShapeVector max_shape = {first_input_shape_max[0], second_input_shape_max[0]};
+  return std::make_shared<abstract::Shape>(x_shape, min_shape, max_shape);
 }
 
 TypePtr MvlgammaGradInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(prim);
   std::map<std::string, TypePtr> types;
-  (void)types.emplace("y_grad", input_args[kInputIndex0]->BuildType());
-  (void)types.emplace("x", input_args[kInputIndex1]->BuildType());
+  (void)types.emplace("y_grad", input_args[0]->BuildType());
+  (void)types.emplace("x", input_args[1]->BuildType());
   const std::set<TypePtr> valid_types = {kFloat32, kFloat64};
   return CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(MvlgammaGrad, BaseOperator);
+void MvlgammaGrad::Init(const int64_t p) { set_p(p); }
+
+void MvlgammaGrad::set_p(const int64_t p) { (void)this->AddAttr(kP, api::MakeValue(p)); }
+
+int64_t MvlgammaGrad::get_p() const { return GetValue<int64_t>(GetAttr(kP)); }
+
 AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
@@ -54,7 +72,7 @@ AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const Pri
   auto infer_shape = MvlgammaGradInferShape(primitive, input_args);
   return abstract::MakeAbstract(infer_shape, infer_type);
 }
-
+MIND_API_OPERATOR_IMPL(MvlgammaGrad, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(MvlgammaGrad, prim::kPrimMvlgammaGrad, MvlgammaGradInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore
