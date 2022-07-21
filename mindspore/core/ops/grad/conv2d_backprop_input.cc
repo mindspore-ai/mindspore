@@ -87,67 +87,9 @@ void SetPadList(const PrimitivePtr &primitive, const std::vector<int64_t> &dout_
 abstract::ShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
                                                  const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto prim_name = primitive->name();
-  std::vector<int64_t> out_shape;
-  abstract::ShapePtr ret_shape;
   auto input_size = input_args[kConv2DBackpropInputSizeIndex];
-  auto input_size_v = input_size->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_size_v);
-
-  if (input_size->isa<abstract::AbstractTensor>()) {
-    if (input_size_v->isa<tensor::Tensor>()) {
-      out_shape = CheckAndConvertUtils::CheckTensorIntValue("input x size", input_size_v, prim_name);
-      ret_shape = std::make_shared<abstract::Shape>(out_shape);
-    } else {
-      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kConv2DBackpropInputSizeIndex);
-      MS_EXCEPTION_IF_NULL(shape_ptr);
-      auto shape_shape = shape_ptr->shape();
-      if (shape_shape.size() != 1) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name << "', x size must be 1-D, but got " << shape_shape.size() << "-D.";
-      }
-
-      auto abstract_tensor = input_size->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(abstract_tensor);
-      auto shape_max_value = abstract_tensor->get_max_value();
-      auto shape_min_value = abstract_tensor->get_min_value();
-      if (shape_max_value == nullptr || shape_min_value == nullptr) {
-        auto x_size_len = LongToSize(shape_shape[0]);
-        for (size_t i = 0; i < x_size_len; i++) {
-          out_shape.push_back(abstract::Shape::SHP_ANY);
-        }
-        ret_shape = std::make_shared<abstract::Shape>(out_shape);
-      } else {
-        auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
-        auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
-
-        auto x_size_len = LongToSize(shape_shape[0]);
-        if (shape_max.size() != x_size_len || shape_min.size() != x_size_len) {
-          MS_LOG(EXCEPTION) << "For " << prim_name
-                            << ", x size's min and max value must be equal to x size len, but got min value: "
-                            << shape_min.size() << ", max value: " << shape_max.size() << ", x size len: " << x_size_len
-                            << ".";
-        }
-
-        for (size_t i = 0; i < x_size_len; i++) {
-          if (shape_min[i] == shape_max[i]) {
-            out_shape.push_back(shape_min[i]);
-          } else {
-            out_shape.push_back(abstract::Shape::SHP_ANY);
-          }
-        }
-        ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
-      }
-    }
-  } else if (input_size->isa<abstract::AbstractTuple>()) {
-    // check tensor, tuple or int to raise error.
-    out_shape = CheckAndConvertUtils::CheckTupleInt("input[x size]", input_size_v, prim_name);
-    ret_shape = std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    auto size_type = input_size->BuildType();
-    MS_EXCEPTION_IF_NULL(size_type);
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input x's size must be a tuple or Tensor, but got: " << size_type->ToString() << ".";
-  }
+  auto out_shape = GetShapeValue(primitive, input_size);
+  auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
   auto dout_shape =
     CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kConv2DBackpropInputDoutIndex]->BuildShape())[kShape];
 

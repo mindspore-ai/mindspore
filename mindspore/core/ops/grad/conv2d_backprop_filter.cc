@@ -31,69 +31,10 @@ constexpr size_t kConv2DBackpropFilterInputIndex = 1;
 
 abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
                                                   const std::vector<AbstractBasePtr> &input_args) {
-  auto prim_name = primitive->name();
-  std::vector<int64_t> out_shape;
-  abstract::ShapePtr ret_shape;
   constexpr size_t kFilterSizeIndex = 2;
   auto filter_size = input_args[kFilterSizeIndex];
-  auto filter_size_v = filter_size->BuildValue();
-  MS_EXCEPTION_IF_NULL(filter_size_v);
-
-  if (filter_size->isa<abstract::AbstractTensor>()) {
-    if (filter_size_v->isa<tensor::Tensor>()) {
-      out_shape = CheckAndConvertUtils::CheckTensorIntValue("filter size", filter_size_v, prim_name);
-      ret_shape = std::make_shared<abstract::Shape>(out_shape);
-    } else {
-      auto shape_ptr = CheckAndConvertUtils::GetTensorInputShape(prim_name, input_args, kFilterSizeIndex);
-      MS_EXCEPTION_IF_NULL(shape_ptr);
-      auto shape_shape = shape_ptr->shape();
-      if (shape_shape.size() != 1) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name << "', filter size must be 1-D, but got " << shape_shape.size()
-                          << "-D.";
-      }
-
-      auto abstract_tensor = filter_size->cast<abstract::AbstractTensorPtr>();
-      MS_EXCEPTION_IF_NULL(abstract_tensor);
-      auto shape_max_value = abstract_tensor->get_max_value();
-      auto shape_min_value = abstract_tensor->get_min_value();
-      if (shape_max_value == nullptr || shape_min_value == nullptr) {
-        auto len = LongToSize(shape_shape[0]);
-        for (size_t i = 0; i < len; i++) {
-          out_shape.push_back(abstract::Shape::SHP_ANY);
-        }
-        ret_shape = std::make_shared<abstract::Shape>(out_shape);
-        return ret_shape;
-      }
-
-      auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);
-      auto shape_min = GetValue<std::vector<int64_t>>(shape_min_value);
-
-      auto filter_len = LongToSize(shape_shape[0]);
-      if (shape_max.size() != filter_len || shape_min.size() != filter_len) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name
-                          << "', filter size's min or max must be equal to filter_len, but got min: "
-                          << shape_min.size() << ", max: " << shape_max.size() << ", filter_len: " << filter_len << ".";
-      }
-
-      for (size_t i = 0; i < filter_len; i++) {
-        if (shape_min[i] == shape_max[i]) {
-          out_shape.push_back(shape_min[i]);
-        } else {
-          out_shape.push_back(abstract::Shape::SHP_ANY);
-        }
-      }
-      ret_shape = std::make_shared<abstract::Shape>(out_shape, shape_min, shape_max);
-    }
-  } else if (filter_size->isa<abstract::AbstractTuple>()) {
-    // check tensor, tuple or int to raise error.
-    out_shape = CheckAndConvertUtils::CheckTupleInt("input[filter_size]", filter_size_v, prim_name);
-    ret_shape = std::make_shared<abstract::Shape>(out_shape);
-  } else {
-    auto size_type = filter_size->BuildType();
-    MS_EXCEPTION_IF_NULL(size_type);
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', input filter size be a tuple or Tensor, but got: " << size_type->ToString() << ".";
-  }
+  auto out_shape = GetShapeValue(primitive, filter_size);
+  auto ret_shape = std::make_shared<abstract::Shape>(out_shape);
   return ret_shape;
 }
 
