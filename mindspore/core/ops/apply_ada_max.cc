@@ -51,41 +51,45 @@ abstract::TupleShapePtr ApplyAdaMaxInferShape(const PrimitivePtr &primitive,
   auto epsilon_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex7]->BuildShape())[kShape];
   auto grad_shape = input_args[kInputIndex8]->BuildShape();
   auto grad_shape_ptr = grad_shape->cast<abstract::ShapePtr>();
-  // beta1_power,lr,beta1,beta2,epsilon must be scalar
+
   size_t batch_rank = 0;
   if (primitive->HasAttr(kBatchRank)) {
     auto value_ptr = primitive->GetAttr(kBatchRank);
     batch_rank = GetValue<int64_t>(value_ptr);
   }
-  const int64_t kInputShape = batch_rank;
-  (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape.size()), kLessEqual,
-                                           kInputShape, prim_name);
-  if (beta1_power_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta1_power_shape[0]", SizeToLong(beta1_power_shape.size()), kEqual,
+  int64_t kInputShape = batch_rank;
+  if (batch_rank == 0) {
+    // if vmap is not activated, constants could be either 0d or 1d.
+    kInputShape = 1;
+    if (beta1_power_shape.size() > 0) {
+      (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape[0]), kEqual,
+                                               kInputShape, prim_name);
+    }
+    if (lr_shape.size() > 0) {
+      (void)CheckAndConvertUtils::CheckInteger("lr's rank", SizeToLong(lr_shape[0]), kEqual, kInputShape, prim_name);
+    }
+    if (beta1_shape.size() > 0) {
+      (void)CheckAndConvertUtils::CheckInteger("beta1's rank", SizeToLong(beta1_shape[0]), kEqual, kInputShape,
+                                               prim_name);
+    }
+    if (beta2_shape.size() > 0) {
+      (void)CheckAndConvertUtils::CheckInteger("beta2's rank", SizeToLong(beta2_shape[0]), kEqual, kInputShape,
+                                               prim_name);
+    }
+    if (epsilon_shape.size() > 0) {
+      (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", SizeToLong(epsilon_shape[0]), kEqual, kInputShape,
+                                               prim_name);
+    }
+  } else {
+    // if vmap is activated, constants should have the same rank as kInputShape.
+    (void)CheckAndConvertUtils::CheckInteger("beta1 power's rank", SizeToLong(beta1_power_shape.size()), kEqual,
                                              kInputShape, prim_name);
-  }
-  (void)CheckAndConvertUtils::CheckInteger("lr's rank", SizeToLong(lr_shape.size()), kLessEqual, kInputShape,
-                                           prim_name);
-  if (lr_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("lr_shape[0]", SizeToLong(lr_shape.size()), kEqual, kInputShape,
+    (void)CheckAndConvertUtils::CheckInteger("lr's rank", SizeToLong(lr_shape.size()), kEqual, kInputShape, prim_name);
+    (void)CheckAndConvertUtils::CheckInteger("beta1's rank", SizeToLong(beta1_shape.size()), kEqual, kInputShape,
                                              prim_name);
-  }
-  (void)CheckAndConvertUtils::CheckInteger("beta1's rank", SizeToLong(beta1_shape.size()), kLessEqual, kInputShape,
-                                           prim_name);
-  if (beta1_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta1_shape[0]", SizeToLong(beta1_shape.size()), kEqual, kInputShape,
+    (void)CheckAndConvertUtils::CheckInteger("beta2's rank", SizeToLong(beta2_shape.size()), kEqual, kInputShape,
                                              prim_name);
-  }
-  (void)CheckAndConvertUtils::CheckInteger("beta2's rank", SizeToLong(beta2_shape.size()), kLessEqual, kInputShape,
-                                           prim_name);
-  if (beta2_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("beta2_shape[0]", SizeToLong(beta2_shape.size()), kEqual, kInputShape,
-                                             prim_name);
-  }
-  (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", SizeToLong(epsilon_shape.size()), kLessEqual, kInputShape,
-                                           prim_name);
-  if (epsilon_shape.size() == 1) {
-    (void)CheckAndConvertUtils::CheckInteger("epsilon_shape[0]", SizeToLong(epsilon_shape.size()), kEqual, kInputShape,
+    (void)CheckAndConvertUtils::CheckInteger("epsilon's rank", SizeToLong(epsilon_shape.size()), kEqual, kInputShape,
                                              prim_name);
   }
 
