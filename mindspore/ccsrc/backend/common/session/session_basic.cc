@@ -558,36 +558,6 @@ bool UseParamInitInServer(const FuncGraphPtr &kernel_graph, const AnfNodePtr &pa
                      [](const AnfNodePtr &node) { return AnfUtils::IsRealKernel(node); });
 }
 #endif
-
-void GetValueNodeString(std::ostringstream &buf, const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto dtype = tensor->Dtype();
-  MS_EXCEPTION_IF_NULL(dtype);
-  size_t data_size = std::min(tensor->DataSize(), kThreshold);
-  auto fn = [&buf, data_size](auto addr) {
-    for (size_t i = 0; i < data_size; ++i) {
-      buf << *(addr + i);
-    }
-  };
-
-  if (dtype->type_id() == kNumberTypeBool) {
-    fn(reinterpret_cast<bool *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt16) {
-    fn(reinterpret_cast<int16_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt32) {
-    fn(reinterpret_cast<int32_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeInt64) {
-    fn(reinterpret_cast<int64_t *>(tensor->data_c()));
-  } else if (dtype->type_id() == kNumberTypeFloat16) {
-    buf << *reinterpret_cast<float16 *>(tensor->data_c());
-  } else if (dtype->type_id() == kNumberTypeFloat32) {
-    buf << *reinterpret_cast<float *>(tensor->data_c());
-  } else if (dtype->type_id() == kNumberTypeFloat64) {
-    buf << *reinterpret_cast<double *>(tensor->data_c());
-  } else {
-    MS_LOG(EXCEPTION) << "The dtype of the constant input is " << dtype->ToString();
-  }
-}
 }  // namespace
 
 GraphId SessionBasic::graph_sum_ = 0;
@@ -1367,7 +1337,7 @@ void SessionBasic::GetSingleOpGraphInfo(const CNodePtr &kernel, const InputTenso
     // For constant input
     if (input_tensors_mask[i] == kValueNodeTensorMask) {
       has_const_input = true;
-      GetValueNodeString(buf, tensor);
+      buf << common::AnfAlgo::GetTensorValueString(tensor);
     }
     buf << "_";
   }
