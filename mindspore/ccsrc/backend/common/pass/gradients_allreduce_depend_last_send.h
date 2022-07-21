@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_GRADIENTS_ALLREDUCE_DEPEBD_LAST_SEND_H_
 #include <vector>
 #include <string>
-#include <utility>
 #include <memory>
 
 #include "backend/common/optimizer/pass.h"
@@ -37,7 +36,7 @@ class GradientsAllReduceDependLastSend : public Pass {
 
  private:
   bool InsertDependBetweenAllReduceAndSend(const FuncGraphPtr &graph, const std::vector<CNodePtr> &addn_list,
-                                           const CNodePtr &last_send);
+                                           const CNodePtr &last_send) const;
 };
 }  // namespace opt
 }  // namespace mindspore

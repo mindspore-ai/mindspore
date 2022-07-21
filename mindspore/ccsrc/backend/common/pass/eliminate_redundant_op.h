@@ -43,7 +43,8 @@ class EliminateRedundantOp : public PatternProcessPass {
   void Init();
   const AnfNodePtr DoEliminate(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const;
   const AnfNodePtr ProcessMatchedNodes(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                       const CNodePtr &prev_cnode, std::vector<KernelWithIndex> *pass_vector) const;
+                                       const CNodePtr &prev_cnode,
+                                       std::vector<KernelWithIndex> *const pass_vector) const;
   mindspore::HashMap<std::string, RedundantOpPair> redundant_process_map_;
 };
 }  // namespace opt

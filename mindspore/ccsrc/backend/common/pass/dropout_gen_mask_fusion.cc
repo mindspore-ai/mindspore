@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace opt {
 bool DropoutGenMaskFusion::DoFusion(const std::vector<CNodePtr> &genmasks, const std::set<int64_t> fusion_set,
-                                    const FuncGraphManagerPtr &manager) {
+                                    const FuncGraphManagerPtr &manager) const {
   // Fusion of masks with the same fusion_id
   auto node_users_map = manager->node_users();
   std::vector<CNodePtr> temp;
@@ -33,7 +33,7 @@ bool DropoutGenMaskFusion::DoFusion(const std::vector<CNodePtr> &genmasks, const
     for (auto &mask : genmasks) {
       auto cur_fusion = GetValue<int64_t>(mask->GetPrimalAttr(kAttrFusion));
       if (cur_fusion == fusion) {
-        temp.emplace_back(mask);
+        (void)temp.emplace_back(mask);
       }
     }
     auto mask_first = temp.front();
@@ -72,7 +72,7 @@ bool DropoutGenMaskFusion::Run(const FuncGraphPtr &func_graph) {
       if (cnode->HasPrimalAttr(kAttrFusion)) {
         genmasks.push_back(cnode);
         auto fusion_id = GetValue<int64_t>(cnode->GetPrimalAttr(kAttrFusion));
-        fusion_set.insert(fusion_id);
+        (void)fusion_set.insert(fusion_id);
       }
     }
   }

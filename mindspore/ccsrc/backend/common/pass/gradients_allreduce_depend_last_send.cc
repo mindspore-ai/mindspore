@@ -63,7 +63,7 @@ bool GradientsAllReduceDependLastSend::Run(const FuncGraphPtr &graph) {
 
 bool GradientsAllReduceDependLastSend::InsertDependBetweenAllReduceAndSend(const FuncGraphPtr &graph,
                                                                            const std::vector<CNodePtr> &addn_list,
-                                                                           const CNodePtr &last_send) {
+                                                                           const CNodePtr &last_send) const {
   bool changed = false;
   FuncGraphManagerPtr manager = graph->manager();
   for (auto &addn : addn_list) {

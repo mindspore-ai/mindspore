@@ -119,7 +119,7 @@ const AnfNodePtr InplaceAssignForCustomOp::Process(const FuncGraphPtr &func_grap
   }
 
   if (IsPrimitiveCNode(cnode, prim::kPrimCustom) && visited_.find(cnode) == visited_.end()) {
-    visited_.insert(cnode);
+    (void)visited_.insert(cnode);
     return InplaceAssignAfterCustom(func_graph, cnode);
   } else if (IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) && visited_.find(cnode) == visited_.end()) {
     (void)visited_.insert(cnode);

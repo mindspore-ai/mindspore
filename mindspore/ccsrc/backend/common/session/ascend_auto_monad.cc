@@ -649,7 +649,7 @@ class CallInfoFinder {
   }
 
   // Create CallSite for Call node.
-  void MakeCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) {
+  void MakeCallSite(const CNodePtr &cnode, const AnfNodePtr &last_monad, CallInfo *call_info) const {
     auto &call_site = call_info->call_sites.emplace_back();
     call_site.cnode = cnode;
     call_site.last_monad = last_monad;
@@ -675,7 +675,7 @@ class CallInfoFinder {
     return {.graph = kg, .args = std::move(args)};
   }
 
-  std::vector<CallBranch> GetSwitchBranches(const CNodePtr &cnode) {
+  std::vector<CallBranch> GetSwitchBranches(const CNodePtr &cnode) const {
     constexpr size_t cond_start_index = 2;
     std::vector<CallBranch> branches;
     for (size_t index = cond_start_index; index < cnode->inputs().size(); ++index) {
@@ -1456,7 +1456,7 @@ class AscendAutoMonadConverter {
   }
 
   // Make a StackInit node.
-  CNodePtr StackInit(const KernelGraphPtr &kg) {
+  CNodePtr StackInit(const KernelGraphPtr &kg) const {
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_init = NewPrimitive(prim::kPrimStackInit);
     auto cnode = kg->NewCNode({stack_init, monad});
@@ -1466,7 +1466,7 @@ class AscendAutoMonadConverter {
   }
 
   // Make a StackDestroy node.
-  CNodePtr StackDestroy(const KernelGraphPtr &kg) {
+  CNodePtr StackDestroy(const KernelGraphPtr &kg) const {
     auto monad = AnfAlgo::MakeMonadValueNode(kg);
     auto stack_destroy = NewPrimitive(prim::kPrimStackDestroy);
     auto cnode = kg->NewCNode({stack_destroy, monad});
@@ -1920,7 +1920,7 @@ class ExecuteOrderGenerator {
             continue;
           }
         }
-        label_used.insert(label);
+        (void)label_used.insert(label);
       }
       ++iter;
     }
