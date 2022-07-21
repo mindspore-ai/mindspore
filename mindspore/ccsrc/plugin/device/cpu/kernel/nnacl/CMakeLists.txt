@@ -55,7 +55,7 @@ if(ENABLE_CPU)
     set(CMAKE_C_FLAGS "-Wno-attributes ${CMAKE_C_FLAGS}")
 endif()
 
-if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(APPLE OR PLATFORM_ARM32 OR PLATFORM_ARM64 OR PLATFORM_MCU)
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND DEFINED ARCHS)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fstrict-aliasing \
         -ffunction-sections -fdata-sections -ffast-math -Wno-shorten-64-to-32")
