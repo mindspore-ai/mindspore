@@ -25,6 +25,7 @@
 #include "ir/tensor.h"
 #include "pybind_api/ir/primitive_py.h"
 #include "pybind_api/ir/tensor_py.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 namespace opt {

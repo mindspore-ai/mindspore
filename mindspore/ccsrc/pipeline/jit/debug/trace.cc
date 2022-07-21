@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,20 @@
 #include "pipeline/jit/debug/trace.h"
 
 #include <iostream>
-#include <fstream>
 #include <map>
 #include <vector>
 #include <string>
-#include <sstream>
 #include <utility>
-#include <stack>
 #include <algorithm>
 
 #include "utils/hash_map.h"
 #include "utils/hash_set.h"
-#include "ir/meta_func_graph.h"
-#include "ir/graph_utils.h"
 #include "frontend/operator/composite/composite.h"
 #include "ir/tensor.h"
 #include "pipeline/jit/debug/anf_ir_utils.h"
 #include "include/common/debug/common.h"
 #include "pipeline/jit/static_analysis/evaluator.h"
 #include "pipeline/jit/static_analysis/async_eval_result.h"
-#include "pipeline/jit/base.h"
 #include "utils/log_adapter.h"
 #include "include/common/utils/comm_manager.h"
 #include "abstract/abstract_value.h"
@@ -139,8 +133,8 @@ class AnalyzeFailExporter : public AnfExporter {
  protected:
   void OutputCNode(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                    std::map<AnfNodePtr, int> *const apply_map) override;
-  std::string GetNodeType(const AnfNodePtr &nd) override;
-  AbstractBasePtr GetNodeAbstract(const AnfNodePtr &nd);
+  std::string GetNodeType(const AnfNodePtr &node) override;
+  AbstractBasePtr GetNodeAbstract(const AnfNodePtr &node);
   AnfNodeConfigPtr GetForwardConfig(const AnfNodeConfigPtr &cfg);
   void ProcessFuncGraphCall(const CNodePtr &node, std::string *const op_comment);
   mindspore::HashMap<FuncGraphPtr, TaggedNodeMap> CreateTaggedNodeMap(
@@ -452,11 +446,11 @@ void TraceGraphEvalLeave(const abstract::AnalysisContextPtr &context) {
 }
 
 void TraceGraphEvalStackPrepare(const TraceGraphEvalStack &graph_evals) {
-  graph_infer_stack.insert(graph_infer_stack.end(), graph_evals.begin(), graph_evals.end());
+  (void)graph_infer_stack.insert(graph_infer_stack.end(), graph_evals.begin(), graph_evals.end());
 }
 
 void TraceEvalCNodeStackPrepare(const TraceCNodeEvalStack &cnode_evals) {
-  cnode_debug_stack.insert(cnode_debug_stack.end(), cnode_evals.begin(), cnode_evals.end());
+  (void)cnode_debug_stack.insert(cnode_debug_stack.end(), cnode_evals.begin(), cnode_evals.end());
 }
 
 void TraceEvalCNodeEnter(const abstract::AnfNodeConfigPtr &node_config) { cnode_debug_stack.push_back(node_config); }
@@ -510,13 +504,13 @@ void GetTraceStackInfo(std::ostringstream &oss, bool add_title) {
 
 // Register trace provider to LogWriter.
 struct TraceProviderRegister {
-  TraceProviderRegister() { LogWriter::set_trace_provider(GetTraceStackInfo); }
+  TraceProviderRegister() noexcept { LogWriter::set_trace_provider(GetTraceStackInfo); }
   ~TraceProviderRegister() = default;
 } trace_provider_register;
 
 // Register trace cnode provider to AbstractBase.
 struct TraceNodeProviderRegister {
-  TraceNodeProviderRegister() {
+  TraceNodeProviderRegister() noexcept {
     abstract::AbstractBase::set_trace_node_provider([](AnfNodePtr *node) {
       auto stack = GetCNodeDebugStack();
       if (!stack.empty()) {

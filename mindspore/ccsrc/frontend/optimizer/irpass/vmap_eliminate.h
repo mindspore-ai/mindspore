@@ -17,10 +17,7 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_VMAP_ELIMINATE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_VMAP_ELIMINATE_H_
 
-#include <vector>
-#include <algorithm>
 #include <memory>
-#include <string>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/irpass.h"

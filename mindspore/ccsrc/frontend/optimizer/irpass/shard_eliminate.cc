@@ -34,7 +34,7 @@ bool ExpandShardPrim::operator()(const FuncGraphPtr &func_graph, const Optimizer
   auto manager = optimizer->manager();
   for (auto shard_node : shard_nodes_) {
     auto expanded_shard = internal::ExpandShard(shard_node);
-    manager->Replace(shard_node, expanded_shard);
+    (void)manager->Replace(shard_node, expanded_shard);
     change = true;
   }
   return change;

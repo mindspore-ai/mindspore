@@ -63,12 +63,12 @@ class Substitution {
 using SubstitutionPtr = std::shared_ptr<Substitution>;
 
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name, const PrimitivePtr &prim,
-                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
+                                 const RenormAction &renorm_action = CHECK_RENORM, bool has_priority_pattern = false);
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
                                  const std::vector<PrimitivePtr> &prims,
-                                 const RenormAction &action_renorm = CHECK_RENORM, bool has_priority_pattern = false);
+                                 const RenormAction &renorm_action = CHECK_RENORM, bool has_priority_pattern = false);
 SubstitutionPtr MakeSubstitution(const OptimizerCallerPtr &transform, const std::string &name,
-                                 const PredicateFuncType &predicate, const RenormAction &action_renorm = CHECK_RENORM,
+                                 const PredicateFuncType &predicate, const RenormAction &renorm_action = CHECK_RENORM,
                                  bool has_priority_pattern = false);
 
 enum OptTraverseSubstitutionsMode { kOptTraverseFromIRToSubstitutions = 0, kOptTraverseFromSubstitutionsToIR };
@@ -85,7 +85,7 @@ class SubstitutionList {
  private:
   bool ApplyIRToSubstitutions(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
   bool ApplySubstitutionToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph,
-                             const SubstitutionPtr &sub) const;
+                             const SubstitutionPtr &substitution) const;
   bool ApplySubstitutionsToIR(const OptimizerPtr &optimizer, const FuncGraphPtr &func_graph) const;
   void DisplayStatusOfSubstitution(const mindspore::HashMap<std::string, std::vector<bool>> &status,
                                    const OptimizerPtr &optimizer, size_t space) const;

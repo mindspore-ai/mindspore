@@ -456,7 +456,7 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
   auto mng = graph->manager();
   MS_EXCEPTION_IF_NULL(mng);
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();
-  std::vector<CNodePtr> origin_nodes_topological(orders.begin(), orders.end());
+  std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
   SetRecomputedAttr(graph, origin_nodes_topological);
   // Get candidate origin recomputed nodes which have no grad inputs and output to at least one grad node directly.
   std::vector<CNodePtr> candidate_recomputed_nodes = FindCandidateRecomputedNodes(mng, origin_nodes_topological);
@@ -468,7 +468,7 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
     mindspore::HashSet<CNodePtr> max_recomputed_sub_graph = {candidate_recomputed_node};
     // Get max continuous recomputed sub-graph.
     GetMaxSubGraph(mng, &max_recomputed_sub_graph, true, true);
-    visited_nodes.insert(max_recomputed_sub_graph.begin(), max_recomputed_sub_graph.end());
+    visited_nodes.insert(max_recomputed_sub_graph.cbegin(), max_recomputed_sub_graph.cend());
     // Get the origin recomputed nodes which directly output to the grad nodes.
     mindspore::HashSet<CNodePtr> origin_recomputed_nodes;
     mindspore::HashSet<CNodePtr> target_nodes;

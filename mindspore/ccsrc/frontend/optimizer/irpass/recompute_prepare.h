@@ -111,7 +111,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
     }
   }
 
-  FuncGraphPtr GetAbstractFuncGraph(const abstract::AbstractFunctionPtr &abs) {
+  FuncGraphPtr GetAbstractFuncGraph(const abstract::AbstractFunctionPtr &abs) const {
     if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
       auto abstract_func_graph = abs->cast<abstract::FuncGraphAbstractClosurePtr>();
       return abstract_func_graph->func_graph();
@@ -127,7 +127,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
     return nullptr;
   }
 
-  bool OutputAllNodes(const mindspore::HashSet<CNodePtr> &real_outputs) {
+  bool OutputAllNodes(const mindspore::HashSet<CNodePtr> &real_outputs) const {
     for (const auto &cnode : real_outputs) {
       const auto &inputs = cnode->inputs();
       for (const auto &input : inputs) {

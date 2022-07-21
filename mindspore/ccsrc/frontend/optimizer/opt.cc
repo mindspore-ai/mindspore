@@ -386,7 +386,7 @@ bool SimpleRewriter::Run() {
     }
     auto new_node = NodeRewrite(node);
     if (new_node != nullptr) {
-      manager_->Replace(node, new_node);
+      (void)manager_->Replace(node, new_node);
       changed = true;
     }
   }

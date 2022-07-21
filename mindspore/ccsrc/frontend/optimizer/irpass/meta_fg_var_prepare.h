@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_VAR_PREPARE_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_VAR_PREPARE_H_
 
-#include <vector>
-#include <algorithm>
 #include <memory>
 
 #include "utils/hash_map.h"

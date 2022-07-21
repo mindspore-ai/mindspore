@@ -60,14 +60,14 @@ static AnfNodePtr GenerateUnpackGraphNode(const AnfNodePtr &origin_node, std::ve
     nodes.push_back(func_node);
     // {{GradOperation, ...}, args...} and other {{meta_fg_opration, ...}, args...}
     const size_t inputs_begin_index = 1;
-    (void)std::transform(inputs_y.begin() + inputs_begin_index, inputs_y.end(), std::back_inserter(nodes),
+    (void)std::transform(inputs_y.cbegin() + SizeToLong(inputs_begin_index), inputs_y.cend(), std::back_inserter(nodes),
                          [](const AnfNodePtr &node) { return node; });
     unpack_graph_node = func_graph->NewCNodeBefore(origin_node, nodes);
   }
   return unpack_graph_node;
 }
 
-// Check if node is a specific meta_fg_opration that registered in the meta_fg_ops
+// Check if node is a specific meta_fg_operation that registered in the meta_fg_ops
 bool CheckMetaFgOps(const AnfNodePtr &node) {
   if (node == nullptr) {
     return false;
@@ -76,14 +76,14 @@ bool CheckMetaFgOps(const AnfNodePtr &node) {
   if (value == nullptr) {
     return false;
   }
-  auto meta_func_graph_ptr = value->cast<MetaFuncGraphPtr>();
-  if (meta_func_graph_ptr == nullptr) {
+  auto meta_func_graph = value->cast<MetaFuncGraphPtr>();
+  if (meta_func_graph == nullptr) {
     return false;
   }
 
   const auto &meta_fg_ops = GetMetaFgOps();
   for (auto meta_fg_op : meta_fg_ops) {
-    if (meta_fg_op->Match(meta_func_graph_ptr)) {
+    if (meta_fg_op->Match(meta_func_graph)) {
       return true;
     }
   }

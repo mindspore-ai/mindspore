@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,33 +28,12 @@
 namespace mindspore {
 namespace opt {
 namespace irpass {
-namespace internal {
-// check if node is MinimumGrad() or MaximumGrad()
-bool IsOriginMaxMinGrad(const AnfNodePtr &node) {
-  if (!IsPrimitiveCNode(node, prim::kPrimMaximumGrad) && !IsPrimitiveCNode(node, prim::kPrimMinimumGrad)) {
-    return false;
-  }
-
-  auto cnode = node->cast<CNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-  auto x_v = prim->GetAttr("grad_x");
-  auto y_v = prim->GetAttr("grad_y");
-  if (x_v == nullptr || y_v == nullptr || !x_v->isa<BoolImm>() || !y_v->isa<BoolImm>()) {
-    return false;
-  }
-
-  bool x = GetValue<bool>(x_v);
-  bool y = GetValue<bool>(y_v);
-  return x && y;
-}
-}  // namespace internal
-
 // {prim::kPrimTupleGetItem, {target_grad, Xs}, C}
 class MinMaximumGrad : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
-    AnfVisitor::Match(prim::kPrimTupleGetItem, {internal::IsOriginMaxMinGrad, IsValueNode<Int64Imm>})(node);
+    AnfVisitor::Match(prim::kPrimTupleGetItem, {MinMaximumGrad::IsOriginMaxMinGrad, IsValueNode<Int64Imm>})(node);
     if (grad_ == nullptr || idx_ < 0 || idx_ > 1 || node->func_graph() == nullptr) {
       return nullptr;
     }
@@ -83,7 +62,7 @@ class MinMaximumGrad : public AnfVisitor {
 
     std::vector<AnfNodePtr> args;
     args.push_back(NewValueNode(new_prim));
-    (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+    (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
 
     auto fg = node->func_graph();
     auto new_code = fg->NewCNode(args);
@@ -101,6 +80,25 @@ class MinMaximumGrad : public AnfVisitor {
   void Reset() {
     idx_ = -1;
     grad_ = nullptr;
+  }
+
+  // Check if node is MinimumGrad() or MaximumGrad()
+  static bool IsOriginMaxMinGrad(const AnfNodePtr &node) {
+    if (!IsPrimitiveCNode(node, prim::kPrimMaximumGrad) && !IsPrimitiveCNode(node, prim::kPrimMinimumGrad)) {
+      return false;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+    auto x_v = prim->GetAttr("grad_x");
+    auto y_v = prim->GetAttr("grad_y");
+    if (x_v == nullptr || y_v == nullptr || !x_v->isa<BoolImm>() || !y_v->isa<BoolImm>()) {
+      return false;
+    }
+
+    bool x = GetValue<bool>(x_v);
+    bool y = GetValue<bool>(y_v);
+    return x && y;
   }
 
  private:

@@ -228,7 +228,7 @@ void SliceRecomputedActivationNodes(const FuncGraphPtr &graph) {
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   std::list<CNodePtr> orders = graph->GetOrderedCnodes();
-  std::vector<CNodePtr> origin_nodes_topological(orders.begin(), orders.end());
+  std::vector<CNodePtr> origin_nodes_topological(orders.cbegin(), orders.cend());
   SpreadRecomputeDepend(manager, origin_nodes_topological);
   std::vector<CNodePtr> slice_allgathers;
   int64_t recompute_order_id = 0;

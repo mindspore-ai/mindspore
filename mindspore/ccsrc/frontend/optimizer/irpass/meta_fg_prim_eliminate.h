@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_META_FG_PRIM_ELIMINATE_H_
 
 #include <vector>
-#include <algorithm>
 #include <memory>
 
 #include "frontend/optimizer/optimizer.h"

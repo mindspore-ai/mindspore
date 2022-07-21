@@ -477,7 +477,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
         AnfNodePtr para_after_cast = parse::GetMixedPrecisionCastHelp(g, p);
         new_node_inputs.push_back(para_after_cast);
       }
-      (void)new_node_inputs.insert(new_node_inputs.end(), fvs.begin(), fvs.end());
+      (void)new_node_inputs.insert(new_node_inputs.end(), fvs.cbegin(), fvs.cend());
       AnfNodePtr out = g->NewCNodeBefore(g->get_return(), new_node_inputs);
       g->set_output(out);
       const int recursive_level = 4;
@@ -1189,7 +1189,6 @@ bool StartServerAction(const ResourcePtr &resource) {
                                                  executor_threshold);
   } else {
     MS_LOG(EXCEPTION) << "Server mode " << server_mode_ << " is not supported.";
-    return false;
   }
   fl::server::Server::GetInstance().Run();
   return true;
