@@ -186,7 +186,7 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
                    const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list) {
   std::vector<size_t> eli;
   eli.push_back(node_index);
-  for (size_t i = 0; i < (size_t)graph->nodes[node_index].node_out.size(); i++) {
+  for (size_t i = 0; i < graph->nodes[node_index].node_out.size(); i++) {
     eli.push_back(graph->nodes[node_index].node_out[i]);
   }
   eli_list->push_back(eli);
@@ -196,8 +196,8 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(incoming_outputs->begin(), incoming_outputs->end(), node_index);
     if (it != incoming_outputs->end()) {
       it = incoming_outputs->erase(it);
-      (void)incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(),
-                                     graph->nodes[node_index].node_out.end());
+      (void)incoming_outputs->insert(it, graph->nodes[node_index].node_out.cbegin(),
+                                     graph->nodes[node_index].node_out.cend());
     }
   }
 
@@ -206,8 +206,8 @@ void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,
     auto it = find(aux_incoming_outputs->begin(), aux_incoming_outputs->end(), node_index);
     if (it != aux_incoming_outputs->end()) {
       it = aux_incoming_outputs->erase(it);
-      (void)aux_incoming_outputs->insert(it, graph->nodes[node_index].node_out.begin(),
-                                         graph->nodes[node_index].node_out.end());
+      (void)aux_incoming_outputs->insert(it, graph->nodes[node_index].node_out.cbegin(),
+                                         graph->nodes[node_index].node_out.cend());
     }
   }
 
@@ -236,22 +236,22 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
                                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                                       const std::shared_ptr<std::vector<size_t>> &index_list) {
   MS_EXCEPTION_IF_NULL(graph);
-  for (size_t node_index = 0; node_index < (size_t)graph->nodes.size(); node_index++) {
+  for (size_t node_index = 0; node_index < graph->nodes.size(); node_index++) {
     auto type = graph->nodes[node_index].apply.op_type;
     if (ElementWiseOpType.find(type) != ElementWiseOpType.end()) {
       Eliminate_Aux(node_index, graph, eli_list);
     }
   }
   index_list->reserve(graph->nodes.size());
-  for (size_t i = 0; i < (size_t)graph->nodes.size(); i++) {
+  for (size_t i = 0; i < graph->nodes.size(); i++) {
     index_list->push_back(i);
   }
-  for (size_t i = 0; i < (size_t)eli_list->size(); i++) {
+  for (size_t i = 0; i < eli_list->size(); i++) {
     if (eli_list->at(i)[0] >= index_list->size()) {
       MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
     }
     index_list->at(eli_list->at(i)[0]) = SIZE_MAX;
-    for (size_t j = eli_list->at(i)[0] + 1; j < (size_t)index_list->size(); j++) {
+    for (size_t j = eli_list->at(i)[0] + 1; j < index_list->size(); j++) {
       index_list->at(j)--;
     }
   }
@@ -265,7 +265,7 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
     for (size_t j = node_in->size(); j > 0; j--) {
       bool IsEliminated = (index_list->at(node_in->at(j - 1)) == SIZE_MAX);
       if (IsEliminated) {
-        (void)node_in->erase(node_in->begin() + SizeToLong(j) - 1);
+        (void)node_in->erase(node_in->cbegin() + SizeToLong(j) - 1);
       } else {
         node_in->at(j - 1) = index_list->at(node_in->at(j - 1));
       }
@@ -274,7 +274,7 @@ std::shared_ptr<Graph> EliminateGraph(const std::shared_ptr<Graph> &graph,
     for (size_t j = node_out->size(); j > 0; j--) {
       bool IsEliminated = (index_list->at(node_out->at(j - 1)) == SIZE_MAX);
       if (IsEliminated) {
-        (void)node_out->erase(node_out->begin() + SizeToLong(j) - 1);
+        (void)node_out->erase(node_out->cbegin() + SizeToLong(j) - 1);
       } else {
         node_out->at(j - 1) = index_list->at(node_out->at(j - 1));
       }

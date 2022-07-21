@@ -31,7 +31,7 @@ using Shape = std::vector<int64_t>;
 
 class DeviceMatrix {
  public:
-  DeviceMatrix(int64_t rank, RankList devices, Shape dev_shape);
+  DeviceMatrix(int64_t rank, RankList dev_list, Shape dev_shape);
   DeviceMatrix() = default;
   ~DeviceMatrix() = default;
   std::vector<RankList> group_list() const { return group_list_; }

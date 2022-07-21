@@ -17,6 +17,7 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_TENSOR_H_
 #define PARALLEL_AUTO_PARALLEL_REC_TENSOR_H_
 
+#include <stdint.h>
 #include "frontend/parallel/auto_parallel/rec_core/rec_strategy.h"
 
 namespace mindspore {

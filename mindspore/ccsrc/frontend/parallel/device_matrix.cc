@@ -108,7 +108,7 @@ Shape ConvertRankToCoordinate(int64_t rank, const Shape &dev_shape) {
       MS_LOG(EXCEPTION) << "Invalid dev shape: " << ShapeToString(dev_shape);
     } else {
       int64_t index = rank % size;
-      (void)dev_coordinate.insert(dev_coordinate.begin(), index);
+      (void)dev_coordinate.insert(dev_coordinate.cbegin(), index);
       rank = rank / size;
     }
   }
@@ -139,7 +139,7 @@ Status DeviceMatrix::GetDevicesByTensorMap(const Shape &tensor_map, RankList *ra
     return FAILED;
   }
 
-  Shape current_rank_coordinate = ConvertRankToCoordinate((int32_t)local_rank, dev_shape_);
+  Shape current_rank_coordinate = ConvertRankToCoordinate(static_cast<int32_t>(local_rank), dev_shape_);
   for (uint32_t loop_local_rank = 0; loop_local_rank < dev_list_.size(); ++loop_local_rank) {
     Shape tmp_rank_coordinate = ConvertRankToCoordinate(loop_local_rank, dev_shape_);
     bool matched = true;
