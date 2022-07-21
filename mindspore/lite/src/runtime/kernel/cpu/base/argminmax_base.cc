@@ -55,6 +55,7 @@ int ArgMinMaxCPUKernel::ReSize() {
   CHECK_NULL_RETURN(out_tensors_.at(0));
   auto out_shape = out_tensors_.at(0)->shape();
   CHECK_NULL_RETURN(out_shape.data());
+  CHECK_LESS_RETURN(COMM_SHAPE_SIZE, out_shape.size());
   ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
   return RET_OK;
 }

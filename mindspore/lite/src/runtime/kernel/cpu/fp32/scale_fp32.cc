@@ -110,7 +110,8 @@ int ScaleCPUKernel::CalculateParameter() {
   auto in_shape = in_tensor->shape();
   auto scale_tensor = in_tensors_.at(1);
   auto scale_shape = scale_tensor->shape();
-
+  auto out_tensor = out_tensors_.at(kOutputIndex);
+  MS_CHECK_FALSE_MSG(out_tensor->shape().empty(), RET_ERROR, "Output tensor shape is empty.");
   if (scale_param_->axis_ < 0) {
     scale_param_->axis_ = scale_param_->axis_ + static_cast<int>(in_shape.size());
   }
@@ -125,11 +126,6 @@ int ScaleCPUKernel::CalculateParameter() {
     scale_param_->outer_size_ *= in_shape.at(i);
   }
   for (size_t i = 0; i < scale_shape.size(); i++) {
-    if (i + static_cast<size_t>(scale_param_->axis_) >= in_shape.size() ||
-        in_shape.at(i + scale_param_->axis_) != scale_shape.at(i)) {
-      MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
-      return RET_ERROR;
-    }
     scale_param_->axis_size_ *= in_shape.at(i + scale_param_->axis_);
   }
   for (size_t i = scale_param_->axis_ + scale_shape.size(); i < in_shape.size(); i++) {
@@ -153,6 +149,20 @@ int ScaleCPUKernel::Prepare() {
     return RET_ERROR;
   }
 
+  // check scale tensor shape
+  auto in_shape = in_tensors_.at(FIRST_INPUT)->shape();
+  auto scale_shape = in_tensors_.at(SECOND_INPUT)->shape();
+  if (scale_param_->axis_ < 0) {
+    scale_param_->axis_ = scale_param_->axis_ + static_cast<int>(in_shape.size());
+  }
+
+  for (size_t i = 0; i < scale_shape.size(); i++) {
+    if (i + static_cast<size_t>(scale_param_->axis_) >= in_shape.size() ||
+        in_shape.at(i + scale_param_->axis_) != scale_shape.at(i)) {
+      MS_LOG(ERROR) << "Scale tensor shape is incorrect.";
+      return RET_ERROR;
+    }
+  }
   if (!InferShapeDone()) {
     return RET_OK;
   }

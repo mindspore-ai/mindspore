@@ -35,7 +35,7 @@ using mindspore::schema::PrimitiveType_Activation;
 namespace mindspore::kernel {
 int ActivationCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
-  CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  CHECK_NOT_EQUAL_RETURN(out_tensors_.size(), 1);
 
   if (in_tensors().front()->data_type() == kNumberTypeInt32) {
     if (type_ != schema::ActivationType_RELU) {

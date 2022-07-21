@@ -20,6 +20,18 @@ using mindspore::schema::PrimitiveType_Splice;
 
 namespace mindspore {
 namespace lite {
+void DestroySpliceParameter(OpParameter *parameter) {
+  MS_CHECK_PTR_IF_NULL(parameter);
+  auto param = reinterpret_cast<SpliceParameter *>(parameter);
+  if (param->context_ != nullptr) {
+    free(param->context_);
+    param->context_ = nullptr;
+  }
+  if (param->forward_indexes_ != nullptr) {
+    free(param->forward_indexes_);
+    param->forward_indexes_ = nullptr;
+  }
+}
 OpParameter *PopulateSpliceParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   MS_ASSERT(primitive != nullptr);
@@ -58,6 +70,7 @@ OpParameter *PopulateSpliceParameter(const void *prim) {
     free(param);
     return nullptr;
   }
+  param->op_parameter_.destroy_func_ = DestroySpliceParameter;
   // src_to_dst_row_offset
   int src_to_dst_row_offset = INT32_MIN;
   (void)memset(param->context_, 0, primitive_context.size() * sizeof(int));

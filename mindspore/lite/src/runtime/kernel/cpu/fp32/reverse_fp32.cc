@@ -19,6 +19,7 @@
 #include "schema/model_generated.h"
 #include "src/runtime/kernel_registry.h"
 #include "nnacl/fp32/reverse_fp32.h"
+#include "nnacl/errorcode.h"
 #include "include/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -104,6 +105,9 @@ int ReverseCPUKernel::ReSize() {
 int ReverseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), 1);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  auto reverse_param = reinterpret_cast<ReverseParameter *>(op_parameter_);
+  CHECK_NULL_RETURN(reverse_param);
+  CHECK_LESS_RETURN(reverse_param->num_axis_, 1);
   if (!InferShapeDone()) {
     return RET_OK;
   }

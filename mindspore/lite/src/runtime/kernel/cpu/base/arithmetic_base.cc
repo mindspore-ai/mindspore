@@ -36,6 +36,11 @@ int ArithmeticBaseRun(void *cdata, int task_id, float lhs_scale, float rhs_scale
 int ArithmeticBaseCPUKernel::Prepare() {
   CHECK_LESS_RETURN(in_tensors_.size(), C2NUM);
   CHECK_LESS_RETURN(out_tensors_.size(), 1);
+  if (op_parameter_->quant_type_ != schema::QuantType_QUANT_NONE) {
+    MS_LOG(ERROR) << "Quant type should be: " << schema::QuantType_QUANT_NONE
+                  << " but got: " << op_parameter_->quant_type_;
+    return RET_ERROR;
+  }
   primitive_type_ = param_->op_parameter_.type_;
   if (primitive_type_ == schema::PrimitiveType_Eltwise) {
     switch (param_->eltwise_mode_) {

@@ -51,6 +51,10 @@ int DepthToSpaceCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Input shape size should be " << DIMENSION_4D;
     return RET_PARAM_INVALID;
   }
+  if (out_tensors_[kOutputIndex]->shape().size() != DIMENSION_4D) {
+    MS_LOG(ERROR) << "Output shape size should be " << DIMENSION_4D;
+    return RET_ERROR;
+  }
   int32_t in_strides[DIMENSION_4D];
   ComputeStrides(const_cast<int *>(in_tensors_[0]->shape().data()), in_strides, shape_size);
   param_->in_stride_dim0_ = in_strides[0];

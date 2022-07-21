@@ -64,11 +64,12 @@ int TransposeInferShape(const TensorC *const *inputs, size_t inputs_size, Tensor
 
   SetDataTypeFormat(output, input);
   const TensorC *perm_tensor = inputs[1];
-  const int32_t *perm_data = (int32_t *)perm_tensor->data_;
-  const int perms_num = perm_tensor->shape_[0];
-  if (perm_tensor->shape_size_ == 0) {
+  if (perm_tensor == NULL) {
     return NNACL_INFER_INVALID;
   }
+  const int32_t *perm_data = (int32_t *)perm_tensor->data_;
+  MS_CHECK_TRUE_RET(perm_tensor->shape_size_ == 1, NNACL_INFER_INVALID);
+  const int perms_num = perm_tensor->shape_[0];
   if (perms_num != 0 && perm_data == NULL) {
     return NNACL_INFER_INVALID;
   }

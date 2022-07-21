@@ -254,6 +254,8 @@ int DeConvolutionWinogradCPUKernel::InitComputeParam() {
       int w_size = 1 + (conv_param_->kernel_w_ - si_w - 1) / conv_param_->stride_w_;
 
       DeConvComputeUnit unit;
+      unit.winograd_.AT_ = nullptr;
+      unit.winograd_.BT_ = nullptr;
 
       unit.h_start_ = si_h;
       unit.w_start_ = si_w;

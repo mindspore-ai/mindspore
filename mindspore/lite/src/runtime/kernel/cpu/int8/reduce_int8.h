@@ -61,6 +61,7 @@ class ReduceInt8CPUKernel : public ReduceBaseCPUKernel {
   int CalculateQuantArgsReduceSumSquare();
   void FreeMultipliers();
   void GetQuantArgs(size_t i);
+  int CheckQuantParams();
 
   ReduceParameter *param_ = nullptr;
   ReduceQuantArg quant_arg_ = {};

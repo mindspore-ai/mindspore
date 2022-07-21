@@ -98,7 +98,13 @@ int PoolingBaseCPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[0]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(pooling_param_);
+  CHECK_NULL_RETURN(op_parameter_);
   pooling_param_->thread_num_ = thread_count_;
+  if (op_parameter_->quant_type_ != schema::QuantType_QUANT_NONE &&
+      op_parameter_->quant_type_ != schema::QuantType_QUANT_ALL) {
+    MS_LOG(ERROR) << "Invalid quant type: " << op_parameter_->quant_type_;
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 

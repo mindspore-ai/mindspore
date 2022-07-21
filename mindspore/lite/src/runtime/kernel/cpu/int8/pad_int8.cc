@@ -120,6 +120,11 @@ int PadInt8CPUKernel::Prepare() {
   CHECK_NULL_RETURN(in_tensors_[1]);
   CHECK_NULL_RETURN(out_tensors_[0]);
   CHECK_NULL_RETURN(pad_param_);
+  // param check, padding length must equal 2 * len(input_x)
+  if (in_tensors_[kInputIndex]->shape().size() * 2 != static_cast<size_t>(pad_param_->padding_length)) {
+    MS_LOG(ERROR) << "Input shape size not match padding length.";
+    return RET_ERROR;
+  }
   auto error_code = SetQuantParam();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SetQuantParam failed. errorcode: " << error_code;

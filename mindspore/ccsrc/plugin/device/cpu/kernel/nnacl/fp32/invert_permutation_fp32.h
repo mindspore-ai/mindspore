@@ -19,7 +19,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void InvertPermutation(const int *input, int *output, int num);
+int InvertPermutation(const int *input, int *output, int num);
 #ifdef __cplusplus
 }
 #endif

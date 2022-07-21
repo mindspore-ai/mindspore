@@ -52,6 +52,7 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   auto mean = in_tensors_.at(kNumInput1);
   auto variance = in_tensors_.at(kNumInput2);
   auto output = out_tensors_.at(0);
+  MS_CHECK_FALSE_MSG(mean->shape().empty() || variance->shape().empty(), RET_ERROR, "Invalid input tensors.");
 
   auto mean_ptr = reinterpret_cast<int8_t *>(mean->MutableData());
   CHECK_NULL_RETURN(mean_ptr);
@@ -86,6 +87,10 @@ int BatchnormInt8CPUKernel::InitConstTensor() {
   auto s_var = variance->quant_params().front().scale;
   auto s_out = output->quant_params().front().scale;
 
+  if (batchnorm_param_->channel_ > variance->ElementsNum()) {
+    MS_LOG(ERROR) << "Buffer overflow error.";
+    return RET_ERROR;
+  }
   for (int i = 0; i < batchnorm_param_->channel_; ++i) {
     float tmp = s_out * sqrt(eps + s_var * (var_ptr[i] - zp_var));
     float tmp_a = s_in / tmp;

@@ -44,6 +44,11 @@ int OneHotCPUKernel::Prepare() {
                   << in_tensors_.size() << ", output size should be" << kOutputNum << ", got " << out_tensors_.size();
     return RET_ERROR;
   }
+  if (in_tensors_[0]->data_type() != kNumberTypeInt32 && in_tensors_[0]->data_type() != kNumberTypeInt64) {
+    MS_LOG(ERROR) << "OneHot input indices data type should be " << kNumberTypeInt32 << " or " << kNumberTypeInt64
+                  << ", got " << in_tensors_[0]->data_type();
+    return RET_ERROR;
+  }
   if (ms_context_ == nullptr) {
     MS_LOG(ERROR) << "OneHot context nullptr";
     return RET_NULL_PTR;
