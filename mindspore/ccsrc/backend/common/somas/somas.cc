@@ -1984,7 +1984,6 @@ SomasStreamPtr Somas::GetSomasStream(size_t stream_id) const {
   }
 }
 
-using SomasNodePtr = std::shared_ptr<SomasNode>;
 SomasNodePtr Somas::GetSomasNode(size_t node_id) const {
   auto it = nodes_id_map_.find(node_id);
   if (it == nodes_id_map_.end()) {

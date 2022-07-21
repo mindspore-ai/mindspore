@@ -363,8 +363,8 @@ void Common::DebugTerminate(bool val, bool exit_success) {
 
 uint64_t Common::GetTimeStamp() {
   auto cur_sys_time = std::chrono::system_clock::now();
-  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
-  return timestamp;
+  auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
+  return static_cast<uint64_t>(timestamp);
 }
 
 struct GlogLogDirRegister {

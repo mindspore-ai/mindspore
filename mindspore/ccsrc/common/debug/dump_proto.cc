@@ -47,7 +47,7 @@ class ProtoExporter {
   std::string GetOpNodeInputId(const FuncGraphPtr & /* func_graph */, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
                                std::map<AnfNodePtr, size_t> *const_map_ptr) const;
-  void SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto);
+  void SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto) const;
   void SetValueToProto(const ValuePtr &val, irpb::ValueProto *value_proto);
   void SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *value_proto) const;
   void SetSequenceToProto(const ValueSequencePtr &val, irpb::ValueProto *value_proto);
@@ -177,7 +177,7 @@ void ProtoExporter::SetNodeOutputType(const AnfNodePtr &node, irpb::TypeProto *t
   SetNodeOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto) {
+void ProtoExporter::SetValueToProtoBasicTypes(const ValuePtr &val, irpb::ValueProto *const value_proto) const {
   if (val->isa<StringImm>()) {
     const StringImmPtr &value = dyn_cast<StringImm>(val);
     value_proto->set_dtype(irpb::DT_STRING);
