@@ -122,7 +122,7 @@ class BACKEND_EXPORT RecoveryContext {
   void ObtainLocalLatestCkptInfo();
 
   // Parse latest epoch and step info from all latest checkpoints info allgather from other workers.
-  void ParseLatestCkptInfo(const int *recv_buffer, const uint32_t buffer_len);
+  void ParseLatestCkptInfo(const std::vector<int> &recv_buffer);
 
   // Whether enable recovery or not, set by environment variable 'MS_ENABLE_RECOVERY'.
   bool enable_recovery_{false};

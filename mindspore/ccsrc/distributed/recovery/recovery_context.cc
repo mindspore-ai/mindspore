@@ -19,6 +19,7 @@
 #include <dirent.h>
 #include <algorithm>
 #include <utility>
+#include <map>
 
 #include "nlohmann/json.hpp"
 #include "ps/ps_context.h"
@@ -148,10 +149,9 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
                       << global_rank_size_;
   }
 
-  const uint32_t kRecvBufferLen = kSendBufferLen * global_rank_size_;
+  const std::size_t kRecvBufferLen = kSendBufferLen * global_rank_size_;
 
-  int recv_buffer[kRecvBufferLen];
-  (void)std::fill_n(recv_buffer, kRecvBufferLen, 0);
+  std::vector<int> recv_buffer(kRecvBufferLen, 0);
 
 #if ((defined ENABLE_CPU) && (!defined _WIN32) && !defined(__APPLE__))
   // Synchronize the checkpoint information between all the other nodes to ensure the accuracy of training.
@@ -209,7 +209,7 @@ void RecoveryContext::ObtainGlobalLatestCkptInfo() {
   }
 
   // 4. Parse latest epoch and step info.
-  ParseLatestCkptInfo(recv_buffer, kRecvBufferLen);
+  ParseLatestCkptInfo(recv_buffer);
 
   // 5. Remove useless ckpt
   for (int i = SizeToInt(ckpt_files_.size()) - 1; i >= 0; i--) {
@@ -277,9 +277,9 @@ void RecoveryContext::ObtainLocalLatestCkptInfo() {
   latest_ckpt_step_ = ckpt_epoch_step.second;
 }
 
-void RecoveryContext::ParseLatestCkptInfo(const int *recv_buffer, const uint32_t buffer_len) {
+void RecoveryContext::ParseLatestCkptInfo(const std::vector<int> &recv_buffer) {
   std::vector<std::pair<int, int>> ckpts_epoch_step;
-  for (uint32_t i = 0; i < buffer_len; i += kSendBufferLen) {
+  for (std::size_t i = 0; i < recv_buffer.size(); i += kSendBufferLen) {
     ckpts_epoch_step.emplace_back(recv_buffer[i], recv_buffer[i + 1]);
   }
   sort(ckpts_epoch_step.begin(), ckpts_epoch_step.end(),
