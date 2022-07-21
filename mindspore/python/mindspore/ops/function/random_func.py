@@ -39,6 +39,8 @@ def random_gamma(shape, alpha, seed=0, seed2=0):
             A Tensor. Must be one of the following types: half, float32, float64.
         seed (int): Seed is used as entropy source for the random number engines to generate
             pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
+        seed2 (int): Seed2 is used as entropy source for the random number engines to generate
+            pseudo-random numbers, must be non-negative. Default: None, which will be treated as 0.
 
     Returns:
         Tensor. The shape should be equal to the concat shape between the input `shape` and the broadcast
