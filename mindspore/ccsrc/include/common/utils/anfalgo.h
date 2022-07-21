@@ -261,6 +261,8 @@ class COMMON_EXPORT AnfAlgo {
   static bool CheckAbsSparseTensor(const AnfNodePtr &node);
   static bool CheckAbsSparseTensor(const abstract::AbstractBasePtr &abs);
   static TypeId GetSparseTypeIdAt(const AnfNodePtr &node, size_t idx);
+
+  static std::string GetTensorValueString(const tensor::TensorPtr &tensor);
 };
 }  // namespace common
 }  // namespace mindspore
