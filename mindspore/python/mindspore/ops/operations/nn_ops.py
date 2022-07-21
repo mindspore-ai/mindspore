@@ -2863,7 +2863,7 @@ class SmoothL1Loss(Primitive):
         ValueError: If shape of `logits` is not the same as `labels`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> loss = ops.SmoothL1Loss()

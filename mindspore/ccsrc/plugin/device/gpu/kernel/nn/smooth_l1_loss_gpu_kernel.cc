@@ -134,5 +134,6 @@ std::vector<KernelAttr> SmoothL1LossGpuKernelMod::GetOpSupport() {
   return support_list;
 }
 
+MS_KERNEL_FACTORY_REG(NativeGpuKernelMod, SmoothL1Loss, SmoothL1LossGpuKernelMod);
 }  // namespace kernel
 }  // namespace mindspore
