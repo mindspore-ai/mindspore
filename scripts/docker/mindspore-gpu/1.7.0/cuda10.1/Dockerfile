@@ -11,7 +11,6 @@ ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:${CUDA_PATH}/lib64:$LD_LIBRARY_PATH
 
 # Update nvidia GPG key and install base tools
 RUN rm /etc/apt/sources.list.d/cuda.list && \
-    rm /etc/apt/sources.list.d/nvidia-ml.list && \
     apt-key del 7fa2af80 && \
     DEBIAN_FRONTEND=noninteractive apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget && \
