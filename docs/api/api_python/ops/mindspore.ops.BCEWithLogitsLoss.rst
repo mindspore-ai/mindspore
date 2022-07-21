@@ -25,7 +25,7 @@ mindspore.ops.BCEWithLogitsLoss
 
     **参数：**
 
-    - **reduction** (str) - 指定用于输出结果的计算方式。取值为 `mean` 、 `sum` 或 `none` ，不区分大小写。如果 `none` ，则不执行 `reduction` 。默认值：`mean` 。
+    - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
 
     **输入：**
 
@@ -36,10 +36,12 @@ mindspore.ops.BCEWithLogitsLoss
 
     **输出：**
 
-    Tensor或Scalar，如果 `reduction` 为 `none` ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
+    Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
 
     **异常：**
 
+    - **TypeError** - 任何输入不是Tensor。
     - **TypeError** - 任何输入的数据类型既不是float16也不是float32。
+    - **TypeError** - `reduction` 的数据类型不是string。
     - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
-    - **ValueError** - `reduction` 不为 `none` 、 `mean` 或 `sum` 。
+    - **ValueError** - `reduction` 不为 'none' 、 'mean' 或 'sum' 。

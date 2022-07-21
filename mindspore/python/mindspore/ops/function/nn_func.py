@@ -297,13 +297,15 @@ def binary_cross_entropy_with_logits(logits, label, weight, pos_weight, reductio
           number of classes. It can be broadcast to a tensor with shape of `logits`.
           Data type must be float16 or float32.
         reduction (str): Type of reduction to be applied to loss. The optional values are 'mean', 'sum', and 'none',
-             not case sensitive. If 'none', do not perform reduction. Default:'mean'.
+             not case sensitive. If 'none', do not perform reduction. Default: 'mean'.
     Returns:
         Tensor or Scalar, if `reduction` is 'none', it's a tensor with the same shape and type as input `logits`.
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If data type of any input is neither float16 nor float32.
+        TypeError: If input `logits`, `label`, `weight`, `pos_weight` is not Tensor.
+        TypeError: If data type of input `logits`, `label`, `weight`, `pos_weight` is neither float16 nor float32.
+        TypeError: If data type of input `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
         ValueError: If `reduction` is not one of 'none', 'mean' or 'sum'.
 

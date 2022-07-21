@@ -2895,7 +2895,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
         x (Tensor): Rank r + 1, where r >= 1.
         diagonal (Tensor): A Tensor. Have the same dtype as x. Rank r when k is an integer or k[0] == k[1].
           Otherwise, it has rank r + 1.
-        k (Union[int, Tensor], optional): A Tensor of type int32. Diagonal offset(s). Positive value means
+        k (Union[int, Tensor], optional): A int32 Scalar or int32 Tensor. Diagonal offset(s). Positive value means
           superdiagonal, 0 refers to the main diagonal, and negative value means subdiagonals. k can be a
           single integer (for a single diagonal) or a pair of integers specifying the low and high ends of
           a matrix band. k[0] must not be larger than k[1].
@@ -2908,11 +2908,10 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
 
     Returns:
         Tensor, The same type as x. Let x has r+1 dimensions [I, J, ..., L, M, N].
-
         The output is a tensor of rank r+1 with dimensions [I, J, ..., L, M, N], the same as input x.
 
     Raises:
-        TypeError: If any input is not Tensor.
+        TypeError: If input `x` or `diagonal` is not Tensor.
         TypeError: If input `x` and `diagonal` are not the same dtype.
         TypeError: If `k` is not int32 dtype.
         ValueError: If `align` is not a string or not in the valid range.
@@ -2940,7 +2939,7 @@ def matrix_set_diag(x, diagonal, k=0, align="RIGHT_LEFT"):
         ...                             [4, 5, 0]]), mindspore.float32)
         >>> k = Tensor(np.array([-1, 2]), mindspore.int32)
         >>> align = 'RIGHT_LEFT'
-        >>> output = ops.matrix_set_diag_v3(x, diagonal, k, align)
+        >>> output = ops.matrix_set_diag(x, diagonal, k, align)
         >>> print(output)
         [[1. 6. 9. 7.]
          [4. 2. 5. 1.]
