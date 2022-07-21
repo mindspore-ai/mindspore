@@ -274,6 +274,12 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   /// \return Status The status code returned
   Status GetNextRowPullMode(TensorRow *const row) override;
 
+  Status SendWaitFlagToWorker(int32_t worker_id) override;
+
+  Status SendQuitFlagToWorker(int32_t worker_id) override;
+
+  Status ComputeColMap() override;
+
 #ifdef ENABLE_PYTHON
   // Invoke batch size function with current BatchInfo to generate batch size.
   // @return Status The status code returned
@@ -283,11 +289,6 @@ class BatchOp : public ParallelOp<std::pair<std::unique_ptr<TensorQTable>, CBatc
   // @return Status The status code returned
   Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info, bool *concat_batch);
 #endif
-  Status SendWaitFlagToWorker(int32_t worker_id) override;
-
-  Status SendQuitFlagToWorker(int32_t worker_id) override;
-
-  Status ComputeColMap() override;
 
   int32_t start_batch_size_;
   const bool drop_;                                     // bool for whether to drop remainder or not

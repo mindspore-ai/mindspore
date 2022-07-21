@@ -63,7 +63,7 @@ class DeviceQueueOp : public PipelineOp {
 
   //  Name: constructor
   //  Description
-  DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
+  DeviceQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
                 int32_t total_batch, bool create_data_info_queue);
 
   //  Name: destructor

@@ -73,7 +73,7 @@ void MapOp::Print(std::ostream &out, bool show_all) const {
 Status MapOp::FetchNextWork(uint32_t worker_id, TensorRow *row, std::vector<std::shared_ptr<MapJob>> *job_list) {
   std::unique_ptr<MapWorkerJob> worker_job;
   // Fetch the next worker job and TensorRow
-  RETURN_IF_NOT_OK(worker_in_queues_[worker_id]->PopFront(&worker_job));
+  RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(worker_id)]->PopFront(&worker_job));
   // Extract the TensorRow and job list from the map worker job.
   *row = std::move(worker_job->tensor_row);
   *job_list = std::move(worker_job->jobs);

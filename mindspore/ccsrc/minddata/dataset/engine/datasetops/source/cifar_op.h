@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,15 @@ class CifarOp : public MappableLeafOp {
   /// @return Name of the current Op
   std::string Name() const override { return "CifarOp"; }
 
+ protected:
+  // Called first when function is called
+  // @return
+  Status RegisterAndLaunchThreads() override;
+
+  // Parse cifar data
+  // @return
+  Status PrepareData() override;
+
  private:
   // Load a tensor row according to a pair
   // @param uint64_t index - index need to load
@@ -78,10 +87,6 @@ class CifarOp : public MappableLeafOp {
   // Read block data from cifar file
   // @return
   Status ReadCifarBlockDataAsync();
-
-  // Called first when function is called
-  // @return
-  Status RegisterAndLaunchThreads() override;
 
   /// Get cifar files in dir
   /// @return
@@ -94,10 +99,6 @@ class CifarOp : public MappableLeafOp {
   /// Read cifar100 data as block
   /// @return
   Status ReadCifar100BlockData();
-
-  /// Parse cifar data
-  /// @return
-  Status PrepareData() override;
 
   /// Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   /// @param (std::map<uint32_t, std::vector<uint32_t >> *cls_ids - val all ids for this class

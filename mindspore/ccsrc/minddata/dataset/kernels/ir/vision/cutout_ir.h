@@ -20,8 +20,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "include/api/status.h"
 #include "minddata/dataset/include/dataset/constants.h"

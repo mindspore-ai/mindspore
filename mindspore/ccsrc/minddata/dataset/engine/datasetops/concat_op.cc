@@ -133,8 +133,8 @@ bool ConcatOp::IgnoreSample() {
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
-    const bool is_not_mappable = static_cast<const bool>(children_flag_and_nums_[cur_child_].first);
-    const bool second_ne_zero = static_cast<const bool>(!children_flag_and_nums_[cur_child_].second);
+    const bool is_not_mappable = children_flag_and_nums_[cur_child_].first != 0 ? true : false;
+    const bool second_ne_zero = children_flag_and_nums_[cur_child_].second == 0 ? true : false;
     is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
   bool ret = true;
@@ -162,11 +162,11 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
   bool is_not_mappable_or_second_ne_zero = true;
 
   if (!children_flag_and_nums_.empty()) {
-    const bool is_not_mappable = static_cast<const bool>(children_flag_and_nums_[cur_child_].first);
-    const bool second_ne_zero = static_cast<const bool>(!children_flag_and_nums_[cur_child_].second);
+    const bool is_not_mappable = children_flag_and_nums_[cur_child_].first != 0 ? true : false;
+    const bool second_ne_zero = children_flag_and_nums_[cur_child_].second == 0 ? true : false;
     is_not_mappable_or_second_ne_zero = is_not_mappable || second_ne_zero;
   }
-  RETURN_IF_NOT_OK(child_[cur_child_]->GetNextRow(row));
+  RETURN_IF_NOT_OK(child_[static_cast<size_t>(cur_child_)]->GetNextRow(row));
 
   if (!row->eoe() && !row->eof()) {
     if (!verified_) {
@@ -198,7 +198,7 @@ Status ConcatOp::GetNextRow(TensorRow *row) {
   }
   if (row->eof()) {
     CHECK_FAIL_RETURN_UNEXPECTED(cur_child_ == 0, "[Internal ERROR] Received an unexpected EOF.");
-    for (int32_t i = cur_child_ + 1; i < child_.size(); i++) {
+    for (size_t i = cur_child_ + 1; i < child_.size(); i++) {
       RETURN_IF_NOT_OK(child_[i]->GetNextRow(row));
       CHECK_FAIL_RETURN_UNEXPECTED(row->eof(), "[Internal ERROR] Row must be an EOF.");
     }

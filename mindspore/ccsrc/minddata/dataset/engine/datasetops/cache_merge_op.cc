@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ Status CacheMergeOp::operator()() {
   int64_t ctr = 0;
   do {
     RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
-    RETURN_IF_NOT_OK(worker_in_queues_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
+    RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>(ctr++ % num_workers_)]->EmplaceBack(std::move(new_row)));
   } while (!new_row.eof());
 
   return Status::OK();
@@ -114,7 +114,8 @@ Status CacheMergeOp::CacheMissMaster() {
   int64_t ctr = 0;
   do {
     RETURN_IF_NOT_OK(child_iterator->FetchNextTensorRow(&new_row));
-    RETURN_IF_NOT_OK(missWorkers_in_queues_[ctr++ % num_workers_]->EmplaceBack(std::move(new_row)));
+    RETURN_IF_NOT_OK(
+      missWorkers_in_queues_[static_cast<const int>(ctr++ % num_workers_)]->EmplaceBack(std::move(new_row)));
   } while (!new_row.eof());
   return Status::OK();
 }

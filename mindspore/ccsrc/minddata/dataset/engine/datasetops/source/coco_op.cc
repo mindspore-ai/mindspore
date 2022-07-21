@@ -97,7 +97,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   }
   Path image_folder(real_path.value());
   Path kImageFile = image_folder / image_id;
-  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile.ToString(), data_schema_->Column(0), &image));
+  RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile.ToString(), &image));
   if (task_type_ == TaskType::Captioning) {
     std::shared_ptr<Tensor> captions;
     auto itr = captions_map_.find(image_id);
@@ -568,8 +568,7 @@ Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
   return Status::OK();
 }
 
-Status CocoOp::ReadImageToTensor(const std::string &path, const ColDescriptor &col,
-                                 std::shared_ptr<Tensor> *tensor) const {
+Status CocoOp::ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) const {
 #ifdef ENABLE_PYTHON
   RETURN_IF_NOT_OK(MappableLeafOp::ImageDecrypt(path, tensor, decrypt_));
 #else

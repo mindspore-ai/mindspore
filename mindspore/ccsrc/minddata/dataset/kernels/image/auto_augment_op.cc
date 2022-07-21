@@ -207,9 +207,6 @@ Status AutoAugmentOp::ApplyAugment(const std::shared_ptr<Tensor> &input, std::sh
     AffineOp affine(0.0, {0, translate}, 1.0, {0.0, 0.0}, interpolation_, fill_value_);
     RETURN_IF_NOT_OK(affine.Compute(input, output));
   } else if (op_name == "Rotate") {
-    const int kRIndex = 0;
-    const int kGIndex = 1;
-    const int kBIndex = 2;
     RETURN_IF_NOT_OK(Rotate(input, output, {}, magnitude, interpolation_, false, fill_value_[kRIndex],
                             fill_value_[kGIndex], fill_value_[kBIndex]));
   } else if (op_name == "Brightness") {

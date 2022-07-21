@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,10 +64,6 @@ class AlbumOp : public MappableLeafOp {
   /// \brief Destructor.
   ~AlbumOp() = default;
 
-  /// \brief Initialize AlbumOp related var, calls the function to walk all files
-  /// \return Status The status code returned
-  Status PrepareData() override;
-
   /// \brief A print method typically used for debugging
   /// \param[in] out
   /// \param[in] show_all
@@ -81,6 +77,11 @@ class AlbumOp : public MappableLeafOp {
   // Op name getter
   // @return Name of the current Op
   std::string Name() const override { return "AlbumOp"; }
+
+ protected:
+  /// \brief Initialize AlbumOp related var, calls the function to walk all files
+  /// \return Status The status code returned
+  Status PrepareData() override;
 
  private:
   /// \brief Load image to tensor row

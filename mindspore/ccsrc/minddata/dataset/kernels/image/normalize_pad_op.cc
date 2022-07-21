@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace dataset {
-NormalizePadOp::NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, std::string dtype,
+NormalizePadOp::NormalizePadOp(const std::vector<float> &mean, const std::vector<float> &std, const std::string dtype,
                                bool is_hwc)
     : mean_(mean), std_(std), dtype_(dtype), is_hwc_(is_hwc) {}
 

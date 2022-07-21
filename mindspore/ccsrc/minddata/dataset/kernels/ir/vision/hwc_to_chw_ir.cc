@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <algorithm>
-
 #include "minddata/dataset/kernels/ir/vision/hwc_to_chw_ir.h"
 
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"

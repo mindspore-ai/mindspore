@@ -267,10 +267,10 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     TensorShape new_shape = TensorShape({output_height, output_width, 3});
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input_cv->type(), &output_tensor));
     uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
-    imOut.Init(output_width, output_height, input_cv->shape()[kChannelIndexHWC], reinterpret_cast<void *>(buffer),
-               LDataType::UINT8);
-    imIn.Init(input_cv->shape()[1], input_cv->shape()[0], input_cv->shape()[kChannelIndexHWC], input_cv->mat().data,
-              LDataType::UINT8);
+    imOut.Init(output_width, output_height, static_cast<int>(input_cv->shape()[kChannelIndexHWC]),
+               reinterpret_cast<void *>(buffer), LDataType::UINT8);
+    imIn.Init(static_cast<int>(input_cv->shape()[1]), static_cast<int>(input_cv->shape()[0]),
+              static_cast<int>(input_cv->shape()[kChannelIndexHWC]), input_cv->mat().data, LDataType::UINT8);
     if (ResizeCubic(imIn, imOut, output_width, output_height) == false) {
       RETURN_STATUS_UNEXPECTED("Resize: failed to do resize, please check the error msg.");
     }
@@ -280,7 +280,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   try {
     TensorShape shape{output_height, output_width};
     if (input_cv->Rank() == kDefaultImageRank) {
-      int num_channels = input_cv->shape()[kChannelIndexHWC];
+      int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
       shape = shape.AppendDim(num_channels);
     }
     std::shared_ptr<CVTensor> output_cv;
@@ -580,7 +580,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
   try {
     TensorShape shape{h, w};
     if (input_cv->Rank() == kDefaultImageRank) {
-      int num_channels = input_cv->shape()[kChannelIndexHWC];
+      int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
       shape = shape.AppendDim(num_channels);
     }
     std::shared_ptr<CVTensor> output_cv;
@@ -602,7 +602,7 @@ Status ConvertColor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] ConvertColor: load image failed.");
     }
     if (input_cv->Rank() == kDefaultImageRank) {
-      int num_channels = input_cv->shape()[kChannelIndexHWC];
+      int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
       if (num_channels != kMinImageChannel && num_channels != kDefaultImageChannel &&
           num_channels != kMaxImageChannel) {
         RETURN_STATUS_UNEXPECTED("ConvertColor: number of channels of image should be 1, 3, 4, but got:" +
@@ -644,9 +644,9 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     }
     cv::Mat output_img;
 
-    int height = input_cv->shape()[0];
-    int width = input_cv->shape()[1];
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int height = static_cast<int>(input_cv->shape()[0]);
+    int width = static_cast<int>(input_cv->shape()[1]);
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
 
     std::shared_ptr<CVTensor> output_cv;
     RETURN_IF_NOT_OK(CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, input_cv->type(), &output_cv));
@@ -764,7 +764,7 @@ Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
       input_cv->shape().Size() > kChannelIndexHWC,
       "SwapRedAndBlue: rank of input data should be greater than:" + std::to_string(kChannelIndexHWC) +
         ", but got:" + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     if (input_cv->shape().Size() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("SwapRedBlue: image shape should be in <H,W,C> format, but got:" +
                                input_cv->shape().ToString());
@@ -836,7 +836,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
 
     TensorShape shape{target_height, target_width};
     if (input_cv->Rank() == kDefaultImageRank) {
-      int num_channels = input_cv->shape()[kChannelIndexHWC];
+      int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
       shape = shape.AppendDim(num_channels);
     }
     std::shared_ptr<CVTensor> cvt_out;
@@ -922,7 +922,7 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
   if (is_hwc) {
     num_channels = (*output)->shape()[kChannelIndexHWC];
     while (itr != end) {
-      for (int64_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
+      for (size_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
         *itr_out = static_cast<T2>((static_cast<float>(*itr) - mean[i]) / std[i]);
         ++itr_out;
         ++itr;
@@ -934,7 +934,7 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     int64_t width_index = 2;
     int64_t channel_len = (*output)->shape()[height_index] * (*output)->shape()[width_index];
     while (itr != end) {
-      for (int64_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
+      for (size_t i = 0; i < num_channels - static_cast<int>(pad); i++) {
         for (int64_t j = 0; j < channel_len; j++) {
           *itr_out = static_cast<T2>((static_cast<float>(*itr) - mean[i]) / std[i]);
           ++itr_out;
@@ -947,8 +947,8 @@ void Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
 
 template <typename T>
 Status Normalize_caller(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
-                        std::vector<float> mean_v, std::vector<float> std_v, bool is_hwc, bool pad) {
-  switch (input->type().value()) {
+                        const std::vector<float> mean_v, const std::vector<float> std_v, bool is_hwc, bool pad) {
+  switch (static_cast<int>(input->type().value())) {
     case DataType::DE_BOOL:
       Normalize<bool, T>(input, output, mean_v, std_v, is_hwc, pad);
       break;
@@ -1020,7 +1020,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       std.push_back(std[0]);
     }
   }
-  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == mean.size(),
+  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == static_cast<dsize_t>(mean.size()),
                                "Normalize: number of channels does not match the size of mean and std vectors, got "
                                "channels: " +
                                  std::to_string((*output)->shape()[channel_index]) +
@@ -1042,17 +1042,17 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   }
   int32_t channels = 1;
   if (input->Rank() == kDefaultImageRank) {
-    channels = input->shape()[channel_index];
+    channels = static_cast<int>(input->shape()[channel_index]);
   }
 
   if (is_hwc) {
     TensorShape new_shape = TensorShape({input->shape()[0], input->shape()[1], channels + 1});
-    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
-    (*output)->Zero();
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, DataType(dtype), output));
+    RETURN_IF_NOT_OK((*output)->Zero());
   } else {
     TensorShape new_shape = TensorShape({channels + 1, input->shape()[1], input->shape()[2]});
-    Tensor::CreateEmpty(new_shape, DataType(dtype), output);
-    (*output)->Zero();
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, DataType(dtype), output));
+    RETURN_IF_NOT_OK((*output)->Zero());
   }
 
   // caller provided 1 mean/std value and there are more than one channel --> duplicate mean/std value
@@ -1062,7 +1062,7 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       std.push_back(std[0]);
     }
   }
-  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == mean.size() + 1,
+  CHECK_FAIL_RETURN_UNEXPECTED((*output)->shape()[channel_index] == static_cast<dsize_t>(mean.size()) + 1,
                                "NormalizePad: number of channels does not match the size of mean and std vectors, got "
                                "channels: " +
                                  std::to_string((*output)->shape()[channel_index] - 1) +
@@ -1089,7 +1089,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
       input_cv->shape().Size() > kChannelIndexHWC,
       "AdjustBrightness: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     // Rank of the image represents how many dimensions, image is expected to be HWC
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustBrightness: image shape is not <H,W,C> or channel is not 3, got image rank: " +
@@ -1117,7 +1117,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
       input_cv->shape().Size() > kChannelIndexHWC,
       "AdjustContrast: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     if (input_cv->Rank() != kDefaultImageChannel || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustContrast: image shape is not <H,W,C> or channel is not 3, got image rank: " +
                                std::to_string(input_cv->Rank()) + ", and channel:" + std::to_string(num_channels));
@@ -1219,7 +1219,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
       RETURN_IF_NOT_OK(input_cv->ExpandDim(kMinImageRank));
     }
     // Get number of channels and image matrix
-    std::size_t num_of_channels = input_cv->shape()[kChannelIndexHWC];
+    std::size_t num_of_channels = input_cv->shape()[static_cast<size_t>(kChannelIndexHWC)];
     if (num_of_channels != kMinImageChannel && num_of_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AutoContrast: channel of input image should be 1 or 3, but got: " +
                                std::to_string(num_of_channels));
@@ -1295,7 +1295,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
       input_cv->shape().Size() > kChannelIndexHWC,
       "AdjustSaturation: image rank should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustSaturation: image shape is not <H,W,C> or channel is not 3, but got rank: " +
                                std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
@@ -1329,7 +1329,7 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     CHECK_FAIL_RETURN_UNEXPECTED(input_cv->shape().Size() > kMinImageRank,
                                  "AdjustHue: image rank should be greater than: " + std::to_string(kMinImageRank) +
                                    ", but got: " + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[2];
+    int num_channels = static_cast<int>(input_cv->shape()[2]);
     if (input_cv->Rank() != kDefaultImageRank || num_channels != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("AdjustHue: image shape is not <H,W,C> or channel is not 3, but got rank: " +
                                std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(num_channels));
@@ -1487,8 +1487,8 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
       int32_t h_start = (bounded) ? height_distribution_bound(*rnd) : (height_distribution_unbound(*rnd) - box_height);
       int32_t w_start = (bounded) ? width_distribution_bound(*rnd) : (width_distribution_unbound(*rnd) - box_width);
 
-      int32_t max_width = (w_start + box_width > image_w) ? image_w : w_start + box_width;
-      int32_t max_height = (h_start + box_height > image_h) ? image_h : h_start + box_height;
+      int64_t max_width = (w_start + box_width > image_w) ? image_w : w_start + box_width;
+      int64_t max_height = (h_start + box_height > image_h) ? image_h : h_start + box_height;
       // check for starting range >= 0, here the start range is checked after for cut out, for random erasing
       // w_start and h_start will never be less than 0.
       h_start = (h_start < 0) ? 0 : h_start;
@@ -1505,7 +1505,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
         }
       } else {
         int64_t num_bytes = type_size * (max_width - w_start);
-        for (int c = 0; c < num_channels; c++) {
+        for (uint64_t c = 0; c < num_channels; c++) {
           uchar *buffer = GetPtr(input_cv) + (type_size * c * image_h * image_w);
           for (int x = h_start; x < max_height; x++) {
             auto ret = memset_s(buffer + (x * image_w + w_start) * type_size, num_bytes, 0, num_bytes);
@@ -1943,14 +1943,14 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       input_cv->shape().Size() > kChannelIndexHWC,
       "ToTensor: rank of input data should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got:" + std::to_string(input_cv->shape().Size()));
-    int num_channels = input_cv->shape()[kChannelIndexHWC];
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     if (input_cv->shape().Size() != kDefaultImageRank) {
       RETURN_STATUS_UNEXPECTED("ToTensor: image shape should be <H,W,C>, but got rank: " +
                                std::to_string(input_cv->shape().Size()));
     }
 
-    int height = input_cv->shape()[0];
-    int width = input_cv->shape()[1];
+    int height = static_cast<int>(input_cv->shape()[0]);
+    int width = static_cast<int>(input_cv->shape()[1]);
 
     // OpenCv has a bug in extractChannel when the type is float16.
     // To avoid the segfault, we cast to float32 first.

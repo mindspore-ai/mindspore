@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2021 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ Status CacheBase::FetchSamplesToWorkers() {
           // Now we tell the WorkerEntry to wait for them to come back.
           for (auto row_id : prefetch_keys) {
             keys.push_back(row_id);
-            RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
+            RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, static_cast<int32_t>(buf_cnt++ % num_workers_), keys));
             keys.clear();
           }
           prefetch_keys.clear();
@@ -118,16 +118,16 @@ Status CacheBase::FetchSamplesToWorkers() {
       RETURN_IF_NOT_OK(send_to_que(prefetch_queues_, prefetch_cnt++ % num_prefetchers_, prefetch_keys));
       for (auto row_id : prefetch_keys) {
         keys.push_back(row_id);
-        RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
+        RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, static_cast<int32_t>(buf_cnt++ % num_workers_), keys));
         keys.clear();
       }
     }
     if (!keys.empty()) {
-      RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, buf_cnt++ % num_workers_, keys));
+      RETURN_IF_NOT_OK(send_to_que(worker_in_queues_, static_cast<int32_t>(buf_cnt++ % num_workers_), keys));
     }
     // send the eoe
-    RETURN_IF_NOT_OK(
-      worker_in_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
+    RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>((buf_cnt++) % num_workers_)]->Add(
+      std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     RETURN_IF_NOT_OK(prefetch_queues_[(prefetch_cnt++) % num_prefetchers_]->Add(
       std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEoe)));
     // If repeat but the not last repeat, wait for reset.
@@ -147,8 +147,8 @@ Status CacheBase::FetchSamplesToWorkers() {
     UpdateRepeatAndEpochCounter();
   } while (true);
   // Flow the eof before exit
-  RETURN_IF_NOT_OK(
-    worker_in_queues_[(buf_cnt++) % num_workers_]->Add(std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
+  RETURN_IF_NOT_OK(worker_in_queues_[static_cast<const int>((buf_cnt++) % num_workers_)]->Add(
+    std::make_unique<IOBlock>(IOBlock::kDeIoBlockFlagEof)));
   // Shutdown threads
   for (int32_t i = 0; i < num_workers_; i++) {
     RETURN_IF_NOT_OK(

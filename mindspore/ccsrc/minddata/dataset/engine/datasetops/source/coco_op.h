@@ -245,10 +245,9 @@ class CocoOp : public MappableLeafOp {
                                  std::shared_ptr<Tensor> captions, TensorRow *trow);
 
   /// \param[in] path Path to the image file.
-  /// \param[in] col Contains tensor implementation and datatype.
   /// \param[out] tensor Returned tensor.
   /// \return Status The status code returned.
-  Status ReadImageToTensor(const std::string &path, const ColDescriptor &col, std::shared_ptr<Tensor> *tensor) const;
+  Status ReadImageToTensor(const std::string &path, std::shared_ptr<Tensor> *tensor) const;
 
   /// \brief Read annotation from Annotation folder.
   /// \return Status The status code returned.

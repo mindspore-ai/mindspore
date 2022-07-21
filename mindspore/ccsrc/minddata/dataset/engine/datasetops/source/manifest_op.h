@@ -77,6 +77,11 @@ class ManifestOp : public MappableLeafOp {
   /// \return Status - The status code return
   Status GetClassIndexing(std::vector<std::pair<std::string, std::vector<int32_t>>> *output_class_indexing) override;
 
+ protected:
+  // Parse manifest file to get image path and label and so on.
+  // @return Status The status code returned
+  Status PrepareData() override;
+
  private:
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
@@ -84,10 +89,6 @@ class ManifestOp : public MappableLeafOp {
   // @param TensorRow row - image & label read into this tensor row
   // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, TensorRow *trow) override;
-
-  // Parse manifest file to get image path and label and so on.
-  // @return Status The status code returned
-  Status PrepareData() override;
 
   // Check if image ia valid.Only support JPEG/PNG/GIF/BMP
   // @return

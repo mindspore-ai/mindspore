@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2021-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@
 namespace mindspore {
 namespace dataset {
 const int32_t kQMnistLabelFileMagicNumber = 3074;
-const int32_t kQMnistImageRows = 28;
-const int32_t kQMnistImageCols = 28;
-const int32_t kQMnistLabelLength = 8;
+const size_t kQMnistImageRows = 28;
+const size_t kQMnistImageCols = 28;
+const size_t kQMnistLabelLength = 8;
 
 QMnistOp::QMnistOp(const std::string &folder_path, const std::string &usage, bool compat,
                    std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler, int32_t num_workers,
@@ -61,18 +61,19 @@ void QMnistOp::Print(std::ostream &out, bool show_all) const {
 // Load 1 TensorRow (image, label) using 1 MnistLabelPair or QMnistImageInfoPair.
 Status QMnistOp::LoadTensorRow(row_id_type row_id, TensorRow *trow) {
   RETURN_UNEXPECTED_IF_NULL(trow);
+  size_t unsigned_row_id = static_cast<size_t>(row_id);
   std::shared_ptr<Tensor> image, label;
   if (compat_) {
-    MnistLabelPair qmnist_pair = image_label_pairs_[row_id];
+    MnistLabelPair qmnist_pair = image_label_pairs_[unsigned_row_id];
     RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.first, &image));
     RETURN_IF_NOT_OK(Tensor::CreateScalar(qmnist_pair.second, &label));
   } else {
-    QMnistImageInfoPair qmnist_pair = image_info_pairs_[row_id];
+    QMnistImageInfoPair qmnist_pair = image_info_pairs_[unsigned_row_id];
     RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.first, &image));
     RETURN_IF_NOT_OK(Tensor::CreateFromTensor(qmnist_pair.second, &label));
   }
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
-  trow->setPath({image_path_[row_id], label_path_[row_id]});
+  trow->setPath({image_path_[unsigned_row_id], label_path_[unsigned_row_id]});
   return Status::OK();
 }
 
@@ -117,12 +118,14 @@ Status QMnistOp::CountTotalRows(const std::string &dir, const std::string &usage
 
     if (usage == "test10k") {
       // only use the first 10k samples and drop the last 50k samples
-      num_images = 10000;
-      num_labels = 10000;
+      uint32_t first_10k = 10000;
+      num_images = first_10k;
+      num_labels = first_10k;
     } else if (usage == "test50k") {
       // only use the last 50k samples and drop the first 10k samples
-      num_images = 50000;
-      num_labels = 50000;
+      uint32_t last_50k = 50000;
+      num_images = last_50k;
+      num_labels = last_50k;
     }
 
     *count = *count + num_images;
@@ -202,19 +205,22 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
                                  ", num of labels: " + std::to_string(num_labels) + ".");
 
   // The image size of the QMNIST dataset is fixed at [28,28]
-  int64_t image_size = kQMnistImageRows * kQMnistImageCols;
-  int64_t label_length = kQMnistLabelLength;
+  size_t image_size = kQMnistImageRows * kQMnistImageCols;
+  size_t label_length = kQMnistLabelLength;
 
+  uint32_t first_10k = 10000;
   if (usage_ == "test10k") {
     // only use the first 10k samples and drop the last 50k samples
-    num_images = 10000;
-    num_labels = 10000;
+    num_images = first_10k;
+    num_labels = first_10k;
   } else if (usage_ == "test50k") {
-    num_images = 50000;
-    num_labels = 50000;
+    uint32_t last_50k = 50000;
+    int num_bytes_for_unint32_t = 4;
+    num_images = last_50k;
+    num_labels = last_50k;
     // skip the first 10k samples for ifstream reader
-    (void)image_reader->ignore(image_size * 10000);
-    (void)label_reader->ignore(label_length * 10000 * 4);
+    (void)image_reader->ignore(image_size * first_10k);
+    (void)label_reader->ignore(label_length * first_10k * num_bytes_for_unint32_t);
   }
 
   auto images_buf = std::make_unique<char[]>(image_size * num_images);
@@ -239,7 +245,7 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
   }
   TensorShape image_tensor_shape = TensorShape({kQMnistImageRows, kQMnistImageCols, 1});
   TensorShape label_tensor_shape = TensorShape({kQMnistLabelLength});
-  for (int64_t data_index = 0; data_index != num_images; data_index++) {
+  for (size_t data_index = 0; data_index != num_images; data_index++) {
     auto image = &images_buf[data_index * image_size];
     std::shared_ptr<Tensor> image_tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(image_tensor_shape, data_schema_->Column(0).Type(),
@@ -253,8 +259,8 @@ Status QMnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *l
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(label_tensor_shape, data_schema_->Column(1).Type(),
                                               reinterpret_cast<unsigned char *>(label), &label_tensor));
 
-    image_info_pairs_.emplace_back(std::make_pair(image_tensor, label_tensor));
-    image_label_pairs_.emplace_back(std::make_pair(image_tensor, label[0]));
+    (void)image_info_pairs_.emplace_back(std::make_pair(image_tensor, label_tensor));
+    (void)image_label_pairs_.emplace_back(std::make_pair(image_tensor, label[0]));
     image_path_.push_back(image_names_[index]);
     label_path_.push_back(label_names_[index]);
   }

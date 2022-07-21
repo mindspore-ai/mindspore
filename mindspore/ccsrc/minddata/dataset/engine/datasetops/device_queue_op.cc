@@ -27,8 +27,8 @@
 
 namespace mindspore {
 namespace dataset {
-DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, int32_t device_id, bool send_epoch_end,
-                             int32_t total_batch, bool create_data_info_queue)
+DeviceQueueOp::DeviceQueueOp(const std::string channel_name, DeviceType device_type, int32_t device_id,
+                             bool send_epoch_end, int32_t total_batch, bool create_data_info_queue)
     : PipelineOp(1),
       channel_name_(channel_name),
       device_type_(device_type),
@@ -218,8 +218,8 @@ Status DeviceQueueOp::SendDataToAscend() {
   bool is_profiling_enable = false;
 #endif
 #ifdef ENABLE_DUMP_IR
-  md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
-  md_channel_info_->RecordPreprocessBatch(0);
+  RETURN_IF_NOT_OK(md_channel_info_->RecordBatchQueue(ChildOpConnectorSize()));
+  RETURN_IF_NOT_OK(md_channel_info_->RecordPreprocessBatch(0));
 #endif
 #ifndef ENABLE_SECURITY
   batch_record_start = ProfilingTime::GetCurMilliSecond();
@@ -233,9 +233,9 @@ Status DeviceQueueOp::SendDataToAscend() {
       RETURN_IF_NOT_OK(CheckExceptions(curr_row));
       WaitContinueSignal();
 #ifdef ENABLE_DUMP_IR
-      md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
-      md_channel_info_->RecordPreprocessBatch(send_batch);
-      md_channel_info_->RecordPushStartTime();
+      RETURN_IF_NOT_OK(md_channel_info_->RecordBatchQueue(ChildOpConnectorSize()));
+      RETURN_IF_NOT_OK(md_channel_info_->RecordPreprocessBatch(send_batch));
+      RETURN_IF_NOT_OK(md_channel_info_->RecordPushStartTime());
 #endif
 #ifndef ENABLE_SECURITY
       DetectPerBatchTime(&batch_record_start, &batch_record_end);
@@ -256,9 +256,9 @@ Status DeviceQueueOp::SendDataToAscend() {
 #endif
       send_batch++;
 #ifdef ENABLE_DUMP_IR
-      md_channel_info_->RecordBatchQueue(ChildOpConnectorSize());
-      md_channel_info_->RecordPreprocessBatch(send_batch);
-      md_channel_info_->RecordPushEndTime();
+      RETURN_IF_NOT_OK(md_channel_info_->RecordBatchQueue(ChildOpConnectorSize()));
+      RETURN_IF_NOT_OK(md_channel_info_->RecordPreprocessBatch(send_batch));
+      RETURN_IF_NOT_OK(md_channel_info_->RecordPushEndTime());
 #endif
 
       if (total_batch_ > 0 && send_batch >= total_batch_) {

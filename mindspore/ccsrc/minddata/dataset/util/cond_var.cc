@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,14 @@ Status CondVar::WaitFor(std::unique_lock<std::mutex> *lck, int64_t duration) {
       // Otherwise we wake up once a while to check for interrupt (for this thread).
       auto f = []() -> bool { return this_thread::is_interrupted(); };
       int64_t ctr = 0;
-      while (!f() && ctr++ < duration) {
-        (void)cv_.wait_for(*lck, std::chrono::milliseconds(1), f);
+      while (!f()) {
+        if (ctr < duration) {
+          ctr++;
+          (void)cv_.wait_for(*lck, std::chrono::milliseconds(1), f);
+        } else {
+          ctr++;
+          break;
+        }
       }
       RETURN_IF_INTERRUPTED();
     }
