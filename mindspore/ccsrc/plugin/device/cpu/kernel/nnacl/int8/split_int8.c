@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 
 #include "nnacl/int8/split_int8.h"
-#include "nnacl/split_parameter.h"
 #include <string.h>
+#include <math.h>
+#include <float.h>
+#include "nnacl/split_parameter.h"
 #include "nnacl/errorcode.h"
 
 int Int8DoSplit(const int8_t *in_data, int8_t **out_data, const int32_t *input_shape, int offset, int num_unit,
@@ -50,7 +52,7 @@ int Int8DoSplit(const int8_t *in_data, int8_t **out_data, const int32_t *input_s
     int8_t *dst = out_data[split_which] + split_times * copy_size;
     float out_scale = out_quant_arg[split_which].scale_;
     int32_t out_zp = out_quant_arg[split_which].zp_;
-    if (in_scale == out_scale && in_zp == out_zp) {
+    if (fabs(in_scale - out_scale) <= FLT_EPSILON && in_zp == out_zp) {
       (void)memcpy(dst, src, copy_size * sizeof(int8_t));
     } else {
       float scale = in_scale / out_scale;

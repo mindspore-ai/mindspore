@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-#include <math.h>
 #include "nnacl/int8/arithmetic_self_int8.h"
+#include <math.h>
+#include <float.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #include "nnacl/int8/common_func_int8.h"
@@ -288,7 +289,7 @@ int Int8ElementReciprocal(const int8_t *input, int8_t *output, int element_size,
   float bias = in_zp * in_scale;
   for (int i = 0; i < element_size; i++) {
     float input_f32 = input[i] * in_scale + bias;
-    if (input_f32 == 0.0f) {
+    if (fabs(input_f32) <= FLT_EPSILON) {
       return NNACL_ERR;
     }
     int32_t output_tmp = round(1.f / (input_f32 * out_scale)) + out_zp;

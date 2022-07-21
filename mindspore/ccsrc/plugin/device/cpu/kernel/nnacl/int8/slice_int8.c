@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 #include "nnacl/int8/slice_int8.h"
+#include <math.h>
+#include <float.h>
 #include "nnacl/errorcode.h"
 
 int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, int thread_id) {
@@ -44,7 +46,7 @@ int SliceInt8(const int8_t *input, int8_t *output, const SliceParameter *param, 
   int i, j, k, l, n, h, w, c;
 
   int equal_quant = 0;
-  if (input_scale == output_scale && input_zp == output_zp) {
+  if (fabs(input_scale - output_scale) <= FLT_EPSILON && input_zp == output_zp) {
     equal_quant = 1;
   }
 

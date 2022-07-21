@@ -17,6 +17,8 @@
 #include "src/common/quant_utils.h"
 #include <functional>
 #include <map>
+#include <cmath>
+#include <cfloat>
 
 namespace mindspore {
 namespace lite {
@@ -194,7 +196,7 @@ int CalWeightQuantBias(const float *raw_datas, size_t elem_count, const std::vec
   }
   for (size_t bucket_index = 0; bucket_index < bucket_size; bucket_index++) {
     quant_params->at(bucket_index).varCorr = 1;
-    if (var_raws[bucket_index] != 0 && var_dequants[bucket_index] != 0) {
+    if (fabs(var_raws[bucket_index]) > DBL_EPSILON && fabs(var_dequants[bucket_index]) > DBL_EPSILON) {
       auto temp_var_corr = var_raws[bucket_index] / var_dequants[bucket_index];
       const int min_var_corr = 0;
       const int max_var_corr = 10;
