@@ -1,5 +1,7 @@
 # MindSpore contributing guidelines
 
+[查看中文](./CONTRIBUTING_CN.md)
+
 <!-- TOC -->
 
 - [MindSpore contributing guidelines](#mindspore-contributing-guidelines)
