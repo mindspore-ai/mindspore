@@ -23,7 +23,7 @@ mindspore.ops.sparse_segment_mean
 
     - **TypeError** - `x` 、 `indices` 或 `segment_ids` 不是Tensor类型。
     - **TypeError** - `x` 的数据类型不是float16、float32、float64的任一类型。
-    - **TypeError** - `indices` 和 `segment_ids` 的数据类型不是float16、float32、float64的任一类型。
+    - **TypeError** - `indices` 和 `segment_ids` 的数据类型不是int32、int64的任一类型。
     - **TypeError** - `indices` 和 `segment_ids` 的数据类型不相同。
     - **ValueError** - `x` 、 `indices` 或 `segment_ids` 的维度不满足上述要求。
     - **ValueError** - `indices` 或 `segment_ids` 的shape不相同。
