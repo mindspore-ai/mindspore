@@ -180,8 +180,8 @@ double CostMatMul::GetMaxCostIn(const OperatorRec &op) {
 }
 
 // Chose strategy for MatMul
-StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+StrategyRec CostMatMul::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -318,8 +318,8 @@ double CostConvolution::GetMinCostIn(const Graph::NodeType &node) {
 }
 
 // Chose strategy for Conv
-StrategyRec CostConvolution::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+StrategyRec CostConvolution::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -408,8 +408,8 @@ StrategyRec CostPooling::GetOptimalStr(const Graph::NodeType &node,
 }
 
 // Chose strategy for Pooling
-StrategyRec CostPooling::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+StrategyRec CostPooling::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) const {
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -451,7 +451,7 @@ StrategyRec CostPooling::ChoseStr(const std::vector<double> &cost_op, StrategyRe
 
 // Chose strategy for Add
 StrategyRec CostTensorAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -502,7 +502,7 @@ StrategyRec CostReshape::ChoseStr(StrategyRec str) const { return str; }
 
 // Chose strategy for BiasAdd
 StrategyRec CostBiasAdd::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -588,7 +588,7 @@ StrategyRec CostCommon::GetOptimalStr(const Graph::NodeType &node,
 
 // Chose strategy for Common op
 StrategyRec CostCommon::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -667,7 +667,7 @@ StrategyRec CostBatchParallel::GetOptimalStr(const Graph::NodeType &node) {
 
 // Chose strategy for BatchParallel op
 StrategyRec CostBatchParallel::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
@@ -709,7 +709,7 @@ StrategyRec CostBatchParallel::ChoseStr(const std::vector<double> &cost_op, Stra
 
 // Chose strategy for CostSoftmaxCrossEntropyWithLogits
 StrategyRec CostSoftmaxCrossEntropyWithLogits::ChoseStr(const std::vector<double> &cost_op, StrategyRec str) {
-  uint64_t min_position = min_element(cost_op.begin(), cost_op.end()) - cost_op.begin();
+  uint64_t min_position = LongToUlong(min_element(cost_op.begin(), cost_op.end()) - cost_op.begin());
   if (cost_op[min_position] > (DOUBLE_MAX - 0.1)) {
     return str;
   }
