@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "debug/rdr/task_debug_info_recorder.h"
+#include "plugin/device/ascend/hal/device/tasksink/task_debug_info_recorder.h"
 #include <utility>
 #include "plugin/device/ascend/hal/device/tasksink/task_generator.h"
 #include "include/common/debug/rdr/recorder_manager.h"

@@ -28,9 +28,6 @@
 #include "utils/ms_context.h"
 #include "ps/ps_context.h"
 #include "utils/anf_utils.h"
-#ifdef ENABLE_D
-#include "include/transform/graph_ir/utils.h"
-#endif
 namespace mindspore {
 const char kMsConvert[] = "ms";
 const char kMsVm[] = "vm";

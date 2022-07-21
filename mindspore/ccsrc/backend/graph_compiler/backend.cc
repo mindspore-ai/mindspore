@@ -399,7 +399,7 @@ void ClearInputDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *d
 }
 
 bool OpInBlackList(const session::BackendOpRunInfoPtr &op_run_info) {
-  return kOpCacheBlackList.find(op_run_info->base_op_run_info.op_name) != kOpCacheBlackList.end();
+  return IsOneOfCacheBlackList(op_run_info->base_op_run_info.op_name);
 }
 
 int GetExecutionMode() {

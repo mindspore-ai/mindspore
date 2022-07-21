@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_SCALE_GRAD_IMPL_H_
 
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 template <typename T, typename S>
 void ScaleGradKernel(const int &nums, const T *x0, const S &x1, T *y, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPLIT_H_

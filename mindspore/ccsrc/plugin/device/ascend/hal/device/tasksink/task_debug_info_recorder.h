@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_DEBUG_RDR_TASK_DEBUG_INFO_RECORDER_H_
-#define MINDSPORE_CCSRC_DEBUG_RDR_TASK_DEBUG_INFO_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TASKSINK_TASK_DEBUG_INFO_RECORDER_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TASKSINK_TASK_DEBUG_INFO_RECORDER_H_
 #include <vector>
 #include <string>
 #include <memory>
@@ -49,4 +49,4 @@ bool RecordTaskDebugInfo(SubModuleId module, const std::string &name,
                          const std::vector<TaskDebugInfoPtr> &task_debug_info_list);
 }  // namespace RDR
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_DEBUG_RDR_TASK_DEBUG_INFO_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_TASKSINK_TASK_DEBUG_INFO_RECORDER_H_

@@ -39,13 +39,13 @@ const AnfNodePtr TransOpFormatRefine::Process(const FuncGraphPtr &func_graph, co
     auto builder =
       std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(node));
     MS_EXCEPTION_IF_NULL(builder);
-    if (in_format == kOpFormat_DEFAULT && k3DFormatSet.find(out_format) != k3DFormatSet.end()) {
+    if (in_format == kOpFormat_DEFAULT && IsOneOf3DFormat(out_format)) {
       builder->SetInputsFormat({kOpFormat_NCDHW});
       builder->SetOutputsFormat({out_format});
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());
       common::AnfAlgo::SetNodeAttr(kAttrSrcFormat, MakeValue(kOpFormat_NCDHW), node);
     }
-    if (out_format == kOpFormat_DEFAULT && k3DFormatSet.find(in_format) != k3DFormatSet.end()) {
+    if (out_format == kOpFormat_DEFAULT && IsOneOf3DFormat(in_format)) {
       builder->SetInputsFormat({in_format});
       builder->SetOutputsFormat({kOpFormat_NCDHW});
       AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), node.get());

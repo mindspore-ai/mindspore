@@ -815,7 +815,7 @@ bool AnfAlgo::IsUpdateParameterKernel(const CNodePtr &node) {
   if (HasNodeAttr(kAttrAsync, node) && GetNodeAttr<bool>(node, kAttrAsync)) {
     return false;
   }
-  if (kOptOperatorSet.find(node_name) == kOptOperatorSet.end() && node_name.find("Assign") == string::npos) {
+  if (!IsOneOfOperator(node_name) && node_name.find("Assign") == string::npos) {
     return false;
   }
   return true;
@@ -1031,7 +1031,7 @@ void FindDelayExecPosition(const std::vector<CNodePtr> &nodes, size_t current_in
     auto &child = nodes[j];
     auto child_name = AnfAlgo::GetCNodeName(child);
     if (child_name == kAssignAddOpName || child_name == kAssignSubOpName || child_name == kAssignOpName ||
-        kOptOperatorSet.find(child_name) != kOptOperatorSet.end()) {
+        IsOneOfOperator(child_name)) {
       return;
     }
 
@@ -1112,7 +1112,7 @@ void AnfAlgo::ReorderPosteriorExecList(NotNull<std::vector<CNodePtr> *> node_lis
 
   for (const auto &node : *node_list) {
     MS_EXCEPTION_IF_NULL(node);
-    if (kPosteriorOperatorSet.find(AnfAlgo::GetCNodeName(node)) != kPosteriorOperatorSet.end()) {
+    if (IsOneOfPosteriorOperator(AnfAlgo::GetCNodeName(node))) {
       posterior_node_list.emplace_back(node);
     } else {
       ordinary_node_list.emplace_back(node);

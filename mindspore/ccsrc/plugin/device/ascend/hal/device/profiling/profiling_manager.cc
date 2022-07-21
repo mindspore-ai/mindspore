@@ -27,6 +27,7 @@
 #include "runtime/base.h"
 #include <nlohmann/json.hpp>
 #include "plugin/device/ascend/hal/device/profiling/profiling_utils.h"
+#include "plugin/device/ascend/hal/profiler/ascend_profiling.h"
 
 using mindspore::device::ascend::ProfilingUtils;
 

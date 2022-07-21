@@ -405,7 +405,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   if (IsPrimitiveCNode(kernel_node, prim::kPrimCustom)) {
     auto tp = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
-    if (kCustomTypeAkg.find(tp) != kCustomTypeAkg.end()) {
+    if (IsOneOfCustomAkgType(tp)) {
       UpdateCustomKernelBuildInfo(kernel_node, true);
       return {};
     }

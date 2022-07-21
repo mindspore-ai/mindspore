@@ -39,7 +39,7 @@ DynamicAicpuOpKernelMod::DynamicAicpuOpKernelMod(const AnfNodePtr &anf_node_ptr)
   auto cnode = anf_node_ptr->cast<CNodePtr>();
   if (cnode != nullptr) {
     auto op_name = common::AnfAlgo::GetCNodeName(cnode);
-    if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
+    if (IsOneOfComputeDepend(op_name)) {
       unknow_type_ = device::ascend::UnknowShapeOpType::DEPEND_COMPUTE;
     }
   }

@@ -21,10 +21,11 @@
 
 #include "utils/hash_map.h"
 #include "common/graph_kernel/model/op_node.h"
+#include "include/backend/visible.h"
 
 namespace mindspore::graphkernel::inner {
 using CreatorFunc = std::function<PrimOpPtr(const std::string &)>;
-class OpRegistry {
+class BACKEND_EXPORT OpRegistry {
  public:
   static OpRegistry &Instance() {
     static OpRegistry instance{};

@@ -443,7 +443,7 @@ std::vector<T> PaddingShape(const std::vector<T> &shape, const std::string &form
                   << ", detail info: " << node->DebugString();
   }
   std::vector<T> host_shape;
-  if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (IsOneOf3DFormat(format)) {
     if (shape.size() >= kDim5) {
       return shape;
     }
@@ -466,7 +466,7 @@ std::vector<int> StringToAxisVector(const std::vector<T> &shape, const std::stri
   }
 
   std::vector<int> padding_axis;
-  if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (IsOneOf3DFormat(format)) {
     if (shape.size() >= kDim5) {
       return padding_axis;
     }

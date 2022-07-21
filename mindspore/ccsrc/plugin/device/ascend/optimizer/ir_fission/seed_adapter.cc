@@ -30,6 +30,8 @@
 
 namespace mindspore::opt {
 namespace {
+const std::set<std::string> kNodeWithSeedOperators = {kGammaOpName,          kPoissonOpName,    kStandardLaplaceOpName,
+                                                      kStandardNormalOpName, kUniformIntOpName, kUniformRealOpName};
 tensor::TensorPtr CreateTensor(int64_t seed) {
   // 1 create seed tensor
   std::vector<int64_t> indices_shape = {1};

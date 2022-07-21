@@ -19,9 +19,11 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void restrainforcewithatomenergyandvirial(int restrain_numbers, int atom_numbers, const int *restrain_list,
-                                          const float *crd_f, const float *crd_ref_f, const float weight,
-                                          const float *boxlength_f, float *atom_ene, float *atom_virial, float *frc_f,
-                                          cudaStream_t stream);
+CUDA_LIB_EXPORT void restrainforcewithatomenergyandvirial(int restrain_numbers, int atom_numbers,
+                                                          const int *restrain_list, const float *crd_f,
+                                                          const float *crd_ref_f, const float weight,
+                                                          const float *boxlength_f, float *atom_ene, float *atom_virial,
+                                                          float *frc_f, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_RESTRAIN_RESTRAIN_FORCE_ATOM_ENERGY_VIRIAL_IMPL_H_

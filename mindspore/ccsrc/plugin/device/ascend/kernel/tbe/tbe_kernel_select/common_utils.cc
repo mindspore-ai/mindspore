@@ -70,12 +70,12 @@ std::vector<int64_t> HostCheck::GetFinalInferShape(const AnfNodePtr &node, const
   }
 
   auto temp_shape = infer_shape;
-  if (kNoPaddingFormatSet.find(format) == kNoPaddingFormatSet.end() && format != kOpFormat_FRACTAL_ZN_LSTM &&
-      infer_shape.size() < kShape4dDims && k3DFormatSet.find(format) == k3DFormatSet.end()) {
+  if (!IsOneOfNoPaddingFormat(format) && format != kOpFormat_FRACTAL_ZN_LSTM && infer_shape.size() < kShape4dDims &&
+      !IsOneOf3DFormat(format)) {
     MS_LOG(DEBUG) << "Get Device Shape using a shape size is less than 4 ,should be Padding shape by Default firstly";
     temp_shape = trans::PaddingShapeTo4dDefault(infer_shape, node);
   }
-  if (infer_shape.size() != kNcdhwShapeSize && k3DFormatSet.find(format) != k3DFormatSet.end()) {
+  if (infer_shape.size() != kNcdhwShapeSize && IsOneOf3DFormat(format)) {
     temp_shape = trans::PaddingShapeTo5dDefault(infer_shape, node);
   }
   return temp_shape;

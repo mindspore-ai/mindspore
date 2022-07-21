@@ -166,8 +166,7 @@ void SingleTbeJsonCreator::GenInputDescJson(const AnfNodePtr &anf_node, size_t r
   auto def_format = TbeJsonUtils::IsNeedChangeDefaultFormat(anf_node) ? kOpFormat_NCDHW : kOpFormat_NCHW;
   auto format = AnfAlgo::GetInputFormat(anf_node, real_input_index);
   format = TbeAdapter::FormatPass(format, ori_shape.size());
-  format =
-    (def_format == kOpFormat_NCDHW && k3DFormatSet.find(format) == k3DFormatSet.end()) ? kOpFormat_NCDHW : format;
+  format = (def_format == kOpFormat_NCDHW && !IsOneOf3DFormat(format)) ? kOpFormat_NCDHW : format;
   auto d_type = AnfAlgo::GetInputDeviceDataType(anf_node, real_input_index);
   (*input_desc)[kJDtype] = tbe::TypeIdToString(d_type);
   (*input_desc)[kJDataType] = GetJsonValue<std::string>(*input_desc, kJDtype);

@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <map>
 
 #include "frontend/optimizer/optimizer_caller.h"
 #include "frontend/optimizer/anf_visitor.h"
@@ -40,6 +41,8 @@ namespace irpass {
 // {prim::kPrimListGetItem, L, N}
 // {prim::kPrimTupleSetItem, T, N, Z}
 // {prim::kPrimListSetItem, L, N, Z}
+const std::map<std::string, size_t> kSliceAttrToIndex = {{kSliceStart, 1}, {kSliceStop, 2}, {kSliceStep, 3}};
+
 class TupleListConvertItemIndexToPositive : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {

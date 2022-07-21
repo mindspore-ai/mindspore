@@ -133,7 +133,7 @@ const AnfNodePtr CustomOpRegInfoToAttr::Process(const FuncGraphPtr &, const AnfN
   MS_EXCEPTION_IF_NULL(primitive);
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(cnode, kAttrFuncType);
   // AKG/AICPU need to process attr, TBE will process later in the json creating phase.
-  if (kCustomTypeAkg.find(func_type) == kCustomTypeAkg.end() || func_type == kCustomTypeAICPU) {
+  if (!IsOneOfCustomAkgType(func_type) || func_type == kCustomTypeAICPU) {
     return nullptr;
   }
   // Early return if current node does not have attr

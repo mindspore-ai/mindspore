@@ -89,8 +89,6 @@ std::vector<KernelAttr> NativeCpuKernelMod::GetSupportFromOpLib(const std::strin
   return support_kernel_attrs;
 }
 
-mindspore::HashMap<std::string, std::vector<KernelAttr>> NativeCpuKernelMod::support_map_{};
-
 int DeprecatedNativeCpuKernelMod::Resize(const BaseOperatorPtr &base_operator,
                                          const std::vector<KernelTensorPtr> &inputs,
                                          const std::vector<KernelTensorPtr> &outputs,

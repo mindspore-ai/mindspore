@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "include/common/utils/utils.h"
 #include "mindspore/core/ops/core_ops.h"
+#include "plugin/device/ascend/optimizer/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {

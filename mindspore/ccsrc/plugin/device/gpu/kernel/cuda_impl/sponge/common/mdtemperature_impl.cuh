@@ -19,7 +19,8 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void MDTemperature(const int residue_numbers, const int *start, const int *end, const float *atom_vel_f,
-                   const float *atom_mass, float *ek, cudaStream_t stream);
+CUDA_LIB_EXPORT void MDTemperature(const int residue_numbers, const int *start, const int *end, const float *atom_vel_f,
+                                   const float *atom_mass, float *ek, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_COMMON_MDTEMPERATURE_IMPL_H_

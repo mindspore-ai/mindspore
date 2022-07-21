@@ -21,12 +21,13 @@
 #include <utility>
 #include <memory>
 #include <string>
+#include "include/backend/visible.h"
 
 namespace mindspore {
 namespace kernel {
 using AkgKernelBuildCreator = std::function<std::shared_ptr<AkgKernelBuilder>()>;
 
-class AkgKernelBuildManager {
+class BACKEND_EXPORT AkgKernelBuildManager {
  public:
   static AkgKernelBuildManager &Instance();
   void Register(const std::string &device_type, AkgKernelBuildCreator &&creator);

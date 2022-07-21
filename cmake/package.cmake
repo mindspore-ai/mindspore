@@ -95,6 +95,22 @@ install(
     COMPONENT mindspore
 )
 
+if(ENABLE_D)
+    install(
+        TARGETS mindspore_ascend
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
+if(ENABLE_GPU)
+    install(
+            TARGETS mindspore_gpu
+            DESTINATION ${INSTALL_LIB_DIR}
+            COMPONENT mindspore
+    )
+endif()
+
 if(USE_GLOG)
     install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
       DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.so.0 COMPONENT mindspore)

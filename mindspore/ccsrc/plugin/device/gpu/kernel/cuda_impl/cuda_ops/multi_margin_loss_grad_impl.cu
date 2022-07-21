@@ -133,9 +133,9 @@ __global__ void MultiMarginLoss_backward_kernel_half(half *gradInput, const half
 
 // namespace str
 template <typename T>
-void MultiMarginLossGrad(int64_t p, float margin, int64_t reduction, int nframe, int dim, const T *output_grad,
-                         const T *input, const int64_t *target, const T *weight, T *output, const uint32_t &device_id,
-                         cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT void MultiMarginLossGrad(int64_t p, float margin, int64_t reduction, int nframe, int dim,
+                                         const T *output_grad, const T *input, const int64_t *target, const T *weight,
+                                         T *output, const uint32_t &device_id, cudaStream_t cuda_stream) {
   dim3 blocks1(nframe);
   dim3 threads1(MULTIMARGIN_THREADS);
   bool reduce = false;
@@ -158,9 +158,10 @@ void MultiMarginLossGrad(int64_t p, float margin, int64_t reduction, int nframe,
 
 // namespace str
 template <>
-void MultiMarginLossGrad(int64_t p, float margin, int64_t reduction, int nframe, int dim, const half *output_grad,
-                         const half *input, const int64_t *target, const half *weight, half *output,
-                         const uint32_t &device_id, cudaStream_t cuda_stream) {
+CUDA_LIB_EXPORT void MultiMarginLossGrad(int64_t p, float margin, int64_t reduction, int nframe, int dim,
+                                         const half *output_grad, const half *input, const int64_t *target,
+                                         const half *weight, half *output, const uint32_t &device_id,
+                                         cudaStream_t cuda_stream) {
   dim3 blocks1(nframe);
   dim3 threads1(MULTIMARGIN_THREADS);
   bool reduce = false;

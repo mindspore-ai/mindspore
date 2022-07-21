@@ -23,8 +23,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void LJ_Direct_CF_Force_With_LJ_Virial_Direct_CF_Energy(
+CUDA_LIB_EXPORT void LJ_Direct_CF_Force_With_LJ_Virial_Direct_CF_Energy(
   const int atom_numbers, const float cutoff, const float pme_beta, const unsigned int *uint_crd_f, const int *LJtype,
   const float *charge, const float *scaler_f, float *uint_crd_with_LJ, int *nl_atom_numbers, int *nl_atom_serial,
   int *nl, const float *d_LJ_A, const float *d_LJ_B, float *frc_f, float *atom_lj_virial, float *atom_energy,

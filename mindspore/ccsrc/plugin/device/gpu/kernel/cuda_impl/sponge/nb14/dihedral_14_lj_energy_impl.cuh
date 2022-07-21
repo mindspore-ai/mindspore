@@ -18,10 +18,12 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void Dihedral14LJEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f, const int *LJtype,
-                        const float *charge, float *uint_crd_with_LJ_f, const float *boxlength_f, const int *a_14,
-                        const int *b_14, const float *lj_scale_factor, const float *LJ_type_A, const float *LJ_type_B,
-                        float *ene, cudaStream_t stream);
+CUDA_LIB_EXPORT void Dihedral14LJEnergy(const int dihedral_14_numbers, const int atom_numbers, const int *uint_crd_f,
+                                        const int *LJtype, const float *charge, float *uint_crd_with_LJ_f,
+                                        const float *boxlength_f, const int *a_14, const int *b_14,
+                                        const float *lj_scale_factor, const float *LJ_type_A, const float *LJ_type_B,
+                                        float *ene, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_NB14_DIHEDRAL_14_LJ_ENERGY_IMPL_H

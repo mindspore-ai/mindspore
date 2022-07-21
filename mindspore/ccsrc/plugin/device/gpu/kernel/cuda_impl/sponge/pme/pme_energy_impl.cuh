@@ -18,13 +18,15 @@
 
 #include <cufft.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
-               float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz, const int *uint_crd_f,
-               const float *charge, int *nl_atom_numbers, int *nl_atom_serial, int *nl, const float *scaler_f,
-               const int *excluded_list_start, const int *excluded_list, const int *excluded_atom_numbers,
-               float *d_reciprocal_ene, float *d_self_ene, float *d_direct_ene, float *d_correction_ene,
-               dim3 thread_PME, int PME_Nin, int PME_Nfft, int PME_Nall, const cufftHandle &PME_plan_r2c,
-               const cufftHandle &PME_plan_c2r, cudaStream_t stream);
+CUDA_LIB_EXPORT void PMEEnergy(int fftx, int ffty, int fftz, int atom_numbers, float beta, float *PME_BC, int *pme_uxyz,
+                               float *pme_frxyz, float *PME_Q, float *pme_fq, int *PME_atom_near, int *pme_kxyz,
+                               const int *uint_crd_f, const float *charge, int *nl_atom_numbers, int *nl_atom_serial,
+                               int *nl, const float *scaler_f, const int *excluded_list_start, const int *excluded_list,
+                               const int *excluded_atom_numbers, float *d_reciprocal_ene, float *d_self_ene,
+                               float *d_direct_ene, float *d_correction_ene, dim3 thread_PME, int PME_Nin, int PME_Nfft,
+                               int PME_Nall, const cufftHandle &PME_plan_r2c, const cufftHandle &PME_plan_c2r,
+                               cudaStream_t stream);
 
 #endif

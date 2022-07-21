@@ -19,9 +19,10 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void DihedralForce(int dihedral_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
-                   const int *atom_a, const int *atom_b, const int *atom_c, const int *atom_d, const int *ipn,
-                   const float *pk, const float *gamc, const float *gams, const float *pn, float *frc_f,
-                   cudaStream_t stream);
+CUDA_LIB_EXPORT void DihedralForce(int dihedral_numbers, int atom_numbers, const int *uint_crd_f, const float *scaler_f,
+                                   const int *atom_a, const int *atom_b, const int *atom_c, const int *atom_d,
+                                   const int *ipn, const float *pk, const float *gamc, const float *gams,
+                                   const float *pn, float *frc_f, cudaStream_t stream);
 #endif

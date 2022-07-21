@@ -67,11 +67,6 @@ class BACKEND_EXPORT Util {
   static void DoFusion(const FuncGraphPtr &func_graph, const std::string &cnode_name,
                        const std::string &fused_cnode_name);
   static kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
-
-  static mindspore::HashMap<std::string, int64_t> optimizer_to_ids;
-  static mindspore::HashMap<int64_t, std::string> id_to_optimizers;
-  static mindspore::HashMap<int64_t, std::string> id_to_optimizer_nodes;
-  static int64_t rank_id_;
 };
 }  // namespace ps
 }  // namespace mindspore

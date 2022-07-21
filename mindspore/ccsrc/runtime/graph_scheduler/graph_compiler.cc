@@ -481,8 +481,7 @@ std::set<CNodePtr> FetchNopNodeNotSupportEliminate(const KernelGraph *const grap
     }
 
     // kernel not support multi-thread execute will be inited in launch kernel, so its input cannot be eliminated.
-    if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(cnode)) !=
-          kOpNotSupportMultiThreadExecList.end() ||
+    if (IsOneOfNotSupportMultiThreadExec(common::AnfAlgo::GetCNodeName(cnode)) ||
         (kCPUOpNoEliminateList.find(common::AnfAlgo::GetCNodeName(cnode)) != kCPUOpNoEliminateList.end())) {
       const auto &inputs = cnode->inputs();
       for (const auto &input : inputs) {

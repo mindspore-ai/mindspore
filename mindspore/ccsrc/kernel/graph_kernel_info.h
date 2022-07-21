@@ -25,6 +25,7 @@
 #include "ir/dtype.h"
 #include "ir/kernel_info_dev.h"
 #include "kernel/kernel.h"
+#include "include/backend/visible.h"
 namespace mindspore {
 class GraphKernelInfo {
  public:
@@ -35,7 +36,7 @@ class GraphKernelInfo {
 
 using GraphKernelInfoCreator = std::function<std::shared_ptr<GraphKernelInfo>()>;
 
-class GraphKernelInfoManager {
+class BACKEND_EXPORT GraphKernelInfoManager {
  public:
   static GraphKernelInfoManager &Instance() {
     static GraphKernelInfoManager instance{};
@@ -52,6 +53,7 @@ class GraphKernelInfoManager {
       MS_EXCEPTION_IF_NULL(iter->second);
       return (iter->second)();
     }
+    MS_LOG(WARNING) << "Can not get a graph kernel info ptr on device: " << device_type;
     return nullptr;
   }
 

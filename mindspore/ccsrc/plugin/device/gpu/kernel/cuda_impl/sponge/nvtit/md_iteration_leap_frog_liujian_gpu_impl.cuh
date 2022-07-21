@@ -19,10 +19,11 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-void MD_Iteration_Leap_Frog_With_LiuJian(const int atom_numbers, const float half_dt, const float dt,
-                                         const float exp_gamma, int float4_numbers, float *inverse_mass,
-                                         float *sqrt_mass_inverse, float *vel, float *crd, float *frc, float *acc,
-                                         curandStatePhilox4_32_10_t *rand_state, float *rand_frc, float *output,
-                                         cudaStream_t stream);
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+CUDA_LIB_EXPORT void MD_Iteration_Leap_Frog_With_LiuJian(const int atom_numbers, const float half_dt, const float dt,
+                                                         const float exp_gamma, int float4_numbers, float *inverse_mass,
+                                                         float *sqrt_mass_inverse, float *vel, float *crd, float *frc,
+                                                         float *acc, curandStatePhilox4_32_10_t *rand_state,
+                                                         float *rand_frc, float *output, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_MD_ITERATION_LEAP_FROG_LIUJIAN_GPU_IMPL_H_

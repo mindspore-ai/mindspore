@@ -83,8 +83,7 @@ string GetPriorityMatchFormat(const CNodePtr &cnode) {
   size_t input_num = common::AnfAlgo::GetInputTensorNum(cnode);
   for (size_t index = 0; index < input_num; ++index) {
     auto pre_output_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
-    if (AnfAlgo::IsFeatureMapInput(cnode, index) &&
-        kHWSpecialFormatSet.find(pre_output_format) != kHWSpecialFormatSet.end()) {
+    if (AnfAlgo::IsFeatureMapInput(cnode, index) && IsOneOfHWSpecialFormat(pre_output_format)) {
       priority_matched_format = !is_init ? pre_output_format : priority_matched_format;
       is_init = true;
     }
@@ -494,7 +493,7 @@ KernelSelectStatus SelectCustomKernelInfo(const CNodePtr &kernel_node, KernelTyp
   auto func_type = common::AnfAlgo::GetNodeAttr<std::string>(kernel_node, kAttrFuncType);
   if (func_type == kCustomTypeTbe) {
     *kernel_type = KernelType::TBE_KERNEL;
-  } else if (kCustomTypeAkg.find(func_type) != kCustomTypeAkg.end()) {
+  } else if (IsOneOfCustomAkgType(func_type)) {
     *kernel_type = KernelType::AKG_KERNEL;
   } else if (func_type == kCustomTypeAICPU) {
     *kernel_type = KernelType::AICPU_KERNEL;

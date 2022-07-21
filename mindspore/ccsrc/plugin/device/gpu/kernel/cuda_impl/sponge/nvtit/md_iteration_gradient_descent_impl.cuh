@@ -19,7 +19,8 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
-void MDIterationGradientDescent(const int atom_numbers, float *crd, float *frc, const float learning_rate,
-                                cudaStream_t stream);
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
+CUDA_LIB_EXPORT void MDIterationGradientDescent(const int atom_numbers, float *crd, float *frc,
+                                                const float learning_rate, cudaStream_t stream);
 
 #endif

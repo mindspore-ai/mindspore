@@ -19,8 +19,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void CrdToUintCrd(const int atom_numbers, const float *crd_to_uint_crd_cof_f, const float *crd_f,
-                  unsigned int *uint_crd_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void CrdToUintCrd(const int atom_numbers, const float *crd_to_uint_crd_cof_f, const float *crd_f,
+                                  unsigned int *uint_crd_f, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_CRD_TO_UINT_CRD_IMPL_H_

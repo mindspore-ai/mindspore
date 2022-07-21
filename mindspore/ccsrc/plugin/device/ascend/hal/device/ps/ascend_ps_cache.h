@@ -14,23 +14,46 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_
-#define MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_
+#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_PS_ASCEND_PS_CACHE_H_
+#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_PS_ASCEND_PS_CACHE_H_
 
-#include <cuda_runtime_api.h>
+#include <string>
+#include <vector>
 #include <memory>
+#include <utility>
 #include "ps/ps_cache/ps_cache_basic.h"
+#include "plugin/device/ascend/kernel/aicpu/aicpu_kernel_mod.h"
+#include "ir/dtype.h"
+#include "runtime/base.h"
 
 namespace mindspore {
 namespace ps {
-namespace gpu {
-class GPUPsCache : public PsCacheBasic {
+namespace ascend {
+struct KernelNodeInfo {
+  KernelNodeInfo(const std::string &op_name, std::vector<std::vector<size_t>> input_data_shape,
+                 std::vector<TypeId> input_data_type, std::vector<std::vector<size_t>> output_data_shape,
+                 std::vector<TypeId> output_data_type)
+      : op_name_(op_name) {
+    input_data_shape_.swap(input_data_shape);
+    input_data_type_.swap(input_data_type);
+    output_data_shape_.swap(output_data_shape);
+    output_data_type_.swap(output_data_type);
+  }
+  std::string op_name_;
+  std::vector<std::vector<size_t>> input_data_shape_;
+  std::vector<TypeId> input_data_type_;
+  std::vector<std::vector<size_t>> output_data_shape_;
+  std::vector<TypeId> output_data_type_;
+};
+
+class AscendPsCache : public PsCacheBasic {
  public:
-  GPUPsCache() = default;
-  ~GPUPsCache() override = default;
+  AscendPsCache() = default;
+  ~AscendPsCache() override = default;
   bool InitDevice(uint32_t device_id, const void *context) override;
   void *MallocMemory(size_t size) override;
   void FreeMemory(void *device_addr) override;
+  bool MallocConstantMemory(size_t cache_vocab_size) override;
   bool RecordEvent() override;
   bool SynchronizeEvent() override;
   bool SynchronizeStream() override;
@@ -42,9 +65,11 @@ class GPUPsCache : public PsCacheBasic {
                   size_t embedding_size, size_t swap_in_size) override;
 
  private:
-  std::unique_ptr<cudaEvent_t> event_;
+  int *offset_addr_{nullptr};
+  int *cache_vocab_size_addr_{nullptr};
+  std::unique_ptr<rtEvent_t> event_;
 };
-}  // namespace gpu
+}  // namespace ascend
 }  // namespace ps
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PS_PS_CACHE_GPU_GPU_PS_CACHE_H_
+#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_DEVICE_PS_ASCEND_PS_CACHE_H_

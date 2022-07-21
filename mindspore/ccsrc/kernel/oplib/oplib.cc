@@ -67,7 +67,6 @@ constexpr auto kFormat = "format";
 constexpr auto kNeedCompile = "need_compile";
 constexpr auto kShape = "shape";
 constexpr auto kProcessor = "processor";
-std::multimap<std::string, std::shared_ptr<OpInfo>> OpLib::op_info_;
 
 static std::string ImplTypeToStr(OpImplyType impl_type) {
   switch (impl_type) {

@@ -15,9 +15,6 @@ set(_OFFLINE_SRC_LIST
 
 if(ENABLE_DUMP_IR)
     file(GLOB_RECURSE _RDR_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "rdr/*.cc")
-    if(NOT ENABLE_D)
-        list(REMOVE_ITEM _RDR_SRC_LIST "rdr/task_debug_info_recorder.cc")
-    endif()
 endif()
 
 if("${ENABLE_HIDDEN}" STREQUAL "OFF")

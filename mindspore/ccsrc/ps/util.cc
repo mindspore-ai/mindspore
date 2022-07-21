@@ -24,26 +24,28 @@
 
 namespace mindspore {
 namespace ps {
-mindspore::HashMap<std::string, int64_t> Util::optimizer_to_ids{
+namespace {
+static mindspore::HashMap<std::string, int64_t> optimizer_to_ids = {
   {kApplyMomentum, 0},
   {kSparseAdam, 1},
   {kSparseLazyAdam, 2},
   {kSparseFtrl, 3},
 };
 
-mindspore::HashMap<int64_t, std::string> Util::id_to_optimizers{
+static mindspore::HashMap<int64_t, std::string> id_to_optimizers = {
   {0, kApplyMomentum},
   {1, kSparseAdam},
   {2, kSparseLazyAdam},
   {3, kSparseFtrl},
 };
 
-mindspore::HashMap<int64_t, std::string> Util::id_to_optimizer_nodes{
+static mindspore::HashMap<int64_t, std::string> id_to_optimizer_nodes = {
   {0, kApplyMomentumOp},
   {1, kSparseAdamOp},
   {2, kSparseLazyAdamOp},
   {3, kSparseFtrlOp},
 };
+}  // namespace
 
 bool Util::IsRoleOfPServer() { return PSContext::instance()->is_server(); }
 

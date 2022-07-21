@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_UTILS_H_
 
 #include <string>
+#include <set>
 #include "plugin/device/ascend/hal/hardware/ascend_device_context.h"
 #include "backend/common/session/kernel_graph.h"
 

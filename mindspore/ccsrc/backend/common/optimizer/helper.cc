@@ -734,10 +734,10 @@ AbstractBasePtrList RectifyAbstractFromRegAttr(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(ms_context);
   auto device = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device == kGPUDevice) {
-    if (DynamicShapeConstInputToAttrGPU.find(primitive->name()) != DynamicShapeConstInputToAttrGPU.end()) {
+    if (IsOneOfDynamicShapeConstInputToAttrGPU(primitive->name())) {
       return input_abstract;
     }
-  } else if (DynamicShapeConstInputToAttr.find(primitive->name()) != DynamicShapeConstInputToAttr.end()) {
+  } else if (IsOneOfDynamicShapeConstInputToAttr(primitive->name())) {
     return input_abstract;
   }
   auto convert_input_list = reg.GetConstInputAttrInfo();

@@ -14,9 +14,6 @@ set(FBS_FILES
 ms_build_flatbuffers(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}../../schema generated_fbs_files ${SERVER_FLATBUFFER_OUTPUT})
 
 if(ENABLE_D OR ENABLE_ACL)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/ascend-toolkit/latest/lib64)
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/lib64)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/nnae/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
     set(MINDSPORE_RPATH
@@ -24,9 +21,77 @@ if(ENABLE_D OR ENABLE_ACL)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/Ascend/latest/opp/op_impl/built-in/ai_core/tbe/op_tiling)
 endif()
 
-if(ENABLE_D)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/ascend/kernel/aicpu/aicpu_ops)
-    add_subdirectory(plugin/device/ascend/kernel/aicpu/aicpu_ops)
+if(ENABLE_GPU)
+    find_package(CUDA REQUIRED)
+    find_package(Threads)
+    if(${CUDA_VERSION} VERSION_LESS ${MS_REQUIRE_CUDA_VERSION})
+        message(FATAL_ERROR "The minimum CUDA version ${MS_REQUIRE_CUDA_VERSION} is required, \
+              but only CUDA ${CUDA_VERSION} found.")
+    endif()
+    enable_language(CUDA)
+    if(NOT CUDA_PATH OR CUDA_PATH STREQUAL "")
+        if(DEFINED ENV{CUDA_HOME} AND NOT $ENV{CUDA_HOME} STREQUAL "")
+            set(CUDA_PATH $ENV{CUDA_HOME})
+        else()
+            set(CUDA_PATH ${CUDA_TOOLKIT_ROOT_DIR})
+        endif()
+    endif()
+
+    if(DEFINED ENV{CUDNN_HOME} AND NOT $ENV{CUDNN_HOME} STREQUAL "")
+        set(CUDNN_INCLUDE_DIR $ENV{CUDNN_HOME}/include)
+        set(CUDNN_LIBRARY_DIR $ENV{CUDNN_HOME}/lib64)
+        find_path(CUDNN_INCLUDE_PATH cudnn.h HINTS ${CUDNN_INCLUDE_DIR} NO_DEFAULT_PATH)
+        find_library(CUDNN_LIBRARY_PATH "cudnn" HINTS ${CUDNN_LIBRARY_DIR} NO_DEFAULT_PATH)
+        find_library(CUBLAS_LIBRARY_PATH "cublas" HINTS ${CUDNN_LIBRARY_DIR})
+        if(CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn header file, please set environment variable CUDNN_HOME to \
+                    cudnn installation position.")
+        endif()
+        if(CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn library file, please set environment variable CUDNN_HOME to \
+                    cudnn installation position.")
+        endif()
+    else()
+        list(APPEND CMAKE_PREFIX_PATH  ${CUDA_TOOLKIT_ROOT_DIR})
+        find_path(CUDNN_INCLUDE_PATH cudnn.h PATH_SUFFIXES cuda/inclulde include cuda)
+        find_library(CUDNN_LIBRARY_PATH "cudnn" PATH_SUFFIXES cuda/lib64 lib64 lib cuda/lib lib/x86_64-linux-gnu)
+        find_library(CUBLAS_LIBRARY_PATH "cublas" PATH_SUFFIXES cuda/lib64 lib64 lib cuda/lib lib/x86_64-linux-gnu)
+        if(CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn header file, if cudnn library is not installed, please put \
+                    cudnn header file in cuda include path or user include path(eg. /usr/local/cuda/include; \
+                    /usr/local/include; /usr/include), if cudnn library is installed in other position, please \
+                    set environment variable CUDNN_HOME to cudnn installation position, there should be cudnn.h \
+                    in {CUDNN_HOME}/include.")
+        endif()
+        if(CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
+            message(FATAL_ERROR "Failed to find cudnn library file, if cudnn library is not installed, please put \
+                    cudnn library file in cuda library path or user library path(eg. /usr/local/cuda/lib64; \
+                    /usr/local/lib64; /usr/lib64; /usr/local/lib; /usr/lib), if cudnn library is installed in other \
+                    position, please set environment variable CUDNN_HOME to cudnn installation position, there should \
+                    be cudnn library file in {CUDNN_HOME}/lib64.")
+        endif()
+    endif()
+
+    if(NOT CUPTI_INCLUDE_DIRS OR CUPTI_INCLUDE_DIRS STREQUAL "")
+        set(CUPTI_INCLUDE_DIRS  ${CUDA_PATH}/extras/CUPTI/include)
+    endif()
+    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:${CUDA_PATH}/lib64)
+    message("CUDA_PATH: ${CUDA_PATH}")
+    message("CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
+    message("CUDNN_INCLUDE_PATH: ${CUDNN_INCLUDE_PATH}")
+    message("CUDNN_LIBRARY_PATH: ${CUDNN_LIBRARY_PATH}")
+    message("CUBLAS_LIBRARY_PATH: ${CUBLAS_LIBRARY_PATH}")
+    message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
+    include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
+
+    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        list(APPEND CUDA_NVCC_FLAGS -G)
+        message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})
+    endif()
+    set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
+    add_compile_definitions(ENABLE_GPU)
 endif()
 
 if(ENABLE_CPU)
@@ -57,111 +122,6 @@ endif()
 
 if(ENABLE_MPI)
     add_compile_definitions(ENABLE_MPI)
-endif()
-
-if(ENABLE_GPU)
-    find_package(CUDA REQUIRED)
-    find_package(Threads)
-    if(${CUDA_VERSION} VERSION_LESS ${MS_REQUIRE_CUDA_VERSION})
-        message(FATAL_ERROR "The minimum CUDA version ${MS_REQUIRE_CUDA_VERSION} is required, \
-              but only CUDA ${CUDA_VERSION} found.")
-    endif()
-    enable_language(CUDA)
-    if(NOT CUDA_PATH OR CUDA_PATH STREQUAL "")
-        if(DEFINED ENV{CUDA_HOME} AND NOT $ENV{CUDA_HOME} STREQUAL "")
-            set(CUDA_PATH $ENV{CUDA_HOME})
-        else()
-            set(CUDA_PATH ${CUDA_TOOLKIT_ROOT_DIR})
-        endif()
-    endif()
-
-    if(DEFINED ENV{CUDNN_HOME} AND NOT $ENV{CUDNN_HOME} STREQUAL "")
-        set(CUDNN_INCLUDE_DIR $ENV{CUDNN_HOME}/include)
-        set(CUDNN_LIBRARY_DIR $ENV{CUDNN_HOME}/lib64)
-        find_path(CUDNN_INCLUDE_PATH cudnn.h HINTS ${CUDNN_INCLUDE_DIR} NO_DEFAULT_PATH)
-        find_library(CUDNN_LIBRARY_PATH "cudnn" HINTS ${CUDNN_LIBRARY_DIR} NO_DEFAULT_PATH)
-        if(CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
-            message(FATAL_ERROR "Failed to find cudnn header file, please set environment variable CUDNN_HOME to \
-                    cudnn installation position.")
-        endif()
-        if(CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
-            message(FATAL_ERROR "Failed to find cudnn library file, please set environment variable CUDNN_HOME to \
-                    cudnn installation position.")
-        endif()
-    else()
-        list(APPEND CMAKE_PREFIX_PATH  ${CUDA_TOOLKIT_ROOT_DIR})
-        find_path(CUDNN_INCLUDE_PATH cudnn.h PATH_SUFFIXES cuda/inclulde include cuda)
-        find_library(CUDNN_LIBRARY_PATH "cudnn" PATH_SUFFIXES cuda/lib64 lib64 lib cuda/lib lib/x86_64-linux-gnu)
-        if(CUDNN_INCLUDE_PATH STREQUAL CUDNN_INCLUDE_PATH-NOTFOUND)
-            message(FATAL_ERROR "Failed to find cudnn header file, if cudnn library is not installed, please put \
-                    cudnn header file in cuda include path or user include path(eg. /usr/local/cuda/include; \
-                    /usr/local/include; /usr/include), if cudnn library is installed in other position, please \
-                    set environment variable CUDNN_HOME to cudnn installation position, there should be cudnn.h \
-                    in {CUDNN_HOME}/include.")
-        endif()
-        if(CUDNN_LIBRARY_PATH STREQUAL CUDNN_LIBRARY_PATH-NOTFOUND)
-            message(FATAL_ERROR "Failed to find cudnn library file, if cudnn library is not installed, please put \
-                    cudnn library file in cuda library path or user library path(eg. /usr/local/cuda/lib64; \
-                    /usr/local/lib64; /usr/lib64; /usr/local/lib; /usr/lib), if cudnn library is installed in other \
-                    position, please set environment variable CUDNN_HOME to cudnn installation position, there should \
-                    be cudnn library file in {CUDNN_HOME}/lib64.")
-        endif()
-    endif()
-
-    if(NOT CUPTI_INCLUDE_DIRS OR CUPTI_INCLUDE_DIRS STREQUAL "")
-        set(CUPTI_INCLUDE_DIRS  ${CUDA_PATH}/extras/CUPTI/include)
-    endif()
-    set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:${CUDA_PATH}/lib64)
-    message("CUDA_PATH: ${CUDA_PATH}")
-    message("CUDA_INCLUDE_DIRS: ${CUDA_INCLUDE_DIRS}")
-    message("CUDNN_INCLUDE_PATH: ${CUDNN_INCLUDE_PATH}")
-    message("CUDNN_LIBRARY_PATH: ${CUDNN_LIBRARY_PATH}")
-    message("CUPTI_INCLUDE_DIRS: ${CUPTI_INCLUDE_DIRS}")
-    include_directories(${CUDNN_INCLUDE_PATH} ${CUDA_PATH} ${CUDA_INCLUDE_DIRS} ${CUPTI_INCLUDE_DIRS})
-
-    file(GLOB_RECURSE GPU_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-            "plugin/device/gpu/hal/device/*.cc"
-            "plugin/device/gpu/hal/device/*.cu"
-            "plugin/device/gpu/kernel/*.cu"
-            )
-
-    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/kernel/cuda_impl/cuda_ops/*.cu")
-
-    list(APPEND CUDA_NVCC_FLAGS -arch=sm_53 --expt-relaxed-constexpr)
-    if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        list(APPEND CUDA_NVCC_FLAGS -G)
-        message("CUDA_NVCC_FLAGS" ${CUDA_NVCC_FLAGS})
-    endif()
-    list(REMOVE_ITEM GPU_SRC_LIST "plugin/device/gpu/hal/device/mpi/mpi_initializer.cc"
-                                  "plugin/device/gpu/hal/device/distribution/collective_wrapper.cc"
-                                  "plugin/device/gpu/hal/device/distribution/mpi_wrapper.cc"
-                                  "plugin/device/gpu/hal/device/distribution/nccl_wrapper.cc"
-                                  "plugin/device/gpu/hal/device/trt_loader.cc")
-
-    if(NOT ${TENSORRT_HOME} STREQUAL "")
-        find_path(TENSORRT_HOME_INCLUDE NvInfer.h HINTS ${TENSORRT_HOME}/include)
-        if(TENSORRT_HOME_INCLUDE STREQUAL TENSORRT_HOME_INCLUDE-NOTFOUND)
-          message(FATAL_ERROR "Tensor-RT dir not exist ${TENSORRT_HOME}")
-        endif()
-        message("Enable GPU inference. Tensor-RT include dir: ${TENSORRT_HOME_INCLUDE}")
-        set(ENABLE_GPU_INFER TRUE)
-        add_compile_definitions(ENABLE_GPU_INFER)
-        include_directories(${TENSORRT_HOME_INCLUDE})
-        list(APPEND GPU_SRC_LIST ${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/gpu/hal/device/trt_loader.cc)
-    endif()
-
-    set(NVCC_TMP_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-    if(${CUDA_VERSION} VERSION_LESS 11.0)
-        string(REPLACE "-std=c++17" "-std=c++11" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    else()
-        string(REPLACE "-std=c++17" "-std=c++14" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    endif()
-    set_property(SOURCE ${GPU_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_DEVICE)
-    cuda_add_library(gpu_cuda_lib STATIC ${GPU_SRC_LIST})
-    set(CMAKE_CXX_FLAGS ${NVCC_TMP_CMAKE_CXX_FLAGS})
-    add_compile_definitions(ENABLE_GPU)
-    add_dependencies(gpu_cuda_lib proto_input)
-    add_subdirectory(plugin/device/gpu/kernel/cuda_impl/cuda_ops)
 endif()
 
 ## make protobuf files
@@ -328,22 +288,11 @@ set(BACKEND_SUB_COMP
         runtime/hardware
         runtime/pynative
         runtime/data_queue
-        plugin/device/ascend/hal/device
-        plugin/device/ascend/hal/hardware
-        plugin/device/ascend/hal/hccl_adapter
-        plugin/device/ascend/hal/profiler
-        plugin/device/ascend/kernel
-        plugin/device/ascend/optimizer
         plugin/device/cpu/hal/device
         plugin/device/cpu/hal/hardware
         plugin/device/cpu/hal/profiler
         plugin/device/cpu/kernel
         plugin/device/cpu/optimizer
-        plugin/device/gpu/hal/device
-        plugin/device/gpu/hal/hardware
-        plugin/device/gpu/hal/profiler
-        plugin/device/gpu/kernel
-        plugin/device/gpu/optimizer
         transform/graph_ir
         )
 
@@ -370,14 +319,19 @@ endif()
 
 set_property(SOURCE ${BACKEND_SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_ME)
 add_library(mindspore_backend SHARED ${BACKEND_SUB_OBJECTS_SRC})
+add_library(mindspore_backend_common STATIC ${BACKEND_SUB_OBJECTS_SRC})
+
 if(MODE_ASCEND_ACL)
     add_library(mindspore_backend_static STATIC ${BACKEND_SUB_OBJECTS_SRC})
 endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore_backend PRIVATE mindspore::pybind11_module)
 endif()
+
 target_link_libraries(mindspore_backend PRIVATE mindspore_core mindspore_common proto_input mindspore::protobuf)
 target_link_libraries(mindspore_backend PRIVATE securec)
+
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_target_properties(mindspore_backend PROPERTIES MACOSX_RPATH ON)
     set_target_properties(mindspore_backend PROPERTIES INSTALL_RPATH @loader_path)
@@ -387,17 +341,6 @@ endif()
 
 if(ENABLE_CPU)
     target_link_libraries(mindspore_backend PRIVATE mindspore::dnnl mindspore::mkldnn nnacl)
-endif()
-if(ENABLE_GPU)
-    message("add gpu lib to mindspore_backend")
-    target_link_libraries(mindspore_backend PRIVATE gpu_cuda_lib cublas cuda_ops
-            ${CUDA_PATH}/lib64/libcurand.so
-            ${CUDNN_LIBRARY_PATH}
-            ${CUDA_PATH}/lib64/libcudart.so
-            ${CUDA_PATH}/lib64/stubs/libcuda.so
-            ${CUDA_PATH}/lib64/libcusolver.so
-            ${CUDA_PATH}/lib64/libcufft.so
-            ${CUDA_PATH}/lib64/libcusparse.so)
 endif()
 
 if(NOT WIN32)
@@ -421,28 +364,7 @@ elseif(ENABLE_CPU AND NOT WIN32)
             -Wl,--no-as-needed mindspore::event_core ps_cache)
 endif()
 
-if(ENABLE_D)
-    find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(HCCL hccl ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    target_link_libraries(mindspore_backend PUBLIC ${GE_RUNNER} ${GRAPH} ${HCCL})
-endif()
-
 if(MODE_ASCEND_ALL)
-    MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
-    find_library(ERROR_MANAGER error_manager ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(RUNTIME_LIB runtime ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(TSDCLIENT tsdclient HINTS ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(DATATRANSFER datatransfer HINTS ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(PROFILING msprofiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ACL ascendcl ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(ACL_TDT_CHANNEL acl_tdt_channel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(OPT_FEATURE opt_feature ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-    find_library(OPTILING optiling ${ASCEND_CANN_OPP_PATH} ${ASCEND_TOOLKIT_OPP_PATH})
-    target_link_libraries(mindspore_backend PUBLIC ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
-            -Wl,--no-as-needed ${OPTILING} ${PLATFORM} ${ACL} ${ACL_TDT_CHANNEL} ${OPT_FEATURE} ${PROFILING})
     target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf -Wl,--end-group)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_link_libraries(mindspore PUBLIC -Wl,--start-group proto_input mindspore::protobuf mindspore::sentencepiece
@@ -472,6 +394,18 @@ else()
     MESSAGE(FATAL_ERROR "other platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 set(MINDSPORE_RPATH ${ORIGIN_PATH}/lib:${MINDSPORE_RPATH})
+
+if(ENABLE_D)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/ascend)
+    add_subdirectory(plugin/device/ascend)
+    target_link_libraries(mindspore_backend PRIVATE mindspore_ascend)
+endif()
+
+if(ENABLE_GPU)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/plugin/device/gpu)
+    add_subdirectory(plugin/device/gpu)
+    target_link_libraries(mindspore_backend PRIVATE mindspore_gpu)
+endif()
 
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
@@ -524,16 +458,6 @@ endif()
 if(ENABLE_MINDDATA)
     add_subdirectory(minddata/mindrecord)
     add_subdirectory(minddata/dataset)
-endif()
-
-if(MODE_ASCEND_ALL)
-    target_link_libraries(_c_expression PRIVATE ${adump_server})
-endif()
-
-if(ENABLE_D)
-    if(ENABLE_MPI)
-        set_target_properties(_ascend_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-    endif()
 endif()
 
 if(ENABLE_TEST OR ENABLE_TESTCASES)

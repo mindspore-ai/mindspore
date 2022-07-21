@@ -35,7 +35,7 @@
 #ifdef ENABLE_GPU_COLLECTIVE
 #include "plugin/device/gpu/hal/device/distribution/collective_init.h"
 #else
-#include "plugin/device/gpu/hal/device/distribution/collective_fake_init.h"
+#include "runtime/collective/collective_fake_init.h"
 #endif
 #if ((defined ENABLE_CPU) && (!defined _WIN32))
 #include "ps/util.h"

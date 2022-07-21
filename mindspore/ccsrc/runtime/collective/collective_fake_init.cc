@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/gpu/hal/device/distribution/collective_fake_init.h"
+#include "runtime/collective/collective_fake_init.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

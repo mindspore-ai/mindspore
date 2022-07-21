@@ -32,6 +32,22 @@ install(
         COMPONENT mindspore
 )
 
+if(ENABLE_D)
+    install(
+        TARGETS mindspore_ascend
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
+if(ENABLE_GPU)
+    install(
+        TARGETS mindspore_gpu
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
 if(USE_GLOG)
     file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
     install(

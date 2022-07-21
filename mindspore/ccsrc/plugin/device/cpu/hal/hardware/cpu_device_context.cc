@@ -345,8 +345,7 @@ bool CPUKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vector<A
 
   // Some CPU kernels can't initialize kernel and launch kernel in different thread, so reinitialize the kernels before
   // launch.
-  if (kOpNotSupportMultiThreadExecList.find(common::AnfAlgo::GetCNodeName(kernel)) !=
-      kOpNotSupportMultiThreadExecList.end()) {
+  if (IsOneOfNotSupportMultiThreadExec(common::AnfAlgo::GetCNodeName(kernel))) {
     auto cpu_kernel_mod = dynamic_cast<kernel::DeprecatedNativeCpuKernelMod *>(kernel_mod);
     MS_EXCEPTION_IF_NULL(cpu_kernel_mod);
     cpu_kernel_mod->InitKernel(kernel);

@@ -28,16 +28,16 @@ __global__ void ScaleGrad(const int nums, const T *x0, const S &x1, T *y) {
 }
 
 template <typename T, typename S>
-void ScaleGradKernel(const int &nums, const T *x0, const S &x1, T *y, cudaStream_t stream) {
+CUDA_LIB_EXPORT void ScaleGradKernel(const int &nums, const T *x0, const S &x1, T *y, cudaStream_t stream) {
   ScaleGrad<<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
   return;
 }
 
-template void ScaleGradKernel<float, float>(const int &nums, const float *x0, const float &x1, float *y,
-                                            cudaStream_t stream);
-template void ScaleGradKernel<float, half>(const int &nums, const float *x0, const half &x1, float *y,
-                                           cudaStream_t stream);
-template void ScaleGradKernel<half, float>(const int &nums, const half *x0, const float &x1, half *y,
-                                           cudaStream_t stream);
-template void ScaleGradKernel<half, half>(const int &nums, const half *x0, const half &x1, half *y,
-                                          cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScaleGradKernel<float, float>(const int &nums, const float *x0, const float &x1, float *y,
+                                                            cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScaleGradKernel<float, half>(const int &nums, const float *x0, const half &x1, float *y,
+                                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScaleGradKernel<half, float>(const int &nums, const half *x0, const float &x1, half *y,
+                                                           cudaStream_t stream);
+template CUDA_LIB_EXPORT void ScaleGradKernel<half, half>(const int &nums, const half *x0, const half &x1, half *y,
+                                                          cudaStream_t stream);

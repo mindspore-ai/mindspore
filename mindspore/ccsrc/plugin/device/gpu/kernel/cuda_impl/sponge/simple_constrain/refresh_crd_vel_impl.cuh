@@ -19,7 +19,9 @@
 
 #include <curand_kernel.h>
 #include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_common.h"
+#include "plugin/device/gpu/kernel/cuda_impl/cuda_ops/cuda_device_info.h"
 
-void refreshcrdvel(int atom_numbers, float dt_inverse, float dt, float exp_gamma, float half_exp_gamma_plus_half,
-                   float *test_frc_f, float *mass_inverse, float *crd_f, float *vel_f, cudaStream_t stream);
+CUDA_LIB_EXPORT void refreshcrdvel(int atom_numbers, float dt_inverse, float dt, float exp_gamma,
+                                   float half_exp_gamma_plus_half, float *test_frc_f, float *mass_inverse, float *crd_f,
+                                   float *vel_f, cudaStream_t stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_SPONGE_SIMPLE_CONSTRAIN_REFRESH_CRD_VEL_IMPL_H_
