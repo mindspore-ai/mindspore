@@ -476,8 +476,8 @@ class SmoothL1Loss(LossBase):
     .. math::
         L =
         \begin{cases}
-            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{`sum'.}
+            \operatorname{mean}(L_{i}), &  \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L_{i}),  &  \text{if reduction} = \text{'sum'.}
         \end{cases}
 
     .. note::
@@ -494,12 +494,13 @@ class SmoothL1Loss(LossBase):
                          Default: "none".
 
     Inputs:
-        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be float16 or float32.
+        - **logits** (Tensor) - Predictive value. Tensor of any dimension. Data type must be one of float16,
+          float32 and float64.
         - **labels** (Tensor) - Ground truth data, same shape and dtype as the `logits`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
-        Otherwise it is a scalar.
+        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Otherwise the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
