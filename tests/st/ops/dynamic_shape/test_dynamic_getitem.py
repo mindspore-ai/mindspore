@@ -56,9 +56,10 @@ class GradOfFirstInput(_Grad):
 
 
 class CommonFunc():
-    def __init__(self, ms_net, np_net, input_np):
+    def __init__(self, ms_net, np_net, input_np, input_dyn):
         super(CommonFunc, self).__init__()
         self.ms_net = ms_net
+        self.ms_net.set_inputs(input_dyn)
         self.ms_net.set_grad()
         self.np_net = np_net
 
@@ -78,6 +79,8 @@ class CommonFunc():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -99,22 +102,23 @@ def test_dynamic_getitem_ellipsis():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None,), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None,), dtype=mstype.float32)
     input_np = np.random.randn(4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -136,22 +140,23 @@ def test_dynamic_getitem_bool():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
     input_np = np.random.randn(2, 3).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -173,22 +178,23 @@ def test_dynamic_getitem_none():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
     input_np = np.random.randn(2, 3).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -215,22 +221,23 @@ def test_dynamic_getitem_tensor():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
     input_np = np.random.randn(3, 4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -259,22 +266,23 @@ def test_dynamic_getitem_tensor_001():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 3), dtype=mstype.float32)
     input_np = np.random.randn(3, 3).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -296,22 +304,23 @@ def test_dynamic_getitem_slice():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
     input_np = np.random.randn(6, 4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -333,22 +342,23 @@ def test_dynamic_getitem_slice_001():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
     input_np = np.random.randn(6, 4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -370,22 +380,23 @@ def test_dynamic_getitem_int():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 4), dtype=mstype.float32)
     input_np = np.random.randn(3, 4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -412,22 +423,23 @@ def test_dynamic_getitem_int_001():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, 2), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, 2), dtype=mstype.float32)
     input_np = np.random.randn(3, 2).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -449,22 +461,23 @@ def test_dynamic_getitem_int_002():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None, None, 3), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None, None, 3), dtype=mstype.float32)
     input_np = np.random.randn(5, 5, 3).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -488,22 +501,23 @@ def test_dynamic_getitem_list():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(None,), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(None,), dtype=mstype.float32)
     input_np = np.random.randn(5).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -530,22 +544,23 @@ def test_dynamic_getitem_tuple():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(2, None, 3), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(2, None, 3), dtype=mstype.float32)
     input_np = np.random.randn(2, 4, 3).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -569,22 +584,23 @@ def test_dynamic_getitem_tuple_001():
             return x
 
     net_ms = Net()
-    dynamic_input = Tensor(shape=(3, 4, None, 2), dtype=mstype.float32)
-    net_ms.set_inputs(dynamic_input)
     net_np = NumpyNet()
+    dynamic_input = Tensor(shape=(3, 4, None, 2), dtype=mstype.float32)
     input_np = np.random.randn(3, 4, 5, 2).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -611,17 +627,16 @@ def test_dynamic_getitem_tuple_002():
             return x
 
     net_ms = Net()
+    net_np = NumpyNet()
     dynamic_input = Tensor(shape=(None, 4, 5, 2, None),
                            dtype=mstype.float32)  # (1,2,4,5,2,None)
-    net_ms.set_inputs(dynamic_input)
-    net_np = NumpyNet()
     input_np = np.random.randn(3, 4, 5, 2, 4).astype(np.float32)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
-    fact = CommonFunc(net_ms, net_np, input_np)
+    fact = CommonFunc(net_ms, net_np, input_np, dynamic_input)
     fact.forward_cmp()
     fact.grad_impl()
