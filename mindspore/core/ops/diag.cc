@@ -54,5 +54,6 @@ AbstractBasePtr DiagInfer(const abstract::AnalysisEnginePtr &, const PrimitivePt
   }
   return abstract::MakeAbstract(DiagInferShape(primitive, input_args), PartInferType(primitive, input_args));
 }
+REGISTER_PRIMITIVE_EVAL_IMPL(Diag, prim::kPrimDiag, DiagInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

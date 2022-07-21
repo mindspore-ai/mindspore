@@ -3739,7 +3739,7 @@ class StridedSlice(PrimitiveWithInfer):
         return ret_shape, ret_min_shape, ret_max_shape
 
 
-class Diag(PrimitiveWithInfer):
+class Diag(PrimitiveWithCheck):
     r"""
 
     Constructs a diagonal tensor with a given diagonal values.
