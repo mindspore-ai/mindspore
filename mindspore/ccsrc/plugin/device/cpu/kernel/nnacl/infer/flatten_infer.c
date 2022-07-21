@@ -16,6 +16,7 @@
 
 #include "nnacl/infer/flatten_infer.h"
 #include "nnacl/infer/infer_register.h"
+#include "nnacl/flatten_parameter.h"
 
 int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC **outputs, size_t outputs_size,
                       OpParameter *parameter) {
@@ -38,10 +39,22 @@ int FlattenInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC 
   int input_shape[MAX_SHAPE_SIZE] = {0};
   size_t input_shape_size = 0;
   ShapeSet(input_shape, &input_shape_size, input->shape_, input->shape_size_);
+  FlattenParameter *param = (FlattenParameter *)parameter;
+  int axis = param->axis_;
+  // The value for axis must be in the range[-r, r], where r is
+  // the rank of the input tensor.Negative value means counting
+  // dimensions from the back.
+  if (abs(axis) > (int)input_shape_size) {
+    return NNACL_ERR;
+  }
+  axis = axis < 0 ? (int)input_shape_size - axis : axis;
   int output_shape[2];
-  output_shape[0] = input_shape[0];
-  output_shape[1] = 1;
-  for (size_t i = 1; i < input_shape_size; i++) {
+  output_shape[0] = axis == 0 ? 1 : input_shape[0];
+  for (size_t i = 1; i < (size_t)axis; i++) {
+    output_shape[0] *= input_shape[i];
+  }
+  output_shape[1] = input_shape[axis];
+  for (size_t i = (size_t)axis + 1; i < input_shape_size; i++) {
     output_shape[1] *= input_shape[i];
   }
   SetShapeArray(output, output_shape, 2);

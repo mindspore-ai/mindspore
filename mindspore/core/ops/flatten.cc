@@ -23,6 +23,11 @@
 
 namespace mindspore {
 namespace ops {
+void Flatten::set_axis(const int64_t axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+int64_t Flatten::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  return GetValue<int64_t>(value_ptr);
+}
 namespace {
 abstract::ShapePtr FlattenInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
