@@ -70,7 +70,7 @@ abstract::ShapePtr DynamicBroadcastToInferShape(const PrimitivePtr &primitive,
       min_shape = min_value ? GetValue<std::vector<int64_t>>(min_value) : ShapeVector();
       max_shape = max_value ? GetValue<std::vector<int64_t>>(max_value) : ShapeVector();
       if (min_shape.empty() || max_shape.empty()) {
-        output_shape = GetShapeValue(input_y);
+        output_shape = GetShapeValue(primitive, input_y);
       } else {
         if (min_shape.size() != out_dims || max_shape.size() != out_dims) {
           MS_EXCEPTION(ValueError)
