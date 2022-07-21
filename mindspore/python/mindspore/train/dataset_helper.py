@@ -138,12 +138,6 @@ def _check_inputs(network, dataset_shapes):
     Check if set inputs are correct.
     """
     network_shapes = network.get_inputs()
-    dataset_inputs_len = len(dataset_shapes)
-    network_inputs_len = len(network_shapes)
-    if network_inputs_len != dataset_inputs_len:
-        raise ValueError(
-            f"For 'set_inputs', the Length of Tensor must be {dataset_inputs_len}, but got {network_inputs_len}"
-        )
     for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
         set_inputs_shape = list(network_shapes[tensor_index].shape)
         inputs_shape = list(ele_dataset_shape)
