@@ -46,7 +46,7 @@ std::vector<int64_t> GetListInt(const ValuePtr &attr_value) {
   return list_int;
 }
 
-AbstractBasePtr InferWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+AbstractBasePtr InferShapeTypeWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
   auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
   auto iter = frontend_infer_func.find(prim);
   if (iter != frontend_infer_func.end()) {
@@ -61,6 +61,20 @@ AbstractBasePtr InferWithAbstract(const PrimitivePtr &prim, const AbstractBasePt
   } else {
     MS_LOG(EXCEPTION) << "The infer function of [" << prim->name() << "] is not defined.";
   }
+}
+
+tensor::TensorPtr InferValueWithAbstract(const PrimitivePtr &prim, const AbstractBasePtrList &abs_list) {
+  auto &frontend_infer_func = abstract::GetPrimitiveToEvalImplMap();
+  auto iter = frontend_infer_func.find(prim);
+  if (iter != frontend_infer_func.end() && iter->second.infer_value_impl_ != nullptr) {
+    return std::static_pointer_cast<tensor::Tensor>(iter->second.infer_value_impl_(prim, abs_list));
+  }
+  auto &backend_infer_func = abstract::GetPrimitiveToBackendEvalImplMap();
+  auto iter2 = backend_infer_func.find(prim);
+  if (iter2 != backend_infer_func.end() && iter2->second.infer_value_impl_ != nullptr) {
+    return std::static_pointer_cast<tensor::Tensor>(iter2->second.infer_value_impl_(prim, abs_list));
+  }
+  return nullptr;
 }
 
 NodeBase ExtractAbstract(const AbstractBasePtr &abs) {
@@ -108,7 +122,7 @@ NodeBaseList PrimOp::InferShapeType(const NodePtrList &inputs, const DAttrs &att
                          return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
                        });
   RectifyAbstract(primc, &inputs_abstract);
-  AbstractBasePtr infer_result = InferWithAbstract(primc, inputs_abstract);
+  AbstractBasePtr infer_result = InferShapeTypeWithAbstract(primc, inputs_abstract);
   MS_EXCEPTION_IF_NULL(infer_result);
   NodeBaseList result;
   if (infer_result->isa<abstract::AbstractTuple>()) {
@@ -195,88 +209,158 @@ std::string PrimOp::ToString() const {
   return oss.str();
 }
 
-template <typename TM, typename TD>
-tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const std::string &op, TypeId tid) {
-  std::vector<TM> inputs_tm;
-  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_tm), [](const NodePtr &i) {
-    return *static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(i)->data()->data_c());
-  });
-
-  mindspore::HashMap<std::string, std::function<TM(const std::vector<TM> &)>> func_map = {
-    {"Add", [](const std::vector<TM> &n) { return n[0] + n[1]; }},
-    {"Sub", [](const std::vector<TM> &n) { return n[0] - n[1]; }},
-    {"Mul", [](const std::vector<TM> &n) { return n[0] * n[1]; }},
-    {"RealDiv", [](const std::vector<TM> &n) { return n[0] / n[1]; }},
-    {"Neg", [](const std::vector<TM> &n) { return TM(0) - n[0]; }},
-    {"Reciprocal", [](const std::vector<TM> &n) { return TM(1) / n[0]; }},
-    {"Log", [](const std::vector<TM> &n) { return log(n[0]); }},
-    {"Exp", [](const std::vector<TM> &n) { return exp(n[0]); }},
-    {"Abs", [](const std::vector<TM> &n) { return n[0] <= TM(0) ? (TM(0) - n[0]) : n[0]; }},
-    {"Sqrt", [](const std::vector<TM> &n) { return sqrt(n[0]); }},
-    {"Rsqrt", [](const std::vector<TM> &n) { return TM(1) / sqrt(n[0]); }},
-    {"Reshape", [](const std::vector<TM> &n) { return n[0]; }},
-  };
-  if (func_map.find(op) == func_map.end()) {
-    return nullptr;
+template <typename TD, typename TE>
+std::vector<TE> ChangeDataToVec(const NodePtr &n) {
+  std::vector<TE> res;
+  TD *data = static_cast<TD *>(std::static_pointer_cast<inner::ConstTensorNode>(n)->data()->data_c());
+  for (size_t elem = 0; elem < n->tensor_size(); elem++) {
+    res.push_back(static_cast<TE>(*(data + elem)));
   }
-  return std::make_shared<tensor::Tensor>(static_cast<TD>(func_map[op](inputs_tm)), TypeIdToType(tid));
+  return res;
 }
 
-NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &, const std::string &op) {
+template <typename TM>
+tensor::TensorPtr PrimOp::CalcByOperator(const NodePtrList &inputs, const DAttrs &) {
+  const size_t unary_input_num = 1;
+  const size_t binary_input_num = 2;
   for (auto i : inputs) {
     if (i->NodeType() != NType::Value) {
       return nullptr;
     }
   }
+  if (inputs.size() > 0) {
+    bool all_shape_equal =
+      std::all_of(inputs.begin(), inputs.end(), [&inputs](const NodePtr &t) { return t->shape == inputs[0]->shape; });
+    if (!all_shape_equal) {
+      return nullptr;
+    }
+  }
+  std::vector<std::vector<TM>> inputs_tm;
+  const auto &op = this->op();
+  const auto tid = this->type;
+  for (const auto &t : inputs) {
+    (void)inputs_tm.emplace_back(ChangeDataToVec<TM, TM>(t));
+  }
+  if (inputs.size() == unary_input_num) {
+    mindspore::HashMap<std::string, std::function<TM(const TM &)>> func_map = {
+      {"Reshape", [](const TM &a) { return a; }},
+      {"Exp", [](const TM &a) { return exp(a); }},
+      {"Reciprocal",
+       [](const TM &a) {
+         if (a == TM(0)) {
+           MS_LOG(EXCEPTION) << "During graph kernel constant fold for reciprocal, divisor is zero.";
+         }
+         return TM(1) / a;
+       }},
+      {"Rsqrt",
+       [](const TM &a) {
+         if (a == TM(0)) {
+           MS_LOG(EXCEPTION) << "During graph kernel constant fold for rsqrt, divisor is zero.";
+         }
+         return TM(1) / sqrt(a);
+       }},
+    };
+    if (func_map.find(op) == func_map.end()) {
+      return nullptr;
+    }
+    const auto &input_a = inputs_tm[0];
+    std::vector<TM> res;
+    (void)std::transform(input_a.begin(), input_a.end(), std::back_inserter(res),
+                         [&func_map, &op](const TM &i) { return func_map[op](i); });
+    return std::make_shared<tensor::Tensor>(tid, this->shape, &res[0], tid);
+  } else if (inputs.size() == binary_input_num) {
+    mindspore::HashMap<std::string, std::function<TM(const TM &, const TM &)>> func_map = {
+      {"Add", [](const TM &a, const TM &b) { return a + b; }},
+      {"Sub", [](const TM &a, const TM &b) { return a - b; }},
+      {"Mul", [](const TM &a, const TM &b) { return a * b; }},
+      {"RealDiv",
+       [](const TM &a, const TM &b) {
+         if (b == TM(0)) {
+           MS_LOG(EXCEPTION) << "During graph kernel constant fold for realdiv, divisor is zero.";
+         }
+         return a / b;
+       }},
+    };
+    if (func_map.find(op) == func_map.end()) {
+      return nullptr;
+    }
+    const auto &input_a = inputs_tm[0];
+    const auto &input_b = inputs_tm[1];
+    std::vector<TM> res;
+    for (size_t i = 0; i < input_a.size(); i++) {
+      (void)res.emplace_back(func_map[op](input_a[i], input_b[i]));
+    }
+    return std::make_shared<tensor::Tensor>(tid, this->shape, &res[0], tid);
+  }
+  return nullptr;
+}
+
+NodePtr PrimOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
   TypeId output_type = this->type;
   tensor::TensorPtr res = nullptr;
   switch (static_cast<int>(output_type)) {
     case TypeId::kNumberTypeUInt8: {
-      res = CalcByOperator<uint8_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<uint8_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      res = CalcByOperator<int8_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<int8_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeInt16: {
-      res = CalcByOperator<int16_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<int16_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      res = CalcByOperator<int32_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<int32_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeInt64: {
-      res = CalcByOperator<int64_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<int64_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeUInt16: {
-      res = CalcByOperator<uint16_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<uint16_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeUInt32: {
-      res = CalcByOperator<uint32_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<uint32_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeUInt64: {
-      res = CalcByOperator<uint64_t, int64_t>(inputs, op, output_type);
+      res = CalcByOperator<uint64_t>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeFloat16: {
-      res = CalcByOperator<float16, double>(inputs, op, output_type);
+      res = CalcByOperator<float16>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeFloat32: {
-      res = CalcByOperator<float, double>(inputs, op, output_type);
+      res = CalcByOperator<float>(inputs, attrs);
       break;
     }
     case TypeId::kNumberTypeFloat64: {
-      res = CalcByOperator<double, double>(inputs, op, output_type);
+      res = CalcByOperator<double>(inputs, attrs);
       break;
     }
     default:
       return nullptr;
+  }
+  if (res == nullptr) {
+    auto op_primc_fns = ops::OpPrimCRegister::GetInstance().GetPrimCMap();
+    const auto iter = op_primc_fns.find(op_);
+    if (iter == op_primc_fns.end()) {
+      return nullptr;
+    }
+    auto primc = iter->second();
+    (void)primc->SetAttrs(attrs);
+    AbstractBasePtrList inputs_abstract;
+    (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(inputs_abstract),
+                         [](const NodePtr &node) -> AbstractBasePtr {
+                           return std::make_shared<abstract::AbstractTensor>(TypeIdToType(node->type), node->shape);
+                         });
+    RectifyAbstract(primc, &inputs_abstract);
+    res = InferValueWithAbstract(primc, inputs_abstract);
   }
   return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
@@ -420,6 +504,11 @@ DFormat TransposeOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs)
   return kOpFormat_DEFAULT;
 }
 
+NodePtr ShapeOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  auto tensor = std::make_shared<tensor::Tensor>(this->type, this->shape, inputs[0]->shape.data(), kNumberTypeInt64);
+  return std::make_shared<ConstTensorNode>(tensor);
+}
+
 std::vector<DShape> PadAkgOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {
   std::vector<int64_t> shape0 = inputs[0]->shape;
   size_t n = shape0.size();
@@ -502,6 +591,243 @@ DFormat Conv2dOp::InferFormat(const NodePtrList &inputs, const DAttrs &attrs) {
   }
   CHECK_ATTR(attrs, "conv_out_format");
   return GetValue<std::string>(attrs.find("conv_out_format")->second);
+}
+
+void ConcatOp::RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) {
+  AbstractBasePtrList rectifyed_abs_list;
+  (void)rectifyed_abs_list.emplace_back(std::make_shared<abstract::AbstractTuple>(*input_abstract_ptr));
+  input_abstract_ptr->swap(rectifyed_abs_list);
+}
+
+std::vector<size_t> CompactShape(const ShapeVector &origin, int64_t axis) {
+  std::vector<size_t> new_shape;
+  size_t accu = 1;
+  for (size_t i = 0; i < origin.size(); i++) {
+    if (LongToSize(axis) == i) {
+      new_shape.push_back(accu);
+      new_shape.push_back(LongToSize(origin[i]));
+      accu = 1;
+    } else {
+      accu *= LongToSize(origin[i]);
+    }
+  }
+  new_shape.push_back(accu);
+  return new_shape;
+}
+
+template <typename TM>
+tensor::TensorPtr GatherOp::CalcGather(const NodePtrList &inputs, const DAttrs &attrs) {
+  constexpr size_t param_index = 0;
+  constexpr size_t indice_index = 1;
+  constexpr size_t axis_index = 2;
+  constexpr size_t input_num = 3;
+  constexpr size_t first_dim = 0;
+  constexpr size_t second_dim = 1;
+  constexpr size_t third_dim = 2;
+  int64_t axis = 0;
+  if (attrs.count("axis") > 0) {
+    axis = GetValue<int64_t>(attrs.find("axis")->second);
+  } else if (inputs.size() == input_num) {
+    int *data_axis =
+      static_cast<int *>(std::static_pointer_cast<inner::ConstTensorNode>(inputs[axis_index])->data()->data_c());
+    axis = IntToLong(*data_axis);
+  } else {
+    return nullptr;
+  }
+  ShapeVector param_shp = inputs[param_index]->shape;
+  axis = axis < 0 ? SizeToLong(param_shp.size()) + axis : axis;
+  std::vector<size_t> indices;
+  switch (static_cast<int>(inputs[indice_index]->type)) {
+    case TypeId::kNumberTypeInt8: {
+      indices = ChangeDataToVec<int8_t, size_t>(inputs[indice_index]);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      indices = ChangeDataToVec<int16_t, size_t>(inputs[indice_index]);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      indices = ChangeDataToVec<int32_t, size_t>(inputs[indice_index]);
+      break;
+    }
+    case TypeId::kNumberTypeInt64: {
+      indices = ChangeDataToVec<int64_t, size_t>(inputs[indice_index]);
+      break;
+    }
+    default:
+      return nullptr;
+  }
+
+  TM *input_x =
+    static_cast<TM *>(std::static_pointer_cast<inner::ConstTensorNode>(inputs[param_index])->data()->data_c());
+  std::vector<size_t> compact_shp = CompactShape(param_shp, axis);
+  std::vector<TM> res;
+  if (compact_shp.size() == input_num) {
+    for (size_t i = 0; i < compact_shp[first_dim]; i++) {
+      for (auto j : indices) {
+        for (size_t k = 0; k < compact_shp[third_dim]; k++) {
+          (void)res.emplace_back(
+            input_x[i * compact_shp[second_dim] * compact_shp[third_dim] + j * compact_shp[third_dim] + k]);
+        }
+      }
+    }
+    return std::make_shared<tensor::Tensor>(this->type, this->shape, &res[0], this->type);
+  }
+  return nullptr;
+}
+
+NodePtr GatherOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
+  }
+  TypeId output_type = this->type;
+  tensor::TensorPtr res = nullptr;
+  switch (static_cast<int>(output_type)) {
+    case TypeId::kNumberTypeUInt8: {
+      res = CalcGather<uint8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      res = CalcGather<int8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      res = CalcGather<int16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      res = CalcGather<int32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt64: {
+      res = CalcGather<int64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt16: {
+      res = CalcGather<uint16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt32: {
+      res = CalcGather<uint32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt64: {
+      res = CalcGather<uint64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat16: {
+      res = CalcGather<float16>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat32: {
+      res = CalcGather<float>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat64: {
+      res = CalcGather<double>(inputs, attrs);
+      break;
+    }
+    default:
+      return nullptr;
+  }
+  return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
+}
+
+template <typename TM>
+tensor::TensorPtr ConcatOp::CalcConcat(const NodePtrList &inputs, const DAttrs &attrs) {
+  constexpr size_t first_dim = 0;
+  constexpr size_t second_dim = 1;
+  constexpr size_t third_dim = 2;
+  int64_t axis = 0;
+  if (attrs.count("axis") > 0) {
+    axis = GetValue<int64_t>(attrs.find("axis")->second);
+  } else {
+    return nullptr;
+  }
+  axis = axis < 0 ? SizeToLong(this->shape.size()) + axis : axis;
+  std::vector<std::vector<TM>> inputs_tm;
+  for (const auto &t : inputs) {
+    (void)inputs_tm.emplace_back(ChangeDataToVec<TM, TM>(t));
+  }
+  std::vector<std::vector<size_t>> all_shps;
+  (void)std::transform(inputs.begin(), inputs.end(), std::back_inserter(all_shps),
+                       [&axis](const NodePtr &t) { return CompactShape(t->shape, axis); });
+  std::vector<TM> res;
+  if (all_shps.size() > 0) {
+    const size_t third_dim_size = all_shps[0][third_dim];
+    const size_t first_dim_size = all_shps[0][first_dim];
+    for (size_t i = 0; i < first_dim_size; i++) {
+      for (size_t t = 0; t < inputs_tm.size(); t++) {
+        for (size_t j = 0; j < all_shps[t][second_dim]; j++)
+          for (size_t k = 0; k < third_dim_size; k++) {
+            (void)res.emplace_back(inputs_tm[t][i * all_shps[t][second_dim] * third_dim_size + j * third_dim_size + k]);
+          }
+      }
+    }
+    return std::make_shared<tensor::Tensor>(this->type, this->shape, &res[0], this->type);
+  }
+  return nullptr;
+}
+
+NodePtr ConcatOp::InferValue(const NodePtrList &inputs, const DAttrs &attrs) {
+  for (auto i : inputs) {
+    if (i->NodeType() != NType::Value) {
+      return nullptr;
+    }
+  }
+  TypeId output_type = this->type;
+  tensor::TensorPtr res = nullptr;
+  switch (static_cast<int>(output_type)) {
+    case TypeId::kNumberTypeUInt8: {
+      res = CalcConcat<uint8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt8: {
+      res = CalcConcat<int8_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt16: {
+      res = CalcConcat<int16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt32: {
+      res = CalcConcat<int32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeInt64: {
+      res = CalcConcat<int64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt16: {
+      res = CalcConcat<uint16_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt32: {
+      res = CalcConcat<uint32_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeUInt64: {
+      res = CalcConcat<uint64_t>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat16: {
+      res = CalcConcat<float16>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat32: {
+      res = CalcConcat<float>(inputs, attrs);
+      break;
+    }
+    case TypeId::kNumberTypeFloat64: {
+      res = CalcConcat<double>(inputs, attrs);
+      break;
+    }
+    default:
+      return nullptr;
+  }
+  return res == nullptr ? nullptr : std::make_shared<ConstTensorNode>(res);
 }
 
 std::vector<DShape> LayoutTransformOp::InferShape(const NodePtrList &inputs, const DAttrs &attrs) {

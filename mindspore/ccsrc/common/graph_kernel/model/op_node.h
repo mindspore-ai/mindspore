@@ -48,13 +48,14 @@ class PrimOp : public Node {
   ~PrimOp() = default;
 
   NodeBaseList Infer(const NodePtrList &inputs, const DAttrs &attrs);
-  virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &, const std::string &op);
 
   std::string ToString() const override;
   NType NodeType() override { return NType::Primitive; }
 
   const std::string &op() const { return op_; }
   ComputeType compute_type() const { return compute_type_; }
+  // infer output value when all inputs are constant
+  virtual NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs);
 
  protected:
   // Check node info before inference the shape/type/format.
@@ -68,6 +69,10 @@ class PrimOp : public Node {
 
   // Infer type. returning an empty vector means using PrimitiveC's infer_type function.
   virtual std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) { return {}; }
+
+  // calculate const inputs, used for InferValue
+  template <typename TM>
+  tensor::TensorPtr CalcByOperator(const NodePtrList &inputs, const DAttrs &);
 
   // Infer shape and type with PrimitiveC's inference function.
   NodeBaseList InferShapeType(const NodePtrList &inputs, const DAttrs &attrs);
@@ -179,6 +184,18 @@ class ElemAnyOp : public OpaqueOp {
   std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeFloat32}; }
 };
 
+class ShapeOp : public OpaqueOp {
+ public:
+  explicit ShapeOp(const std::string &op) : OpaqueOp(op) {}
+  ~ShapeOp() = default;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+
+ protected:
+  std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &) override {
+    return {{SizeToLong(inputs[0]->shape.size())}};
+  }
+  std::vector<TypeId> InferType(const NodePtrList &, const DAttrs &) override { return {TypeId::kNumberTypeInt32}; }
+};
 class PadAkgOp : public OpaqueOp {
  public:
   explicit PadAkgOp(const std::string &op) : OpaqueOp(op) {}
@@ -208,6 +225,29 @@ class Conv2dOp : public OpaqueOp {
   std::vector<DShape> InferShape(const NodePtrList &inputs, const DAttrs &attrs) override;
   std::vector<TypeId> InferType(const NodePtrList &inputs, const DAttrs &attrs) override;
   DFormat InferFormat(const NodePtrList &inputs, const DAttrs &attrs) override;
+};
+
+class GatherOp : public OpaqueOp {
+ public:
+  explicit GatherOp(const std::string &op) : OpaqueOp(op) {}
+  ~GatherOp() = default;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+
+ protected:
+  template <typename TM>
+  tensor::TensorPtr CalcGather(const NodePtrList &inputs, const DAttrs &attrs);
+};
+
+class ConcatOp : public OpaqueOp {
+ public:
+  explicit ConcatOp(const std::string &op) : OpaqueOp(op) {}
+  ~ConcatOp() = default;
+  NodePtr InferValue(const NodePtrList &inputs, const DAttrs &attrs) override;
+
+ protected:
+  void RectifyAbstract(const PrimitivePtr &, AbstractBasePtrList *input_abstract_ptr) override;
+  template <typename TM>
+  tensor::TensorPtr CalcConcat(const NodePtrList &inputs, const DAttrs &attrs);
 };
 
 class CImagRealOp : public ElemwiseOp {

@@ -25,7 +25,7 @@
 #include "common/graph_kernel/graph_kernel_flags.h"
 #include "common/graph_kernel/add_atomic_clean.h"
 #include "common/graph_kernel/add_stitch_atomic_clean_gpu.h"
-#include "common/graph_kernel/arithmetic_simplify.h"
+#include "common/graph_kernel/core/arithmetic_simplify.h"
 #include "common/graph_kernel/core/graph_kernel_cluster.h"
 #include "common/graph_kernel/core/eliminate_redundant_output.h"
 #include "common/graph_kernel/insert_pad.h"

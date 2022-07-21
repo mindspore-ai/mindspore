@@ -33,7 +33,30 @@ class Reshape : public OpDesc {
  protected:
   NodePtrList Expand(const NodePtrList &inputs) override {
     const auto &input_x = inputs[0];
-    auto shape = GetValue<ShapeVector>(attrs_["shape"]);
+    auto shp_ptr = attrs_["shape"];
+    ShapeVector shape;
+    if (shp_ptr->isa<tensor::Tensor>()) {
+      auto value = std::static_pointer_cast<tensor::Tensor>(shp_ptr);
+      if (value->data_type_c() == TypeId::kNumberTypeInt32) {
+        int32_t *data = static_cast<int32_t *>(value->data_c());
+        for (size_t elem = 0; elem < value->DataSize(); elem++) {
+          (void)shape.emplace_back(IntToLong(*(data + elem)));
+        }
+      } else if (value->data_type_c() == TypeId::kNumberTypeInt64) {
+        int64_t *data = static_cast<int64_t *>(value->data_c());
+        for (size_t elem = 0; elem < value->DataSize(); elem++) {
+          (void)shape.emplace_back(*(data + elem));
+        }
+      } else {
+        MS_LOG_EXCEPTION << "Type of reshape's shape tensor is neither int64_t nor int32_t. Expand failed";
+        return {};
+      }
+    } else if (shp_ptr->isa<ValueTuple>()) {
+      shape = GetValue<ShapeVector>(shp_ptr);
+    } else {
+      MS_LOG_EXCEPTION << "Reshape's attr shape is neither Tensor nor ValueTuple. Expand failed";
+      return {};
+    }
     auto result = gb.Reshape(input_x, shape);
     return {result};
   }
