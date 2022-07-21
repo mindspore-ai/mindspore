@@ -48,6 +48,7 @@ mindspore.COOTensor
         COOTensor, 为两COOTensor相加后的结果。
 
         **异常：**
+
         - **ValueError** - 如果操作数(本COOTensor/other)的indices的维度不等于2。
         - **ValueError** - 如果操作数(本COOTensor/other)的values的维度不等于1。
         - **ValueError** - 如果操作数(本COOTensor/other)的shape的维度不等于1。
@@ -55,12 +56,8 @@ mindspore.COOTensor
         - **TypeError** - 如果操作数(本COOTensor/other)的indices的数据类型不为int64。
         - **TypeError** - 如果操作数(本COOTensor/other)的shape的数据类型不为int64。
         - **ValueError** - 如果操作数(本COOTensor/other)的indices的长度不等于它的values的长度。
-        - **TypeError** - 如果操作数(本COOTensor/other)的values的数据类型不为
-          (int8/int16/int32/int64/float32/float64/complex64/complex128)中
-          的任何一个。
-        - **TypeError** - 如果thresh的数据类型不为
-          (int8/int16/int32/int64/float32/float64)中
-          的任何一个。
+        - **TypeError** - 如果操作数(本COOTensor/other)的values的数据类型不为(int8/int16/int32/int64/float32/float64/complex64/complex128)中的任何一个。
+        - **TypeError** - 如果thresh的数据类型不为(int8/int16/int32/int64/float32/float64)中的任何一个。
         - **TypeError** - 如果操作数(本COOTensor)的indices数据类型不等于other的indices数据类型。
         - **TypeError** - 如果操作数(本COOTensor)的values数据类型不等于other的values数据类型。
         - **TypeError** - 如果操作数(本COOTensor)的shape数据类型不等于other的shape数据类型。

@@ -16,6 +16,7 @@ mindspore.ops.sparse_add
     COOTensor, 为两COOTensor相加后的结果。
 
     **异常：**
+
     - **ValueError** - 如果操作数(x1/x2)的indices的维度不等于2。
     - **ValueError** - 如果操作数(x1/x2)的values的维度不等于1。
     - **ValueError** - 如果操作数(x1/x2)的shape的维度不等于1。
@@ -23,12 +24,8 @@ mindspore.ops.sparse_add
     - **TypeError** - 如果操作数(x1/x2)的indices的数据类型不为int64。
     - **TypeError** - 如果操作数(x1/x2)的shape的数据类型不为int64。
     - **ValueError** - 如果操作数(x1/x2)的indices的长度不等于它的values的长度。
-    - **TypeError** - 如果操作数(x1/x2)的values的数据类型不为
-      (int8/int16/int32/int64/float32/float64/complex64/complex128)中
-      的任何一个。
-    - **TypeError** - 如果thresh的数据类型不为
-      (int8/int16/int32/int64/float32/float64)中
-      的任何一个。
+    - **TypeError** - 如果操作数(x1/x2)的values的数据类型不为(int8/int16/int32/int64/float32/float64/complex64/complex128)中的任何一个。
+    - **TypeError** - 如果thresh的数据类型不为(int8/int16/int32/int64/float32/float64)中的任何一个。
     - **TypeError** - 如果操作数x1的indices数据类型不等于x2的indices数据类型。
     - **TypeError** - 如果操作数x1的values数据类型不等于x2的values数据类型。
     - **TypeError** - 如果操作数x1的shape数据类型不等于x2的shape数据类型。
