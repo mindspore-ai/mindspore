@@ -518,7 +518,6 @@ Parameter操作算子
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.arange
     mindspore.ops.batch_dot
     mindspore.ops.clip_by_global_norm
     mindspore.ops.clip_by_value
