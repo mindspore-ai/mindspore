@@ -7,14 +7,14 @@ mindspore.Profiler
 
     **参数：**
     
-    - **output_path** (str, 可选) – 表示输出数据的路径。默认值："./data"。
-    - **profile_communication** (bool, 可选) – （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。默认值：False。
-    - **profile_memory** (bool, 可选) – （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值：False。
-    - **start_profile** (bool, 可选) – 该参数控制是否在Profiler初始化的时候开启数据采集。默认值：True。
+    - **output_path** (str, 可选) - 表示输出数据的路径。默认值："./data"。
+    - **profile_communication** (bool, 可选) - （仅限Ascend）表示是否在多设备训练中收集通信性能数据。当值为True时，收集这些数据。在单台设备训练中，该参数的设置无效。默认值：False。
+    - **profile_memory** (bool, 可选) - （仅限Ascend）表示是否收集Tensor内存数据。当值为True时，收集这些数据。默认值：False。
+    - **start_profile** (bool, 可选) - 该参数控制是否在Profiler初始化的时候开启数据采集。默认值：True。
 
     **异常：**
 
-    - **RuntimeError** – 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
+    - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
 
     .. py:method:: analyse()
 
@@ -26,18 +26,14 @@ mindspore.Profiler
 
         **参数：**
 
-        - **op_name** (str 或 list) – 表示要查询的primitive算子类型。
-        - **device_id** (int, 可选) – 设备卡号，表示指定解析哪张卡的算子性能数据。在网络训练或者推理时使用，该参数可选。基于离线数据解析使用该接口时，默认值：0。
+        - **op_name** (str 或 list) - 表示要查询的primitive算子类型。
+        - **device_id** (int, 可选) - 设备卡号，表示指定解析哪张卡的算子性能数据。在网络训练或者推理时使用，该参数可选。基于离线数据解析使用该接口时，默认值：0。
 
         **异常：**
 
-        - **TypeError** – op_name参数类型不正确。
-        - **TypeError** – device_id参数类型不正确。
-        - **RunTimeError** – 在Ascend上使用该接口获取性能数据。
-
-        **支持平台：**
-
-        ``GPU`` ``CPU``
+        - **TypeError** - op_name参数类型不正确。
+        - **TypeError** - device_id参数类型不正确。
+        - **RunTimeError** - 在Ascend上使用该接口获取性能数据。
 
     .. py:method:: start()
 
@@ -45,9 +41,9 @@ mindspore.Profiler
 
         **异常：**
 
-        - **RuntimeError** – profiler已经开启。
-        - **RuntimeError** – 停止Minddata采集后，不支持重复开启。
-        - **RuntimeError** – 如果start_profile参数未设置或设置为True。
+        - **RuntimeError** - profiler已经开启。
+        - **RuntimeError** - 停止Minddata采集后，不支持重复开启。
+        - **RuntimeError** - 如果start_profile参数未设置或设置为True。
 
     .. py:method:: stop()
 
@@ -55,4 +51,4 @@ mindspore.Profiler
 
         **异常：**
 
-        - **RuntimeError** – profiler没有开启。
+        - **RuntimeError** - profiler没有开启。
