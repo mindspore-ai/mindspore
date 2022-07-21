@@ -1,5 +1,5 @@
-mindspore.ops.cdist
-===================
+mindspore.ops.assign_sub
+========================
 
 .. py:function:: mindspore.ops.assign_sub(variable, value)
 
