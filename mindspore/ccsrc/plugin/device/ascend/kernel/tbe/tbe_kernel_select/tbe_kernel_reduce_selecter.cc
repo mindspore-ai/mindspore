@@ -51,6 +51,13 @@ bool TbeKernelReduceSelecter::GetShapeInfo(SupportFormat *support_format) {
   GetReduceAttrKeepDim();
   // get axis attr
   axis_ = GetReduceAttrAxis(cnode_ptr_);
+  auto shape_size = input_shape_.size();
+  std::transform(axis_.begin(), axis_.end(), axis_.begin(), [shape_size](int64_t elem) {
+    if (elem < 0) {
+      elem += shape_size;
+    }
+    return elem;
+  });
   AssignSupportFormat(kOpFormat_DEFAULT, support_format);
   return true;
 }
