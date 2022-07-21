@@ -52,7 +52,7 @@ abstract::ShapePtr BiasAddGradInferShape(const PrimitivePtr &primitive,
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
   auto input_shape_ = GetFormatShape(format, input_shape);
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
+  if (!min_shape.empty() && !max_shape.empty()) {
     auto min_shape_ = GetFormatShape(format, min_shape);
     auto max_shape_ = GetFormatShape(format, max_shape);
     return std::make_shared<abstract::Shape>(input_shape_, min_shape_, max_shape_);

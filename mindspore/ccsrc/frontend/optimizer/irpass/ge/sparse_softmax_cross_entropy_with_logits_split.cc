@@ -120,8 +120,10 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
     auto kernel_info = common::AnfAlgo::GetPrevNodeOutput(sparse_softmax_node, 1);
     auto min_shape = common::AnfAlgo::GetOutputMinShape(kernel_info.first, kernel_info.second);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(kernel_info.first, kernel_info.second);
-    min_shape.emplace_back(depth);
-    max_shape.emplace_back(depth);
+    if (!max_shape.empty() && !min_shape.empty() && depth > 0) {
+      min_shape.emplace_back(depth);
+      max_shape.emplace_back(depth);
+    }
     common::AnfAlgo::SetOutputTypeAndDetailShape(
       {kNumberTypeFloat32}, {std::make_shared<abstract::Shape>(labels_shape, min_shape, max_shape)},
       one_hot_node.get());

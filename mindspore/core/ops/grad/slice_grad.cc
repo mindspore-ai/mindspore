@@ -34,7 +34,7 @@ abstract::ShapePtr SliceGradInferShape(const PrimitivePtr &primitive, const std:
   auto input_shape = shape_map[kShape];
   auto min_shape = shape_map[kMinShape];
   auto max_shape = shape_map[kMaxShape];
-  if (max_shape.empty() && min_shape.empty()) {
+  if (max_shape.empty() || min_shape.empty()) {
     return std::make_shared<abstract::Shape>(input_shape);
   }
   return std::make_shared<abstract::Shape>(input_shape, min_shape, max_shape);

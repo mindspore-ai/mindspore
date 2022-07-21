@@ -103,8 +103,8 @@ AbstractBasePtr LayerNormInfer(const abstract::AnalysisEnginePtr &, const Primit
   }
   for (size_t i = begin_params_axis_u; i < input_shape_list.size(); ++i) {
     size_t gamma_beta_shape_dim = i - begin_params_axis_u;
-    if ((gamma_shape_list[gamma_beta_shape_dim] != input_shape_list[i]) ||
-        (beta_shape_list[gamma_beta_shape_dim] != input_shape_list[i])) {
+    if (input_shape_list[i] > 0 && ((gamma_shape_list[gamma_beta_shape_dim] != input_shape_list[i]) ||
+                                    (beta_shape_list[gamma_beta_shape_dim] != input_shape_list[i]))) {
       MS_EXCEPTION(ValueError) << "For '" << op_name
                                << "', gamma or beta shape must match input shape, but got input shape: "
                                << input_shape->ToString() << ", gamma shape: " << gamma_shape->ToString()

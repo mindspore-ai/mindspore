@@ -63,10 +63,10 @@ abstract::ShapePtr SoftMaxInferShape(const PrimitivePtr &primitive, const std::v
   for (auto &item : axis) {
     CheckAndConvertUtils::CheckInRange<int64_t>("axis", item, kIncludeLeft, {-rank, rank}, op_name);
   }
-  if (min_shape.size() != 0 && max_shape.size() != 0) {
-    return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
+  if (min_shape.empty() || max_shape.empty()) {
+    return std::make_shared<abstract::Shape>(in_shape);
   }
-  return std::make_shared<abstract::Shape>(in_shape);
+  return std::make_shared<abstract::Shape>(in_shape, min_shape, max_shape);
 }
 
 TypePtr SoftMaxInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {

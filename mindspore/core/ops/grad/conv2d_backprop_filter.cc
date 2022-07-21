@@ -57,8 +57,12 @@ abstract::ShapePtr Conv2DBackpropFilterInferShape(const PrimitivePtr &primitive,
       auto shape_max_value = abstract_tensor->get_max_value();
       auto shape_min_value = abstract_tensor->get_min_value();
       if (shape_max_value == nullptr || shape_min_value == nullptr) {
-        MS_LOG(EXCEPTION) << "For '" << prim_name
-                          << "', max value or min value of 'filter' size can not be empty when its value is dynamic.";
+        auto len = LongToSize(shape_shape[0]);
+        for (size_t i = 0; i < len; i++) {
+          out_shape.push_back(abstract::Shape::SHP_ANY);
+        }
+        ret_shape = std::make_shared<abstract::Shape>(out_shape);
+        return ret_shape;
       }
 
       auto shape_max = GetValue<std::vector<int64_t>>(shape_max_value);

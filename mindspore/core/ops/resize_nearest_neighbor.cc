@@ -72,6 +72,9 @@ abstract::ShapePtr ResizeNearestNeighborInferShape(const PrimitivePtr &primitive
   if (x_shape_ptr->IsDynamic()) {
     auto x_min_shape = x_shape_ptr->min_shape();
     auto x_max_shape = x_shape_ptr->max_shape();
+    if (x_min_shape.empty() || x_max_shape.empty()) {
+      return std::make_shared<abstract::Shape>(x_shape);
+    }
     x_min_shape.erase(x_min_shape.begin() + size_size, x_min_shape.end());
     x_min_shape.insert(x_min_shape.end(), size_v.begin(), size_v.end());
     x_max_shape.erase(x_max_shape.begin() + size_size, x_max_shape.end());
