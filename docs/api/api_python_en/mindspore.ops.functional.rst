@@ -234,6 +234,7 @@ Comparison operators
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.approximate_equal
     mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
