@@ -2015,6 +2015,10 @@ class Mul(_MathBinaryOp):
             return out
         return None
 
+    def _convert_back_shape(self, shape_value, cmp_shape):
+        real_shape = [dim if cmp_dim > 0 else cmp_dim for dim, cmp_dim in zip(shape_value, cmp_shape)]
+        return tuple(real_shape)
+
     def _infer_min_value(self, x, y):
         """Calculate min value for output for Mul op"""
         return self._infer_specified_mul_value(x, y)
@@ -2031,6 +2035,10 @@ class Mul(_MathBinaryOp):
             out = np.array(out, x.dtype)
             return Tensor(out)
         return None
+
+    def _infer_shape_value(self, x, y):
+        shape_value = self._infer_specified_mul_value(x, y)
+        return self._convert_back_shape(shape_value, x)
 
 
 class SquaredDifference(Primitive):
