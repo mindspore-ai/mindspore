@@ -786,9 +786,8 @@ class ApplyProximalAdagradConstantNet(nn.Cell):
         self.const = Tensor(9999, mstype.float32)
 
     def construct(self, lr, l1, l2, grad, indices):
-        optimizer = self.sparse_apply_proximal_adagrad(
-            self.var, self.accum, lr, l1, l2, grad, indices)
-        return self.depend(self.const, optimizer)
+        self.sparse_apply_proximal_adagrad(self.var, self.accum, lr, l1, l2, grad, indices)
+        return self.const
 
 
 @pytest.mark.level1

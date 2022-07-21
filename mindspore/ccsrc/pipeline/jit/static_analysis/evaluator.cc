@@ -79,45 +79,6 @@ bool CheckIfAlwaysEval(const AnfNodeConfigPtr &conf, const AbstractBasePtr &arg)
   return false;
 }
 
-void BaseFuncGraphEvaluator::CollectSideEffectNodes(const AnfNodePtr &node,
-                                                    std::vector<AnfNodePtr> *side_effect_nodes) {
-  const auto &primitive = GetCNodePrimitiveWithoutDoSignature(node);
-  if (primitive != nullptr) {
-    auto effect_info = GetPrimEffectInfo(primitive);
-    if (effect_info.memory || effect_info.io) {
-      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
-      (void)side_effect_nodes->emplace_back(node);
-    }
-  }
-}
-
-void BaseFuncGraphEvaluator::CheckSideEffectNodes(const AbstractBasePtr &abstract,
-                                                  const std::vector<AnfNodePtr> &side_effect_nodes) const {
-  if (!side_effect_nodes.empty()) {
-    ValuePtr val = abstract->BuildValue();
-    if (!val->isa<AnyValue>()) {
-      std::stringstream ss;
-      ss << "Side Effect Invalid: Found unsupported syntax in graph mode, those side effect codes would be ignored:\n";
-      ss << "-----\n";
-      size_t num = 1;
-      for (auto &side_effect_node : side_effect_nodes) {
-        ss << "# No. " << num << ":\n" << trace::GetDebugInfo(side_effect_node->debug_info()) << "\n";
-        ++num;
-      }
-      ss << "-----\n";
-      // All nodes in side_effect_nodes are CNode, so its func_graph() must not be null.
-      auto fg = side_effect_nodes[0]->func_graph();
-      MS_EXCEPTION_IF_NULL(fg);
-      ss << "\nIf a function return a const value or inferred const value, the side effect node would be ignored.\n"
-         << "So the codes may not run as the user's expectation, please fix it.\n\n"
-         << "In this case, the const value '" << val->ToString() << "' returns: \n"
-         << trace::GetDebugInfo(fg->debug_info()) << "\nFor more information about this issue, please refer to "
-         << "https://www.mindspore.cn/search?inputValue=Side%20Effect%20Invalid\n";
-      MS_LOG(EXCEPTION) << ss.str();
-    }
-  }
-}
-
 void BaseFuncGraphEvaluator::EnterStackFrame(const AnalysisEnginePtr &engine, const StackFramePtr &current_stack_frame,
                                              const StackFramePtr &new_stack_frame) {
   MS_EXCEPTION_IF_NULL(current_stack_frame);
@@ -243,12 +204,8 @@ AbstractBasePtr BaseFuncGraphEvaluator::LaunchRecursiveEval(const AnalysisEngine
     abstract = node_eval_result->abstract();
     MS_EXCEPTION_IF_NULL(abstract);
     MS_LOG(DEBUG) << GetInferThread() << "Eval ( " << node_conf->ToString() << ") = " << abstract->ToString();
-
-    // Check if contains side effect operations.
-    CollectSideEffectNodes(node, &side_effect_nodes);
   }
   MS_EXCEPTION_IF_NULL(abstract);
-  CheckSideEffectNodes(abstract, side_effect_nodes);
   return abstract;
 }
 
@@ -336,6 +293,8 @@ EvalResultPtr BaseFuncGraphEvaluator::Eval(AnalysisEnginePtr engine, const Abstr
     abstract = std::make_shared<AbstractUndetermined>();
   }
   MS_LOG(DEBUG) << GetInferThread() << "} //" << fg->ToString() << " = " << abstract->ToString();
+
+  SyncFuncGraphIsolatedSideEffectFlag(fg);
 
   trace::TraceGraphEvalLeave(context);
   // Decrease the func graph call depth.

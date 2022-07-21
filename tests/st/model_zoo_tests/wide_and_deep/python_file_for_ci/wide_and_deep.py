@@ -17,7 +17,6 @@ import numpy as np
 from mindspore import nn
 from mindspore import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
-from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.nn.optim import Adam, FTRL
@@ -312,8 +311,9 @@ class TrainStepWrap(nn.Cell):
         if self.reducer_flag:
             grads_w = self.grad_reducer_w(grads_w)
             grads_d = self.grad_reducer_d(grads_d)
-        return F.depend(loss_w, self.optimizer_w(grads_w)), F.depend(loss_d,
-                                                                     self.optimizer_d(grads_d))
+        self.optimizer_w(grads_w)
+        self.optimizer_d(grads_d)
+        return loss_w, loss_d
 
 
 class PredictWithSigmoid(nn.Cell):

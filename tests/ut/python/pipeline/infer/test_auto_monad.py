@@ -371,11 +371,12 @@ def test_partial_parameter():
     print(net())
 
 
-def test_return_const_value_with_side_effect_op():
+# Better to run in ST and check stdout.
+def test_return_const_value_with_side_effect_io():
     """
     Feature: Side effect
     Description: Test side effect with returned const value.
-    Expectation: Throw exception.
+    Expectation: Not throw exception.
     """
     class Demo(nn.Cell):
         def construct(self, x):
@@ -386,7 +387,26 @@ def test_return_const_value_with_side_effect_op():
 
     x = [[1, 2, 3, 4], [5, 6, 7, 8]]
     net = Demo()
-    with pytest.raises(RuntimeError) as info:
-        output = net(x)
-        print(output)
-    assert "Side Effect Invalid" in str(info.value)
+    output = net(x)
+    print(output)
+
+
+def test_return_const_value_with_side_effect_mem():
+    """
+    Feature: Side effect
+    Description: Test side effect with returned const value.
+    Expectation: Not throw exception.
+    """
+    y = Parameter(Tensor([1]))
+    class Demo(nn.Cell):
+        def construct(self, x):
+            P.Assign()(x, Tensor([0]))
+            P.Assign()(y, Tensor([0]))
+            return True
+
+    x = Parameter(Tensor([1]))
+    net = Demo()
+    output = net(x)
+    print(output)
+    print(Tensor(x))
+    print(Tensor(y))

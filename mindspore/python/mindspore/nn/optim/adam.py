@@ -293,14 +293,12 @@ def _run_off_load_opt(opt, beta1_power, beta2_power, beta1, beta2, eps, lr, grad
 def _run_fused_adam_weight_decay_opt(opt, beta1, beta2, eps, lr, weight_decay, param, moment1, moment2, gradient,
                                      decay_flags, optim_filter):
     """Apply FusedAdamWeightDecay optimizer to the weight parameter using Tensor."""
-    success = True
     if optim_filter:
         if decay_flags:
-            out = opt(param, moment1, moment2, lr, beta1, beta2, eps, weight_decay, P.Cast()(gradient, F.dtype(param)))
+            opt(param, moment1, moment2, lr, beta1, beta2, eps, weight_decay, P.Cast()(gradient, F.dtype(param)))
         else:
-            out = opt(param, moment1, moment2, lr, beta1, beta2, eps, 0.0, P.Cast()(gradient, F.dtype(param)))
-        return F.depend(success, out)
-    return success
+            opt(param, moment1, moment2, lr, beta1, beta2, eps, 0.0, P.Cast()(gradient, F.dtype(param)))
+    return True
 
 
 def _check_param_value(beta1, beta2, eps, prim_name):

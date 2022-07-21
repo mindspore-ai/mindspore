@@ -221,8 +221,7 @@ class BaseFuncGraphEvaluator : public Evaluator {
     return always_eval_flags_.back();
   }
 
-  void CollectSideEffectNodes(const AnfNodePtr &node, std::vector<AnfNodePtr> *side_effect_nodes);
-  void CheckSideEffectNodes(const AbstractBasePtr &abstract, const std::vector<AnfNodePtr> &side_effect_nodes) const;
+  virtual void SyncFuncGraphIsolatedSideEffectFlag(const FuncGraphPtr &func_graph) = 0;
 
  protected:
   AnalysisContextPtr parent_context_;
@@ -256,6 +255,12 @@ class FuncGraphEvaluator : public BaseFuncGraphEvaluator {
   AbstractBasePtrList BroadenUndeterminedArgs(const AbstractBasePtrList &args_abs_list) override;
   std::string ToString() const override { return identifier_ + "_" + func_graph_->ToString(); }
 
+  void SyncFuncGraphIsolatedSideEffectFlag(const FuncGraphPtr &func_graph) override {
+    if (func_graph->has_isolated_side_effect_node()) {
+      func_graph_->set_has_isolated_side_effect_node(true);
+    }
+  }
+
  private:
   FuncGraphPtr func_graph_;
   FuncGraphCacheMap func_graph_cache_;
@@ -278,6 +283,12 @@ class MetaFuncGraphEvaluator : public BaseFuncGraphEvaluator {
     return meta_func_graph_->NormalizeArgs(args_abs_list);
   }
   std::string ToString() const override { return identifier_ + "_" + meta_func_graph_->ToString(); }
+
+  void SyncFuncGraphIsolatedSideEffectFlag(const FuncGraphPtr &func_graph) override {
+    if (func_graph->has_isolated_side_effect_node()) {
+      meta_func_graph_->set_has_isolated_side_effect_node(true);
+    }
+  }
 
  private:
   MetaFuncGraphPtr meta_func_graph_;

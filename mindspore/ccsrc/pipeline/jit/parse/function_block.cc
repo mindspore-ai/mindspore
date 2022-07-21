@@ -646,7 +646,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
 
   AnfNodePtr old_output = nullptr;
   auto return_node = func_graph_->get_return();
-  if (return_node) {
+  if (return_node != nullptr) {
     const size_t return_input_size = 2;
     if (return_node->inputs().size() < return_input_size) {
       MS_LOG(EXCEPTION) << "Length of inputs of output node is less than 2";
@@ -670,7 +670,8 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   MS_LOG(INFO) << "Attached for side-effect nodes, depend_node: " << depend_node->DebugString()
                << ", state: " << state->DebugString(recursive_level);
   func_graph_->set_output(depend_node, true);
-  if (return_node && return_node->debug_info()) {
+  // Update new return node's debug_info with old one.
+  if (return_node != nullptr && return_node->debug_info()) {
     auto new_return = func_graph_->get_return();
     new_return->set_debug_info(return_node->debug_info());
   }

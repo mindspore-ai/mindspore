@@ -89,7 +89,8 @@ class TrainForwardBackward(Cell):
         loss = self.network(*inputs)
         sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
         grads = self.grad(self.network, weights)(*inputs, sens)
-        return F.depend(loss, self.hyper_map(F.partial(_sum_op), self.grad_sum, grads))
+        self.hyper_map(F.partial(_sum_op), self.grad_sum, grads)
+        return loss
 
 
 class TrainOptim(Cell):

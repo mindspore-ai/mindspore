@@ -55,7 +55,6 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
                              compression, use_first_moment, weight_decay_flag, learning_rate,
                              grad, param, exp_avg, exp_avg_sq_row, exp_avg_sq_col, exp_avg_sq):
     """Apply ada factor optimizer to the weight parameter using Tensor."""
-    success = True
     grad_dtype = F.dtype(grad)
     grad_shape = F.shape(grad)
 
@@ -114,17 +113,17 @@ def _run_opt_with_one_number(eps, clip_threshold, beta1, beta2t, weight_decay, s
         p_data_fp32_coff = p_data_fp32 * -weight_decay * learning_rate_update
         p_data_fp32 = P.Add()(p_data_fp32, p_data_fp32_coff)
     p_data_fp32 = P.Sub()(p_data_fp32, update)
-    return F.depend(success, P.Assign()(param, F.cast(p_data_fp32, F.dtype(param))))
+    P.Assign()(param, F.cast(p_data_fp32, F.dtype(param)))
+    return True
 
 
 @_adafactor_opt.register("Function", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor", "Tensor",
                          "Tensor", "Tensor", "Tensor", "Tensor")
 def _run_fused_ada_factor(fused_ada_factor, eps, clip_threshold, beta1, beta2t, weight_decay, learning_rate,
                           grad, param, exp_avg, exp_avg_sq_row, exp_avg_sq_col, exp_avg_sq):
-    success = True
-    ret = fused_ada_factor(eps, clip_threshold, beta1, beta2t, weight_decay, learning_rate,
-                           grad, param, exp_avg, exp_avg_sq_row, exp_avg_sq_col, exp_avg_sq)
-    return F.depend(success, ret)
+    fused_ada_factor(eps, clip_threshold, beta1, beta2t, weight_decay, learning_rate,
+                     grad, param, exp_avg, exp_avg_sq_row, exp_avg_sq_col, exp_avg_sq)
+    return True
 
 
 def trans_to_tensor(param, is_tuple=False, fp32=True):

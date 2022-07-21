@@ -124,6 +124,7 @@ StackFramePtr StackFrame::DoJump(const AnalysisEnginePtr &engine, const CNodePtr
     engine->SaveEvalResultInCache(conf, result);
   }
   fg_evaluator->PushAlwaysEvalFlag(always_eval_flag);
+  fg_evaluator->SyncFuncGraphIsolatedSideEffectFlag(fg);
   // Create a new stack frame and set arguments for it.
   auto new_stack_frame = std::make_shared<StackFrame>(fg_evaluator, fg, new_context, parent_context);
   new_stack_frame->set_args_abs_list(std::move(args_abs_list));
@@ -175,9 +176,6 @@ EvalResultPtr StackFrame::Step(const AnalysisEnginePtr &engine) {
   }
   MS_LOG(DEBUG) << GetInferThread() << "Eval(" << node_conf->ToString() << ") = "
                 << (node_eval_result->abstract() ? node_eval_result->abstract()->ToString() : "Abstract null");
-
-  // Check if contains side effect operations.
-  fg_evaluator->CollectSideEffectNodes(current_node, &side_effect_nodes_);
   return node_eval_result;
 }
 
@@ -192,6 +190,17 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
   if (last_stack_frame->func_graph()->stub()) {
     result = std::make_shared<EvalResult>(std::make_shared<AbstractUndetermined>(), nullptr);
   }
+
+  // Check if child func graph contains isolated side-effect.
+  if (engine->check_isolated_side_effect()) {
+    if (last_stack_frame->func_graph()->has_isolated_side_effect_node()) {
+      auto cnode = dyn_cast<CNode>(CurrentNode());
+      MS_EXCEPTION_IF_NULL(cnode);
+      cnode->set_has_isolated_side_effect_node(true);
+      cnode->func_graph()->set_has_isolated_side_effect_node(true);
+    }
+  }
+
   // Save func graph eval result for specialize.
   auto evaluator = last_stack_frame->evaluator();
   MS_EXCEPTION_IF_NULL(evaluator);
@@ -210,10 +219,6 @@ void StackFrame::Back(const AnalysisEnginePtr &engine, const StackFramePtr &last
                 << ", Save result, NodeConfig: " << node_conf->ToString() << ", result: " << result->abstract().get()
                 << "/" << result->abstract()->ToString();
   engine->SaveEvalResultInCache(node_conf, result);
-
-  fg_evaluator->CheckSideEffectNodes(result->abstract(), last_stack_frame->side_effect_nodes());
-  last_stack_frame->side_effect_nodes().clear();
-
   // Leave the call CNode.
   trace::TraceEvalCNodeLeave();
 }

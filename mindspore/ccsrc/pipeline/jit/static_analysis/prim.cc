@@ -1366,7 +1366,8 @@ EvalResultPtr GetEvaluatedValueForNameSpaceString(const AnalysisEnginePtr &, con
 EvalResultPtr GetEvaluatedValueForNameSpace(const AnalysisEnginePtr &, const AbstractBasePtrList &args_spec_list,
                                             const AnfNodeConfigPtr &out_conf) {
   // args_spec_list: same as StaticGetter
-  if (args_spec_list.size() < 2) {
+  constexpr size_t args_min_size = 2;
+  if (args_spec_list.size() < args_min_size) {
     MS_LOG(EXCEPTION) << "Size of args_spec_list is less than 2";
   }
   MS_EXCEPTION_IF_NULL(out_conf);

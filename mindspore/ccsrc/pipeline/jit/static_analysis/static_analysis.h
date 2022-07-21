@@ -291,7 +291,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
       : prim_constructors_(prim_evaluator_map),
         func_graph_manager_(func_graph_manager),
         forward_count_(0),
-        enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1") {}
+        enable_recursive_eval_(common::GetEnv("MS_DEV_RECURSIVE_EVAL") == "1"),
+        check_isolated_side_effect_(false) {}
   virtual ~AnalysisEngine() = default;
 
   // func_graph: The func_graph to analyze.
@@ -345,6 +346,11 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   bool enable_recursive_eval() const { return enable_recursive_eval_; }
   static EvalResultPtr ProcessEvalResults(const AbstractBasePtrList &out_specs, const AnfNodePtr &node);
 
+  bool check_isolated_side_effect() const { return check_isolated_side_effect_; }
+  void set_check_isolated_side_effect(bool check_isolated_side_effect) {
+    check_isolated_side_effect_ = check_isolated_side_effect;
+  }
+
  private:
   void SetUndeterminedFlag(const FuncGraphPtr &possible_parent_fg) const;
   EvaluatorPtr HandleNestedRecursion(const std::vector<EvaluatorPtr> &evaluators, const EvaluatorPtr &eval,
@@ -381,6 +387,8 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
   std::atomic_long forward_count_;
 
   bool enable_recursive_eval_;
+
+  bool check_isolated_side_effect_;
 
 #ifdef DEBUG
   std::vector<AnfNodePtr> compute_conf_stack_;
