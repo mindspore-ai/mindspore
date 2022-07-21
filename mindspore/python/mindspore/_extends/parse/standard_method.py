@@ -30,6 +30,7 @@ from ...ops.composite.multitype_ops import _compile_utils as compile_utils
 from ...ops.operations._inner_ops import Format
 from ...ops.operations import _csr_ops
 from ...ops.primitive import constexpr
+from ...ops.function.sparse_func import sparse_add
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
@@ -2366,6 +2367,11 @@ def coo_abs(x):
     """Implementation of `abs` for COOTensor."""
     data = F.absolute(x.values)
     return F.make_coo_tensor(x.indices, data, x.shape)
+
+
+def coo_add(x, y, thresh):
+    """Implementation of `add` for COOTensor."""
+    return sparse_add(x, y, thresh)
 
 
 ################

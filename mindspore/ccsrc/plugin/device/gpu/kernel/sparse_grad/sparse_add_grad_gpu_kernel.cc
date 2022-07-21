@@ -58,25 +58,7 @@ const std::vector<std::pair<KernelAttr, SparseAddGradPtrCreatorFunc>> kernel_att
   GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat32, int64_t, float),
   GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeFloat64, int64_t, double),
   GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, int64_t, cuComplex),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex64, int64_t, cuDoubleComplex),
-
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt8, int32_t, int8_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt16, int32_t, int16_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt32, int32_t, int32_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeInt64, int32_t, int64_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat32, int32_t, float),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeFloat64, int32_t, double),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeComplex64, int32_t, cuComplex),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt32, kNumberTypeComplex64, int32_t, cuDoubleComplex),
-
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt8, int16_t, int8_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt16, int16_t, int16_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt32, int16_t, int32_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeInt64, int16_t, int64_t),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat32, int16_t, float),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeFloat64, int16_t, double),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeComplex64, int16_t, cuComplex),
-  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt16, kNumberTypeComplex64, int16_t, cuDoubleComplex),
+  GPU_SPARSE_ADD_GRAD_KERNEL_REGISTER(kNumberTypeInt64, kNumberTypeComplex128, int64_t, cuDoubleComplex),
 };
 }  // namespace
 

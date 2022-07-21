@@ -648,7 +648,7 @@ class SparseMatrixNNZ(Primitive):
 
 class SparseAdd(Primitive):
     """
-    Computes gradients for sparse add operation.
+    Computes sum of two COOTensor.
 
     Inputs:
         - **x1_indices** (Tensor) - represents the first input's indices in the COO sparse tensor.
@@ -662,29 +662,50 @@ class SparseAdd(Primitive):
 
     Outputs:
         - **sum_indices** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the indices of output COOTensor
+            specified dimension. This is the indices of output COOTensor.
         - **sum_values** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the values of output COOTensor
+            specified dimension. This is the values of output COOTensor.
         - **sum_shape** (Tensor) - the result of concatenates the input SparseTensor along the
-            specified dimension. This is the shape of output COOTensor
+            specified dimension. This is the shape of output COOTensor.
 
     Raises:
-        ValueError: If anf input's dim is wrong
+        ValueError: If (x1_indices/x2_indices)'s dim is not equal to 2.
+        ValueError: If (x1_values/x2_values)'s dim is not equal to 1.
+        ValueError: If (x1_shape/x2_shape)'s dim is not equal to 1.
+        ValueError: If thresh's dim is not equal to 0.
+        TypeError: If (x1_indices/x2_indices)'s type is not equal to int64.
+        TypeError: If (x1_shape/x2_shape)'s type is not equal to int64.
+        ValueError: If (x1_indices/x2_indices)'s length is not equal to
+                    its (x1_values/x2_values)'s length.
+        TypeError: If (x1_values/x2_values)'s type is not equal to anf of
+                   (int8/int16/int32/int64/float32/float64/complex64/complex128).
+        TypeError: If thresh's type is not equal to anf of
+                   (int8/int16/int32/int64/float32/float64).
+        TypeError: If x1_indices's type is not equal to x2_indices's type.
+        TypeError: If x1_values's type is not equal to x2_values's type.
+        TypeError: If x1_shape's type is not equal to x2_shape's type.
+        TypeError: If (x1_values/x2_values)'s type is not match to thresh's type.
 
     Supported Platforms:
         ``CPU`` ``GPU``
 
     Examples:
-        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int32)
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> from mindspore.ops.operations.sparse_ops import SparseAdd
+        >>> indics0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
         >>> values0 = Tensor([1, 2], dtype=mstype.int32)
-        >>> shape0 = Tensor([3, 4], dtype=mstype.int32)
-        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int32)
+        >>> shape0 = Tensor([3, 4], dtype=mstype.int64)
+        >>> indics1 = Tensor([[0, 0], [1, 1]], dtype=mstype.int64)
         >>> values1 = Tensor([3, 4], dtype=mstype.int32)
-        >>> shape1 = Tensor([3, 4], dtype=mstype.int32)
-        >>> thres = Tensor([0], dtype=mstype.int32)
-        >>> parse_add = ops.SparseAdd()
+        >>> shape1 = Tensor([3, 4], dtype=mstype.int64)
+        >>> thres = Tensor(0, dtype=mstype.int32)
+        >>> sparse_add = SparseAdd()
         >>> out = sparse_add(indics0, values0, shape0, indics1, values1, shape1, thres)
         >>> print(out)
+        (Tensor(shape=[4, 2], dtype=Int64, value=[[0, 0], [0, 1], [1, 1], [1, 2]]),
+        Tensor(shape=[4], dtype=Int32, value=[3, 1, 4, 2]),
+        Tensor(shape=[2], dtype=Int64, value=[3, 4]))
     """
     @prim_attr_register
     def __init__(self):

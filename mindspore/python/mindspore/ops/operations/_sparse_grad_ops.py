@@ -22,10 +22,33 @@ from ..primitive import Primitive, prim_attr_register
 class SparseAddGrad(Primitive):
     """
     Computes gradients for sparse add operation.
+
+    Inputs:
+        - **backprop_val_grad** (Tensor) - 1D Tensor, the gradient with respect to
+            the non-empty values of the sum.
+        - **x1_indices** (Tensor) - 2D Tensor, the indices of the x1 in forward.
+        - **x2_indices** (Tensor) - 2D Tensor, the indices of the x2 in forward.
+        - **sum_indices** (Tensor) - 2d Tensor the indices of sum in forward.
+
+    Outputs:
+        - **x1_val_grad** (Tensor) - the gradient with respect to x1 in forward.
+        - **x2_val_grad** (Tensor) - the gradient with respect to x2 in forward.
+
+    Raises:
+        ValueError: If (x1_indices/x2_indices/sum_indices)'s dim is not equal to 2.
+        ValueError: If backprop_val_grad's dim is not equal to 1.
+        ValueError: If (x1_shape/x2_shape)'s dim is not equal to 1.
+        TypeError: If (x1_indices/x2_indices/sum_indices)'s type is not equal to int64.
+        TypeError: If backprop_val_grad's type is not equal to anf of
+                   (int8/int16/int32/int64/float32/float64/complex64/complex128).
+
     Supported Platforms:
         ``GPU``
+
+    Examples:
     """
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(
-            inputs=['dout', 'x1_indices', 'x2_indices', 'out_indices'], outputs=['dx1', 'dx2'])
+            inputs=['backprop_val_grad', 'x1_indices', 'x2_indices', 'sum_indices'],
+            outputs=['x1_val_grad', 'x2_val_grad'])
