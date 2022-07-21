@@ -24,6 +24,7 @@
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "utils/tensor_construct_utils.h"
+#include "utils/shape_utils.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/src/helper.h"
 
@@ -48,9 +49,9 @@ void GetShapeVector(const ValuePtr &shape_attr, std::vector<std::vector<int64_t>
   }
 }
 
-bool IsDynamic(const std::vector<ShapeVector> &shape) {
+bool IsShapesDynamic(const std::vector<ShapeVector> &shape) {
   for (auto shape_vec : shape) {
-    if (std::find(shape_vec.begin(), shape_vec.end(), -1) != shape_vec.end()) {
+    if (IsDynamic(shape_vec)) {
       return true;
     }
   }
@@ -72,7 +73,7 @@ abstract::AbstractBasePtr GetnextInferShape(const PrimitivePtr &primitive) {
   GetShapeVector(min_shape_attr, &min_shape);
   GetShapeVector(max_shape_attr, &max_shape);
 
-  bool is_dynamic = IsDynamic(shape);
+  bool is_dynamic = IsShapesDynamic(shape);
 
   AbstractBasePtrList output;
   for (size_t i = 0; i < shape.size(); ++i) {

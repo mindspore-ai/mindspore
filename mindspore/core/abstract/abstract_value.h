@@ -662,6 +662,16 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   /// \return A pointer to a value.
   const ValuePtr &get_max_value() const { return max_value_; }
 
+  /// \brief Set shape value
+  ///
+  /// \param[in] shape_value The shape value of tensor.
+  void set_shape_value(const ValuePtr &shape_value) { shape_value_ = shape_value; }
+
+  /// \brief Get the shape value.
+  ///
+  /// \return A pointer to a value.
+  const ValuePtr &get_shape_value() const { return shape_value_; }
+
   TypePtr BuildType() const override;
 
   BaseShapePtr BuildShape() const override;
@@ -705,6 +715,7 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
   bool equal_to(const AbstractTensor &other) const;
   ValuePtr min_value_ = nullptr;
   ValuePtr max_value_ = nullptr;
+  ValuePtr shape_value_ = nullptr;
 };
 using AbstractTensorPtr = std::shared_ptr<AbstractTensor>;
 using AbstractTensorPtrList = std::vector<AbstractTensorPtr>;

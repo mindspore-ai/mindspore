@@ -66,5 +66,19 @@ api::SharedPtr<T> GetOperator(const AnfNodePtr &node) {
 }
 
 bool ObscureShapeEqual(const ShapeVector &lhs, const ShapeVector &rhs);
+
+// Get the shape value from abstract input arg
+// Ops like DynamicBroadcastTo or Reshape can directly get the shape value
+// from input which represents shape by invoking this function
+// Do not support input with type of AbstractTuple of AbstractTensor
+ShapeVector GetShapeValue(const AbstractBasePtr &input_arg);
+
+// Infer shape value of make-shape op that only transform shapes, e.g. Concat, Stack, StridedSlice
+// Do not support op with multiple outputs for now
+ValuePtr InferMakeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args);
+
+// Infer shape value of compute-shape op that could change the dim value, e.g. Mul, Add, Sub
+// Do not support op with multiple outputs for now
+ValuePtr InferComputeShapeTensorValue(const PrimitivePtr &prim, const AbstractBasePtrList &args);
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

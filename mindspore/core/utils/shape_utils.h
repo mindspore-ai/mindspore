@@ -22,7 +22,9 @@
 
 namespace mindspore {
 constexpr size_t kDynamicRankLen = 1;
-constexpr ShapeValueDType kDynamicRankValue = -2;
+static const ShapeValueDType UNKNOWN_DIM = -1;
+static const ShapeValueDType UNKNOWN_RANK = -2;
+
 inline size_t SizeOf(const ShapeVector &shape) {
   ShapeValueDType data_size = 1;
   for (auto dim : shape) {
@@ -40,7 +42,7 @@ inline bool IsDynamic(const ShapeVector &shape) {
 }
 
 inline bool IsDynamicRank(const ShapeVector &shape) {
-  return ((shape.size() == kDynamicRankLen) && (shape[0] == kDynamicRankValue));
+  return ((shape.size() == kDynamicRankLen) && (shape[0] == UNKNOWN_RANK));
 }
 }  // namespace mindspore
 
