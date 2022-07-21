@@ -21,6 +21,5 @@ mindspore.LossScaleManager
 
         根据 `overflow` 状态更新梯度放大系数（loss scale)。
 
-        **参数：**
-
-        - **overflow** (bool) - 表示训练过程是否溢出。
+        参数：
+            - **overflow** (bool) - 表示训练过程是否溢出。
