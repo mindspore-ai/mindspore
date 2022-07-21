@@ -198,7 +198,7 @@ class GraphCompiler {
   void AddOutInRefToGraph(const KernelGraphPtr &graph) const;
 
   // Update ref info of graph, before create kernel.
-  void UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph);
+  void UpdateRefInfoBeforeCreateKernel(const session::OpRunInfo &op_run_info, const KernelGraphPtr &graph) const;
 
   // Create device address for all anf nodes of graph.
   void CreateDeviceAddress(const KernelGraphPtr &graph, const DeviceContext *device_context,

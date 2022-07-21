@@ -51,7 +51,7 @@ class SchedulerHelper {
   // Body control arrow is only exists to entrance actor..
   static void AddLoopBodyControlArrow(AbstractActor *from_actor, EntranceActor *to_actor);
   // Data arrow with branch id is only exists from gather actor to entrance actor.
-  static void AddDataWithBranchIDArrow(GatherActor *const gather_actor, EntranceActor *const entrance_actor,
+  static void AddDataWithBranchIDArrow(GatherActor *const gather_actor, const EntranceActor *entrance_actor,
                                        const FuncGraphPtr &func_graph);
   // Since the output of exit actor has branches, it needs to be based on a dedicated interface.
   static void AddDataArrowForExitActor(ExitActor *const exit_actor, AbstractActor *const to_actor, size_t from_index,
