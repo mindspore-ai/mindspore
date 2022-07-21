@@ -120,9 +120,9 @@ class GraphData:
 
     Examples:
         >>> graph_dataset_dir = "/path/to/graph_dataset_file"
-        >>> graph_dataset = ds.GraphData(dataset_file=graph_dataset_dir, num_parallel_workers=2)
-        >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-        >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[1])
+        >>> graph_data = ds.GraphData(dataset_file=graph_dataset_dir, num_parallel_workers=2)
+        >>> nodes = graph_data.get_all_nodes(node_type=1)
+        >>> features = graph_data.get_node_feature(node_list=nodes, feature_types=[1])
     """
 
     @check_gnn_graphdata
@@ -161,7 +161,7 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
 
         Raises:
             TypeError: If `node_type` is not integer.
@@ -182,7 +182,7 @@ class GraphData:
             numpy.ndarray, array of edges.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(edge_type=0)
+            >>> edges = graph_data.get_all_edges(edge_type=0)
 
         Raises:
             TypeError: If `edge_type` is not integer.
@@ -221,7 +221,7 @@ class GraphData:
             numpy.ndarray, array of edges ID.
 
         Examples:
-            >>> edges = graph_dataset.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
+            >>> edges = graph_data.get_edges_from_nodes(node_list=[(101, 201), (103, 207)])
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -335,12 +335,12 @@ class GraphData:
 
         Examples:
             >>> from mindspore.dataset.engine import OutputFormat
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2)
-            >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-            ...                                                 output_format=OutputFormat.COO)
-            >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type=2,
-            ...                                                               output_format=OutputFormat.CSR)
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neighbors = graph_data.get_all_neighbors(node_list=nodes, neighbor_type=2)
+            >>> neighbors_coo = graph_data.get_all_neighbors(node_list=nodes, neighbor_type=2,
+            ...                                              output_format=OutputFormat.COO)
+            >>> offset_table, neighbors_csr = graph_data.get_all_neighbors(node_list=nodes, neighbor_type=2,
+            ...                                                            output_format=OutputFormat.CSR)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -381,9 +381,9 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-            ...                                                 neighbor_types=[2, 1])
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neighbors = graph_data.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                              neighbor_types=[2, 1])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -411,9 +411,9 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
-            ...                                                         neg_neighbor_type=2)
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> neg_neighbors = graph_data.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
+            ...                                                      neg_neighbor_type=2)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -438,8 +438,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=[2, 3])
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> features = graph_data.get_node_feature(node_list=nodes, feature_types=[2, 3])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -467,8 +467,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(edge_type=0)
-            >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=[1])
+            >>> edges = graph_data.get_all_edges(edge_type=0)
+            >>> features = graph_data.get_edge_feature(edge_list=edges, feature_types=[1])
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -513,8 +513,8 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> walks = graph_dataset.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
+            >>> nodes = graph_data.get_all_nodes(node_type=1)
+            >>> walks = graph_data.random_walk(target_nodes=nodes, meta_path=[2, 1, 2])
 
         Raises:
             TypeError: If `target_nodes` is not list or ndarray.
@@ -575,23 +575,39 @@ class Graph(GraphData):
             when the number of connected clients reaches num_client and no client is being connected,
             the server automatically exits (default=True).
 
+    Raises:
+        TypeError: If `edges` not list or NumPy array.
+        TypeError: If `node_feat` provided but not dict, or key in dict is not string type, or value in dict not NumPy
+            array.
+        TypeError: If `edge_feat` provided but not dict, or key in dict is not string type, or value in dict not NumPy
+            array.
+        TypeError: If `graph_feat` provided but not dict, or key in dict is not string type, or value in dict not NumPy
+            array.
+        TypeError: If `node_type` provided but its type not list or NumPy array.
+        TypeError: If `edge_type` provided but its type not list or NumPy array.
+        ValueError: If `num_parallel_workers` exceeds the max thread numbers.
+        ValueError: If `working_mode` is not 'local', 'client' or 'server'.
+        TypeError: If `hostname` is illegal.
+        ValueError: If `port` is not in range [1024, 65535].
+        ValueError: If `num_client` is not in range [1, 255].
+
     Examples:
-        >> # 1) Only provide edges for creating graph, as this is the only required input parameter
-        >> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
-        >> g = Graph(edges)
-        >> graph_info = g.graph_info()
-        >>
-        >> # 2) Setting node_feat and edge_feat for corresponding node and edge
-        >> #    first dimension of feature shape should be corrsponding node num or edge num.
-        >> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
-        >> node_feat = {"node_feature_1": np.array([[0], [1], [2]], dtype=np.int32)}
-        >> edge_feat = {"edge_feature_1": np.array([[1, 2], [3, 4]], dtype=np.int32)}
-        >> g = Graph(edges, node_feat, edge_feat)
-        >>
-        >> # 3) Setting graph feature for graph, there is shape limit for graph feature
-        >> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
-        >> graph_feature = {"graph_feature_1": np.array([1, 2, 3, 4, 5, 6], dtype=np.int32)}
-        >> g = Graph(edges, graph_feat=graph_feature)
+        >>> # 1) Only provide edges for creating graph, as this is the only required input parameter
+        >>> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
+        >>> graph = Graph(edges)
+        >>> graph_info = g.graph_info()
+        >>>
+        >>> # 2) Setting node_feat and edge_feat for corresponding node and edge
+        >>> #    first dimension of feature shape should be corresponding node num or edge num.
+        >>> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
+        >>> node_feat = {"node_feature_1": np.array([[0], [1], [2]], dtype=np.int32)}
+        >>> edge_feat = {"edge_feature_1": np.array([[1, 2], [3, 4]], dtype=np.int32)}
+        >>> graph = Graph(edges, node_feat, edge_feat)
+        >>>
+        >>> # 3) Setting graph feature for graph, there is no shape limit for graph feature
+        >>> edges = np.array([[1, 2], [0, 1]], dtype=np.int32)
+        >>> graph_feature = {"graph_feature_1": np.array([1, 2, 3, 4, 5, 6], dtype=np.int32)}
+        >>> graph = Graph(edges, graph_feat=graph_feature)
     """
 
     @check_gnn_graph
@@ -657,7 +673,7 @@ class Graph(GraphData):
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type="0")
+            >>> nodes = graph.get_all_nodes(node_type="0")
 
         Raises:
             TypeError: If `node_type` is not string.
@@ -684,7 +700,7 @@ class Graph(GraphData):
             numpy.ndarray, array of edges.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(edge_type='0')
+            >>> edges = graph.get_all_edges(edge_type='0')
 
         Raises:
             TypeError: If `edge_type` is not string.
@@ -803,12 +819,12 @@ class Graph(GraphData):
 
         Examples:
             >>> from mindspore.dataset.engine import OutputFormat
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neighbors = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type='0')
-            >>> neighbors_coo = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type='0',
-            ...                                                 output_format=OutputFormat.COO)
-            >>> offset_table, neighbors_csr = graph_dataset.get_all_neighbors(node_list=nodes, neighbor_type='0',
-            ...                                                               output_format=OutputFormat.CSR)
+            >>> nodes = graph.get_all_nodes(node_type=1)
+            >>> neighbors = graph.get_all_neighbors(node_list=nodes, neighbor_type='0')
+            >>> neighbors_coo = graph.get_all_neighbors(node_list=nodes, neighbor_type='0',
+            ...                                         output_format=OutputFormat.COO)
+            >>> offset_table, neighbors_csr = graph.get_all_neighbors(node_list=nodes, neighbor_type='0',
+            ...                                                       output_format=OutputFormat.CSR)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -853,9 +869,9 @@ class Graph(GraphData):
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neighbors = graph_dataset.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
-            ...                                                 neighbor_types=[2, 1])
+            >>> nodes = graph.get_all_nodes(node_type=1)
+            >>> neighbors = graph.get_sampled_neighbors(node_list=nodes, neighbor_nums=[2, 2],
+            ...                                         neighbor_types=[2, 1])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -890,9 +906,9 @@ class Graph(GraphData):
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type=1)
-            >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
-            ...                                                         neg_neighbor_type='0')
+            >>> nodes = graph.get_all_nodes(node_type=1)
+            >>> neg_neighbors = graph.get_neg_sampled_neighbors(node_list=nodes, neg_neighbor_num=5,
+            ...                                                 neg_neighbor_type='0')
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -921,8 +937,8 @@ class Graph(GraphData):
             numpy.ndarray, array of features.
 
         Examples:
-            >>> nodes = graph_dataset.get_all_nodes(node_type='0')
-            >>> features = graph_dataset.get_node_feature(node_list=nodes, feature_types=["feature_1", "feature_2"])
+            >>> nodes = graph.get_all_nodes(node_type='0')
+            >>> features = graph.get_node_feature(node_list=nodes, feature_types=["feature_1", "feature_2"])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -957,8 +973,8 @@ class Graph(GraphData):
             numpy.ndarray, array of features.
 
         Examples:
-            >>> edges = graph_dataset.get_all_edges(edge_type='0')
-            >>> features = graph_dataset.get_edge_feature(edge_list=edges, feature_types=["feature_1"])
+            >>> edges = graph.get_all_edges(edge_type='0')
+            >>> features = graph.get_edge_feature(edge_list=edges, feature_types=["feature_1"])
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -983,7 +999,7 @@ class Graph(GraphData):
     @check_gnn_get_graph_feature
     def get_graph_feature(self, feature_types):
         """
-        Get `feature_types` feature of the nodes in `node_list`.
+        Get `feature_types` feature that stored in Graph feature level.
 
         Args:
             feature_types (Union[list, numpy.ndarray]): The given list of feature types, each element should be string.
@@ -992,10 +1008,9 @@ class Graph(GraphData):
             numpy.ndarray, array of features.
 
         Examples:
-            >>> features = graph_dataset.get_graph_feature(feature_types=['feature_1', 'feature_2'])
+            >>> features = graph.get_graph_feature(feature_types=['feature_1', 'feature_2'])
 
         Raises:
-            TypeError: If `node_list` is not list or ndarray.
             TypeError: If `feature_types` is not list or ndarray.
         """
         if self._working_mode in ['server']:
@@ -1349,7 +1364,8 @@ class ArgoverseDataset(InMemoryGraphDataset):
 
     def process(self):
         """
-        process method mainly refers to: https://github.com/xk-huang/yet-another-vectornet/blob/master/dataset.py
+        Process method for argoverse dataset, here we load original dataset and create a lot of graphs based on it.
+        Pre-processed method mainly refers to: https://github.com/xk-huang/yet-another-vectornet/blob/master/dataset.py.
         """
         try:
             import pandas as pd
