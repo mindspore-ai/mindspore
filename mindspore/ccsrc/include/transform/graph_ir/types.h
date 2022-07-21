@@ -55,14 +55,12 @@ using TensorOrderMap = std::map<std::string, std::shared_ptr<tensor::Tensor>>;
 
 struct DfGraphWrapper {
  public:
-  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
-                 const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options);
+  DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr, const OptionMap &options);
   ~DfGraphWrapper() {}
 
   std::string name_;
   int id_;
   DfGraphPtr graph_ptr_;
-  std::vector<transform::GeTensorPtr> inputs_ = {};
   OptionMap options_ = {};
 };
 

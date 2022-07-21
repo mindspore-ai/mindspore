@@ -30,6 +30,7 @@
 #include "backend/common/session/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "backend/common/optimizer/common_backend_optimization.h"
+#include "runtime/hardware/deprecated_interface.h"
 
 namespace mindspore {
 namespace device {
@@ -77,6 +78,9 @@ class DeviceContext {
 
   // Get device address type according different device type, such GPU, Ascend.
   DeviceType GetDeviceType() const { return GetDeviceTypeByName(device_context_key_.device_name_); }
+
+  // todo: delete
+  virtual DeprecatedInterface *GetDeprecatedInterface() { return nullptr; }
 
   DeviceContextKey device_context_key_;
   std::unique_ptr<DeviceResManager> device_res_manager_;

@@ -99,6 +99,9 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
 
   FuncGraphPtr BuildGraph(const py::dict &init_params, const std::string &phase,
                           const py::object &broadcast_params = {}) const;
+  void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
+                   const py::object encrypt = py::none(), char *key = nullptr);
+
   void UpdataParamNodeDefaultInput(const std::string &phase,
                                    const std::unordered_map<std::string, tensor::TensorPtr> &params_value);
   void PyExePath(const py::object &py_exe_path) const;
@@ -178,9 +181,6 @@ void FinalizeBackend();
 void ClearResAtexit();
 void ReleaseGeTsd();
 void MemoryRecycle();
-
-void ExportGraph(const std::string &file_name, const std::string &model_type, const std::string &phase,
-                 const py::object encrypt = py::none(), char *key = nullptr);
 
 FuncGraphPtr LoadMindIR(const std::string &file_name, char *dec_key, const size_t key_len, const std::string &dec_mode,
                         const py::object decrypt = py::none());

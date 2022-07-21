@@ -278,7 +278,6 @@ set_property(SOURCE ${SUB_OBJECTS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID
 add_library(mindspore STATIC ${SUB_OBJECTS_SRC})
 
 set(COMMON_SUB_COMP
-        transform/graph_ir
         utils
         common
         common/debug
@@ -345,6 +344,7 @@ set(BACKEND_SUB_COMP
         plugin/device/gpu/hal/profiler
         plugin/device/gpu/kernel
         plugin/device/gpu/optimizer
+        transform/graph_ir
         )
 
 foreach(_comp ${BACKEND_SUB_COMP})

@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace profiler {
 namespace ascend {
-BACKEND_EXPORT void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
+void DumpProfileParallelStrategy(const FuncGraphPtr &func_graph);
 void SaveParallelStrategyToFile();
 }  // namespace ascend
 }  // namespace profiler

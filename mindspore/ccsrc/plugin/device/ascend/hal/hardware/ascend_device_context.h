@@ -17,11 +17,13 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEVICE_CONTEXT_H_
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_ASCEND_ASCEND_DEVICE_CONTEXT_H_
 
+#include <memory>
 #include "runtime/hardware/device_context.h"
 #include "runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_device_res_manager.h"
 #include "plugin/device/ascend/hal/hardware/ascend_kernel_executor.h"
 #include "plugin/device/ascend/hal/hardware/ascend_graph_executor.h"
+#include "plugin/device/ascend/hal/hardware/ascend_deprecated_interface.h"
 
 namespace mindspore {
 namespace device {
@@ -46,9 +48,12 @@ class AscendDeviceContext : public DeviceInterface<AscendGraphExecutor, AscendKe
 
   RunMode GetRunMode(const FuncGraphPtr &func_graph) const override;
 
+  DeprecatedInterface *GetDeprecatedInterface() override;
+
  private:
   bool initialized_{false};
   AscendKernelRuntime *runtime_instance_{nullptr};
+  std::unique_ptr<AscendDeprecatedInterface> deprecated_interface_;
 };
 }  // namespace ascend
 }  // namespace device

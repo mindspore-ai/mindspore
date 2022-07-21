@@ -29,8 +29,8 @@
 namespace mindspore {
 namespace transform {
 DfGraphWrapper::DfGraphWrapper(const std::string &name, const int &id, const DfGraphPtr &graph_ptr,
-                               const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options)
-    : name_(name), id_(id), graph_ptr_(graph_ptr), inputs_(inputs), options_(options) {}
+                               const OptionMap &options)
+    : name_(name), id_(id), graph_ptr_(graph_ptr), options_(options) {}
 
 DfGraphManager::DfGraphManager() {
   graph_id_ = 0;
@@ -62,8 +62,7 @@ int DfGraphManager::GenerateId() {
   return graph_id_;
 }
 
-Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr,
-                                const std::vector<transform::GeTensorPtr> &inputs, const OptionMap &options) {
+Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph_ptr, const OptionMap &options) {
   std::lock_guard<std::mutex> lg(lock_);
   if (name.empty()) {
     MS_LOG(ERROR) << "The graph name is null, add graph failed";
@@ -76,7 +75,7 @@ Status DfGraphManager::AddGraph(const std::string &name, const DfGraphPtr &graph
   }
 
   int id = GenerateId();
-  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, inputs, options);
+  DfGraphWrapperPtr wrap_ptr = std::make_shared<DfGraphWrapper>(name, id, graph_ptr, options);
   auto ret = graphs_.emplace(name, wrap_ptr);
   if (ret.second == false) {
     MS_LOG(WARNING) << "The graph name:{ " << name << " }is already exists! The old graph will be overwritten!!";

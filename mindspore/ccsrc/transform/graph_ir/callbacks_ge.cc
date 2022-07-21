@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifdef ENABLE_D
-#include "include/common/utils/callbacks_ge.h"
+#include "transform/graph_ir/callbacks_ge.h"
 #include "pybind11/pybind11.h"
 #include "ir/param_info.h"
 #include "include/transform/graph_ir/utils.h"
@@ -182,4 +181,3 @@ uint32_t SummarySaveCallback(uint32_t graph_id, const std::map<std::string, ge::
 }
 }  // namespace callbacks
 }  // namespace mindspore
-#endif

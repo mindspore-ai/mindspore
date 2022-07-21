@@ -20,9 +20,11 @@
 #include <memory>
 #include <string>
 #include <map>
+#include "plugin/device/ascend/hal/hardware/ge_deprecated_interface.h"
 #include "runtime/hardware/device_context.h"
 #include "runtime/device/memory_manager.h"
 #include "utils/ms_context.h"
+#include "include/transform/graph_ir/types.h"
 
 namespace mindspore {
 namespace device {
@@ -41,6 +43,8 @@ class GeDeviceResManager : public DeviceResManager {
   DeviceAddressPtr CreateDeviceAddress(void *const device_ptr, size_t device_size, const string &format, TypeId type_id,
                                        const ShapeVector &shape = ShapeVector()) const override;
 
+  static void CreateSessionAndGraphRunner(bool is_training);
+
  protected:
   // Relevant function to allocate and free device memory of raw ptr.
   void *AllocateMemory(size_t size) const override;
@@ -56,6 +60,9 @@ class GeGraphExecutor : public GraphExecutor {
   bool CompileGraph(const FuncGraphPtr &graph, const std::map<string, string> &compile_options) override;
   bool RunGraph(const FuncGraphPtr &graph, const std::vector<tensor::Tensor> &inputs,
                 std::vector<tensor::Tensor> *outputs, const std::map<string, string> &compile_options) override;
+
+  static FuncGraphPtr BuildDFGraph(const FuncGraphPtr &anf_graph, const transform::TensorOrderMap &init_inputs_map,
+                                   bool export_air);
 
  private:
   void AllocInputHostMemory(const KernelGraphPtr &kernel_graph) const;
@@ -75,6 +82,8 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManag
   bool PartitionGraph(const FuncGraphPtr &func_graph) const override;
   RunMode GetRunMode(const FuncGraphPtr &func_graph) const override;
 
+  DeprecatedInterface *GetDeprecatedInterface() override;
+
  private:
   DISABLE_COPY_AND_ASSIGN(GeDeviceContext);
 
@@ -84,6 +93,7 @@ class GeDeviceContext : public DeviceInterface<GeGraphExecutor, GeDeviceResManag
   void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
   void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
 
+  std::unique_ptr<GeDeprecatedInterface> deprecated_interface_;
   bool initialized_;
 };
 }  // namespace ascend
