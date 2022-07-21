@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <future>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -41,9 +42,10 @@ namespace mindspore {
 namespace dataset {
 const int64_t kTFRecordFileLimit = 0x140000000;
 
+std::set<std::string> TFReaderOp::large_files_ = {};
+
 std::vector<std::string> TFReaderOp::ValidateFirstRowCrc(const std::vector<std::string> &filenames) {
   std::vector<std::string> invalid_files;
-  std::vector<std::string> large_files;
 
   for (const std::string &filename : filenames) {
     auto realpath = FileUtils::GetRealPath(filename.c_str());
@@ -59,13 +61,6 @@ std::vector<std::string> TFReaderOp::ValidateFirstRowCrc(const std::vector<std::
       reader.close();
       continue;
     }
-
-    // record large tf file and warning
-    int64_t file_len = reader.seekg(0, std::ios::end).tellg();
-    if (file_len > kTFRecordFileLimit) {
-      large_files.push_back(filename);
-    }
-    (void)reader.seekg(0, std::ios::beg);
 
     // read data
     int64_t record_length = 0;
@@ -84,15 +79,6 @@ std::vector<std::string> TFReaderOp::ValidateFirstRowCrc(const std::vector<std::
       invalid_files.push_back(filename);
     }
     reader.close();
-  }
-
-  if (!large_files.empty()) {
-    auto large_filenames = std::accumulate(large_files.begin() + 1, large_files.end(), large_files[0],
-                                           [](const std::string &x, const std::string &y) { return x + ", " + y; });
-    MS_LOG(WARNING)
-      << "The size of following TFRecord files are larger than 5G, there may be performance problems in "
-      << "distributed scenarios, and it can be split into sub-files smaller than 5G to get better performance. "
-      << "Large TFRecord files list: " << large_filenames;
   }
   return invalid_files;
 }
@@ -337,6 +323,19 @@ Status TFReaderOp::LoadFile(const std::string &filename, int64_t start_offset, i
   reader.open(realpath.value());
   if (!reader) {
     RETURN_STATUS_UNEXPECTED("Invalid file, " + filename + " open failed: permission denied!");
+  }
+
+  // record large tf file and log a warning
+  if (large_files_.find(filename) == large_files_.end()) {
+    int64_t file_len = reader.seekg(0, std::ios::end).tellg();
+    if (file_len > kTFRecordFileLimit) {
+      large_files_.insert(filename);
+      MS_LOG(WARNING)
+        << "The size of following TFRecord file is larger than 5G. There may be performance problems in "
+        << "distributed scenarios. The file can be split into sub-files smaller than 5G to obtain better performance. "
+        << "Large TFRecord file: " << filename;
+    }
+    (void)reader.seekg(0, std::ios::beg);
   }
 
   int64_t rows_read = 0;
