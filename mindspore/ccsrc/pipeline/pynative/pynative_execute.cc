@@ -934,20 +934,6 @@ void UpdateTensorInfo(const tensor::TensorPtr &new_tensor, const std::vector<ten
   }
 }
 
-void CheckPyNativeContext() {
-  const auto &parallel_context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(parallel_context);
-  const auto &ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &parallel_mode = parallel_context->parallel_mode();
-  const auto &search_mode = parallel_context->strategy_search_mode();
-  if (parallel_mode == parallel::kAutoParallel && search_mode != parallel::kShardingPropagation) {
-    MS_LOG(EXCEPTION)
-      << "PyNative only supports Auto_Parallel under search mode of sharding_propagation using shard function, but got "
-      << search_mode;
-  }
-}
-
 py::object GetDstType(const TypeId &type_id) {
   constexpr int k8Bits = 8;
   constexpr int k16Bits = 16;
@@ -1213,7 +1199,6 @@ void FindMatchTopCell(const TopCellInfoPtr &top_cell, const py::args &args, std:
 }  // namespace
 
 py::object RealRunOp(const py::args &args) {
-  CheckPyNativeContext();
   const auto &executor = PynativeExecutor::GetInstance();
   MS_EXCEPTION_IF_NULL(executor);
   OpExecInfoPtr op_exec_info = executor->forward_executor()->GenerateOpExecInfo(args);
