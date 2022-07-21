@@ -27,6 +27,7 @@ enum WeightQuantType {
   FIXED_BIT_PER_LAYER = 1,
   MIXED_BIT_PER_LAYER = 2,
 };
+constexpr size_t k1Bit = 1;
 constexpr size_t k2Bit = 2;
 constexpr size_t k8Bit = 8;
 constexpr size_t k10Bit = 10;

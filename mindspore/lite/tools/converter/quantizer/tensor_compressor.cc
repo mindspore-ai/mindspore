@@ -56,11 +56,15 @@ int TensorCompressor::DoBitPack(const size_t &bit_num, schema::TensorT *tensor_i
       return RET_ERROR;
     }
   } else if (bit_num > k8Bit && bit_num < k16Bit) {
-    auto shape_size =
-      std::accumulate(tensor_input->dims.begin(), tensor_input->dims.end(), size_t(1), std::multiplies<size_t>());
+    int shape_size;
+    auto status = GetElementNumFromShape(tensor_input->dims, &shape_size);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Get ElementNum from shape failed.";
+      return status;
+    }
     std::vector<int16_t> origin_data(shape_size);
-    auto status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
-                           tensor_input->data.size() * sizeof(uint8_t));
+    status = memcpy_s(origin_data.data(), origin_data.size() * sizeof(int16_t), tensor_input->data.data(),
+                      tensor_input->data.size() * sizeof(uint8_t));
     if (status != EOK) {
       MS_LOG(ERROR) << "memcpy failed. " << status;
       return RET_ERROR;
@@ -78,25 +82,65 @@ int TensorCompressor::DoBitPack(const size_t &bit_num, schema::TensorT *tensor_i
   return RET_OK;
 }
 
-int TensorCompressor::SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, int bit_num,
+int TensorCompressor::SetNewCompressionTensor(const ParameterPtr &weight, const std::vector<bool> &bits, size_t bit_num,
                                               const tensor::TensorPtr &tensor_info,
                                               TensorCompressionType compression_type) {
   // Add New Tensor
   auto size_in_byte = static_cast<size_t>(ceil(bits.size() / kBitNumPerByte));
   std::shared_ptr<mindspore::tensor::Tensor> compression_tensor = nullptr;
-  if (bit_num == k8Bit) {
+  if (bit_num >= k1Bit && bit_num <= k8Bit) {
     compression_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt8, tensor_info->shape(),
                                                                      size_in_byte, compression_type);
-  } else if (bit_num == k16Bit) {
+  } else if (bit_num > k8Bit && bit_num <= k16Bit) {
     compression_tensor = std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt16, tensor_info->shape(),
                                                                      size_in_byte, compression_type);
   } else {
-    MS_LOG(ERROR) << "bit_num only support 8 or 16 bit.";
+    MS_LOG(ERROR) << "bit_num only support 1 ~ 16 bit.";
     return RET_ERROR;
   }
   CHECK_NULL_RETURN(compression_tensor);
   // update tensor data
   WriteBufferWithAlignByte(bits, static_cast<int8_t *>(compression_tensor->data().data()));
+  weight->set_default_param(compression_tensor);
+  weight->set_abstract(compression_tensor->ToAbstract());
+  return RET_OK;
+}
+
+int TensorCompressor::DoBitPack(const ParameterPtr &weight, size_t bit_num) {
+  auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
+  CHECK_NULL_RETURN(tensor_info);
+  auto elements_num = tensor_info->ElementsNum();
+  std::shared_ptr<mindspore::tensor::Tensor> compression_tensor = nullptr;
+  if (bit_num > 0 && bit_num < k8Bit) {
+    auto quant_data = static_cast<int8_t *>(tensor_info->data().data());
+    std::vector<int8_t> origin_data(quant_data, quant_data + elements_num);
+    std::vector<uint8_t> pack_data{};
+    BitPack::BitPacking<int8_t, uint8_t>(bit_num, origin_data, &pack_data);
+    auto buffer_size = pack_data.size() * sizeof(int8_t);
+    compression_tensor =
+      std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt8, tensor_info->shape(), buffer_size, kBitPacking);
+    CHECK_NULL_RETURN(compression_tensor);
+    auto ret = memcpy_s(compression_tensor->data_c(), buffer_size, pack_data.data(), buffer_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << weight->name() << " memcpy failed.";
+      return RET_ERROR;
+    }
+  } else if (bit_num > k8Bit && bit_num < k16Bit) {
+    auto quant_data = static_cast<int16_t *>(tensor_info->data().data());
+    std::vector<int16_t> origin_data(quant_data, quant_data + elements_num);
+    std::vector<uint16_t> pack_data{};
+    BitPack::BitPacking<int16_t, uint16_t>(bit_num, origin_data, &pack_data);
+    auto buffer_size = pack_data.size() * sizeof(int16_t);
+    compression_tensor =
+      std::make_shared<mindspore::tensor::Tensor>(kNumberTypeInt16, tensor_info->shape(), buffer_size, kBitPacking);
+    CHECK_NULL_RETURN(compression_tensor);
+    auto ret = memcpy_s(compression_tensor->data_c(), buffer_size, pack_data.data(), buffer_size);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << weight->name() << " memcpy failed.";
+      return RET_ERROR;
+    }
+  }
+  // update tensor data
   weight->set_default_param(compression_tensor);
   weight->set_abstract(compression_tensor->ToAbstract());
   return RET_OK;
