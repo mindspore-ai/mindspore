@@ -38,19 +38,19 @@ mindspore.nn.SmoothL1Loss
 
     **输入：**
 
-    - **logits** (Tensor) - 预测值，任意维度Tensor。数据类型必须为float16或float32。
+    - **logits** (Tensor) - 预测值，任意维度Tensor。数据类型为float16、float32或float64。
     - **labels** (Tensor) - 目标值，数据类型和shape与 `logits` 相同的Tensor。
 
     **输出：**
 
-    Tensor或标量。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则为标量。
+    Tensor。如果 `reduction` 为'none'，则输出为Tensor且与 `logits` 的shape相同。否则shape为 `(1,)`。
 
     **异常：**
 
     - **TypeError** - `beta` 不是float。
     - **ValueError** - `reduction` 不是'none'，'mean'和'sum'中的任意一个。
     - **TypeError** - `logits` 或 `labels` 不是Tensor。
-    - **TypeError** - `logits` 或 `labels` 的数据类型既不是float16，也不是float32。
+    - **TypeError** - `logits` 或 `labels` 的数据类型不是float16，float32和float64中的任一者。
     - **TypeError** - `logits` 的数据类型与 `labels` 不同。
     - **ValueError** - `beta` 小于或等于0。
     - **ValueError** - `logits` 的shape与 `labels` 不同。

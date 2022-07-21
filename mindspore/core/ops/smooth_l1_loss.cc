@@ -18,8 +18,8 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include "ops/smooth_l1_loss.h"
+#include "utils/ms_context.h"
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
 #include "mindapi/src/helper.h"
@@ -65,14 +65,23 @@ abstract::ShapePtr SmoothL1LossInferShape(const PrimitivePtr &primitive,
   if (reduction == kNone) {
     return shape_element;
   } else {
-    ShapeVector shape_out{};
+    ShapeVector shape_out{1};
     return std::make_shared<abstract::Shape>(shape_out);
   }
 }
 
 TypePtr SmoothL1LossInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   // Infer type
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64};
+  std::set<TypePtr> valid_types{};
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  bool is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
+  if (is_ascend) {
+    valid_types = {kFloat16, kFloat32};
+  } else {
+    valid_types = {kFloat16, kFloat32, kFloat64};
+  }
+
   std::map<std::string, TypePtr> args;
   (void)args.emplace("scale", input_args[kInputIndex0]->BuildType());
   (void)args.emplace("bias", input_args[kInputIndex1]->BuildType());

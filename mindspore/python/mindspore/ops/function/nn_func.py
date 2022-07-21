@@ -1411,8 +1411,8 @@ def smooth_l1_loss(logits, labels, beta=1.0, reduction='none'):
         reduction (str): Apply specific reduction method to the output: 'none', 'mean' or 'sum'. Default: 'none'.
 
     Returns:
-        Tensor or Scalar, if `reduction` is 'none', then output is a tensor and has the same shape as `logits`.
-        Otherwise it is a scalar.
+        Tensor, if `reduction` is 'none', then output is a tensor with the same shape as `logits`.
+        Otherwise the shape of output tensor is `(1,)`.
 
     Raises:
         TypeError: If `beta` is not a float.
