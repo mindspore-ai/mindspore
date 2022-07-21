@@ -49,9 +49,9 @@ class COMMON_EXPORT AnfAlgo {
   static AnfNodePtr GetTupleGetItemRealInput(const CNodePtr &tuple_get_item);
   static size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item);
   // get input_anf_node's real kernel by recurse
-  static KernelWithIndex VisitKernel(const AnfNodePtr &input_anf_node, size_t output_index);
+  static KernelWithIndex VisitKernel(const AnfNodePtr &anf_node, size_t index);
   static KernelWithIndex VisitKernelWithReturnType(
-    const AnfNodePtr &input_anf_node, size_t output_index, bool skip_nop_node = false,
+    const AnfNodePtr &anf_node, size_t index, bool skip_nop_node = false,
     const std::vector<PrimitivePtr> &return_types = {prim::kPrimMakeTuple},
     abstract::AbstractBasePtr *abstract = nullptr);
   static std::vector<AnfNodePtr> GetAllOutput(const AnfNodePtr &node,
@@ -99,7 +99,7 @@ class COMMON_EXPORT AnfAlgo {
   // check whether a cnode has the specified attr.
   static bool HasNodeAttr(const std::string &key, const CNodePtr &node);
   // delete attr of anf node
-  static void EraseNodeAttr(const std::string &key, AnfNodePtr node);
+  static void EraseNodeAttr(const std::string &key, const AnfNodePtr &node);
   // get the num of inputs include monads for a cnode
   static size_t GetInputNum(const CNodePtr &cnode);
   // get the num of inputs exclude monads for real_kernel (which can be build and run in device)
@@ -119,7 +119,7 @@ class COMMON_EXPORT AnfAlgo {
   static ShapeVector GetPrevNodeOutputInferShape(const AnfNodePtr &node, size_t input_idx);
   // get output data type inferred by ME of anf node
   static TypeId GetOutputInferDataType(const AnfNodePtr &node, size_t output_idx);
-  static TypeId GetOutputInferDataType(const TypePtr &type_ptr, size_t output_idx);
+  static TypeId GetOutputInferDataType(const TypePtr &type, size_t output_idx);
 
   // get all output infer data type
   static std::vector<TypeId> GetAllOutputInferDataTypes(const AnfNodePtr &node);
@@ -149,7 +149,7 @@ class COMMON_EXPORT AnfAlgo {
   static AnfNodePtr GetInputNode(const CNodePtr &node, size_t index);
   static bool IsCommunicationOp(const AnfNodePtr &node);
   static bool IsFusedCommunicationOp(const AnfNodePtr &node);
-  static bool IsInplaceNode(const AnfNodePtr &node, const string &type);
+  static bool IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &type);
   static bool IsGetNext(const NotNull<AnfNodePtr> &node);
   static bool IsNeedSkipNopOpAddr(const AnfNodePtr &node);
   static bool IsNeedSkipNopOpExecution(const AnfNodePtr &node);
@@ -174,16 +174,16 @@ class COMMON_EXPORT AnfAlgo {
   static std::vector<int64_t> GetInputMinShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMaxShape(const AnfNodePtr &anf_node, size_t index);
   static std::vector<int64_t> GetOutputMinShape(const AnfNodePtr &anf_node, size_t index);
-  static bool IsHostKernel(const CNodePtr &node);
+  static bool IsHostKernel(const CNodePtr &kernel_node);
   static void AddArgList(AbstractBasePtrList *args_spec_list, const AnfNodePtr &real_input, size_t real_input_index);
   // Find real input nodes.
   static void GetAllFatherRealNode(const AnfNodePtr &anf_node, std::vector<AnfNodePtr> *result,
                                    std::set<AnfNodePtr> *visited);
-  static void GetAllVisitedCNode(const CNodePtr &cnode, std::vector<AnfNodePtr> *used_kernels,
+  static void GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *used_kernels,
                                  std::set<AnfNodePtr> *visited);
   static AnfNodeIndexSet GetUpdateStateUsers(const FuncGraphManagerPtr &manager, const AnfNodePtr &node);
   // Get node real inputs, skip `MakeTuple`, `TupleGetItem`, `Depend`, `Load`, `UpdateState` etc.
-  static void GetRealInputs(const AnfNodePtr &anf_node, std::vector<KernelWithIndex> *inputs);
+  static void GetRealInputs(const AnfNodePtr &node, std::vector<KernelWithIndex> *inputs);
   // Check whether tensors need broadcast or not.
   template <typename T>
   static inline bool IsTensorBroadcast(const std::vector<T> &lhs, const std::vector<T> &rhs) {
@@ -253,7 +253,7 @@ class COMMON_EXPORT AnfAlgo {
   }
 
   // Get the real output node and indexes of get item, make tuple, depend, load.
-  static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *index_stack);
+  static AnfNodePtr GetTupleIndexes(const AnfNodePtr &node, std::vector<size_t> *const index_stack);
   static bool IsNopNode(const AnfNodePtr &node);
 
   template <typename T>

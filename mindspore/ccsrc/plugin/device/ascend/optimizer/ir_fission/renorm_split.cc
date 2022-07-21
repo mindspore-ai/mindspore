@@ -24,9 +24,18 @@ namespace {
 void FreshRenormInferShape(const CNodePtr &node, ShapeVector in_shape, const TypeId &type) {
   MS_EXCEPTION_IF_NULL(node);
   auto dim = common::AnfAlgo::GetNodeAttr<int64_t>(node, "dim");
+  if (dim > 0 && dim >= SizeToLong(in_shape.size())) {
+    MS_LOG(EXCEPTION) << "Attr dim must be less than the shape size, but got dim:" << dim
+                      << ", shape size:" << in_shape.size();
+  }
   if (dim < 0) {
-    dim += in_shape.size();
-    common::AnfAlgo::SetNodeAttr("dim", MakeValue(dim), node);
+    if (std::abs(dim) <= SizeToLong(in_shape.size())) {
+      dim += in_shape.size();
+      common::AnfAlgo::SetNodeAttr("dim", MakeValue(dim), node);
+    } else {
+      MS_LOG(EXCEPTION) << "Attr dim must be less than the shape size, but got dim:" << dim
+                        << ", shape size:" << in_shape.size();
+    }
   }
 
   for (size_t i = 0; i < in_shape.size(); i++) {

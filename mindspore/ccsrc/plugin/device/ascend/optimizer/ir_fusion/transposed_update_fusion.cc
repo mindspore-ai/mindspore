@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/optimizer/ir_fusion/transposed_update_fusion.h"
 #include <set>
+#include <vector>
 #include <algorithm>
 #include "plugin/device/ascend/optimizer/ascend_helper.h"
 #include "backend/common/session/anf_runtime_algorithm.h"

@@ -46,7 +46,7 @@ const AnfNodePtr SpaceToBatchNDAttrUpdate::Process(const FuncGraphPtr &graph, co
 
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
-    block_shape.insert(block_shape.begin(), 1);
+    block_shape.insert(block_shape.cbegin(), 1);
     common::AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
   }
   auto paddings = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrPaddings);
@@ -70,7 +70,7 @@ const AnfNodePtr BatchToSpaceNDAttrUpdate::Process(const FuncGraphPtr &graph, co
 
   auto block_shape = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(node, kAttrBlockShape);
   if (block_shape.size() == kBlockShapeDimNum) {
-    block_shape.insert(block_shape.begin(), 1);
+    block_shape.insert(block_shape.cbegin(), 1);
     common::AnfAlgo::SetNodeAttr(kAttrBlockShape, MakeValue(block_shape), node);
   }
   auto crops = common::AnfAlgo::GetNodeAttr<std::vector<std::vector<int64_t>>>(node, kAttrCrops);

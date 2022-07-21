@@ -1681,6 +1681,12 @@ TensorPtr SessionBasic::GetCNodeOutputTensor(const KernelWithIndex &kernel_with_
 void SessionBasic::GetConstValueDepend(const CNodePtr &cnode, std::vector<size_t> *const_input_attr_index) {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(const_input_attr_index);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target != kAscendDevice) {
+    return;
+  }
   auto op_name = common::AnfAlgo::GetCNodeName(cnode);
   auto is_dynamic_shape = common::AnfAlgo::IsDynamicShape(cnode);
   auto op_info_ptr = mindspore::kernel::OpLib::FindOp(op_name, kernel::OpImplyType::kTBE, is_dynamic_shape);

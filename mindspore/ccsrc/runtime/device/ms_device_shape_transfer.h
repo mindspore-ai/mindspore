@@ -165,11 +165,11 @@ class DeviceShapeTransfer {
                                      int64_t groups = 1, const ShapeVector &input_hidden_size = {kAlign16, kAlign16});
 
  private:
-  ShapeVector GetAttrInputAndHiddenSize(const AnfNodePtr &node);
+  ShapeVector GetAttrInputAndHiddenSize(const AnfNodePtr &node) const;
   std::optional<ShapeVector> GetFixedDeviceShape(const ShapeVector &, const AnfNodePtr &node, size_t index,
-                                                 bool is_output = true);
+                                                 bool is_output = true) const;
   ShapeVector TransCore(const ShapeVector &shape, const std::string &format, const TypeId &type, int64_t groups = 1,
-                        const ShapeVector &input_hidden_size = {kAlign16, kAlign16});
+                        const ShapeVector &input_hidden_size = {kAlign16, kAlign16}) const;
 
   // trans functions
   static ShapeVector NCHWDeviceShape(const ShapeVector &shape, const TypeId &);
@@ -265,7 +265,7 @@ class ShapeRangeTransfer {
   ShapeRangeTransfer() = default;
   ~ShapeRangeTransfer() = default;
   RangePair GetRealRange(const RangePair &ori_range, const std::string &format, const TypeId &type,
-                         const std::string &padding_str = {""});
+                         const std::string &padding_str = {""}) const;
 
  private:
   static RangePair NHWCRange(const RangePair &ori_range, const TypeId &);
@@ -477,8 +477,8 @@ std::vector<int> StringToAxisVector(const std::vector<T> &shape, const std::stri
         padding_axis.push_back(index);
       }
     } else {
-      std::transform(padding_axis_5d.begin(), padding_axis_5d.end(), std::back_inserter(padding_axis),
-                     [](Axis5D x) { return static_cast<int>(x); });
+      (void)std::transform(padding_axis_5d.begin(), padding_axis_5d.end(), std::back_inserter(padding_axis),
+                           [](Axis5D x) { return static_cast<int>(x); });
     }
   } else {
     std::vector<Axis> padding_axis_4d;
@@ -489,8 +489,8 @@ std::vector<int> StringToAxisVector(const std::vector<T> &shape, const std::stri
         padding_axis.push_back(index);
       }
     } else {
-      std::transform(padding_axis_4d.begin(), padding_axis_4d.end(), std::back_inserter(padding_axis),
-                     [](Axis x) { return static_cast<int>(x); });
+      (void)std::transform(padding_axis_4d.begin(), padding_axis_4d.end(), std::back_inserter(padding_axis),
+                           [](Axis x) { return static_cast<int>(x); });
     }
   }
 

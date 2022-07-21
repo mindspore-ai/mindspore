@@ -37,9 +37,7 @@ using abstract::AbstractTuple;
 namespace {
 constexpr size_t kNopNodeRealInputIndex = 1;
 
-const PrimitiveSet expand_prims{
-  prim::kPrimMakeTuple,
-};
+const PrimitiveSet expand_prims = {prim::kPrimMakeTuple};
 const std::set<std::string> kNodeTupleOutSet = {prim::kMakeTuple, prim::kGetNext};
 
 enum class ShapeType { kMaxShape, kMinShape };
@@ -159,7 +157,7 @@ std::vector<KernelWithIndex> GetAllOutputWithIndexInner(const AnfNodePtr &node) 
         MS_LOG(EXCEPTION) << "Invalid index:" << output_with_index.second
                           << " for outputs of node:" << output_with_index.first->DebugString();
       }
-      ret.emplace_back(output_vector[output_with_index.second]);
+      (void)ret.emplace_back(output_vector[output_with_index.second]);
       continue;
     }
 
@@ -235,7 +233,6 @@ KernelWithIndex AnfAlgo::VisitKernelWithReturnType(const AnfNodePtr &anf_node, s
   }
   auto cnode = anf_node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
-  std::string prim_name = GetCNodeFuncName(cnode);
   // TupleGetItem and SparseGetAttr needs to find real input
   if (CheckPrimitiveType(cnode, prim::kPrimTupleGetItem)) {
     abstract::AbstractBasePtr abs = nullptr;
@@ -436,7 +433,7 @@ void AnfAlgo::CopyNodeAttrs(const AnfNodePtr &from, const AnfNodePtr &to) {
   (void)to_primitive->SetAttrs(from_primitive->attrs());
 }
 
-void AnfAlgo::EraseNodeAttr(const std::string &key, const AnfNodePtr node) {
+void AnfAlgo::EraseNodeAttr(const std::string &key, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Only cnode has attr, but this anf is " << node->DebugString() << trace::DumpSourceLines(node);
@@ -787,7 +784,6 @@ void AnfAlgo::SetOutputInferTypeAndShape(const std::vector<TypeId> &types, const
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
-      ShapeVector shape_int;
       abstract::AbstractTensorPtr abstract = nullptr;
       if (abstract_ptr != nullptr) {
         auto max_shape = GetOutputMaxShape(node_ptr, i);
@@ -891,7 +887,7 @@ void AnfAlgo::SetNodeInput(const CNodePtr &node, const AnfNodePtr &input_node, s
   if (node->func_graph() != nullptr) {
     auto manager = node->func_graph()->manager();
     if (manager != nullptr) {
-      manager->SetEdge(node, index + 1, input_node);
+      manager->SetEdge(node, index + IntToSize(1), input_node);
       return;
     }
   }
@@ -1368,19 +1364,19 @@ bool AnfAlgo::IsNodeInputDynamicShape(const CNodePtr &anf_node_ptr) {
   return false;
 }
 
-void AnfAlgo::GetAllVisitedCNode(const CNodePtr &anf_node, std::vector<AnfNodePtr> *used_kernels,
+void AnfAlgo::GetAllVisitedCNode(const CNodePtr &node, std::vector<AnfNodePtr> *used_kernels,
                                  std::set<AnfNodePtr> *visited) {
-  MS_EXCEPTION_IF_NULL(anf_node);
+  MS_EXCEPTION_IF_NULL(node);
   MS_EXCEPTION_IF_NULL(used_kernels);
   MS_EXCEPTION_IF_NULL(visited);
-  if (visited->find(anf_node) != visited->end()) {
-    MS_LOG(INFO) << "Node:" << anf_node->fullname_with_scope() << " has already been visited";
+  if (visited->find(node) != visited->end()) {
+    MS_LOG(INFO) << "Node:" << node->fullname_with_scope() << " has already been visited";
     return;
   }
-  visited->insert(anf_node);
-  auto input_size = anf_node->inputs().size() - 1;
+  visited->insert(node);
+  auto input_size = node->inputs().size() - 1;
   for (size_t i = 0; i < input_size; ++i) {
-    auto input = AnfAlgo::GetInputNode(anf_node, i);
+    auto input = AnfAlgo::GetInputNode(node, i);
     if (!input->isa<CNode>()) {
       continue;
     }

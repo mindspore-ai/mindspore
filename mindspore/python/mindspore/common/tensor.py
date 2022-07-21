@@ -1230,9 +1230,9 @@ class Tensor(Tensor_):
             >>> x = Tensor(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]), mindspore.float32)
             >>> y = x.renorm(p=1, dim=0, maxnorm=5.)
             >>> print(y)
-            [[1.       1.        1.        1.       ]
-            [1.6666666 1.6666666 1.6666666 1.6666666]
-            [1.6666667 1.6666667 1.6666667 1.6666667]]
+            [[1.       1.        1.        ]
+            [1.6666666 1.6666666 1.6666666 ]
+            [1.6666667 1.6666667 1.6666667 ]]
         """
         self._init_check()
         return tensor_operator_registry.get("renorm")(self, p, dim, maxnorm)
