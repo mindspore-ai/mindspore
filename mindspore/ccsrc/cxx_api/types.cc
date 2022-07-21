@@ -20,6 +20,9 @@
 #include "mindspore/core/ir/api_tensor_impl.h"
 #include "mindspore/core/utils/convert_utils_base.h"
 #include "utils/file_utils.h"
+#ifdef _MSC_VER
+#pragma warning(disable : 4716)
+#endif
 
 namespace mindspore {
 class Buffer::Impl {
