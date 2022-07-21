@@ -33,6 +33,7 @@
 #include "tools/converter/parser/onnx/onnx_pad_adjust.h"
 #include "tools/converter/parser/onnx/onnx_nonzero_adjust.h"
 #include "tools/converter/parser/onnx/onnx_einsum_adjust.h"
+#include "tools/converter/parser/onnx/onnx_quantize_linear_adjust.h"
 #include "tools/converter/parser/parser_utils.h"
 #include "tools/converter/parser/lite_model_parser_creator.h"
 #include "tools/converter/parser/unify_format.h"
@@ -71,6 +72,11 @@ int Onnx2AnfAdjust(const std::set<FuncGraphPtr> &all_func_graphs) {
     }
     if (!OnnxEinsumAdjust::Adjust(func_graph)) {
       MS_LOG(ERROR) << "onnx einsum adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return RET_ERROR;
+    }
+    if (!OnnxQuantizeLinearAdjust::Adjust(func_graph)) {
+      MS_LOG(ERROR) << "onnx quantize linear adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return RET_ERROR;
     }
