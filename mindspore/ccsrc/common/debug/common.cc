@@ -112,7 +112,8 @@ std::optional<std::string> Common::CreatePrefixPath(const std::string &input_pat
   return std::string(prefix_path_str + "/" + file_name_str);
 }
 
-bool Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path, std::string *value) {
+bool Common::CommonFuncForConfigPath(const std::string &default_path, const std::string &env_path,
+                                     std::string *const value) {
   MS_EXCEPTION_IF_NULL(value);
   value->clear();
   if (!env_path.empty()) {
@@ -362,8 +363,8 @@ void Common::DebugTerminate(bool val, bool exit_success) {
 
 uint64_t Common::GetTimeStamp() {
   auto cur_sys_time = std::chrono::system_clock::now();
-  uint64_t timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
-  return timestamp;
+  auto timestamp = std::chrono::duration_cast<std::chrono::microseconds>(cur_sys_time.time_since_epoch()).count();
+  return static_cast<uint64_t>(timestamp);
 }
 
 struct GlogLogDirRegister {

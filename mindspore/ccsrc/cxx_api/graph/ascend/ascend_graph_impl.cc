@@ -439,8 +439,14 @@ PythonEnvGuard::PythonEnvGuard() : origin_init_status_(PythonIsInited()) { InitP
 
 PythonEnvGuard::~PythonEnvGuard() {
   // finalize when init by this
-  if (!origin_init_status_) {
-    FinalizePython();
+  try {
+    if (!origin_init_status_) {
+      FinalizePython();
+    }
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "PythonEnvGuard destructor run failed, error message : " << e.what();
+  } catch (...) {
+    MS_LOG(ERROR) << "PythonEnvGuard destructor run failed, unknown error occurred.";
   }
 }
 
