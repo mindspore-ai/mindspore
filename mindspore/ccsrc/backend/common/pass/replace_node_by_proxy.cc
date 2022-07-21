@@ -64,7 +64,7 @@ bool ReplaceNodeByProxy::Run(const FuncGraphPtr &func_graph) {
       auto prim = std::make_shared<Primitive>(kEmbeddingLookupProxyOpName);
       MS_EXCEPTION_IF_NULL(prim);
       std::vector<AnfNodePtr> proxy_inputs = {NewValueNode(prim)};
-      proxy_inputs.insert(proxy_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
+      (void)proxy_inputs.insert(proxy_inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
       AnfNodePtr proxy_node = func_graph->NewCNode(proxy_inputs);
       MS_EXCEPTION_IF_NULL(proxy_node);
 

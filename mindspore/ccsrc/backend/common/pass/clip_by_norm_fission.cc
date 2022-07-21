@@ -26,9 +26,7 @@ namespace {
 ShapeVector GetOutputInferShape(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto shape = common::AnfAlgo::GetOutputInferShape(node, 0);
-  ShapeVector infer_shape;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(infer_shape), SizeToLong);
-  return infer_shape;
+  return shape;
 }
 
 std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape,
@@ -37,8 +35,8 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
   if (x_shape == y_shape) {
     return x_shape;
   }
-  auto x_length = static_cast<int64_t>(x_shape.size());
-  auto y_length = static_cast<int64_t>(y_shape.size());
+  auto x_length = x_shape.size();
+  auto y_length = y_shape.size();
   auto length = x_length < y_length ? x_length : y_length;
   std::vector<int64_t> broadcast_shape;
   if (x_length == length) {
@@ -46,15 +44,15 @@ std::vector<int64_t> InferBroadcastShape(const std::vector<int64_t> &x_shape, co
   } else {
     (void)std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
   }
-  for (int64_t i = -length; i < 0; ++i) {
-    if (x_shape[LongToSize(x_length + i)] == 1) {
-      broadcast_shape.push_back(y_shape[LongToSize(y_length + i)]);
-    } else if (y_shape[LongToSize(y_length + i)] == 1) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if (x_shape[x_length + i] == y_shape[LongToSize(y_length + i)]) {
-      broadcast_shape.push_back(x_shape[LongToSize(x_length + i)]);
-    } else if ((x_shape[x_length + i] == abstract::Shape::SHP_ANY) ||
-               (y_shape[y_length + i] == abstract::Shape::SHP_ANY)) {
+  for (size_t i = length; i > 0; --i) {
+    if (x_shape[x_length - i] == 1) {
+      broadcast_shape.push_back(y_shape[y_length - i]);
+    } else if (y_shape[y_length - i] == 1) {
+      broadcast_shape.push_back(x_shape[x_length - i]);
+    } else if (x_shape[x_length - i] == y_shape[y_length - i]) {
+      broadcast_shape.push_back(x_shape[x_length - i]);
+    } else if ((x_shape[x_length - i] == abstract::Shape::SHP_ANY) ||
+               (y_shape[y_length - i] == abstract::Shape::SHP_ANY)) {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', input dynamic shape args is not supported.";
     } else {
       MS_EXCEPTION(ValueError) << "For '" << op_name << "', the two input '" << op_x_name << "' and '" << op_y_name
@@ -112,7 +110,7 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
       }
     }
   } else if (axis_value->isa<Int64Imm>()) {
-    axis.emplace_back(GetValue<int64_t>(axis_value));
+    (void)axis.emplace_back(GetValue<int64_t>(axis_value));
   } else {
     MS_EXCEPTION(TypeError) << "For `" << prim::kPrimClipByNorm->name()
                             << "`, the type of attribute `axis` is invalid.";
@@ -126,7 +124,7 @@ AnfNodePtr ClipByNormFission::CreateReduceSumNode(const FuncGraphPtr &func_graph
                                << "), but got: " << idx;
     }
     auto positive_idx = idx < 0 ? idx + ddim : idx;
-    reduce_sum_output_shape[positive_idx] = 1;
+    reduce_sum_output_shape[LongToUlong(positive_idx)] = 1;
   }
 
   auto abs = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type_id), reduce_sum_output_shape);
