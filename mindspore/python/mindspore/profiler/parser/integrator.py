@@ -1261,6 +1261,9 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
         except (IOError, OSError) as err:
             logger.critical(f'Error occurred when read {step_trace_profiling_path}: {err}')
             raise ProfilerIOException()
+        except StopIteration:
+            logger.warning('No step trace data exists.')
+            return False
 
     def _get_cluster_timeline(self, timeline, activity_info, comm_info, step_info):
         """
