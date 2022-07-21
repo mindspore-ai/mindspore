@@ -83,7 +83,13 @@ int KLDivLossCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
     workspace_size_list_.push_back(input_x_shape_size_ * type_size);
   }
 
-  batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
+  if (reductionMode_ == ops::kBatchMean) {
+    if (input_x_shape.size() < 1) {
+      MS_LOG(EXCEPTION) << kernel_name_
+                        << ": for batchmean reduction, the input must be an array or matrix, but got a number";
+    }
+    batch_size_ = inputs[kIndex0]->GetShapeVector()[kIndex0];
+  }
   return ret;
 }
 
