@@ -51,8 +51,8 @@ class TestMinddataProfilingManager:
         """
 
         # Set the MindData Profiling related environment variables
-        os.environ['RANK_ID'] = "1"
-        os.environ['DEVICE_ID'] = "1"
+        os.environ['RANK_ID'] = "0"
+        os.environ['DEVICE_ID'] = "0"
 
         # Initialize MindData profiling manager
         self.md_profiler.init()
@@ -94,7 +94,6 @@ class TestMinddataProfilingManager:
             assert data["system_memory_info"]["total_sys_memory_mbytes"][0] > 0
             assert data["system_memory_info"]["used_sys_memory_mbytes"][0] > 0
 
-
     def confirm_ops_in_pipeline(self, pipeline_file, num_ops, op_list):
         """
         Confirm pipeline JSON file with <num_ops> are in the pipeline and the given list of ops
@@ -135,9 +134,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm no profiling files are produced (since no MindData pipeline has been executed)
         assert os.path.exists(pipeline_file) is False
@@ -188,9 +187,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -221,6 +220,7 @@ class TestMinddataProfilingManager:
 
         Expectation: Runs successfully
         """
+
         # In source1 dataset: Number of rows is 3; its values are 0, 1, 2
         def source1():
             for i in range(3):
@@ -249,9 +249,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm pipeline is created with EpochCtrl op
         with open(pipeline_file) as f:
@@ -280,6 +280,7 @@ class TestMinddataProfilingManager:
             (Generator -> Rename -> Skip -> Repeat -> Take)
         Expectation: Runs successfully
         """
+
         # In source1 dataset: Number of rows is 10; its values are 0, 1, 2, 3, 4, 5 ... 9
         def source1():
             for i in range(10):
@@ -298,9 +299,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -347,9 +348,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(pipeline_file, 3, ["GeneratorOp", "BatchOp", "ShuffleOp"])
@@ -365,6 +366,7 @@ class TestMinddataProfilingManager:
             (Generator -> Map -> Batch -> Repeat -> EpochCtrl)
         Expectation: Runs successfully
         """
+
         def source1():
             for i in range(8000):
                 yield (np.array([i]),)
@@ -389,9 +391,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -443,9 +445,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         with open(pipeline_file) as f:
             data = json.load(f)
@@ -490,9 +492,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm pipeline file and CPU util file each have 3 ops
         self.confirm_ops_in_pipeline(pipeline_file, 3, ["GeneratorOp", "BatchOp", "EpochCtrlOp"])
@@ -545,9 +547,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(pipeline_file, 2, ["GeneratorOp", "BatchOp"])
@@ -599,9 +601,9 @@ class TestMinddataProfilingManager:
         self.md_profiler.stop()
         self.md_profiler.save(str(tmp_path))
 
-        pipeline_file = str(tmp_path) + "/pipeline_profiling_1.json"
-        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_1.json"
-        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_1.txt"
+        pipeline_file = str(tmp_path) + "/pipeline_profiling_0.json"
+        cpu_util_file = str(tmp_path) + "/minddata_cpu_utilization_0.json"
+        dataset_iterator_file = str(tmp_path) + "/dataset_iterator_profiling_0.txt"
 
         # Confirm pipeline file and CPU util file each have 2 ops
         self.confirm_ops_in_pipeline(pipeline_file, 2, ["GeneratorOp", "BatchOp"])
