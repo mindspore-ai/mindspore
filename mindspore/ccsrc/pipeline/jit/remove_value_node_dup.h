@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,8 @@ namespace pipeline {
 using HashCache = mindspore::HashMap<std::size_t, std::vector<AnfNodePtr>>;
 using HashValue = mindspore::HashMap<AnfNodePtr, std::size_t>;
 
-void TryToDoReplace(FuncGraphManager *manager, const AnfNodePtr &node, HashCache *hash_cache, HashValue *hash_value);
+void TryToDoReplace(FuncGraphManager *const manager, const AnfNodePtr &node, HashCache *const hash_cache,
+                    HashValue *const hash_value);
 }  // namespace pipeline
 }  // namespace mindspore
 

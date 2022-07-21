@@ -86,13 +86,13 @@ void BaseFuncGraphEvaluator::CollectSideEffectNodes(const AnfNodePtr &node,
     auto effect_info = GetPrimEffectInfo(primitive);
     if (effect_info.memory || effect_info.io) {
       MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
-      side_effect_nodes->emplace_back(node);
+      (void)side_effect_nodes->emplace_back(node);
     }
   }
 }
 
 void BaseFuncGraphEvaluator::CheckSideEffectNodes(const AbstractBasePtr &abstract,
-                                                  const std::vector<AnfNodePtr> &side_effect_nodes) {
+                                                  const std::vector<AnfNodePtr> &side_effect_nodes) const {
   if (!side_effect_nodes.empty()) {
     ValuePtr val = abstract->BuildValue();
     if (!val->isa<AnyValue>()) {
