@@ -107,8 +107,10 @@ bool MatrixSetDiagV3GpuKernelMod::LaunchKernel(const std::vector<kernel::Address
   std::vector<int> host_k_vec;
   size_t k_length = k->size / sizeof(int);
   host_k_vec.resize(k_length);
-  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(cudaMemcpy(host_k_vec.data(), k_device_address, k->size, cudaMemcpyDeviceToHost),
-                                    "MatrixSetDiagV3GpuKernelMod cuda copy device to host Fail");
+  CHECK_CUDA_RET_WITH_ERROR_NOTRACE(
+    cudaMemcpyAsync(host_k_vec.data(), k_device_address, k->size, cudaMemcpyDeviceToHost,
+                    reinterpret_cast<cudaStream_t>(cuda_stream_)),
+    "MatrixSetDiagV3GpuKernelMod cuda copy device to host Fail");
 
   lower_ = host_k_vec.at(kIndex0);
   upper_ = host_k_vec.at(kIndex0);
