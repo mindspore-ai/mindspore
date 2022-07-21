@@ -36,20 +36,20 @@ class MS_API Serialization {
   /// \param[in] data_size The size of the buffer.
   /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
   /// \param[out] graph The output parameter, an object saves graph data.
-  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
-  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
+  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32. Not supported on MindSpore Lite.
+  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC. Not supported on MindSpore Lite.
   ///
   /// \return Status.
   inline static Status Load(const void *model_data, size_t data_size, ModelType model_type, Graph *graph,
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
 
-  /// \brief Loads a model file from path, is not supported on MindSpore Lite.
+  /// \brief Loads a model file from path.
   ///
   /// \param[in] file The path of model file.
   /// \param[in] model_type The Type of model file, options are ModelType::kMindIR, ModelType::kOM.
   /// \param[out] graph The output parameter, an object saves graph data.
-  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32.
-  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC.
+  /// \param[in] dec_key The decryption key, key length is 16, 24, or 32. Not supported on MindSpore Lite.
+  /// \param[in] dec_mode The decryption mode, optional options are AES-GCM, AES-CBC. Not supported on MindSpore Lite.
   ///
   /// \return Status.
   inline static Status Load(const std::string &file, ModelType model_type, Graph *graph, const Key &dec_key = {},
@@ -66,8 +66,35 @@ class MS_API Serialization {
   /// \return Status.
   inline static Status Load(const std::vector<std::string> &files, ModelType model_type, std::vector<Graph> *graphs,
                             const Key &dec_key = {}, const std::string &dec_mode = kDecModeAesGcm);
+
+  /// \brief Configure model parameters, MindSpore Lite does not provide this feature.
+  ///
+  /// \param[in] parameters The parameters.
+  /// \param[in] model The model.
+  ///
+  /// \return Status.
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
+
+  /// \brief Export training model from memory buffer, MindSpore Lite does not provide this feature.
+  ///
+  /// \param[in] model The model data.
+  /// \param[in] model_type The model file type.
+  /// \param[out] model_data The model parameter data.
+  ///
+  /// \return Status.
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
+
+  /// \brief Export training model from file.
+  ///
+  /// \param[in] model The model data.
+  /// \param[in] model_type The model file type.
+  /// \param[in] model_file The exported model file.
+  /// \param[in] quantization_type The quantification type.
+  /// \param[in] export_inference_only Whether to export a reasoning only model.
+  /// \param[in] output_tensor_name The set the name of the output tensor of the exported reasoning model, default as
+  /// empty, and export the complete reasoning model.
+  ///
+  /// \return Status.
   inline static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file,
                                    QuantizationType quantization_type = kNoQuant, bool export_inference_only = true,
                                    std::vector<std::string> output_tensor_name = {});
