@@ -205,7 +205,7 @@ void ReflectParamBackToPython(const AnfNodePtr &param, const string &param_name,
   // 2. Clone default_input tensor
   MS_EXCEPTION_IF_NULL(default_input);
   auto default_tensor = std::make_shared<tensor::Tensor>(default_input->data_type(), default_input->shape_c(),
-                                                         default_input->data_c(), (size_t)default_input->Size());
+                                                         default_input->data_c(), default_input->Size());
   // 3. New a Parameter object with the above-specified args
   py::object parameter_class = py::module::import(PARAMETER_MODULE).attr(PARAMETER_CLASS);
   py::object new_parameter = parameter_class(default_tensor, param_name, requires_grad, layerwise_parallel);

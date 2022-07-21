@@ -16,7 +16,6 @@
 #include "frontend/optimizer/py_pass_manager.h"
 
 #include <functional>
-#include <utility>
 
 #include "ir/manager.h"
 #include "frontend/optimizer/pass_group.h"
@@ -27,7 +26,7 @@ namespace python_pass {
 PyPassManagerPtr PyPassManager::global_instance = nullptr;
 mindspore::HashMap<Phase, PassGroupPtr> PyPassManager::phase_to_group_;
 
-PassGroupPtr PyPassManager::GetPassGroup(Phase phase) {
+PassGroupPtr PyPassManager::GetPassGroup(Phase phase) const {
   auto pm = phase_to_group_.find(phase);
   if (pm == phase_to_group_.end()) {
     return nullptr;

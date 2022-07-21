@@ -17,12 +17,11 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MAKE_SPARSE_TENSOR_TO_MAKE_TUPLE_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_IRPASS_MAKE_SPARSE_TENSOR_TO_MAKE_TUPLE_
 
-#include <vector>
-
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/optimizer.h"
+#include "ir/pattern_matcher.h"
 
 namespace mindspore {
 namespace opt {

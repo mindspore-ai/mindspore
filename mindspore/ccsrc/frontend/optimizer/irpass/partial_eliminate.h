@@ -267,7 +267,7 @@ class ChoicePartialEliminater : public AnfVisitor {
 
   // Find the new location of the old_inputs except Zs.
   size_t FindNewLocation(const std::vector<AnfNodePtrList> &args_list, size_t anchor_index,
-                         std::vector<size_t> *inputs_index_list, AnfNodePtrList *extra_inputs_ptr) {
+                         std::vector<size_t> *inputs_index_list, AnfNodePtrList *extra_inputs_ptr) const {
     const auto &anchor_args = args_list[anchor_index];
     auto &extra_inputs = *extra_inputs_ptr;
     size_t extra_input_counter = 0;
@@ -366,7 +366,7 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
  private:
   AnfNodePtr BuildNewSwitchNode(const CNodePtr &old_cnode, const CNodePtr input0_cnode, const AnfNodePtr &G1,
                                 const AnfNodePtr &G2, const AnfNodePtrList &partial_args,
-                                const AnfNodePtrList &extra_args) {
+                                const AnfNodePtrList &extra_args) const {
     TraceGuard guard1(std::make_shared<TraceCopy>(input0_cnode->debug_info()));
     // {Switch, cond, G1, G2}
     auto switch_cnode = old_cnode->func_graph()->NewCNode({input0_cnode->input(0), input0_cnode->input(1), G1, G2});
@@ -448,7 +448,8 @@ class SwitchLayerPartialEliminater : public ChoicePartialEliminater {
 
  private:
   AnfNodePtr BuildNewSwitchLayerNode(const CNodePtr &old_cnode, const CNodePtr switch_layer_cnode,
-                                     const AnfNodePtrList &anchor_partial_args, const AnfNodePtrList &extra_args) {
+                                     const AnfNodePtrList &anchor_partial_args,
+                                     const AnfNodePtrList &extra_args) const {
     auto make_tuple_cnode = switch_layer_cnode->input(kSwitchLayerBranchesIndex)->cast<CNodePtr>();
     AnfNodePtrList make_tuple_args{make_tuple_cnode->input(0)};
     make_tuple_args.insert(make_tuple_args.end(), fg_list_.begin(), fg_list_.end());

@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
 #include "utils/hash_map.h"
 #include "ir/anf.h"
@@ -56,7 +55,7 @@ class PyPassManager {
                 bool run_only_once);
   void Unregister(const std::string &pass_name);
   void GenNewParameter(const PatternPtr &parameter);
-  PassGroupPtr GetPassGroup(Phase phase);
+  PassGroupPtr GetPassGroup(Phase phase) const;
   MatchResultPtr GetMatchResult() { return res_; }
   void SetRenorm(bool should_renorm) { should_renorm_ = should_renorm; }
   bool ShouldRenorm() const { return should_renorm_; }

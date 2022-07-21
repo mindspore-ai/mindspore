@@ -124,7 +124,7 @@ class SpecializeOnGraphArguments : public AnfVisitor {
       return nullptr;
     }
     auto new_fg = specialize_transform_(inp0_fg, need_eliminated_args);
-    (void)new_xs.insert(new_xs.begin(), NewValueNode(new_fg));
+    (void)new_xs.insert(new_xs.cbegin(), NewValueNode(new_fg));
 
     return node->func_graph()->NewCNode(new_xs);
   }
