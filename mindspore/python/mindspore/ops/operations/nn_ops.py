@@ -6725,7 +6725,7 @@ class ApplyProximalGradientDescent(Primitive):
         RuntimeError: If the data type of `var`, and `delta` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> class Net(nn.Cell):
