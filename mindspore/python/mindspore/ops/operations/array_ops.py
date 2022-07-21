@@ -1241,7 +1241,7 @@ class UniqueWithPad(PrimitiveWithCheck):
         validator.check("rank of x", len(x_shape), "expected", 1, Rel.EQ, self.name)
 
 
-class Split(PrimitiveWithCheck):
+class Split(Primitive):
     """
     Splits the input tensor into output_num of tensors along the given axis and output numbers.
 
@@ -1285,21 +1285,7 @@ class Split(PrimitiveWithCheck):
         validator.check_positive_int(output_num, "output_num", self.name)
         self.axis = axis
         self.output_num = output_num
-
-    def __check__(self, x):
-        validator.check_subclass("x", x['dtype'], mstype.tensor, self.name)
-        x_shape = list(x['shape'])
-        dim = len(x_shape)
-        validator.check_int_range(self.axis, -dim, dim, Rel.INC_LEFT, 'axis value', self.name)
-        if is_shape_known(x_shape):
-            # only validate when shape fully known
-            output_valid_check = x_shape[self.axis] % self.output_num
-            if output_valid_check != 0:
-                raise ValueError(f"For '{self.name}', the specified axis of 'input_x' must be divided exactly by "
-                                 f"'output_num', but got the shape of 'input_x' in 'axis' {self.axis} is "
-                                 f"{x_shape[self.axis]}, 'output_num': {self.output_num}.")
-        size_splits = [x_shape[self.axis] // self.output_num] * self.output_num
-        self.add_prim_attr('size_splits', size_splits)
+        self.add_prim_attr('num_split', self.output_num)
 
 
 class Rank(PrimitiveWithInfer):

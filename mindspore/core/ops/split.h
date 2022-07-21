@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class MIND_API Split : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Split);
   /// \brief Constructor.
-  Split() : BaseOperator(kNameSplit) {}
+  Split() : BaseOperator(kNameSplit) { InitIOName({"x"}, {"output"}); }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Split for the inputs.
   void Init(const int64_t axis, const int64_t output_num);
   /// \brief Set size_splits.
@@ -58,5 +58,4 @@ abstract::AbstractBasePtr SplitInfer(const abstract::AnalysisEnginePtr &, const 
 using PrimSplit = std::shared_ptr<Split>;
 }  // namespace ops
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CORE_OPS_SPLIT_H_

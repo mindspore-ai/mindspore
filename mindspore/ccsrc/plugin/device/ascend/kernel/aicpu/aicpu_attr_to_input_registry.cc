@@ -36,6 +36,7 @@ std::map<string, std::vector<std::pair<string, size_t>>> AicpuOpAttrToInputMap =
   {prim::kPrimGather->name(), {{"axis", 2}}},
   {prim::kPrimSlice->name(), {{"begin", 1}, {"size", 2}}},
   {prim::kPrimReduceMean->name(), {{"axis", 1}}},
+  {prim::kPrimSplit->name(), {{"axis", 0}}},
   {prim::kPrimReduceProd->name(), {{"axis", 1}}}};
 
 bool GetAicpuOpAttrToInputInfo(const CNodePtr &kernel_node, std::vector<std::pair<string, size_t>> *info) {
