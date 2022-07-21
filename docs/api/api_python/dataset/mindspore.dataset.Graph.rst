@@ -27,6 +27,12 @@ mindspore.dataset.Graph
         - **auto_shutdown** (bool, 可选) - 当工作模式设置为 'server' 时有效。当连接的客户端数量达到 `num_client` ，且没有客户端正在连接时，服务器将自动退出，默认值：True。
 
     异常：
+        - **TypeError** - 如果 `edges` 不是list或NumPy array类型。
+        - **TypeError** - 如果提供了 `node_feat` 但不是dict类型, 或者dict中的key不是string类型, 或者dict中的value不是NumPy array类型。
+        - **TypeError** - 如果提供了 `edge_feat` 但不是dict类型, 或者dict中的key不是string类型, 或者dict中的value不是NumPy array类型。
+        - **TypeError** - 如果提供了 `graph_feat` 但不是dict类型, 或者dict中的key不是string类型, 或者dict中的value不是NumPy array类型。
+        - **TypeError** - 如果提供了 `node_type` 但不是list或NumPy array类型。
+        - **TypeError** - 如果提供了 `edge_type` 但不是list或 NumPy array类型。
         - **ValueError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **ValueError** - `working_mode` 参数取值不为'local', 'client' 或 'server'。
         - **TypeError** - `hostname` 参数类型错误。
@@ -187,6 +193,19 @@ mindspore.dataset.Graph
         异常：
             - **TypeError** - 参数 `edge_list` 的类型不为列表或numpy.ndarray。
 
+    .. py:method:: get_graph_feature(edge_list, feature_types)
+
+        依据给定的 `feature_types` 获取存储在Graph中对应的特征。
+
+        参数：
+            - **feature_types** (Union[list, numpy.ndarray]) - 包含给定特征类型的列表，列表中每个元素是string类型。
+
+        返回：
+            numpy.ndarray，包含特征的数组。
+
+        异常：
+            - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
+
     .. py:method:: get_neg_sampled_neighbors(node_list, neg_neighbor_num, neg_neighbor_type)
 
         获取 `node_list` 列表中节所有点的负样本相邻节点，以 `neg_neighbor_type` 类型返回。
@@ -218,7 +237,6 @@ mindspore.dataset.Graph
         异常：
             - **TypeError** - 参数 `node_list` 的类型不为列表或numpy.ndarray。
             - **TypeError** - 参数 `feature_types` 的类型不为列表或numpy.ndarray。
-
 
     .. py:method:: get_nodes_from_edges(edge_list)
 

@@ -26,6 +26,25 @@
 
     .. include:: mindspore.dataset.Dataset.d.rst
 
+    .. py:method:: load()
+
+        从给定（处理好的）路径加载数据，也可以在自己实现的Dataset类中实现这个方法。
+
+    .. include:: mindspore.dataset.Dataset.e.rst
+
+    .. py:method:: process()
+
+        针对argoverse数据集的处理方法，基于加载上来的原始数据集创建很多子图。
+        数据预处理方法主要参考：https://github.com/xk-huang/yet-another-vectornet/blob/master/dataset.py。
+
+    .. include:: mindspore.dataset.Dataset.f.rst
+
+    .. py:method:: save()
+
+        将经过 `process` 函数处理后的数据以 numpy.npz 格式保存到磁盘中，也可以在自己实现的Dataset类中自己实现这个方法。
+
+    .. include:: mindspore.dataset.Dataset.g.rst
+
     .. include:: mindspore.dataset.Dataset.use_sampler.rst
 
     .. include:: mindspore.dataset.Dataset.zip.rst
