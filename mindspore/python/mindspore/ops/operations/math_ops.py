@@ -6269,9 +6269,12 @@ class STFT(Primitive):
         - **y** (Tensor) - A tensor containing the STFT result with shape described above.
 
     Examples:
-        >>> x = Tensor(np.random.rand(2,7192), mindspore.float32)
-        >>> window =  Tensor(np.random.rand(64), mindspore.float32)
-        >>> stft = ops.STFT(64, 16, 64, False, True, True)
+        >>> import mindspore as ms
+        >>> from mindspore.ops.operations.math_ops import STFT
+        >>> import numpy as np
+        >>> x = ms.Tensor(np.random.rand(2,7192), ms.float32)
+        >>> window = ms.Tensor(np.random.rand(64), ms.float32)
+        >>> stft = STFT(64, 16, 64, False, True, True)
         >>> output = stft(x, window)
         >>> print(output.shape)
         (2, 33, 446)
