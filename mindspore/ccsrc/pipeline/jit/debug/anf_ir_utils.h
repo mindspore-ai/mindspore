@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,21 +75,20 @@ class AnfExporter {
   virtual ~AnfExporter() {}
 
   void ExportFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
-  void ExportFuncGraph(const FuncGraphPtr &func_graph, std::ostringstream &graph_stream);
 
  protected:
   virtual std::string GetNodeType(const AnfNodePtr &nd);
   int GetParamIndex(const FuncGraphPtr &func_graph, const AnfNodePtr &param, bool throw_excp = true);
   int GetParamIndexFromExported(const AnfNodePtr &param);
   std::string GetValueNodeText(const FuncGraphPtr &func_graph, const ValueNodePtr &node);
-  std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph);
+  std::string GetMultitypeFuncGraphText(const prim::MultitypeFuncGraphPtr &mt_func_graph) const;
   std::string GetSymbolicKeyInstanceText(const FuncGraphPtr &func_graph, const SymbolicKeyInstancePtr &sym_inst);
   std::string GetSequenceText(const FuncGraphPtr &func_graph, const ValuePtr &value);
   std::string GetValueText(const FuncGraphPtr &func_graph, const ValuePtr &value);
-  std::string GetOtherValueText(const FuncGraphPtr &func_graph, const ValuePtr &value);
-  std::string GetPrimitiveText(const PrimitivePtr &prim);
+  std::string GetOtherValueText(const ValuePtr &value) const;
+  std::string GetPrimitiveText(const PrimitivePtr &prim) const;
   std::string GetDictText(const FuncGraphPtr &func_graph, const ValuePtr &value);
-  std::string GetNameSpaceText(const parse::NameSpacePtr &ns);
+  std::string GetNameSpaceText(const parse::NameSpacePtr &ns) const;
   std::string GetMetaFuncGraphText(const MetaFuncGraphPtr &meta_func_graph);
   std::string GetAnfNodeText(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                              const std::map<AnfNodePtr, int> &apply_map);
@@ -97,7 +96,7 @@ class AnfExporter {
 
   void OutputStatementComment(std::ostringstream &oss, const CNodePtr &node);
 
-  void OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph);
+  void OutputOrderList(std::ostringstream &oss, const FuncGraphPtr &func_graph) const;
 
   void OutputCNodeText(std::ostringstream &oss, const CNodePtr &cnode, const FuncGraphPtr &func_graph, int *idx,
                        std::map<AnfNodePtr, int> *const apply_map);
@@ -111,8 +110,6 @@ class AnfExporter {
   OrderedMap<FuncGraphPtr, ParamIndexMap> exported;
 
  private:
-  void OutputCNodes(std::ofstream &ofs, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
-                    const TaggedNodeMap &tagged_cnodes_map);
   void OutputCNodes(std::ostringstream &oss, const std::vector<AnfNodePtr> &nodes, const FuncGraphPtr &func_graph,
                     const TaggedNodeMap &tagged_cnodes_map);
 

@@ -128,7 +128,7 @@ MatchResultPtr Imm::match(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(value_node);
   auto value_ptr = value_node->value()->cast<Int32ImmPtr>();
   MS_EXCEPTION_IF_NULL(value_ptr);
-  if ((int32_t)value_ptr->value() == value_) {
+  if (value_ptr->value() == value_) {
     MatchResultPtr res = std::make_shared<MatchResult>();
     res->add_entry(shared_from_base<Imm>(), node);
     return res;

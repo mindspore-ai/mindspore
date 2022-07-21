@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#include <vector>
 
 namespace mindspore {
 namespace opt {

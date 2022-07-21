@@ -282,7 +282,7 @@ CNodePtr ConvertRemoveNodeToVirtualNode(const CNodePtr &cnode) {
   }
 
   (void)std::copy_if(
-    inputs.begin(), inputs.end(), std::back_inserter(args),
+    inputs.cbegin(), inputs.cend(), std::back_inserter(args),
     [&remove_index, &index](const AnfNodePtr &) { return remove_index.find(index++) != remove_index.end(); });
 
   (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeTuple));
@@ -325,7 +325,7 @@ void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager
   MS_EXCEPTION_IF_NULL(root_graph);
 
   std::vector<AnfNodePtr> real_remove_parameter_list;
-  (void)std::copy_if(remove_parameter_list.begin(), remove_parameter_list.end(),
+  (void)std::copy_if(remove_parameter_list.cbegin(), remove_parameter_list.cend(),
                      std::back_inserter(real_remove_parameter_list),
                      [&manager](const AnfNodePtr &param) { return IsRealRemoveParameterNode(manager, param); });
 
@@ -336,7 +336,7 @@ void RemoveBatchNormalizetionNotUseParameters(const FuncGraphManagerPtr &manager
                                                return NeedRemove(node->cast<ParameterPtr>(),
                                                                  real_remove_parameter_list);
                                              }),
-                              root_parameters.end());
+                              root_parameters.cend());
   size_t remove_param_count = origin_param_count - root_parameters.size();
   size_t fv_param_count = root_graph->fv_param_count();
   if (remove_param_count > fv_param_count) {

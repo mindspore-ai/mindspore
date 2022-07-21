@@ -79,26 +79,27 @@ PYBIND11_MODULE(_c_expression, m) {
     std::vector<string> parent_names;
     for (auto parent_name = inheritance_map.find(class_name); parent_name != inheritance_map.end();
          parent_name = inheritance_map.find(parent_name->second)) {
-      parent_names.emplace_back(parent_name->second);
+      (void)parent_names.emplace_back(parent_name->second);
     }
     return parent_names;
   };
 
-  for (auto &item : fns) {
+  for (const auto &item : fns) {
     if (has_inited.find(item.first) != has_inited.end()) {
       continue;
     }
     auto parent_names = get_inherit_stack(item.first);
     // Init parent class
-    std::for_each(parent_names.rbegin(), parent_names.rend(), [&fns, &has_inited, &m](const std::string &parent_name) {
-      if (has_inited.find(parent_name) == has_inited.end()) {
-        fns[parent_name](&m);
-        has_inited.emplace(parent_name);
-      }
-    });
+    (void)std::for_each(parent_names.rbegin(), parent_names.rend(),
+                        [&fns, &has_inited, &m](const std::string &parent_name) {
+                          if (has_inited.find(parent_name) == has_inited.end()) {
+                            fns[parent_name](&m);
+                            (void)has_inited.emplace(parent_name);
+                          }
+                        });
     // Init current class
     item.second(&m);
-    has_inited.emplace(item.first);
+    (void)has_inited.emplace(item.first);
   }
 
   mindspore::ScopedLongRunning::SetHook(std::make_unique<mindspore::GilScopedLongRunningHook>());

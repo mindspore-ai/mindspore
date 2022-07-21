@@ -49,13 +49,13 @@ class SpecialOpEliminater : public OptimizerCaller {
         print_shape_type_(std::make_shared<PrimEliminater>(prim::kPrimPrintShapeType)),
         mirror_(std::make_shared<PrimEliminater>(prim::kPrimMirror)),
         virtual_div_(std::make_shared<PrimEliminater>(prim::kPrimVirtualDiv)) {
-    eliminaters_.emplace_back(insert_gradient_of_);
-    eliminaters_.emplace_back(stop_gradient_);
-    eliminaters_.emplace_back(hook_backward_);
-    eliminaters_.emplace_back(cell_backward_hook_);
-    eliminaters_.emplace_back(print_shape_type_);
-    eliminaters_.emplace_back(mirror_);
-    eliminaters_.emplace_back(virtual_div_);
+    (void)eliminaters_.emplace_back(insert_gradient_of_);
+    (void)eliminaters_.emplace_back(stop_gradient_);
+    (void)eliminaters_.emplace_back(hook_backward_);
+    (void)eliminaters_.emplace_back(cell_backward_hook_);
+    (void)eliminaters_.emplace_back(print_shape_type_);
+    (void)eliminaters_.emplace_back(mirror_);
+    (void)eliminaters_.emplace_back(virtual_div_);
   }
   ~SpecialOpEliminater() = default;
 
@@ -95,8 +95,8 @@ class VirtualDatasetEliminater : public AnfVisitor {
     }
 
     std::vector<AnfNodePtr> args;
-    (void)std::copy(inputs.begin() + 1, inputs.end(), std::back_inserter(args));
-    (void)args.insert(args.begin(), NewValueNode(prim::kPrimMakeTuple));
+    (void)std::copy(inputs.cbegin() + 1, inputs.cend(), std::back_inserter(args));
+    (void)args.insert(args.cbegin(), NewValueNode(prim::kPrimMakeTuple));
 
     return node->func_graph()->NewCNode(args);
   }
@@ -179,9 +179,7 @@ class LinSpaceValue : public AnfVisitor {
     if (input_val_ptr->abstract()->isa<abstract::AbstractTensor>()) {
       return nullptr;
     }
-    auto input_num = GetValue<int64_t>(input_val_ptr->value());
-    input_num = IntToSize(input_num);
-    if (input_num != 1) {
+    if (GetValue<int64_t>(input_val_ptr->value()) != 1) {
       return nullptr;
     }
 
@@ -342,7 +340,7 @@ class MiniStepAllGatherPass : public AnfVisitor {
     if (contain_recompute) {
       attrs[parallel::RECOMPUTE] = MakeValue(recompute);
     }
-    prim->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
@@ -381,7 +379,7 @@ class MicroStepAllGatherPass : public AnfVisitor {
     if (contain_recompute) {
       attrs[parallel::RECOMPUTE] = MakeValue(recompute);
     }
-    prim->SetAttrs(attrs);
+    (void)prim->SetAttrs(attrs);
     auto func_graph = inputs[1]->func_graph();
     CNodePtr new_node = func_graph->NewCNode(node_input);
     return new_node;
@@ -467,7 +465,7 @@ class DependValueElim : public OptimizerCaller {
     return nullptr;
   }
 
-  bool IsUsedByOther(const AnfNodePtr &node, const AnfNodePtr &user_node) {
+  bool IsUsedByOther(const AnfNodePtr &node, const AnfNodePtr &user_node) const {
     if (!user_node->isa<CNode>()) {
       return false;
     }
@@ -481,7 +479,7 @@ class DependValueElim : public OptimizerCaller {
 // {prim:getattr, {prim::resolve, SymbolStr, zeros_like}, Xy} ->Tensor(0, shape(Xy))
 // {{prim::resolve, CommonOPS, getitem}, (tensor0, tensor1,...), 0} -> tensor0
 class PynativeEliminater : public OptimizerCaller {
-  bool CheckNameSpaceVNode(const AnfNodePtr &node, const std::string &str_value) {
+  bool CheckNameSpaceVNode(const AnfNodePtr &node, const std::string &str_value) const {
     ValueNodePtr value_node = node->cast<ValueNodePtr>();
     if (value_node == nullptr) {
       return false;
@@ -490,14 +488,14 @@ class PynativeEliminater : public OptimizerCaller {
     return module_name.find(str_value) != std::string::npos;
   }
 
-  bool CheckSymbolVNode(const AnfNodePtr &node, const std::string &str_value) {
+  bool CheckSymbolVNode(const AnfNodePtr &node, const std::string &str_value) const {
     ValueNodePtr value_node = node->cast<ValueNodePtr>();
     if (value_node == nullptr) {
       return false;
     }
     return GetValueNode<parse::SymbolPtr>(value_node)->symbol() == str_value;
   }
-  bool CheckStrVNode(const AnfNodePtr &node, const std::string &str_value) {
+  bool CheckStrVNode(const AnfNodePtr &node, const std::string &str_value) const {
     ValueNodePtr value_node = node->cast<ValueNodePtr>();
     if (value_node == nullptr) {
       return false;
@@ -505,7 +503,7 @@ class PynativeEliminater : public OptimizerCaller {
     return GetValueNode<StringImmPtr>(value_node)->value() == str_value;
   }
 
-  ValuePtr FillGetItem(const ValuePtr &value, const ValuePtr &idx) {
+  ValuePtr FillGetItem(const ValuePtr &value, const ValuePtr &idx) const {
     MS_LOG(DEBUG) << "Start FillGetItem" << value->ToString() << idx->ToString();
     if (!idx->isa<Int64Imm>()) {
       MS_LOG(EXCEPTION) << "Getitem idx must int:" << idx->ToString();
@@ -582,7 +580,7 @@ class PynativeEliminater : public OptimizerCaller {
     return nullptr;
   }
 
-  void OperatorHandle3(const std::vector<PatternNode<AnfNodePtr>> &args, const AnfNodePtr &node) {
+  void OperatorHandle3(const std::vector<PatternNode<AnfNodePtr>> &args, const AnfNodePtr &node) const {
     for (size_t i = 0; i < 2; i++) {
       auto rep = (args[i]).GetNode(node);
       if (rep != nullptr && rep->isa<ValueNode>()) {
@@ -722,7 +720,8 @@ class AllReduceConstElim : public OptimizerCaller {
         }
         auto constant_tensor = constant_value_node->value()->cast<tensor::TensorPtr>();
         auto tensor_dtype = constant_tensor->Dtype();
-        auto num_of_device_node = NewValueNode(std::make_shared<tensor::Tensor>((int64_t)num_of_devices, tensor_dtype));
+        auto num_of_device_node =
+          NewValueNode(std::make_shared<tensor::Tensor>(static_cast<int64_t>(num_of_devices), tensor_dtype));
         // Multiply nodes
         auto mul_prim = prim::GetPythonOps("tensor_mul", "mindspore.ops.functional");
         MS_EXCEPTION_IF_NULL(mul_prim);
@@ -756,7 +755,7 @@ class FloatDependGCall : public AnfVisitor {
       }
       // put {Y, Xs} to new_inputs;
       std::vector<AnfNodePtr> new_inputs({depend_inputs[1]});
-      new_inputs.insert(new_inputs.end(), inputs.cbegin() + 1, inputs.cend());
+      (void)new_inputs.insert(new_inputs.cend(), inputs.cbegin() + 1, inputs.cend());
       TraceGuard guard(std::make_shared<TraceCopy>(node->debug_info()));
       ScopePtr scope = node->scope();
       ScopeGuard scope_guard(scope);

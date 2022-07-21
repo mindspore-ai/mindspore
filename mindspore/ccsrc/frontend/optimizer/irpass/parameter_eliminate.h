@@ -117,7 +117,7 @@ static inline std::pair<mindspore::HashSet<size_t>, mindspore::HashMap<size_t, s
         MS_EXCEPTION_IF_NULL(user_cnode);
         auto zero_value = NewValueNode(MakeValue(0));
         zero_value->set_abstract(std::make_shared<abstract::AbstractScalar>(std::make_shared<Int32Imm>(0)));
-        user_cnode->set_input(pos, zero_value);
+        user_cnode->set_input(IntToSize(pos), zero_value);
       }
     }
     index++;
@@ -176,10 +176,10 @@ static inline void AdjustCallerArgs(const FuncGraphPtr &called, const CNodePtr &
   //       2. The arguments in caller may be less than the formal parameters in called as some parameters can have
   //       default value.
   if (!called->has_vararg() &&
-      caller->inputs().size() > (1 + called->GetPositionalArgsCount() + called->fv_param_count())) {
-    size_t start_offset = called->GetPositionalArgsCount() + 1;
+      caller->inputs().size() > (1 + IntToSize(called->GetPositionalArgsCount()) + called->fv_param_count())) {
+    size_t start_offset = IntToSize(called->GetPositionalArgsCount()) + 1;
     size_t end_offset = called->fv_param_count();
-    new_args.erase(new_args.begin() + start_offset, new_args.end() - end_offset);
+    (void)new_args.erase(new_args.cbegin() + SizeToLong(start_offset), new_args.cend() - end_offset);
   }
 
   TraceGuard trace_guard(std::make_shared<TraceCopy>(caller->debug_info()));
