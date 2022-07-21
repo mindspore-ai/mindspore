@@ -1194,7 +1194,8 @@ def expand_dims(input_x, axis):
         value of `axis` is 0. It has the same data type as `input_x`.
 
     Raises:
-        ValueError: If `axis` is not an int or not in the valid range.
+        TypeError: If `axis` is not an int.
+        ValueError: If `axis` is not in the valid range :math:`[-a.ndim-1, a.ndim]`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
