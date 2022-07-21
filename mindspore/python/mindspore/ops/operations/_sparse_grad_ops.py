@@ -38,6 +38,7 @@ class SparseAddGrad(Primitive):
         ValueError: If (x1_indices/x2_indices/sum_indices)'s dim is not equal to 2.
         ValueError: If backprop_val_grad's dim is not equal to 1.
         ValueError: If (x1_shape/x2_shape)'s dim is not equal to 1.
+        ValueError: If backprop_val_grad's length is not equal to sum_indices' length.
         TypeError: If (x1_indices/x2_indices/sum_indices)'s type is not equal to int64.
         TypeError: If backprop_val_grad's type is not equal to anf of
                    (int8/int16/int32/int64/float32/float64/complex64/complex128).

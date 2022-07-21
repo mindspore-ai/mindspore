@@ -714,6 +714,71 @@ class SparseAdd(Primitive):
             outputs=["sum_indices", "sum_values", "sum_shape"])
 
 
+class SparseMatrixSoftmax(Primitive):
+    """
+    Calculates the softmax of a CSRTensorMatrix
+
+    .. warning::
+        This is an experimental prototype that is subject to change and/or deletion.
+
+    Args:
+        **dtype** (dtype.Number) - The valid data type. Only constant value is allowed.
+
+    Inputs:
+        - **x_dense_shape** (Tensor) - A Tensor.
+        - **x_batch_pointers** (Tensor) - A Tensor.
+        - **x_row_pointers** (Tensor) - A Tensor.
+        - **x_col_indices** (Tensor) - A Tensor.
+        - **x_values** (Tensor) - A Tensor.
+
+    Outputs:
+        - **y_dense_shape** (Tensor) - A Tensor.
+        - **y_batch_pointers** (Tensor) - A Tensor.
+        - **y_row_pointers** (Tensor) - A Tensor.
+        - **y_col_indices** (Tensor) - A Tensor.
+        - **y_values** (Tensor) - A Tensor.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.nn as nn
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops.sparse_ops import SparseMatrixSoftmax
+        >>> from mindspore.common import dtype as mstype
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, dtype):
+        ...         super(Net, self).__init__()
+        ...         self.op = SparseMatrixSoftmax(dtype)
+        ...
+        ...     def construct(self, logits_shape, logits_pointers, logits_indptr, logits_indices, logits_values):
+        ...         return self.op(logits_shape, logits_pointers, logits_indptr, logits_indices, logits_values)
+        >>> logits_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
+        >>> logits_indices = Tensor([0, 1], dtype=mstype.int32)
+        >>> logits_values = Tensor([1, 2], dtype=mstype.float32)
+        >>> logits_pointers = Tensor([0, a_values.shape[0]], dtype=mstype.int32)
+        >>> logits_shape = Tensor((2, 6), dtype=mstype.int32)
+        >>> out = Net(dtype=mstype.float32)(logits_shape, logits_pointers, logits_indptr, logits_indices,
+        ...             logits_values)
+        >>> print(out)
+        (Tensor(shape=[3], dtype=Int64, values = [0, 1, 2]),
+         Tensor(shape=[2], dtype=Int64, values = [0, 1]),
+         Tensor(shape=[2], dtype=Float32, values = [2.0, 4.0]))
+    """
+
+    @prim_attr_register
+    def __init__(self, dtype):
+        '''Initialize for SparseMatrixSoftmax'''
+        if not isinstance(dtype, (type(mstype.float32), type(mstype.single), type(mstype.float64),
+                                  type(mstype.double))):
+            raise TypeError("Only float32 and float64 type data are supported, but got {}".format(dtype))
+        self.add_prim_attr("dtype", dtype)
+        self.init_prim_io_names(inputs=['x_dense_shape', 'x_batch_pointers', 'x_row_pointers',
+                                        'x_col_indices', 'x_values'],
+                                outputs=['y_dense_shape', 'y_batch_pointers', 'y_row_pointers', 'y_col_indices',
+                                         'y_values'])
+
+
 class CSRSparseMatrixToDense(Primitive):
     """
     Converts a CSR sparse matrix(maybe batched) to its dense form.

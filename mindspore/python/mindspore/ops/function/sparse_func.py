@@ -467,7 +467,7 @@ def sparse_add(x1, x2, thresh):
             if an output value/index pair pair take space.
 
     Returns:
-        output: A COOTensor, the result of sum the input SparseTensor.
+        A COOTensor, the result of sum the input SparseTensor.
 
     Raises:
         ValueError: If any input(x1/x2)'s indices's dim is not equal to 2.
