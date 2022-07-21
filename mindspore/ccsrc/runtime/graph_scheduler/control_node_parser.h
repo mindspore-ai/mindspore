@@ -86,6 +86,7 @@ using RealToFormalParameter = std::map<KernelWithIndex, std::set<KernelWithIndex
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 using FrontNodeToKernelGraph = mindspore::HashMap<AnfNodePtr, KernelGraphPtr>;
 using FuncGraphCallRelation = mindspore::HashMap<FuncGraphPtr, std::vector<std::set<FuncGraphPtr>>>;
+using FuncGraphToCallNode = mindspore::HashMap<FuncGraphPtr, std::set<AnfNodePtr>>;
 using CallNodeToFuncGraph = mindspore::HashMap<AnfNodePtr, std::set<FuncGraphPtr>>;
 using KernelGraphToDeviceContext = mindspore::HashMap<KernelGraphPtr, DeviceContext *>;
 using GroupNameToCommuNodes =
@@ -123,6 +124,10 @@ KernelWithIndex FetchRealNodeByGetItem(const KernelWithIndex &node_with_index);
 bool IsInvalidPartial(const AnfNodePtr &node);
 // Check whether the switch node abstract is functional.
 bool IsPartialInput(const AnfNodePtr &node);
+// Fetch the depend nodes according to the monad node.
+void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *const depend_nodes);
+// Get all the depend nodes of node in side effect.
+std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node);
 // ControlNodeParser is used to parse control nodes, and get the edges between nodes.
 class ControlNodeParser {
  public:
@@ -152,7 +157,9 @@ class ControlNodeParser {
   bool IsRecursionKernelGraph(const KernelGraphPtr &graph);
   bool IsSameKernelGraphGroup(const AnfNodePtr &node, const KernelGraphPtr &graph);
   bool IsInputInSameLevel(const AnfNodePtr &node);
-
+  // If the two input call nodes will call the same recursion graph in same time.
+  bool IsParallelCallRecursionGraph(const AnfNodePtr &call_node1, const AnfNodePtr &call_node2,
+                                    const FuncGraphToCallNode &func_graph_to_call_node);
   const std::vector<KernelWithIndex> &control_node_parameters() const { return control_node_parameters_; }
   const FrontToBackendNodeWithContext &front_to_backend_parameters() const { return front_to_backend_parameters_; }
   const NodeWithDeviceContext &front_value_nodes() const { return front_value_nodes_; }
@@ -243,6 +250,9 @@ class ControlNodeParser {
   // Get the level of the control node, recursively traverse all the inputs of the node, and find the largest level
   // among them.
   size_t ParseControlNodeLevel(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_nodes);
+  // When there is the possibility of calling the same funcgraph at multiple places in the graph, the graph cannot
+  // be executed in parallel, and all call nodes need to be executed serially.
+  void InsertDependForParallelCall(const std::vector<AnfNodePtr> &control_nodes);
   // When the parameter is directly used as the condition of the switch, there will be no back-end node, and a device
   // tensor needs to be created for it.
   void CreateDeviceTensorForRootGraphParameter(DeviceContext *const default_context);
