@@ -34,10 +34,10 @@ class MemReuseChecker {
   static MemReuseChecker &GetInstance();
   MemReuseChecker(const MemReuseChecker &) = delete;
   MemReuseChecker &operator=(const MemReuseChecker &) = delete;
-  void CheckSignalOps(const CNodePtr &c_node);
+  void CheckSignalOps(const CNodePtr &c_node) const;
   void CheckWorkSpace(const std::vector<size_t> &max_list);
-  void CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx);
-  bool CheckGraphOutputAssigned(const session::KernelGraph *graph);
+  void CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx) const;
+  bool CheckGraphOutputAssigned(const session::KernelGraph *graph) const;
   void CheckMemReuseIR(const KernelRefCountPtrList &total_refs_list, const KernelDefPtrMaps &kernel_def_ptr_list,
                        const KernelGraph *graph);
   int64_t CalculOriStatic(const KernelGraph *graph) const;
@@ -49,7 +49,7 @@ class MemReuseChecker {
   int GetTensorIdx(const void *in) const;
   void SetMembuInfos(const KernelDef *op_def, const std::vector<MembufPtr> &membuf_ptr_list);
   void SetTesnorFromAndToInfo(const KernelDef *op_def);
-  void ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx);
+  void ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) const;
   void ExportNormalOpIr(const std::vector<CNodePtr> &cnodes);
   void ExportNormalTensorIR(std::ofstream &ofs);
   void CheckNormalIR(const session::KernelGraph *graph);

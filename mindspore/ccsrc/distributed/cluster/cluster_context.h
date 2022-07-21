@@ -23,7 +23,6 @@
 #include <string>
 #include <memory>
 #include <atomic>
-#include <vector>
 #include "distributed/constants.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"

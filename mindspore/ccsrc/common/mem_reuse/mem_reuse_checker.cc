@@ -25,7 +25,7 @@ MemReuseChecker &MemReuseChecker::GetInstance() {
   return instance;
 }
 
-void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) {
+void MemReuseChecker::CheckSignalOps(const CNodePtr &c_node) const {
   std::string node_name = common::AnfAlgo::GetCNodeName(c_node);
   if (node_name == kSendOpName || node_name == kRecvOpName) {
     MS_LOG(INFO) << "MemReuseChecker check op_name of  Send or Send";
@@ -41,7 +41,7 @@ void MemReuseChecker::CheckWorkSpace(const std::vector<size_t> &max_list) {
   }
 }
 
-void MemReuseChecker::CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx) {
+void MemReuseChecker::CheckOutRef(const KernelRefs &kernel_refs, const CNodePtr &c_node, size_t output_idx) const {
   auto key = c_node.get();
   auto iter = kernel_refs.find(key);
   auto node_name = common::AnfAlgo::GetCNodeName(c_node);
@@ -206,7 +206,7 @@ void MemReuseChecker::ExportKernelDependence() {
   ofs.close();
 }
 
-bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph) {
+bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph) const {
   // set real graph output node to be special who's refcount equal kMaxRefCount
   for (const auto &output : graph->outputs()) {
     MS_EXCEPTION_IF_NULL(output);
@@ -237,7 +237,7 @@ bool MemReuseChecker::CheckGraphOutputAssigned(const session::KernelGraph *graph
   return true;
 }
 
-void MemReuseChecker::ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) {
+void MemReuseChecker::ExportMemOpIr(const KernelDef *def, std::ofstream &ofs, int def_idx) const {
   auto scope_name = def->scope_full_name();
   std::string split_name = GetSplitName(scope_name);
   ofs << "$" << def_idx << "\t" << split_name << "\t" << static_cast<int>(def->type_) << "\t";

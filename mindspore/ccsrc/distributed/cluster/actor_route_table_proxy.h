@@ -37,7 +37,7 @@ constexpr uint32_t kLookupInterval = 3000;
 // across the network.
 class ActorRouteTableProxy {
  public:
-  explicit ActorRouteTableProxy(std::shared_ptr<topology::ComputeGraphNode> cgn,
+  explicit ActorRouteTableProxy(const std::shared_ptr<topology::ComputeGraphNode> &cgn,
                                 uint32_t lookup_timeout = kDefaultLookupTimeout)
       : cgn_(cgn), lookup_timeout_(std::chrono::milliseconds(lookup_timeout)) {}
   ~ActorRouteTableProxy() = default;

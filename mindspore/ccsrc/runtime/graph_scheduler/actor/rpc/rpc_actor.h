@@ -56,6 +56,7 @@ class RpcActor : public KernelActor {
                     const std::set<size_t> &modifiable_ref_output_indexes, const KernelTransformType &type)
       : KernelActor(name, kernel, device_context, memory_manager_aid, debug_aid, recorder_aid, strategy,
                     modifiable_ref_input_indexes, modifiable_ref_output_indexes, type),
+        op_context_(nullptr),
         input_inter_process_num_(0) {}
   ~RpcActor() override = default;
 

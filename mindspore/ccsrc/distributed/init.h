@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_INIT_H_
 
-#include <vector>
-#include <string>
 #include "distributed/collective/collective_manager.h"
 #ifdef WITH_BACKEND
 #include "distributed/cluster/cluster_context.h"
