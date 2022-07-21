@@ -89,12 +89,15 @@
 #include "tools/optimizer/fusion/transpose_fusion.h"
 #include "tools/optimizer/format/to_nchw_format.h"
 #include "tools/optimizer/format/to_nhwc_format.h"
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
 #include "tools/converter/adapter/acl/acl_pass.h"
+#endif
 #include "src/common/log_util.h"
 #include "tools/optimizer/fusion/groupnorm_fusion.h"
 #include "tools/optimizer/fusion/mul_reduce_fusion.h"
 #include "tools/converter/import/cast_op_adjust.h"
 #include "tools/converter/quantizer/quant_helper/remove_unused_quant_param.h"
+#include "tools/converter/adapter/acl/plugin/acl_pass_plugin.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -329,13 +332,27 @@ int AnfTransform::RunGraphPass(const FuncGraphPtr &old_graph, const std::shared_
 }
 
 int AnfTransform::RunConvertPass(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param) {
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
   auto acl_pass = std::make_shared<opt::AclPass>(param);
   CHECK_NULL_RETURN(acl_pass);
   if (!acl_pass->Run(old_graph)) {
     MS_LOG(ERROR) << "Acl pass failed.";
     return RET_ERROR;
   }
-
+#endif
+  if (opt::AclPassPlugin::GetInstance().HasPluginSo()) {
+    auto acl_pass_ptr = opt::AclPassPlugin::GetInstance().CreateAclPass(param);
+    if (acl_pass_ptr == nullptr) {
+      MS_LOG(ERROR) << "Acl pass ptr is nullptr.";
+      return RET_ERROR;
+    }
+    if (!acl_pass_ptr->Run(old_graph)) {
+      MS_LOG(ERROR) << "Acl pass failed.";
+      opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+      return RET_ERROR;
+    }
+    opt::AclPassPlugin::GetInstance().DestroyAclPass(acl_pass_ptr);
+  }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   CHECK_NULL_RETURN(optimizer);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);

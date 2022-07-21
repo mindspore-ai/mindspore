@@ -60,6 +60,13 @@ Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
   return kSuccess;
 }
 
+// to do, now just to adapter benchmark
+Status Model::Build(const std::vector<char> &model_path, ModelType model_type,
+                    const std::shared_ptr<Context> &model_context, const Key &dec_key, const std::string &dec_mode,
+                    const std::vector<char> &cropto_lib_path) {
+  return Build(model_path, model_type, model_context);
+}
+
 Status Model::Build(GraphCell graph, const std::shared_ptr<Context> &model_context,
                     const std::shared_ptr<TrainCfg> &train_cfg) {
   MS_LOG(ERROR) << "Unsupported Feature.";
@@ -151,5 +158,17 @@ MSTensor Model::GetOutputByTensorName(const std::vector<char> &name) {
 
 std::vector<MSTensor> Model::GetOutputsByNodeName(const std::vector<char> &node_name) {
   return std::vector<MSTensor>();
+}
+
+Status Model::BindGLTexture2DMemory(const std::map<std::string, unsigned int> &inputGLTexture,
+                                    std::map<std::string, unsigned int> *outputGLTexture) {
+  return kSuccess;
+}
+
+Status Model::LoadConfig(const std::vector<char> &config_path) { return kSuccess; }
+
+Status Model::UpdateConfig(const std::vector<char> &section,
+                           const std::pair<std::vector<char>, std::vector<char>> &config) {
+  return kSuccess;
 }
 }  // namespace mindspore

@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.12)
 project(Lite_benchmark)
 
-set(BENCHMARK_LINK_LIB mindspore-lite)
+if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+    set(BENCHMARK_LINK_LIB mindspore-lite)
+else()
+    add_definitions(-DUSE_GLOG)
+    set(BENCHMARK_LINK_LIB mindspore-extendrt)
+endif()
+
 set(PROVIDERS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../providers)
 if(TARGET_HIMIX)
     add_subdirectory(${PROVIDERS_DIR}/nnie nnie)
@@ -64,12 +70,16 @@ if(MSLITE_GPU_BACKEND STREQUAL opencl)
     endif()
 endif()
 
+if(NOT MSLITE_ENABLE_CLOUD_FUSION_INFERENCE)
+  set(C_SRC ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_c_api.cc)
+endif()
+
 add_executable(benchmark
         ${CMAKE_CURRENT_SOURCE_DIR}/main.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/run_benchmark.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_base.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_unified_api.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/benchmark_c_api.cc
+        ${C_SRC}
         ${COMMON_SRC})
 
 add_dependencies(benchmark fbs_src)

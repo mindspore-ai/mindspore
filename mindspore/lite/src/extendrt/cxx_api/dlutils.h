@@ -22,31 +22,31 @@
 #include <string>
 #include <fstream>
 #include "utils/file_utils.h"
+#include "include/api/status.h"
 
 namespace mindspore {
-inline Status DLSoPath(std::string *so_path) {
-  if (so_path == nullptr) {
+inline Status DLSoPath(const std::string &benchmark_so, const std::string &target_so, std::string *target_so_path) {
+  if (target_so_path == nullptr) {
     return Status(kMEFailed, "Input so_path can not be nullptr.");
   }
   Dl_info dl_info;
   dladdr(reinterpret_cast<void *>(DLSoPath), &dl_info);
-  std::string libmindspore_so = dl_info.dli_fname;
+  std::string cur_so_path = dl_info.dli_fname;
 
-  auto pos = libmindspore_so.find("libmindspore.so");
+  auto pos = cur_so_path.find(benchmark_so);
   if (pos == std::string::npos) {
-    return Status(kMEFailed, "Could not find libmindspore.so, check path.");
+    return Status(kMEFailed, "Could not find benchmark so " + benchmark_so + " check path.");
   }
-
-  std::string parent_dir = libmindspore_so.substr(0, pos) + "../";
-  std::string c_dataengine_so;
+  std::string parent_dir = cur_so_path.substr(0, pos);
+  std::string found_target_so;
 
   DIR *dir = opendir(parent_dir.c_str());
   if (dir != nullptr) {
     // access all the files and directories within directory
     dirent *ent = readdir(dir);
     while (ent != nullptr) {
-      if (std::string(ent->d_name).find("_c_dataengine") != std::string::npos) {
-        c_dataengine_so = std::string(ent->d_name);
+      if (std::string(ent->d_name).find(target_so) != std::string::npos) {
+        found_target_so = std::string(ent->d_name);
         break;
       }
       ent = readdir(dir);
@@ -55,14 +55,17 @@ inline Status DLSoPath(std::string *so_path) {
   } else {
     return Status(kMEFailed, "Could not open directory: " + parent_dir);
   }
-
-  std::string unreal_path = parent_dir + c_dataengine_so;
+  if (found_target_so.empty()) {
+    MS_LOG(WARNING) << target_so << "is not existed in dir " << parent_dir;
+    return kSuccess;
+  }
+  std::string unreal_path = parent_dir + found_target_so;
   auto realpath = FileUtils::GetRealPath(unreal_path.c_str());
   if (!realpath.has_value()) {
-    return Status(kMEFailed, "Get c_dataengine_so real path failed, path: " + unreal_path);
+    return Status(kMEFailed, "Get target so " + target_so + " real path failed, path: " + unreal_path);
   }
 
-  *so_path = realpath.value();
+  *target_so_path = realpath.value();
   return kSuccess;
 }
 

@@ -86,8 +86,33 @@ std::vector<MSTensor> ModelImpl::GetOutputs() {
 }
 
 MSTensor ModelImpl::GetInputByTensorName(const std::string &name) { return MSTensor(); }
-std::vector<std::string> ModelImpl::GetOutputTensorNames() { return std::vector<std::string>(); }
-MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) { return MSTensor(); }
+
+std::vector<std::string> ModelImpl::GetOutputTensorNames() {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    std::vector<std::string> empty;
+    return empty;
+  }
+  return session_->GetOutputNames();
+}
+
+MSTensor ModelImpl::GetOutputByTensorName(const std::string &name) {
+  if (session_ == nullptr) {
+    MS_LOG(ERROR) << "Session is null.";
+    return MSTensor(nullptr);
+  }
+  auto tensor_ptr = session_->GetOutputByTensorName(name);
+  if (tensor_ptr == nullptr) {
+    MS_LOG(ERROR) << "Model does not contains tensor " << name << " .";
+    return MSTensor(nullptr);
+  }
+  auto ms_outputs = TensorPtrToMSTensor({tensor_ptr}, {name});
+  if (ms_outputs.empty()) {
+    MS_LOG(ERROR) << "Tensor to ms tensor failed." << name << " .";
+    return MSTensor(nullptr);
+  }
+  return ms_outputs[0];
+}
 
 Status ModelImpl::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(session_);
@@ -144,7 +169,7 @@ Status ModelImpl::Preprocess(const std::vector<std::vector<MSTensor>> &inputs, s
 #if !defined(_WIN32) && !defined(_WIN64)
   // Config preprocessor, temporary way to let mindspore.so depends on _c_dataengine
   std::string dataengine_so_path;
-  Status dlret = DLSoPath(&dataengine_so_path);
+  Status dlret = DLSoPath("libmindspore.so", "_c_dataengine", &dataengine_so_path);
   CHECK_FAIL_AND_RELEASE(dlret, nullptr, "Parse dataengine_so failed: " + dlret.GetErrDescription());
 
   // Run preprocess

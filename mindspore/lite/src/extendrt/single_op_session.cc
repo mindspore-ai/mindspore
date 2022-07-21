@@ -26,6 +26,7 @@
 #include "kernel/common_utils.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
 #include "src/extendrt/utils/kernel_build_utils.h"
+#include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
 
 namespace mindspore {
 const size_t tensor_max_size = 0x1000000;
@@ -33,6 +34,7 @@ const size_t tensor_max_size = 0x1000000;
 Status SingleOpInferSession::Init(const std::shared_ptr<Context> context) {
   MS_LOG(INFO) << "SingleOpInferSession::Init";
   session_basic_ = std::make_shared<session::SessionBasic>();
+  kernel::AscendKernelPlugin::GetInstance().Register();
   return kSuccess;
 }
 
@@ -53,11 +55,11 @@ Status SingleOpInferSession::CompileGraph(FuncGraphPtr graph) {
     mindspore::infer::SetKernelInfo(kernel_node);
     std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
     std::shared_ptr<kernel::KernelMod> kernel_mod = kernel::Factory<kernel::KernelMod>::Instance().Create(kernel_name);
-    MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
-    auto args = kernel::AbstractArgsFromCNode(kernel_node);
     if (kernel_mod == nullptr) {
       MS_LOG(EXCEPTION) << "Kernel mod is nullptr, kernel name: " << kernel_name;
     }
+    MS_LOG(INFO) << "SingleOpInferSession::Kernels " << kernel_name;
+    auto args = kernel::AbstractArgsFromCNode(kernel_node);
     mindspore::infer::CopyInputWeights(kernel_node, args.inputs);
     auto ret = kernel_mod->Init(args.op, args.inputs, args.outputs);
     MS_LOG(INFO) << "SingleOpInferSession::Kernels ret " << ret;
@@ -177,7 +179,17 @@ std::vector<tensor::TensorPtr> SingleOpInferSession::GetOutputs() { return outpu
 std::vector<tensor::TensorPtr> SingleOpInferSession::GetInputs() { return inputs_; }
 std::vector<std::string> SingleOpInferSession::GetOutputNames() { return output_names_; }
 std::vector<std::string> SingleOpInferSession::GetInputNames() { return input_names_; }
-tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
+tensor::TensorPtr SingleOpInferSession::GetOutputByTensorName(const std::string &tensorName) {
+  for (size_t idx = 0; idx < output_names_.size(); ++idx) {
+    if (output_names_[idx] == tensorName) {
+      if (idx < outputs_.size()) {
+        return outputs_[idx];
+      }
+    }
+  }
+  MS_LOG(ERROR) << "Can't found tensor name " << tensorName;
+  return nullptr;
+}
 tensor::TensorPtr SingleOpInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 
 void SingleOpInferSession::AssignKernelGraphAddress(KernelGraphPtr kernel_graph) {
@@ -336,5 +348,6 @@ void SingleOpInferSession::CopyOutputs(std::vector<tensor::TensorPtr> *outputs) 
     auto tensor_ptr = std::make_shared<mindspore::tensor::Tensor>(type_id, shape, data, data_size);
     outputs->push_back(tensor_ptr);
   }
+  outputs_ = *outputs;
 }
 }  // namespace mindspore

@@ -263,6 +263,20 @@ bool Converter::GetNoFusion() {
   }
 }
 
+void Converter::SetDevice(const std::string &device) {
+  if (data_ != nullptr) {
+    data_->device = device;
+  }
+}
+
+std::string Converter::GetDevice() {
+  if (data_ != nullptr) {
+    return data_->device;
+  } else {
+    return "";
+  }
+}
+
 Status Converter::Convert() {
   if (data_ != nullptr) {
     auto ret = lite::RunConverter(data_, nullptr, nullptr, false);
