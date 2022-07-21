@@ -180,7 +180,7 @@ void ParameterizedTruncatedNormalCpuKernelMod::Generate(int64_t size, T mean, T 
     // Sample from a uniform distribution on [norm_min, norm_max].
     GenerateCase2(size, norm_min, norm_max, stddev, mean, output_ptr);
   } else {
-    GenerateCase2(size, norm_min, norm_max, stddev, mean, output_ptr);
+    GenerateCase3(size, norm_min, norm_max, stddev, mean, output_ptr);
   }
   return;
 }

@@ -498,41 +498,36 @@ class RandomPoisson(Primitive):
          dtype (mindspore.dtype): The type of output. Default: mindspore.int64.
 
     Inputs:
-        - **shape** (Tensor) - The shape of random tensor to be generated. Its type must be one of the following types:
-          mindspore.int32 and mindspore.int64.
+        - **shape** (Tensor) - The shape of random tensor to be generated, 1-D Tensor, whose dtype is int32 or int64.
         - **rate** (Tensor) - μ parameter the distribution was constructed with. The parameter defines mean number
-          of occurrences of the event. Its type must be one of the following types:
-          mindspore.float16, mindspore.float32 mindspore.float64,mindspore.int32 and mindspore.int64.
+          of occurrences of the event.
 
     Outputs:
-        Tensor. Its shape is spcified by the input `shape`. Its type is spcified by `rate`.
+        Tensor. Its shape is (*shape, *rate.shape). Its type is spcified by `dtype`.
 
     Raises:
-        TypeError: If `shape` is not a Tensor.
-        TypeError: If `dtype` and input tensor type are not allowed.
-        ValueError: If `shape` elements are not positive.
-        ValueError: If `shape` has less than 2 elements.
+        TypeError: If `shape` is not a Tensor or its dtype is not int32 or int64.
+        TypeError: If `dtype` is not int32 or int64.
         ValueError: If `shape` is not a 1-D tensor.
-        ValueError: If the number of elements of output is more than 1000000.
+        ValueError: If `shape` elements are negative.
 
     Supported Platforms:
         ``Ascend````CPU``
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
-        >>> rate = Tensor(np.array([2]), mstype.int32)
+        >>> rate = Tensor(np.array([2, 2]), mstype.int32)
         >>> seed = 0
         >>> seed2 = 0
         >>> random_poisson = ops.RandomPoisson(seed=seed, seed2=seed2)
         >>> output = random_poisson(shape,rate)
         >>> print(output.shape)
-        (2, 3)
+        (2, 3, 2)
     """
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0, dtype=mstype.int64):
         """Initialize Poisson"""
-        self.add_prim_attr("max_length", 1000000)
         self.init_prim_io_names(inputs=['shape', 'rate'], outputs=['output'])
         Validator.check_value_type('seed', seed, [int], self.name)
         Validator.check_value_type('seed2', seed2, [int], self.name)

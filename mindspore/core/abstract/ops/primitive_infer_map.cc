@@ -67,7 +67,6 @@ PrimShapeDependMap &GetHostDependsMap() {
   static const auto &kStridedSlice = prim::kPrimStridedSlice->name();
   static const auto &kStridedSliceGrad = prim::kPrimStridedSliceGrad->name();
   static const auto &kResizeBicubic = prim::kPrimResizeBicubic->name();
-  static const auto &kRandomPoisson = prim::kPrimRandomPoisson->name();
   static const auto &kRandomCategorical = prim::kPrimRandomCategorical->name();
   static const auto &kMatrixDiagV3 = prim::kPrimMatrixDiagV3->name();
   static const auto &kMatrixDiagPartV3 = prim::kPrimMatrixDiagPartV3->name();
@@ -156,7 +155,6 @@ PrimShapeDependMap &GetHostDependsMap() {
                                          {kScatterNd, ShapeSet{2}},
                                          {kSliceGrad, ShapeSet{2, 3}},
                                          {kFillV2, ShapeSet{0}},
-                                         {kRandomPoisson, ShapeSet{0}},
                                          {kRandomCategorical, ShapeSet{1}},
                                          {kRandomGamma, ShapeSet{0, 1}},
                                          {kDynamicBroadcastTo, ShapeSet{1}},
