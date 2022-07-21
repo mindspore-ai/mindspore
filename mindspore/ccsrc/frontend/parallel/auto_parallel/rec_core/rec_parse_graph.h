@@ -163,14 +163,14 @@ OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInf
                                    Graph::NodeType NewTensor);
 
 TensorParam Complete2DInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
-                             const size_t iter_input_tensor, Graph::NodeType NewTensor);
+                             const size_t iter_input_tensors, Graph::NodeType NewTensor);
 
 std::shared_ptr<Graph> ParseGraph(const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                                   const std::vector<std::vector<std::string>> &input_tensor_names);
 
 void MakeEdge(const std::vector<std::vector<std::string>> &input_tensor_names, const std::shared_ptr<Graph> &graph);
 
-size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_names,
+size_t GetIndexInInputTensorNames(const std::vector<std::vector<std::string>> &input_tensor_name,
                                   const std::string &input_name);
 
 void Eliminate_Aux(const size_t node_index, const std::shared_ptr<Graph> &graph,

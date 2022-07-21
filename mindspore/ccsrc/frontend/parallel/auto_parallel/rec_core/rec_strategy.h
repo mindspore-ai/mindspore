@@ -17,9 +17,11 @@
 #ifndef PARALLEL_AUTO_PARALLEL_REC_STRATEGY_H_
 #define PARALLEL_AUTO_PARALLEL_REC_STRATEGY_H_
 
+#include <stdint.h>
+
 namespace mindspore {
 namespace parallel {
-#define MAX_INPUT_NUM 20
+constexpr size_t MAX_INPUT_NUM = 20;
 
 struct TensorStr4D {
   float str_n = 1;

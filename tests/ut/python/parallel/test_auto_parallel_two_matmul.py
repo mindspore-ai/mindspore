@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import re
+import math
 import numpy as np
 
 import mindspore as ms
@@ -76,35 +77,35 @@ def test_two_matmul():
                                               costmodel_communi_const=2222.0,
                                               costmodel_communi_bias=1111.0)
     dev_mem_cap = cost_model_context.get_cost_model_context("device_memory_capacity")
-    assert dev_mem_cap == 32.0 * 1024.0 * 1024.0 * 1024.0
+    assert math.isclose(dev_mem_cap, 32.0 * 1024.0 * 1024.0 * 1024.0, rel_tol=1e-6)
     costmodel_alpha = cost_model_context.get_cost_model_context("costmodel_alpha")
-    assert costmodel_alpha == 1.0
+    assert math.isclose(costmodel_alpha, 1.0, rel_tol=1e-6)
     costmodel_beta = cost_model_context.get_cost_model_context("costmodel_beta")
-    assert costmodel_beta == 60.0
+    assert math.isclose(costmodel_beta, 60.0, rel_tol=1e-6)
     costmodel_gamma = cost_model_context.get_cost_model_context("costmodel_gamma")
-    assert costmodel_gamma == 0.1
+    assert math.isclose(costmodel_gamma, 0.1, rel_tol=1e-6)
     costmodel_communi_threshold = cost_model_context.get_cost_model_context("costmodel_communi_threshold")
-    assert costmodel_communi_threshold == 1024.0
+    assert math.isclose(costmodel_communi_threshold, 1024.0, rel_tol=1e-6)
     costmodel_communi_const = cost_model_context.get_cost_model_context("costmodel_communi_const")
-    assert costmodel_communi_const == 2222.0
+    assert math.isclose(costmodel_communi_const, 2222.0, rel_tol=1e-6)
     costmodel_communi_bias = cost_model_context.get_cost_model_context("costmodel_communi_bias")
-    assert costmodel_communi_bias == 1111.0
+    assert math.isclose(costmodel_communi_bias, 1111.0, rel_tol=1e-6)
 
     cost_model_context.reset_cost_model_context()
     dev_mem_cap = cost_model_context.get_cost_model_context("device_memory_capacity")
-    assert dev_mem_cap == 16.0 * 1024.0 * 1024.0 * 1024.0
+    assert math.isclose(dev_mem_cap, 16.0 * 1024.0 * 1024.0 * 1024.0, rel_tol=1e-6)
     costmodel_alpha = cost_model_context.get_cost_model_context("costmodel_alpha")
-    assert costmodel_alpha == 1.0
+    assert math.isclose(costmodel_alpha, 1.0, rel_tol=1e-6)
     costmodel_beta = cost_model_context.get_cost_model_context("costmodel_beta")
-    assert costmodel_beta == 400.0
+    assert math.isclose(costmodel_beta, 400.0, rel_tol=1e-6)
     costmodel_gamma = cost_model_context.get_cost_model_context("costmodel_gamma")
-    assert costmodel_gamma == 0.001
+    assert math.isclose(costmodel_gamma, 0.001, rel_tol=1e-6)
     costmodel_communi_threshold = cost_model_context.get_cost_model_context("costmodel_communi_threshold")
-    assert costmodel_communi_threshold == 2048.0
+    assert math.isclose(costmodel_communi_threshold, 2048.0, rel_tol=1e-6)
     costmodel_communi_const = cost_model_context.get_cost_model_context("costmodel_communi_const")
-    assert costmodel_communi_const == 3072.0
+    assert math.isclose(costmodel_communi_const, 3072.0, rel_tol=1e-6)
     costmodel_communi_bias = cost_model_context.get_cost_model_context("costmodel_communi_bias")
-    assert costmodel_communi_bias == 1024.0
+    assert math.isclose(costmodel_communi_bias, 1024.0, rel_tol=1e-6)
 
     set_algo_parameters(tensor_slice_align_enable=False, tensor_slice_align_size=32,
                         fully_use_devices=False, elementwise_op_strategy_follow=False,
@@ -120,7 +121,7 @@ def test_two_matmul():
     enable_approxi = get_algo_parameters("enable_algo_approxi")
     assert enable_approxi
     algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
-    assert algo_epsilon == 0.001
+    assert math.isclose(algo_epsilon, 0.001, rel_tol=1e-6)
 
     expecte_single_loop = False
     signle_loop = _get_algo_single_loop()
@@ -142,7 +143,7 @@ def test_two_matmul():
     enable_approxi = get_algo_parameters("enable_algo_approxi")
     assert not enable_approxi
     algo_epsilon = get_algo_parameters("algo_approxi_epsilon")
-    assert algo_epsilon == 0.1
+    assert math.isclose(algo_epsilon, 0.1, rel_tol=1e-6)
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
