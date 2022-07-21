@@ -116,8 +116,9 @@ double MatMulCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, co
       used_device_num *= input1_shape[i] / input1_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+    }
   }
 
   return result;
@@ -161,8 +162,9 @@ double MatMulCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inp
       used_device_num *= input1_shape[i] / input1_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input1_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+    }
   }
 
   return result;
@@ -197,7 +199,7 @@ void MatMulCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_outp
 }
 
 // return the per device communication cost in the forward phase.
-double BatchNormCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+double BatchNormCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                          int64_t) const {
   TensorInfo input0 = inputs[0];
   Shape input0_shape = input0.shape();
@@ -258,8 +260,8 @@ double BatchNormCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
 
 // Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double BatchNormCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                                 int64_t stage_id) const {
+double BatchNormCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                                 int64_t) const {
   return 0.0;
 }
 
@@ -831,8 +833,9 @@ double SubCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs
       used_device_num *= input_a_shape[i] / input_a_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input_a_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
   }
 
   if (is_parameter_[1]) {
@@ -844,8 +847,9 @@ double SubCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs
       used_device_num *= input_b_shape[i] / input_b_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input_b_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+    }
   }
   return result;
 }
@@ -866,8 +870,9 @@ double SubCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const
       used_device_num *= input_a_shape[i] / input_a_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input_a_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
   }
 
   if (is_parameter_[1]) {
@@ -879,8 +884,9 @@ double SubCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const
       used_device_num *= input_b_shape[i] / input_b_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input_b_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+    }
   }
 
   return result;
@@ -1205,8 +1211,9 @@ double ReduceSumCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs,
       used_device_num *= input_shape[i] / input_slice_shape[i];
     }
 
-    if (total_device_num != LongToSize(used_device_num))
+    if (total_device_num != LongToSize(used_device_num)) {
       result += ListProduct(input_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+    }
   }
 
   return result;
@@ -1432,7 +1439,7 @@ double DSDMatmulCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
 
 void DSDMatmulCost::CalculateOutputInMemory() {
   is_output_should_in_memory_ =
-    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+    (std::find(is_parameter_involve_.cbegin(), is_parameter_involve_.cend(), true) != is_parameter_involve_.cend());
 }
 
 void DSDMatmulCost::CalculateInputsInMemory(const std::map<size_t, bool> &) {
@@ -1867,7 +1874,7 @@ double MatmulDDSCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
 // Not taking account of output
 void MatmulDDSCost::CalculateOutputInMemory() {
   is_output_should_in_memory_ =
-    (std::find(is_parameter_involve_.begin(), is_parameter_involve_.end(), true) != is_parameter_involve_.end());
+    (std::find(is_parameter_involve_.cbegin(), is_parameter_involve_.cend(), true) != is_parameter_involve_.cend());
 }
 
 // Taking account of input
