@@ -285,6 +285,8 @@ constexpr auto kSparseConcat = "SparseConcat";
 constexpr auto kSparseMatrixNNZ = "SparseMatrixNNZ";
 constexpr auto kSparseMatrixTranspose = "SparseMatrixTranspose";
 constexpr auto kSparseMatrixSoftmax = "SparseMatrixSoftmax";
+constexpr auto kSparseMatrixMatMul = "SparseMatrixMatMul";
+constexpr auto kSparseMatrixSparseMatMul = "SparseMatrixSparseMatMul";
 
 // Sparse Grad ops
 constexpr auto kSparseAddGrad = "SparseAddGrad";
@@ -895,6 +897,8 @@ GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToSparseTensor, std::make_shared<Prim
 GVAR_DEF(PrimitivePtr, kPrimSparseConcat, std::make_shared<Primitive>(kSparseConcat));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixNNZ, std::make_shared<Primitive>(kSparseMatrixNNZ));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSoftmax, std::make_shared<Primitive>(kSparseMatrixSoftmax));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixMatMul, std::make_shared<Primitive>(kSparseMatrixMatMul));
+GVAR_DEF(PrimitivePtr, kPrimSparseMatrixSparseMatMul, std::make_shared<Primitive>(kSparseMatrixSparseMatMul));
 GVAR_DEF(PrimitivePtr, kPrimCSRSparseMatrixToDense, std::make_shared<Primitive>("CSRSparseMatrixToDense"));
 GVAR_DEF(PrimitivePtr, kPrimSparseMatrixTranspose, std::make_shared<Primitive>(kSparseMatrixTranspose));
 
