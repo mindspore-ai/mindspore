@@ -28,12 +28,20 @@
 namespace mindspore {
 namespace ops {
 namespace {
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr NotEqualInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  return BroadCastInferShape(prim_name, input_args);
+}
+
+TypePtr NotEqualInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   auto op_name = prim->name();
   std::map<std::string, TypePtr> types;
   (void)types.emplace("x", input_args[0]->BuildType());
   (void)types.emplace("y", input_args[1]->BuildType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, common_valid_types, op_name);
+  const std::set<TypePtr> valid_types = {kFloat64, kBool,   kInt64,  kFloat,  kFloat16, kInt16,     kInt32,
+                                         kInt8,    kUInt16, kUInt32, kUInt64, kUInt8,   kComplex64, kComplex128};
+  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, op_name);
   return std::make_shared<TensorType>(kBool);
 }
 }  // namespace
@@ -41,16 +49,13 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 MIND_API_OPERATOR_IMPL(NotEqual, BaseOperator);
 AbstractBasePtr NotEqualInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const std::vector<AbstractBasePtr> &input_args) {
+  constexpr int64_t kInputNum = 2;
   MS_EXCEPTION_IF_NULL(primitive);
-  auto op_name = primitive->name();
-  const int64_t input_num = 2;
-  (void)CheckAndConvertUtils::CheckInteger("input number", SizeToLong(input_args.size()), kEqual, input_num, op_name);
-  for (const auto &item : input_args) {
-    MS_EXCEPTION_IF_NULL(item);
-  }
-  auto type = InferType(primitive, input_args);
-  return abstract::MakeAbstract(BroadCastInferShape(op_name, input_args), type);
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, primitive->name());
+  auto infer_type = NotEqualInferType(primitive, input_args);
+  auto infer_shape = NotEqualInferShape(primitive, input_args);
+  return abstract::MakeAbstract(infer_shape, infer_type);
 }
-REGISTER_PRIMITIVE_C(kNameNotEqual, NotEqual);
+REGISTER_PRIMITIVE_EVAL_IMPL(NotEqual, prim::kPrimNotEqual, NotEqualInfer, nullptr, true);
 }  // namespace ops
 }  // namespace mindspore

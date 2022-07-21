@@ -83,15 +83,19 @@ class ArithLogicCpuTypeFunc : public DeprecatedCpuKernelFunc {
                         << "', the 'input1' and 'input2' must have the same data type, but got type of 'input1': "
                         << dtype_ << ", and the type of 'input2': " << dtype_1;
     }
-    static const std::unordered_map<std::string, TypeComputeFunc> arithmetic_logic_func_map{
-      {prim::kPrimGreater->name(), &ArithLogicCpuTypeFunc<T>::Greater},
-      {prim::kPrimGreaterEqual->name(), &ArithLogicCpuTypeFunc<T>::GreaterEqual},
-      {prim::kPrimLogicalAnd->name(), &ArithLogicCpuTypeFunc<T>::LogicalAnd},
-      {prim::kPrimLessEqual->name(), &ArithLogicCpuTypeFunc<T>::LessEqual},
-      {prim::kPrimLogicalOr->name(), &ArithLogicCpuTypeFunc<T>::LogicalOr},
-      {prim::kPrimLogicalXor->name(), &ArithLogicCpuTypeFunc<T>::LogicalXor},
-      {prim::kPrimLess->name(), &ArithLogicCpuTypeFunc<T>::Less},
-      {prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
+    static std::unordered_map<std::string, TypeComputeFunc> arithmetic_logic_func_map;
+    if constexpr (!((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {
+      arithmetic_logic_func_map = {{prim::kPrimGreater->name(), &ArithLogicCpuTypeFunc<T>::Greater},
+                                   {prim::kPrimGreaterEqual->name(), &ArithLogicCpuTypeFunc<T>::GreaterEqual},
+                                   {prim::kPrimLogicalAnd->name(), &ArithLogicCpuTypeFunc<T>::LogicalAnd},
+                                   {prim::kPrimLessEqual->name(), &ArithLogicCpuTypeFunc<T>::LessEqual},
+                                   {prim::kPrimLogicalOr->name(), &ArithLogicCpuTypeFunc<T>::LogicalOr},
+                                   {prim::kPrimLogicalXor->name(), &ArithLogicCpuTypeFunc<T>::LogicalXor},
+                                   {prim::kPrimLess->name(), &ArithLogicCpuTypeFunc<T>::Less},
+                                   {prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
+    } else {
+      arithmetic_logic_func_map = {{prim::kPrimNotEqual->name(), &ArithLogicCpuTypeFunc<T>::NotEqual}};
+    }
     if (arithmetic_logic_func_map.find(kernel_name_) == arithmetic_logic_func_map.end()) {
       MS_LOG(EXCEPTION) << "For 'ArithmeticLogic', only supports operators in " << Map2Str(arithmetic_logic_func_map)
                         << ", but got " << kernel_name_;
@@ -424,7 +428,16 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, ArithLogicCpuFunc
     {KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<float>},
     {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
-     SpecializeArithLogFunc<double>}}},
+     SpecializeArithLogFunc<double>},
+    {KernelAttr().AddInputAttr(kNumberTypeUInt64).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithLogFunc<uint64_t>},
+    {KernelAttr().AddInputAttr(kNumberTypeComplex64).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeBool),
+     SpecializeArithLogFunc<complex64>},
+    {KernelAttr()
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddInputAttr(kNumberTypeComplex128)
+       .AddOutputAttr(kNumberTypeBool),
+     SpecializeArithLogFunc<complex128>}}},
   {prim::kPrimGreater->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
      SpecializeArithLogFunc<int>},
