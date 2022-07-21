@@ -270,6 +270,7 @@ constexpr auto kSideEffectIO = "side_effect_io";
 constexpr auto kDeviceType = "device_type";
 constexpr auto kExclusive = "exclusive";
 constexpr auto kReverse = "reverse";
+constexpr auto kSwap = "swap";
 constexpr auto kSplitStride = "split_stride";
 constexpr auto kExtendTop = "extend_top";
 constexpr auto kExtendBottom = "extend_bottom";

@@ -34,6 +34,16 @@ class MIND_API TripletMarginLoss : public BaseOperator {
   TripletMarginLoss() : BaseOperator(kNameTripletMarginLoss) {
     InitIOName({"x", "positive", "negative", "margin"}, {"y"});
   }
+  void Init(const int64_t p = 2, const float eps = 1e-6, const bool swap = false,
+            const std::string &reduction = "mean");
+  void set_p(const int64_t p);
+  void set_eps(const float eps);
+  void set_swap(const bool swap);
+  void set_reduction(const std::string &reduction);
+  int64_t get_p() const;
+  float get_eps() const;
+  bool get_swap() const;
+  std::string get_reduction() const;
 };
 
 abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

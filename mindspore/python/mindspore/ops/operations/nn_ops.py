@@ -10069,7 +10069,7 @@ class TripletMarginLoss(Primitive):
         ValueError: If `reduction` is not one of 'none', 'mean', 'sum'.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> loss = ops.TripletMarginLoss()
