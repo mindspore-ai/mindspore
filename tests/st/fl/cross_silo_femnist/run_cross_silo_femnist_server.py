@@ -15,6 +15,7 @@
 
 import argparse
 import subprocess
+import ast
 
 parser = argparse.ArgumentParser(description="Run test_cross_silo_femnist.py case")
 parser.add_argument("--device_target", type=str, default="CPU")
@@ -38,6 +39,8 @@ parser.add_argument("--config_file_path", type=str, default="")
 parser.add_argument("--encrypt_type", type=str, default="NOT_ENCRYPT")
 parser.add_argument("--dataset_path", type=str, default="")
 parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", "adaptive"])
+parser.add_argument("--server_domain", type=str, default="127.0.0.1:8080")
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -61,6 +64,7 @@ config_file_path = args.config_file_path
 encrypt_type = args.encrypt_type
 dataset_path = args.dataset_path
 sync_type = args.sync_type
+enable_ssl = args.enable_ssl
 
 if local_server_num == -1:
     local_server_num = server_num
@@ -95,6 +99,7 @@ for i in range(local_server_num):
     cmd_server += " --dataset_path=" + str(dataset_path)
     cmd_server += " --user_id=" + str(0)
     cmd_server += " --sync_type=" + sync_type
+    cmd_server += " --enable_ssl=" + str(enable_ssl)
     cmd_server += " > server.log 2>&1 &"
 
     import time

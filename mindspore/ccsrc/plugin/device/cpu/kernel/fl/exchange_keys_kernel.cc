@@ -29,29 +29,10 @@ bool ExchangeKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const 
     return false;
   }
 
-  std::shared_ptr<std::vector<unsigned char>> exchange_keys_rsp_msg = nullptr;
-  if (!fl::worker::FLWorker::GetInstance().SendToServer(target_server_rank_, fbb_->GetBufferPointer(), fbb_->GetSize(),
-                                                        ps::core::TcpUserCommand::kExchangeKeys,
-                                                        &exchange_keys_rsp_msg)) {
-    MS_LOG(EXCEPTION) << "Sending request for ExchangeKeys to server " << target_server_rank_ << " failed.";
+  if (!fl::worker::FLCloudWorker::GetInstance().SendToServerSync(kernel_path_, HTTP_CONTENT_TYPE_URL_ENCODED,
+                                                                 fbb_->GetBufferPointer(), fbb_->GetSize())) {
+    MS_LOG(WARNING) << "Sending request for exchangeKeys to server failed.";
     return false;
-  }
-  if (exchange_keys_rsp_msg == nullptr) {
-    MS_LOG(EXCEPTION) << "Received message pointer is nullptr.";
-    return false;
-  }
-  flatbuffers::Verifier verifier(exchange_keys_rsp_msg->data(), exchange_keys_rsp_msg->size());
-  if (!verifier.VerifyBuffer<schema::ResponseExchangeKeys>()) {
-    MS_LOG(EXCEPTION) << "The schema of ResponseExchangeKeys is invalid.";
-    return false;
-  }
-
-  const schema::ResponseExchangeKeys *exchange_keys_rsp =
-    flatbuffers::GetRoot<schema::ResponseExchangeKeys>(exchange_keys_rsp_msg->data());
-  MS_EXCEPTION_IF_NULL(exchange_keys_rsp);
-  auto response_code = exchange_keys_rsp->retcode();
-  if ((response_code != schema::ResponseCode_SUCCEED) && (response_code != schema::ResponseCode_OutOfTime)) {
-    MS_LOG(EXCEPTION) << "Launching exchange keys job for worker failed. Reason: " << exchange_keys_rsp->reason();
   }
 
   MS_LOG(INFO) << "Exchange keys successfully.";
@@ -63,22 +44,27 @@ void ExchangeKeysKernelMod::Init(const CNodePtr &kernel_node) {
   if (cnode_ptr_.lock() == nullptr) {
     cnode_ptr_ = kernel_node;
   }
-  fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
-  server_num_ = fl::worker::FLWorker::GetInstance().server_num();
-  rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();
-  if (rank_id_ == UINT32_MAX) {
-    MS_LOG(EXCEPTION) << "Federated worker is not initialized yet.";
-    return;
-  }
-
-  if (server_num_ <= 0) {
-    MS_LOG(EXCEPTION) << "Server number should be larger than 0, but got: " << server_num_;
-    return;
-  }
-  target_server_rank_ = rank_id_ % server_num_;
-
+  kernel_path_ = "/exchangeKeys";
+  fl_id_ = fl::worker::FLCloudWorker::GetInstance().fl_id();
   MS_LOG(INFO) << "Initializing ExchangeKeys kernel"
-               << ", fl_id: " << fl_id_ << ". Request will be sent to server " << target_server_rank_;
+               << ", fl_id: " << fl_id_;
+
+  fl::worker::FLCloudWorker::GetInstance().RegisterMessageCallback(
+    kernel_path_, [&](const std::shared_ptr<std::vector<unsigned char>> &response_msg) {
+      flatbuffers::Verifier verifier(response_msg->data(), response_msg->size());
+      if (!verifier.VerifyBuffer<schema::ResponseExchangeKeys>()) {
+        MS_LOG(WARNING) << "The schema of response message is invalid.";
+        return;
+      }
+      const schema::ResponseExchangeKeys *exchange_keys_rsp =
+        flatbuffers::GetRoot<schema::ResponseExchangeKeys>(response_msg->data());
+      MS_EXCEPTION_IF_NULL(exchange_keys_rsp);
+      auto response_code = exchange_keys_rsp->retcode();
+      if ((response_code != schema::ResponseCode_SUCCEED) && (response_code != schema::ResponseCode_OutOfTime)) {
+        MS_LOG(EXCEPTION) << "Launching exchange keys job for worker failed. Reason: " << exchange_keys_rsp->reason();
+      }
+      return;
+    });
 
   fbb_ = std::make_shared<fl::FBBuilder>();
   MS_EXCEPTION_IF_NULL(fbb_);
@@ -107,8 +93,8 @@ bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBui
   }
 
   // save pw_salt and pw_iv at local
-  fl::worker::FLWorker::GetInstance().set_pw_salt(pw_salt_);
-  fl::worker::FLWorker::GetInstance().set_pw_iv(pw_iv_);
+  fl::worker::FLCloudWorker::GetInstance().set_pw_salt(pw_salt_);
+  fl::worker::FLCloudWorker::GetInstance().set_pw_iv(pw_iv_);
 
   // get public key bytes
   std::vector<uint8_t> pubkey_bytes = GetPubicKeyBytes();
@@ -118,7 +104,7 @@ bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBui
   }
 
   // build data which will be send to server
-  int iter = fl::worker::FLWorker::GetInstance().fl_iteration_num();
+  int iter = fl::worker::FLCloudWorker::GetInstance().fl_iteration_num();
   auto fbs_fl_id = fbb->CreateString(fl_id_);
   auto fbs_public_key = fbb->CreateVector(pubkey_bytes.data(), pubkey_bytes.size());
   auto fbs_pw_iv = fbb->CreateVector(pw_iv_.data(), iv_vec_len);
@@ -138,7 +124,7 @@ bool ExchangeKeysKernelMod::BuildExchangeKeysReq(const std::shared_ptr<fl::FBBui
 std::vector<uint8_t> ExchangeKeysKernelMod::GetPubicKeyBytes() {
   // generate private key of secret
   armour::PrivateKey *sPriKeyPtr = armour::KeyAgreement::GeneratePrivKey();
-  fl::worker::FLWorker::GetInstance().set_secret_pk(sPriKeyPtr);
+  fl::worker::FLCloudWorker::GetInstance().set_secret_pk(sPriKeyPtr);
 
   // get public bytes length
   size_t pubLen;

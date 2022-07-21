@@ -23,36 +23,11 @@ bool GetKeysKernelMod::Launch(const std::vector<AddressPtr> &inputs, const std::
   MS_LOG(INFO) << "Launching client GetKeysKernelMod";
   BuildGetKeysReq(fbb_);
 
-  std::shared_ptr<std::vector<unsigned char>> get_keys_rsp_msg = nullptr;
-  if (!fl::worker::FLWorker::GetInstance().SendToServer(target_server_rank_, fbb_->GetBufferPointer(), fbb_->GetSize(),
-                                                        ps::core::TcpUserCommand::kGetKeys, &get_keys_rsp_msg)) {
-    MS_LOG(EXCEPTION) << "Sending request for GetKeys to server " << target_server_rank_ << " failed.";
+  if (!fl::worker::FLCloudWorker::GetInstance().SendToServerSync(kernel_path_, HTTP_CONTENT_TYPE_URL_ENCODED,
+                                                                 fbb_->GetBufferPointer(), fbb_->GetSize())) {
+    MS_LOG(WARNING) << "Sending request for getKeys to server failed.";
     return false;
   }
-  if (get_keys_rsp_msg == nullptr) {
-    MS_LOG(EXCEPTION) << "Received message pointer is nullptr.";
-    return false;
-  }
-  flatbuffers::Verifier verifier(get_keys_rsp_msg->data(), get_keys_rsp_msg->size());
-  if (!verifier.VerifyBuffer<schema::ReturnExchangeKeys>()) {
-    MS_LOG(EXCEPTION) << "The schema of ResponseGetKeys is invalid.";
-    return false;
-  }
-
-  const schema::ReturnExchangeKeys *get_keys_rsp =
-    flatbuffers::GetRoot<schema::ReturnExchangeKeys>(get_keys_rsp_msg->data());
-  MS_EXCEPTION_IF_NULL(get_keys_rsp);
-  auto response_code = get_keys_rsp->retcode();
-  if ((response_code != schema::ResponseCode_SUCCEED) && (response_code != schema::ResponseCode_OutOfTime)) {
-    MS_LOG(EXCEPTION) << "Launching get keys job for worker failed. response_code: " << response_code;
-  }
-
-  bool save_keys_succeed = SavePublicKeyList(get_keys_rsp->remote_publickeys());
-  if (!save_keys_succeed) {
-    MS_LOG(EXCEPTION) << "Save received remote keys failed.";
-    return false;
-  }
-
   MS_LOG(INFO) << "Get keys successfully.";
   return true;
 }
@@ -62,22 +37,32 @@ void GetKeysKernelMod::Init(const CNodePtr &kernel_node) {
   if (cnode_ptr_.lock() == nullptr) {
     cnode_ptr_ = kernel_node;
   }
-
-  fl_id_ = fl::worker::FLWorker::GetInstance().fl_id();
-  server_num_ = fl::worker::FLWorker::GetInstance().server_num();
-  rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();
-  if (rank_id_ == UINT32_MAX) {
-    MS_LOG(EXCEPTION) << "Federated worker is not initialized yet.";
-    return;
-  }
-  if (server_num_ <= 0) {
-    MS_LOG(EXCEPTION) << "Server number should be larger than 0, but got: " << server_num_;
-    return;
-  }
-  target_server_rank_ = rank_id_ % server_num_;
-
+  kernel_path_ = "/getKeys";
+  fl_id_ = fl::worker::FLCloudWorker::GetInstance().fl_id();
   MS_LOG(INFO) << "Initializing GetKeys kernel"
-               << ", fl_id: " << fl_id_ << ". Request will be sent to server " << target_server_rank_;
+               << ", fl_id: " << fl_id_;
+
+  fl::worker::FLCloudWorker::GetInstance().RegisterMessageCallback(
+    kernel_path_, [&](const std::shared_ptr<std::vector<unsigned char>> &response_msg) {
+      flatbuffers::Verifier verifier(response_msg->data(), response_msg->size());
+      if (!verifier.VerifyBuffer<schema::ReturnExchangeKeys>()) {
+        MS_LOG(WARNING) << "The schema of response message is invalid.";
+        return;
+      }
+      const schema::ReturnExchangeKeys *get_keys_rsp =
+        flatbuffers::GetRoot<schema::ReturnExchangeKeys>(response_msg->data());
+      MS_EXCEPTION_IF_NULL(get_keys_rsp);
+      auto response_code = get_keys_rsp->retcode();
+      if ((response_code != schema::ResponseCode_SUCCEED) && (response_code != schema::ResponseCode_OutOfTime)) {
+        MS_LOG(EXCEPTION) << "Launching get keys job for worker failed. response_code: " << response_code;
+      }
+
+      bool save_keys_succeed = SavePublicKeyList(get_keys_rsp->remote_publickeys());
+      if (!save_keys_succeed) {
+        MS_LOG(EXCEPTION) << "Save received remote keys failed.";
+      }
+      return;
+    });
 
   fbb_ = std::make_shared<fl::FBBuilder>();
   MS_EXCEPTION_IF_NULL(fbb_);
@@ -90,7 +75,7 @@ void GetKeysKernelMod::InitKernel(const CNodePtr &kernel_node) { return; }
 
 void GetKeysKernelMod::BuildGetKeysReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
   MS_EXCEPTION_IF_NULL(fbb);
-  int iter = fl::worker::FLWorker::GetInstance().fl_iteration_num();
+  int iter = fl::worker::FLCloudWorker::GetInstance().fl_iteration_num();
   auto fbs_fl_id = fbb->CreateString(fl_id_);
   schema::GetExchangeKeysBuilder get_keys_builder(*(fbb.get()));
   get_keys_builder.add_fl_id(fbs_fl_id);
@@ -137,7 +122,7 @@ bool GetKeysKernelMod::SavePublicKeyList(
       MS_LOG(INFO) << "Add public keys of client:" << fl_id << " successfully.";
     }
   }
-  fl::worker::FLWorker::GetInstance().set_public_keys_list(saved_remote_public_keys);
+  fl::worker::FLCloudWorker::GetInstance().set_public_keys_list(saved_remote_public_keys);
   return true;
 }
 

@@ -253,6 +253,9 @@ class BACKEND_EXPORT PSContext {
   void set_continuous_failure_times(uint32_t continuous_failure_times);
   uint32_t continuous_failure_times();
 
+  void set_server_domain(const std::string &server_domain);
+  const std::string &server_domain();
+
  private:
   PSContext()
       : ps_enabled_(false),
@@ -312,7 +315,9 @@ class BACKEND_EXPORT PSContext {
         checkpoint_dir_(""),
         instance_name_(""),
         participation_time_level_("5,15"),
-        continuous_failure_times_(10) {}
+        continuous_failure_times_(10),
+        server_domain_("0.0.0.0") {}
+
   bool ps_enabled_;
   bool is_worker_;
   bool is_pserver_;
@@ -463,6 +468,9 @@ class BACKEND_EXPORT PSContext {
 
   // The times of iteration continuous failure
   uint32_t continuous_failure_times_;
+
+  // The server cluster http server domain, for example: 127.0.0.1:8080
+  std::string server_domain_;
 };
 }  // namespace ps
 }  // namespace mindspore

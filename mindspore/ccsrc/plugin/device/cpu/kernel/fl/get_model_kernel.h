@@ -25,93 +25,94 @@
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "fl/worker/fl_worker.h"
+#include "fl/worker/fl_cloud_worker.h"
 #include "ps/core/comm_util.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr size_t kRetryTimesOfGetModel = 512;
+constexpr size_t kSleepMillisecondsOfGetModel = 1000;
 class GetModelKernelMod : public NativeCpuKernelMod {
  public:
   GetModelKernelMod() = default;
   ~GetModelKernelMod() override = default;
-
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &) {
     MS_LOG(INFO) << "Launching client GetModelKernelMod";
-    if (!BuildGetModelReq(fbb_, inputs)) {
+    if (!BuildGetModelReq(fbb_)) {
       MS_LOG(EXCEPTION) << "Building request for FusedPushWeight failed.";
-      return false;
     }
+    bool get_model_success = false;
+    std::map<std::string, size_t> weight_name_to_input_idx_tmp = weight_name_to_input_idx_;
+    fl::worker::FLCloudWorker::GetInstance().RegisterMessageCallback(
+      kernel_path_, [&](const std::shared_ptr<std::vector<unsigned char>> &response_msg) {
+        flatbuffers::Verifier verifier(response_msg->data(), response_msg->size());
+        if (!verifier.VerifyBuffer<schema::ResponseGetModel>()) {
+          MS_LOG(DEBUG) << "The schema of response message is invalid.";
+          return;
+        }
+        const schema::ResponseGetModel *get_model_rsp =
+          flatbuffers::GetRoot<schema::ResponseGetModel>(response_msg->data());
+        MS_ERROR_IF_NULL_WO_RET_VAL(get_model_rsp);
+        auto response_code = get_model_rsp->retcode();
+        if (response_code == schema::ResponseCode_SUCCEED) {
+          MS_LOG(INFO) << "Get model from server successful.";
+          get_model_success = true;
+        } else if (response_code == schema::ResponseCode_SucNotReady) {
+          MS_LOG(INFO) << "Get model response code from server is not ready.";
+          return;
+        } else {
+          MS_LOG(ERROR) << "Launching get model for worker failed. Reason: " << get_model_rsp->reason();
+        }
 
-    const schema::ResponseGetModel *get_model_rsp = nullptr;
-    std::shared_ptr<std::vector<unsigned char>> get_model_rsp_msg = nullptr;
-    int response_code = schema::ResponseCode_SucNotReady;
-    while (response_code == schema::ResponseCode_SucNotReady) {
-      if (!fl::worker::FLWorker::GetInstance().SendToServer(target_server_rank_, fbb_->GetBufferPointer(),
-                                                            fbb_->GetSize(), ps::core::TcpUserCommand::kGetModel,
-                                                            &get_model_rsp_msg)) {
-        MS_LOG(EXCEPTION) << "Sending request for GetModel to server " << target_server_rank_ << " failed.";
-        return false;
-      }
-      flatbuffers::Verifier verifier(get_model_rsp_msg->data(), get_model_rsp_msg->size());
-      if (!verifier.VerifyBuffer<schema::ResponseGetModel>()) {
-        MS_LOG(EXCEPTION) << "The schema of ResponseGetModel is invalid.";
-        return false;
-      }
+        auto feature_map = get_model_rsp->feature_map();
+        MS_EXCEPTION_IF_NULL(feature_map);
+        if (feature_map->size() == 0) {
+          MS_LOG(ERROR) << "Feature map after GetModel is empty.";
+          return;
+        }
+        MS_LOG(INFO) << "weight_name_to_input_idx_tmp size is " << weight_name_to_input_idx_tmp.size();
+        for (size_t i = 0; i < feature_map->size(); i++) {
+          std::string weight_full_name = feature_map->Get(i)->weight_fullname()->str();
+          float *weight_data = const_cast<float *>(feature_map->Get(i)->data()->data());
+          size_t weight_size = feature_map->Get(i)->data()->size() * sizeof(float);
+          if (weight_name_to_input_idx_tmp.count(weight_full_name) == 0) {
+            MS_LOG(ERROR) << "Weight " << weight_full_name << " doesn't exist in FL worker.";
+            return;
+          }
+          MS_LOG(INFO) << "Cover weight " << weight_full_name << " by the model in server.";
+          size_t index = weight_name_to_input_idx_tmp[weight_full_name];
+          int ret = memcpy_s(inputs[index]->addr, inputs[index]->size, weight_data, weight_size);
+          if (ret != 0) {
+            MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
+          }
+        }
+        return;
+      });
 
-      get_model_rsp = flatbuffers::GetRoot<schema::ResponseGetModel>(get_model_rsp_msg->data());
-      MS_EXCEPTION_IF_NULL(get_model_rsp);
-      response_code = get_model_rsp->retcode();
-      if (response_code == schema::ResponseCode_SUCCEED) {
+    size_t retryTimes = 0;
+    while (!get_model_success && retryTimes < kRetryTimesOfGetModel) {
+      if (!fl::worker::FLCloudWorker::GetInstance().SendToServerSync(kernel_path_, HTTP_CONTENT_TYPE_URL_ENCODED,
+                                                                     fbb_->GetBufferPointer(), fbb_->GetSize())) {
+        MS_LOG(WARNING) << "Sending request for GetModel to server failed.";
         break;
-      } else if (response_code == schema::ResponseCode_SucNotReady) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        continue;
-      } else {
-        MS_LOG(EXCEPTION) << "Launching get model for worker failed. Reason: " << get_model_rsp->reason();
       }
+      retryTimes += 1;
+      std::this_thread::sleep_for(std::chrono::milliseconds(kSleepMillisecondsOfGetModel));
     }
-
-    auto feature_map = get_model_rsp->feature_map();
-    MS_EXCEPTION_IF_NULL(feature_map);
-    if (feature_map->size() == 0) {
-      MS_LOG(EXCEPTION) << "Feature map after GetModel is empty.";
-      return false;
-    }
-    for (size_t i = 0; i < feature_map->size(); i++) {
-      std::string weight_full_name = feature_map->Get(i)->weight_fullname()->str();
-      float *weight_data = const_cast<float *>(feature_map->Get(i)->data()->data());
-      size_t weight_size = feature_map->Get(i)->data()->size() * sizeof(float);
-      if (weight_name_to_input_idx_.count(weight_full_name) == 0) {
-        MS_LOG(EXCEPTION) << "Weight " << weight_full_name << " doesn't exist in FL worker.";
-        return false;
-      }
-      MS_LOG(INFO) << "Cover weight " << weight_full_name << " by the model in server.";
-      size_t index = weight_name_to_input_idx_[weight_full_name];
-      int ret = memcpy_s(inputs[index]->addr, inputs[index]->size, weight_data, weight_size);
-      if (ret != 0) {
-        MS_LOG(EXCEPTION) << "memcpy_s error, errorno(" << ret << ")";
-        return false;
-      }
+    if (!get_model_success) {
+      MS_LOG(WARNING) << "Get model from server failed.";
     }
     return true;
   }
 
   void Init(const CNodePtr &kernel_node) {
-    MS_LOG(INFO) << "Initializing GetModel kernel";
     fbb_ = std::make_shared<fl::FBBuilder>();
     MS_EXCEPTION_IF_NULL(fbb_);
 
     MS_EXCEPTION_IF_NULL(kernel_node);
-    server_num_ = fl::worker::FLWorker::GetInstance().server_num();
-    rank_id_ = fl::worker::FLWorker::GetInstance().rank_id();
-    if (rank_id_ == UINT32_MAX) {
-      MS_LOG(EXCEPTION) << "Federated worker is not initialized yet.";
-      return;
-    }
-    target_server_rank_ = rank_id_ % server_num_;
-    fl_name_ = fl::worker::FLWorker::GetInstance().fl_name();
-    MS_LOG(INFO) << "Initializing GetModel kernel. fl_name: " << fl_name_ << ". Request will be sent to server "
-                 << target_server_rank_;
+    kernel_path_ = "/getModel";
+    fl_name_ = fl::worker::FLCloudWorker::GetInstance().fl_name();
+    MS_LOG(INFO) << "Initializing GetModel kernel. fl_name: " << fl_name_;
 
     size_t input_num = common::AnfAlgo::GetInputTensorNum(kernel_node);
     for (size_t i = 0; i < input_num; i++) {
@@ -144,7 +145,7 @@ class GetModelKernelMod : public NativeCpuKernelMod {
   void InitSizeLists() { return; }
 
  private:
-  bool BuildGetModelReq(const std::shared_ptr<fl::FBBuilder> &fbb, const std::vector<AddressPtr> &weights) {
+  bool BuildGetModelReq(const std::shared_ptr<fl::FBBuilder> &fbb) {
     MS_EXCEPTION_IF_NULL(fbb_);
     auto fbs_fl_name = fbb->CreateString(fl_name_);
     auto time = ps::core::CommUtil::GetNowTime();
@@ -153,7 +154,7 @@ class GetModelKernelMod : public NativeCpuKernelMod {
     schema::RequestGetModelBuilder req_get_model_builder(*(fbb.get()));
     req_get_model_builder.add_fl_name(fbs_fl_name);
     req_get_model_builder.add_timestamp(fbs_timestamp);
-    iteration_ = fl::worker::FLWorker::GetInstance().fl_iteration_num();
+    iteration_ = fl::worker::FLCloudWorker::GetInstance().fl_iteration_num();
     req_get_model_builder.add_iteration(SizeToInt(iteration_));
     auto req_get_model = req_get_model_builder.Finish();
     fbb->Finish(req_get_model);
@@ -161,9 +162,7 @@ class GetModelKernelMod : public NativeCpuKernelMod {
   }
 
   std::shared_ptr<fl::FBBuilder> fbb_;
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  std::string kernel_path_;
   std::string fl_name_;
   uint64_t iteration_;
   std::map<std::string, size_t> weight_name_to_input_idx_;

@@ -14,6 +14,7 @@
 # ============================================================================
 
 import argparse
+import ast
 import os
 import time
 import numpy as np
@@ -65,6 +66,8 @@ parser.add_argument("--sync_type", type=str, default="fixed", choices=["fixed", 
 
 parser.add_argument('--img_size', type=int, default=(32, 32, 1), help='the image size of (h,w,c)')
 parser.add_argument('--repeat_size', type=int, default=1, help='the repeat size when create the dataLoader')
+parser.add_argument("--enable_ssl", type=ast.literal_eval, default=False)
+parser.add_argument("--server_domain", type=str, default="127.0.0.1:8080")
 
 args, _ = parser.parse_known_args()
 device_target = args.device_target
@@ -92,6 +95,8 @@ cipher_time_window = args.cipher_time_window
 dataset_path = args.dataset_path
 user_id = args.user_id
 sync_type = args.sync_type
+enable_ssl = args.enable_ssl
+server_domain = args.server_domain
 
 ctx = {
     "enable_fl": True,
@@ -116,6 +121,10 @@ ctx = {
     "config_file_path": config_file_path,
     "encrypt_type": encrypt_type,
     "cipher_time_window": cipher_time_window,
+    "server_domain": server_domain,
+    "enable_ssl": enable_ssl,
+    "client_password": "123456",
+    "server_password": "123456"
 }
 
 context.set_context(mode=context.GRAPH_MODE, device_target=device_target)
@@ -281,7 +290,7 @@ def evalute_process(model, eval_data, img_size, batch_size):
 
 
 def train():
-    epoch = fl_iteration_num
+    epoch = 10
     network = LeNet5(62, 3)
 
     # construct dataset

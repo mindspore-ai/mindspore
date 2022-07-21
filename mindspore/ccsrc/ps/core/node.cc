@@ -131,6 +131,14 @@ void Node::NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta) {
   }
 }
 
+void Node::NotifyMessageArrival(uint64_t request_id) {
+  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
+  if (message_tracker_.count(request_id)) {
+    message_tracker_[request_id].second++;
+    message_tracker_cond_.notify_all();
+  }
+}
+
 void Node::set_message_callback(const uint64_t &request_id, const MessageCallback &callback) {
   if (!callback) {
     return;

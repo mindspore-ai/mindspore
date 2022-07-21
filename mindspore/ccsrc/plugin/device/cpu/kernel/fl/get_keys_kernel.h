@@ -22,7 +22,7 @@
 #include <memory>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
-#include "fl/worker/fl_worker.h"
+#include "fl/worker/fl_cloud_worker.h"
 #include "fl/armour/secure_protocol/key_agreement.h"
 
 namespace mindspore {
@@ -50,9 +50,7 @@ class GetKeysKernelMod : public NativeCpuKernelMod {
   bool SavePublicKeyList(
     const flatbuffers::Vector<flatbuffers::Offset<mindspore::schema::ClientPublicKeys>> *remote_public_key);
 
-  uint32_t rank_id_;
-  uint32_t server_num_;
-  uint32_t target_server_rank_;
+  std::string kernel_path_;
   std::string fl_id_;
   std::shared_ptr<fl::FBBuilder> fbb_;
 };
