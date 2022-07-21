@@ -18,13 +18,10 @@
 
 #include "pipeline/jit/parse/function_block.h"
 
-#include <string>
-#include <memory>
 #include <algorithm>
 #include <unordered_set>
 #include <queue>
 
-#include "pybind11/pybind11.h"
 #include "pipeline/jit/parse/resolve.h"
 #include "pipeline/jit/parse/parse.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -37,10 +34,8 @@ namespace mindspore {
 namespace py = pybind11;
 
 namespace parse {
-FunctionBlock::FunctionBlock(const Parser &parser) : parser_(parser) {
-  func_graph_ = std::make_shared<FuncGraph>();
-  matured_ = false;
-}
+FunctionBlock::FunctionBlock(const Parser &parser)
+    : func_graph_(std::make_shared<FuncGraph>()), parser_(parser), matured_(false) {}
 
 void FunctionBlock::AddPrevBlock(const FunctionBlockPtr &block) { prev_blocks_.push_back(block.get()); }
 
@@ -137,7 +132,7 @@ std::pair<AnfNodePtr, bool> FunctionBlock::FindPredInterpretNode(const std::stri
   while (!block_queue.empty()) {
     const auto cur_block = block_queue.front();
     block_queue.pop();
-    visited_block.insert(cur_block);
+    (void)visited_block.insert(cur_block);
     auto pred_node = cur_block->ReadLocalVariable(var_name);
     if (pred_node != nullptr) {
       has_found = true;
@@ -650,7 +645,7 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
   std::vector<AnfNodePtr> states;
   states.emplace_back(NewValueNode(prim::kPrimMakeTuple));
   constexpr int recursive_level = 2;
-  for (auto &node : isolated_nodes_) {
+  for (const auto &node : isolated_nodes_) {
     MS_EXCEPTION_IF_NULL(node);
     MS_LOG(DEBUG) << "Adding dependency, node: " << node->DebugString(recursive_level) << " in "
                   << func_graph_->ToString();
