@@ -72,7 +72,7 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
 
 std::vector<DeviceMemPtr> DynamicMemPoolBestFit::AllocContinuousTensorMem(const std::vector<size_t> &size_list) {
   std::vector<DeviceMemPtr> device_addr_list;
-  size_t total_size = std::accumulate(size_list.begin(), size_list.end(), 0);
+  size_t total_size = std::accumulate(size_list.begin(), size_list.end(), IntToSize(0));
   // Pre-alloc the one whole piece memory.
   auto device_addr = AllocTensorMem(total_size, false);
   if (!device_addr) {
@@ -302,7 +302,7 @@ bool DynamicMemPoolBestFit::CmpMemBlock(const DeviceMemPtr &device_addr, const D
 }
 
 DynamicMemBlockPtr DynamicMemPoolBestFit::FindMemBlock(const DeviceMemPtr &device_addr,
-                                                       const MemStatusManagerPtr &mem_mng) {
+                                                       const MemStatusManagerPtr &mem_mng) const {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto &&iter =
     std::upper_bound(mem_mng->mem_block_list_.begin(), mem_mng->mem_block_list_.end(), device_addr, CmpMemBlock);
@@ -401,7 +401,7 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block, c
 }
 
 void DynamicMemPoolBestFit::EraseIdleMemBuf(size_t size, const DeviceMemPtr &device_addr,
-                                            const MemStatusManagerPtr &mem_mng) {
+                                            const MemStatusManagerPtr &mem_mng) const {
   MS_EXCEPTION_IF_NULL(device_addr);
   auto &&iter = mem_mng->idle_mem_buf_map_.equal_range(size);
   while (iter.first != iter.second) {

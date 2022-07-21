@@ -37,7 +37,7 @@ class ActorRouteTableService {
   ActorRouteTableService() = default;
   ~ActorRouteTableService() = default;
 
-  bool Initialize();
+  bool Initialize() const;
 
   // Register actor address to the route table. Parameter 'error' represents the failure information if this operation
   // failed.

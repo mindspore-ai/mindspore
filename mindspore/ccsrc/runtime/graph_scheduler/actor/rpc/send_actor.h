@@ -62,7 +62,7 @@ class SendActor : public RpcActor {
   // |--------22 bytes------|---4 bytes--|PB data size bytes| data size bytes |
   // |RPC_DYNAMIC_SHAPE_DATA|PB data size|      PB data     | real data       |
   void SerializeDynamicShapeMessgae(std::string *msg_body, const ShapeVector &shape_vec, const TypeId &data_type,
-                                    const kernel::AddressPtr &addr);
+                                    const kernel::AddressPtr &addr) const;
 
   friend class GraphScheduler;
 
