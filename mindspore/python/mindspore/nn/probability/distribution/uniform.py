@@ -53,7 +53,7 @@ class Uniform(Distribution):
         please refer to :class:`mindspore.nn.probability.distribution.Distribution`, and examples below.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Note:
         `low` must be strictly less than `high`.

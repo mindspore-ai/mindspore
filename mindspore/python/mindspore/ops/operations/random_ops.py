@@ -487,7 +487,7 @@ class RandomPoisson(Primitive):
         Validator.check_type_name("dtype", dtype, valid_values, self.name)
 
 
-class UniformInt(PrimitiveWithInfer):
+class UniformInt(Primitive):
     r"""
     Produces random integer values i, uniformly distributed on the closed interval [minval, maxval), that is,
     distributed according to the discrete probability function:
@@ -542,25 +542,6 @@ class UniformInt(PrimitiveWithInfer):
         self.add_prim_attr("side_effect_hidden", True)
         Validator.check_non_negative_int(seed, "seed", self.name)
         Validator.check_non_negative_int(seed2, "seed2", self.name)
-
-    def __infer__(self, shape, minval, maxval):
-        shape_v = shape["value"]
-        if shape_v is None:
-            raise ValueError(f"For '{self.name}', the 'shape' cannot be None.")
-        Validator.check_value_type("shape", shape_v, [tuple], self.name)
-        for i, shape_i in enumerate(shape_v):
-            Validator.check_positive_int(shape_i, f'shape[{i}]', self.name)
-        Validator.check_tensor_dtype_valid("minval", minval["dtype"], [mstype.int32], self.name)
-        Validator.check_tensor_dtype_valid("maxval", maxval["dtype"], [mstype.int32], self.name)
-        minval_shape = minval['shape']
-        maxval_shape = maxval['shape']
-        Validator.check("dim of minval", len(minval_shape), '0(scalar)', 0, Rel.EQ, self.name)
-        Validator.check("dim of maxval", len(maxval_shape), '0(scalar)', 0, Rel.EQ, self.name)
-        out = {
-            'shape': shape_v,
-            'dtype': mstype.int32,
-            'value': None}
-        return out
 
 
 class UniformReal(StandardNormal):
