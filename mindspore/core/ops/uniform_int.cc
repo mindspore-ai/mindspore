@@ -62,14 +62,16 @@ abstract::AbstractBasePtr UniformIntInfer(const abstract::AnalysisEnginePtr &, c
   abstract::ShapePtr minval_shape = minval->shape();
   MS_EXCEPTION_IF_NULL(minval_shape);
   if (minval_shape->IsDimUnknown() || minval_shape->shape().size() != 0) {
-    MS_LOG(EXCEPTION) << "The min value should be a scalar tensor, while the shape is: " << minval_shape->ToString();
+    MS_EXCEPTION(ValueError) << "The min value should be a scalar tensor, while the shape is: "
+                             << minval_shape->ToString();
   }
   abstract::AbstractTensorPtr maxval = abstract::CheckArg<abstract::AbstractTensor>(op_name, input_args, 2);
   (void)CheckAndConvertUtils::CheckTensorTypeValid("maxval", maxval->BuildType(), {kInt32}, op_name);
   abstract::ShapePtr maxval_shape = maxval->shape();
   MS_EXCEPTION_IF_NULL(maxval_shape);
   if (maxval_shape->IsDimUnknown() || maxval_shape->shape().size() != 0) {
-    MS_LOG(EXCEPTION) << "The max value should be a scalar tensor, while the shape is: " << minval_shape->ToString();
+    MS_EXCEPTION(ValueError) << "The max value should be a scalar tensor, while the shape is: "
+                             << minval_shape->ToString();
   }
 
   ShapeVector shape;
