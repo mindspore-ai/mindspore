@@ -17,25 +17,21 @@
 
     如果两个比较的元素相同，则优先返回索引值较小的元素。
 
-    **参数：**
+    参数：
+        - **sorted** (bool) - 如果为True，则获取的元素将按值降序排序。默认值：True。
 
-    - **sorted** (bool) - 如果为True，则获取的元素将按值降序排序。默认值：True。
+    输入：
+        - **input_x** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
+        - **k** (int) - 指定计算最大元素的数量，需要是常量。
 
-    **输入：**
+    输出：
+        2个Tensor组成的tuple， `values` 和 `indices` 。
 
-    - **input_x** (Tensor) - 需计算的输入，数据类型必须为float16、float32或int32。
-    - **k** (int) - 指定计算最大元素的数量，需要是常量。
+        - **values** (Tensor) - 最后一个维度的每个切片中的 `k` 最大元素。
+        - **indices** (Tensor) - `k` 最大元素的对应索引。
 
-    **输出：**
-
-    2个Tensor组成的tuple， `values` 和 `indices` 。
-
-    - **values** (Tensor) - 最后一个维度的每个切片中的 `k` 最大元素。
-    - **indices** (Tensor) - `k` 最大元素的对应索引。
-
-    **异常：**
-
-    - **TypeError** - 如果 `sorted` 不是bool。
-    - **TypeError** - 如果 `input_x` 不是Tensor。
-    - **TypeError** - 如果 `k` 不是int。
-    - **TypeError** - 如果 `input_x` 的数据类型不是以下之一：float16、float32或int32。
+    异常：
+        - **TypeError** - 如果 `sorted` 不是bool。
+        - **TypeError** - 如果 `input_x` 不是Tensor。
+        - **TypeError** - 如果 `k` 不是int。
+        - **TypeError** - 如果 `input_x` 的数据类型不是以下之一：float16、float32或int32。

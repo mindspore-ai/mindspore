@@ -15,15 +15,12 @@
             loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
         \end{array}
 
-    **输入：**
+    输入：
+        - **logits** (Tensor) - 预测值，任意维度的Tensor。
+        - **label** (Tensor) - 真实值。shape和数据类型与 `logits` 的相同。
 
-    - **logits** (Tensor) - 预测值，任意维度的Tensor。
-    - **label** (Tensor) - 真实值。shape和数据类型与 `logits` 的相同。
+    输出：
+        Tensor，shape和数据类型与输入 `logits` 相同。
 
-    **输出：**
-
-    Tensor，shape和数据类型与输入 `logits` 相同。
-
-    **异常：**
-
-    - **TypeError** - `logits` 或 `label` 不是Tensor。
+    异常：
+        - **TypeError** - `logits` 或 `label` 不是Tensor。

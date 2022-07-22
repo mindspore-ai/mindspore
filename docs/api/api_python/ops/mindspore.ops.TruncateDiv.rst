@@ -13,15 +13,12 @@ mindspore.ops.TruncateDiv
     .. note::
         支持shape广播。
 
-    **输入：**
+    输入：
+        - **x** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
+        - **y** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
 
-    - **x** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。
-    - **y** (Union[Tensor, Number, bool]) - Number或bool类型的Tensor。`x` 和 `y` 不能同时为bool类型。
+    输出：
+        Tensor，shape为输入广播后的shape，数据类型为两个输入中精度较高的输入的类型。
 
-    **输出：**
-
-    Tensor，shape为输入广播后的shape，数据类型为两个输入中精度较高的输入的类型。
-
-    **异常：**
-
-    - **TypeError** - `x` 和 `y` 数据类型不是以下之一：Tensor、Number或bool。
+    异常：
+        - **TypeError** - `x` 和 `y` 数据类型不是以下之一：Tensor、Number或bool。

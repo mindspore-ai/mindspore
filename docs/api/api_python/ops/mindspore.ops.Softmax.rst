@@ -12,22 +12,18 @@
 
     其中 :math:`N` 代表Tensor的长度。
 
-    **参数：**
+    参数：
+        - **axis** (Union[int, tuple]) - 指定Softmax操作的轴。默认值：-1。
 
-    - **axis** (Union[int, tuple]) - 指定Softmax操作的轴。默认值：-1。
+    输入：
+        - **logits** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。其数据类型为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor，数据类型和shape与 `logits` 相同。
 
-    - **logits** (Tensor) - shape：:math:`(N, *)` ，其中 :math:`*` 表示任意数量的附加维度。其数据类型为float16或float32。
-
-    **输出：**
-
-    Tensor，数据类型和shape与 `logits` 相同。
-
-    **异常：**
-
-    - **TypeError** - `axis` 既不是int也不是tuple。
-    - **TypeError** - `logits` 的数据类型既不是float16也不是float32。
-    - **ValueError** - `axis` 是长度小于1的tuple。
-    - **ValueError** - `axis` 是一个tuple，其元素不全在[-len(logits.shape), len(logits.shape))范围中。
+    异常：
+        - **TypeError** - `axis` 既不是int也不是tuple。
+        - **TypeError** - `logits` 的数据类型既不是float16也不是float32。
+        - **ValueError** - `axis` 是长度小于1的tuple。
+        - **ValueError** - `axis` 是一个tuple，其元素不全在[-len(logits.shape), len(logits.shape))范围中。
     
