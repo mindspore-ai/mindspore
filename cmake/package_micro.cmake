@@ -10,6 +10,10 @@ function(__install_micro_wrapper)
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(DIRECTORY ${NNACL_DIR}/fp32 DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
+    install(FILES ${NNACL_DIR}/fp32_grad/activation_grad.h DESTINATION
+            ${CODEGEN_ROOT_DIR}/include/nnacl/fp32_grad COMPONENT ${RUNTIME_COMPONENT_NAME})
+    install(FILES ${NNACL_DIR}/fp32_grad/softmax_cross_entropy_with_logits.h DESTINATION
+            ${CODEGEN_ROOT_DIR}/include/nnacl/fp32_grad COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(DIRECTORY ${NNACL_DIR}/kernel DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl
             COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h")
     install(DIRECTORY ${NNACL_DIR}/infer DESTINATION ${CODEGEN_ROOT_DIR}/include/nnacl

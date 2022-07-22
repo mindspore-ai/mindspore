@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2022 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 
 #include "src/net_runner.h"
-#include <math.h>
 #include <getopt.h>
 #include <stdio.h>
 #include <malloc.h>
 #include <cstring>
+#include <cmath>
 #include <chrono>
 #include <iostream>
 #include <fstream>
@@ -63,7 +63,7 @@ constexpr static int kElem2Print = 10;
 class Rescaler : public mindspore::TrainCallBack {
  public:
   explicit Rescaler(float scale) : scale_(scale) {
-    if (scale_ == 0) {
+    if (std::fabs(scale) <= std::numeric_limits<float>::epsilon()) {
       scale_ = 1.0;
     }
   }

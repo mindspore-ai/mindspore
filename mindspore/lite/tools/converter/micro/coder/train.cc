@@ -60,12 +60,13 @@ int Train::TransformGraphForTrain(CoderContext *context, const std::vector<std::
     MS_LOG(INFO) << "input context invalid";
     return RET_ERROR;
   }
-  const std::array<int, 6> loss_types = {schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
+  const std::array<int, 7> loss_types = {schema::PrimitiveType_SparseSoftmaxCrossEntropyWithLogits,
                                          schema::PrimitiveType_BinaryCrossEntropy,
                                          schema::PrimitiveType_SmoothL1Loss,
                                          schema::PrimitiveType_SmoothL1LossGrad,
                                          schema::PrimitiveType_SigmoidCrossEntropyWithLogits,
-                                         schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad};
+                                         schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad,
+                                         schema::PrimitiveType_SoftmaxCrossEntropyWithLogits};
   OperatorCoder *loss_op = nullptr;
   for (const auto &opcoder : op_coders) {
     const LiteGraph::Node *node = opcoder->node();
