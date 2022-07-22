@@ -20,25 +20,31 @@
 #include <vector>
 #include <memory>
 #include <string>
+#include <map>
 #include <functional>
 #include "plugin/device/cpu/kernel/cpu_kernel.h"
 #include "plugin/factory/ms_factory.h"
 
 namespace mindspore {
 namespace kernel {
-class ReduceCpuKernelMod : public DeprecatedNativeCpuKernelMod {
+class ReduceCpuKernelMod : public NativeCpuKernelMod {
  public:
   ReduceCpuKernelMod() = default;
   explicit ReduceCpuKernelMod(const std::string &kernel_type) : kernel_type_(kernel_type) {}
   ~ReduceCpuKernelMod() override = default;
-  void InitKernel(const CNodePtr &kernel_node) override;
+  bool Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+            const std::vector<KernelTensorPtr> &outputs) override;
+
+  int Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+             const std::vector<KernelTensorPtr> &outputs, const std::map<uint32_t, tensor::TensorPtr> &) override;
+
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override {
     return func_obj_->RunFunc(inputs, workspace, outputs);
   }
 
  private:
-  std::shared_ptr<DeprecatedCpuKernelFunc> func_obj_;
+  std::shared_ptr<CpuKernelFunc> func_obj_;
   std::string kernel_type_{"Unknown"};
 };
 }  // namespace kernel
