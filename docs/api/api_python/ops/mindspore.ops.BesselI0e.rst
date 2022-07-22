@@ -12,15 +12,12 @@ mindspore.ops.BesselI0e
 
     其中bessel_i0是第一类0阶的Bessel函数。
 
-    **输入：**
+    输入：
+        - **x** (Tensor) - 任意维度的Tensor。数据类型应为float16，float32或float64。
 
-    - **x** (Tensor) - 任意维度的Tensor。数据类型应为float16，float32或float64。
+    输出：
+        Tensor，shape和数据类型与 `x` 相同。
 
-    **输出：**
-
-    Tensor，shape和数据类型与 `x` 相同。
-
-    **异常：**
-
-    - **TypeError** - `x` 不是Tensor。
-    - **TypeError** - `x` 的数据类型不是float16，float32或float64。
+    异常：
+        - **TypeError** - `x` 不是Tensor。
+        - **TypeError** - `x` 的数据类型不是float16，float32或float64。

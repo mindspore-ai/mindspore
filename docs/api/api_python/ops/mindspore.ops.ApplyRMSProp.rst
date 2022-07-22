@@ -24,30 +24,26 @@ mindspore.ops.ApplyRMSProp
     .. warning::
         在该算法的稠密实现版本中，"mean_square"和"momemt"即使"grad"为零将仍被更新。但在该稀疏实现版本中，在"grad"为零的迭代"mean_squre"和"moment"将不被更新。
 
-    **参数：**
+    参数：
+        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值: False。
 
-    - **use_locking** (bool) - 是否对参数更新加锁保护。默认值: False。
+    输入：
+        - **var** (Tensor) - 待更新的网络参数。
+        - **mean_square** (Tensor) - 均方梯度，数据类型需与 `var` 相同。
+        - **moment** (Tensor) - 一阶矩，数据类型需与 `var` 相同。
+        - **learning_rate** (Union[Number, Tensor]) - 学习率。需为浮点数或者数据类型为float16或float32的标量矩阵。
+        - **grad** (Tensor) - 梯度，数据类型需与 `var` 相同。
+        - **decay** (float) - 衰减率。需为常量。
+        - **momentum** (float) - 移动平均的动量项momentum。需为常量。
+        - **epsilon** (float) - 避免除数为零的平滑项。需为常量。
 
-    **输入：**
+    输出：
+        Tensor，待更新的网络参数。
 
-    - **var** (Tensor) - 待更新的网络参数。
-    - **mean_square** (Tensor) - 均方梯度，数据类型需与 `var` 相同。
-    - **moment** (Tensor) - 一阶矩，数据类型需与 `var` 相同。
-    - **learning_rate** (Union[Number, Tensor]) - 学习率。需为浮点数或者数据类型为float16或float32的标量矩阵。
-    - **grad** (Tensor) - 梯度，数据类型需与 `var` 相同。
-    - **decay** (float) - 衰减率。需为常量。
-    - **momentum** (float) - 移动平均的动量项momentum。需为常量。
-    - **epsilon** (float) - 避免除数为零的平滑项。需为常量。
-
-    **输出：**
-
-    Tensor，待更新的网络参数。
-
-    **异常：**
-
-    - **TypeError** - `use_locking` 不是bool类型。
-    - **TypeError** - `var` 、 `mean_square` 、 `moment` 或 `decay` 不是Tensor。
-    - **TypeError** - `learning_rate` 不是数值也不是Tensor。
-    - **TypeError** - `decay` 、 `momentum` 或 `epsilon` 的数据类型非float。
-    - **TypeError** - `learning_rate` 的数据类型不是float16或float32。
-    - **ValueError** - `decay` 、 `momentum` 或 `epsilon` 不是常量。
+    异常：
+        - **TypeError** - `use_locking` 不是bool类型。
+        - **TypeError** - `var` 、 `mean_square` 、 `moment` 或 `decay` 不是Tensor。
+        - **TypeError** - `learning_rate` 不是数值也不是Tensor。
+        - **TypeError** - `decay` 、 `momentum` 或 `epsilon` 的数据类型非float。
+        - **TypeError** - `learning_rate` 的数据类型不是float16或float32。
+        - **ValueError** - `decay` 、 `momentum` 或 `epsilon` 不是常量。

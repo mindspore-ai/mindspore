@@ -20,29 +20,26 @@
 
     `var` 、 `m` 、 `v` 和 `grad` 的输入符合隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度的数据类型。
 
-    **输入：**
+    输入：
+        - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。
+        - **m** (Parameter) - 一阶矩，shape和数据类型与 `var` 相同。数据类型为float32或float16。
+        - **v** (Parameter) - 二阶矩。shape和类型与 `var` 相同。数据类型为float32或float16。
+        - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` ，必须是Scalar。数据类型为float32或float16。
+        - **lr** (Union[Number, Tensor]) - 学习率，公式中的 :math:`l` ，必须是Scalar。数据类型为float32或float16。
+        - **beta1** (Union[Number, Tensor]) - 一阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
+        - **beta2** (Union[Number, Tensor]) - 二阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
+        - **epsilon** (Union[Number, Tensor]) - 加在分母上的值，以确保数值稳定，必须是Scalar。数据类型为float32或float16。
+        - **grad** (Tensor) - 为梯度，是一个Tensor，shape和数据类型与 `var` 相同。数据类型为float32或float16。
 
-    - **var** (Parameter) - 待更新的网络参数，为任意维度。数据类型为float32或float16。
-    - **m** (Parameter) - 一阶矩，shape和数据类型与 `var` 相同。数据类型为float32或float16。
-    - **v** (Parameter) - 二阶矩。shape和类型与 `var` 相同。数据类型为float32或float16。
-    - **beta1_power** (Union[Number, Tensor]) - :math:`beta_1^t` ，必须是Scalar。数据类型为float32或float16。
-    - **lr** (Union[Number, Tensor]) - 学习率，公式中的 :math:`l` ，必须是Scalar。数据类型为float32或float16。
-    - **beta1** (Union[Number, Tensor]) - 一阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
-    - **beta2** (Union[Number, Tensor]) - 二阶矩的指数衰减率，必须是Scalar。数据类型为float32或float16。
-    - **epsilon** (Union[Number, Tensor]) - 加在分母上的值，以确保数值稳定，必须是Scalar。数据类型为float32或float16。
-    - **grad** (Tensor) - 为梯度，是一个Tensor，shape和数据类型与 `var` 相同。数据类型为float32或float16。
+    输出：
+        3个Tensor组成的tuple，更新后的数据。
 
-    **输出：**
+        - **var** (Tensor) - shape和数据类型与 `var` 相同。
+        - **m** (Tensor) - shape和数据类型与 `m` 相同。
+        - **v** (Tensor) - shape和数据类型与 `v` 相同。
 
-    3个Tensor组成的tuple，更新后的数据。
-
-    - **var** (Tensor) - shape和数据类型与 `var` 相同。
-    - **m** (Tensor) - shape和数据类型与 `m` 相同。
-    - **v** (Tensor) - shape和数据类型与 `v` 相同。
-
-    **异常：**
-
-    - **TypeError** - 如果 `var` 、 `m` 、 `v` 、 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 、 `epsilon` 或 `grad` 的数据类型既不是float16也不是float32。
-    - **TypeError** - 如果 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 或 `epsilon` 既不是数值型也不是Tensor。
-    - **TypeError** - 如果 `grad` 不是Tensor。
-    - **RuntimeError** - 如果 `var` 、 `m` 、 `v` 和 `grad` 不支持数据类型转换。
+    异常：
+        - **TypeError** - 如果 `var` 、 `m` 、 `v` 、 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 、 `epsilon` 或 `grad` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `beta_power` 、 `lr` 、 `beta1` 、 `beta2` 或 `epsilon` 既不是数值型也不是Tensor。
+        - **TypeError** - 如果 `grad` 不是Tensor。
+        - **RuntimeError** - 如果 `var` 、 `m` 、 `v` 和 `grad` 不支持数据类型转换。
