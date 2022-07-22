@@ -18,7 +18,9 @@
 #include <string>
 #include <memory>
 #include "tools/benchmark/benchmark_unified_api.h"
+#ifndef ENABLE_CLOUD_FUSION_INFERENCE
 #include "tools/benchmark/benchmark_c_api.h"
+#endif
 
 namespace mindspore {
 namespace lite {

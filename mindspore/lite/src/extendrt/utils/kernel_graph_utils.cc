@@ -18,14 +18,21 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "src/extendrt/utils/kernel_graph_utils.h"
 #include "ir/graph_utils.h"
+#include "utils/ms_context.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "include/common/utils/anfalgo.h"
+#include "base/base_ref_utils.h"
 
-namespace mindspore::infer {
+namespace mindspore {
+const size_t max_depth = 128;
+GraphId KernelGraphUtils::graph_sum_ = 0;
 KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_graph,
                                                       std::vector<KernelGraphPtr> *all_out_graph,
-                                                      DeviceType device_target) {
+                                                      mindspore::device::DeviceType device_target) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(all_out_graph);
   auto node_list = TopoSort(func_graph->get_return());
@@ -66,8 +73,7 @@ KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_g
 #ifdef ENABLE_DUMP_IR
       DumpIR("construct_kernel_graph_fail.ir", func_graph);
 #endif
-      MS_LOG(EXCEPTION) << "Construct func graph " << func_graph->ToString() << " failed."
-                        << trace::DumpSourceLines(node);
+      MS_LOG(EXCEPTION) << "Construct func graph " << func_graph->ToString() << " failed.";
     }
   }
 
@@ -84,6 +90,47 @@ KernelGraphPtr KernelGraphUtils::ConstructKernelGraph(const FuncGraphPtr &func_g
 #endif
 
   all_out_graph->push_back(graph);
+  return graph;
+}
+
+KernelGraphPtr KernelGraphUtils::ConstructKernelGraphFromNodeList(const AnfNodePtrList &node_list,
+                                                                  const AnfNodePtrList &outputs,
+                                                                  mindspore::device::DeviceType device_target,
+                                                                  bool common_opt) {
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> other_graph_cnode;
+  auto graph = NewKernelGraph();
+  MS_EXCEPTION_IF_NULL(graph);
+  MS_LOG(INFO) << "Create graph: " << graph->graph_id();
+  for (const auto &node : node_list) {
+    MS_EXCEPTION_IF_NULL(node);
+    MS_LOG(DEBUG) << "Start create new cnode, node = " << node->DebugString();
+    if (!node->isa<CNode>()) {
+      MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " is not CNode";
+    }
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    // create a new cnode object
+    auto new_cnode = CreateNewCNode(cnode, graph, &other_graph_cnode);
+    MS_EXCEPTION_IF_NULL(new_cnode);
+    new_cnode->set_abstract(cnode->abstract());
+    new_cnode->set_scope(cnode->scope());
+    new_cnode->set_parallel(cnode->is_parallel());
+    if (IsPrimitiveCNode(cnode, prim::kPrimLoad)) {
+      new_cnode->set_fullname_with_scope(cnode->input(kFirstDataInputIndex)->fullname_with_scope());
+    }
+    // record map relations between anf from ME and new anf node used in backend
+    graph->FrontBackendMapAdd(node, new_cnode);
+  }
+  graph->set_device_target(device_target);
+  // add a make_tuple at the end of graph as output
+  // graph->set_output(ConstructOutput(outputs, graph));
+  FuncGraphManagerPtr manager = MakeManager({graph});
+  if (manager) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
+  graph->SetExecOrderByDefault();
+
   return graph;
 }
 
@@ -210,7 +257,8 @@ void KernelGraphUtils::InitInternalOutputParameter(const AnfNodePtr &out_node, c
     return;
   }
   MS_LOG(INFO) << "Init parameter with pre graph output node: " << out_node->DebugString();
-  auto ref_node = node_graph->GetInternalOutputByFrontNode(out_node);
+  auto ref_node_with_index = node_graph->GetInternalOutputByFrontNode(out_node);
+  auto ref_node = ref_node_with_index.first;
   if (ref_node == nullptr) {
     MS_LOG(INFO) << "No corresponding internal output for output node";
     return;
@@ -792,9 +840,6 @@ CNodePtr KernelGraphUtils::CreateSwitchInput(const CNodePtr &cnode, const AnfNod
 void KernelGraphUtils::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph,
                                           const std::vector<AnfNodePtr> &real_inputs) {
   MS_EXCEPTION_IF_NULL(cnode);
-  // func1 =switch(branch1, branch2)
-  // func2 = func1(param1)
-  // out = func2(param2)
   // process the last cnode(func2), not func1 which abstract is AbstractFunction
   if (cnode->abstract()->isa<abstract::AbstractFunction>()) {
     return;
@@ -844,6 +889,146 @@ void KernelGraphUtils::ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *gr
   auto call_node = graph->NewCNode(call_inputs);
   call_node->set_abstract(cnode->abstract());
   // update return input
-  ret->set_input(kFirstDataInputIndex, call_node);
+  ret->
+
+    set_input(kFirstDataInputIndex, call_node);
 }
-}  // namespace mindspore::infer
+
+void KernelGraphUtils::GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs,
+                                          std::vector<std::string> *inputs_name) const {
+  MS_LOG(INFO) << "Start get model inputs, graph id : " << graph_id;
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(inputs);
+  MS_EXCEPTION_IF_NULL(inputs_name);
+  auto kernel_graph_inputs = kernel_graph->inputs();
+  // find parameters of graph inputs
+  for (size_t i = 0; i < kernel_graph_inputs.size(); ++i) {
+    if (!kernel_graph_inputs[i]->isa<Parameter>()) {
+      MS_LOG(ERROR) << "Kernel graph inputs have anfnode which is not Parameter.";
+      continue;
+    }
+    auto parameter = kernel_graph_inputs[i]->cast<ParameterPtr>();
+    if (!common::AnfAlgo::IsParameterWeight(parameter)) {
+      std::vector<int64_t> input_shape = AnfAlgo::GetOutputDeviceShape(parameter, 0);
+      auto kernel_build_info = AnfAlgo::GetSelectKernelBuildInfo(parameter);
+      auto data_type = kernel_build_info->GetOutputDeviceType(0);
+      auto ms_tensor = std::make_shared<tensor::Tensor>(data_type, input_shape);
+      inputs->push_back(ms_tensor);
+      inputs_name->push_back(parameter->name());
+    }
+  }
+}
+
+void KernelGraphUtils::GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
+                                           std::vector<std::string> *output_names) const {
+  std::vector<tensor::TensorPtr> inputs;
+  std::vector<std::string> input_names;
+  GetModelInputsInfo(graph_id, &inputs, &input_names);
+
+  auto kernel_graph = GetGraph(graph_id);
+  MS_EXCEPTION_IF_NULL(kernel_graph);
+  MS_EXCEPTION_IF_NULL(outputs);
+  MS_EXCEPTION_IF_NULL(output_names);
+
+  VectorRef vector_outputs;
+  std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
+  session::KernelMapTensor node_to_tensor;
+  auto anf_outputs = kernel_graph->outputs();
+  for (auto &item : anf_outputs) {
+    MS_EXCEPTION_IF_NULL(item);
+    MS_LOG(INFO) << "Create node output[" << item->DebugString() << "]";
+    vector_outputs.emplace_back(CreateNodeOutputTensors(item, kernel_graph, inputs, &tensor_to_node, &node_to_tensor));
+  }
+  *outputs = TransformVectorRefToMultiTensor(vector_outputs);
+  for (size_t i = 0; i < outputs->size(); i++) {
+    output_names->push_back("output" + std::to_string(i));
+  }
+}
+
+CNodePtr KernelGraphUtils::CreateNewCNode(const CNodePtr &cnode, KernelGraphPtr graph,
+                                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode) {
+  return nullptr;
+}
+
+mindspore::BaseRef KernelGraphUtils::CreateNodeOutputTensors(
+  const mindspore::AnfNodePtr &anf, const mindspore::KernelGraphPtr &graph,
+  const mindspore::tensor::TensorPtrList &input_tensors,
+  std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+  mindspore::session::KernelMapTensor *node_to_tensor) const {
+  MS_EXCEPTION_IF_NULL(tensor_to_node);
+  MS_EXCEPTION_IF_NULL(node_to_tensor);
+  MS_LOG(DEBUG) << "Create tensor for output[" << anf->DebugString() << "]";
+  auto item_with_index = common::AnfAlgo::VisitKernelWithReturnType(anf, 0);
+  MS_EXCEPTION_IF_NULL(item_with_index.first);
+  MS_LOG(DEBUG) << "Create tensor for output after visit:" << item_with_index.first->DebugString();
+
+  // if is graph return nothing ,the function should return a null anylist
+  size_t size = common::AnfAlgo::GetOutputTensorNum(item_with_index.first);
+  if (size == 0) {
+    return VectorRef();
+  }
+
+  //  The outputs of graph may have the same kernel node, no need to create new tensor.
+  const auto &iter = node_to_tensor->find(item_with_index);
+  if (iter != node_to_tensor->end()) {
+    return iter->second;
+  }
+
+  const auto &tensor = CreateNodeOutputTensor(item_with_index, graph, input_tensors, tensor_to_node);
+  (*node_to_tensor)[item_with_index] = tensor;
+  return tensor;
+}
+
+BaseRef KernelGraphUtils::CreateNodeOutputTensor(
+  const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
+  const std::vector<tensor::TensorPtr> &input_tensors,
+  std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const {
+  auto &node = node_output_pair.first;
+  size_t output_index = node_output_pair.second;
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(graph);
+  TypeId type_id = AnfAlgo::GetOutputDeviceDataType(node, output_index);
+  if (type_id == kTypeUnknown) {
+    type_id = common::AnfAlgo::GetOutputInferDataType(node, output_index);
+  }
+
+  auto shape = common::AnfAlgo::GetOutputInferShape(node, output_index);
+  if (common::AnfAlgo::IsDynamicShape(node)) {
+    auto max_shape = common::AnfAlgo::GetOutputMaxShape(node, output_index);
+    if (abstract::ShapeSize(max_shape) > abstract::ShapeSize(shape)) {
+      shape = max_shape;
+    }
+  }
+  tensor::TensorPtr tensor;
+  bool is_internal_output = graph->IsInternalOutput(node, output_index);
+  if (is_internal_output) {
+    tensor = graph->GetInternalOutputTensor(node, output_index);
+    if (tensor == nullptr) {
+      tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+      graph->AddInternalOutputTensor(node, output_index, tensor);
+    }
+  } else {
+    tensor = std::make_shared<tensor::Tensor>(type_id, shape);
+  }
+  MS_EXCEPTION_IF_NULL(tensor);
+  tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
+  if (is_internal_output) {
+    tensor->set_sync_status(kNoNeedSync);
+  } else {
+    // if in pynative mode,data only copied to host when user want to print data
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
+        ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
+      tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
+    } else {
+      tensor->set_sync_status(kNeedSyncDeviceToHost);
+    }
+  }
+  tensor->SetIsGraphOutput();
+  (*tensor_to_node)[tensor] = node_output_pair;
+  return tensor;
+  // return BaseRef();
+}
+}  // namespace mindspore

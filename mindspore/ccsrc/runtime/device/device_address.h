@@ -55,6 +55,7 @@ class GPUDeviceContext;
 }  // namespace gpu
 }  // namespace device
 class SingleOpInferSession;
+class RuntimeUtils;
 }  // namespace mindspore
 
 namespace mindspore {
@@ -207,6 +208,7 @@ class DeviceAddress : public mindspore::DeviceSync {
 #endif
   friend class mindspore::device::Bucket;
   friend class mindspore::SingleOpInferSession;
+  friend class mindspore::RuntimeUtils;
 };
 
 using DeviceAddressPtr = std::shared_ptr<DeviceAddress>;

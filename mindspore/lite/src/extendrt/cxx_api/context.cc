@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/cxx_api/context.h"
+#include "src/extendrt/cxx_api/context.h"
 #include <string>
 #include <memory>
 #include "include/api/types.h"
@@ -48,6 +48,34 @@ constexpr auto KModelOptionAscendFusionSwitchCfgPath = "mindspore.option.ascend.
 constexpr auto kModelOptionAscendDynamicBatchSize = "mindspore.option.ascend.dynamic_batch_size";
 constexpr auto kModelOptionAscendDynamicImageSize = "mindspore.option.ascend.dynamic_image_size";
 constexpr auto kModelOptionAscendBufferOptimize = "mindspore.option.ascend.buffer_optimize";
+constexpr auto kModelOptionGPUPrecisionMode = "mindspore.option.gpu.precision_mode";
+constexpr auto kModelOptionAscend910DeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionAscend310DeviceID = kModelOptionDeviceID;
+constexpr auto kModelOptionAscend310InsertOpCfgPath = "mindspore.option.ascend310.insert_op_config_file_path";
+constexpr auto kModelOptionAscend310InputFormat = "mindspore.option.ascend310.input_format";
+constexpr auto kModelOptionAscend310InputShapeMap = "mindspore.option.ascend310.input_shape_map";
+constexpr auto kModelOptionAscend310InputShape = "mindspore.option.ascend310.input_shape";
+constexpr auto kModelOptionAscend310OutputType = "mindspore.option.ascend310.output_type";
+constexpr auto kModelOptionAscend310PrecisionMode = "mindspore.option.ascend310.precision_mode";
+constexpr auto kModelOptionAscend310OpSelectImplMode = "mindspore.option.ascend310.op_select_impl_mode";
+constexpr auto KModelOptionAscend310FusionSwitchCfgPath = "mindspore.option.ascend310.fusion_switch_config_file_path";
+constexpr auto kModelOptionAscend310DynamicBatchSize = "mindspore.option.ascend310.dynamic_batch_size";
+constexpr auto kModelOptionAscend310BufferOptimize = "mindspore.option.ascend310.buffer_optimize";
+
+// class Allocator {};
+
+// struct Context::Data {
+//   std::vector<std::shared_ptr<DeviceInfoContext>> device_info_list;
+//   int32_t thread_num;
+//   bool enable_parallel_ = false;
+//   std::vector<int32_t> affinity_core_list_;
+//   int affinity_mode_ = 2;
+//   std::shared_ptr<Delegate> delegate = nullptr;
+// };
+
+// struct DeviceInfoContext::Data {
+//   std::map<std::string, std::any> params;
+// };
 
 Context::Context() : data_(std::make_shared<Data>()) {}
 
@@ -376,6 +404,7 @@ int GPUDeviceInfo::GetGroupSize() const {
 void GPUDeviceInfo::SetPrecisionMode(const std::vector<char> &precision_mode) {
   MS_LOG(ERROR) << "Unsupported Feature.";
 }
+
 std::vector<char> GPUDeviceInfo::GetPrecisionModeChar() const {
   MS_LOG(ERROR) << "Unsupported Feature.";
   std::vector<char> ret;

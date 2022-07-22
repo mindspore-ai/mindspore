@@ -20,12 +20,15 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <map>
+#include <string>
 
 #include "backend/common/session/kernel_graph.h"
 
-namespace mindspore::infer {
+namespace mindspore {
 using GraphId = uint32_t;
-class KernelGraphUtils {
+using KernelGraph = mindspore::session::KernelGraph;
+class KernelGraphUtils : public std::enable_shared_from_this<KernelGraphUtils> {
  public:
   KernelGraphUtils() = default;
   virtual ~KernelGraphUtils() = default;
@@ -36,7 +39,17 @@ class KernelGraphUtils {
   }
 
   KernelGraphPtr ConstructKernelGraph(const FuncGraphPtr &func_graph, std::vector<KernelGraphPtr> *all_out_graph,
-                                      DeviceType device_target);
+                                      mindspore::device::DeviceType device_target);
+  KernelGraphPtr ConstructKernelGraphFromNodeList(
+    const AnfNodePtrList &node_list, const AnfNodePtrList &outputs,
+    mindspore::device::DeviceType device_target = mindspore::device::DeviceType::kUnknown, bool common_opt = true);
+
+  void GetModelInputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *inputs,
+                          std::vector<std::string> *inputs_name) const;
+  void GetModelOutputsInfo(uint32_t graph_id, std::vector<tensor::TensorPtr> *outputs,
+                           std::vector<std::string> *output_names) const;
+
+ private:
   KernelGraphPtr NewKernelGraph();
   ParameterPtr CreateNewParameter(const AnfNodePtr &anf, KernelGraph *graph);
   ValueNodePtr CreateNewValueNode(const AnfNodePtr &anf, KernelGraph *graph);
@@ -64,14 +77,29 @@ class KernelGraphUtils {
   CNodePtr CreateSwitchInput(const CNodePtr &cnode, const AnfNodePtr &node_input, KernelGraph *graph);
   void ProcessNodeRetFunc(const CNodePtr &cnode, KernelGraph *graph, const std::vector<AnfNodePtr> &real_inputs);
 
+  CNodePtr CreateNewCNode(const CNodePtr &cnode, KernelGraphPtr graph,
+                          mindspore::HashMap<AnfNodePtr, AnfNodePtr> *other_graph_cnode);
+  mindspore::BaseRef CreateNodeOutputTensors(const mindspore::AnfNodePtr &anf, const mindspore::KernelGraphPtr &graph,
+                                             const mindspore::tensor::TensorPtrList &input_tensors,
+                                             std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node,
+                                             mindspore::session::KernelMapTensor *node_to_tensor) const;
+  mindspore::BaseRef CreateNodeOutputTensor(
+    const session::KernelWithIndex &node_output_pair, const KernelGraphPtr &graph,
+    const std::vector<tensor::TensorPtr> &input_tensors,
+    std::map<tensor::TensorPtr, session::KernelWithIndex> *tensor_to_node) const;
+
 #ifndef ENABLE_SECURITY
-  static bool KernelGraphUtils::ExistSummaryNode(const KernelGraph *graph);
+  static bool ExistSummaryNode(const KernelGraph *graph);
 #endif
 
  private:
   mindspore::HashMap<FuncGraph *, KernelGraphPtr> front_backend_graph_map_;
   static GraphId graph_sum_;
+  mindspore::HashMap<GraphId, std::shared_ptr<KernelGraph>> graphs_;
+  mindspore::HashMap<AnfNodePtr, ParameterPtr> default_param_map_;
+  mindspore::HashMap<AnfNodePtr, AnfNodePtr> partial_parameters_map_;
 };
-}  // namespace mindspore::infer
+using KernelGraphUtilsPtr = std::shared_ptr<KernelGraphUtils>;
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_SRC_EXTENDRT_UTILS_KERNEL_GRAPH_UTILS_H_

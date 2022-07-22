@@ -26,12 +26,14 @@
 #include "include/common/utils/utils.h"
 #include "ir/func_graph.h"
 #include "backend/graph_compiler/graph_partition.h"
+#include "extendrt/session/type.h"
 
 namespace mindspore {
 class InferSession : public std::enable_shared_from_this<InferSession> {
  public:
   virtual ~InferSession() = default;
   static std::shared_ptr<InferSession> CreateSession(const std::shared_ptr<Context> context);
+  static SessionConfig SelectSessionArg(const std::shared_ptr<Context> context);
   virtual Status Init(const std::shared_ptr<Context> context) = 0;
   virtual Status CompileGraph(FuncGraphPtr graph) = 0;
   virtual Status RunGraph() = 0;

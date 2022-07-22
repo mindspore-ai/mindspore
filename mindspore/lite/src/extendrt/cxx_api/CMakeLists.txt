@@ -62,3 +62,4 @@ if(ENABLE_D)
 endif()
 
 add_library(mindspore_infer_shared_lib_obj OBJECT ${MSLIB_INFER_SRC})
+add_dependencies(mindspore_infer_shared_lib_obj fbs_inner_src)

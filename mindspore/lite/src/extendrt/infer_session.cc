@@ -18,9 +18,15 @@
 #include "extendrt/single_op_session.h"
 #include "plugin/factory/ms_factory.h"
 #include "kernel/common_utils.h"
-#include "backend/common/session/session_basic.h"
+// #include "backend/common/session/session_basic.h"
 #include "backend/graph_compiler/graph_partition.h"
 #include "plugin/device/cpu/kernel/cpu_kernel_mod.h"
+#include "extendrt/utils/kernel_graph_utils.h"
+#include "include/common/utils/anfalgo.h"
+#include "backend/common/session/anf_runtime_algorithm.h"
+#include "extendrt/delegate/factory.h"
+#include "extendrt/delegate/graph_executor/factory.h"
+#include "extendrt/session/factory.h"
 
 namespace mindspore {
 static const std::vector<PrimitivePtr> ms_infer_cut_list = {prim::kPrimReturn,   prim::kPrimPartial,
@@ -46,60 +52,19 @@ class DefaultInferSession : public InferSession {
   tensor::TensorPtr GetInputByTensorName(const std::string &name) override;
 
  private:
-  session::SessionPtr session_basic_;
+  KernelGraphUtilsPtr kernel_graph_utils_;
   KernelGraphPtr kernel_graph_;
   std::vector<KernelGraphPtr> kernel_graphs_;
 };
 
 Status DefaultInferSession::Init(const std::shared_ptr<Context> context) {
   MS_LOG(INFO) << "DefaultInferSession::Init";
-  session_basic_ = std::make_shared<session::SessionBasic>();
+  kernel_graph_utils_ = std::make_shared<mindspore::KernelGraphUtils>();
   partition_ = std::make_shared<compile::GraphPartition>(ms_infer_cut_list, "ms");
   return kSuccess;
 }
 Status DefaultInferSession::CompileGraph(FuncGraphPtr graph) {
   MS_LOG(INFO) << "DefaultInferSession::CompileGraph";
-
-  bool contain_multi_target = false;
-  const auto &segments = partition_->Partition(graph, &contain_multi_target);
-
-  for (auto &segment : segments) {
-    FuncGraphPtr fg;
-    AnfNodePtrList inputs;
-    AnfNodePtrList outputs;
-    auto kernel_seg_graph =
-      session_basic_->ConstructKernelGraph(segment->nodes_, outputs, mindspore::device::DeviceType::kCPU);
-    auto kernel_nodes = kernel_seg_graph->execution_order();
-
-    MS_LOG(INFO) << "DefaultInferSession::CompileGraph Dump Kernels";
-    for (const auto &kernel_node : kernel_nodes) {
-      std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-      std::shared_ptr<kernel::CpuKernelMod> cpu_kernel_mod =
-        kernel::Factory<kernel::CpuKernelMod>::Instance().Create(kernel_name);
-      MS_LOG(INFO) << "DefaultInferSession::CompileGraph kernels " << kernel_name;
-    }
-
-    kernel_graphs_.push_back(kernel_seg_graph);
-  }
-  // std::vector<KernelGraphPtr> all_out_graph;
-  // kernel_graph_ = session_basic_->ConstructKernelGraph(graph, &all_out_graph, mindspore::device::DeviceType::kCPU);
-
-  // auto &kernel_nodes = kernel_graph_->execution_order();
-  // for (const auto &kernel_node : kernel_nodes) {
-  //   std::string kernel_name = common::AnfAlgo::GetCNodeName(kernel_node);
-  //   std::shared_ptr<kernel::CpuKernelMod> cpu_kernel_mod =
-  //     kernel::Factory<kernel::CpuKernelMod>::Instance().Create(kernel_name);
-  //   auto args = kernel::AbstractArgsFromCNode(kernel_node);
-  //   auto ret = cpu_kernel_mod->Init(args.op, args.inputs, args.outputs);
-  //   if (!ret) {
-  //     MS_LOG(EXCEPTION) << "kernel init failed " << kernel_name;
-  //   }
-  //   if (cpu_kernel_mod->Resize(args.op, args.inputs, args.outputs, kernel::GetKernelDepends(kernel_node)) ==
-  //       kernel::KRET_RESIZE_FAILED) {
-  //     MS_LOG(EXCEPTION) << "CPU kernel op [" << kernel_node->fullname_with_scope() << "] Resize failed.";
-  //   }
-  //   AnfAlgo::SetKernelMod(cpu_kernel_mod, kernel_node.get());
-  // }
   return kSuccess;
 }
 
@@ -119,9 +84,45 @@ std::vector<std::string> DefaultInferSession::GetInputNames() { return std::vect
 tensor::TensorPtr DefaultInferSession::GetOutputByTensorName(const std::string &tensorName) { return nullptr; }
 tensor::TensorPtr DefaultInferSession::GetInputByTensorName(const std::string &name) { return nullptr; }
 std::shared_ptr<InferSession> InferSession::CreateSession(const std::shared_ptr<Context> context) {
-  if (is_infer_single_op) {
-    return std::make_shared<SingleOpInferSession>();
+  auto config = SelectSessionArg(context);
+  return SessionRegistry::GetInstance()->GetSession(config.type_, config);
+}
+
+SessionConfig InferSession::SelectSessionArg(const std::shared_ptr<Context> context) {
+  SessionConfig config;
+  if (context != nullptr) {
+    if (context->GetDelegate() != nullptr) {
+      config.delegates_.emplace_back(context->GetDelegate());
+    }
+    auto &device_contexts = context->MutableDeviceInfo();
+    for (auto device_context : device_contexts) {
+      // delegate init
+      MS_EXCEPTION_IF_NULL(device_context);
+      // get graph executor delegate
+      auto delegate = mindspore::DelegateRegistry::GetInstance()->GetDelegate(device_context->GetDeviceType(),
+                                                                              device_context->GetProvider());
+      if (delegate == nullptr) {
+        continue;
+      }
+      config.delegates_.emplace_back(delegate);
+    }
   }
+
+  if (!config.delegates_.empty()) {
+    // create delegate session object
+    config.type_ = kDelegateSession;
+    return config;
+  }
+  if (is_infer_single_op) {
+    config.type_ = kSingleOpSession;
+    return config;
+  }
+  config.type_ = kDefaultSession;
+  return config;
+}
+
+static std::shared_ptr<InferSession> DefaultSessionCreator(const SessionConfig &config) {
   return std::make_shared<DefaultInferSession>();
 }
+REG_SESSION(kDefaultSession, DefaultSessionCreator);
 }  // namespace mindspore
