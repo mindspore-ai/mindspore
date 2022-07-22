@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include "tools/converter/quantizer/quantize_util.h"
+#include "tools/converter/graphdef_transform.h"
 #include "nnacl/op_base.h"
 #include "tools/common/statistic_utils.h"
 #include "src/tensor.h"

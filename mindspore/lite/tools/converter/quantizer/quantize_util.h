@@ -48,7 +48,6 @@
 #include "tools/converter/quantizer/quant_params.h"
 #include "tools/converter/quantizer/mixed_bit_weight_quantizer.h"
 #include "src/runtime/lite_session.h"
-#include "tools/converter/graphdef_transform.h"
 #include "src/common/file_utils.h"
 #include "src/common/quant_utils.h"
 #include "include/api/model.h"
@@ -71,7 +70,7 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
 bool TensorQuantParamsInited(const schema::TensorT &tensor);
 
 int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                        const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                        const PrimitivePtr &primitive, schema::QuantType quant_type, WeightQuantType weight_quant_type,
                         TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetric);
 
 int CalChannels(const std::vector<int> &dims, int channel_cnt, bool *channel_at_first);
@@ -104,7 +103,7 @@ int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<min
 
 template <typename T>
 int FixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                        const PrimitivePtr &primitive, QuantType quant_type, int quant_max, int quant_min,
+                        const PrimitivePtr &primitive, schema::QuantType quant_type, int quant_max, int quant_min,
                         size_t bit_num, WeightQuantType weight_quant_type, TypeId quant_data_type, int index,
                         int preferred_dim, bool symmetric = false, bool narrow_range = false) {
   MS_ASSERT(weight != nullptr);

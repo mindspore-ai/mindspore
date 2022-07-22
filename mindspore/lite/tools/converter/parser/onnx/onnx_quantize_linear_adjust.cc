@@ -24,6 +24,7 @@
 #include "tools/converter/ops/ops_def.h"
 #include "src/common/utils.h"
 #include "nnacl/op_base.h"
+#include "tools/converter/quantizer/quantize_util.h"
 
 namespace mindspore::lite {
 void OnnxQuantizeLinearAdjust::RemoveDequantizeLinear(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
@@ -109,14 +110,13 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
     MS_CHECK_TRUE_RET(manager != nullptr, false);
     auto node_users = manager->node_users()[cnode];
     for (auto &node_user : node_users) {
-      auto next_primitive = GetValueNode<PrimitivePtr>(node_user.first->cast<CNodePtr>()->input(0));
-      auto next_quant_holder = GetCNodeQuantHolder(next_primitive);
+      auto next_quant_holder = quant::GetCNodeQuantHolder(node_user.first->cast<CNodePtr>());
       auto ret = SetInputQuantParam(cnode, next_quant_holder, (node_user.second - kPrimOffset));
       if (!ret) {
         MS_LOG(ERROR) << "Set quant param failed.";
         return false;
       }
-      manager->SetEdge(node_user.first, node_user.second, cnode->inputs()[1]);
+      manager->SetEdge(node_user.first, node_user.second, cnode->inputs()[kIndex1]);
     }
   }
 
@@ -124,7 +124,7 @@ bool OnnxQuantizeLinearAdjust::Adjust(const FuncGraphPtr &func_graph) {
   for (auto &cnode : func_graph->GetOrderedCnodes()) {
     MS_LOG(DEBUG) << "check cnode name: " << cnode->fullname_with_scope();
     auto primitive = GetValueNode<PrimitivePtr>(cnode->input(0));
-    auto primitive_quant_holder = GetCNodeQuantHolder(primitive);
+    auto primitive_quant_holder = quant::GetCNodeQuantHolder(primitive);
     auto input_quant_params = primitive_quant_holder->get_input_quant_params();
     for (size_t i = 0; i < input_quant_params.size(); i++) {
       auto quant_params = input_quant_params.at(i);

@@ -213,7 +213,7 @@ int AnfExporter::CreateNewTensorForParameter(const std::unique_ptr<schema::MetaG
   schema_tensor->dataType = data_info.data_type_;
   schema_tensor->data = data_info.data_;
   schema_tensor->enableHuffmanCode = data_info.enable_huffman_code_;
-  schema_tensor->weightQuantCompressType = static_cast<WeightQuantCompressType>(data_info.compress_type_);
+  schema_tensor->weightQuantCompressType = static_cast<schema::WeightQuantCompressType>(data_info.compress_type_);
   schema_tensor->nodeType = NodeType_CNode;
   auto key = std::make_pair(input, 0);
   node_id_map_[key] = static_cast<int>(meta_graphT->allTensors.size());

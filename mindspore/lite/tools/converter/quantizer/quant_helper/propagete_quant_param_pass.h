@@ -26,6 +26,7 @@
 #include "schema/inner/model_generated.h"
 #include "base/base.h"
 #include "ir/anf.h"
+#include "ir/func_graph.h"
 #include "tools/converter/quantizer/quant_param_holder.h"
 
 namespace mindspore::lite::quant {

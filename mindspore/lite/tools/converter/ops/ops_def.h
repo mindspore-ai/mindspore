@@ -46,6 +46,7 @@ ADD_CONVERTER_ONLY_OP(Merge);
 ADD_CONVERTER_ONLY_OP(Einsum);
 ADD_CONVERTER_ONLY_OP(QuantizeLinear);
 ADD_CONVERTER_ONLY_OP(DequantizeLinear);
+ADD_CONVERTER_ONLY_OP(FakeQuantWithMinMaxVars);
 }  // namespace lite
 }  // namespace mindspore
 

@@ -59,7 +59,7 @@ class AnfTransform {
 
   static STATUS MarkTrainOp(const FuncGraphPtr &func_graph);
 
-  static STATUS QATTransform(const FuncGraphPtr &func_graph, const std::shared_ptr<ConverterPara> &param);
+  static STATUS QATTransform(const FuncGraphPtr &old_graph, const std::shared_ptr<ConverterPara> &param);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -37,6 +37,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "nnacl/op_base.h"
 #include "ops/op_utils.h"
+#include "tools/converter/graphdef_transform.h"
 
 using std::string;
 using std::vector;
@@ -537,7 +538,7 @@ void CalQuantAssitInfo(const schema::PrimitiveT &primitive, const std::vector<in
 }
 
 int MixedBitQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
-                        const PrimitivePtr &primitive, QuantType quant_type, WeightQuantType weight_quant_type,
+                        const PrimitivePtr &primitive, schema::QuantType quant_type, WeightQuantType weight_quant_type,
                         TypeId quant_data_type, double init_scale, int index, int preferred_dim, bool symmetric) {
   MS_CHECK_TRUE_RET(primitive != nullptr, RET_NULL_PTR);
   MS_CHECK_TRUE_RET(weight != nullptr, RET_NULL_PTR);
