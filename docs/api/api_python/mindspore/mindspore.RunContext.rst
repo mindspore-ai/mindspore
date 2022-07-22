@@ -59,25 +59,22 @@ mindspore.RunContext
     |   net_outputs            |      net_outputs       |       训练或推理的网络输出            |
     +--------------------------+------------------------+---------------------------------------+
 
-    **参数：**
-
-    - **original_args** (dict) - 模型的相关信息。
+    参数：
+        - **original_args** (dict) - 模型的相关信息。
 
     .. py:method:: get_stop_requested()
 
         获取是否停止训练的标志。
 
-        **返回：**
-
-        bool，如果为True，则 `Model.train()` 停止迭代。
+        返回：
+            bool，如果为True，则 `Model.train()` 停止迭代。
 
     .. py:method:: original_args()
 
         获取模型相关信息的对象。
 
-        **返回：**
-
-        dict，含有模型的相关信息的对象。
+        返回：
+            dict，含有模型的相关信息的对象。
 
     .. py:method:: request_stop()
 
