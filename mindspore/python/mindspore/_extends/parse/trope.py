@@ -28,7 +28,7 @@ from operator import (  # noqa
 # support system function call
 from builtins import (  # noqa
     bool, getattr, setattr, len, iter, next, pow, range, map, zip,
-    print, enumerate, isinstance, filter
+    print, enumerate, isinstance, filter, abs
 )
 
 # support functools
@@ -45,8 +45,8 @@ __all__ = ['add', 'sub', 'mul', 'truediv', 'floordiv', 'mod', 'eq', 'ne', 'lt', 
            'not_', 'and_', 'or_', 'xor', 'lshift', 'rshift', 'invert', 'is_', 'is_not', 'contains',
            'matmul', 'getitem', 'setitem',
            'bool', 'getattr', 'setattr', 'len', 'iter', 'next', 'pow', 'range', 'map', 'zip',
-           'partial', 'print', 'enumerate', 'isinstance',
-           'exp', 'log', 'sin', 'cos', 'tan', 'filter']
+           'partial', 'print', 'enumerate', 'isinstance', 'filter', 'abs',
+           'exp', 'log', 'sin', 'cos', 'tan']
 
 
 def MakeTuple(*elts):  # pragma: no cover

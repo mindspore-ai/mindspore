@@ -1656,6 +1656,21 @@ def hasnext(it):
     return it.__ms_hasnext__()
 
 
+@constexpr
+def constant_abs(x):
+    """Returns the absolute value of the constant."""
+    if x is None:
+        raise ValueError("For abs(), the parameter should be a constant or Tensor type.")
+    return abs(x)
+
+
+def ms_abs(x):
+    """Implementation of `abs`."""
+    if isinstance(x, Tensor):
+        return abs_(x)
+    return constant_abs(x)
+
+
 def ms_len(data):
     """Implementation of `len`."""
     return data.__len__()

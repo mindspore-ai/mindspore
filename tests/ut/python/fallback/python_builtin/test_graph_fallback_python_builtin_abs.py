@@ -15,7 +15,6 @@
 """ test graph fallback """
 import math
 import numpy as np
-import pytest
 
 from mindspore import ms_function, context, Tensor, nn
 
@@ -76,10 +75,10 @@ def test_fallback_abs_numpy():
 
     @ms_function
     def foo():
-        x = abs(np.array([1, -2, 3]))
+        x = abs(np.array([1, -2, 3])) + 1
         return Tensor(x)
 
-    assert np.all(foo().asnumpy() == abs(np.array([-1, 2, -3])))
+    assert np.all(foo().asnumpy() == abs(np.array([-1, 2, -3]))) + 1
 
 
 def test_fallback_abs_cell_construct_tensor():
@@ -96,23 +95,6 @@ def test_fallback_abs_cell_construct_tensor():
 
     test_cell = TestCell()
     assert np.all(test_cell().asnumpy() == np.array([1, 2]))
-
-
-@pytest.mark.skip("Not Supported yet not support variable")
-def test_fallback_abs_cell_variable_tensor():
-    """
-    Feature: JIT Fallback
-    Description: Test abs(Tensor) a variable tensor in construct function in graph mode
-    Expectation: No exception
-    """
-
-    class TestCell(nn.Cell):
-        def construct(self, y):
-            x = Tensor([-1, 2])
-            return abs(x + y)
-
-    test_cell = TestCell()
-    assert np.all(test_cell(Tensor([-1, 2])).asnumpy() == np.array([2, 4]))
 
 
 def test_fallback_abs_cell_init_tensor():
