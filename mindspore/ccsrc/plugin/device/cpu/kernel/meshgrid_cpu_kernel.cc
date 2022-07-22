@@ -22,12 +22,37 @@
 
 namespace mindspore {
 namespace kernel {
-std::vector<KernelAttr> MeshgridCpuKernelMod::GetOpSupport() {
-  std::vector<KernelAttr> support_list;
-  (void)std::transform(func_list_.begin(), func_list_.end(), std::back_inserter(support_list),
-                       [](const std::pair<KernelAttr, MeshgridFunc> &pair) { return pair.first; });
-  return support_list;
-}
+namespace {
+const std::vector<KernelAttr> kernel_attr = {
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64)},
+  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128)},
+};
+
+constexpr size_t kInt8Size = 8;
+constexpr size_t kInt16Size = 16;
+constexpr size_t kInt32Size = 32;
+constexpr size_t kInt64Size = 64;
+constexpr size_t kInt128Size = 128;
+const std::map<TypeId, size_t> data_size_map = {
+  {kNumberTypeBool, kInt8Size},       {kNumberTypeUInt8, kInt8Size},        {kNumberTypeUInt16, kInt16Size},
+  {kNumberTypeUInt32, kInt32Size},    {kNumberTypeUInt64, kInt64Size},      {kNumberTypeInt8, kInt8Size},
+  {kNumberTypeInt16, kInt16Size},     {kNumberTypeInt32, kInt32Size},       {kNumberTypeInt64, kInt64Size},
+  {kNumberTypeFloat16, kInt16Size},   {kNumberTypeFloat32, kInt32Size},     {kNumberTypeFloat64, kInt64Size},
+  {kNumberTypeComplex64, kInt64Size}, {kNumberTypeComplex128, kInt128Size},
+};
+}  // namespace
 
 bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
                                 const std::vector<KernelTensorPtr> &outputs) {
@@ -55,15 +80,18 @@ bool MeshgridCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std:
   } else {
     MS_LOG(ERROR) << "For '" << kernel_name_ << "', the value of 'indexing' must be \"xy\" or \"ij\", but get "
                   << indexing;
-  }
-
-  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
-  auto pair = MatchKernelAttr(kernel_attr, GetOpSupport());
-  if (!pair.first) {
-    MS_LOG(ERROR) << "'" << kernel_name_ << "' does not support this kernel data type: " << kernel_attr;
     return false;
   }
-  kernel_func_ = func_list_[pair.second].second;
+
+  auto input_type_id = inputs[0]->GetDtype();
+  if (data_size_map.find(input_type_id) != data_size_map.end()) {
+    data_size_ = data_size_map.at(input_type_id);
+  } else {
+    MS_LOG(ERROR) << "'" << kernel_name_
+                  << "' does not supported data type, the dtype of input must be bool, uint8, uint16, uint32, uint64, "
+                     "int8, int16, int32, int64, float16, float32, float64, complex64, complex128";
+    return false;
+  }
   return true;
 }
 
@@ -128,7 +156,7 @@ bool MeshgridCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   for (size_t i = 0; i < outputs.size(); i++) {
     auto input_index = (i <= 1 && swap_indexing_ == true) ? 1 - i : i;
     shape_info_.input_shape_[input_index] = LongToInt(input_shape_lists_[i]);
-    auto ret = kernel_func_(this, inputs[i], outputs[i]);
+    auto ret = LaunchKernel(inputs[i], outputs[i]);
     if (!ret) {
       MS_LOG(ERROR) << "For '" << kernel_name_ << "', calculate output " << i << " failed.";
       return false;
@@ -138,25 +166,24 @@ bool MeshgridCpuKernelMod::Launch(const std::vector<AddressPtr> &inputs, const s
   return true;
 }
 
-template <typename T>
 bool MeshgridCpuKernelMod::LaunchKernel(const kernel::AddressPtr input, const kernel::AddressPtr output) {
   MS_ERROR_IF_NULL_W_RET_VAL(input->addr, false);
   MS_ERROR_IF_NULL_W_RET_VAL(output->addr, false);
   int status = static_cast<int>(NNACL_OK);
-  switch (sizeof(T)) {
-    case sizeof(int8_t):
+  switch (data_size_) {
+    case kInt8Size:
       status = BroadcastToSize8(input->addr, &shape_info_, output->addr);
       break;
-    case sizeof(int16_t):
+    case kInt16Size:
       status = BroadcastToSize16(input->addr, &shape_info_, output->addr);
       break;
-    case sizeof(int32_t):
+    case kInt32Size:
       status = BroadcastToSize32(input->addr, &shape_info_, output->addr);
       break;
-    case sizeof(int64_t):
+    case kInt64Size:
       status = BroadcastToSize64(input->addr, &shape_info_, output->addr);
       break;
-    case sizeof(__int128_t):
+    case kInt128Size:
       status = BroadcastToSize128(input->addr, &shape_info_, output->addr);
       break;
     default:
@@ -173,36 +200,7 @@ bool MeshgridCpuKernelMod::LaunchKernel(const kernel::AddressPtr input, const ke
   return true;
 }
 
-std::vector<std::pair<KernelAttr, MeshgridCpuKernelMod::MeshgridFunc>> MeshgridCpuKernelMod::func_list_ = {
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-   &MeshgridCpuKernelMod::LaunchKernel<bool>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
-   &MeshgridCpuKernelMod::LaunchKernel<uint8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
-   &MeshgridCpuKernelMod::LaunchKernel<uint16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
-   &MeshgridCpuKernelMod::LaunchKernel<uint32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
-   &MeshgridCpuKernelMod::LaunchKernel<uint64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
-   &MeshgridCpuKernelMod::LaunchKernel<int8_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
-   &MeshgridCpuKernelMod::LaunchKernel<int16_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-   &MeshgridCpuKernelMod::LaunchKernel<int32_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-   &MeshgridCpuKernelMod::LaunchKernel<int64_t>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
-   &MeshgridCpuKernelMod::LaunchKernel<float16>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-   &MeshgridCpuKernelMod::LaunchKernel<float>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
-   &MeshgridCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex64).AddOutputAttr(kNumberTypeComplex64),
-   &MeshgridCpuKernelMod::LaunchKernel<double>},
-  {KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeComplex128).AddOutputAttr(kNumberTypeComplex128),
-   &MeshgridCpuKernelMod::LaunchKernel<__int128_t>},
-};
+std::vector<KernelAttr> MeshgridCpuKernelMod::GetOpSupport() { return kernel_attr; }
 
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, Meshgrid, MeshgridCpuKernelMod);
 }  // namespace kernel
