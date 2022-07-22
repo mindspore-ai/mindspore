@@ -397,7 +397,8 @@ void GraphScheduler::Initialize() {
   ComputeThreadNums(&actor_thread_num, &actor_and_kernel_thread_num);
   auto actor_manager = ActorMgr::GetActorMgrRef();
   MS_EXCEPTION_IF_NULL(actor_manager);
-  auto ret = actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num);
+  size_t actor_queue_size = 81920;
+  auto ret = actor_manager->Initialize(true, actor_thread_num, actor_and_kernel_thread_num, actor_queue_size);
   if (ret != MINDRT_OK) {
     MS_LOG(EXCEPTION) << "Actor manager init failed.";
   }
