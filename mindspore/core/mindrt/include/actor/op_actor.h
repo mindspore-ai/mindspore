@@ -38,7 +38,7 @@ struct DataArrow {
   AID to_op_id_;
   int to_input_index_;
   // Used to indicate the attribute of data arrow.
-  int flag_;
+  size_t flag_;
 };
 using DataArrowPtr = std::shared_ptr<DataArrow>;
 
@@ -47,7 +47,7 @@ struct ControlArrow {
   explicit ControlArrow(const AID &to_op_id) : to_op_id_(to_op_id), flag_{0} {}
   AID to_op_id_;
   // Used to indicate the attribute of control arrow.
-  int flag_;
+  size_t flag_;
 };
 using ControlArrowPtr = std::shared_ptr<ControlArrow>;
 

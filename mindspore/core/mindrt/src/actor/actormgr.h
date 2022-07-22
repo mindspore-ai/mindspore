@@ -53,7 +53,8 @@ class MS_CORE_API ActorMgr {
 
   void Finalize();
   // initialize actor manager resource, do not create inner thread pool by default
-  int Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1);
+  int Initialize(bool use_inner_pool = false, size_t actor_thread_num = 1, size_t max_thread_num = 1,
+                 size_t actor_queue_size = kMaxHqueueSize);
 
   void RemoveActor(const std::string &name);
   ActorReference GetActor(const AID &id);
