@@ -15,26 +15,22 @@ mindspore.nn.AvgPool1d
     .. note::
         pad_mode仅支持"same"和"valid"。
 
-    **参数：**
+    参数：
+        - **kernel_size** (int) - 指定池化核尺寸大小，数据类型为整型。默认值：1。
+        - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值：1。
+        - **pad_mode** (str) - 指定池化的填充方式，可选值为"same"或"valid"，不区分大小写。默认值："valid"。
 
-    - **kernel_size** (int) - 指定池化核尺寸大小，数据类型为整型。默认值：1。
-    - **stride** (int) - 池化操作的移动步长，数据类型为整型。默认值：1。
-    - **pad_mode** (str) - 指定池化的填充方式，可选值为"same"或"valid"，不区分大小写。默认值："valid"。
+          - **same** - 输出的shape与输入整数 `stride` 后的值相同。
+          - **valid** - 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
 
-      - **same** - 输出的shape与输入整数 `stride` 后的值相同。
-      - **valid** - 在不填充的前提下返回有效计算所得的输出。不满足计算的多余像素会被丢弃。
+    输入：
+        - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。
 
-    **输入：**
+    输出：
+        shape为 :math:`(N, C_{out}, L_{out})` 的Tensor。
 
-    - **x** (Tensor) - shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。
-
-    **输出：**
-
-    shape为 :math:`(N, C_{out}, L_{out})` 的Tensor。
-
-    **异常：**
-
-    - **TypeError** - `kernel_size` 或 `stride` 不是int。
-    - **ValueError** - `pad_mode` 既不是"valid"，也不是"same"，不区分大小写。
-    - **ValueError** - `kernel_size` 或 `stride` 小于1。
-    - **ValueError** -  `x` 的shape长度不等于3。
+    异常：
+        - **TypeError** - `kernel_size` 或 `stride` 不是int。
+        - **ValueError** - `pad_mode` 既不是"valid"，也不是"same"，不区分大小写。
+        - **ValueError** - `kernel_size` 或 `stride` 小于1。
+        - **ValueError** -  `x` 的shape长度不等于3。

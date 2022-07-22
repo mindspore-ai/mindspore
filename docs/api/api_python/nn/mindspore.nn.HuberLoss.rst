@@ -27,25 +27,21 @@ mindspore.nn.HuberLoss
             \operatorname{sum}(L),  & \text{if reduction} = \text{"sum".}
         \end{cases}
 
-    **参数：**
+    参数：
+        - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"，或"none"。默认值："mean"。如果 `reduction` 为"mean"或"sum"，则输出一个标量Tensor；如果 `reduction` 为"none"，则输出Tensor的shape为广播后的shape。
+        - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须为正。默认值：1.0。
 
-    - **reduction** (str) - 应用于loss的reduction类型。取值为"mean"，"sum"，或"none"。默认值："mean"。如果 `reduction` 为"mean"或"sum"，则输出一个标量Tensor；如果 `reduction` 为"none"，则输出Tensor的shape为广播后的shape。
-    - **delta** (Union[int, float]) - 两种损失之间变化的阈值。该值必须为正。默认值：1.0。
+    输入：
+        - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
+        - **labels** (Tensor) - 目标值，通常情况下与 `logits` 的shape和dtype相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
 
-    **输入：**
+    输出：
+        Tensor或Scalar，如果 `reduction` 为"none"，返回与 `logits` 具有相同shape和dtype的Tensor。否则，将返回一个Scalar。
 
-    - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
-    - **labels** (Tensor) - 目标值，通常情况下与 `logits` 的shape和dtype相同。但是如果 `logits` 和 `labels` 的shape不同，需要保证他们之间可以互相广播。
-
-    **输出：**
-
-    Tensor或Scalar，如果 `reduction` 为"none"，返回与 `logits` 具有相同shape和dtype的Tensor。否则，将返回一个Scalar。
-
-    **异常：**
-
-    - **TypeError** - `logits` 或 `labels` 的数据类型既不是float16也不是float32。
-    - **TypeError** - `logits` 和 `labels` 的数据类型不同。
-    - **TypeError** - `delta` 不是float或int。
-    - **ValueError** - `delta` 的值小于或等于0。
-    - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
-    - **ValueError** - `logits` 和 `labels` 有不同的shape，且不能互相广播。
+    异常：
+        - **TypeError** - `logits` 或 `labels` 的数据类型既不是float16也不是float32。
+        - **TypeError** - `logits` 和 `labels` 的数据类型不同。
+        - **TypeError** - `delta` 不是float或int。
+        - **ValueError** - `delta` 的值小于或等于0。
+        - **ValueError** - `reduction` 不为"mean"、"sum"或"none"。
+        - **ValueError** - `logits` 和 `labels` 有不同的shape，且不能互相广播。

@@ -14,15 +14,12 @@ mindspore.nn.ImageGradients
         dx[i] = \begin{cases} image[:, i+1]-image[:, i], &if\ 0<=i<w-1 \cr
         0, &if\ i==w-1\end{cases}
 
-    **输入：**
+    输入：
+        - **images** (Tensor) - 输入图像数据，格式为'NCHW'。
 
-    - **images** (Tensor) - 输入图像数据，格式为'NCHW'。
+    输出：
+        - **dy** (Tensor) - 垂直方向的图像梯度，数据类型和shape与输入相同。
+        - **dx** (Tensor) - 水平方向的图像梯度，数据类型和shape与输入相同。
 
-    **输出：**
-
-    - **dy** (Tensor) - 垂直方向的图像梯度，数据类型和shape与输入相同。
-    - **dx** (Tensor) - 水平方向的图像梯度，数据类型和shape与输入相同。
-
-    **异常：**
-
-    - **ValueError** - `images` 的shape长度不等于4。
+    异常：
+        - **ValueError** - `images` 的shape长度不等于4。

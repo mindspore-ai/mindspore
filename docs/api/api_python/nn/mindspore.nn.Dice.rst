@@ -10,9 +10,8 @@ mindspore.nn.Dice
     .. math::
         dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
 
-    **参数：**
-
-    - **smooth** (float) - 在计算过程中添加到分母里，用于提高数值稳定性，取值需大于0。默认值：1e-5。
+    参数：
+        - **smooth** (float) - 在计算过程中添加到分母里，用于提高数值稳定性，取值需大于0。默认值：1e-5。
 
     .. py:method:: clear()
 
@@ -22,23 +21,19 @@ mindspore.nn.Dice
 
         计算Dice系数。
 
-        **返回：**
+        返回：
+            Float，计算的结果。
 
-        Float，计算的结果。
-
-        **异常：**
-
-        - **RuntimeError** - 样本数为0。
+        异常：
+            - **RuntimeError** - 样本数为0。
 
     .. py:method:: update(*inputs)
 
         更新内部评估结果 `y_pred` 和 `y` 。
 
-        **参数：**
+        参数：
+            - **inputs** (tuple) -输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。 `y_pred` 和 `y` 的shape都是 `(N, ...)`。
 
-        - **inputs** (tuple) -输入 `y_pred` 和 `y` 。 `y_pred` 和 `y` 是tensor、列表或numpy.ndarray。 `y_pred` 是预测值， `y` 是真实值。 `y_pred` 和 `y` 的shape都是 `(N, ...)`。
-
-        **异常：**
-
-        - **ValueError** - 输入参数的数量不等于2。
-        - **ValueError** - 如果预测值和标签shape不一致。
+        异常：
+            - **ValueError** - 输入参数的数量不等于2。
+            - **ValueError** - 如果预测值和标签shape不一致。

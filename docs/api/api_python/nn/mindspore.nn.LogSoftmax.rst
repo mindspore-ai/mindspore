@@ -17,20 +17,16 @@ mindspore.nn.LogSoftmax
 
     其中，:math:`x_i` 是输入Tensor的一个元素。
 
-    **参数：**
+    参数：
+        - **axis** (int) - Log Softmax运算的axis，-1表示最后一个维度。默认值：-1。
 
-    - **axis** (int) - Log Softmax运算的axis，-1表示最后一个维度。默认值：-1。
+    输入：
+        - **x** (Tensor) - Log Softmax的输入，数据类型为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor，数据类型和shape与 `x` 相同，输出值的范围在[-inf,0)。
 
-    - **x** (Tensor) - Log Softmax的输入，数据类型为float16或float32。
-
-    **输出：**
-
-    Tensor，数据类型和shape与 `x` 相同，输出值的范围在[-inf,0)。
-
-    **异常：**
-
-    - **TypeError** - `axis` 不是int。
-    - **TypeError** - `x` 的数据类型既不是float16也不是float32。
-    - **ValueError** - `axis` 不在[-len(x), len(x))范围中。
+    异常：
+        - **TypeError** - `axis` 不是int。
+        - **TypeError** - `x` 的数据类型既不是float16也不是float32。
+        - **ValueError** - `axis` 不在[-len(x), len(x))范围中。

@@ -7,18 +7,15 @@ mindspore.nn.FixedLossScaleUpdateCell
 
     该类是 :class:`mindspore.FixedLossScaleManager` 的 `get_update_cell` 方法的返回值。训练过程中，类 :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该Cell。
 
-    **参数：**
+    参数：
+        - **loss_scale_value** (float) - 初始损失缩放系数。
 
-    - **loss_scale_value** (float) - 初始损失缩放系数。
+    输入：
+        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。在当前类中，该值被忽略。
+        - **overflow** (bool) - 是否发生溢出。
 
-    **输入：**
-
-    - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。在当前类中，该值被忽略。
-    - **overflow** (bool) - 是否发生溢出。
-
-    **输出：**
-
-    Bool，即输入 `overflow`。
+    输出：
+        Bool，即输入 `overflow`。
 
     .. py:method:: get_loss_scale()
 

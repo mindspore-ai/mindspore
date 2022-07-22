@@ -12,14 +12,11 @@ mindspore.nn.HSigmoid
 
     其中，:math:`x_i` 是输入Tensor的一个元素。
 
-    **输入：**
+    输入：
+        - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。
 
-    - **input_x** (Tensor) - Hard Sigmoid的输入，任意维度的Tensor。
-          
-    **输出：**
+    输出：
+        Tensor，数据类型和shape与 `input_x` 的相同。
 
-    Tensor，数据类型和shape与 `input_x` 的相同。
-
-    **异常：**
-
-    - **TypeError** - `input_x` 不是tensor。
+    异常：
+        - **TypeError** - `input_x` 不是tensor。

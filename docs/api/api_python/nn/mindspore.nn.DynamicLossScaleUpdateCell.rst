@@ -9,20 +9,17 @@ mindspore.nn.DynamicLossScaleUpdateCell
 
     该类是 :class:`mindspore.DynamicLossScaleManager` 的 `get_update_cell` 方法的返回值。训练过程中，类 :class:`mindspore.nn.TrainOneStepWithLossScaleCell` 会调用该Cell来更新损失缩放系数。
 
-    **参数：**
+    参数：
+        - **loss_scale_value** (float) - 初始的损失缩放系数。
+        - **scale_factor** (int) - 增减系数。
+        - **scale_window** (int) - 未溢出时，增大损失缩放系数的最大连续训练步数。
 
-    - **loss_scale_value** (float) - 初始的损失缩放系数。
-    - **scale_factor** (int) - 增减系数。
-    - **scale_window** (int) - 未溢出时，增大损失缩放系数的最大连续训练步数。
+    输入：
+        - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。
+        - **overflow** (bool) - 是否发生溢出。
 
-    **输入：**
-
-    - **loss_scale** (Tensor) - 训练期间的损失缩放系数，是一个标量。
-    - **overflow** (bool) - 是否发生溢出。
-
-    **输出：**
-
-    Bool，即输入 `overflow` 。
+    输出：
+        Bool，即输入 `overflow` 。
 
     .. py:method:: get_loss_scale()
 
