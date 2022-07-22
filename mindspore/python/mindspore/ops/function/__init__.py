@@ -314,7 +314,6 @@ from .sparse_func import (
     row_tensor_add,
     sparse_add,
     sparse_concat,
-    csr_softmax,
 )
 from .random_func import (
     standard_laplace,

@@ -3381,7 +3381,7 @@ class Tensor(Tensor_):
             tmp = []
             for choice in choicelist:
                 tmp.append(tensor_operator_registry.get('broadcast_to')(shape_choice)(choice))
-            choices = tensor_operator_registry.get('stack')(0)(tmp)
+            choices = tensor_operator_registry.get('stack')(tmp, 0)
 
         if self.ndim == 0 or choices.ndim == 0:
             raise ValueError(f"For 'Tensor.choose', the original tensor and the argument 'choices' cannot be scalars."
@@ -3401,7 +3401,7 @@ class Tensor(Tensor_):
             dim_shape = validator.expanded_shape(ndim, a.shape[i], i)
             dim_grid = tensor_operator_registry.get('broadcast_to')(a.shape)(dim_grid.reshape(dim_shape))
             grids.append(dim_grid)
-        grid = tensor_operator_registry.get('stack')(-1)(grids)
+        grid = tensor_operator_registry.get('stack')(grids, -1)
         indices = tensor_operator_registry.get('concatenate')(-1)((a.reshape(a.shape + (1,)), grid))
         return tensor_operator_registry.get('gather_nd')(choices, indices).astype(dtype)
 
@@ -5165,7 +5165,7 @@ class CSRTensor(CSRTensor_):
         if self.ndim != 2:
             raise ValueError("Currently only support 2-D CSRTensor when converting to COOTensor.")
         row_indices = tensor_operator_registry.get("csr2coo")(self.indptr, self.values.shape[0])
-        coo_indices = tensor_operator_registry.get("stack")(1)((row_indices, self.indices))
+        coo_indices = tensor_operator_registry.get("stack")((row_indices, self.indices), 1)
         return COOTensor(coo_indices, self.values, self.shape)
 
     def to_dense(self):
@@ -5315,42 +5315,6 @@ class CSRTensor(CSRTensor_):
         """
         data = self.values.abs()
         return CSRTensor(self.indptr, self.indices, data, self.shape)
-
-    def softmax(self, dtype):
-        """
-        Calculates the softmax of a CSRTensorMatrix.
-
-        Args:
-            logits (CSRTensor): Sparse CSR Tensor.
-            dtype (dtype): Data type.
-
-        Returns:
-            CSRTensor. a csr_tensor containing:
-            indptr: indicates the start and end point for `values` in each row.
-            indices: the column positions of all non-zero values of the input.
-            values: the non-zero values of the dense tensor.
-            shape: the shape of the csr_tensor.
-
-        Supported Platforms:
-            ``GPU`` ``CPU``
-
-        Examples:
-            >>> from mindspore.common import dtype as mstype
-            >>> from mindspore import Tensor, CSRTensor
-            >>> from mindspore.ops.functional import sparse_matrix_softmax
-            >>> logits_indptr = Tensor([0, 1, 2], dtype=mstype.int32)
-            >>> logits_indices = Tensor([0, 1], dtype=mstype.int32)
-            >>> logits_values = Tensor([1, 2], dtype=mstype.float32)
-            >>> shape = (2, 6)
-            >>> logits = CSRTensor(logits_indptr, logits_indices, logits_values, shape)
-            >>> out = logits.sparse_matrix_softmax(dtype)
-            >>> print(out)
-            CSRTensor(shape=[2,6], dtype=Float32,
-                      indptr=Tensor(shape=[3], dtype=Int64, value = [0, 1, 2]),
-                      indices=Tensor(shape=[2], dtype=Int64, value = [0, 1]),
-                      values=Tensor(shape=[2], dtype=Float32, value = [2.0, 4.0]))
-        """
-        return tensor_operator_registry.get("sparse_matrix_softmax")(self, dtype)
 
 
 def _vm_compare(*args):
