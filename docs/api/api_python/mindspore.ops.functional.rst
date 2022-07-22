@@ -208,6 +208,7 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.logsumexp
+    mindspore.ops.max
     mindspore.ops.norm
 
 .. list-table::
