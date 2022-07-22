@@ -510,9 +510,10 @@ void Debugger::DumpParamsAndConstAndHistory() {
       DumpConstantDataAscend(graph);
     }
   }
-  for (auto kernel_graph : executed_graph_ptr_set_) {
+  for (auto kernel_graph = executed_graph_ptr_set_.cbegin(); kernel_graph != executed_graph_ptr_set_.cend();
+       kernel_graph++) {
     // Dump graph run hisotry for each graph.
-    E2eDump::DumpRunIter(kernel_graph, GetRankID());
+    E2eDump::DumpRunIter(*kernel_graph, GetRankID());
   }
   if (!cur_root_graph_checked) {
     visited_root_graph_ids_.push_back(cur_root_graph_id_);
@@ -1077,17 +1078,17 @@ void Debugger::ViewValueLevel(const EventReply &reply) {
   MS_LOG(INFO) << "Sending tensors";
   std::list<TensorProto> tensors = LoadTensors(GetTensors(reply));
   // print view cmd reply
-  for (auto tensor : tensors) {
-    MS_LOG(INFO) << "tensor node name: " << tensor.node_name();
-    MS_LOG(INFO) << "tensor slot: " << tensor.slot();
-    MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor.finished() << std::noboolalpha;
-    MS_LOG(INFO) << "tensor iter: " << tensor.iter();
-    MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor.truncate() << std::noboolalpha;
+  for (auto tensor = tensors.cbegin(); tensor != tensors.cend(); tensor++) {
+    MS_LOG(INFO) << "tensor node name: " << tensor->node_name();
+    MS_LOG(INFO) << "tensor slot: " << tensor->slot();
+    MS_LOG(INFO) << "tensor finished: " << std::boolalpha << tensor->finished() << std::noboolalpha;
+    MS_LOG(INFO) << "tensor iter: " << tensor->iter();
+    MS_LOG(INFO) << "tensor truncate: " << std::boolalpha << tensor->truncate() << std::noboolalpha;
     MS_LOG(INFO) << "tensor dims: ";
-    for (auto dim : tensor.dims()) {
-      MS_LOG(INFO) << dim << ",";
+    for (auto dim = tensor->dims().cbegin(); dim != tensor->dims().cend(); dim++) {
+      MS_LOG(INFO) << *dim << ",";
     }
-    MS_LOG(INFO) << "tensor dtype: " << tensor.data_type();
+    MS_LOG(INFO) << "tensor dtype: " << tensor->data_type();
   }
   MS_EXCEPTION_IF_NULL(grpc_client_);
   EventReply send_tensors_reply = grpc_client_->SendTensors(tensors);
@@ -1490,7 +1491,7 @@ bool Debugger::CheckPort(const std::string &port) const {
   if (port[0] == '0' && port[1] != '\0') {
     return false;
   }
-  int i = 0;
+  size_t i = 0;
   while (port[i] != '\0') {
     if (port[i] < '0' || port[i] > '9') {
       return false;
@@ -1795,8 +1796,9 @@ bool Debugger::TensorExistsInCurrent(const std::string &tensor_name) {
  * for Ascend a + m dump. If not found, create a new one for it and add to dump_data_construct_map_.
  */
 std::shared_ptr<DumpDataBuilder> Debugger::LoadDumpDataBuilder(const std::string &node_name) {
-  const auto iter = dump_data_construct_map_.find(node_name);
-  if (iter == dump_data_construct_map_.end()) {
+  std::map<std::string, std::shared_ptr<DumpDataBuilder>>::const_iterator iter =
+    dump_data_construct_map_.find(node_name);
+  if (iter == dump_data_construct_map_.cend()) {
     dump_data_construct_map_[node_name] = std::make_shared<DumpDataBuilder>();
   }
   return dump_data_construct_map_[node_name];
@@ -1812,7 +1814,7 @@ void Debugger::ClearDumpDataBuilder(const std::string &node_name) { (void)dump_d
  * dumped to disk completely. Check if dump_data_construct_map_ is empty to see if no dump task is alive. If not, sleep
  * for 500ms and check again.
  */
-void Debugger::WaitForWriteFileFinished() {
+void Debugger::WaitForWriteFileFinished() const {
   const int kRetryTimeInMilliseconds = 500;
   const int kMaxRecheckCount = 10;
   int recheck_cnt = 0;

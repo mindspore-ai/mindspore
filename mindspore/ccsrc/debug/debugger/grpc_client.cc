@@ -68,7 +68,7 @@ EventReply GrpcClient::SendMetadata(const Metadata &metadata) {
   return reply;
 }
 
-std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size) {
+std::vector<std::string> GrpcClient::ChunkString(std::string str, int graph_size) const {
   std::vector<std::string> buf;
   constexpr auto l_chunk_size = 1024 * 1024 * 3;
   int size_iter = 0;

@@ -115,14 +115,14 @@ void SetOutputType(const TypePtr &type, const BaseShapePtr &shape, debugger::Typ
   }
 }
 
-void DebuggerProtoExporter::SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto) {
+void DebuggerProtoExporter::SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto) const {
   if (node == nullptr || type_proto == nullptr) {
     return;
   }
   SetOutputType(node->Type(), node->Shape(), type_proto);
 }
 
-void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::ValueProto *value_proto) {
+void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::ValueProto *value_proto) const {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
@@ -175,7 +175,7 @@ void DebuggerProtoExporter::SetValueToProto(const ValuePtr &val, debugger::Value
   }
 }
 
-void DebuggerProtoExporter::SetScalarToProto(const ScalarPtr &val, debugger::ValueProto *value_proto) {
+void DebuggerProtoExporter::SetScalarToProto(const ScalarPtr &val, debugger::ValueProto *value_proto) const {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
@@ -229,7 +229,7 @@ void DebuggerProtoExporter::SetScalarToProto(const ScalarPtr &val, debugger::Val
   }
 }
 
-void DebuggerProtoExporter::SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto) {
+void DebuggerProtoExporter::SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto) const {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
@@ -249,7 +249,8 @@ void DebuggerProtoExporter::SetSequenceToProto(const ValueSequencePtr &val, debu
   }
 }
 
-void DebuggerProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto) {
+void DebuggerProtoExporter::SetDictionaryToProto(const ValueDictionaryPtr &val,
+                                                 debugger::ValueProto *value_proto) const {
   if (val == nullptr || value_proto == nullptr) {
     return;
   }
@@ -288,7 +289,7 @@ void DebuggerProtoExporter::GetOpNodeTypeAndAttrs(const FuncGraphPtr &, const An
 
 std::string DebuggerProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const AnfNodePtr &node,
                                                     const std::map<AnfNodePtr, size_t> &apply_map,
-                                                    std::map<AnfNodePtr, size_t> *const_map_ptr) {
+                                                    std::map<AnfNodePtr, size_t> *const_map_ptr) const {
   if (node == nullptr || const_map_ptr == nullptr) {
     return "";
   }
@@ -310,7 +311,7 @@ std::string DebuggerProtoExporter::GetOpNodeInputId(const FuncGraphPtr &, const 
   }
 
   if (node->isa<ValueNode>()) {
-    const auto iter = const_map_ptr->find(node);
+    std::map<AnfNodePtr, size_t>::const_iterator iter = const_map_ptr->find(node);
     if (iter == const_map_ptr->end()) {
       // Start index number from 1
       const auto const_idx = const_map_ptr->size() + 1;

@@ -35,10 +35,11 @@ std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id = 0, bool is_cs
 
 void GetFileKernelName(NotNull<std::string *> kernel_name);
 
-void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> int_shapes, bool trans_flag = false);
+void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> const int_shapes,
+                     bool trans_flag = false);
 
-const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVector *> int_shapes,
-                                       NotNull<TypeId *> host_type, NotNull<TypeId *> device_type);
+const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVector *> const int_shapes,
+                                       NotNull<TypeId *> const host_type, NotNull<TypeId *> const device_type);
 
 void DumpMemToFile(const std::string &file_path, const device::DeviceAddress &addr, const ShapeVector &int_shapes,
                    const TypeId &type, bool trans_flag = false);

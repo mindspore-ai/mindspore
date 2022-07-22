@@ -85,7 +85,7 @@ void GetFileKernelName(NotNull<std::string *> kernel_name) {
  * Runtime category: Old runtime, MindRT.
  * Description: Get the actual tensor shape for dumping based on trans_flag option in configuration json file.
  */
-void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> int_shapes, bool trans_flag) {
+void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *> const int_shapes, bool trans_flag) {
   if (trans_flag) {
     *int_shapes = trans::GetRuntimePaddingShape(node, index);
   } else {
@@ -93,8 +93,8 @@ void GetDumpIntShape(const AnfNodePtr &node, size_t index, NotNull<ShapeVector *
   }
 }
 
-const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVector *> int_shapes,
-                                       NotNull<TypeId *> host_type, NotNull<TypeId *> device_type) {
+const DeviceTensorPtr GetParameterInfo(const AnfNodePtr &node, NotNull<ShapeVector *> const int_shapes,
+                                       NotNull<TypeId *> const host_type, NotNull<TypeId *> const device_type) {
   const auto &device_tensors = DeviceTensorStore::GetInstance().Fetch(node.get());
   if (device_tensors.size() < 1) {
     return nullptr;
