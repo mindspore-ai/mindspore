@@ -43,15 +43,11 @@ class MeshgridCpuKernelMod : public NativeCpuKernelMod {
   std::vector<KernelAttr> GetOpSupport() override;
 
  private:
-  template <typename T>
   bool LaunchKernel(const kernel::AddressPtr input, const kernel::AddressPtr output);
-  using MeshgridFunc = std::function<bool(MeshgridCpuKernelMod *, const kernel::AddressPtr input_addr,
-                                          const kernel::AddressPtr output_addr)>;
-  static std::vector<std::pair<KernelAttr, MeshgridFunc>> func_list_;
-  MeshgridFunc kernel_func_;
   bool swap_indexing_{true};
   BroadcastShapeInfo shape_info_{};
   std::vector<int64_t> input_shape_lists_{};
+  size_t data_size_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore
