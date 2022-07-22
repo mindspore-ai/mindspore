@@ -86,6 +86,9 @@ void AddNumSample(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
                             << "', the second input type should be scalar or tensor, but got invalid abstract type:"
                             << nun_sample_arg->type_name() << ".";
   }
+  if (num_sample <= 0) {
+    MS_EXCEPTION(ValueError) << "For '" << prim->name() << "', num_sample must greater than 0, but got " << num_sample;
+  }
   prim->AddAttr(kNumSample, MakeValue(num_sample));
 }
 
