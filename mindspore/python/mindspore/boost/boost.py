@@ -294,76 +294,59 @@ class AutoBoost:
 
         return network
 
-    def set_fn_flag(self, fn_flag):
-        """set fn flag"""
+    def _set_fn_flag(self, fn_flag):
         self._fn_flag = fn_flag
 
-    def set_gc_flag(self, gc_flag):
-        """set gc flag"""
+    def _set_gc_flag(self, gc_flag):
         self._gc_flag = gc_flag
 
-    def set_param_groups(self, param_groups):
-        """set param groups"""
+    def _set_param_groups(self, param_groups):
         self._param_groups = param_groups
 
-    def set_freeze_type(self, freeze_type):
-        """set freeze type"""
+    def _set_freeze_type(self, freeze_type):
         self._freeze_type = freeze_type
 
-    def set_freeze_p(self, freeze_p):
-        """set freeze p"""
+    def _set_freeze_p(self, freeze_p):
         self._freeze_p = freeze_p
 
-    def set_total_steps(self, total_steps):
-        """set total steps"""
+    def _set_total_steps(self, total_steps):
         self._total_steps = total_steps
 
-    def set_device_number(self, device_number):
-        """set device number"""
+    def _set_device_number(self, device_number):
         self.device_number = device_number
 
-    def set_grad_accumulation_step(self, grad_accumulation_step):
-        """set grad accumulation step"""
+    def _set_grad_accumulation_step(self, grad_accumulation_step):
         self.grad_accumulation_step = grad_accumulation_step
 
-    def set_gradient_split_groups(self, gradient_groups):
-        """set gradient split groups"""
+    def _set_gradient_split_groups(self, gradient_groups):
         if not isinstance(gradient_groups, (list, int)):
             raise ValueError(f"gradient_groups `{gradient_groups}` is not in (list, int)")
         if isinstance(gradient_groups, int):
             gradient_groups = list(gradient_groups)
         self.gradient_groups = gradient_groups
 
-    def set_rho(self, rho):
-        """set rho"""
+    def _set_rho(self, rho):
         self.rho = rho
 
-    def set_gamma(self, gamma):
-        """set gamma"""
+    def _set_gamma(self, gamma):
         self.gamma = gamma
 
-    def set_alpha(self, alpha):
-        """set alpha"""
+    def _set_alpha(self, alpha):
         self.alpha = alpha
 
-    def set_sigma(self, sigma):
-        """set sigma"""
+    def _set_sigma(self, sigma):
         self.sigma = sigma
 
-    def set_n_components(self, n_components):
-        """set n components"""
+    def _set_n_components(self, n_components):
         self.n_components = n_components
 
-    def set_pca_mat_path(self, pca_mat_path):
-        """set pca_mat path"""
+    def _set_pca_mat_path(self, pca_mat_path):
         self.pca_mat_path = pca_mat_path
 
-    def set_weight_load_dir(self, weight_load_dir):
-        """set weight load dir"""
+    def _set_weight_load_dir(self, weight_load_dir):
         self.weight_load_dir = weight_load_dir
 
-    def set_timeout(self, timeout):
-        """set timeout"""
+    def _set_timeout(self, timeout):
         self.timeout = timeout
 
     def _get_configuration(self, level, boost_config_dict):
@@ -400,21 +383,21 @@ class AutoBoost:
         return level_config
 
     _boost_config_func_map = {
-        "fn_flag": set_fn_flag,
-        "gc_flag": set_gc_flag,
-        "param_groups": set_param_groups,
-        "freeze_type": set_freeze_type,
-        "freeze_p": set_freeze_p,
-        "total_steps": set_total_steps,
-        "device_number": set_device_number,
-        "gradient_split_groups": set_gradient_split_groups,
-        "grad_accumulation_step": set_grad_accumulation_step,
-        "rho": set_rho,
-        "gamma": set_gamma,
-        "alpha": set_alpha,
-        "sigma": set_sigma,
-        "n_components": set_n_components,
-        "pca_mat_path": set_pca_mat_path,
-        "weight_load_dir": set_weight_load_dir,
-        "timeout": set_timeout
+        "fn_flag": _set_fn_flag,
+        "gc_flag": _set_gc_flag,
+        "param_groups": _set_param_groups,
+        "freeze_type": _set_freeze_type,
+        "freeze_p": _set_freeze_p,
+        "total_steps": _set_total_steps,
+        "device_number": _set_device_number,
+        "gradient_split_groups": _set_gradient_split_groups,
+        "grad_accumulation_step": _set_grad_accumulation_step,
+        "rho": _set_rho,
+        "gamma": _set_gamma,
+        "alpha": _set_alpha,
+        "sigma": _set_sigma,
+        "n_components": _set_n_components,
+        "pca_mat_path": _set_pca_mat_path,
+        "weight_load_dir": _set_weight_load_dir,
+        "timeout": _set_timeout
     }
