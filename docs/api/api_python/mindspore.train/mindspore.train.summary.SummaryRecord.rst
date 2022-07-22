@@ -4,7 +4,7 @@
 
     该方法将在一个指定的目录中创建summary文件和lineage文件，并将数据写入文件。
 
-    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#summarysummarycollector>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/master/summary_record.html#callback>`_ 记录数据。
+    它通过执行 `record` 方法将数据写入文件。除了通过 `summary算子 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.6/summary_record.html#summarysummarycollector>`_ 记录网络的数据外，SummaryRecord还支持通过 `自定义回调函数和自定义训练循环 <https://www.mindspore.cn/mindinsight/docs/zh-CN/r1.6/summary_record.html#callback>`_ 记录数据。
 
     .. note::
         - 确保在最后关闭SummaryRecord，否则进程不会退出。请参阅下面的示例部分，了解如何用两种方式正确关闭SummaryRecord。
@@ -144,7 +144,7 @@
 
         **异常：**
 
-        - **TypeError：** `step` 不为整型，或 `train_network` 的类型不为`mindspore.nn.Cell <https://www.mindspore.cn/docs/api/zh-CN/master/api_python/nn/mindspore.nn.Cell.html?highlight=MindSpore.nn.cell#mindspore-nn-cell>`_ 。
+        - **TypeError：** `step` 不为整型，或 `train_network` 的类型不为`mindspore.nn.Cell <https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/nn/mindspore.nn.Cell.html?highlight=MindSpore.nn.cell#mindspore-nn-cell>`_ 。
 
         **样例：**
 

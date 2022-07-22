@@ -84,8 +84,8 @@ Contributions of any kind are welcome!
 
 - [STABLE] Support overwrite feature in MindRecord.
 - [STABLE] Log improvement and more friendly to users.
-- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
-- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
+- [BETA] Support new feature [Dataset Offload](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/enable_dataset_offload.html) to speed up data processing by heterogeneous computing.
+- [BETA] Support new feature [Dataset Autotune](https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/enable_dataset_autotune.html) to adjust parallelism of dataset pipeline automatically.
 
 #### GraphKernel Fusion
 
@@ -111,7 +111,7 @@ Contributions of any kind are welcome!
 
 ###### `mindspore.dataset.MindDataset` interface changes input parameter dataset_file([!27542](https://gitee.com/mindspore/mindspore/pulls/27542))
 
-`MindDataset` contains the input parameter `dataset_file`, which is in the singular format. It can receive a single file path or a list that stores multiple file paths. Thus It is preferred to change the input parameter `dataset_file` into plural format. In addition, the input parameters of most dataset API, such as `TFRecordDataset`, are in plural formart (`dataset_files`). To ensure consistency, the input parameter `dataset_file` of MindDataset is changed to plural formart as `dataset_files`,  we can see the updated version in api of [mindspore.dataset.MindDataset](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/dataset/mindspore.dataset.MindDataset.html#mindspore.dataset.MindDataset).
+`MindDataset` contains the input parameter `dataset_file`, which is in the singular format. It can receive a single file path or a list that stores multiple file paths. Thus It is preferred to change the input parameter `dataset_file` into plural format. In addition, the input parameters of most dataset API, such as `TFRecordDataset`, are in plural formart (`dataset_files`). To ensure consistency, the input parameter `dataset_file` of MindDataset is changed to plural formart as `dataset_files`,  we can see the updated version in api of [mindspore.dataset.MindDataset](https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/dataset/mindspore.dataset.MindDataset.html#mindspore.dataset.MindDataset).
 
 ###### Deprecated usage: `import mindspore.dataset.engine.datasets as ds`. Use `import mindspore.dataset as ds` instead as recommended
 
@@ -135,11 +135,11 @@ We're reconstructed `mindspore/dataset/engine/datasets.py` to `datasets.py`, `da
 
 ###### `mindspore.train.callback.SummaryCollector` interface's parameter `collect_specified_data` add new operations `collect_landscape` ([!26229](https://gitee.com/mindspore/mindspore/pulls/26229))
 
-`collect_landscape` can collect the parameters needed to create the loss landscape. we can see the updated version in api of [mindspore.train.callback.SummaryCollector](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.SummaryCollector).
+`collect_landscape` can collect the parameters needed to create the loss landscape. we can see the updated version in api of [mindspore.train.callback.SummaryCollector](https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.train.html#mindspore.train.callback.SummaryCollector).
 
 ###### `mindspore.train.callback` add new interface `SummaryLandscape` ([!26229](https://gitee.com/mindspore/mindspore/pulls/26229))
 
-`SummaryLandscape` can help you to collect loss landscape information. It can create landscape in PCA direction or random direction by calculating loss. We can see the updated version in api of [mindspore.train.callback.SummaryLandscape](https://www.mindspore.cn/docs/api/zh-CN/master/api_python/mindspore.train.html#mindspore.train.callback.SummaryLandscape).
+`SummaryLandscape` can help you to collect loss landscape information. It can create landscape in PCA direction or random direction by calculating loss. We can see the updated version in api of [mindspore.train.callback.SummaryLandscape](https://www.mindspore.cn/docs/api/zh-CN/r1.6/api_python/mindspore.train.html#mindspore.train.callback.SummaryLandscape).
 
 ### Bug fixes
 
@@ -611,7 +611,7 @@ thor(net, learning_rate, damping, momentum, weight_decay=0.0, loss_scale=1.0, ba
 
 ##### Dump Config
 
-Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/master/dump_in_graph_mode.html#dump).
+Previously, we could only dump tensor data for one or all steps. To make the dump feature easier to use, we changed the dump configuration format and dump structure. View the [New Dump Tutorial](https://www.mindspore.cn/docs/programming_guide/en/r1.6/dump_in_graph_mode.html#dump).
 
 | 1.2.1                                                  | 1.3.0                                                                                       |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
@@ -995,7 +995,7 @@ However, currently MindSpore Parser cannot parse numpy.ndarray in JIT-graph. To 
 
 ###### mindspore.numpy interfaces remove support for keyword arguments `out` and `where`([!12726](https://gitee.com/mindspore/mindspore/pulls/12726))
 
-Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/docs/api/en/master/api_python/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
+Previously, we have incomplete support for keyword arguments `out` and `where` in mindspore.numpy interfaces, however, the `out` argument is only functional when `where` argument is also provided, and `out` cannot be used to pass reference to numpy functions. Therefore, we have removed these two arguments to avoid any confusion users may have. Their original functionality can be found in [np.where](https://www.mindspore.cn/docs/api/en/r1.6/api_python/numpy/mindspore.numpy.where.html#mindspore.numpy.where)
 
 <table>
 <tr>
@@ -1294,7 +1294,7 @@ MSTensor::DestroyTensorPtr(tensor);
 
 ###### `nn.MatMul` is now deprecated in favor of `ops.matmul` ([!12817](https://gitee.com/mindspore/mindspore/pulls/12817))
 
-[ops.matmul](https://www.mindspore.cn/docs/api/en/master/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/docs/api/en/master/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
+[ops.matmul](https://www.mindspore.cn/docs/api/en/r1.6/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) follows the API of [numpy.matmul](https://numpy.org/doc/stable/reference/generated/numpy.matmul.html) as closely as possible. As a function interface, [ops.matmul](https://www.mindspore.cn/docs/api/en/r1.6/api_python/ops/mindspore.ops.matmul.html#mindspore.ops.matmul) is applied without instantiation, as opposed to `nn.MatMul`, which should only be used as a class instance.
 
 <table>
 <tr>

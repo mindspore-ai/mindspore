@@ -5,8 +5,8 @@ mindspore.dataset.DatasetCache
 
     创建数据缓存客户端实例。
 
-    关于单节点数据缓存的使用，请参阅 `单节点数据缓存教程 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/enable_cache.html>`_ 、
-    `单节点数据缓存编程指南 <https://www.mindspore.cn/docs/programming_guide/zh-CN/master/cache.html>`_。
+    关于单节点数据缓存的使用，请参阅 `单节点数据缓存教程 <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/enable_cache.html>`_ 、
+    `单节点数据缓存编程指南 <https://www.mindspore.cn/docs/programming_guide/zh-CN/r1.6/cache.html>`_。
 
     **参数：**
 
