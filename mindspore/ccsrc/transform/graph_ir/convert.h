@@ -50,7 +50,6 @@ namespace mindspore {
 namespace transform {
 class BaseOpAdapter;
 using HcomBroadcast = ::ge::op::HcomBroadcast;
-using OpAdapterPtr = std::shared_ptr<BaseOpAdapter>;
 
 using ParamIndexMap = std::map<std::size_t, std::size_t>;
 enum class GraphType { kNormal, kCond, kBody, kAfter, kBranch };
