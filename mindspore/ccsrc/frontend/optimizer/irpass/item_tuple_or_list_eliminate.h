@@ -368,14 +368,14 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
         return;
       }
       set_item_tuple_ = cnode->input(kTupleSetItemTupleIndex);
-      set_item_index_ = GePositiveIndex(cnode->input(kTupleSetItemIndexIndex));
+      set_item_index_ = GetPositiveIndex(cnode->input(kTupleSetItemIndexIndex));
       set_item_value_ = cnode->input(kTupleSetItemValueIndex);
     }
   }
 
   void Visit(const ValueNodePtr &vnode) override {
     if (set_item_tuple_ != nullptr && IsValueNode<Int64Imm>(vnode)) {
-      get_item_index_ = GePositiveIndex(vnode);
+      get_item_index_ = GetPositiveIndex(vnode);
       get_item_index_value_node_ = vnode;
     }
   }
@@ -393,7 +393,7 @@ class TupleListGetSetitemEliminator : public AnfVisitor {
   int64_t set_item_index_{-1}, get_item_index_{-1};
   AnfNodePtr set_item_tuple_{nullptr}, set_item_value_{nullptr}, get_item_index_value_node_{nullptr};
 
-  int64_t GePositiveIndex(const AnfNodePtr &node) {
+  int64_t GetPositiveIndex(const AnfNodePtr &node) {
     auto vnode = node->cast<ValueNodePtr>();
     if (vnode == nullptr) {
       return -1;

@@ -396,48 +396,39 @@ void FunctionBlock::SetPhiArgument(const ParameterPtr &phi) {
   std::string var = phi_nodes_[phi];
   MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " set phi " << phi->ToString()
                 << " for var `" << var << "`";
-  auto removable = CollectRemovablePhi(phi);
-  // If the phi node is not necessary, not need to add to jumps_ of the prev blocks.
-  if (removable) {
-    MS_LOG(DEBUG) << "remove the phi when call graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)")
-                  << " var `" << var << "`";
-    return;
-  }
+  CollectRemovablePhi(phi);
   for (auto &pred : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(pred);
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " pred_blocks_ "
                   << (pred->func_graph_ ? pred->func_graph_->ToString() : "FG(Null)");
     AnfNodePtr arg_node = pred->ReadVariable(var);
-    CNodePtr jump = pred->jumps_[this];
+    auto jump_iter = pred->jumps_.find(this);
+    if (jump_iter == pred->jumps_.end()) {
+      // If prev block is a switch call's prev block, no jumps here.
+      continue;
+    }
+    CNodePtr jump = jump_iter->second;
     MS_EXCEPTION_IF_NULL(jump);
     jump->add_input(arg_node);
   }
 }
 
-AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const ParameterPtr &phi) {
-  AnfNodePtr arg_node = nullptr;
-  MS_LOG(DEBUG) << "Prev_blocks size: " << prev_blocks_.size();
+std::set<AnfNodePtr> FunctionBlock::SearchAllArgsOfPhiNode(const std::string &var, const ParameterPtr &phi) {
+  std::set<AnfNodePtr> all_arg_nodes;
+  MS_LOG(DEBUG) << "Search block:" << ToString() << "Prev_blocks size: " << prev_blocks_.size();
   for (auto &prev : prev_blocks_) {
     MS_EXCEPTION_IF_NULL(prev);
     AnfNodePtr temp_node = prev->ReadVariable(var);
-    MS_EXCEPTION_IF_NULL(temp_node);
-    if (temp_node != phi) {
-      if (arg_node == nullptr) {
-        arg_node = temp_node;
-        MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
-                      << (phi ? phi->ToString() : "null") << " may be replaced by node " << arg_node->DebugString();
-      } else if (temp_node == arg_node) {
-        MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " phi "
-                      << (phi ? phi->ToString() : "null") << " is same as node " << arg_node->DebugString();
-      } else {
-        MS_LOG(DEBUG) << "phi " << (phi ? phi->ToString() : "null")
-                      << " cannot be removed as it assigns to different node. node1: " << arg_node->DebugString()
-                      << ", node2: " << temp_node->DebugString();
-        return nullptr;
-      }
-    }
+    MS_LOG(DEBUG) << "Read from prev block:" << prev->ToString() << ", temp_node: " << temp_node->DebugString();
+    (void)all_arg_nodes.insert(temp_node);
   }
-  return arg_node;
+  if (all_arg_nodes.size() == 1) {
+    auto arg_node = *(all_arg_nodes.begin());
+    MS_EXCEPTION_IF_NULL(arg_node);
+    MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi "
+                  << (phi ? phi->ToString() : "null") << " may be replaced by node " << arg_node->DebugString();
+  }
+  return all_arg_nodes;
 }
 
 // Check if there is removable unnecessary phi node in this graph.
@@ -456,22 +447,23 @@ AnfNodePtr FunctionBlock::SearchReplaceNode(const std::string &var, const Parame
 // graph of this function block, some may stay in vars_ in other blocks.
 // 2. it's costly to iterate the graph to replace the phi for each phi.
 // Args: phi: This parameter node is functioning as a phi node.
-bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
+void FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
   MS_EXCEPTION_IF_NULL(phi);
   std::string var_name = phi_nodes_[phi];
   MS_LOG(DEBUG) << "check phi " << phi->DebugString() << " for " << var_name;
   if (prev_blocks_.empty()) {
     MS_LOG(DEBUG) << "no phi " << phi->DebugString() << " for var " << var_name;
-    return false;
+    return;
   }
-  AnfNodePtr arg_node = SearchReplaceNode(var_name, phi);
-  if (arg_node != nullptr) {
+  auto arg_nodes = SearchAllArgsOfPhiNode(var_name, phi);
+  phi_args_[phi] = arg_nodes;
+  if (arg_nodes.size() == 1) {
+    auto arg_node = *arg_nodes.begin();
     arg_node->set_debug_info(phi->debug_info());
     MS_LOG(DEBUG) << "graph " << (func_graph_ ? func_graph_->ToString() : "FG(Null)") << " phi " << phi->ToString()
                   << " can be replaced with " << arg_node->DebugString();
     // Replace var with new one. This equal to statement in TR "v0 is immediately replaced by v1."
     WriteVariable(var_name, arg_node);
-    removable_phis_[phi] = arg_node;
     static const auto use_fallback = (parser_.support_fallback() != "0");
     if (use_fallback) {
       bool interpret_without_internal =
@@ -483,30 +475,7 @@ bool FunctionBlock::CollectRemovablePhi(const ParameterPtr &phi) {
         }
       }
     }
-    // The following equal to statement "The φ-function defining v1, which now reads φ(v2, v1), is optimized
-    // recursively". check if phi1 is assigned with this phi before, then phi1 can be replaced with arg_node.
-    for (auto &prev : prev_blocks_) {
-      MS_EXCEPTION_IF_NULL(prev);
-      if (!prev->matured_) {
-        continue;
-      }
-      for (auto &phi_iter : prev->removable_phis_) {
-        MS_EXCEPTION_IF_NULL(phi_iter.second);
-        if (phi_iter.second->isa<Parameter>()) {
-          const auto &param = phi_iter.second->cast<ParameterPtr>();
-          if (param == phi) {
-            MS_LOG(DEBUG) << "graph " << (prev->func_graph_ ? prev->func_graph_->ToString() : "FG(Null)") << " var "
-                          << phi_iter.first->DebugString() << " can be replaced from " << param->DebugString()
-                          << " with " << arg_node->DebugString() << " in graph "
-                          << (arg_node->func_graph() ? arg_node->func_graph()->ToString() : "FG(Null)");
-            prev->removable_phis_[phi_iter.first] = arg_node;
-          }
-        }
-      }
-    }
-    return true;
   }
-  return false;
 }
 
 // A block should be marked matured if its predecessor blocks have been processed
@@ -708,5 +677,14 @@ void FunctionBlock::AttachIsolatedNodesBeforeReturn() {
 }
 
 void FunctionBlock::SetAsDeadBlock() { is_dead_block_ = true; }
+
+CNodePtr FunctionBlock::GetJumpNode(FunctionBlock *target_block) {
+  auto it = jumps_.find(target_block);
+  if (it == jumps_.end()) {
+    MS_LOG(DEBUG) << "Can't find jump node from block:" << ToString() << " to block:" << target_block->ToString();
+    return nullptr;
+  }
+  return it->second;
+}
 }  // namespace parse
 }  // namespace mindspore

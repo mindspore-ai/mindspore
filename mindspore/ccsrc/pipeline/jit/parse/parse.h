@@ -266,6 +266,15 @@ class Parser {
 
   void MakeConditionBlocks(const FunctionBlockPtr &pre_block, const FunctionBlockPtr &true_block,
                            const FunctionBlockPtr &false_block) const;
+  std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> CalRemovablePhis();
+  void CreatePhiArgMaps(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
+                        std::map<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis);
+  static void PrintPhiArgMaps(const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_to_args,
+                              const std::map<AnfNodePtr, std::set<ParameterPtr>> &arg_to_phis);
+  static void UpdatePhiArgMapsRepeatedly(std::map<ParameterPtr, std::set<AnfNodePtr>> *phi_to_args,
+                                         std::map<AnfNodePtr, std::set<ParameterPtr>> *arg_to_phis);
+  static std::shared_ptr<std::map<ParameterPtr, AnfNodePtr>> CollectRemovablePhiArgs(
+    const std::map<ParameterPtr, std::set<AnfNodePtr>> &phi_to_args);
   void RemoveUnnecessaryPhis();
   // Write a new var
   void WriteAssignVars(const FunctionBlockPtr &block, const py::object &target_object, const AnfNodePtr &value_node);
