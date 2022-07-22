@@ -54,6 +54,19 @@ abstract::ShapePtr ScaleAndTranslateGradInferShape(const PrimitivePtr &primitive
   (void)CheckAndConvertUtils::CheckInteger("translation's elements'", translation_shape[0], kEqual, kElementsNumber,
                                            prim_name);
   //  infer output shape
+  if (grads_shape[0] != original_image_shape[0]) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[0] is " << grads_shape[0]
+                             << ", but the shape of original_image_shape[0] is " << original_image_shape[0]
+                             << ". The first dimension of the shape of grads_shape "
+                             << "must be equal to that of original_image_shape.";
+  }
+  if (grads_shape[kInputIndex3] != original_image_shape[kInputIndex3]) {
+    MS_EXCEPTION(ValueError) << "For '" << primitive->name() << "', the shape of grads_shape[3] is "
+                             << grads_shape[kInputIndex3] << ", but the shape of original_image_shape[3] is "
+                             << original_image_shape[kInputIndex3]
+                             << ". The third dimension of the shape of grads_shape "
+                             << "must be equal to that of original_image_shape.";
+  }
   return std::make_shared<abstract::Shape>(original_image_shape);
 }
 
