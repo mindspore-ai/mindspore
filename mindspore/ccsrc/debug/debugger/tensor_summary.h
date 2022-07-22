@@ -73,7 +73,7 @@ class VarianceAndMeanCalculator {
   VarianceAndMeanCalculator();
   ~VarianceAndMeanCalculator() = default;
   void ProcessElement(double value);
-  double GetStandardDeviation();
+  double GetStandardDeviation() const;
   double GetVariance() const;
   double GetMean() const;
 
@@ -158,9 +158,9 @@ class TensorSummary : public ITensorSummary {
   mindspore::HashMap<std::string, std::unique_ptr<MeanCalculator>> means_;
   mindspore::HashMap<uint32_t, std::unique_ptr<AllCloseCalculator>> all_close_;
   mindspore::HashMap<uint32_t, std::unique_ptr<RangeCountCalculator>> range_counts_;
-  double_t StatLookup(const DebugServices::watchpoint_t &wp);
+  double_t StatLookup(const DebugServices::watchpoint_t &wp) const;
   double_t StatLookup(const std::string &parameter_name, const DebugServices::watchpoint_t &wp);
-  double_t GetZeroValPercent();
+  double_t GetZeroValPercent() const;
   void TensorStatisticsSingleThread();
   void InitCalculators(const std::vector<DebugServices::watchpoint_t> &);
 };

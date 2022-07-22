@@ -54,7 +54,7 @@ constexpr auto kMindsporeDumpConfig = "MINDSPORE_DUMP_CONFIG";
 
 namespace mindspore {
 auto DumpJsonParser::CheckJsonKeyExist(const nlohmann::json &content, const std::string &key) {
-  auto iter = content.find(key);
+  nlohmann::json::const_iterator iter = content.find(key);
   if (iter == content.end()) {
     MS_LOG(EXCEPTION) << "Check dump json failed, " << key << " not found";
   }
@@ -597,7 +597,7 @@ void DumpJsonParser::ParseSupportDevice(const nlohmann::json &content) {
   }
 }
 
-bool DumpJsonParser::ParseEnable(const nlohmann::json &content) {
+bool DumpJsonParser::ParseEnable(const nlohmann::json &content) const {
   if (!content.is_boolean()) {
     MS_LOG(EXCEPTION) << "Dump Json Parse Failed. 'enable' should be boolean type";
   }

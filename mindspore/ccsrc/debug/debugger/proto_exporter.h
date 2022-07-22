@@ -43,12 +43,12 @@ class DebuggerProtoExporter {
   void GetOpNodeTypeAndAttrs(const FuncGraphPtr &func_graph, const AnfNodePtr &node, debugger::NodeProto *node_proto);
   std::string GetOpNodeInputId(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                const std::map<AnfNodePtr, size_t> &apply_map,
-                               std::map<AnfNodePtr, size_t> *const_map_ptr);
-  void SetValueToProto(const ValuePtr &attr_value, debugger::ValueProto *value_proto);
-  void SetScalarToProto(const ScalarPtr &val, debugger::ValueProto *value_proto);
-  void SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto);
-  void SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto);
-  void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto);
+                               std::map<AnfNodePtr, size_t> *const_map_ptr) const;
+  void SetValueToProto(const ValuePtr &attr_value, debugger::ValueProto *value_proto) const;
+  void SetScalarToProto(const ScalarPtr &val, debugger::ValueProto *value_proto) const;
+  void SetSequenceToProto(const ValueSequencePtr &val, debugger::ValueProto *value_proto) const;
+  void SetDictionaryToProto(const ValueDictionaryPtr &val, debugger::ValueProto *value_proto) const;
+  void SetNodeOutputType(const AnfNodePtr &node, debugger::TypeProto *type_proto) const;
   void ExportFuncGraph(const FuncGraphPtr &func_graph, debugger::GraphProto *const graph_proto,
                        LocDebugDumpMode dump_location = kDebugWholeStack);
   void ExportParameters(const FuncGraphPtr &func_graph, debugger::GraphProto *graph_proto);

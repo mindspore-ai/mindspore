@@ -199,7 +199,7 @@ class BACKEND_EXPORT Debugger : public std::enable_shared_from_this<Debugger> {
 
   void ClearDumpDataBuilder(const std::string &node_name);
 
-  void WaitForWriteFileFinished();
+  void WaitForWriteFileFinished() const;
 
  private:
   // private constructor for singleton
