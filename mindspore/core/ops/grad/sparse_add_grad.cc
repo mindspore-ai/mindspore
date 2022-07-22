@@ -45,9 +45,20 @@ inline void CheckSparseAddGradShape(const size_t sparse_shape_size, const size_t
   }
 }
 
+inline void CheckSparseAddGradNNZ(const int64_t indices_nnz, const int64_t value_nnz, const std::string &indices_name,
+                                  const std::string &value_name, const std::string &op_name) {
+  if (indices_nnz != value_nnz) {
+    MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", the length of " << indices_name << " and "
+                                        << value_name << " must be same, but got"
+                                        << "length of " << indices_name << " is " << indices_nnz << ", and length of "
+                                        << value_name << " is " << value_nnz;
+  }
+}
+
 mindspore::TypePtr SparseAddGradInferType(const std::string &op_name, const AbstractBasePtrList &args_spec_list,
                                           size_t index) {
   auto tensor = mindspore::abstract::CheckArg<AbstractTensor>(op_name, args_spec_list, index);
+  MS_EXCEPTION_IF_NULL(tensor);
   return tensor->element()->BuildType();
 }
 }  // namespace
@@ -58,22 +69,25 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
                                    const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto name = primitive->name();
+  for (auto &ptr : input_args) {
+    MS_EXCEPTION_IF_NULL(ptr);
+  }
   const size_t kInputNum = 4;
   constexpr size_t kIndicesShapeSize = 2;
   constexpr size_t kValuesShapeSize = 1;
   (void)CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, kInputNum, name);
+  auto bvg = input_args.at(kSparseAddGradIndex0);
+  auto x1_indices = input_args.at(kSparseAddGradIndex1);
+  auto x2_indices = input_args.at(kSparseAddGradIndex2);
+  auto sum_indices = input_args.at(kSparseAddGradIndex3);
 
-  auto type = SparseAddGradInferType(name, input_args, 0);
   const std::set<TypePtr> indices_valid_types = {kInt64};
   const std::set<TypePtr> values_valid_types = {kInt8,    kInt16,   kInt32,     kInt64,
                                                 kFloat32, kFloat64, kComplex64, kComplex128};
-  CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", type, values_valid_types, name);
-  auto x1_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex1);
-  CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", x1_type, indices_valid_types, name);
-  auto x2_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex2);
-  CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", x2_type, indices_valid_types, name);
-  auto sum_type = SparseAddGradInferType(name, input_args, kSparseAddGradIndex3);
-  CheckAndConvertUtils::CheckTensorTypeValid("sum_indices", sum_type, indices_valid_types, name);
+  CheckAndConvertUtils::CheckTensorTypeValid("backprop_val_grad", bvg->BuildType(), values_valid_types, name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x1_indices", x1_indices->BuildType(), indices_valid_types, name);
+  CheckAndConvertUtils::CheckTensorTypeValid("x2_indices", x2_indices->BuildType(), indices_valid_types, name);
+  CheckAndConvertUtils::CheckTensorTypeValid("sum_indices", sum_indices->BuildType(), indices_valid_types, name);
   std::shared_ptr<AbstractTensor> dx1 = nullptr;
   std::shared_ptr<AbstractTensor> dx2 = nullptr;
   auto val_grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape());
@@ -82,6 +96,7 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
   bool x1_is_dyn_shape = !x1_shape[kMaxShape].empty();
   auto dx1_shape = x1_shape[kShape];
   (void)CheckSparseAddGradShape(dx1_shape.size(), kIndicesShapeSize, "x1_indices", name);
+  auto type = SparseAddGradInferType(name, input_args, 0);
   ShapeVector shp = {dx1_shape.at(0)};
   if (x1_is_dyn_shape) {
     auto dx1_min_shape = x1_shape[kMinShape];
@@ -108,7 +123,9 @@ AbstractBasePtr SparseAddGradInfer(const abstract::AnalysisEnginePtr &, const Pr
     dx2 = std::make_shared<AbstractTensor>(type, std::make_shared<mindspore::abstract::Shape>(shp));
   }
   auto sum_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kSparseAddGradIndex3]->BuildShape());
-  (void)CheckSparseAddGradShape(sum_shape.size(), kIndicesShapeSize, "sum_indices", name);
+  (void)CheckSparseAddGradShape(sum_shape[kShape].size(), kIndicesShapeSize, "sum_indices", name);
+  (void)CheckSparseAddGradNNZ(sum_shape[kShape][0], val_grad_shape[kShape][0], "sum_indices", "backprop_val_grad",
+                              name);
   AbstractBasePtrList ret = {dx1, dx2};
   return std::make_shared<AbstractTuple>(ret);
 }

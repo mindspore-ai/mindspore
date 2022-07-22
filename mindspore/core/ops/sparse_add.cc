@@ -44,7 +44,7 @@ inline void CheckSparseAddNNZ(const int64_t indices_nnz, const int64_t value_nnz
   if (indices_nnz != value_nnz) {
     MS_EXCEPTION(mindspore::ValueError) << "For " << op_name << ", the length of " << indices_name << " and "
                                         << value_name << " must be same, but got"
-                                        << "length of " << indices_nnz << " is " << indices_nnz << ", and length of "
+                                        << "length of " << indices_name << " is " << indices_nnz << ", and length of "
                                         << value_name << " is " << value_nnz;
   }
 }
