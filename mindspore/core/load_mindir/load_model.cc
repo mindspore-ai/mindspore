@@ -142,8 +142,7 @@ std::vector<std::string> MindIRLoader::LoadPreprocess(const std::string &file_na
 
   // Read graph
   mind_ir::ModelProto origin_model;
-  std::fstream mindir_stream(std::string(std::string(abs_path_buff)), std::ios::in | std::ios::binary);
-  if (!mindir_stream || !origin_model.ParseFromIstream(&mindir_stream)) {
+  if (!ParseModelProto(&origin_model, std::string(abs_path_buff))) {
     MS_LOG(ERROR) << "Load MindIR file failed, please check the correctness of the file.";
     return {};
   }
