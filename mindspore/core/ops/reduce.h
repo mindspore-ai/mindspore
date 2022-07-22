@@ -51,6 +51,10 @@ class MIND_API Reduce : public BaseOperator {
   ///
   /// \return keep_dims attribute.
   bool get_keep_dims() const;
+
+  void set_axis(const std::vector<int64_t> &axis);
+
+  std::vector<int64_t> get_axis() const;
 };
 abstract::AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                       const std::vector<abstract::AbstractBasePtr> &input_args);

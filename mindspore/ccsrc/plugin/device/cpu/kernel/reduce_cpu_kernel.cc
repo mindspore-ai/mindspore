@@ -23,6 +23,7 @@
 #include <map>
 #include "nnacl/fp32/reduce_fp32.h"
 #include "plugin/device/cpu/hal/device/cpu_device_address.h"
+#include "ops/reduce.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,13 +36,18 @@ using complex64 = std::complex<float>;
 using complex128 = std::complex<double>;
 
 template <typename T>
-class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
+class ReduceCpuKernelFunc : public CpuKernelFunc {
  public:
   ReduceCpuKernelFunc() = default;
   ~ReduceCpuKernelFunc() override = default;
-  void InitFunc(const CNodePtr &kernel_node) override;
+  void InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                const std::vector<KernelTensorPtr> &outputs) override;
   bool RunFunc(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                const std::vector<AddressPtr> &outputs) override;
+  int Resize(
+    const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+    const std::vector<KernelTensorPtr> &outputs,
+    const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost = std::map<uint32_t, tensor::TensorPtr>()) override;
 
  private:
   void AccelerateLongVector(T *input_addr, T *output_addr, size_t input_size);
@@ -59,84 +65,119 @@ class ReduceCpuKernelFunc : public DeprecatedCpuKernelFunc {
   std::vector<int64_t> input_shape_;
   std::vector<int64_t> axis_;
   ReduceFuncType reduce_type_{ReduceFuncType::kReduceAllType};
-  std::function<void(const T *, size_t, T *)> reduce_func_;
+  std::function<void(const T *, T *, size_t, size_t, TransposeIterator *)> reduce_func_;
   bool simple_execute_{false};
   std::string kernel_name_;
 };
 
-void UpdateAxis(const PrimitivePtr &prim, const CNodePtr &kernel_node, const std::string &kernel_name,
-                std::vector<int64_t> *axis) {
-  auto axis_addr = prim->GetAttr(AXIS);
-  if (axis == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' can not be null.";
-  }
-  if (axis_addr == nullptr) {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name << "', the 'axis' can not be null, but got empty value.";
-  }
-  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
-    *axis = common::AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
-  } else if (axis_addr->isa<Int64Imm>()) {
-    (void)axis->emplace_back(common::AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
+template <typename T>
+void ReduceSum(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  // float is prone to cumulative error, use double instead of float.
+  constexpr bool is_float = std::is_same<T, float>::value;
+  auto value = is_float ? static_cast<double>(0.f) : static_cast<T>(0);
+  value += *out;
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      value += in[iter->GetPos()];
+      iter->GenNextPos();
+    }
   } else {
-    MS_LOG(EXCEPTION) << "For '" << kernel_name
-                      << "', the type of 'axis' must be tuple, list, or int, but got invalid type.";
+    for (size_t i = start; i < end; i++) {
+      value += in[i];
+    }
+  }
+  *out = value;
+}
+
+template <typename T>
+void ReduceMean(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  ReduceSum(in, out, start, end, iter);
+}
+
+template <typename T>
+void ReduceProd(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      *out *= in[iter->GetPos()];
+      iter->GenNextPos();
+    }
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    *out *= in[i];
   }
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
-  if constexpr (std::is_same<T, bool>::value) {
-    if (kernel_name_ == prim::kPrimReduceAll->name()) {
-      reduce_type_ = ReduceFuncType::kReduceAllType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out &= input[pos]; };
-    } else if (kernel_name_ == prim::kPrimReduceAny->name()) {
-      reduce_type_ = ReduceFuncType::kReduceAnyType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out |= input[pos]; };
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
+void ReduceMax(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      *out = std::max(*out, in[iter->GetPos()]);
+      iter->GenNextPos();
     }
-  } else if constexpr (((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {  // NOLINT
-    if (kernel_name_ == prim::kPrimReduceProd->name()) {
-      reduce_type_ = ReduceFuncType::kReduceProdType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
-    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
-      reduce_type_ = ReduceFuncType::kReduceMeanType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
-    }
-  } else {
-    if (kernel_name_ == prim::kPrimReduceMax->name()) {
-      reduce_type_ = ReduceFuncType::kReduceMaxType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::max(input[pos], *out); };
-    } else if (kernel_name_ == prim::kPrimReduceMin->name()) {
-      reduce_type_ = ReduceFuncType::kReduceMinType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out = std::min(input[pos], *out); };
-    } else if (kernel_name_ == prim::kPrimReduceSum->name()) {
-      reduce_type_ = ReduceFuncType::kReduceSumType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
-    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
-      reduce_type_ = ReduceFuncType::kReduceMeanType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out += input[pos]; };
-    } else if (kernel_name_ == prim::kPrimReduceProd->name()) {
-      reduce_type_ = ReduceFuncType::kReduceProdType;
-      reduce_func_ = [](const T *input, size_t pos, T *out) { *out *= input[pos]; };
-    } else {
-      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
-    }
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    *out = std::max(*out, in[i]);
   }
 }
 
 template <typename T>
-void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
-  axis_.clear();
-  input_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-  auto prim = common::AnfAlgo::GetCNodePrimitive(kernel_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  UpdateAxis(prim, kernel_node, kernel_name_, &axis_);
+void ReduceMin(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      *out = std::min(*out, in[iter->GetPos()]);
+      iter->GenNextPos();
+    }
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    *out = std::min(*out, in[i]);
+  }
+}
+
+template <typename T>
+void ReduceAll(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      *out &= in[iter->GetPos()];
+      iter->GenNextPos();
+    }
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    *out &= in[i];
+  }
+}
+
+template <typename T>
+void ReduceAny(const T *in, T *out, size_t start, size_t end, TransposeIterator *iter) {
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      *out |= in[iter->GetPos()];
+      iter->GenNextPos();
+    }
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    *out |= in[i];
+  }
+}
+
+template <typename T>
+int ReduceCpuKernelFunc<T>::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                   const std::vector<KernelTensorPtr> &outputs,
+                                   const std::map<uint32_t, tensor::TensorPtr> &) {
+  input_shape_ = inputs[0]->GetDeviceShapeAdaptively();
   int64_t dimension = SizeToLong(input_shape_.size());
+  auto kernel_ptr = std::dynamic_pointer_cast<ops::Reduce>(base_operator);
+  MS_EXCEPTION_IF_NULL(kernel_ptr);
+  axis_ = kernel_ptr->get_axis();
   (void)std::for_each(axis_.begin(), axis_.end(), [dimension](auto &a) {
     if (a < -dimension || a >= dimension) {
       MS_LOG(EXCEPTION) << "For reduce, the each axis element should be in [" << -dimension << ", " << dimension
@@ -144,20 +185,72 @@ void ReduceCpuKernelFunc<T>::InitFunc(const CNodePtr &kernel_node) {
     }
     a = a < 0 ? dimension + a : a;
   });
+
   // Delete the duplicate axis.
   sort(axis_.begin(), axis_.end());
   auto last = std::unique(axis_.begin(), axis_.end());
   axis_.erase(last, axis_.end());
 
-  ChooseFunc(kernel_name_);
-
   // special accelerate for axis = 1 and input has 2 dims
   if constexpr (std::is_same<T, float>::value) {
     if ((reduce_type_ == ReduceFuncType::kReduceMeanType || reduce_type_ == ReduceFuncType::kReduceSumType) &&
-        axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == 2) {
+        axis_.size() == 1 && axis_[0] == 1 && input_shape_.size() == kDim2) {
       simple_execute_ = true;
     }
   }
+  return KRET_OK;
+}
+
+template <typename T>
+void ReduceCpuKernelFunc<T>::ChooseFunc(const std::string &kernel_name_) {
+  if constexpr (std::is_same<T, bool>::value) {
+    if (kernel_name_ == prim::kPrimReduceAll->name()) {
+      reduce_type_ = ReduceFuncType::kReduceAllType;
+      reduce_func_ = ReduceAll<T>;
+    } else if (kernel_name_ == prim::kPrimReduceAny->name()) {
+      reduce_type_ = ReduceFuncType::kReduceAnyType;
+      reduce_func_ = ReduceAny<T>;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for bool.";
+    }
+  } else if constexpr (((std::is_same_v<T, complex64>) || (std::is_same_v<T, complex128>))) {  // NOLINT
+    if (kernel_name_ == prim::kPrimReduceProd->name()) {
+      reduce_type_ = ReduceFuncType::kReduceProdType;
+      reduce_func_ = ReduceProd<T>;
+    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
+      reduce_type_ = ReduceFuncType::kReduceMeanType;
+      reduce_func_ = ReduceMean<T>;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation for complex.";
+    }
+  } else {
+    if (kernel_name_ == prim::kPrimReduceMax->name()) {
+      reduce_type_ = ReduceFuncType::kReduceMaxType;
+      reduce_func_ = ReduceMax<T>;
+    } else if (kernel_name_ == prim::kPrimReduceMin->name()) {
+      reduce_type_ = ReduceFuncType::kReduceMinType;
+      reduce_func_ = ReduceMin<T>;
+    } else if (kernel_name_ == prim::kPrimReduceSum->name()) {
+      reduce_type_ = ReduceFuncType::kReduceSumType;
+      reduce_func_ = ReduceSum<T>;
+    } else if (kernel_name_ == prim::kPrimReduceMean->name()) {
+      reduce_type_ = ReduceFuncType::kReduceMeanType;
+      reduce_func_ = ReduceMean<T>;
+    } else if (kernel_name_ == prim::kPrimReduceProd->name()) {
+      reduce_type_ = ReduceFuncType::kReduceProdType;
+      reduce_func_ = ReduceProd<T>;
+    } else {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', unsupported reduce operation.";
+    }
+  }
+}
+
+template <typename T>
+void ReduceCpuKernelFunc<T>::InitFunc(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                                      const std::vector<KernelTensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(base_operator);
+  kernel_name_ = base_operator->name();
+  ChooseFunc(kernel_name_);
 }
 
 template <typename T>
@@ -169,13 +262,12 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
   size_t input_size = inputs[0]->size / sizeof(T);
   auto *input_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto *output_addr = reinterpret_cast<T *>(outputs[0]->addr);
+
   if (axis_.empty() || input_shape_.empty() || input_shape_.size() == 1) {
     if (input_size < kReduceSmallVectorSize) {
       // Get one ret
       *output_addr = input_addr[0];
-      for (size_t i = 1; i < input_size; ++i) {
-        reduce_func_(input_addr, i, output_addr);
-      }
+      reduce_func_(input_addr, output_addr, 1, input_size, nullptr);
       if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
         *output_addr /= static_cast<float>(input_size);
       }
@@ -218,6 +310,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
         return true;
       }
     }
+
     // Calculate transpose shape
     std::vector<int64_t> transpose_shape(input_shape_.size());
     for (int i = 0; i < dimension; ++i) {
@@ -230,10 +323,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::AddressPtr> &inpu
       for (size_t i = start; i < end; ++i) {
         output_addr[i] = input_addr[iter.GetPos()];
         iter.GenNextPos();
-        for (size_t j = 1; j < stride; ++j) {
-          reduce_func_(input_addr, iter.GetPos(), &output_addr[i]);
-          iter.GenNextPos();
-        }
+        reduce_func_(input_addr, &output_addr[i], 1, stride, &iter);
         if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
           output_addr[i] /= static_cast<float>(stride);
         }
@@ -257,14 +347,10 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
       return;
     }
     auto block_output = input_addr[start];
-    size_t i = start + 1;
-    while (i < end) {
-      reduce_func_(input_addr, i, &block_output);
-      ++i;
-    }
+    reduce_func_(input_addr, &block_output, start + 1, end, nullptr);
     {
       std::lock_guard<std::mutex> task_lock(task_mutex);
-      reduce_func_(&block_output, 0, output_addr);
+      reduce_func_(&block_output, output_addr, 0, 1, nullptr);
     }
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
@@ -272,11 +358,12 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
     *output_addr /= static_cast<float>(input_size);
   }
 }
+
 template <typename T>
-std::shared_ptr<DeprecatedCpuKernelFunc> SpecializeReduceFunc() {
+std::shared_ptr<CpuKernelFunc> SpecializeReduceFunc() {
   return std::make_shared<ReduceCpuKernelFunc<T>>();
 }
-using SpecializeReduceFuncCreator = std::function<std::shared_ptr<DeprecatedCpuKernelFunc>()>;
+using SpecializeReduceFuncCreator = std::function<std::shared_ptr<CpuKernelFunc>()>;
 static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>>> kernel_attr_list = {
   {prim::kPrimReduceMean->name(),
    {{KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32), SpecializeReduceFunc<float>},
@@ -330,8 +417,9 @@ static std::map<std::string, std::vector<std::pair<KernelAttr, SpecializeReduceF
    {{KernelAttr().AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool), SpecializeReduceFunc<bool>}}}};
 }  // namespace
 
-void ReduceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
-  kernel_name_ = common::AnfAlgo::GetCNodeName(kernel_node);
+bool ReduceCpuKernelMod::Init(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                              const std::vector<KernelTensorPtr> &outputs) {
+  kernel_name_ = base_operator->name();
   if (kernel_name_ != kernel_type_) {
     MS_LOG(EXCEPTION) << "Suppose to be " << kernel_type_ << " but got " << kernel_name_;
   }
@@ -345,14 +433,27 @@ void ReduceCpuKernelMod::InitKernel(const CNodePtr &kernel_node) {
   (void)std::transform(iter->second.begin(), iter->second.end(), std::back_inserter(support_list),
                        [](const std::pair<KernelAttr, SpecializeReduceFuncCreator> &pair) { return pair.first; });
 
-  auto kernel_attr = GetKernelAttrFromNode(kernel_node);
+  auto kernel_attr = GetKernelAttrFromTensors(inputs, outputs);
   auto [is_match, index] = MatchKernelAttr(kernel_attr, support_list);
   if (!is_match) {
     MS_LOG(EXCEPTION) << "Reduce does not support this kernel data type: " << kernel_attr;
   }
 
   func_obj_ = kernel_attr_list[kernel_type_][index].second();
-  func_obj_->InitFunc(kernel_node);
+  func_obj_->InitFunc(base_operator, inputs, outputs);
+  return true;
+}
+
+int ReduceCpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const std::vector<KernelTensorPtr> &inputs,
+                               const std::vector<KernelTensorPtr> &outputs,
+                               const std::map<uint32_t, tensor::TensorPtr> &inputsOnHost) {
+  int ret = KernelMod::Resize(base_operator, inputs, outputs, inputsOnHost);
+  if (ret != KRET_OK) {
+    return ret;
+  }
+  ret = func_obj_->Resize(base_operator, inputs, outputs, inputsOnHost);
+
+  return ret;
 }
 
 MS_KERNEL_FACTORY_REG_BY_CREATOR(NativeCpuKernelMod, ReduceMean,

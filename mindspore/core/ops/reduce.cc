@@ -32,6 +32,16 @@ bool Reduce::get_keep_dims() const { return GetValue<bool>(GetAttr(kKeepDims)); 
 
 void Reduce::Init(const bool keep_dims) { this->set_keep_dims(keep_dims); }
 
+void Reduce::set_axis(const std::vector<int64_t> &axis) { (void)this->AddAttr(kAxis, api::MakeValue(axis)); }
+
+std::vector<int64_t> Reduce::get_axis() const {
+  auto value_ptr = this->GetAttr(kAxis);
+  if (value_ptr->isa<api::Int64Imm>()) {
+    return {GetValue<int64_t>(value_ptr)};
+  }
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
 MIND_API_OPERATOR_IMPL(Reduce, BaseOperator);
 REGISTER_PRIMITIVE_C(kNameReduce, Reduce);
 }  // namespace ops
