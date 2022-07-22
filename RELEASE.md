@@ -46,16 +46,16 @@
 
 #### Executor
 
-- [BETA] [Failure Recovery Under Data Parallel Training](https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) Support auto failure recovery under data parallel training mode.
+- [BETA] [Failure Recovery Under Data Parallel Training](https://www.mindspore.cn/tutorials/experts/zh-CN/r1.7/parallel/train_gpu.html#%E5%AE%B9%E7%81%BE%E6%81%A2%E5%A4%8D) Support auto failure recovery under data parallel training mode.
 - [BETA] Support searching for the number of threads under the CPU to obtain the optimal number of threads for execution. The entire search process takes 50 steps, and the overall performance will reach a stable state after 50 steps. When testing performance, data after 50 steps need to be used as a standard.
 - [STABLE] Enable concurrent executing on oneDNN for linux version. The performance of some CPU models may change a lot up or down.
 
 #### DataSet
 
-- [STABLE] Add dataset operations mapping between TensorFlow.data module and MindSpore.dataset module, [check list](https://www.mindspore.cn/docs/en/master/note/api_mapping/tensorflow_api_mapping.html#tf-data).
+- [STABLE] Add dataset operations mapping between TensorFlow.data module and MindSpore.dataset module, [check list](https://www.mindspore.cn/docs/en/r1.7/note/api_mapping/tensorflow_api_mapping.html#tf-data).
 - [STABLE] Python multiprocessing optimization and make processes exit normally.
-- [STABLE] Support [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/en/master/dataset/dataset_autotune.html) for tuning the speed of dataset pipeline automatically.
-- [BETA]  [Dataset Offload](https://www.mindspore.cn/tutorials/experts/en/master/dataset/dataset_offload.html) support new data augmentation operations: RandomColorAdjust, RandomSharpness, TypeCast.
+- [STABLE] Support [Dataset Autotune](https://www.mindspore.cn/tutorials/experts/en/r1.7/dataset/dataset_autotune.html) for tuning the speed of dataset pipeline automatically.
+- [BETA]  [Dataset Offload](https://www.mindspore.cn/tutorials/experts/en/r1.7/dataset/dataset_offload.html) support new data augmentation operations: RandomColorAdjust, RandomSharpness, TypeCast.
 - Output a single data column when `__getitem__/__next__` methods of GeneratorDataset return a single NumPy object.
 - Use `ulimit -u 10240` to increase the number of threads/processes available to the current user when specify too many processes or threads for loading dataset may cause RuntimeError: can't start new thread.
 
