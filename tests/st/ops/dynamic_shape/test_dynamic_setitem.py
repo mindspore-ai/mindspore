@@ -115,6 +115,8 @@ class TensorSetItem(nn.Cell):
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -139,6 +141,8 @@ def test_dynamic_setitem_int_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -164,6 +168,8 @@ def test_dynamic_setitem_int_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -188,6 +194,8 @@ def test_dynamic_setitem_int_sequence():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -213,6 +221,8 @@ def test_dynamic_setitem_tensor_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -239,6 +249,8 @@ def test_dynamic_setitem_tensor_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -264,6 +276,8 @@ def test_dynamic_setitem_tensor_sequence():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -277,6 +291,10 @@ def test_dynamic_setitem_none_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -284,6 +302,8 @@ def test_dynamic_setitem_none_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -298,6 +318,10 @@ def test_dynamic_setitem_none_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -305,6 +329,8 @@ def test_dynamic_setitem_none_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -318,6 +344,10 @@ def test_dynamic_setitem_none_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -325,6 +355,8 @@ def test_dynamic_setitem_none_sequence():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -338,6 +370,10 @@ def test_dynamic_setitem_ellipsis_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -345,6 +381,8 @@ def test_dynamic_setitem_ellipsis_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -359,6 +397,10 @@ def test_dynamic_setitem_ellipsis_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -366,6 +408,8 @@ def test_dynamic_setitem_ellipsis_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -379,6 +423,10 @@ def test_dynamic_setitem_ellipsis_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -386,6 +434,8 @@ def test_dynamic_setitem_ellipsis_sequence():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -399,6 +449,10 @@ def test_dynamic_setitem_bool_number():
     value = 88.0
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -406,6 +460,8 @@ def test_dynamic_setitem_bool_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -420,6 +476,10 @@ def test_dynamic_setitem_bool_tensor():
         (1 * 3)).astype(np.float32), mstype.float32)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value.asnumpy())
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -427,6 +487,8 @@ def test_dynamic_setitem_bool_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -440,6 +502,10 @@ def test_dynamic_setitem_bool_sequence():
     value = (1.0, Tensor(5, mstype.float32), 8.0)
     ms_net = TensorSetItem(index, value)
     np_net = NumpySetItem(index, value)
+    context.set_context(mode=context.PYNATIVE_MODE)
+    fact = CommonFunc(ms_net, np_net)
+    fact.forward_cmp()
+    fact.grad_impl()
     context.set_context(mode=context.GRAPH_MODE)
     fact = CommonFunc(ms_net, np_net)
     fact.forward_cmp()
@@ -447,6 +513,8 @@ def test_dynamic_setitem_bool_sequence():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -471,6 +539,8 @@ def test_dynamic_setitem_list_number():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -496,6 +566,8 @@ def test_dynamic_setitem_list_tensor():
 
 
 @pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
