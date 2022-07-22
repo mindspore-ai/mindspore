@@ -207,6 +207,7 @@ Reduction Operators
     :template: classtemplate.rst
 
     mindspore.ops.logsumexp
+    mindspore.ops.max
     mindspore.ops.norm
 
 .. list-table::
