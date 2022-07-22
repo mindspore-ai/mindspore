@@ -673,7 +673,7 @@ class NeighborExchange(Primitive):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.8/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to.
@@ -748,7 +748,7 @@ class AlltoAll(PrimitiveWithInfer):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.8/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         split_count (int): On each process, divide blocks into split_count number.
@@ -838,7 +838,7 @@ class NeighborExchangeV2(Primitive):
 
         This operator requires a full-mesh network topology, each device has the same vlan id, and the ip & mask are
         in the same subnet, please check the `details \
-        <https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/communicate_ops.html#注意事项>`_.
+        <https://www.mindspore.cn/tutorials/experts/zh-CN/r1.8/parallel/communicate_ops.html#注意事项>`_.
 
     Args:
         send_rank_ids (list(int)): Ranks which the data is sent to. 8 rank_ids represents 8 directions, if one
