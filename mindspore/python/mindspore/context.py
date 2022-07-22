@@ -145,6 +145,7 @@ class _Context:
         self._thread_local_info = _ThreadLocalInfo()
         self._context_switches = _ContextSwitchInfo(False)
         self._context_handle = MSContext.get_instance()
+        self._support_binary = False
         self.enable_compile_cache = None
 
     def __new__(cls, *args, **kwargs):
@@ -384,6 +385,18 @@ class _Context:
     def enable_debug_runtime(self, enable):
         thread_info = self._thread_local_info
         thread_info.debug_runtime = enable
+
+    @property
+    def support_binary(self):
+        """Whether support run .pyc or .so in graph mode."""
+        return self._support_binary
+
+    @support_binary.setter
+    def support_binary(self, support: bool):
+        if not isinstance(support, bool):
+            raise TypeError(f"The attribute 'support_binary' should be a bool, but got {type(support)}.")
+        self._support_binary = support
+
 
 
 def _context():
@@ -719,6 +732,8 @@ def set_context(**kwargs):
     |                         |  compile_cache_path          |  CPU/GPU/Ascend            |
     |                         +------------------------------+----------------------------+
     |                         |  disable_format_transform    |  GPU                       |
+    |                         +------------------------------+----------------------------+
+    |                         |  support_binary              |  CPU/GPU/Ascend            |
     +-------------------------+------------------------------+----------------------------+
 
     Args:
@@ -854,6 +869,10 @@ def set_context(**kwargs):
         disable_format_transform (bool): Whether to disable the automatic format transform function from NCHW to NHWC.
             When the network training performance of fp16 is worse than fp32,
             `disable_format_transform` can be set to True to try to improve training performance. Default: False.
+         support_binary (bool): Whether to support run .pyc or .so in graph mode. If want to support run .so or .pyc
+             in graph mode, coulde set 'support_binary' to be True, and run once .py file. It would save the source
+             of the interfaces would be compiled by MindSpore to the interfaces definition .py file that should be
+             guaranteed to be writable. Then compile the .py file to the .pyc or .so file, and could run in Graph mode.
     Raises:
         ValueError: If input key is not an attribute in context.
 
