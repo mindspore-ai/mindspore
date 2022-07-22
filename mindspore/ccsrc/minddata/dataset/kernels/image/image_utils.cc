@@ -142,7 +142,17 @@ Status ValidateImage(const std::shared_ptr<Tensor> &image, const std::string &op
     if (valid_rank.find(rank) == valid_rank.end()) {
       std::string err_msg = op_name + ": the dimension of image tensor does not match the requirement of operator.";
       err_msg += " Expecting tensor in dimension of " + NumberSetToString(valid_rank);
+      if (valid_rank == std::set<dsize_t>({kMinImageRank, kDefaultImageRank})) {
+        err_msg += ", in shape of <H, W> or <H, W, C>";
+      } else if (valid_rank == std::set<dsize_t>({kMinImageRank})) {
+        err_msg += ", in shape of <H, W>";
+      } else if (valid_rank == std::set<dsize_t>({kDefaultImageRank})) {
+        err_msg += ", in shape of <H, W, C>";
+      }
       err_msg += ". But got dimension " + std::to_string(rank) + ".";
+      if (rank == 1) {
+        err_msg += " You may need to perform Decode first.";
+      }
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
   }
@@ -164,8 +174,8 @@ Status ValidateImageDtype(const std::string &op_name, DataType dtype) {
   uint8_t type = dtype.AsCVType();
   if (type == kCVInvalidType) {
     std::string type_name = "unknown";
-    if (type < DataType::NUM_OF_TYPES) {
-      type_name = std::string(DataType::kTypeInfo[type].name_);
+    if (dtype.value() < DataType::NUM_OF_TYPES) {
+      type_name = std::string(DataType::kTypeInfo[dtype.value()].name_);
     }
     std::string err_msg = op_name + ": Cannot convert [" + type_name + "] to OpenCV type." +
                           " Currently unsupported data type: [uint32, int64, uint64, string]";
@@ -1532,21 +1542,13 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   try {
+    RETURN_IF_NOT_OK(ValidateImage(input, "Pad", {1, 2, 3, 4, 5, 6, 10, 11, 12}, {2, 3}, {1, 3}));
+
     // input image
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
 
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] Pad: load image failed.");
-    }
-
-    // validate rank and number channels
-    RETURN_IF_NOT_OK(ValidateImageRank("Pad", input_cv->Rank()));
-    if (input_cv->Rank() == kDefaultImageRank) {
-      if (input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel &&
-          input_cv->shape()[kChannelIndexHWC] != kMinImageChannel) {
-        RETURN_STATUS_UNEXPECTED("Pad: number of channels for input tensor can only be 1 or 3, got channel: " +
-                                 std::to_string(input_cv->shape()[kChannelIndexHWC]));
-      }
     }
 
     // get the border type in openCV
