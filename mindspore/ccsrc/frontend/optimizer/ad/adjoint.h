@@ -32,7 +32,7 @@ class Adjoint {
   ~Adjoint() = default;
   AnfNodePtr primal();
   AnfNodePtr k();
-  void UpdateK(const AnfNodePtr &k);
+  void UpdateK(const AnfNodePtr &new_k);
   void RegisterKUser(const CNodePtr &user, size_t index);
   AnfNodePtr dout();
   void AccumulateDout(const AnfNodePtr &dout_factor);

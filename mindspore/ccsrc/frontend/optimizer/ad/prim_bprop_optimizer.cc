@@ -267,7 +267,7 @@ FuncGraphPtr PrimBpropOptimizer::GenSpecOptBprop(const FuncGraphPtr &bprop_fg, c
   return level_2_graph_info->opt_func_graph();
 }
 
-PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) {
+PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPtr &bprop_fg) const {
   opt::irpass::OptimizeIRPassLib irpass;
   auto level_1_graph_info = std::make_shared<PrimBpropOptGraphInfo>();
   auto prim_bprop_opt_res = std::make_shared<pipeline::Resource>();
@@ -281,7 +281,7 @@ PrimBpropOptGraphInfoPtr PrimBpropOptimizer::PrimBpropOptStep1(const FuncGraphPt
 }
 
 void PrimBpropOptimizer::BindAbsToParameters(const FuncGraphPtr &bprop_fg,
-                                             const abstract::AbstractBasePtrList &abs_list_input) {
+                                             const abstract::AbstractBasePtrList &abs_list_input) const {
   MS_EXCEPTION_IF_NULL(bprop_fg);
   auto &params = bprop_fg->parameters();
   if (abs_list_input.size() != params.size()) {
@@ -346,7 +346,7 @@ ECacheQrtRes PrimBpropOptimizer::GetOptBpfgFromCache(const PrimitivePtr &prim,
 }
 
 void PrimBpropOptimizer::ArgsToAbs(const PrimitivePtr &prim, const ValuePtrList &op_args,
-                                   abstract::AbstractBasePtrList *abs_list) {
+                                   abstract::AbstractBasePtrList *abs_list) const {
   MS_EXCEPTION_IF_NULL(prim);
   MS_EXCEPTION_IF_NULL(abs_list);
   auto const_input_index = prim->get_const_input_indexes();

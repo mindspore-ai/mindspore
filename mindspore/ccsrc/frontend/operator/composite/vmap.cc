@@ -219,7 +219,6 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inpu
         fg_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), each_input_cnode, NewValueNode(static_cast<int64_t>(0))});
       auto src_cnode =
         fg_->NewCNode({NewValueNode(prim::kPrimTupleGetItem), each_input_cnode, NewValueNode(static_cast<int64_t>(1))});
-      auto val_abstract = each_inputs_abstract_elements[0];
       auto src_abstract = each_inputs_abstract_elements[1];
       CNodePtr out_cnode = nullptr;
       if (src_abstract->isa<abstract::AbstractNone>() && !dst_abstract->isa<abstract::AbstractNone>()) {
@@ -235,7 +234,7 @@ CNodePtr VmapMatchOutAxis::GenerateFuncGraphInnerAllTuple(const AnfNodePtr &inpu
         auto move_axis_fg = parse::ParsePythonCode(move_axis);
         out_cnode = fg_->NewCNode({NewValueNode(move_axis_fg), val_cnode, src_cnode, dst_cnode});
       }
-      vals_out_tuple_cnode_inputs.emplace_back(out_cnode);
+      (void)vals_out_tuple_cnode_inputs.emplace_back(out_cnode);
     }
   }
   return fg_->NewCNode(vals_out_tuple_cnode_inputs);
@@ -491,13 +490,14 @@ FuncGraphPtr VmapGeneralRule::GenerateFuncGraph(const AbstractBasePtrList &args_
     std::vector<AnfNodePtr> output_element_cnode_inputs;
     if (wrapped_tuple) {
       std::vector<AnfNodePtr> tuple_cnode_inputs{NewValueNode(prim::kPrimMakeTuple)};
-      (void)tuple_cnode_inputs.insert(tuple_cnode_inputs.end(), map_input.begin(), map_input.end());
+      (void)tuple_cnode_inputs.insert(tuple_cnode_inputs.cend(), map_input.cbegin(), map_input.cend());
       auto tuple_cnode = fg_->NewCNode(tuple_cnode_inputs);
       output_element_cnode_inputs.push_back(NewValueNode(prim_));
       output_element_cnode_inputs.push_back(tuple_cnode);
     } else {
       output_element_cnode_inputs.push_back(NewValueNode(prim_));
-      (void)output_element_cnode_inputs.insert(output_element_cnode_inputs.end(), map_input.begin(), map_input.end());
+      (void)output_element_cnode_inputs.insert(output_element_cnode_inputs.cend(), map_input.cbegin(),
+                                               map_input.cend());
     }
     auto output_element_cnode = fg_->NewCNode(output_element_cnode_inputs);
     (void)output_cnode_inputs.emplace_back(output_element_cnode);

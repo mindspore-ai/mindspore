@@ -16,6 +16,11 @@
 
 #include "frontend/optimizer/irpass/ge/avg_pool_grad_for_ge.h"
 
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <memory>
+
 #include "pybind_api/pybind_patch.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
@@ -61,43 +66,41 @@ AnfNodePtr AvgPoolGradForGE::operator()(const OptimizerPtr &opt, const AnfNodePt
   std::string pad_mode;
   if (pad_mode_type == TypeId::kNumberTypeInt64) {
     auto pad_value = GetValue<int64_t>(pad_mode_value);
-    pad_mode = pad_value ? "SAME" : "VALID";
+    pad_mode = pad_value != 0 ? "SAME" : "VALID";
   } else {
     pad_mode = GetValue<std::string>(pad_mode_value);
   }
   auto origin_shape = avg_pool_grad_node->input(kAvgPoolGradInputXIndex)->Shape();
   if (origin_shape->IsDynamic()) {
     MS_LOG(EXCEPTION) << "Do not support dynamic AvgPoolGrad in GE backend";
-  } else {
-    auto shape_vector = origin_shape->cast<abstract::ShapePtr>()->shape();
-    std::vector<int32_t> value_node_data;
-    std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(value_node_data), LongToInt);
-    auto origin_shape_value = MakeValue(value_node_data);
-    auto origin_shape_node = NewValueNode(origin_shape_value);
-    origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
-
-    auto avg_pool_grad_ge_obj = python_adapter::GetPyFn(kOpsGradFunctionName, "AvgPoolGradGe")();
-
-    const auto &adapter = py::cast<PrimitivePyAdapterPtr>(avg_pool_grad_ge_obj);
-    MS_EXCEPTION_IF_NULL(adapter);
-    auto attached_prim = adapter->attached_primitive();
-    if (attached_prim == nullptr) {
-      attached_prim = std::make_shared<PrimitivePy>(avg_pool_grad_ge_obj, adapter);
-      adapter->set_attached_primitive(attached_prim);
-    }
-    auto new_prim = attached_prim->cast<PrimitivePtr>();
-
-    new_prim->set_attr(kPoolKernelSizeAttrName, origin_prim->GetAttr(kPoolKernelSizeAttrName));
-    new_prim->set_attr(kPoolStridesAttrName, origin_prim->GetAttr(kPoolStridesAttrName));
-    new_prim->set_attr(kPoolDataFormatAttrName, MakeValue(format));
-    new_prim->set_attr(kPoolPadModeAttrName, MakeValue(pad_mode));
-
-    auto new_avg_pool_node = node->func_graph()->NewCNode(
-      new_prim, {origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
-    new_avg_pool_node->set_abstract(node->abstract());
-    return new_avg_pool_node;
   }
-  return nullptr;
+  auto shape_vector = origin_shape->cast<abstract::ShapePtr>()->shape();
+  std::vector<int32_t> value_node_data;
+  (void)std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(value_node_data), LongToInt);
+  auto origin_shape_value = MakeValue(value_node_data);
+  auto origin_shape_node = NewValueNode(origin_shape_value);
+  origin_shape_node->set_abstract(origin_shape_value->ToAbstract());
+
+  auto avg_pool_grad_ge_obj = python_adapter::GetPyFn(kOpsGradFunctionName, "AvgPoolGradGe")();
+
+  const auto &adapter = py::cast<PrimitivePyAdapterPtr>(avg_pool_grad_ge_obj);
+  MS_EXCEPTION_IF_NULL(adapter);
+  auto attached_prim = adapter->attached_primitive();
+  if (attached_prim == nullptr) {
+    attached_prim = std::make_shared<PrimitivePy>(avg_pool_grad_ge_obj, adapter);
+    adapter->set_attached_primitive(attached_prim);
+  }
+  auto new_prim = attached_prim->cast<PrimitivePtr>();
+
+  new_prim->set_attr(kPoolKernelSizeAttrName, origin_prim->GetAttr(kPoolKernelSizeAttrName));
+  new_prim->set_attr(kPoolStridesAttrName, origin_prim->GetAttr(kPoolStridesAttrName));
+  new_prim->set_attr(kPoolDataFormatAttrName, MakeValue(format));
+  new_prim->set_attr(kPoolPadModeAttrName, MakeValue(pad_mode));
+
+  auto new_avg_pool_node =
+    node->func_graph()->NewCNode(new_prim, {origin_shape_node, avg_pool_grad_node->input(kAvgPoolGradInputGradIndex)});
+  new_avg_pool_node->set_abstract(node->abstract());
+  return new_avg_pool_node;
 }
 }  // namespace irpass
 }  // namespace opt

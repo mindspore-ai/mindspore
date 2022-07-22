@@ -279,7 +279,7 @@ void CompileGraph::AddPadStack(int64_t param_height) {
                 << " need_stack:" << stack_sizes;
   if (stack_sizes > 0) {
     VectorRef need_stacks({stack_sizes});
-    (void)inst_.insert(inst_.begin(), std::make_pair(Instruction::kPadStack, need_stacks));
+    (void)inst_.insert(inst_.cbegin(), std::make_pair(Instruction::kPadStack, need_stacks));
   }
 }
 
@@ -456,7 +456,7 @@ FuncGraphPtr WrapPrimitives(const FuncGraphPtr &graph) {
   FuncGraphManagerPtr manager_ptr = graph->manager();
   MS_EXCEPTION_IF_NULL(manager_ptr);
   MapPrimTypeFuncGraph prim_graphs;
-  auto get_prim_graph = [&prim_graphs](const PrimitivePtr &prim, const AbstractFunctionPtr &type) {
+  const auto &get_prim_graph = [&prim_graphs](const PrimitivePtr &prim, const AbstractFunctionPtr &type) {
     PrimTypePair prim_type = std::make_pair(prim, type);
     if (prim_graphs.end() == prim_graphs.find(prim_type)) {
       FuncGraphPtr g = std::make_shared<FuncGraph>();
@@ -505,7 +505,7 @@ void CompileGraphs::Compile(const FuncGraphPtr &graph) {
   if (transform_ != nullptr) {
     InstSet insts = transform_->Run(graph);
     if (!insts.empty()) {
-      (void)insts_.insert(insts_.end(), insts.begin(), insts.end());
+      (void)insts_.insert(insts_.cend(), insts.cbegin(), insts.cend());
     }
   }
   MS_LOG(DEBUG) << "End";
@@ -544,7 +544,7 @@ FinalVMPtr CompileGraphs::CompileAndLink(const FuncGraphPtr &graph) {
   MS_EXCEPTION_IF_NULL(prim_graph);
   MS_EXCEPTION_IF_NULL(prim_graph->manager());
   FuncGraphSet graphs = prim_graph->manager()->func_graphs();
-  for (auto g : graphs) {
+  for (const auto &g : graphs) {
     if (g != graph && g != nullptr) {
       Compile(g);
     }

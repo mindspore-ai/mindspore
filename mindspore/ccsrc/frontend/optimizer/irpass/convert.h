@@ -47,7 +47,7 @@ class PrintTupleWrapper : public AnfVisitor {
 
     // {prim::kPrimPrint, Xs}
     auto &inputs = cnode->inputs();
-    (void)args.insert(args.end(), inputs.begin() + 1, inputs.end());
+    (void)args.insert(args.cend(), inputs.cbegin() + 1, inputs.cend());
 
     // {prim::kPrinMakeTuple, Xs}
     auto fg = node->func_graph();

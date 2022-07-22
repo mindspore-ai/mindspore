@@ -16,6 +16,10 @@
 
 #include "frontend/optimizer/irpass/ge/sparse_softmax_cross_entropy_with_logits_split.h"
 
+#include <string>
+#include <memory>
+#include <vector>
+
 #include "pybind_api/pybind_patch.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/pynative/base.h"
@@ -53,7 +57,7 @@ void CheckCNodeInputSize(const CNodePtr &cnode, size_t input_tensor_size) {
   }
 }
 
-ValueNodePtr CreateValueNode(const ValuePtr &value_ptr, TypeId output_type) {
+ValueNodePtr CreateValueNode(const ValuePtr &value_ptr) {
   MS_EXCEPTION_IF_NULL(value_ptr);
   auto new_node = std::make_shared<ValueNode>(value_ptr);
   MS_EXCEPTION_IF_NULL(new_node);
@@ -90,10 +94,10 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   }
 
   auto value_on = std::make_shared<tensor::Tensor>(1.0, kFloat32);
-  auto value_on_node = CreateValueNode(value_on, kNumberTypeFloat32);
+  auto value_on_node = CreateValueNode(value_on);
   MS_EXCEPTION_IF_NULL(value_on_node);
   auto value_off = std::make_shared<tensor::Tensor>(0.0, kFloat32);
-  auto value_off_node = CreateValueNode(value_off, kNumberTypeFloat32);
+  auto value_off_node = CreateValueNode(value_off);
   MS_EXCEPTION_IF_NULL(value_off_node);
 
   auto one_hot_primitive = std::make_shared<Primitive>(kOneHotOpName);
@@ -115,13 +119,13 @@ CNodePtr CreateOneHot(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_
   MS_EXCEPTION_IF_NULL(one_hot_node);
   one_hot_node->set_scope(sparse_softmax_node->scope());
   auto labels_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 1);
-  labels_shape.emplace_back(depth);
+  (void)labels_shape.emplace_back(depth);
   if (IsDynamic(labels_shape)) {
     auto kernel_info = common::AnfAlgo::GetPrevNodeOutput(sparse_softmax_node, 1);
     auto min_shape = common::AnfAlgo::GetOutputMinShape(kernel_info.first, kernel_info.second);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(kernel_info.first, kernel_info.second);
-    min_shape.emplace_back(depth);
-    max_shape.emplace_back(depth);
+    (void)min_shape.emplace_back(depth);
+    (void)max_shape.emplace_back(depth);
     common::AnfAlgo::SetOutputTypeAndDetailShape(
       {kNumberTypeFloat32}, {std::make_shared<abstract::Shape>(labels_shape, min_shape, max_shape)},
       one_hot_node.get());
@@ -146,7 +150,7 @@ CNodePtr CreateSoftmaxCrossEntropyWithLogits(const FuncGraphPtr &graph, const CN
   auto labels_shape = common::AnfAlgo::GetOutputInferShape(one_hot_node, 0);
   ShapeVector loss_shape;
   if (!labels_shape.empty()) {
-    loss_shape.emplace_back(labels_shape[0]);
+    (void)loss_shape.emplace_back(labels_shape[0]);
   } else {
     MS_LOG(EXCEPTION) << "One_hot output's shape is empty." << trace::DumpSourceLines(one_hot_node);
   }
@@ -205,7 +209,7 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
   }
   std::vector<int64_t> range;
   for (size_t i = 0; i < output_shape.size(); i++) {
-    range.emplace_back(i);
+    (void)range.emplace_back(i);
   }
   return range;
 }
@@ -213,7 +217,7 @@ std::vector<int64_t> GetAxis(const AnfNodePtr &node) {
 ValueNodePtr GetAxisNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto range = GetAxis(node);
-  auto axis_node = CreateValueNode(MakeValue(range), kNumberTypeInt64);
+  auto axis_node = CreateValueNode(MakeValue(range));
   MS_EXCEPTION_IF_NULL(axis_node);
   return axis_node;
 }
@@ -260,15 +264,15 @@ CNodePtr CreateMul(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_nod
                       << trace::DumpSourceLines(softmax_output_node);
   }
   ShapeVector tensor_shape;
-  tensor_shape.emplace_back(softmax_output_shape[0]);
-  tensor_shape.emplace_back(1);
+  (void)tensor_shape.emplace_back(softmax_output_shape[0]);
+  (void)tensor_shape.emplace_back(1);
   if (softmax_output_shape[0] == 0) {
     MS_LOG(EXCEPTION) << "Output_shape[0] of softmax should not be 0" << trace::DumpSourceLines(softmax_output_node);
   }
   std::vector<float> tensor_value(softmax_output_shape[0], 1.0 / softmax_output_shape[0]);
   auto buf_size = sizeof(float) * tensor_value.size();
   auto tensor_y = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, tensor_shape, tensor_value.data(), buf_size);
-  auto y_node = CreateValueNode(tensor_y, kNumberTypeFloat32);
+  auto y_node = CreateValueNode(tensor_y);
   MS_EXCEPTION_IF_NULL(y_node);
 
   py::object mul_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_mul");
@@ -300,7 +304,7 @@ CNodePtr CreateTile(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax_no
     return nullptr;
   }
   auto multiples = MakeValue(multiple_value);
-  auto multiples_node = CreateValueNode(multiples, kNumberTypeInt64);
+  auto multiples_node = CreateValueNode(multiples);
   MS_EXCEPTION_IF_NULL(multiples_node);
 
   py::object tile_prim_obj = python_adapter::GetPyFn(kArrayOpsFunctionModelName, "tile_");
@@ -339,7 +343,7 @@ CNodePtr CreateRealDiv(const FuncGraphPtr &graph, const CNodePtr &sparse_softmax
   }
   auto y_value = static_cast<float>(labels_shape[0]);
   auto y = std::make_shared<tensor::Tensor>(y_value, kFloat32);
-  auto y_node = CreateValueNode(y, kNumberTypeFloat32);
+  auto y_node = CreateValueNode(y);
   MS_EXCEPTION_IF_NULL(y_node);
 
   py::object div_prim_obj = python_adapter::GetPyFn(kMathOpsFunctionModelName, "tensor_div");
@@ -384,12 +388,12 @@ CNodePtr CreateExpandDims(const FuncGraphPtr &graph, const CNodePtr &real_div_no
 
   expand_dims_node->set_scope(real_div_node->scope());
   auto y_shape = common::AnfAlgo::GetOutputInferShape(real_div_node, 0);
-  y_shape.emplace_back(1);
+  (void)y_shape.emplace_back(1);
   if (IsDynamic(y_shape)) {
     auto min_shape = common::AnfAlgo::GetOutputMinShape(real_div_node, 0);
     auto max_shape = common::AnfAlgo::GetOutputMaxShape(real_div_node, 0);
-    min_shape.emplace_back(1);
-    max_shape.emplace_back(1);
+    (void)min_shape.emplace_back(1);
+    (void)max_shape.emplace_back(1);
     common::AnfAlgo::SetOutputTypeAndDetailShape({common::AnfAlgo::GetOutputInferDataType(real_div_node, 0)},
                                                  {std::make_shared<abstract::Shape>(y_shape, min_shape, max_shape)},
                                                  expand_dims_node.get());
@@ -451,7 +455,7 @@ CNodePtr HandleTrain(const FuncGraphPtr &fg, const AnfNodePtr &node) {
   auto softmax_node = CreateSoftmaxCrossEntropyWithLogits(fg, sparse_softmax_node, one_hot_node);
 
   std::vector<AnfNodePtr> softmax_node_outputs;
-  (void)CreateMultiOutputsOfAnfNode(fg, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
+  CreateMultiOutputsOfAnfNode(fg, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
   auto reduce_node = CreateReduceMean(fg, sparse_softmax_node_grad, softmax_node_outputs[0]);
   auto mul_node = CreateMul(fg, sparse_softmax_node_grad, softmax_node_outputs[1]);
 
@@ -476,7 +480,7 @@ CNodePtr HandleTrainWithLossScale(const FuncGraphPtr &fg, const AnfNodePtr &node
   auto softmax_node = CreateSoftmaxCrossEntropyWithLogits(fg, sparse_softmax_node, one_hot_node);
 
   std::vector<AnfNodePtr> softmax_node_outputs;
-  (void)CreateMultiOutputsOfAnfNode(fg, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
+  CreateMultiOutputsOfAnfNode(fg, softmax_node, kSoftmaxCrossEntropyWithLogitsOutputNum, &softmax_node_outputs);
   auto reduce_node = CreateReduceMean(fg, sparse_softmax_node_grad, softmax_node_outputs[0]);
   auto tile_node = CreateTile(fg, sparse_softmax_node_grad, mul_node);
   CNodePtr real_div_node;
@@ -550,7 +554,7 @@ void SparseSoftmaxCrossEntropyWithLogitsSplit::Visit(const AnfNodePtr &node) {
   is_match_ = true;
 }
 
-AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsSplit::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsSplit::operator()(const OptimizerPtr &opt, const AnfNodePtr &node) {
   MS_LOG(INFO) << "SparseSoftmaxCrossEntropyWithLogits split start.";
   auto IsSparseSoftmaxNode = [](const AnfNodePtr &node) -> bool {
     return IsPrimitiveCNode(node, prim::kPrimSparseSoftmaxCrossEntropyWithLogits) &&

@@ -90,7 +90,7 @@ void GeTensorArrayPrepare::TransformTASizeFromAttrToInput(const AnfNodePtr &node
   // has monad input
   if (origin_inputs.size() > 1) {
     std::vector<AnfNodePtr> sorted_inputs(origin_inputs);
-    sorted_inputs.insert(sorted_inputs.begin() + 1, size_node);
+    (void)sorted_inputs.insert(sorted_inputs.cbegin() + 1, size_node);
     ta_node->set_inputs(sorted_inputs);
   }
 

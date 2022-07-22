@@ -402,7 +402,7 @@ class IncorporateGetitem : public AnfVisitor {
     if (index_set.size() != total_usage) {
       MS_LOG(DEBUG) << "some index usage is duplicated, total_usage: " << total_usage;
       MS_LOG(DEBUG) << "index_set:";
-      for (auto idx : index_set) {
+      for (const auto idx : index_set) {
         MS_LOG(DEBUG) << " " << idx;
       }
     }
@@ -460,7 +460,7 @@ class IncorporateGetitem : public AnfVisitor {
   AnfNodePtr TransformFuncGraph(const FuncGraphManagerPtr &manager, const AnfNodePtr &origin_node) {
     auto new_fg = getitem_transform_(origin_node, fg_, idx_);
     MS_LOG(DEBUG) << "Original fg: " << fg_->ToString() << ", new fg: " << new_fg->ToString();
-    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    (void)args_.insert(args_.cbegin(), NewValueNode(new_fg));
     auto new_node = origin_node->func_graph()->NewCNode(args_);
     // Check if the another only usage of {G, Xs} is UpdateState{s, {G, Xs}}, if yes, replace
     // UpdateState{s, {G, Xs}} with UpdateState{s, new_node};
@@ -539,7 +539,7 @@ class IncorporateGetitemDepend : public AnfVisitor {
     }
 
     auto new_fg = getitem_transform_(node, fg_, idx_);
-    (void)args_.insert(args_.begin(), NewValueNode(new_fg));
+    (void)args_.insert(args_.cbegin(), NewValueNode(new_fg));
     auto new_fg_cnode = node->func_graph()->NewCNode(args_);
     AnfNodePtr new_depend_cnode;
     if (used_in_update_) {
@@ -685,7 +685,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     MS_LOG(DEBUG) << "Original fg1: " << g1_->ToString() << ", new_fg1: " << new_g1->ToString();
     MS_LOG(DEBUG) << "Original fg2: " << g2_->ToString() << ", new_fg2: " << new_g2->ToString();
     auto sw_node = fg->NewCNode({NewValueNode(prim::kPrimSwitch), x_, NewValueNode(new_g1), NewValueNode(new_g2)});
-    (void)args_.insert(args_.begin(), sw_node);
+    (void)args_.insert(args_.cbegin(), sw_node);
 
     auto new_node = fg->NewCNode(args_);
     new_node->set_abstract(node->abstract());
@@ -824,7 +824,7 @@ class IncorporateGetitemSwitch : public AnfVisitor {
     if (index_set.size() != total_usage) {
       MS_LOG(DEBUG) << "some index is duplicated, total_usage: " << total_usage;
       MS_LOG(DEBUG) << "index_set: ";
-      for (auto idx : index_set) {
+      for (const auto idx : index_set) {
         MS_LOG(DEBUG) << " " << idx;
       }
     }
@@ -1000,7 +1000,7 @@ class IncorporateGetitemSwitchLayerB : public AnfVisitor {
     auto sw_node = fg->NewCNode(sw_args);
     (void)args_.insert(args_.begin(), sw_node);
     auto call_switch_layer = fg->NewCNode(args_);
-    (void)outer_call_args_.insert(outer_call_args_.begin(), call_switch_layer);
+    (void)outer_call_args_.insert(outer_call_args_.cbegin(), call_switch_layer);
     return fg->NewCNode(outer_call_args_);
   }
 
@@ -1070,7 +1070,7 @@ class IncorporateGetitemSet : public OptimizerCaller {
   ~IncorporateGetitemSet() = default;
 
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
-    static bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
+    static const bool enable_closure = common::GetEnv("MS_DEV_ENABLE_CLOSURE") != "0";
     if (enable_closure) {
       return nullptr;
     }
