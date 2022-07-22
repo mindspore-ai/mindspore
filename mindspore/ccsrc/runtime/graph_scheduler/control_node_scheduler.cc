@@ -45,50 +45,6 @@ std::string GetStackActorNameByExitName(const std::string &exit_name) {
   return exit_name.substr(0, pos) + kStackActorNameSuffix;
 }
 
-// Fetch the depend nodes according to the monad node.
-void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *const depend_nodes) {
-  // Find the real input node, include the monad node and make tuple node.
-  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
-                                                  prim::kPrimMakeTuple};
-  const auto &node_with_index = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_types);
-  auto real_node = node_with_index.first;
-  MS_EXCEPTION_IF_NULL(real_node);
-  if (!real_node->isa<CNode>()) {
-    return;
-  }
-
-  const auto &real_cnode = real_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(real_cnode);
-  const auto &real_inputs = real_cnode->inputs();
-
-  // Make tuple node needs to be expanded.
-  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
-    for (size_t i = 1; i < real_inputs.size(); ++i) {
-      MS_EXCEPTION_IF_NULL(real_inputs[i]);
-      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
-    }
-    return;
-  }
-
-  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
-    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
-  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
-      common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
-    FetchRealDependNodeByAutoMonad(real_inputs[kDependAttachNodeIndex], depend_nodes);
-    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
-    // node in this scene.
-    if (IsOneOfPrimitiveCNode(real_inputs[kRealInputIndexInDepend], recursion_prims)) {
-      FetchRealDependNodeByAutoMonad(real_inputs[kRealInputIndexInDepend], depend_nodes);
-    }
-  } else if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
-    for (size_t i = kUpdateStateRealInput; i < real_inputs.size(); ++i) {
-      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
-    }
-  } else {
-    (void)depend_nodes->emplace(real_node);
-  }
-}
-
 // Parameter and ref node can not copy the device tensor.
 bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
   MS_EXCEPTION_IF_NULL(backend_node);
@@ -107,29 +63,6 @@ bool is_need_copy_device_tensor(const AnfNodePtr &backend_node, size_t index) {
   }
 
   return true;
-}
-
-std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return {};
-  }
-  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState) ||
-      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
-      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad)) {
-    return {node};
-  }
-
-  std::vector<AnfNodePtr> results;
-  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
-    const auto &cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    for (const auto &input : cnode->inputs()) {
-      MS_EXCEPTION_IF_NULL(input);
-      const auto &result = FetchAllMonadNodeByNode(input);
-      (void)results.insert(results.end(), result.begin(), result.end());
-    }
-  }
-  return results;
 }
 
 // Check whether the exit actor corresponding to the call node to the to actor already exists control arrow.
@@ -1085,13 +1018,13 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       continue;
     }
 
-    auto from_actor = control_actor;
+    auto to_actor = control_actor;
     if (parser->IsNeedStackControlNode(node)) {
       const auto &stack_actor_name = GetActorName(node) + kStackActorNameSuffix;
       auto actor = FetchActor(stack_actor_name);
       MS_EXCEPTION_IF_NULL(actor);
-      from_actor = dynamic_cast<ControlActor *>(actor);
-      MS_EXCEPTION_IF_NULL(from_actor);
+      to_actor = dynamic_cast<ControlActor *>(actor);
+      MS_EXCEPTION_IF_NULL(to_actor);
     }
 
     const auto &cnode = node->cast<CNodePtr>();
@@ -1102,7 +1035,7 @@ void ControlNodeScheduler::LinkControlArrowForControlActor(ActorSet *const actor
       std::vector<AnfNodePtr> monad_nodes = FetchAllMonadNodeByNode(input);
       for (const auto &monad_node : monad_nodes) {
         MS_EXCEPTION_IF_NULL(monad_node);
-        LinkControlArrowByAutoMonad(from_actor, monad_node, parser);
+        LinkControlArrowByAutoMonad(to_actor, monad_node, parser);
       }
     }
   }
@@ -1656,8 +1589,8 @@ void ControlNodeScheduler::LinkArrowForRootGraphEntranceActor(const GraphCompile
       SchedulerHelper::AddDataArrow(host_ds_actor, to_actor, parameter_with_index.second, i,
                                     parameter_with_index.first);
     } else {
-      MS_LOG(WARNING) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
-                      << " index:" << formal_parameter.second << " for actor:" << to_actor->GetAID();
+      MS_LOG(INFO) << "Invalid formal parameter:" << formal_parameter.first->DebugString()
+                   << " index:" << formal_parameter.second << " for actor:" << to_actor->GetAID();
     }
   }
 }

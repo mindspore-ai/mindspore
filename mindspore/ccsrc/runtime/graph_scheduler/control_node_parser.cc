@@ -23,6 +23,7 @@
 #include "utils/ms_context.h"
 #include "ir/tensor.h"
 #include "abstract/abstract_function.h"
+#include "include/common/debug/anf_ir_dump.h"
 
 namespace mindspore {
 namespace runtime {
@@ -468,6 +469,31 @@ bool IsFirstControlNode(const AnfNodePtr &node, std::set<AnfNodePtr> *checked_no
   }
   return true;
 }
+
+// Check if src_node depends on dst_node.
+bool IsTopoDependNode(const AnfNodePtr &src_node, const AnfNodePtr &dst_node, std::set<AnfNodePtr> *checked_node) {
+  MS_EXCEPTION_IF_NULL(src_node);
+  MS_EXCEPTION_IF_NULL(dst_node);
+  MS_EXCEPTION_IF_NULL(checked_node);
+  if (src_node == dst_node) {
+    return true;
+  }
+  if (!src_node->isa<CNode>() || checked_node->find(src_node) != checked_node->end()) {
+    return false;
+  }
+
+  (void)checked_node->emplace(src_node);
+  const auto &cnode = src_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (IsTopoDependNode(input, dst_node, checked_node)) {
+      return true;
+    }
+  }
+  return false;
+}
 }  // namespace
 
 bool IsInvalidPartial(const AnfNodePtr &node) {
@@ -670,6 +696,75 @@ bool IsPartialInput(const AnfNodePtr &node) {
   return false;
 }
 
+// Fetch the depend nodes according to the monad node.
+void FetchRealDependNodeByAutoMonad(const AnfNodePtr &node, std::set<AnfNodePtr> *const depend_nodes) {
+  // Find the real input node, include the monad node and make tuple node.
+  const std::vector<PrimitivePtr> return_types = {prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad,
+                                                  prim::kPrimMakeTuple};
+  const auto &node_with_index = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false, return_types);
+  auto real_node = node_with_index.first;
+  MS_EXCEPTION_IF_NULL(real_node);
+  if (!real_node->isa<CNode>()) {
+    return;
+  }
+
+  const auto &real_cnode = real_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(real_cnode);
+  const auto &real_inputs = real_cnode->inputs();
+
+  // Make tuple node needs to be expanded.
+  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimMakeTuple)) {
+    for (size_t i = 1; i < real_inputs.size(); ++i) {
+      MS_EXCEPTION_IF_NULL(real_inputs[i]);
+      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
+    }
+    return;
+  }
+
+  const mindspore::HashSet<PrimitivePtr, PrimitiveHasher, PrimitiveEqual> recursion_prims = {
+    prim::kPrimDepend, prim::kPrimUpdateState, prim::kPrimLoad, prim::kPrimMakeTuple};
+  if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimLoad)) {
+    FetchRealDependNodeByAutoMonad(real_inputs[kDependAttachNodeIndex], depend_nodes);
+    // The real input may be this scene:  depend/load --> load/depend, so need add the control arrow for real input
+    // node in this scene.
+    if (IsOneOfPrimitiveCNode(real_inputs[kRealInputIndexInDepend], recursion_prims)) {
+      FetchRealDependNodeByAutoMonad(real_inputs[kRealInputIndexInDepend], depend_nodes);
+    }
+  } else if (common::AnfAlgo::CheckPrimitiveType(real_node, prim::kPrimUpdateState)) {
+    for (size_t i = kUpdateStateRealInput; i < real_inputs.size(); ++i) {
+      FetchRealDependNodeByAutoMonad(real_inputs[i], depend_nodes);
+    }
+  } else {
+    (void)depend_nodes->emplace(real_node);
+  }
+}
+
+// Get all the depend nodes of node in side effect.
+std::vector<AnfNodePtr> FetchAllMonadNodeByNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return {};
+  }
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimUpdateState) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimDepend) ||
+      common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimLoad)) {
+    return {node};
+  }
+
+  std::vector<AnfNodePtr> results;
+  if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimMakeTuple)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    for (const auto &input : cnode->inputs()) {
+      MS_EXCEPTION_IF_NULL(input);
+      const auto &result = FetchAllMonadNodeByNode(input);
+      (void)results.insert(results.end(), result.begin(), result.end());
+    }
+  }
+  return results;
+}
+
 void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, const std::vector<KernelGraphPtr> &graphs,
                               const std::vector<DeviceContext *> &device_contexts, const FuncGraphPtr &root_graph,
                               const FuncGraphToKernelGraphGroup &func_graph_to_kernel_graphs) {
@@ -730,6 +825,8 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseUnRecursionCallNode();
 
+  InsertDependForParallelCall(control_nodes);
+
   ParseKernelGraphGroup(kernel_graph_to_device_contexts);
 
   ParseNodeLevel(control_nodes);
@@ -752,6 +849,126 @@ void ControlNodeParser::Parse(const std::vector<AnfNodePtr> &control_nodes, cons
 
   ParseFirstControlNodeAndKernelGraphForFuncGraph(control_nodes);
   MS_LOG(DEBUG) << "Control node parse end.";
+}
+
+// Fetch all the funcgraph recursively that the call node will call.
+void FetchAllCalledFuncGraph(const AnfNodePtr &call_node, std::set<FuncGraphPtr> *called_graphs,
+                             const CallNodeToFuncGraph &call_node_to_func_graphs,
+                             const FuncGraphToCallNode &func_graph_to_call_nodes) {
+  MS_EXCEPTION_IF_NULL(call_node);
+  MS_EXCEPTION_IF_NULL(called_graphs);
+  const auto &call_iter = call_node_to_func_graphs.find(call_node);
+  if (call_iter == call_node_to_func_graphs.end()) {
+    return;
+  }
+  for (const auto &func_graph : call_iter->second) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    if (called_graphs->find(func_graph) != called_graphs->end()) {
+      continue;
+    }
+    (void)called_graphs->emplace(func_graph);
+    const auto &graph_iter = func_graph_to_call_nodes.find(func_graph);
+    if (graph_iter == func_graph_to_call_nodes.end()) {
+      continue;
+    }
+
+    // Fetch the funcgraph recursively.
+    for (const auto &node : graph_iter->second) {
+      FetchAllCalledFuncGraph(node, called_graphs, call_node_to_func_graphs, func_graph_to_call_nodes);
+    }
+  }
+}
+
+bool ControlNodeParser::IsParallelCallRecursionGraph(const AnfNodePtr &call_node1, const AnfNodePtr &call_node2,
+                                                     const FuncGraphToCallNode &func_graph_to_call_nodes) {
+  // Fetch all funcgraphs the two call nodes will call both.
+  std::set<FuncGraphPtr> called_graphs_1;
+  FetchAllCalledFuncGraph(call_node1, &called_graphs_1, call_node_to_func_graphs_, func_graph_to_call_nodes);
+  std::set<FuncGraphPtr> called_graphs_2;
+  FetchAllCalledFuncGraph(call_node2, &called_graphs_2, call_node_to_func_graphs_, func_graph_to_call_nodes);
+  std::vector<FuncGraphPtr> common_called_graphs;
+  (void)std::set_intersection(called_graphs_1.begin(), called_graphs_1.end(), called_graphs_2.begin(),
+                              called_graphs_2.end(), std::back_inserter(common_called_graphs));
+
+  // Check for recursive calls in funcgraph.
+  for (const auto &func_graph : common_called_graphs) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    const auto &iter = func_graph_to_call_nodes.find(func_graph);
+    if (iter == func_graph_to_call_nodes.end()) {
+      continue;
+    }
+    for (const auto &call_node : iter->second) {
+      MS_EXCEPTION_IF_NULL(call_node);
+      if (IsRecursionCallNode(call_node)) {
+        MS_LOG(INFO) << "Call node:" << call_node1->DebugString() << " and:" << call_node2->DebugString()
+                     << " would call the same recursion in graph:" << func_graph
+                     << " which has a recursion call:" << call_node->DebugString();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+void ControlNodeParser::InsertDependForParallelCall(const std::vector<AnfNodePtr> &control_nodes) {
+  MS_LOG(INFO) << "InsertDependForParallelCall start";
+  // Fetch call node in funcgraph.
+  FuncGraphToCallNode func_graph_to_call_nodes;
+  for (const auto &control_node : control_nodes) {
+    if (common::AnfAlgo::IsCallNode(control_node)) {
+      const auto &func_graph = control_node->func_graph();
+      MS_EXCEPTION_IF_NULL(func_graph);
+      (void)func_graph_to_call_nodes[func_graph].emplace(control_node);
+    }
+  }
+
+  std::vector<AnfNodePtr> call_nodes;
+  for (const auto &control_node : control_nodes) {
+    MS_EXCEPTION_IF_NULL(control_node);
+    if (!common::AnfAlgo::CheckPrimitiveType(control_node, prim::kPrimReturn)) {
+      if (common::AnfAlgo::IsCallNode(control_node)) {
+        // Fetch all the call nodes in the same graph.
+        (void)call_nodes.emplace_back(control_node);
+      }
+      continue;
+    }
+
+    // Check whether there is a topology relationship between call nodes.
+    for (size_t i = 0; i < call_nodes.size(); ++i) {
+      for (size_t j = 0; j < i; ++j) {
+        std::set<AnfNodePtr> checked_nodes;
+        if (IsTopoDependNode(call_nodes[i], call_nodes[j], &checked_nodes) ||
+            (!IsParallelCallRecursionGraph(call_nodes[i], call_nodes[j], func_graph_to_call_nodes))) {
+          continue;
+        }
+        // If there is no topological relationship between call nodes, and the same recursive graph will be called
+        // at the same time, then a depend node needs to be inserted between call nodes.
+        auto func_graph = call_nodes[i]->func_graph();
+        MS_EXCEPTION_IF_NULL(func_graph);
+        auto cnode = call_nodes[i]->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        const auto &inputs = cnode->inputs();
+        MS_EXCEPTION_IF_NULL(inputs[0]);
+
+        // Create a depend node.
+        std::vector<AnfNodePtr> depend_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())),
+                                                 cnode->input(0), call_nodes[j]};
+        auto new_depend = func_graph->NewCNode(depend_inputs);
+        new_depend->set_abstract(cnode->input(0)->abstract());
+
+        // Set depend node to call input.
+        std::vector<AnfNodePtr> new_call_inputs{new_depend};
+        for (size_t k = 1; k < inputs.size(); ++k) {
+          (void)new_call_inputs.emplace_back(inputs[k]);
+        }
+        cnode->set_inputs(new_call_inputs);
+        MS_LOG(INFO) << "Add depend node:" << new_depend->DebugString()
+                     << " for call node:" << call_nodes[i]->DebugString() << " and:" << call_nodes[j]->DebugString();
+      }
+    }
+    call_nodes.clear();
+  }
+  MS_LOG(INFO) << "InsertDependForParallelCall end";
 }
 
 bool ControlNodeParser::IsControlFlowDataArrow(const KernelGraphPtr &graph, const AnfNodePtr &backend_node) {
@@ -1736,16 +1953,35 @@ void ControlNodeParser::ParseUnRecursionCallNode() {
 
 bool ControlNodeParser::IsCallNodeNeedStack(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  std::set<AnfNodePtr> depend_nodes;
 
+  // Fetch all the side effect inputs of call node.
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    std::vector<AnfNodePtr> monad_nodes = FetchAllMonadNodeByNode(input);
+    for (const auto &monad_node : monad_nodes) {
+      FetchRealDependNodeByAutoMonad(monad_node, &depend_nodes);
+    }
+  }
+
+  // Fetch all the data inputs of call node.
   auto input_with_indexs = FetchInputNodeByCNode(node);
-  for (const auto &input_with_index : input_with_indexs) {
-    MS_EXCEPTION_IF_NULL(input_with_index.first);
+  (void)std::for_each(
+    input_with_indexs.begin(), input_with_indexs.end(),
+    [&depend_nodes](const auto &input_with_index) { (void)depend_nodes.emplace(input_with_index.first); });
+
+  // Check if the call node need a stack.
+  for (const auto &depend_node : depend_nodes) {
+    MS_EXCEPTION_IF_NULL(depend_node);
     // If the call node has call or recursion graph input, a stack created for the call node is required.
-    if (!common::AnfAlgo::IsCallNode(input_with_index.first)) {
-      if (!input_with_index.first->isa<CNode>()) {
+    if (!common::AnfAlgo::IsCallNode(depend_node)) {
+      if (!depend_node->isa<CNode>()) {
         continue;
       }
-      const auto &graph = FetchKernelGraphByFrontNode(input_with_index.first);
+      const auto &graph = FetchKernelGraphByFrontNode(depend_node);
       if (graph == nullptr || (!IsRecursionKernelGraph(graph))) {
         continue;
       }
