@@ -623,8 +623,7 @@ std::vector<MSTensor> ModelPool::GetOutputs() {
 
 Status ModelPool::InitNumaParameter(const std::shared_ptr<RunnerConfig> &runner_config) {
   numa_available_ = numa::NUMAAdapter::GetInstance()->Available();
-  if (!numa_available_ && runner_config->GetWorkersNum() != 0 &&
-      runner_config->GetContext()->GetThreadAffinityCoreList().size() != 0) {
+  if (!numa_available_) {
     MS_LOG(DEBUG) << "numa node is unavailable.";
     return kSuccess;
   }
