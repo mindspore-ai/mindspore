@@ -31,71 +31,31 @@ namespace ops {
 namespace {
 abstract::ShapePtr RandomPoissonInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) {
-  if (!input_args[0]->isa<abstract::AbstractTensor>()) {
-    MS_EXCEPTION(TypeError) << "For RandomPoisson, input[0] only support tensor!";
-  }
   MS_EXCEPTION_IF_NULL(primitive);
-  const uint32_t kInpuDims = 1;
-  auto max_length_ptr = primitive->GetAttr("max_length");
-  MS_EXCEPTION_IF_NULL(max_length_ptr);
-  int64_t max_length = GetValue<int64_t>(max_length_ptr);
-  auto input_shape = input_args[0]->cast<abstract::AbstractTensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_shape);
-  auto input_shape_value_ptr = input_shape->BuildValue();
-  MS_EXCEPTION_IF_NULL(input_shape_value_ptr);
-  auto input_shape_tensor = input_shape_value_ptr->cast<tensor::TensorPtr>();
-  auto input_type = input_args[0]->BuildType();
-  MS_EXCEPTION_IF_NULL(input_type);
-  auto input_type_id = input_type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(input_type_id);
-  auto input_type_element = input_type_id->element();
-  MS_EXCEPTION_IF_NULL(input_type_element);
-  auto shape_ptr = std::make_shared<abstract::Shape>(
-    CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape]);
-  auto shape_v = shape_ptr->shape();
-  if (shape_v.size() != kInpuDims) {
-    MS_EXCEPTION(ValueError) << "For RandomPoisson, the input tensor must be a 1-D tensor.";
+  auto op_name = primitive->name();
+  auto shape_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  if (shape_shape.size() != 1) {
+    MS_EXCEPTION(ValueError) << "For RandomPoisson, the argument[shape] must be a 1-D tensor, but got "
+                             << shape_shape.size() << "-D";
   }
-  if (!input_args[0]->BuildValue()->isa<AnyValue>() && !input_args[0]->BuildValue()->isa<None>()) {
-    std::vector<int64_t> out_shape;
-    auto shape_m = 1;
-    if (input_type_element->type_id() == kNumberTypeInt32) {
-      auto input_shape_ptr = reinterpret_cast<int32_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= input_shape_ptr[i];
-        } else {
-          MS_EXCEPTION(ValueError) << "For RandomPoisson, each dimension must be greater than 0.";
-        }
-      }
-    } else if (input_type_element->type_id() == kNumberTypeInt64) {
-      auto input_shape_ptr = reinterpret_cast<int64_t *>(input_shape_tensor->data_c());
-      for (auto i = 0; i < shape_v[0]; ++i) {
-        if (input_shape_ptr[i] > 0) {
-          out_shape.push_back(input_shape_ptr[i]);
-          shape_m *= input_shape_ptr[i];
-        } else {
-          MS_EXCEPTION(ValueError) << "For RandomPoisson, each dimension must be greater than 0.";
-        }
-      }
+
+  auto shape_value = input_args[kInputIndex0]->BuildValue();
+  MS_EXCEPTION_IF_NULL(shape_value);
+  if (!shape_value->isa<AnyValue>() && !shape_value->isa<None>()) {
+    auto out_shape = CheckAndConvertUtils::CheckTensorIntValue("shape", shape_value, op_name);
+    (void)CheckAndConvertUtils::CheckPositiveVector("shape", out_shape, op_name);
+
+    auto rate_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->BuildShape())[kShape];
+    auto rate_rank = SizeToLong(rate_shape.size());
+    for (int64_t i = 0; i < rate_rank; i++) {
+      out_shape.push_back(rate_shape[i]);
     }
-    if (shape_m > max_length) {
-      MS_EXCEPTION(ValueError) << "For RandomPoisson, the number of elements of output must be less than max length: "
-                               << max_length << ", but got " << shape_m
-                               << "! the shape of  output should be reduced or max_length should be increased";
-    }
+
     return std::make_shared<abstract::Shape>(out_shape);
   } else {
-    const uint32_t input_shapes = static_cast<uint32_t>(std::pow(max_length, 1.0 / shape_v[0]));
-    std::vector<int64_t> output_shape;
-    ShapeVector shape_min;
-    ShapeVector shape_max;
-    for (int i = 0; i < shape_v[0]; i++) {
-      output_shape.push_back(abstract::Shape::SHP_ANY);
-      shape_min.push_back(0);
-      shape_max.push_back(input_shapes);
-    }
+    std::vector<int64_t> output_shape = {-2};
+    ShapeVector shape_min = {1};
+    ShapeVector shape_max = {1};
     return std::make_shared<abstract::Shape>(output_shape, shape_min, shape_max);
   }
 }
@@ -124,7 +84,7 @@ AbstractBasePtr RandomPoissonInfer(const abstract::AnalysisEnginePtr &, const Pr
   auto infershape = RandomPoissonInferShape(primitive, input_args);
   return abstract::MakeAbstract(infershape, infertype);
 }
-
+REGISTER_HOST_DEPENDS(kRandomPoisson, {0});
 MIND_API_OPERATOR_IMPL(RandomPoisson, BaseOperator);
 REGISTER_PRIMITIVE_EVAL_IMPL(RandomPoisson, prim::kPrimRandomPoisson, RandomPoissonInfer, nullptr, true);
 }  // namespace ops
