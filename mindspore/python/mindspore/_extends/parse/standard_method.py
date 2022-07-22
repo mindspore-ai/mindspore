@@ -2106,6 +2106,7 @@ check_is_int = constexpr(validator.check_is_int)
 check_type_name = constexpr(validator.check_type_name)
 check_value_type = constexpr(validator.check_value_type)
 check_int = constexpr(validator.check_int)
+check_bool = constexpr(validator.check_bool)
 
 
 def tensor_bool(x):
@@ -2210,6 +2211,15 @@ def ceil(x):
     Rounds a tensor up to the closest integer element-wise.
     """
     return F.ceil(x)
+
+
+def top_k(input_x, k, sorted=True):
+    """
+    Finds values and indices of the `k` largest entries along the last dimension.
+    """
+    check_is_int(k, 'k')
+    check_bool(sorted, 'sorted')
+    return F.top_k(input_x, k, sorted)
 
 
 #############

@@ -342,7 +342,6 @@ Reduction算子
     mindspore.ops.Minimum
     mindspore.ops.NotEqual
     mindspore.ops.SameTypeShape
-    mindspore.ops.TopK
 
 线性代数算子
 ^^^^^^^^^^^^^
@@ -463,6 +462,7 @@ Array操作
     mindspore.ops.TensorScatterUpdate
     mindspore.ops.TensorShape
     mindspore.ops.Tile
+    mindspore.ops.TopK
     mindspore.ops.Transpose
     mindspore.ops.Unique
     mindspore.ops.UniqueWithPad

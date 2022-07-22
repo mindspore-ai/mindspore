@@ -354,6 +354,7 @@ Array操作
     mindspore.ops.tensor_scatter_mul
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tile
+    mindspore.ops.top_k
     mindspore.ops.transpose
     mindspore.ops.unique
     mindspore.ops.unique_consecutive

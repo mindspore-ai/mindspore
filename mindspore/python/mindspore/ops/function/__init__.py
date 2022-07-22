@@ -89,7 +89,9 @@ from .array_func import (
     col2im,
     split,
     max,
+    unsorted_segment_sum,
     min,
+    top_k,
 )
 from .parameter_func import (
     assign,

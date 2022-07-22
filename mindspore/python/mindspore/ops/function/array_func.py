@@ -3700,9 +3700,9 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
     is negative, the value will be ignored. 'num_segments' must be equal to the number of different segment_ids.
 
     Args:
-        - **input_x** (Tensor) - The shape is :math:`(x_1, x_2, ..., x_R)`.
-        - **segment_ids** (Tensor) - Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
-        - **num_segments** (int) - Set :math:`z` as num_segments.
+        input_x (Tensor): The shape is :math:`(x_1, x_2, ..., x_R)`.
+        segment_ids (Tensor): Set the shape as :math:`(x_1, x_2, ..., x_N)`, where 0 < N <= R.
+        num_segments (int): Set :math:`z` as num_segments.
 
     Returns:
         Tensor, the shape is :math:`(z, x_{N+1}, ..., x_R)`.
@@ -3720,13 +3720,13 @@ def unsorted_segment_sum(input_x, segment_ids, num_segments):
         >>> input_x = Tensor([1, 2, 3, 4], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2], mindspore.int32)
         >>> num_segments = 4
-        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
         >>> print(output)
         [3. 3. 4. 0.]
         >>> input_x = Tensor([1, 2, 3, 4, 2, 5], mindspore.float32)
         >>> segment_ids = Tensor([0, 0, 1, 2, 3, 4], mindspore.int32)
         >>> num_segments = 6
-        >>> output = ops.UnsortedSegmentSum(input_x, segment_ids, num_segments)
+        >>> output = ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
         >>> print(output)
         [3. 3. 4. 2. 5. 0.]
     """
@@ -3785,6 +3785,63 @@ def min(x, axis=0, keep_dims=False):
     """
     argmin_with_value_op = P.ArgMinWithValue(axis, keep_dims)
     return argmin_with_value_op(x)
+
+
+def top_k(input_x, k, sorted=True):
+    r"""
+    Finds values and indices of the `k` largest entries along the last dimension.
+
+    .. warning::
+        - If sorted is set to 'False', it will use the aicpu operator, the performance may be reduced.
+
+    If the `input_x` is a one-dimensional Tensor, finds the `k` largest entries in the Tensor,
+    and outputs its value and index as a Tensor. Therefore, values[`k`] is the `k` largest item in `input_x`,
+    and its index is indices [`k`].
+
+    For a multi-dimensional matrix,
+    calculates the first `k` entries in each row (corresponding vector along the last dimension), therefore:
+
+    .. math::
+
+        values.shape = indices.shape = input.shape[:-1] + [k].
+
+    If the two compared elements are the same, the one with the smaller index value is returned first.
+
+    Args:
+        input_x (Tensor): Input to be computed, data type must be float16, float32 or int32.
+        k (int): The number of top elements to be computed along the last dimension, constant input is needed.
+        sorted (bool, optional): If true, the obtained elements will be sorted by the values in descending order.
+            Default: True.
+
+    Outputs:
+        Tuple of 2 tensors, the values and the indices.
+
+        - values (Tensor): The `k` largest elements in each slice of the last dimension.
+        - indices (Tensor): The indices of values within the last dimension of input.
+
+    Raises:
+        TypeError: If `sorted` is not a bool.
+        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `k` is not an int.
+        TypeError: If dtype of `input_x` is not one of the following: float16, float32 or int32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.ops as ops
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
+        >>> input_x = Tensor([1, 2, 3, 4, 5], ms.float16)
+        >>> k = 3
+        >>> values, indices = ops.top_k(input_x, k, sorted=True)
+        >>> print((values, indices))
+        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
+          dtype=Int32, value= [4, 3, 2]))
+    """
+    top_k_ = _get_cache_prim(P.TopK)(sorted)
+    return top_k_(input_x, k)
+
 
 __all__ = [
     'unique',
@@ -3851,6 +3908,8 @@ __all__ = [
     'col2im',
     'split',
     'max',
+    'unsorted_segment_sum',
     'min',
+    'top_k',
 ]
 __all__.sort()

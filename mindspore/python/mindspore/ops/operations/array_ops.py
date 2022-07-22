@@ -7744,3 +7744,34 @@ class FillDiagonal(Primitive):
         self.fill_value = fill_value
         validator.check_value_type('wrap', wrap, [bool], self.name)
         self.init_prim_io_names(inputs=['input_x'], outputs=['y'])
+
+
+class TopK(Primitive):
+    """
+    Finds values and indices of the `k` largest entries along the last dimension.
+
+    Refer to :func:`mindspore.ops.top_k` for more detail.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore.ops.operations.nn_ops import TopK
+        >>> import mindspore as ms
+        >>> from mindspore import Tensor
+        >>> top_k = TopK(sorted=True)
+        >>> input_x = Tensor([1, 2, 3, 4, 5], ms.float16)
+        >>> k = 3
+        >>> values, indices = top_k(input_x, k)
+        >>> print((values, indices))
+        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
+          dtype=Int32, value= [4, 3, 2]))
+    """
+
+    @prim_attr_register
+    def __init__(self, sorted=True):
+        """Initialize TopK."""
+        self.sorted = validator.check_value_type("sorted", sorted, [bool], self.name)
+        self.add_prim_attr("sorted", self.sorted)
+        self.init_prim_io_names(inputs=['input', 'k'],
+                                outputs=['values', 'indices'])

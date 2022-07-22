@@ -342,7 +342,6 @@ Comparison Operator
     mindspore.ops.Minimum
     mindspore.ops.NotEqual
     mindspore.ops.SameTypeShape
-    mindspore.ops.TopK
 
 Linear Algebraic Operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -463,6 +462,7 @@ Array Operation
     mindspore.ops.TensorScatterUpdate
     mindspore.ops.TensorShape
     mindspore.ops.Tile
+    mindspore.ops.TopK
     mindspore.ops.Transpose
     mindspore.ops.Unique
     mindspore.ops.UniqueWithPad

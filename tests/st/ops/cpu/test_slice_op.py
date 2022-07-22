@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -69,6 +70,7 @@ def test_slice2():
     output = slice_op(x)
     assert (output.asnumpy() == expect).all()
 
+
 def test_slice_float64():
     data = Tensor(np.array([[[1, 1, 1], [2, 2, 2]],
                             [[3, 3, 3], [4, 4, 4]],
@@ -77,6 +79,7 @@ def test_slice_float64():
     output = slice_op(data, (1, 0, 0), (1, 1, 3))
     expect = [[[3.0, 3.0, 3.0]]]
     assert (output.asnumpy() == expect).all()
+
 
 class Slice3(nn.Cell):
     def __init__(self):
@@ -179,6 +182,7 @@ class StridedSlice(nn.Cell):
     def construct(self, x):
         return self.stride_slice(x, self.begin, self.end, self.stride)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -193,6 +197,25 @@ def test_strided_slice_bool_type():
     expected_output = np.array([False, True, False])
     assert (output.asnumpy() == expected_output).all()
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_slice_functional():
+    """
+    Feature: test_slice_functional
+    Description: test slice functional API
+    Expectation: the output is as expected
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    x = Tensor(
+        np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]), mstype.float32)
+    expect = [[[2., -2., 2.]],
+              [[4., -4., 4.]]]
+    output = F.slice(x, begin=(0, 1, 0), size=(2, 1, 3))
+    assert (output.asnumpy() == expect).all()
+
+
 if __name__ == '__main__':
     test_slice()
     test_slice2()
@@ -201,3 +224,4 @@ if __name__ == '__main__':
     test_slice5()
     test_slice6()
     test_strided_slice_bool_type()
+    test_slice_functional()
