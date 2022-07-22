@@ -551,7 +551,27 @@ __global__ void FloorKernel(const half *input, half *output, const size_t count)
   }
   return;
 }
-
+template <typename T>
+__global__ void TruncKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = truncf(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void TruncKernel(const double *input, double *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = trunc(input[i]);
+  }
+  return;
+}
+template <>
+__global__ void TruncKernel(const half *input, half *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    output[i] = htrunc(input[i]);
+  }
+  return;
+}
 template <typename T>
 __global__ void CeilKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
@@ -846,6 +866,11 @@ void Floor(const T *input, T *output, const size_t count, cudaStream_t cuda_stre
   return;
 }
 template <typename T>
+void Trunc(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  TruncKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Ceil(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   CeilKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -919,6 +944,8 @@ template CUDA_LIB_EXPORT void Abs<double>(const double *input, double *output, c
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<double>(const double *input, double *output, const size_t count,
                                             cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<double>(const double *input, double *output, const size_t count,
+                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<double>(const double *input, double *output, const size_t count,
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<double>(const double *input, double *output, const size_t count,
@@ -987,6 +1014,8 @@ template CUDA_LIB_EXPORT void Abs<float>(const float *input, float *output, cons
                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<float>(const float *input, float *output, const size_t count,
                                            cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<float>(const float *input, float *output, const size_t count,
+                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<float>(const float *input, float *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<float>(const float *input, float *output, const size_t count,
@@ -1042,6 +1071,8 @@ template CUDA_LIB_EXPORT void Rsqrt<half>(const half *input, half *output, const
 template CUDA_LIB_EXPORT void Abs<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<half>(const half *input, half *output, const size_t count,
                                           cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<half>(const half *input, half *output, const size_t count,
+                                          cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Round<half>(const half *input, half *output, const size_t count,
@@ -1090,6 +1121,8 @@ template CUDA_LIB_EXPORT void Rsqrt<char>(const char *input, char *output, const
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<char>(const char *input, char *output, const size_t count,
+                                          cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<char>(const char *input, char *output, const size_t count,
                                           cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<char>(const char *input, char *output, const size_t count, cudaStream_t cuda_stream);
@@ -1153,6 +1186,8 @@ template CUDA_LIB_EXPORT void Abs<unsigned char>(const unsigned char *input, uns
                                                  cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<unsigned char>(const unsigned char *input, unsigned char *output,
                                                    const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<unsigned char>(const unsigned char *input, unsigned char *output,
+                                                   const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
                                                   cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<unsigned char>(const unsigned char *input, unsigned char *output, const size_t count,
@@ -1199,6 +1234,7 @@ template CUDA_LIB_EXPORT void Atanh<int>(const int *input, int *output, const si
 template CUDA_LIB_EXPORT void Rsqrt<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Abs<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Round<int>(const int *input, int *output, const size_t count, cudaStream_t cuda_stream);
@@ -1259,6 +1295,8 @@ template CUDA_LIB_EXPORT void Rsqrt<uint32_t>(const uint32_t *input, uint32_t *o
 template CUDA_LIB_EXPORT void Abs<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<uint32_t>(const uint32_t *input, uint32_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
@@ -1322,6 +1360,8 @@ template CUDA_LIB_EXPORT void Abs<int16_t>(const int16_t *input, int16_t *output
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<int16_t>(const int16_t *input, int16_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<int16_t>(const int16_t *input, int16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<int16_t>(const int16_t *input, int16_t *output, const size_t count,
@@ -1383,6 +1423,8 @@ template CUDA_LIB_EXPORT void Rsqrt<uint16_t>(const uint16_t *input, uint16_t *o
 template CUDA_LIB_EXPORT void Abs<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<uint16_t>(const uint16_t *input, uint16_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
@@ -1446,6 +1488,8 @@ template CUDA_LIB_EXPORT void Abs<int64_t>(const int64_t *input, int64_t *output
                                            cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<int64_t>(const int64_t *input, int64_t *output, const size_t count,
+                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<int64_t>(const int64_t *input, int64_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Rint<int64_t>(const int64_t *input, int64_t *output, const size_t count,
@@ -1507,6 +1551,8 @@ template CUDA_LIB_EXPORT void Rsqrt<uint64_t>(const uint64_t *input, uint64_t *o
 template CUDA_LIB_EXPORT void Abs<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                             cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Floor<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
+                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT void Trunc<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                               cudaStream_t cuda_stream);
 template CUDA_LIB_EXPORT void Ceil<uint64_t>(const uint64_t *input, uint64_t *output, const size_t count,
                                              cudaStream_t cuda_stream);
