@@ -174,11 +174,12 @@ def test_pad_to_size_check():
     test_invalid_input(RuntimeError, "target size to pad should be no less than the original image size", size=(5, 5))
     test_invalid_input(RuntimeError, "sum of offset and original image size should be no more than the target size",
                        (30, 30), (5, 5))
-    test_invalid_input(RuntimeError, "number of channels for input tensor can only be 1 or 3",
+    test_invalid_input(RuntimeError, "Expecting tensor in channel of (1, 3)",
                        data=np.random.random((28, 28, 4)))
-    test_invalid_input(RuntimeError, "input tensor is not in shape of <H,W> or <H,W,C>",
+    test_invalid_input(RuntimeError, "Expecting tensor in dimension of (2, 3)",
                        data=np.random.random(28))
-    test_invalid_input(RuntimeError, "Currently unsupported data type: [uint32, int64, uint64, string]",
+    test_invalid_input(RuntimeError, "Expecting tensor in type of "
+                                     "(bool, int8, uint8, int16, uint16, int32, float16, float32, float64)",
                        data=np.random.random((28, 28, 3)).astype(np.str))
 
 

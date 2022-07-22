@@ -62,7 +62,7 @@ Status RandomCropOp::ImagePadding(const std::shared_ptr<Tensor> &input, std::sha
   CHECK_FAIL_RETURN_UNEXPECTED(
     pad_top_ < input->shape()[0] * max_ratio && pad_bottom_ < input->shape()[0] * max_ratio &&
       pad_left_ < input->shape()[1] * max_ratio && pad_right_ < input->shape()[1] * max_ratio,
-    "Pad: padding size is three times bigger than the image size, padding top: " + std::to_string(pad_top_) +
+    "RandomCrop: padding size is three times bigger than the image size, padding top: " + std::to_string(pad_top_) +
       ", padding bottom: " + std::to_string(pad_bottom_) + ", padding pad_left_: " + std::to_string(pad_left_) +
       ", padding padding right:" + std::to_string(pad_right_) + ", image shape: " + std::to_string(input->shape()[0]) +
       ", " + std::to_string(input->shape()[1]));
@@ -125,12 +125,12 @@ Status RandomCropOp::Compute(const TensorRow &input, TensorRow *output) {
     for (size_t i = 0; i < input.size() - 1; i++) {
       if (input[i]->Rank() != 2 && input[i]->Rank() != 3) {
         std::string err_msg =
-          "RandomCropOp: image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(input[i]->Rank());
+          "RandomCrop: image shape is not <H,W,C> or <H, W>, but got rank:" + std::to_string(input[i]->Rank());
         RETURN_STATUS_UNEXPECTED(err_msg);
       }
       if (input[i]->shape()[0] != input[i + 1]->shape()[0] || input[i]->shape()[1] != input[i + 1]->shape()[1]) {
         RETURN_STATUS_UNEXPECTED(
-          "RandomCropOp: Input images in different column must have the same shape, check the output shape in "
+          "RandomCrop: Input images in different column must have the same shape, check the output shape in "
           "specified 'input_columns' before call this operation.");
       }
     }

@@ -92,18 +92,21 @@ Tensor &Tensor::operator=(Tensor &&other) noexcept {
 }
 
 Status Tensor::CreateEmpty(const TensorShape &shape, const DataType &type, TensorPtr *out) {
-  CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Invalid shape.");
-  CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Invalid data type.");
+  CHECK_FAIL_RETURN_UNEXPECTED(shape.known(), "Failed to create empty tensor, tensor shape is unknown.");
+  CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN, "Failed to create empty tensor, data type is unknown.");
   RETURN_UNEXPECTED_IF_NULL(out);
   const TensorAlloc *alloc = GlobalContext::Instance()->tensor_allocator();
   *out = std::allocate_shared<Tensor>(*alloc, shape, type);
-  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Allocate memory failed.");
+  CHECK_FAIL_RETURN_UNEXPECTED(out != nullptr, "Failed to create empty tensor, allocate memory failed.");
   // if it's a string tensor and it has no elements, Just initialize the shape and type.
-  if (!type.IsNumeric() && shape.NumOfElements() == 0) {
-    return Status::OK();
+  if (!type.IsNumeric()) {
+    if (shape.NumOfElements() == 0) {
+      return Status::OK();
+    } else {
+      RETURN_STATUS_UNEXPECTED(
+        "Failed to create empty tensor, number of elements should be 0 when data type is string.");
+    }
   }
-
-  CHECK_FAIL_RETURN_UNEXPECTED(type.IsNumeric(), "Number of elements is not 0. The type should be numeric.");
 
   int64_t byte_size = (*out)->SizeInBytes();
 
@@ -197,7 +200,11 @@ Status Tensor::CreateFromNpString(py::array arr, std::shared_ptr<Tensor> *out) {
 
 Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  if (DataType::FromNpArray(arr) == DataType::DE_STRING) {
+  DataType type = DataType::FromNpArray(arr);
+  CHECK_FAIL_RETURN_UNEXPECTED(type != DataType::DE_UNKNOWN,
+                               "Failed to create tensor from numpy array, data type is unknown.");
+
+  if (type == DataType::DE_STRING) {
     return CreateFromNpString(arr, out);
   }
 
@@ -221,10 +228,10 @@ Status Tensor::CreateFromNpArray(const py::array &arr, std::shared_ptr<Tensor> *
   unsigned char *data = static_cast<unsigned char *>(arr.request().ptr);
 
   if (is_strided) {
-    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), DataType::FromNpArray(arr), out));
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(shape), type, out));
     RETURN_IF_NOT_OK(CopyStridedArray((*out)->data_, data, shape, strides, (*out)->type_.SizeInBytes()));
   } else {
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), DataType::FromNpArray(arr), data, out));
+    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(TensorShape(shape), type, data, out));
   }
   return Status::OK();
 }
