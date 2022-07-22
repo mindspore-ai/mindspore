@@ -58,7 +58,7 @@ void GPUMemoryAllocator::CheckMaxDeviceMemory() const {
   MS_EXCEPTION_IF_NULL(context_ptr);
   auto max_device_memory = context_ptr->get_param<float>(MS_CTX_MAX_DEVICE_MEMORY);
   //  Currently not support modifying the max device memory.
-  if (limited_device_memory_ != max_device_memory) {
+  if (!common::IsFloatEqual(limited_device_memory_, max_device_memory)) {
     MS_LOG(EXCEPTION)
       << "Can't change or set context param max_device_memory during running, currently effective max_device_memory("
       << limited_device_memory_ << "GB), set new max_device_memory(" << max_device_memory << "GB) failed.";
