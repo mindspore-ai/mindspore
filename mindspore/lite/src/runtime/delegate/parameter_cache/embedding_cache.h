@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <memory>
 #include "include/api/status.h"
+#include "include/api/types.h"
 #include "include/api/data_type.h"
 #include "src/common/log_adapter.h"
 #include "src/runtime/delegate/parameter_cache/cache_algorithm.h"
