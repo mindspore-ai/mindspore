@@ -102,8 +102,10 @@ bool PopulationCountCpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &in
   const T *input_0_addr = reinterpret_cast<T *>(inputs[kZero]->addr);
   uint8_t *output_0_addr = reinterpret_cast<uint8_t *>(outputs[kZero]->addr);
   size_t length = inputs[kZero]->size / sizeof(T);
+  constexpr size_t min_block_size = 1024;
+  auto block_size = std::max(min_block_size, length / GetActorMgrInnerThreadPool()->GetKernelThreadNum());
   auto task = std::bind(PopulationCount<T>, input_0_addr, output_0_addr, std::placeholders::_1, std::placeholders::_2);
-  ParallelLaunchAutoSearch(task, length, this, &parallel_search_info_);
+  ParallelLaunch(task, length, block_size, this);
   return true;
 }
 

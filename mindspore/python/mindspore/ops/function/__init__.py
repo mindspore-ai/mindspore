@@ -108,6 +108,7 @@ from .array_func import (
     index_fill,
     max,
     min,
+    population_count,
 )
 from .parameter_func import (
     assign,
