@@ -192,6 +192,7 @@ constexpr auto kPreNmsTopn = "pre_nms_topn";
 constexpr auto kRankSize = "rank_size";
 constexpr auto kRatio = "ratio";
 constexpr auto kReduction = "reduction";
+constexpr auto kRho = "rho";
 constexpr auto kRootRank = "root_rank";
 constexpr auto kRoundMode = "round_mode";
 constexpr auto kRtol = "rtol";

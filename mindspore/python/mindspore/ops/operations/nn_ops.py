@@ -8805,11 +8805,11 @@ class SparseApplyRMSProp(Primitive):
     the relatively highest priority data type.
 
     Args:
-        rho (float): Decay rate. The value should between 0 and 1, otherwise the behavior is undefined.
+        rho (float): Decay rate. The value should be between 0 and 1, otherwise the behavior is undefined.
         momentum (float): Momentum. The value should be greater or equal to 0, otherwise the behavior is undefined.
         epsilon (float): A small value added for numerical stability. The value should be greater than 0,
                          otherwise the behavior is undefined.
-        use_locking (bool): If `True`, updating of the var, ms, and mom tensors is protected by a lock;
+        use_locking (bool): If `True`, updating of the var, ms, and mom tensors are protected by a lock;
                             otherwise the behavior is undefined, but may exhibit less contention. Default: False.
 
     Inputs:
@@ -8848,7 +8848,7 @@ class SparseApplyRMSProp(Primitive):
         RuntimeError: If the data type of `var`, `ms`, `mom` and `grad` conversion of Parameter is not supported.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend``  ``CPU``
 
     Examples:
         >>> class SparseApplyRMSPropNet(nn.Cell):

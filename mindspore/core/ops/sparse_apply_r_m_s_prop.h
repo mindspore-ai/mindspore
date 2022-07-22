@@ -36,6 +36,32 @@ class MIND_API SparseApplyRMSProp : public BaseOperator {
   SparseApplyRMSProp() : BaseOperator(kNameSparseApplyRMSProp) {
     InitIOName({"var", "ms", "mom", "lr", "grad", "indices"}, {"var", "ms", "mom"});
   }
+
+  /// \brief Set rho, the decay rate.
+  void set_rho(const float epsilon);
+  /// \brief Get rho.
+  ///
+  /// \return rho.
+  float get_rho() const;
+  /// \brief Set momentum.
+  void set_momentum(const float momentum);
+  /// \brief Get momentum.
+  ///
+  /// \return momentum.
+  float get_momentum() const;
+  /// \brief Set epsilon, A small value (float) added for numerical stability.
+  void set_epsilon(const float epsilon);
+  /// \brief Get epsilon.
+  ///
+  /// \return epsilon.
+  float get_epsilon() const;
+
+  /// \brief Set use_locking, A bool where if True, updating var, ms and mom is protected by a lock. Default: False.
+  void set_use_locking(const bool use_locking);
+  /// \brief Get use_locking.
+  ///
+  /// \return use_locking.
+  bool get_use_locking() const;
 };
 
 abstract::AbstractBasePtr SparseApplyRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
