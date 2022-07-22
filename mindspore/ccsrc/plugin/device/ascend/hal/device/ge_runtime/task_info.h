@@ -262,6 +262,11 @@ class HcclTaskInfo : public TaskInfo {
   int64_t op_type() const { return op_type_; }
   int64_t data_type() const { return data_type_; }
   const std::string &group() const { return group_; }
+  const std::vector<void *> &global_workspace_addr() const { return global_workspace_addr_; }
+
+  void SetGlobalWorkspaceAddr(const std::vector<void *> &global_workspace_addr) {
+    this->global_workspace_addr_ = global_workspace_addr;
+  }
 
  private:
   std::string hccl_type_;
@@ -277,6 +282,8 @@ class HcclTaskInfo : public TaskInfo {
   int64_t op_type_;
   int64_t data_type_;
   std::string group_;
+  // hccl global overflow addr
+  std::vector<void *> global_workspace_addr_;
 };
 
 class ProfilerTraceTaskInfo : public TaskInfo {

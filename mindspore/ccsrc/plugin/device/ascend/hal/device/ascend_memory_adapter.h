@@ -22,11 +22,11 @@
 #include <memory>
 #include <vector>
 #include "utils/ms_context.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-
 class AscendMemAdapter {
  public:
   static AscendMemAdapter &GetInstance() {
@@ -39,6 +39,7 @@ class AscendMemAdapter {
 
   uint8_t *MallocStaticDevMem(size_t size, const std::string &tag = "");
   uint8_t *MallocDynamicDevMem(size_t size, const std::string &tag = "");
+  uint8_t *MallocOverflowMem(const CNodePtr &kernel);
   bool FreeStaticDevMem(void *) const { return true; }
   void ResetDynamicMemory();
 
@@ -73,6 +74,9 @@ class AscendMemAdapter {
   // Support multi-thread.
   std::mutex mutex_;
 
+  // Support overflow case.
+  std::mutex overflow_mutex_;
+
   // rts Memory INFO
   size_t device_hbm_total_size_{0};
   size_t device_hbm_free_size_{0};
@@ -90,6 +94,9 @@ class AscendMemAdapter {
   uint64_t static_mem_offset_{0};
   std::vector<std::shared_ptr<MemoryBlock>> static_memory_block_list_;
   static size_t GetRoundDownAlignSize(size_t input_size);
+
+  // overflow memory info, key is kernel, val is memory ptr
+  mindspore::HashMap<std::string, uint8_t *> overflow_memory_info_map_;
 };
 }  // namespace ascend
 }  // namespace device
