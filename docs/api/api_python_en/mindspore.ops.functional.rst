@@ -373,6 +373,7 @@ Array Operation
     mindspore.ops.space_to_batch_nd
     mindspore.ops.sparse_segment_mean
     mindspore.ops.split
+    mindspore.ops.squeeze
     mindspore.ops.stack
     mindspore.ops.tensor_scatter_add
     mindspore.ops.tensor_scatter_min
@@ -408,8 +409,6 @@ Array Operation
      - Refer to :class:`mindspore.ops.DType`.
    * - mindspore.ops.sort
      - Refer to :class:`mindspore.ops.Sort`.
-   * - mindspore.ops.squeeze
-     - Refer to :class:`mindspore.ops.Squeeze`.
    * - mindspore.ops.strided_slice
      - Refer to :class:`mindspore.ops.StridedSlice`.
    * - mindspore.ops.tensor_scatter_update
