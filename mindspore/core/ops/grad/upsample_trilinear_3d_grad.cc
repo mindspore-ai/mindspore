@@ -39,6 +39,7 @@ abstract::ShapePtr UpsampleTrilinear3DGradInferShape(const PrimitivePtr &primiti
   string op_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->BuildShape())[kShape];
+  auto grad_shape_ptr = input_args[0]->BuildShape();
   auto input_size_ptr = primitive->GetAttr("input_size");
   MS_EXCEPTION_IF_NULL(input_size_ptr);
   auto input_size = GetValue<std::vector<int64_t>>(input_size_ptr);
@@ -84,6 +85,11 @@ abstract::ShapePtr UpsampleTrilinear3DGradInferShape(const PrimitivePtr &primiti
     output_shape[kInputIndex3] = output_size[kInputIndex1];
     output_shape[kInputIndex4] = output_size[kInputIndex2];
   }
+
+  if (grad_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(input_size);
+  }
+
   bool shape_error = false;
   const int shape_dims = 4;
   for (size_t i = 0; i < shape_dims; i++) {

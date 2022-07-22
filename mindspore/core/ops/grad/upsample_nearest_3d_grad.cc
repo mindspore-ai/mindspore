@@ -29,6 +29,7 @@ abstract::ShapePtr UpsampleNearest3DGradInferShape(const PrimitivePtr &primitive
   auto prim_name = primitive->name();
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto grad_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[0]->BuildShape())[kShape];
+  auto grad_shape_ptr = input_args[0]->BuildShape();
   (void)CheckAndConvertUtils::CheckInteger("the dimension of grad", SizeToLong(grad_shape.size()), kEqual,
                                            SizeToLong(kInputIndex5), prim_name);
   // input size
@@ -59,10 +60,15 @@ abstract::ShapePtr UpsampleNearest3DGradInferShape(const PrimitivePtr &primitive
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', only one of 'scales' and 'output_size' can be specified."
                              << " But get both.";
   }
-  (void)CheckAndConvertUtils::CheckInteger("grad tensor dim 0", input_size[kInputIndex0], kEqual,
-                                           grad_shape[kInputIndex0], prim_name);
-  (void)CheckAndConvertUtils::CheckInteger("grad tensor dim 1", input_size[kInputIndex1], kEqual,
-                                           grad_shape[kInputIndex1], prim_name);
+
+  if (grad_shape_ptr->IsDynamic()) {
+    return std::make_shared<abstract::Shape>(input_size);
+  }
+
+  (void)CheckAndConvertUtils::CheckInteger("grad tensor dim 0", grad_shape[kInputIndex0], kEqual,
+                                           input_size[kInputIndex0], prim_name);
+  (void)CheckAndConvertUtils::CheckInteger("grad tensor dim 1", grad_shape[kInputIndex1], kEqual,
+                                           input_size[kInputIndex1], prim_name);
   if (scales.empty()) {
     (void)CheckAndConvertUtils::CheckInteger("grad tensor dim 2", grad_shape[kInputIndex2], kEqual,
                                              output_size[kInputIndex0], prim_name);
