@@ -209,6 +209,7 @@ Reduction算子
 
     mindspore.ops.logsumexp
     mindspore.ops.norm
+    mindspore.ops.min
 
 .. list-table::
    :widths: 50 50

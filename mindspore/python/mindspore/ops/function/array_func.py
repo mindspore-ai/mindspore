@@ -3856,7 +3856,7 @@ def max(x, axis=0, keep_dims=False):
     Also see: class: `mindspore.ops.ArgMaxWithValue`.
 
     Args:
-        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)`. And the data type only support mindspore.float16 or float32.
         axis (int): The dimension to reduce. Default: 0.
         keep_dims (bool): Whether to reduce dimension, if true, the output will keep same dimension with the input,
@@ -3909,7 +3909,7 @@ def min(x, axis=0, keep_dims=False):
     Also see: class: `mindspore.ops.ArgMinWithValue`.
 
     Args:
-        x (Tensor) - The input tensor, can be any dimension. Set the shape of input tensor as
+        x (Tensor): The input tensor, can be any dimension. Set the shape of input tensor as
           :math:`(x_1, x_2, ..., x_N)` . And the data type only support
           mindspore.uint16, mindspore.uint32, mindspore.int16, mindspore.int32, mindspore.float16, mindspore.float32.
         axis (int): The dimension to reduce. Default: 0.
@@ -3926,6 +3926,7 @@ def min(x, axis=0, keep_dims=False):
         - **values** (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Raises:
+        TypeError: If data type `x` is not uint16, uint32, int16, int32, float16, float32.
         TypeError: If `keep_dims` is not a bool.
         TypeError: If `axis` is not an int.
 
