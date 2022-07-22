@@ -46,8 +46,8 @@ static bool IsInEndNodeBlackList(const CNodePtr &cnode) {
   if (IsInParallelBlackList(prim)) {
     return true;
   }
-  for (auto &prim_node : END_NODE_BLACK_LIST) {
-    if (IsPrimitiveCNode(cnode, prim_node)) {
+  for (auto prim_node = END_NODE_BLACK_LIST.cbegin(); prim_node != END_NODE_BLACK_LIST.cend(); ++prim_node) {
+    if (IsPrimitiveCNode(cnode, *prim_node)) {
       return true;
     }
   }
@@ -131,7 +131,9 @@ CNodePtr FindNodeWithMircoSize(const AnfNodePtr &node_user, const NodeUsersMap &
 }
 
 bool IsSourceUsedByMirror(const CNodePtr &node, const NodeUsersMap &node_user_map) {
-  if (node->inputs().size() < 2) return false;
+  if (node->inputs().size() < 2) {
+    return false;
+  }
   auto parameter_node = node->input(1);
   if (parameter_node->cast<ParameterPtr>()) {
     for (auto &item : node_user_map.at(parameter_node)) {
@@ -444,8 +446,7 @@ void ReorderForBackward(const PipelinePair &forward_start_pair, const PipelinePa
 }
 
 void ReorderForParams(const std::vector<AnfNodePtr> &backward_params, const std::vector<AnfNodePtr> &forward_params,
-                      const std::vector<AnfNodePtr> &allreduce_params, const PipelinePair &forward_params_pair,
-                      const PipelinePair &backward_params_pair, const std::vector<AnfNodePtr> &backward_end,
+                      const PipelinePair &forward_params_pair, const std::vector<AnfNodePtr> &backward_end,
                       const PipelinePair &forward_start_pair, const FuncGraphPtr &root) {
   auto manager = root->manager();
   MS_EXCEPTION_IF_NULL(manager);
@@ -561,17 +562,17 @@ AnfNodePtr GetPreNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(cnode);
   std::vector<AnfNodePtr> node_queue = {node};
   while (!node_queue.empty()) {
-    auto cur_node = (*node_queue.begin())->cast<CNodePtr>();
+    auto cur_node = (*node_queue.cbegin())->cast<CNodePtr>();
     if (!cur_node) {
-      (void)node_queue.erase(node_queue.begin());
+      (void)node_queue.erase(node_queue.cbegin());
       continue;
     }
-    (void)node_queue.erase(node_queue.begin());
+    (void)node_queue.erase(node_queue.cbegin());
     if (!IsInEndNodeBlackList(cur_node) && cur_node->HasPrimalAttr(NEED_GRAD)) {
       MS_LOG(INFO) << "Pipeline End node: " << cur_node->DebugString();
       return cur_node;
     }
-    (void)node_queue.insert(node_queue.end(), cur_node->inputs().begin() + 1, cur_node->inputs().end());
+    (void)node_queue.insert(node_queue.cend(), cur_node->inputs().cbegin() + 1, cur_node->inputs().cend());
   }
   MS_LOG(EXCEPTION) << "Get Pipeline End node failed.";
 }
@@ -784,7 +785,6 @@ void Reorder(const FuncGraphPtr &root) {
   auto forward_start_pair = Deduplicate(forward_start, root, micro_max);
   auto forward_end_pair = Deduplicate(forward_end, root, micro_max);
   auto forward_params_pair = Deduplicate(forward_params, root, micro_max);
-  auto backward_params_pair = Deduplicate(backward_params, root, micro_max);
   CheckBorderNode(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair, LongToSize(micro_max));
   PipelinePair forward_end_before_pair;
   if (!IsLastStage()) {
@@ -806,8 +806,7 @@ void Reorder(const FuncGraphPtr &root) {
   ReorderForForward(forward_start_pair.first, forward_end_pair.second, root);
   ReorderForBackward(forward_start_pair, forward_end_pair, backward_start_pair, backward_end_pair,
                      forward_end_before_pair, root);
-  ReorderForParams(backward_params, forward_params, allreduce_params, forward_params_pair, backward_params_pair,
-                   backward_end, forward_start_pair, root);
+  ReorderForParams(backward_params, forward_params, forward_params_pair, backward_end, forward_start_pair, root);
 }
 
 void ReorderForPredict(const FuncGraphPtr &root, const FuncGraphManagerPtr &manager) {

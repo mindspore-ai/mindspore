@@ -216,11 +216,11 @@ py::dict GetParallelCNodeInfoFromSubGraph(const FuncGraphPtr &sub_graph, const F
 
   py::dict cnode_info_dict;
   auto cnodes = sub_graph->GetOrderedCnodes();
-  for (const auto &cnode : cnodes) {
-    std::string op_name_with_count = GetCNodeOperatorNameWithCount(cnode, func_name_map);
+  for (auto cnode = cnodes.cbegin(); cnode != cnodes.cend(); ++cnode) {
+    std::string op_name_with_count = GetCNodeOperatorNameWithCount(*cnode, func_name_map);
     py::dict cnode_info;
-    cnode_info[INPUTS] = GetCNodeOperandNameList(cnode, func_name_map);
-    cnode_info[ATTRS] = GetCNodeAttrs(cnode);
+    cnode_info[INPUTS] = GetCNodeOperandNameList(*cnode, func_name_map);
+    cnode_info[ATTRS] = GetCNodeAttrs(*cnode);
     cnode_info_dict[py::str(op_name_with_count)] = cnode_info;
   }
   return cnode_info_dict;

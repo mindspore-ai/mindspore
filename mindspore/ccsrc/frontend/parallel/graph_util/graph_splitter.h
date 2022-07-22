@@ -282,8 +282,7 @@ class ParameterServerMode : public DistributedExecutionMode {
   CNodePtr CreateGradMeanNode(const AnfNodePtr &gradient, size_t divisor);
 
   // Create MakeTupe and TupleGetItem nodes for the multiple inputs.
-  std::pair<CNodePtr, CNodePtr> CreateNodesForMakeTuple(const AnfNodePtr &input, size_t input_index,
-                                                        size_t total_inputs_number);
+  std::pair<CNodePtr, CNodePtr> CreateNodesForMakeTuple(const AnfNodePtr &input, size_t total_inputs_number);
 
   // Create node with multiple inputs. Some of the inputs could be fake nodes.
   // 'many_to_one_node_name' represents the name of the node to be created.
@@ -300,11 +299,11 @@ class ParameterServerMode : public DistributedExecutionMode {
     const InterProcessOpEdgesInfo &comm_edges_of_server_optimizer);
 
   // Filter out all communication edges related to optimizers on Parameter Server.
-  InterProcessOpEdgesInfo FilterCommEdgesOfServerOptimizer(const InterProcessOpEdgesInfo &comm_edges);
+  InterProcessOpEdgesInfo FilterCommEdgesOfServerOptimizer(const InterProcessOpEdgesInfo &comm_edges) const;
 
   // Filter out all communication edges which are not related to any Parameter Server optimizers and convert them to
   // FusedInterProcessOpPairMap.
-  FusedInterProcessOpPairMap FilterNotServerOptimizerEdges(const InterProcessOpEdgesInfo &comm_edges);
+  FusedInterProcessOpPairMap FilterNotServerOptimizerEdges(const InterProcessOpEdgesInfo &comm_edges) const;
 
   // Fuse the given rpc send nodes list. Only nodes which send data to the same peer can be fused.
   CNodePtr FuseRpcSendNodes(const std::vector<CNodePtr> &rpc_send_nodes);
@@ -378,7 +377,7 @@ class GraphSplitter {
   // So method GenerateInterProcessOpsForNodeInputs is for generating Send-Recv pair between Node-In and Node-X.
   InterProcessOpEdgesInfo GenerateInterProcessOpsForNodeInputs(const AnfNodePtr &node);
 
-  InterProcessEdgeLabel GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node);
+  InterProcessEdgeLabel GenerateEdgeLabel(const AnfNodePtr &src_node, const AnfNodePtr &dst_node) const;
 
   // Segments will be independent with each other after the graph is cut, so in-degrees and out-degrees of each segment
   // should be connected with control edges in case that the nodes are optimized out.

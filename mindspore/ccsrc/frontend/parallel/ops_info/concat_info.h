@@ -36,8 +36,8 @@ class ConcatInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ConcatCost>()) {}
   ~ConcatInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
 
  protected:

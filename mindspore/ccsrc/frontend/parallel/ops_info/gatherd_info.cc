@@ -126,7 +126,7 @@ Status GatherDInfo::InferTensorInfo() {
   }
 
   TensorInfo dim_tensor_info;
-  (void)inputs_tensor_info_.insert(inputs_tensor_info_.begin() + 1, dim_tensor_info);
+  (void)inputs_tensor_info_.insert(inputs_tensor_info_.cbegin() + 1, dim_tensor_info);
 
   for (size_t i = 0; i < outputs_tensor_map_.size(); ++i) {
     TensorLayout output_layout;

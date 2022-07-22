@@ -20,7 +20,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "utils/hash_map.h"
@@ -30,7 +29,7 @@
 
 namespace mindspore {
 namespace parallel {
-#define USING_HASH_NAME "USING_HASH_NAME"
+const char USING_HASH_NAME[] = "USING_HASH_NAME";
 // Get the operator's path where the operator has be defined
 std::string GetOpPythonPath(const OperatorName &op_name);
 

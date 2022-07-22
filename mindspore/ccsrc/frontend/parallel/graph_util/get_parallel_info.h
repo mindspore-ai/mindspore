@@ -18,7 +18,6 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_GET_GRAPH_INFO_H_
 
 #include "pybind11/stl.h"
-#include "pybind11/pybind11.h"
 #include "ir/anf.h"
 #include "pipeline/jit/resource.h"
 

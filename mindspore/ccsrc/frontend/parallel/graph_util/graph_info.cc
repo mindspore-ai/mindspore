@@ -40,7 +40,7 @@ std::vector<PrimitivePtr> FindPrimtive(const FuncGraphPtr &graph, const std::str
     PrimitivePtr node_prim = prim_node_anf->value()->cast<PrimitivePtr>();
     MS_EXCEPTION_IF_NULL(node_prim);
     if (node_prim->name() == name) {
-      prim_list.emplace_back(node_prim);
+      (void)prim_list.emplace_back(node_prim);
     }
   }
   return prim_list;

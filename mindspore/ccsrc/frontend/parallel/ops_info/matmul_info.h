@@ -32,18 +32,17 @@ namespace mindspore {
 namespace parallel {
 class MatMulBase : public OperatorInfo {
  public:
+  // Generate all strategies and the corresponding cost for this MatMul operator
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  Status SwapLastTwoElements(Shape *const input);
+  Shapes InferParamStrategy(const Shapes &default_strategy) override;
+
+ protected:
   MatMulBase(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<MatMulCost>()) {}
   ~MatMulBase() override = default;
-
-  // Generate all strategies and the corresponding cost for this MatMul operator
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
-  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  Status SwapLastTwoElements(Shape *shape);
-  Shapes InferParamStrategy(const Shapes &default_strategy) override;
-
- protected:
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;  // the forward_reduce_scatter mode need to override this function
   Status InferDevMatrixShape() override;

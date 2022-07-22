@@ -310,7 +310,7 @@ bool FindReshape(const CNodePtr &cnode, mindspore::HashSet<std::string> *op_cach
     if (op_cache->find(op_info_name) != op_cache->end()) {
       return false;
     }
-    op_cache->insert(op_info_name);
+    (void)op_cache->insert(op_info_name);
     return true;
   }
   return false;
