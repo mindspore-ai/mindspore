@@ -187,7 +187,7 @@ std::vector<StrategyPtr> Softmax::GenerateOpStrategies(int64_t stage_id) {
   }
 
   Shape input0_split;
-  (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
+  (void)input0_split.insert(input0_split.cbegin(), inputs_shape_[0].size(), 1);
   for (auto &element : axis_) {
     int64_t axis_index = element;
     if (element < 0) {
@@ -431,7 +431,7 @@ Status ActivationBase::InferTensorMap() {
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - i - 1));
+    tensor_map_index.push_back(static_cast<int64_t>(size - i - 1));
   }
 
   inputs_tensor_map_.push_back(tensor_map_index);
@@ -468,7 +468,7 @@ Status DropoutInfo::InferTensorMap() {
   size_t size = inputs_shape_.at(0).size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_in.push_back((int64_t)(size - i - 1));
+    tensor_map_in.push_back(static_cast<int64_t>(size - i - 1));
   }
 
   inputs_tensor_map_.push_back(tensor_map_in);
@@ -585,7 +585,7 @@ Status ExpandDimsInfo::InferTensorMap() {
     MS_LOG(ERROR) << name_ << ": Invalid positive axis " << positive_axis_;
     return FAILED;
   }
-  (void)output_tensor_map.insert(output_tensor_map.begin() + positive_axis_, NO_SPLIT_MAP);
+  (void)output_tensor_map.insert(output_tensor_map.cbegin() + positive_axis_, NO_SPLIT_MAP);
   outputs_tensor_map_.push_back(output_tensor_map);
 
   MS_LOG(INFO) << name_ << ": The tensor map of input is " << ShapeToString(input_tensor_map)

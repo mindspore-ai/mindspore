@@ -69,7 +69,7 @@ std::vector<StrategyPtr> L2NormalizeInfo::GenerateOpStrategies(int64_t stage_id)
     size_t input_dim = inputs_shape_.at(0).size();
     axis_index = static_cast<int64_t>(input_dim) + axis_;
   }
-  (void)input0_split.insert(input0_split.begin() + axis_index, 0);
+  (void)input0_split.insert(input0_split.cbegin() + axis_index, 0);
   Shapes splittable_inputs = {input0_split};
 
   std::vector<StrategyPtr> sp_vector;

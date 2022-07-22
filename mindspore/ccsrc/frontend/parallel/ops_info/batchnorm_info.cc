@@ -39,7 +39,8 @@ Status BatchNormInfo::GetAttrs() {
   auto attr_iter = attrs_.find(GROUP_SIZE);
   if (attr_iter != attrs_.end()) {
     group_size_ = GetIntAttr(GROUP_SIZE);
-    if (group_size_ < 1 || group_size_ > stage_device_size_ || (group_size_ & (group_size_ - 1)) != 0 ||
+    if (group_size_ < 1 || group_size_ > stage_device_size_ ||
+        ((static_cast<uint64_t>(group_size_) & static_cast<uint64_t>(group_size_ - 1)) != 0) ||
         stage_device_size_ % group_size_ != 0) {
       MS_LOG(ERROR) << name_ << ": The group size is out of range, it must be in [1, " << stage_device_size_
                     << "], it must be the power of 2, and it can divide all device num " << stage_device_size_

@@ -30,7 +30,7 @@ namespace parallel {
 class BatchParallelInfo : public OperatorInfo {
  public:
   BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                    const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+                    const PrimitiveAttrs &attrs, const OperatorCostPtr cost)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                     const PrimitiveAttrs &attrs)

@@ -622,7 +622,7 @@ void GatherInfo::InferTensorMapForManualSplit() {
   Shape param_map;
   size_t size = inputs_shape_[0].size();
   for (size_t i = 0; i < size; ++i) {
-    param_map.push_back((int64_t)(size - i - 1));
+    param_map.push_back(static_cast<int64_t>(size - i - 1));
   }
 
   size_t indices_size = inputs_shape_[1].size();
@@ -782,6 +782,7 @@ Status GatherInfo::InferOffset() {
   if (param_strategy.size() > 1) {
     bias_size = std::accumulate(param_strategy.begin() + 1, param_strategy.end(), 1, std::multiplies<int64_t>());
   }
+  MS_EXCEPTION_IF_ZERO("bias_size", LongToSize(bias_size));
   size_t index = rank / LongToSize(bias_size);
   if (index < index_offsets_.size()) {
     index_offset_ = index_offsets_[index];

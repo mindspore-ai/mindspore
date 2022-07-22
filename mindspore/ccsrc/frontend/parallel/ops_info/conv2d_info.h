@@ -37,9 +37,10 @@ class Conv2DInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()) {}
   ~Conv2DInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
-  Status SetCostUnderStrategy(const StrategyPtr &) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
+  Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
   void ReComputeBatchSplitFlagList() override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrsBase();
@@ -64,7 +65,6 @@ class Conv2DInfo : public OperatorInfo {
   void InferCommunicationAttrs();
   std::string ReplaceNodeName() const;
   AnfNodePtr GenerateConv2DNode(const AnfNodePtr &new_input, const CNodePtr &cnode);
-  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
   OperatorAttrs CreateNeighborExchangeV2Attrs();
   OperatorAttrs CreateConv2DAttrs();
   void ComputeReplaceGraph(const CNodePtr &cnode);

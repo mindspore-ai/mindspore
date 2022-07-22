@@ -36,7 +36,7 @@ class GammaInfo : public OperatorInfo {
       : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<GammaCost>()) {}
   ~GammaInfo() override = default;
 
-  std::vector<StrategyPtr> GenerateOpStrategies(int64_t) override;
+  std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override { return SetCostUnderStrategyBase(strategy); }
   void UpdateShape(const CNodePtr &cnode);
   void ReplaceNodeInputOrAttrs() override;
@@ -53,7 +53,7 @@ class GammaInfo : public OperatorInfo {
 
  private:
   void ResetInputsShape();
-  bool IsNotSplittableStrategy(const Dimensions &strategy);
+  bool IsNotSplittableStrategy(const Dimensions &strategy) const;
 
   int64_t seed_ = 0;
   int64_t seed2_ = 0;

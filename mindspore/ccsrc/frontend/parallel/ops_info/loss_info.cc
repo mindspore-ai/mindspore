@@ -80,7 +80,7 @@ Status SoftmaxCrossEntropyWithLogitsInfo::InferTensorMap() {
   size_t size = inputs_shape_[0].size();
   // such as 4: tensor_map_index [3,2,1,0]
   for (size_t i = 0; i < size; ++i) {
-    tensor_map_index.push_back((int64_t)(size - i - 1));
+    tensor_map_index.push_back(static_cast<int64_t>(size - i - 1));
   }
 
   Shape first_output_tensor_map = {tensor_map_index[0]};
@@ -118,7 +118,7 @@ std::vector<StrategyPtr> SoftmaxCrossEntropyWithLogitsInfo::GenerateOpStrategies
   }
 
   Shape input0_split;
-  (void)input0_split.insert(input0_split.begin(), inputs_shape_[0].size(), 1);
+  (void)input0_split.insert(input0_split.cbegin(), inputs_shape_[0].size(), 1);
   input0_split[LongToSize(axis_index)] = 0;
   Shapes splittable_inputs = {input0_split, input0_split};
   std::vector<StrategyPtr> sp_vector;

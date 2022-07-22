@@ -29,7 +29,7 @@ namespace parallel {
 Shape ExpandShape(const Shape &bigger_size_shape, Shape smaller_size_shape) {
   size_t insert_num = bigger_size_shape.size() - smaller_size_shape.size();
   for (size_t num = 0; num < insert_num; ++num) {
-    (void)smaller_size_shape.insert(smaller_size_shape.begin(), 1);
+    (void)smaller_size_shape.insert(smaller_size_shape.cbegin(), 1);
   }
   return smaller_size_shape;
 }
@@ -113,7 +113,7 @@ TensorMap SetExpandTensorMap(const Shape &strategy, const Shape &dev_matrix_shap
   TensorMap tensor_map_index;
   for (size_t i = 0; i < strategy.size(); ++i) {
     if (strategy[i] == dev_matrix_shape[i]) {
-      tensor_map_index.push_back((int64_t)(LAST_INDEX(strategy.size()) - i));
+      tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(strategy.size()) - i));
     } else {
       tensor_map_index.push_back(-1);
     }
@@ -126,8 +126,8 @@ TensorMap SetTensorMap(const Shape &strategy_expand, const Shape &dev_matrix_sha
   size_t dev_matrix_size = dev_matrix_shape.size();
   size_t strategy_size = strategy.size();
   if (dev_matrix_size != strategy_size) {
-    (void)expand_map.erase(expand_map.begin(),
-                           expand_map.begin() + static_cast<different_type>(dev_matrix_size - strategy_size));
+    (void)expand_map.erase(expand_map.cbegin(),
+                           expand_map.cbegin() + static_cast<different_type>(dev_matrix_size - strategy_size));
   }
   return expand_map;
 }
@@ -157,7 +157,7 @@ Status ArithmeticBase::InferTensorMap() {
   Dimensions sub_a_strategy = stra.at(0);
   Dimensions sub_b_strategy = stra.at(1);
   for (size_t i = 0; i < sub_a_expand_strategy.size(); ++i) {
-    tensor_map_index.push_back((int64_t)(LAST_INDEX(sub_a_expand_strategy.size()) - i));
+    tensor_map_index.push_back(static_cast<int64_t>(LAST_INDEX(sub_a_expand_strategy.size()) - i));
   }
 
   // Get dev matrix without repeated calculation
@@ -166,7 +166,7 @@ Status ArithmeticBase::InferTensorMap() {
     if (repeated_num_in_dev_matrix_right_) {
       dev_shape.pop_back();
     } else {
-      (void)dev_shape.erase(dev_shape.begin());
+      (void)dev_shape.erase(dev_shape.cbegin());
     }
   }
 
@@ -184,7 +184,7 @@ Shapes ArithmeticBase::InferParamStrategy(const Shapes &default_strategy) {
     return default_strategy;
   }
   int64_t strategy_mul = 1;
-  std::for_each(left_strategy.begin(), left_strategy.end(), [&](int64_t const &data) { strategy_mul *= data; });
+  (void)std::for_each(left_strategy.cbegin(), left_strategy.cend(), [&](int64_t const &data) { strategy_mul *= data; });
   auto left_shape = inputs_shape_[0];
   auto left_batch = left_shape[0];
   auto right_shape = inputs_shape_[1];
@@ -219,7 +219,7 @@ std::vector<StrategyPtr> ArithmeticBase::GenerateOpStrategies(int64_t stage_id) 
     MS_LOG(EXCEPTION) << name_ << ": Size of inputs must be greater than or equal to 2, but got size "
                       << inputs_shape_.size();
   }
-  Shapes inputs_shape(inputs_shape_.begin(), inputs_shape_.begin() + 2);
+  Shapes inputs_shape(inputs_shape_.cbegin(), inputs_shape_.cbegin() + 2);
 
   std::vector<StrategyPtr> sp_vector;
   if (GenerateStrategiesWithBroadcast(stage_id, inputs_shape, splittable_inputs, &sp_vector) != SUCCESS) {
@@ -326,7 +326,7 @@ Status LerpInfo::InferTensorMap() {
     if (repeated_num_in_dev_matrix_right_) {
       dev_shape.pop_back();
     } else {
-      (void)dev_shape.erase(dev_shape.begin());
+      (void)dev_shape.erase(dev_shape.cbegin());
     }
   }
   inputs_tensor_map_.push_back(SetTensorMap(expand_weight_strategy, dev_shape, weight_strategy));
