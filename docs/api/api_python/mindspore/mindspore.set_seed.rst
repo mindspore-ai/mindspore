@@ -11,11 +11,9 @@ mindspore.set_seed
         - numpy.random.seed()设置的种子仅能被numpy.random使用，而这个API设置的种子也可被numpy.random使用，因此推荐使用这个API设置所有的种子。
         - 在semi_auto_parallel/auto_parallel模式下，使用set_seed时，同一节点具有相同形状和相同切分策略的权重将被初始化为相同的结果，否则，将被初始化为不同的结果。
 
-    **参数：**
+    参数：
+        - **seed** (int) - 设置的全局种子。
 
-    - **seed** (int) – 设置的全局种子。
-
-    **异常：**
-
-    - **ValueError** – 种子值非法 (小于0)。
-    - **TypeError** – 种子值非整型数。
+    异常：
+        - **ValueError** - 种子值非法 (小于0)。
+        - **TypeError** - 种子值非整型数。
