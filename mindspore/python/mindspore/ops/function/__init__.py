@@ -109,6 +109,7 @@ from .array_func import (
     max,
     min,
     population_count,
+    top_k,
 )
 from .parameter_func import (
     assign,

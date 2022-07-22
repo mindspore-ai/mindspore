@@ -416,6 +416,7 @@ Array Operation
     mindspore.ops.tensor_scatter_sub
     mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
+    mindspore.ops.top_k
     mindspore.ops.transpose
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
