@@ -121,7 +121,7 @@ char *RuntimeConvert(const std::string &file_path, size_t *size) {
 
   void *model_buf = nullptr;
   meta_graph->version = Version();
-  auto status = TransferMetaGraph(*meta_graph, &model_buf, size);
+  status = TransferMetaGraph(*meta_graph, &model_buf, size);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Transfer model failed.";
     delete meta_graph;
