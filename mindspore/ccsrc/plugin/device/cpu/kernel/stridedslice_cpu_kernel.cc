@@ -92,7 +92,7 @@ void StridedSliceCpuKernelMod::InitParallelParam() {
   int thread_num = 1;
   if (outer_ == 1) {
     parallel_strategy_ = kOnSplitAxis;
-    thread_num = std::min(LongToInt(output_shape_[split_axis_]), max_thread_num);
+    thread_num = std::max(thread_num, std::min(LongToInt(output_shape_[split_axis_]), max_thread_num));
     cal_num_per_thread_ = UP_DIV(output_shape_[split_axis_], thread_num);
   } else {
     parallel_strategy_ = kOnOuter;
