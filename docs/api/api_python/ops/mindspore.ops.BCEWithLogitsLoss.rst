@@ -23,25 +23,21 @@ mindspore.ops.BCEWithLogitsLoss
 
     :math:`\ell` 表示计算损失的方法。有三种方法：第一种方法是直接提供损失值，第二种方法是计算所有损失的平均值，第三种方法是计算所有损失的总和。
 
-    **参数：**
+    参数：
+        - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
 
-    - **reduction** (str) - 指定用于输出结果的计算方式。取值为 'mean' 、 'sum' 或 'none' ，不区分大小写。如果 'none' ，则不执行 `reduction` 。默认值：'mean' 。
+    输入：
+        - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
+        - **label** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
+        - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
+        - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
 
-    **输入：**
+    输出：
+        Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
 
-    - **logits** (Tensor) - 输入预测值，任意维度的Tensor。其数据类型为float16或float32。
-    - **label** (Tensor) - 输入目标值，shape与 `logits` 相同。数据类型为float16或float32。
-    - **weight** (Tensor) - 指定每个批次二值交叉熵的权重。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
-    - **pos_weight** (Tensor) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `logits` 的shape保持一致。数据类型必须为float16或float32。
-
-    **输出：**
-
-    Tensor或Scalar，如果 `reduction` 为 'none' ，则为shape和数据类型与输入 `logits` 相同的Tensor。否则，输出为Scalar。
-
-    **异常：**
-
-    - **TypeError** - 任何输入不是Tensor。
-    - **TypeError** - 任何输入的数据类型既不是float16也不是float32。
-    - **TypeError** - `reduction` 的数据类型不是string。
-    - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
-    - **ValueError** - `reduction` 不为 'none' 、 'mean' 或 'sum' 。
+    异常：
+        - **TypeError** - 任何输入不是Tensor。
+        - **TypeError** - 任何输入的数据类型既不是float16也不是float32。
+        - **TypeError** - `reduction` 的数据类型不是string。
+        - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `logits` 的Tensor。
+        - **ValueError** - `reduction` 不为 'none' 、 'mean' 或 'sum' 。

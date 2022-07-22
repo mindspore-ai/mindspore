@@ -12,19 +12,16 @@
 
     `var` 和 `delta` 的输入遵循隐式类型转换规则，使数据类型一致。如果它们具有不同的数据类型，则低精度数据类型将转换为相对最高精度数据类型。
 
-    **输入：**
+    输入：
+        - **var** (Parameter) - 要更新的变量，为任意维度，其数据类型为float32或float16。
+        - **alpha** (Union[Number, Tensor]) - 调节系数，必须是Scalar。数据类型为float32或float16。
+        - **delta** (Tensor) - 变化的Tensor，shape和数据类型与 `var` 相同。
 
-    - **var** (Parameter) - 要更新的变量，为任意维度，其数据类型为float32或float16。
-    - **alpha** (Union[Number, Tensor]) - 调节系数，必须是Scalar。数据类型为float32或float16。
-    - **delta** (Tensor) - 变化的Tensor，shape和数据类型与 `var` 相同。
+    输出：
+        Tensor，更新后的 `var` 。
 
-    **输出：**
-
-    Tensor，更新后的 `var` 。
-
-    **异常：**
-
-    - **TypeError** - 如果 `var` 或 `alpha` 的数据类型既不是float16也不是float32。
-    - **TypeError** - 如果 `delta` 不是Tensor。
-    - **TypeError** - 如果 `alpha` 既不是数值型也不是Tensor。
-    - **RuntimeError** - 如果不支持 `var` 和 `delta` 数据类型转换。
+    异常：
+        - **TypeError** - 如果 `var` 或 `alpha` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `delta` 不是Tensor。
+        - **TypeError** - 如果 `alpha` 既不是数值型也不是Tensor。
+        - **RuntimeError** - 如果不支持 `var` 和 `delta` 数据类型转换。

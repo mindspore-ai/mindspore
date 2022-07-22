@@ -15,30 +15,26 @@ mindspore.ops.ApplyProximalAdagrad
 
     输入 `var` 、 `accum` 和 `grad` 之间必须遵守隐式类型转换规则以保证数据类型的统一。如果数据类型不同，低精度的数据类型将被自动转换到高精度的数据类型。
 
-    **参数：**
+    参数：
+        - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
 
-    - **use_locking** (bool) - 是否对参数更新加锁保护。默认值：False。
+    输入：
+        - **var** (Parameter) - 公式中的"var"。数据类型需为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
+        - **accum** (Parameter) - 公式中的"accum"。与 `var` 的shape和数据类型相同。
+        - **lr** (Union[Number, Tensor]) - 学习率，必须为标量，数据类型为float16或float32。
+        - **l1** (Union[Number, Tensor]) - l1正则化强度，必须为标量，数据类型为float16或float32。
+        - **l2** (Union[Number, Tensor]) - l2正则化强度，必须为标量，数据类型为float16或float32。
+        - **grad** (Tensor) - 梯度，与 `var` 的shape与数据类型相同。
 
-    **输入：**
+    输出：
+        包含两个Tensor的Tuple，已被更新的参数。
 
-    - **var** (Parameter) - 公式中的"var"。数据类型需为float16或float32。shape为 :math:`(N,*)` ，其中 :math:`*` 表示任何数量的附加维度。
-    - **accum** (Parameter) - 公式中的"accum"。与 `var` 的shape和数据类型相同。
-    - **lr** (Union[Number, Tensor]) - 学习率，必须为标量，数据类型为float16或float32。
-    - **l1** (Union[Number, Tensor]) - l1正则化强度，必须为标量，数据类型为float16或float32。
-    - **l2** (Union[Number, Tensor]) - l2正则化强度，必须为标量，数据类型为float16或float32。
-    - **grad** (Tensor) - 梯度，与 `var` 的shape与数据类型相同。
+        - **var** (Tensor) - 与输入 `var` 的shape与数据类型相同。
+        - **accum** (Tensor) - 与输入 `accum` 的shape与数据类型相同。
 
-    **输出：**
-
-    包含两个Tensor的Tuple，已被更新的参数。
-
-    - **var** (Tensor) - 与输入 `var` 的shape与数据类型相同。
-    - **accum** (Tensor) - 与输入 `accum` 的shape与数据类型相同。
-
-    **异常：**
-
-    - **TypeError** - `use_blocking` 不是bool类型。
-    - **TypeError** - `var` 、 `lr` 、 `l1` 或 `l2` 的数据类型不是float16或float32。
-    - **TypeError** - `lr` 、 `l1` 或 `l2` 的数据类型不是Number或Tensor。
-    - **TypeError** - `grad` 不是Tensor。
-    - **RuntimeError** - `var` 、 `accum` 和 `grad` 网络参数的数据类型转换错误。
+    异常：
+        - **TypeError** - `use_blocking` 不是bool类型。
+        - **TypeError** - `var` 、 `lr` 、 `l1` 或 `l2` 的数据类型不是float16或float32。
+        - **TypeError** - `lr` 、 `l1` 或 `l2` 的数据类型不是Number或Tensor。
+        - **TypeError** - `grad` 不是Tensor。
+        - **RuntimeError** - `var` 、 `accum` 和 `grad` 网络参数的数据类型转换错误。

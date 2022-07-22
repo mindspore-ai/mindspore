@@ -31,30 +31,26 @@
     .. warning::
         在此算法的密集实现中， `mean_gradient` 、 `mean_square` 和 `moment` 在 `grad` 为零时仍将被更新。但在稀疏实现中， `mean_gradient` 、 `mean_square` 和 `moment` 不会在 `grad` 为零的迭代中被更新。
 
-    **参数：**
+    参数：
+        - **use_locking** (bool) - 是否对参数更新增加锁保护。默认值：False。
 
-    - **use_locking** (bool) - 是否对参数更新增加锁保护。默认值：False。
+    输入：
+        - **var** (Tensor) - 要更新的权重。
+        - **mean_gradient** (Tensor) - 均值梯度，数据类型必须与 `var` 相同。
+        - **mean_square** (Tensor) - 均方梯度，数据类型必须与 `var` 相同。
+        - **moment** (Tensor) - `var` 的增量，数据类型必须与 `var` 相同。
+        - **grad** (Tensor) - 梯度，数据类型必须与 `var` 相同。
+        - **learning_rate** (Union[Number, Tensor]) - 学习率。必须是float或Scalar的Tensor，数据类型为float16或float32。
+        - **decay** (float) - 衰减率。
+        - **momentum** (float) - 动量。
+        - **epsilon** (float) - 添加在分母上的较小值，以避免被零除。
 
-    **输入：**
+    输出：
+        Tensor，更新后的数据。
 
-    - **var** (Tensor) - 要更新的权重。
-    - **mean_gradient** (Tensor) - 均值梯度，数据类型必须与 `var` 相同。
-    - **mean_square** (Tensor) - 均方梯度，数据类型必须与 `var` 相同。
-    - **moment** (Tensor) - `var` 的增量，数据类型必须与 `var` 相同。
-    - **grad** (Tensor) - 梯度，数据类型必须与 `var` 相同。
-    - **learning_rate** (Union[Number, Tensor]) - 学习率。必须是float或Scalar的Tensor，数据类型为float16或float32。
-    - **decay** (float) - 衰减率。
-    - **momentum** (float) - 动量。
-    - **epsilon** (float) - 添加在分母上的较小值，以避免被零除。
-
-    **输出：**
-
-    Tensor，更新后的数据。
-
-    **异常：**
-
-    - **TypeError** - 如果 `use_locking` 不是bool。
-    - **TypeError** - 如果 `var` 、 `mean_gradient` 、 `mean_square` 、 `moment` 或 `grad` 不是Tensor。
-    - **TypeError** - 如果 `learing_rate` 既不是数值型也不是Tensor。
-    - **TypeError** - 如果 `learing_rate` 的数据类型既不是float16也不是float32。
-    - **TypeError** - 如果 `decay` 、 `momentum` 或 `epsilon` 不是float。
+    异常：
+        - **TypeError** - 如果 `use_locking` 不是bool。
+        - **TypeError** - 如果 `var` 、 `mean_gradient` 、 `mean_square` 、 `moment` 或 `grad` 不是Tensor。
+        - **TypeError** - 如果 `learing_rate` 既不是数值型也不是Tensor。
+        - **TypeError** - 如果 `learing_rate` 的数据类型既不是float16也不是float32。
+        - **TypeError** - 如果 `decay` 、 `momentum` 或 `epsilon` 不是float。
