@@ -57,12 +57,15 @@ echo "current dir is: ${BASEPATH}"
 
 get_version() {
     VERSION_STR=$(cat ${ROOT_DIR}/version.txt)
+    if [[ X"${VERSION_STR}" == "X1.7.1" ]]; then
+        VERSION_STR=1.7.0
+    fi
 }
 
 download_inference() {
     if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
         local ARM_NAME=aarch64
-        local DEVICE=cpu
+        local DEVICE=gpu
     else
         local ARM_NAME=aarch32
         local DEVICE=cpu
