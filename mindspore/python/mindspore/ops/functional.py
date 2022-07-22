@@ -17,6 +17,7 @@
 
 """The names of functional part are summarized here."""
 
+from functools import partial
 import numpy as np
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
@@ -27,6 +28,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from mindspore.nn.grad.cell_grad import _JvpInner
 from mindspore.nn.grad.cell_grad import _VjpInner
+from mindspore.nn.grad.cell_grad import _LinearizeInner
 from mindspore.ops import _constants
 from mindspore.ops.function import *
 from mindspore.ops.primitive import constexpr, Primitive
@@ -524,6 +526,72 @@ def jvp(fn, inputs, v):
     if isinstance(inputs, (tuple, list)):
         return _wrap_container(v, *inputs)
     return _wrap_container(v, inputs)
+
+
+def linearize(fn, inputs):
+    """
+    Produces a linear approximation to fun using jvp() and partial eval.
+    This function is mainly useful if you want to apply jvp multiple times.
+
+    Args:
+        fn (Union[Function, Cell]): The function or net that takes Tensor inputs and returns single tensor or tuple of
+            Tensors.
+        inputs (Union[Tensor, Tuple or List of Tensors]): The inputs to `fn`.
+
+    Returns:
+        Tuple, tuple of output and jvp_fn.
+
+        - **netout** (Tensor or Tuple of Tensors) - The output of "fn(inputs)".
+        - **jvp_fn** (Function) - The function that evaluates the Jacobian-vector product.
+
+    Raises:
+        TypeError: If the input is not a tensor or tuple or list of tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, Parameter , ops
+        >>> from mindspore import nn
+        >>> from mindspore.ops.functional import linearize
+
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.matmul = ops.MatMul()
+        ...     def construct(self, x , y):
+        ...         out = self.matmul(x , y)
+        ...         return out
+        >>> x = Tensor(np.array([[1, 2 , 3 ], [3, 4 , 5]]).astype(np.float32))
+        >>> y = Tensor(np.array([[1, 2], [3, 4] , [5 , 6]]).astype(np.float32))
+        >>> v = (Tensor(np.array([[1, 1 , 1], [1, 1 , 1]]).astype(np.float32)),
+            Tensor(np.array([[1, 1], [1, 1], [0 , 0]]).astype(np.float32)))
+        >>> output , jvp_fn = linearize(Net() , (x,y))
+        >>> print(output)
+        [[22. 28.]
+        [40. 52.]]
+        >>> jvp = jvp_fn(v)
+        >>> print(jvp)
+        [[12. 15.]
+        [16. 19.]]
+    """
+    @ms_function(hash_args=fn)
+    def _wrap_container(*arg):
+        args = arg[1:-1]
+        vectors = arg[-1]
+        output = arg[0]
+        if isinstance(vectors, list):
+            vectors = tuple(vectors)
+        return linearize_inner(fn, vectors, output, args)
+
+    linearize_inner = _LinearizeInner()
+    if not isinstance(inputs, (Tensor, tuple, list)):
+        _raise_type_error()
+    if isinstance(inputs, Tensor):
+        inputs = (inputs,)
+    output = fn(*inputs)
+    return output, partial(_wrap_container, output, *inputs)
 
 
 def vjp(fn, inputs, v):
