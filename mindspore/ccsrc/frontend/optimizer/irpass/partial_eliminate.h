@@ -183,13 +183,13 @@ class ChoicePartialEliminater : public AnfVisitor {
   // as z1, z2 maybe U or IO monad.
   AnfNodePtrList UnifyParameters(const size_t &anchor_index, const AnfNodePtrList &fg_list,
                                  const std::vector<AnfNodePtrList> args_list) {
-    std::vector<size_t> inputs_index_list[args_list.size()];
+    std::vector<std::vector<size_t>> inputs_index_list(args_list.size());
     AnfNodePtrList extra_inputs;
     const auto &anchor_args = args_list[anchor_index];
     size_t anchor_args_size = anchor_args.size();
     auto anchor_fg = GetValueNode<FuncGraphPtr>(fg_list[anchor_index]);
     MS_EXCEPTION_IF_NULL(anchor_fg);
-    size_t extra_input_counter = FindNewLocation(args_list, anchor_index, inputs_index_list, &extra_inputs);
+    size_t extra_input_counter = FindNewLocation(args_list, anchor_index, &inputs_index_list[0], &extra_inputs);
 
     auto manager = anchor_fg->manager();
     MS_EXCEPTION_IF_NULL(manager);
