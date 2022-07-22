@@ -35,7 +35,7 @@ class GraphPartition {
  public:
   explicit GraphPartition(const std::vector<PrimitivePtr> &cut_list, const std::string &backend_name);
   ~GraphPartition() = default;
-  std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &func_graph, bool *multi_target = nullptr);
+  std::vector<GraphSegmentPtr> Partition(const FuncGraphPtr &graph, bool *multi_target = nullptr);
 
  private:
   bool IsCut(const AnfNodePtr &node);

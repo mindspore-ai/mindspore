@@ -130,7 +130,7 @@ class BACKEND_EXPORT FinalVM {
   void Popp();
   void Pushsp();
   void Popsp();
-  void DoJmp(const BaseRef &jmp);
+  void DoJmp(const BaseRef &jmp_orig);
 
  private:
   InstSet insts_;

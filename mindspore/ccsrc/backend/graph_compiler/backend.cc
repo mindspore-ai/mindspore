@@ -86,7 +86,7 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   segment->graph_id_ = graph_id;
   auto graph = current_session->GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(graph);
-  for (auto &pre_segment : segment->pre_segments_) {
+  for (const auto &pre_segment : segment->pre_segments_) {
     MS_EXCEPTION_IF_NULL(pre_segment);
     MS_EXCEPTION_IF_NULL(target_sess_);
     auto pre_graph = target_sess_->GetGraph(pre_segment->graph_id_);
@@ -568,7 +568,7 @@ MindRTBackend::MindRTBackend(const std::string &backend_name, const std::string 
 
 void MindRTBackend::ProcessNotSupportCnode(const FuncGraphPtr &func_graph,
                                            const mindspore::device::DeviceType &old_target,
-                                           const mindspore::device::DeviceType &new_target) {
+                                           const mindspore::device::DeviceType &new_target) const {
   const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
   for (const auto &node : all_nodes) {
     if (!node->isa<CNode>()) {
@@ -656,7 +656,7 @@ void MindRTBackend::CompileSubGraph(const FuncGraphPtr &func_graph, device::RunM
 
   MS_EXCEPTION_IF_NULL(root_graph->manager());
   FuncGraphSet sub_graphs = root_graph->manager()->func_graphs();
-  for (auto sub_graph : sub_graphs) {
+  for (const auto &sub_graph : sub_graphs) {
     if (sub_graph != func_graph && sub_graph != nullptr) {
       CompileGraph(sub_graph, run_mode);
     }
@@ -750,7 +750,7 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
   auto back_size = backend_cnode->inputs().size();
   while (front_index + 1 < front_size && back_index + 1 < back_size) {
     AnfNodePtr input_node = nullptr;
-    if (args_tuple_num) {
+    if (args_tuple_num != 0) {
       input_node = backend_cnode->input(back_index + 1);
     } else {
       input_node = front_cnode->input(front_index + 1);
@@ -793,8 +793,8 @@ void GetControlOpInput(const std::shared_ptr<GraphCompiler> &graph_compiler, con
         args_tuple.clear();
       }
     }
-    if (!args_tuple_num) {
-      args->emplace_back(value);
+    if (args_tuple_num == 0) {
+      (void)args->emplace_back(value);
       front_index++;
     }
   }
@@ -1000,7 +1000,7 @@ void MindRTBackend::RunGraphByActors(const ActorInfo &actor_info, const GraphCom
         // Need to get tensor after ParseControlNodes.
         pynative::GraphAdapter::ReplaceGraphParameterProperties(graph, inputs.at(i), device_contexts[i]);
       }
-      graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
+      (void)graph_compiler_->CompileGraphImpl(graph, device_contexts[i]);
       pynative::GraphAdapter::RemoveUnusedValueNodes(graph);
       graph->CacheGraphOutputToFrontNodeWithIndex({graph->output()}, graph->front_outputs());
       // Clear front outputs after the outputs is cached.
@@ -1138,7 +1138,6 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
     auto parallel_mode = parallel_context->parallel_mode();
     bool is_parallel = parallel_mode == parallel::kSemiAutoParallel || parallel_mode == parallel::kAutoParallel;
 
-    // TODO(caifubi): Need to support condition: 1. Dynamic shape. 2. AutoParallel.
     MS_EXCEPTION_IF_NULL(root_graph_);
     if (root_graph_->has_flag(kFlagIsDynamicStructure) ||
         // `ms_function + dynamic_shape` is already supported, so there is no need to execute RunGraphBySingleOp.
@@ -1417,7 +1416,7 @@ void MindRTBackend::EraseSingleOpCache(const ActorInfo &actor_info, const std::s
   MS_EXCEPTION_IF_NULL(graph_compiler_);
   graph_compiler_->EraseSingleOpCache(graph_info, graph->graph_id());
   actor_to_graph_compiler_info_.erase(actor_info);
-  graph_info_to_device_context_.erase(graph_info);
+  (void)graph_info_to_device_context_.erase(graph_info);
 }
 
 void MindRTBackend::ReleaseForwardOutput(const std::vector<TensorPtr> &input_tensors) {
@@ -1660,7 +1659,7 @@ void MindRTBackend::CompileSingleOpGraph(const KernelGraphPtr &graph, const Devi
   graph_compiler_info->input_tensors_.clear();
 }
 
-void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *outputs) {
+void MindRTBackend::UpdateOutput(const std::vector<session::KernelWithIndex> &output_nodes, VectorRef *const outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   for (auto &item_with_index : output_nodes) {
     MS_EXCEPTION_IF_NULL(item_with_index.first);

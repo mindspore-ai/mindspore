@@ -17,9 +17,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_GRAD_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_AD_GRAD_H_
 
-#include <memory>
-#include <string>
-
 #include "ir/anf.h"
 #include "ir/meta_func_graph.h"
 #include "frontend/optimizer/optimizer.h"

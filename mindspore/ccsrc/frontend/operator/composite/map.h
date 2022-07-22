@@ -75,8 +75,8 @@ class Map : public MetaFuncGraph {
                           const ArgsPairList &arg_pairs);
   AnfNodePtr FullMakeTuple(const std::shared_ptr<Tuple> &type, const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg,
                            const ArgsPairList &arg_pairs);
-  AnfNodePtr Make(const FuncGraphPtr &graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs);
-  std::pair<std::string, std::string> GetMapInputIndex(size_t num);
+  AnfNodePtr Make(const FuncGraphPtr &func_graph, const AnfNodePtr &fn_arg, const ArgsPairList &arg_pairs);
+  std::pair<std::string, std::string> GetMapInputIndex(size_t num) const;
   void Init() {
     if (fn_leaf_ != nullptr) {
       name_ = "map[" + fn_leaf_->name() + "]";

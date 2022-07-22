@@ -212,11 +212,11 @@ class ConvertSwitchReplacement {
 
  private:
   // Determine whether there are graphs inside the branch graph.
-  bool CheckSwitchBranch(const AnfNodePtr &node);
+  bool CheckSwitchBranch(const AnfNodePtr &node) const;
   // Determine whether node matches {{prim::kPrimSwitch, X, G1, G2}, Xs}.
   bool CheckSwitchWrapNode(const AnfNodePtr &node);
   // Replace switch branch.
-  void TransformSwitchBranchReplace(const AnfNodePtr &node);
+  void TransformSwitchBranchReplace(const AnfNodePtr &node) const;
 };
 
 // {prim::kPrimSwitch, {prim::kPrimDepend, ValueNode, X}, G1, G2} ->

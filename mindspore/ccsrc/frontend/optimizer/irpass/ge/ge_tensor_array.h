@@ -54,7 +54,7 @@ class GeTensorArrayAddFlow : public AnfVisitor {
       auto input_size = ta_node_inputs.size();
       std::vector<AnfNodePtr> new_inputs;
       new_inputs.assign(ta_node_inputs.begin(), ta_node_inputs.end());
-      new_inputs.insert(new_inputs.begin() + input_size - 1, flow_node);
+      (void)new_inputs.insert(new_inputs.cbegin() + input_size - 1, flow_node);
       ta_node->set_inputs(new_inputs);
     } else {
       ta_node->add_input(flow_node);

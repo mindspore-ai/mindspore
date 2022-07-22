@@ -19,10 +19,8 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CLEAN_H_
 
-#include <memory>
 #include "ir/anf.h"
 #include "frontend/operator/ops.h"
-#include "utils/any.h"
 #include "ir/manager.h"
 #include "abstract/dshape.h"
 

@@ -50,7 +50,7 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
     if (op2attrs.count(primitive->name()) != 0) {
       for (auto &attr : op2attrs[primitive->name()]) {
         if (primitive->HasAttr(attr)) {
-          attrs.push_back({attr, primitive->GetAttr(attr)});
+          (void)attrs.emplace_back(std::pair{attr, primitive->GetAttr(attr)});
         } else {
           MS_LOG(WARNING) << primitive->name() << " op do not have attr: " << attr;
           return false;
@@ -61,7 +61,7 @@ bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
     (void)new_prim->SetAttrs(primitive->attrs());
     AnfNodePtrList inputs = {NewValueNode(new_prim)};
     auto cnode = dyn_cast<CNode>(node);
-    inputs.insert(inputs.end(), cnode->inputs().begin() + 1, cnode->inputs().end());
+    (void)inputs.insert(inputs.cend(), cnode->inputs().cbegin() + 1, cnode->inputs().cend());
     cnode->set_inputs(inputs);
   }
   return true;
@@ -112,7 +112,7 @@ AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
     {kTileOpName, {InputToAttrDeco::GetCreator({1})}},
     {kSliceOpName, {InputToAttrDeco::GetCreator({1, 2})}},
   };
-  auto iter = creators.find(GetCNodePrimitive(node)->name());
+  const auto &iter = creators.find(GetCNodePrimitive(node)->name());
   if (iter != creators.end()) {
     expander = graphkernel::WrapExpander(expander, iter->second);
   }

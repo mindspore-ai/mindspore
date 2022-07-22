@@ -19,7 +19,6 @@
 #ifndef MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_
 #define MINDSPORE_CCSRC_FRONTEND_OPTIMIZER_CSE_PASS_H_
 
-#include <vector>
 #include <memory>
 
 #include "utils/hash_map.h"
@@ -36,7 +35,7 @@ class CSEPass : public CSE {
   explicit CSEPass(bool report_changes = true) : CSE(), report_changes_(report_changes) {}
   virtual ~CSEPass() = default;
 
-  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) {
+  bool operator()(const FuncGraphPtr &root, const OptimizerPtr &optimizer) const {
     bool chg = Cse(root, optimizer->resource()->manager());
     return chg && report_changes_;
   }

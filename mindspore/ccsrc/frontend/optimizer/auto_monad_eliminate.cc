@@ -16,11 +16,13 @@
 
 #include "frontend/optimizer/auto_monad_eliminate.h"
 
-#include <vector>
 #include <algorithm>
 #include <memory>
 #include <string>
 #include <optional>
+#include <map>
+#include <utility>
+#include <vector>
 
 #include "utils/hash_map.h"
 #include "utils/ordered_map.h"
@@ -93,12 +95,12 @@ LoadGraphMap GenerateLoadGroups(const FuncGraphPtr &fg, std::vector<AnfNodePtr> 
       constexpr size_t monad_index = 2;
       auto monad = cnode->input(monad_index);
       std::map<AnfNodePtr, size_t> &cur_param_monads = param_monads[ref_key.value()];
-      auto iter = cur_param_monads.find(monad);
+      const auto &iter = cur_param_monads.find(monad);
       // Remove duplicate load which has the same inputs, otherwise there may be an error in the load grouping.
       if (iter != cur_param_monads.end()) {
         auto id = iter->second;
         auto &first_load = (*toposet)[id];
-        mgr->Replace(cnode, first_load);
+        (void)mgr->Replace(cnode, first_load);
         (*toposet)[i] = first_load;
         continue;
       } else {
@@ -348,12 +350,12 @@ bool AutoMonadEliminator::ReplaceAutoMonadNode(const FuncGraphManagerPtr &manage
     auto load_groups = GenerateLoadGroups(fg, &toposet, &need_replace_loads, &param_users, &special_op_indexes);
     // Split group if there is no-load node between two load nodes.
     std::vector<std::vector<size_t>> need_merge_loads;
-    for (auto &load_group : load_groups) {
+    for (const auto &load_group : load_groups) {
       auto &ref_key = load_group.first;
       auto &group = load_group.second;
       const auto &param_user_indexes = param_users[ref_key];
       auto groups = SplitGroup(group, param_user_indexes, special_op_indexes);
-      need_merge_loads.insert(need_merge_loads.end(), groups.begin(), groups.end());
+      need_merge_loads.insert(need_merge_loads.cend(), groups.cbegin(), groups.cend());
     }
     for (auto &group : need_merge_loads) {
       bool replaced = ReplaceSameGroupLoad(manager, fg, toposet, group);
