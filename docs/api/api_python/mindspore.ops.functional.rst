@@ -33,7 +33,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     # True
     # Tensor[Int32]
 
-神经网络层算子
+神经网络层函数
 ----------------
 
 神经网络
@@ -47,12 +47,31 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.adaptive_avg_pool2d
     mindspore.ops.adaptive_max_pool3d
     mindspore.ops.avg_pool2d
+    mindspore.ops.ctc_greedy_decoder
     mindspore.ops.deformable_conv2d
+    mindspore.ops.dropout2d
+    mindspore.ops.dropout3d
+    mindspore.ops.flatten
     mindspore.ops.interpolate
+    mindspore.ops.lrn
     mindspore.ops.max_pool3d
     mindspore.ops.kl_div
     mindspore.ops.pad
+    mindspore.ops.padding
     mindspore.ops.pdist
+
+损失函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.binary_cross_entropy_with_logits
+    mindspore.ops.cross_entropy
+    mindspore.ops.nll_loss
+    mindspore.ops.smooth_l1_loss
 
 激活函数
 ^^^^^^^^^^
@@ -64,14 +83,17 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
 
     mindspore.ops.celu
     mindspore.ops.fast_gelu
+    mindspore.ops.gumbel_softmax
     mindspore.ops.hardshrink
     mindspore.ops.hardswish
     mindspore.ops.log_softmax
+    mindspore.ops.mish
+    mindspore.ops.selu
     mindspore.ops.soft_shrink
     mindspore.ops.softsign
     mindspore.ops.tanh
 
-损失函数
+采样函数
 ^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -79,11 +101,19 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.ops.cross_entropy
-    mindspore.ops.nll_loss
-    mindspore.ops.smooth_l1_loss
+    mindspore.ops.uniform_candidate_sampler
 
-数学运算算子
+距离函数
+^^^^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.cdist
+
+数学运算函数
 ----------------
 
 逐元素运算
@@ -107,16 +137,16 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.bernoulli
     mindspore.ops.bessel_i0
     mindspore.ops.bessel_i0e
+    mindspore.ops.bessel_i1
+    mindspore.ops.bessel_i1e
     mindspore.ops.bessel_j0
     mindspore.ops.bessel_j1
     mindspore.ops.bessel_k0
     mindspore.ops.bessel_k0e
-    mindspore.ops.bessel_y0
-    mindspore.ops.bessel_y1
-    mindspore.ops.bessel_i1
-    mindspore.ops.bessel_i1e
     mindspore.ops.bessel_k1
     mindspore.ops.bessel_k1e
+    mindspore.ops.bessel_y0
+    mindspore.ops.bessel_y1
     mindspore.ops.bitwise_and
     mindspore.ops.bitwise_or
     mindspore.ops.bitwise_xor
@@ -124,8 +154,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.cos
     mindspore.ops.cosh
     mindspore.ops.div
-    mindspore.ops.dropout2d
-    mindspore.ops.dropout3d
     mindspore.ops.erf
     mindspore.ops.erfc
     mindspore.ops.exp
@@ -133,9 +161,6 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.floor
     mindspore.ops.floor_div
     mindspore.ops.floor_mod
-    mindspore.ops.inplace_add
-    mindspore.ops.inplace_sub
-    mindspore.ops.inplace_update
     mindspore.ops.inv
     mindspore.ops.invert
     mindspore.ops.lerp
@@ -145,14 +170,11 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
     mindspore.ops.logical_not
     mindspore.ops.logical_or
     mindspore.ops.log_matrix_determinant
-    mindspore.ops.lrn
     mindspore.ops.matrix_determinant
-    mindspore.ops.mish
     mindspore.ops.mul
     mindspore.ops.neg
     mindspore.ops.pow
     mindspore.ops.round
-    mindspore.ops.selu
     mindspore.ops.sin
     mindspore.ops.sinh
     mindspore.ops.sub
@@ -199,7 +221,7 @@ functional算子是经过初始化后的Primitive，可以直接作为函数使�
    * - mindspore.ops.tensor_sub
      - `tensor_sub` will be deprecated in the future. Please use `mindspore.ops.sub` instead.
 
-Reduction算子
+Reduction函数
 ^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -207,6 +229,7 @@ Reduction算子
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.argmin
     mindspore.ops.logsumexp
     mindspore.ops.norm
 
@@ -227,7 +250,7 @@ Reduction算子
    * - mindspore.ops.reduce_sum
      - Refer to :class:`mindspore.ops.ReduceSum`.
 
-比较算子
+比较函数
 ^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -236,7 +259,6 @@ Reduction算子
     :template: classtemplate.rst
 
     mindspore.ops.approximate_equal
-    mindspore.ops.argmin
     mindspore.ops.cummax
     mindspore.ops.cummin
     mindspore.ops.equal
@@ -276,7 +298,7 @@ Reduction算子
    * - mindspore.ops.tensor_lt
      - `tensor_lt` will be deprecated in the future. Please use `mindspore.ops.less` instead.
 
-线性代数算子
+线性代数函数
 ^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -284,13 +306,15 @@ Reduction算子
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.ops.batch_dot
+    mindspore.ops.dot
     mindspore.ops.matmul
     mindspore.ops.matrix_solve
-    mindspore.ops.cdist
     mindspore.ops.ger
     mindspore.ops.renorm
+    mindspore.ops.tensor_dot
 
-Tensor操作算子
+Tensor操作函数
 ----------------
 
 Tensor创建
@@ -305,11 +329,13 @@ Tensor创建
     mindspore.ops.fill
     mindspore.ops.fills
     mindspore.ops.linspace
+    mindspore.ops.narrow
+    mindspore.ops.one_hot
     mindspore.ops.ones
     mindspore.ops.ones_like
     mindspore.ops.zeros_like
 
-随机生成算子
+随机生成函数
 ^^^^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -318,14 +344,14 @@ Tensor创建
     :template: classtemplate.rst
 
     mindspore.ops.gamma
-    mindspore.ops.random_gamma
+    mindspore.ops.laplace
     mindspore.ops.multinomial
     mindspore.ops.poisson
     mindspore.ops.random_categorical
+    mindspore.ops.random_gamma
     mindspore.ops.standard_laplace
-    mindspore.ops.uniform
     mindspore.ops.standard_normal
-    mindspore.ops.uniform_candidate_sampler
+    mindspore.ops.uniform
 
 Array操作
 ^^^^^^^^^^^^^^^^
@@ -338,20 +364,21 @@ Array操作
     mindspore.ops.adaptive_max_pool2d
     mindspore.ops.affine_grid
     mindspore.ops.batch_to_space_nd
-    mindspore.ops.binary_cross_entropy_with_logits
     mindspore.ops.broadcast_to
     mindspore.ops.col2im
     mindspore.ops.concat
     mindspore.ops.diag
     mindspore.ops.dyn_shape
     mindspore.ops.expand_dims
-    mindspore.ops.flatten
     mindspore.ops.gather
     mindspore.ops.gather_d
     mindspore.ops.gather_elements
     mindspore.ops.gather_nd
-    mindspore.ops.gumbel_softmax
+    mindspore.ops.index_add
     mindspore.ops.index_fill
+    mindspore.ops.inplace_add
+    mindspore.ops.inplace_sub
+    mindspore.ops.inplace_update
     mindspore.ops.masked_fill
     mindspore.ops.masked_select
     mindspore.ops.matrix_band_part
@@ -359,14 +386,15 @@ Array操作
     mindspore.ops.matrix_diag_part
     mindspore.ops.matrix_set_diag
     mindspore.ops.meshgrid
+    mindspore.ops.normal
     mindspore.ops.nonzero
-    mindspore.ops.one_hot
-    mindspore.ops.padding
     mindspore.ops.range
     mindspore.ops.rank
+    mindspore.ops.repeat_elements
     mindspore.ops.reshape
     mindspore.ops.scatter_nd
     mindspore.ops.select
+    mindspore.ops.sequence_mask
     mindspore.ops.shape
     mindspore.ops.size
     mindspore.ops.slice
@@ -383,12 +411,12 @@ Array操作
     mindspore.ops.tensor_scatter_elements
     mindspore.ops.tile
     mindspore.ops.transpose
-    mindspore.ops.unsorted_segment_min
-    mindspore.ops.unsorted_segment_max
-    mindspore.ops.unsorted_segment_prod
     mindspore.ops.unique
     mindspore.ops.unique_consecutive
     mindspore.ops.unique_with_pad
+    mindspore.ops.unsorted_segment_max
+    mindspore.ops.unsorted_segment_min
+    mindspore.ops.unsorted_segment_prod
     mindspore.ops.unsorted_segment_sum
     mindspore.ops.unstack
 
@@ -430,7 +458,7 @@ Array操作
     mindspore.ops.scalar_to_tensor
     mindspore.ops.tuple_to_array
 
-稀疏算子
+稀疏函数
 ^^^^^^^^^^^^^^^^
 
 .. mscnplatformautosummary::
@@ -443,7 +471,18 @@ Array操作
     mindspore.ops.csr_to_coo
     mindspore.ops.sparse_add
 
-Parameter操作算子
+梯度剪裁
+^^^^^^^
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.clip_by_global_norm
+    mindspore.ops.clip_by_value
+
+Parameter操作函数
 --------------------
 
 .. mscnplatformautosummary::
@@ -454,7 +493,6 @@ Parameter操作算子
     mindspore.ops.assign
     mindspore.ops.assign_add
     mindspore.ops.assign_sub
-    mindspore.ops.index_add
     mindspore.ops.scatter_add
     mindspore.ops.scatter_div
     mindspore.ops.scatter_min
@@ -473,10 +511,23 @@ Parameter操作算子
 
    * - functional
      - Description
-   * - mindspore.ops.scatter_nd_update
-     - Refer to :class:`mindspore.ops.ScatterNdUpdate`.
 
-调试算子
+微分函数
+----------------
+
+.. mscnplatformautosummary::
+    :toctree: ops
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.ops.derivative
+    mindspore.ops.grad
+    mindspore.ops.jet
+    mindspore.ops.jvp
+    mindspore.ops.vjp
+    mindspore.ops.vmap
+
+调试函数
 ----------------
 
 .. list-table::
@@ -488,7 +539,7 @@ Parameter操作算子
    * - mindspore.ops.print\_
      - Refer to :class:`mindspore.ops.Print`.
 
-其他算子
+其他函数
 ----------------
 
 .. list-table::
@@ -568,23 +619,6 @@ Parameter操作算子
     :template: classtemplate.rst
 
     mindspore.ops.arange
-    mindspore.ops.batch_dot
-    mindspore.ops.clip_by_global_norm
-    mindspore.ops.clip_by_value
     mindspore.ops.core
     mindspore.ops.count_nonzero
-    mindspore.ops.ctc_greedy_decoder
-    mindspore.ops.derivative
-    mindspore.ops.dot
-    mindspore.ops.grad
-    mindspore.ops.jet
-    mindspore.ops.jvp
-    mindspore.ops.laplace
-    mindspore.ops.narrow
-    mindspore.ops.normal
-    mindspore.ops.repeat_elements
-    mindspore.ops.sequence_mask
-    mindspore.ops.tensor_dot
-    mindspore.ops.uniform
-    mindspore.ops.vjp
-    mindspore.ops.vmap
+
