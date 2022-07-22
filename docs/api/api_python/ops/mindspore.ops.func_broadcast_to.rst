@@ -10,7 +10,7 @@ mindspore.ops.broadcast_to
     **参数：**
 
     - **x** (Tensor) - 第一个输入，任意维度的Tensor，数据类型为float16、float32、int32、int8、uint8、bool。
-    - **shape** (Tensor) - 第二个输入，指定广播到目标 `shape`。
+    - **shape** (Tuple) - 第二个输入，指定广播到目标 `shape`。
 
     **返回：**
 
