@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include "include/context.h"
 #ifdef BFC_MEMORY
-#include "src/litert/dynamic_mem_allocator.h"
+#include "src/extendrt/dynamic_mem_allocator.h"
 #else
 #include "src/litert/inner_allocator.h"
 #endif

@@ -60,7 +60,7 @@ int TensorRTSubGraph::Init(cudaStream_t stream) {
     MS_LOG(ERROR) << "createOptimizationProfile failed.";
     return RET_ERROR;
   }
-  ctx_ = new TensorRTContext();
+  ctx_ = new (std::nothrow) TensorRTContext();
   if (ctx_ == nullptr) {
     MS_LOG(ERROR) << "New TensorRTContext failed.";
     return RET_OK;
@@ -144,7 +144,7 @@ int TensorRTSubGraph::SetDeviceConfig(cudaStream_t stream) {
   stream_ = stream;
   MS_LOG(INFO) << GetRankID() << " tensorrt subgraph stream: " << stream_;
 
-  // config setMaxWorkspaceSize to 1152 MB for max limit
+  // config setMaxWorkspaceSize to 2047 MB for max limit
   config_->setMaxWorkspaceSize(2047 * (1 << 20));
   return RET_OK;
 }
@@ -289,7 +289,7 @@ int TensorRTSubGraph::BuildTensorRTGraph() {
           }
         } else if (trt_specific_weight_nodes_.find(cur_op->type()) == trt_specific_weight_nodes_.end()) {
           if (in_tensor.Data() == nullptr) {
-            MS_LOG(ERROR) << "Weight Tensor data is nullptr.";
+            MS_LOG(ERROR) << "Weight Tensor data is nullptr for " << in_tensor.Name();
             return RET_ERROR;
           }
           trt_tensor.trt_tensor_ = lite::ConvertConstantTensor(ctx_, in_tensor, cur_op->GetOpName());

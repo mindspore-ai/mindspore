@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_NUMA_ADAPTER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_NUMA_ADAPTER_H_
 #include <cstdint>
 #include <cstddef>
 #include <memory>
@@ -74,4 +74,4 @@ class NUMAAdapter {
 };
 }  // namespace numa
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_NUMA_ADAPTER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_NUMA_ADAPTER_H_

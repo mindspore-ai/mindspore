@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/litert/dynamic_mem_manager.h"
+#include "src/extendrt/dynamic_mem_manager.h"
 #include "src/common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/common.h"

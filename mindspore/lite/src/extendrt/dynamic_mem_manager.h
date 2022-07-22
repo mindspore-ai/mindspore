@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_MANAGER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_MANAGER_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_MANAGER_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_MANAGER_H_
 
 #include <memory>
 #include <vector>
@@ -23,7 +23,7 @@
 #include <map>
 #include <unordered_map>
 #include <deque>
-#include "src/litert/numa_adapter.h"
+#include "src/extendrt/numa_adapter.h"
 
 namespace mindspore {
 struct Block {
@@ -87,4 +87,4 @@ class DynamicMemManager {
 };
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_DYNAMIC_MEM_MANAGER_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_DYNAMIC_MEM_MANAGER_H_

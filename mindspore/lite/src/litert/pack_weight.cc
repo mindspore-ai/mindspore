@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "src/litert/pack_weight.h"
-#include "src/litert/dynamic_mem_allocator.h"
+#include "src/extendrt/dynamic_mem_allocator.h"
 namespace mindspore::lite {
 STATUS PackWeight::InitWeightManagerByBuf(const char *model_buf, size_t model_size, int numa_id, bool copy_buf) {
   MS_CHECK_TRUE_MSG(model_buf != nullptr, RET_ERROR, "model buf is nullptr in pack weight manager.");

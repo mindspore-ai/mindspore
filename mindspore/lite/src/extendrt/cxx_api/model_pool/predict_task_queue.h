@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
+#ifndef MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
+#define MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
 
 #include <queue>
 #include <mutex>
@@ -23,7 +23,7 @@
 #include <condition_variable>
 #include "include/api/types.h"
 #include "include/api/status.h"
-#include "src/litert/cxx_api/model_pool/model_worker.h"
+#include "src/extendrt/cxx_api/model_pool/model_worker.h"
 #include "thread/hqueue.h"
 #ifndef USE_HQUEUE
 #define USE_HQUEUE
@@ -75,4 +75,4 @@ class PredictTaskQueue {
   bool predict_task_done_ = false;
 };
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_
+#endif  // MINDSPORE_LITE_SRC_EXTENDRT_CXX_API_MODEL_POOL_PREDICT_TASK_QUEUE_H_

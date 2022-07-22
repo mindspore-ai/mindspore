@@ -68,10 +68,10 @@ file(GLOB CXX_API_SRCS
 if(MSLITE_ENABLE_PARALLEL_INFERENCE)
     set(CXX_API_SRCS
             ${CXX_API_SRCS}
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/model_pool/predict_task_queue.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/model_pool/model_worker.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/model_pool/model_pool.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/litert/cxx_api/model_pool/model_parallel_runner.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/cxx_api/model_pool/predict_task_queue.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/cxx_api/model_pool/model_worker.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/cxx_api/model_pool/model_pool.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/cxx_api/model_pool/model_parallel_runner.cc
             )
 endif()
 
@@ -161,9 +161,9 @@ endif()
 if(MSLITE_ENABLE_BFC_MEMORY)
     set(LITE_SRC
         ${LITE_SRC}
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/dynamic_mem_allocator.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/dynamic_mem_manager.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/litert/numa_adapter.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/dynamic_mem_allocator.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/dynamic_mem_manager.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/extendrt/numa_adapter.cc
         )
 endif()
 
