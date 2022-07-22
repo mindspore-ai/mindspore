@@ -131,24 +131,19 @@ void CodeMSModelBuild(std::ofstream &ofs, const Configurator *config) {
 
 void CodeMSModelDestory(std::ofstream &ofs, const Configurator *config) {
   ofs << "void MSModelDestroy(MSModelHandle *model) {\n";
+  ofs << "  if (*model) {\n"
+         "    MicroModel *micro_model = (MicroModel *)*model;\n";
   if (config->target() != kCortex_M) {
-    ofs << "  if (*model) {\n"
-           "    MicroModel *micro_model = (MicroModel *)*model;\n"
-           "    if (micro_model->runtime_buffer) {\n"
+    ofs << "    if (micro_model->runtime_buffer) {\n"
            "      free(micro_model->runtime_buffer);\n"
            "      micro_model->runtime_buffer = NULL;\n"
-           "    }\n"
-           "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
-           "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
-           "    free(*model);\n"
-           "    *model = NULL;\n"
-           "  }\n";
-  } else {
-    ofs << "  if (*model) {\n"
-           "    free(*model);\n"
-           "    *model = NULL;\n"
-           "  }\n";
+           "    }\n";
   }
+  ofs << "    MSTensorHandleArrayDestroy(micro_model->inputs);\n"
+         "    MSTensorHandleArrayDestroy(micro_model->outputs);\n"
+         "    free(*model);\n"
+         "    *model = NULL;\n"
+         "  }\n";
 
   if (config->support_parallel()) {
     ofs << "  ClearThreadPool();\n";
