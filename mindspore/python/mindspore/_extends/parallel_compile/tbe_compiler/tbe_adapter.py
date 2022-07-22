@@ -587,7 +587,7 @@ def rl_tune_single_op(job: TbeJob):
     finally:
         pass
     tune_op_module_name = op_module_name + "@" + py_module_path
-    base_kernel = job.content["SocInfo"]["op_debug_dir"] + "/kernel_meta/" + op_kernel_name + ".o"
+    base_kernel = os.path.join(job.content["SocInfo"]["op_debug_dir"], "kernel_meta", op_kernel_name + ".o")
     from schedule_search.rl_online_tune import dispatch_single_tune_task
     pack_args = pack_op_args(inputs, outputs, attrs)
     res = dispatch_single_tune_task(job.source_id, job.id, l1_size, base_kernel, op_kernel_name, full_name,
