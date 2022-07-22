@@ -793,7 +793,7 @@ void DfGraphConvertor::CacheWhileGraph(const CNodePtr &cnode) {
   FuncGraphPtr cond_graph = graph_node->value()->cast<FuncGraphPtr>();
   MS_EXCEPTION_IF_NULL(cond_graph);
   const auto &cond_set = cond_graph->nodes();
-  for (auto beg = cond_set.begin(); beg != cond_set.end(); beg++) {
+  for (auto beg = cond_set.begin(); beg != cond_set.end(); ++beg) {
     if (!((*beg)->isa<CNode>())) {
       continue;
     }
@@ -1124,7 +1124,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
   }
   auto body_graph_node_inputs = body_graph_node->cast<CNodePtr>()->inputs();
   std::vector<AnfNodePtr> body_params;
-  for (auto it = body_graph_node_inputs.begin() + kInputOffset; it != body_graph_node_inputs.end(); it++) {
+  for (auto it = body_graph_node_inputs.begin() + kInputOffset; it != body_graph_node_inputs.end(); ++it) {
     body_params.push_back(*it);
   }
 
@@ -1141,7 +1141,7 @@ void DfGraphConvertor::SetParamIndexMap(const std::vector<AnfNodePtr> &graphs) {
   }
   auto after_graph_node_inputs = after_graph_node->cast<CNodePtr>()->inputs();
   std::vector<AnfNodePtr> after_params;
-  for (auto it = after_graph_node_inputs.begin() + 2; it != after_graph_node_inputs.end(); it++) {
+  for (auto it = after_graph_node_inputs.begin() + 2; it != after_graph_node_inputs.end(); ++it) {
     after_params.push_back(*it);
   }
 
@@ -1452,7 +1452,7 @@ void DfGraphConvertor::GetCallNodeInputs(const CNodePtr &node) {
 
   while_const_input_index_.clear();
   std::set<size_t> while_input_node_index;
-  for (auto iter = while_used_input_index_.begin(); iter != while_used_input_index_.end(); iter++) {
+  for (auto iter = while_used_input_index_.begin(); iter != while_used_input_index_.end(); ++iter) {
     auto n = inputs[*iter];
     OutHandler out_handler;
     if (IsAfterGraph() && n->isa<Parameter>()) {
