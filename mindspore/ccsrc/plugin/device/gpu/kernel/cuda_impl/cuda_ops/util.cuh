@@ -381,4 +381,45 @@ struct Epsilon<half> {
   static constexpr float value = 0.000977;
 };
 
+// Some bit-related function
+inline int Log2Floor(uint32_t n) {
+  if (n == 0) return -1;
+  int log = 0;
+  for (int i = 4; i >= 0; --i) {
+    int shift = (1 << i);
+    uint32_t x = n >> shift;
+    if (x) {
+      n = x;
+      log += shift;
+    }
+  }
+  return log;
+}
+
+inline int Log2Ceil(uint32_t n) {
+  int floor = Log2Floor(n);
+  if (n == (n & ~(n - 1)))
+    return floor;
+  else
+    return floor + 1;
+}
+
+inline int Log2Floor64(uint64_t n) {
+  // Scan n first high 32 then low 32 bits.
+  const uint32_t high_32_bit = static_cast<uint32_t>(n >> 32);
+  if (high_32_bit == 0) {
+    return Log2Floor(static_cast<uint32_t>(n));
+  } else {
+    return 32 + Log2Floor(high_32_bit);
+  }
+}
+
+inline int Log2Ceil64(uint64_t n) {
+  int floor = Log2Floor64(n);
+  if (n == (n & ~(n - 1)))
+    return floor;
+  else
+    return floor + 1;
+}
+
 #endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_GPU_KERNEL_CUDA_IMPL_CUDA_OPS_UTIL_CUH_

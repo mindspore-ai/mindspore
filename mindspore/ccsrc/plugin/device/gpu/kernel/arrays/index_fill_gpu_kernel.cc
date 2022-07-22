@@ -58,19 +58,23 @@ int IndexFillGpuKernelMod::Resize(const BaseOperatorPtr &base_operator, const st
 }
 
 bool IndexFillGpuKernelMod::GetSizeInfo(const AddressPtr &address_ptr, int64_t &outer_size, int64_t &dim_size,
-                                        int64_t &inner_size) {
+                                        int64_t &inner_size, cudaStream_t cuda_stream) {
   // Initialize and check 'dim'.
   auto dim_ptr = address_ptr->addr;
   MS_EXCEPTION_IF_NULL(dim_ptr);
   int rank = static_cast<int>(x_shape_.size());
   int dim;
+  // Here we can not use cudaMemcpy, since cudaMemcpy is asynchronous to host,
+  // and when memory is pageable, cudaMemcpyAsync is synchronous to host.
   if (address_ptr->size == sizeof(int)) {
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&dim, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost),
-                                       "In IndexFill kernel, cudaMemcpy input 'dim' device to host failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&dim, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost, cuda_stream),
+      "In IndexFill kernel, cudaMemcpyAsync input 'dim' device to host failed.");
   } else {
     int64_t dim_tmp;
-    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaMemcpy(&dim_tmp, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost),
-                                       "In IndexFill kernel, cudaMemcpy input 'dim' device to host failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+      cudaMemcpyAsync(&dim_tmp, dim_ptr, address_ptr->size, cudaMemcpyDeviceToHost, cuda_stream),
+      "In IndexFill kernel, cudaMemcpyAsync input 'dim' device to host failed.");
     dim = static_cast<int>(dim_tmp);
   }
   if (dim < -rank || dim >= rank) {
@@ -123,7 +127,7 @@ bool IndexFillGpuKernelMod::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                      "In IndexFill kernel, cudaMemsetAsync out_bound variable failed.");
   // Prepare dim_size, outer_size, inner_size
   int64_t dim_size, outer_size, inner_size;
-  if (!GetSizeInfo(inputs[kIndex1], outer_size, dim_size, inner_size)) {
+  if (!GetSizeInfo(inputs[kIndex1], outer_size, dim_size, inner_size, cuda_stream)) {
     return false;
   }
 
