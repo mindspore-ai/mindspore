@@ -359,6 +359,25 @@ AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &prim
   return std::make_shared<AbstractTensor>(arg->element(), std::make_shared<Shape>(result_shp));
 }
 
+AbstractBasePtr InferImplBiasDropoutAdd(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_spec_list) {
+  size_t kInputSize = 3;
+  auto op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, kInputSize);
+  auto x = abstract::CheckArg<abstract::AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+
+  ShapeVector shape = x->shape()->shape();
+  ShapeVector min_shape = x->shape()->min_shape();
+  ShapeVector max_shape = x->shape()->max_shape();
+  CheckAndConvertUtils::CheckMinMaxShape(shape, &min_shape, &max_shape);
+  auto output_shape = std::make_shared<abstract::AbstractTensor>(
+    x->element(), std::make_shared<abstract::Shape>(shape, min_shape, max_shape));
+  AbstractBasePtrList ret = {output_shape, output_shape};
+  return std::make_shared<abstract::AbstractTuple>(ret);
+}
+
 AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                const AbstractBasePtrList &args_spec_list) {
   // inputs: true_classes, sampled_candidates
