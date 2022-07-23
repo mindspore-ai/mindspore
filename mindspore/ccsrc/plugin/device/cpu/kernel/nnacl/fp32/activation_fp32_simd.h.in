@@ -198,6 +198,15 @@ static inline int SoftShrink@SIMD_INSTRUCTION@(int index, const float *src, int 
     return index;
 }
 
+static inline int SoftsignFp32Opt@SIMD_INSTRUCTION@(int index, const float *src, int length, float *dst) {
+    for (int block_max_size = length - BLOCK_NUM + 1; index < block_max_size; index += BLOCK_NUM) {
+        SIMD_F32 src_tmp = SIMD_LD_F32(src + index);
+        SIMD_F32 divisor_tmp = SIMD_ADD_F32(SIMD_MOV_F32(1.0f), SIMD_ABS_F32(src_tmp));
+        SIMD_ST_F32(dst + index, SIMD_DIV_F32(src_tmp, divisor_tmp));
+    }
+    return index;
+}
+
 @SIMD_INSTRUCTION_END@
 #ifdef __cplusplus
 }
